@@ -1,0 +1,52 @@
+version: 2.1
+
+# The images that jobs can have
+executors:
+  panther-buildpack:
+    docker:
+      - image: pantherlabs/panther-buildpack:1.0.1
+
+# Set of re-usable commands to be used across different jobs
+commands:
+  setup_backend:
+    steps:
+      - checkout
+      - run:
+          name: Setup project dependencies
+          command: mage -v setup
+
+  setup_frontend:
+    steps:
+      - checkout
+      - run:
+          name: Install JS dependencies
+          command: npm i
+
+# The pool of jobs that that our CI will be able to run
+jobs:
+  validate_frontend:
+    executor: panther-buildpack
+    steps:
+      - setup_frontend
+      - run:
+          name: Validate the project dependencies do not have any known vulnerabilities
+          command: npm audit
+      - run:
+          name: Lint project and run TS checks
+          command: npm run lint
+
+  validate_backend:
+    executor: panther-buildpack
+    resource_class: xlarge
+    steps:
+      - setup_backend
+      - run:
+          name: Lint and test the backend infrastructure
+          command: mage test:ci
+
+workflows:
+  version: 2
+  pipeline:
+    jobs:
+      - validate_frontend
+      - validate_backend

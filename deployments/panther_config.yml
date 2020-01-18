@@ -1,0 +1,72 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+##### Panther deployment configuration #####
+
+# CloudFormation parameter overrides for the core/buckets.yml prerequisite stack.
+BucketsParameterValues:
+  # Use an existing S3 bucket for storing access logs. If not specified, one is created for you.
+  AccessLogsBucketName: ''
+
+
+# CloudFormation parameter overrides for the template.yml main application stack.
+AppParameterValues:
+  # Retention period for all Panther CloudWatch log groups.
+  CloudWatchLogRetentionDays: 365
+
+  # Enable DEBUG logging for all Lambda functions.
+  Debug: false
+
+  # Comma-delimited list of LayerVersions to attach to every Lambda function.
+  #
+  # For example, this could be a serverless monitoring/security service.
+  LayerVersionArns: ''
+
+  # Custom layer attached to every Python Lambda function for analysis and remediation.
+  #
+  # If not specified, a layer is created for you based on the PipLayer setting below.
+  PythonLayerVersionArn: ''
+
+  # ARN of an AWS ACM certificate used on the loadbalancer presenting the panther web app
+  #
+  # If not specified, a self signed certificate is created automatically.
+  # WARNING: SELF SIGNED CERTIFICATES ARE NOT SAFE TO USE IN PRODUCTION, PLEASE
+  # PROVIDE A CERTIFICATE FOR PRODUCTION USE
+  WebApplicationCertificateArn: ''
+
+  # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
+  TracingMode: ''
+
+
+# Create a Python layer with these pip library versions.
+#
+# This makes it easy to add your own pip libraries for analysis and remediation.
+# Natively compiled libraries (e.g. numpy) are not currently supported: build a custom layer instead.
+#
+# This setting has no effect if PythonLayerVersionArn is set above.
+PipLayer:
+  - boto3==1.10.46
+  - policyuniverse==1.3.2.1
+  - requests==2.22.0
+
+
+# List of policy/rule sets to install when Panther is FIRST deployed.
+#
+# Entries can be URLs or file:// paths that point to a .zip file.
+# If the analysis-api is non-empty, this setting is ignored and you can instead
+# use the BulkUpload functionality from the web app to upload new or modified rule sets.
+InitialAnalysisSets:
+  - https://github.com/panther-labs/panther-analysis/releases/download/v1.0.0/panther-analysis-all.zip

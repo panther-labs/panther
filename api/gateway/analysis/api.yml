@@ -1,0 +1,1273 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+swagger: '2.0'
+info:
+  version: '1.0.0'  # API version, not the SAR code version
+  title: panther-analysis-api
+  description: Panther Python policies/rules
+  contact:
+    name: Panther Labs
+    url: https://runpanther.io/about
+    email: support@runpanther.io
+
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# The name of the CloudFormation resource for the Lambda handler function
+x-panther-lambda-cfn-resource: HandlerFunction
+
+parameters:  # Parameters shared across multiple methods
+  policyId:
+    name: policyId
+    in: query
+    description: Unique ASCII policy identifier
+    required: true
+    type: string
+    pattern: '[a-zA-Z0-9\-\.: ]{1,200}'
+
+  ruleId:
+    name: ruleId
+    in: query
+    description: Unique ASCII rule identifier
+    required: true
+    type: string
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
+  type:
+    name: type
+    in: query
+    description: Type of analysis logic to retrieve
+    default: policy
+    type: string
+    enum: [policy, rule]
+
+paths:
+  /policy:
+    # The UI policy detail shows all details for an individual policy.
+    #
+    # Example: GET /policy ? policyId=BucketEncryptionEnabled
+    #
+    # Response: {
+    #     "autoRemediationId":         "",
+    #     "autoRemediationParameters": {},
+    #     "body":                      "def policy(resource): return True",
+    #     "complianceStatus":          "PASS",
+    #     "createdAt":                 "2019-08-26T00:00:00.000Z",
+    #     "createdBy":                 "5f54cf4a-ec56-44c2-83bc-8b742600f307",
+    #     "description":               "This policy is always compliant",
+    #     "displayName":               "My Test Policy",
+    #     "enabled":                   true,
+    #     "id":                        "BucketEncryptionEnabled",
+    #     "lastModified":              "2019-08-26T00:00:00.000Z",
+    #     "lastModifiedBy":            "5f54cf4a-ec56-44c2-83bc-8b742600f307",
+    #     "reference":                 "https://example.com",
+    #     "resourceTypes":             ["AWS.S3.Bucket"],
+    #     "runbook":                   "No need to do anything",
+    #     "severity":                  "INFO",
+    #     "suppressions":              ["arn:aws:s3:::panther-public-*"],
+    #     "tags":                      [],
+    #     "tests": [
+    #         {
+    #             "expectedResult": true,
+    #             "name": "TestTheFirst",
+    #             "resource": {
+    #                 "hello": "world"
+    #             },
+    #             "type": "AWS.S3.Bucket"
+    #         }
+    #     ],
+    #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
+    # }
+    get:
+      operationId: GetPolicy
+      summary: Get policy details
+      parameters:
+        - $ref: '#/parameters/policyId'
+        -
+          name: versionId
+          in: query
+          description: Optional version ID to retrieve (for older versions)
+          type: string
+          pattern: '[a-zA-Z\._0-9]{32}'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Policy'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Policy does not exist
+        500:
+          description: Internal server error
+
+    # When users create a new policy, the frontend uses this endpoint.
+    #
+    # This is almost identical to updating a policy, except the policyId must not already exist.
+    #
+    # Example: (see ModifyPolicy)
+    post:
+      operationId: CreatePolicy
+      summary: Create a new compliance policy
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdatePolicy'
+      responses:
+        201:
+          description: Policy created successfully
+          schema:
+            $ref: '#/definitions/Policy'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        409:
+          description: Rule or policy with the given ID already exists
+        500:
+          description: Internal server error
+
+  /rule:
+    # Same as GetPolicy, but for a log analysis rule (which has slightly different parameters).
+    get:
+      operationId: GetRule
+      summary: Get rule details
+      parameters:
+        - $ref: '#/parameters/ruleId'
+        -
+          name: versionId
+          in: query
+          description: Optional version ID to retrieve (for older versions)
+          type: string
+          pattern: '[a-zA-Z\._0-9]{32}'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Rule'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Rule does not exist
+        500:
+          description: Internal server error
+
+    # Same as CreatePolicy, but for a log analysis rule.
+    post:
+      operationId: CreateRule
+      summary: Create a new log analysis rule
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateRule'
+      responses:
+        201:
+          description: Rule created successfully
+          schema:
+            $ref: '#/definitions/Rule'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        409:
+          description: Rule or policy with the given ID already exists
+        500:
+          description: Internal server error
+
+  /delete:
+    # Request deletion for one or more policies/rules, optionally across organizations.
+    #
+    # Deleted policies are removed from Dynamo but old versions remain in S3.
+    #
+    # Example: POST /delete
+    # {
+    #     "policies": [
+    #         {
+    #             "id":    "MyTestPolicy",
+    #         }
+    #     ]
+    # }
+    post:
+      operationId: DeletePolicies
+      summary: Delete one or more policies/rules
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/DeletePolicies'
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+  /enabled:
+    # The backend resource-processor uses enabled policies to scan modified resources.
+    #
+    # Here, we assume all policies fit in the 6MB response limit (no paging required)
+    # since only the fields we need for processing are returned in the response.
+    #
+    # TODO: add paging / merge into ListPolicies endpoint
+    get:
+      operationId: GetEnabledPolicies
+      summary: List all enabled rules/policies for a customer account for backend processing
+      parameters:
+        - $ref: '#/parameters/type'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/EnabledPolicies'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+  /list:
+    # The frontend pages through the policies in a customer account.
+    #
+    # Example: GET /list ?
+    #     complianceStatus=FAIL &
+    #     nameContains=Encryption &
+    #     enabled=true &
+    #     hasRemediation=true &
+    #     resourceTypes=AWS.S3.Bucket,AWS.KMS.Key
+    #     severity=MEDIUM &
+    #     tags=aws,panther &
+    #     sortBy=lastModified
+    #     sortDir=ascending
+    #
+    # Response: {
+    #     "paging": {
+    #         "thisPage":   1,
+    #         "totalPages": 1,
+    #         "totalItems": 1
+    #     },
+    #     "policies": [
+    #         {
+    #             "autoRemediationId": "some-fix",
+    #             "complianceStatus":  "FAIL",
+    #             "displayName":       "",
+    #             "enabled":           true,
+    #             "id":                "AWS.S3.BucketEncryption",
+    #             "lastModified":      "2019-08-26T00:00:00.000Z",
+    #             "resourceTypes":     ["AWS.KMS.Key", "AWS.S3.Bucket"],
+    #             "severity":          "MEDIUM",
+    #             "tags":              ["aws", "s3", "cis"]
+    #         }
+    #     ]
+    # }
+    get:
+      operationId: ListPolicies
+      summary: Page through policies in a customer's account
+      parameters:
+        # filtering
+        -
+          name: complianceStatus
+          in: query
+          description: Only include policies with a specific compliance status
+          type: string
+          enum: [ERROR, FAIL, PASS]
+        -
+          name: nameContains
+          in: query
+          description: Only include policies whose ID or display name contains this substring (case-insensitive)
+          type: string
+        -
+          name: enabled
+          in: query
+          description: Only include policies which are enabled or disabled
+          type: boolean
+        -
+          name: hasRemediation
+          in: query
+          description: Only include policies with or without auto-remediation enabled
+          type: boolean
+        -
+          name: resourceTypes
+          in: query
+          description: Only include policies which apply to one of these resource types
+          type: array
+          collectionFormat: csv
+          uniqueItems: true
+          items:
+            type: string
+        -
+          name: severity
+          in: query
+          description: Only include policies with this severity
+          type: string
+          enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
+        -
+          name: tags
+          in: query
+          description: Only include policies with all of these tags (case-insensitive)
+          type: array
+          collectionFormat: csv
+          uniqueItems: true
+          items:
+            type: string
+
+        # sorting
+        -
+          name: sortBy
+          in: query
+          description: Name of the field to sort by
+          type: string
+          enum:
+            - complianceStatus
+            - enabled
+            - id
+            - lastModified
+            - resourceTypes
+            - severity
+          default: severity
+        -
+          name: sortDir
+          in: query
+          description: Sort direction
+          type: string
+          enum: [ascending, descending]
+          default: descending
+
+        # paging
+        -
+          name: pageSize
+          in: query
+          description: Number of items in each page of results
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 25
+        -
+          name: page
+          in: query
+          description: Which page of results to retrieve
+          type: integer
+          minimum: 1
+          default: 1
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/PolicyList'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+  /suppress:
+    # Suppress resource patterns across one or more policies
+    #
+    # Example: POST /suppress
+    # {
+    #     "policyIds": ["MyTestPolicy", "SomeOtherPolicy"],
+    #     "resourcePatterns": ["arn:aws:s3:::panther-.*", "dev"]
+    # }
+    post:
+      operationId: Suppress
+      summary: Suppress resource patterns across one or more policies
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Suppress'
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+  /rule/list:
+    # Same as ListPolicies, but for log analysis rules
+    get:
+      operationId: ListRules
+      summary: Page through rules in a customer's account
+      parameters:
+        # filtering
+        -
+          name: nameContains
+          in: query
+          description: Only include rules whose ID or display name contains this substring (case-insensitive)
+          type: string
+        -
+          name: enabled
+          in: query
+          description: Only include rules which are enabled or disabled
+          type: boolean
+        -
+          name: logTypes
+          in: query
+          description: Only include rules which apply to one of these log types
+          type: array
+          collectionFormat: csv
+          uniqueItems: true
+          items:
+            type: string
+        -
+          name: severity
+          in: query
+          description: Only include policies with this severity
+          type: string
+          enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
+        -
+          name: tags
+          in: query
+          description: Only include policies with all of these tags (case-insensitive)
+          type: array
+          collectionFormat: csv
+          uniqueItems: true
+          items:
+            type: string
+
+        # sorting
+        -
+          name: sortBy
+          in: query
+          description: Name of the field to sort by
+          type: string
+          enum:
+            - enabled
+            - id
+            - lastModified
+            - logTypes
+            - severity
+          default: severity
+        -
+          name: sortDir
+          in: query
+          description: Sort direction
+          type: string
+          enum: [ascending, descending]
+          default: ascending
+
+        # paging
+        -
+          name: pageSize
+          in: query
+          description: Number of items in each page of results
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 25
+        -
+          name: page
+          in: query
+          description: Which page of results to retrieve
+          type: integer
+          minimum: 1
+          default: 1
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/RuleList'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+  /update:
+    # When users edit a policy, the frontend sends the changes to this endpoint.
+    #
+    # This is almost identical to creating a policy, except the policyId must already exist.
+    # NOTE: we can't use PATCH because of a limitation in AppSync.
+    #
+    # Example: POST /update
+    # {
+    #     "body":     "def policy(resource): return False",
+    #     "enabled":  false,
+    #     "id":       "MyVeryExcellentPolicy",
+    #     "severity": "MEDIUM",
+    #     "userId":   "5f54cf4a-ec56-44c2-83bc-8b742600f307"
+    # }
+    #
+    # Response: (see GetPolicy)
+    post:
+      operationId: ModifyPolicy
+      summary: Modify an existing policy
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdatePolicy'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Policy'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Policy not found
+        500:
+          description: Internal server error
+
+  /rule/update:
+    # Same as UpdatePolicy, but for a log analysis rule
+    post:
+      operationId: ModifyRule
+      summary: Modify an existing rule
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateRule'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Rule'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Rule not found
+        500:
+          description: Internal server error
+
+  /upload:
+    # Upload base64-encoded zipfile contents with multiple policies/rules for a single org.
+    #
+    # Policies/Rules are either updated or replaced depending on whether their ID already exists.
+    #
+    # Example: POST /upload
+    # {
+    #     "data":   "... base64-encoded zipfile ...",
+    #     "userId": "5f54cf4a-ec56-44c2-83bc-8b742600f307"
+    # }
+    #
+    # Response: {
+    #     "modifiedPolicies": 5,
+    #     "modifiedRules":    0,
+    #     "newPolicies":      5,
+    #     "newRules":         1,
+    #     "totalPolicies":    10,
+    #     "totalRules":       3
+    # }
+    post:
+      operationId: BulkUpload
+      summary: Upload a zipfile containing a bundle of policies
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/BulkUpload'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/BulkUploadResult'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+  /test:
+    post:
+      operationId: TestPolicy
+      summary: Test a policy against a set of unit tests
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TestPolicy'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/TestPolicyResult'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+definitions:
+  Error:
+    type: object
+    properties:
+      message:
+        description: Error message
+        type: string
+    required:
+      - message
+
+  ##### Create/Update/Modify #####
+  Policy:
+    type: object
+    properties:
+      autoRemediationId:
+        $ref: '#/definitions/autoRemediationId'
+      autoRemediationParameters:
+        $ref: '#/definitions/autoRemediationParameters'
+      body:
+        $ref: '#/definitions/body'
+      complianceStatus:
+        $ref: '#/definitions/complianceStatus'
+      createdAt:
+        $ref: '#/definitions/modifyTime'
+      createdBy:
+        $ref: '#/definitions/userId'
+      description:
+        $ref: '#/definitions/description'
+      displayName:
+        $ref: '#/definitions/displayName'
+      enabled:
+        $ref: '#/definitions/enabled'
+      id:
+        $ref: '#/definitions/id'
+      lastModified:
+        $ref: '#/definitions/modifyTime'
+      lastModifiedBy:
+        $ref: '#/definitions/userId'
+      reference:
+        $ref: '#/definitions/reference'
+      resourceTypes:
+        $ref: '#/definitions/TypeSet'
+      runbook:
+        $ref: '#/definitions/runbook'
+      severity:
+        $ref: '#/definitions/severity'
+      suppressions:
+        $ref: '#/definitions/suppressions'
+      tags:
+        $ref: '#/definitions/tags'
+      tests:
+        $ref: '#/definitions/TestSuite'
+      versionId:
+        $ref: '#/definitions/versionId'
+    required:
+      - autoRemediationId
+      - autoRemediationParameters
+      - body
+      - complianceStatus
+      - createdAt
+      - createdBy
+      - description
+      - displayName
+      - enabled
+      - id
+      - lastModified
+      - lastModifiedBy
+      - reference
+      - resourceTypes
+      - runbook
+      - severity
+      - suppressions
+      - tags
+      - tests
+      - versionId
+
+  TypeSet:
+    description: List of resource/log types to which this policy applies
+    type: array
+    maxItems: 500
+    uniqueItems: true
+    items:
+      type: string
+      minLength: 1
+
+  UnitTest:
+    type: object
+    properties:
+      expectedResult:
+        $ref: '#/definitions/testExpectedResult'
+      name:
+        $ref: '#/definitions/testName'
+      resource:
+        $ref: '#/definitions/testResource'
+      resourceType:
+        $ref: '#/definitions/testResourceType'
+    required:
+      - expectedResult
+      - name
+      - resource
+      - resourceType
+
+  TestSuite:
+    type: array
+    items:
+      $ref: '#/definitions/UnitTest'
+
+  UpdatePolicy:
+    type: object
+    properties:
+      autoRemediationId:
+        $ref: '#/definitions/autoRemediationId'
+      autoRemediationParameters:
+        $ref: '#/definitions/autoRemediationParameters'
+      body:
+        $ref: '#/definitions/body'
+      description:
+        $ref: '#/definitions/description'
+      displayName:
+        $ref: '#/definitions/displayName'
+      enabled:
+        $ref: '#/definitions/enabled'
+      id:
+        $ref: '#/definitions/id'
+      reference:
+        $ref: '#/definitions/reference'
+      resourceTypes:
+        $ref: '#/definitions/TypeSet'
+      runbook:
+        $ref: '#/definitions/runbook'
+      severity:
+        $ref: '#/definitions/severity'
+      suppressions:
+        $ref: '#/definitions/suppressions'
+      tags:
+        $ref: '#/definitions/tags'
+      tests:
+        $ref: '#/definitions/TestSuite'
+      userId:
+        $ref: '#/definitions/userId'
+    required:
+      - body
+      - enabled
+      - id
+      - severity
+      - userId
+
+  ##### DeletePolicies #####
+  DeletePolicies:
+    type: object
+    properties:
+      policies:
+        type: array
+        items:
+          $ref: '#/definitions/DeleteEntry'
+        minItems: 1
+        maxItems: 1000  # max deletes in a single S3 DeleteObjects call
+        uniqueItems: true
+    required:
+      - policies
+
+  DeleteEntry:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+    required:
+      - id
+
+  ##### GetEnabledPolicies #####
+  EnabledPolicies:
+    type: object
+    properties:
+      policies:
+        type: array
+        items:
+          $ref: '#/definitions/EnabledPolicy'
+    required:
+      - policies
+
+  EnabledPolicy:
+    type: object
+    properties:  # only the fields we need for backend processing
+      body:
+        $ref: '#/definitions/body'
+      id:
+        $ref: '#/definitions/id'
+      resourceTypes:
+        $ref: '#/definitions/TypeSet'
+      severity:
+        $ref: '#/definitions/severity'
+      suppressions:
+        $ref: '#/definitions/suppressions'
+      versionId:
+        $ref: '#/definitions/versionId'
+
+  ##### ListPolicies #####
+  PolicyList:
+    type: object
+    properties:
+      paging:
+        $ref: '#/definitions/Paging'
+      policies:
+        type: array
+        items:
+          $ref: '#/definitions/PolicySummary'
+    required:
+      - paging
+      - policies
+
+  Paging:
+    type: object
+    properties:
+      thisPage:
+        type: integer
+        minimum: 1
+      totalPages:
+        type: integer
+        minimum: 1
+      totalItems:
+        type: integer
+        minimum: 1
+    required:
+      - thisPage
+      - totalPages
+      - totalItems
+
+  PolicySummary:
+    type: object
+    properties:  # only the fields we need for the table in the UI
+      autoRemediationId:
+        $ref: '#/definitions/autoRemediationId'
+      autoRemediationParameters:
+        $ref: '#/definitions/autoRemediationParameters'
+      complianceStatus:
+        $ref: '#/definitions/complianceStatus'
+      displayName:
+        $ref: '#/definitions/displayName'
+      enabled:
+        $ref: '#/definitions/enabled'
+      id:
+        $ref: '#/definitions/id'
+      lastModified:
+        $ref: '#/definitions/modifyTime'
+      resourceTypes:
+        $ref: '#/definitions/TypeSet'
+      severity:
+        $ref: '#/definitions/severity'
+      tags:
+        $ref: '#/definitions/tags'
+      suppressions:
+        $ref: '#/definitions/suppressions'
+    required:
+      - autoRemediationId
+      - autoRemediationParameters
+      - complianceStatus
+      - displayName
+      - enabled
+      - id
+      - lastModified
+      - resourceTypes
+      - severity
+      - tags
+      - suppressions
+
+  ##### BulkUpload #####
+  BulkUpload:
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/base64zipfile'
+      userId:
+        $ref: '#/definitions/userId'
+    required:
+      - data
+      - userId
+
+  BulkUploadResult:
+    type: object
+    properties:
+      totalPolicies:
+        type: integer
+        minimum: 0
+      newPolicies:
+        type: integer
+        minimum: 0
+      modifiedPolicies:
+        type: integer
+        minimum: 0
+      totalRules:
+        type: integer
+        minimum: 0
+      newRules:
+        type: integer
+        minimum: 0
+      modifiedRules:
+        type: integer
+        minimum: 0
+    required:
+      - totalPolicies
+      - newPolicies
+      - modifiedPolicies
+      - totalRules
+      - newRules
+      - modifiedRules
+
+  ##### TestPolicy #####
+  TestPolicy:
+    type: object
+    properties:
+      body:
+        $ref: '#/definitions/body'
+      resourceTypes:
+        $ref: '#/definitions/TypeSet'
+      tests:
+        $ref: '#/definitions/TestSuite'
+    required:
+      - body
+      - resourceTypes
+      - tests
+
+  TestPolicyResult:
+    type: object
+    properties:
+      testSummary:
+        $ref: '#/definitions/testSummary'
+      testsPassed:
+        $ref: '#/definitions/testsPassed'
+      testsFailed:
+        $ref: '#/definitions/testsFailed'
+      testsErrored:
+        $ref: '#/definitions/testsErrored'
+    required:
+      - testSummary
+      - testsPassed
+      - testsFailed
+      - testsErrored
+
+  ##### Suppress #####
+  Suppress:
+    type: object
+    properties:
+      policyIds:
+        type: array
+        items:
+          $ref: '#/definitions/id'
+        minItems: 1
+      resourcePatterns:
+        $ref: '#/definitions/suppressions'
+    required:
+      - policyIds
+      - resourcePatterns
+
+  ##### Create/Modify/Update Rules (Log Analysis) #####
+  Rule:
+    type: object
+    properties:
+      body:
+        $ref: '#/definitions/body'
+      createdAt:
+        $ref: '#/definitions/modifyTime'
+      createdBy:
+        $ref: '#/definitions/userId'
+      description:
+        $ref: '#/definitions/description'
+      displayName:
+        $ref: '#/definitions/displayName'
+      enabled:
+        $ref: '#/definitions/enabled'
+      id:
+        $ref: '#/definitions/id'
+      lastModified:
+        $ref: '#/definitions/modifyTime'
+      lastModifiedBy:
+        $ref: '#/definitions/userId'
+      logTypes:
+        $ref: '#/definitions/TypeSet'
+      reference:
+        $ref: '#/definitions/reference'
+      runbook:
+        $ref: '#/definitions/runbook'
+      severity:
+        $ref: '#/definitions/severity'
+      tags:
+        $ref: '#/definitions/tags'
+      tests:
+        $ref: '#/definitions/TestSuite'
+      versionId:
+        $ref: '#/definitions/versionId'
+    required:
+      - body
+      - createdAt
+      - createdBy
+      - description
+      - displayName
+      - enabled
+      - id
+      - lastModified
+      - lastModifiedBy
+      - logTypes
+      - reference
+      - runbook
+      - severity
+      - tags
+      - tests
+      - versionId
+
+  UpdateRule:
+    type: object
+    properties:
+      body:
+        $ref: '#/definitions/body'
+      description:
+        $ref: '#/definitions/description'
+      displayName:
+        $ref: '#/definitions/displayName'
+      enabled:
+        $ref: '#/definitions/enabled'
+      id:
+        $ref: '#/definitions/id'
+      logTypes:
+        $ref: '#/definitions/TypeSet'
+      reference:
+        $ref: '#/definitions/reference'
+      runbook:
+        $ref: '#/definitions/runbook'
+      severity:
+        $ref: '#/definitions/severity'
+      tags:
+        $ref: '#/definitions/tags'
+      tests:
+        $ref: '#/definitions/TestSuite'
+      userId:
+        $ref: '#/definitions/userId'
+    required:
+      - body
+      - enabled
+      - id
+      - severity
+      - userId
+
+  ##### ListRules #####
+  RuleList:
+    type: object
+    properties:
+      paging:
+        $ref: '#/definitions/Paging'
+      rules:
+        type: array
+        items:
+          $ref: '#/definitions/RuleSummary'
+    required:
+      - paging
+      - rules
+
+  RuleSummary:
+    type: object
+    properties:  # only the fields we need for the table in the UI
+      displayName:
+        $ref: '#/definitions/displayName'
+      enabled:
+        $ref: '#/definitions/enabled'
+      id:
+        $ref: '#/definitions/id'
+      lastModified:
+        $ref: '#/definitions/modifyTime'
+      logTypes:
+        $ref: '#/definitions/TypeSet'
+      severity:
+        $ref: '#/definitions/severity'
+      tags:
+        $ref: '#/definitions/tags'
+    required:
+      - displayName
+      - enabled
+      - id
+      - lastModified
+      - logTypes
+      - severity
+      - tags
+
+  ##### object properties #####
+  autoRemediationId:
+    description: When a resource fails the policy, trigger the remediation with this ID
+    type: string
+    maxLength: 200
+
+  autoRemediationParameters:
+    description: Configuration parameters passed to the remediation handler
+    type: object
+    additionalProperties:
+      type: string
+    maxProperties: 50
+
+  base64zipfile:
+    description: Base64-encoded zipfile with a policy bundle
+    type: string
+    # we don't use format: byte because it fails to unmarshal without double-encoding
+    minLength: 10
+
+  body:
+    description: Python policy source code
+    type: string
+    minLength: 10
+    maxLength: 1000000  # ~1 MB
+
+  complianceStatus:
+    description: Pass/fail compliance status
+    type: string
+    enum:
+      - ERROR    # Policy raised an exception when evaluating a resource
+      - FAIL     # Policy failed on at least one resource
+      - PASS     # Policy passed for all applicable resources
+
+  description:
+    description: Summary of the policy and its purpose
+    type: string
+    maxLength: 5000
+
+  displayName:
+    description: Optional user-friendly policy name
+    type: string
+    maxLength: 200
+
+  enabled:
+    description: True if the policy is currently being evaluated
+    type: boolean
+
+  id:
+    description: User-specified unique rule/policy ID
+    type: string
+    pattern: '[a-zA-Z0-9\-\.: ]{1,200}'
+
+  modifyTime:
+    description: Policy modification timestamp
+    type: string
+    format: date-time
+
+  reference:
+    description: External documentation motivating the need for this policy
+    type: string
+    maxLength: 5000
+
+  runbook:
+    description: Internal documenation about what to do when a policy fails
+    type: string
+
+  suppressions:
+    description: >
+      List of resource ID regexes that are excepted from this policy.
+      The policy will still be evaluated, but failures will not trigger alerts nor remediations.
+    type: array
+    maxItems: 500
+    uniqueItems: true
+    items:
+      type: string
+      maxLength: 1000
+
+  testExpectedResult:
+    description: The expected outcome when running a unit test
+    type: boolean
+
+  testName:
+    description: The name of a unit test
+    type: string
+    minLength: 1
+
+  testResourceType:
+    description: The resource or log type of an individual unit test
+    type: string
+    minLength: 1
+
+  testResource:
+    description: The resource (or log event) the unit test is running against
+    type: string
+    minLength: 2
+
+  severity:
+    description: Policy severity
+    type: string
+    enum:
+      - INFO
+      - LOW
+      - MEDIUM
+      - HIGH
+      - CRITICAL
+
+  tags:
+    description: List of tags to categorize the policy
+    type: array
+    maxItems: 500
+    uniqueItems: true
+    items:
+      type: string
+      maxLength: 200
+
+  testSummary:
+    description: True if all tests passed
+    type: boolean
+
+  testsPassed:
+    description: List of names of tests that passed
+    type: array
+    items:
+      type: string
+
+  testsFailed:
+    description: List of names of tests that failed
+    type: array
+    items:
+      type: string
+
+  testsErrored:
+    description: List of names of tests that raised an error, along with their error message
+    type: array
+    items:
+      $ref: '#/definitions/testErrorResult'
+
+  testErrorResult:
+    description: A combination of a test name and the error the test raised
+    type: object
+    properties:
+      name:
+        type: string
+      errorMessage:
+        type: string
+
+  userId:
+    description: Panther user ID that created or modified the policy
+    type: string
+    pattern: '[a-f0-9\-]{36}'
+
+  versionId:
+    description: Policy version ID
+    type: string
+    pattern: '[a-zA-Z\._0-9]{32}'  # 32-character alphanumeric S3 object version

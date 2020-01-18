@@ -1,0 +1,302 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Loading logs, classifying, normalizing and sending downstream
+
+Parameters:
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+    Default: ''
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+
+  AlertsAPIMemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the alerts-api Lambda function
+    Default: 512
+    MinValue: 128
+    MaxValue: 3008
+  AlertsAPITimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the alerts-api Lambda function
+    Default: 180
+    MinValue: 5
+    MaxValue: 900
+  MergerMemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the alert-merger Lambda function
+    Default: 128
+    MinValue: 128
+    MaxValue: 3008
+  MergerTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the alert-merger Lambda function
+    Default: 180
+    MinValue: 5
+    MaxValue: 900
+
+  AnalysisApiId:
+    Type: String
+    Description: API Gateway for analysis-api
+  SQSKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+
+Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+
+Resources:
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-log-alert-notifications-queue
+      KmsMasterKeyId: !Ref SQSKeyId
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: !Ref AlertsAPITimeoutSec
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 10
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-log-alert-notifications-dlq
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: !Ref AlertsAPITimeoutSec
+
+  ##### Dynamo alerts table #####
+  AlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-log-alerts
+      AttributeDefinitions:
+        - AttributeName: alertId
+          AttributeType: S
+        - AttributeName: creationTime
+          AttributeType: S
+        - AttributeName: ruleId
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - # Add an index ruleId to efficiently list alerts for a specific rule
+          KeySchema:
+            - AttributeName: ruleId
+              KeyType: HASH
+            - AttributeName: creationTime
+              KeyType: RANGE
+          IndexName: ruleId-creationTime-index
+          Projection:
+            ProjectionType: ALL
+      KeySchema:
+        - AttributeName: alertId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:  # Create periodic table backups
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:  # Enable server-side encryption
+        SSEEnabled: True
+
+  ##### Dynamo recent alerts table #####
+  RecentAlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-recent-alerts
+      AttributeDefinitions:
+        - AttributeName: ruleId
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: ruleId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:  # Create periodic table backups
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:  # Enable server-side encryption
+        SSEEnabled: True
+
+  ##### Dynamo events table #####
+  EventsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-events
+      AttributeDefinitions:
+        - AttributeName: eventHash
+          AttributeType: B
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: eventHash
+          KeyType: HASH
+      PointInTimeRecoverySpecification:  # Create periodic table backups
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:  # Enable server-side encryption
+        SSEEnabled: True
+
+  ###### Lambda API function #####
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-alerts-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertsAPIFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/log_analysis/alerts_api/main
+      Description: CRUD actions for the alerts database
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          ALERTS_TABLE_NAME: !Ref AlertsTable
+          EVENTS_TABLE_NAME: !Ref EventsTable
+          RULE_INDEX_NAME: ruleId-creationTime-index
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          ANALYSIS_API_PATH: v1
+      FunctionName: panther-alerts-api
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref AlertsAPIMemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref AlertsAPITimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: ManageAlerts
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt AlertsTable.Arn
+                - !Sub
+                  - '${TableArn}/index/*'
+                  - { TableArn: !GetAtt AlertsTable.Arn }
+        -
+          Id: InvokeGatewayApi
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
+        -
+          Id: ReadEvents
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - dynamodb:BatchGetItem
+                - dynamodb:GetItem
+              Resource: !GetAtt EventsTable.Arn
+
+  ##### Alert merger Lambda
+
+  AlertMergerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-alert-merger
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertsMergerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/log_analysis/alert_merger/main
+      Description: Lambda for alert merging
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          RECENT_ALERTS_TABLE: !Ref RecentAlertsTable
+          EVENTS_TABLE: !Ref EventsTable
+          ALERTS_TABLE: !Ref AlertsTable
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          ANALYSIS_API_PATH: v1
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-alerts
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt Queue.Arn
+            BatchSize: 10
+      FunctionName: panther-alert-merger
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref MergerMemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref MergerTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: InvokeGatewayApi
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
+        -
+          Id: SQS
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+              Resource: !GetAtt Queue.Arn
+            -
+              Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+            -
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts
+        -
+          Id: ManageAlerts
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+              Resource:
+                - !GetAtt AlertsTable.Arn
+                - !GetAtt EventsTable.Arn
+                - !GetAtt RecentAlertsTable.Arn

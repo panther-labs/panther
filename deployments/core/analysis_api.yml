@@ -1,0 +1,221 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Analysis datastore and API - stores Python bodies
+
+Parameters:
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+    Default: ''
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+
+  HandlerMemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the API Lambda handler
+    Default: 512
+    MinValue: 128
+    MaxValue: 3008
+  HandlerTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the API Lambda handler
+    Default: 120
+    MinValue: 5
+    MaxValue: 900
+
+  ComplianceApiId:
+    Type: String
+    Description: API Gateway for compliance-api
+  S3BucketAccessLogs:
+    Type: String
+    Description: S3 bucket for storing S3 access logs
+  SQSKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+
+Conditions:
+  AttachBaseLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+
+Resources:
+  ##### API Gateway #####
+  GatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      DefinitionBody: api/gateway/analysis/api.yml
+      EndpointConfiguration: REGIONAL
+      Name: panther-analysis-api
+      StageName: v1
+      TracingEnabled: !If [TracingEnabled, true, false]
+
+  GatewayInvocationPermission:  # allow API gateway to invoke the Lambda function
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref HandlerFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
+
+  ##### API Lambda Handler #####
+  HandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../bin/internal/core/analysis_api/main
+      Description: Analysis API
+      Environment:
+        Variables:
+          BUCKET: !Ref Bucket
+          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          COMPLIANCE_API_PATH: v1
+          DEBUG: !Ref Debug
+          ENGINE: panther-policy-engine
+          RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-resources
+          TABLE: !Ref Table
+      FunctionName: panther-analysis-api
+      Handler: main
+      MemorySize: !Ref HandlerMemorySizeMB
+      Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Runtime: go1.x
+      Timeout: !Ref HandlerTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: InvokeApis
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/describe-org
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/delete
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/update
+            -
+              Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
+        -
+          Id: ManageDataStores
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - dynamodb:*Item
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource: !GetAtt Table.Arn
+            -
+              Effect: Allow
+              Action:
+                - s3:DeleteObject  # Does NOT grant permission to permanently delete versions
+                - s3:GetObject*
+                - s3:PutObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${Bucket}/*
+            -
+              Effect: Allow
+              Action:
+                - s3:ListBucket
+                - s3:ListBucketVersions
+              Resource: !GetAtt Bucket.Arn
+        -
+          Id: PublishToResourceQueue
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-resources
+            -
+              Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+
+  HandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-analysis-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+
+
+  ##### Data Stores #####
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True
+      TableName: panther-analysis
+
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      BucketName: !Sub panther-analysis-versions-${AWS::AccountId}-${AWS::Region}
+      LifecycleConfiguration:
+        Rules:
+          - NoncurrentVersionExpirationInDays: 365
+            Status: Enabled
+      LoggingConfiguration:
+        DestinationBucketName: !Ref S3BucketAccessLogs
+        LogFilePrefix: !Sub panther-analysis-versions-${AWS::AccountId}-${AWS::Region}/
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+Outputs:
+  BucketName:
+    Description: The name of the S3 analysis bucket
+    Value: !Ref Bucket
+  GatewayId:
+    Description: API Gateway ID
+    Value: !Ref GatewayApi

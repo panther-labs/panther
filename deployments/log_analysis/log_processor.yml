@@ -1,0 +1,174 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Loading logs, classifying, normalizing and sending downstream
+
+Parameters:
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+    Default: ''
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+
+  MemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the Lambda function
+    Default: 512
+    MinValue: 128
+    MaxValue: 3008
+  TimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the Lambda function
+    Default: 180
+    MinValue: 5
+    MaxValue: 900
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket for storing processed logs
+  SnsTopicArn:
+    Type: String
+    Description: The SNS Topic to send notifications for new files in staging S3 bucket
+  SQSKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+
+  PantherDatabase:
+    Type: String
+    Description: Glue database over Panther processed S3 data.
+
+Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+
+Resources:
+
+  # SQS Queue, DLQ and Lambda
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-input-data-notifications
+      KmsMasterKeyId: !Ref SQSKeyId
+      # Reference on KeyReuse: https://amzn.to/2ngIsFB
+      KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
+      VisibilityTimeout: !Ref TimeoutSec
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 10
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-input-data-notifications-dlq
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: !Ref TimeoutSec
+
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-log-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: panther-log-processor
+      Description: Downloads security logs from S3 for Panther analysis
+      CodeUri: ../../out/bin/internal/log_analysis/log_processor/main
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref MemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref TimeoutSec
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          S3_BUCKET: !Ref ProcessedDataBucket
+          SNS_TOPIC_ARN: !Ref SnsTopicArn
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt Queue.Arn
+            BatchSize: 10
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ReceiveFromInputSqsQueue
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: !GetAtt Queue.Arn
+        - Id: OutputToS3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:PutObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs*
+        - Id: NotifySns
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sns:Publish
+              Resource: !Ref SnsTopicArn
+        - Id: AssumePantherLogProcessingRole
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: 'arn:aws:iam::*:role/PantherLogProcessingRole'
+              Condition:
+                Bool:
+                  aws:SecureTransport: true
+        - Id: AccessSqsKms
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:Encrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+        - Id: WriteGluePartitions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:GetPartition
+                - glue:CreatePartition
+                - glue:GetTable
+              Resource:
+                - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:database/${PantherDatabase}
+                - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:table/${PantherDatabase}/*
+

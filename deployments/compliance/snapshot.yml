@@ -1,0 +1,285 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Panther Snapshot Infra
+
+Parameters:
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+    Default: ''
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+
+  ApiMemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the snapshot-api Lambda function
+    Default: 128
+    MinValue: 128
+    MaxValue: 3008
+  ApiTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the snapshot-api Lambda function
+    Default: 120
+    MinValue: 5
+    MaxValue: 900
+  PollerMemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the snapshot-poller Lambda function
+    Default: 512
+    MinValue: 128
+    MaxValue: 3008
+  PollerTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the snapshot-poller Lambda function
+    Default: 900
+    MinValue: 5
+    MaxValue: 900
+  SchedulerMemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the snapshot-scheduler Lambda function
+    Default: 128
+    MinValue: 128
+    MaxValue: 3008
+  SchedulerTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the snapshot-scheduler Lambda function
+    Default: 120
+    MinValue: 5
+    MaxValue: 900
+
+  AuditRoleName:
+    Type: String
+    Default: PantherAuditRole
+    Description: The name of the IAM role to assume to perform AWS account/service scans
+  ResourcesApiId:
+    Type: String
+    Description: API Gateway for resources-api
+  SQSKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+  LogAnalysisQueueName:
+    Type: String
+    Default: panther-input-data-notifications
+
+Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+
+Resources:
+  ##### Snapshot Poller #####
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-snapshot-queue
+      KmsMasterKeyId: !Ref SQSKeyId
+      VisibilityTimeout: !Ref PollerTimeoutSec
+
+  PollerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/compliance/snapshot_poller/main
+      Description: Polls AWS resources and writes them to the resources-api
+      Environment:
+        Variables:
+          AUDIT_ROLE_NAME: !Ref AuditRoleName
+          DEBUG: !Ref Debug
+          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCES_API_PATH: v1
+          SNAPSHOT_QUEUE_URL: !Ref Queue
+      Events:
+        SQS:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt Queue.Arn
+            BatchSize: 1
+      FunctionName: panther-snapshot-pollers
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref PollerMemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref PollerTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: ManageSQSMessages
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !GetAtt Queue.Arn
+            -
+              Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+        -
+          Id: InvokeResourcesAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/resource
+        -
+          Id: AssumePantherAuditRoles
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:aws:iam::*:role/${AuditRoleName}
+
+  PollerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-snapshot-pollers
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ##### Snapshot API #####
+  IntegrationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-source-integrations
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: integrationId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: integrationId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:  # Enable server-side encryption
+        SSEEnabled: True
+
+  ApiLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/compliance/snapshot_api/main
+      Description: Manages database of source integrations
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          SNAPSHOT_POLLERS_QUEUE_URL: !Ref Queue
+          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${LogAnalysisQueueName}
+          LOG_PROCESSOR_QUEUE_ARN: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
+          TABLE_NAME: !Ref IntegrationsTable
+      FunctionName: panther-snapshot-api
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref ApiMemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref ApiTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: IntegrationsTablePermissions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:*Item
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource: !GetAtt IntegrationsTable.Arn
+        -
+          Id: SendSQSMessages
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !GetAtt Queue.Arn
+            -
+              Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+        -
+          Id: UpdateLogProcessorQueue
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sqs:*Permission
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-snapshot-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ##### Snapshot Scheduler #####
+  SchedulerLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/compliance/snapshot_scheduler/main
+      Description: Runs once daily to schedule account-wide scans
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+      Events:
+        ScheduleScans:
+          Type: Schedule
+          Properties:
+            Schedule: rate(24 hours)
+      FunctionName: panther-snapshot-scheduler
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref SchedulerMemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref SchedulerTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: InvokeSnapshotAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+
+  SchedulerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-snapshot-scheduler
+      RetentionInDays: !Ref CloudWatchLogRetentionDays

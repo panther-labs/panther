@@ -1,0 +1,175 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Process real-time changes to AWS infrastructure
+
+Parameters:
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+    Default: ''
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+
+  MemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the Lambda function
+    Default: 128
+    MinValue: 128
+    MaxValue: 3008
+  TimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the Lambda function
+    Default: 120
+    MinValue: 5
+    MaxValue: 900
+
+  ResourcesApiId:
+    Type: String
+    Description: API Gateway for resources-api
+  SQSKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+
+Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+
+Resources:
+  EventQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 86400 # 24 hours
+      QueueName: panther-aws-events
+      KmsMasterKeyId: !Ref SQSKeyId
+      # Reference on KeyReuse: https://amzn.to/2ngIsFB
+      KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 10
+      VisibilityTimeout: !Ref TimeoutSec
+
+  EventQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: arn:aws:sns:*:*:*-PantherEventsTopic-*
+      Queues:
+        - !Ref EventQueue
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      QueueName: panther-aws-events-dlq
+      VisibilityTimeout: 60
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-aws-event-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/compliance/aws_event_processor/main
+      Description: Process real-time changes to AWS infrastructure
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCES_API_PATH: v1
+          SNAPSHOT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            BatchSize: 10  # Maximum batch size
+            Queue: !GetAtt EventQueue.Arn
+      FunctionName: panther-aws-event-processor
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref MemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref TimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: SendAndReceiveSqsMessages
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+            - Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: !GetAtt EventQueue.Arn
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-snapshot-queue
+        -
+          Id: ConfirmSubscription
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sns:ConfirmSubscription
+              Resource: arn:aws:sns:*:*:*-PantherEventsTopic-*
+        -
+          Id: DeleteResources
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/delete
+        -
+          Id: InvokeSnapshotAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api

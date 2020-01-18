@@ -1,0 +1,43 @@
+package handlers
+
+/**
+ * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import (
+	"github.com/aws/aws-sdk-go/service/sqs"
+	jsoniter "github.com/json-iterator/go"
+	"go.uber.org/zap"
+)
+
+// Queue a policy for re-analysis (evaluate against all applicable resources).
+//
+// This ensures policy changes are reflected almost immediately (instead of waiting for daily scan).
+func queuePolicy(policy *tableItem) error {
+	body, err := jsoniter.MarshalToString(policy.Policy(""))
+	if err != nil {
+		zap.L().Error("failed to marshal policy", zap.Error(err))
+		return err
+	}
+
+	zap.L().Info("queueing policy for analysis",
+		zap.String("policyId", string(policy.ID)),
+		zap.String("resourceQueueURL", env.ResourceQueueURL))
+	_, err = sqsClient.SendMessage(
+		&sqs.SendMessageInput{MessageBody: &body, QueueUrl: &env.ResourceQueueURL})
+	return err
+}

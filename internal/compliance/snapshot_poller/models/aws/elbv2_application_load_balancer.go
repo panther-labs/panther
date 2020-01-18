@@ -1,0 +1,48 @@
+package aws
+
+/**
+ * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import "github.com/aws/aws-sdk-go/service/elbv2"
+
+const (
+	Elbv2LoadBalancerSchema = "AWS.ELBV2.ApplicationLoadBalancer"
+)
+
+// Elbv2ApplicationLoadBalancer contains all information about an application load balancer
+type Elbv2ApplicationLoadBalancer struct {
+	// Generic resource fields
+	GenericAWSResource
+	GenericResource
+
+	// Fields embedded from elbv2.LoadBalancer
+	AvailabilityZones      []*elbv2.AvailabilityZone
+	CanonicalHostedZonedId *string
+	DNSName                *string
+	IpAddressType          *string
+	Scheme                 *string
+	SecurityGroups         []*string
+	State                  *elbv2.LoadBalancerState
+	Type                   *string
+	VpcId                  *string
+
+	// Additional fields
+	WebAcl      *string
+	Listeners   []*elbv2.Listener
+	SSLPolicies map[string]*elbv2.SslPolicy
+}

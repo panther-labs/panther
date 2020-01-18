@@ -1,0 +1,333 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Auto-Remediation Infrastructure
+
+Parameters:
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+    Default: ''
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+
+  ApiTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the remediation-api Lambda function
+    Default: 120
+    MinValue: 5
+    MaxValue: 900
+  ApiMemorySizeMB:
+    Type: Number
+    Description: The memory that we will allocate for the remediation-api Lambda functxion
+    Default: 512
+    MinValue: 128
+    MaxValue: 3008
+  ProcessorTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the remediation-processor Lambda function
+    Default: 120
+    MinValue: 5
+    MaxValue: 900
+  ProcessorMemorySizeMB:
+    Type: Number
+    Description: The memory that we will allocate for the remediation-processor Lambda functxion
+    Default: 512
+    MinValue: 128
+    MaxValue: 3008
+  RemediationTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the remediation-processor Lambda function
+    Default: 60
+    MinValue: 5
+    MaxValue: 900
+  RemediationMemorySizeMB:
+    Type: Number
+    Description: The memory that we will allocate for the remediation-processor Lambda functxion
+    Default: 128
+    MinValue: 128
+    MaxValue: 3008
+
+  CrossAccountRoleName:
+    Type: String
+    Description: The name of the remediation IAM role to assume in each account
+    Default: PantherLambdaInvocationRole
+  CrossAccountSessionDuration:
+    Type: Number
+    Description: The duration (in seconds) of the cross-account session
+    Default: 3600
+
+  AnalysisApiId:
+    Type: String
+    Description: API Gateway for analysis-api
+  PythonLayerArn:
+    Type: String
+    Description: Python Lambda layer with pip libraries for analysis
+  ResourcesApiId:
+    Type: String
+    Description: API Gateway for resources-api
+  SQSKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+
+Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  DebugEnabled: !Equals [!Ref Debug, true]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+
+Resources:
+  ##### Remediation API #####
+  GatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      DefinitionBody: api/gateway/remediation/api.yml
+      EndpointConfiguration: REGIONAL
+      Name: panther-remediation-api
+      StageName: v1
+      TracingEnabled: !If [TracingEnabled, true, false]
+
+  GatewayInvocationPermission:  # allow API gateway to invoke the Lambda function
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ApiFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
+
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-remediation-queue
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      KmsMasterKeyId: !Ref SQSKeyId
+      VisibilityTimeout: !Ref ProcessorTimeoutSec
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt [DeadLetterQueue, Arn]
+        maxReceiveCount: 10
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-remediation-dlq
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: 60
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../bin/internal/compliance/remediation_api/main
+      Description: Triggers AWS remediations
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          CROSS_ACCOUNT_ROLE: !Ref CrossAccountRoleName
+          CROSS_ACCOUNT_SESSION_DURATION: !Ref CrossAccountSessionDuration
+          ORGANIZATIONS_API: panther-organization-api
+          SQS_QUEUE_URL: !Ref Queue
+          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          POLICIES_SERVICE_PATH: v1
+          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCES_SERVICE_PATH: v1
+      FunctionName: panther-remediation-api
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref ApiMemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref ApiTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: SendSqsMessages
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+            -
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !GetAtt Queue.Arn
+        -
+          Id: AssumeRemediationRole
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:aws:iam::*:role/${CrossAccountRoleName}
+              Condition:
+                Bool:
+                  aws:SecureTransport: true
+        -
+          Id: InvokeAPIs
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
+            -
+              Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-remediation-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ##### Remediation Processor #####
+  ProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-remediation-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../bin/internal/compliance/remediation_processor/main
+      Description: Process queued remediations
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          CROSS_ACCOUNT_ROLE: !Ref CrossAccountRoleName
+          CROSS_ACCOUNT_SESSION_DURATION: !Ref CrossAccountSessionDuration
+          ORGANIZATIONS_API: panther-organization-api
+          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          POLICIES_SERVICE_PATH: v1
+          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCES_SERVICE_PATH: v1
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt Queue.Arn
+            BatchSize: 1
+      FunctionName: panther-remediation-processor
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref ProcessorMemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref ProcessorTimeoutSec
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        -
+          Id: ReceiveAndDeleteSQSMessages
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: !GetAtt Queue.Arn
+            -
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+        -
+          Id: AssumeRemediationRole
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:aws:iam::*:role/${CrossAccountRoleName}
+              Condition:
+                Bool:
+                  aws:SecureTransport: true
+        -
+          Id: InvokeAPIs
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
+            -
+              Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+
+  ##### AWS Remediation #####
+  RemediationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-aws-remediation
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  RemediationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../../internal/compliance/remediation_aws
+      Description: Function that remediates issues with AWS resources
+      FunctionName: panther-aws-remediation
+      Handler: src.app.main.lambda_handler
+      Environment:
+        Variables:
+          # TODO: Support customizable logging levels (for every Lambda function)
+          LOGGING_LEVEL: !If [DebugEnabled, DEBUG, INFO]
+      Layers: !If
+        - AttachLayers
+        - !Split
+          # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ","
+          - !Sub
+            - "${base},${pip}"
+            - {base: !Join [",", !Ref LayerVersionArns], pip: !Ref PythonLayerArn}
+        - [!Ref PythonLayerArn]
+      MemorySize: !Ref RemediationMemorySizeMB
+      Runtime: python3.7
+      Timeout: !Ref RemediationTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - Id: AssumeRemediationRole
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:aws:iam::*:role/${CrossAccountRoleName}
+
+Outputs:
+  GatewayId:
+    Description: Remediation API Gateway ID
+    Value: !Ref GatewayApi

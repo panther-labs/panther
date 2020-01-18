@@ -1,0 +1,79 @@
+{
+    "eventVersion": "1.05",
+    "userIdentity": {
+        "type": "AssumedRole",
+        "principalId": "AROA4PIQ2YYOGH2G27YIM:nicholas_hakmiller",
+        "arn": "arn:aws:sts::857418155548:assumed-role/PantherDevNickAdministrator/nicholas_hakmiller",
+        "accountId": "857418155548",
+        "accessKeyId": "ASIA4PIQ2YYODXL3QAZ3",
+        "sessionContext": {
+            "sessionIssuer": {
+                "type": "Role",
+                "principalId": "AROA4PIQ2YYOGH2G27YIM",
+                "arn": "arn:aws:iam::857418155548:role/PantherDevNickAdministrator",
+                "accountId": "857418155548",
+                "userName": "PantherDevNickAdministrator"
+            },
+            "webIdFederationData": {},
+            "attributes": {
+                "mfaAuthenticated": "true",
+                "creationDate": "2019-08-27T20:07:51Z"
+            }
+        }
+    },
+    "eventTime": "2019-08-27T20:27:51Z",
+    "eventSource": "cloudtrail.amazonaws.com",
+    "eventName": "PutEventSelectors",
+    "awsRegion": "us-west-2",
+    "sourceIPAddress": "71.198.154.250",
+    "userAgent": "console.amazonaws.com",
+    "requestParameters": {
+        "trailName": "arn:aws:cloudtrail:us-west-2:857418155548:trail/cloudtrail-public-s3",
+        "eventSelectors": [
+            {
+                "readWriteType": "ReadOnly",
+                "includeManagementEvents": true,
+                "dataResources": []
+            },
+            {
+                "readWriteType": "All",
+                "includeManagementEvents": false,
+                "dataResources": [
+                    {
+                        "type": "AWS::S3::Object",
+                        "values": [
+                            "arn:aws:s3:::s3-polling-test-bucket/"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "responseElements": {
+        "trailARN": "arn:aws:cloudtrail:us-west-2:857418155548:trail/cloudtrail-public-s3",
+        "eventSelectors": [
+            {
+                "readWriteType": "ReadOnly",
+                "includeManagementEvents": true,
+                "dataResources": []
+            },
+            {
+                "readWriteType": "All",
+                "includeManagementEvents": false,
+                "dataResources": [
+                    {
+                        "type": "AWS::S3::Object",
+                        "values": [
+                            "arn:aws:s3:::s3-polling-test-bucket/"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "requestID": "8c23b35f-befd-4bef-ada7-65979032e589",
+    "eventID": "5ce81ddc-351e-4e5f-bbc6-75be5db63eed",
+    "readOnly": false,
+    "eventType": "AwsApiCall",
+    "recipientAccountId": "857418155548"
+}

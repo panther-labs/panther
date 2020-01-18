@@ -1,0 +1,8 @@
+{
+  "TemplateName": "EmailVerificationTemplate",
+  "FromEmailAddress": "alerts@runpanther.io",
+  "TemplateSubject": "Panther Alerts - please confirm your email address",
+  "SuccessRedirectionURL": "https://runpanther.io",
+  "FailureRedirectionURL": "https://runpanther.io",
+  "TemplateContent": "<html><head></head><body style='font-family:sans-serif;'><p>You have added this email as a Panther Alerts output.</p><p>To verify the email, click on the link below.</p></body></html>"
+}

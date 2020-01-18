@@ -1,0 +1,725 @@
+scalar AWSEmail
+scalar AWSPhone
+scalar AWSTimestamp
+scalar AWSDateTime
+scalar AWSJSON
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Mutation {
+  addDestination(input: DestinationInput!): Destination
+  addIntegration(input: AddIntegrationInput!): Integration
+  addPolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
+  addRule(input: CreateOrModifyRuleInput!): RuleDetails
+  deleteDestination(id: ID!): Boolean
+  deleteIntegration(id: ID!): Boolean
+  deletePolicy(input: DeletePolicyInput!): Boolean
+  remediateResource(input: RemediateResourceInput!): Boolean
+  resetUserPassword(id: ID!): Boolean
+  suppressPolicies(input: SuppressPoliciesInput!): Boolean
+  testPolicy(input: TestPolicyInput): TestPolicyResponse
+  updateDestination(input: DestinationInput!): Destination
+  updateIntegration(input: UpdateIntegrationInput!): Boolean
+  updateOrganization(input: UpdateOrganizationInput!): Boolean
+  updatePolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
+  updateRule(input: CreateOrModifyRuleInput!): RuleDetails
+  updateUser(input: UpdateUserInput!): Boolean
+  uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
+}
+
+type Query {
+  alert(input: GetAlertInput!): AlertDetails
+  alerts(input: ListAlertsInput): ListAlertsResponse
+  organization: GetOrganizationResponse
+  destination(id: ID!): Destination
+  destinations: [Destination]
+  remediations: AWSJSON
+  resource(input: GetResourceInput!): ResourceDetails
+  resources(input: ListResourcesInput): ListResourcesResponse
+  resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
+  policy(input: GetPolicyInput!): PolicyDetails
+  policies(input: ListPoliciesInput): ListPoliciesResponse
+  policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
+  integrations(input: ListIntegrationsInput): [Integration!]
+  organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
+  rule(input: GetRuleInput!): RuleDetails
+  rules(input: ListRulesInput): ListRulesResponse
+}
+
+input ListAlertsInput {
+  ruleId: ID
+  pageSize: Int
+  exclusiveStartKey: String
+}
+
+input ListIntegrationsInput {
+  integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
+}
+
+input GetAlertInput {
+  alertId: ID!
+  eventPageSize: Int
+  eventPage: Int
+}
+
+type AlertDetails {
+  alertId: ID!
+  rule: RuleDetails
+  creationTime: AWSDateTime
+  lastEventMatched: AWSDateTime
+  events: [AWSJSON!]
+}
+
+type ListAlertsResponse {
+  alertSummaries: [AlertSummary]
+  lastEvaluatedKey: String
+}
+
+type AlertSummary {
+  alertId: String
+  creationTime: AWSDateTime
+  eventsMatched: Int
+  lastEventMatched: AWSDateTime
+  ruleId: String
+  severity: String
+}
+
+input ListRulesInput {
+  nameContains: String
+  enabled: Boolean
+  logTypes: String # Comma-separated string
+  severity: SeverityEnum
+  tags: String # Comma-separated string
+  # Sorting
+  sortBy: ListRulesSortFieldsEnum # defaults to `id`
+  sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+input CreateOrModifyRuleInput {
+  body: String!
+  description: String
+  displayName: String
+  enabled: Boolean!
+  id: ID!
+  reference: String
+  logTypes: [String]
+  runbook: String
+  severity: SeverityEnum!
+  tags: [String]
+  tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
+}
+
+input GetRuleInput {
+  ruleId: ID!
+  versionId: ID
+}
+
+type RuleSummary {
+  displayName: String
+  enabled: Boolean
+  id: ID!
+  lastModified: AWSDateTime
+  logTypes: [String]
+  severity: SeverityEnum
+  tags: [String]
+}
+
+type ListRulesResponse {
+  paging: PagingData
+  rules: [RuleSummary]
+}
+
+type RuleDetails {
+  body: String
+  createdAt: AWSDateTime
+  createdBy: ID
+  description: String
+  displayName: String
+  enabled: Boolean
+  id: String!
+  lastModified: AWSDateTime
+  lastModifiedBy: ID
+  logTypes: [String]
+  reference: String
+  runbook: String
+  severity: SeverityEnum
+  tags: [String]
+  tests: [PolicyUnitTest] # Policy and Rule have the same tests structure so we reuse the struct here
+  versionId: ID
+}
+
+input SuppressPoliciesInput {
+  policyIds: [ID]!
+  resourcePatterns: [String]!
+}
+
+input PoliciesForResourceInput {
+  resourceId: ID
+  severity: SeverityEnum
+  status: ComplianceStatusEnum
+  suppressed: Boolean
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+input ResourcesForPolicyInput {
+  policyId: ID
+  status: ComplianceStatusEnum
+  suppressed: Boolean
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+type ListComplianceItemsResponse {
+  items: [ComplianceItem]
+  paging: PagingData
+  status: ComplianceStatusEnum
+  totals: ActiveSuppressCount
+}
+
+type ComplianceItem {
+  errorMessage: String
+  lastUpdated: AWSDateTime
+  policyId: ID
+  policySeverity: SeverityEnum
+  resourceId: ID
+  resourceType: String
+  status: ComplianceStatusEnum
+  suppressed: Boolean
+  integrationId: ID
+}
+
+type ActiveSuppressCount {
+  active: ComplianceStatusCounts
+  suppressed: ComplianceStatusCounts
+}
+
+input OrganizationStatsInput {
+  limitTopFailing: Int
+}
+
+type GetOrganizationResponse {
+  organization: Organization
+}
+
+type ComplianceStatusCounts {
+  error: Int
+  fail: Int
+  pass: Int
+}
+
+type OrganizationReportBySeverity {
+  info: ComplianceStatusCounts
+  low: ComplianceStatusCounts
+  medium: ComplianceStatusCounts
+  high: ComplianceStatusCounts
+  critical: ComplianceStatusCounts
+}
+
+type ScannedResourceStats {
+  count: ComplianceStatusCounts
+  type: String
+}
+
+type ScannedResources {
+  byType: [ScannedResourceStats]
+}
+
+type OrganizationStatsResponse {
+  appliedPolicies: OrganizationReportBySeverity
+  scannedResources: ScannedResources
+  topFailingPolicies: [PolicySummary]
+  topFailingResources: [ResourceSummary]
+}
+
+enum AlertReportFrequencyEnum {
+  P1D
+  P1W
+}
+
+input UpdateOrganizationInput {
+  displayName: String
+  email: String
+  alertReportFrequency: AlertReportFrequencyEnum
+  remediationConfig: RemediationConfigInput
+}
+
+input RemediationConfigInput {
+  awsRemediationLambdaArn: String
+}
+
+type Organization {
+  id: String
+  displayName: String
+  email: String
+  alertReportFrequency: AlertReportFrequencyEnum
+  remediationConfig: RemediationConfig
+}
+
+type RemediationConfig {
+  awsRemediationLambdaArn: String
+}
+
+input TestPolicyInput {
+  body: String
+  resourceTypes: [String]
+  analysisType: AnalysisTypeEnum
+  tests: [PolicyUnitTestInput!]
+}
+
+type IntegrationConfig {
+  awsRoleArn: String
+}
+
+input IntegrationConfigInput {
+  awsRoleArn: String
+}
+
+type Integration {
+  awsAccountId: String
+  createdAtTime: AWSDateTime
+  createdBy: ID
+  integrationId: ID
+  integrationLabel: String
+  integrationType: String
+  scanEnabled: Boolean
+  scanIntervalMins: Int
+  scanStatus: String
+  eventStatus: String
+  s3Buckets: [String]
+  kmsKeys: [String]
+  lastScanEndTime: AWSDateTime
+  lastScanErrorMessage: String
+  lastScanStartTime: AWSDateTime
+}
+
+input AddIntegrationInput {
+  integrations: [AddIntegrationAttributes]
+}
+
+input AddIntegrationAttributes {
+  awsAccountId: String
+  integrationLabel: String!
+  integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
+  s3Buckets: [String]
+  kmsKeys: [String]
+}
+
+input UpdateIntegrationInput {
+  awsAccountId: String
+  integrationId: String!
+  integrationLabel: String!
+}
+
+type ListPoliciesResponse {
+  paging: PagingData
+  policies: [PolicySummary]
+}
+
+type ListResourcesResponse {
+  paging: PagingData
+  resources: [ResourceSummary]
+}
+
+type Destination {
+  createdBy: String!
+  creationTime: AWSDateTime!
+  displayName: String!
+  lastModifiedBy: String!
+  lastModifiedTime: AWSDateTime!
+  outputId: ID!
+  outputType: DestinationTypeEnum!
+  outputConfig: DestinationConfig!
+  verificationStatus: String
+  defaultForSeverity: [SeverityEnum]!
+}
+
+type DestinationConfig {
+  slack: SlackConfig
+  sns: SnsConfig
+  sqs: SqsConfig
+  email: EmailConfig
+  pagerDuty: PagerDutyConfig
+  github: GithubConfig
+  jira: JiraConfig
+  opsgenie: OpsgenieConfig
+  msTeams: MsTeamsConfig
+}
+
+type SqsConfig {
+  queueUrl: String!
+}
+
+type OpsgenieConfig {
+  apiKey: String!
+}
+
+type MsTeamsConfig {
+  webhookURL: String!
+}
+
+type JiraConfig {
+  orgDomain: String!
+  projectKey: String!
+  userName: String!
+  apiKey: String!
+  assigneeID: String
+}
+
+type GithubConfig {
+  repoName: String!
+  token: String!
+}
+
+type SlackConfig {
+  webhookURL: String!
+}
+
+type SnsConfig {
+  topicArn: String!
+}
+
+type EmailConfig {
+  destinationAddress: String!
+}
+
+type PagerDutyConfig {
+  integrationKey: String!
+}
+
+input DestinationInput {
+  outputId: ID
+  displayName: String!
+  outputConfig: DestinationConfigInput!
+  outputType: String!
+  defaultForSeverity: [SeverityEnum]!
+}
+
+input DestinationConfigInput {
+  slack: SlackConfigInput
+  sns: SnsConfigInput
+  sqs: SQSConfigInput
+  email: EmailConfigInput
+  pagerDuty: PagerDutyConfigInput
+  github: GithubConfigInput
+  jira: JiraConfigInput
+  opsgenie: OpsgenieConfigInput
+  msTeams: MsTeamsConfigInput
+}
+
+input SQSConfigInput {
+  queueUrl: String!
+}
+
+input OpsgenieConfigInput {
+  apiKey: String!
+}
+
+input MsTeamsConfigInput {
+  webhookURL: String!
+}
+
+input JiraConfigInput {
+  orgDomain: String!
+  projectKey: String!
+  userName: String!
+  apiKey: String!
+  assigneeID: String
+}
+
+input GithubConfigInput {
+  repoName: String!
+  token: String!
+}
+
+input SlackConfigInput {
+  webhookURL: String!
+}
+
+input SnsConfigInput {
+  topicArn: String!
+}
+
+input EmailConfigInput {
+  destinationAddress: String!
+}
+
+input PagerDutyConfigInput {
+  integrationKey: String!
+}
+
+type PolicyDetails {
+  actionDelaySeconds: Int
+  alertSuppressSeconds: Int
+  autoRemediationId: ID
+  autoRemediationParameters: AWSJSON
+  complianceStatus: ComplianceStatusEnum
+  body: String
+  createdAt: AWSDateTime
+  createdBy: ID
+  description: String
+  displayName: String
+  enabled: Boolean
+  suppressions: [String]
+  id: ID!
+  lastModified: AWSDateTime
+  lastModifiedBy: ID
+  reference: String
+  resourceTypes: [String]
+  runbook: String
+  severity: SeverityEnum
+  tags: [String]
+  tests: [PolicyUnitTest]
+  versionId: ID
+}
+
+type PagingData {
+  thisPage: Int
+  totalPages: Int
+  totalItems: Int
+}
+
+type PolicySummary {
+  autoRemediationId: ID
+  autoRemediationParameters: AWSJSON
+  suppressions: [String]
+  complianceStatus: ComplianceStatusEnum
+  displayName: String
+  enabled: Boolean
+  id: ID!
+  lastModified: AWSDateTime
+  resourceTypes: [String]
+  severity: SeverityEnum
+  tags: [String]
+}
+
+input CreateOrModifyPolicyInput {
+  actionDelaySeconds: Int
+  alertSuppressSeconds: Int
+  autoRemediationId: ID
+  autoRemediationParameters: AWSJSON
+  body: String!
+  description: String
+  displayName: String
+  enabled: Boolean!
+  suppressions: [String]
+  id: ID!
+  reference: String
+  resourceTypes: [String]
+  runbook: String
+  severity: SeverityEnum!
+  tags: [String]
+  tests: [PolicyUnitTestInput]
+}
+
+input GetPolicyInput {
+  policyId: ID!
+  versionId: ID
+}
+
+input DeletePolicyInput {
+  policies: [DeletePolicyInputItem]
+}
+
+input DeletePolicyInputItem {
+  id: ID!
+}
+
+input ListPoliciesInput {
+  complianceStatus: ComplianceStatusEnum
+  nameContains: String
+  enabled: Boolean
+  hasRemediation: Boolean
+  resourceTypes: String # Comma-separated string
+  severity: SeverityEnum
+  tags: String # Comma-separated string
+  # Sorting
+  sortBy: ListPoliciesSortFieldsEnum # defaults to `id`
+  sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+input UploadPoliciesInput {
+  data: String! # Base64-encoded zipfile with a policy bundle
+}
+
+input GetResourceInput {
+  resourceId: ID!
+}
+
+input ListResourcesInput {
+  complianceStatus: ComplianceStatusEnum
+  deleted: Boolean
+  idContains: String
+  integrationId: ID
+  integrationType: AccountTypeEnum
+  types: String # comma separated string
+  # Sorting
+  sortBy: ListResourcesSortFieldsEnum # defaults to `id`
+  sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+input RemediateResourceInput {
+  policyId: ID!
+  resourceId: ID!
+}
+
+type PolicyUnitTest {
+  expectedResult: Boolean
+  name: String
+  resource: String # The `attributes` field of the Resource in stringified JSON format
+  resourceType: String # The `resourceType` of the unit test
+}
+
+input PolicyUnitTestInput {
+  expectedResult: Boolean
+  name: String
+  resource: String # The `attributes` field of the Resource in stringified JSON format
+  resourceType: String # The `resourceType` of the unit test
+}
+
+input UpdateUserInput {
+  id: ID!
+  givenName: String
+  familyName: String
+  email: AWSEmail
+  phoneNumber: AWSPhone
+  role: RoleNameEnum
+}
+
+type UploadPoliciesResponse {
+  totalPolicies: Int
+  newPolicies: Int
+  modifiedPolicies: Int
+  totalRules: Int
+  newRules: Int
+  modifiedRules: Int
+}
+
+type PolicyUnitTestError {
+  name: String
+  errorMessage: String
+}
+
+type TestPolicyResponse {
+  testSummary: Boolean # True if all tests passed
+  testsPassed: [String] # List of test names that passed
+  testsFailed: [String] # List of test names that failed
+  testsErrored: [PolicyUnitTestError] # List of test names that raised an error along with the message
+}
+
+type ResourceSummary {
+  id: ID
+  integrationId: ID
+  complianceStatus: ComplianceStatusEnum
+  integrationType: AccountTypeEnum
+  deleted: Boolean
+  lastModified: AWSDateTime
+  type: String
+}
+
+type ResourceDetails {
+  attributes: AWSJSON
+  deleted: Boolean
+  expiresAt: Int
+  id: ID
+  integrationId: ID
+  integrationType: AccountTypeEnum
+  complianceStatus: ComplianceStatusEnum
+  lastModified: AWSDateTime
+  type: String
+}
+
+type User {
+  givenName: String
+  familyName: String
+  id: ID!
+  email: AWSEmail
+  phoneNumber: AWSPhone
+  createdAt: AWSTimestamp
+  status: String
+  role: RoleNameEnum
+}
+
+enum ComplianceStatusEnum {
+  ERROR
+  FAIL
+  PASS
+}
+
+enum ListResourcesSortFieldsEnum {
+  complianceStatus
+  id
+  lastModified
+  type
+}
+
+enum ListPoliciesSortFieldsEnum {
+  complianceStatus
+  enabled
+  id
+  lastModified
+  severity
+  resourceTypes
+}
+
+enum ListRulesSortFieldsEnum {
+  enabled
+  id
+  lastModified
+  logTypes
+  severity
+}
+
+enum SortDirEnum {
+  ascending
+  descending
+}
+
+enum SeverityEnum {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AccountTypeEnum {
+  aws
+}
+
+enum RoleNameEnum {
+  Admin
+  Analyst
+  ReadOnly
+}
+
+enum DestinationTypeEnum {
+  slack
+  pagerduty
+  email
+  github
+  jira
+  opsgenie
+  msteams
+  sns
+  sqs
+}
+
+enum AnalysisTypeEnum {
+  RULE
+  POLICY
+}
