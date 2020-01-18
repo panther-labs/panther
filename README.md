@@ -1,7 +1,7 @@
 ![Panther Logo](docs/img/logo-banner.png)
 
 [![Gitter](https://badges.gitter.im/runpanther/community.svg)](https://gitter.im/runpanther/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![CircleCI](https://circleci.com/gh/panther-labs/panther/tree/master.svg?style=svg)](https://circleci.com/gh/panther-labs/panther/tree/master)
+[![CircleCI](https://circleci.com/gh/panther-labs/panther.svg?style=svg)](https://circleci.com/gh/panther-labs/panther)
 [![Built with Mage](https://magefile.org/badge.svg)](https://magefile.org)
 
 ---
@@ -42,6 +42,7 @@ To deploy Panther from source:
    - HTTPS: `git clone https://github.com/panther-labs/panther $GOPATH/src/github.com/panther-labs/panther`
    - SSH: `git clone git@github.com:panther-labs/panther $GOPATH/src/github.com/panther-labs/panther`
 5. From the root of the repo, run `mage setup && npm i`
+   - `pip` may show warnings about incompatible packages which are safe to ignore
 6. Deploy! `mage deploy`
    - Your IAM role will need permission to create resources in Lambda, DynamoDB, S3, ECS, ELB, EC2 (security groups, subnets, VPC), SNS, SQS, SES, KMS, IAM, CloudFormation, CloudWatch, API Gateway, Cognito, and AppSync.
    - NOTE: The initial deploy will take 10-15 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off.
@@ -49,6 +50,8 @@ To deploy Panther from source:
    - Near the end of the deploy command, you'll be prompted for first/last name and email
    - You will get an email from **no-reply@verificationemail.com** with your temporary password. If you don't see it, be sure to check your spam folder.
 8. Sign in to Panther! The URL is listed in the welcome email and also printed at the end of the deploy command.
+   - WARNING: By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page.
+   - If you see a "502 Bad Gateway" error, wait a few minutes and refresh the page
 9. [Onboard your AWS account(s)](https://docs.runpanther.io/quick-start) in your Panther deployment!
 
 ## Development
