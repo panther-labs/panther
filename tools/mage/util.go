@@ -132,3 +132,9 @@ func download(url string) ([]byte, error) {
 
 	return ioutil.ReadAll(response.Body)
 }
+
+// isRunningInCI returns true if the mage command is running inside
+// CI environment
+func isRunningInCI() bool {
+	return os.Getenv("CI") != ""
+}

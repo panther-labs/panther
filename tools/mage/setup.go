@@ -30,31 +30,19 @@ import (
 )
 
 const (
-	golangciVersion = "1.21.0"
+	golangciVersion = "1.22.2"
 	swaggerVersion  = "0.21.0"
 
-	binDir = "/usr/local/bin"
+	setupDirectory = "./.setup"
 )
 
 // Setup Install development dependencies
 func Setup() error {
-	fmt.Println("setup: installing python3 venv")
-	if err := os.RemoveAll("venv"); err != nil {
+	if err := setupPythonVirtualEnv(); err != nil {
 		return err
 	}
-	if err := sh.RunV("python3", "-m", "venv", "venv"); err != nil {
-		return err
-	}
-	args := []string{"install", "-r", "requirements.txt"}
-	if !mg.Verbose() {
-		args = append(args, "--quiet")
-	}
-	if err := sh.RunV("venv/bin/pip3", args...); err != nil {
-		return err
-	}
-
 	// Some libraries are only needed for development, not for CI
-	if os.Getenv("CI") == "" {
+	if !isRunningInCI() {
 		fmt.Println("setup: installing goimports for local development")
 		if err := sh.RunV("go", "get", "golang.org/x/tools/cmd/goimports"); err != nil {
 			return err
@@ -72,11 +60,33 @@ func Setup() error {
 	return installGolangCiLint(env)
 }
 
+func setupPythonVirtualEnv() error {
+	fmt.Println("setup: installing python3 venv")
+	vEnvPath := path.Join(setupDirectory, "venv")
+	if err := os.RemoveAll(vEnvPath); err != nil {
+		return err
+	}
+	if err := sh.RunV("python3", "-m", "venv", vEnvPath); err != nil {
+		return err
+	}
+	args := []string{"install", "-r", "requirements.txt"}
+	if !mg.Verbose() {
+		args = append(args, "--quiet")
+	}
+	if err := sh.RunV(path.Join(vEnvPath, "bin", "pip3"), args...); err != nil {
+		return err
+	}
+	return nil
+}
+
 func installSwagger(uname string) error {
 	fmt.Println("setup: installing go-swagger")
+	if err := os.MkdirAll(setupDirectory, os.ModePerm); err != nil {
+		return err
+	}
 	url := fmt.Sprintf("https://github.com/go-swagger/go-swagger/releases/download/v%s/swagger_%s_amd64",
 		swaggerVersion, strings.ToLower(uname))
-	binary := path.Join(binDir, "swagger")
+	binary := path.Join(setupDirectory, "swagger")
 	if err := sh.RunV("curl", "-o", binary, "-fL", url); err != nil {
 		return err
 	}
@@ -85,8 +95,8 @@ func installSwagger(uname string) error {
 
 func installGolangCiLint(uname string) error {
 	fmt.Println("setup: installing golangci-lint")
-	downloadDir := filepath.Join(os.TempDir(), "golangci")
-	if err := os.MkdirAll(downloadDir, 0755); err != nil {
+	downloadDir := filepath.Join(setupDirectory, "golangci")
+	if err := os.MkdirAll(downloadDir, os.ModePerm); err != nil {
 		return err
 	}
 
@@ -100,5 +110,10 @@ func installGolangCiLint(uname string) error {
 	if err := sh.RunV("tar", "-xzvf", path.Join(downloadDir, "ci.tar.gz"), "-C", downloadDir); err != nil {
 		return err
 	}
-	return sh.RunV("mv", path.Join(downloadDir, pkg, "golangci-lint"), binDir)
+	// moving golangci-lint from download folder to setupDirectory
+	if err := os.Rename(path.Join(downloadDir, pkg, "golangci-lint"), path.Join(setupDirectory, "golangci-lint")); err != nil {
+		return err
+	}
+	// deleting download folder
+	return os.RemoveAll(downloadDir)
 }
