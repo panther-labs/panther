@@ -32,8 +32,6 @@ import (
 const (
 	golangciVersion = "1.22.2"
 	swaggerVersion  = "0.21.0"
-
-	setupDirectory = "./.setup"
 )
 
 // Setup Install development dependencies
@@ -62,18 +60,17 @@ func Setup() error {
 
 func setupPythonVirtualEnv() error {
 	fmt.Println("setup: installing python3 venv")
-	vEnvPath := path.Join(setupDirectory, "venv")
-	if err := os.RemoveAll(vEnvPath); err != nil {
+	if err := os.RemoveAll(pythonVirtualEnvPath); err != nil {
 		return err
 	}
-	if err := sh.RunV("python3", "-m", "venv", vEnvPath); err != nil {
+	if err := sh.RunV("python3", "-m", "venv", pythonVirtualEnvPath); err != nil {
 		return err
 	}
 	args := []string{"install", "-r", "requirements.txt"}
 	if !mg.Verbose() {
 		args = append(args, "--quiet")
 	}
-	if err := sh.RunV(path.Join(vEnvPath, "bin", "pip3"), args...); err != nil {
+	if err := sh.RunV(pythonLibPath("pip3"), args...); err != nil {
 		return err
 	}
 	return nil
