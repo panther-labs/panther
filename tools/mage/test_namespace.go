@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -72,7 +73,7 @@ func (t Test) Lint() error {
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
-	if err := sh.RunV("golangci-lint", args...); err != nil {
+	if err := sh.RunV(path.Join(setupDirectory, "golangci-lint"), args...); err != nil {
 		errs = append(errs, err)
 	}
 
