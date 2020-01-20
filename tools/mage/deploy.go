@@ -25,15 +25,18 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/shutil"
@@ -115,6 +118,10 @@ func Deploy() error {
 		return err
 	}
 
+	if err := restartFrontend(awsSession, outputs["WebApplicationClusterName"]); err != nil {
+		return err
+	}
+
 	if err := inviteFirstUser(awsSession, outputs["UserPoolId"]); err != nil {
 		return err
 	}
@@ -125,6 +132,64 @@ func Deploy() error {
 
 	// TODO - underline link
 	fmt.Printf("\nPanther URL = https://%s\n", outputs["LoadBalancerUrl"])
+	return nil
+}
+
+func restartFrontend(awsSession *session.Session, clusterName string) error {
+	fmt.Println("Restarting frontend server...")
+	ecsClient := ecs.New(awsSession)
+
+	alreadyRunningTasks, err := ecsClient.ListTasks(&ecs.ListTasksInput{
+		Cluster:       aws.String(clusterName),
+		DesiredStatus: aws.String(ecs.DesiredStatusRunning),
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to list tasks")
+	}
+	for _, taskArn := range alreadyRunningTasks.TaskArns {
+		if mg.Verbose() {
+			fmt.Printf("Stopping task %s", *taskArn)
+		}
+		_, err := ecsClient.StopTask(&ecs.StopTaskInput{
+			Cluster: aws.String(clusterName),
+			Task:    taskArn},
+		)
+		if err != nil {
+			return errors.Wrap(err, "failed to stop running task")
+		}
+	}
+
+	fmt.Println("Waiting for frontend server to become active")
+	isTaskRunning := false
+	for start := time.Now(); time.Since(start) < pollTimeout && !isTaskRunning; time.Sleep(pollInterval) {
+		pendingTasks, err := ecsClient.ListTasks(&ecs.ListTasksInput{
+			Cluster:       aws.String(clusterName),
+			DesiredStatus: aws.String(ecs.DesiredStatusRunning),
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed to get list of tasks")
+		}
+
+		if len(pendingTasks.TaskArns) == 0 {
+			continue
+		}
+		describeTaskInput := &ecs.DescribeTasksInput{
+			Cluster: aws.String(clusterName),
+			Tasks:   pendingTasks.TaskArns,
+		}
+		tasks, err := ecsClient.DescribeTasks(describeTaskInput)
+		if err != nil {
+			return errors.Wrap(err, "failed to describe running tasks")
+		}
+		for _, task := range tasks.Tasks {
+			// If we find a task that is running, return
+			if aws.StringValue(task.LastStatus) == ecs.DesiredStatusRunning {
+				isTaskRunning = true
+				break
+			}
+		}
+	}
+	fmt.Println("Finished restarting frontend")
 	return nil
 }
 

@@ -390,3 +390,6 @@ Outputs:
   WebApplicationCertificateArn:
     Description: ARN of the certificate used by the web application
     Value: !Ref WebApplicationCertificateArn
+  WebApplicationClusterName:
+    Description: ARN of the certificate used by the web application
+    Value: !Ref WebApplicationCluster
