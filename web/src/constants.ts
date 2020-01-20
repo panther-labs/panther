@@ -103,8 +103,5 @@ export enum INTEGRATION_TYPES {
   AWS_INFRA = 'aws-scan',
 }
 
-export const PANTHER_AUDIT_ROLE = 'panther-compliance-iam';
-export const PANTHER_LOG_PROCESSING_ROLE = 'panther-log-processing-role';
-export const PANTHER_REAL_TIME = 'panther-cloudwatch-events';
 export const PANTHER_REMEDIATION_MASTER_ACCOUNT = 'panther-aws-remediations-master-account';
 export const PANTHER_REMEDIATION_SATELLITE_ACCOUNT = 'panther-aws-remediations-satellite-account';
