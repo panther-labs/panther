@@ -44,18 +44,29 @@ class Engine:
         self.logger.info('Retrieved rules in {} seconds'.format(end - start))
         start = default_timer()
 
-        # Importing COMMON module
+        # Importing COMMON module, check all keys (do NOT trust data in ddb!), update lookup table
+        import_count = 0
         for index, raw_rule in enumerate(rules):
+            if 'id' not in raw_rule:
+                self.logger.error('Rule missing id'.format(str(raw_rule)))
+                continue
+            if 'body' not in raw_rule:
+                self.logger.error('Rule {} missing body'.format(raw_rule['id']))
+                continue
+            if 'resourceTypes' not in raw_rule:
+                self.logger.error('Rule {} missing resourceTypes'.format(raw_rule['id']))
+                continue
             if raw_rule['id'] == COMMON_MODULE_RULE_ID:
                 Rule(raw_rule['id'], raw_rule['body'])
-                del rules[index]
-                break
-        for raw_rule in rules:
+                continue
+            # update lookup table from log type to rule
+            import_count = import_count + 1
             rule = Rule(raw_rule['id'], raw_rule['body'])
             for log_type in raw_rule['resourceTypes']:
                 self._log_type_to_rules[log_type].append(rule)
+
         end = default_timer()
-        self.logger.info('Imported rules in {} seconds'.format(end - start))
+        self.logger.info('Imported {} rules in {} seconds'.format(import_count, end - start))
         self._last_update = datetime.utcnow()
 
     def get_rules(self) -> List[Dict[str, str]]:
