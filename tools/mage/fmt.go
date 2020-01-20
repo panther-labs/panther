@@ -65,7 +65,7 @@ func Fmt() error {
 	if mg.Verbose() {
 		args = append(args, "--verbose")
 	}
-	return sh.Run("venv/bin/yapf", append(args, pyTargets...)...)
+	return sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...)
 }
 
 func removeAllImportNewlines() error {

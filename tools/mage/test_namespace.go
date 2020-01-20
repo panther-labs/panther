@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -72,7 +73,7 @@ func (t Test) Lint() error {
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
-	if err := sh.RunV("golangci-lint", args...); err != nil {
+	if err := sh.RunV(path.Join(setupDirectory, "golangci-lint"), args...); err != nil {
 		errs = append(errs, err)
 	}
 
@@ -84,7 +85,7 @@ func (t Test) Lint() error {
 	} else {
 		args = append(args, "--quiet")
 	}
-	if err := sh.Run("venv/bin/bandit", append(args, pyTargets...)...); err != nil {
+	if err := sh.Run(pythonLibPath("bandit"), append(args, pyTargets...)...); err != nil {
 		errs = append(errs, err)
 	}
 
@@ -94,7 +95,7 @@ func (t Test) Lint() error {
 	if mg.Verbose() {
 		args = append(args, "--verbose")
 	}
-	if output, err := sh.Output("venv/bin/yapf", append(args, pyTargets...)...); err != nil {
+	if output, err := sh.Output(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
 		errs = append(errs, fmt.Errorf("yapf diff: %d bytes (err: %v)", len(output), err))
 	}
 
@@ -105,12 +106,12 @@ func (t Test) Lint() error {
 	}
 	// pylint src
 	srcArgs := append(args, "--ignore", "tests", "--disable", strings.Join(pylintSrcDisabled, ","))
-	if err := sh.RunV("venv/bin/pylint", append(srcArgs, pyTargets...)...); err != nil {
+	if err := sh.RunV(pythonLibPath("pylint"), append(srcArgs, pyTargets...)...); err != nil {
 		errs = append(errs, err)
 	}
 	// pylint tests
 	testArgs := append(args, "--ignore", "src", "--disable", strings.Join(pylintTestsDisabled, ","))
-	if err := sh.RunV("venv/bin/pylint", append(testArgs, pyTargets...)...); err != nil {
+	if err := sh.RunV(pythonLibPath("pylint"), append(testArgs, pyTargets...)...); err != nil {
 		errs = append(errs, err)
 	}
 
@@ -120,7 +121,7 @@ func (t Test) Lint() error {
 	if mg.Verbose() {
 		args = append(args, "--verbose")
 	}
-	if err := sh.RunV("venv/bin/mypy", append(args, pyTargets...)...); err != nil {
+	if err := sh.RunV(pythonLibPath("mypy"), append(args, pyTargets...)...); err != nil {
 		errs = append(errs, err)
 	}
 
@@ -136,7 +137,7 @@ func (t Test) Lint() error {
 	if err != nil {
 		errs = append(errs, fmt.Errorf("filepath.Walk(deployments) failed: %v", err))
 	}
-	if err := sh.RunV("venv/bin/cfn-lint", templates...); err != nil {
+	if err := sh.RunV(pythonLibPath("cfn-lint"), templates...); err != nil {
 		errs = append(errs, err)
 	}
 
@@ -165,7 +166,7 @@ func (Test) Unit() error {
 
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
 		fmt.Println("test:unit python unittest", target)
-		if err := sh.RunV("venv/bin/python3", append(args, target)...); err != nil {
+		if err := sh.RunV(pythonLibPath("python3"), append(args, target)...); err != nil {
 			return err
 		}
 	}
@@ -228,7 +229,7 @@ func (t Test) Integration() error {
 	// Run Python integration tests unless a Go pkg is specified
 	if os.Getenv("PKG") == "" {
 		fmt.Println("test:integration: python engine")
-		return sh.RunV("venv/bin/python3", "internal/compliance/policy_engine/tests/integration.py")
+		return sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py")
 	}
 	return nil
 }

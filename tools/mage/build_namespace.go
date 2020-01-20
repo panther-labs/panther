@@ -72,7 +72,7 @@ func (b Build) API() error {
 		}
 
 		args := []string{"generate", "client", "-q", "-t", path.Dir(spec), "-f", spec}
-		if err := sh.Run("swagger", args...); err != nil {
+		if err := sh.Run(path.Join(setupDirectory, "swagger"), args...); err != nil {
 			return err
 		}
 
