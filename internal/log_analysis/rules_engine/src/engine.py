@@ -38,15 +38,26 @@ class Engine:
 
     def populate_rules(self) -> None:
         """Import all rules."""
+        import_count = 0
         start = default_timer()
         rules = self.get_rules()
         end = default_timer()
-        self.logger.info('Retrieved rules in {} seconds'.format(end - start))
+        self.logger.info('Retrieved {} rules in {} seconds'.format(len(rules), end - start))
         start = default_timer()
 
-        # Importing COMMON module, check all keys (do NOT trust data in ddb!), update lookup table
-        import_count = 0
-        for index, raw_rule in enumerate(rules):
+        # Importing common module. This module MAY hold code common to some rules and if it exists, it must be imported before other rules.
+        # However, the presence of this rule is optional.
+        for raw_rule in rules:
+            if 'id' not in raw_rule:
+                continue
+            if 'body' not in raw_rule:
+                continue
+            if raw_rule['id'] == COMMON_MODULE_RULE_ID:
+                Rule(raw_rule['id'], raw_rule['body'])
+                break
+
+        # Check all keys (do NOT trust data in ddb!), update lookup table
+        for raw_rule in rules:
             if 'id' not in raw_rule:
                 self.logger.error('Rule missing id'.format(str(raw_rule)))
                 continue
@@ -57,7 +68,7 @@ class Engine:
                 self.logger.error('Rule {} missing resourceTypes'.format(raw_rule['id']))
                 continue
             if raw_rule['id'] == COMMON_MODULE_RULE_ID:
-                Rule(raw_rule['id'], raw_rule['body'])
+                # skip, should be already loaded above if present
                 continue
             # update lookup table from log type to rule
             import_count = import_count + 1
