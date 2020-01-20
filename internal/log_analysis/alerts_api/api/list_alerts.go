@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
@@ -80,12 +81,11 @@ func alertItemsToAlertSummary(items []*models.AlertItem) ([]*models.AlertSummary
 		// All items are for the same org
 		severity, err := getSeverity(ruleID)
 		if err != nil {
-			zap.L().Error("could not get rule severity",
-				zap.String("ruleId", ruleID),
-				zap.Error(err))
-
-			// a 404 means cannot find rule, treat as nil
+			// a 404 means cannot find rule, treat as nil, else log and return err
 			if !strings.Contains(err.Error(), "getRuleNotFound") {
+				zap.L().Error("could not get rule severity",
+					zap.String("ruleId", ruleID),
+					zap.Error(err))
 				return nil, err
 			}
 		}
@@ -108,6 +108,7 @@ func getSeverity(ruleID string) (*string, error) {
 		HTTPClient: httpClient,
 	})
 	if err != nil {
+		err = errors.Wrap(err, "GetRule() failed looking up severity")
 		return nil, err
 	}
 	return aws.String(string(response.Payload.Severity)), nil
