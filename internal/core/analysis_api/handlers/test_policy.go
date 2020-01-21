@@ -56,7 +56,7 @@ func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 			return errResponse
 		}
 		results = &enginemodels.PolicyEngineOutput{
-			Resources: []enginemodels.Result{},
+			Resources: make([]enginemodels.Result, 0, len(ruleResults.Events)),
 		}
 		for _, event := range ruleResults.Events {
 			results.Resources = append(results.Resources, enginemodels.Result{

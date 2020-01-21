@@ -96,7 +96,8 @@ Resources:
           COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.amazonaws.com'
           COMPLIANCE_API_PATH: v1
           DEBUG: !Ref Debug
-          ENGINE: panther-policy-engine
+          POLICY_ENGINE: panther-policy-engine
+          RULES_ENGINE: panther-rules-engine
           RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-resources
           TABLE: !Ref Table
       FunctionName: panther-analysis-api
