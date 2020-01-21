@@ -1,4 +1,5 @@
 ![Panther Logo](docs/img/logo-banner.png)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther?ref=badge_shield)
 
 [![Gitter](https://badges.gitter.im/runpanther/community.svg)](https://gitter.im/runpanther/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![CircleCI](https://circleci.com/gh/panther-labs/panther.svg?style=svg)](https://circleci.com/gh/panther-labs/panther)
@@ -79,3 +80,6 @@ We welcome contributions! Please read the [contributing guidelines](https://gith
 ## License
 
 Panther is dual-licensed under the AGPLv3 and Apache-2.0 [licenses](https://github.com/panther-labs/panther/blob/master/LICENSE).
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther?ref=badge_large)
