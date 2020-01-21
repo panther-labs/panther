@@ -61,7 +61,7 @@ Resources:
         IsMasterAccount: 'true'
         CreateSSMDocument: 'false'
         LambdaLoggingLevel: 'INFO'
-        LambdaLogsRetentionDays: 365
+        LambdaLogsRetentionDays: '365'
 
 Outputs:
   LambdaArn:
