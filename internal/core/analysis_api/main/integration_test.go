@@ -323,6 +323,7 @@ func testPolicyPass(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
+			AnalysisType:  "POLICY",
 			Body:          policy.Body,
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
@@ -344,6 +345,7 @@ func testPolicyNotApplicable(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
+			AnalysisType:  "POLICY",
 			Body:          policy.Body,
 			ResourceTypes: policy.ResourceTypes,
 			Tests: models.TestSuite{
@@ -377,6 +379,7 @@ func testPolicyFail(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
+			AnalysisType:  "POLICY",
 			Body:          "def policy(resource): return False",
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
@@ -398,6 +401,7 @@ func testPolicyError(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
+			AnalysisType:  "POLICY",
 			Body:          "whatever, I do what I want",
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
@@ -428,6 +432,7 @@ func testPolicyMixed(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
+			AnalysisType:  "POLICY",
 			Body:          "def policy(resource): return resource['Hello']",
 			ResourceTypes: policy.ResourceTypes,
 			Tests: models.TestSuite{

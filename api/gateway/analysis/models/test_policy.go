@@ -34,6 +34,10 @@ import (
 // swagger:model TestPolicy
 type TestPolicy struct {
 
+	// analysis type
+	// Required: true
+	AnalysisType AnalysisType `json:"analysisType"`
+
 	// body
 	// Required: true
 	Body Body `json:"body"`
@@ -51,6 +55,10 @@ type TestPolicy struct {
 func (m *TestPolicy) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateAnalysisType(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateBody(formats); err != nil {
 		res = append(res, err)
 	}
@@ -66,6 +74,18 @@ func (m *TestPolicy) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *TestPolicy) validateAnalysisType(formats strfmt.Registry) error {
+
+	if err := m.AnalysisType.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("analysisType")
+		}
+		return err
+	}
+
 	return nil
 }
 

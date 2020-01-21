@@ -18,20 +18,26 @@ import collections
 import json
 from gzip import GzipFile
 from io import TextIOWrapper
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import boto3
 
 from .engine import Engine
 from .logging import get_logger
+from .rule import Rule
 from .sqs import send_to_sqs
 
 s3_client = boto3.client('s3')
 rules_engine = Engine()
 
 
-def lambda_handler(event: Dict[str, Any], unused_context) -> None:
+def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[str, Any]]:
     logger = get_logger()
+
+    # Handle the direct evaluation of a single rule against some number of events
+    if 'rules' in event:
+        return direct_analysis(event)
+
     # Dictionary containing mapping from log type to list of TextIOWrapper's
     log_type_to_data: Dict[str, TextIOWrapper] = collections.defaultdict(list)
 
@@ -57,6 +63,37 @@ def lambda_handler(event: Dict[str, Any], unused_context) -> None:
     else:
         logger.info("no matches found")
 
+# Evaluates a single rule against a set of events, and returns the results
+# Currently used for testing policies directly
+def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
+        # Since this is used for testing single rules, it should only ever have one rule
+        if len(event['rules']) != 1:
+            raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
+
+        raw_rule = event['rules'][0]
+        test_rule = Rule(raw_rule['id'], raw_rule['body'])
+        results = {'events' : []}
+        for single_event in event['events']:
+            result = {
+                'id': single_event['id'],
+                'matched' : [],
+                'notMatched': [],
+                'errored': [],
+            }
+            matched = test_rule.run(single_event['data'])
+            if matched is True:
+                result['matched'] = [raw_rule['id']]
+            elif matched is False:
+                result['notMatched'] = [raw_rule['id']]
+            else:
+                result['errored'] = [{
+                    'id' : raw_rule['id'],
+                    'message': str(matched),
+                    }]
+
+            results['events'].append(result)
+
+        return results
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all
 # contents of S3 object in memory

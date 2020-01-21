@@ -742,6 +742,13 @@ definitions:
     items:
       $ref: '#/definitions/UnitTest'
 
+  AnalysisType:
+    type: string
+    enum:
+      - POLICY
+      - RULE
+
+
   UpdatePolicy:
     type: object
     properties:
@@ -951,10 +958,13 @@ definitions:
         $ref: '#/definitions/TypeSet'
       tests:
         $ref: '#/definitions/TestSuite'
+      analysisType:
+        $ref: '#/definitions/AnalysisType'
     required:
       - body
       - resourceTypes
       - tests
+      - analysisType
 
   TestPolicyResult:
     type: object
