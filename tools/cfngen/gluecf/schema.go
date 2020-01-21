@@ -101,7 +101,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	if fieldName == "" {
 		fieldName = sf.Name
 	}
-	
+
 	switch t.Kind() { // NOTE: not all possible nestings have been implemented
 	case reflect.Slice:
 
