@@ -3,4 +3,4 @@ A collection of files used to create auxiliary infrastructure in support of a pa
 
 ## Formats
   - CloudFormation: Deploy AWS Infrastructure with AWS CloudFormation templates
-  - Terraform: Deploy infrastructure with Hashicorp Terraform templates (coming soon!)
+  - Terraform: Deploy infrastructure with Terraform templates (coming soon!)

@@ -1,5 +1,5 @@
 # Panther's CloudFormation Templates
-A collection of CloudFormation Templates to interact with Panther.
+A collection of CloudFormation templates to configure data collection and remediation with multiple satellite accounts.
 
 ## Templates
 
