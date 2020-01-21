@@ -19,8 +19,6 @@ package verification
  */
 
 import (
-	"os"
-
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
@@ -30,11 +28,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var (
-	emailVerificationTemplate = os.Getenv("EMAIL_VERIFICATION_TEMPLATE")
-	sesConfigurationSet       = os.Getenv("SES_CONFIGURATION_SET")
-	usersAPI                  = os.Getenv("USERS_API")
-)
 
 // OutputVerificationAPI defines the interface for the outputs table which can be used for mocking.
 type OutputVerificationAPI interface {

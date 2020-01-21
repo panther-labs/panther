@@ -57,6 +57,11 @@ Parameters:
     Type: String
     Description: The ARN of the TLS certificate that is going to be used by the web application
 
+  # Set automatically by "mage deploy" unless specified in panther_config
+  EmailAlertsFromAddress:
+    Type: String
+    Description: The email address that will be used as the source of email alerts
+
 Conditions:
   CreatePythonLayer: !Equals [!Ref PythonLayerVersionArn, '']
 
@@ -183,6 +188,7 @@ Resources:
 
         AppFqdn: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl
         SQSKeyId: !Ref QueueEncryptionKey
+        EmailAlertsFromAddress: !Ref EmailAlertsFromAddress
       TemplateURL: core/outputs.yml
 
   AdminAPI:
@@ -390,3 +396,7 @@ Outputs:
   WebApplicationCertificateArn:
     Description: ARN of the certificate used by the web application
     Value: !Ref WebApplicationCertificateArn
+  EmailAlertsFromAddress:
+    Description: The email address that will be used as the source of email alerts
+    Value: !Ref EmailAlertsFromAddress
+

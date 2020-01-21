@@ -47,6 +47,13 @@ AppParameterValues:
   # PROVIDE A CERTIFICATE FOR PRODUCTION USE
   WebApplicationCertificateArn: ''
 
+
+  # Email address that will be used as the source for sending email alerts
+  #
+  # If not specified, the user will be prompted for the address during the first setup
+  # Specify only email addresses that you have verified through SES
+  EmailAlertsFromAddress: ''
+
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
 

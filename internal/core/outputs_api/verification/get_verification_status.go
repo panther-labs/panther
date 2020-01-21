@@ -19,14 +19,10 @@ package verification
  */
 
 import (
-	"strings"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ses"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
-	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // GetVerificationStatus returns the verification status of an email address
@@ -36,16 +32,7 @@ func (verification *OutputVerification) GetVerificationStatus(input *models.Aler
 		return &result, nil
 	}
 
-	// Check if the email is a user's email
-	isVerified, err := verification.isVerifiedUserEmail(input.OutputConfig.Email.DestinationAddress)
-	if err != nil {
-		return nil, err
-	}
-	if *isVerified {
-		return aws.String(models.VerificationStatusSuccess), nil
-	}
-
-	// If the email is not from a verified user, check SES to see if it has been verified that way
+	// Check SES to see if it has been verified already
 	request := &ses.GetIdentityVerificationAttributesInput{
 		Identities: []*string{input.OutputConfig.Email.DestinationAddress},
 	}
@@ -68,20 +55,4 @@ func (verification *OutputVerification) GetVerificationStatus(input *models.Aler
 	default:
 		return aws.String(models.VerificationStatusFailed), nil
 	}
-}
-
-func (verification *OutputVerification) isVerifiedUserEmail(email *string) (*bool, error) {
-	input := usermodels.LambdaInput{
-		GetUserOrganizationAccess: &usermodels.GetUserOrganizationAccessInput{
-			Email: email,
-		},
-	}
-	var output usermodels.GetUserOrganizationAccessOutput
-	if err := genericapi.Invoke(verification.lambdaClient, usersAPI, &input, &output); err != nil {
-		if strings.Contains(err.Error(), "does not exist") {
-			return aws.Bool(false), nil
-		}
-		return nil, err
-	}
-	return aws.Bool(true), nil
 }

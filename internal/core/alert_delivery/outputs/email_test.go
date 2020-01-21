@@ -58,7 +58,6 @@ func (m *mockSesClient) SendEmail(input *ses.SendEmailInput) (*ses.SendEmailOutp
 func init() {
 	policyURLPrefix = "https://panther.io/policies/"
 	alertURLPrefix = "https://panther.io/alerts/"
-	sesConfigurationSet = "sesConfigurationSet"
 }
 
 func TestSendEmail(t *testing.T) {
@@ -66,9 +65,8 @@ func TestSendEmail(t *testing.T) {
 	outputClient := &OutputClient{sesClient: client, mailFrom: aws.String("email@email.com")}
 
 	expectedEmailInput := &ses.SendEmailInput{
-		ConfigurationSetName: aws.String("sesConfigurationSet"),
-		Source:               aws.String("email@email.com"),
-		Destination:          &ses.Destination{ToAddresses: []*string{aws.String("destinationAddress")}},
+		Source:      aws.String("email@email.com"),
+		Destination: &ses.Destination{ToAddresses: []*string{aws.String("destinationAddress")}},
 		Message: &ses.Message{
 			Subject: &ses.Content{
 				Charset: aws.String("UTF-8"),
@@ -106,9 +104,8 @@ func TestSendEmailRule(t *testing.T) {
 	}
 
 	expectedEmailInput := &ses.SendEmailInput{
-		ConfigurationSetName: aws.String("sesConfigurationSet"),
-		Source:               aws.String("email@email.com"),
-		Destination:          &ses.Destination{ToAddresses: []*string{aws.String("destinationAddress")}},
+		Source:      aws.String("email@email.com"),
+		Destination: &ses.Destination{ToAddresses: []*string{aws.String("destinationAddress")}},
 		Message: &ses.Message{
 			Subject: &ses.Content{
 				Charset: aws.String("UTF-8"),

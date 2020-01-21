@@ -152,12 +152,20 @@ func getDeployParams(awsSession *session.Session, config *PantherConfig, bucket 
 		result["PythonLayerObjectVersion"] = version
 	}
 
-	if result["WebApplicationCertificateArn"] == "" {
+	if result[certificateOutputKey] == "" {
 		certificateArn, err := uploadLocalCertificate(awsSession)
 		if err != nil {
 			return nil, err
 		}
-		result["WebApplicationCertificateArn"] = certificateArn
+		result[certificateOutputKey] = certificateArn
+	}
+
+	if result[emailAlertsFromAddressOutputsKey] == "" {
+		emailAddress, err := getEmailAddress(awsSession)
+		if err != nil {
+			return nil, err
+		}
+		result[emailAlertsFromAddressOutputsKey] = emailAddress
 	}
 
 	return result, nil

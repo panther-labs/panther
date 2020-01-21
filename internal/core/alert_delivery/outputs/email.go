@@ -20,7 +20,6 @@ package outputs
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -34,8 +33,6 @@ const emailTemplate = "<h2>Message</h2>%s<br>" +
 	"<h2>Severity</h2>%s<br>" +
 	"<h2>Runbook</h2>%s<br>" +
 	"<h2>Description</h2>%s"
-
-var sesConfigurationSet = os.Getenv("SES_CONFIGURATION_SET")
 
 func generateEmailContent(alert *alertmodels.Alert) *string {
 	messageField := fmt.Sprintf("<a href='%s'>%s</a>",
@@ -53,9 +50,8 @@ func generateEmailContent(alert *alertmodels.Alert) *string {
 // Email sends email to destination
 func (client *OutputClient) Email(alert *alertmodels.Alert, config *outputmodels.EmailConfig) *AlertDeliveryError {
 	emailInput := &ses.SendEmailInput{
-		ConfigurationSetName: aws.String(sesConfigurationSet),
-		Source:               client.mailFrom,
-		Destination:          &ses.Destination{ToAddresses: []*string{config.DestinationAddress}},
+		Source:      client.mailFrom,
+		Destination: &ses.Destination{ToAddresses: []*string{config.DestinationAddress}},
 		Message: &ses.Message{
 			Subject: &ses.Content{
 				Charset: aws.String("UTF-8"),

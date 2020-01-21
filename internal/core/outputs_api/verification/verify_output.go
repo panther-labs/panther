@@ -19,26 +19,35 @@ package verification
  */
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ses"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // VerifyOutput performs verification on a AlertOutput
 // Note that in case the output is not an email, no action is performed.
 // In case it is an email, we use SES's email verification mechanism.
+
+var emailFromAddress = os.Getenv("MAIL_FROM")
+
 func (verification *OutputVerification) VerifyOutput(input *models.AlertOutput) (*models.AlertOutput, error) {
 	if *input.OutputType != "email" {
 		return input, nil
 	}
-	request := &ses.SendCustomVerificationEmailInput{
-		EmailAddress:         input.OutputConfig.Email.DestinationAddress,
-		ConfigurationSetName: aws.String(sesConfigurationSet),
-		TemplateName:         aws.String(emailVerificationTemplate),
+
+	if emailFromAddress == "" {
+		return nil, &genericapi.InvalidInputError{Message:"Cannot add email destination. You need to configure an email that will be used as source email"}
 	}
-	response, err := verification.sesClient.SendCustomVerificationEmail(request)
+
+	request := &ses.VerifyEmailIdentityInput{
+		EmailAddress: input.OutputConfig.Email.DestinationAddress,
+	}
+	response, err := verification.sesClient.VerifyEmailIdentity(request)
 
 	if err != nil {
 		return nil, err
