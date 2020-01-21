@@ -32,6 +32,7 @@ import (
 const (
 	golangciVersion = "1.22.2"
 	swaggerVersion  = "0.21.0"
+)
 
 // Setup Install development dependencies
 func Setup() error {

@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -75,8 +76,6 @@ func (t Test) Lint() error {
 	if err := sh.RunV(path.Join(setupDirectory, "golangci-lint"), args...); err != nil {
 		errs = append(errs, err)
 	}
-	return errors.New(errString)
-}
 
 	// python bandit (security linting)
 	fmt.Println("test:lint: python security")

@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-lambda-go v1.13.3
 	github.com/aws/aws-sdk-go v1.28.5
 	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/fatih/color v1.9.0
 	github.com/go-openapi/errors v0.19.3
 	github.com/go-openapi/runtime v0.19.9
 	github.com/go-openapi/strfmt v0.19.4
