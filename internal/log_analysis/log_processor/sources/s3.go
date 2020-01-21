@@ -37,6 +37,10 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 )
 
+const (
+	s3TestEvent = "s3:TestEvent"
+)
+
 // ReadSQSMessages reads incoming messages containing SNS notifications and returns a slice of DataStream items
 func ReadSQSMessages(messages []events.SQSMessage) (result []*common.DataStream, err error) {
 	zap.L().Debug("reading data for messages", zap.Int("numMessages", len(messages)))
@@ -187,7 +191,7 @@ func ParseNotification(message string) ([]*S3ObjectInfo, error) {
 		return nil, err
 	}
 
-	// If the input was not a CloudTrail notification, the result will be empty slice
+	// If the input was not a CloudTrail notification, s3Objects will be empty slice
 	if len(s3Objects) == 0 {
 		s3Objects, err = parseS3Event(message)
 		if err != nil {
@@ -195,7 +199,13 @@ func ParseNotification(message string) ([]*S3ObjectInfo, error) {
 		}
 	}
 
+	// If the input was not an S3 event notification, s3Objects will be empty slice
+
 	if len(s3Objects) == 0 {
+		// If it is an S3 test event, return an empty array. There are no S3 objects to process
+		if isTestS3Event(message) {
+			return []*S3ObjectInfo{}, nil
+		}
 		return nil, errors.New("notification is not of known type: " + message)
 	}
 	return s3Objects, nil
@@ -239,6 +249,16 @@ func parseS3Event(message string) (result []*S3ObjectInfo, err error) {
 		result = append(result, info)
 	}
 	return result, nil
+}
+
+// The method returns true if the received event is an S3 Test event
+func isTestS3Event(message string) bool {
+	notification := &events.S3TestEvent{}
+	err := jsoniter.UnmarshalFromString(message, notification)
+	if err != nil {
+		return false
+	}
+	return notification.Event == s3TestEvent
 }
 
 // cloudTrailNotification is the notification sent by CloudTrail whenever it delivers a new log file to S3
