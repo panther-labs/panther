@@ -38,7 +38,8 @@ import (
 )
 
 const (
-	s3TestEvent = "s3:TestEvent"
+	s3TestEvent                 = "s3:TestEvent"
+	cloudTrailValidationMessage = "CloudTrail validation message."
 )
 
 // ReadSQSMessages reads incoming messages containing SNS notifications and returns a slice of DataStream items
@@ -186,38 +187,33 @@ func readS3Object(s3Object *S3ObjectInfo, topicArn string) (dataStream *common.D
 
 // ParseNotification parses a message received
 func ParseNotification(message string) ([]*S3ObjectInfo, error) {
-	s3Objects, err := parseCloudTrailNotification(message)
-	if err != nil {
-		return nil, err
-	}
+	s3Objects := parseCloudTrailNotification(message)
 
 	// If the input was not a CloudTrail notification, s3Objects will be empty slice
-	if len(s3Objects) == 0 {
-		s3Objects, err = parseS3Event(message)
-		if err != nil {
-			return nil, err
-		}
+	if len(s3Objects) > 0 {
+		return s3Objects, nil
 	}
 
-	// If the input was not an S3 event notification, s3Objects will be empty slice
-	if len(s3Objects) == 0 {
-		// If it is an S3 test event, return an empty array. There are no S3 objects to process
-		if isTestS3Event(message) {
-			return []*S3ObjectInfo{}, nil
-		}
-		return nil, errors.New("notification is not of known type: " + message)
+	s3Objects = parseS3Event(message)
+	if len(s3Objects) > 0 {
+		return s3Objects, nil
 	}
-	return s3Objects, nil
+
+	if isTestS3Event(message) || isCloudTrailValidationMessage(message) {
+		//In this case return an empty array. There are no S3 objects to process
+		return []*S3ObjectInfo{}, nil
+	}
+
+	return nil, errors.New("notification is not of known type: " + message)
 }
 
 // parseCloudTrailNotification will try to parse input as if it was a CloudTrail notification
 // If the input was not a CloudTrail notification, it will return a empty slice
-// The method returns error if it encountered some issue while trying to parse the notification
-func parseCloudTrailNotification(message string) (result []*S3ObjectInfo, err error) {
+func parseCloudTrailNotification(message string) (result []*S3ObjectInfo) {
 	cloudTrailNotification := &cloudTrailNotification{}
-	err = jsoniter.UnmarshalFromString(message, cloudTrailNotification)
+	err := jsoniter.UnmarshalFromString(message, cloudTrailNotification)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse CloudTrail event")
+		return result
 	}
 
 	for _, s3Key := range cloudTrailNotification.S3ObjectKey {
@@ -227,17 +223,16 @@ func parseCloudTrailNotification(message string) (result []*S3ObjectInfo, err er
 		}
 		result = append(result, info)
 	}
-	return result, nil
+	return result
 }
 
 // parseS3Event will try to parse input as if it was an S3 Event (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
 // If the input was not an S3 Event  notification, it will return a empty slice
-// The method returns error if it encountered some issue while trying to parse the notification
-func parseS3Event(message string) (result []*S3ObjectInfo, err error) {
+func parseS3Event(message string) (result []*S3ObjectInfo) {
 	notification := &events.S3Event{}
-	err = jsoniter.UnmarshalFromString(message, notification)
+	err := jsoniter.UnmarshalFromString(message, notification)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse S3 event")
+		return result
 	}
 
 	for _, record := range notification.Records {
@@ -247,7 +242,7 @@ func parseS3Event(message string) (result []*S3ObjectInfo, err error) {
 		}
 		result = append(result, info)
 	}
-	return result, nil
+	return result
 }
 
 // The method returns true if the received event is an S3 Test event
@@ -258,6 +253,11 @@ func isTestS3Event(message string) bool {
 		return false
 	}
 	return notification.Event == s3TestEvent
+}
+
+// The method returns true if the received event is a CloudTrail validation message
+func isCloudTrailValidationMessage(message string) bool {
+	return message == cloudTrailValidationMessage
 }
 
 // cloudTrailNotification is the notification sent by CloudTrail whenever it delivers a new log file to S3

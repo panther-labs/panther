@@ -69,3 +69,18 @@ func TestParseTestS3Notification(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(s3Objects))
 }
+
+func TestParseCloudTrailValidationMessage(t *testing.T) {
+	notification := "CloudTrail validation message."
+
+	s3Objects, err := ParseNotification(notification)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(s3Objects))
+}
+
+func TestParseUnknownMessage(t *testing.T) {
+	notification := "Unknown message"
+
+	_, err := ParseNotification(notification)
+	require.Error(t, err)
+}
