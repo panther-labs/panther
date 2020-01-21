@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -31,6 +32,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"gopkg.in/yaml.v2"
+)
+
+var (
+	setupDirectory       = "./.setup"
+	pythonVirtualEnvPath = path.Join(setupDirectory, "venv")
 )
 
 // Open and parse a yaml file.
@@ -131,4 +137,15 @@ func download(url string) ([]byte, error) {
 	defer response.Body.Close()
 
 	return ioutil.ReadAll(response.Body)
+}
+
+// isRunningInCI returns true if the mage command is running inside
+// CI environment
+func isRunningInCI() bool {
+	return os.Getenv("CI") != ""
+}
+
+// pythonLibPath the Python venv path of the given library
+func pythonLibPath(lib string) string {
+	return path.Join(pythonVirtualEnvPath, "bin", lib)
 }

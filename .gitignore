@@ -1,4 +1,5 @@
 out/
+.setup/
 venv/
 .idea/
 __pycache__/

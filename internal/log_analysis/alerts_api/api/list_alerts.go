@@ -19,7 +19,10 @@ package api
  */
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
@@ -76,9 +79,15 @@ func alertItemsToAlertSummary(items []*models.AlertItem) ([]*models.AlertSummary
 	// Get the severity of each rule ID
 	for ruleID := range ruleIDToSeverity {
 		// All items are for the same org
-		severity, err := getSeverity(aws.String(ruleID))
+		severity, err := getSeverity(ruleID)
 		if err != nil {
-			return nil, err
+			// a 404 means cannot find rule, treat as nil, else log and return err
+			if !strings.Contains(err.Error(), "getRuleNotFound") {
+				zap.L().Error("could not get rule severity",
+					zap.String("ruleId", ruleID),
+					zap.Error(err))
+				return nil, err
+			}
 		}
 		ruleIDToSeverity[ruleID] = severity
 	}
@@ -91,18 +100,16 @@ func alertItemsToAlertSummary(items []*models.AlertItem) ([]*models.AlertSummary
 }
 
 // getSeverity retrieves the rule severity associated with an alert
-func getSeverity(ruleID *string) (*string, error) {
-	zap.L().Debug("fetching severity of rule",
-		zap.String("ruleId", *ruleID))
+func getSeverity(ruleID string) (*string, error) {
+	zap.L().Debug("fetching severity of rule", zap.String("ruleId", ruleID))
 
 	response, err := policiesClient.Operations.GetRule(&operations.GetRuleParams{
-		RuleID:     *ruleID,
+		RuleID:     ruleID,
 		HTTPClient: httpClient,
 	})
-
 	if err != nil {
+		err = errors.Wrap(err, "GetRule() failed looking up severity")
 		return nil, err
 	}
-
 	return aws.String(string(response.Payload.Severity)), nil
 }

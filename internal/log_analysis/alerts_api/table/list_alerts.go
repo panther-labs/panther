@@ -19,8 +19,6 @@ package table
  */
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -52,8 +50,7 @@ func (table *AlertsTable) ListAlerts(exclusiveStartKey *string, pageSize *int) (
 			return nil, nil, err
 		}
 		scanExclusiveStartKey = map[string]*dynamodb.AttributeValue{
-			"creationTime": {S: paginationKey.CreationTime},
-			"alertId":      {S: paginationKey.AlertID},
+			"alertId": {S: paginationKey.AlertID},
 		}
 	}
 
@@ -84,24 +81,11 @@ func (table *AlertsTable) ListAlerts(exclusiveStartKey *string, pageSize *int) (
 		return nil, nil, err
 	}
 
-	// If DDB returned a LastEvaluatedKey, it means there are more alerts to be returned
-	// Return populated `lastEvaluatedKey` in the response.
+	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
+	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` in the response.
 	if len(scanOutput.LastEvaluatedKey) > 0 {
-		// ensure expected keys are there, fail if not
-		for _, key := range []string{"creationTime", "alertId"} {
-			if _, exists := scanOutput.LastEvaluatedKey[key]; !exists {
-				errMsg := fmt.Sprintf("cannot find expected key "+key+" in ddb record: %#v",
-					scanOutput.LastEvaluatedKey)
-				err := errors.WithStack(&genericapi.InternalError{
-					Message: errMsg,
-				})
-				zap.L().Error(errMsg, zap.Error(err))
-				return nil, nil, err
-			}
-		}
 		paginationKey := listAlertsPaginationKey{
-			CreationTime: scanOutput.LastEvaluatedKey["creationTime"].S,
-			AlertID:      scanOutput.LastEvaluatedKey["alertId"].S,
+			AlertID: scanOutput.LastEvaluatedKey["alertId"].S,
 		}
 		marshalledKey, err := jsoniter.MarshalToString(paginationKey)
 		if err != nil {
@@ -119,6 +103,5 @@ func (table *AlertsTable) ListAlerts(exclusiveStartKey *string, pageSize *int) (
 }
 
 type listAlertsPaginationKey struct {
-	CreationTime *string `json:"creationTime"`
-	AlertID      *string `json:"alertId"`
+	AlertID *string `json:"alertId"`
 }

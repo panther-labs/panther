@@ -24,6 +24,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -40,7 +42,10 @@ func (table *AlertsTable) ListAlertsByRule(ruleID *string, exclusiveStartKey *st
 		Build()
 
 	if err != nil {
-		return nil, nil, &genericapi.InternalError{Message: "failed to build expression " + err.Error()}
+		errMsg := "failed to build expression " + err.Error()
+		err = errors.WithStack(&genericapi.InternalError{Message: errMsg})
+		zap.L().Error(errMsg, zap.Error(err))
+		return nil, nil, err
 	}
 
 	var queryResultsLimit *int64
@@ -56,8 +61,7 @@ func (table *AlertsTable) ListAlertsByRule(ruleID *string, exclusiveStartKey *st
 			return nil, nil, err
 		}
 		queryExclusiveStartKey = map[string]*dynamodb.AttributeValue{
-			"creationTime": {S: key.CreationTime},
-			"alertId":      {S: key.AlertID},
+			"alertId": {S: key.AlertID},
 		}
 	}
 
@@ -74,30 +78,38 @@ func (table *AlertsTable) ListAlertsByRule(ruleID *string, exclusiveStartKey *st
 
 	queryOutput, err := table.Client.Query(queryInput)
 	if err != nil {
-		return nil, nil, &genericapi.InternalError{
-			Message: "query to DDB failed" + err.Error(),
-		}
+		errMsg := "query to DDB failed" + err.Error()
+		err = errors.WithStack(&genericapi.InternalError{
+			Message: errMsg,
+		})
+		zap.L().Error(errMsg, zap.Error(err))
+		return nil, nil, err
 	}
 
 	err = dynamodbattribute.UnmarshalListOfMaps(queryOutput.Items, &summaries)
 	if err != nil {
-		return nil, nil, &genericapi.InternalError{
-			Message: "failed to marshall response" + err.Error(),
-		}
+		errMsg := "failed to marshall response" + err.Error()
+		err = errors.WithStack(&genericapi.InternalError{
+			Message: errMsg,
+		})
+		zap.L().Error(errMsg, zap.Error(err))
+		return nil, nil, err
 	}
 
-	// If DDB returned a LastEvaluatedKey, it means there are more alerts to be returned
-	// Return populated `lastEvaluatedKey` in the response.
+	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
+	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` in the response.
 	if len(queryOutput.LastEvaluatedKey) > 0 {
 		paginationKey := listAlertsPaginationKey{
-			CreationTime: queryOutput.LastEvaluatedKey["creationTime"].S,
-			AlertID:      queryOutput.LastEvaluatedKey["alertId"].S,
+			AlertID: queryOutput.LastEvaluatedKey["alertId"].S,
 		}
 		marshalledKey, err := jsoniter.MarshalToString(paginationKey)
 		if err != nil {
-			return nil, nil, &genericapi.InternalError{
-				Message: "failed to marshall key" + err.Error(),
-			}
+			errMsg := "failed to marshall key" + err.Error()
+			err = errors.WithStack(&genericapi.InternalError{
+				Message: errMsg,
+			})
+			zap.L().Error(errMsg, zap.Error(err))
+			return nil, nil, err
 		}
 		lastEvaluatedKey = &marshalledKey
 	}

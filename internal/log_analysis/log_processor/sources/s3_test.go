@@ -59,3 +59,28 @@ func TestParseS3Notification(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedOutput, s3Objects)
 }
+
+func TestParseTestS3Notification(t *testing.T) {
+	//nolint:lll
+	notification := "{\"Service\":\"Amazon S3\",\"Event\":\"s3:TestEvent\",\"Time\":\"2020-01-21T14:17:54.420Z\",\"Bucket\":\"test-bucket\"," +
+		"\"RequestId\":\"0D79B9C057838DEA\",\"HostId\":\"6HTLml3u1UbsYgjuzueCQApRHOfpRM5yJ+nTZCveOMejyM7iB4Pg8RESbVAU5nHjduW+QoeK+UA=\"}"
+
+	s3Objects, err := ParseNotification(notification)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(s3Objects))
+}
+
+func TestParseCloudTrailValidationMessage(t *testing.T) {
+	notification := "CloudTrail validation message."
+
+	s3Objects, err := ParseNotification(notification)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(s3Objects))
+}
+
+func TestParseUnknownMessage(t *testing.T) {
+	notification := "Unknown message"
+
+	_, err := ParseNotification(notification)
+	require.Error(t, err)
+}
