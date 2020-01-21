@@ -203,7 +203,7 @@ Resources:
       Description: Forwards the alerts to the alert delivery mechanism
       Environment:
         Variables:
-          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-alert-processor-queue
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-alerts
           DEBUG: !Ref Debug
       Events:
         DynamoDBEvent:
