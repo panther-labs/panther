@@ -79,6 +79,10 @@ func (b Build) API() error {
 		if err := fmtLicenseGroup(agplSource, dir); err != nil {
 			return err
 		}
+
+		if err := fmtLicenseGroup(agplSource, dir); err != nil {
+			return err
+		}
 	}
 
 	return nil

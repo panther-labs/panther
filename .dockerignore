@@ -15,6 +15,11 @@ venv
 
 # Generated
 out
+keys
 
 # External
 docs
+
+# Allow only enterprise/web folder
+enterprise/*
+!enterprise/web

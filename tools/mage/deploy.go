@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path"
@@ -29,8 +30,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/fatih/color"
+	"github.com/iancoleman/strcase"
+	"github.com/joho/godotenv"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -102,6 +108,8 @@ func Deploy() error {
 		return err
 	}
 
+	_, err = getStackDetails(awsSession, applicationStack)
+	deployParams["IsInitialDeployment"] = strconv.FormatBool(err != nil)
 	if err = deployTemplate(awsSession, template, applicationStack, deployParams); err != nil {
 		return err
 	}
@@ -111,20 +119,51 @@ func Deploy() error {
 		return err
 	}
 
-	if err := enableTOTP(awsSession, outputs["UserPoolId"]); err != nil {
+	if err := generateDotEnvFromCfnOutputs(outputs, ".env"); err != nil {
 		return err
 	}
 
-	if err := inviteFirstUser(awsSession, outputs["UserPoolId"]); err != nil {
+	if err = buildAndPushImageFromSource(awsSession, outputs["WebApplicationImage"]); err != nil {
 		return err
 	}
 
-	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], &config); err != nil {
-		return err
+	// If we previously deployed the app for the first time, then we didn't deploy the ECS stack due to the image
+	// not being yet present. To resolve this we re-deploy in order for the ECS stack to be created. This
+	// will only happen once, during the initial installation so that's why we have encapsulated all the "run-once"
+	// logic inside this condotional
+	if deployParams["IsInitialDeployment"] == "true" {
+		deployParams["IsInitialDeployment"] = "false"
+		if err = deployTemplate(awsSession, template, applicationStack, deployParams); err != nil {
+			return err
+		}
+
+		outputs, err = getStackOutputs(awsSession, applicationStack)
+		if err != nil {
+			return err
+		}
+
+		if err := enableTOTP(awsSession, outputs["WebApplicationUserPoolId"]); err != nil {
+			return err
+		}
+
+		if err := inviteFirstUser(awsSession, outputs["WebApplicationUserPoolId"]); err != nil {
+			return err
+		}
+
+		if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], &config); err != nil {
+			return err
+		}
+	} else {
+		if err = restartFrontendServer(
+			awsSession,
+			outputs["WebApplicationClusterName"],
+			outputs["WebApplicationServiceName"],
+		); err != nil {
+			return err
+		}
 	}
 
-	// TODO - underline link
-	fmt.Printf("\nPanther URL = https://%s\n", outputs["LoadBalancerUrl"])
+	color.Yellow("\nPanther URL = https://%s\n", outputs["LoadBalancerUrl"])
 	return nil
 }
 
@@ -139,6 +178,7 @@ func getDeployParams(awsSession *session.Session, config *PantherConfig, bucket 
 		"LayerVersionArns":             v.LayerVersionArns,
 		"PythonLayerVersionArn":        v.PythonLayerVersionArn,
 		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
+		"WebApplicationImageVersion":   v.WebApplicationImageVersion,
 		"TracingMode":                  v.TracingMode,
 	}
 
@@ -300,5 +340,78 @@ func inviteFirstUser(awsSession *session.Session, userPoolID string) error {
 			*response.FunctionError, string(response.Payload))
 	}
 
+	return nil
+}
+
+// Functions that build a personalized docker image from source, while pushing it to the private image repo of the user
+func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) error {
+	fmt.Println("docker: Requesting access to remote image repo...")
+	ecrClient := ecr.New(awsSession)
+	req, resp := ecrClient.GetAuthorizationTokenRequest(&ecr.GetAuthorizationTokenInput{})
+	if err := req.Send(); err != nil {
+		return err
+	}
+
+	ecrAuthorizationToken := *resp.AuthorizationData[0].AuthorizationToken
+	ecrServer := *resp.AuthorizationData[0].ProxyEndpoint
+
+	decodedCredentialsInBytes, _ := base64.StdEncoding.DecodeString(ecrAuthorizationToken)
+	credentials := strings.Split(string(decodedCredentialsInBytes), ":")
+
+	fmt.Println("docker: Logging in to remote image repo...")
+	if err := runCommand("docker", "login",
+		"-u", credentials[0],
+		"-p", credentials[1],
+		ecrServer,
+	); err != nil {
+		return err
+	}
+
+	fmt.Println("docker: Building docker image from source...")
+	if err := runCommand("docker", "build",
+		"--file", "deployments/web/Dockerfile",
+		"--tag", imageTag,
+		"--quiet",
+		".",
+	); err != nil {
+		return err
+	}
+
+	fmt.Println("docker: Begin image push to remote repo...")
+	if err := runCommand("docker", "push", imageTag); err != nil {
+		return err
+	}
+
+	fmt.Println("docker: Image pushed successfully!")
+	return nil
+}
+
+// Accepts Cloudformation outputs, converts the keys into a screaming snakecase format and stores them in a dotenv file
+func generateDotEnvFromCfnOutputs(outputs map[string]string, filename string) error {
+	conventionalOutputs := make(map[string]string)
+	for k, v := range outputs {
+		conventionalOutputs[strcase.ToScreamingSnake(k)] = v
+	}
+	if err := godotenv.Write(conventionalOutputs, filename); err != nil {
+		return err
+	}
+	return nil
+}
+
+// makes sure to force a new ECS deployment on the service server so that the latest docker image can be applied
+func restartFrontendServer(awsSession *session.Session, cluster string, service string) error {
+	fmt.Println("cleanup: Upgrading front-end server to the latest docker image...")
+	ecsClient := ecs.New(awsSession)
+	_, err := ecsClient.UpdateService(&ecs.UpdateServiceInput{
+		Cluster:            aws.String(cluster),
+		Service:            aws.String(service),
+		ForceNewDeployment: aws.Bool(true),
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("cleanup: Front-end server upgraded successfully!")
+	color.Cyan("Please allow up to 1 minute for front-end changes to be propagated across containers")
 	return nil
 }

@@ -24,7 +24,7 @@ const path = require('path');
 const app = express();
 
 // allow static assets to be served from the /dist folder
-app.use(express.static(path.join(path.resolve(), 'web/dist')));
+app.use(express.static(path.resolve(__dirname, '../dist')));
 
 // Instantly reply to health checks from our ALB
 app.get('/healthcheck', (req, res) => {
@@ -33,7 +33,7 @@ app.get('/healthcheck', (req, res) => {
 
 // Resolve all other requests to the index.html file
 app.get('*', (req, res) => {
-  res.sendFile(path.join(path.resolve(), 'web/dist/index.html'));
+  res.sendFile(path.resolve(__dirname, '../dist/index.html'));
 });
 
 // initialize server

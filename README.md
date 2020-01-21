@@ -32,33 +32,42 @@ _NOTE: Panther is currently in beta._
 
 To deploy Panther from source:
 
-1. Install Go 1.13+, Node 10+, and Python 3.7+
+1. Install Docker 17+ [using any of the recommended methods](https://docs.docker.com/install/)
+2. Install Go 1.13+, Node 10+, and Python 3.7+
    - For mac w/ homebrew, `brew install go node python3`
-2. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html)
+3. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html)
    - [Configure](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your AWS region and credentials
-3. Install [Mage](https://magefile.org/#installation)
+4. Install [Mage](https://magefile.org/#installation)
    - If you run into issues, try explicitly [setting GOPATH](https://github.com/golang/go/wiki/SettingGOPATH): `export GOPATH=$HOME/go`
-4. Clone the repo to `$GOPATH/src`
+5. Clone the repo to `$GOPATH/src`
    - HTTPS: `git clone https://github.com/panther-labs/panther $GOPATH/src/github.com/panther-labs/panther`
    - SSH: `git clone git@github.com:panther-labs/panther $GOPATH/src/github.com/panther-labs/panther`
-5. From the root of the repo, run `mage setup && npm i`
+6. From the root of the repo, run `mage setup && npm i`
    - `pip` may show warnings about incompatible packages which are safe to ignore
-6. Deploy! `mage deploy`
+7. Deploy! `mage deploy`
    - Your IAM role will need permission to create resources in Lambda, DynamoDB, S3, ECS, ELB, EC2 (security groups, subnets, VPC), SNS, SQS, SES, KMS, IAM, CloudFormation, CloudWatch, API Gateway, Cognito, and AppSync.
    - NOTE: The initial deploy will take 10-15 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off.
-7. Configure your initial Panther admin user
+8. Configure your initial Panther admin user
    - Near the end of the deploy command, you'll be prompted for first/last name and email
    - You will get an email from **no-reply@verificationemail.com** with your temporary password. If you don't see it, be sure to check your spam folder.
-8. Sign in to Panther! The URL is listed in the welcome email and also printed at the end of the deploy command.
+9. Sign in to Panther! The URL is listed in the welcome email and also printed at the end of the deploy command.
    - WARNING: By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page.
    - If you see a "502 Bad Gateway" error, wait a few minutes and refresh the page
-9. [Onboard your AWS account(s)](https://docs.runpanther.io/quick-start) in your Panther deployment!
+10. [Onboard your AWS account(s)](https://docs.runpanther.io/quick-start) in your Panther deployment!
 
 ## Development
 
 Since the majority of Panther is written in Go, we follow the [standard Go project layout](https://github.com/golang-standards/project-layout).
+For example, for front-end related changes, check out the [web folder](./web)
 
-Run `mage` to see the list of available commands (`-v` for verbose mode). You can easily chain `mage` commands together, for example:
+In addition, you can run `mage` to see the list of available commands (`-v` for verbose mode). You can easily chain `mage` commands together, for example:
+
+If you haven't already, [configure](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your AWS region and credentials. We recommend using [aws-vault](https://github.com/99designs/aws-vault) for credential management.
+
+Deploying is as simple as `mage deploy`.
+
+You will be prompted to enter a name and email for
+the default admin user. Once the deploy is complete, that email will receive a link to sign in.
 
 ```bash
 mage fmt test:ci deploy

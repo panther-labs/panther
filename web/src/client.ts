@@ -56,7 +56,7 @@ const createErrorLink = (history: History<LocationErrorState>) => {
 /**
  * Typical HTTP link to add the GraphQL URL to query
  */
-const httpLink = createHttpLink({ uri: process.env.GRAPHQL_ENDPOINT });
+const httpLink = createHttpLink({ uri: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT });
 
 /**
  * This link is here to add the necessary headers present for AMAZON_COGNITO_USER_POOLS
@@ -64,7 +64,7 @@ const httpLink = createHttpLink({ uri: process.env.GRAPHQL_ENDPOINT });
  */
 const authLink = (createAuthLink({
   region: process.env.AWS_REGION,
-  url: process.env.GRAPHQL_ENDPOINT,
+  url: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
   auth: {
     jwtToken: () => Auth.currentSession().then(session => session.getIdToken().getJwtToken()),
     type: AUTH_TYPE.AMAZON_COGNITO_USER_POOLS,

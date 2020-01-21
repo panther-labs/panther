@@ -48,7 +48,7 @@ def lambda_handler(event: Dict[str, Any], unused_context) -> None:
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
             for data in data_stream:
-                for matched_rule in rules_engine.analyze(log_type, data):
+                for matched_rule in rules_engine.analyze(log_type, json.loads(data)):
                     matched.append((matched_rule, data))
 
     if len(matched) > 0:

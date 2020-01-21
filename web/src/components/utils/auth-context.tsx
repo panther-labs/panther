@@ -155,7 +155,7 @@ const AuthContext = React.createContext<AuthContextValue>(undefined);
 // in the Amplify, since the `isAuthenticated` flag just decides which screens to show.
 const previousUserSessionExists = Boolean(
   storage.read(
-    `CognitoIdentityServiceProvider.${process.env.AWS_COGNITO_APP_CLIENT_ID}.LastAuthUser`
+    `CognitoIdentityServiceProvider.${process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
   )
 );
 

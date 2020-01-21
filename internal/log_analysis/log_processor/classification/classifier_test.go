@@ -280,6 +280,113 @@ func testSkipClassify(logLine string, t *testing.T) {
 	require.Nil(t, classifier.ParserStats()[failingParser2.LogType()])
 }
 
+func TestClassifyParserPanic(t *testing.T) {
+	// uncomment to see the logs produced
+	/*
+		logger := zap.NewExample()
+		defer logger.Sync()
+		undo := zap.ReplaceGlobals(logger)
+		defer undo()
+	*/
+
+	panicParser := &mockParser{}
+
+	panicParser.On("Parse", mock.Anything).Run(func(args mock.Arguments) { panic("test parser panic") })
+	panicParser.On("LogType").Return("panic parser")
+
+	availableParsers := []*registry.LogParserMetadata{
+		{Parser: panicParser},
+	}
+	testRegistry := NewTestRegistry()
+	parserRegistry = testRegistry // re-bind as interface
+	for i := range availableParsers {
+		testRegistry.Add(availableParsers[i]) // update registry
+	}
+
+	classifier := NewClassifier()
+
+	logLine := "log of death"
+
+	expectedStats := &ClassifierStats{
+		BytesProcessedCount:         uint64(len(logLine)),
+		LogLineCount:                1,
+		EventCount:                  0,
+		SuccessfullyClassifiedCount: 0,
+		ClassificationFailureCount:  1,
+	}
+
+	result := classifier.Classify(logLine)
+
+	// skipping specifically validating the times
+	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
+	require.Equal(t, expectedStats, classifier.Stats())
+
+	require.Equal(t, &ClassifierResult{LogLine: logLine}, result)
+	panicParser.AssertNumberOfCalls(t, "Parse", 1)
+}
+
+func TestClassifyNoLogline(t *testing.T) {
+	testSkipClassify("", t)
+}
+
+func TestClassifyLogLineIsWhiteSpace(t *testing.T) {
+	testSkipClassify("\n", t)
+	testSkipClassify("\n\r", t)
+	testSkipClassify("   ", t)
+	testSkipClassify("\t", t)
+}
+
+func testSkipClassify(logLine string, t *testing.T) {
+	// this tests the shortcut path where if log line == "" or "<whitepace>" we just skip
+	failingParser1 := &mockParser{}
+	failingParser2 := &mockParser{}
+
+	failingParser1.On("Parse", mock.Anything).Return(nil)
+	failingParser1.On("LogType").Return("failure1")
+	failingParser2.On("Parse", mock.Anything).Return(nil)
+	failingParser2.On("LogType").Return("failure2")
+
+	availableParsers := []*registry.LogParserMetadata{
+		{Parser: failingParser1},
+		{Parser: failingParser2},
+	}
+	testRegistry := NewTestRegistry()
+	parserRegistry = testRegistry // re-bind as interface
+	for i := range availableParsers {
+		testRegistry.Add(availableParsers[i]) // update registry
+	}
+
+	classifier := NewClassifier()
+
+	repetitions := 1000
+
+	var expectedLogLineCount uint64 = 0
+	if len(logLine) > 0 { // when there is NO log line we return without counts.
+		expectedLogLineCount = uint64(repetitions) // if there is a log line , but white space, we count, then return
+	}
+	expectedResult := &ClassifierResult{}
+	expectedStats := &ClassifierStats{
+		BytesProcessedCount:         0,
+		LogLineCount:                expectedLogLineCount,
+		EventCount:                  0,
+		SuccessfullyClassifiedCount: 0,
+		ClassificationFailureCount:  0,
+	}
+
+	for i := 0; i < repetitions; i++ {
+		result := classifier.Classify(logLine)
+		require.Equal(t, expectedResult, result)
+	}
+
+	// skipping specifically validating the times
+	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
+	require.Equal(t, expectedStats, classifier.Stats())
+
+	requireLessOrEqualNumberOfCalls(t, failingParser1, "Parse", 1)
+	require.Nil(t, classifier.ParserStats()[failingParser1.LogType()])
+	require.Nil(t, classifier.ParserStats()[failingParser2.LogType()])
+}
+
 func requireLessOrEqualNumberOfCalls(t *testing.T, underTest *mockParser, method string, number int) {
 	timesCalled := 0
 	for _, call := range underTest.Calls {

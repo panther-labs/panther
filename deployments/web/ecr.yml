@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Registry declaration for the docker images of the Panther web app (front-end)
+
+Parameters:
+  ImageName:
+    Type: String
+    Description: The name of the image repository
+    Default: panther-web
+
+Resources:
+  PantherWebImageRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref ImageName
+
+Outputs:
+  ImageRepo:
+    Description: The URL of the repository hosting the panther web image
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ImageName}

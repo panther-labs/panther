@@ -96,6 +96,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-log-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-log-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
   Function:
     Type: AWS::Serverless::Function
     Properties:

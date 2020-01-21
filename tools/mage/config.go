@@ -30,6 +30,7 @@ type appParameters struct {
 	LayerVersionArns             string `yaml:"LayerVersionArns"`
 	PythonLayerVersionArn        string `yaml:"PythonLayerVersionArn"`
 	WebApplicationCertificateArn string `yaml:"WebApplicationCertificateArn"`
+	WebApplicationImageVersion   string `yaml:"WebApplicationImageVersion"`
 	TracingMode                  string `yaml:"TracingMode"`
 }
 

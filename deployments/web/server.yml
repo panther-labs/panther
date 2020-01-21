@@ -36,27 +36,17 @@ Parameters:
   ClusterName:
     Type: String
     Description: The name of the cluster that the server should be attached to
+  Image:
+    Type: String
+    Description: The container image to use for the front-end web application server
   ServiceName:
     Type: String
-    Default: panther-web-frontend
     Description: The name of the service that will host the tasks that serve the application
+    Default: panther-web
   Port:
     Type: Number
     Default: 80
     Description: The exposed port of the application, that will be used by the VPC & Container.
-  ImageVersion:
-    Type: String
-    Default: latest
-    Description: The version of the public panther docker image to install
-  GraphQLApiEndpoint:
-    Type: String
-    Description: The URL to the GraphQL server that the front-end will use
-  CognitoAppClientId:
-    Type: String
-    Description: The ID of the user pool client (app client) that the frontend will use to communicate with Cognito
-  CognitoUserPoolId:
-    Type: String
-    Description: The ID of the user pool that users will live in
 
 Resources:
   # A target group is connected to a network or application load balancer, so it can automatically
@@ -72,6 +62,9 @@ Resources:
       HealthCheckTimeoutSeconds: 6
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 3
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds # Instantly deregister draining targets since we have 200% max capacity
+          Value: '0'
       TargetType: ip
       Port: !Ref Port
       Protocol: HTTP
@@ -193,18 +186,8 @@ Resources:
           Environment:
             - Name: SERVER_PORT
               Value: !Ref Port
-            - Name: AWS_REGION
-              Value: !Ref AWS::Region
-            - Name: AWS_ACCOUNT_ID
-              Value: !Ref AWS::AccountId
-            - Name: GRAPHQL_ENDPOINT
-              Value: !Ref GraphQLApiEndpoint
-            - Name: AWS_COGNITO_APP_CLIENT_ID
-              Value: !Ref CognitoAppClientId
-            - Name: AWS_COGNITO_USER_POOL_ID
-              Value: !Ref CognitoUserPoolId
           Essential: true
-          Image: !Sub pantherlabs/panther-web:${ImageVersion}
+          Image: !Ref Image
           Interactive: false
           LogConfiguration:
             LogDriver: awslogs
@@ -224,3 +207,8 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
+
+Outputs:
+  ServiceName:
+    Description: The name of the service that the hosts the front-end server
+    Value: !GetAtt WebApplicationServer.Name

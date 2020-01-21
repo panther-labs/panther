@@ -47,6 +47,13 @@ AppParameterValues:
   # PROVIDE A CERTIFICATE FOR PRODUCTION USE
   WebApplicationCertificateArn: ''
 
+  # The version of the docker image to upload that will be used by the front-end web server.
+  #
+  # By default, Panther always builds and tags the image as `latest` in order to avoid making Cloudformation changes
+  # on every deploy
+  WebApplicationImageVersion: latest
+
+
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
 

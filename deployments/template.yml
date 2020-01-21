@@ -28,6 +28,11 @@ Parameters:
     Description: Toggle debug logging for all Lambda functions
     Default: false
     AllowedValues: [true, false]
+  IsInitialDeployment:
+    Type: String
+    Description: Whether the current stack is getting deployed for the first time
+    Default: false
+    AllowedValues: [true, false]
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to every function
@@ -56,9 +61,13 @@ Parameters:
   WebApplicationCertificateArn:
     Type: String
     Description: The ARN of the TLS certificate that is going to be used by the web application
+  WebApplicationImageVersion:
+    Type: String
+    Description: The docker image version that the front-end server will use. Configure through `deployments/panther_config.yml`
 
 Conditions:
   CreatePythonLayer: !Equals [!Ref PythonLayerVersionArn, '']
+  CreateFrontendApplicationServer: !Equals [!Ref IsInitialDeployment, false]
 
 Resources:
   GatewayLoggingRole:
@@ -143,19 +152,23 @@ Resources:
         CertificateArn: !Ref WebApplicationCertificateArn
       TemplateURL: web/alb.yml
 
-  FrontendApplicationServer:
+  WebApplicationImageRepository:
     Type: AWS::CloudFormation::Stack
     Properties:
+      TemplateURL: web/ecr.yml
+
+  FrontendApplicationServer:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateFrontendApplicationServer
+    Properties:
       Parameters:
+        Image: !Sub ${WebApplicationImageRepository.Outputs.ImageRepo}:${WebApplicationImageVersion}
         ClusterName: !Ref WebApplicationCluster
         VpcId: !GetAtt WebApplicationNetworking.Outputs.VpcId
         SubnetOneId: !GetAtt WebApplicationNetworking.Outputs.SubnetOneId
         SubnetTwoId: !GetAtt WebApplicationNetworking.Outputs.SubnetTwoId
         LoadBalancerListenerArn: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerListenerArn
         LoadBalancerSecurityGroupId: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerSecurityGroupId
-        GraphQLApiEndpoint: !GetAtt Appsync.Outputs.GraphQLApiEndpoint
-        CognitoAppClientId: !GetAtt Cognito.Outputs.AppClientId
-        CognitoUserPoolId: !GetAtt Cognito.Outputs.UserPoolId
       TemplateURL: web/server.yml
 
   AnalysisAPI:
@@ -164,7 +177,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
         ComplianceApiId: !GetAtt ComplianceAPI.Outputs.GatewayId
@@ -178,7 +191,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
         AppFqdn: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl
@@ -191,7 +204,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ",", !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
       TemplateURL: core/admin_api.yml
 
@@ -206,10 +219,10 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        AnalysisApi: !Sub 'https://${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com'
-        ComplianceApi: !Sub 'https://${ComplianceAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com'
-        RemediationApi: !Sub 'https://${RemediationAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com'
-        ResourcesApi: !Sub 'https://${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com'
+        AnalysisApi: !Sub https://${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
+        ComplianceApi: !Sub https://${ComplianceAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
+        RemediationApi: !Sub https://${RemediationAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
+        ResourcesApi: !Sub https://${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
         UserPoolId: !GetAtt Cognito.Outputs.UserPoolId
       TemplateURL: ../out/deployments/core/embedded.appsync.yml
 
@@ -220,7 +233,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
       TemplateURL: ../out/deployments/compliance/embedded.compliance_api.yml
 
@@ -230,7 +243,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
@@ -245,7 +258,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
         ResourcesApiId: !GetAtt ResourcesAPI.Outputs.GatewayId
@@ -258,7 +271,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
         ResourcesApiId: !GetAtt ResourcesAPI.Outputs.GatewayId
@@ -271,7 +284,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
@@ -286,7 +299,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
@@ -328,7 +341,7 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
         SnsTopicArn: !Ref ProcessedDataNotifications
         ProcessedDataBucket: !Ref ProcessedDataBucket
@@ -342,10 +355,21 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
         SQSKeyId: !Ref QueueEncryptionKey
+        AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
+      TemplateURL: log_analysis/alerts.yml
+
+  RulesEngine:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        Debug: !Ref Debug
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        TracingMode: !Ref TracingMode
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
       TemplateURL: log_analysis/alerts.yml
 
@@ -374,19 +398,41 @@ Resources:
 Outputs:
   AnalysisApiEndpoint:
     Description: panther-analysis-api Gateway HTTPS endpoint
-    Value: !Sub '${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com'
+    Value: !Sub ${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
   ComplianceApiEndpoint:
     Description: panther-compliance-api Gateway HTTPS endpoint
-    Value: !Sub '${ComplianceAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com'
+    Value: !Sub ${ComplianceAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
   ResourcesApiEndpoint:
     Description: panther-resources-api Gateway HTTPS endpoint
-    Value: !Sub '${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com'
+    Value: !Sub ${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
   LoadBalancerUrl:
     Description: Panther URL (application load balancer)
     Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl
-  UserPoolId:
+  WebApplicationUserPoolId:
     Description: Cognito user pool ID
     Value: !GetAtt Cognito.Outputs.UserPoolId
+  WebApplicationUserPoolClientId:
+    Description: Cognito user pool application client ID
+    Value: !GetAtt Cognito.Outputs.AppClientId
+  WebApplicationGraphqlApiEndpoint:
+    Description: The URL of the GraphQL API that the front-end uses
+    Value: !GetAtt Appsync.Outputs.GraphQLApiEndpoint
   WebApplicationCertificateArn:
     Description: ARN of the certificate used by the web application
     Value: !Ref WebApplicationCertificateArn
+  WebApplicationImage:
+    Description: The docker  image used by the web application
+    Value: !Sub ${WebApplicationImageRepository.Outputs.ImageRepo}:${WebApplicationImageVersion}
+  WebApplicationClusterName:
+    Description: The name of the cluster that holds the web application related services
+    Value: !Ref WebApplicationCluster
+  WebApplicationServiceName:
+    Condition: CreateFrontendApplicationServer
+    Description: The name of the cluster that holds the web application related services
+    Value: !GetAtt FrontendApplicationServer.Outputs.ServiceName
+  AWSAccountId:
+    Description: The ID of the account that this stack was deployed to
+    Value: !Ref AWS::AccountId
+  AWSRegion:
+    Description: The region that the stack was deployed to
+    Value: !Ref AWS::Region

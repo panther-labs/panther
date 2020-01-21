@@ -63,6 +63,7 @@
     "chalk": "^2.4.2",
     "clean-webpack-plugin": "^2.0.1",
     "copy-webpack-plugin": "^5.0.5",
+    "cross-env": "^6.0.3",
     "dotenv": "^8.0.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^13.2.0",
@@ -130,11 +131,10 @@
     "yup": "^0.26.6"
   },
   "scripts": {
-    "build-assets": "webpack",
-    "serve-assets": "node web/scripts/serve-assets.js",
-    "setup-dotenv": "node web/scripts/setup-dotenv.js",
+    "build": "cross-env NODE_ENV=production node -r dotenv/config node_modules/.bin/webpack",
+    "start": "cross-env NODE_ENV=development node -r dotenv/config node_modules/.bin/webpack-dev-server",
+    "serve": "cross-env SERVER_PORT=8080 node web/scripts/serve.js",
     "generate-gql": "graphql-codegen",
-    "dev": "npm run setup-dotenv -- --environment=local webpack-dev-server",
     "lint": "eslint \"{web,enterprise}/**/*.{ts,js,tsx,jsx}\" && prettier --list-different  \"{web,enterprise}/**/*.{ts,js,tsx,jsx,md,scss,css,json}\" && tsc -p ."
   }
 }
