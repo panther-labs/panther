@@ -36,10 +36,6 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-const (
-	sqsReceiveMessageAction = "ReceiveMessage"
-)
-
 // PutIntegration adds a set of new integrations in a batch.
 func (API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIntegrationMetadata, error) {
 	permissionsAddedForIntegrations := []*models.SourceIntegrationMetadata{}
@@ -167,6 +163,4 @@ func generateNewIntegration(input *models.PutIntegrationSettings) *models.Source
 		S3Buckets: input.S3Buckets,
 		KmsKeys:   input.KmsKeys,
 	}
-	_, err := SQSClient.AddPermission(permissionInput)
-	return err
 }

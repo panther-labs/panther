@@ -38,12 +38,6 @@ const (
 	statsKey      = "stats"
 )
 
-const (
-	// oplog keys
-	operationName = "parse"
-	statsKey      = "stats"
-)
-
 var (
 	// ParsedEventBufferSize is the size of the buffer of the Go channel containing the parsed events.
 	// Since there are different goroutines writing and reading from that channel each with different I/O characteristics,

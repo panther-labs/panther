@@ -368,17 +368,6 @@ Resources:
       Parameters:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
-        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
-        TracingMode: !Ref TracingMode
-        AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
-      TemplateURL: log_analysis/alerts.yml
-
-  RulesEngine:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
-        Debug: !Ref Debug
         LayerVersionArns: !Join [ ',', !Ref LayerVersionArns ]
         TracingMode: !Ref TracingMode
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId

@@ -58,16 +58,8 @@ To deploy Panther from source:
 ## Development
 
 Since the majority of Panther is written in Go, we follow the [standard Go project layout](https://github.com/golang-standards/project-layout).
-For example, for front-end related changes, check out the [web folder](./web)
 
-In addition, you can run `mage` to see the list of available commands (`-v` for verbose mode). You can easily chain `mage` commands together, for example:
-
-If you haven't already, [configure](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your AWS region and credentials. We recommend using [aws-vault](https://github.com/99designs/aws-vault) for credential management.
-
-Deploying is as simple as `mage deploy`.
-
-You will be prompted to enter a name and email for
-the default admin user. Once the deploy is complete, that email will receive a link to sign in.
+Run `mage` to see the list of available commands (`-v` for verbose mode). You can easily chain `mage` commands together, for example:
 
 ```bash
 mage fmt test:ci deploy

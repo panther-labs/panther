@@ -96,22 +96,6 @@ func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []interfac
 	return parsedEvents
 }
 
-// catch panics from parsers, log and continue
-func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			zap.L().Error("parser panic",
-				zap.String("parser", parser.LogType()),
-				zap.Error(fmt.Errorf("%v", r)),
-				zap.String("stacktrace", string(debug.Stack())),
-				zap.String("log", log))
-			parsedEvents = nil // return indicator that parse failed
-		}
-	}()
-	parsedEvents = parser.Parse(log)
-	return parsedEvents
-}
-
 // Classify attempts to classify the provided log line
 func (c *Classifier) Classify(log string) *ClassifierResult {
 	startClassify := time.Now().UTC()
