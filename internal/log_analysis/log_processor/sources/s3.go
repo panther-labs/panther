@@ -200,7 +200,6 @@ func ParseNotification(message string) ([]*S3ObjectInfo, error) {
 	}
 
 	// If the input was not an S3 event notification, s3Objects will be empty slice
-
 	if len(s3Objects) == 0 {
 		// If it is an S3 test event, return an empty array. There are no S3 objects to process
 		if isTestS3Event(message) {
