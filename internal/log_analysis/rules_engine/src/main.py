@@ -67,6 +67,10 @@ def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[st
 # Currently used for testing policies directly
 def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
         # Since this is used for testing single rules, it should only ever have one rule
+        if len(event['rules']) != 1:
+            logger.error('expected exactly 1 rule to analyze, received {} instead'.format(len(event['rules']))
+            return
+
         raw_rule = event['rules'][0]
         test_rule = Rule(raw_rule['id'], raw_rule['body'])
         results = {'events' : []}

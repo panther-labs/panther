@@ -19,7 +19,6 @@ package handlers
  */
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,6 +26,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
@@ -51,9 +51,9 @@ func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 	var results *enginemodels.PolicyEngineOutput
 	// Build the policy engine request
 	if input.AnalysisType == "RULE" {
-		ruleResults, response := getRuleResults(input)
-		if response != nil {
-			return response
+		ruleResults, errResponse := getRuleResults(input)
+		if errResponse != nil {
+			return errResponse
 		}
 		results = &enginemodels.PolicyEngineOutput{
 			Resources: []enginemodels.Result{},
@@ -69,10 +69,10 @@ func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 			})
 		}
 	} else {
-		var response *events.APIGatewayProxyResponse
-		results, response = getPolicyResults(input)
-		if response != nil {
-			return response
+		var errResponse *events.APIGatewayProxyResponse
+		results, errResponse = getPolicyResults(input)
+		if errResponse != nil {
+			return errResponse
 		}
 	}
 
@@ -137,7 +137,7 @@ func getRuleResults(input *models.TestPolicy) (*enginemodels.RulesEngineOutput, 
 		// Unmarshal event into object form
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
-			return nil, badRequest(fmt.Errorf("tests[%d].event is not valid json: %s", i, err))
+			return nil, badRequest(errors.Wrapf(err, "tests[%d].event is not valid jsons", i))
 		}
 
 		inputEvents[i] = enginemodels.Event{
@@ -191,7 +191,7 @@ func getPolicyResults(input *models.TestPolicy) (*enginemodels.PolicyEngineOutpu
 		// Unmarshal resource into object form
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
-			return nil, badRequest(fmt.Errorf("tests[%d].resource is not valid json: %s", i, err))
+			return nil, badRequest(errors.Wrapf(err, "tests[%d].resource is not valid json", i))
 		}
 
 		resources[i] = enginemodels.Resource{
