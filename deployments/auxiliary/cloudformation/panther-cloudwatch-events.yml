@@ -1,0 +1,245 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  This stack configures Panther's real-time CloudWatch Event collection process.
+  It works by creating CloudWatch Event rules which feed to Panther's SQS Queue proxied by
+  a local SNS topic in each region.
+Metadata:
+  Version: v0.1.8
+
+Parameters:
+  MasterAccountId:
+    Type: String
+    Description: AWS account ID of the account running the Panther backend
+  QueueArn:
+    Type: String
+    Description: The Panther SQS Queue Arn to forward CloudWatch Events to via SNS.
+  CloudTrailEvents:
+    Type: String
+    Default: 'True'
+    Description: Collection of CloudTrail API events.
+    AllowedValues:
+      - 'True'
+      - 'False'
+  EC2Events:
+    Type: String
+    Default: 'True'
+    Description: Collection of CWE EC2 events.
+    AllowedValues:
+      - 'True'
+      - 'False'
+  ECSEvents:
+    Type: String
+    Default: 'False'
+    Description: Collection of CWE ECS events.
+    AllowedValues:
+      - 'True'
+      - 'False'
+  KMSEvents:
+    Type: String
+    Default: 'False'
+    Description: Collection of CWE KMS events.
+    AllowedValues:
+      - 'True'
+      - 'False'
+  OpsWorksEvents:
+    Type: String
+    Default: 'False'
+    Description: Collection of CWE OpsWorks events.
+    AllowedValues:
+      - 'True'
+      - 'False'
+  SecurityEvents:
+    Type: String
+    Default: 'True'
+    Description: Collection of CWE Security events.
+    AllowedValues:
+      - 'True'
+      - 'False'
+  SSMEvents:
+    Type: String
+    Default: 'False'
+    Description: Collection of CWE SSM events.
+    AllowedValues:
+      - 'True'
+      - 'False'
+  ScheduledEvents:
+    Type: String
+    Default: 'False'
+    Description: Collection of CWE Scheduled events.
+    AllowedValues:
+      - 'True'
+      - 'False'
+
+Conditions:
+  CloudTrailEvents: !Equals [!Ref CloudTrailEvents, 'True']
+  EC2Events: !Equals [!Ref EC2Events, 'True']
+  ECSEvents: !Equals [!Ref ECSEvents, 'True']
+  KMSEvents: !Equals [!Ref KMSEvents, 'True']
+  OpsWorksEvents: !Equals [!Ref OpsWorksEvents, 'True']
+  ScheduledEvents: !Equals [!Ref ScheduledEvents, 'True']
+  SecurityEvents: !Equals [!Ref SecurityEvents, 'True']
+  SSMEvents: !Equals [!Ref SSMEvents, 'True']
+
+Resources:
+
+  # SNS Topic, Policy, and Subscription to SQS
+
+  PantherEventsTopic:
+    Type: AWS::SNS::Topic
+
+  TopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Sid: CloudWatchEventsPublish
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref PantherEventsTopic
+          -
+            Sid: CrossAccountSubscription
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+            Action: sns:Subscribe
+            Resource: !Ref PantherEventsTopic
+      Topics:
+        - !Ref PantherEventsTopic
+
+  QueueSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref QueueArn
+      Protocol: sqs
+      RawMessageDelivery: true
+      TopicArn: !Ref PantherEventsTopic
+
+  # CloudWatch Event Rules
+
+  CloudTrailRule:
+    Type: AWS::Events::Rule
+    Condition: CloudTrailEvents
+    Properties:
+      Description: Collect CloudTrail API calls.
+      EventPattern:
+        detail-type:
+          - AWS API Call via CloudTrail
+      State: ENABLED
+      Targets:
+        -
+          Arn: !Ref PantherEventsTopic
+          Id: panther-collect-cloudtrail-events
+
+  SecurityRule:
+    Type: AWS::Events::Rule
+    Condition: SecurityEvents
+    Properties:
+      Description: Collect Security events into Panther.
+      EventPattern:
+        source:
+          - aws.config
+          - aws.guardduty
+          - aws.macie
+          - aws.trustedadvisor
+          - aws.health
+      State: ENABLED
+      Targets:
+        - Arn: !Ref PantherEventsTopic
+          Id: panther-collect-security-events
+
+  EC2Rule:
+    Type: AWS::Events::Rule
+    Condition: EC2Events
+    Properties:
+      Description: Collect EBS and EC2 events into Panther.
+      EventPattern:
+        detail-type:
+          - EC2 Command Status-change Notification
+          - EC2 Command Invocation Status-change Notification
+          - EC2 Automation Step Status-change Notification
+          - EC2 Automation Execution Status-change Notification
+          - EC2 Instance State-change Notification
+          - EC2 State Manager Association State Change
+          - EC2 State Manager Instance Association State Change
+          - EC2 Spot Instance Interruption Warning
+          - EBS Snapshot Notification
+          - EBS Volume Notification
+      State: ENABLED
+      Targets:
+        - Arn: !Ref PantherEventsTopic
+          Id: panther-collect-ec2-events
+
+  ECSRule:
+    Type: AWS::Events::Rule
+    Condition: ECSEvents
+    Properties:
+      Description: Collect ECS events into Panther.
+      EventPattern:
+        detail-type:
+          - ECS Container Instance State Change
+          - ECS Task State Change
+      State: ENABLED
+      Targets:
+        - Arn: !Ref PantherEventsTopic
+          Id: panther-collect-ecs-events
+
+  OpsWorksRule:
+    Type: AWS::Events::Rule
+    Condition: OpsWorksEvents
+    Properties:
+      Description: Collect OpsWorks events into Panther.
+      EventPattern:
+        detail-type:
+          - OpsWorks Instance State Change
+          - OpsWorks Command State Change
+          - OpsWorks Deployment State Change
+          - OpsWorks Alert
+      State: ENABLED
+      Targets:
+        - Arn: !Ref PantherEventsTopic
+          Id: panther-collect-opsworks-events
+
+  SSMRule:
+    Type: AWS::Events::Rule
+    Condition: SSMEvents
+    Properties:
+      Description: Collect SSM events into Panther.
+      EventPattern:
+        detail-type:
+          - Configuration Compliance State Change
+          - Parameter Store Change
+      State: ENABLED
+      Targets:
+        - Arn: !Ref PantherEventsTopic
+          Id: panther-collect-ssm-events
+
+  KMSRule:
+    Type: AWS::Events::Rule
+    Condition: KMSEvents
+    Properties:
+      Description: Collect KMS events into Panther.
+      EventPattern:
+        detail-type:
+          - KMS CMK Rotation
+          - KMS CMK Deletion
+      State: ENABLED
+      Targets:
+        - Arn: !Ref PantherEventsTopic
+          Id: panther-collect-kms-events
+
+  ScheduledEventsRule:
+    Type: AWS::Events::Rule
+    Condition: ScheduledEvents
+    Properties:
+      Description: Collect Scheduled CloudWatch events into Panther.
+      EventPattern:
+        detail-type:
+          - Scheduled Event
+      State: ENABLED
+      Targets:
+        - Arn: !Ref PantherEventsTopic
+          Id: panther-collect-scheduled-events

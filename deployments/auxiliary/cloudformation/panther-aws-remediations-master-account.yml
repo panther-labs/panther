@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Deploys the latest Panther Remediation Lambda from SAR and creates the appropriate IAM role to allow invocation of Lambda from Panther
+Metadata:
+  Version: 1.1
+
+Parameters:
+  MasterAccountId:
+    Type: String
+    Description:  AWS account ID of the account running the Panther backend
+
+Resources:
+  PantherLambdaInvocationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: PantherLambdaInvocationRole
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:SecureTransport: true
+      Policies:
+        - PolicyName: AllowInvocation
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt PantherAWSRemediations.Outputs.LambdaArn
+
+  PantherAWSRemediations:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/aws-remediations
+        SemanticVersion: 0.1.2
+      Parameters:
+        IsMasterAccount: 'true'
+        CreateSSMDocument: 'false'
+        LambdaLoggingLevel: 'INFO'
+        LambdaLogsRetentionDays: 365
+
+Outputs:
+  LambdaArn:
+    Description: The ARN of the Lambda function that will perform the remediative actions.
+    Value: !GetAtt PantherAWSRemediations.Outputs.LambdaArn

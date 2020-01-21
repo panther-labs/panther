@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Deploys the latest Panther Remediation Roles from SAR
+Metadata:
+  Version: 1.0
+
+Parameters:
+  MasterAccountId:
+    Type: String
+    Description: The master account Id
+
+Resources:
+  PantherAWSRemediations:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/aws-remediations
+        SemanticVersion: 0.1.2
+      Parameters:
+        IsMasterAccount: 'false'
+        CreateSSMDocument: 'false'
+        MasterAccountId: !Ref MasterAccountId
