@@ -19,73 +19,67 @@
 import React from 'react';
 import * as Yup from 'yup';
 import { FastField as Field, Formik } from 'formik';
-import { Box, Button, Flex, InputElementLabel } from 'pouncejs';
-import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
-import FormikCheckbox from 'Components/fields/checkbox';
+import { Box, Button } from 'pouncejs';
+import { AWS_ACCOUNT_ID_REGEX, PANTHER_REMEDIATION_SATELLITE_ACCOUNT } from 'Source/constants';
 import FormikTextInput from 'Components/fields/text-input';
 
 interface SetupRemediationFormValues {
-  isSatellite: boolean;
-  adminAWSAccountId: string;
+  awsAccountId: string;
 }
 
 interface SetupRemediationFormProps {
-  getStackUrl: (values: SetupRemediationFormValues) => string;
-  onStackLaunch?: () => void;
+  onStackLaunch: () => void;
 }
 
 const initialValues = {
-  isSatellite: false,
-  adminAWSAccountId: '',
+  awsAccountId: '',
 };
 
 const validationSchema = Yup.object().shape({
-  isSatellite: Yup.boolean(),
-  username: Yup.string()
-    .matches(AWS_ACCOUNT_ID_REGEX)
+  awsAccountId: Yup.string()
+    .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
 });
 
-const SetupRemediationForm: React.FC<SetupRemediationFormProps> = ({
-  getStackUrl,
-  onStackLaunch,
-}) => {
+const SetupRemediationForm: React.FC<SetupRemediationFormProps> = ({ onStackLaunch }) => {
   return (
     <Formik<SetupRemediationFormValues>
       initialValues={initialValues}
       onSubmit={() => {}}
       validationSchema={validationSchema}
     >
-      {({ handleSubmit, values }) => (
-        <Box is="form" onSubmit={handleSubmit}>
-          <Flex mb={6} alignItems="center">
-            <InputElementLabel htmlFor="isSatellite" mr={3}>
-              I want to setup automatic remediation in a satellite account
-            </InputElementLabel>
-            <Field as={FormikCheckbox} id="isSatellite" name="isSatellite" />
-          </Flex>
-          <Box hidden={!values.isSatellite} mb={10} width={0.3}>
-            <Field
-              as={FormikTextInput}
-              label="Your Auto-Remediation Master AWS Account ID"
-              name="adminAWSAccountId"
-              placeholder="i.e. 548784460855"
-              aria-required
-            />
-          </Box>
-          <Button
-            size="large"
-            variant="default"
-            target="_blank"
-            is="a"
-            rel="noopener noreferrer"
-            href={getStackUrl(values)}
-            onClick={onStackLaunch}
-          >
-            Launch Stack
-          </Button>
-        </Box>
-      )}
+      {({ handleSubmit, values: { awsAccountId } }) => {
+        const cfnLink =
+          `https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review` +
+          `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}/latest/template.yml` +
+          `&stackName=${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}` +
+          `&param_MasterAccountId=${awsAccountId}`;
+
+        return (
+          <form onSubmit={handleSubmit}>
+            <Box mb={8} width={0.6}>
+              <Field
+                as={FormikTextInput}
+                label="Your Auto-Remediation Master AWS Account ID"
+                name="awsAccountId"
+                placeholder="i.e. 548784460855"
+                aria-required
+              />
+            </Box>
+            <Button
+              size="large"
+              variant="default"
+              target="_blank"
+              is="a"
+              rel="noopener noreferrer"
+              href={cfnLink}
+              onClick={onStackLaunch}
+            >
+              Launch Stack
+            </Button>
+          </form>
+        );
+      }}
     </Formik>
   );
 };

@@ -20,22 +20,6 @@ import React from 'react';
 import { Box, Heading, Text } from 'pouncejs';
 import AddRemediationLambdaForm from 'Components/forms/add-remediation-lambda-form';
 import SetupRemediationForm from 'Components/forms/setup-remediation-form';
-import {
-  PANTHER_REMEDIATION_MASTER_ACCOUNT,
-  PANTHER_REMEDIATION_SATELLITE_ACCOUNT,
-} from 'Source/constants';
-
-export const adminRemediationCloudformationLink = `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?\
-region=${process.env.AWS_REGION}#/stacks/create/review?templateURL=https://s3-us-west-2.amazonaws.com/\
-panther-public-cloudformation-templates/${PANTHER_REMEDIATION_MASTER_ACCOUNT}/\
-latest/template.yml&stackName=${PANTHER_REMEDIATION_MASTER_ACCOUNT}`;
-
-export const getSatelliteRemediationCloudformationLink = (masterAWSAccountId: string) => {
-  return `https://us-west-2.console.aws.amazon.com/cloudformation/home?\
-region=us-west-2#/stacks/create/review?templateURL=https://s3-us-west-2.amazonaws.com/\
-panther-public-cloudformation-templates/${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}/latest/template.yml&\
-stackName=${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}&param_MasterAccountId=${masterAWSAccountId}`;
-};
 
 const RemediationPanel: React.FC = () => {
   const [isStackLaunched, markStackAsLaunched] = React.useState(false);
@@ -52,6 +36,8 @@ const RemediationPanel: React.FC = () => {
         <br />
         This stack will configure Panther to fix misconfigured infrastructure as soon as it is
         detected. Remediations can be configured on a per-policy basis to take any desired actions.
+        <br />
+        <br />
         After a successful deployment, you will have to come back to this page to save the ARN of
         the created lambda. You will be able to edit it afterwards through your Organization{"'"}s
         settings page.
@@ -71,14 +57,7 @@ const RemediationPanel: React.FC = () => {
       {isStackLaunched ? (
         <AddRemediationLambdaForm />
       ) : (
-        <SetupRemediationForm
-          onStackLaunch={() => markStackAsLaunched(true)}
-          getStackUrl={({ isSatellite, adminAWSAccountId }) =>
-            isSatellite
-              ? getSatelliteRemediationCloudformationLink(adminAWSAccountId)
-              : adminRemediationCloudformationLink
-          }
-        />
+        <SetupRemediationForm onStackLaunch={() => markStackAsLaunched(true)} />
       )}
     </Box>
   );

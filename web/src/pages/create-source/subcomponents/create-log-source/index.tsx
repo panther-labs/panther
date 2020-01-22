@@ -19,7 +19,7 @@
 /* eslint-disable react/display-name */
 import React from 'react';
 import { Card, Flex, Alert, Box } from 'pouncejs';
-import { INTEGRATION_TYPES } from 'Source/constants';
+import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import Wizard from 'Components/wizard';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -59,8 +59,7 @@ const initialValues = {
 const validationSchema = Yup.object().shape({
   integrationLabel: Yup.string().required(),
   awsAccountId: Yup.string()
-    .matches(/[0-9]+/, 'Must only contain numbers')
-    .length(12, 'Must be 12 digits long')
+    .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
   s3Buckets: Yup.array()
     .of(Yup.string())
