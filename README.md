@@ -46,23 +46,23 @@ Panther is deployed from within your AWS account. Follow our [Quick Start guide 
 ## Screenshots
 
 <img src="docs/img/compliance-overview.png" alt="Compliance Overview"/>
-<p align="center">*Compliance Overview*</p>
+<p align="center"><i>Compliance Overview</i></p>
 
 <img src="docs/img/rules-editor.png" alt="Rules Editor"/>
-<p align="center">*Rules Editor*</p>
+<p align="center"><i>Rules Editor</i></p>
 
 <img src="docs/img/resource-viewer.png" alt="Resource Viewer"/>
-<p align="center">*Resource Viewer*</p>
+<p align="center"><i>Resource Viewer</i></p>
 
 ## Development
 
-Since the majority of Panther is written in Go, we follow the [standard Go project layout](https://github.com/golang-standards/project-layout).
-
-Run `mage` to see the list of available commands (`-v` for verbose mode). You can easily chain `mage` commands together, for example:
+Run [mage](https://magefile.org) to see the list of available commands (`-v` for verbose mode). You can also easily chain `mage` commands together, for example:
 
 ```bash
 mage fmt test:ci deploy
 ```
+
+Most of Panther is written in Go, and the repository follows the [standard Go project layout](https://github.com/golang-standards/project-layout).
 
 ### Testing
 
@@ -74,7 +74,7 @@ mage fmt test:ci deploy
 
 ## Contributing
 
-We welcome contributions! Please read the [contributing guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
+We love contributions! Please read the [contributing guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
 
 ## License
 
