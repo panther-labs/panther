@@ -46,9 +46,6 @@ export const LIST_DESTINATIONS = gql`
         sns {
           topicArn
         }
-        email {
-          destinationAddress
-        }
         pagerDuty {
           integrationKey
         }

@@ -150,7 +150,6 @@ export type DestinationConfig = {
   slack?: Maybe<SlackConfig>;
   sns?: Maybe<SnsConfig>;
   sqs?: Maybe<SqsConfig>;
-  email?: Maybe<EmailConfig>;
   pagerDuty?: Maybe<PagerDutyConfig>;
   github?: Maybe<GithubConfig>;
   jira?: Maybe<JiraConfig>;
@@ -162,7 +161,6 @@ export type DestinationConfigInput = {
   slack?: Maybe<SlackConfigInput>;
   sns?: Maybe<SnsConfigInput>;
   sqs?: Maybe<SqsConfigInput>;
-  email?: Maybe<EmailConfigInput>;
   pagerDuty?: Maybe<PagerDutyConfigInput>;
   github?: Maybe<GithubConfigInput>;
   jira?: Maybe<JiraConfigInput>;
@@ -181,7 +179,6 @@ export type DestinationInput = {
 export enum DestinationTypeEnum {
   Slack = 'slack',
   Pagerduty = 'pagerduty',
-  Email = 'email',
   Github = 'github',
   Jira = 'jira',
   Opsgenie = 'opsgenie',
@@ -189,15 +186,6 @@ export enum DestinationTypeEnum {
   Sns = 'sns',
   Sqs = 'sqs',
 }
-
-export type EmailConfig = {
-  __typename?: 'EmailConfig';
-  destinationAddress: Scalars['String'];
-};
-
-export type EmailConfigInput = {
-  destinationAddress: Scalars['String'];
-};
 
 export type GetAlertInput = {
   alertId: Scalars['ID'];
