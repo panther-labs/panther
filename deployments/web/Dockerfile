@@ -37,8 +37,8 @@ RUN mkdir /code
 # To a different folder so we don't pollute the root of our container
 WORKDIR /code
 
-# Mount the package.json
-ADD package.json .
+# Mount the package.json & lock
+ADD package.json package-lock.json ./
 
 # Install the dependencies
 RUN npm --production=false install
