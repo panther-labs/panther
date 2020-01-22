@@ -19,11 +19,11 @@
 /* eslint-disable react/display-name */
 
 import React from 'react';
-import { TableProps, Box, Badge, Text, Tooltip, Label } from 'pouncejs';
+import { TableProps, Box, Badge, Text } from 'pouncejs';
 import { formatDatetime, generateEnumerationColumn } from 'Helpers/utils';
 import ListDestinationsTableRowOptionsProps from 'Pages/destinations/subcomponents/list-destinations-table-row-options';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
-import { DestinationTypeEnum, Destination } from 'Generated/schema';
+import { Destination } from 'Generated/schema';
 
 // The columns that the associated table will show
 const columns = [
@@ -34,34 +34,6 @@ const columns = [
     key: 'displayName',
     header: 'Display Name',
     flex: '1 0 200px',
-    renderCell: ({ displayName, verificationStatus, outputType, outputConfig }) => {
-      const isUnverifiedEmailDestination =
-        outputType === DestinationTypeEnum.Email && verificationStatus !== 'SUCCESS';
-
-      if (!isUnverifiedEmailDestination) {
-        return <Text size="medium">{displayName}</Text>;
-      }
-
-      const emailAddress = outputConfig.email.destinationAddress;
-      let verificationMessage;
-      switch (verificationStatus) {
-        case 'PENDING':
-          verificationMessage = `${emailAddress} is currently pending verification`;
-          break;
-        case 'FAILED':
-          verificationMessage = `${emailAddress} failed to become verified. Please update it`;
-          break;
-        default:
-          verificationMessage = "Email verification process hasn't been initiated";
-      }
-      return (
-        <Tooltip positioning="down" content={<Label size="medium">{verificationMessage}</Label>}>
-          <Text size="medium" color="red300">
-            {displayName} *
-          </Text>
-        </Tooltip>
-      );
-    },
   },
 
   // The service like slack or pagerduty
