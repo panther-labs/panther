@@ -28,6 +28,9 @@ import (
 	"github.com/panther-labs/panther/api/lambda/organization/models"
 )
 
+// The default organization ID. Note that we can currently have only one organization.
+const orgID = "defaultOrganizationId"
+
 // API defines the interface for the table which can be used for mocking.
 type API interface {
 	Get() (*models.Organization, error)

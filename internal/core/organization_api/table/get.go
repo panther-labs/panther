@@ -32,7 +32,7 @@ import (
 func (table *OrganizationsTable) Get() (*models.Organization, error) {
 	zap.L().Info("retrieving organization from dynamo")
 	response, err := table.client.GetItem(&dynamodb.GetItemInput{
-		Key:       DynamoItem{"id": {S: aws.String("1")}},
+		Key:       DynamoItem{"id": {S: aws.String(orgID)}},
 		TableName: table.Name,
 	})
 	if err != nil {

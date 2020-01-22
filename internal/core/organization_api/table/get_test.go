@@ -83,11 +83,11 @@ func TestGetItemDoesNotExistError(t *testing.T) {
 func TestGetItem(t *testing.T) {
 	mockClient := &mockDynamoClient{}
 	expectedInput := &dynamodb.GetItemInput{
-		Key:       DynamoItem{"id": {S: aws.String("1")}},
+		Key:       DynamoItem{"id": {S: aws.String(orgID)}},
 		TableName: aws.String("test-table"),
 	}
 	output := &dynamodb.GetItemOutput{Item: DynamoItem{
-		"id":    {S: aws.String("1")},
+		"id":    {S: aws.String(orgID)},
 		"email": {S: aws.String("email")},
 	}}
 	mockClient.On("GetItem", expectedInput).Return(output, nil)
