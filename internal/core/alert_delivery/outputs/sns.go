@@ -33,7 +33,8 @@ import (
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
 func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.SnsConfig) *AlertDeliveryError {
-	outputMessage := &snsOutputMessage{
+	outputMessage := &snsMessage{
+		DefaultMessage: snsDefaultMessage{
 		ID:          alert.PolicyID,
 		Name:        alert.PolicyName,
 		VersionID:   alert.PolicyVersionID,
@@ -41,6 +42,8 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 		Runbook:     alert.Runbook,
 		Severity:    alert.Severity,
 		Tags:        alert.Tags,
+		},
+		EmailMessage: generateEmailContent(alert),
 	}
 
 	serializedMessage, err := jsoniter.MarshalToString(outputMessage)
@@ -52,7 +55,10 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 	snsMessageInput := &sns.PublishInput{
 		TopicArn: config.TopicArn,
 		Message:  aws.String(serializedMessage),
+		// Subject is optional in case the topic is subscribed to Email
 		Subject: generateAlertTitle(alert),
+		MessageStructure: aws.String("json"),
+
 	}
 
 	snsClient, err := client.getSnsClient(*config.TopicArn)
@@ -68,8 +74,14 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 	return nil
 }
 
-//snsOutputMessage contains the fields that will be included in the SNS message
-type snsOutputMessage struct {
+type snsMessage struct {
+	DefaultMessage snsDefaultMessage `json:"default"`
+	// EmailMessage contains the message that will be delivered to email subscribers
+	EmailMessage string `json:"email"`
+}
+
+//snsOutputMessage contains the fields that will be included in the  default SNS message
+type snsDefaultMessage struct {
 	ID          *string   `json:"id"`
 	Name        *string   `json:"name,omitempty"`
 	VersionID   *string   `json:"versionId,omitempty"`
