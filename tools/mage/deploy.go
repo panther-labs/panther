@@ -36,6 +36,7 @@ import (
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
+	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/pkg/shutil"
 )
 
@@ -281,14 +282,34 @@ func inviteFirstUser(awsSession *session.Session, userPoolID string) error {
 			Role:       aws.String("Admin"),
 		},
 	}
+	if err := invokeLambda(input, "panther-users-api"); err != nil {
+		return err
+	}
+
+	createOrgInput := &orgmodels.LambdaInput{
+		CreateOrganization: &orgmodels.CreateOrganizationInput{
+			Email: &email,
+			DisplayName: &firstName,
+		},
+	}
+
+	if err := invokeLambda(createOrgInput, "panther-organization-api"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func invokeLambda(input interface{}, functionName string) error {
 	payload, err := jsoniter.Marshal(input)
 	if err != nil {
 		return err
 	}
 
+	awsSession, err := session.NewSession()
+
 	lambdaClient := lambda.New(awsSession)
 	response, err := lambdaClient.Invoke(&lambda.InvokeInput{
-		FunctionName: aws.String("panther-users-api"),
+		FunctionName: aws.String(functionName),
 		Payload:      payload,
 	})
 	if err != nil {
@@ -299,6 +320,5 @@ func inviteFirstUser(awsSession *session.Session, userPoolID string) error {
 		return fmt.Errorf("failed to invoke panther-users-api: %s error: %s",
 			*response.FunctionError, string(response.Payload))
 	}
-
 	return nil
 }
