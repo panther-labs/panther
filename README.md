@@ -41,36 +41,21 @@ _NOTE: Panther is currently in beta._
 
 ## Deployment
 
-Panther is deployed from within your AWS account. Follow our [Quick Start guide here](https://docs.runpanther.io/quick-start) to quickly get up and running!
+Follow our [Quick Start Guide](https://docs.runpanther.io/quick-start) to deploy Panther to your AWS account in a matter of minutes!
 
 ## Screenshots
 
 <img src="docs/img/compliance-overview.png" alt="Compliance Overview"/>
 <p align="center"><i>Compliance Overview</i></p>
+<br />
 
 <img src="docs/img/rules-editor.png" alt="Rules Editor"/>
 <p align="center"><i>Rules Editor</i></p>
+<br />
 
 <img src="docs/img/resource-viewer.png" alt="Resource Viewer"/>
 <p align="center"><i>Resource Viewer</i></p>
-
-## Development
-
-Run [mage](https://magefile.org) to see the list of available commands (`-v` for verbose mode). You can also easily chain `mage` commands together, for example:
-
-```bash
-mage fmt test:ci deploy
-```
-
-Most of Panther is written in Go, and the repository follows the [standard Go project layout](https://github.com/golang-standards/project-layout).
-
-### Testing
-
-1. Run backend test suite: `mage test:ci`
-2. Run frontend test suite: `npm run lint`
-3. Run integration tests against a live deployment: `mage test:integration`
-   - WARNING: Integration tests will erase all Panther data stores
-   - To run tests for only one package: `PKG=./internal/compliance/compliance-api/main mage test:integration`
+<br />
 
 ## Contributing
 
