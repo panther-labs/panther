@@ -20,7 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/text-input';
-import { Text } from 'pouncejs';
+import { Text, Box } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -76,14 +76,16 @@ const SNSDestinationForm: React.FC<SNSDestinationFormProps> = ({ onSubmit, initi
         name="outputConfig.sns.topicArn"
         label="Topic ARN"
         placeholder="Where should we publish a notification to?"
-        mb={6}
+        mb={2}
         aria-required
       />
-      <Text size="medium" mb={2}>
-        <b>Note</b>: You would need to allow Panther <b>sns:Publish</b> access to send alert
-        messages to your SNS topic
-      </Text>
-      <JsonViewer data={SNS_TOPIC_POLICY} collapsed={false} />
+      <Box mb={6}>
+        <Text size="small" color="grey400" mb={2}>
+          <b>Note</b>: You would need to allow Panther <b>sns:Publish</b> access to send alert
+          messages to your SNS topic
+        </Text>
+        <JsonViewer data={SNS_TOPIC_POLICY} collapsed={false} />
+      </Box>
     </BaseDestinationForm>
   );
 };

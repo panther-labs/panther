@@ -20,7 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/text-input';
-import { Text } from 'pouncejs';
+import { Box, Text } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -73,20 +73,21 @@ const SQSDestinationForm: React.FC<SQSDestinationFormProps> = ({ onSubmit, initi
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Text size="small">Note: Add note here</Text>
       <Field
         as={FormikTextInput}
         name="outputConfig.sqs.queueUrl"
         label="Queue URL"
         placeholder="Where should we send the queue data to?"
-        mb={6}
+        mb={2}
         aria-required
       />
-      <Text size="medium" mb={2}>
-        <b>Note</b>: You would need to allow Panther <b>sqs:SendMessage</b> access to send alert
-        messages to your SQS queue
-      </Text>
-      <JsonViewer data={SQS_QUEUE_POLICY} collapsed={false} />
+      <Box mb={6}>
+        <Text size="small" color="grey400" mb={2}>
+          <b>Note</b>: You would need to allow Panther <b>sqs:SendMessage</b> access to send alert
+          messages to your SQS queue
+        </Text>
+        <JsonViewer data={SQS_QUEUE_POLICY} collapsed={false} />
+      </Box>
     </BaseDestinationForm>
   );
 };
