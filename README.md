@@ -39,23 +39,20 @@ Panther is developed by a [dedicated team](https://runpanther.io/about/) of clou
 
 _NOTE: Panther is currently in beta._
 
-## Screenshots
-
-**Compliance Overview**
-
-<img src="docs/img/compliance-overview.png" alt="Compliance Overview"/>
-
-**Rules Editor**
-
-<img src="docs/img/rules-editor.png" alt="Rules Editor"/>
-
-**Resource Viewer**
-
-<img src="docs/img/resource-viewer.png" alt="Resource Viewer"/>
-
 ## Deployment
 
 Panther is deployed from within your AWS account. Follow our [Quick Start guide here](https://docs.runpanther.io/quick-start) to quickly get up and running!
+
+## Screenshots
+
+<img src="docs/img/compliance-overview.png" alt="Compliance Overview"/>
+<p align="center">*Compliance Overview*</p>
+
+<img src="docs/img/rules-editor.png" alt="Rules Editor"/>
+<p align="center">*Rules Editor*</p>
+
+<img src="docs/img/resource-viewer.png" alt="Resource Viewer"/>
+<p align="center">*Resource Viewer*</p>
 
 ## Development
 
