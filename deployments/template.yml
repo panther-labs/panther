@@ -390,3 +390,6 @@ Outputs:
   WebApplicationCertificateArn:
     Description: ARN of the certificate used by the web application
     Value: !Ref WebApplicationCertificateArn
+  RemediationLambdaArn:
+    Description: The ARN of the Remediation Function
+    Value: !GetAtt RemediationAPI.Outputs.RemediationLambdaArn

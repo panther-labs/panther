@@ -35,8 +35,8 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
-	"github.com/panther-labs/panther/api/lambda/users/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
+	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/shutil"
 )
 
@@ -116,7 +116,7 @@ func Deploy() error {
 		return err
 	}
 
-	if err := inviteFirstUser(awsSession, outputs["UserPoolId"]); err != nil {
+	if err := setupOrganization(awsSession, outputs["UserPoolId"], outputs["RemediationLambdaArn"]); err != nil {
 		return err
 	}
 
@@ -252,8 +252,8 @@ func enableTOTP(awsSession *session.Session, userPoolID string) error {
 	return err
 }
 
-// If the Admin group is empty (e.g. on the initial deploy), create the initial admin user.
-func inviteFirstUser(awsSession *session.Session, userPoolID string) error {
+// If the Admin group is empty (e.g. on the initial deploy), create the initial admin user and organization
+func setupOrganization(awsSession *session.Session, userPoolID string, remediationLambdaArn string) error {
 	cognitoClient := cognitoidentityprovider.New(awsSession)
 	group, err := cognitoClient.ListUsersInGroup(&cognitoidentityprovider.ListUsersInGroupInput{
 		GroupName:  aws.String("Admin"),
@@ -282,30 +282,29 @@ func inviteFirstUser(awsSession *session.Session, userPoolID string) error {
 			Role:       aws.String("Admin"),
 		},
 	}
-	if err := invokeLambda(input, "panther-users-api"); err != nil {
+	if err := invokeLambda(awsSession, "panther-users-api", input); err != nil {
 		return err
 	}
 
+	// Hit organization-api.CreateOrganization to create organization entry
 	createOrgInput := &orgmodels.LambdaInput{
 		CreateOrganization: &orgmodels.CreateOrganizationInput{
-			Email: &email,
-			DisplayName: &firstName,
+			Email:             &email,
+			DisplayName:       aws.String(firstName + "-" + lastName),
+			RemediationConfig: &orgmodels.RemediationConfig{AwsRemediationLambdaArn: aws.String(remediationLambdaArn)},
 		},
 	}
-
-	if err := invokeLambda(createOrgInput, "panther-organization-api"); err != nil {
+	if err := invokeLambda(awsSession, "panther-organization-api", createOrgInput); err != nil {
 		return err
 	}
 	return nil
 }
 
-func invokeLambda(input interface{}, functionName string) error {
+func invokeLambda(awsSession *session.Session, functionName string, input interface{}) error {
 	payload, err := jsoniter.Marshal(input)
 	if err != nil {
 		return err
 	}
-
-	awsSession, err := session.NewSession()
 
 	lambdaClient := lambda.New(awsSession)
 	response, err := lambdaClient.Invoke(&lambda.InvokeInput{
@@ -317,8 +316,8 @@ func invokeLambda(input interface{}, functionName string) error {
 	}
 
 	if response.FunctionError != nil {
-		return fmt.Errorf("failed to invoke panther-users-api: %s error: %s",
-			*response.FunctionError, string(response.Payload))
+		return fmt.Errorf("failed to invoke %s: %s error: %s",
+			functionName, *response.FunctionError, string(response.Payload))
 	}
 	return nil
 }
