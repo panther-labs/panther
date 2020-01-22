@@ -52,6 +52,7 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 	snsMessageInput := &sns.PublishInput{
 		TopicArn: config.TopicArn,
 		Message:  aws.String(serializedMessage),
+		Subject: generateAlertTitle(alert),
 	}
 
 	snsClient, err := client.getSnsClient(*config.TopicArn)
