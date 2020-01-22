@@ -36,9 +36,6 @@ export const GET_ORGANIZATION = gql`
         displayName
         email
         alertReportFrequency
-        remediationConfig {
-          awsRemediationLambdaArn
-        }
       }
     }
   }
