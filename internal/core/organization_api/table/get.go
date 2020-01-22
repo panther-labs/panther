@@ -44,7 +44,7 @@ func (table *OrganizationsTable) Get() (*models.Organization, error) {
 		return nil, &genericapi.InternalError{
 			Message: "failed to unmarshal dynamo item to an Organization: " + err.Error()}
 	}
-	if org.AwsConfig == nil {
+	if org.Email == nil {
 		return nil, &genericapi.DoesNotExistError{}
 	}
 
