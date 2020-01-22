@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { useTheme } from 'pouncejs';
+import { copyTextToClipboard } from 'Helpers/utils';
 
 const ReactJSONView = React.lazy(() =>
   import(/* webpackChunkName: 'react-json-view' */ 'react-json-view')
@@ -34,7 +35,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data, collapsed }) => {
   const jsonViewerStyle = React.useMemo(() => ({ fontSize: theme.fontSizes[2] }), [theme]);
 
   const handleCopy = React.useCallback(copy => {
-    navigator.clipboard.writeText(JSON.stringify(copy.src, null, '\t'));
+    copyTextToClipboard(JSON.stringify(copy.src, null, '\t'));
   }, []);
 
   return (
