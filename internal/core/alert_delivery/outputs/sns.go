@@ -33,16 +33,25 @@ import (
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
 func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.SnsConfig) *AlertDeliveryError {
+
+	snsDefaultMessage := snsDefaultMessage{
+		ID:          alert.PolicyID,
+		Name:        alert.PolicyName,
+		VersionID:   alert.PolicyVersionID,
+		Description: alert.PolicyDescription,
+		Runbook:     alert.Runbook,
+		Severity:    alert.Severity,
+		Tags:        alert.Tags,
+	}
+
+	serializedDefaultMessage, err := jsoniter.MarshalToString(snsDefaultMessage)
+	if err != nil {
+		zap.L().Error("Failed to serialize message", zap.Error(err))
+		return &AlertDeliveryError{Message: "Failed to serialize message"}
+	}
+
 	outputMessage := &snsMessage{
-		DefaultMessage: snsDefaultMessage{
-			ID:          alert.PolicyID,
-			Name:        alert.PolicyName,
-			VersionID:   alert.PolicyVersionID,
-			Description: alert.PolicyDescription,
-			Runbook:     alert.Runbook,
-			Severity:    alert.Severity,
-			Tags:        alert.Tags,
-		},
+		DefaultMessage: serializedDefaultMessage,
 		EmailMessage: generateEmailContent(alert),
 	}
 
@@ -74,7 +83,7 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 }
 
 type snsMessage struct {
-	DefaultMessage snsDefaultMessage `json:"default"`
+	DefaultMessage string `json:"default"`
 	// EmailMessage contains the message that will be delivered to email subscribers
 	EmailMessage string `json:"email"`
 }

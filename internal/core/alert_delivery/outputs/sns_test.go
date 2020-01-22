@@ -58,13 +58,7 @@ func TestSendSns(t *testing.T) {
 	}
 
 	expectedSnsMessage := &snsMessage{
-		DefaultMessage: snsDefaultMessage{
-			ID:          alert.PolicyID,
-			Name:        alert.PolicyName,
-			Description: alert.PolicyDescription,
-			Severity:    alert.Severity,
-			Runbook:     alert.Runbook,
-		},
+		DefaultMessage: `{"id":"policyId","name":"policyName","description":"policyDescription","runbook":"runbook","severity":"severity"}`,
 		EmailMessage: "<h2>Message</h2><a href='https://panther.io/policies/policyId'>" +
 			"policyName failed on new resources</a><br><h2>Severity</h2>severity<br>" +
 			"<h2>Runbook</h2>runbook<br><h2>Description</h2>policyDescription",
