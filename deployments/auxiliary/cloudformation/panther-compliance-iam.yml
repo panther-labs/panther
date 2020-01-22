@@ -104,15 +104,6 @@ Resources:
                   - waf:ListTagsForResource
                   - waf-regional:ListTagsForResource
                 Resource: '*'
-        -
-          PolicyName: GetCertificates
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - acm:GetCertificate
-                Resource: '*'
       Tags:
         - Key: Application
           Value: Panther

@@ -46,7 +46,7 @@ func (client *OutputClient) Github(
 	tags := "\n **Tags:** " + strings.Join(tagsItem, ", ")
 
 	githubRequest := map[string]interface{}{
-		"title": aws.StringValue(generateAlertTitle(alert)),
+		"title": generateAlertTitle(alert),
 		"body":  description + link + runBook + severity + tags,
 	}
 

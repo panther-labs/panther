@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type TestCustomSimpleType int
@@ -50,10 +51,14 @@ type TestStruct struct {
 func (ts *TestStruct) Foo() { // admits to TestInterface
 }
 
+type StructToNest struct {
+	InheritedField string
+}
 type NestedStruct struct {
-	A TestStruct
-	B TestStruct
-	C *TestStruct
+	StructToNest // composed, in this case fields should be inherited
+	A            TestStruct
+	B            TestStruct
+	C            *TestStruct
 }
 
 type TestInterface interface {
@@ -194,7 +199,7 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "MapStringToString", Type: "map<string,string>"},
 		{Name: "MapStringToStruct", Type: "map<string,struct<Field1:string,Field2:int>>"},
 		{Name: "StructField", Type: "struct<Field1:string,Field2:int>"},
-		{Name: "NestedStructField", Type: "struct<A:struct<Field1:string,Field2:int>,B:struct<Field1:string,Field2:int>,C:struct<Field1:string,Field2:int>>"}, // nolint
+		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int>,B:struct<Field1:string,Field2:int>,C:struct<Field1:string,Field2:int>>"}, // nolint
 		{Name: "CustomTypeField", Type: "foo"},
 		{Name: "CustomStructField", Type: "bar"},
 	}
@@ -213,4 +218,29 @@ func TestInferJsonColumns(t *testing.T) {
 	var testInterface TestInterface = &TestStruct{}
 	cols = InferJSONColumns(testInterface)
 	assert.Equal(t, []Column{{Name: "Field1", Type: "string"}, {Name: "Field2", Type: "int"}}, cols, "Interface test failed")
+}
+
+type composedStruct struct {
+	fooStruct
+	Bar string
+}
+
+type fooStruct struct {
+	Foo string
+}
+
+func TestComposeStructs(t *testing.T) {
+	// test that the columns are correctly inherited
+	composition := composedStruct{
+		fooStruct: fooStruct{
+			Foo: "foo",
+		},
+		Bar: "bar",
+	}
+	cols := InferJSONColumns(&composition)
+	expectedColumns := []Column{
+		{Name: "Foo", Type: "string"},
+		{Name: "Bar", Type: "string"},
+	}
+	require.Equal(t, expectedColumns, cols)
 }

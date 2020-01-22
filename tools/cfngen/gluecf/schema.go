@@ -49,14 +49,22 @@ func InferJSONColumns(obj interface{}, customMappings ...CustomMapping) (cols []
 		objType = objType.Elem()
 	}
 
-	for i := 0; i < objType.NumField(); i++ {
-		fieldName, jsonType, skip := inferStructFieldType(objType.Field(i), customMappingsTable)
-		if skip {
-			continue
-		}
-		cols = append(cols, Column{Name: fieldName, Type: jsonType})
-	}
+	return inferJSONColumns(objType, customMappingsTable)
+}
 
+func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (cols []Column) {
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.Anonymous { // if composing a struct, treat fields as part of this struct
+			cols = append(cols, inferJSONColumns(field.Type, customMappingsTable)...)
+		} else {
+			fieldName, jsonType, skip := inferStructFieldType(field, customMappingsTable)
+			if skip {
+				continue
+			}
+			cols = append(cols, Column{Name: fieldName, Type: jsonType})
+		}
+	}
 	return cols
 }
 
@@ -120,7 +128,12 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 			return
 		}
 
-		jsonType = fmt.Sprintf("struct<%s>", inferStruct(t, customMappingsTable))
+		if sf.Anonymous { // composed struct, fields part of enclosing struct
+			fieldName = ""
+			jsonType = inferStruct(t, customMappingsTable)
+		} else {
+			jsonType = fmt.Sprintf("struct<%s>", inferStruct(t, customMappingsTable))
+		}
 		return
 
 	default:
@@ -145,7 +158,10 @@ func inferStruct(structType reflect.Type, customMappingsTable map[string]string)
 		if subFieldSkip {
 			continue
 		}
-		keyPairs = append(keyPairs, subFieldName+":"+subFieldJSONType)
+		if subFieldName != "" {
+			subFieldName += ":"
+		}
+		keyPairs = append(keyPairs, subFieldName+subFieldJSONType)
 	}
 	return strings.Join(keyPairs, ",")
 }

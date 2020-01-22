@@ -57,17 +57,17 @@ func TestSendSns(t *testing.T) {
 		Runbook:           aws.String("runbook"),
 	}
 
-	expectedSnsMessage := &snsOutputMessage{
-		ID:          alert.PolicyID,
-		Name:        alert.PolicyName,
-		Description: alert.PolicyDescription,
-		Severity:    alert.Severity,
-		Runbook:     alert.Runbook,
+	expectedSnsMessage := &snsMessage{
+		DefaultMessage: `{"id":"policyId","name":"policyName","description":"policyDescription","runbook":"runbook","severity":"severity"}`,
+		EmailMessage: "policyName failed on new resources\nFor more details please visit: https://panther.io/policies/policyId\n" +
+			"Severity: severity\nRunbook: runbook\nDescription:policyDescription",
 	}
 	expectedSerializedSnsMessage, _ := jsoniter.MarshalToString(expectedSnsMessage)
 	expectedSnsPublishInput := &sns.PublishInput{
-		TopicArn: snsOutputConfig.TopicArn,
-		Message:  aws.String(expectedSerializedSnsMessage),
+		TopicArn:         snsOutputConfig.TopicArn,
+		Message:          aws.String(expectedSerializedSnsMessage),
+		MessageStructure: aws.String("json"),
+		Subject:          aws.String("Policy Failure: policyName"),
 	}
 
 	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{}, nil)
