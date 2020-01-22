@@ -69,6 +69,9 @@ export const LIST_DESTINATIONS = gql`
         msTeams {
           webhookURL
         }
+        sqs {
+          queueUrl
+        }
       }
       verificationStatus
       defaultForSeverity

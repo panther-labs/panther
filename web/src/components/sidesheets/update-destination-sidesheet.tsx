@@ -83,6 +83,9 @@ const UPDATE_DESTINATION = gql`
         msTeams {
           webhookURL
         }
+        sqs {
+          queueUrl
+        }
       }
       verificationStatus
       defaultForSeverity
