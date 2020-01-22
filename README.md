@@ -3,12 +3,12 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.runpanther.io">Documentation</a> |
-  <a href="https://blog.runpanther.io">Blog</a>
+  <b>A Cloud-Native SIEM for the Modern Security Team</b>
 </p>
 
 <p align="center">
-  <h3>Panther is a flexible, scalable, cloud-native SIEM designed for the modern security team</h3>
+  <a href="https://docs.runpanther.io">Documentation</a> |
+  <a href="https://blog.runpanther.io">Blog</a>
 </p>
 
 <p align="center">
@@ -19,49 +19,43 @@
 
 ---
 
-Developed by a [dedicated team](https://runpanther.io/about/) of cloud security practitioners, Panther is designed to be:
+## Why Panther?
 
-- **Flexible:** Python-based detections with integrations into common tools such as PagerDuty, Slack, MS Teams, and more
-- **Scalable:** Built with serverless technology for cost and operational efficiency at any scale
-- **Secure:** Least-privilege and encrypted infrastructure that you control
-- **Integrated:** Support for many popular security logs combined with rich information about your cloud resources
+Panther is developed by a [dedicated team](https://runpanther.io/about/) of cloud security practitioners and is designed to be:
+
+- **Flexible:** Perform advanced analysis on log data and cloud infrastructure with Python-based detections
 - **Automated:** Fast and simple deployments with AWS CloudFormation
+- **Scalable:** Built on Serverless technology for cost and operational efficiency at any scale
+- **Secure:** Least-privilege and encrypted infrastructure deployed into your cloud
+- **Integrated:** Analyze popular security logs, gather information about your cloud resources, and send alarms to commonly used destinations
 
-### Panther Use Cases
+## Use Cases
 
 - **SIEM:** Centralize all security log data for threat detection, historical search, long-term storage, and investigations
-- **[Threat Detection](https://runpanther.io/log-analysis):** Detect suspicious activity quickly and effectively with Python rules
-- **Alerting:** Send notifications to your team when new issues are identified
+- **[Log Analysis](https://runpanther.io/log-analysis):** Detect suspicious activity quickly and effectively with Python rules
 - **[Cloud Compliance](https://runpanther.io/compliance/):** Detect and enforce AWS infrastructure best practices with Python policies
+- **Alerting:** Send notifications to your team when new issues are identified
 - **Automatic Remediation:** Correct insecure infrastructure as soon as new issues are identified
 
 _NOTE: Panther is currently in beta._
 
-## Getting Started
+## Screenshots
 
-To deploy Panther from source:
+**Compliance Overview**
 
-1. Install Go 1.13+, Node 10+, and Python 3.7+
-   - For mac w/ homebrew, `brew install go node python3`
-2. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html)
-   - [Configure](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your AWS region and credentials
-3. Install [Mage](https://magefile.org/#installation)
-   - If you run into issues, try explicitly [setting GOPATH](https://github.com/golang/go/wiki/SettingGOPATH): `export GOPATH=$HOME/go`
-4. Clone the repo to `$GOPATH/src`
-   - HTTPS: `git clone https://github.com/panther-labs/panther $GOPATH/src/github.com/panther-labs/panther`
-   - SSH: `git clone git@github.com:panther-labs/panther $GOPATH/src/github.com/panther-labs/panther`
-5. From the root of the repo, run `mage setup && npm i`
-   - `pip` may show warnings about incompatible packages which are safe to ignore
-6. Deploy! `mage deploy`
-   - Your IAM role will need permission to create resources in Lambda, DynamoDB, S3, ECS, ELB, EC2 (security groups, subnets, VPC), SNS, SQS, SES, KMS, IAM, CloudFormation, CloudWatch, API Gateway, Cognito, and AppSync.
-   - NOTE: The initial deploy will take 10-15 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off.
-7. Configure your initial Panther admin user
-   - Near the end of the deploy command, you'll be prompted for first/last name and email
-   - You will get an email from **no-reply@verificationemail.com** with your temporary password. If you don't see it, be sure to check your spam folder.
-8. Sign in to Panther! The URL is listed in the welcome email and also printed at the end of the deploy command.
-   - WARNING: By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page.
-   - If you see a "502 Bad Gateway" error, wait a few minutes and refresh the page
-9. [Onboard your AWS account(s)](https://docs.runpanther.io/quick-start) in your Panther deployment!
+<img src="docs/img/compliance-overview.png" alt="Compliance Overview"/>
+
+**Rules Editor**
+
+<img src="docs/img/rules-editor.png" alt="Rules Editor"/>
+
+**Resource Viewer**
+
+<img src="docs/img/resource-viewer.png" alt="Resource Viewer"/>
+
+## Deployment
+
+Panther is deployed from within your AWS account. Follow our [Quick Start guide here](https://docs.runpanther.io/quick-start) to quickly get up and running!
 
 ## Development
 

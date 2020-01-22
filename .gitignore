@@ -18,3 +18,5 @@ web/config/*
 # Private keys
 keys/
 
+# MacOS files
+.DS_Store
