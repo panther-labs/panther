@@ -30,6 +30,13 @@ interface JsonViewerProps {
 
 const JsonViewer: React.FC<JsonViewerProps> = ({ data, collapsed }) => {
   const theme = useTheme();
+
+  const jsonViewerStyle = React.useMemo(() => ({ fontSize: theme.fontSizes[2] }), [theme]);
+
+  const handleCopy = React.useCallback(copy => {
+    navigator.clipboard.writeText(JSON.stringify(copy.src, null, '\t'));
+  }, []);
+
   return (
     <React.Suspense fallback={null}>
       <ReactJSONView
@@ -40,8 +47,9 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data, collapsed }) => {
         displayObjectSize={false}
         displayDataTypes={false}
         collapsed={collapsed || 1}
-        style={{ fontSize: theme.fontSizes[2] }}
+        style={jsonViewerStyle}
         sortKeys
+        enableClipboard={handleCopy}
       />
     </React.Suspense>
   );
