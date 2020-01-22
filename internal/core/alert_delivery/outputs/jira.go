@@ -45,7 +45,7 @@ func (client *OutputClient) Jira(
 	tags := "\n *Tags:* " + strings.Join(tagsItem, ", ")
 
 	fields := map[string]interface{}{
-		"summary":     *generateAlertTitle(alert),
+		"summary":     generateAlertTitle(alert),
 		"description": description + link + runBook + severity + tags,
 		"project": map[string]*string{
 			"key": config.ProjectKey,

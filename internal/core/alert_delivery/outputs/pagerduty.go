@@ -55,7 +55,7 @@ func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmo
 	}
 
 	payload := map[string]interface{}{
-		"summary":   *generateAlertTitle(alert),
+		"summary":   generateAlertTitle(alert),
 		"severity":  aws.StringValue(severity),
 		"timestamp": alert.CreatedAt.Format(time.RFC3339),
 		"source":    "pantherlabs",

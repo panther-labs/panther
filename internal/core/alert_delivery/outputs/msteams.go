@@ -42,7 +42,7 @@ func (client *OutputClient) MsTeams(
 	msTeamsRequestBody := map[string]interface{}{
 		"@context": "http://schema.org/extensions",
 		"@type":    "MessageCard",
-		"text":     *generateAlertTitle(alert),
+		"text":     generateAlertTitle(alert),
 		"sections": []interface{}{
 			map[string]interface{}{
 				"facts": []interface{}{
