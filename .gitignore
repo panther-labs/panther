@@ -15,3 +15,6 @@ web/scripts/deploy-sourcemap.js
 
 # Private keys
 keys/
+
+# Dev credentials
+web/config
