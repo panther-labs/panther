@@ -87,8 +87,8 @@ func TestGetItem(t *testing.T) {
 		TableName: aws.String("test-table"),
 	}
 	output := &dynamodb.GetItemOutput{Item: DynamoItem{
-		"id":        {S: aws.String("1")},
-		"awsConfig": dynamoAwsConfig,
+		"id":    {S: aws.String("1")},
+		"email": {S: aws.String("email")},
 	}}
 	mockClient.On("GetItem", expectedInput).Return(output, nil)
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
