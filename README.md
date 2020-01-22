@@ -1,5 +1,14 @@
 <p align="center">
-  <img src="docs/img/logo-banner.png"/>
+  <a href="https://www.runpanther.io"><img src="docs/img/logo-banner.png" alt="Panther Logo"/></a>
+</p>
+
+<p align="center">
+  <a href="https://docs.runpanther.io">Documentation</a> |
+  <a href="https://blog.runpanther.io">Blog</a>
+</p>
+
+<p align="center">
+  <h3>Panther is a flexible, scalable, cloud-native SIEM designed for the modern security team</h3>
 </p>
 
 <p align="center">
@@ -9,8 +18,6 @@
 </p>
 
 ---
-
-Panther is a scalable, open-source, cloud-native SIEM written in Golang/React.
 
 Developed by a [dedicated team](https://runpanther.io/about/) of cloud security practitioners, Panther is designed to be:
 
@@ -27,8 +34,6 @@ Developed by a [dedicated team](https://runpanther.io/about/) of cloud security 
 - **Alerting:** Send notifications to your team when new issues are identified
 - **[Cloud Compliance](https://runpanther.io/compliance/):** Detect and enforce AWS infrastructure best practices with Python policies
 - **Automatic Remediation:** Correct insecure infrastructure as soon as new issues are identified
-
-Check out our [website](https://runpanther.io), [blog](https://blog.runpanther.io), and [docs](https://docs.runpanther.io) to learn more!
 
 _NOTE: Panther is currently in beta._
 
