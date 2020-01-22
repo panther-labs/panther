@@ -65,10 +65,12 @@ func AddPermissionToLogProcessorQueue(accountID string) error {
 	}
 
 	if findStatementIndex(existingPolicy, accountID) >= 0 {
-		err = &genericapi.DoesNotExistError{Message: "AWS Account ID already exists"}
-		zap.L().Error("AWS Account already exists",
+		errMsg := "account: " + accountID + " has already been configured"
+		err = errors.WithStack(&genericapi.AlreadyExistsError{Message: errMsg})
+		zap.L().Error(errMsg,
+			zap.String("sqsQueueARN", logProcessorQueueArn),
 			zap.String("awsAccountId", accountID),
-			zap.Error(errors.Wrap(err, "AWS Account already exists")))
+			zap.Error(err))
 
 		// // Returning user friendly message
 		return err
