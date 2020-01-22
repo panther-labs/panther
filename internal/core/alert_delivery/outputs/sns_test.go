@@ -71,10 +71,10 @@ func TestSendSns(t *testing.T) {
 	}
 	expectedSerializedSnsMessage, _ := jsoniter.MarshalToString(expectedSnsMessage)
 	expectedSnsPublishInput := &sns.PublishInput{
-		TopicArn: snsOutputConfig.TopicArn,
-		Message:  aws.String(expectedSerializedSnsMessage),
+		TopicArn:         snsOutputConfig.TopicArn,
+		Message:          aws.String(expectedSerializedSnsMessage),
 		MessageStructure: aws.String("json"),
-		Subject: aws.String("Policy Failure: policyName"),
+		Subject:          aws.String("Policy Failure: policyName"),
 	}
 
 	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{}, nil)

@@ -35,13 +35,13 @@ import (
 func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.SnsConfig) *AlertDeliveryError {
 	outputMessage := &snsMessage{
 		DefaultMessage: snsDefaultMessage{
-		ID:          alert.PolicyID,
-		Name:        alert.PolicyName,
-		VersionID:   alert.PolicyVersionID,
-		Description: alert.PolicyDescription,
-		Runbook:     alert.Runbook,
-		Severity:    alert.Severity,
-		Tags:        alert.Tags,
+			ID:          alert.PolicyID,
+			Name:        alert.PolicyName,
+			VersionID:   alert.PolicyVersionID,
+			Description: alert.PolicyDescription,
+			Runbook:     alert.Runbook,
+			Severity:    alert.Severity,
+			Tags:        alert.Tags,
 		},
 		EmailMessage: generateEmailContent(alert),
 	}
@@ -56,9 +56,8 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 		TopicArn: config.TopicArn,
 		Message:  aws.String(serializedMessage),
 		// Subject is optional in case the topic is subscribed to Email
-		Subject: generateAlertTitle(alert),
+		Subject:          generateAlertTitle(alert),
 		MessageStructure: aws.String("json"),
-
 	}
 
 	snsClient, err := client.getSnsClient(*config.TopicArn)
