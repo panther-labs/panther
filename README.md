@@ -1,8 +1,12 @@
-![Panther Logo](docs/img/logo-banner.png)
+<p align="center">
+  <img src="docs/img/logo-banner.png"/>
+</p>
 
-[![Gitter](https://badges.gitter.im/runpanther/community.svg)](https://gitter.im/runpanther/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![CircleCI](https://circleci.com/gh/panther-labs/panther.svg?style=svg)](https://circleci.com/gh/panther-labs/panther)
-[![Built with Mage](https://magefile.org/badge.svg)](https://magefile.org)
+<p align="center">
+  <a href="https://gitter.im/runpanther/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge"><img src="https://badges.gitter.im/runpanther/community.svg" alt="Gitter"/></a>
+  <a href="https://magefile.org"><img src="https://magefile.org/badge.svg" alt="Built with Mage"/></a>
+  <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a>
+</p>
 
 ---
 
