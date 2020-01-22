@@ -51,16 +51,7 @@ const PolicyFormAutoRemediationFields: React.FC = () => {
     values.autoRemediationParameters,
   ]);
 
-  // Currently there is a bug in apollo. On requests where the cache is read, if there
-  // is an error, then the second time you read from the cache the "error" key is undefined. Thus,
-  // you don't know whether there was actually an error before. For this reason, we don't add cache
-  // for requests where we would want to still store the error in the cache (since the error would
-  // mean that no remediation lambda is present). That's why `no-cache` is added here.
-  // https://github.com/apollographql/apollo-client/issues/4138
-  // TODO: convert fetchPolicy to `cache-first` if the above issue is resolved
-  const { data, loading, error } = useQuery<ApolloQueryData>(LIST_REMEDIATIONS, {
-    fetchPolicy: 'no-cache',
-  });
+  const { data, loading, error } = useQuery<ApolloQueryData>(LIST_REMEDIATIONS);
 
   if (loading) {
     return <Spinner size="medium" />;
