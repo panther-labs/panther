@@ -19,17 +19,26 @@ package verification
  */
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ses"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
+
+var emailFromAddress = os.Getenv("MAIL_FROM")
 
 // GetVerificationStatus returns the verification status of an email address
 func (verification *OutputVerification) GetVerificationStatus(input *models.AlertOutput) (*string, error) {
 	if *input.OutputType != "email" {
 		result := models.VerificationStatusSuccess
 		return &result, nil
+	}
+
+	if emailFromAddress == "" {
+		return nil, &genericapi.InvalidInputError{Message:"Cannot add email destination. You need to configure an email that will be used as source email"}
 	}
 
 	// Check SES to see if it has been verified already

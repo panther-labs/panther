@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -94,21 +95,19 @@ func uploadFileToS3(
 func promptUser(prompt string, validator func(string) error) string {
 	var result string
 
-	for {
-		fmt.Print(prompt)
-		if _, err := fmt.Scanln(&result); err != nil {
-			fmt.Println(err) // empty line, for example
-			continue
-		}
-
-		result = strings.TrimSpace(result)
+	fmt.Print(prompt)
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan(){
+		result = strings.TrimSpace(scanner.Text())
 		if err := validator(result); err != nil {
 			fmt.Println(err)
+			fmt.Print(prompt)
 			continue
 		}
-
 		return result
 	}
+
+	return result
 }
 
 // Ensure non-empty strings.
