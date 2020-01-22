@@ -12,9 +12,9 @@ npm-debug.log*
 # web
 web/dist/
 web/scripts/deploy-sourcemap.js
+# Dev configurations
+web/config/*
 
 # Private keys
 keys/
 
-# Dev credentials
-web/config
