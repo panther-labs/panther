@@ -156,19 +156,14 @@ const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
           }}
         />
         {type === 'rule' && (
-          <Box>
-            <Field
-              as={FormikMultiCombobox}
-              searchable
-              label="Log Types"
-              name="logTypes"
-              items={LOG_TYPES}
-              inputProps={{ placeholder: 'Filter affected log types' }}
-            />
-            <Text size="small" color="grey300" mt={2}>
-              Leave empty to apply to all logs
-            </Text>
-          </Box>
+          <Field
+            as={FormikMultiCombobox}
+            searchable
+            label="* Log Types"
+            name="logTypes"
+            items={LOG_TYPES}
+            inputProps={{ placeholder: 'Filter affected log types' }}
+          />
         )}
       </Grid>
       <Box my={6}>
