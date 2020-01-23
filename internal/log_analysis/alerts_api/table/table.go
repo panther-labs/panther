@@ -30,16 +30,16 @@ import (
 type API interface {
 	GetAlert(*string) (*models.AlertItem, error)
 	GetEvent([]byte) (*string, error)
-	ListAlerts(*string, *int) ([]*models.AlertItem, *string, error)
-	ListAlertsByRule(*string, *string, *int) ([]*models.AlertItem, *string, error)
+	List(string, string, *string, *int) ([]*models.AlertItem, *string, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.
 type AlertsTable struct {
-	AlertsTableName             string
-	RuleIDCreationTimeIndexName string
-	EventsTableName             string
-	Client                      dynamodbiface.DynamoDBAPI
+	AlertsTableName                    string
+	RuleIDCreationTimeIndexName        string
+	TimePartitionCreationTimeIndexName string
+	EventsTableName                    string
+	Client                             dynamodbiface.DynamoDBAPI
 }
 
 // The AlertsTable must satisfy the API interface.

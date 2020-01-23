@@ -21,9 +21,11 @@ package table
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/pkg/errors"
 )
 
 // GetEvent retrieves an event from DDB
+// FIXME: the string keys should be constants in _some_ model, but which?
 func (table *AlertsTable) GetEvent(eventHash []byte) (*string, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
@@ -34,7 +36,7 @@ func (table *AlertsTable) GetEvent(eventHash []byte) (*string, error) {
 
 	ddbResult, err := table.Client.GetItem(input)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "GetItem() failed for: "+string(eventHash))
 	}
 
 	return ddbResult.Item["event"].S, nil

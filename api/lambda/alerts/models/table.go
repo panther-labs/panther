@@ -20,6 +20,13 @@ package models
 
 import "time"
 
+const (
+	RuleIDKey        = "ruleId"
+	AlertIDKey       = "alertId"
+	TimePartitionKey = "timePartition"
+	CreationTimeKey  = "creationTime"
+)
+
 // AlertItem is a DDB representation of an Alert
 type AlertItem struct {
 	AlertID          *string    `json:"alertId"`

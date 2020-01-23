@@ -28,24 +28,31 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// ListAlertsByRule returns (a page of alerts, last evaluated key, any error)
-func (table *AlertsTable) ListAlertsByRule(ruleID *string, exclusiveStartKey *string, pageSize *int) (
+// List returns (a page of alerts ordered by creationTime, last evaluated key, any error)
+func (table *AlertsTable) List(ddbKey, ddbValue string, exclusiveStartKey *string, pageSize *int) (
 	summaries []*models.AlertItem, lastEvaluatedKey *string, err error) {
 
-	keyCondition := expression.Key("ruleId").Equal(expression.Value(ruleID))
+	// pick index
+	var index string
+	if ddbKey == models.RuleIDKey {
+		index = table.RuleIDCreationTimeIndexName
+	} else if ddbKey == models.TimePartitionKey {
+		index = table.TimePartitionCreationTimeIndexName
+	} else {
+		return nil, nil, errors.New("unknown key" + ddbKey)
+	}
+
+	// queries require and = condition on primary key
+	keyCondition := expression.Key(ddbKey).Equal(expression.Value(&ddbValue))
 
 	queryExpression, err := expression.NewBuilder().
 		WithKeyCondition(keyCondition).
 		Build()
 
 	if err != nil {
-		errMsg := "failed to build expression " + err.Error()
-		err = errors.WithStack(&genericapi.InternalError{Message: errMsg})
-		zap.L().Error(errMsg, zap.Error(err))
-		return nil, nil, err
+		return nil, nil, errors.Wrap(err, "failed to build expression")
 	}
 
 	var queryResultsLimit *int64
@@ -55,13 +62,10 @@ func (table *AlertsTable) ListAlertsByRule(ruleID *string, exclusiveStartKey *st
 
 	var queryExclusiveStartKey map[string]*dynamodb.AttributeValue
 	if exclusiveStartKey != nil {
-		key := &listAlertsPaginationKey{}
-		err = jsoniter.UnmarshalFromString(*exclusiveStartKey, key)
+		queryExclusiveStartKey = make(map[string]*dynamodb.AttributeValue)
+		err = jsoniter.UnmarshalFromString(*exclusiveStartKey, &queryExclusiveStartKey)
 		if err != nil {
-			return nil, nil, err
-		}
-		queryExclusiveStartKey = map[string]*dynamodb.AttributeValue{
-			"alertId": {S: key.AlertID},
+			return nil, nil, errors.Wrap(err, "failed to Unmarshal ExclusiveStartKey")
 		}
 	}
 
@@ -72,46 +76,30 @@ func (table *AlertsTable) ListAlertsByRule(ruleID *string, exclusiveStartKey *st
 		ExpressionAttributeValues: queryExpression.Values(),
 		KeyConditionExpression:    queryExpression.KeyCondition(),
 		ExclusiveStartKey:         queryExclusiveStartKey,
-		IndexName:                 aws.String(table.RuleIDCreationTimeIndexName),
+		IndexName:                 aws.String(index),
 		Limit:                     queryResultsLimit,
 	}
 
 	queryOutput, err := table.Client.Query(queryInput)
 	if err != nil {
-		errMsg := "query to DDB failed" + err.Error()
-		err = errors.WithStack(&genericapi.InternalError{
-			Message: errMsg,
-		})
-		zap.L().Error(errMsg, zap.Error(err))
-		return nil, nil, err
+		// this deserves detailed logging for debugging
+		zap.L().Error("Query()", zap.Error(err), zap.Any("input", queryInput), zap.Any("startKey", queryExclusiveStartKey))
+		return nil, nil, errors.Wrapf(err, "QueryInput() failed for %s,%s", ddbKey, ddbValue)
 	}
 
 	err = dynamodbattribute.UnmarshalListOfMaps(queryOutput.Items, &summaries)
 	if err != nil {
-		errMsg := "failed to marshall response" + err.Error()
-		err = errors.WithStack(&genericapi.InternalError{
-			Message: errMsg,
-		})
-		zap.L().Error(errMsg, zap.Error(err))
-		return nil, nil, err
+		return nil, nil, errors.Wrap(err, "UnmarshalListOfMaps() failed")
 	}
 
 	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
-	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` in the response.
+	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` JSON blob in the response.
 	if len(queryOutput.LastEvaluatedKey) > 0 {
-		paginationKey := listAlertsPaginationKey{
-			AlertID: queryOutput.LastEvaluatedKey["alertId"].S,
-		}
-		marshalledKey, err := jsoniter.MarshalToString(paginationKey)
+		jsonSnippet, err := jsoniter.MarshalToString(queryOutput.LastEvaluatedKey)
 		if err != nil {
-			errMsg := "failed to marshall key" + err.Error()
-			err = errors.WithStack(&genericapi.InternalError{
-				Message: errMsg,
-			})
-			zap.L().Error(errMsg, zap.Error(err))
-			return nil, nil, err
+			return nil, nil, errors.Wrap(err, "failed to Marshal LastEvaluatedKey)")
 		}
-		lastEvaluatedKey = &marshalledKey
+		lastEvaluatedKey = &jsonSnippet
 	}
 
 	return summaries, lastEvaluatedKey, nil
