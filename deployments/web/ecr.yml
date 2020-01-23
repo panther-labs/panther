@@ -31,5 +31,5 @@ Resources:
 
 Outputs:
   ImageRepo:
-    Description: The URL of the repository hosting the panther web image
+    Description: The name of the registry hosting the panther web image
     Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ImageName}
