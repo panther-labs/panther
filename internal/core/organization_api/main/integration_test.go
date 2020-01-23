@@ -175,8 +175,8 @@ func updateOrg(t *testing.T) {
 
 	expected := models.UpdateOrganizationOutput{
 		Organization: &models.Organization{
-			CompletedActions: org.CompletedActions,
-			CreatedAt:        org.CreatedAt,
+			CompletedActions:     org.CompletedActions,
+			CreatedAt:            org.CreatedAt,
 			AlertReportFrequency: input.UpdateOrganization.AlertReportFrequency,
 			AwsConfig:            input.UpdateOrganization.AwsConfig,
 			DisplayName:          input.UpdateOrganization.DisplayName,
