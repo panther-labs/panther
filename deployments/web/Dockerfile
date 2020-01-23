@@ -71,6 +71,10 @@ COPY --from=build-env /code/web/dist dist
 ADD  web/scripts/serve.js scripts/serve.js
 
 # Install express
+#
+## WARNING: Be careful not to add the package.json, since it will install all of your dependencies
+## even when you explicitly try to install a single one
+#
 RUN npm install express
 
 # Run the express server to serve the assets
