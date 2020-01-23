@@ -13,9 +13,11 @@ web/README.md
 node_modules
 venv
 
+
 # Generated
 out
 keys
+.setup
 
 # External
 docs
