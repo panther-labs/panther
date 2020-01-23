@@ -45,9 +45,9 @@ import (
 
 const (
 	// CloudFormation templates + stacks
-	backendStack     = "panther-backend"
+	backendStack     = "panther-app"
 	backendTemplate  = "deployments/backend.yml"
-	frontendStack    = "panther-frontend"
+	frontendStack    = "panther-app-frontend"
 	frontendTemplate = "deployments/frontend.yml"
 	bucketStack      = "panther-buckets" // prereq stack with Panther S3 buckets
 	bucketTemplate   = "deployments/core/buckets.yml"
@@ -130,7 +130,7 @@ func Deploy() error {
 		return err
 	}
 
-	frontendDeployParams, err := getFrontendDeployParams(&config, backendOutputs)
+	frontendDeployParams, err := getFrontendDeployParams(backendOutputs)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 	return result, nil
 }
 
-func getFrontendDeployParams(config *PantherConfig, backendOutputs map[string]string) (map[string]string, error) {
+func getFrontendDeployParams(backendOutputs map[string]string) (map[string]string, error) {
 	// If there are params declared in config, we should make sure to add them as well. Currently there are none.
 	result := map[string]string{
 		"WebApplicationImage":                       backendOutputs["WebApplicationImage"],
