@@ -33,7 +33,7 @@ Parameters:
   WebApplicationLoadBalancerSecurityGroupId:
     Type: String
     Description: The ID of the security group that is related with the Load Balancer that sits int front of this service
-  WebApplicationCluster:
+  WebApplicationClusterName:
     Type: String
     Description: The name of the cluster that the server should be attached to
   WebApplicationImage:
@@ -46,7 +46,7 @@ Resources:
     Properties:
       Parameters:
         Image: !Ref WebApplicationImage
-        ClusterName: !Ref WebApplicationCluster
+        ClusterName: !Ref WebApplicationClusterName
         VpcId: !Ref WebApplicationVpcId
         SubnetOneId: !Ref WebApplicationSubnetOneId
         SubnetTwoId: !Ref WebApplicationSubnetTwoId

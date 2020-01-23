@@ -33,7 +33,7 @@ import (
 
 // Functions that build a personalized docker image from source, while pushing it to the private image repo of the user
 func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) error {
-	fmt.Println("docker: Requesting access to remote image repo")
+	fmt.Println("deploy: Requesting access to remote image repo")
 	ecrClient := ecr.New(awsSession)
 	req, resp := ecrClient.GetAuthorizationTokenRequest(&ecr.GetAuthorizationTokenInput{})
 	if err := req.Send(); err != nil {
@@ -55,7 +55,7 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 		return err
 	}
 
-	fmt.Println("deploy: building docker image from source")
+	fmt.Println("deploy: building the docker image for the front-end server from source")
 	if err := sh.Run("docker", "build",
 		"--file", "deployments/web/Dockerfile",
 		"--tag", imageTag,
@@ -65,7 +65,7 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 		return err
 	}
 
-	fmt.Println("deploy: pushing image to remote repo")
+	fmt.Println("deploy: pushing docker image to remote repo")
 	if err := sh.RunV("docker", "push", imageTag); err != nil {
 		return err
 	}

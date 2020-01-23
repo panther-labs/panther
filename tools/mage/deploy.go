@@ -204,7 +204,7 @@ func getFrontendDeployParams(backendOutputs map[string]string) map[string]string
 	// If there are params declared in config, we should make sure to add them as well. Currently there are none.
 	result := map[string]string{
 		"WebApplicationImage":                       backendOutputs["WebApplicationImage"],
-		"WebApplicationCluster":                     backendOutputs["WebApplicationCluster"],
+		"WebApplicationClusterName":                 backendOutputs["WebApplicationClusterName"],
 		"WebApplicationVpcId":                       backendOutputs["WebApplicationVpcId"],
 		"WebApplicationSubnetOneId":                 backendOutputs["WebApplicationSubnetOneId"],
 		"WebApplicationSubnetTwoId":                 backendOutputs["WebApplicationSubnetTwoId"],
