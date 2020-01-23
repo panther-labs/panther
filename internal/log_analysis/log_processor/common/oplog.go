@@ -41,6 +41,7 @@ var (
 	OpLogSNSServiceDim       = zap.String(OpLogServiceDim, "sns")
 	OpLogProcessorServiceDim = zap.String(OpLogServiceDim, "processor")
 	OpLogGlueServiceDim      = zap.String(OpLogServiceDim, "glue")
+	OpLogAlertsAPIDim        = zap.String(OpLogServiceDim, "alertsApi")
 
 	/*
 			  Example CloudWatch Insight queries this structure enables:
