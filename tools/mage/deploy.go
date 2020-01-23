@@ -45,12 +45,12 @@ import (
 
 const (
 	// CloudFormation templates + stacks
-	backendStack    = "panther-backend"
-	backendTemplate = "deployments/backend.yml"
+	backendStack     = "panther-backend"
+	backendTemplate  = "deployments/backend.yml"
 	frontendStack    = "panther-frontend"
 	frontendTemplate = "deployments/frontend.yml"
-	bucketStack         = "panther-buckets" // prereq stack with Panther S3 buckets
-	bucketTemplate      = "deployments/core/buckets.yml"
+	bucketStack      = "panther-buckets" // prereq stack with Panther S3 buckets
+	bucketTemplate   = "deployments/core/buckets.yml"
 
 	// Python layer
 	layerSourceDir   = "out/pip/analysis/python"
@@ -206,19 +206,19 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 func getFrontendDeployParams(config *PantherConfig, backendOutputs map[string]string) (map[string]string, error) {
 	// If there are params declared in config, we should make sure to add them as well. Currently there are none.
 	result := map[string]string{
-		"WebApplicationImage": backendOutputs["WebApplicationImage"],
-		"WebApplicationCluster": backendOutputs["WebApplicationCluster"],
-		"WebApplicationVpcId": backendOutputs["WebApplicationVpcId"],
-		"WebApplicationSubnetOneId": backendOutputs["WebApplicationSubnetOneId"],
-		"WebApplicationSubnetTwoId": backendOutputs["WebApplicationSubnetTwoId"],
-		"WebApplicationLoadBalancerListenerArn": backendOutputs["WebApplicationLoadBalancerListenerArn"],
+		"WebApplicationImage":                       backendOutputs["WebApplicationImage"],
+		"WebApplicationCluster":                     backendOutputs["WebApplicationCluster"],
+		"WebApplicationVpcId":                       backendOutputs["WebApplicationVpcId"],
+		"WebApplicationSubnetOneId":                 backendOutputs["WebApplicationSubnetOneId"],
+		"WebApplicationSubnetTwoId":                 backendOutputs["WebApplicationSubnetTwoId"],
+		"WebApplicationLoadBalancerListenerArn":     backendOutputs["WebApplicationLoadBalancerListenerArn"],
 		"WebApplicationLoadBalancerSecurityGroupId": backendOutputs["WebApplicationLoadBalancerSecurityGroupId"],
 	}
 
 	return result, nil
 }
 
-	// Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
+// Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
 func uploadLayer(awsSession *session.Session, libs []string, bucket, key string) (string, error) {
 	s3Client := s3.New(awsSession)
 	head, err := s3Client.HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &key})

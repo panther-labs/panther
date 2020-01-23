@@ -33,7 +33,7 @@ type backendParameters struct {
 	TracingMode                  string `yaml:"TracingMode"`
 }
 
-type frontendParameters struct {}
+type frontendParameters struct{}
 
 // PantherConfig describes the panther_config.yml file.
 type PantherConfig struct {
