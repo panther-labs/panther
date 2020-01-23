@@ -381,7 +381,7 @@ func invokeLambda(awsSession *session.Session, functionName string, input interf
 
 // Functions that build a personalized docker image from source, while pushing it to the private image repo of the user
 func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) error {
-	fmt.Println("docker: Requesting access to remote image repo...")
+	fmt.Println("docker: Requesting access to remote image repo")
 	ecrClient := ecr.New(awsSession)
 	req, resp := ecrClient.GetAuthorizationTokenRequest(&ecr.GetAuthorizationTokenInput{})
 	if err := req.Send(); err != nil {
