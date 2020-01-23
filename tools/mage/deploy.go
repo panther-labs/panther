@@ -130,10 +130,7 @@ func Deploy() error {
 		return err
 	}
 
-	frontendDeployParams, err := getFrontendDeployParams(backendOutputs)
-	if err != nil {
-		return err
-	}
+	frontendDeployParams := getFrontendDeployParams(backendOutputs)
 
 	if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
 		return err
@@ -203,7 +200,7 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 	return result, nil
 }
 
-func getFrontendDeployParams(backendOutputs map[string]string) (map[string]string, error) {
+func getFrontendDeployParams(backendOutputs map[string]string) map[string]string {
 	// If there are params declared in config, we should make sure to add them as well. Currently there are none.
 	result := map[string]string{
 		"WebApplicationImage":                       backendOutputs["WebApplicationImage"],
@@ -215,7 +212,7 @@ func getFrontendDeployParams(backendOutputs map[string]string) (map[string]strin
 		"WebApplicationLoadBalancerSecurityGroupId": backendOutputs["WebApplicationLoadBalancerSecurityGroupId"],
 	}
 
-	return result, nil
+	return result
 }
 
 // Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
