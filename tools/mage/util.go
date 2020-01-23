@@ -54,16 +54,11 @@ func loadYamlFile(path string, out interface{}) error {
 	return nil
 }
 
-// Get the details of a Cloudformation stack
-func getStackDetails(awsSession *session.Session, name string) (*cloudformation.DescribeStacksOutput, error) {
-	cfnClient := cloudformation.New(awsSession)
-	input := &cloudformation.DescribeStacksInput{StackName: &name}
-	return cfnClient.DescribeStacks(input)
-}
-
 // Get CloudFormation stack outputs as a map.
 func getStackOutputs(awsSession *session.Session, name string) (map[string]string, error) {
-	response, err := getStackDetails(awsSession, name)
+	cfnClient := cloudformation.New(awsSession)
+	input := &cloudformation.DescribeStacksInput{StackName: &name}
+	response, err := cfnClient.DescribeStacks(input)
 	if err != nil {
 		return nil, err
 	}
