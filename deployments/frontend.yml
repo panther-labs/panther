@@ -1,0 +1,61 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Master Panther template for the front-end resources
+
+Parameters:
+  VpcId:
+    Type: String
+    Description: The ID of the VPC associated with the service
+  WebApplicationSubnetOneId:
+    Type: String
+    Description: The ID of a subnet in the VPC above
+  WebApplicationSubnetTwoId:
+    Type: String
+    Description: The ID of another subnet in the VPC above
+  WebApplicationLoadBalancerListenerArn:
+    Type: String
+    Description: The ARN of the load balancer that accepts & forwards incoming traffic to the current ECS tasks
+  WebApplicationLoadBalancerSecurityGroupId:
+    Type: String
+    Description: The ID of the security group that is related with the Load Balancer that sits int front of this service
+  WebApplicationCluster:
+    Type: String
+    Description: The name of the cluster that the server should be attached to
+  WebApplicationImage:
+    Type: String
+    Description: The docker  image used by the web application
+
+Resources:
+  FrontendApplicationServer:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        Image: !Ref WebApplicationImage
+        ClusterName: !Ref WebApplicationCluster
+        VpcId: !Ref WebApplicationVpcId
+        SubnetOneId: !Ref WebApplicationSubnetOneId
+        SubnetTwoId: !Ref WebApplicationSubnetTwoId
+        LoadBalancerListenerArn: !Ref WebApplicationLoadBalancerListenerArn
+        LoadBalancerSecurityGroupId: !Ref WebApplicationLoadBalancerSecurityGroupId
+      TemplateURL: web/server.yml
+
+Outputs:
+  WebApplicationServiceName:
+    Condition: CreateFrontendApplicationServer
+    Description: The name of the cluster that holds the web application related services
+    Value: !GetAtt FrontendApplicationServer.Outputs.ServiceName

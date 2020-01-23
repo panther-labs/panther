@@ -48,8 +48,10 @@ import (
 
 const (
 	// CloudFormation templates + stacks
-	applicationStack    = "panther-app"
-	applicationTemplate = "deployments/template.yml"
+	backendStack    = "panther-backend"
+	backendTemplate = "deployments/backend.yml"
+	frontendStack    = "panther-frontend"
+	frontendTemplate = "deployments/frontend.yml"
 	bucketStack         = "panther-buckets" // prereq stack with Panther S3 buckets
 	bucketTemplate      = "deployments/core/buckets.yml"
 
@@ -93,93 +95,93 @@ func Deploy() error {
 		return err
 	}
 
-	outputs, err := getStackOutputs(awsSession, bucketStack)
+	bucketOutputs, err := getStackOutputs(awsSession, bucketStack)
 	if err != nil {
 		return err
 	}
-	bucket := outputs["SourceBucketName"]
+	bucket := bucketOutputs["SourceBucketName"]
 
-	template, err := cfnPackage(applicationTemplate, bucket, applicationStack)
-	if err != nil {
-		return err
-	}
-
-	deployParams, err := getDeployParams(awsSession, &config, bucket)
+	backendTemplate, err := cfnPackage(backendTemplate, bucket, backendStack)
 	if err != nil {
 		return err
 	}
 
-	_, err = getStackDetails(awsSession, applicationStack)
-	deployParams["IsInitialDeployment"] = strconv.FormatBool(err != nil)
-	if err = deployTemplate(awsSession, template, applicationStack, deployParams); err != nil {
-		return err
-	}
-
-	outputs, err = getStackOutputs(awsSession, applicationStack)
+	backendDeployParams, err := getBackendDeployParams(awsSession, &config, bucket)
 	if err != nil {
 		return err
 	}
 
-	if err := generateDotEnvFromCfnOutputs(outputs, ".env"); err != nil {
+	if err = deployTemplate(awsSession, backendTemplate, backendStack, backendDeployParams); err != nil {
 		return err
 	}
 
-	if err = buildAndPushImageFromSource(awsSession, outputs["WebApplicationImage"]); err != nil {
+	backendOutputs, err := getStackOutputs(awsSession, backendStack)
+	if err != nil {
 		return err
 	}
 
-	// If we previously deployed the app for the first time, then we didn't deploy the ECS stack due to the image
-	// not being yet present. To resolve this we re-deploy in order for the ECS stack to be created. This
-	// will only happen once, during the initial installation so that's why we have encapsulated all the "run-once"
-	// logic inside this condotional
-	if deployParams["IsInitialDeployment"] == "true" {
-		deployParams["IsInitialDeployment"] = "false"
-		if err = deployTemplate(awsSession, template, applicationStack, deployParams); err != nil {
-			return err
-		}
-
-		outputs, err = getStackOutputs(awsSession, applicationStack)
-		if err != nil {
-			return err
-		}
-
-		if err := enableTOTP(awsSession, outputs["WebApplicationUserPoolId"]); err != nil {
-			return err
-		}
-
-		if err := setupOrganization(awsSession, outputs["UserPoolId"], outputs["RemediationLambdaArn"]); err != nil {
-            return err
-        }
-
-		if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], &config); err != nil {
-			return err
-		}
-	} else {
-		if err = restartFrontendServer(
-			awsSession,
-			outputs["WebApplicationClusterName"],
-			outputs["WebApplicationServiceName"],
-		); err != nil {
-			return err
-		}
+	if err := generateDotEnvFromCfnOutputs(backendOutputs, ".env"); err != nil {
+		return err
 	}
 
-	color.Yellow("\nPanther URL = https://%s\n", outputs["LoadBalancerUrl"])
+	if err = buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImage"]); err != nil {
+		return err
+	}
+
+	frontendTemplate, err := cfnPackage(frontendTemplate, bucket, frontendStack)
+	if err != nil {
+		return err
+	}
+
+	frontendDeployParams, err := getFrontendDeployParams(&config, backendOutputs)
+	if err != nil {
+		return err
+	}
+
+	if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
+		return err
+	}
+
+	frontEndOutputs, err := getStackOutputs(awsSession, frontendStack)
+	if err != nil {
+		return err
+	}
+
+	if err := enableTOTP(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
+		return err
+	}
+
+	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"], backendOutputs["RemediationLambdaArn"]); err != nil {
+		return err
+	}
+
+	if err := initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], &config); err != nil {
+		return err
+	}
+
+	if err = restartFrontendServer(
+		awsSession,
+		backendOutputs["WebApplicationClusterName"],
+		frontEndOutputs["WebApplicationServiceName"],
+	); err != nil {
+		return err
+	}
+
+	color.Yellow("\nPanther URL = https://%s\n", backendOutputs["LoadBalancerUrl"])
 	return nil
 }
 
 // Generate the set of deploy parameters for the main application stack.
 //
 // This will first upload the layer zipfile unless a custom layer is specified.
-func getDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) (map[string]string, error) {
-	v := config.AppParameterValues
+func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) (map[string]string, error) {
+	v := config.BackendParameterValues
 	result := map[string]string{
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
 		"Debug":                        strconv.FormatBool(v.Debug),
 		"LayerVersionArns":             v.LayerVersionArns,
 		"PythonLayerVersionArn":        v.PythonLayerVersionArn,
 		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
-		"WebApplicationImageVersion":   v.WebApplicationImageVersion,
 		"TracingMode":                  v.TracingMode,
 	}
 
@@ -204,7 +206,22 @@ func getDeployParams(awsSession *session.Session, config *PantherConfig, bucket 
 	return result, nil
 }
 
-// Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
+func getFrontendDeployParams(config *PantherConfig, backendOutputs map[string]string) (map[string]string, error) {
+	// If there are params declared in config, we should make sure to add them as well. Currently there are none.
+	result := map[string]string{
+		"WebApplicationImage": backendOutputs["WebApplicationImage"],
+		"WebApplicationCluster": backendOutputs["WebApplicationCluster"],
+		"WebApplicationVpcId": backendOutputs["WebApplicationVpcId"],
+		"WebApplicationSubnetOneId": backendOutputs["WebApplicationSubnetOneId"],
+		"WebApplicationSubnetTwoId": backendOutputs["WebApplicationSubnetTwoId"],
+		"WebApplicationLoadBalancerListenerArn": backendOutputs["WebApplicationLoadBalancerListenerArn"],
+		"WebApplicationLoadBalancerSecurityGroupId": backendOutputs["WebApplicationLoadBalancerSecurityGroupId"],
+	}
+
+	return result, nil
+}
+
+	// Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
 func uploadLayer(awsSession *session.Session, libs []string, bucket, key string) (string, error) {
 	s3Client := s3.New(awsSession)
 	head, err := s3Client.HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &key})

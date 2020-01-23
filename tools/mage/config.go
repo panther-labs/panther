@@ -24,20 +24,22 @@ type bucketsParameters struct {
 	AccessLogsBucketName string `yaml:"AccessLogsBucketName"`
 }
 
-type appParameters struct {
+type backendParameters struct {
 	CloudWatchLogRetentionDays   int    `yaml:"CloudWatchLogRetentionDays"`
 	Debug                        bool   `yaml:"Debug"`
 	LayerVersionArns             string `yaml:"LayerVersionArns"`
 	PythonLayerVersionArn        string `yaml:"PythonLayerVersionArn"`
 	WebApplicationCertificateArn string `yaml:"WebApplicationCertificateArn"`
-	WebApplicationImageVersion   string `yaml:"WebApplicationImageVersion"`
 	TracingMode                  string `yaml:"TracingMode"`
 }
 
+type frontendParameters struct {}
+
 // PantherConfig describes the panther_config.yml file.
 type PantherConfig struct {
-	BucketsParameterValues bucketsParameters `yaml:"BucketsParameterValues"`
-	AppParameterValues     appParameters     `yaml:"AppParameterValues"`
-	PipLayer               []string          `yaml:"PipLayer"`
-	InitialAnalysisSets    []string          `yaml:"InitialAnalysisSets"`
+	BucketsParameterValues  bucketsParameters  `yaml:"BucketsParameterValues"`
+	BackendParameterValues  backendParameters  `yaml:"BackendParameterValues"`
+	FrontendParameterValues frontendParameters `yaml:"FrontendParameterValues"`
+	PipLayer                []string           `yaml:"PipLayer"`
+	InitialAnalysisSets     []string           `yaml:"InitialAnalysisSets"`
 }
