@@ -50,8 +50,8 @@ func (client *OutputClient) Jira(
 		"project": map[string]*string{
 			"key": config.ProjectKey,
 		},
-		"issuetype": map[string]string{
-			"name": "Task",
+		"issuetype": map[string]*string{
+			"name": config.Type,
 		},
 	}
 

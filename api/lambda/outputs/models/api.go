@@ -258,6 +258,7 @@ type JiraConfig struct {
 	UserName   *string `json:"userName" validate:"required"`
 	APIKey     *string `json:"apiKey" validate:"required"`
 	AssigneeID *string `json:"assigneeId"`
+	Type       *string `json:"type"`
 }
 
 // OpsgenieConfig defines options for each Opsgenie output
