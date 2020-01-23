@@ -135,6 +135,6 @@
     "start": "cross-env NODE_ENV=development node -r dotenv/config node_modules/.bin/webpack-dev-server",
     "serve": "cross-env SERVER_PORT=8080 node web/scripts/serve.js",
     "generate-gql": "graphql-codegen",
-    "lint": "eslint \"{web,enterprise}/**/*.{ts,js,tsx,jsx}\" && prettier --list-different  \"{web,enterprise}/**/*.{ts,js,tsx,jsx,md,scss,css,json}\" && tsc -p ."
+    "lint": "eslint \"web/**/*.{ts,js,tsx,jsx}\" && prettier --list-different  \"web/**/*.{ts,js,tsx,jsx,md,scss,css,json}\" && tsc -p ."
   }
 }

@@ -17,11 +17,7 @@
  */
 /* eslint-disable global-require, import/no-dynamic-require */
 
-const fs = require('fs');
 const chalk = require('chalk');
-
-const ENTERPRISE_WEBPACK_CONFIG = './enterprise/web/webpack.config.js';
-const PUBLIC_WEBPACK_CONFIG = './web/webpack.config.js';
 
 const requiredEnv = [
   'AWS_ACCOUNT_ID',
@@ -36,8 +32,4 @@ if (unsetVars.length) {
   throw new Error(chalk.red(`Couldn't find the following ENV vars: ${unsetVars.join(', ')}`));
 }
 
-if (fs.existsSync(ENTERPRISE_WEBPACK_CONFIG)) {
-  module.exports = require(ENTERPRISE_WEBPACK_CONFIG);
-} else {
-  module.exports = require(PUBLIC_WEBPACK_CONFIG);
-}
+module.exports = require('./web/webpack.config.js');
