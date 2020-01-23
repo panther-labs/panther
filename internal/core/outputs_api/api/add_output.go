@@ -95,6 +95,7 @@ func addToDefaults(severities []*string, outputID *string) error {
 		if err != nil {
 			return err
 		}
+		zap.L().Info("Defaults for severity", zap.Any("defaults", defaults), zap.String("severity", *severity))
 
 		if defaults == nil {
 			defaults = &models.DefaultOutputsItem{
@@ -104,6 +105,7 @@ func addToDefaults(severities []*string, outputID *string) error {
 		} else {
 			defaults.OutputIDs = append(defaults.OutputIDs, outputID)
 		}
+		zap.L().Info("Putting defaults", zap.Any("defaults", defaults), zap.String("severity", *severity))
 
 		if err = defaultsTable.PutDefaults(defaults); err != nil {
 			return err

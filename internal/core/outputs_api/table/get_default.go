@@ -19,6 +19,7 @@ package table
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
@@ -33,6 +34,7 @@ func (table *DefaultsTable) GetDefault(severity *string) (*models.DefaultOutputs
 			Key: DynamoItem{
 				"severity": {S: severity},
 			},
+			ConsistentRead: aws.Bool(true),
 		})
 
 	if err != nil {

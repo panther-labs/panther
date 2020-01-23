@@ -19,6 +19,7 @@ package table
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
@@ -29,7 +30,8 @@ import (
 // GetDefaults returns the default outputs for one organization
 func (table *DefaultsTable) GetDefaults() (defaults []*models.DefaultOutputsItem, err error) {
 	var scanInput = &dynamodb.ScanInput{
-		TableName: table.Name,
+		TableName:      table.Name,
+		ConsistentRead: aws.Bool(true),
 	}
 
 	var internalErr error

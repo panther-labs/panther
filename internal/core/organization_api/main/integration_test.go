@@ -145,7 +145,7 @@ func getTest(t *testing.T) {
 	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
 
 	expected := models.GetOrganizationOutput{Organization: org}
-	assert.Equal(t, expected, output)
+	require.Equal(t, expected, output)
 }
 
 func getOrg(t *testing.T) {
@@ -177,7 +177,6 @@ func updateOrg(t *testing.T) {
 		Organization: &models.Organization{
 			CompletedActions: org.CompletedActions,
 			CreatedAt:        org.CreatedAt,
-
 			AlertReportFrequency: input.UpdateOrganization.AlertReportFrequency,
 			AwsConfig:            input.UpdateOrganization.AwsConfig,
 			DisplayName:          input.UpdateOrganization.DisplayName,
@@ -186,9 +185,8 @@ func updateOrg(t *testing.T) {
 			RemediationConfig:    input.UpdateOrganization.RemediationConfig,
 		},
 	}
-	assert.Equal(t, expected, output)
+	require.Equal(t, expected, output)
 	org = output.Organization
-
 	getTest(t)
 }
 
