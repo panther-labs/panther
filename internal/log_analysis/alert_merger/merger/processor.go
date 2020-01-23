@@ -241,7 +241,7 @@ func addEventToAlert(event *MatchedEvent, alertNotification *AlertNotification, 
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		Key: map[string]*dynamodb.AttributeValue{
-			"alertId": {S: alertID},
+			alertapimodel.AlertIDKey: {S: alertID},
 		},
 		TableName:        alertsTable,
 		UpdateExpression: expr.Update(),
