@@ -394,8 +394,8 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 	decodedCredentialsInBytes, _ := base64.StdEncoding.DecodeString(ecrAuthorizationToken)
 	credentials := strings.Split(string(decodedCredentialsInBytes), ":")
 
-	fmt.Println("docker: Logging in to remote image repo...")
-	if err := runCommand("docker", "login",
+	fmt.Println("deploy: logging in to remote image repo")
+	if err := sh.Run("docker", "login",
 		"-u", credentials[0],
 		"-p", credentials[1],
 		ecrServer,
@@ -403,8 +403,8 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 		return err
 	}
 
-	fmt.Println("docker: Building docker image from source...")
-	if err := runCommand("docker", "build",
+	fmt.Println("deploy: building docker image from source")
+	if err := sh.Run("docker", "build",
 		"--file", "deployments/web/Dockerfile",
 		"--tag", imageTag,
 		"--quiet",
@@ -413,12 +413,11 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 		return err
 	}
 
-	fmt.Println("docker: Begin image push to remote repo...")
-	if err := runCommand("docker", "push", imageTag); err != nil {
+	fmt.Println("deploy: pushing image to remote repo")
+	if err := sh.RunV("docker", "push", imageTag); err != nil {
 		return err
 	}
 
-	fmt.Println("docker: Image pushed successfully!")
 	return nil
 }
 
@@ -436,7 +435,7 @@ func generateDotEnvFromCfnOutputs(outputs map[string]string, filename string) er
 
 // makes sure to force a new ECS deployment on the service server so that the latest docker image can be applied
 func restartFrontendServer(awsSession *session.Session, cluster string, service string) error {
-	fmt.Println("cleanup: Upgrading front-end server to the latest docker image...")
+	fmt.Println("deploy: upgrading front-end server to the latest docker image")
 	ecsClient := ecs.New(awsSession)
 	_, err := ecsClient.UpdateService(&ecs.UpdateServiceInput{
 		Cluster:            aws.String(cluster),
@@ -447,7 +446,7 @@ func restartFrontendServer(awsSession *session.Session, cluster string, service 
 		return err
 	}
 
-	fmt.Println("cleanup: Front-end server upgraded successfully!")
-	color.Cyan("Please allow up to 1 minute for front-end changes to be propagated across containers")
+	fmt.Println("deploy: front-end server upgraded successfully!")
+	color.Cyan("deploy: please allow up to 1 minute for front-end changes to be propagated across containers")
 	return nil
 }

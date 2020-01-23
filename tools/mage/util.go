@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 
@@ -138,14 +137,6 @@ func download(url string) ([]byte, error) {
 	defer response.Body.Close()
 
 	return ioutil.ReadAll(response.Body)
-}
-
-// A wrapper around the basic `exec.Command`, running it immediately & adding streaming output to STDOUT/STDERR
-func runCommand(name string, arg ...string) error {
-	cmd := exec.Command(name, arg...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
 }
 
 // isRunningInCI returns true if the mage command is running inside
