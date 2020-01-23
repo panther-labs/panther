@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Master Panther template for the front-end resources
 
 Parameters:
-  VpcId:
+  WebApplicationVpcId:
     Type: String
     Description: The ID of the VPC associated with the service
   WebApplicationSubnetOneId:
@@ -56,6 +56,5 @@ Resources:
 
 Outputs:
   WebApplicationServiceName:
-    Condition: CreateFrontendApplicationServer
     Description: The name of the cluster that holds the web application related services
     Value: !GetAtt FrontendApplicationServer.Outputs.ServiceName
