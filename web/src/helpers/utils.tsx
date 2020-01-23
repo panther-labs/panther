@@ -232,3 +232,20 @@ export const extractErrorMessage = (error: ApolloError | ErrorResponse) => {
       return message;
   }
 };
+
+// Copies a text to clipboard, with fallback for Safari and old-Edge
+export const copyTextToClipboard = (text: string) => {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const container = document.querySelector('[role="dialog"] [role="document"]') || document.body;
+    const textArea = document.createElement('textarea');
+    textArea.innerHTML = text;
+    textArea.style.position = 'fixed'; // avoid scrolling to bottom
+    container.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    document.execCommand('copy');
+    container.removeChild(textArea);
+  }
+};

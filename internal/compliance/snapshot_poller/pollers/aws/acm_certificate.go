@@ -21,7 +21,6 @@ package aws
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
@@ -51,9 +50,8 @@ func PollACMCertificate(
 ) interface{} {
 
 	client := getClient(pollerInput, "acm", resourceARN.Region).(acmiface.ACMAPI)
-	cert := getCertificate(client, scanRequest.ResourceID)
 
-	snapshot := buildAcmCertificateSnapshot(client, cert)
+	snapshot := buildAcmCertificateSnapshot(client, scanRequest.ResourceID)
 	if snapshot == nil {
 		return nil
 	}
@@ -61,25 +59,6 @@ func PollACMCertificate(
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 
 	return snapshot
-}
-
-// getCertificate returns the certificate summary for a single certificate
-func getCertificate(svc acmiface.ACMAPI, arn *string) *string {
-	cert, err := svc.GetCertificate(&acm.GetCertificateInput{CertificateArn: arn})
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "ResourceNotFoundException" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *arn),
-					zap.String("resourceType", awsmodels.AcmCertificateSchema))
-				return nil
-			}
-		}
-		utils.LogAWSError("ACM.GetCertificate", err)
-		return nil
-	}
-
-	return cert.Certificate
 }
 
 // listCertificates returns all ACM certificates in the account
@@ -106,7 +85,7 @@ func describeCertificate(acmSvc acmiface.ACMAPI, arn *string) (*acm.CertificateD
 	return out.Certificate, nil
 }
 
-// describeCertificates provides detailed information for a given ACM certificate
+// listTagsForCertificate provides detailed information for a given ACM certificate
 func listTagsForCertificate(acmSvc acmiface.ACMAPI, arn *string) ([]*acm.Tag, error) {
 	out, err := acmSvc.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: arn})
 	if err != nil {

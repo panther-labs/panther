@@ -31,7 +31,6 @@ import {
 import { BaseDestinationFormValues } from 'Components/forms/common/base-destination-form';
 import {
   PagerDutyDestinationForm,
-  EmailDestinationForm,
   JiraDestinationForm,
   OpsgenieDestinationForm,
   MicrosoftTeamsDestinationForm,
@@ -60,9 +59,6 @@ const ADD_DESTINATION = gql`
         sns {
           topicArn
         }
-        email {
-          destinationAddress
-        }
         pagerDuty {
           integrationKey
         }
@@ -82,6 +78,9 @@ const ADD_DESTINATION = gql`
         }
         msTeams {
           webhookURL
+        }
+        sqs {
+          queueUrl
         }
       }
       verificationStatus
@@ -169,16 +168,6 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
 
   const renderFullDestinationForm = () => {
     switch (destinationType) {
-      case DestinationTypeEnum.Email:
-        return (
-          <EmailDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: { email: { destinationAddress: '' } },
-            }}
-            onSubmit={handleSubmit}
-          />
-        );
       case DestinationTypeEnum.Pagerduty:
         return (
           <PagerDutyDestinationForm

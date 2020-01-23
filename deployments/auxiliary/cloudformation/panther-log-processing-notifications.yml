@@ -1,0 +1,104 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Sets up an SNS topic and subscribes it to Panther Log processing SQS queue.
+
+Metadata:
+  Version: v1.0.0
+
+Parameters:
+  SnsTopicName:
+    Type: String
+    Description: The name of the SNS topic
+    Default: panther-notifications-topic
+  PantherAccountId:
+    Type: String
+    Description: The AWS AccountId where you have deployed Panther
+  PantherRegion:
+    Type: String
+    Description: The region where you have deployed Panther.
+    AllowedValues:
+      - us-east-1
+      - us-east-2
+      - us-west-1
+      - us-west-2
+      - ap-east-1
+      - ap-south-1
+      - ap-northeast-1
+      - ap-northeast-2
+      - ap-southeast-1
+      - ap-southeast-2
+      - ca-central-1
+      - eu-central-1
+      - eu-west-1
+      - eu-west-2
+      - eu-west-3
+      - eu-north-1
+      - me-south-1
+      - sa-east-1
+
+Resources:
+  # This topic is used to notify the Panther master account whenever new data is written to the
+  # LogProcessing bucket.
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Ref SnsTopicName
+
+  # This policy is used to allow S3 to publish to the topic when new data is written to S3
+  TopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          # Reference: https://amzn.to/2ouFmhK
+          - Sid: AllowS3EventNotifications
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref Topic
+          - Sid: AllowCloudTrailNotification
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref Topic
+          - Sid: AllowSubscriptionToPanther
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${PantherAccountId}:root
+            Action: sns:Subscribe
+            Resource: !Ref Topic
+      Topics:
+        - !Ref Topic
+
+  # SNS Topic subscription to Panther
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Sub arn:aws:sqs:${PantherRegion}:${PantherAccountId}:panther-input-data-notifications
+      Protocol: sqs
+      RawMessageDelivery: false
+      TopicArn: !Ref Topic
+
+
+Outputs:
+  SnsTopicArn:
+    Description: The ARN of the SNS Topic that will be notifying Panther of new data.
+    Value: !Ref Topic

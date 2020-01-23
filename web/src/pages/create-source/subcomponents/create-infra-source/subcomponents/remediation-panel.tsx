@@ -17,41 +17,30 @@
  */
 
 import React from 'react';
-import { Box, Heading, Text } from 'pouncejs';
-import AddRemediationLambdaForm from 'Components/forms/add-remediation-lambda-form';
-import SetupRemediationForm from 'Components/forms/setup-remediation-form';
-import {
-  PANTHER_REMEDIATION_MASTER_ACCOUNT,
-  PANTHER_REMEDIATION_SATELLITE_ACCOUNT,
-} from 'Source/constants';
-
-export const adminRemediationCloudformationLink = `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?\
-region=${process.env.AWS_REGION}#/stacks/create/review?templateURL=https://s3-us-west-2.amazonaws.com/\
-panther-public-cloudformation-templates/${PANTHER_REMEDIATION_MASTER_ACCOUNT}/\
-latest/template.yml&stackName=${PANTHER_REMEDIATION_MASTER_ACCOUNT}`;
-
-export const getSatelliteRemediationCloudformationLink = (masterAWSAccountId: string) => {
-  return `https://us-west-2.console.aws.amazon.com/cloudformation/home?\
-region=us-west-2#/stacks/create/review?templateURL=https://s3-us-west-2.amazonaws.com/\
-panther-public-cloudformation-templates/${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}/latest/template.yml&\
-stackName=${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}&param_MasterAccountId=${masterAWSAccountId}`;
-};
+import { Box, Button, Heading, Text } from 'pouncejs';
+import { PANTHER_REMEDIATION_SATELLITE_ACCOUNT } from 'Source/constants';
 
 const RemediationPanel: React.FC = () => {
-  const [isStackLaunched, markStackAsLaunched] = React.useState(false);
+  const cfnLink =
+    `https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review` +
+    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}/latest/template.yml` +
+    `&stackName=${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}` +
+    `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}`;
 
   return (
     <Box>
       <Heading size="medium" m="auto" mb={10} color="grey400">
         Setup AWS Automatic Remediation (Optional)
       </Heading>
-      <Text size="large" color="grey200" mb={6} is="p">
+      <Text size="large" color="grey200" mb={10} is="p">
         By clicking the button below, you will be redirected to the CloudFormation console to launch
         a stack in your account.
         <br />
         <br />
         This stack will configure Panther to fix misconfigured infrastructure as soon as it is
         detected. Remediations can be configured on a per-policy basis to take any desired actions.
+        <br />
+        <br />
         After a successful deployment, you will have to come back to this page to save the ARN of
         the created lambda. You will be able to edit it afterwards through your Organization{"'"}s
         settings page.
@@ -67,19 +56,16 @@ const RemediationPanel: React.FC = () => {
         </a>{' '}
         to learn more about this functionality.
       </Text>
-
-      {isStackLaunched ? (
-        <AddRemediationLambdaForm />
-      ) : (
-        <SetupRemediationForm
-          onStackLaunch={() => markStackAsLaunched(true)}
-          getStackUrl={({ isSatellite, adminAWSAccountId }) =>
-            isSatellite
-              ? getSatelliteRemediationCloudformationLink(adminAWSAccountId)
-              : adminRemediationCloudformationLink
-          }
-        />
-      )}
+      <Button
+        size="large"
+        variant="default"
+        target="_blank"
+        is="a"
+        rel="noopener noreferrer"
+        href={cfnLink}
+      >
+        Launch Stack
+      </Button>
     </Box>
   );
 };

@@ -1,0 +1,181 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: All the infrastructure needed to setup LogProcessing ingestion to Panther.
+
+Metadata:
+  Version: v1.0.1
+
+Parameters:
+  MasterAccountId:
+    Type: String
+    Description: The Panther Master account ID.
+  ExpireData:
+    Type: String
+    Description: Indicates if LogProcessing bucket should automatically delete data after a certain timefame.
+    Default: true
+    AllowedValues: [true, false]
+  DataLifetime:
+    Type: Number 
+    Description: How long to wait before automatically deleting data, if ExpireData is set to true.
+    Default: 30
+
+Conditions:
+  ExpireData: !Equals [true, !Ref ExpireData]
+
+Resources:
+  # This is the location that LogProcessing will be stored
+  LogProcessingBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: LogProcessingNotificationsTopicPolicy
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: 30DayExpiration
+            Status: !If [ExpireData, Enabled, Disabled]
+            ExpirationInDays: !If [ExpireData, !Ref DataLifetime, !Ref "AWS::NoValue"]
+            NoncurrentVersionExpirationInDays: !If [ExpireData, !Ref DataLifetime, !Ref "AWS::NoValue"]
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+      NotificationConfiguration:
+        TopicConfigurations:
+          -
+            Topic: !Ref LogProcessingNotificationsTopic
+            Event: s3:ObjectCreated:*
+
+  # This policy grants the CloudTrail and VPC FLow Logs services write permissions, and blocks
+  # insecure access.
+  # Consider expanding on this policy to increase the security of the LogProcessing bucket.
+  LogProcessingBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LogProcessingBucket
+      PolicyDocument:
+        Statement:
+          # The following two statements are required for CloudTrail to work
+          - Sid: CloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt LogProcessingBucket.Arn
+          - Sid: CloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub ${LogProcessingBucket.Arn}/*
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+          # The following statement enforces secure access to the data
+          - Sid: EnforceSecureAccess
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub ${LogProcessingBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+          # The following two statements are required for VPC FlowLogs to work
+          - Sid: VPCFlowAclCheck
+            Effect: Allow
+            Principal:
+              Service: delivery.logs.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt LogProcessingBucket.Arn
+          - Sid: VPCFlowWrite
+            Effect: Allow
+            Principal:
+              Service: delivery.logs.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub ${LogProcessingBucket.Arn}/*
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+
+  # This topic is used to notify the Panther master account whenever new data is written to the
+  # LogProcessing bucket.
+  LogProcessingNotificationsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: panther-log-processing-topic
+
+  # This policy is used to allow S3 to publish to the topic when new data is written to S3
+  LogProcessingNotificationsTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            # Reference: https://amzn.to/2ouFmhK
+            Sid: S3NotificationPublish
+            Effect: Allow
+            Principal:
+              Service: 's3.amazonaws.com'
+            Action: sns:Publish
+            Resource: !Ref LogProcessingNotificationsTopic
+          -
+            Sid: CrossAccountSubscription
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+            Action: sns:Subscribe
+            Resource: !Ref LogProcessingNotificationsTopic
+      Topics:
+        - !Ref LogProcessingNotificationsTopic
+
+  # This subscription subscribes the Panther Master account SQS queue to the topic created above
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Sub arn:aws:sqs:us-west-2:${MasterAccountId}:panther-log-notifications
+      Protocol: sqs
+      RawMessageDelivery: false
+      TopicArn: !Ref LogProcessingNotificationsTopic
+
+  # This trail will generate audit logs and send them to an S3 bucket for storage
+  LogProcessingCloudTrail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn: LogProcessingBucketPolicy
+    Properties:
+      TrailName: panther-log-processing-trail
+      S3BucketName: !Ref LogProcessingBucket
+      IsLogging: true
+      IsMultiRegionTrail: true
+      IncludeGlobalServiceEvents: true
+      EnableLogFileValidation: true
+
+
+Outputs:
+  SnsTopicArn:
+    Description: The ARN of the SNS Topic that will be notifying Panther of new data.
+    Value: !Ref LogProcessingNotificationsTopic
+  S3BucketArn:
+    Description: The ARN of the S3 Bucket that will be storing Log Data.
+    Value: !GetAtt LogProcessingBucket.Arn

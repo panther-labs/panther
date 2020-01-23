@@ -103,5 +103,4 @@ export enum INTEGRATION_TYPES {
   AWS_INFRA = 'aws-scan',
 }
 
-export const PANTHER_REMEDIATION_MASTER_ACCOUNT = 'panther-aws-remediations-master-account';
 export const PANTHER_REMEDIATION_SATELLITE_ACCOUNT = 'panther-aws-remediations-satellite-account';

@@ -346,7 +346,6 @@ type DestinationConfig {
   slack: SlackConfig
   sns: SnsConfig
   sqs: SqsConfig
-  email: EmailConfig
   pagerDuty: PagerDutyConfig
   github: GithubConfig
   jira: JiraConfig
@@ -387,10 +386,6 @@ type SnsConfig {
   topicArn: String!
 }
 
-type EmailConfig {
-  destinationAddress: String!
-}
-
 type PagerDutyConfig {
   integrationKey: String!
 }
@@ -407,7 +402,6 @@ input DestinationConfigInput {
   slack: SlackConfigInput
   sns: SnsConfigInput
   sqs: SQSConfigInput
-  email: EmailConfigInput
   pagerDuty: PagerDutyConfigInput
   github: GithubConfigInput
   jira: JiraConfigInput
@@ -446,10 +440,6 @@ input SlackConfigInput {
 
 input SnsConfigInput {
   topicArn: String!
-}
-
-input EmailConfigInput {
-  destinationAddress: String!
 }
 
 input PagerDutyConfigInput {
@@ -710,7 +700,6 @@ enum RoleNameEnum {
 enum DestinationTypeEnum {
   slack
   pagerduty
-  email
   github
   jira
   opsgenie

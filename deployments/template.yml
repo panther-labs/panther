@@ -425,3 +425,6 @@ Outputs:
   AWSRegion:
     Description: The region that the stack was deployed to
     Value: !Ref AWS::Region
+  RemediationLambdaArn:
+    Description: The ARN of the Remediation Function
+    Value: !GetAtt RemediationAPI.Outputs.RemediationLambdaArn

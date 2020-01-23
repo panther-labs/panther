@@ -238,7 +238,7 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: sqs:*Permission
+              Action: sqs:*QueueAttributes
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
 
   ApiLogGroup:

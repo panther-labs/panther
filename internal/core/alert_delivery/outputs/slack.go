@@ -61,9 +61,9 @@ func (client *OutputClient) Slack(alert *alertmodels.Alert, config *outputmodels
 	payload := map[string]interface{}{
 		"attachments": []map[string]interface{}{
 			{
-				"fallback": aws.StringValue(generateAlertTitle(alert)),
+				"fallback": generateAlertTitle(alert),
 				"color":    severityColors[aws.StringValue(alert.Severity)],
-				"title":    aws.StringValue(generateAlertTitle(alert)),
+				"title":    generateAlertTitle(alert),
 				"fields":   fields,
 			},
 		},

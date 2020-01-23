@@ -49,7 +49,7 @@ func (client *OutputClient) Opsgenie(
 	severity := "\n <strong>Severity:</strong> " + aws.StringValue(alert.Severity)
 
 	opsgenieRequest := map[string]interface{}{
-		"message":     *generateAlertTitle(alert),
+		"message":     generateAlertTitle(alert),
 		"description": description + link + runBook + severity,
 		"tags":        tagsItem,
 		"priority":    pantherToOpsGeniePriority[aws.StringValue(alert.Severity)],

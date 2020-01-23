@@ -46,9 +46,6 @@ export const LIST_DESTINATIONS = gql`
         sns {
           topicArn
         }
-        email {
-          destinationAddress
-        }
         pagerDuty {
           integrationKey
         }
@@ -68,6 +65,9 @@ export const LIST_DESTINATIONS = gql`
         }
         msTeams {
           webhookURL
+        }
+        sqs {
+          queueUrl
         }
       }
       verificationStatus

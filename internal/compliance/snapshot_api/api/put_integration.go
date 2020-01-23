@@ -26,7 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/snapshot/models"
@@ -65,11 +64,8 @@ func (API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIn
 			continue
 		}
 		err = AddPermissionToLogProcessorQueue(*integration.AWSAccountID)
-		if err != nil {
-			zap.L().Error("failed to add permission to log procesor queue",
-				zap.Error(errors.Wrap(err, "failed to add permission to log procesor queue")))
-			// Returning user friendly message
-			return nil, &genericapi.InternalError{Message: "failed to add integration"}
+		if err != nil { // logging handled in function
+			return nil, err
 		}
 		permissionsAddedForIntegrations = append(permissionsAddedForIntegrations, integration)
 	}

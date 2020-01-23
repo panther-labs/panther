@@ -26,7 +26,6 @@ import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
 import githubLogo from 'Assets/github-minimal-logo.svg';
 import pagerDutyLogo from 'Assets/pagerduty-minimal-logo.svg';
 import jiraLogo from 'Assets/jira-minimal-logo.svg';
-import emailLogo from 'Assets/email-minimal-logo.svg';
 import snsLogo from 'Assets/aws-sns.svg';
 import sqsLogo from 'Assets/aws-sqs.svg';
 
@@ -63,11 +62,6 @@ const destinationConfigs = [
     logo: pagerDutyLogo,
     title: 'PagerDuty',
     destinationType: DestinationTypeEnum.Pagerduty,
-  },
-  {
-    logo: emailLogo,
-    title: 'Email',
-    destinationType: DestinationTypeEnum.Email,
   },
   {
     logo: snsLogo,

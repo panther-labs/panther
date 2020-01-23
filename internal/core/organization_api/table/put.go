@@ -35,7 +35,7 @@ func (table *OrganizationsTable) Put(org *models.Organization) error {
 			Message: "failed to marshal Organization to a dynamo item: " + err.Error()}
 	}
 
-	item["id"] = &dynamodb.AttributeValue{S: aws.String("1")}
+	item["id"] = &dynamodb.AttributeValue{S: aws.String(orgID)}
 	input := &dynamodb.PutItemInput{Item: item, TableName: table.Name}
 	if _, err = table.client.PutItem(input); err != nil {
 		return &genericapi.AWSError{Method: "dynamodb.PutItem", Err: err}

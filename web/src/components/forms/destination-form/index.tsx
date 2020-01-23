@@ -24,4 +24,3 @@ export { default as JiraDestinationForm } from './jira-destination-form';
 export { default as OpsgenieDestinationForm } from './opsgenie-destination.form';
 export { default as GithubDestinationForm } from './github-destination-form';
 export { default as PagerDutyDestinationForm } from './pagerduty-destination-form';
-export { default as EmailDestinationForm } from './email-destination-form';

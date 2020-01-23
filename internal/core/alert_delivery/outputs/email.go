@@ -37,17 +37,17 @@ const emailTemplate = "<h2>Message</h2>%s<br>" +
 
 var sesConfigurationSet = os.Getenv("SES_CONFIGURATION_SET")
 
-func generateEmailContent(alert *alertmodels.Alert) *string {
+func generateEmailContent(alert *alertmodels.Alert) string {
 	messageField := fmt.Sprintf("<a href='%s'>%s</a>",
 		generateURL(alert),
-		aws.StringValue(generateAlertMessage(alert)))
-	return aws.String(fmt.Sprintf(
+		generateAlertMessage(alert))
+	return fmt.Sprintf(
 		emailTemplate,
 		messageField,
 		aws.StringValue(alert.Severity),
 		aws.StringValue(alert.Runbook),
 		aws.StringValue(alert.PolicyDescription),
-	))
+	)
 }
 
 // Email sends email to destination
@@ -59,12 +59,12 @@ func (client *OutputClient) Email(alert *alertmodels.Alert, config *outputmodels
 		Message: &ses.Message{
 			Subject: &ses.Content{
 				Charset: aws.String("UTF-8"),
-				Data:    generateAlertTitle(alert),
+				Data:    aws.String(generateAlertTitle(alert)),
 			},
 			Body: &ses.Body{
 				Html: &ses.Content{
 					Charset: aws.String("UTF-8"),
-					Data:    generateEmailContent(alert),
+					Data:    aws.String(generateEmailContent(alert)),
 				},
 			},
 		},

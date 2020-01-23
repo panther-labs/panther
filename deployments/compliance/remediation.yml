@@ -331,3 +331,6 @@ Outputs:
   GatewayId:
     Description: Remediation API Gateway ID
     Value: !Ref GatewayApi
+  RemediationLambdaArn:
+    Description: The ARN of the Remediation Function
+    Value: !GetAtt RemediationFunction.Arn

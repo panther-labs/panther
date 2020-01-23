@@ -102,18 +102,18 @@ func New(sess *session.Session) *OutputClient {
 	}
 }
 
-func generateAlertMessage(alert *alertmodels.Alert) *string {
+func generateAlertMessage(alert *alertmodels.Alert) string {
 	if aws.StringValue(alert.Type) == alertmodels.RuleType {
-		return aws.String(getDisplayName(alert) + " failed")
+		return getDisplayName(alert) + " failed"
 	}
-	return aws.String(getDisplayName(alert) + " failed on new resources")
+	return getDisplayName(alert) + " failed on new resources"
 }
 
-func generateAlertTitle(alert *alertmodels.Alert) *string {
+func generateAlertTitle(alert *alertmodels.Alert) string {
 	if aws.StringValue(alert.Type) == alertmodels.RuleType {
-		return aws.String("New Alert: " + getDisplayName(alert))
+		return "New Alert: " + getDisplayName(alert)
 	}
-	return aws.String("Policy Failure: " + getDisplayName(alert))
+	return "Policy Failure: " + getDisplayName(alert)
 }
 
 func getDisplayName(alert *alertmodels.Alert) string {
