@@ -33,7 +33,7 @@ import (
 )
 
 // Functions that build a personalized docker image from source, while pushing it to the private image repo of the user
-func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry string) (string,error) {
+func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry string) (string, error) {
 	fmt.Println("deploy: Requesting access to remote image repo")
 	ecrClient := ecr.New(awsSession)
 	req, resp := ecrClient.GetAuthorizationTokenRequest(&ecr.GetAuthorizationTokenInput{})
@@ -60,12 +60,12 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry stri
 	}
 
 	fmt.Println("deploy: building the docker image for the front-end server from source")
-	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/web/Dockerfile", "--quiet", ".", )
+	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/web/Dockerfile", "--quiet", ".")
 	if err != nil {
 		return "", err
 	}
 
-	localImageId := strings.Replace(dockerBuildOutput, "sha256:", "", 1);
+	localImageId := strings.Replace(dockerBuildOutput, "sha256:", "", 1)
 	remoteImage := imageRegistry + ":" + localImageId
 
 	fmt.Println("deploy: tagging the new image release")
