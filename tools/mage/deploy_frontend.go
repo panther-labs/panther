@@ -21,6 +21,7 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -50,10 +51,24 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 	}
 	credentials := strings.Split(string(decodedCredentialsInBytes), ":")
 
+	// Piping the Docker password to stdin
+	// before calling docker login command.
+	_, pipeWriter, err := os.Pipe()
+	if err != nil {
+		return  err
+	}
+	defer func() {
+		pipeWriter.Close()
+	}()
+	if _, err := pipeWriter.WriteString(credentials[1]); err != nil {
+		return err
+	}
+
+
 	fmt.Println("deploy: logging in to remote image repo")
 	if err := sh.Run("docker", "login",
 		"-u", credentials[0],
-		"-p", credentials[1],
+		"--password-stdin",
 		ecrServer,
 	); err != nil {
 		return err
