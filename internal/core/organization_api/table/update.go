@@ -73,7 +73,7 @@ func (table *OrganizationsTable) doUpdate(update expression.UpdateBuilder) (*mod
 		ConditionExpression:       expr.Condition(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
-		Key:                       DynamoItem{"id": {S: aws.String("1")}},
+		Key:                       DynamoItem{"id": {S: aws.String(orgID)}},
 		ReturnValues:              aws.String("ALL_NEW"),
 		TableName:                 table.Name,
 		UpdateExpression:          expr.Update(),

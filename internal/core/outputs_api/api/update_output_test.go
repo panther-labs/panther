@@ -133,3 +133,131 @@ func TestUpdateSameOutpuOutput(t *testing.T) {
 
 	mockOutputsTable.AssertExpectations(t)
 }
+
+func TestUpdateOutputAddSeverity(t *testing.T) {
+	// The output was configured to be default for only CRITICAL severity.
+	// Update configures it be default for CRITICAL and HIGH severity
+	mockOutputsTable := &mockOutputTable{}
+	outputsTable = mockOutputsTable
+	mockEncryptionKey := &mockEncryptionKey{}
+	encryptionKey = mockEncryptionKey
+	mockDefaultsTable := &mockDefaultsTable{}
+	defaultsTable = mockDefaultsTable
+
+	// Output was default for CRITICAL severity
+	previousDefaults := []*models.DefaultOutputsItem{
+		{
+			Severity:  aws.String("CRITICAL"),
+			OutputIDs: []*string{alertOutputItem.OutputID},
+		},
+	}
+	mockDefaultsTable.On("GetDefaults", mock.Anything).Return(previousDefaults, nil)
+
+	// First the output will be removed from CRITICAL
+	expectedRemoveDefaultOutputForCritical := &models.DefaultOutputsItem{
+		Severity:  aws.String("CRITICAL"),
+		OutputIDs: []*string{},
+	}
+	mockDefaultsTable.On("PutDefaults", expectedRemoveDefaultOutputForCritical).Return(nil).Once()
+
+	// We expect that the output will be added as default for CRITICAL and HIGH
+	expectedAddDefaultOutputForCritical := &models.DefaultOutputsItem{
+		Severity:  aws.String("CRITICAL"),
+		OutputIDs: []*string{alertOutputItem.OutputID},
+	}
+	expectedAddDefaultOutputForHigh := &models.DefaultOutputsItem{
+		Severity:  aws.String("HIGH"),
+		OutputIDs: []*string{alertOutputItem.OutputID},
+	}
+	mockDefaultsTable.On("PutDefaults", expectedAddDefaultOutputForCritical).Return(nil).Once()
+	mockDefaultsTable.On("PutDefaults", expectedAddDefaultOutputForHigh).Return(nil).Once()
+
+	mockOutputsTable.On("GetOutputByName", aws.String("displayName")).Return(alertOutputItem, nil)
+	mockDefaultsTable.On("GetDefault", mock.Anything).Return(nil, nil)
+	mockOutputsTable.On("UpdateOutput", mock.Anything).Return(alertOutputItem, nil)
+	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
+	mockEncryptionKey.On("DecryptConfig", mock.Anything, mock.Anything).Return(nil)
+
+	updateOutputInput := &models.UpdateOutputInput{
+		OutputID:           alertOutputItem.OutputID,
+		DisplayName:        alertOutputItem.DisplayName,
+		UserID:             alertOutputItem.LastModifiedBy,
+		OutputConfig:       &models.OutputConfig{Sns: &models.SnsConfig{}},
+		DefaultForSeverity: aws.StringSlice([]string{"CRITICAL", "HIGH"}),
+	}
+	result, err := (API{}).UpdateOutput(updateOutputInput)
+
+	assert.NoError(t, err)
+	assert.Equal(t, updateOutputInput.OutputID, result.OutputID)
+	assert.Equal(t, updateOutputInput.DisplayName, result.DisplayName)
+	assert.Equal(t, updateOutputInput.UserID, result.LastModifiedBy)
+	assert.Equal(t, aws.String("sns"), result.OutputType)
+
+	mockOutputsTable.AssertExpectations(t)
+}
+
+func TestUpdateOutputRemoveSeverity(t *testing.T) {
+	// The output was configured to be default for CRITICAL and HIGH severity.
+	// Update configures it be default for only CRITICAL severity
+	mockOutputsTable := &mockOutputTable{}
+	outputsTable = mockOutputsTable
+	mockEncryptionKey := &mockEncryptionKey{}
+	encryptionKey = mockEncryptionKey
+	mockDefaultsTable := &mockDefaultsTable{}
+	defaultsTable = mockDefaultsTable
+
+	// Output was default for CRITICAL and HIGH severity
+	previousDefaults := []*models.DefaultOutputsItem{
+		{
+			Severity:  aws.String("CRITICAL"),
+			OutputIDs: []*string{alertOutputItem.OutputID},
+		},
+		{
+			Severity:  aws.String("HIGH"),
+			OutputIDs: []*string{alertOutputItem.OutputID},
+		},
+	}
+	mockDefaultsTable.On("GetDefaults", mock.Anything).Return(previousDefaults, nil)
+
+	// First the output will be removed from CRITICAL and HIGH
+	expectedRemoveDefaultOutputForCritical := &models.DefaultOutputsItem{
+		Severity:  aws.String("CRITICAL"),
+		OutputIDs: []*string{},
+	}
+	expectedRemoveDefaultOutputForHigh := &models.DefaultOutputsItem{
+		Severity:  aws.String("HIGH"),
+		OutputIDs: []*string{},
+	}
+	mockDefaultsTable.On("PutDefaults", expectedRemoveDefaultOutputForCritical).Return(nil).Once()
+	mockDefaultsTable.On("PutDefaults", expectedRemoveDefaultOutputForHigh).Return(nil).Once()
+
+	// We expect that the output will be added as default for CRITICAL and HIGH
+	expectedAddDefaultOutputForCritical := &models.DefaultOutputsItem{
+		Severity:  aws.String("CRITICAL"),
+		OutputIDs: []*string{alertOutputItem.OutputID},
+	}
+	mockDefaultsTable.On("PutDefaults", expectedAddDefaultOutputForCritical).Return(nil).Once()
+
+	mockOutputsTable.On("GetOutputByName", aws.String("displayName")).Return(alertOutputItem, nil)
+	mockDefaultsTable.On("GetDefault", mock.Anything).Return(nil, nil)
+	mockOutputsTable.On("UpdateOutput", mock.Anything).Return(alertOutputItem, nil)
+	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
+	mockEncryptionKey.On("DecryptConfig", mock.Anything, mock.Anything).Return(nil)
+
+	updateOutputInput := &models.UpdateOutputInput{
+		OutputID:           alertOutputItem.OutputID,
+		DisplayName:        alertOutputItem.DisplayName,
+		UserID:             alertOutputItem.LastModifiedBy,
+		OutputConfig:       &models.OutputConfig{Sns: &models.SnsConfig{}},
+		DefaultForSeverity: aws.StringSlice([]string{"CRITICAL"}),
+	}
+	result, err := (API{}).UpdateOutput(updateOutputInput)
+
+	assert.NoError(t, err)
+	assert.Equal(t, updateOutputInput.OutputID, result.OutputID)
+	assert.Equal(t, updateOutputInput.DisplayName, result.DisplayName)
+	assert.Equal(t, updateOutputInput.UserID, result.LastModifiedBy)
+	assert.Equal(t, aws.String("sns"), result.OutputType)
+
+	mockOutputsTable.AssertExpectations(t)
+}

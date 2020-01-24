@@ -333,7 +333,6 @@ func updateInvalid(t *testing.T) {
 }
 
 func updateSlack(t *testing.T) {
-	t.Parallel()
 	slack.WebhookURL = aws.String("https://hooks.slack.com/services/DDDDDDDDD/EEEEEEEEE/" +
 		"abcdefghijklmnopqrstuvwx")
 	input := models.LambdaInput{
@@ -346,12 +345,12 @@ func updateSlack(t *testing.T) {
 		},
 	}
 	var output models.UpdateOutputOutput
-	assert.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
-	assert.Equal(t, slackOutputID, output.OutputID)
-	assert.Equal(t, aws.String("alert-channel-new"), output.DisplayName)
-	assert.Equal(t, slack, output.OutputConfig.Slack)
-	assert.Equal(t, aws.String("slack"), output.OutputType)
-	assert.Nil(t, output.OutputConfig.Sns)
+	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
+	require.Equal(t, slackOutputID, output.OutputID)
+	require.Equal(t, aws.String("alert-channel-new"), output.DisplayName)
+	require.Equal(t, slack, output.OutputConfig.Slack)
+	require.Equal(t, aws.String("slack"), output.OutputType)
+	require.Nil(t, output.OutputConfig.Sns)
 
 	defaults, err := getDefaultOutputsInternal()
 	require.NoError(t, err)
@@ -359,11 +358,10 @@ func updateSlack(t *testing.T) {
 		Severity:  aws.String("CRITICAL"),
 		OutputIDs: []*string{slackOutputID},
 	}
-	assert.Equal(t, []*models.DefaultOutputs{expectedDefaultOutputs}, defaults.Defaults)
+	require.Equal(t, []*models.DefaultOutputs{expectedDefaultOutputs}, defaults.Defaults)
 }
 
 func updateSns(t *testing.T) {
-	t.Parallel()
 	sns.TopicArn = aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")
 	input := models.LambdaInput{
 		UpdateOutput: &models.UpdateOutputInput{
