@@ -60,12 +60,7 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry stri
 	}
 
 	fmt.Println("deploy: building the docker image for the front-end server from source")
-	dockerBuildOutput, err := sh.Output("docker", "build",
-		"--file", "deployments/web/Dockerfile",
-		//"--tag", imageTag,
-		"--quiet",
-		".",
-	)
+	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/web/Dockerfile", "--quiet", ".", )
 	if err != nil {
 		return "", err
 	}
