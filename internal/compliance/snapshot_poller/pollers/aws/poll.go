@@ -335,10 +335,14 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		// Account wide resource type scan
 	} else if scanRequest.ResourceType != nil {
 		zap.L().Info("processing full account resource type scan")
-		return serviceScan(
-			[]resourcePoller{ServicePollers[*scanRequest.ResourceType]},
-			pollerResourceInput,
-		)
+		if poller, ok := ServicePollers[*scanRequest.ResourceType]; ok {
+			return serviceScan(
+				[]resourcePoller{poller},
+				pollerResourceInput,
+			)
+		} else {
+			return nil, errors.Errorf("invalid single region resource type '%s' scan requested", *scanRequest.ResourceType)
+		}
 	}
 
 	zap.L().Error("Invalid scan request input")
