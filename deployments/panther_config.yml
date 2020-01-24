@@ -50,10 +50,6 @@ BackendParameterValues:
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
 
-# CloudFormation parameter overrides for the frontend.yml which deploys the frontend stack.
-FrontendParameterValues:
-  ## Add any parameters that the front-end stack will accept here
-
 # Create a Python layer with these pip library versions.
 #
 # This makes it easy to add your own pip libraries for analysis and remediation.
