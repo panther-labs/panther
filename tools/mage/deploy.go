@@ -138,7 +138,7 @@ func Deploy() error {
 	if err != nil {
 		return err
 	}
-	
+
 	if err = restartFrontendServer(
 		awsSession,
 		backendOutputs["WebApplicationClusterName"],

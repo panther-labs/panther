@@ -35,8 +35,8 @@ type backendParameters struct {
 
 // PantherConfig describes the panther_config.yml file.
 type PantherConfig struct {
-	BucketsParameterValues  bucketsParameters  `yaml:"BucketsParameterValues"`
-	BackendParameterValues  backendParameters  `yaml:"BackendParameterValues"`
-	PipLayer                []string           `yaml:"PipLayer"`
-	InitialAnalysisSets     []string           `yaml:"InitialAnalysisSets"`
+	BucketsParameterValues bucketsParameters `yaml:"BucketsParameterValues"`
+	BackendParameterValues backendParameters `yaml:"BackendParameterValues"`
+	PipLayer               []string          `yaml:"PipLayer"`
+	InitialAnalysisSets    []string          `yaml:"InitialAnalysisSets"`
 }
