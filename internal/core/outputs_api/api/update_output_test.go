@@ -135,8 +135,8 @@ func TestUpdateSameOutpuOutput(t *testing.T) {
 }
 
 func TestUpdateOutputAddSeverity(t *testing.T) {
-	// The output was configured to have only CRITICAL severity.
-	// Update configures it be be for CRITICAL and HIGH severity
+	// The output was configured to be default for only CRITICAL severity.
+	// Update configures it be default for CRITICAL and HIGH severity
 	mockOutputsTable := &mockOutputTable{}
 	outputsTable = mockOutputsTable
 	mockEncryptionKey := &mockEncryptionKey{}
@@ -197,8 +197,8 @@ func TestUpdateOutputAddSeverity(t *testing.T) {
 }
 
 func TestUpdateOutputRemoveSeverity(t *testing.T) {
-	// The output was configured to have only CRITICAL and HIGH severity.
-	// Update configures it be be only for CRITICAL severity
+	// The output was configured to be default for CRITICAL and HIGH severity.
+	// Update configures it be default for only CRITICAL severity
 	mockOutputsTable := &mockOutputTable{}
 	outputsTable = mockOutputsTable
 	mockEncryptionKey := &mockEncryptionKey{}
