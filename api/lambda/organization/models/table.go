@@ -28,13 +28,13 @@ const (
 
 // Organization defines the fields in the table row.
 type Organization struct {
-	AlertReportFrequency *string            `json:"alertReportFrequency"`
-	AwsConfig            *AwsConfig         `json:"awsConfig"`
-	CompletedActions     []*Action          `dynamodbav:"completedActions,omitempty,stringset" json:"completedActions"`
-	CreatedAt            *string            `json:"createdAt"`
-	DisplayName          *string            `json:"displayName"`
-	Email                *string            `json:"email"`
-	Phone                *string            `json:"phone"`
+	AlertReportFrequency *string    `json:"alertReportFrequency"`
+	AwsConfig            *AwsConfig `json:"awsConfig"`
+	CompletedActions     []*Action  `dynamodbav:"completedActions,omitempty,stringset" json:"completedActions"`
+	CreatedAt            *string    `json:"createdAt"`
+	DisplayName          *string    `json:"displayName"`
+	Email                *string    `json:"email"`
+	Phone                *string    `json:"phone"`
 }
 
 // AwsConfig defines metadata related to AWS infrastructure for the organization
