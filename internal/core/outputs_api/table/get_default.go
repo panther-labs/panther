@@ -34,6 +34,8 @@ func (table *DefaultsTable) GetDefault(severity *string) (*models.DefaultOutputs
 			Key: DynamoItem{
 				"severity": {S: severity},
 			},
+			// Need consistent reads since code performs some
+			// quick read-after-write operations that require consistency.
 			ConsistentRead: aws.Bool(true),
 		})
 
