@@ -28,6 +28,23 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Ref ImageName
+      LifecyclePolicy:
+        RegistryId: !Ref AWS::AccountId
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Makes sure to keep only the last 10 images that have been uploaded",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 10
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
 
 Outputs:
   ImageRepo:
