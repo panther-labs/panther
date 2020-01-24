@@ -259,16 +259,16 @@ Resources:
   RemediationLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/lambda/panther-aws-remediation
+      LogGroupName: /aws/lambda/panther-aws-remediation/src
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
   RemediationFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../../../internal/compliance/remediation_aws
+      CodeUri: ../../../internal/compliance/remediation_aws/src
       Description: Function that remediates issues with AWS resources
       FunctionName: panther-aws-remediation
-      Handler: src.app.main.lambda_handler
+      Handler: app.main.lambda_handler
       Environment:
         Variables:
           # TODO: Support customizable logging levels (for every Lambda function)
