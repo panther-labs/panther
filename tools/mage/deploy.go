@@ -139,7 +139,7 @@ func Deploy() error {
 		return err
 	}
 
-	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"], backendOutputs["RemediationLambdaArn"]); err != nil {
+	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
 		return err
 	}
 
@@ -290,7 +290,7 @@ func enableTOTP(awsSession *session.Session, userPoolID string) error {
 }
 
 // If the Admin group is empty (e.g. on the initial deploy), create the initial admin user and organization
-func setupOrganization(awsSession *session.Session, userPoolID string, remediationLambdaArn string) error {
+func setupOrganization(awsSession *session.Session, userPoolID string) error {
 	cognitoClient := cognitoidentityprovider.New(awsSession)
 	group, err := cognitoClient.ListUsersInGroup(&cognitoidentityprovider.ListUsersInGroupInput{
 		GroupName:  aws.String("Admin"),
@@ -328,7 +328,6 @@ func setupOrganization(awsSession *session.Session, userPoolID string, remediati
 		CreateOrganization: &orgmodels.CreateOrganizationInput{
 			Email:             &email,
 			DisplayName:       aws.String(firstName + "-" + lastName),
-			RemediationConfig: &orgmodels.RemediationConfig{AwsRemediationLambdaArn: aws.String(remediationLambdaArn)},
 		},
 	}
 	if err := invokeLambda(awsSession, "panther-organization-api", createOrgInput); err != nil {

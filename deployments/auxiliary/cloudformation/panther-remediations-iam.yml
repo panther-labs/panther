@@ -16,54 +16,58 @@
 
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: Deploys the latest Panther Remediation Lambda from SAR and creates the appropriate IAM role to allow invocation of Lambda from Panther
+Description: Deploys the IAM role that allows Panther to remediate resources in an account
 Metadata:
-  Version: 1.1
+  Version: 1.0
 
 Parameters:
   MasterAccountId:
     Type: String
-    Description:  AWS account ID of the account running the Panther backend
+    Description: The account ID where Panther is deployed in
 
 Resources:
-  PantherLambdaInvocationRole:
+  RemediationRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherLambdaInvocationRole
+      RoleName: AwsRemediationRole
       MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+              AWS: !Ref MasterAccountId
             Action: sts:AssumeRole
             Condition:
               Bool:
                 aws:SecureTransport: true
       Policies:
-        - PolicyName: AllowInvocation
+        - PolicyName: AllowRemediativeActions
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: lambda:InvokeFunction
-                Resource: !GetAtt PantherAWSRemediations.Outputs.LambdaArn
-
-  PantherAWSRemediations:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/aws-remediations
-        SemanticVersion: 0.1.2
-      Parameters:
-        IsMasterAccount: 'true'
-        CreateSSMDocument: 'false'
-        LambdaLoggingLevel: 'INFO'
-        LambdaLogsRetentionDays: '365'
-
-Outputs:
-  LambdaArn:
-    Description: The ARN of the Lambda function that will perform the remediative actions.
-    Value: !GetAtt PantherAWSRemediations.Outputs.LambdaArn
+                Action:
+                  - cloudtrail:CreateTrail
+                  - cloudtrail:StartLogging
+                  - cloudtrail:UpdateTrail
+                  - dynamodb:UpdateTable
+                  - ec2:CreateFlowLogs
+                  - ec2:StopInstances
+                  - ec2:TerminateInstances
+                  - guardduty:CreateDetector
+                  - iam:CreateAccessKey
+                  - iam:CreateServiceLinkedRole
+                  - iam:DeleteAccessKey
+                  - iam:UpdateAccessKey
+                  - iam:UpdateAccountPasswordPolicy
+                  - kms:EnableKeyRotation
+                  - logs:CreateLogDelivery
+                  - rds:ModifyDBInstance
+                  - rds:ModifyDBSnapshotAttribute
+                  - s3:PutBucketVersioning
+                  - s3:PutBucketLogging
+                  - s3:PutBucketAcl
+                  - s3:PutEncryptionConfiguration
+                  - s3:PutBucketPublicAccessBlock
+                Resource: '*'
