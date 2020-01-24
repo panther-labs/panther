@@ -72,7 +72,7 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 	// Removing outputId from all defaults
 	for _, defaultOutput := range defaults {
 		var removed bool
-		defaultOutput.OutputIDs, removed = removeSlice(defaultOutput.OutputIDs, input.OutputID)
+		defaultOutput.OutputIDs, removed = removeFromSlice(defaultOutput.OutputIDs, input.OutputID)
 		if removed {
 			if err := defaultsTable.PutDefaults(defaultOutput); err != nil {
 				return nil, err
@@ -93,7 +93,7 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 
 // Removes an item from a slice if it exists. Returns the resulting slice
 // and a boolean indicating whether an item was removed or not
-func removeSlice(slice []*string, item *string) ([]*string, bool) {
+func removeFromSlice(slice []*string, item *string) ([]*string, bool) {
 	new := make([]*string, 0, len(slice))
 	for _, element := range slice {
 		if *element != *item {
