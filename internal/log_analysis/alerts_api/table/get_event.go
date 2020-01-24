@@ -25,11 +25,10 @@ import (
 )
 
 // GetEvent retrieves an event from DDB
-// FIXME: the string keys should be constants in _some_ model, but which?
 func (table *AlertsTable) GetEvent(eventHash []byte) (*string, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			EventHash: {B: eventHash},
+			EventHashKey: {B: eventHash},
 		},
 		TableName: aws.String(table.EventsTableName),
 	}
@@ -39,5 +38,5 @@ func (table *AlertsTable) GetEvent(eventHash []byte) (*string, error) {
 		return nil, errors.Wrap(err, "GetItem() failed for: "+string(eventHash))
 	}
 
-	return ddbResult.Item["event"].S, nil
+	return ddbResult.Item[EventKey].S, nil
 }

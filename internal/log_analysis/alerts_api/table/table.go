@@ -31,7 +31,8 @@ const (
 	AlertIDKey       = "alertId"
 	TimePartitionKey = "timePartition"
 	CreationTimeKey  = "creationTime"
-	EventHash        = "eventHash"
+	EventHashKey     = "eventHash"
+	EventKey         = "event"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
