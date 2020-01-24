@@ -226,7 +226,7 @@ type composedStruct struct {
 }
 
 type fooStruct struct {
-	Foo string
+	Foo string `description:"this is Foo field and it is awesome"`
 }
 
 func TestComposeStructs(t *testing.T) {
@@ -239,7 +239,7 @@ func TestComposeStructs(t *testing.T) {
 	}
 	cols := InferJSONColumns(&composition)
 	expectedColumns := []Column{
-		{Name: "Foo", Type: "string"},
+		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
 		{Name: "Bar", Type: "string"},
 	}
 	require.Equal(t, expectedColumns, cols)
