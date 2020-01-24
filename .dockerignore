@@ -16,7 +16,7 @@ venv
 
 # Generated
 out
-!out/.env
+!out/.env*
 .setup
 
 # External
