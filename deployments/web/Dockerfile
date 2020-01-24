@@ -37,7 +37,8 @@ ADD package.json package-lock.json ./
 RUN npm i
 
 # Mount the necessary source code
-ADD .babelrc tsconfig.json webpack.config.js out/.env ./
+ADD .babelrc tsconfig.json webpack.config.js ./
+ADD out/.env out/.env
 ADD web web
 
 # Build argument & ENV var for versioning
