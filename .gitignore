@@ -15,7 +15,6 @@ web/scripts/deploy-sourcemap.js
 
 # Private keys
 keys/
-.env
 
 # MacOS files
 .DS_Store

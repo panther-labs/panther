@@ -131,8 +131,8 @@
     "yup": "^0.26.6"
   },
   "scripts": {
-    "build": "cross-env NODE_ENV=production node -r dotenv/config node_modules/.bin/webpack",
-    "start": "cross-env NODE_ENV=development node -r dotenv/config node_modules/.bin/webpack-dev-server",
+    "build": "cross-env NODE_ENV=production node -r dotenv/config dotenv_config_path=out/.env node_modules/.bin/webpack",
+    "start": "cross-env NODE_ENV=development node -r dotenv/config dotenv_config_path=out/.env node_modules/.bin/webpack-dev-server",
     "serve": "cross-env SERVER_PORT=8080 node web/scripts/serve.js",
     "generate-gql": "graphql-codegen",
     "lint": "eslint \"web/src/**/*.{ts,js,tsx,jsx}\" && prettier --list-different  \"web/src/**/*.{ts,js,tsx,jsx,md,scss,css,json}\" && tsc -p ."
