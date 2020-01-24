@@ -326,8 +326,8 @@ func setupOrganization(awsSession *session.Session, userPoolID string) error {
 	// Hit organization-api.CreateOrganization to create organization entry
 	createOrgInput := &orgmodels.LambdaInput{
 		CreateOrganization: &orgmodels.CreateOrganizationInput{
-			Email:             &email,
-			DisplayName:       aws.String(firstName + "-" + lastName),
+			Email:       &email,
+			DisplayName: aws.String(firstName + "-" + lastName),
 		},
 	}
 	if err := invokeLambda(awsSession, "panther-organization-api", createOrgInput); err != nil {

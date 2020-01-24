@@ -36,13 +36,11 @@ type InvokerAPI interface {
 //Invoker is responsible for invoking Remediation Lambda
 type Invoker struct {
 	lambdaClient lambdaiface.LambdaAPI
-	awsSession   *session.Session
 }
 
 //NewInvoker method returns a new instance of Invoker
 func NewInvoker(sess *session.Session) *Invoker {
 	return &Invoker{
 		lambdaClient: lambda.New(sess),
-		awsSession:   sess,
 	}
 }

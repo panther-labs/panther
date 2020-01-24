@@ -35,7 +35,6 @@ type Organization struct {
 	DisplayName          *string            `json:"displayName"`
 	Email                *string            `json:"email"`
 	Phone                *string            `json:"phone"`
-	RemediationConfig    *RemediationConfig `json:"remediationConfig,omitempty"`
 }
 
 // AwsConfig defines metadata related to AWS infrastructure for the organization
@@ -43,11 +42,4 @@ type AwsConfig struct {
 	UserPoolID     *string `json:"userPoolId"`
 	AppClientID    *string `json:"appClientId"`
 	IdentityPoolID *string `json:"identityPoolId"`
-}
-
-// RemediationConfig contains information related to Remediation actions
-type RemediationConfig struct {
-	// Each organization will have one Lambda that is able to perform remediation for their AWS infrastructure.
-	// This field contains the ARN for that Lambda.
-	AwsRemediationLambdaArn *string `json:"awsRemediationLambdaArn,omitempty"`
 }

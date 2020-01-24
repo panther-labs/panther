@@ -24,7 +24,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -49,10 +48,8 @@ var (
 	resourcesServiceHostname = os.Getenv("RESOURCES_SERVICE_HOSTNAME")
 	resourcesServicePath     = os.Getenv("RESOURCES_SERVICE_PATH")
 
-	awsSession                         = session.Must(session.NewSession())
-	httpClient                         = gatewayapi.GatewayClient(awsSession)
-	lambdaClient lambdaiface.LambdaAPI = lambda.New(awsSession)
-
+	awsSession     = session.Must(session.NewSession())
+	httpClient     = gatewayapi.GatewayClient(awsSession)
 	policiesConfig = analysisclient.DefaultTransportConfig().
 			WithBasePath(policiesServicePath).
 			WithHost(policiesServiceHostname)
@@ -162,7 +159,7 @@ func (remediator *Invoker) invokeLambda(lambdaInput *LambdaInput) ([]byte, error
 		FunctionName: aws.String(remediationLambdaArn),
 	}
 
-	response, err := lambdaClient.Invoke(invokeInput)
+	response, err := remediator.lambdaClient.Invoke(invokeInput)
 	if err != nil {
 		return nil, err
 	}

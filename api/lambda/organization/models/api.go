@@ -43,7 +43,6 @@ type CreateOrganizationInput struct {
 	DisplayName          *string            `json:"displayName" validate:"required,min=1"`
 	Email                *string            `genericapi:"redact" json:"email" validate:"required,email"`
 	Phone                *string            `genericapi:"redact" json:"phone"`
-	RemediationConfig    *RemediationConfig `json:"remediationConfig,omitempty"`
 }
 
 // CreateOrganizationOutput returns the newly created organization.
