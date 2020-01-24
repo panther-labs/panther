@@ -138,6 +138,14 @@ func Deploy() error {
 	if err != nil {
 		return err
 	}
+	
+	if err = restartFrontendServer(
+		awsSession,
+		backendOutputs["WebApplicationClusterName"],
+		frontEndOutputs["WebApplicationServiceName"],
+	); err != nil {
+		return err
+	}
 
 	if err := enableTOTP(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
 		return err
@@ -148,14 +156,6 @@ func Deploy() error {
 	}
 
 	if err := initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], &config); err != nil {
-		return err
-	}
-
-	if err = restartFrontendServer(
-		awsSession,
-		backendOutputs["WebApplicationClusterName"],
-		frontEndOutputs["WebApplicationServiceName"],
-	); err != nil {
 		return err
 	}
 

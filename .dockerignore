@@ -14,7 +14,7 @@ node_modules
 venv
 
 
-# Generated
+# Generated (ignore everything except from dotenv files)
 out
 !out/.env*
 .setup
