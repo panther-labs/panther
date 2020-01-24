@@ -30,15 +30,27 @@ import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
-// List returns (a page of alerts ordered by creationTime, last evaluated key, any error)
-func (table *AlertsTable) List(ddbKey, ddbValue string, exclusiveStartKey *string, pageSize *int) (
+func (table *AlertsTable) ListByRule(ruleID string, exclusiveStartKey *string, pageSize *int) (
+	summaries []*models.AlertItem, lastEvaluatedKey *string, err error) {
+
+	return table.list(RuleIDKey, ruleID, exclusiveStartKey, pageSize)
+}
+
+func (table *AlertsTable) ListAll(exclusiveStartKey *string, pageSize *int) (
+	summaries []*models.AlertItem, lastEvaluatedKey *string, err error) {
+
+	return table.list(TimePartitionKey, TimePartitionKey, exclusiveStartKey, pageSize)
+}
+
+// list returns a page of alerts ordered by creationTime, last evaluated key, any error
+func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *string, pageSize *int) (
 	summaries []*models.AlertItem, lastEvaluatedKey *string, err error) {
 
 	// pick index
 	var index string
-	if ddbKey == models.RuleIDKey {
+	if ddbKey == RuleIDKey {
 		index = table.RuleIDCreationTimeIndexName
-	} else if ddbKey == models.TimePartitionKey {
+	} else if ddbKey == TimePartitionKey {
 		index = table.TimePartitionCreationTimeIndexName
 	} else {
 		return nil, nil, errors.New("unknown key" + ddbKey)
@@ -95,11 +107,11 @@ func (table *AlertsTable) List(ddbKey, ddbValue string, exclusiveStartKey *strin
 	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
 	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` JSON blob in the response.
 	if len(queryOutput.LastEvaluatedKey) > 0 {
-		jsonSnippet, err := jsoniter.MarshalToString(queryOutput.LastEvaluatedKey)
+		lastEvaluatedKeySerialized, err := jsoniter.MarshalToString(queryOutput.LastEvaluatedKey)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to Marshal LastEvaluatedKey)")
 		}
-		lastEvaluatedKey = &jsonSnippet
+		lastEvaluatedKey = &lastEvaluatedKeySerialized
 	}
 
 	return summaries, lastEvaluatedKey, nil

@@ -33,7 +33,7 @@ import (
 
 // ListAlerts retrieves alert and event details.
 func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsOutput, err error) {
-	operation := common.OpLogManager.Start("listAlerts", common.OpLogAlertsAPIDim)
+	operation := common.OpLogManager.Start("listAlerts")
 	defer func() {
 		operation.Stop()
 		operation.Log(err)
@@ -42,11 +42,9 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 	result = &models.ListAlertsOutput{}
 	var alertItems []*models.AlertItem
 	if input.RuleID != nil { // list per specific ruleId
-		alertItems, result.LastEvaluatedKey, err = alertsDB.List(models.RuleIDKey, *input.RuleID,
-			input.ExclusiveStartKey, input.PageSize)
+		alertItems, result.LastEvaluatedKey, err = alertsDB.ListByRule(*input.RuleID, input.ExclusiveStartKey, input.PageSize)
 	} else { // list all alerts time desc order
-		alertItems, result.LastEvaluatedKey, err = alertsDB.List(models.TimePartitionKey, models.TimePartitionKey,
-			input.ExclusiveStartKey, input.PageSize)
+		alertItems, result.LastEvaluatedKey, err = alertsDB.ListAll(input.ExclusiveStartKey, input.PageSize)
 	}
 	if err != nil {
 		return nil, err

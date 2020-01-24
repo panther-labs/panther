@@ -76,7 +76,7 @@ func Handler(ctx context.Context, event events.SQSEvent) error {
 		// this is where real work is done, for safety, fail lambda on any error
 		if err := merger.Handle(input); err != nil {
 			errorCount++
-			logger.Error("encountered issue while processing event", zap.Error(err), zap.Error(err), zap.Any("input", input))
+			logger.Error("encountered issue while processing event", zap.Error(err), zap.Any("input", input))
 			return err
 		}
 	}

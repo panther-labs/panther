@@ -29,7 +29,7 @@ import (
 
 // GetEvent retrieves a specific event
 func (API) GetEvent(input *models.GetEventInput) (output *models.GetEventOutput, err error) {
-	operation := common.OpLogManager.Start("getEvent", common.OpLogAlertsAPIDim)
+	operation := common.OpLogManager.Start("getEvent")
 	defer func() {
 		operation.Stop()
 		operation.Log(err)

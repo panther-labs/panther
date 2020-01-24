@@ -29,7 +29,7 @@ import (
 func (table *AlertsTable) GetEvent(eventHash []byte) (*string, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"eventHash": {B: eventHash},
+			EventHash: {B: eventHash},
 		},
 		TableName: aws.String(table.EventsTableName),
 	}

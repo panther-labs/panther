@@ -39,8 +39,8 @@ import (
 
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	alertapimodel "github.com/panther-labs/panther/api/lambda/alerts/models"
-	alertmodel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	tableModel "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
@@ -228,7 +228,7 @@ func addEventToAlert(event *MatchedEvent, alertNotification *AlertNotification, 
 		Set(expression.Name("creationTime"), expression.Value(creationTime)).
 		Set(expression.Name("ruleId"), expression.Value(alertNotification.RuleID)).
 		Set(expression.Name("lastEventMatched"), expression.Value(event.Timestamp)).
-		Set(expression.Name(alertapimodel.TimePartitionKey), expression.Value(alertapimodel.TimePartitionKey))
+		Set(expression.Name(tableModel.TimePartitionKey), expression.Value(tableModel.TimePartitionKey))
 
 	expr, err := expression.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
@@ -241,7 +241,7 @@ func addEventToAlert(event *MatchedEvent, alertNotification *AlertNotification, 
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		Key: map[string]*dynamodb.AttributeValue{
-			alertapimodel.AlertIDKey: {S: alertID},
+			tableModel.AlertIDKey: {S: alertID},
 		},
 		TableName:        alertsTable,
 		UpdateExpression: expr.Update(),
@@ -279,7 +279,7 @@ func sendAlert(notification *AlertNotification, alertID *string) error {
 	return nil
 }
 
-func getAlert(notification *AlertNotification, alertID *string) (*alertmodel.Alert, error) {
+func getAlert(notification *AlertNotification, alertID *string) (*alertModel.Alert, error) {
 	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
 		RuleID:     *notification.RuleID,
 		HTTPClient: httpClient,
@@ -290,7 +290,7 @@ func getAlert(notification *AlertNotification, alertID *string) (*alertmodel.Ale
 		return nil, err
 	}
 
-	return &alertmodel.Alert{
+	return &alertModel.Alert{
 		CreatedAt:         notification.Timestamp,
 		PolicyDescription: aws.String(string(rule.Payload.Description)),
 		PolicyID:          notification.RuleID,
@@ -299,7 +299,7 @@ func getAlert(notification *AlertNotification, alertID *string) (*alertmodel.Ale
 		Runbook:           aws.String(string(rule.Payload.Runbook)),
 		Severity:          aws.String(string(rule.Payload.Severity)),
 		Tags:              aws.StringSlice(rule.Payload.Tags),
-		Type:              aws.String(alertmodel.RuleType),
+		Type:              aws.String(alertModel.RuleType),
 		AlertID:           alertID,
 	}, nil
 }

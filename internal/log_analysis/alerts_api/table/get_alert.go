@@ -31,7 +31,7 @@ import (
 func (table *AlertsTable) GetAlert(alertID *string) (*models.AlertItem, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			models.AlertIDKey: {S: alertID},
+			AlertIDKey: {S: alertID},
 		},
 		TableName: aws.String(table.AlertsTableName),
 	}

@@ -26,11 +26,20 @@ import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
+const (
+	RuleIDKey        = "ruleId"
+	AlertIDKey       = "alertId"
+	TimePartitionKey = "timePartition"
+	CreationTimeKey  = "creationTime"
+	EventHash        = "eventHash"
+)
+
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
 	GetAlert(*string) (*models.AlertItem, error)
 	GetEvent([]byte) (*string, error)
-	List(string, string, *string, *int) ([]*models.AlertItem, *string, error)
+	ListByRule(string, *string, *int) ([]*models.AlertItem, *string, error)
+	ListAll(*string, *int) ([]*models.AlertItem, *string, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.

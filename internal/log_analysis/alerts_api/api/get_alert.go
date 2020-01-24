@@ -31,7 +31,7 @@ import (
 
 // GetAlert retrieves details for a given alert
 func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput, err error) {
-	operation := common.OpLogManager.Start("getAlert", common.OpLogAlertsAPIDim)
+	operation := common.OpLogManager.Start("getAlert")
 	defer func() {
 		operation.Stop()
 		operation.Log(err)
