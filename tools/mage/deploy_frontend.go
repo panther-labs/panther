@@ -43,7 +43,10 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 	ecrAuthorizationToken := *resp.AuthorizationData[0].AuthorizationToken
 	ecrServer := *resp.AuthorizationData[0].ProxyEndpoint
 
-	decodedCredentialsInBytes, _ := base64.StdEncoding.DecodeString(ecrAuthorizationToken)
+	decodedCredentialsInBytes, err := base64.StdEncoding.DecodeString(ecrAuthorizationToken)
+	if err != nil {
+		return err
+	}
 	credentials := strings.Split(string(decodedCredentialsInBytes), ":")
 
 	fmt.Println("deploy: logging in to remote image repo")
