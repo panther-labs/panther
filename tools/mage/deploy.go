@@ -32,8 +32,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fatih/color"
-	"github.com/iancoleman/strcase"
-	"github.com/joho/godotenv"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -117,7 +115,7 @@ func Deploy() error {
 		return err
 	}
 
-	if err := generateDotEnvFromCfnOutputs(backendOutputs, "out/.env"); err != nil {
+	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs, "out/.env"); err != nil {
 		return err
 	}
 
@@ -364,18 +362,6 @@ func invokeLambda(awsSession *session.Session, functionName string, input interf
 	if response.FunctionError != nil {
 		return fmt.Errorf("failed to invoke %s: %s error: %s",
 			functionName, *response.FunctionError, string(response.Payload))
-	}
-	return nil
-}
-
-// Accepts Cloudformation outputs, converts the keys into a screaming snakecase format and stores them in a dotenv file
-func generateDotEnvFromCfnOutputs(outputs map[string]string, filename string) error {
-	conventionalOutputs := make(map[string]string)
-	for k, v := range outputs {
-		conventionalOutputs[strcase.ToScreamingSnake(k)] = v
-	}
-	if err := godotenv.Write(conventionalOutputs, filename); err != nil {
-		return err
 	}
 	return nil
 }

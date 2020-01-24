@@ -21,6 +21,7 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/joho/godotenv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -75,6 +76,23 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 
 	return nil
 }
+
+// Accepts Cloudformation outputs, converts the keys into a screaming snakecase format and stores them in a dotenv file
+func generateDotEnvFromCfnOutputs(awsSession *session.Session, outputs map[string]string, filename string) error {
+	conventionalOutputs := map[string]string{
+		"AWS_REGION": *awsSession.Config.Region,
+		"AWS_ACCOUNT_ID": outputs["AWSAccountId"],
+		"WEB_APPLICATION_GRAPHQL_API_ENDPOINT": outputs["WebApplicationGraphqlApiEndpoint"],
+		"WEB_APPLICATION_USER_POOL_ID": outputs["WebApplicationUserPoolId"],
+		"WEB_APPLICATION_USER_POOL_CLIENT_ID": outputs["WebApplicationUserPoolClientId"],
+	}
+
+	if err := godotenv.Write(conventionalOutputs, filename); err != nil {
+		return err
+	}
+	return nil
+}
+
 
 // makes sure to force a new ECS deployment on the service server so that the latest docker image can be applied
 func restartFrontendServer(awsSession *session.Session, cluster string, service string) error {
