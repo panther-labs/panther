@@ -23,11 +23,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/ecs"
-	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 	"github.com/magefile/mage/sh"
 )
@@ -65,11 +62,11 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry stri
 		return "", err
 	}
 
-	localImageId := strings.Replace(dockerBuildOutput, "sha256:", "", 1)
-	remoteImage := imageRegistry + ":" + localImageId
+	localImageID := strings.Replace(dockerBuildOutput, "sha256:", "", 1)
+	remoteImage := imageRegistry + ":" + localImageID
 
 	fmt.Println("deploy: tagging the new image release")
-	if err = sh.Run("docker", "tag", localImageId, remoteImage); err != nil {
+	if err = sh.Run("docker", "tag", localImageID, remoteImage); err != nil {
 		return "", err
 	}
 
@@ -94,23 +91,5 @@ func generateDotEnvFromCfnOutputs(awsSession *session.Session, outputs map[strin
 	if err := godotenv.Write(conventionalOutputs, filename); err != nil {
 		return err
 	}
-	return nil
-}
-
-// makes sure to force a new ECS deployment on the service server so that the latest docker image can be applied
-func restartFrontendServer(awsSession *session.Session, cluster string, service string) error {
-	fmt.Println("deploy: upgrading front-end server to the latest docker image")
-	ecsClient := ecs.New(awsSession)
-	_, err := ecsClient.UpdateService(&ecs.UpdateServiceInput{
-		Cluster:            aws.String(cluster),
-		Service:            aws.String(service),
-		ForceNewDeployment: aws.Bool(true),
-	})
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("deploy: front-end server upgraded successfully!")
-	color.Cyan("deploy: please allow up to 1 minute for front-end changes to be propagated across containers")
 	return nil
 }
