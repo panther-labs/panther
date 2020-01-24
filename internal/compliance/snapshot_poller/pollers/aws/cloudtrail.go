@@ -52,7 +52,7 @@ func PollCloudTrailTrail(
 	client := getClient(pollerResourceInput, "cloudtrail", resourceARN.Region).(cloudtrailiface.CloudTrailAPI)
 	trail := getTrail(client, scanRequest.ResourceID)
 
-	snapshot := buildCloudTrailSnapshot(client, trail, scanRequest.Region)
+	snapshot := buildCloudTrailSnapshot(client, trail, aws.String(resourceARN.Region))
 	if snapshot == nil {
 		return nil
 	}
