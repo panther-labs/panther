@@ -45,6 +45,10 @@ func classifyCloudTrail(detail gjson.Result, accountID string) []*resourceChange
 	}
 	var err error
 
+	// WARNING: never return a region wide service scan configuration (resourceID is not set, region is set) for CloudTrail!
+	//
+	// Doing so will break the CloudTrail meta resource. CloudTrail will only ever have a handful of
+	// resources, just do full account scans instead.
 	switch eventName {
 	case "AddTags", "RemoveTags":
 		// This will always be an ARN
@@ -110,6 +114,8 @@ func classifyCloudTrail(detail gjson.Result, accountID string) []*resourceChange
 		AwsAccountID: accountID,
 		Delete:       false,
 		EventName:    eventName,
+		// This should always be empty for CloudTrail scan requests!
+		Region:       "",
 		ResourceID:   trailARNBase.String(),
 		ResourceType: schemas.CloudTrailSchema,
 	}}
