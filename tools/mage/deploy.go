@@ -119,7 +119,8 @@ func Deploy() error {
 		return err
 	}
 
-	if err = buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImage"]); err != nil {
+	dockerImage, err := buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImageRegistry"])
+	if err != nil {
 		return err
 	}
 
@@ -128,22 +129,9 @@ func Deploy() error {
 		return err
 	}
 
-	frontendDeployParams := getFrontendDeployParams(backendOutputs)
+	frontendDeployParams := getFrontendDeployParams(dockerImage, backendOutputs)
 
 	if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
-		return err
-	}
-
-	frontEndOutputs, err := getStackOutputs(awsSession, frontendStack)
-	if err != nil {
-		return err
-	}
-
-	if err = restartFrontendServer(
-		awsSession,
-		backendOutputs["WebApplicationClusterName"],
-		frontEndOutputs["WebApplicationServiceName"],
-	); err != nil {
 		return err
 	}
 
@@ -198,10 +186,10 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 	return result, nil
 }
 
-func getFrontendDeployParams(backendOutputs map[string]string) map[string]string {
+func getFrontendDeployParams(image string, backendOutputs map[string]string) map[string]string {
 	// If there are params declared in config, we should make sure to add them as well. Currently there are none.
 	result := map[string]string{
-		"WebApplicationImage":                       backendOutputs["WebApplicationImage"],
+		"WebApplicationImage":                       image,
 		"WebApplicationClusterName":                 backendOutputs["WebApplicationClusterName"],
 		"WebApplicationVpcId":                       backendOutputs["WebApplicationVpcId"],
 		"WebApplicationSubnetOneId":                 backendOutputs["WebApplicationSubnetOneId"],

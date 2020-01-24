@@ -53,8 +53,3 @@ Resources:
         LoadBalancerListenerArn: !Ref WebApplicationLoadBalancerListenerArn
         LoadBalancerSecurityGroupId: !Ref WebApplicationLoadBalancerSecurityGroupId
       TemplateURL: web/server.yml
-
-Outputs:
-  WebApplicationServiceName:
-    Description: The name of the cluster that holds the web application related services
-    Value: !GetAtt FrontendApplicationServer.Outputs.ServiceName

@@ -33,12 +33,12 @@ import (
 )
 
 // Functions that build a personalized docker image from source, while pushing it to the private image repo of the user
-func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) error {
+func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry string) (string,error) {
 	fmt.Println("deploy: Requesting access to remote image repo")
 	ecrClient := ecr.New(awsSession)
 	req, resp := ecrClient.GetAuthorizationTokenRequest(&ecr.GetAuthorizationTokenInput{})
 	if err := req.Send(); err != nil {
-		return err
+		return "", err
 	}
 
 	ecrAuthorizationToken := *resp.AuthorizationData[0].AuthorizationToken
@@ -46,7 +46,7 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 
 	decodedCredentialsInBytes, err := base64.StdEncoding.DecodeString(ecrAuthorizationToken)
 	if err != nil {
-		return err
+		return "", err
 	}
 	credentials := strings.Split(string(decodedCredentialsInBytes), ":")
 
@@ -56,25 +56,34 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 		"-p", credentials[1],
 		ecrServer,
 	); err != nil {
-		return err
+		return "", err
 	}
 
 	fmt.Println("deploy: building the docker image for the front-end server from source")
-	if err := sh.Run("docker", "build",
+	dockerBuildOutput, err := sh.Output("docker", "build",
 		"--file", "deployments/web/Dockerfile",
-		"--tag", imageTag,
+		//"--tag", imageTag,
 		"--quiet",
 		".",
-	); err != nil {
-		return err
+	)
+	if err != nil {
+		return "", err
+	}
+
+	localImageId := strings.Replace(dockerBuildOutput, "sha256:", "", 1);
+	remoteImage := imageRegistry + ":" + localImageId
+
+	fmt.Println("deploy: tagging the new image release")
+	if err = sh.Run("docker", "tag", localImageId, remoteImage); err != nil {
+		return "", err
 	}
 
 	fmt.Println("deploy: pushing docker image to remote repo")
-	if err := sh.RunV("docker", "push", imageTag); err != nil {
-		return err
+	if err := sh.RunV("docker", "push", remoteImage); err != nil {
+		return "", err
 	}
 
-	return nil
+	return remoteImage, nil
 }
 
 // Accepts Cloudformation outputs, converts the keys into a screaming snakecase format and stores them in a dotenv file
