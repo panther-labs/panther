@@ -43,12 +43,14 @@ import (
 )
 
 const (
-	rootAccountNameCredReport = "<root_account>"
-	rootDeviceSerialSuffix    = ":mfa/root-account-mfa-device"
+	// Time to delay the requeue of a scan of IAM Users when the credential report times out
+	credentialReportRequeueDelaySeconds = 90
+	maxCredReportBackoff                = 1 * time.Minute
+	rootAccountNameCredReport           = "<root_account>"
+	rootDeviceSerialSuffix              = ":mfa/root-account-mfa-device"
 )
 
 var (
-	maxCredReportBackoff  = 1 * time.Minute
 	userCredentialReports map[string]*awsmodels.IAMCredentialReport
 	mfaDeviceMapping      map[string]*awsmodels.VirtualMFADevice
 )
@@ -74,6 +76,15 @@ func PollIAMUser(
 	}
 	userCredentialReports, err = buildCredentialReport(client)
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
+			if awsErr.Code() == iam.ErrCodeLimitExceededException {
+				utils.Requeue(pollermodels.ScanMsg{
+					Entries: []*pollermodels.ScanEntry{scanRequest},
+				}, credentialReportRequeueDelaySeconds)
+			}
+			return nil
+		}
 		zap.L().Error("failed to build credential report", zap.Error(err))
 		return nil
 	}
@@ -275,10 +286,10 @@ func buildCredentialReport(
 				if err != nil {
 					return nil, err
 				}
+				return extractCredentialReport(credentialReportRaw.Content)
 			}
-		} else {
-			return nil, err
 		}
+		return nil, err
 	}
 
 	return extractCredentialReport(credentialReportRaw.Content)
@@ -520,8 +531,22 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 	}
 
 	// Build the credential report for all users
+	// error ghere
 	userCredentialReports, err = buildCredentialReport(iamSvc)
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
+			if awsErr.Code() == iam.ErrCodeLimitExceededException {
+				utils.Requeue(pollermodels.ScanMsg{
+					Entries: []*pollermodels.ScanEntry{{
+						AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
+						IntegrationID: pollerInput.IntegrationID,
+						ResourceType:  aws.String(awsmodels.IAMUserSchema),
+					}},
+				}, credentialReportRequeueDelaySeconds)
+				return nil, nil
+			}
+		}
 		zap.L().Error("failed to build credential report", zap.Error(err))
 		return nil, err
 	}

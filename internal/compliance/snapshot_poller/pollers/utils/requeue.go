@@ -47,6 +47,12 @@ func Requeue(scanRequest poller.ScanMsg, delay int64) {
 		delay = MaxRequeueDelaySeconds
 	}
 
+	zap.L().Info(
+		"initiating scan re-queue",
+		zap.Int64("delaySeconds", delay),
+		zap.String("requeueRequest", body),
+	)
+
 	sqsClient := sqs.New(session.Must(session.NewSession()))
 	_, err = sqsClient.SendMessage(
 		&sqs.SendMessageInput{
