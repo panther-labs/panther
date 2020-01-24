@@ -30,7 +30,7 @@ import (
 // GetDefaults returns the default outputs for one organization
 func (table *DefaultsTable) GetDefaults() (defaults []*models.DefaultOutputsItem, err error) {
 	var scanInput = &dynamodb.ScanInput{
-		TableName:      table.Name,
+		TableName: table.Name,
 		// Need consistent reads since code performs some
 		// quick read-after-write operations that require consistency.
 		ConsistentRead: aws.Bool(true),
