@@ -51,26 +51,7 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 	}
 	credentials := strings.Split(string(decodedCredentialsInBytes), ":")
 
-	// Piping the Docker password to stdin
-	// before calling docker login command.
-	_, pipeWriter, err := os.Pipe()
-	if err != nil {
-		return  err
-	}
-	defer func() {
-		pipeWriter.Close()
-	}()
-	if _, err := pipeWriter.WriteString(credentials[1]); err != nil {
-		return err
-	}
-
-
-	fmt.Println("deploy: logging in to remote image repo")
-	if err := sh.Run("docker", "login",
-		"-u", credentials[0],
-		"--password-stdin",
-		ecrServer,
-	); err != nil {
+	if err := dockerLogin(ecrServer, credentials); err != nil {
 		return err
 	}
 
@@ -90,6 +71,37 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 	}
 
 	return nil
+}
+
+func dockerLogin(ecrServer string, dockerCredentials []string) error {
+	// We are going to replace Stdin with a pipe reader, so temporarily
+	// cache previous Stdin
+	existingStdin := os.Stdin
+	// Make sure to reset the Stdin.
+	defer func() {
+		os.Stdin = existingStdin
+	}()
+	// Create a pipe to pass docker password to the docker login command
+	pipeReader, pipeWriter, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	os.Stdin = pipeReader
+
+	// Write password to pipe
+	if _, err := pipeWriter.WriteString(dockerCredentials[1]); err != nil {
+		return err
+	}
+	if err := pipeWriter.Close(); err != nil {
+		return err
+	}
+
+	fmt.Println("deploy: logging in to remote image repo")
+	return sh.Run("docker", "login",
+		"-u", dockerCredentials[0],
+		"--password-stdin",
+		ecrServer,
+	)
 }
 
 // Accepts Cloudformation outputs, converts the keys into a screaming snakecase format and stores them in a dotenv file
