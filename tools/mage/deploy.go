@@ -123,6 +123,11 @@ func Deploy() error {
 		return err
 	}
 
+	frontendTemplate, err := cfnPackage(frontendTemplate, bucket, frontendStack)
+	if err != nil {
+		return err
+	}
+
 	frontendDeployParams := getFrontendDeployParams(backendOutputs)
 
 	if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
