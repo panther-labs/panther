@@ -19,9 +19,10 @@ package main
  */
 
 import (
-	"github.com/magefile/mage/sh"
 	"log"
 	"os"
+
+	"github.com/magefile/mage/sh"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 
 	_, err = sh.Exec(nil, os.Stdout, os.Stderr, "docker", "run",
 		// add the local panther directory as a mount volume
-		"-v", pwd + ":/code",
+		"-v", pwd+":/code",
 		// use the same docker daemon within the image, as the one present in the host machine
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		// forward the needed ENV vars to the container
