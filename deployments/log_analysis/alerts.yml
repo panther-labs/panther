@@ -105,6 +105,8 @@ Resources:
           AttributeType: S
         - AttributeName: ruleId
           AttributeType: S
+        - AttributeName: timePartition
+          AttributeType: S
       BillingMode: PAY_PER_REQUEST
       GlobalSecondaryIndexes:
         - # Add an index ruleId to efficiently list alerts for a specific rule
@@ -114,6 +116,15 @@ Resources:
             - AttributeName: creationTime
               KeyType: RANGE
           IndexName: ruleId-creationTime-index
+          Projection:
+            ProjectionType: ALL
+        - # Add an index using dummy timePartition to efficiently list alerts by creationTime
+          KeySchema:
+            - AttributeName: timePartition
+              KeyType: HASH
+            - AttributeName: creationTime
+              KeyType: RANGE
+          IndexName: timePartition-creationTime-index
           Projection:
             ProjectionType: ALL
       KeySchema:
@@ -176,6 +187,7 @@ Resources:
           ALERTS_TABLE_NAME: !Ref AlertsTable
           EVENTS_TABLE_NAME: !Ref EventsTable
           RULE_INDEX_NAME: ruleId-creationTime-index
+          TIME_INDEX_NAME: timePartition-creationTime-index
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
           ANALYSIS_API_PATH: v1
       FunctionName: panther-alerts-api

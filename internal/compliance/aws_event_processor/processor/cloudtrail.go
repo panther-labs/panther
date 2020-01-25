@@ -45,6 +45,8 @@ func classifyCloudTrail(detail gjson.Result, accountID string) []*resourceChange
 	}
 	var err error
 
+	// WARNING: regional service scans for CloudTrail are ignored, and default to account wide scans.
+	// This is to ensure the correctness of the CloudTrail.Meta resource.
 	switch eventName {
 	case "AddTags", "RemoveTags":
 		// This will always be an ARN

@@ -27,22 +27,24 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // ListAlerts retrieves alert and event details.
 func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsOutput, err error) {
-	zap.L().Info("listing alerts", zap.Any("input", input))
+	operation := common.OpLogManager.Start("listAlerts")
+	defer func() {
+		operation.Stop()
+		operation.Log(err)
+	}()
 
 	result = &models.ListAlertsOutput{}
 	var alertItems []*models.AlertItem
-	if input.RuleID != nil {
-		zap.L().Info("fetching alert summaries for rule",
-			zap.String("ruleId", *input.RuleID))
-		alertItems, result.LastEvaluatedKey, err = alertsDB.ListAlertsByRule(input.RuleID, input.ExclusiveStartKey, input.PageSize)
-	} else {
-		zap.L().Info("fetching all alert summaries")
-		alertItems, result.LastEvaluatedKey, err = alertsDB.ListAlerts(input.ExclusiveStartKey, input.PageSize)
+	if input.RuleID != nil { // list per specific ruleId
+		alertItems, result.LastEvaluatedKey, err = alertsDB.ListByRule(*input.RuleID, input.ExclusiveStartKey, input.PageSize)
+	} else { // list all alerts time desc order
+		alertItems, result.LastEvaluatedKey, err = alertsDB.ListAll(input.ExclusiveStartKey, input.PageSize)
 	}
 	if err != nil {
 		return nil, err
@@ -83,9 +85,6 @@ func alertItemsToAlertSummary(items []*models.AlertItem) ([]*models.AlertSummary
 		if err != nil {
 			// a 404 means cannot find rule, treat as nil, else log and return err
 			if !strings.Contains(err.Error(), "getRuleNotFound") {
-				zap.L().Error("could not get rule severity",
-					zap.String("ruleId", ruleID),
-					zap.Error(err))
 				return nil, err
 			}
 		}
@@ -108,7 +107,7 @@ func getSeverity(ruleID string) (*string, error) {
 		HTTPClient: httpClient,
 	})
 	if err != nil {
-		err = errors.Wrap(err, "GetRule() failed looking up severity")
+		err = errors.Wrap(err, "GetRule() failed looking up severity for: "+ruleID)
 		return nil, err
 	}
 	return aws.String(string(response.Payload.Severity)), nil

@@ -47,6 +47,7 @@ type envConfig struct {
 	AnalysisAPIPath string `required:"true" split_words:"true"`
 	AlertsTableName string `required:"true" split_words:"true"`
 	RuleIndexName   string `required:"true" split_words:"true"`
+	TimeIndexName   string `required:"true" split_words:"true"`
 	EventsTableName string `required:"true" split_words:"true"`
 }
 
@@ -63,9 +64,10 @@ func Setup() {
 			WithBasePath("/"+env.AnalysisAPIPath))
 
 	alertsDB = &table.AlertsTable{
-		AlertsTableName:             env.AlertsTableName,
-		Client:                      dynamodb.New(awsSession),
-		EventsTableName:             env.EventsTableName,
-		RuleIDCreationTimeIndexName: env.RuleIndexName,
+		AlertsTableName:                    env.AlertsTableName,
+		Client:                             dynamodb.New(awsSession),
+		EventsTableName:                    env.EventsTableName,
+		RuleIDCreationTimeIndexName:        env.RuleIndexName,
+		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
 }

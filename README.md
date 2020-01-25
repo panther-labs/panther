@@ -24,7 +24,7 @@
 
 Panther is developed by a [dedicated team](https://runpanther.io/about/) of cloud security practitioners and is designed to be:
 
-- **Flexible:** Perform advanced analysis on log data and cloud infrastructure with Python-based detections
+- **Flexible:** Perform advanced analysis on log data and cloud infrastructure with [Python-based detections](https://github.com/panther-labs/panther-analysis)
 - **Automated:** Fast and simple deployments with AWS CloudFormation
 - **Scalable:** Built on Serverless technology for cost and operational efficiency at any scale
 - **Secure:** Least-privilege and encrypted infrastructure deployed into your cloud

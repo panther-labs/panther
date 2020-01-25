@@ -34,11 +34,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	alertmodel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	tableModel "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
@@ -65,32 +67,23 @@ const eventMergingPeriodSeconds = 3600 // One hour
 
 // Handle handles alert notifications
 func Handle(notification *AlertNotification) error {
-	zap.L().Info("received new alert notification")
-
 	event, err := storeMatchedEvent(notification)
 	if err != nil {
-		zap.L().Warn("failed to store event")
-		return err
+		return errors.Wrap(err, "failed to store event")
 	}
-
-	zap.L().Info("successfully stored event")
 
 	isNewAlert, alertID, creationTime, err := getAlertInfo(notification)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get alert info")
 	}
 
-	zap.L().Info("successfully got alert id",
-		zap.String("alertId", *alertID))
-
 	if err = addEventToAlert(event, notification, alertID, creationTime); err != nil {
-		return err
+		return errors.Wrap(err, "failed to add event to alert")
 	}
 
 	if isNewAlert {
 		if err = sendAlert(notification, alertID); err != nil {
-			zap.L().Warn("failed to send alert")
-			return err
+			return errors.Wrap(err, "failed to send alert")
 		}
 	}
 
@@ -106,6 +99,7 @@ func storeMatchedEvent(notification *AlertNotification) (*MatchedEvent, error) {
 
 	marshalledItem, err := dynamodbattribute.MarshalMap(event)
 	if err != nil {
+		err = errors.WithStack(err)
 		return nil, err
 	}
 
@@ -116,6 +110,7 @@ func storeMatchedEvent(notification *AlertNotification) (*MatchedEvent, error) {
 
 	_, err = ddbClient.PutItem(input)
 	if err != nil {
+		err = errors.WithStack(err)
 		return nil, err
 	}
 	return event, nil
@@ -140,9 +135,8 @@ func getAlertInfo(notification *AlertNotification) (bool, *string, *time.Time, e
 		WithUpdate(updateExpression).
 		WithCondition(conditionExpression).
 		Build()
-
 	if err != nil {
-		zap.L().Error("failed to build expression", zap.Error(err))
+		err = errors.WithStack(err)
 		return false, nil, nil, err
 	}
 
@@ -162,17 +156,18 @@ func getAlertInfo(notification *AlertNotification) (bool, *string, *time.Time, e
 	if err != nil {
 		aerr, ok := err.(awserr.Error)
 		if ok && aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-			zap.L().Info("update on ddb failed on condition, we will not trigger an alert")
+			zap.L().Debug("update on ddb failed on condition, we will not trigger an alert")
 			alertID, alertCreationTime, err := getCurrentAlertInfo(notification)
 			return false, alertID, alertCreationTime, err
 		}
-		zap.L().Warn("experienced issue while updating ddb table", zap.Error(err))
+		err = errors.WithStack(err)
 		return false, nil, nil, err
 	}
 
 	compositeAlertKey := compositeAlertID(notification.RuleID, response.Attributes["alertCount"].N)
 	alertCreationTime, err := stringToTime(response.Attributes["creationTime"].N)
 	if err != nil {
+		err = errors.WithStack(err)
 		return false, nil, nil, err
 	}
 
@@ -189,13 +184,14 @@ func getCurrentAlertInfo(notification *AlertNotification) (*string, *time.Time, 
 
 	response, err := ddbClient.GetItem(input)
 	if err != nil {
-		zap.L().Warn("failed to get alertCount", zap.Error(err))
+		err = errors.WithStack(err)
 		return nil, nil, err
 	}
 
 	alertID := compositeAlertID(notification.RuleID, response.Item["alertCount"].N)
 	alertCreationTime, err := stringToTime(response.Item["creationTime"].N)
 	if err != nil {
+		err = errors.WithStack(err)
 		return nil, nil, err
 	}
 
@@ -205,7 +201,7 @@ func getCurrentAlertInfo(notification *AlertNotification) (*string, *time.Time, 
 func stringToTime(input *string) (*time.Time, error) {
 	unixTime, err := strconv.ParseInt(aws.StringValue(input), 10, 64)
 	if err != nil {
-		zap.L().Error("failed to convert string to time", zap.Error(err))
+		err = errors.WithStack(err)
 		return nil, err
 	}
 	return aws.Time(time.Unix(unixTime, 0)), nil
@@ -231,10 +227,12 @@ func addEventToAlert(event *MatchedEvent, alertNotification *AlertNotification, 
 		Add(expression.Name("eventHashes"), expression.Value(eventHashSet([][sha1.Size]byte{event.EventHash}))).
 		Set(expression.Name("creationTime"), expression.Value(creationTime)).
 		Set(expression.Name("ruleId"), expression.Value(alertNotification.RuleID)).
-		Set(expression.Name("lastEventMatched"), expression.Value(event.Timestamp))
+		Set(expression.Name("lastEventMatched"), expression.Value(event.Timestamp)).
+		Set(expression.Name(tableModel.TimePartitionKey), expression.Value(tableModel.TimePartitionKey))
 
 	expr, err := expression.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
+		err = errors.WithStack(err)
 		return err
 	}
 
@@ -243,7 +241,7 @@ func addEventToAlert(event *MatchedEvent, alertNotification *AlertNotification, 
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		Key: map[string]*dynamodb.AttributeValue{
-			"alertId": {S: alertID},
+			tableModel.AlertIDKey: {S: alertID},
 		},
 		TableName:        alertsTable,
 		UpdateExpression: expr.Update(),
@@ -251,7 +249,7 @@ func addEventToAlert(event *MatchedEvent, alertNotification *AlertNotification, 
 
 	_, err = ddbClient.UpdateItem(input)
 	if err != nil {
-		zap.L().Warn("failed to add event hashes to alert", zap.Error(err))
+		err = errors.WithStack(err)
 		return err
 	}
 	return nil
@@ -260,10 +258,12 @@ func addEventToAlert(event *MatchedEvent, alertNotification *AlertNotification, 
 func sendAlert(notification *AlertNotification, alertID *string) error {
 	alert, err := getAlert(notification, alertID)
 	if err != nil {
+		err = errors.WithStack(err)
 		return err
 	}
 	msgBody, err := jsoniter.MarshalToString(alert)
 	if err != nil {
+		err = errors.WithStack(err)
 		return err
 	}
 
@@ -273,24 +273,24 @@ func sendAlert(notification *AlertNotification, alertID *string) error {
 	}
 	_, err = sqsClient.SendMessage(input)
 	if err != nil {
-		zap.L().Warn("failed to send message to remediation", zap.Error(err))
+		err = errors.WithStack(err)
 		return err
 	}
 	return nil
 }
 
-func getAlert(notification *AlertNotification, alertID *string) (*alertmodel.Alert, error) {
+func getAlert(notification *AlertNotification, alertID *string) (*alertModel.Alert, error) {
 	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
 		RuleID:     *notification.RuleID,
 		HTTPClient: httpClient,
 	})
 
 	if err != nil {
-		zap.L().Warn("failed to fetch rule information", zap.Error(err))
+		err = errors.WithStack(err)
 		return nil, err
 	}
 
-	return &alertmodel.Alert{
+	return &alertModel.Alert{
 		CreatedAt:         notification.Timestamp,
 		PolicyDescription: aws.String(string(rule.Payload.Description)),
 		PolicyID:          notification.RuleID,
@@ -299,7 +299,7 @@ func getAlert(notification *AlertNotification, alertID *string) (*alertmodel.Ale
 		Runbook:           aws.String(string(rule.Payload.Runbook)),
 		Severity:          aws.String(string(rule.Payload.Severity)),
 		Tags:              aws.StringSlice(rule.Payload.Tags),
-		Type:              aws.String(alertmodel.RuleType),
+		Type:              aws.String(alertModel.RuleType),
 		AlertID:           alertID,
 	}, nil
 }

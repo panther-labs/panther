@@ -386,9 +386,9 @@ Outputs:
   WebApplicationCertificateArn:
     Description: ARN of the certificate used by the web application
     Value: !Ref WebApplicationCertificateArn
-  WebApplicationImage:
-    Description: The docker  image used by the web application
-    Value: !Sub ${WebApplicationImageRepository.Outputs.ImageRepo}:latest
+  WebApplicationImageRegistry:
+    Description: The docker image registry that stores the images used by the web application
+    Value: !GetAtt WebApplicationImageRepository.Outputs.ImageRepo
   WebApplicationLoadBalancerListenerArn:
     Description: ARN of the load balancer listener that's used by the web application
     Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerListenerArn

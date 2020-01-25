@@ -52,7 +52,7 @@ func PollCloudTrailTrail(
 	client := getClient(pollerResourceInput, "cloudtrail", resourceARN.Region).(cloudtrailiface.CloudTrailAPI)
 	trail := getTrail(client, scanRequest.ResourceID)
 
-	snapshot := buildCloudTrailSnapshot(client, trail)
+	snapshot := buildCloudTrailSnapshot(client, trail, aws.String(resourceARN.Region))
 	if snapshot == nil {
 		return nil
 	}
@@ -82,7 +82,7 @@ func getTrail(svc cloudtrailiface.CloudTrailAPI, trailARN *string) *cloudtrail.T
 }
 
 func describeTrails(svc cloudtrailiface.CloudTrailAPI) ([]*cloudtrail.Trail, error) {
-	var in = &cloudtrail.DescribeTrailsInput{IncludeShadowTrails: aws.Bool(false)}
+	var in = &cloudtrail.DescribeTrailsInput{IncludeShadowTrails: aws.Bool(true)}
 	var out *cloudtrail.DescribeTrailsOutput
 	var err error
 
@@ -131,10 +131,13 @@ func getEventSelectors(svc cloudtrailiface.CloudTrailAPI, trailARN *string) ([]*
 }
 
 // buildCloudTrailSnapshot builds a complete CloudTrail snapshot for a given trail
-func buildCloudTrailSnapshot(svc cloudtrailiface.CloudTrailAPI, trail *cloudtrail.Trail) *awsmodels.CloudTrail {
-	if trail == nil {
+func buildCloudTrailSnapshot(svc cloudtrailiface.CloudTrailAPI, trail *cloudtrail.Trail, region *string) *awsmodels.CloudTrail {
+	// Return on empty requests and shadow trails (trails not from this region)
+	if trail == nil || *trail.HomeRegion != *region {
+		zap.L().Info("shadow trail or nil request")
 		return nil
 	}
+	zap.L().Info("cloudtrail has valid arn", zap.String("arn", *trail.TrailARN))
 	cloudTrail := &awsmodels.CloudTrail{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   trail.TrailARN,
@@ -185,7 +188,7 @@ func buildCloudTrailSnapshot(svc cloudtrailiface.CloudTrailAPI, trail *cloudtrai
 //
 // It returns a mapping of CloudTrailARN to CloudTrailSnapshot.
 func buildCloudTrails(
-	cloudtrailSvc cloudtrailiface.CloudTrailAPI,
+	cloudtrailSvc cloudtrailiface.CloudTrailAPI, region *string,
 ) awsmodels.CloudTrails {
 
 	cloudTrails := make(awsmodels.CloudTrails)
@@ -200,7 +203,11 @@ func buildCloudTrails(
 
 	// Build each CloudTrail's snapshot by requesting additional context from CloudTrail/S3 APIs
 	for _, trail := range trails {
-		cloudTrail := buildCloudTrailSnapshot(cloudtrailSvc, trail)
+		cloudTrail := buildCloudTrailSnapshot(cloudtrailSvc, trail, region)
+		// Skip same account shadow trails
+		if cloudTrail == nil {
+			continue
+		}
 		cloudTrails[*trail.TrailARN] = cloudTrail
 	}
 
@@ -223,21 +230,18 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		cloudTrailSvc := CloudTrailClientFunc(sess, &aws.Config{Credentials: creds}).(cloudtrailiface.CloudTrailAPI)
 
 		// Build the list of all CloudTrails for the given region
-		regionTrails := buildCloudTrails(cloudTrailSvc)
+		regionTrails := buildCloudTrails(cloudTrailSvc, regionID)
 
 		// Insert each trail into the master list of CloudTrails (if it is not there already)
 		for trailARN, trail := range regionTrails {
 			trail.Region = regionID
 			trail.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			if _, ok := cloudTrailSnapshots[trailARN]; !ok {
-				cloudTrailSnapshots[trailARN] = trail
-			} else {
+			if _, ok := cloudTrailSnapshots[trailARN]; ok {
 				zap.L().Info(
-					"overwriting existing CloudTrail snapshot",
-					zap.String("resourceId", trailARN),
+					"overwriting existing CloudTrail snapshot", zap.String("resourceId", trailARN),
 				)
-				cloudTrailSnapshots[trailARN] = trail
 			}
+			cloudTrailSnapshots[trailARN] = trail
 		}
 	}
 
@@ -249,7 +253,7 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		awsmodels.CloudTrailMetaSchema,
 	)
 
-	// Handle the case where there is not a CloudTrail to return
+	// Handle the case where there are no CloudTrails to return
 	if len(cloudTrailSnapshots) == 0 {
 		return []*apimodels.AddResourceEntry{{
 			Attributes: &awsmodels.CloudTrailMeta{
@@ -271,6 +275,7 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		}}, nil
 	}
 
+	// Build the meta resource
 	accountSnapshot := &awsmodels.CloudTrailMeta{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   aws.String(metaResourceID),
@@ -283,15 +288,10 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		},
 	}
 
+	// Append each individual trail to  the results and update the meta resource appropriately
 	resources := make([]*apimodels.AddResourceEntry, 0, len(cloudTrailSnapshots)+1)
 	for _, trail := range cloudTrailSnapshots {
-		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      trail,
-			ID:              apimodels.ResourceID(*trail.ARN),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
-			Type:            awsmodels.CloudTrailSchema,
-		})
+		// Update the meta resource, regardless of if we are processing an organization trail
 		accountSnapshot.Trails = append(accountSnapshot.Trails, trail.ResourceID)
 		if *trail.IsMultiRegionTrail && *trail.Status.IsLogging {
 			accountSnapshot.GlobalEventSelectors = append(
@@ -299,8 +299,34 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 				trail.EventSelectors...,
 			)
 		}
+
+		// Organization trails are a special case.
+		// Organization trails should only show up as a resource in the master organization account, however,
+		// they need to be represented in the meta resource for every account they exist in
+		if *trail.IsOrganizationTrail {
+			// Determine if we are in the master account (the org trail's accountID = scanned accountID)
+			parsed, err := arn.Parse(*trail.ARN)
+			if err != nil {
+				zap.L().Error("unable to parse organization trail arn", zap.String("arn", *trail.ARN))
+				continue
+			}
+			if parsed.AccountID != pollerInput.AuthSourceParsedARN.AccountID {
+				zap.L().Info("skipping organization trail")
+				continue
+			}
+		}
+
+		// For non-organization trails and organization trails in the master account, add the trail to the results
+		resources = append(resources, &apimodels.AddResourceEntry{
+			Attributes:      trail,
+			ID:              apimodels.ResourceID(*trail.ARN),
+			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
+			IntegrationType: apimodels.IntegrationTypeAws,
+			Type:            awsmodels.CloudTrailSchema,
+		})
 	}
 
+	// Append the meta resource to the results
 	resources = append(resources, &apimodels.AddResourceEntry{
 		Attributes:      accountSnapshot,
 		ID:              apimodels.ResourceID(metaResourceID),

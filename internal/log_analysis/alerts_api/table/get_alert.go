@@ -22,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
@@ -30,19 +31,19 @@ import (
 func (table *AlertsTable) GetAlert(alertID *string) (*models.AlertItem, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"alertId": {S: alertID},
+			AlertIDKey: {S: alertID},
 		},
 		TableName: aws.String(table.AlertsTableName),
 	}
 
 	ddbResult, err := table.Client.GetItem(input)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "GetItem() failed for: "+*alertID)
 	}
 
 	alertItem := &models.AlertItem{}
 	if err = dynamodbattribute.UnmarshalMap(ddbResult.Item, alertItem); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "UnmarshalMap() failed for: "+*alertID)
 	}
 	return alertItem, nil
 }

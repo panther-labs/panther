@@ -21,24 +21,22 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
+	"os"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/ecs"
-	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 	"github.com/magefile/mage/sh"
 )
 
 // Functions that build a personalized docker image from source, while pushing it to the private image repo of the user
-func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) error {
+func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry string) (string, error) {
 	fmt.Println("deploy: Requesting access to remote image repo")
 	ecrClient := ecr.New(awsSession)
 	req, resp := ecrClient.GetAuthorizationTokenRequest(&ecr.GetAuthorizationTokenInput{})
 	if err := req.Send(); err != nil {
-		return err
+		return "", err
 	}
 
 	ecrAuthorizationToken := *resp.AuthorizationData[0].AuthorizationToken
@@ -46,35 +44,65 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageTag string) e
 
 	decodedCredentialsInBytes, err := base64.StdEncoding.DecodeString(ecrAuthorizationToken)
 	if err != nil {
-		return err
+		return "", err
 	}
 	credentials := strings.Split(string(decodedCredentialsInBytes), ":")
 
-	fmt.Println("deploy: logging in to remote image repo")
-	if err := sh.Run("docker", "login",
-		"-u", credentials[0],
-		"-p", credentials[1],
-		ecrServer,
-	); err != nil {
-		return err
+	if err := dockerLogin(ecrServer, credentials); err != nil {
+		return "", err
 	}
 
 	fmt.Println("deploy: building the docker image for the front-end server from source")
-	if err := sh.Run("docker", "build",
-		"--file", "deployments/web/Dockerfile",
-		"--tag", imageTag,
-		"--quiet",
-		".",
-	); err != nil {
-		return err
+	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/web/Dockerfile", "--quiet", ".")
+	if err != nil {
+		return "", err
+	}
+
+	localImageID := strings.Replace(dockerBuildOutput, "sha256:", "", 1)
+	remoteImage := imageRegistry + ":" + localImageID
+
+	fmt.Println("deploy: tagging the new image release")
+	if err = sh.Run("docker", "tag", localImageID, remoteImage); err != nil {
+		return "", err
 	}
 
 	fmt.Println("deploy: pushing docker image to remote repo")
-	if err := sh.RunV("docker", "push", imageTag); err != nil {
+	if err := sh.RunV("docker", "push", remoteImage); err != nil {
+		return "", err
+	}
+
+	return remoteImage, nil
+}
+
+func dockerLogin(ecrServer string, dockerCredentials []string) error {
+	// We are going to replace Stdin with a pipe reader, so temporarily
+	// cache previous Stdin
+	existingStdin := os.Stdin
+	// Make sure to reset the Stdin.
+	defer func() {
+		os.Stdin = existingStdin
+	}()
+	// Create a pipe to pass docker password to the docker login command
+	pipeReader, pipeWriter, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	os.Stdin = pipeReader
+
+	// Write password to pipe
+	if _, err := pipeWriter.WriteString(dockerCredentials[1]); err != nil {
+		return err
+	}
+	if err := pipeWriter.Close(); err != nil {
 		return err
 	}
 
-	return nil
+	fmt.Println("deploy: logging in to remote image repo")
+	return sh.Run("docker", "login",
+		"-u", dockerCredentials[0],
+		"--password-stdin",
+		ecrServer,
+	)
 }
 
 // Accepts Cloudformation outputs, converts the keys into a screaming snakecase format and stores them in a dotenv file
@@ -90,23 +118,5 @@ func generateDotEnvFromCfnOutputs(awsSession *session.Session, outputs map[strin
 	if err := godotenv.Write(conventionalOutputs, filename); err != nil {
 		return err
 	}
-	return nil
-}
-
-// makes sure to force a new ECS deployment on the service server so that the latest docker image can be applied
-func restartFrontendServer(awsSession *session.Session, cluster string, service string) error {
-	fmt.Println("deploy: upgrading front-end server to the latest docker image")
-	ecsClient := ecs.New(awsSession)
-	_, err := ecsClient.UpdateService(&ecs.UpdateServiceInput{
-		Cluster:            aws.String(cluster),
-		Service:            aws.String(service),
-		ForceNewDeployment: aws.Bool(true),
-	})
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("deploy: front-end server upgraded successfully!")
-	color.Cyan("deploy: please allow up to 1 minute for front-end changes to be propagated across containers")
 	return nil
 }
