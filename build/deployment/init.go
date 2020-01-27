@@ -21,6 +21,7 @@ package main
 import (
 	"log"
 	"os"
+
 	"github.com/magefile/mage/sh"
 )
 
@@ -43,7 +44,7 @@ func main() {
 		// forward the needed ENV vars to the container
 		"-e", "AWS_ACCESS_KEY_ID",
 		"-e", "AWS_SECRET_ACCESS_KEY",
-		"-e", "AWS_REGION" + "=" + awsRegion,
+		"-e", "AWS_REGION"+"="+awsRegion,
 		// run in interractive mode
 		"-it",
 		// don't store a container out of this execution (since temporary creds could be still compromised)
