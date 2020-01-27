@@ -259,7 +259,7 @@ Resources:
   RemediationLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/lambda/panther-aws-remediation/src
+      LogGroupName: /aws/lambda/panther-aws-remediation
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
   RemediationFunction:
