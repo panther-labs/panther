@@ -22,8 +22,8 @@ import (
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-// GetOrganizationOutputs returns all the alert outputs configured for one organization
-func (API) GetOrganizationOutputs(input *models.GetOutputsInput) (models.GetOutputsOutput, error) {
+// GetOutputs returns all the alert outputs configured for one organization
+func (API) GetOutputs(input *models.GetOutputsInput) (models.GetOutputsOutput, error) {
 	outputItems, err := outputsTable.GetOutputs()
 	if err != nil {
 		return nil, err

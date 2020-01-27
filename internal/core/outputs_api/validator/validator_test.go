@@ -25,6 +25,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 const outputSet = "Slack|Sns|Email|PagerDuty|Github|Jira|Opsgenie|MsTeams|Sqs"
@@ -39,10 +41,10 @@ func expectedMsg(structName string, fieldName string, tagName string) string {
 func TestAddOutputNoName(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
-	err = validator.Struct(&AddOutputInput{
+	err = validator.Struct(&models.AddOutputInput{
 		UserID:       aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName:  aws.String(""),
-		OutputConfig: &OutputConfig{Slack: &SlackConfig{WebhookURL: aws.String("https://hooks.slack.com")}},
+		OutputConfig: &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: aws.String("https://hooks.slack.com")}},
 	})
 	require.Error(t, err)
 	assert.Equal(t, expectedMsg("AddOutputInput", "DisplayName", "min"), err.Error())
@@ -51,10 +53,10 @@ func TestAddOutputNoName(t *testing.T) {
 func TestAddOutputNoneSpecified(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
-	err = validator.Struct(&AddOutputInput{
+	err = validator.Struct(&models.AddOutputInput{
 		UserID:       aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName:  aws.String("mychannel"),
-		OutputConfig: &OutputConfig{},
+		OutputConfig: &models.OutputConfig{},
 	})
 	require.NotNil(t, err)
 	assert.Equal(t, expectedMsg("AddOutputInput.OutputConfig", outputSet, "exactly_one_output"), err.Error())
@@ -63,12 +65,12 @@ func TestAddOutputNoneSpecified(t *testing.T) {
 func TestAddOutputAllSpecified(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
-	err = validator.Struct(&AddOutputInput{
+	err = validator.Struct(&models.AddOutputInput{
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mychannel"),
-		OutputConfig: &OutputConfig{
-			Slack: &SlackConfig{WebhookURL: aws.String("https://hooks.slack.com")},
-			Sns:   &SnsConfig{TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")},
+		OutputConfig: &models.OutputConfig{
+			Slack: &models.SlackConfig{WebhookURL: aws.String("https://hooks.slack.com")},
+			Sns:   &models.SnsConfig{TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")},
 		},
 	})
 	require.NotNil(t, err)
@@ -78,11 +80,11 @@ func TestAddOutputAllSpecified(t *testing.T) {
 func TestAddOutputValid(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
-	assert.NoError(t, validator.Struct(&AddOutputInput{
+	assert.NoError(t, validator.Struct(&models.AddOutputInput{
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mychannel"),
-		OutputConfig: &OutputConfig{
-			Slack: &SlackConfig{WebhookURL: aws.String("https://hooks.slack.com")},
+		OutputConfig: &models.OutputConfig{
+			Slack: &models.SlackConfig{WebhookURL: aws.String("https://hooks.slack.com")},
 		},
 	}))
 }
@@ -90,11 +92,11 @@ func TestAddOutputValid(t *testing.T) {
 func TestAddInvalidArn(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
-	err = validator.Struct(&AddOutputInput{
+	err = validator.Struct(&models.AddOutputInput{
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mytopic"),
-		OutputConfig: &OutputConfig{
-			Sns: &SnsConfig{TopicArn: aws.String("arn:aws:sns:invalidarn:MyTopic")},
+		OutputConfig: &models.OutputConfig{
+			Sns: &models.SnsConfig{TopicArn: aws.String("arn:aws:sns:invalidarn:MyTopic")},
 		},
 	})
 	require.Error(t, err)
@@ -104,11 +106,11 @@ func TestAddInvalidArn(t *testing.T) {
 func TestAddNonSnsArn(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
-	err = validator.Struct(&AddOutputInput{
+	err = validator.Struct(&models.AddOutputInput{
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mytopic"),
-		OutputConfig: &OutputConfig{
-			Sns: &SnsConfig{TopicArn: aws.String("arn:aws:s3:::test-s3-bucket")},
+		OutputConfig: &models.OutputConfig{
+			Sns: &models.SnsConfig{TopicArn: aws.String("arn:aws:s3:::test-s3-bucket")},
 		},
 	})
 	require.Error(t, err)

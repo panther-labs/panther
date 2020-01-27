@@ -91,15 +91,11 @@ func TestAddOutputSlack(t *testing.T) {
 	outputsTable = mockOutputTable
 	mockOutputVerification := &mockOutputVerification{}
 	outputVerification = mockOutputVerification
-	mockDefaultsTable := &mockDefaultsTable{}
-	defaultsTable = mockDefaultsTable
 
 	mockOutputTable.On("GetOutputByName", aws.String("my-channel")).Return(nil, nil)
 	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
 	mockOutputTable.On("PutOutput", mock.Anything).Return(nil)
 	mockOutputVerification.On("GetVerificationStatus", mock.Anything).Return(aws.String(models.VerificationStatusSuccess), nil)
-	mockDefaultsTable.On("GetDefault", mock.Anything).Return(&models.DefaultOutputsItem{}, nil)
-	mockDefaultsTable.On("PutDefaults", mock.Anything).Return(nil)
 
 	input := &models.AddOutputInput{
 		UserID:             aws.String("userId"),

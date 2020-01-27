@@ -68,7 +68,6 @@ type AddOutputOutput = AlertOutput
 // }
 type DeleteOutputInput struct {
 	OutputID *string `json:"outputId" validate:"required,uuid4"`
-	Force    *bool   `json:"force"`
 }
 
 // UpdateOutputInput updates an alert output configuration.

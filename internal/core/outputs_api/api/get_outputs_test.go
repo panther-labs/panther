@@ -42,9 +42,10 @@ var alertOutputItem = &table.AlertOutputItem{
 	OutputType:         aws.String("slack"),
 	VerificationStatus: aws.String(models.VerificationStatusSuccess),
 	EncryptedConfig:    make([]byte, 1),
+	DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
 }
 
-func TestGetOrganizationOutputs(t *testing.T) {
+func TestGetOutputs(t *testing.T) {
 	mockOutputsTable := &mockOutputTable{}
 	outputsTable = mockOutputsTable
 	mockEncryptionKey := new(mockEncryptionKey)
@@ -65,10 +66,10 @@ func TestGetOrganizationOutputs(t *testing.T) {
 		LastModifiedTime:   aws.String("lastModifiedTime"),
 		VerificationStatus: aws.String(models.VerificationStatusSuccess),
 		OutputConfig:       &models.OutputConfig{},
-		DefaultForSeverity: []*string{},
+		DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
 	}
 
-	result, err := (API{}).GetOrganizationOutputs(mockInput)
+	result, err := (API{}).GetOutputs(mockInput)
 
 	assert.NoError(t, err)
 	assert.Equal(t, []*models.AlertOutput{expectedAlertOutput}, result)
@@ -82,7 +83,7 @@ func TestGetOrganizationOutputsDdbError(t *testing.T) {
 
 	mockOutputsTable.On("GetOutputs").Return([]*table.AlertOutputItem{}, errors.New("fake error"))
 
-	_, err := (API{}).GetOrganizationOutputs(mockInput)
+	_, err := (API{}).GetOutputs(mockInput)
 
 	assert.Error(t, errors.New("fake error"), err)
 	mockOutputsTable.AssertExpectations(t)
@@ -97,7 +98,7 @@ func TestGetOrganizationDecryptionError(t *testing.T) {
 	mockOutputsTable.On("GetOutputs").Return([]*table.AlertOutputItem{alertOutputItem}, nil)
 	mockEncryptionKey.On("DecryptConfig", make([]byte, 1), mock.Anything).Return(errors.New("fake error"))
 
-	_, err := (API{}).GetOrganizationOutputs(mockInput)
+	_, err := (API{}).GetOutputs(mockInput)
 
 	assert.Error(t, errors.New("fake error"), err)
 	mockOutputsTable.AssertExpectations(t)
