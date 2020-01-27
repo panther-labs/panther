@@ -21,7 +21,6 @@ package main
 import (
 	"log"
 	"os"
-
 	"github.com/magefile/mage/sh"
 )
 
