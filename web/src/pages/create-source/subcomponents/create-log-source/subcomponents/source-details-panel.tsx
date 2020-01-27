@@ -22,6 +22,7 @@ import ErrorBoundary from 'Components/error-boundary';
 import { Field } from 'formik';
 import FormikTextInput from 'Components/fields/text-input';
 import FormikMultiCombobox from 'Components/fields/multi-combobox';
+import { getArnRegexForService } from 'Helpers/utils';
 
 const SourceDetailsPanel: React.FC = () => {
   return (
@@ -71,6 +72,7 @@ const SourceDetailsPanel: React.FC = () => {
           label="KMS Keys (Optional)"
           aria-required
           allowAdditions
+          validateAddition={str => getArnRegexForService('KMS').test(str)}
           searchable
           items={[]}
           inputProps={{
