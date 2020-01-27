@@ -175,7 +175,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
           <GithubDestinationForm
             initialValues={{
               ...commonInitialValues,
-              outputConfig: pick(destination.outputConfig, ['github.repoName', 'github.apiKey']),
+              outputConfig: pick(destination.outputConfig, ['github.repoName', 'github.token']),
             }}
             onSubmit={handleSubmit}
           />
