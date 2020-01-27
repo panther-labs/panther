@@ -53,7 +53,7 @@ type PantherAnyString struct { // needed to declare as struct (rather than map) 
 
 func NewPantherAnyString() *PantherAnyString {
 	return &PantherAnyString{
-		set: make(map[string]struct{}, 4),
+		set: make(map[string]struct{}),
 	}
 }
 
@@ -78,8 +78,8 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 		return err
 	}
 	any.set = make(map[string]struct{}, len(values))
-	for i := range values {
-		any.set[values[i]] = struct{}{}
+	for _, entry := range values {
+		any.set[entry] = struct{}{}
 	}
 	return nil
 }
@@ -195,18 +195,16 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 			})
 		}
 
-	case "publicIp", "ipv6Addresses", "privateIpAddress", "ipAddressV4":
-		switch key.Str {
-		case "ipv6Addresses":
-			if value.IsArray() {
-				value.ForEach(func(v6ListKey, v6ListValue gjson.Result) bool {
-					e.pl.AppendAnyIPAddresses(v6ListValue.Str)
-					return true
-				})
-			}
-		default:
-			e.pl.AppendAnyIPAddresses(value.Str)
+	case "ipv6Addresses":
+		if value.IsArray() {
+			value.ForEach(func(v6ListKey, v6ListValue gjson.Result) bool {
+				e.pl.AppendAnyIPAddresses(v6ListValue.Str)
+				return true
+			})
 		}
+
+	case "publicIp", "privateIpAddress", "ipAddressV4":
+		e.pl.AppendAnyIPAddresses(value.Str)
 
 	case "publicDnsName", "privateDnsName", "domain":
 		e.pl.AppendAnyDomainNames(value.Str)
