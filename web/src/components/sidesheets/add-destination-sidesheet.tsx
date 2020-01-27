@@ -71,7 +71,7 @@ const ADD_DESTINATION = gql`
           projectKey
           userName
           apiKey
-          assigneeID
+          assigneeId
         }
         opsgenie {
           apiKey
@@ -199,7 +199,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
                   projectKey: '',
                   userName: '',
                   apiKey: '',
-                  assigneeID: '',
+                  assigneeId: '',
                 },
               },
             }}

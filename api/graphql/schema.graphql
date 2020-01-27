@@ -370,7 +370,7 @@ type JiraConfig {
   projectKey: String!
   userName: String!
   apiKey: String!
-  assigneeID: String
+  assigneeId: String
 }
 
 type GithubConfig {
@@ -426,7 +426,7 @@ input JiraConfigInput {
   projectKey: String!
   userName: String!
   apiKey: String!
-  assigneeID: String
+  assigneeId: String
 }
 
 input GithubConfigInput {
