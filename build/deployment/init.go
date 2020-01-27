@@ -31,6 +31,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	awsRegion, exists := os.LookupEnv("AWS_REGION")
+	if !exists {
+		awsRegion = os.Getenv("AWS_DEFAULT_REGION")
+	}
+
 	_, err = sh.Exec(nil, os.Stdout, os.Stderr, "docker", "run",
 		// add the local panther directory as a mount volume
 		"-v", pwd+":/code",
@@ -39,7 +44,7 @@ func main() {
 		// forward the needed ENV vars to the container
 		"-e", "AWS_ACCESS_KEY_ID",
 		"-e", "AWS_SECRET_ACCESS_KEY",
-		"-e", "AWS_REGION",
+		"-e", "AWS_REGION" + "=" + awsRegion,
 		// run in interractive mode
 		"-it",
 		// don't store a container out of this execution (since temporary creds could be still compromised)
