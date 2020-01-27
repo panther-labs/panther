@@ -75,7 +75,6 @@ module.exports = {
         historyApiFallback: {
           disableDotRule: true,
         },
-        overlay: true,
         // Where will the webpack-dev-server attempt to load the content from. We add public
         // so that we can have access to files that don't pass through webpack (i.e. they are not
         // imported through Javascript)
