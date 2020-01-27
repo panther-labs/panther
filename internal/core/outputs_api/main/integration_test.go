@@ -390,7 +390,7 @@ func getOutputs(t *testing.T) {
 	assert.Nil(t, output[2].OutputConfig.Slack)
 	assert.Nil(t, output[2].OutputConfig.Sns)
 	assert.Equal(t, pagerDuty, output[2].OutputConfig.PagerDuty)
-	assert.Equal(t, aws.StringSlice([]string{"HIGH"}), output[2].DefaultForSeverity)
+	assert.Equal(t, aws.StringSlice([]string{}), output[2].DefaultForSeverity)
 }
 
 func getOutput(t *testing.T) {
