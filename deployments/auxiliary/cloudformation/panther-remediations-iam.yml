@@ -36,13 +36,13 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Ref MasterAccountId
+              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
             Action: sts:AssumeRole
             Condition:
               Bool:
                 aws:SecureTransport: true
       Policies:
-        - PolicyName: AllowRemediativeActions
+        - PolicyName: UpdateCloudTrail
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -51,20 +51,76 @@ Resources:
                   - cloudtrail:CreateTrail
                   - cloudtrail:StartLogging
                   - cloudtrail:UpdateTrail
+                Resource: '*'
+        - PolicyName: UpdateDDB
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
                   - dynamodb:UpdateTable
+                Resource: '*'
+        - PolicyName: UpdateEC2
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
                   - ec2:CreateFlowLogs
                   - ec2:StopInstances
                   - ec2:TerminateInstances
+                Resource: '*'
+        - PolicyName: UpdateGuardDuty
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
                   - guardduty:CreateDetector
+                Resource: '*'
+        - PolicyName: UpdateIAM
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
                   - iam:CreateAccessKey
                   - iam:CreateServiceLinkedRole
                   - iam:DeleteAccessKey
                   - iam:UpdateAccessKey
                   - iam:UpdateAccountPasswordPolicy
+                Resource: '*'
+        - PolicyName: UpdateKMS
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
                   - kms:EnableKeyRotation
-                  - logs:CreateLogDelivery
+                Resource: '*'
+        - PolicyName: UpdateRDS
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
                   - rds:ModifyDBInstance
                   - rds:ModifyDBSnapshotAttribute
+                Resource: '*'
+        - PolicyName: UpdateLogging
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                Resource: '*'
+        - PolicyName: UpdateS3
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
                   - s3:PutBucketVersioning
                   - s3:PutBucketLogging
                   - s3:PutBucketAcl
