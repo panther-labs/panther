@@ -34,7 +34,7 @@ Precise deployment policy coming soon!
 
 ### Steps
 
-1. Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, [Python](https://www.python.org/downloads/) 3.7+, and [Docker](https://docs.docker.com/install/) 17+
+1. Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 11.7+, [Python](https://www.python.org/downloads/) 3.7+, and [Docker](https://docs.docker.com/install/) 17+
    - For MacOS w/ homebrew: `brew install go node python3 docker`
 2. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) and [configure](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your credentials
    - `pip3 install awscli --upgrade --user && aws configure`

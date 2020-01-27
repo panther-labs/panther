@@ -18,13 +18,20 @@
 
 /* eslint-disable no-console  */
 const express = require('express');
+const expressStaticGzip = require('express-static-gzip');
 const path = require('path');
 
 // construct a mini server
 const app = express();
 
 // allow static assets to be served from the /dist folder
-app.use(express.static(path.resolve(__dirname, '../dist')));
+app.use(
+  expressStaticGzip(path.resolve(__dirname, '../dist'), {
+    enableBrotli: true,
+    index: 'index.html',
+    orderPreference: ['br'],
+  })
+);
 
 // Instantly reply to health checks from our ALB
 app.get('/healthcheck', (req, res) => {
@@ -37,6 +44,6 @@ app.get('*', (req, res) => {
 });
 
 // initialize server
-app.listen(process.env.SERVER_PORT, () => {
+app.listen(process.env.SERVER_PORT || '8080', () => {
   console.log(`Listening on port ${process.env.SERVER_PORT}`);
 });

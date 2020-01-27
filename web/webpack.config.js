@@ -26,6 +26,7 @@ const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
 
 const isEnvDevelopment = process.env.NODE_ENV === 'development';
 const isEnvProduction = process.env.NODE_ENV === 'production';
@@ -310,5 +311,12 @@ module.exports = {
       watch: path.resolve(__dirname, 'src'),
       silent: true,
     }),
+    isEnvProduction &&
+      new CompressionPlugin({
+        test: /\.(js|html|svg)$/,
+        filename: '[path].br[query]',
+        algorithm: 'brotliCompress',
+        compressionOptions: { level: 11 },
+      }),
   ].filter(Boolean),
 };
