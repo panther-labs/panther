@@ -19,12 +19,16 @@ package common
  */
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
@@ -82,7 +86,24 @@ func TestAppendAnyString(t *testing.T) {
 		},
 	}
 	event.AppendAnyAWSAccountIds(value)
-	require.Equal(t, event.PantherAnyAWSAccountIds, expectedAny)
+	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
+}
+
+func TestSetRequired(t *testing.T) {
+	event := PantherLog{}
+	const logType = "Data.Source"
+	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
+	expectedEvent := PantherLog{
+		PantherLogType:   logType,
+		PantherEventTime: eventTime,
+	}
+	event.SetRequired(logType, eventTime)
+	uuidParts := strings.Split(event.PantherRowID, RowIDDelimiter)
+	require.Equal(t, 3, len(uuidParts))
+	assert.Equal(t, logType, uuidParts[0])
+	assert.Equal(t, (time.Time)(eventTime).Format(RowIDTimeFormat), uuidParts[1])
+	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
+	require.Equal(t, expectedEvent, event)
 }
 
 func TestAWSExtractor(t *testing.T) {
