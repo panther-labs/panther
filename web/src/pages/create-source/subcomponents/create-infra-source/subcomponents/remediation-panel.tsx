@@ -41,11 +41,6 @@ const RemediationPanel: React.FC = () => {
         detected. Remediations can be configured on a per-policy basis to take any desired actions.
         <br />
         <br />
-        After a successful deployment, you will have to come back to this page to save the ARN of
-        the created lambda. You will be able to edit it afterwards through your Organization{"'"}s
-        settings page.
-        <br />
-        <br />
         If you need more information on the process, please visit our{' '}
         <a
           target="_blank"
