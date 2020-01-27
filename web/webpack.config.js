@@ -22,7 +22,6 @@ const TerserPlugin = require('terser-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
@@ -67,14 +66,7 @@ module.exports = {
             .replace(/\\/g, '/')
       : isEnvDevelopment && (info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
   },
-  entry: [
-    // During development we make sure to get the input from the dev server and also accept hot
-    // reloads when possible
-    isEnvDevelopment && `${require.resolve('webpack-dev-server/client')}?/`,
-    isEnvDevelopment && require.resolve('webpack/hot/dev-server'),
-    // of course we need to include the app's code
-    path.resolve(__dirname, 'src/index.tsx'),
-  ].filter(Boolean),
+  entry: path.resolve(__dirname, 'src/index.tsx'),
   // When we are developing locally, we want to add a `devServer` configuration
   devServer: isEnvDevelopment
     ? {
@@ -129,11 +121,10 @@ module.exports = {
           output: {
             ecma: 5,
             comments: false,
+            ascii_only: true,
           },
         },
         parallel: true,
-        // Enable file caching
-        cache: true,
         sourceMap: true,
       }),
     ],
@@ -163,7 +154,7 @@ module.exports = {
           cacheDirectory: true,
           cacheCompression: isEnvProduction,
           compact: isEnvProduction,
-          plugins: isEnvDevelopment ? ['react-refresh/babel'] : undefined,
+          plugins: isEnvDevelopment ? [require.resolve('react-refresh/babel')] : undefined,
         },
       },
       {
@@ -245,12 +236,10 @@ module.exports = {
     ),
     // Makes sure to inline the generated manifest to the HTML
     isEnvProduction && new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime-.+[.]js/]),
-    // This is necessary to emit hot updates to the browser
-    isEnvDevelopment && new webpack.HotModuleReplacementPlugin(),
     // This is currently an experimental feature supported only by react-native, but released
     // through the official React repo. Up until now we utilise a custom webpack-plugin (since
     // the official one exists only for react-native's Metro)
-    isEnvDevelopment && new ReactRefreshWebpackPlugin(),
+    isEnvDevelopment && new ReactRefreshWebpackPlugin({ disableRefreshCheck: true }),
     // Generate a manifest file which contains a mapping of all asset filenames
     // to their corresponding output file so that tools can pick it up without
     // having to parse `index.html`.
@@ -268,25 +257,6 @@ module.exports = {
         };
       },
     }),
-
-    // Generate a service worker script that will precache, and keep up to date,
-    // the HTML & assets that are part of the Webpack build. Since we are deploying to Cloudfront
-    // both the HTML and the static assets of the platform, it's ok to cache the files under the
-    // same domain (a.k.a. we are not using an external CDN that will serve our files)
-    isEnvProduction &&
-      new WorkboxWebpackPlugin.GenerateSW({
-        clientsClaim: true,
-        exclude: [/\.map$/, /asset-manifest\.json$/],
-        importWorkboxFrom: 'cdn',
-        navigateFallback: '/index.html',
-        navigateFallbackBlacklist: [
-          // Exclude URLs starting with /_, as they're likely an API call
-          new RegExp('^/_'),
-          // Exclude URLs containing a dot, as they're likely a resource in
-          // public/ and not a SPA route
-          new RegExp('/[^/]+\\.[^/]+$'),
-        ],
-      }),
     // Create a forked process (thread) that performs the TS checks. We currently don't have
     // `ts-loader` loaded at all, so the TS compilation is handled by `babel-loader` through the
     // `@babel/preset-typescript`. That means that we don't have any TS checks on compilation time
