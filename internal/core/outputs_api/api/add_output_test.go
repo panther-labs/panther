@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
 
 func TestAddOutputSameNameAlreadyExists(t *testing.T) {
@@ -39,7 +40,7 @@ func TestAddOutputSameNameAlreadyExists(t *testing.T) {
 	mockOutputVerification := &mockOutputVerification{}
 	outputVerification = mockOutputVerification
 
-	mockOutputTable.On("GetOutputByName", aws.String("my-channel")).Return(&models.AlertOutputItem{}, nil)
+	mockOutputTable.On("GetOutputByName", aws.String("my-channel")).Return(&table.AlertOutputItem{}, nil)
 
 	input := &models.AddOutputInput{
 		DisplayName:  aws.String("my-channel"),

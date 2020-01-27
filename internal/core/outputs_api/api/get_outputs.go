@@ -1,4 +1,4 @@
-package table
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,36 +19,27 @@ package table
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-// GetDefault gets the default outputs for a given severity
-func (table *DefaultsTable) GetDefault(severity *string) (*models.DefaultOutputsItem, error) {
-	result, err := table.client.GetItem(
-		&dynamodb.GetItemInput{
-			TableName: table.Name,
-			Key: DynamoItem{
-				"severity": {S: severity},
-			},
-			// Need consistent reads since code performs some
-			// quick read-after-write operations that require consistency.
-			ConsistentRead: aws.Bool(true),
-		})
-
+// GetOrganizationOutputs returns all the alert outputs configured for one organization
+func (API) GetOrganizationOutputs(input *models.GetOutputsInput) (models.GetOutputsOutput, error) {
+	outputItems, err := outputsTable.GetOutputs()
 	if err != nil {
 		return nil, err
 	}
 
-	if result.Item == nil {
-		return nil, err
+	outputs := make([]*models.AlertOutput, len(outputItems))
+	for i, item := range outputItems {
+		alertOutput, err := ItemToAlertOutput(item)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = checkAndUpdateVerificationStatus(alertOutput); err != nil {
+			return nil, err
+		}
+		outputs[i] = alertOutput
 	}
-	var defaultOutput models.DefaultOutputsItem
-	if err = dynamodbattribute.UnmarshalMap(result.Item, &defaultOutput); err != nil {
-		return nil, err
-	}
-	return &defaultOutput, nil
+	return outputs, nil
 }

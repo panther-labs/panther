@@ -1,4 +1,4 @@
-package models
+package validator
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -23,12 +23,14 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // Validator builds a custom struct validator.
 func Validator() (*validator.Validate, error) {
 	result := validator.New()
-	result.RegisterStructValidation(ensureOneOutput, &OutputConfig{})
+	result.RegisterStructValidation(ensureOneOutput, &models.OutputConfig{})
 	if err := result.RegisterValidation("snsArn", validateAwsArn); err != nil {
 		return nil, err
 	}

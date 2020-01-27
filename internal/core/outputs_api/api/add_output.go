@@ -80,34 +80,8 @@ func (API) AddOutput(input *models.AddOutputInput) (*models.AddOutputOutput, err
 		return nil, err
 	}
 
-	zap.L().Info("stored new alert output",
+	zap.L().Debug("stored new alert output",
 		zap.String("outputId", *alertOutput.OutputID))
 
-	if err = addToDefaults(input.DefaultForSeverity, alertOutput.OutputID); err != nil {
-		return nil, err
-	}
 	return alertOutput, nil
-}
-
-func addToDefaults(severities []*string, outputID *string) error {
-	for _, severity := range severities {
-		defaults, err := defaultsTable.GetDefault(severity)
-		if err != nil {
-			return err
-		}
-
-		if defaults == nil {
-			defaults = &models.DefaultOutputsItem{
-				Severity:  severity,
-				OutputIDs: []*string{outputID},
-			}
-		} else {
-			defaults.OutputIDs = append(defaults.OutputIDs, outputID)
-		}
-
-		if err = defaultsTable.PutDefaults(defaults); err != nil {
-			return err
-		}
-	}
-	return nil
 }

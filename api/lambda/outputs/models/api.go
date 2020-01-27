@@ -22,13 +22,11 @@ package models
 //
 // Exactly one action must be specified.
 type LambdaInput struct {
-	AddOutput              *AddOutputInput              `json:"addOutput"`
-	UpdateOutput           *UpdateOutputInput           `json:"updateOutput"`
-	GetOutput              *GetOutputInput              `json:"getOutput"`
-	DeleteOutput           *DeleteOutputInput           `json:"deleteOutput"`
-	GetOrganizationOutputs *GetOrganizationOutputsInput `json:"getOrganizationOutputs"`
-	SetDefaultOutputs      *SetDefaultOutputsInput      `json:"setDefaultOutputs"`
-	GetDefaultOutputs      *GetDefaultOutputsInput      `json:"getDefaultOutputs"`
+	AddOutput    *AddOutputInput    `json:"addOutput"`
+	UpdateOutput *UpdateOutputInput `json:"updateOutput"`
+	GetOutput    *GetOutputInput    `json:"getOutput"`
+	DeleteOutput *DeleteOutputInput `json:"deleteOutput"`
+	GetOutputs   *GetOutputsInput   `json:"getOutputs"`
 }
 
 // AddOutputInput adds a new encrypted alert output to DynamoDB.
@@ -112,10 +110,10 @@ type GetOutputOutput = AlertOutput
 //
 // Example:
 // {
-//     "getOrganizationOutputsInput": {
+//     "getOutputs": {
 //     }
 // }
-type GetOrganizationOutputsInput struct {
+type GetOutputsInput struct {
 }
 
 // GetOrganizationOutputsOutput returns all the alert outputs for one organization
@@ -126,25 +124,7 @@ type GetOrganizationOutputsInput struct {
 //     "outputId": "7d1c5854-f3ea-491c-8a52-0aa0d58cb456",
 //     "outputType": "slack"
 // }
-type GetOrganizationOutputsOutput = []*AlertOutput
-
-// SetDefaultOutputsInput sets the default output for an organization
-type SetDefaultOutputsInput struct {
-	Severity  *string   `json:"severity" validate:"required,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
-	OutputIDs []*string `json:"outputIds"`
-}
-
-// SetDefaultOutputsOutput is the output of the SetDefaultOutputs operation
-type SetDefaultOutputsOutput = DefaultOutputs
-
-// GetDefaultOutputsInput is the request sent to return as part of GetDefaultOutputs operation
-type GetDefaultOutputsInput struct {
-}
-
-// GetDefaultOutputsOutput is the response of the GetDefaultOutputs operation
-type GetDefaultOutputsOutput struct {
-	Defaults []*DefaultOutputs `json:"defaults"`
-}
+type GetOutputsOutput = []*AlertOutput
 
 // AlertOutput contains the information for alert output configuration
 type AlertOutput struct {

@@ -64,41 +64,9 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 		return nil, err
 	}
 
-	defaults, err := defaultsTable.GetDefaults()
-	if err != nil {
-		return nil, err
-	}
-
-	// Removing outputId from all defaults
-	for _, defaultOutput := range defaults {
-		var removed bool
-		defaultOutput.OutputIDs, removed = removeFromSlice(defaultOutput.OutputIDs, input.OutputID)
-		if removed {
-			if err := defaultsTable.PutDefaults(defaultOutput); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if err := addToDefaults(input.DefaultForSeverity, input.OutputID); err != nil {
-		return nil, err
-	}
-
 	alertOutput.CreatedBy = alertOutputItem.CreatedBy
 	alertOutput.CreationTime = alertOutputItem.CreationTime
 	alertOutput.VerificationStatus = alertOutputItem.VerificationStatus
 
 	return alertOutput, nil
-}
-
-// Removes an item from a slice if it exists. Returns the resulting slice
-// and a boolean indicating whether an item was removed or not
-func removeFromSlice(slice []*string, item *string) ([]*string, bool) {
-	new := make([]*string, 0, len(slice))
-	for _, element := range slice {
-		if *element != *item {
-			new = append(new, element)
-		}
-	}
-	return new, len(new) < len(slice)
 }

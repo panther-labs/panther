@@ -72,19 +72,21 @@ func getAlertOutputIds(alert *alertmodels.Alert) ([]*string, error) {
 	}
 
 	zap.L().Info("getting default outputs")
-	input := outputmodels.LambdaInput{GetDefaultOutputs: &outputmodels.GetDefaultOutputsInput{}}
-	var defaultOutputs outputmodels.GetDefaultOutputsOutput
-	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &defaultOutputs); err != nil {
+	input := outputmodels.LambdaInput{GetOutputs: &outputmodels.GetOutputsInput{}}
+	var outputs outputmodels.GetOutputsOutput
+	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
 		return nil, err
 	}
 
 	defaultOutputIDsCache = &cachedOutputIDs{
 		Timestamp: time.Now(),
-		Outputs:   make(map[string][]*string, len(defaultOutputs.Defaults)),
+		Outputs:   make(map[string][]*string),
 	}
 
-	for _, output := range defaultOutputs.Defaults {
-		defaultOutputIDsCache.Outputs[*output.Severity] = output.OutputIDs
+	for _, output := range outputs {
+		for _ , severity := range output.DefaultForSeverity {
+			defaultOutputIDsCache.Outputs[*severity] = append(defaultOutputIDsCache.Outputs[*severity], output.OutputID)
+		}
 	}
 
 	zap.L().Debug("default output ids cache", zap.Any("cache", defaultOutputIDsCache))

@@ -27,11 +27,12 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
 
-var mockGetOrganizationOutputsInput = &models.GetOrganizationOutputsInput{}
+var mockInput = &models.GetOutputsInput{}
 
-var alertOutputItem = &models.AlertOutputItem{
+var alertOutputItem = &table.AlertOutputItem{
 	OutputID:           aws.String("outputId"),
 	DisplayName:        aws.String("displayName"),
 	CreatedBy:          aws.String("createdBy"),
@@ -50,12 +51,9 @@ func TestGetOrganizationOutputs(t *testing.T) {
 	encryptionKey = mockEncryptionKey
 	mockOutputVerification := &mockOutputVerification{}
 	outputVerification = mockOutputVerification
-	mockDefaultsTable := &mockDefaultsTable{}
-	defaultsTable = mockDefaultsTable
 
-	mockOutputsTable.On("GetOutputs").Return([]*models.AlertOutputItem{alertOutputItem}, nil)
+	mockOutputsTable.On("GetOutputs").Return([]*table.AlertOutputItem{alertOutputItem}, nil)
 	mockEncryptionKey.On("DecryptConfig", make([]byte, 1), mock.Anything).Return(nil)
-	mockDefaultsTable.On("GetDefaults", mock.Anything).Return([]*models.DefaultOutputsItem{}, nil)
 
 	expectedAlertOutput := &models.AlertOutput{
 		OutputID:           aws.String("outputId"),
@@ -70,22 +68,21 @@ func TestGetOrganizationOutputs(t *testing.T) {
 		DefaultForSeverity: []*string{},
 	}
 
-	result, err := (API{}).GetOrganizationOutputs(mockGetOrganizationOutputsInput)
+	result, err := (API{}).GetOrganizationOutputs(mockInput)
 
 	assert.NoError(t, err)
 	assert.Equal(t, []*models.AlertOutput{expectedAlertOutput}, result)
 	mockOutputsTable.AssertExpectations(t)
 	mockEncryptionKey.AssertExpectations(t)
-	mockDefaultsTable.AssertExpectations(t)
 }
 
 func TestGetOrganizationOutputsDdbError(t *testing.T) {
 	mockOutputsTable := &mockOutputTable{}
 	outputsTable = mockOutputsTable
 
-	mockOutputsTable.On("GetOutputs").Return([]*models.AlertOutputItem{}, errors.New("fake error"))
+	mockOutputsTable.On("GetOutputs").Return([]*table.AlertOutputItem{}, errors.New("fake error"))
 
-	_, err := (API{}).GetOrganizationOutputs(mockGetOrganizationOutputsInput)
+	_, err := (API{}).GetOrganizationOutputs(mockInput)
 
 	assert.Error(t, errors.New("fake error"), err)
 	mockOutputsTable.AssertExpectations(t)
@@ -97,10 +94,10 @@ func TestGetOrganizationDecryptionError(t *testing.T) {
 	mockEncryptionKey := new(mockEncryptionKey)
 	encryptionKey = mockEncryptionKey
 
-	mockOutputsTable.On("GetOutputs").Return([]*models.AlertOutputItem{alertOutputItem}, nil)
+	mockOutputsTable.On("GetOutputs").Return([]*table.AlertOutputItem{alertOutputItem}, nil)
 	mockEncryptionKey.On("DecryptConfig", make([]byte, 1), mock.Anything).Return(errors.New("fake error"))
 
-	_, err := (API{}).GetOrganizationOutputs(mockGetOrganizationOutputsInput)
+	_, err := (API{}).GetOrganizationOutputs(mockInput)
 
 	assert.Error(t, errors.New("fake error"), err)
 	mockOutputsTable.AssertExpectations(t)
