@@ -18,17 +18,17 @@ from typing import Any, Dict
 
 from boto3 import Session
 
-from ..app import Remediation
-from ..app.remediation_base import RemediationBase
+from .remediation import Remediation
+from .remediation_base import RemediationBase
 
 
 @Remediation
-class AwsEc2StopInstance(RemediationBase):
-    """Remediation that stops an EC2 instance"""
+class AwsIamDeleteInactiveAccessKeys(RemediationBase):
+    """Remediation that deletes inactive user access keys"""
 
     @classmethod
     def _id(cls) -> str:
-        return 'EC2.StopInstance'
+        return 'IAM.DeleteInactiveAccessKeys'
 
     @classmethod
     def _parameters(cls) -> Dict[str, str]:
@@ -36,6 +36,8 @@ class AwsEc2StopInstance(RemediationBase):
 
     @classmethod
     def _fix(cls, session: Session, resource: Dict[str, Any], parameters: Dict[str, str]) -> None:
-        session.client('ec2').stop_instances(InstanceIds=[
-            resource['Id'],
-        ])
+        client = session.client('iam')
+        if 'AccessKey1Active' in resource['CredentialReport'] and not resource['CredentialReport']['AccessKey1Active']:
+            client.delete_access_key(UserName=resource['UserName'], AccessKeyId=resource['CredentialReport']['AccessKey1Id'])
+        if 'AccessKey2Active' in resource['CredentialReport'] and not resource['CredentialReport']['AccessKey2Active']:
+            client.delete_access_key(UserName=resource['UserName'], AccessKeyId=resource['CredentialReport']['AccessKey2Id'])

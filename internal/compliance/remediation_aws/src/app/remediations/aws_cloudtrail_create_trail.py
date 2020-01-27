@@ -18,8 +18,8 @@ from typing import Any, Dict
 
 from boto3 import Session
 
-from ..app import Remediation
-from ..app.remediation_base import RemediationBase
+from .remediation import Remediation
+from .remediation_base import RemediationBase
 
 
 @Remediation

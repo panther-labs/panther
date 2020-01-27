@@ -18,30 +18,22 @@ from typing import Any, Dict
 
 from boto3 import Session
 
-from ..app import Remediation
-from ..app.remediation_base import RemediationBase
+from .remediation import Remediation
+from .remediation_base import RemediationBase
 
 
 @Remediation
-class AwsS3EnableBucketLogging(RemediationBase):
-    """Remediation that enables S3 bucket access logging"""
+class AwsGuardDutyCreateDetector(RemediationBase):
+    """Remediation that creates a GuardDuty detector if one doesn't exist"""
 
     @classmethod
     def _id(cls) -> str:
-        return 'S3.EnableBucketLogging'
+        return 'GuardDuty.CreateDetector'
 
     @classmethod
     def _parameters(cls) -> Dict[str, str]:
-        return {'TargetBucket': '', 'TargetPrefix': ''}
+        return {'FindingPublishingFrequency': 'FIFTEEN_MINUTES'}
 
     @classmethod
     def _fix(cls, session: Session, resource: Dict[str, Any], parameters: Dict[str, str]) -> None:
-        session.client('s3').put_bucket_logging(
-            Bucket=resource['Name'],
-            BucketLoggingStatus={
-                'LoggingEnabled': {
-                    'TargetBucket': parameters['TargetBucket'],
-                    'TargetPrefix': parameters['TargetPrefix']
-                }
-            }
-        )
+        session.client("guardduty").create_detector(Enable=True, FindingPublishingFrequency=parameters['FindingPublishingFrequency'])

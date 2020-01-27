@@ -18,26 +18,24 @@ from typing import Any, Dict
 
 from boto3 import Session
 
-from ..app import Remediation
-from ..app.remediation_base import RemediationBase
+from .remediation import Remediation
+from .remediation_base import RemediationBase
 
 
 @Remediation
-class AwsRdsEnableAutoMinorVersionUpgrade(RemediationBase):
-    """Remediation that enables Auto Minor Version upgrade for RDS instances"""
+class AwsEc2TerminateInstance(RemediationBase):
+    """Remediation that terminates an EC2 instance"""
 
     @classmethod
     def _id(cls) -> str:
-        return 'RDS.EnableAutoMinorVersionUpgrade'
+        return 'EC2.TerminateInstance'
 
     @classmethod
     def _parameters(cls) -> Dict[str, str]:
-        return {'ApplyImmediately': 'true'}
+        return {}
 
     @classmethod
     def _fix(cls, session: Session, resource: Dict[str, Any], parameters: Dict[str, str]) -> None:
-        session.client('rds').modify_db_instance(
-            DBInstanceIdentifier=resource['Id'],
-            AutoMinorVersionUpgrade=True,
-            ApplyImmediately=parameters['ApplyImmediately'].lower() == 'true'
-        )
+        session.client('ec2').terminate_instances(InstanceIds=[
+            resource['Id'],
+        ])

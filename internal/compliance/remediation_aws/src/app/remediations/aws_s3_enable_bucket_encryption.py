@@ -18,9 +18,9 @@ from typing import Any, Dict
 
 from boto3 import Session
 
-from ..app import Remediation
-from ..app.remediation_base import RemediationBase
-from ..app.exceptions import InvalidParameterException
+from .remediation import Remediation
+from .remediation_base import RemediationBase
+from ..common.exceptions import InvalidParameterException
 
 
 @Remediation

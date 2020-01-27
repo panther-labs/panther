@@ -24,8 +24,8 @@ from botocore.client import BaseClient
 from botocore.credentials import RefreshableCredentials
 from botocore.exceptions import ClientError
 
-from . import logging
-from .exceptions import RemediationException, RemediationNotAuthorized
+from ..common import logging
+from ..common.exceptions import RemediationException, RemediationNotAuthorized
 
 _STS_CLIENT_MAP: Dict[str, BaseClient] = {}
 _DEFAULT_STS_REGION = 'us-east-1'
