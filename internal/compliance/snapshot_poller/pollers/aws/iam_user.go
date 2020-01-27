@@ -79,6 +79,7 @@ func PollIAMUser(
 		if awsErr, ok := err.(awserr.Error); ok {
 			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
 			if awsErr.Code() == iam.ErrCodeLimitExceededException {
+				zap.L().Debug("credential report lookup rate limited during single user scan", zap.String("resourceId", *scanRequest.ResourceID))
 				utils.Requeue(pollermodels.ScanMsg{
 					Entries: []*pollermodels.ScanEntry{scanRequest},
 				}, credentialReportRequeueDelaySeconds)
@@ -536,6 +537,9 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		if awsErr, ok := err.(awserr.Error); ok {
 			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
 			if awsErr.Code() == iam.ErrCodeLimitExceededException {
+				zap.L().Debug(
+					"credential report lookup rate limited during all users scan",
+					zap.String("accountId", pollerInput.AuthSourceParsedARN.AccountID))
 				utils.Requeue(pollermodels.ScanMsg{
 					Entries: []*pollermodels.ScanEntry{{
 						AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
