@@ -58,7 +58,7 @@ export const LIST_DESTINATIONS = gql`
           projectKey
           userName
           apiKey
-          assigneeID
+          assigneeId
         }
         opsgenie {
           apiKey

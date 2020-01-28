@@ -38,15 +38,17 @@ import (
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
+const (
+	// Time to delay the requeue of a scan of a CloudFormation stack whose drift detection was in
+	// progress when this scan started.
+	driftDetectionRequeueDelaySeconds = 30
+	requeueRequiredError              = "CloudFormation: re-queue required"
+)
+
 var (
 	// Set as variables to be overridden in testing
 	CloudFormationClientFunc = setupCloudFormationClient
 	maxDriftDetectionBackoff = 2 * time.Minute
-
-	// Time to delay the requeue of a scan of a CloudFormation stack whose drift detection was in
-	// progress when this scan started.
-	driftDetectionRequeueDelaySeconds int64 = 30
-	requeueRequiredError                    = "CloudFormation: re-queue required"
 )
 
 func setupCloudFormationClient(sess *session.Session, cfg *aws.Config) interface{} {

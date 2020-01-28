@@ -257,7 +257,7 @@ export type JiraConfig = {
   projectKey: Scalars['String'];
   userName: Scalars['String'];
   apiKey: Scalars['String'];
-  assigneeID?: Maybe<Scalars['String']>;
+  assigneeId?: Maybe<Scalars['String']>;
 };
 
 export type JiraConfigInput = {
@@ -265,7 +265,7 @@ export type JiraConfigInput = {
   projectKey: Scalars['String'];
   userName: Scalars['String'];
   apiKey: Scalars['String'];
-  assigneeID?: Maybe<Scalars['String']>;
+  assigneeId?: Maybe<Scalars['String']>;
 };
 
 export type ListAlertsInput = {
