@@ -45,10 +45,8 @@ necessary prerequisites yourself.
    - HTTPS: `git clone https://github.com/panther-labs/panther && cd panther`
    - SSH: `git clone git@github.com:panther-labs/panther && cd panther`
 3. Spin-up the development environment by running `./dev.sh`.
-   - If you are using `aws-vault` or similar AWS credential managers, make sure you run the executable after creating the temporary credentials
-     like so: `aws-vault exec <ROLE> -- ./dev.sh`.
-   - We recommend that your temporary credentials stay valid for a minimum of
-     30 mins, since the initial deployment will take some time.
+   - If you are using `aws-vault` or similar AWS credential managers, make sure you run the executable after creating the temporary credentials like so: `aws-vault exec <ROLE> -- ./dev.sh`.
+   - We recommend that your temporary credentials stay valid for a minimum of 30 mins, since the initial deployment will take some time.
 
 #### Manually
 
