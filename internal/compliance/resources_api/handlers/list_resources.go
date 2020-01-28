@@ -117,6 +117,7 @@ func parseListResources(request *events.APIGatewayProxyRequest) (*operations.Lis
 		if err := models.IntegrationID(integrationID).Validate(nil); err != nil {
 			return nil, errors.New("invalid integrationId: " + err.Error())
 		}
+		result.IntegrationID = aws.String(integrationID)
 	}
 
 	if integrationType := request.QueryStringParameters["integrationType"]; integrationType != "" {
