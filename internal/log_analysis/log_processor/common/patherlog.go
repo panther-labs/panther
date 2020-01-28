@@ -186,18 +186,22 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 
 	// key based matching (not exact)
 	if key.Str == "instanceId" || strings.HasSuffix(key.Str, "InstanceId") {
-		e.pl.AppendAnyAWSInstanceIds(value.Str)
+		if strings.HasPrefix(value.Str, "i-") {
+			e.pl.AppendAnyAWSInstanceIds(value.Str)
+		}
 		return
 	}
 
 	if key.Str == "accountId" || strings.HasSuffix(key.Str, "AccountId") {
-		e.pl.AppendAnyAWSAccountIds(value.Str)
+		if len(value.Str) == 12 { // account ids are always 12 digits
+			e.pl.AppendAnyAWSAccountIds(value.Str)
+		}
 		return
 	}
 
 	// exact key based matching
 	switch key.Str {
-	case "tags":
+	case "tags": // found in many objects that use ASW tags
 		if value.IsArray() {
 			value.ForEach(func(tagListKey, tagListValue gjson.Result) bool {
 				tagKey := tagListValue.Get("key")
@@ -209,7 +213,7 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 			})
 		}
 
-	case "ipv6Addresses":
+	case "ipv6Addresses": // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		if value.IsArray() {
 			value.ForEach(func(v6ListKey, v6ListValue gjson.Result) bool {
 				e.pl.AppendAnyIPAddresses(v6ListValue.Str)
@@ -217,10 +221,16 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 			})
 		}
 
-	case "publicIp", "privateIpAddress", "ipAddressV4":
+	case
+		"publicIp",         // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
+		"privateIpAddress", // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
+		"ipAddressV4":      // found in GuardDuty findings
 		e.pl.AppendAnyIPAddresses(value.Str)
 
-	case "publicDnsName", "privateDnsName", "domain":
+	case
+		"publicDnsName",  // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
+		"privateDnsName", // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
+		"domain":         // found in GuardDuty findings
 		e.pl.AppendAnyDomainNames(value.Str)
 	}
 }
