@@ -40,7 +40,6 @@ installing the necessary prerequisites yourself.
 #### Installation & Deployment using our Docker Image
 
 1. Install [Docker](https://docs.docker.com/install/) 17+ and make sure the daemon is running (i.e. typing `docker info` doesn't cause an error)
-   - For MacOS w/ homebrew: `brew install docker`
 2. Clone the repo and `cd` into it
 
 - HTTPS: `git clone https://github.com/panther-labs/panther && cd panther`
@@ -66,7 +65,7 @@ installing the necessary prerequisites yourself.
 #### Manual Installation & Deployment
 
 1. Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, [Python](https://www.python.org/downloads/) 3.7+, and [Docker](https://docs.docker.com/install/) 17+
-   - For MacOS w/ homebrew: `brew install go node python3 docker`
+   - For MacOS w/ homebrew: `brew install go node python3`
 2. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) and [configure](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your credentials
    - `pip3 install awscli --upgrade --user && aws configure`
 3. Configure your environment
