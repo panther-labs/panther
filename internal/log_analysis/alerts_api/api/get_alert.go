@@ -47,7 +47,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		RuleID:           alertItem.RuleID,
 		CreationTime:     alertItem.CreationTime,
 		LastEventMatched: alertItem.LastEventMatched,
-		MatchedEventNum:  aws.Int(len(alertItem.EventHashes)),
+		EventsMatched:    aws.Int(len(alertItem.EventHashes)),
 	}
 
 	var eventHashesToReturn [][]byte
