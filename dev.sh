@@ -11,6 +11,8 @@ docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -e AWS_ACCESS_KEY_ID \
     -e AWS_SECRET_ACCESS_KEY \
+    -e AWS_SESSION_TOKEN \
+    -e AWS_SECURITY_TOKEN \
     -e AWS_REGION=$(if [ -z "$AWS_REGION" ]; then echo $AWS_DEFAULT_REGION; else echo $AWS_REGION; fi) \
     -it \
     --rm \
