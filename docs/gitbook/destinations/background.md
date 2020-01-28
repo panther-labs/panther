@@ -6,11 +6,11 @@ Whenever a policy fails on a resource or a rule triggers on an event, an alert i
 
 Alerts are routed based on rule/policy severity. For example, if a Rule is configured with a `Critical`, it will dispatch alerts to the default Destinations configured to handle `Critical` alerts.
 
+![](../.gitbook/assets/default-destinations.png)
+
 {% hint style="info" %}
 A single failure may dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
 {% endhint %}
-
-![](../../.gitbook/assets/default-destinations.png)
 
 Supported Destinations:
 
