@@ -19,7 +19,7 @@
 /* eslint-disable react/display-name */
 
 import React from 'react';
-import { TableProps, Box } from 'pouncejs';
+import { TableProps, Box, Text } from 'pouncejs';
 import { Integration } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import ListSourcesTableRowOptionsProps from 'Pages/list-sources/subcomponents/list-sources-table-row-options';
@@ -44,7 +44,16 @@ const columns = [
   {
     key: 's3Buckets',
     header: 'S3 Buckets',
-    flex: '1 0 200px',
+    flex: '1 0 300px',
+    renderCell: ({ s3Buckets }) => (
+      <React.Fragment>
+        {s3Buckets.map(s3Arn => (
+          <Text size="medium" key={s3Arn} mb={1}>
+            {s3Arn}
+          </Text>
+        ))}
+      </React.Fragment>
+    ),
   },
 
   {
