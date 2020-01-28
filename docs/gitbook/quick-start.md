@@ -32,60 +32,52 @@ Precise deployment policy coming soon!
 {"coming": "soon"}
 ```
 
-### Getting Started
+### Setup the Development Environment
 
-In order to install Panther on your AWS account, you can choose between using our dedicated docker deployment image or manually
-installing the necessary prerequisites yourself.
+Before you can deploy Panther to your AWS account, you need to setup the development environment.
+You can choose between using our dedicated docker deployment image or manually installing the
+necessary prerequisites yourself.
 
-#### Installation & Deployment using our Docker Image
+#### Using our Docker Image
 
-1. Install [Docker](https://docs.docker.com/install/) 17+ and make sure the daemon is running (i.e. typing `docker info` doesn't cause an error)
-2. Clone the repo and `cd` into it
+1. Install [Docker](https://docs.docker.com/install/) 17+ and make sure the daemon is running (e.g. typing `docker info` doesn't cause an error)
+2. Clone the repo and `cd` into it.
+   - HTTPS: `git clone https://github.com/panther-labs/panther && cd panther`
+   - SSH: `git clone git@github.com:panther-labs/panther && cd panther`
+3. Spin-up the development environment by running `./dev.sh`.
+   - If you are using `aws-vault` or similar AWS credential managers, make sure you run the executable after creating the temporary credentials
+     like so: `aws-vault exec <ROLE> -- ./dev.sh`.
+   - We recommend that your temporary credentials stay valid for a minimum of
+     30 mins, since the initial deployment will take some time.
 
-- HTTPS: `git clone https://github.com/panther-labs/panther && cd panther`
-- SSH: `git clone git@github.com:panther-labs/panther && cd panther`
+#### Manually
 
-3. Spin-up the deployment environment by running `./build/deployment/init` [related source code](https://github.com/panther-labs/panther/tree/master/build/deployment/init.go)
-
-- If you are using `aws-vault` or similar AWS credential managers, make sure you run the executable after creating the temporary credentials
-  like so: `aws-vault exec <ROLE> -- ./build/deployment/init`.
-- We recommend that your temporary credentials stay valid for a minimum of
-  30 mins, since the initial deployment will take some time.
-
-4. From the root of the repo, run `mage setup`
-   - `pip` may show warnings about incompatible packages - these are safe to ignore
-5. Deploy! `mage deploy`
-   - _NOTE: The initial deploy will take 20-30 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off._
-6. Configure your initial Panther admin user
-   - Near the end of the deploy command, you'll be prompted for first/last name and email
-   - You will get an email from [**no-reply@verificationemail.com**](mailto:no-reply@verificationemail.com) with your temporary password. If you don't see it, be sure to check your spam folder.
-7. Sign in to Panther! The URL is linked in the welcome email and also printed at the end of the deploy command.
-   - _WARNING: By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page._
-
-#### Manual Installation & Deployment
-
-1. Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, [Python](https://www.python.org/downloads/) 3.7+, and [Docker](https://docs.docker.com/install/) 17+
+1. Install [Docker](https://docs.docker.com/install/) 17+ and make sure the daemon is running (e.g. typing `docker info` doesn't cause an error)
+2. Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, [Python](https://www.python.org/downloads/) 3.7+
    - For MacOS w/ homebrew: `brew install go node python3`
-2. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) and [configure](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your credentials
+3. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html) and [configure](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your credentials
    - `pip3 install awscli --upgrade --user && aws configure`
-3. Configure your environment
+4. Configure your environment
    - `export AWS_REGION=us-east-1 GOPATH=$HOME/go PATH=$PATH:$GOPATH/bin`
    - \(Panther can be deployed to any standard `AWS_REGION`\)
-4. Install [Mage](https://magefile.org/#installation): `go get github.com/magefile/mage`
-5. Clone the repo to `$GOPATH/src`
+5. Install [Mage](https://magefile.org/#installation): `go get github.com/magefile/mage`
+6. Clone the repo to `$GOPATH/src`
    - HTTPS: `git clone https://github.com/panther-labs/panther $GOPATH/src/github.com/panther-labs/panther`
    - SSH: `git clone git@github.com:panther-labs/panther $GOPATH/src/github.com/panther-labs/panther`
-6. Make sure the docker daemon is running (i.e. typing `docker info` doesn't cause an error)
-7. From the root of the repo, run `mage setup`
+
+## Deployment
+
+After having configured the development environment, deployment is super simple. From the root of
+the project repo:
+
+1. Run `mage setup` in order to install the necessary packages
    - `pip` may show warnings about incompatible packages - these are safe to ignore
-8. Deploy! `mage deploy`
+2. Run `mage deploy` in order to kick off the deployment process
    - _NOTE: The initial deploy will take 20-30 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off._
-9. Configure your initial Panther admin user
    - Near the end of the deploy command, you'll be prompted for first/last name and email
    - You will get an email from [**no-reply@verificationemail.com**](mailto:no-reply@verificationemail.com) with your temporary password. If you don't see it, be sure to check your spam folder.
-10. Sign in to Panther! The URL is linked in the welcome email and also printed at the end of the deploy command.
-
-- _WARNING: By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page._
+3. Sign in to Panther! The URL is linked in the welcome email and also printed at the end of the deploy command.
+   - _WARNING: By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page._
 
 ## Onboarding
 
