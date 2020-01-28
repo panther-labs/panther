@@ -30,7 +30,7 @@ import (
 )
 
 type outputsCache struct {
-	//Map from outputID -> List of outputs
+	// All cached outputs
 	Outputs   []*outputmodels.AlertOutput
 	Timestamp time.Time
 }
