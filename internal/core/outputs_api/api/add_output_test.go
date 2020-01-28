@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
 
 func TestAddOutputSameNameAlreadyExists(t *testing.T) {
@@ -39,7 +40,7 @@ func TestAddOutputSameNameAlreadyExists(t *testing.T) {
 	mockOutputVerification := &mockOutputVerification{}
 	outputVerification = mockOutputVerification
 
-	mockOutputTable.On("GetOutputByName", aws.String("my-channel")).Return(&models.AlertOutputItem{}, nil)
+	mockOutputTable.On("GetOutputByName", aws.String("my-channel")).Return(&table.AlertOutputItem{}, nil)
 
 	input := &models.AddOutputInput{
 		DisplayName:  aws.String("my-channel"),
@@ -90,15 +91,11 @@ func TestAddOutputSlack(t *testing.T) {
 	outputsTable = mockOutputTable
 	mockOutputVerification := &mockOutputVerification{}
 	outputVerification = mockOutputVerification
-	mockDefaultsTable := &mockDefaultsTable{}
-	defaultsTable = mockDefaultsTable
 
 	mockOutputTable.On("GetOutputByName", aws.String("my-channel")).Return(nil, nil)
 	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
 	mockOutputTable.On("PutOutput", mock.Anything).Return(nil)
 	mockOutputVerification.On("GetVerificationStatus", mock.Anything).Return(aws.String(models.VerificationStatusSuccess), nil)
-	mockDefaultsTable.On("GetDefault", mock.Anything).Return(&models.DefaultOutputsItem{}, nil)
-	mockDefaultsTable.On("PutDefaults", mock.Anything).Return(nil)
 
 	input := &models.AddOutputInput{
 		UserID:             aws.String("userId"),

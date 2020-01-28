@@ -102,5 +102,3 @@ export enum INTEGRATION_TYPES {
   AWS_LOGS = 'aws-s3',
   AWS_INFRA = 'aws-scan',
 }
-
-export const PANTHER_REMEDIATION_SATELLITE_ACCOUNT = 'panther-aws-remediations-satellite-account';

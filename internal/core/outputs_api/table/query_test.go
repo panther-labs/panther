@@ -28,8 +28,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 var mockItemMap = map[string]*dynamodb.AttributeValue{
@@ -104,13 +102,13 @@ func TestGetOutputs(t *testing.T) {
 	}
 
 	dynamoDBClient.On("Scan", expectedScanInput).Return(mockScanItemOutput, nil)
-	expectedResult := &models.AlertOutputItem{
+	expectedResult := &AlertOutputItem{
 		OutputID: aws.String("outputId"),
 	}
 
 	result, err := table.GetOutputs()
 	require.NoError(t, err)
-	assert.Equal(t, []*models.AlertOutputItem{expectedResult}, result)
+	assert.Equal(t, []*AlertOutputItem{expectedResult}, result)
 
 	dynamoDBClient.AssertExpectations(t)
 }
@@ -126,14 +124,14 @@ func TestGetOutputsPagination(t *testing.T) {
 	dynamoDBClient.On("Scan", mock.Anything).Return(dynamoResponseInitial, nil).Twice()
 	dynamoDBClient.On("Scan", mock.Anything).Return(dynamoResponseFinal, nil)
 
-	expectedResult := &models.AlertOutputItem{
+	expectedResult := &AlertOutputItem{
 		OutputID: aws.String("outputId"),
 	}
 
 	result, err := table.GetOutputs()
 
 	require.NoError(t, err)
-	assert.Equal(t, []*models.AlertOutputItem{expectedResult, expectedResult, expectedResult}, result)
+	assert.Equal(t, []*AlertOutputItem{expectedResult, expectedResult, expectedResult}, result)
 	dynamoDBClient.AssertExpectations(t)
 }
 
@@ -155,7 +153,7 @@ func TestGetOutput(t *testing.T) {
 	mockGetItemOutput := &dynamodb.GetItemOutput{Item: mockItemMap}
 	dynamoDBClient.On("GetItem", expectedGetItemInput).Return(mockGetItemOutput, nil)
 
-	expectedResult := &models.AlertOutputItem{
+	expectedResult := &AlertOutputItem{
 		OutputID: aws.String("outputId"),
 	}
 

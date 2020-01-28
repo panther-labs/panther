@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_cloudtrail_create_trail import AwsCloudTrailCreateTrail
+from ...src.app.remediations.aws_cloudtrail_create_trail import AwsCloudTrailCreateTrail
 
 
 class TestAwsCloudTrailCreateTrail(TestCase):

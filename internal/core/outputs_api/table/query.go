@@ -24,12 +24,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // GetOutputByName returns an output given it's displayName. If such output doesn't exist, it returns nil.
-func (table *OutputsTable) GetOutputByName(displayName *string) (*models.AlertOutputItem, error) {
+func (table *OutputsTable) GetOutputByName(displayName *string) (*AlertOutputItem, error) {
 	keyCondition := expression.Key("displayName").Equal(expression.Value(displayName))
 
 	queryExpression, err := expression.NewBuilder().
@@ -64,7 +63,7 @@ func (table *OutputsTable) GetOutputByName(displayName *string) (*models.AlertOu
 			zap.String("displayName", *displayName))
 	}
 
-	item := &models.AlertOutputItem{}
+	item := &AlertOutputItem{}
 	err = dynamodbattribute.UnmarshalMap(queryOutput.Items[0], item)
 	if err != nil {
 		return nil, &genericapi.InternalError{Message: "failed to unmarshal response" + err.Error()}
@@ -73,7 +72,7 @@ func (table *OutputsTable) GetOutputByName(displayName *string) (*models.AlertOu
 }
 
 // GetOutputs returns all the Alert Outputs for one organization
-func (table *OutputsTable) GetOutputs() (outputItems []*models.AlertOutputItem, err error) {
+func (table *OutputsTable) GetOutputs() (outputItems []*AlertOutputItem, err error) {
 	var scanInput = &dynamodb.ScanInput{
 		TableName: table.Name,
 	}
@@ -85,7 +84,7 @@ func (table *OutputsTable) GetOutputs() (outputItems []*models.AlertOutputItem, 
 			return nil, &genericapi.AWSError{Method: "dynamodb.Scan", Err: err}
 		}
 
-		var outputItemsPartial []*models.AlertOutputItem
+		var outputItemsPartial []*AlertOutputItem
 		if err = dynamodbattribute.UnmarshalListOfMaps(scanOutput.Items, &outputItemsPartial); err != nil {
 			return nil, &genericapi.InternalError{
 				Message: "failed to unmarshal dynamo item to an AlertOutputItem: " + err.Error()}
@@ -102,7 +101,7 @@ func (table *OutputsTable) GetOutputs() (outputItems []*models.AlertOutputItem, 
 }
 
 // GetOutput returns the configuration of an alert output
-func (table *OutputsTable) GetOutput(outputID *string) (*models.AlertOutputItem, error) {
+func (table *OutputsTable) GetOutput(outputID *string) (*AlertOutputItem, error) {
 	getItemInput := &dynamodb.GetItemInput{
 		TableName: table.Name,
 		Key: map[string]*dynamodb.AttributeValue{
@@ -123,7 +122,7 @@ func (table *OutputsTable) GetOutput(outputID *string) (*models.AlertOutputItem,
 			Message: "outputId=" + *outputID}
 	}
 
-	var outputItem *models.AlertOutputItem
+	var outputItem *AlertOutputItem
 	if err = dynamodbattribute.UnmarshalMap(result.Item, &outputItem); err != nil {
 		return nil, &genericapi.InternalError{
 			Message: "failed to unmarshal dynamo item to an AlertOutputItem: " + err.Error()}

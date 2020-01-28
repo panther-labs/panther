@@ -40,7 +40,6 @@ func (API) CreateOrganization(
 		DisplayName:          input.DisplayName,
 		Email:                input.Email,
 		Phone:                input.Phone,
-		RemediationConfig:    input.RemediationConfig,
 	}
 
 	if err := orgTable.Put(org); err != nil {

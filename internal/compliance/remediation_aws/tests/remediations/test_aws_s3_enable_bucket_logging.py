@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_s3_enable_bucket_versioning import AwsS3EnableBucketVersioning
+from ...src.app.remediations.aws_s3_enable_bucket_versioning import AwsS3EnableBucketVersioning
 
 
 class TestAwsS3EnableBucketVersioning(TestCase):

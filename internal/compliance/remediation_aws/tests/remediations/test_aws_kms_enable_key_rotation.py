@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_kms_enable_key_rotation import AwsKmsEnableKeyRotation
+from ...src.app.remediations.aws_kms_enable_key_rotation import AwsKmsEnableKeyRotation
 
 
 class TestAwsIamUpdateAccountPasswordPolicy(TestCase):

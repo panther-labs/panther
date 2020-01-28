@@ -249,11 +249,6 @@ input UpdateOrganizationInput {
   displayName: String
   email: String
   alertReportFrequency: AlertReportFrequencyEnum
-  remediationConfig: RemediationConfigInput
-}
-
-input RemediationConfigInput {
-  awsRemediationLambdaArn: String
 }
 
 type Organization {
@@ -261,11 +256,6 @@ type Organization {
   displayName: String
   email: String
   alertReportFrequency: AlertReportFrequencyEnum
-  remediationConfig: RemediationConfig
-}
-
-type RemediationConfig {
-  awsRemediationLambdaArn: String
 }
 
 input TestPolicyInput {

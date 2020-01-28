@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_cloudtrail_enable_log_validation import AwsCloudTrailEnableLogValidation
+from ...src.app.remediations.aws_cloudtrail_enable_log_validation import AwsCloudTrailEnableLogValidation
 
 
 class TestAwsCloudTrailEnableLogValidation(TestCase):

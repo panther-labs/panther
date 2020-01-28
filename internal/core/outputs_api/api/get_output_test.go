@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
 
 func TestGetOutput(t *testing.T) {
@@ -36,14 +37,12 @@ func TestGetOutput(t *testing.T) {
 	encryptionKey = mockEncryptionKey
 	mockOutputVerification := &mockOutputVerification{}
 	outputVerification = mockOutputVerification
-	mockDefaultsTable := &mockDefaultsTable{}
-	defaultsTable = mockDefaultsTable
 
 	mockGetOutputInput := &models.GetOutputInput{
 		OutputID: aws.String("outputId"),
 	}
 
-	alertOutputItem := &models.AlertOutputItem{
+	alertOutputItem := &table.AlertOutputItem{
 		OutputID:           aws.String("outputId"),
 		DisplayName:        aws.String("displayName"),
 		CreatedBy:          aws.String("createdBy"),
@@ -53,10 +52,10 @@ func TestGetOutput(t *testing.T) {
 		OutputType:         aws.String("slack"),
 		EncryptedConfig:    make([]byte, 1),
 		VerificationStatus: aws.String(models.VerificationStatusSuccess),
+		DefaultForSeverity: aws.StringSlice([]string{"HIGH", "CRITICAL"}),
 	}
 	mockEncryptionKey.On("DecryptConfig", make([]byte, 1), mock.Anything).Return(nil)
 	mockOutputsTable.On("GetOutput", aws.String("outputId")).Return(alertOutputItem, nil)
-	mockDefaultsTable.On("GetDefaults", mock.Anything).Return([]*models.DefaultOutputsItem{}, nil)
 
 	expectedAlertOutput := &models.AlertOutput{
 		OutputID:           aws.String("outputId"),
@@ -68,7 +67,7 @@ func TestGetOutput(t *testing.T) {
 		LastModifiedTime:   aws.String("lastModifiedTime"),
 		OutputConfig:       &models.OutputConfig{},
 		VerificationStatus: aws.String(models.VerificationStatusSuccess),
-		DefaultForSeverity: []*string{},
+		DefaultForSeverity: aws.StringSlice([]string{"HIGH", "CRITICAL"}),
 	}
 
 	result, err := (API{}).GetOutput(mockGetOutputInput)
@@ -77,5 +76,4 @@ func TestGetOutput(t *testing.T) {
 	assert.Equal(t, expectedAlertOutput, result)
 	mockOutputsTable.AssertExpectations(t)
 	mockEncryptionKey.AssertExpectations(t)
-	mockDefaultsTable.AssertExpectations(t)
 }

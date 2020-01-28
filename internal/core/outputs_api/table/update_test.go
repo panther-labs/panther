@@ -28,7 +28,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -39,7 +38,7 @@ var mockUpdateItemOutput = &dynamodb.UpdateItemOutput{
 		},
 	},
 }
-var mockUpdateItemAlertOutput = &models.AlertOutputItem{
+var mockUpdateItemAlertOutput = &AlertOutputItem{
 	OutputID:           aws.String("outputId"),
 	DisplayName:        aws.String("displayName"),
 	LastModifiedBy:     aws.String("lastModifiedBy"),
@@ -79,7 +78,7 @@ func TestUpdateOutput(t *testing.T) {
 		ExpressionAttributeValues: expectedExpression.Values(),
 		ReturnValues:              aws.String(dynamodb.ReturnValueAllNew),
 	}
-	expectedResult := &models.AlertOutputItem{
+	expectedResult := &AlertOutputItem{
 		OutputID: aws.String("outputId"),
 	}
 
@@ -91,7 +90,7 @@ func TestUpdateOutput(t *testing.T) {
 }
 
 func TestUpdateOutputWithoutVerificationStatus(t *testing.T) {
-	var mockUpdateItemAlertOutput = &models.AlertOutputItem{
+	var mockUpdateItemAlertOutput = &AlertOutputItem{
 		OutputID:         aws.String("outputId"),
 		DisplayName:      aws.String("displayName"),
 		LastModifiedBy:   aws.String("lastModifiedBy"),
@@ -128,7 +127,7 @@ func TestUpdateOutputWithoutVerificationStatus(t *testing.T) {
 		ExpressionAttributeValues: expectedExpression.Values(),
 		ReturnValues:              aws.String(dynamodb.ReturnValueAllNew),
 	}
-	expectedResult := &models.AlertOutputItem{
+	expectedResult := &AlertOutputItem{
 		OutputID: aws.String("outputId"),
 	}
 

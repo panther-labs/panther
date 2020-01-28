@@ -26,19 +26,16 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	policymodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	processormodels "github.com/panther-labs/panther/api/gateway/remediation/models"
 	"github.com/panther-labs/panther/api/gateway/resources/models"
-	organizationmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 )
 
 type mockLambdaClient struct {
@@ -90,32 +87,16 @@ var (
 )
 
 func init() {
-	crossAccountRoleName = "crossAccountRoleName"
-	sessionDurationSeconds = "60"
-	organizationsAPI = "organizationsApi"
 	resourcesServiceHostname = "resourcesServiceHostname"
 	policiesServiceHostname = "policiesServiceHostname"
+	remediationLambdaArn = "arn:aws:lambda:us-west-2:123456789012:function:function"
 }
 
 func TestRemediate(t *testing.T) {
 	mockClient := &mockLambdaClient{}
-	mockCreds := &credentials.Credentials{}
-
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
-
-	mockRemediatorLambdaClient := &mockLambdaClient{}
-	remediator := &Invoker{
-		lambdaClient: mockRemediatorLambdaClient,
-	}
-
-	getCreds = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-		return mockCreds
-	}
-
-	getLambda = func(p client.ConfigProvider, cfgs *aws.Config) lambdaiface.LambdaAPI {
-		return mockClient
-	}
+	remediator := &Invoker{lambdaClient: mockClient}
 
 	expectedPayload := Payload{
 		RemediationID: string(policy.AutoRemediationID),
@@ -126,66 +107,31 @@ func TestRemediate(t *testing.T) {
 		Action:  aws.String(remediationAction),
 		Payload: expectedPayload,
 	}
-	expectedSerializedInput, _ := jsoniter.Marshal(expectedInput)
+	expectedSerializedInput, err := jsoniter.Marshal(expectedInput)
+	require.NoError(t, err)
 
 	expectedLambdaInput := &lambda.InvokeInput{
-		FunctionName: aws.String("arn:aws:lambda:us-west-2:123456789012:function:function"),
+		FunctionName: aws.String(remediationLambdaArn),
 		Payload:      expectedSerializedInput,
 	}
 
 	mockClient.On("Invoke", expectedLambdaInput).Return(&lambda.InvokeOutput{}, nil)
-
-	expectedOrganizationsLambdaPayload := organizationmodels.LambdaInput{
-		GetOrganization: &organizationmodels.GetOrganizationInput{},
-	}
-	expectedOrganizationsLambdaSerializedPayload, _ := jsoniter.Marshal(expectedOrganizationsLambdaPayload)
-
-	expectedOrganizationsLambdaInput := &lambda.InvokeInput{
-		FunctionName: aws.String("organizationsApi"),
-		Payload:      expectedOrganizationsLambdaSerializedPayload,
-	}
-
-	organizationsOutput := &organizationmodels.GetOrganizationOutput{
-		Organization: &organizationmodels.Organization{
-			RemediationConfig: &organizationmodels.RemediationConfig{
-				AwsRemediationLambdaArn: aws.String("arn:aws:lambda:us-west-2:123456789012:function:function"),
-			},
-		},
-	}
-	organizationsPayload, _ := jsoniter.Marshal(organizationsOutput)
-
-	mockRemediatorLambdaClient.On("Invoke", expectedOrganizationsLambdaInput).Return(&lambda.InvokeOutput{Payload: organizationsPayload}, nil)
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(resource, http.StatusOK), nil).Once()
-
-	// Clearing up the cache
-	cache = nil
 
 	result := remediator.Remediate(input)
 	assert.NoError(t, result)
 
-	// Verify cache has been populated
-	expectedValue := &aws.Config{Region: aws.String("us-west-2"), Credentials: mockCreds}
-	assert.Equal(t, expectedValue, cache)
-
-	mockRemediatorLambdaClient.AssertExpectations(t)
+	mockClient.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestRemediateLambdaError(t *testing.T) {
 	mockClient := &mockLambdaClient{}
-	mockCreds := &credentials.Credentials{}
 
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
-	getCreds = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-		return mockCreds
-	}
-
-	getLambda = func(p client.ConfigProvider, cfgs *aws.Config) lambdaiface.LambdaAPI {
-		return mockClient
-	}
 	remediator := &Invoker{lambdaClient: mockClient}
 	mockClient.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, errors.New("error"))
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
@@ -200,18 +146,9 @@ func TestRemediateLambdaError(t *testing.T) {
 
 func TestRemediateLambdaFunctionError(t *testing.T) {
 	mockClient := &mockLambdaClient{}
-	mockCreds := &credentials.Credentials{}
 
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
-
-	getCreds = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-		return mockCreds
-	}
-
-	getLambda = func(p client.ConfigProvider, cfgs *aws.Config) lambdaiface.LambdaAPI {
-		return mockClient
-	}
 
 	lambdaOutput := &lambda.InvokeOutput{
 		FunctionError: aws.String("LambdaError"),
@@ -231,55 +168,20 @@ func TestRemediateLambdaFunctionError(t *testing.T) {
 
 func TestGetRemediations(t *testing.T) {
 	mockClient := &mockLambdaClient{}
-	mockCreds := &credentials.Credentials{}
-
-	mockRemediatorLambdaClient := &mockLambdaClient{}
 	remediator := &Invoker{
-		lambdaClient: mockRemediatorLambdaClient,
-	}
-
-	getCreds = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-		return mockCreds
-	}
-
-	getLambda = func(p client.ConfigProvider, cfgs *aws.Config) lambdaiface.LambdaAPI {
-		return mockClient
+		lambdaClient: mockClient,
 	}
 
 	expectedInput := LambdaInput{Action: aws.String(listRemediationsAction)}
 	expectedSerializedInput, _ := jsoniter.Marshal(expectedInput)
 
 	expectedLambdaInput := &lambda.InvokeInput{
-		FunctionName: aws.String("arn:aws:lambda:us-west-2:123456789012:function:function"),
+		FunctionName: aws.String(remediationLambdaArn),
 		Payload:      expectedSerializedInput,
 	}
 
 	serializedRemediations := []byte("{\"AWS.S3.EnableBucketEncryption\": {\"SSEAlgorithm\": \"AES256\"}}")
 	mockClient.On("Invoke", expectedLambdaInput).Return(&lambda.InvokeOutput{Payload: serializedRemediations}, nil)
-
-	expectedOrganizationsLambdaPayload := organizationmodels.LambdaInput{
-		GetOrganization: &organizationmodels.GetOrganizationInput{},
-	}
-	expectedOrganizationsLambdaSerializedPayload, _ := jsoniter.Marshal(expectedOrganizationsLambdaPayload)
-
-	expectedOrganizationsLambdaInput := &lambda.InvokeInput{
-		FunctionName: aws.String("organizationsApi"),
-		Payload:      expectedOrganizationsLambdaSerializedPayload,
-	}
-
-	organizationsOutput := &organizationmodels.GetOrganizationOutput{
-		Organization: &organizationmodels.Organization{
-			RemediationConfig: &organizationmodels.RemediationConfig{
-				AwsRemediationLambdaArn: aws.String("arn:aws:lambda:us-west-2:123456789012:function:function"),
-			},
-		},
-	}
-	organizationsPayload, _ := jsoniter.Marshal(organizationsOutput)
-
-	mockRemediatorLambdaClient.On("Invoke", expectedOrganizationsLambdaInput).Return(&lambda.InvokeOutput{Payload: organizationsPayload}, nil)
-
-	// Clearing up the cache
-	cache = nil
 
 	result, err := remediator.GetRemediations()
 	assert.NoError(t, err)
@@ -300,9 +202,6 @@ func TestDoNotTakeActionIfNoRemediationConfigured(t *testing.T) {
 	}
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
-
-	// Clearing up the cache
-	cache = nil
 
 	result := remediator.Remediate(input)
 	assert.NoError(t, result)

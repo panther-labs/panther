@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_iam_update_account_password_policy import AwsIamUpdateAccountPasswordPolicy
+from ...src.app.remediations.aws_iam_update_account_password_policy import AwsIamUpdateAccountPasswordPolicy
 
 
 class TestAwsIamUpdateAccountPasswordPolicy(TestCase):
