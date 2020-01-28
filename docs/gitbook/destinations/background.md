@@ -4,21 +4,21 @@ Destinations are used to send alerts about suspicious activity or vulnerable inf
 
 Whenever a policy fails on a resource or a rule triggers on an event, an alert is generated and sent to the configured Destination.
 
-Alerts are routed based on rule/policy severity. For example, if Rule is configured with a `Critical`, it will dispatch alerts to the default Destinations configured to handle `Critical` alerts.
+Alerts are routed based on rule/policy severity. For example, if a Rule is configured with a `Critical`, it will dispatch alerts to the default Destinations configured to handle `Critical` alerts.
 
 {% hint style="info" %}
-A single failure may dispatch to multiple destinations simultaneously, such as creating a JIRA ticket, sending an email, or paging the on call personnel.
+A single failure may dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
 {% endhint %}
 
-For example, Destinations may be configured for both email and PagerDuty. Further, the email Destination may be configured to handle `Medium` , `High`, and `Critical` severity alerts while the PagerDuty Destination is configured to handle just `Critical` severity alerts. Whenever a `Medium` or `High` severity policy or rule fails, an email is sent to the configured email address. However, when a `Critical` severity policy or rule fails an email is sent to the configured email address and a page is sent to the PagerDuty integration.
+![](../../.gitbook/assets/default-destinations.png)
 
 Supported Destinations:
 
 - [Slack](https://slack.com/)
 - [PagerDuty](https://www.pagerduty.com/)
-- Github
-- JIRA
-- SNS (Email)
-- SQS
-- OpsGenie
-- Microsoft Teams
+- [Github](https://github.com/)
+- [Jira](https://www.atlassian.com/software/jira)
+- [OpsGenie](https://www.atlassian.com/software/opsgenie/what-is-opsgenie)
+- [Amazon Simple Notification Service (Email)](https://aws.amazon.com/sns/)
+- [Amazon Simple Queue Service](https://aws.amazon.com/sqs/)
+- [Microsoft Teams](https://products.office.com/en-us/microsoft-teams/group-chat-software)
