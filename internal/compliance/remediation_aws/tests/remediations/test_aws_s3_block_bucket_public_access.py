@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_s3_block_bucket_public_access import AwsS3BlockBucketPublicAccess
+from ...src.app.remediations.aws_s3_block_bucket_public_access import AwsS3BlockBucketPublicAccess
 
 
 class TestAwsS3BlockBucketPublicAccessConfigurable(TestCase):

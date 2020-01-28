@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_rds_enable_auto_minor_version_upgrade import AwsRdsEnableAutoMinorVersionUpgrade
+from ...src.app.remediations.aws_rds_enable_auto_minor_version_upgrade import AwsRdsEnableAutoMinorVersionUpgrade
 
 
 class TestAwsRdsEnableAutoMinorVersionUpgrade(TestCase):

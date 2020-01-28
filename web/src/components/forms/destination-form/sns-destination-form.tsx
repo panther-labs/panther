@@ -27,6 +27,7 @@ import BaseDestinationForm, {
   defaultValidationSchema,
 } from 'Components/forms/common/base-destination-form';
 import JsonViewer from 'Components/json-viewer';
+import { getArnRegexForService } from 'Helpers/utils';
 
 const SNS_TOPIC_POLICY = {
   Version: '2012-10-17',
@@ -53,7 +54,9 @@ interface SNSDestinationFormProps {
 const snsFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     sns: Yup.object().shape({
-      topicArn: Yup.string().required(),
+      topicArn: Yup.string()
+        .matches(getArnRegexForService('SNS'), 'Must be a valid SNS Topic')
+        .required(),
     }),
   }),
 });

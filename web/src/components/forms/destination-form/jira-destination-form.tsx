@@ -96,7 +96,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
 
       <Field
         as={FormikTextInput}
-        name="outputConfig.jira.assigneeID"
+        name="outputConfig.jira.assigneeId"
         label="Assignee ID"
         placeholder="Who should we assign this to?"
         mb={6}

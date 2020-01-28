@@ -105,6 +105,11 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 
 	comment = sf.Tag.Get("description")
 
+	if to, found := customMappingsTable[t.String()]; found {
+		jsonType = to
+		return
+	}
+
 	switch t.Kind() { // NOTE: not all possible nestings have been implemented
 	case reflect.Slice:
 
@@ -125,12 +130,6 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 		return fieldName, inferMap(t, customMappingsTable), comment, skip
 
 	case reflect.Struct:
-
-		if to, found := customMappingsTable[t.String()]; found {
-			jsonType = to
-			return
-		}
-
 		if sf.Anonymous { // composed struct, fields part of enclosing struct
 			fieldName = ""
 			jsonType = inferStruct(t, customMappingsTable)

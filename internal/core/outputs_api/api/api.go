@@ -41,9 +41,6 @@ var (
 		os.Getenv("OUTPUTS_TABLE_NAME"),
 		os.Getenv("OUTPUTS_DISPLAY_NAME_INDEX_NAME"),
 		awsSession)
-	defaultsTable table.DefaultsAPI = table.NewDefaults(
-		os.Getenv("DEFAULTS_TABLE_NAME"),
-		awsSession)
 
 	outputVerification verification.OutputVerificationAPI = verification.NewVerification(awsSession)
 )

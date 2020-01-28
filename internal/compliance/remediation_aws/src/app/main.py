@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import importlib
+import os
 from typing import Any, Dict
 
-from . import Remediation
-from .exceptions import InvalidInput
+from .remediations.remediation import Remediation
+from .common.exceptions import InvalidInput
 
 
 def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Dict[Any, Any]:
@@ -65,3 +67,13 @@ def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Dict[Any, Any]
         Remediation.get(event['payload']['remediationId'])().fix(event['payload'])
         return {}
     raise InvalidInput('Unknown action "{}"'.format(event['action']))
+
+
+# Import all files containing subclasses of RemediationBase
+for file in os.listdir(os.path.join(os.path.dirname(__file__), 'remediations')):
+    # Skip the init file
+    if file.startswith('__init__'):
+        continue
+
+    full_import = ['app.remediations', os.path.splitext(file)[0]]
+    importlib.import_module('.'.join(full_import))

@@ -25,6 +25,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/outputs_api/api"
+	"github.com/panther-labs/panther/internal/core/outputs_api/validator"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
@@ -32,7 +33,7 @@ import (
 var router *genericapi.Router
 
 func init() {
-	validator, err := models.Validator()
+	validator, err := validator.Validator()
 	if err != nil {
 		panic(err)
 	}

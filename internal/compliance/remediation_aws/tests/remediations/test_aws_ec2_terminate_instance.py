@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_ec2_terminate_instance import AwsEc2TerminateInstance
+from ...src.app.remediations.aws_ec2_terminate_instance import AwsEc2TerminateInstance
 
 
 class TestAwsEc2TerminateInstance(TestCase):

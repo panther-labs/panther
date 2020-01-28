@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_guardduty_create_detector import AwsGuardDutyCreateDetector
+from ...src.app.remediations.aws_guardduty_create_detector import AwsGuardDutyCreateDetector
 
 
 class TestAwsGuardDutyCreateDetector(TestCase):

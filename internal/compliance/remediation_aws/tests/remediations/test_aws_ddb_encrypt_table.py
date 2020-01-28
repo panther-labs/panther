@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_ddb_encrypt_table import AwsDdbEncryptTable
+from ...src.app.remediations.aws_ddb_encrypt_table import AwsDdbEncryptTable
 
 
 class TestAwsDdbEncryptTable(TestCase):

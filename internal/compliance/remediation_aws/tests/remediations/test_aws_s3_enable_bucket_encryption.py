@@ -17,8 +17,8 @@
 from unittest import mock, TestCase
 from boto3 import Session
 
-from ...src.app.exceptions import InvalidParameterException
-from ...src.remediations.aws_s3_enable_bucket_encryption import AwsS3EnableBucketEncryption
+from ...src.app.common.exceptions import InvalidParameterException
+from ...src.app.remediations.aws_s3_enable_bucket_encryption import AwsS3EnableBucketEncryption
 
 
 class TestAwsS3EnableBucketEncryption(TestCase):

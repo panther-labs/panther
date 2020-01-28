@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_ec2_enable_vpc_flow_logs_to_s3 import AwsEc2EnableVpcFlowLogsToS3
+from ...src.app.remediations.aws_ec2_enable_vpc_flow_logs_to_s3 import AwsEc2EnableVpcFlowLogsToS3
 
 
 class TestAwsEc2EnableVpcFlowLogsToS3(TestCase):

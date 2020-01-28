@@ -19,6 +19,7 @@ package table
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/stretchr/testify/mock"
@@ -68,4 +69,30 @@ func (m *mockDynamoDB) ScanPages(input *dynamodb.ScanInput, function func(*dynam
 	args := m.Called(input, function)
 	function(mockScanOutput, true)
 	return args.Error(0)
+}
+
+var mockQueryOutput = &dynamodb.QueryOutput{
+	Items: []map[string]*dynamodb.AttributeValue{
+		{
+			"severity": {
+				S: aws.String("INFO"),
+			},
+			"outputIds": {
+				L: []*dynamodb.AttributeValue{{S: aws.String("outputId")}},
+			},
+		},
+	},
+}
+
+var mockScanOutput = &dynamodb.ScanOutput{
+	Items: []map[string]*dynamodb.AttributeValue{
+		{
+			"severity": {
+				S: aws.String("INFO"),
+			},
+			"outputIds": {
+				L: []*dynamodb.AttributeValue{{S: aws.String("outputId")}},
+			},
+		},
+	},
 }
