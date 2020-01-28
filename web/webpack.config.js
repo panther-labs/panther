@@ -313,7 +313,7 @@ module.exports = {
     }),
     isEnvProduction &&
       new CompressionPlugin({
-        test: /\.(js|html|svg)$/,
+        test: /\.(js|svg)$/,
         filename: '[path].br[query]',
         algorithm: 'brotliCompress',
         compressionOptions: { level: 11 },
