@@ -24,11 +24,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
 
 // AlertOutputToItem converts an AlertOutput to an AlertOutputItem
-func AlertOutputToItem(input *models.AlertOutput) (*models.AlertOutputItem, error) {
-	item := &models.AlertOutputItem{
+func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error) {
+	item := &table.AlertOutputItem{
 		CreatedBy:          input.CreatedBy,
 		CreationTime:       input.CreationTime,
 		DisplayName:        input.DisplayName,
@@ -37,6 +38,7 @@ func AlertOutputToItem(input *models.AlertOutput) (*models.AlertOutputItem, erro
 		OutputID:           input.OutputID,
 		OutputType:         input.OutputType,
 		VerificationStatus: input.VerificationStatus,
+		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
 	encryptedConfig, err := encryptionKey.EncryptConfig(input.OutputConfig)
@@ -51,7 +53,7 @@ func AlertOutputToItem(input *models.AlertOutput) (*models.AlertOutputItem, erro
 }
 
 // ItemToAlertOutput converts an AlertOutputItem to an AlertOutput
-func ItemToAlertOutput(input *models.AlertOutputItem) (alertOutput *models.AlertOutput, err error) {
+func ItemToAlertOutput(input *table.AlertOutputItem) (alertOutput *models.AlertOutput, err error) {
 	alertOutput = &models.AlertOutput{
 		CreatedBy:          input.CreatedBy,
 		CreationTime:       input.CreationTime,
@@ -61,6 +63,7 @@ func ItemToAlertOutput(input *models.AlertOutputItem) (alertOutput *models.Alert
 		OutputID:           input.OutputID,
 		OutputType:         input.OutputType,
 		VerificationStatus: input.VerificationStatus,
+		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
 	alertOutput.OutputConfig = &models.OutputConfig{}

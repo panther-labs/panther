@@ -19,7 +19,6 @@ package delivery
  */
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -33,7 +32,6 @@ import (
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 func sampleAlert() *alertmodels.Alert {
@@ -42,56 +40,38 @@ func sampleAlert() *alertmodels.Alert {
 		Severity:   aws.String("INFO"),
 		PolicyID:   aws.String("test-rule-id"),
 		PolicyName: aws.String("test_rule_name"),
+		CreatedAt:  aws.Time(time.Now().UTC()),
 	}
 }
 
-func setCaches() {
-	key := outputCacheKey{OutputID: "output-id"}
-	alertOutputCache = map[outputCacheKey]cachedOutput{
-		key: {
-			Output: &outputmodels.AlertOutput{
-				OutputType:  aws.String("slack"),
-				DisplayName: aws.String("slack:alerts"),
-				OutputConfig: &outputmodels.OutputConfig{
-					Slack: &outputmodels.SlackConfig{WebhookURL: aws.String("https://slack.com")},
-				},
-				VerificationStatus: aws.String(outputmodels.VerificationStatusSuccess),
-			},
-			Timestamp: time.Now(),
-		},
-	}
+var alertOutput = &outputmodels.AlertOutput{
+	OutputType:  aws.String("slack"),
+	DisplayName: aws.String("slack:alerts"),
+	OutputConfig: &outputmodels.OutputConfig{
+		Slack: &outputmodels.SlackConfig{WebhookURL: aws.String("https://slack.com")},
+	},
+	VerificationStatus: aws.String(outputmodels.VerificationStatusSuccess),
+	OutputID:           aws.String("output-id"),
+}
 
-	defaultOutputIDsCache = &cachedOutputIDs{
-		Outputs: map[string][]*string{
-			"INFO": aws.StringSlice([]string{"default-output-id"}),
-		},
+func setCaches() {
+	cache = &outputsCache{
+		Outputs:   []*outputmodels.AlertOutput{alertOutput},
 		Timestamp: time.Now(),
 	}
 }
 
-func TestFailureToRetrieveOutput(t *testing.T) {
-	mockClient := &mockOutputsClient{}
-	outputClient = mockClient
-
-	ch := make(chan outputStatus, 1)
-	alertOutputCache = make(map[outputCacheKey]cachedOutput)
-
-	send(sampleAlert(), "output-id", ch)
-	assert.Equal(t, outputStatus{outputID: "output-id", needsRetry: true}, <-ch)
-	mockClient.AssertExpectations(t)
-}
-
 func TestSendPanic(t *testing.T) {
-	mockLambdaClient := &mockLambdaClient{}
-	lambdaClient = mockLambdaClient
+	mockOutputsClient := &mockOutputsClient{}
+	outputClient = mockOutputsClient
 
 	ch := make(chan outputStatus, 1)
-	mockLambdaClient.On("Invoke", mock.Anything).Run(func(args mock.Arguments) {
+	mockOutputsClient.On("Slack", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		panic("panicking")
 	})
-	go send(sampleAlert(), "output-id", ch)
-	assert.Equal(t, outputStatus{outputID: "output-id"}, <-ch)
-	mockLambdaClient.AssertExpectations(t)
+	go send(sampleAlert(), alertOutput, ch)
+	require.Equal(t, outputStatus{outputID: *alertOutput.OutputID}, <-ch)
+	mockOutputsClient.AssertExpectations(t)
 }
 
 func TestSendUnsupportedOutput(t *testing.T) {
@@ -99,28 +79,35 @@ func TestSendUnsupportedOutput(t *testing.T) {
 	outputClient = mockClient
 	setCaches()
 	ch := make(chan outputStatus, 1)
-	key := outputCacheKey{
-		OutputID: "output-id",
-	}
-	alertOutputCache[key].Output.OutputConfig.Slack = nil
 
-	send(sampleAlert(), "output-id", ch)
-	assert.Equal(t, outputStatus{outputID: "output-id"}, <-ch)
+	send(sampleAlert(), alertOutput, ch)
+	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID}, <-ch)
 	mockClient.AssertExpectations(t)
 }
 
 func TestSendNotVerifiedOutput(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	setCaches()
-	ch := make(chan outputStatus, 1)
-	key := outputCacheKey{
-		OutputID: "output-id",
-	}
-	alertOutputCache[key].Output.VerificationStatus = aws.String(outputmodels.VerificationStatusPending)
 
-	send(sampleAlert(), "output-id", ch)
-	assert.Equal(t, outputStatus{outputID: "output-id", success: false, needsRetry: false}, <-ch)
+	// Alert output with VerificationStatus that is not SUCCESS
+	alertOutput := &outputmodels.AlertOutput{
+		OutputType:  aws.String("slack"),
+		DisplayName: aws.String("slack:alerts"),
+		OutputConfig: &outputmodels.OutputConfig{
+			Slack: &outputmodels.SlackConfig{WebhookURL: aws.String("https://slack.com")},
+		},
+		VerificationStatus: aws.String(outputmodels.VerificationStatusNotStarted),
+		OutputID:           aws.String("output-id"),
+	}
+	cache = &outputsCache{
+		Outputs:   []*outputmodels.AlertOutput{alertOutput},
+		Timestamp: time.Now(),
+	}
+
+	ch := make(chan outputStatus, 1)
+
+	send(sampleAlert(), alertOutput, ch)
+	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID, success: false, needsRetry: false}, <-ch)
 	mockClient.AssertExpectations(t)
 }
 
@@ -131,28 +118,9 @@ func TestSendTransientFailure(t *testing.T) {
 	ch := make(chan outputStatus, 1)
 	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryError{})
 
-	send(sampleAlert(), "output-id", ch)
-	assert.Equal(t, outputStatus{outputID: "output-id", needsRetry: true}, <-ch)
+	send(sampleAlert(), alertOutput, ch)
+	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID, needsRetry: true}, <-ch)
 	mockClient.AssertExpectations(t)
-}
-
-func TestSendOutputDoesNotExist(t *testing.T) {
-	mockLambdaClient := &mockLambdaClient{}
-	lambdaClient = mockLambdaClient
-	ch := make(chan outputStatus, 1)
-
-	lambdaErr, err := jsoniter.Marshal(genericapi.LambdaError{ErrorType: aws.String("DoesNotExistError")})
-	require.NoError(t, err)
-	lambdaOutput := &lambda.InvokeOutput{
-		FunctionError: aws.String("error"),
-		Payload:       lambdaErr,
-	}
-
-	mockLambdaClient.On("Invoke", mock.Anything).Return(lambdaOutput, nil)
-
-	send(sampleAlert(), "non-existent-output", ch)
-	assert.Equal(t, outputStatus{outputID: "non-existent-output", needsRetry: false}, <-ch)
-	mockLambdaClient.AssertExpectations(t)
 }
 
 func TestSendSuccess(t *testing.T) {
@@ -162,8 +130,8 @@ func TestSendSuccess(t *testing.T) {
 	mockClient.On("Slack", mock.Anything, mock.Anything).Return((*outputs.AlertDeliveryError)(nil))
 	ch := make(chan outputStatus, 1)
 
-	send(sampleAlert(), "output-id", ch)
-	assert.Equal(t, outputStatus{outputID: "output-id", success: true}, <-ch)
+	send(sampleAlert(), alertOutput, ch)
+	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID, success: true}, <-ch)
 	mockClient.AssertExpectations(t)
 }
 
@@ -173,15 +141,15 @@ func TestDispatchFailure(t *testing.T) {
 	setCaches()
 	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryError{})
 
-	alert := sampleAlert()
-	assert.False(t, dispatch(alert))
-	assert.Equal(t, aws.StringSlice([]string{"output-id"}), alert.OutputIDs)
+	assert.False(t, dispatch(sampleAlert()))
 	mockClient.AssertExpectations(t)
 }
 
 func TestDispatchSuccess(t *testing.T) {
-	outputClient = &mockOutputsClient{}
+	mockClient := &mockOutputsClient{}
+	outputClient = mockClient
 	setCaches()
+	mockClient.On("Slack", mock.Anything, mock.Anything).Return((*outputs.AlertDeliveryError)(nil))
 	assert.True(t, dispatch(sampleAlert()))
 }
 
@@ -201,15 +169,23 @@ func TestDispatchUseNonCachedDefault(t *testing.T) {
 	mockLambdaClient := &mockLambdaClient{}
 	lambdaClient = mockLambdaClient
 
+	outputs := &outputmodels.GetOutputsOutput{
+		{
+			OutputID:           aws.String("output-id"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		},
+	}
+	payload, err := jsoniter.Marshal(outputs)
+	require.NoError(t, err)
+
 	mockLambdaResponse := &lambda.InvokeOutput{
-		Payload: []byte(`{"defaults": [{"severity": "INFO", "outputIds": ["output-id"]}]}`),
+		Payload: payload,
 	}
 
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
 	alert := sampleAlert()
-	alert.OutputIDs = nil       //Setting OutputIds in the alert to nil, in order to fetch default outputs
-	defaultOutputIDsCache = nil // Clearing the default output ids cache
-
+	alert.OutputIDs = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
+	cache = nil           // Setting cache to nil, so we fetch latest outputs IDs from Lambda
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
 }
@@ -218,52 +194,28 @@ func TestAllGoRoutinesShouldComplete(t *testing.T) {
 	mockLambdaClient := &mockLambdaClient{}
 	lambdaClient = mockLambdaClient
 
-	mockLambdaResponse := &lambda.InvokeOutput{
-		Payload: []byte(`{"defaults": [{"severity": "INFO", "outputIds": ["output-id-1", "output-id-2"]}]}`),
+	outputs := &outputmodels.GetOutputsOutput{
+		{
+			OutputID:           aws.String("output-id-1"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		},
+		{
+			OutputID:           aws.String("output-id-2"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		},
+	}
+	payload, err := jsoniter.Marshal(outputs)
+	require.NoError(t, err)
+	mockGetOutputsResponse := &lambda.InvokeOutput{
+		Payload: payload,
 	}
 
-	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Twice().Run(func(args mock.Arguments) {
-		time.Sleep(time.Second)
-	})
-	alert := sampleAlert()
-	alert.OutputIDs = nil       //Setting OutputIds in the alert to nil, in order to fetch default outputs
-	defaultOutputIDsCache = nil // Clearing the default output ids cache
-
-	assert.True(t, dispatch(alert))
-	mockLambdaClient.AssertExpectations(t)
-}
-
-func TestDispatchUseDefaultIsEmpty(t *testing.T) {
-	mockLambdaClient := &mockLambdaClient{}
-	lambdaClient = mockLambdaClient
-
-	mockLambdaResponse := &lambda.InvokeOutput{
-		Payload: []byte(`{"defaults": [{"severity": "INFO"}]}`),
-	}
-
-	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
-
-	setCaches()
+	// Invoke once to get all outpts
+	mockLambdaClient.On("Invoke", mock.Anything).Return(mockGetOutputsResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIDs = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
-	alert.Severity = aws.String("INFO")
-	defaultOutputIDsCache = nil
+	cache = nil           // Clearing the default output ids cache
 
 	assert.True(t, dispatch(alert))
-	mockLambdaClient.AssertExpectations(t)
-}
-
-func TestDispatchFailIfFailureToGetDefaults(t *testing.T) {
-	mockLambdaClient := &mockLambdaClient{}
-	lambdaClient = mockLambdaClient
-
-	mockLambdaClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
-
-	setCaches()
-	alert := sampleAlert()
-	alert.OutputIDs = nil       //Setting OutputIds in the alert to nil, in order to fetch default outputs
-	defaultOutputIDsCache = nil // Clearing the default output ids cache
-
-	assert.False(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
 }

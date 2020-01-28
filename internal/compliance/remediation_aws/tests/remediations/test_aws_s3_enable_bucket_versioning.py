@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_s3_enable_bucket_logging import AwsS3EnableBucketLogging
+from ...src.app.remediations.aws_s3_enable_bucket_logging import AwsS3EnableBucketLogging
 
 
 class TestAwsS3EnableBucketLogging(TestCase):

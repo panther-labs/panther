@@ -75,14 +75,10 @@ Parameters:
     MinValue: 128
     MaxValue: 3008
 
-  CrossAccountRoleName:
+  RemediationRoleName:
     Type: String
-    Description: The name of the remediation IAM role to assume in each account
-    Default: PantherLambdaInvocationRole
-  CrossAccountSessionDuration:
-    Type: Number
-    Description: The duration (in seconds) of the cross-account session
-    Default: 3600
+    Description: The name of the IAM role to assume to perform remediation actions
+    Default: AwsRemediationRole
 
   AnalysisApiId:
     Type: String
@@ -147,10 +143,8 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          CROSS_ACCOUNT_ROLE: !Ref CrossAccountRoleName
-          CROSS_ACCOUNT_SESSION_DURATION: !Ref CrossAccountSessionDuration
-          ORGANIZATIONS_API: panther-organization-api
           SQS_QUEUE_URL: !Ref Queue
+          REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
           POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
           POLICIES_SERVICE_PATH: v1
           RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
@@ -181,29 +175,19 @@ Resources:
                 - sqs:SendMessageBatch
               Resource: !GetAtt Queue.Arn
         -
-          Id: AssumeRemediationRole
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Resource: !Sub arn:aws:iam::*:role/${CrossAccountRoleName}
-              Condition:
-                Bool:
-                  aws:SecureTransport: true
-        -
           Id: InvokeAPIs
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
-              Action: lambda:InvokeFunction
-              Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
             -
               Effect: Allow
               Action: execute-api:Invoke
               Resource:
                 - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
                 - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+            -
+              Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !GetAtt RemediationFunction.Arn
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -226,9 +210,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          CROSS_ACCOUNT_ROLE: !Ref CrossAccountRoleName
-          CROSS_ACCOUNT_SESSION_DURATION: !Ref CrossAccountSessionDuration
-          ORGANIZATIONS_API: panther-organization-api
+          REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
           POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
           POLICIES_SERVICE_PATH: v1
           RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
@@ -262,30 +244,16 @@ Resources:
               Effect: Allow
               Action: kms:Decrypt
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-        -
-          Id: AssumeRemediationRole
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Resource: !Sub arn:aws:iam::*:role/${CrossAccountRoleName}
-              Condition:
-                Bool:
-                  aws:SecureTransport: true
-        -
-          Id: InvokeAPIs
-          Version: 2012-10-17
-          Statement:
-            -
-              Effect: Allow
-              Action: lambda:InvokeFunction
-              Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
             -
               Effect: Allow
               Action: execute-api:Invoke
               Resource:
                 - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
                 - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+            -
+              Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !GetAtt RemediationFunction.Arn
 
   ##### AWS Remediation #####
   RemediationLogGroup:
@@ -297,10 +265,10 @@ Resources:
   RemediationFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../../../internal/compliance/remediation_aws
+      CodeUri: ../../../internal/compliance/remediation_aws/src
       Description: Function that remediates issues with AWS resources
       FunctionName: panther-aws-remediation
-      Handler: src.app.main.lambda_handler
+      Handler: app.main.lambda_handler
       Environment:
         Variables:
           # TODO: Support customizable logging levels (for every Lambda function)
@@ -325,12 +293,9 @@ Resources:
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
-              Resource: !Sub arn:aws:iam::*:role/${CrossAccountRoleName}
+              Resource: !Sub arn:aws:iam::*:role/${RemediationRoleName}
 
 Outputs:
   GatewayId:
     Description: Remediation API Gateway ID
     Value: !Ref GatewayApi
-  RemediationLambdaArn:
-    Description: The ARN of the Remediation Function
-    Value: !GetAtt RemediationFunction.Arn

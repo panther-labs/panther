@@ -28,15 +28,15 @@ Parameters:
   # Optional configuration parameters
   S3Buckets:
     Type: CommaDelimitedList
-    Description: Allow Panther master account to get location of these bucket patterns. >
+    Description: Allow Panther master account to get location of these bucket patterns.
       E.g. "arn:aws:s3:::my-bucket,arn:aws:s3:::another-bucket*"
   S3ObjectPrefixes:
     Type: CommaDelimitedList
-    Description: Allow Panther master account access to access S3 objects that have the following patterns >
+    Description: Allow Panther master account access to access S3 objects that have the following patterns.
       E.g. "arn:aws:s3:::my-bucket/prefix*,arn:aws:s3:::my-bucket/prefix-2*"
   EncryptionKeys:
     Type: CommaDelimitedList
-    Description: Allow Panther master account access to decrypt these KMS keys. >
+    Description: Allow Panther master account access to decrypt these KMS keys.
       E.g. "arn:aws:kms:us-west-2:111122223333:key/14f5c696-8198-417b-bb22-699990b400cf"
     Default: ''
 
@@ -67,19 +67,17 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action:
-                  - s3:GetBucketLocation
+                Action: s3:GetBucketLocation
                 Resource: !Ref S3Buckets
               - Effect: Allow
-                Action:
-                  - s3:GetObject
+                Action: s3:GetObject
                 Resource: !Ref S3ObjectPrefixes
               - !If
                 - WithKmsPermissions
                 - Effect: Allow
                   Action: kms:Decrypt
                   Resource: !Ref EncryptionKeys
-                - !Ref 'AWS::NoValue'
+                - !Ref AWS::NoValue
       Tags:
         - Key: Application
           Value: Panther

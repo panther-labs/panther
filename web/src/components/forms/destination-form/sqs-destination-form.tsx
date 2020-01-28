@@ -55,7 +55,7 @@ const SQS_QUEUE_POLICY = {
       Principal: {
         AWS: process.env.AWS_ACCOUNT_ID,
       },
-      Resource: '<The ARN of the SQS Queue they are adding as output>',
+      Resource: '<The ARN of the SQS Queue you are adding as output>',
     },
   ],
 };

@@ -47,6 +47,10 @@ export const formatSecretCode = (code: string, email: string): string => {
   return `otpauth://totp/${email}?secret=${code}&issuer=${issuer}`;
 };
 
+export const getArnRegexForService = (awsService: string) => {
+  return new RegExp(`arn:aws:${awsService.toLowerCase()}:([a-z]){2}-([a-z])+-[0-9]:\\d{12}:.+`);
+};
+
 export const createYupPasswordValidationSchema = () =>
   Yup.string()
     .required()

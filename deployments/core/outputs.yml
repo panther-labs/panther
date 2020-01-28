@@ -137,22 +137,6 @@ Resources:
         SSEEnabled: True
       TableName: panther-outputs
 
-  DefaultOutputsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: severity
-          AttributeType: S
-      BillingMode: PAY_PER_REQUEST
-      KeySchema:
-        - AttributeName: severity
-          KeyType: HASH
-      PointInTimeRecoverySpecification:  # Create periodic table backups
-        PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
-        SSEEnabled: True
-      TableName: panther-default-outputs
-
   EncryptionKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
@@ -183,7 +167,6 @@ Resources:
           KEY_ID: !Ref EncryptionKey
           OUTPUTS_TABLE_NAME: !Ref OutputsTable
           OUTPUTS_DISPLAY_NAME_INDEX_NAME: displayName-index
-          DEFAULTS_TABLE_NAME: !Ref DefaultOutputsTable
           EMAIL_VERIFICATION_TEMPLATE: !Ref EmailVerificationTemplate
           SES_CONFIGURATION_SET: !Ref SesConfigurationSet
           USERS_API: panther-users-api
@@ -211,7 +194,6 @@ Resources:
                 - dynamodb:UpdateItem
               Resource:
                 - !GetAtt OutputsTable.Arn
-                - !GetAtt DefaultOutputsTable.Arn
                 - !Sub '${OutputsTable.Arn}/index/*'
         -
           Id: CredentialEncryption

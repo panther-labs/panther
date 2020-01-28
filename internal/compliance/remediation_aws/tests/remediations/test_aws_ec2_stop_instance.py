@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_ec2_stop_instance import AwsEc2StopInstance
+from ...src.app.remediations.aws_ec2_stop_instance import AwsEc2StopInstance
 
 
 class TestAwsEc2StopInstance(TestCase):

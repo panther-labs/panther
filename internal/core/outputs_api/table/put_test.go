@@ -27,7 +27,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -53,17 +52,17 @@ func (m *mockPutClient) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItem
 
 func TestPutOutputDoesNotExist(t *testing.T) {
 	table := &OutputsTable{client: &mockPutClient{conditionalErr: true}}
-	err := table.PutOutput(&models.AlertOutputItem{OutputID: mockOutputID})
+	err := table.PutOutput(&AlertOutputItem{OutputID: mockOutputID})
 	assert.NotNil(t, err.(*genericapi.DoesNotExistError))
 }
 
 func TestPutOutputServiceError(t *testing.T) {
 	table := &OutputsTable{client: &mockPutClient{serviceErr: true}}
-	err := table.PutOutput(&models.AlertOutputItem{OutputID: mockOutputID})
+	err := table.PutOutput(&AlertOutputItem{OutputID: mockOutputID})
 	assert.NotNil(t, err.(*genericapi.AWSError))
 }
 
 func TestPutOutput(t *testing.T) {
 	table := &OutputsTable{client: &mockPutClient{}}
-	assert.Nil(t, table.PutOutput(&models.AlertOutputItem{OutputID: mockOutputID}))
+	assert.Nil(t, table.PutOutput(&AlertOutputItem{OutputID: mockOutputID}))
 }

@@ -19,7 +19,6 @@ package aws
  */
 
 import (
-	"errors"
 	"os"
 	"time"
 
@@ -32,6 +31,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	resourcesapimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -298,10 +298,14 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		// Single region service scan
 	} else if scanRequest.Region != nil && scanRequest.ResourceType != nil {
 		zap.L().Info("processing single region service scan")
-		return serviceScan(
-			[]resourcePoller{ServicePollers[*scanRequest.ResourceType]},
-			pollerResourceInput,
-		)
+		if poller, ok := ServicePollers[*scanRequest.ResourceType]; ok {
+			return serviceScan(
+				[]resourcePoller{poller},
+				pollerResourceInput,
+			)
+		} else {
+			return nil, errors.Errorf("invalid single region resource type '%s' scan requested", *scanRequest.ResourceType)
+		}
 	}
 
 	// Get the list of active regions to scan
@@ -331,10 +335,14 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		// Account wide resource type scan
 	} else if scanRequest.ResourceType != nil {
 		zap.L().Info("processing full account resource type scan")
-		return serviceScan(
-			[]resourcePoller{ServicePollers[*scanRequest.ResourceType]},
-			pollerResourceInput,
-		)
+		if poller, ok := ServicePollers[*scanRequest.ResourceType]; ok {
+			return serviceScan(
+				[]resourcePoller{poller},
+				pollerResourceInput,
+			)
+		} else {
+			return nil, errors.Errorf("invalid single region resource type '%s' scan requested", *scanRequest.ResourceType)
+		}
 	}
 
 	zap.L().Error("Invalid scan request input")

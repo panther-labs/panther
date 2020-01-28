@@ -117,9 +117,6 @@ func createOrg(t *testing.T) {
 		DisplayName: aws.String("panther-org-api-integration-test"),
 		Email:       aws.String("eng@runpanther.io"),
 		Phone:       aws.String("111-222-3333"),
-		RemediationConfig: &models.RemediationConfig{
-			AwsRemediationLambdaArn: aws.String("arn:aws:lambda:us-west-2:415773754570:function:aws-auto-remediation"),
-		},
 	}}
 	var output models.CreateOrganizationOutput
 	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
@@ -134,7 +131,6 @@ func createOrg(t *testing.T) {
 		DisplayName:          input.CreateOrganization.DisplayName,
 		Email:                input.CreateOrganization.Email,
 		Phone:                input.CreateOrganization.Phone,
-		RemediationConfig:    input.CreateOrganization.RemediationConfig,
 	}
 	assert.Equal(t, expected, org)
 }
@@ -165,9 +161,6 @@ func updateOrg(t *testing.T) {
 			DisplayName: aws.String("panther-org-api-integration-test-update"),
 			Email:       aws.String("eng-update@runpanther.io"),
 			Phone:       aws.String("111-222-3456"),
-			RemediationConfig: &models.RemediationConfig{
-				AwsRemediationLambdaArn: aws.String("arn:aws:lambda:us-west-2:415773754570:function:aws-auto-remediation"),
-			},
 		},
 	}}
 	var output models.UpdateOrganizationOutput
@@ -182,7 +175,6 @@ func updateOrg(t *testing.T) {
 			DisplayName:          input.UpdateOrganization.DisplayName,
 			Email:                input.UpdateOrganization.Email,
 			Phone:                input.UpdateOrganization.Phone,
-			RemediationConfig:    input.UpdateOrganization.RemediationConfig,
 		},
 	}
 	require.Equal(t, expected, output)

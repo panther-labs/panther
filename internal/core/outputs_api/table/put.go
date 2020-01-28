@@ -24,12 +24,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // PutOutput saves the output details to the table.
-func (table *OutputsTable) PutOutput(output *models.AlertOutputItem) error {
+func (table *OutputsTable) PutOutput(output *AlertOutputItem) error {
 	item, err := dynamodbattribute.MarshalMap(output)
 	if err != nil {
 		return &genericapi.InternalError{Message: "failed to marshal AlertOutput to a dynamo item: " + err.Error()}

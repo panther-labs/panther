@@ -22,7 +22,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -30,18 +29,9 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-type outputCacheKey struct {
-	OutputID string
-}
-
-type cachedOutput struct {
-	Output    *outputmodels.AlertOutput
-	Timestamp time.Time
-}
-
-type cachedOutputIDs struct {
-	//Map from Severity -> List of output Ids
-	Outputs   map[string][]*string
+type outputsCache struct {
+	// All cached outputs
+	Outputs   []*outputmodels.AlertOutput
 	Timestamp time.Time
 }
 
@@ -54,62 +44,54 @@ func getRefreshInterval() time.Duration {
 }
 
 var (
-	alertOutputCache      = make(map[outputCacheKey]cachedOutput) // Map outputID to its credentials
-	defaultOutputIDsCache *cachedOutputIDs                        // Map of organizationId to default output ids
-	outputsAPI            = os.Getenv("OUTPUTS_API")
-	refreshInterval       = getRefreshInterval()
+	cache           *outputsCache
+	outputsAPI      = os.Getenv("OUTPUTS_API")
+	refreshInterval = getRefreshInterval()
 )
 
 // Get output ids for an alert
-func getAlertOutputIds(alert *alertmodels.Alert) ([]*string, error) {
-	if len(alert.OutputIDs) > 0 {
-		return alert.OutputIDs, nil
+func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
+	if cache == nil || time.Since(cache.Timestamp) > refreshInterval {
+		zap.L().Debug("getting cached default outputs")
+		input := outputmodels.LambdaInput{GetOutputs: &outputmodels.GetOutputsInput{}}
+		var outputs outputmodels.GetOutputsOutput
+		if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
+			return nil, err
+		}
+		cache = &outputsCache{
+			Outputs:   outputs,
+			Timestamp: time.Now().UTC(),
+		}
 	}
 
-	if defaultOutputIDsCache != nil && time.Since(defaultOutputIDsCache.Timestamp) < refreshInterval {
-		zap.L().Info("using cached output Ids")
-		return defaultOutputIDsCache.Outputs[*alert.Severity], nil
+	// If alert doesn't have outputs IDs specified, return the defaults for the severity
+	if len(alert.OutputIDs) == 0 {
+		return getOutputsBySeverity(alert.Severity), nil
 	}
 
-	zap.L().Info("getting default outputs")
-	input := outputmodels.LambdaInput{GetDefaultOutputs: &outputmodels.GetDefaultOutputsInput{}}
-	var defaultOutputs outputmodels.GetDefaultOutputsOutput
-	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &defaultOutputs); err != nil {
-		return nil, err
+	result := []*outputmodels.AlertOutput{}
+	for _, output := range cache.Outputs {
+		for _, alertOutputID := range alert.OutputIDs {
+			if *output.OutputID == *alertOutputID {
+				result = append(result, output)
+			}
+		}
 	}
-
-	defaultOutputIDsCache = &cachedOutputIDs{
-		Timestamp: time.Now(),
-		Outputs:   make(map[string][]*string, len(defaultOutputs.Defaults)),
-	}
-
-	for _, output := range defaultOutputs.Defaults {
-		defaultOutputIDsCache.Outputs[*output.Severity] = output.OutputIDs
-	}
-
-	zap.L().Debug("default output ids cache", zap.Any("cache", defaultOutputIDsCache))
-	return defaultOutputIDsCache.Outputs[*alert.Severity], nil
+	return result, nil
 }
 
-// Get output details, either from in-memory cache or the outputs-api
-func getOutput(outputID string) (*outputmodels.GetOutputOutput, error) {
-	key := outputCacheKey{OutputID: outputID}
-
-	if cached, ok := alertOutputCache[key]; ok && time.Since(cached.Timestamp) < refreshInterval {
-		zap.L().Info("using cached outputs",
-			zap.String("outputID", outputID))
-		return cached.Output, nil
+func getOutputsBySeverity(severity *string) []*outputmodels.AlertOutput {
+	result := []*outputmodels.AlertOutput{}
+	if cache == nil {
+		return result
 	}
 
-	zap.L().Info("getting outputs from outputs-api",
-		zap.String("outputID", outputID))
-
-	input := outputmodels.LambdaInput{GetOutput: &outputmodels.GetOutputInput{OutputID: aws.String(outputID)}}
-	var result outputmodels.GetOutputOutput
-	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &result); err != nil {
-		return nil, err
+	for _, output := range cache.Outputs {
+		for _, outputSeverity := range output.DefaultForSeverity {
+			if *severity == *outputSeverity {
+				result = append(result, output)
+			}
+		}
 	}
-
-	alertOutputCache[key] = cachedOutput{Output: &result, Timestamp: time.Now()}
-	return &result, nil
+	return result
 }

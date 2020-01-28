@@ -410,6 +410,3 @@ Outputs:
   AWSAccountId:
     Description: The ID of the account that this stack was deployed to
     Value: !Ref AWS::AccountId
-  RemediationLambdaArn:
-    Description: The ARN of the Remediation Function
-    Value: !GetAtt RemediationAPI.Outputs.RemediationLambdaArn

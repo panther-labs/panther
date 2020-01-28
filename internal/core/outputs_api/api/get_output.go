@@ -31,13 +31,12 @@ func (API) GetOutput(input *models.GetOutputInput) (*models.GetOutputOutput, err
 		return nil, err
 	}
 
-	defaults, err := defaultsTable.GetDefaults()
+	alertOutput, err := ItemToAlertOutput(item)
 	if err != nil {
 		return nil, err
 	}
 
-	alertOutput, err := populateAlertOutput(item, defaults)
-	if err != nil {
+	if err = checkAndUpdateVerificationStatus(alertOutput); err != nil {
 		return nil, err
 	}
 
@@ -73,25 +72,4 @@ func checkAndUpdateVerificationStatus(output *models.AlertOutput) error {
 		}
 	}
 	return nil
-}
-
-func populateAlertOutput(item *models.AlertOutputItem, defaultOutputs []*models.DefaultOutputsItem) (*models.AlertOutput, error) {
-	alertOutput, err := ItemToAlertOutput(item)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = checkAndUpdateVerificationStatus(alertOutput); err != nil {
-		return nil, err
-	}
-
-	alertOutput.DefaultForSeverity = []*string{}
-	for _, defaultOutput := range defaultOutputs {
-		for _, outputID := range defaultOutput.OutputIDs {
-			if *outputID == *alertOutput.OutputID {
-				alertOutput.DefaultForSeverity = append(alertOutput.DefaultForSeverity, defaultOutput.Severity)
-			}
-		}
-	}
-	return alertOutput, nil
 }

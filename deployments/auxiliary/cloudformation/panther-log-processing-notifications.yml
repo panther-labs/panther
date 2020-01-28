@@ -25,7 +25,7 @@ Parameters:
     Type: String
     Description: The name of the SNS topic
     Default: panther-notifications-topic
-  PantherAccountId:
+  MasterAccountId:
     Type: String
     Description: The AWS AccountId where you have deployed Panther
   PantherRegion:
@@ -82,7 +82,7 @@ Resources:
           - Sid: AllowSubscriptionToPanther
             Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${PantherAccountId}:root
+              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
             Action: sns:Subscribe
             Resource: !Ref Topic
       Topics:
@@ -92,11 +92,10 @@ Resources:
   Subscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !Sub arn:aws:sqs:${PantherRegion}:${PantherAccountId}:panther-input-data-notifications
+      Endpoint: !Sub arn:aws:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications
       Protocol: sqs
       RawMessageDelivery: false
       TopicArn: !Ref Topic
-
 
 Outputs:
   SnsTopicArn:

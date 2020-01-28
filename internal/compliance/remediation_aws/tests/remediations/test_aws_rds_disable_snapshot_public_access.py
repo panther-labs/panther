@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_rds_disable_snapshot_public_access import AwsRdsDisableSnapshotPublicAccess
+from ...src.app.remediations.aws_rds_disable_snapshot_public_access import AwsRdsDisableSnapshotPublicAccess
 
 
 class TestAwsRdsDisableSnapshotPublicAccess(TestCase):

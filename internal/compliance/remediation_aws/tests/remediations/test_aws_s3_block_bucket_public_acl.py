@@ -16,7 +16,7 @@
 
 from unittest import mock, TestCase
 from boto3 import Session
-from ...src.remediations.aws_s3_block_bucket_public_acl import AwsS3BlockBucketPublicACL
+from ...src.app.remediations.aws_s3_block_bucket_public_acl import AwsS3BlockBucketPublicACL
 
 
 class TestAwsS3BlockBucketPublicACL(TestCase):

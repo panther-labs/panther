@@ -38,12 +38,11 @@ type CompleteActionOutput struct {
 
 // CreateOrganizationInput creates a new Panther customer account.
 type CreateOrganizationInput struct {
-	AlertReportFrequency *string            `json:"alertReportFrequency" validate:"omitempty,oneof=P1D P1W"`
-	AwsConfig            *AwsConfig         `json:"awsConfig"`
-	DisplayName          *string            `json:"displayName" validate:"required,min=1"`
-	Email                *string            `genericapi:"redact" json:"email" validate:"required,email"`
-	Phone                *string            `genericapi:"redact" json:"phone"`
-	RemediationConfig    *RemediationConfig `json:"remediationConfig,omitempty"`
+	AlertReportFrequency *string    `json:"alertReportFrequency" validate:"omitempty,oneof=P1D P1W"`
+	AwsConfig            *AwsConfig `json:"awsConfig"`
+	DisplayName          *string    `json:"displayName" validate:"required,min=1"`
+	Email                *string    `genericapi:"redact" json:"email" validate:"required,email"`
+	Phone                *string    `genericapi:"redact" json:"phone"`
 }
 
 // CreateOrganizationOutput returns the newly created organization.
