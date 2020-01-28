@@ -29,7 +29,7 @@ Resources:
   RemediationRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: AwsRemediationRole
+      RoleName: PantherRemediationRole
       MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
         Version: 2012-10-17
