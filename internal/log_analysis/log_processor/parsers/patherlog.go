@@ -20,17 +20,14 @@ package parsers
 
 import (
 	"sort"
-	"time"
 
-	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-const (
-	RowIDDelimiter  = "@"          // splits the 3 parts
-	RowIDTimeFormat = "2006010215" // truncate to hour
+var (
+	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 )
 
 // All log parsers should extend from this to get standardized fields (all prefixed with 'p_' as JSON for uniqueness)
@@ -88,25 +85,9 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 	return nil
 }
 
-// newRowID generates uuid for row of the form: <logType>@<eventTime(hour)>@<random uuid>
-func newRowID(logType string, eventTime timestamp.RFC3339) string {
-	/* By prepending the logType and hour of event time to the row id
-	   this info be used to "find" the row by picking the table (logType) and time
-	   partitions close to event timestamp.
-
-	   About UUID from: https://godoc.org/github.com/google/uuid#New
-	   Randomly generated UUIDs have 122 random bits.  One's annual risk of being
-	   hit by a meteorite is estimated to be one chance in 17 billion, that
-	   means the probability is about 0.00000000006 (6 × 10−11),
-	   equivalent to the odds of creating a few tens of trillions of UUIDs in a
-	   year and having one duplicate.
-	*/
-	return logType + RowIDDelimiter + (time.Time)(eventTime).Format(RowIDTimeFormat) + RowIDDelimiter + uuid.New().String()
-}
-
 func (pl *PantherLog) SetRequired(logType string, eventTime timestamp.RFC3339) {
 	pl.PantherLogType = logType
-	pl.PantherRowID = newRowID(logType, eventTime)
+	pl.PantherRowID = rowCounter.NewRowID()
 	pl.PantherEventTime = eventTime
 }
 

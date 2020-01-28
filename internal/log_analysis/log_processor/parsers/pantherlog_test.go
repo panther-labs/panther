@@ -19,12 +19,10 @@ package parsers
  */
 
 import (
-	"strings"
 	"testing"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -96,10 +94,6 @@ func TestSetRequired(t *testing.T) {
 		PantherEventTime: eventTime,
 	}
 	event.SetRequired(logType, eventTime)
-	uuidParts := strings.Split(event.PantherRowID, RowIDDelimiter)
-	require.Equal(t, 3, len(uuidParts))
-	assert.Equal(t, logType, uuidParts[0])
-	assert.Equal(t, (time.Time)(eventTime).Format(RowIDTimeFormat), uuidParts[1])
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 	require.Equal(t, expectedEvent, event)
 }
