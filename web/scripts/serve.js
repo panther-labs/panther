@@ -24,12 +24,31 @@ const path = require('path');
 // construct a mini server
 const app = express();
 
+const getCacheControlForFile = filepath => {
+  if (/favicon.*\.(png|svg|ico)/.test(filepath)) {
+    return 'max-age=604800,public,stale-while-revalidate=604800';
+  }
+
+  if (/\.(.*\.js|svg|jpg)/.test(filepath)) {
+    return 'max-age=31536000,public,immutable';
+  }
+
+  return 'no-cache';
+};
+
 // allow static assets to be served from the /dist folder
 app.use(
   expressStaticGzip(path.resolve(__dirname, '../dist'), {
     enableBrotli: true,
-    index: 'index.html',
     orderPreference: ['br'],
+    serveStatic: {
+      // disable this package's cache control since we are going to provide our own logic
+      cacheControl: false,
+      // add cache-control logic
+      setHeaders: (res, filepath) => {
+        res.setHeader('Cache-Control', getCacheControlForFile(filepath));
+      },
+    },
   })
 );
 
@@ -44,6 +63,7 @@ app.get('*', (req, res) => {
 });
 
 // initialize server
-app.listen(process.env.SERVER_PORT || '8080', () => {
-  console.log(`Listening on port ${process.env.SERVER_PORT}`);
+const port = process.env.SERVER_PORT || '8080';
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`);
 });
