@@ -70,7 +70,7 @@ COPY --from=build-env /code/web/dist dist
 
 # Add the script that runs the express server
 ADD package.json .
-ADD  web/scripts/serve.js scripts/serve.js
+ADD  web/scripts/serve.js web/scripts/serve.js
 
 # Install express
 #

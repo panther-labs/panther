@@ -32,7 +32,7 @@ import (
 
 // Functions that build a personalized docker image from source, while pushing it to the private image repo of the user
 func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry string) (string, error) {
-	fmt.Println("deploy: Requesting access to remote image repo")
+	fmt.Println("deploy: requesting access to remote image repo")
 	ecrClient := ecr.New(awsSession)
 	req, resp := ecrClient.GetAuthorizationTokenRequest(&ecr.GetAuthorizationTokenInput{})
 	if err := req.Send(); err != nil {
