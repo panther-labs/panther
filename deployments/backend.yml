@@ -73,7 +73,7 @@ Resources:
               Service: !Sub apigateway.${AWS::URLSuffix}
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 
   GatewayAccount:
     Type: AWS::ApiGateway::Account
@@ -95,7 +95,7 @@ Resources:
             Resource: '*'
           - Effect: Allow
             Principal:
-              Service: sns.${AWS::URLSuffix}
+              Service: !Sub sns.${AWS::URLSuffix}
             Action:
               - kms:GenerateDataKey
               - kms:Decrypt
