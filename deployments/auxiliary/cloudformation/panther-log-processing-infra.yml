@@ -80,13 +80,13 @@ Resources:
           - Sid: CloudTrailAclCheck
             Effect: Allow
             Principal:
-              Service: cloudtrail.${AWS::URLSuffix}
+              Service: !Sub cloudtrail.${AWS::URLSuffix}
             Action: s3:GetBucketAcl
             Resource: !GetAtt LogProcessingBucket.Arn
           - Sid: CloudTrailWrite
             Effect: Allow
             Principal:
-              Service: cloudtrail.${AWS::URLSuffix}
+              Service: !Sub cloudtrail.${AWS::URLSuffix}
             Action: s3:PutObject
             Resource: !Sub ${LogProcessingBucket.Arn}/*
             Condition:
@@ -105,13 +105,13 @@ Resources:
           - Sid: VPCFlowAclCheck
             Effect: Allow
             Principal:
-              Service: delivery.logs.${AWS::URLSuffix}
+              Service: !Sub delivery.logs.${AWS::URLSuffix}
             Action: s3:GetBucketAcl
             Resource: !GetAtt LogProcessingBucket.Arn
           - Sid: VPCFlowWrite
             Effect: Allow
             Principal:
-              Service: delivery.logs.${AWS::URLSuffix}
+              Service: !Sub delivery.logs.${AWS::URLSuffix}
             Action: s3:PutObject
             Resource: !Sub ${LogProcessingBucket.Arn}/*
             Condition:
@@ -136,7 +136,7 @@ Resources:
             Sid: S3NotificationPublish
             Effect: Allow
             Principal:
-              Service: 's3.${AWS::URLSuffix}'
+              Service: !Sub s3.${AWS::URLSuffix}
             Action: sns:Publish
             Resource: !Ref LogProcessingNotificationsTopic
           - Sid: CrossAccountSubscription

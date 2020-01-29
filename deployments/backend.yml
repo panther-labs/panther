@@ -70,7 +70,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: apigateway.${AWS::URLSuffix}
+              Service: !Sub apigateway.${AWS::URLSuffix}
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs

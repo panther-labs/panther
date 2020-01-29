@@ -76,13 +76,13 @@ Resources:
           - Sid: AllowS3EventNotifications
             Effect: Allow
             Principal:
-              Service: s3.${AWS::URLSuffix}
+              Service: !Sub s3.${AWS::URLSuffix}
             Action: sns:Publish
             Resource: !Ref Topic
           - Sid: AllowCloudTrailNotification
             Effect: Allow
             Principal:
-              Service: cloudtrail.${AWS::URLSuffix}
+              Service: !Sub cloudtrail.${AWS::URLSuffix}
             Action: sns:Publish
             Resource: !Ref Topic
           - Sid: AllowSubscriptionToPanther

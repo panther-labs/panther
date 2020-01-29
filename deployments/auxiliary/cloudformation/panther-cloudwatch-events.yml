@@ -111,7 +111,7 @@ Resources:
           - Sid: CloudWatchEventsPublish
             Effect: Allow
             Principal:
-              Service: events.${AWS::URLSuffix}
+              Service: !Sub events.${AWS::URLSuffix}
             Action: sns:Publish
             Resource: !Ref PantherEventsTopic
           - Sid: CrossAccountSubscription

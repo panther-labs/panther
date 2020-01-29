@@ -10,11 +10,11 @@ docker run \
     -v $(pwd):/code \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -e AWS_ACCESS_KEY_ID \
+    -e AWS_PARTITION \
     -e AWS_SECRET_ACCESS_KEY \
     -e AWS_SESSION_TOKEN \
     -e AWS_SECURITY_TOKEN \
     -e AWS_REGION=$(if [ -z "$AWS_REGION" ]; then echo $AWS_DEFAULT_REGION; else echo $AWS_REGION; fi) \
-    -e AWS_PARTITION=$(if [ -z "$AWS_PARTITION" ]; then echo $AWS_PARTITION; else echo $AWS_PARTITION; fi) \
     -it \
     --rm \
     pantherlabs/panther-development-pack:latest
