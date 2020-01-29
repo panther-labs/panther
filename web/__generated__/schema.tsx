@@ -39,9 +39,11 @@ export type AlertDetails = {
   __typename?: 'AlertDetails';
   alertId: Scalars['ID'];
   rule?: Maybe<RuleDetails>;
-  creationTime?: Maybe<Scalars['AWSDateTime']>;
-  lastEventMatched?: Maybe<Scalars['AWSDateTime']>;
-  events?: Maybe<Array<Scalars['AWSJSON']>>;
+  creationTime: Scalars['AWSDateTime'];
+  lastEventMatched: Scalars['AWSDateTime'];
+  eventsMatched: Scalars['Int'];
+  events: Array<Scalars['AWSJSON']>;
+  eventsLastEvaluatedKey: Scalars['String'];
 };
 
 export enum AlertReportFrequencyEnum {
@@ -51,12 +53,12 @@ export enum AlertReportFrequencyEnum {
 
 export type AlertSummary = {
   __typename?: 'AlertSummary';
-  alertId?: Maybe<Scalars['String']>;
-  creationTime?: Maybe<Scalars['AWSDateTime']>;
-  eventsMatched?: Maybe<Scalars['Int']>;
-  lastEventMatched?: Maybe<Scalars['AWSDateTime']>;
+  alertId: Scalars['String'];
+  creationTime: Scalars['AWSDateTime'];
+  eventsMatched: Scalars['Int'];
+  lastEventMatched: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
-  severity?: Maybe<Scalars['String']>;
+  severity: Scalars['String'];
 };
 
 export enum AnalysisTypeEnum {
@@ -189,8 +191,8 @@ export enum DestinationTypeEnum {
 
 export type GetAlertInput = {
   alertId: Scalars['ID'];
-  eventPageSize?: Maybe<Scalars['Int']>;
-  eventPage?: Maybe<Scalars['Int']>;
+  eventsPageSize?: Maybe<Scalars['Int']>;
+  eventsExclusiveStartKey?: Maybe<Scalars['Int']>;
 };
 
 export type GetOrganizationResponse = {
@@ -276,7 +278,7 @@ export type ListAlertsInput = {
 
 export type ListAlertsResponse = {
   __typename?: 'ListAlertsResponse';
-  alertSummaries?: Maybe<Array<Maybe<AlertSummary>>>;
+  alertSummaries: Array<Maybe<AlertSummary>>;
   lastEvaluatedKey?: Maybe<Scalars['String']>;
 };
 
@@ -491,7 +493,6 @@ export type Organization = {
   displayName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   alertReportFrequency?: Maybe<AlertReportFrequencyEnum>;
-  remediationConfig?: Maybe<RemediationConfig>;
 };
 
 export type OrganizationReportBySeverity = {
@@ -679,15 +680,6 @@ export type RemediateResourceInput = {
   resourceId: Scalars['ID'];
 };
 
-export type RemediationConfig = {
-  __typename?: 'RemediationConfig';
-  awsRemediationLambdaArn?: Maybe<Scalars['String']>;
-};
-
-export type RemediationConfigInput = {
-  awsRemediationLambdaArn?: Maybe<Scalars['String']>;
-};
-
 export type ResourceDetails = {
   __typename?: 'ResourceDetails';
   attributes?: Maybe<Scalars['AWSJSON']>;
@@ -838,7 +830,6 @@ export type UpdateOrganizationInput = {
   displayName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   alertReportFrequency?: Maybe<AlertReportFrequencyEnum>;
-  remediationConfig?: Maybe<RemediationConfigInput>;
 };
 
 export type UpdateUserInput = {

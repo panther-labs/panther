@@ -61,30 +61,32 @@ input ListIntegrationsInput {
 
 input GetAlertInput {
   alertId: ID!
-  eventPageSize: Int
-  eventPage: Int
+  eventsPageSize: Int
+  eventsExclusiveStartKey: Int
 }
 
 type AlertDetails {
   alertId: ID!
   rule: RuleDetails
-  creationTime: AWSDateTime
-  lastEventMatched: AWSDateTime
-  events: [AWSJSON!]
+  creationTime: AWSDateTime!
+  lastEventMatched: AWSDateTime!
+  eventsMatched: Int!
+  events: [AWSJSON!]!
+  eventsLastEvaluatedKey: String!
 }
 
 type ListAlertsResponse {
-  alertSummaries: [AlertSummary]
+  alertSummaries: [AlertSummary]!
   lastEvaluatedKey: String
 }
 
 type AlertSummary {
-  alertId: String
-  creationTime: AWSDateTime
-  eventsMatched: Int
-  lastEventMatched: AWSDateTime
+  alertId: String!
+  creationTime: AWSDateTime!
+  eventsMatched: Int!
+  lastEventMatched: AWSDateTime!
   ruleId: String
-  severity: String
+  severity: String!
 }
 
 input ListRulesInput {
