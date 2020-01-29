@@ -20,22 +20,33 @@
 
 ---
 
-## Why Panther?
+## About Us
 
-Panther is developed by a [dedicated team](https://runpanther.io/about/) of cloud security practitioners and is designed to be:
+We are a San Francisco based [company](https://www.crunchbase.com/organization/panther-labs) comprised of security engineers who have spent years building large-scale detection and response capabilities for cloud-first companies. Our team is comprised of former software engineers from Airbnb, Amazon, Riverbed, and more. Panther is founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a project started (and open-sourced) at Airbnb to create a cloud-native solution for automated log analysis.
 
-- **Flexible:** Perform advanced analysis on log data and cloud infrastructure with [Python-based detections](https://github.com/panther-labs/panther-analysis)
+Panther is the next step in the journey of providing security teams with a cloud-native, scalable, modern solution to traditional SIEMs. We designed Panther from the ground up for massive scale, a rich and UI-driven user experience, in-browser Python rule editors, first-class AWS cloud analysis, and more.
+
+Our mission is to build an open platform that any security team can use for quickly and effectively protecting their businesses from breaches.
+
+## Product
+
+The core mantra of Panther is to be:
+
+- **Flexible:** Perform advanced analysis on both log data and cloud infrastructure with [Python-based detections](https://github.com/panther-labs/panther-analysis)
+- **Scalable:** Allow small teams to run at a massive scale
+- **Secure:** Least-privileged and encrypted infrastructure run from within your cloud environment
+- **Integrated:** Support for popular security logs, analyzing high-priority cloud resources, and notifying your team with commonly used apps
 - **Automated:** Fast and simple deployments with AWS CloudFormation
-- **Scalable:** Built on Serverless technology for cost and operational efficiency at any scale
-- **Secure:** Least-privilege and encrypted infrastructure deployed into your cloud
-- **Integrated:** Analyze popular security logs, gather information about your cloud resources, and send alarms to commonly used destinations
 
 ## Use Cases
 
-- **SIEM:** Centralize all security log data for threat detection, historical search, long-term storage, and investigations
-- **[Log Analysis](https://runpanther.io/log-analysis):** Detect suspicious activity quickly and effectively with Python rules
-- **[Cloud Compliance](https://runpanther.io/compliance/):** Detect and enforce AWS infrastructure best practices with Python policies
-- **Alerting:** Send notifications to your team when new issues are identified
+Panther is intended to be the focal point of all security log data for enabling threat detection, compliance, historical search, and breach investigations.
+
+Panther's core features include:
+
+- **[Log Analysis](https://runpanther.io/log-analysis):** Real-time detection of suspicious activity with Python rules
+- **[Cloud Compliance](https://runpanther.io/compliance/):** Real-time detection and enforcement of AWS infrastructure best practices with Python policies
+- **Alerting:** Dispatch notifications to your team when new issues are identified
 - **Automatic Remediation:** Correct insecure infrastructure as soon as new issues are identified
 
 _NOTE: Panther is currently in beta._
