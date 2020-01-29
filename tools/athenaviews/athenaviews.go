@@ -58,7 +58,7 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 func GenerateViews(tables []*awsglue.GlueMetadata) (sqlStatements []string) {
 	sqlStatements = append(sqlStatements, generateViewAllLogs(tables))
 	// add future views here
-	return
+	return sqlStatements
 }
 
 // generateViewAllLogs creates a view over all log sources using "panther" fields
