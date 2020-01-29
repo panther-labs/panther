@@ -1,8 +1,8 @@
 # SNS
 
-This page will walk you through configuring SNS as a Destination for your Panther alerts.
+This page will walk you through configuring SNS as a Destination for your Panther alerts. This is a simple way to send notifications to email addresses, multiple queues, and more.
 
-The SNS Destination requires a `Topic ARN`. When an alert is forwarded to an SNS Destination, it publishes a JSON string to that topic
+The SNS Destination requires a `Topic ARN`. When an alert is forwarded to an SNS Destination, it publishes a JSON string to that topic:
 
 ![](../../.gitbook/assets/screen-shot-2019-10-31-at-5.21.18-pm.png)
 
@@ -21,19 +21,17 @@ The SNS Destination requires a `Topic ARN`. When an alert is forwarded to an SNS
       "Sid": "AllowPantherAlarming",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::891530560157:root"
+        "AWS": "arn:aws:iam::<PANTHER-ACCOUNT-ID>:root"
       },
       "Action": "sns:Publish",
       "Resource": "arn:aws:sns:us-west-2:123456789012:example-topic"
     }
 ```
 
-Be sure to replace the `Resource` field with the ARN of your own SNS Topic.
-
 {% hint style="warning" %}
-For CloudPrem customers, you must also replace the Principal with your own AWS account Principal.
+Be sure to replace the `Resource` field with the ARN of your own SNS Topic, and the Principal with the AWS account ID where Panther is deployed.
 {% endhint %}
 
 ![](../../.gitbook/assets/screen-shot-2019-11-01-at-1.23.30-pm.png)
 
-4. Select the `Save changes` button to confirm your changes, and your SNS Topic will now be able to receive notifications from Panther alerts.
+4. Select the `Save changes` button to confirm your changes, and your SNS Topic will now be able to receive Panther alerts.

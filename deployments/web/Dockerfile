@@ -66,20 +66,21 @@ RUN mkdir /code
 WORKDIR /code
 
 # Copy the artifacts from the previous stage
-COPY --from=build-env /code/web/dist dist
+COPY --from=build-env /code/web/dist web/dist
 
 # Add the script that runs the express server
-ADD  web/scripts/serve.js scripts/serve.js
+ADD package.json .
+ADD  web/scripts/serve.js web/scripts/serve.js
 
 # Install express
 #
 ## WARNING: Be careful not to add the package.json, since it will install all of your dependencies
 ## even when you explicitly try to install a single one
 #
-RUN npm install express
+RUN npm install express express-static-gzip
 
 # Run the express server to serve the assets
-CMD node scripts/serve.js
+CMD npm run serve
 
 # through the port chosen during build time (defaults to 8080)
 EXPOSE ${SERVER_PORT}

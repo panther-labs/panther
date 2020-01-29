@@ -108,7 +108,7 @@ type Alert struct {
 	RuleID                 *string    `json:"ruleId"`
 	CreationTime           *time.Time `json:"creationTime"`
 	LastEventMatched       *time.Time `json:"lastEventMatched"`
-	MatchedEventNum        *int       `json:"matchedEventNum"`
+	EventsMatched          *int       `json:"eventsMatched"`
 	Events                 []*string  `json:"events"`
 	EventsLastEvaluatedKey *string    `json:"eventsLastEvaluatedKey,omitempty"`
 }

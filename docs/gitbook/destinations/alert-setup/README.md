@@ -1,4 +1,4 @@
-# Setup
+# Destinations
 
 ## Creating a New Destination
 

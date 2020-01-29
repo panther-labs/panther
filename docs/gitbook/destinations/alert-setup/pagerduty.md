@@ -1,14 +1,14 @@
 # PagerDuty
 
-This page will walk you through configuring PagerDuty as a Destination for your Panther alerts.
+[PagerDuty](https://www.pagerduty.com/) is a service to manage on-call rotations for critical systems.
 
-The PagerDuty Destination requires an `Integration Key`. When an alert is forwarded to a PagerDuty Destination, it creates an incident.
+To configure a PagerDuty Destination, Panther requires an `Integration Key`. When an alert is forwarded to a PagerDuty Destination, it creates an incident.
 
 ![](../../.gitbook/assets/screen-shot-2019-10-21-at-8.56.27-am.png)
 
-The PagerDuty Destination allows you to page on call teams based on Panther alerts. We typically only recommend this Destination for higher severity issues that need to be addressed immediately.
+The PagerDuty Destination allows you to page an on-call team. We typically only recommend this Destination for `High` and `Critical` severity issues that need to be addressed immediately.
 
-1. To configure the PagerDuty Destination, go to the PagerDuty Services configuration page \([https://runpanther.pagerduty.com/service-directory](https://runpanther.pagerduty.com/service-directory)\) and select the `New Service` button.
+1. To configure the PagerDuty Destination, go to the PagerDuty Service Directory configuration page `(https://<your-domain>.pagerduty.com/service-directory)` and select the `New Service` button.
 
 ![](../../.gitbook/assets/screen-shot-2019-10-22-at-10.12.23-am.png)
 
@@ -20,4 +20,6 @@ The PagerDuty Destination allows you to page on call teams based on Panther aler
 
 ![](../../.gitbook/assets/screen-shot-2019-10-22-at-10.15.03-am.png)
 
-The PagerDuty configuration is now set and ready to receive alerts from Panther.
+{% hint style="success" %}
+The PagerDuty configuration is now set and ready to receive alerts from Panther!
+{% endhint %}

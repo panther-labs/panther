@@ -1,23 +1,24 @@
 # Background
 
-Destinations are used to send alerts of policy and rule failure to the appropriate place. Whenever a policy starts failing on a resource, or a rule triggers on an event, an alert is generated and sent to the configured Destinations.
+Destinations are used to send alerts about suspicious activity or vulnerable infrastructure.
 
-Alerts are routed based on a policy or rule's severity. When a Policy or Rule with a `Critical` severity sends an alert, it will send it to all Destinations configured to handle `Critical` alerts. In this way, one failure may kick off multiple work flows as desired, potentially creating a JIRA ticket, sending an email, and paging the on call personnel all at once.
+Whenever a policy fails on a resource or a rule triggers on an event, an alert is generated and sent to the configured Destination.
 
-For example, Destinations may be configured for both email and PagerDuty. Further, the email Destination may be configured to handle `Medium` , `High`, and `Critical` severity alerts while the PagerDuty Destination is configured to handle just `Critical` severity alerts. Whenever a `Medium` or `High` severity policy or rule fails, an email is sent to the configured email address. However, when a `Critical` severity policy or rule fails an email is sent to the configured email address and a page is sent to the PagerDuty integration.
+Alerts are routed based on rule/policy severity. For example, if a Rule is configured with a `Critical`, it will dispatch alerts to the default Destinations configured to handle `Critical` alerts.
+
+![](../.gitbook/assets/default-destinations.png)
+
+{% hint style="info" %}
+A single failure may dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
+{% endhint %}
 
 Supported Destinations:
 
-- Email
 - [Slack](https://slack.com/)
 - [PagerDuty](https://www.pagerduty.com/)
-- Github
-- JIRA
-- SNS
-- SQS
-- OpsGenie
-- Microsoft Teams
-
-{% hint style="warning" %}
-At this time, the email Destination is not supported for CloudPrem deployments. The email Destination requires additional setup, including [moving out of the SES sandbox](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/request-production-access.html), in order to function properly. This Destination \(with supporting configuration documentation\) will be available for CloudPrem customers soon.
-{% endhint %}
+- [Github](https://github.com/)
+- [Jira](https://www.atlassian.com/software/jira)
+- [OpsGenie](https://www.atlassian.com/software/opsgenie/what-is-opsgenie)
+- [Amazon Simple Notification Service (Email)](https://aws.amazon.com/sns/)
+- [Amazon Simple Queue Service](https://aws.amazon.com/sqs/)
+- [Microsoft Teams](https://products.office.com/en-us/microsoft-teams/group-chat-software)
