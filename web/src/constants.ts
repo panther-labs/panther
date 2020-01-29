@@ -79,8 +79,6 @@ export const LOG_TYPES = [
   'Osquery.Status',
 ] as const;
 
-export const JIRA_ISSUE_TYPE = ['Bug', 'Story', 'Task'] as const;
-
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
   [SeverityEnum.Critical]: 'red' as const,
   [SeverityEnum.High]: 'pink' as const,

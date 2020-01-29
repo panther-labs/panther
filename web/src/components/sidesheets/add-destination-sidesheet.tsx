@@ -72,6 +72,7 @@ const ADD_DESTINATION = gql`
           userName
           apiKey
           assigneeId
+          issueType
         }
         opsgenie {
           apiKey

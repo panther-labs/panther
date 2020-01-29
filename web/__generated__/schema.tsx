@@ -258,7 +258,7 @@ export type JiraConfig = {
   userName: Scalars['String'];
   apiKey: Scalars['String'];
   assigneeId?: Maybe<Scalars['String']>;
-  issueType?: Maybe<Scalars['String']>;
+  issueType?: Maybe<JiraIssueTypesEnum>;
 };
 
 export type JiraConfigInput = {
@@ -268,6 +268,12 @@ export type JiraConfigInput = {
   apiKey: Scalars['String'];
   assigneeId?: Maybe<Scalars['String']>;
 };
+
+export enum JiraIssueTypesEnum {
+  Bug = 'Bug',
+  Story = 'Story',
+  Task = 'Task',
+}
 
 export type ListAlertsInput = {
   ruleId?: Maybe<Scalars['ID']>;

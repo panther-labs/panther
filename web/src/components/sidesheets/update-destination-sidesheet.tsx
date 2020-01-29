@@ -72,6 +72,7 @@ const UPDATE_DESTINATION = gql`
           userName
           apiKey
           assigneeId
+          issueType
         }
         opsgenie {
           apiKey
@@ -191,6 +192,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
                 'jira.userName',
                 'jira.apiKey',
                 'jira.assigneeId',
+                'jira.issueType',
               ]),
             }}
             onSubmit={handleSubmit}
