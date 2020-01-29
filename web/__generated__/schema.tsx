@@ -38,7 +38,7 @@ export type AddIntegrationInput = {
 export type AlertDetails = {
   __typename?: 'AlertDetails';
   alertId: Scalars['ID'];
-  rule?: Maybe<RuleDetails>;
+  ruleId?: Maybe<Scalars['ID']>;
   creationTime: Scalars['AWSDateTime'];
   lastEventMatched: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];

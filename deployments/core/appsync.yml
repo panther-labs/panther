@@ -242,71 +242,6 @@ Resources:
           true
         #end
 
-  GetAlertFunction:
-    Type: AWS::AppSync::FunctionConfiguration
-    Properties:
-      ApiId: !GetAtt GraphQLApi.ApiId
-      Name: PantherGetAlertFunction
-      Description: Get alert information
-      FunctionVersion: '2018-05-29'
-      DataSourceName: !GetAtt AlertsAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "getAlert": $ctx.stash.input
-          })
-        }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $context.stash)
-        #else
-          $util.qr($context.stash.put("alert", $context.result))
-          $util.toJson($context.result)
-        #end
-
-  # This function uses the ruleId from the returned Alert response
-  GetRuleForAlertFunction:
-    Type: AWS::AppSync::FunctionConfiguration
-    Properties:
-      ApiId: !GetAtt GraphQLApi.ApiId
-      Name: PantherGetRuleFunction
-      Description: Get rule
-      FunctionVersion: '2018-05-29'
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/rule",
-          "params": {
-            "query": $util.toJson({
-              "ruleId": $context.stash.alert.ruleId
-            }),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
-        }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
-          $util.toJson({
-            "alertId": $ctx.stash.alert.alertId,
-            "rule": $util.parseJson($context.result.body),
-            "creationTime": $ctx.stash.alert.creationTime,
-            "lastEventMatched": $ctx.stash.alert.lastEventMatched,
-            "events": $ctx.stash.alert.events,
-            "eventsMatched": $ctx.stash.alert.eventsMatched,
-            "eventsLastEvaluatedKey": $ctx.stash.alert.eventsLastEvaluatedKey
-          })
-        #elseif($statusCode >= 400 && $statusCode < 500)
-          $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.stash)
-        #else
-          $util.error($ctx.result.body, $statusCode, $ctx.stash)
-        #end
-
   ########## Resolvers ##########
 
   ResetUserPasswordResolver:
@@ -1229,16 +1164,21 @@ Resources:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Query
       FieldName: alert
-      Kind: PIPELINE
+      DataSourceName: !GetAtt AlertsAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        $util.qr($ctx.stash.put("input", $ctx.args.input))
-        {}
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getAlert": $ctx.args.input
+          })
+        }
       ResponseMappingTemplate: |
-        $util.toJson($ctx.result)
-      PipelineConfig:
-        Functions:
-          - !GetAtt GetAlertFunction.FunctionId
-          - !GetAtt GetRuleForAlertFunction.FunctionId
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $context.stash)
+        #else
+          $util.toJson($context.result)
+        #end
 
   TestPolicyResolver:
     Type: AWS::AppSync::Resolver

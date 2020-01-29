@@ -67,7 +67,7 @@ input GetAlertInput {
 
 type AlertDetails {
   alertId: ID!
-  rule: RuleDetails
+  ruleId: ID
   creationTime: AWSDateTime!
   lastEventMatched: AWSDateTime!
   eventsMatched: Int!
