@@ -192,7 +192,7 @@ export enum DestinationTypeEnum {
 export type GetAlertInput = {
   alertId: Scalars['ID'];
   eventsPageSize?: Maybe<Scalars['Int']>;
-  eventsExclusiveStartKey?: Maybe<Scalars['Int']>;
+  eventsExclusiveStartKey?: Maybe<Scalars['String']>;
 };
 
 export type GetOrganizationResponse = {

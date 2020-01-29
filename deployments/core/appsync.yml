@@ -297,7 +297,9 @@ Resources:
             "rule": $util.parseJson($context.result.body),
             "creationTime": $ctx.stash.alert.creationTime,
             "lastEventMatched": $ctx.stash.alert.lastEventMatched,
-            "events": $ctx.stash.alert.events
+            "events": $ctx.stash.alert.events,
+            "eventsMatched": $ctx.stash.alert.eventsMatched,
+            "eventsLastEvaluatedKey": $ctx.stash.alert.eventsLastEvaluatedKey
           })
         #elseif($statusCode >= 400 && $statusCode < 500)
           $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.stash)
