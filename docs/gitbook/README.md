@@ -55,4 +55,4 @@ You can also easily search your **Resources** by using filters such as Type, Sou
 
 ### Getting Started
 
-To get setup with Panther, continue with the Quick Start on the next page.
+To get setup with Panther, continue with the [Quick Start](quick-start.md) on the next page.
