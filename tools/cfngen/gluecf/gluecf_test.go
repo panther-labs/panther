@@ -40,7 +40,7 @@ type commonFields struct {
 }
 
 func TestTablesCloudFormation(t *testing.T) {
-	expectedOutput, err := readTestFile("testdata/gluecf.json")
+	expectedOutput, err := readTestFile("testdata/gluecf.json.cf")
 	require.NoError(t, err)
 
 	// use simple consistent reference set of parsers
