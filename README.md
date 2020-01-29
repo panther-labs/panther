@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://docs.runpanther.io">Documentation</a> |
+  <a href="https://docs.runpanther.io/quick-start">Quick Start</a> |
   <a href="https://blog.runpanther.io">Blog</a>
 </p>
 
@@ -22,15 +23,15 @@
 
 ## About Us
 
-We are a San Francisco based [company](https://www.crunchbase.com/organization/panther-labs) comprised of security engineers who have spent years building large-scale detection and response capabilities for cloud-first companies. Our team is comprised of former software engineers from Airbnb, Amazon, Riverbed, and more. Panther is founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a project started (and open-sourced) at Airbnb to create a cloud-native solution for automated log analysis.
+We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprised of security engineers who have spent years building large-scale detection and response for cloud-first companies such as Airbnb, Amazon, Riverbed, and more. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a project open-sourced at Airbnb to create a cloud-native solution for automated log analysis.
 
-Panther is the next step in the journey of providing security teams with a cloud-native, scalable, modern solution to traditional SIEMs. We designed Panther from the ground up for massive scale, a rich and UI-driven user experience, in-browser Python rule editors, first-class AWS cloud analysis, and more.
+Panther is the next step in a journey of providing security teams with a cloud-native, scalable, modern alternative to traditional SIEMs. We designed Panther for massive scale, a rich and intuitive user experience, in-browser Python rule editors, first-class AWS support, and more.
 
-Our mission is to build an open platform that any security team can use for quickly and effectively protecting their businesses from breaches.
+Our mission is to build an open platform that security teams can use to effectively protect their businesses from cyber breaches.
 
 ## Product
 
-The core mantra of Panther is to be:
+Panther is designed to be:
 
 - **Flexible:** Perform advanced analysis on both log data and cloud infrastructure with [Python-based detections](https://github.com/panther-labs/panther-analysis)
 - **Scalable:** Allow small teams to run at a massive scale
@@ -40,14 +41,12 @@ The core mantra of Panther is to be:
 
 ## Use Cases
 
-Panther is intended to be the focal point of all security log data for enabling threat detection, compliance, historical search, and breach investigations.
-
-Panther's core features include:
+Panther is the destination for all security data to enable threat detection, compliance, historical search, and security investigations. Panther's core features include:
 
 - **[Log Analysis](https://runpanther.io/log-analysis):** Real-time detection of suspicious activity with Python rules
-- **[Cloud Compliance](https://runpanther.io/compliance/):** Real-time detection and enforcement of AWS infrastructure best practices with Python policies
-- **Alerting:** Dispatch notifications to your team when new issues are identified
-- **Automatic Remediation:** Correct insecure infrastructure as soon as new issues are identified
+- **[Compliance](https://runpanther.io/compliance/):** Real-time monitoring and enforcement of AWS infrastructure best practices with Python policies
+- **Alerting:** Send notifications to your team when new issues are identified
+- **Automatic Remediation:** Correct insecure infrastructure as soon as possible
 
 _NOTE: Panther is currently in beta._
 
@@ -71,10 +70,12 @@ Follow our [Quick Start Guide](https://docs.runpanther.io/quick-start) to deploy
 
 ## Contributing
 
-We love contributions! Please read the [contributing guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
+We welcome all contributions! Please read the [contributing guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
 
 ## License
 
 Panther is dual-licensed under the AGPLv3 and Apache-2.0 [licenses](https://github.com/panther-labs/panther/blob/master/LICENSE).
+
+#### FOSSA
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther?ref=badge_large)
