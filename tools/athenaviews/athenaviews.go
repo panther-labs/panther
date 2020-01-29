@@ -35,8 +35,7 @@ import (
 func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 	sess, err := session.NewSession()
 	if err != nil {
-		err = errors.Wrapf(err, "CreateOrReplaceViews() failed")
-		return err
+		return errors.Wrap(err, "CreateOrReplaceViews() failed")
 	}
 	s3Path := "s3://" + athenaResultsBucket + "/athena/"
 	sqlStatements := GenerateViews(registry.AvailableTables())
@@ -44,13 +43,11 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 		q := awsathena.NewAthenaQuery(sess, awsglue.ViewsDatabaseName, sql, &s3Path) // use default bucket
 		err = q.Run()
 		if err != nil {
-			err = errors.Wrapf(err, "CreateOrReplaceViews() failed")
-			return err
+			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}
 		err = q.Wait()
 		if err != nil {
-			err = errors.Wrapf(err, "CreateOrReplaceViews() failed")
-			return err
+			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}
 	}
 	return err
@@ -59,6 +56,7 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 // GenerateViews creates useful Athena views in the panther views database
 func GenerateViews(tables []*awsglue.GlueMetadata) (sqlStatements []string) {
 	sqlStatements = append(sqlStatements, generateViewAllLogs(tables))
+	// add future views here
 	return
 }
 

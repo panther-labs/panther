@@ -48,14 +48,14 @@ func NewAthenaQuery(sess *session.Session, database, sql string, s3Path *string)
 }
 
 func (aq *AthenaQuery) Run() (err error) {
-	qei := athena.StartQueryExecutionInput{}
+	var qei athena.StartQueryExecutionInput
 	qei.SetQueryString(aq.SQL)
 
-	qec := athena.QueryExecutionContext{}
+	var qec athena.QueryExecutionContext
 	qec.SetDatabase(aq.Database)
 	qei.SetQueryExecutionContext(&qec)
 
-	rc := athena.ResultConfiguration{}
+	var rc athena.ResultConfiguration
 	if aq.S3ResultsPath != nil {
 		rc.SetOutputLocation(*aq.S3ResultsPath)
 	}
@@ -69,7 +69,7 @@ func (aq *AthenaQuery) Run() (err error) {
 }
 
 func (aq *AthenaQuery) Wait() (err error) {
-	qei := athena.GetQueryExecutionInput{}
+	var qei athena.GetQueryExecutionInput
 	qei.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
 
 	var qeo *athena.GetQueryExecutionOutput
@@ -77,8 +77,7 @@ func (aq *AthenaQuery) Wait() (err error) {
 	for {
 		qeo, err = aq.Session.GetQueryExecution(&qei)
 		if err != nil {
-			err = errors.Wrapf(err, "athena failed running: %#v", *aq)
-			return err
+			return errors.Wrapf(err, "athena failed running: %#v", *aq)
 		}
 		if *qeo.QueryExecution.Status.State != "RUNNING" {
 			break
@@ -87,17 +86,16 @@ func (aq *AthenaQuery) Wait() (err error) {
 	}
 
 	if *qeo.QueryExecution.Status.State == "SUCCEEDED" {
-		ip := athena.GetQueryResultsInput{}
+		var ip athena.GetQueryResultsInput
 		ip.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
 
 		aq.QueryResult, err = aq.Session.GetQueryResults(&ip)
 		if err != nil {
-			err = errors.Wrapf(err, "athena failed running: %#v", *aq)
-			return err
+			return errors.Wrapf(err, "athena failed running: %#v", *aq)
 		}
 	} else {
-		err = errors.Errorf("athena failed with status %s running: %#v", *qeo.QueryExecution.Status.State, *aq)
+		return errors.Errorf("athena failed with status %s running: %#v", *qeo.QueryExecution.Status.State, *aq)
 	}
 
-	return err
+	return nil
 }
