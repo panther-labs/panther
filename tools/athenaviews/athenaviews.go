@@ -20,6 +20,7 @@ package athenaviews
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
@@ -63,21 +64,24 @@ func GenerateViews(tables []*awsglue.GlueMetadata) (sqlStatements []string) {
 // generateViewAllLogs creates a view over all log sources using "panther" fields
 func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string) {
 	columns := gluecf.InferJSONColumns(parsers.PantherLog{}, gluecf.GlueMappings...)
-	selectClause := ""
+	var selectColumns []string
 	for _, col := range columns {
-		selectClause += col.Name + ","
+		selectColumns = append(selectColumns, col.Name)
 	}
-	selectClause += "year,month,day,hour"
+	selectClause := strings.Join(selectColumns, ",") + ",year,month,day,hour"
 
-	sql += fmt.Sprintf("create or replace view %s.all_logs as\n", awsglue.ViewsDatabaseName)
+	var sqlLines []string
+	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.all_logs as", awsglue.ViewsDatabaseName))
 
 	for i, table := range tables {
-		sql += fmt.Sprintf("select %s from %s.%s\n", selectClause, table.DatabaseName(), table.TableName())
+		sqlLines = append(sqlLines, fmt.Sprintf("select %s from %s.%s",
+			selectClause, table.DatabaseName(), table.TableName()))
 		if i < len(tables)-1 {
-			sql += fmt.Sprintln("\n\tunion all")
+			sqlLines = append(sqlLines, fmt.Sprintf("\n\tunion all"))
 		}
 	}
 
-	sql += fmt.Sprintln(";")
+	sqlLines = append(sqlLines, fmt.Sprintf(";\n"))
+	sql = strings.Join(sqlLines, "\n")
 	return
 }

@@ -38,6 +38,7 @@ import (
 
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/api/lambda/users/models"
+	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/athenaviews"
 )
@@ -120,7 +121,10 @@ func Deploy() error {
 		return err
 	}
 
-	// Athena views are created via API call because CF is not well supported
+	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
+	if err := awsathena.WorkgroupAssociateS3(awsSession, "primary", backendOutputs["AthenaResultsBucket"]); err != nil {
+		return err
+	}
 	if err := athenaviews.CreateOrReplaceViews(backendOutputs["AthenaResultsBucket"]); err != nil {
 		return err
 	}
