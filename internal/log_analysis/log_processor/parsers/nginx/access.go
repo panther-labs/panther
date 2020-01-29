@@ -30,6 +30,7 @@ import (
 
 const (
 	accessNumberOfColumns          = 10
+	// User Identifier field - the second field in the logs - is always '-' for Nginx Access
 	accessUserIdentifier           = "-"
 	accessTimestampFormatTimeLocal = "[2/Jan/2006:15:04:05-0700]"
 )
