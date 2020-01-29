@@ -17,3 +17,37 @@ package nginx
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"testing"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+)
+
+func TestAccessLog(t *testing.T) {
+	//nolint:lll
+	log := `180.76.15.143 - - [06/Feb/2019:00:00:38 +0000] "GET / HTTP/1.1" 301 193 "-" "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.htm$"`
+
+	expectedTime := time.Unix(1549411238, 0).UTC()
+
+	expectedEvent := &Access{
+		RemoteAddress: aws.String("180.76.15.143"),
+		Time:          (*timestamp.RFC3339)(&expectedTime),
+		Request:       aws.String("GET / HTTP/1.1"),
+		Status:        aws.Int16(301),
+		BodyBytesSent: aws.Int(193),
+		HTTPUserAgent: aws.String(`Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.htm$`),
+	}
+
+	parser := &AccessParser{}
+	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+}
+
+func TestAccessLogType(t *testing.T) {
+	parser := &AccessParser{}
+	require.Equal(t, "Nginx.Access", parser.LogType())
+}

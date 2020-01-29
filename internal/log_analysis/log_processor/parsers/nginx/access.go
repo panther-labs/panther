@@ -29,26 +29,23 @@ import (
 )
 
 const (
-	accessNumberOfColumns          = 9
+	accessNumberOfColumns          = 10
 	accessUserIdentifier           = "-"
-	accessTimestampFormatTimeLocal = "06/Jan/2006:15:04:05 -0700"
+	accessTimestampFormatTimeLocal = "[2/Jan/2006:15:04:05-0700]"
 )
 
-var AccessDesc = `Access Logs for your Nginx server. We currently support 'combined' format. 
+var AccessDesc = `Access Logs for your Nginx server. We currently support Nginx 'combined' format. 
 Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`
 
-//'$remote_addr - $remote_user [$time_local] '
-//'"$request" $status $body_bytes_sent '
-//'"$http_referer" "$http_user_agent"';
 type Access struct {
 	RemoteAddress *string            `json:"remoteAddr,omitempty"`
 	RemoteUser    *string            `json:"remoteUser,omitempty"`
 	Time          *timestamp.RFC3339 `json:"time" validate:"required"`
 	Request       *string            `json:"request,omitempty"`
-	Status        *int8              `json:"status,omitempty"`
+	Status        *int16             `json:"status,omitempty"`
 	BodyBytesSent *int               `json:"bodyBytesSent,omitempty"`
-	HttpReferer   *string            `json"httpReferer,omitempty"`
-	HttpUserAgent *string            `json:"httpUserAgent,omitempty"`
+	HTTPReferer   *string            `json:"httpReferer,omitempty"`
+	HTTPUserAgent *string            `json:"httpUserAgent,omitempty"`
 }
 
 // ALBParser parses AWS Application Load Balancer logs
@@ -83,21 +80,24 @@ func (p *AccessParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	time, err := timestamp.Parse(accessTimestampFormatTimeLocal, record[3])
+	// The time in the logs is represented as [06/Feb/2019:00:00:38 +0000]
+	// The CSV reader will break the above date to two different fields `[06/Feb/2019:00:00:38` and `+0000]`
+	// We concatenate these fields before trying to parse them
+	parsedTime, err := timestamp.Parse(accessTimestampFormatTimeLocal, record[3]+record[4])
 	if err != nil {
-		zap.L().Debug("failed to parse time", zap.Error(err))
+		zap.L().Debug("failed to parse time")
 		return nil
 	}
 
 	event := &Access{
 		RemoteAddress: parsers.CsvStringToPointer(record[0]),
 		RemoteUser:    parsers.CsvStringToPointer(record[2]),
-		Time:          &time,
-		Request:       parsers.CsvStringToPointer(record[4]),
-		Status:        parsers.CsvStringToInt8Pointer(record[5]),
-		BodyBytesSent: parsers.CsvStringToIntPointer(record[6]),
-		HttpReferer:   parsers.CsvStringToPointer(record[7]),
-		HttpUserAgent: parsers.CsvStringToPointer(record[8]),
+		Time:          &parsedTime,
+		Request:       parsers.CsvStringToPointer(record[5]),
+		Status:        parsers.CsvStringToInt16Pointer(record[6]),
+		BodyBytesSent: parsers.CsvStringToIntPointer(record[7]),
+		HTTPReferer:   parsers.CsvStringToPointer(record[8]),
+		HTTPUserAgent: parsers.CsvStringToPointer(record[9]),
 	}
 
 	if err := parsers.Validator.Struct(event); err != nil {

@@ -43,7 +43,7 @@ func CsvStringToIntPointer(value string) *int {
 	return aws.Int(result)
 }
 
-func CsvStringToInt8Pointer(value string) *int8 {
+func CsvStringToInt16Pointer(value string) *int16 {
 	if value == "-" {
 		return nil
 	}
@@ -51,7 +51,7 @@ func CsvStringToInt8Pointer(value string) *int8 {
 	if err != nil {
 		return nil
 	}
-	return aws.Int8(int8(result))
+	return aws.Int16(int16(result))
 }
 
 func CsvStringToFloat64Pointer(value string) *float64 {
