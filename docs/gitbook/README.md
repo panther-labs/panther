@@ -27,7 +27,7 @@ Panther's use-cases include:
 
 The following diagram offers a high-level overview of Panther's architecture:
 
-![](.gitbook/assets/docs_-basic-diagram.png)
+![High-Level Architecture](.gitbook/assets/docs_-basic-diagram.png)
 
 ### Log Analysis
 
@@ -55,4 +55,4 @@ You can also easily search your **Resources** by using filters such as Type, Sou
 
 ### Getting Started
 
-To get setup with Panther, continue with the [Quick Start](quick-start.md) on the next page.
+To get set up with Panther, continue with the [Quick Start](quick-start.md) on the next page.

@@ -6,16 +6,13 @@ description: Working with the Panther repo
 
 ## Environment
 
-You can use the Docker environment from the [quick start](quick-start.md#deployment) instructions for development as well!
-
-However, it's faster to compile and test the code if you install the development tools locally.
+You can use the Docker environment from the [quick start](quick-start.md#deployment) instructions for development as well! However, it's faster to compile and test the code if you install the development tools locally.
 
 ### Manual Installation
 
-Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, and [Python](https://www.python.org/downloads/) 3.7+
+Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, and [Python](https://www.python.org/downloads/) 3.7+. For MacOS w/ homebrew, this is easy: `brew install go node python3`
 
-- For MacOS w/ homebrew: `brew install go node python3`
-- Configure your environment: `export GOPATH=$HOME/go PATH=$PATH:$GOPATH/bin`
+Add go tools to your environment: `export GOPATH=$HOME/go PATH=$PATH:$GOPATH/bin`
 
 Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html), which usually works best with the [bundled installer](https://docs.aws.amazon.com/cli/latest/userguide/install-bundle.html):
 

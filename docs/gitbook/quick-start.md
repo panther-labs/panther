@@ -6,7 +6,7 @@ description: Get started with Panther in 20 minutes
 
 Welcome to the future of open-source cloud security - we're glad you're here!
 
-Panther is a collection of serverless applications deployed to your AWS account. The frontend is a React application which runs in a Docker container \(via ECS\), and the backend is a collection of compute \(Lambda\), storage \(DynamoDB / S3\), and other supporting services.
+Panther is a collection of serverless applications deployed within your AWS account. The frontend is a React application which runs in a Docker container \(via ECS\), and the backend is a collection of compute \(Lambda\), storage \(DynamoDB / S3\), and other supporting services.
 
 Your data is always under your control, encrypted in transit and at rest. All infrastructure is least-privilege, modeled and deployed with AWS CloudFormation.
 
@@ -50,7 +50,7 @@ export AWS_SECRET_ACCESS_KEY=`aws configure get aws_secret_access_key`
 ```
 
 {% hint style="warning" %}
-Use proper security hygiene when handling access keys:
+Remember to follow best security practices when handling access keys:
 
 - Avoid storing them in plaintext files
 - Use IAM roles with temporary session credentials
@@ -62,13 +62,7 @@ Tools like [aws-vault](https://github.com/99designs/aws-vault) can help with all
 
 ## Deployment
 
-Run Panther in 3 easy steps!
-
-1. Clone the repo
-2. Install Docker and start the development image: `./dev.sh`
-3. `mage deploy`
-
----
+Run Panther in 3 easy steps: clone the repo, install docker, and deploy!
 
 First, clone the latest release of the [Panther repo](https://github.com/panther-labs/panther):
 
@@ -106,9 +100,7 @@ By default, Panther generates a self-signed certificate, which will cause most b
 
 ![Self-Signed Certificate Warning](.gitbook/assets/self-signed-cert-warning.png)
 
-Your connection _is_ encrypted, and it's generally safe to continue if the domain matches the output of the deploy command.
-
-However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own ACM certificate in the `deployments/panther_config.yml` file.
+Your connection _is_ encrypted, and it's generally safe to continue if the domain matches the output of the deploy command. However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own ACM certificate in the `deployments/panther_config.yml` file.
 {% endhint %}
 
 ## Onboarding
