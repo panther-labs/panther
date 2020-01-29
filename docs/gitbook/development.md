@@ -27,7 +27,9 @@ sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
 
 Install [Docker](https://docs.docker.com/install/) and make sure the daemon is running in the background.
 
-Finally, install [Mage](https://magefile.org/#installation): `go get github.com/magefile/mage`
+Install [Mage](https://magefile.org/#installation): `go get github.com/magefile/mage`
+
+Finally, install the remaining development libraries with `mage setup && npm i`
 
 ## Mage
 

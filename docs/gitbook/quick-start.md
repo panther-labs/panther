@@ -6,7 +6,7 @@ description: Get started with Panther in 20 minutes
 
 Welcome to the future of open-source cloud security - we're glad you're here!
 
-Panther is a collection of serverless applications deployed to your AWS account. The frontend is a React application which runs in a Docker container \(via ECS\), and the backend is a collection of compute (Lambda), storage (DynamoDB/S3), and other supporting services.
+Panther is a collection of serverless applications deployed to your AWS account. The frontend is a React application which runs in a Docker container \(via ECS\), and the backend is a collection of compute \(Lambda\), storage \(DynamoDB / S3\), and other supporting services.
 
 Your data is always under your control, encrypted in transit and at rest. All infrastructure is least-privilege, modeled and deployed with AWS CloudFormation.
 
