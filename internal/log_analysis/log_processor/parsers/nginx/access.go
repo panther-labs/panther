@@ -49,7 +49,7 @@ type Access struct {
 	HTTPUserAgent *string            `json:"httpUserAgent,omitempty"`
 }
 
-// ALBParser parses AWS Application Load Balancer logs
+// AccessParser parses Nginx Access logs in 'combined' log format
 type AccessParser struct{}
 
 // Parse returns the parsed events or nil if parsing failed
