@@ -73,7 +73,7 @@ Resources:
               Service: apigateway.${AWS::URLSuffix}
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:${AWS::Partition}::iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+        - arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 
   GatewayAccount:
     Type: AWS::ApiGateway::Account
