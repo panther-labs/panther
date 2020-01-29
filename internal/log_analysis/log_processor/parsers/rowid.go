@@ -50,39 +50,27 @@ var (
 
 type RowID uint64
 
-// NewRowID returns a unique row id name spaced as nodeID + timeOffset + rowCounter
+// NewRowID returns a unique row id as a hex string, name spaced as nodeID + timeOffset + rowCounter
 func (rid *RowID) NewRowID() string {
 	// the timeOffset and rowCounter are VarInt (https://developers.google.com/protocol-buffers/docs/encoding) encoded to reduce space
-	newCounter := atomic.AddUint64((*uint64)(rid), 1) // incr
-	id := make([]byte, len(prefix)+rowCounterSize)    // worse case size
-	copy(id[:], prefix)                               // copy fixed prefix
-	rowCounterN := binary.PutUvarint(id[len(prefix):], newCounter)
+	newCounter := atomic.AddUint64((*uint64)(rid), 1)              // incr
+	id := make([]byte, len(prefix)+rowCounterSize)                 // worse case size
+	copy(id[:], prefix)                                            // copy fixed prefix
+	rowCounterN := binary.PutUvarint(id[len(prefix):], newCounter) // add counter to end Varint encoded
 	return hex.EncodeToString(id[:len(prefix)+rowCounterN])
 }
 
-// ParseRowID extracts components of a row id
-func ParseRowID(hexID string) (node [nodeIDSize]byte, offset, counter uint64, err error) {
-	id, err := hex.DecodeString(hexID)
-	if err != nil {
-		return
-	}
-	copy(node[:], id[:nodeIDSize])
-	offset, timeOffsetN := binary.Uvarint(id[nodeIDSize:])
-	counter, _ = binary.Uvarint(id[nodeIDSize+timeOffsetN:])
-	return
-}
-
 func init() {
-	// get nodeID
+	// get nodeID to use in prefix of uuid
 	ifName, addr := getHardwareInterface()
 	if ifName == "" { // should never happen ... but just in case
-		err := errors.Errorf("Could not find hardware interface") // to get stacktrace
+		err := errors.Errorf("Could not find hardware interface, generating random addr for uuid prefix") // to get stacktrace
 		zap.L().Error(err.Error(), zap.Error(err))
 		noise := make([]byte, nodeIDSize)
 		rand.Read(noise) // nolint (errcheck) , not checking error because there is noting else to do
 		copy(nodeID[:], noise)
 	} else {
-		zap.L().Debug("Found hardware interface",
+		zap.L().Debug("Found hardware interface for uuid prefix",
 			zap.String("ifName", ifName),
 			zap.String("addr", hex.EncodeToString(addr)))
 		copy(nodeID[:], addr)

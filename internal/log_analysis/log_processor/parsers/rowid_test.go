@@ -19,6 +19,8 @@ package parsers
  */
 
 import (
+	"encoding/binary"
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,4 +37,16 @@ func TestRowID(t *testing.T) {
 		assert.Equal(t, timeOffset, extractedTimeOffset)
 		assert.Equal(t, (uint64)(i+1), extractedCounter)
 	}
+}
+
+// ParseRowID extracts components of a row id
+func ParseRowID(hexID string) (node [nodeIDSize]byte, offset, counter uint64, err error) {
+	id, err := hex.DecodeString(hexID)
+	if err != nil {
+		return
+	}
+	copy(node[:], id[:nodeIDSize])
+	offset, timeOffsetN := binary.Uvarint(id[nodeIDSize:])
+	counter, _ = binary.Uvarint(id[nodeIDSize+timeOffsetN:])
+	return
 }
