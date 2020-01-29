@@ -23,30 +23,22 @@
 
 ## About Us
 
-We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprised of security engineers who have spent years building large-scale detection and response for cloud-first companies such as Airbnb, Amazon, Riverbed, and more. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a project open-sourced at Airbnb to create a cloud-native solution for automated log analysis.
+We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprised of security engineers who have spent years building large-scale detection and response for cloud-first companies including Airbnb, Amazon, Riverbed, and more. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a cloud-native solution for automated log analysis open-sourced by Airbnb.
 
-Panther is the next step in a journey of providing security teams with a cloud-native, scalable, modern alternative to traditional SIEMs. We designed Panther for massive scale, a rich and intuitive user experience, in-browser Python rule editors, first-class AWS support, and more.
+Panther is the next step in providing security teams with a modern alternative to traditional SIEMs. We designed Panther for massive scale, with a rich and intuitive user experience, in-browser Python rule editing, first-class AWS support, and more.
 
-Our mission is to build an open platform that security teams can use to effectively protect their businesses from cyber breaches.
-
-## Product
-
-Panther is designed to be:
-
-- **Flexible:** Perform advanced analysis on both log data and cloud infrastructure with [Python-based detections](https://github.com/panther-labs/panther-analysis)
-- **Scalable:** Allow small teams to run at a massive scale
-- **Secure:** Least-privileged and encrypted infrastructure run from within your cloud environment
-- **Integrated:** Support for popular security logs, analyzing high-priority cloud resources, and notifying your team with commonly used apps
-- **Automated:** Fast and simple deployments with AWS CloudFormation
+Our mission is to provide an open platform to effectively protect businesses from cybersecurity threats.
 
 ## Use Cases
 
 Panther is the destination for all security data to enable threat detection, compliance, historical search, and security investigations. Panther's core features include:
 
-- **[Log Analysis](https://runpanther.io/log-analysis):** Real-time detection of suspicious activity with Python rules
-- **[Compliance](https://runpanther.io/compliance/):** Real-time monitoring and enforcement of AWS infrastructure best practices with Python policies
+- **[Log Analysis](https://runpanther.io/log-analysis):** Real-time detection of suspicious activity with [Python rules](https://github.com/panther-labs/panther-analysis/tree/master/analysis/rules)
+- **[Compliance](https://runpanther.io/compliance/):** Real-time monitoring and enforcement of AWS infrastructure best practices with [Python policies](https://github.com/panther-labs/panther-analysis/tree/master/analysis/policies)
 - **Alerting:** Send notifications to your team when new issues are identified
 - **Automatic Remediation:** Correct insecure infrastructure as soon as possible
+
+Panther is designed to provide flexible detection logic, secure and scalable infrastructure run within your AWS cloud, support for commonly security tooling, and automation for painless deployments.
 
 _NOTE: Panther is currently in beta._
 
