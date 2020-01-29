@@ -361,6 +361,7 @@ type JiraConfig {
   userName: String!
   apiKey: String!
   assigneeId: String
+  issueType: String
 }
 
 type GithubConfig {
