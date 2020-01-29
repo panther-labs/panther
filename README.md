@@ -25,7 +25,7 @@
 
 We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprised of security engineers who have spent years building large-scale detection and response for cloud-first companies including Airbnb, Amazon, Riverbed, and more. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a cloud-native solution for automated log analysis open-sourced by Airbnb.
 
-Panther is the next step in providing security teams with a modern alternative to traditional SIEMs. We designed Panther for massive scale, with a rich and intuitive user experience, in-browser Python rule editing, first-class AWS support, and more.
+Panther is the next step for security teams who need a modern alternative to traditional SIEMs. We designed Panther for massive scale, with a rich and intuitive user experience, in-browser Python rule editing, first-class AWS support, and more.
 
 Our mission is to provide an open platform to effectively protect businesses from cybersecurity threats.
 
@@ -38,7 +38,7 @@ Panther is the destination for all security data to enable threat detection, com
 - **Alerting:** Send notifications to your team when new issues are identified
 - **Automatic Remediation:** Correct insecure infrastructure as soon as possible
 
-Panther is designed to provide flexible detection logic, secure and scalable infrastructure run within your AWS cloud, support for commonly security tooling, and automation for painless deployments.
+Panther is designed to provide flexible detection logic, secure and scalable infrastructure run within your AWS cloud, support for common security tooling, and automation for painless deployments.
 
 _NOTE: Panther is currently in beta._
 
