@@ -98,12 +98,13 @@ func uploadLocalCertificate(awsSession *session.Session) (string, error) {
 	_, err = acmClient.ListCertificates(&acm.ListCertificatesInput{MaxItems: aws.Int64(0)})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
-			// ACM is not supported in this region or for this user, fall back to IAM
 			if awsErr.Code() == "SubscriptionRequiredException" {
+				// ACM is not supported in this region or for this user, fall back to IAM
+				fmt.Println("deploy: ACM not supported, falling back to IAM for certificate management")
 				return uploadIAMCertificate(privateKeyBytes, certificateBytes, awsSession)
 			}
 		}
-		// Some other AWS based error
+		// Some other error
 		return "", err
 	}
 	input := &acm.ImportCertificateInput{
