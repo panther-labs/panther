@@ -62,7 +62,7 @@ input ListIntegrationsInput {
 input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
-  eventsExclusiveStartKey: Int
+  eventsExclusiveStartKey: String
 }
 
 type AlertDetails {
