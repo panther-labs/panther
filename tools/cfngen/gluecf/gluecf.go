@@ -25,6 +25,9 @@ import (
 	"reflect"
 	"strings"
 
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/tools/cfngen"
@@ -33,8 +36,8 @@ import (
 var (
 	CatalogIDRef = cfngen.Ref{Ref: "AWS::AccountId"} // macro expand to accountId for CF
 
-	// Glue mappings for timestamps.
-	glueMappings = []CustomMapping{
+	// GlueMappings for custom Panther types.
+	GlueMappings = []CustomMapping{
 		{
 			From: reflect.TypeOf(timestamp.RFC3339{}),
 			To:   awsglue.GlueTimestampType,
@@ -42,6 +45,14 @@ var (
 		{
 			From: reflect.TypeOf(timestamp.ANSICwithTZ{}),
 			To:   awsglue.GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(parsers.PantherAnyString{}),
+			To:   "array<string>",
+		},
+		{
+			From: reflect.TypeOf(jsoniter.RawMessage{}),
+			To:   "string",
 		},
 	}
 )
@@ -60,17 +71,22 @@ func GenerateCloudFormation(tables []*awsglue.GlueMetadata) (cf []byte, err erro
 		Description: "Bucket to hold data for tables",
 	}
 
-	// all tables are in one database
-	db := NewDatabase(CatalogIDRef, awsglue.InternalDatabaseName, awsglue.InternalDatabaseDescription)
+	tablesDB := NewDatabase(CatalogIDRef, awsglue.TablesDatabaseName, awsglue.TablesDatabaseDescription)
+	viewsDB := NewDatabase(CatalogIDRef, awsglue.ViewsDatabaseName, awsglue.ViewsDatabaseDescription)
 	resources := map[string]interface{}{
-		cfResourceClean(awsglue.InternalDatabaseName): db,
+		cfResourceClean(awsglue.TablesDatabaseName): tablesDB,
+		cfResourceClean(awsglue.ViewsDatabaseName):  viewsDB,
 	}
 
 	// output database name
 	outputs := map[string]interface{}{
-		"PantherDatabase": &cfngen.Output{
-			Description: "Database over Panther S3 data",
-			Value:       cfngen.Ref{Ref: cfResourceClean(awsglue.InternalDatabaseName)},
+		"PantherTablesDatabase": &cfngen.Output{
+			Description: awsglue.TablesDatabaseDescription,
+			Value:       cfngen.Ref{Ref: cfResourceClean(awsglue.TablesDatabaseName)},
+		},
+		"PantherViewsDatabase": &cfngen.Output{
+			Description: awsglue.ViewsDatabaseDescription,
+			Value:       cfngen.Ref{Ref: cfResourceClean(awsglue.ViewsDatabaseName)},
 		},
 	}
 
@@ -78,12 +94,12 @@ func GenerateCloudFormation(tables []*awsglue.GlueMetadata) (cf []byte, err erro
 	for _, t := range tables {
 		location := cfngen.Sub{Sub: "s3://${" + bucketParam + "}/" + t.S3Prefix()}
 
-		columns := InferJSONColumns(t.EventStruct(), glueMappings...)
+		columns := InferJSONColumns(t.EventStruct(), GlueMappings...)
 
 		// NOTE: current all sources are JSONL (could add a type to LogParserMetadata struct if we need more types)
 		table := NewJSONLTable(&NewTableInput{
 			CatalogID:     CatalogIDRef,
-			DatabaseName:  cfngen.Ref{Ref: cfResourceClean(awsglue.InternalDatabaseName)},
+			DatabaseName:  cfngen.Ref{Ref: cfResourceClean(awsglue.TablesDatabaseName)},
 			Name:          t.TableName(),
 			Description:   t.Description(),
 			Location:      location,
@@ -99,6 +115,7 @@ func GenerateCloudFormation(tables []*awsglue.GlueMetadata) (cf []byte, err erro
 	cfTemplate := cfngen.NewTemplate("Panther Glue Resources", parameters, resources, outputs)
 	buffer := bytes.Buffer{}
 	err = cfTemplate.WriteCloudFormation(&buffer)
+	buffer.WriteString("\n") // add trailing \n that is expected in text files
 	return buffer.Bytes(), err
 }
 

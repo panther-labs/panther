@@ -2,6 +2,7 @@
 
 Standalone go utilities shared by multiple projects. See each module for details:
 
+- [`awsathena`](awsathena) - query support and utilities for using AWS Athena
 - [`awsbatch`](awsbatch) - backoff/paging/retry for AWS batch operations
 - [`awsglue`](awsglue) - abstractions and utilities for AWS Glue operations
 - [`extract`](extract) - utility using gjson to walk parse tree to extract elements

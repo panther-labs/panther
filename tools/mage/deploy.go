@@ -39,6 +39,7 @@ import (
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/athenaviews"
 )
 
 const (
@@ -116,6 +117,11 @@ func Deploy() error {
 	}
 
 	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs, "out/.env"); err != nil {
+		return err
+	}
+
+	// Athena views are created via API call because CF is not well supported
+	if err := athenaviews.CreateOrReplaceViews(backendOutputs["AthenaResultsBucket"]); err != nil {
 		return err
 	}
 
