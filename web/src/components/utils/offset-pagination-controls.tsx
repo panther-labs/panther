@@ -19,13 +19,13 @@
 import React from 'react';
 import { Flex, Icon, IconButton, Label } from 'pouncejs';
 
-interface TablePaginationControls {
+interface OffsetPaginationControls {
   page: number;
   onPageChange: (page: number) => void;
   totalPages: number;
 }
 
-const TablePaginationControls: React.FC<TablePaginationControls> = ({
+const OffsetPaginationControls: React.FC<OffsetPaginationControls> = ({
   page,
   onPageChange,
   totalPages,
@@ -51,4 +51,4 @@ const TablePaginationControls: React.FC<TablePaginationControls> = ({
   );
 };
 
-export default React.memo(TablePaginationControls);
+export default React.memo(OffsetPaginationControls);

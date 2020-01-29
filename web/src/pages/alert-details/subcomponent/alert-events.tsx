@@ -19,7 +19,7 @@
 import React, { useState } from 'react';
 import JsonViewer from 'Components/json-viewer';
 import Panel from 'Components/panel';
-import PaginationControls from 'Components/utils/table-pagination-controls';
+import PaginationControls from 'Components/utils/offset-pagination-controls';
 
 interface AlertEventsProps {
   events: string[];
