@@ -181,7 +181,7 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Name: !Ref ServiceName
-          Cpu: 1024
+          Cpu: 512
           DisableNetworking: false
           Environment:
             - Name: SERVER_PORT
@@ -195,15 +195,15 @@ Resources:
               awslogs-group: !Sub ${ServiceName}-logs
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Ref ServiceName
-          Memory: 2048
-          MemoryReservation: 2048
+          Memory: 1024
+          MemoryReservation: 1024
           PortMappings:
             - ContainerPort: !Ref Port
           ReadonlyRootFilesystem: false
-      Cpu: '1024'
+      Cpu: '512'
       ExecutionRoleArn: !GetAtt WebApplicationServerExecutionRole.Arn
       Family: !Ref ServiceName
-      Memory: '2048'
+      Memory: '1024'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
