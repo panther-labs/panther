@@ -42,8 +42,10 @@ var (
 	nodeID [nodeIDSize]byte // mac addr of lambda to use as unique id for host
 
 	// create a time basis relative to rowEpoch to decrease needed number of bits
-	rowEpoch   = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)                  // NEVER CHANGE THIS!
-	timeOffset = (uint64)(time.Now().UTC().Sub(rowEpoch).Nanoseconds()) / 100 // 0.1 milliseconds resolution
+	rowEpoch   = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)                   // NEVER CHANGE THIS!
+	timeOffset = (uint64)(time.Now().UTC().Sub(rowEpoch).Nanoseconds()) / 1000 // microseconds resolution
+
+	prefix = make([]byte, nodeIDSize+timeOffsetSize) // holds precomputed prefix
 )
 
 type RowID uint64
@@ -51,12 +53,11 @@ type RowID uint64
 // NewRowID returns a unique row id name spaced as nodeID + timeOffset + rowCounter
 func (rid *RowID) NewRowID() string {
 	// the timeOffset and rowCounter are VarInt (https://developers.google.com/protocol-buffers/docs/encoding) encoded to reduce space
-	newCounter := atomic.AddUint64((*uint64)(rid), 1)            // incr
-	id := make([]byte, nodeIDSize+timeOffsetSize+rowCounterSize) // worse case size
-	copy(id[:], nodeID[:])                                       // no encoding
-	timeOffsetN := binary.PutUvarint(id[nodeIDSize:], timeOffset)
-	rowCounterN := binary.PutUvarint(id[nodeIDSize+timeOffsetN:], newCounter)
-	return hex.EncodeToString(id[:nodeIDSize+timeOffsetN+rowCounterN])
+	newCounter := atomic.AddUint64((*uint64)(rid), 1) // incr
+	id := make([]byte, len(prefix)+rowCounterSize)    // worse case size
+	copy(id[:], prefix)                               // copy fixed prefix
+	rowCounterN := binary.PutUvarint(id[len(prefix):], newCounter)
+	return hex.EncodeToString(id[:len(prefix)+rowCounterN])
 }
 
 // ParseRowID extracts components of a row id
@@ -86,6 +87,11 @@ func init() {
 			zap.String("addr", hex.EncodeToString(addr)))
 		copy(nodeID[:], addr)
 	}
+
+	// compute prefix
+	copy(prefix[:], nodeID[:])                                        // no encoding
+	timeOffsetN := binary.PutUvarint(prefix[nodeIDSize:], timeOffset) // VarInt encoding
+	prefix = prefix[:nodeIDSize+timeOffsetN]                          // clip
 }
 
 // return first mac addr found
