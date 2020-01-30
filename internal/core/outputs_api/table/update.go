@@ -35,7 +35,8 @@ func (table *OutputsTable) UpdateOutput(alertOutput *AlertOutputItem) (*AlertOut
 		Set(expression.Name("lastModifiedBy"), expression.Value(alertOutput.LastModifiedBy)).
 		Set(expression.Name("lastModifiedTime"), expression.Value(alertOutput.LastModifiedTime)).
 		Set(expression.Name("outputType"), expression.Value(alertOutput.OutputType)).
-		Set(expression.Name("encryptedConfig"), expression.Value(alertOutput.EncryptedConfig))
+		Set(expression.Name("encryptedConfig"), expression.Value(alertOutput.EncryptedConfig)).
+		Set(expression.Name("defaultForSeverity"), expression.Value(alertOutput.DefaultForSeverity))
 
 	if alertOutput.VerificationStatus != nil {
 		updateExpression.Set(expression.Name("verificationStatus"), expression.Value(alertOutput.VerificationStatus))
