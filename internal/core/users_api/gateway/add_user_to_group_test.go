@@ -35,9 +35,8 @@ var testAddUserToGroupInput = &provider.AdminAddUserToGroupInput{
 }
 
 func TestAddUserToGroup(t *testing.T) {
-	mockIamService := &MockIamService{}
 	mockCognitoClient := &MockCognitoClient{}
-	gw := &UsersGateway{userPoolClient: mockCognitoClient, iamService: mockIamService}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
 	mockCognitoClient.On(
 		"AdminAddUserToGroup", testAddUserToGroupInput).Return(&provider.AdminAddUserToGroupOutput{}, nil)
@@ -51,9 +50,8 @@ func TestAddUserToGroup(t *testing.T) {
 }
 
 func TestAddUserToGroupFailure(t *testing.T) {
-	mockIamService := &MockIamService{}
 	mockCognitoClient := &MockCognitoClient{}
-	gw := &UsersGateway{userPoolClient: mockCognitoClient, iamService: mockIamService}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
 	mockCognitoClient.On("AdminAddUserToGroup", testAddUserToGroupInput).Return(
 		&provider.AdminAddUserToGroupOutput{}, &genericapi.AWSError{})

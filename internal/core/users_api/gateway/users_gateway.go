@@ -20,13 +20,8 @@ package gateway
 
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
-	cfnIface "github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface"
-	fedIdentityProvider "github.com/aws/aws-sdk-go/service/cognitoidentity"
-	fedIdentityProviderI "github.com/aws/aws-sdk-go/service/cognitoidentity/cognitoidentityiface"
 	userPoolProvider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	userPoolProviderI "github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
-	"github.com/aws/aws-sdk-go/service/iam"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 )
@@ -44,27 +39,15 @@ type API interface {
 
 // UsersGateway encapsulates a service to Cognito Client.
 type UsersGateway struct {
-	userPoolClient        userPoolProviderI.CognitoIdentityProviderAPI
-	fedIdentityClient     fedIdentityProviderI.CognitoIdentityAPI
-	iamService            IAMService
-	cloudFormationService cfnIface.CloudFormationAPI
+	userPoolClient userPoolProviderI.CognitoIdentityProviderAPI
 }
 
 // The UsersGateway must satisfy the API interface.
 var _ API = (*UsersGateway)(nil)
 
-// IAMService is an interface for unit testing.  It must be satisfied by UsersGateway.iamService.
-type IAMService interface {
-	GetRole(*iam.GetRoleInput) (*iam.GetRoleOutput, error)
-	UpdateAssumeRolePolicy(input *iam.UpdateAssumeRolePolicyInput) (*iam.UpdateAssumeRolePolicyOutput, error)
-}
-
 // New creates a new CognitoIdentityProvider client which talks to the given user pool.
 func New(sess *session.Session) *UsersGateway {
 	return &UsersGateway{
-		userPoolClient:        userPoolProvider.New(sess),
-		fedIdentityClient:     fedIdentityProvider.New(sess),
-		iamService:            iam.New(sess),
-		cloudFormationService: cloudformation.New(sess),
+		userPoolClient: userPoolProvider.New(sess),
 	}
 }

@@ -67,9 +67,8 @@ var testAdminCreateUserInput = &provider.AdminCreateUserInput{
 
 func TestCreateUser(t *testing.T) {
 	testUserID := aws.String("bc010600-b2d6-4a8d-92ac-d4f8bd209766")
-	mockIamService := &MockIamService{}
 	mockCognitoClient := &MockCognitoClient{}
-	gw := &UsersGateway{userPoolClient: mockCognitoClient, iamService: mockIamService}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
 	mockCognitoClient.On(
 		"AdminCreateUser", testAdminCreateUserInput).Return(&provider.AdminCreateUserOutput{
@@ -86,9 +85,8 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestCreateUserFailed(t *testing.T) {
-	mockIamService := &MockIamService{}
 	mockCognitoClient := &MockCognitoClient{}
-	gw := &UsersGateway{userPoolClient: mockCognitoClient, iamService: mockIamService}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
 	mockCognitoClient.On("AdminCreateUser", testAdminCreateUserInput).Return(
 		&provider.AdminCreateUserOutput{}, &genericapi.AWSError{})
