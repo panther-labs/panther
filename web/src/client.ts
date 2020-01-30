@@ -25,6 +25,7 @@ import Auth from '@aws-amplify/auth';
 import { LocationErrorState } from 'Components/utils/api-error-fallback';
 import { LIST_REMEDIATIONS } from 'Components/forms/policy-form/policy-form-auto-remediation-fields';
 import { logError } from 'Helpers/loggers';
+import { RULE_TEASER } from 'Pages/alert-details';
 
 /**
  * A link to react to GraphQL and/or network errors
@@ -32,7 +33,10 @@ import { logError } from 'Helpers/loggers';
 const createErrorLink = (history: History<LocationErrorState>) => {
   // Define the operations that won't trigger any handler actions or be logged anywhere (those can
   // still be handled by the component independently)
-  const silentFailingOperations = [getOperationName(LIST_REMEDIATIONS)];
+  const silentFailingOperations = [
+    getOperationName(LIST_REMEDIATIONS),
+    getOperationName(RULE_TEASER),
+  ];
 
   return (onError(({ graphQLErrors, networkError, operation }: ErrorResponse) => {
     // If the error is not considered a fail, then don't log it to sentry

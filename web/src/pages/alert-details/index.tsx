@@ -148,7 +148,7 @@ const AlertDetailsPage = () => {
       <Box mb={6}>
         <Box mb={4}>
           <ErrorBoundary>
-            <AlertDetailsInfo alert={alertData.alert} rule={ruleData.rule} />
+            <AlertDetailsInfo alert={alertData.alert} rule={ruleData?.rule} />
           </ErrorBoundary>
         </Box>
         <ErrorBoundary>

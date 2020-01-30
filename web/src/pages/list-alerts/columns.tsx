@@ -52,7 +52,16 @@ const columns = [
     sortable: true,
     flex: '1 0 100px',
     header: 'Severity',
-    renderCell: item => <Badge color={SEVERITY_COLOR_MAP[item.severity]}>{item.severity}</Badge>,
+    renderCell: ({ severity }) => {
+      if (!severity) {
+        return (
+          <Text size="medium" pl={4}>
+            N/A
+          </Text>
+        );
+      }
+      return <Badge color={SEVERITY_COLOR_MAP[severity]}>{severity}</Badge>;
+    },
   },
 
   // Date needs to be formatted properly
