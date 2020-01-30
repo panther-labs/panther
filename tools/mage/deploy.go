@@ -20,6 +20,7 @@ package mage
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"sort"
@@ -249,7 +250,13 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 
 // Upload resources to S3 and return the path to the modified CloudFormation template.
 // TODO - replace this with our own to avoid relying on the aws cli
-func cfnPackage(templateFile, bucket, stack string) (string, error) {
+func cfnPackage(templateFile, bucket, stack string) (out string, err error) {
+	defer func() {
+		// Apply post processing when the package command succeeds
+		if err == nil {
+			err = cfnPackagePostProcess(out)
+		}
+	}()
 	outputDir := path.Join("out", path.Dir(templateFile))
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return "", err
@@ -270,8 +277,53 @@ func cfnPackage(templateFile, bucket, stack string) (string, error) {
 
 	// By default, just print a single progress message instead of several lines of explanation
 	fmt.Printf("deploy: cloudformation package %s => %s\n", templateFile, pkgOut)
-	_, err := sh.Output("aws", args...)
+	_, err = sh.Output("aws", args...)
 	return pkgOut, err
+}
+
+// Post-Process all the CFN templates to fix issues the aws cloudformation package command introduces
+func cfnPackagePostProcess(templatePath string) error {
+	templateOriginal, err := ioutil.ReadFile(templatePath)
+	if err != nil {
+		return err
+	}
+
+	var result []string
+	// Someone there is a bug that is causing the environment variables specifying region to not be properly respected
+	// when constructing the template URLs while deploying to another region than the one specified in the aws config.
+	//
+	// Environment variables and flags are being ignored here, so I suspect a bug in the the aws cli cloudformation package command.
+	//
+	// This code transforms:
+	// TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template
+	// into:
+	// TemplateURL: https://bucket.s3.region.amazonaws.com/panther-app/1.template
+	for _, line := range strings.Split(string(templateOriginal), "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "TemplateURL: ") {
+			// Break the line down to the pieces we need
+			lineParts := strings.Split(line, "https://")
+			uriParts := strings.Split(lineParts[1], "/")
+			prefixParts := strings.Split(uriParts[0], ".")
+
+			// Build the new URI
+			prefixParts[1] = prefixParts[0]
+			prefixParts[0] = uriParts[1]
+
+			// Rebuild the line
+			newURIPrefix := strings.Join(prefixParts, ".")
+			newURIParts := append([]string{newURIPrefix}, uriParts[2:]...)
+			lineParts[1] = strings.Join(newURIParts, "/")
+			line = strings.Join(lineParts, "https://")
+		}
+		result = append(result, line)
+	}
+
+	err = ioutil.WriteFile(templatePath, []byte(strings.Join(result, "\n")), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
