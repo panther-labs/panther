@@ -60,6 +60,6 @@ Resources:
         SubnetTwoId: !Ref WebApplicationSubnetTwoId
         LoadBalancerListenerArn: !Ref WebApplicationLoadBalancerListenerArn
         LoadBalancerSecurityGroupId: !Ref WebApplicationLoadBalancerSecurityGroupId
-        Cpu: !Ref WebApplicationFargateTaskCPU
+        CPU: !Ref WebApplicationFargateTaskCPU
         Memory: !Ref WebApplicationFargateTaskMemory
       TemplateURL: web/server.yml
