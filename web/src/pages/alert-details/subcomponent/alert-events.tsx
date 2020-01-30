@@ -29,25 +29,33 @@ interface AlertEventsProps {
 }
 
 const AlertEvents: React.FC<AlertEventsProps> = ({ events, total, fetchMore }) => {
-  const [eventIndex, setEventIndex] = React.useState(0);
+  // because we are going to use that in PaginationControls we are starting an indexing starting
+  // from 1 instead of 0. That's why we are using `eventDisplayIndex - 1` when selecting the proper event.
+  // Normally the `PaginationControls` are used for displaying pages so they are built with a
+  // 1-based indexing in mind
+  const [eventDisplayIndex, setEventDisplayIndex] = React.useState(1);
 
   React.useEffect(() => {
-    if (eventIndex === events.length - DEFAULT_LARGE_PAGE_SIZE) {
+    if (eventDisplayIndex - 1 === events.length - DEFAULT_LARGE_PAGE_SIZE) {
       fetchMore();
     }
-  }, [eventIndex]);
+  }, [eventDisplayIndex]);
 
   return (
     <Panel
       size="large"
       title="Triggered Events"
       actions={
-        <PaginationControls page={eventIndex + 1} totalPages={total} onPageChange={setEventIndex} />
+        <PaginationControls
+          page={eventDisplayIndex}
+          totalPages={total}
+          onPageChange={setEventDisplayIndex}
+        />
       }
     >
-      <JsonViewer data={JSON.parse(JSON.parse(events[eventIndex]))} />
+      <JsonViewer data={JSON.parse(JSON.parse(events[eventDisplayIndex - 1]))} />
     </Panel>
   );
 };
 
-export default AlertEvents;
+export default React.memo(AlertEvents);

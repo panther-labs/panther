@@ -75,10 +75,13 @@ interface ApolloRuleQueryInput {
 const AlertDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
 
-  const { data: alertData, loading: alertLoading, error: alertError, fetchMore } = useQuery<
-    ApolloAlertQueryData,
-    ApolloAlertQueryInput
-  >(ALERT_DETAILS, {
+  const {
+    data: alertData,
+    loading: alertLoading,
+    error: alertError,
+    fetchMore,
+    variables,
+  } = useQuery<ApolloAlertQueryData, ApolloAlertQueryInput>(ALERT_DETAILS, {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
@@ -99,6 +102,28 @@ const AlertDetailsPage = () => {
       },
     },
   });
+
+  const fetchMoreEvents = React.useCallback(() => {
+    fetchMore({
+      variables: {
+        input: {
+          ...variables.input,
+          eventsExclusiveStartKey: alertData.alert.eventsLastEvaluatedKey,
+        },
+      },
+      updateQuery: (previousResult, { fetchMoreResult }) => {
+        return {
+          ...previousResult,
+          ...fetchMoreResult,
+          alert: {
+            ...previousResult.alert,
+            ...fetchMoreResult.alert,
+            events: [...previousResult.alert.events, ...fetchMoreResult.alert.events],
+          },
+        };
+      },
+    });
+  }, [fetchMore, variables, alertData]);
 
   if ((alertLoading && !alertData) || (ruleLoading && !ruleData)) {
     return <AlertDetailsPageSkeleton />;
@@ -130,11 +155,7 @@ const AlertDetailsPage = () => {
           <AlertEvents
             events={alertData.alert.events}
             total={alertData.alert.eventsMatched}
-            fetchMore={() =>
-              fetchMore({
-                variables: { eventsExclusiveStartKey: alertData.alert.eventsLastEvaluatedKey },
-              })
-            }
+            fetchMore={fetchMoreEvents}
           />
         </ErrorBoundary>
       </Box>
