@@ -206,10 +206,10 @@ Resources:
           PortMappings:
             - ContainerPort: !Ref Port
           ReadonlyRootFilesystem: false
-      Cpu: !Sub ${CPU}
+      Cpu: !Ref CPU
       ExecutionRoleArn: !GetAtt WebApplicationServerExecutionRole.Arn
       Family: !Ref ServiceName
-      Memory: !Sub ${Memory}
+      Memory: !Ref Memory
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
