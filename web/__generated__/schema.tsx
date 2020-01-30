@@ -58,7 +58,7 @@ export type AlertSummary = {
   eventsMatched: Scalars['Int'];
   lastEventMatched: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
-  severity: Scalars['String'];
+  severity?: Maybe<Scalars['String']>;
 };
 
 export enum AnalysisTypeEnum {

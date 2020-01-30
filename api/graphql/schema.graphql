@@ -86,7 +86,7 @@ type AlertSummary {
   eventsMatched: Int!
   lastEventMatched: AWSDateTime!
   ruleId: String
-  severity: String!
+  severity: String
 }
 
 input ListRulesInput {
