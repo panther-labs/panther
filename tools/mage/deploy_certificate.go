@@ -95,7 +95,7 @@ func uploadLocalCertificate(awsSession *session.Session) (string, error) {
 
 	// Check if the ACM service is supported before tossing the private key out into the ether
 	acmClient := acm.New(awsSession)
-	_, err = acmClient.ListCertificates(&acm.ListCertificatesInput{MaxItems: aws.Int64(0)})
+	_, err = acmClient.ListCertificates(&acm.ListCertificatesInput{MaxItems: aws.Int64(1)})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			if awsErr.Code() == "SubscriptionRequiredException" {
