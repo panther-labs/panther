@@ -28,6 +28,14 @@ AWS contains a variety of critical data sources used to audit API usage, databas
 | `Osquery.Snapshot`     | https://osquery.readthedocs.io/en/stable/deployment/logging/#snapshot-format |
 | `Osquery.Status`       | https://osquery.readthedocs.io/en/stable/deployment/logging/#status-logs     |
 
+## [Nginx](https://github.com/panther-labs/panther/tree/master/internal/log_analysis/log_processor/parsers/nginxlogs)
+
+[Nginx](https://www.nginx.com/y) is a powerful open source web server. Nginx logs are configurable, Panther supports the NCSA combined log file format for Access logs.
+
+| Log Type       | Reference                                              |
+| -------------- | ------------------------------------------------------ |
+| `Nginx.Access` | http://nginx.org/en/docs/http/ngx_http_log_module.html |
+
 ## Built-in Rule Packs
 
 {% hint style="info" %}

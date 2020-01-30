@@ -1,4 +1,4 @@
-package nginx
+package nginxlogs
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
