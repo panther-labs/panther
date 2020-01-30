@@ -31,11 +31,12 @@ import (
 )
 
 var jiraConfig = &outputmodels.JiraConfig{
-	OrgDomain:  aws.String("https://panther-labs.atlassian.net"),
-	ProjectKey: aws.String("QR"),
-	UserName:   aws.String("username"),
 	APIKey:     aws.String("apikey"),
 	AssigneeID: aws.String("ae393k930390"),
+	OrgDomain:  aws.String("https://panther-labs.atlassian.net"),
+	ProjectKey: aws.String("QR"),
+	Type:       aws.String("Task"),
+	UserName:   aws.String("username"),
 }
 
 func TestJiraAlert(t *testing.T) {
@@ -60,8 +61,8 @@ func TestJiraAlert(t *testing.T) {
 			"project": map[string]*string{
 				"key": jiraConfig.ProjectKey,
 			},
-			"issuetype": map[string]string{
-				"name": "Task",
+			"issuetype": map[string]*string{
+				"name": jiraConfig.Type,
 			},
 			"assignee": map[string]*string{
 				"id": jiraConfig.AssigneeID,
