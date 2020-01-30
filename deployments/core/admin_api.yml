@@ -121,7 +121,7 @@ Resources:
       Timeout: !Ref UsersTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
         -
           Id: CognitoUserManagement
           Version: 2012-10-17
@@ -198,7 +198,7 @@ Resources:
       Timeout: !Ref UsersTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
         -
           Id: GetCognitoUsers
           Version: 2012-10-17
@@ -255,7 +255,7 @@ Resources:
       Timeout: !Ref OrganizationTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
         -
           Id: ManageOrganizationTable
           Version: 2012-10-17

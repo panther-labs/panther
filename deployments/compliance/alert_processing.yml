@@ -134,7 +134,7 @@ Resources:
       Runtime: go1.x
       Timeout: !Ref ProcessorTimeoutSec
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
         -
           Id: ReadFromSQS
           Version: 2012-10-17
@@ -219,7 +219,7 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       Timeout: !Ref ForwarderTimeoutSec
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
         -
           Id: ReadTableStreams
           Version: 2012-10-17

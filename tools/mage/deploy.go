@@ -289,7 +289,7 @@ func cfnPackagePostProcess(templatePath string) error {
 	}
 
 	var result []string
-	// Someone there is a bug that is causing the environment variables specifying region to not be properly respected
+	// Somewhere there is a bug that is causing the environment variables specifying region to not be properly respected
 	// when constructing the template URLs while deploying to another region than the one specified in the aws config.
 	//
 	// Environment variables and flags are being ignored here, so I suspect a bug in the the aws cli cloudformation package command.
