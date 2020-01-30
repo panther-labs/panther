@@ -80,7 +80,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestGlueMetadata_Partitions(t *testing.T) {
+func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
 	}
