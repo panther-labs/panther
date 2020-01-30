@@ -69,7 +69,6 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
-
   # SQS Queue, DLQ and Lambda
   Queue:
     Type: AWS::SQS::Queue
@@ -171,4 +170,3 @@ Resources:
                 - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:database/${PantherDatabase}
                 - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:table/${PantherDatabase}/*
-

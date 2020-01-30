@@ -148,18 +148,21 @@ Resources:
             BatchSize: 10
       Layers: !If
         - AttachBaseLayers
-        - !Split
-          # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
-          - ","
+        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ','
           - !Sub
-            - "${base},${pip}"
-            - {base: !Join [",", !Ref LayerVersionArns], pip: !Ref PythonLayerArn}
+            - '${base},${pip}'
+            - { base: !Join [',', !Ref LayerVersionArns], pip: !Ref PythonLayerArn }
         - [!Ref PythonLayerArn]
       Runtime: python3.7
       Timeout: !Ref TimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
         - Id: ReceiveFromInputSqsQueue
           Version: 2012-10-17
           Statement:
@@ -199,5 +202,3 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
-
-

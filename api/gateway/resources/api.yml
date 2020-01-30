@@ -16,7 +16,7 @@
 
 swagger: '2.0'
 info:
-  version: '1.0.0'  # API version, not the SAR code version
+  version: '1.0.0' # API version, not the SAR code version
   title: panther-resources-api
   description: Tracks resource state and modification history
   contact:
@@ -34,7 +34,7 @@ produces:
 # The name of the CloudFormation resource for the Lambda handler function
 x-panther-lambda-cfn-resource: HandlerFunction
 
-parameters:  # Common parameters shared across multiple methods
+parameters: # Common parameters shared across multiple methods
   resourceId:
     name: resourceId
     in: query
@@ -110,8 +110,7 @@ paths:
       operationId: ModifyResource
       summary: Modify some properties of an existing resource
       parameters:
-        -
-          name: body
+        - name: body
           in: body
           required: true
           schema:
@@ -186,36 +185,30 @@ paths:
       summary: List resources for a customer account
       parameters:
         # filtering
-        -
-          name: complianceStatus
+        - name: complianceStatus
           in: query
           description: Only include resources with a specific compliance status
           type: string
           enum: [ERROR, FAIL, PASS]
-        -
-          name: deleted
+        - name: deleted
           in: query
           description: Only include resources which are or are not deleted
           type: boolean
-        -
-          name: idContains
+        - name: idContains
           in: query
           description: Only include resources whose ID contains this URL-encoded substring (case-insensitive)
           type: string
-        -
-          name: integrationId
+        - name: integrationId
           in: query
           description: Only include resources from this source integration
           type: string
           pattern: '[a-f0-9\-]{36}'
-        -
-          name: integrationType
+        - name: integrationType
           in: query
           description: Only include resources from this integration type
           type: string
           enum: [aws]
-        -
-          name: types
+        - name: types
           in: query
           description: Only include resources which match one of these types
           type: array
@@ -225,8 +218,7 @@ paths:
             type: string
 
         # projection
-        -
-          name: fields
+        - name: fields
           in: query
           description: Resource fields to select (default - all except attributes)
           type: array
@@ -234,11 +226,10 @@ paths:
           uniqueItems: true
           items:
             type: string
-          # We can't specify a default here: https://github.com/go-swagger/go-swagger/issues/2096
 
+          # We can't specify a default here: https://github.com/go-swagger/go-swagger/issues/2096
         # sorting
-        -
-          name: sortBy
+        - name: sortBy
           in: query
           description: Name of the field to sort by
           type: string
@@ -248,8 +239,7 @@ paths:
             - lastModified
             - type
           default: id
-        -
-          name: sortDir
+        - name: sortDir
           in: query
           description: Sort direction
           type: string
@@ -257,16 +247,14 @@ paths:
           default: ascending
 
         # paging
-        -
-          name: pageSize
+        - name: pageSize
           in: query
           description: Number of items in each page of results
           type: integer
           minimum: 1
           maximum: 1000
           default: 25
-        -
-          name: page
+        - name: page
           in: query
           description: Which page of results to retrieve
           type: integer
@@ -329,7 +317,7 @@ definitions:
         $ref: '#/definitions/lastModified'
       type:
         $ref: '#/definitions/resourceType'
-    required:  # force these properties to always be saved to Dynamo
+    required: # force these properties to always be saved to Dynamo
       - attributes
       - complianceStatus
       - deleted

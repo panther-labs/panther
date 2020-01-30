@@ -94,9 +94,9 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      PointInTimeRecoverySpecification:  # Create periodic table backups
+      PointInTimeRecoverySpecification: # Create periodic table backups
         PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
+      SSESpecification: # Enable server-side encryption
         SSEEnabled: True
       TableName: panther-users
 
@@ -121,13 +121,15 @@ Resources:
       Timeout: !Ref UsersTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
-        -
-          Id: CognitoUserManagement
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: CognitoUserManagement
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - cognito-idp:AdminAddUserToGroup
                 - cognito-idp:AdminCreateUser
@@ -143,31 +145,25 @@ Resources:
                 - cognito-idp:ListGroups
                 - cognito-idp:ListUsers
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
-        -
-          Id: AppsyncManagement
+        - Id: AppsyncManagement
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - appsync:GetGraphqlApi
                 - appsync:ListGraphqlApis
                 - appsync:UpdateGraphqlApi
               Resource: !Sub arn:aws:appsync:${AWS::Region}:${AWS::AccountId}:*
-        -
-          Id: InvokeOrganizationAPI
+        - Id: InvokeOrganizationAPI
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !GetAtt OrganizationAPIFunction.Arn
-        -
-          Id: ManageUsersDB
+        - Id: ManageUsersDB
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - dynamodb:*Item
                 - dynamodb:Query
@@ -198,9 +194,12 @@ Resources:
       Timeout: !Ref UsersTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
-        -
-          Id: GetCognitoUsers
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: GetCognitoUsers
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -226,9 +225,9 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      PointInTimeRecoverySpecification:  # Create periodic table backups
+      PointInTimeRecoverySpecification: # Create periodic table backups
         PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
+      SSESpecification: # Enable server-side encryption
         SSEEnabled: True
       TableName: panther-organization
 
@@ -255,9 +254,12 @@ Resources:
       Timeout: !Ref OrganizationTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
-        -
-          Id: ManageOrganizationTable
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: ManageOrganizationTable
           Version: 2012-10-17
           Statement:
             - Effect: Allow

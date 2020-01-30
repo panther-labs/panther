@@ -62,13 +62,13 @@ Resources:
       DefinitionBody: api/gateway/compliance/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-compliance-api
-      StageName: v1  # NOTE: sam also builds a stage called "Stage"
+      StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
 
   Function:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../../bin/internal/compliance/compliance_api/main  # Relative to out/deployments/compliance
+      CodeUri: ../../bin/internal/compliance/compliance_api/main # Relative to out/deployments/compliance
       Description: Compliance API
       Environment:
         Variables:
@@ -83,7 +83,11 @@ Resources:
       Timeout: !Ref TimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
         - Id: DynamoManageItems
           Version: 2012-10-17
           Statement:
@@ -104,7 +108,7 @@ Resources:
       LogGroupName: /aws/lambda/panther-compliance-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
-  GatewayInvocationPermission:  # allow API gateway to invoke the Lambda function
+  GatewayInvocationPermission: # allow API gateway to invoke the Lambda function
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
@@ -123,8 +127,7 @@ Resources:
           AttributeType: S
       BillingMode: PAY_PER_REQUEST
       GlobalSecondaryIndexes:
-        -
-          # Add an index for policyId to efficiently search for a specific policy
+        - # Add an index for policyId to efficiently search for a specific policy
           KeySchema:
             - AttributeName: policyId
               KeyType: HASH

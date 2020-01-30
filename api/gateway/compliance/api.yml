@@ -16,7 +16,7 @@
 
 swagger: '2.0'
 info:
-  version: '1.0.0'  # API version, not the SAR code version
+  version: '1.0.0' # API version, not the SAR code version
   title: panther-compliance-api
   description: Track pass/fail state for every policy-resource pair
   contact:
@@ -34,7 +34,7 @@ produces:
 # The name of the CloudFormation resource for the Lambda handler function
 x-panther-lambda-cfn-resource: Function
 
-parameters:  # Common parameters shared across multiple methods
+parameters: # Common parameters shared across multiple methods
   policyId:
     name: policyId
     in: query
@@ -204,8 +204,7 @@ paths:
       operationId: DescribeOrg
       summary: List pass/fail status for every policy and resource in the org
       parameters:
-        -
-          name: type
+        - name: type
           in: query
           description: Which type of information is returned
           required: true
@@ -406,8 +405,7 @@ paths:
       operationId: GetOrgOverview
       summary: Get account totals and top failing policies / resources
       parameters:
-        -
-          name: limitTopFailing
+        - name: limitTopFailing
           in: query
           description: Upper bound on the number of top failing resources and policies returned
           type: integer
@@ -794,9 +792,9 @@ definitions:
       A list has the collective status ERROR or FAIL if any of them individually error or fail.
     type: string
     enum:
-      - ERROR  # there was an error trying to apply the policy to at least one resource
-      - FAIL   # no errors, but there was at least one failed resource
-      - PASS   # policy is fully compliant - no errors nor failures
+      - ERROR # there was an error trying to apply the policy to at least one resource
+      - FAIL # no errors, but there was at least one failed resource
+      - PASS # policy is fully compliant - no errors nor failures
 
   suppressed:
     description: >
