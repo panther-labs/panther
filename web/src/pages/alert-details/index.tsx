@@ -17,75 +17,100 @@
  */
 
 import React from 'react';
-
 import useRouter from 'Hooks/useRouter';
 import { useQuery, gql } from '@apollo/client';
-import { GetAlertInput, AlertDetails } from 'Generated/schema';
+import { GetAlertInput, AlertDetails, RuleDetails, GetRuleInput } from 'Generated/schema';
 import { Alert, Box } from 'pouncejs';
 import AlertDetailsInfo from 'Pages/alert-details/subcomponent/alert-details-info';
 import AlertEvents from 'Pages/alert-details/subcomponent/alert-events';
 import ErrorBoundary from 'Components/error-boundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import AlertDetailsPageSkeleton from 'Pages/alert-details/skeleton';
+import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 
 export const ALERT_DETAILS = gql`
-  query AlertDetails($alertDetailsInput: GetAlertInput!) {
-    alert(input: $alertDetailsInput) {
+  query AlertDetails($input: GetAlertInput!) {
+    alert(input: $input) {
       alertId
-      rule {
-        description
-        displayName
-        id
-        logTypes
-        runbook
-        severity
-        tags
-      }
+      ruleId
       creationTime
+      eventsMatched
       lastEventMatched
+      eventsLastEvaluatedKey
       events
     }
   }
 `;
 
-interface ApolloQueryData {
+export const RULE_TEASER = gql`
+  query RuleTeaser($input: GetRuleInput!) {
+    rule(input: $input) {
+      description
+      displayName
+      id
+      logTypes
+      runbook
+      severity
+      tags
+    }
+  }
+`;
+
+interface ApolloAlertQueryData {
   alert: AlertDetails;
 }
 
-interface ApolloQueryInput {
-  alertDetailsInput: GetAlertInput;
+interface ApolloAlertQueryInput {
+  input: GetAlertInput;
 }
 
-// The front end needs to know if the newly queried page is the last page but backend does
-// not yet provide this value. A temporary workaround is to add a large page size as we internally
-// assuming they won't page through this much event.
-// TODO: Update the query to handle pagination correctly
-const PAGE_SIZE = 250;
+interface ApolloRuleQueryData {
+  rule: Partial<RuleDetails>;
+}
+
+interface ApolloRuleQueryInput {
+  input: GetRuleInput;
+}
 
 const AlertDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
-  const { error, data, loading } = useQuery<ApolloQueryData, ApolloQueryInput>(ALERT_DETAILS, {
+
+  const { data: alertData, loading: alertLoading, error: alertError, fetchMore } = useQuery<
+    ApolloAlertQueryData,
+    ApolloAlertQueryInput
+  >(ALERT_DETAILS, {
     fetchPolicy: 'cache-and-network',
     variables: {
-      alertDetailsInput: {
+      input: {
         alertId: match.params.id,
-        eventPage: 0,
-        eventPageSize: PAGE_SIZE,
+        eventsPageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
     },
   });
 
-  if (loading && !data) {
+  const { data: ruleData, loading: ruleLoading } = useQuery<
+    ApolloRuleQueryData,
+    ApolloRuleQueryInput
+  >(RULE_TEASER, {
+    skip: !alertData,
+    variables: {
+      input: {
+        ruleId: alertData?.alert.ruleId,
+      },
+    },
+  });
+
+  if ((alertLoading && !alertData) || (ruleLoading && !ruleData)) {
     return <AlertDetailsPageSkeleton />;
   }
 
-  if (error) {
+  if (alertError) {
     return (
       <Alert
         variant="error"
         title="Couldn't load alert"
         description={
-          extractErrorMessage(error) ||
+          extractErrorMessage(alertError) ||
           "An unknown error occured and we couldn't load the alert details from the server"
         }
         mb={6}
@@ -98,11 +123,19 @@ const AlertDetailsPage = () => {
       <Box mb={6}>
         <Box mb={4}>
           <ErrorBoundary>
-            <AlertDetailsInfo alert={data.alert} />
+            <AlertDetailsInfo alert={alertData.alert} rule={ruleData.rule} />
           </ErrorBoundary>
         </Box>
         <ErrorBoundary>
-          <AlertEvents events={data.alert.events} />
+          <AlertEvents
+            events={alertData.alert.events}
+            total={alertData.alert.eventsMatched}
+            fetchMore={() =>
+              fetchMore({
+                variables: { eventsExclusiveStartKey: alertData.alert.eventsLastEvaluatedKey },
+              })
+            }
+          />
         </ErrorBoundary>
       </Box>
     </article>

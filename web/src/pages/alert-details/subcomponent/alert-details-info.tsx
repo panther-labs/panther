@@ -20,7 +20,7 @@ import { Badge, Box, Grid, Label, Text } from 'pouncejs';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import React from 'react';
-import { AlertDetails } from 'Generated/schema';
+import { AlertDetails, RuleDetails } from 'Generated/schema';
 import Linkify from 'linkifyjs/react';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
@@ -28,9 +28,10 @@ import Panel from 'Components/panel';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails;
+  rule: Partial<RuleDetails>;
 }
 
-const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert }) => {
+const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
   return (
     <Panel size="large" title="Alert Details">
       <Grid gridTemplateColumns="repeat(3, 1fr)" gridGap={6}>
@@ -47,19 +48,16 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert }) => {
             RULE ORIGIN
           </Label>
           <Text size="medium" color="black">
-            {(
-              <Link to={urls.rules.details(alert.rule.id)}>
-                {alert.rule.displayName || alert.rule.id}
-              </Link>
-            ) || 'No rule found'}
+            {<Link to={urls.rules.details(rule.id)}>{rule.displayName || rule.id}</Link> ||
+              'No rule found'}
           </Text>
         </Box>
         <Box my={1}>
           <Label mb={1} is="div" size="small" color="grey300">
             LOG TYPES
           </Label>
-          {alert.rule.logTypes.length ? (
-            alert.rule.logTypes.map(logType => (
+          {rule.logTypes.length ? (
+            rule.logTypes.map(logType => (
               <Text size="medium" color="black" key={logType}>
                 {logType}
               </Text>
@@ -74,9 +72,9 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert }) => {
           <Label mb={1} is="div" size="small" color="grey300">
             DESCRIPTION
           </Label>
-          <Text size="medium" color={alert.rule.description ? 'black' : 'grey200'}>
-            <React.Suspense fallback={<span>{alert.rule.description}</span>}>
-              <Linkify>{alert.rule.description || 'No description available'}</Linkify>
+          <Text size="medium" color={rule.description ? 'black' : 'grey200'}>
+            <React.Suspense fallback={<span>{rule.description}</span>}>
+              <Linkify>{rule.description || 'No description available'}</Linkify>
             </React.Suspense>
           </Text>
         </Box>
@@ -84,9 +82,9 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert }) => {
           <Label mb={1} is="div" size="small" color="grey300">
             RUNBOOK
           </Label>
-          <Text size="medium" color={alert.rule.runbook ? 'black' : 'grey200'}>
-            <React.Suspense fallback={<span>{alert.rule.runbook}</span>}>
-              <Linkify>{alert.rule.runbook || 'No runbook available'}</Linkify>
+          <Text size="medium" color={rule.runbook ? 'black' : 'grey200'}>
+            <React.Suspense fallback={<span>{rule.runbook}</span>}>
+              <Linkify>{rule.runbook || 'No runbook available'}</Linkify>
             </React.Suspense>
           </Text>
         </Box>
@@ -94,17 +92,17 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert }) => {
           <Label mb={1} is="div" size="small" color="grey300">
             SEVERITY
           </Label>
-          <Badge color={SEVERITY_COLOR_MAP[alert.rule.severity]}>{alert.rule.severity}</Badge>
+          <Badge color={SEVERITY_COLOR_MAP[rule.severity]}>{rule.severity}</Badge>
         </Box>
         <Box my={1}>
           <Label mb={1} is="div" size="small" color="grey300">
             TAGS
           </Label>
-          {alert.rule.tags.length ? (
-            alert.rule.tags.map((tag, index) => (
+          {rule.tags.length ? (
+            rule.tags.map((tag, index) => (
               <Text size="medium" color="black" key={tag} is="span">
                 {tag}
-                {index !== alert.rule.tags.length - 1 ? ', ' : null}
+                {index !== rule.tags.length - 1 ? ', ' : null}
               </Text>
             ))
           ) : (

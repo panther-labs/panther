@@ -16,34 +16,56 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import JsonViewer from 'Components/json-viewer';
 import Panel from 'Components/panel';
-import PaginationControls from 'Components/utils/offset-pagination-controls';
+import { Flex, Icon, IconButton, Label } from 'pouncejs';
+import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 
 interface AlertEventsProps {
   events: string[];
+  total: number;
+  fetchMore: () => void;
 }
 
-const AlertEvents: React.FC<AlertEventsProps> = ({ events }) => {
-  // because we are going to use that in PaginationControls we are starting an indexing starting
-  // from 1 instead of 0. That's why we are using `eventIndex - 1` when selecting the proper event.
-  // Normally the `PaginationControls` are used for displaying pages so they are built with a
-  // 1-based indexing in mind
-  const [eventIndex, setEventIndex] = useState(1);
+const AlertEvents: React.FC<AlertEventsProps> = ({ events, total, fetchMore }) => {
+  const [eventIndex, setEventIndex] = React.useState(0);
+
   return (
     <Panel
       size="large"
       title="Triggered Events"
       actions={
-        <PaginationControls
-          page={eventIndex}
-          totalPages={events.length}
-          onPageChange={setEventIndex}
-        />
+        <Flex alignItems="center" justifyContent="center">
+          <Flex mr={9} alignItems="center">
+            <IconButton
+              variant="default"
+              disabled={eventIndex <= 0}
+              onClick={() => setEventIndex(eventIndex - 1)}
+            >
+              <Icon size="large" type="chevron-left" />
+            </IconButton>
+            <Label size="large" mx={4} color="grey400">
+              {eventIndex + 1} of {total}
+            </Label>
+            <IconButton
+              variant="default"
+              disabled={eventIndex >= total - 1}
+              onClick={() => {
+                if (eventIndex > events.length - DEFAULT_LARGE_PAGE_SIZE) {
+                  fetchMore();
+                }
+
+                setEventIndex(eventIndex + 1);
+              }}
+            >
+              <Icon size="large" type="chevron-right" />
+            </IconButton>
+          </Flex>
+        </Flex>
       }
     >
-      <JsonViewer data={JSON.parse(JSON.parse(events[eventIndex - 1]))} />
+      <JsonViewer data={JSON.parse(JSON.parse(events[eventIndex]))} />
     </Panel>
   );
 };
