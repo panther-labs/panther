@@ -85,6 +85,9 @@ const createApolloClient = (history: History<LocationErrorState>) =>
         AlertDetails: {
           keyFields: ['alertId'],
         },
+        AlertSummary: {
+          keyFields: ['alertId'],
+        },
       },
     }),
   });
