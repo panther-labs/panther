@@ -87,6 +87,8 @@ func alertItemsToAlertSummary(items []*models.AlertItem) ([]*models.AlertSummary
 			if !strings.Contains(err.Error(), "getRuleNotFound") {
 				return nil, err
 			}
+			unknownSeverity := "Unknown (rule deleted)"
+			severity = &unknownSeverity
 		}
 		ruleIDToSeverity[ruleID] = severity
 	}
