@@ -46,7 +46,13 @@ Parameters:
   Port:
     Type: Number
     Default: 80
-    Description: The exposed port of the application, that will be used by the VPC & Container.
+    Description: The exposed port of the application, that will be used by the VPC & Container
+  Cpu:
+    Type: Number
+    Description: The size of the CPU allocated to the server
+  Memory:
+    Type: Number
+    Description: The MB of memory allocated to the server
 
 Resources:
   # A target group is connected to a network or application load balancer, so it can automatically
@@ -181,7 +187,7 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Name: !Ref ServiceName
-          Cpu: 512
+          Cpu: !Ref Cpu
           DisableNetworking: false
           Environment:
             - Name: SERVER_PORT
@@ -195,15 +201,15 @@ Resources:
               awslogs-group: !Sub ${ServiceName}-logs
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Ref ServiceName
-          Memory: 1024
-          MemoryReservation: 1024
+          Memory: !Ref Memory
+          MemoryReservation: !Ref Memory
           PortMappings:
             - ContainerPort: !Ref Port
           ReadonlyRootFilesystem: false
-      Cpu: '512'
+      Cpu: !Sub ${Cpu}
       ExecutionRoleArn: !GetAtt WebApplicationServerExecutionRole.Arn
       Family: !Ref ServiceName
-      Memory: '1024'
+      Memory: !Sub ${Memory}
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE

@@ -50,6 +50,16 @@ BackendParameterValues:
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
 
+FrontendParameterValues:
+  # The size of the CPU allocated to the front-end web server.
+  #
+  # For example, a value of 1024 equals to 1 vCPU, while a value of 256 equals to 0.25 vCPU
+  WebApplicationServerCpu: 512
+  # The size of memory (in MB) allocated to the front-end web server
+  #
+  # For example, a value of 1024 means 1GB of RAM memory
+  WebApplicationServerMemory: 1024
+
 # Create a Python layer with these pip library versions.
 #
 # This makes it easy to add your own pip libraries for analysis and remediation.

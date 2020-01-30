@@ -33,10 +33,16 @@ type backendParameters struct {
 	TracingMode                  string `yaml:"TracingMode"`
 }
 
+type frontendParameters struct {
+	WebApplicationServerCpu   	int    `yaml:"WebApplicationServerCpu"`
+	WebApplicationServerMemory   	int    `yaml:"WebApplicationServerMemory"`
+}
+
 // PantherConfig describes the panther_config.yml file.
 type PantherConfig struct {
 	BucketsParameterValues bucketsParameters `yaml:"BucketsParameterValues"`
 	BackendParameterValues backendParameters `yaml:"BackendParameterValues"`
+	FrontendParameterValues frontendParameters `yaml:"FrontendParameterValues"`
 	PipLayer               []string          `yaml:"PipLayer"`
 	InitialAnalysisSets    []string          `yaml:"InitialAnalysisSets"`
 }

@@ -3,6 +3,7 @@
 - [Home](README.md)
 - [Quick Start](quick-start.md)
 - [Development](development.md)
+- [Cost](cost.md)
 
 ## Log Analysis
 

@@ -129,7 +129,7 @@ func Deploy() error {
 		return err
 	}
 
-	frontendDeployParams := getFrontendDeployParams(dockerImage, backendOutputs)
+	frontendDeployParams := getFrontendDeployParams(&config, dockerImage, backendOutputs)
 
 	if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
 		return err
@@ -186,9 +186,11 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 	return result, nil
 }
 
-func getFrontendDeployParams(image string, backendOutputs map[string]string) map[string]string {
-	// If there are params declared in config, we should make sure to add them as well. Currently there are none.
+func getFrontendDeployParams(config *PantherConfig, image string, backendOutputs map[string]string) map[string]string {
+	v := config.FrontendParameterValues
 	result := map[string]string{
+		"WebApplicationServerCpu": strconv.Itoa(v.WebApplicationServerCpu),
+		"WebApplicationServerMemory": strconv.Itoa(v.WebApplicationServerMemory),
 		"WebApplicationImage":                       image,
 		"WebApplicationClusterName":                 backendOutputs["WebApplicationClusterName"],
 		"WebApplicationVpcId":                       backendOutputs["WebApplicationVpcId"],
