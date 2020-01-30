@@ -21,7 +21,7 @@ package mage
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -233,7 +233,7 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	// └ python/policyuniverse-VERSION.dist-info/
 	//
 	// https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
-	if err := shutil.ZipDirectory(path.Dir(layerSourceDir), layerZipfile); err != nil {
+	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile); err != nil {
 		return "", err
 	}
 
@@ -248,13 +248,13 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 // Upload resources to S3 and return the path to the modified CloudFormation template.
 // TODO - replace this with our own to avoid relying on the aws cli
 func cfnPackage(templateFile, bucket, stack string) (string, error) {
-	outputDir := path.Join("out", path.Dir(templateFile))
+	outputDir := filepath.Join("out", filepath.Dir(templateFile))
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return "", err
 	}
 
 	// There is no equivalent to this command in the AWS Go SDK.
-	pkgOut := path.Join(outputDir, "package."+path.Base(templateFile))
+	pkgOut := filepath.Join(outputDir, "package."+filepath.Base(templateFile))
 	args := []string{"cloudformation", "package",
 		"--output-template-file", pkgOut,
 		"--s3-bucket", bucket,

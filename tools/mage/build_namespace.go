@@ -21,7 +21,6 @@ package mage
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -49,17 +48,17 @@ func (b Build) API() {
 	for _, spec := range specs {
 		// If an API model is deleted, the generated file will still exist after "swagger generate".
 		// So we remove existing client/ and models/ directories before re-generating.
-		dir := path.Dir(spec)
-		client, models := path.Join(dir, "client"), path.Join(dir, "models")
+		dir := filepath.Dir(spec)
+		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
 		if err := os.RemoveAll(client); err != nil {
 			fatal(fmt.Errorf("failed to reset %s: %v", client, err))
 		}
-		if err := os.RemoveAll(path.Join(dir, "models")); err != nil {
+		if err := os.RemoveAll(filepath.Join(dir, "models")); err != nil {
 			fatal(fmt.Errorf("failed to reset %s: %v", models, err))
 		}
 
-		args := []string{"generate", "client", "-q", "-t", path.Dir(spec), "-f", spec}
-		cmd := path.Join(setupDirectory, "swagger")
+		args := []string{"generate", "client", "-q", "-t", filepath.Dir(spec), "-f", spec}
+		cmd := filepath.Join(setupDirectory, "swagger")
 		if err := sh.Run(cmd, args...); err != nil {
 			fatal(fmt.Errorf("%s %s failed: %v", cmd, strings.Join(args, " "), err))
 		}
@@ -88,8 +87,8 @@ func (b Build) Lambda() {
 }
 
 func buildPackage(pkg string) error {
-	targetDir := path.Join("out", "bin", pkg)
-	binary := path.Join(targetDir, "main")
+	targetDir := filepath.Join("out", "bin", pkg)
+	binary := filepath.Join(targetDir, "main")
 	oldInfo, statErr := os.Stat(binary)
 	oldHash, hashErr := shutil.SHA256(binary)
 

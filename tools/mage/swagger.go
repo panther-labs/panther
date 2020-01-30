@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -111,12 +110,12 @@ func embedAPI(cfnFilename string) (string, error) {
 		return cfnFilename, nil
 	}
 
-	outputDir := path.Join("out", path.Dir(cfnFilename))
+	outputDir := filepath.Join("out", filepath.Dir(cfnFilename))
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to build output dir %s: %s", outputDir, err)
 	}
 
-	cfnDest := path.Join(outputDir, "embedded."+path.Base(cfnFilename))
+	cfnDest := filepath.Join(outputDir, "embedded."+filepath.Base(cfnFilename))
 	if err := ioutil.WriteFile(cfnDest, cfn, 0644); err != nil {
 		return "", fmt.Errorf("failed to write new CloudFormation template %s: %s", cfnDest, err)
 	}

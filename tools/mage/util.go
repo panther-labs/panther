@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -37,8 +36,8 @@ import (
 )
 
 var (
-	setupDirectory       = path.Join(".", ".setup")
-	pythonVirtualEnvPath = path.Join(setupDirectory, "venv")
+	setupDirectory       = filepath.Join(".", ".setup")
+	pythonVirtualEnvPath = filepath.Join(setupDirectory, "venv")
 )
 
 // Wrapper around filepath.Walk, handling fatal errors.
@@ -195,5 +194,5 @@ func isRunningInCI() bool {
 
 // pythonLibPath the Python venv path of the given library
 func pythonLibPath(lib string) string {
-	return path.Join(pythonVirtualEnvPath, "bin", lib)
+	return filepath.Join(pythonVirtualEnvPath, "bin", lib)
 }

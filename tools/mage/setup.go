@@ -21,7 +21,6 @@ package mage
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -83,7 +82,7 @@ func installSwagger(uname string) error {
 	}
 	url := fmt.Sprintf("https://github.com/go-swagger/go-swagger/releases/download/v%s/swagger_%s_amd64",
 		swaggerVersion, strings.ToLower(uname))
-	binary := path.Join(setupDirectory, "swagger")
+	binary := filepath.Join(setupDirectory, "swagger")
 	if err := sh.RunV("curl", "-o", binary, "-fL", url); err != nil {
 		return err
 	}
@@ -100,15 +99,15 @@ func installGolangCiLint(uname string) error {
 	pkg := fmt.Sprintf("golangci-lint-%s-%s-amd64", golangciVersion, strings.ToLower(uname))
 	url := fmt.Sprintf("https://github.com/golangci/golangci-lint/releases/download/v%s/%s.tar.gz",
 		golangciVersion, pkg)
-	if err := sh.RunV("curl", "-o", path.Join(downloadDir, "ci.tar.gz"), "-fL", url); err != nil {
+	if err := sh.RunV("curl", "-o", filepath.Join(downloadDir, "ci.tar.gz"), "-fL", url); err != nil {
 		return err
 	}
 
-	if err := sh.RunV("tar", "-xzvf", path.Join(downloadDir, "ci.tar.gz"), "-C", downloadDir); err != nil {
+	if err := sh.RunV("tar", "-xzvf", filepath.Join(downloadDir, "ci.tar.gz"), "-C", downloadDir); err != nil {
 		return err
 	}
 	// moving golangci-lint from download folder to setupDirectory
-	if err := os.Rename(path.Join(downloadDir, pkg, "golangci-lint"), path.Join(setupDirectory, "golangci-lint")); err != nil {
+	if err := os.Rename(filepath.Join(downloadDir, pkg, "golangci-lint"), filepath.Join(setupDirectory, "golangci-lint")); err != nil {
 		return err
 	}
 	// deleting download folder
