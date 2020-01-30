@@ -39,7 +39,7 @@ Parameters:
   WebApplicationImage:
     Type: String
     Description: The docker  image used by the web application
-  WebApplicationServerCpu:
+  WebApplicationServerCPU:
     Type: Number
     Description: The size of the CPU allocated to the server. 1024 equals to 1 vCPU, while 256 equals to 0.25 vCPU
     AllowedValues: [256, 512, 1024, 2056]
@@ -60,6 +60,6 @@ Resources:
         SubnetTwoId: !Ref WebApplicationSubnetTwoId
         LoadBalancerListenerArn: !Ref WebApplicationLoadBalancerListenerArn
         LoadBalancerSecurityGroupId: !Ref WebApplicationLoadBalancerSecurityGroupId
-        Cpu: !Ref WebApplicationServerCpu
+        Cpu: !Ref WebApplicationServerCPU
         Memory: !Ref WebApplicationServerMemory
       TemplateURL: web/server.yml

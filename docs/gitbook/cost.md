@@ -23,7 +23,7 @@ This means that even if you don't actually use Panther at all, you will still be
 **\$17.77** for the cost of running an elastic service. If you want to lower this cost
 (in exchange for a slower server and an increased web application loading time), you can
 modify the parameters found in [panther_config.yml](https://github.com/panther-labs/panther/blob/master/deployments/panther_config.yml). Specifically,
-you can lower `WebApplicationServerCpu` to `256`, lower `WebApplicationServerMemory` to `512` and deploy (or re-deploy) Panther.
+you can lower `WebApplicationServerCPU` to `256`, lower `WebApplicationServerMemory` to `512` and deploy (or re-deploy) Panther.
 
 These values are the min allowed values that the front-end server can receive and they will drop the costs
 associated with it, down to **\$8.88** per month.

@@ -34,7 +34,7 @@ type backendParameters struct {
 }
 
 type frontendParameters struct {
-	WebApplicationServerCpu    int `yaml:"WebApplicationServerCpu"`
+	WebApplicationServerCPU    int `yaml:"WebApplicationServerCPU"`
 	WebApplicationServerMemory int `yaml:"WebApplicationServerMemory"`
 }
 
