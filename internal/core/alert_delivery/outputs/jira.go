@@ -55,7 +55,7 @@ func (client *OutputClient) Jira(
 		},
 	}
 
-	if config.AssigneeID != nil {
+	if config.AssigneeID != nil && *config.AssigneeID != "" {
 		fields["assignee"] = map[string]*string{
 			"id": config.AssigneeID,
 		}
