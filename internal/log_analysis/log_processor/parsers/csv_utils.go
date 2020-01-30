@@ -1,4 +1,4 @@
-package awslogs
+package parsers
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -25,14 +25,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 )
 
-func csvStringToPointer(value string) *string {
+func CsvStringToPointer(value string) *string {
 	if value == "-" {
 		return nil
 	}
 	return aws.String(value)
 }
 
-func csvStringToIntPointer(value string) *int {
+func CsvStringToIntPointer(value string) *int {
 	if value == "-" {
 		return nil
 	}
@@ -43,7 +43,18 @@ func csvStringToIntPointer(value string) *int {
 	return aws.Int(result)
 }
 
-func csvStringToFloat64Pointer(value string) *float64 {
+func CsvStringToInt16Pointer(value string) *int16 {
+	if value == "-" {
+		return nil
+	}
+	result, err := strconv.Atoi(value)
+	if err != nil {
+		return nil
+	}
+	return aws.Int16(int16(result))
+}
+
+func CsvStringToFloat64Pointer(value string) *float64 {
 	if value == "-" {
 		return nil
 	}
@@ -54,7 +65,7 @@ func csvStringToFloat64Pointer(value string) *float64 {
 	return aws.Float64(result)
 }
 
-func csvStringToArray(value string) []string {
+func CsvStringToArray(value string) []string {
 	if value == "-" {
 		return []string{}
 	}

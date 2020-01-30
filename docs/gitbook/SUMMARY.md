@@ -10,6 +10,7 @@
 - [Log Processing](log-analysis/log-processing/README.md)
   - [IAM Setup](log-analysis/log-processing/iam-setup.md)
   - [Notifications Setup](log-analysis/log-processing/notifications-setup.md)
+- [Supported Logs](log-analysis/supported-logs/README.md)
 - [Rules](log-analysis/rules/README.md)
   - [AWS](log-analysis/rules/aws/README.md)
     - [AWS CloudTrail Modified](log-analysis/rules/aws/aws-cloudtrail-modified.md)

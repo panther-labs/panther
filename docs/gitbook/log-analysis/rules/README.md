@@ -17,30 +17,4 @@ Python provides high flexibility in defining your Rule logic, and the following 
 | `policyuniverse` | `1.3.2.1` | Parse AWS ARNs and Policies | Apache v2 |
 | `requests`       | `2.22.0`  | Easy HTTP Requests          | Apache v2 |
 
-By default, Policies are loaded from Panther's [open-source packs](https://github.com/panther-labs/panther-analysis/tree/master/analysis/policies) which cover the CIS Benchmark.
-
-### Supported Log Types
-
-The following log types are currently supported:
-
-#### [AWS](https://github.com/panther-labs/panther/tree/master/internal/log_analysis/log_processor/parsers/awslogs)
-
-- Application Load Balancer
-- Aurora MYSQL Audit
-- CloudTrail
-- GuardDuty
-- S3 Server Access
-- VPC Flow
-
-#### [osquery](https://github.com/panther-labs/panther/tree/master/internal/log_analysis/log_processor/parsers/osquerylogs)
-
-- Batch
-- Differential
-- Snapshot
-- Status
-
-### Built-in Rules
-
-{% hint style="info" %}
-Coming soon
-{% endhint %}
+By default, Rules are loaded from Panther's [open-source packs](https://github.com/panther-labs/panther-analysis/tree/master/analysis/rules) which cover various detections across our supported logs.

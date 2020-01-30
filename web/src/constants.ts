@@ -73,6 +73,7 @@ export const LOG_TYPES = [
   'AWS.GuardDuty',
   'AWS.S3ServerAccess',
   'AWS.VPCFlow',
+  'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
   'Osquery.Snapshot',
