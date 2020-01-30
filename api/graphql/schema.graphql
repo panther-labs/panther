@@ -361,6 +361,7 @@ type JiraConfig {
   userName: String!
   apiKey: String!
   assigneeId: String
+  issueType: JiraIssueTypesEnum
 }
 
 type GithubConfig {
@@ -417,6 +418,7 @@ input JiraConfigInput {
   userName: String!
   apiKey: String!
   assigneeId: String
+  issueType: JiraIssueTypesEnum
 }
 
 input GithubConfigInput {
@@ -675,6 +677,12 @@ enum SeverityEnum {
   MEDIUM
   HIGH
   CRITICAL
+}
+
+enum JiraIssueTypesEnum {
+  Bug
+  Story
+  Task
 }
 
 enum AccountTypeEnum {

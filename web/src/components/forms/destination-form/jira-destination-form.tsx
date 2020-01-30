@@ -20,7 +20,8 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/text-input';
-import { DestinationConfigInput } from 'Generated/schema';
+import FormikCombobox from 'Components/fields/combobox';
+import { DestinationConfigInput, JiraIssueTypesEnum } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
@@ -43,6 +44,9 @@ const jiraFieldsValidationSchema = Yup.object().shape({
       projectKey: Yup.string().required(),
       apiKey: Yup.string().required(),
       assigneeId: Yup.string(),
+      issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
+        Object.values(JiraIssueTypesEnum).includes(value)
+      ),
     }),
   }),
 });
@@ -80,8 +84,8 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.userName"
-        label="User Name"
-        placeholder="What's the name of the reporting user?"
+        label="Email"
+        placeholder="What's the email of the reporting user?"
         mb={6}
       />
       <Field
@@ -100,6 +104,15 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         label="Assignee ID"
         placeholder="Who should we assign this to?"
         mb={6}
+      />
+      <Field
+        as={FormikCombobox}
+        name="outputConfig.jira.issueType"
+        label="Issue Type"
+        mb={6}
+        aria-required
+        items={Object.keys(JiraIssueTypesEnum)}
+        inputProps={{ placeholder: 'Select a type of issue' }}
       />
     </BaseDestinationForm>
   );
