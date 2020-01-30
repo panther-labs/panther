@@ -71,9 +71,6 @@ Resources:
       UsernameAttributes:
         - email
       UserPoolName: panther-users
-      SmsConfiguration:
-        ExternalId: !Sub panther-${AWS::AccountId}-${AWS::Region}
-        SnsCallerArn: !GetAtt SNSRole.Arn
 
   AdminGroup:
     Type: AWS::Cognito::UserPoolGroup
@@ -94,26 +91,6 @@ Resources:
         - email
         - given_name
         - family_name
-
-  SNSRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - cognito-idp.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: CognitoSNSPolicy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: sns:publish
-                Resource: '*'
 
 Outputs:
   UserPoolId:
