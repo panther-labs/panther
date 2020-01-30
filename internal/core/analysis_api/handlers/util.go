@@ -50,8 +50,12 @@ var (
 
 // Convert a validation error into a 400 proxy response.
 func badRequest(err error) *events.APIGatewayProxyResponse {
-	errModel := &models.Error{Message: aws.String(err.Error())}
-	return gatewayapi.MarshalResponse(errModel, http.StatusBadRequest)
+	return failedRequest(err.Error(), http.StatusBadRequest)
+}
+
+func failedRequest(message string, status int) *events.APIGatewayProxyResponse {
+	errModel := &models.Error{Message: aws.String(message)}
+	return gatewayapi.MarshalResponse(errModel, status)
 }
 
 // Convert a set of strings to a set of unique lowercased strings

@@ -62,22 +62,22 @@ func handleGet(request *events.APIGatewayProxyRequest, codeType string) *events.
 	}
 
 	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		return failedRequest(fmt.Sprintf("Internal error finding %s (%s)", input.ID, codeType), http.StatusInternalServerError)
 	}
 	if item == nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
+		return failedRequest(fmt.Sprintf("Cannot find %s (%s)", input.ID, codeType), http.StatusNotFound)
 	}
 
 	if item.Type != codeType {
 		// Item is the wrong type (e.g. a policy, not a rule)
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
+		return failedRequest(fmt.Sprintf("Cannot find %s (%s)", input.ID, codeType), http.StatusNotFound)
 	}
 
 	// Add current pass/fail information and convert to external Policy model
 	if codeType == typePolicy {
 		status, err := getComplianceStatus(input.ID)
 		if err != nil {
-			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+			return failedRequest(fmt.Sprintf("Internal error finding %s (%s)", input.ID, codeType), http.StatusInternalServerError)
 		}
 		return gatewayapi.MarshalResponse(item.Policy(status.Status), http.StatusOK)
 	}
