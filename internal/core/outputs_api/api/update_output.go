@@ -64,9 +64,10 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 		return nil, err
 	}
 
-	alertOutput.CreatedBy = alertOutputItem.CreatedBy
-	alertOutput.CreationTime = alertOutputItem.CreationTime
-	alertOutput.VerificationStatus = alertOutputItem.VerificationStatus
+	// Returning the result of the update operation
+	if alertOutput, err = ItemToAlertOutput(alertOutputItem); err != nil {
+		return nil, err
+	}
 
 	return alertOutput, nil
 }
