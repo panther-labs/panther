@@ -34,15 +34,15 @@ type backendParameters struct {
 }
 
 type frontendParameters struct {
-	WebApplicationServerCpu   	int    `yaml:"WebApplicationServerCpu"`
-	WebApplicationServerMemory   	int    `yaml:"WebApplicationServerMemory"`
+	WebApplicationServerCpu    int `yaml:"WebApplicationServerCpu"`
+	WebApplicationServerMemory int `yaml:"WebApplicationServerMemory"`
 }
 
 // PantherConfig describes the panther_config.yml file.
 type PantherConfig struct {
-	BucketsParameterValues bucketsParameters `yaml:"BucketsParameterValues"`
-	BackendParameterValues backendParameters `yaml:"BackendParameterValues"`
+	BucketsParameterValues  bucketsParameters  `yaml:"BucketsParameterValues"`
+	BackendParameterValues  backendParameters  `yaml:"BackendParameterValues"`
 	FrontendParameterValues frontendParameters `yaml:"FrontendParameterValues"`
-	PipLayer               []string          `yaml:"PipLayer"`
-	InitialAnalysisSets    []string          `yaml:"InitialAnalysisSets"`
+	PipLayer                []string           `yaml:"PipLayer"`
+	InitialAnalysisSets     []string           `yaml:"InitialAnalysisSets"`
 }
