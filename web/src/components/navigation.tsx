@@ -94,7 +94,7 @@ const Navigation = () => {
   }, [isSettingsPage]);
 
   return (
-    <Flex is="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
+    <Flex is="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} minHeight="100vh">
       <Box width={72} height="100%" boxShadow="dark150">
         <Flex justifyContent="center" py={8} m="auto">
           <IconButton variant="primary" is={Link} to="/" mb={10}>
