@@ -48,8 +48,9 @@ func TestAsanaAlert(t *testing.T) {
 
 	asanaRequest := map[string]interface{}{
 		"data": map[string]interface{}{
-			"name":     "Policy Failure: policy_name",
-			"notes":    "policy_name failed on new resources\nFor more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: \nDescription:description",
+			"name": "Policy Failure: policy_name",
+			"notes": "policy_name failed on new resources\n" +
+				"For more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: \nDescription:description",
 			"projects": aws.StringSlice([]string{"projectGid"}),
 		},
 	}

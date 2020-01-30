@@ -30,7 +30,7 @@ const PolicyType = "POLICY"
 type Alert struct {
 
 	// CreatedAt is the creation timestamp (seconds since epoch).
-	CreatedAt *time.Time `json:"createdAt", validate:"required"`
+	CreatedAt *time.Time `json:"createdAt" validate:"required"`
 
 	// OutputIDs is the set of outputs for this alert.
 	OutputIDs []*string `json:"outputIds,omitempty"`
