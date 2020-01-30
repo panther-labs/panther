@@ -19,7 +19,7 @@
 import React from 'react';
 import JsonViewer from 'Components/json-viewer';
 import Panel from 'Components/panel';
-import { Flex, Icon, IconButton, Label } from 'pouncejs';
+import PaginationControls from 'Components/utils/table-pagination-controls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 
 interface AlertEventsProps {
@@ -31,38 +31,18 @@ interface AlertEventsProps {
 const AlertEvents: React.FC<AlertEventsProps> = ({ events, total, fetchMore }) => {
   const [eventIndex, setEventIndex] = React.useState(0);
 
+  React.useEffect(() => {
+    if (eventIndex === events.length - DEFAULT_LARGE_PAGE_SIZE) {
+      fetchMore();
+    }
+  }, [eventIndex]);
+
   return (
     <Panel
       size="large"
       title="Triggered Events"
       actions={
-        <Flex alignItems="center" justifyContent="center">
-          <Flex mr={9} alignItems="center">
-            <IconButton
-              variant="default"
-              disabled={eventIndex <= 0}
-              onClick={() => setEventIndex(eventIndex - 1)}
-            >
-              <Icon size="large" type="chevron-left" />
-            </IconButton>
-            <Label size="large" mx={4} color="grey400">
-              {eventIndex + 1} of {total}
-            </Label>
-            <IconButton
-              variant="default"
-              disabled={eventIndex >= total - 1}
-              onClick={() => {
-                if (eventIndex > events.length - DEFAULT_LARGE_PAGE_SIZE) {
-                  fetchMore();
-                }
-
-                setEventIndex(eventIndex + 1);
-              }}
-            >
-              <Icon size="large" type="chevron-right" />
-            </IconButton>
-          </Flex>
-        </Flex>
+        <PaginationControls page={eventIndex + 1} totalPages={total} onPageChange={setEventIndex} />
       }
     >
       <JsonViewer data={JSON.parse(JSON.parse(events[eventIndex]))} />

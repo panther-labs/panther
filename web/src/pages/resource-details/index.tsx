@@ -37,7 +37,7 @@ import {
   extractErrorMessage,
 } from 'Helpers/utils';
 import { Alert, Box } from 'pouncejs';
-import PaginationControls from 'Components/utils/offset-pagination-controls';
+import TablePaginationControls from 'Components/utils/table-pagination-controls';
 import TableComplianceFilterControl from 'Components/utils/table-compliance-filter-control';
 import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/error-boundary';
@@ -229,7 +229,7 @@ const ResourceDetailsPage = () => {
             />
           </ErrorBoundary>
           <Box my={6}>
-            <PaginationControls
+            <TablePaginationControls
               page={pagingData.thisPage}
               totalPages={pagingData.totalPages}
               onPageChange={updatePagingParams}

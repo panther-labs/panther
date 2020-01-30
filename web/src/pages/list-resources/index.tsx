@@ -26,7 +26,7 @@ import {
   ListResourcesSortFieldsEnum,
   SortDirEnum,
 } from 'Generated/schema';
-import PaginationControls from 'Components/utils/offset-pagination-controls';
+import TablePaginationControls from 'Components/utils/table-pagination-controls';
 import { useQuery, gql } from '@apollo/client';
 import {
   convertObjArrayValuesToCsv,
@@ -133,7 +133,7 @@ const ListResources = () => {
         </Card>
       </ErrorBoundary>
       <Box my={6}>
-        <PaginationControls
+        <TablePaginationControls
           page={pagingData.thisPage}
           totalPages={pagingData.totalPages}
           onPageChange={updatePagingParams}

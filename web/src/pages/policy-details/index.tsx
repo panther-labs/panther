@@ -29,7 +29,7 @@ import {
 } from 'Generated/schema';
 import { Alert, Box } from 'pouncejs';
 import Panel from 'Components/panel';
-import PaginationControls from 'Components/utils/offset-pagination-controls';
+import TablePaginationControls from 'Components/utils/table-pagination-controls';
 import TableComplianceFilterControl from 'Components/utils/table-compliance-filter-control';
 import {
   extendResourceWithIntegrationLabel,
@@ -232,7 +232,7 @@ const PolicyDetailsPage = () => {
             />
           </ErrorBoundary>
           <Box my={6}>
-            <PaginationControls
+            <TablePaginationControls
               page={pagingData.thisPage}
               totalPages={pagingData.totalPages}
               onPageChange={updatePagingParams}
