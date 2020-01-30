@@ -43,7 +43,7 @@ import { LIST_DESTINATIONS, ListDestinationsQueryData } from 'Pages/destinations
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 
 const ADD_DESTINATION = gql`
-  mutation AddDestination($input: DestinationInput!) {
+  mutation AddSlackDestination($input: DestinationInput!) {
     addDestination(input: $input) {
       createdBy
       creationTime

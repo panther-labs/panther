@@ -43,7 +43,7 @@ import {
 import { extractErrorMessage } from 'Helpers/utils';
 
 const UPDATE_DESTINATION = gql`
-  mutation UpdateDestination($input: DestinationInput!) {
+  mutation UpdateSlackDestination($input: DestinationInput!) {
     updateDestination(input: $input) {
       createdBy
       creationTime
