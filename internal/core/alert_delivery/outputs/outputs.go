@@ -130,7 +130,7 @@ func generateAlertTitle(alert *alertmodels.Alert) string {
 }
 
 func getDisplayName(alert *alertmodels.Alert) string {
-	if alert.PolicyName != nil && *alert.PolicyName != "" {
+	if aws.StringValue(alert.PolicyName) != "" {
 		return *alert.PolicyName
 	}
 	return *alert.PolicyID

@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"go.uber.org/zap"
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
@@ -34,13 +35,12 @@ const (
 
 // Asana creates a task in Asana projects
 func (client *OutputClient) Asana(alert *alertmodels.Alert, config *outputmodels.AsanaConfig) *AlertDeliveryError {
+	zap.L().Debug("sending alert to Asana")
 	payload := map[string]interface{}{
-		"data": []map[string]interface{}{
-			{
-				"name":     generateAlertTitle(alert),
-				"projects": config.ProjectGids,
-				"notes":    generateDetailedAlertMessage(alert),
-			},
+		"data": map[string]interface{}{
+			"name":     generateAlertTitle(alert),
+			"projects": config.ProjectGids,
+			"notes":    generateDetailedAlertMessage(alert),
 		},
 	}
 
