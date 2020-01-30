@@ -54,13 +54,13 @@ FrontendParameterValues:
   # Allowed values: [256, 512, 1024]
   #
   # For example, a value of 1024 equals to 1 vCPU, while a value of 256 equals to 0.25 vCPU
-  WebApplicationServerCPU: 512
+  WebApplicationFargateTaskCPU: 512
 
   # The size of memory (in MB) allocated to the front-end web server
   # Allowed values: [512, 1024, 2056]
   #
   # For example, a value of 1024 means 1GB of RAM memory
-  WebApplicationServerMemory: 1024
+  WebApplicationFargateTaskMemory: 1024
 
 # Create a Python layer with these pip library versions.
 #

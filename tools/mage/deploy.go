@@ -189,8 +189,8 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 func getFrontendDeployParams(config *PantherConfig, image string, backendOutputs map[string]string) map[string]string {
 	v := config.FrontendParameterValues
 	result := map[string]string{
-		"WebApplicationServerCPU":                   strconv.Itoa(v.WebApplicationServerCPU),
-		"WebApplicationServerMemory":                strconv.Itoa(v.WebApplicationServerMemory),
+		"WebApplicationFargateTaskCPU":                   strconv.Itoa(v.WebApplicationFargateTaskCPU),
+		"WebApplicationFargateTaskMemory":                strconv.Itoa(v.WebApplicationFargateTaskMemory),
 		"WebApplicationImage":                       image,
 		"WebApplicationClusterName":                 backendOutputs["WebApplicationClusterName"],
 		"WebApplicationVpcId":                       backendOutputs["WebApplicationVpcId"],

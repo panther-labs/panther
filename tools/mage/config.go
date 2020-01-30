@@ -34,8 +34,8 @@ type backendParameters struct {
 }
 
 type frontendParameters struct {
-	WebApplicationServerCPU    int `yaml:"WebApplicationServerCPU"`
-	WebApplicationServerMemory int `yaml:"WebApplicationServerMemory"`
+	WebApplicationFargateTaskCPU    int `yaml:"WebApplicationFargateTaskCPU"`
+	WebApplicationFargateTaskMemory int `yaml:"WebApplicationFargateTaskMemory"`
 }
 
 // PantherConfig describes the panther_config.yml file.
