@@ -17,7 +17,7 @@ application continuously in Fargate.
 ## Front-end web server
 
 In order to serve the web application, an ECS Fargate service (named `panther-web`) has a single
-task running, which acts as a front-end server. By default this task gets allocated 0.5 vCPU and 1024MB
+task running, which acts as a front-end server. By default, this task gets allocated 0.5 vCPU and 1024MB
 of memory. This leads to a monthly cost of **$14.57 (vCPU) + $3.2 (RAM) = \$17.77** according to the [official ECS pricing page](https://aws.amazon.com/fargate/pricing/).
 
 This means that even if you don't actually use Panther at all, you will still be asked to pay
