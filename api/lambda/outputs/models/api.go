@@ -202,6 +202,9 @@ type OutputConfig struct {
 
 	// SqsConfig contains the configuration for SQS alert output
 	Sqs *SqsConfig `json:"sqs,omitempty"`
+
+	// AsanaConfig contains the configuration for Asana alert output
+	Asana *AsanaConfig `json:"asana,omitempty"`
 }
 
 // SlackConfig defines options for each Slack output.
@@ -253,6 +256,13 @@ type MsTeamsConfig struct {
 // SqsConfig defines options for each Sqs topic output
 type SqsConfig struct {
 	QueueURL *string `json:"queueUrl" validate:"required,url"`
+}
+
+// AsanaConfig defines options for each Asana output
+type AsanaConfig struct {
+	AccessToken *string `json:"accessToken" validate:"required,min=1"`
+	WorkspaceGid *string `json:"workspaceGid" validate:"required,min=1"`
+	ProjectGids []*string `json:"projectGids,omitempty"`
 }
 
 // DefaultOutputs is the structure holding the information about default outputs for severity

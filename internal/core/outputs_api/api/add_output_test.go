@@ -296,3 +296,51 @@ func TestAddOutputSqs(t *testing.T) {
 	_, err = uuid.Parse(*result.OutputID)
 	assert.NoError(t, err)
 }
+
+func TestAddOutputAsana(t *testing.T) {
+	mockEncryptionKey := &mockEncryptionKey{}
+	encryptionKey = mockEncryptionKey
+	mockOutputTable := &mockOutputTable{}
+	outputsTable = mockOutputTable
+	mockOutputVerification := &mockOutputVerification{}
+	outputVerification = mockOutputVerification
+
+	mockOutputTable.On("GetOutputByName", aws.String("my-asana-task")).Return(nil, nil)
+	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
+	mockOutputTable.On("PutOutput", mock.Anything).Return(nil)
+	mockOutputVerification.On("GetVerificationStatus", mock.Anything).Return(aws.String(models.VerificationStatusSuccess), nil)
+
+	input := &models.AddOutputInput{
+		UserID:      aws.String("userId"),
+		DisplayName: aws.String("asana-project"),
+		OutputConfig: &models.OutputConfig{
+			Asana: &models.AsanaConfig{
+
+				QueueURL: aws.String("https://sqs.us-west-2.amazonaws.com/123456789012/test-output"),
+			},
+		},
+	}
+
+	result, err := (API{}).AddOutput(input)
+	require.NoError(t, err)
+
+	expected := &models.AddOutputOutput{
+		DisplayName:    aws.String("my-queue"),
+		OutputType:     aws.String("sqs"),
+		LastModifiedBy: aws.String("userId"),
+		CreatedBy:      aws.String("userId"),
+		OutputConfig: &models.OutputConfig{
+			Sqs: &models.SqsConfig{
+				QueueURL: aws.String("https://sqs.us-west-2.amazonaws.com/123456789012/test-output"),
+			},
+		},
+		OutputID:           result.OutputID,
+		CreationTime:       result.CreationTime,
+		LastModifiedTime:   result.LastModifiedTime,
+		VerificationStatus: aws.String(models.VerificationStatusSuccess),
+	}
+	assert.Equal(t, expected, result)
+
+	_, err = uuid.Parse(*result.OutputID)
+	assert.NoError(t, err)
+}
