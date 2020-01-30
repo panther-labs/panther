@@ -21,6 +21,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/pkg/errors"
 )
 
@@ -29,7 +30,7 @@ const (
 )
 
 type AthenaQuery struct {
-	Session       *athena.Athena
+	Client        athenaiface.AthenaAPI
 	SQL           string
 	S3ResultsPath *string // this can be nil, to use defaults
 	Database      string
@@ -40,7 +41,7 @@ type AthenaQuery struct {
 
 func NewAthenaQuery(sess *session.Session, database, sql string, s3Path *string) *AthenaQuery {
 	return &AthenaQuery{
-		Session:       athena.New(sess),
+		Client:        athena.New(sess),
 		SQL:           sql,
 		S3ResultsPath: s3Path,
 		Database:      database,
@@ -48,20 +49,20 @@ func NewAthenaQuery(sess *session.Session, database, sql string, s3Path *string)
 }
 
 func (aq *AthenaQuery) Run() (err error) {
-	var qei athena.StartQueryExecutionInput
-	qei.SetQueryString(aq.SQL)
+	var startInput athena.StartQueryExecutionInput
+	startInput.SetQueryString(aq.SQL)
 
-	var qec athena.QueryExecutionContext
-	qec.SetDatabase(aq.Database)
-	qei.SetQueryExecutionContext(&qec)
+	var startContext athena.QueryExecutionContext
+	startContext.SetDatabase(aq.Database)
+	startInput.SetQueryExecutionContext(&startContext)
 
-	var rc athena.ResultConfiguration
+	var resultConfig athena.ResultConfiguration
 	if aq.S3ResultsPath != nil {
-		rc.SetOutputLocation(*aq.S3ResultsPath)
+		resultConfig.SetOutputLocation(*aq.S3ResultsPath)
 	}
-	qei.SetResultConfiguration(&rc)
+	startInput.SetResultConfiguration(&resultConfig)
 
-	aq.startResult, err = aq.Session.StartQueryExecution(&qei)
+	aq.startResult, err = aq.Client.StartQueryExecution(&startInput)
 	if err != nil {
 		err = errors.Wrapf(err, "athena failed running: %#v", *aq)
 	}
@@ -69,32 +70,32 @@ func (aq *AthenaQuery) Run() (err error) {
 }
 
 func (aq *AthenaQuery) Wait() (err error) {
-	var qei athena.GetQueryExecutionInput
-	qei.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
+	var executionInput athena.GetQueryExecutionInput
+	executionInput.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
 
-	var qeo *athena.GetQueryExecutionOutput
+	var executionOutput *athena.GetQueryExecutionOutput
 
 	for {
-		qeo, err = aq.Session.GetQueryExecution(&qei)
+		executionOutput, err = aq.Client.GetQueryExecution(&executionInput)
 		if err != nil {
 			return errors.Wrapf(err, "athena failed running: %#v", *aq)
 		}
-		if *qeo.QueryExecution.Status.State != "RUNNING" {
+		if *executionOutput.QueryExecution.Status.State != "RUNNING" {
 			break
 		}
 		time.Sleep(pollDelay)
 	}
 
-	if *qeo.QueryExecution.Status.State == "SUCCEEDED" {
+	if *executionOutput.QueryExecution.Status.State == "SUCCEEDED" {
 		var ip athena.GetQueryResultsInput
 		ip.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
 
-		aq.QueryResult, err = aq.Session.GetQueryResults(&ip)
+		aq.QueryResult, err = aq.Client.GetQueryResults(&ip)
 		if err != nil {
 			return errors.Wrapf(err, "athena failed running: %#v", *aq)
 		}
 	} else {
-		return errors.Errorf("athena failed with status %s running: %#v", *qeo.QueryExecution.Status.State, *aq)
+		return errors.Errorf("athena failed with status %s running: %#v", *executionOutput.QueryExecution.Status.State, *aq)
 	}
 
 	return nil
