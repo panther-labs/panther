@@ -128,10 +128,12 @@ func uploadLocalCertificate(awsSession *session.Session) (string, error) {
 // uploadIAMCertificate creates an IAM certificate resource and returns its ARN
 func uploadIAMCertificate(privateKeyBytes, certificateBytes []byte, session *session.Session) (string, error) {
 	iamClient := iam.New(session)
+	t := time.Now()
+	certName := "PantherCertificate-" + t.Format("2006-01-02T15-04-05")
 	input := &iam.UploadServerCertificateInput{
 		CertificateBody:       aws.String(string(certificateBytes)),
 		PrivateKey:            aws.String(string(privateKeyBytes)),
-		ServerCertificateName: aws.String("PantherCertificate"),
+		ServerCertificateName: aws.String(certName),
 	}
 	output, err := iamClient.UploadServerCertificate(input)
 	if err != nil {
