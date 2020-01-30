@@ -133,7 +133,7 @@ func testCloudTrailBuild(t *testing.T) {
 		},
 	}
 
-	trails := buildCloudTrails(mockSvc)
+	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
 	assert.Equal(t, expected, trails)
 }
 
@@ -143,14 +143,14 @@ func TestCloudTrailBuildEmpty(t *testing.T) {
 		On("DescribeTrails", mock.Anything).
 		Return(&cloudtrail.DescribeTrailsOutput{}, nil)
 
-	trails := buildCloudTrails(mockSvc)
+	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
 	assert.Empty(t, trails)
 }
 
 func TestCloudTrailBuildError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudTrailSvcError([]string{"DescribeTrails"})
 
-	trails := buildCloudTrails(mockSvc)
+	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
 	assert.Empty(t, trails)
 }
 

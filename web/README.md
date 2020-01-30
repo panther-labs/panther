@@ -15,18 +15,44 @@ $ npm i
 
 ### Development
 
-In order to develop locally, all you need to do is run:
+In order to develop locally, you must first have the project deployed on your AWS account. If you've successfully done that,
+then a `.env` folder will have appeared in the project root which will hold crucial ENV vars that
+is needed for local development. If this file is present, then all you need to do is run:
 
 ```
-npm run dev
+npm run start
 ```
 
-and a development server will be setup for you. Visit [localhost:8000](http://localhost:8000) in
+and a development server will be setup for you. Visit [localhost:8080](http://localhost:8080) in
 order to view it.
 
-### Local Deployment
+### Deployment
 
-TODO
+This package shouldn't have to be deployed individually, since its deployment is part
+of `mage deploy` which exposes a publicly available URL for you to access the UI.
+
+There are situations though that may force you to have a local deployment (e.g. firewall restrictions)
+of the interface. To do that, all you need to do is build the web project and then serve its HTML through
+a lightweight web server. Run:
+
+```
+npm run build
+npm run serve
+```
+
+and visit [localhost:8080](http://localhost:8080) to view it.
+
+Alternatively, if you have already ran `mage deploy` once in your account, you can
+use docker to spin-up a container that will serve the image that was already built. Remember that
+this image has the latest public deployment and won't be able to showcase any source changes you have
+not yet deployed. To do that, run:
+
+```
+docker run -e SERVER_PORT=8080 -p 8080:8080 {AWS_ACCOUNT_ID}.dkr.ecr.{AWS_REGION}.amazonaws.com/panther-web
+```
+
+replacing the variable `AWS_ACCOUNT_ID` and `AWS_REGION` with your account-id and the region that
+your panther installation is deployed.
 
 ### Testing
 

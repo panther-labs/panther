@@ -21,8 +21,8 @@ import Auth from '@aws-amplify/auth';
 
 // Initialize the Cognito client to the correct user pool
 Auth.configure({
-  userPoolId: process.env.AWS_COGNITO_USER_POOL_ID,
-  userPoolWebClientId: process.env.AWS_COGNITO_APP_CLIENT_ID,
+  userPoolId: process.env.WEB_APPLICATION_USER_POOL_ID,
+  userPoolWebClientId: process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID,
   region: process.env.AWS_REGION,
 });
 

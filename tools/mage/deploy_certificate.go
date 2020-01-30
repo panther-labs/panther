@@ -110,7 +110,7 @@ func uploadLocalCertificate(awsSession *session.Session) (string, error) {
 }
 
 func getExistingCertificate(awsSession *session.Session) (string, error) {
-	outputs, err := getStackOutputs(awsSession, applicationStack)
+	outputs, err := getStackOutputs(awsSession, backendStack)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			if awsErr.Code() != "ValidationError" || !strings.HasSuffix(awsErr.Code(), "does not exist") {

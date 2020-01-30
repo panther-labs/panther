@@ -14,19 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Can't use alpine due to some node_module deps
-FROM node:13.2-alpine
+#
+# ****************     BUILD STAGE     *******************
+#
+FROM node:13.2-alpine AS build-env
 
-LABEL description="The image that builds the web code and servers it through an express NodeJS server"
-
-# Build argument for versioning
-ARG PANTHER_VERSION
-
-
-# Setup default ENV variables
-ENV SERVER_PORT=8080
-ENV NODE_ENV=production
-ENV PANTHER_VERSION=$PANTHER_VERSION
+LABEL description="The image that builds the web code and serves it through an express NodeJS server"
 
 # Update debian distro
 RUN apk update && apk add --no-cache --update nasm libtool alpine-sdk autoconf automake
@@ -37,18 +30,57 @@ RUN mkdir /code
 # To a different folder so we don't pollute the root of our container
 WORKDIR /code
 
-# Mount the package.json & lock
+# Mount the package.json
 ADD package.json package-lock.json ./
 
 # Install the dependencies
-RUN npm --production=false install
+RUN npm i
 
-# Mount the code
-ADD webpack.config.js tsconfig.json .babelrc ./
+# Mount the necessary source code
+ADD .babelrc tsconfig.json webpack.config.js ./
+ADD out/.env out/.env
 ADD web web
 
-# Build the project with the ENV vars present in the system & run the node server
-CMD npm run build-assets && npm run serve-assets
+# Build argument & ENV var for versioning
+ARG PANTHER_VERSION
+ENV PANTHER_VERSION=$PANTHER_VERSION
+
+# Convert NODE_ENV to production in order to adjust webpack configuration accordingly
+ENV NODE_ENV=production
+
+# Build the project (additional ENV vars are read from a .env)
+RUN npm run build
+
+#
+# ****************     DEPLOYMENT & SERVE STAGE     *******************
+#
+FROM node:13.2-alpine
+
+# Setup default port for fallback. This variable will be overriden on runtime by the associated ECS service.
+ENV SERVER_PORT=8080
+
+# Make sure we add a folder to not pollute our root
+RUN mkdir /code
+
+# And make it the default WD
+WORKDIR /code
+
+# Copy the artifacts from the previous stage
+COPY --from=build-env /code/web/dist web/dist
+
+# Add the script that runs the express server
+ADD package.json .
+ADD  web/scripts/serve.js web/scripts/serve.js
+
+# Install express
+#
+## WARNING: Be careful not to add the package.json, since it will install all of your dependencies
+## even when you explicitly try to install a single one
+#
+RUN npm install express express-static-gzip
+
+# Run the express server to serve the assets
+CMD npm run serve
 
 # through the port chosen during build time (defaults to 8080)
 EXPOSE ${SERVER_PORT}

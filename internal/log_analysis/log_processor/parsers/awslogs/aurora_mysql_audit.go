@@ -82,15 +82,15 @@ func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
 
 	event := &AuroraMySQLAudit{
 		Timestamp:    &timeStamp,
-		ServerHost:   csvStringToPointer(record[1]),
-		Username:     csvStringToPointer(record[2]),
-		Host:         csvStringToPointer(record[3]),
-		ConnectionID: csvStringToIntPointer(record[4]),
-		QueryID:      csvStringToIntPointer(record[5]),
-		Operation:    csvStringToPointer(record[6]),
-		Database:     csvStringToPointer(record[7]),
-		Object:       csvStringToPointer(objectString),
-		RetCode:      csvStringToIntPointer(record[len(record)-1]),
+		ServerHost:   parsers.CsvStringToPointer(record[1]),
+		Username:     parsers.CsvStringToPointer(record[2]),
+		Host:         parsers.CsvStringToPointer(record[3]),
+		ConnectionID: parsers.CsvStringToIntPointer(record[4]),
+		QueryID:      parsers.CsvStringToIntPointer(record[5]),
+		Operation:    parsers.CsvStringToPointer(record[6]),
+		Database:     parsers.CsvStringToPointer(record[7]),
+		Object:       parsers.CsvStringToPointer(objectString),
+		RetCode:      parsers.CsvStringToIntPointer(record[len(record)-1]),
 	}
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))

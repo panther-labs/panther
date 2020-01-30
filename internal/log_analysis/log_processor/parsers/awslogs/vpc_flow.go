@@ -103,20 +103,20 @@ func (p *VPCFlowParser) Parse(log string) []interface{} {
 	endTime := timestamp.Unix(int64(endTimeUnix), 0)
 
 	event := &VPCFlow{
-		Version:     csvStringToIntPointer(record[0]),
+		Version:     parsers.CsvStringToIntPointer(record[0]),
 		Account:     account,
-		InterfaceID: csvStringToPointer(record[2]),
-		SourceAddr:  csvStringToPointer(record[3]),
-		Dstaddr:     csvStringToPointer(record[4]),
-		SrcPort:     csvStringToIntPointer(record[5]),
-		DstPort:     csvStringToIntPointer(record[6]),
-		Protocol:    csvStringToIntPointer(record[7]),
-		Packets:     csvStringToIntPointer(record[8]),
-		Bytes:       csvStringToIntPointer(record[9]),
+		InterfaceID: parsers.CsvStringToPointer(record[2]),
+		SourceAddr:  parsers.CsvStringToPointer(record[3]),
+		Dstaddr:     parsers.CsvStringToPointer(record[4]),
+		SrcPort:     parsers.CsvStringToIntPointer(record[5]),
+		DstPort:     parsers.CsvStringToIntPointer(record[6]),
+		Protocol:    parsers.CsvStringToIntPointer(record[7]),
+		Packets:     parsers.CsvStringToIntPointer(record[8]),
+		Bytes:       parsers.CsvStringToIntPointer(record[9]),
 		Start:       &startTime,
 		End:         &endTime,
-		Action:      csvStringToPointer(record[12]),
-		LogStatus:   csvStringToPointer(record[13]),
+		Action:      parsers.CsvStringToPointer(record[12]),
+		LogStatus:   parsers.CsvStringToPointer(record[13]),
 	}
 
 	if err := parsers.Validator.Struct(event); err != nil {

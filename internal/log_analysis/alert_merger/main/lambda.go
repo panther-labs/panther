@@ -24,10 +24,12 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/alert_merger/merger"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
@@ -40,20 +42,41 @@ func main() {
 // Handler is the entry point for the alert merger Lambda
 func Handler(ctx context.Context, event events.SQSEvent) error {
 	_, logger := lambdalogger.ConfigureGlobal(ctx, nil)
+
+	var recordCount, errorCount int
+
+	operation := common.OpLogManager.Start("alertMerger")
+	defer func() {
+		operation.Stop()
+		var err error
+		if errorCount > 0 {
+			err = errors.New("failures merging alerts")
+		}
+		operation.Log(err,
+			zap.Int("recordCount", recordCount),
+			zap.Int("errorCount", errorCount))
+	}()
+
 	for _, record := range event.Records {
+		recordCount++
+
 		input := &merger.AlertNotification{}
 		if err := jsoniter.UnmarshalFromString(record.Body, input); err != nil {
-			logger.Warn("failed to unmarshall event", zap.Error(err))
-			return err
+			errorCount++
+			logger.Error("failed to unmarshal event", zap.Error(err), zap.Any("event", record))
+			continue // skip bad data, nothing to be done
 		}
 
 		if err := validate.Struct(input); err != nil {
-			logger.Error("invalid message received", zap.Error(err))
-			continue
+			errorCount++
+			logger.Error("invalid message received", zap.Error(err), zap.Any("input", input))
+			continue // skip bad data, nothing to be done
 		}
 
+		// this is where real work is done, for safety, fail lambda on any error
 		if err := merger.Handle(input); err != nil {
-			logger.Warn("encountered issue while processing event", zap.Error(err))
+			errorCount++
+			logger.Error("encountered issue while processing event", zap.Error(err), zap.Any("input", input))
 			return err
 		}
 	}

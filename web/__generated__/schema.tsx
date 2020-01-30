@@ -257,7 +257,8 @@ export type JiraConfig = {
   projectKey: Scalars['String'];
   userName: Scalars['String'];
   apiKey: Scalars['String'];
-  assigneeID?: Maybe<Scalars['String']>;
+  assigneeId?: Maybe<Scalars['String']>;
+  issueType?: Maybe<JiraIssueTypesEnum>;
 };
 
 export type JiraConfigInput = {
@@ -265,8 +266,15 @@ export type JiraConfigInput = {
   projectKey: Scalars['String'];
   userName: Scalars['String'];
   apiKey: Scalars['String'];
-  assigneeID?: Maybe<Scalars['String']>;
+  assigneeId?: Maybe<Scalars['String']>;
+  issueType?: Maybe<JiraIssueTypesEnum>;
 };
+
+export enum JiraIssueTypesEnum {
+  Bug = 'Bug',
+  Story = 'Story',
+  Task = 'Task',
+}
 
 export type ListAlertsInput = {
   ruleId?: Maybe<Scalars['ID']>;
@@ -491,7 +499,6 @@ export type Organization = {
   displayName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   alertReportFrequency?: Maybe<AlertReportFrequencyEnum>;
-  remediationConfig?: Maybe<RemediationConfig>;
 };
 
 export type OrganizationReportBySeverity = {
@@ -679,15 +686,6 @@ export type RemediateResourceInput = {
   resourceId: Scalars['ID'];
 };
 
-export type RemediationConfig = {
-  __typename?: 'RemediationConfig';
-  awsRemediationLambdaArn?: Maybe<Scalars['String']>;
-};
-
-export type RemediationConfigInput = {
-  awsRemediationLambdaArn?: Maybe<Scalars['String']>;
-};
-
 export type ResourceDetails = {
   __typename?: 'ResourceDetails';
   attributes?: Maybe<Scalars['AWSJSON']>;
@@ -838,7 +836,6 @@ export type UpdateOrganizationInput = {
   displayName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   alertReportFrequency?: Maybe<AlertReportFrequencyEnum>;
-  remediationConfig?: Maybe<RemediationConfigInput>;
 };
 
 export type UpdateUserInput = {

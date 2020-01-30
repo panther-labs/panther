@@ -19,20 +19,13 @@ package remediation
  */
 
 import (
-	"errors"
-	"fmt"
 	"os"
-	"strconv"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	analysisclient "github.com/panther-labs/panther/api/gateway/analysis/client"
@@ -42,29 +35,18 @@ import (
 	resourcesclient "github.com/panther-labs/panther/api/gateway/resources/client"
 	resourcesoperations "github.com/panther-labs/panther/api/gateway/resources/client/operations"
 	resourcesmodels "github.com/panther-labs/panther/api/gateway/resources/models"
-	organizationmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const remediationAction = "remediate"
 const listRemediationsAction = "listRemediations"
 
 var (
-	crossAccountRoleName     = os.Getenv("CROSS_ACCOUNT_ROLE")
-	sessionDurationSeconds   = os.Getenv("CROSS_ACCOUNT_SESSION_DURATION")
-	organizationsAPI         = os.Getenv("ORGANIZATIONS_API")
+	remediationLambdaArn     = os.Getenv("REMEDIATION_LAMBDA_ARN")
 	policiesServiceHostname  = os.Getenv("POLICIES_SERVICE_HOSTNAME")
 	policiesServicePath      = os.Getenv("POLICIES_SERVICE_PATH")
 	resourcesServiceHostname = os.Getenv("RESOURCES_SERVICE_HOSTNAME")
 	resourcesServicePath     = os.Getenv("RESOURCES_SERVICE_PATH")
-
-	// Cache of AWS credentials
-	cache *aws.Config
-
-	// Creating variables to make possible to mock 3rd party libraries
-	getLambda = getLambdaFunc
-	getCreds  = stscreds.NewCredentials
 
 	awsSession     = session.Must(session.NewSession())
 	httpClient     = gatewayapi.GatewayClient(awsSession)
@@ -81,28 +63,24 @@ var (
 
 // Remediate will invoke remediation action in an AWS account
 func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateResource) error {
-	zap.L().Info("handling remediation",
+	zap.L().Debug("handling remediation",
 		zap.Any("policyId", remediation.PolicyID),
 		zap.Any("resourceId", remediation.ResourceID))
 
 	policy, err := getPolicy(string(remediation.PolicyID))
 	if err != nil {
-		zap.L().Warn("Encountered issue when getting policy",
-			zap.Any("policyId", remediation.PolicyID))
-		return err
+		return errors.Wrap(err, "Encountered issue when getting policy")
 	}
 
 	if policy.AutoRemediationID == "" {
-		zap.L().Info("There is no remediation configured for this policy",
+		zap.L().Debug("There is no remediation configured for this policy",
 			zap.Any("policyId", remediation.PolicyID))
 		return nil
 	}
 
 	resource, err := getResource(string(remediation.ResourceID))
 	if err != nil {
-		zap.L().Warn("Encountered issue when getting resource",
-			zap.Any("resourceId", remediation.ResourceID))
-		return err
+		return errors.Wrap(err, "Encountered issue when getting resource")
 	}
 	remediationPayload := &Payload{
 		RemediationID: string(policy.AutoRemediationID),
@@ -116,10 +94,10 @@ func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateRes
 
 	_, err = remediator.invokeLambda(lambdaInput)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to invoke remediator")
 	}
 
-	zap.L().Info("finished remediate action")
+	zap.L().Debug("finished remediate action")
 	return nil
 }
 
@@ -142,7 +120,7 @@ func (remediator *Invoker) GetRemediations() (*remediationmodels.Remediations, e
 		return nil, err
 	}
 
-	zap.L().Info("finished action to get remediations")
+	zap.L().Debug("finished action to get remediations")
 	return &remediations, nil
 }
 
@@ -171,31 +149,18 @@ func getResource(resourceID string) (*resourcesmodels.Resource, error) {
 }
 
 func (remediator *Invoker) invokeLambda(lambdaInput *LambdaInput) ([]byte, error) {
-	customerLambdaFunctionArn, err := remediator.getLambdaArn()
-	if err != nil {
-		return nil, err
-	}
-
 	serializedPayload, err := jsoniter.Marshal(lambdaInput)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to marshal lambda input")
 	}
 
 	invokeInput := &lambda.InvokeInput{
 		Payload:      serializedPayload,
-		FunctionName: customerLambdaFunctionArn,
+		FunctionName: aws.String(remediationLambdaArn),
 	}
 
-	zap.L().Info("invoking Lambda in customer account")
-
-	creds, err := remediator.getAwsCredentials(*customerLambdaFunctionArn)
+	response, err := remediator.lambdaClient.Invoke(invokeInput)
 	if err != nil {
-		return nil, err
-	}
-
-	lambdaClient := getLambda(remediator.awsSession, creds)
-	var response *lambda.InvokeOutput
-	if response, err = lambdaClient.Invoke(invokeInput); err != nil {
 		return nil, err
 	}
 
@@ -203,58 +168,8 @@ func (remediator *Invoker) invokeLambda(lambdaInput *LambdaInput) ([]byte, error
 		return nil, errors.New("error invoking lambda: " + string(response.Payload))
 	}
 
-	zap.L().Info("finished Lambda invocation",
-		zap.String("functionArn", *customerLambdaFunctionArn))
-
+	zap.L().Debug("finished Lambda invocation")
 	return response.Payload, nil
-}
-
-func (remediator *Invoker) getAwsCredentials(functionArn string) (*aws.Config, error) {
-	if cache != nil {
-		return cache, nil
-	}
-
-	parsedArn, err := arn.Parse(functionArn)
-	if err != nil {
-		return nil, err
-	}
-	roleArn := fmt.Sprintf("arn:aws:iam::%s:role/%s",
-		parsedArn.AccountID,
-		crossAccountRoleName)
-	zap.L().Info("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
-
-	creds := getCreds(remediator.awsSession, roleArn, func(p *stscreds.AssumeRoleProvider) {
-		p.Duration = time.Duration(mustParseInt(sessionDurationSeconds)) * time.Second
-	})
-
-	config := &aws.Config{Region: aws.String(parsedArn.Region), Credentials: creds}
-	cache = config
-	return config, nil
-}
-
-func mustParseInt(text string) int {
-	val, err := strconv.Atoi(text)
-	if err != nil {
-		panic(err)
-	}
-	return val
-}
-
-func getLambdaFunc(p client.ConfigProvider, cfgs *aws.Config) lambdaiface.LambdaAPI {
-	return lambda.New(p, cfgs)
-}
-
-func (remediator *Invoker) getLambdaArn() (*string, error) {
-	input := organizationmodels.LambdaInput{GetOrganization: &organizationmodels.GetOrganizationInput{}}
-	var output organizationmodels.GetOrganizationOutput
-	if err := genericapi.Invoke(remediator.lambdaClient, organizationsAPI, &input, &output); err != nil {
-		return nil, err
-	}
-
-	if output.Organization.RemediationConfig == nil || output.Organization.RemediationConfig.AwsRemediationLambdaArn == nil {
-		return nil, &genericapi.DoesNotExistError{Message: "there is no aws remediation lambda configured for organization"}
-	}
-	return output.Organization.RemediationConfig.AwsRemediationLambdaArn, nil
 }
 
 //LambdaInput is the input to the Remediation Lambda running in customer account

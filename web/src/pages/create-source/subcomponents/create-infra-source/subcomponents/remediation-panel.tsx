@@ -18,13 +18,12 @@
 
 import React from 'react';
 import { Box, Button, Heading, Text } from 'pouncejs';
-import { PANTHER_REMEDIATION_SATELLITE_ACCOUNT } from 'Source/constants';
 
 const RemediationPanel: React.FC = () => {
-  const cfnLink =
-    `https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review` +
-    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}/latest/template.yml` +
-    `&stackName=${PANTHER_REMEDIATION_SATELLITE_ACCOUNT}` +
+  const cfnConsoleLink =
+    `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
+    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-remediations-iam/latest/template.yml` +
+    `&stackName=panther-remediations-iam-roles` +
     `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}`;
 
   return (
@@ -39,11 +38,6 @@ const RemediationPanel: React.FC = () => {
         <br />
         This stack will configure Panther to fix misconfigured infrastructure as soon as it is
         detected. Remediations can be configured on a per-policy basis to take any desired actions.
-        <br />
-        <br />
-        After a successful deployment, you will have to come back to this page to save the ARN of
-        the created lambda. You will be able to edit it afterwards through your Organization{"'"}s
-        settings page.
         <br />
         <br />
         If you need more information on the process, please visit our{' '}
@@ -62,7 +56,7 @@ const RemediationPanel: React.FC = () => {
         target="_blank"
         is="a"
         rel="noopener noreferrer"
-        href={cfnLink}
+        href={cfnConsoleLink}
       >
         Launch Stack
       </Button>

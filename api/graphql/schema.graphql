@@ -249,11 +249,6 @@ input UpdateOrganizationInput {
   displayName: String
   email: String
   alertReportFrequency: AlertReportFrequencyEnum
-  remediationConfig: RemediationConfigInput
-}
-
-input RemediationConfigInput {
-  awsRemediationLambdaArn: String
 }
 
 type Organization {
@@ -261,11 +256,6 @@ type Organization {
   displayName: String
   email: String
   alertReportFrequency: AlertReportFrequencyEnum
-  remediationConfig: RemediationConfig
-}
-
-type RemediationConfig {
-  awsRemediationLambdaArn: String
 }
 
 input TestPolicyInput {
@@ -370,7 +360,8 @@ type JiraConfig {
   projectKey: String!
   userName: String!
   apiKey: String!
-  assigneeID: String
+  assigneeId: String
+  issueType: JiraIssueTypesEnum
 }
 
 type GithubConfig {
@@ -426,7 +417,8 @@ input JiraConfigInput {
   projectKey: String!
   userName: String!
   apiKey: String!
-  assigneeID: String
+  assigneeId: String
+  issueType: JiraIssueTypesEnum
 }
 
 input GithubConfigInput {
@@ -685,6 +677,12 @@ enum SeverityEnum {
   MEDIUM
   HIGH
   CRITICAL
+}
+
+enum JiraIssueTypesEnum {
+  Bug
+  Story
+  Task
 }
 
 enum AccountTypeEnum {

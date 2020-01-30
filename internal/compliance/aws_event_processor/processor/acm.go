@@ -38,7 +38,8 @@ func classifyACM(detail gjson.Result, accountID string) []*resourceChange {
 
 	var certARN string
 	switch eventName {
-	case "AddTagsToCertificate", "DeleteCertificate", "RemoveTags", "RenewCertificate", "UpdateCertificateOptions":
+	case "AddTagsToCertificate", "DeleteCertificate", "RemoveTags", "RenewCertificate", "UpdateCertificateOptions",
+		"RemoveTagsFromCertificate":
 		certARN = detail.Get("requestParameters.certificateArn").Str
 	case "ImportCertificate", "RequestCertificate":
 		certARN = detail.Get("responseElements.certificateArn").Str

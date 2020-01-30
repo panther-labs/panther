@@ -64,35 +64,9 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 		return nil, err
 	}
 
-	defaults, err := defaultsTable.GetDefaults()
-	if err != nil {
-		return nil, err
-	}
-
-	// Removing outputId from all defaults
-	for _, defaultOutput := range defaults {
-		defaultOutput.OutputIDs = removeFromSlice(defaultOutput.OutputIDs, input.OutputID)
-		if err := defaultsTable.PutDefaults(defaultOutput); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := addToDefaults(input.DefaultForSeverity, input.OutputID); err != nil {
-		return nil, err
-	}
-
 	alertOutput.CreatedBy = alertOutputItem.CreatedBy
 	alertOutput.CreationTime = alertOutputItem.CreationTime
 	alertOutput.VerificationStatus = alertOutputItem.VerificationStatus
 
 	return alertOutput, nil
-}
-
-func removeFromSlice(slice []*string, item *string) []*string {
-	for i, element := range slice {
-		if *element == *item {
-			return append(slice[:i], slice[i+1:]...)
-		}
-	}
-	return slice
 }

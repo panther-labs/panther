@@ -25,12 +25,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // UpdateOutput updates an existing item in the table
-func (table *OutputsTable) UpdateOutput(alertOutput *models.AlertOutputItem) (*models.AlertOutputItem, error) {
+func (table *OutputsTable) UpdateOutput(alertOutput *AlertOutputItem) (*AlertOutputItem, error) {
 	updateExpression := expression.
 		Set(expression.Name("displayName"), expression.Value(alertOutput.DisplayName)).
 		Set(expression.Name("lastModifiedBy"), expression.Value(alertOutput.LastModifiedBy)).
@@ -73,7 +72,7 @@ func (table *OutputsTable) UpdateOutput(alertOutput *models.AlertOutputItem) (*m
 		return nil, &genericapi.AWSError{Method: "dynamodb.UpdateItem", Err: err}
 	}
 
-	var output models.AlertOutputItem
+	var output AlertOutputItem
 	if err = dynamodbattribute.UnmarshalMap(updateResult.Attributes, &output); err != nil {
 		return nil, &genericapi.InternalError{
 			Message: "failed to unmarshal dynamo item to an AlertOutputItem: " + err.Error()}

@@ -23,15 +23,19 @@ import (
 	"encoding/hex"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // GetAlert retrieves details for a given alert
 func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput, err error) {
-	zap.L().Info("getting alert", zap.Any("input", input))
+	operation := common.OpLogManager.Start("getAlert")
+	defer func() {
+		operation.Stop()
+		operation.Log(err)
+	}()
 
 	alertItem, err := alertsDB.GetAlert(input.AlertID)
 	if err != nil {
@@ -43,7 +47,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		RuleID:           alertItem.RuleID,
 		CreationTime:     alertItem.CreationTime,
 		LastEventMatched: alertItem.LastEventMatched,
-		MatchedEventNum:  aws.Int(len(alertItem.EventHashes)),
+		EventsMatched:    aws.Int(len(alertItem.EventHashes)),
 	}
 
 	var eventHashesToReturn [][]byte

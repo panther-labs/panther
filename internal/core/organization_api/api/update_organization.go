@@ -30,7 +30,6 @@ func (API) UpdateOrganization(
 		DisplayName:          input.DisplayName,
 		Email:                input.Email,
 		Phone:                input.Phone,
-		RemediationConfig:    input.RemediationConfig,
 	})
 	if err != nil {
 		return nil, err

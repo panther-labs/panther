@@ -22,8 +22,8 @@ BucketsParameterValues:
   AccessLogsBucketName: ''
 
 
-# CloudFormation parameter overrides for the template.yml main application stack.
-AppParameterValues:
+# CloudFormation parameter overrides for the backend.yml which deploys the backend stack.
+BackendParameterValues:
   # Retention period for all Panther CloudWatch log groups.
   CloudWatchLogRetentionDays: 365
 
@@ -49,7 +49,6 @@ AppParameterValues:
 
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
-
 
 # Create a Python layer with these pip library versions.
 #

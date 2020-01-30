@@ -32,9 +32,9 @@ type mockOutputTable struct {
 	mock.Mock
 }
 
-func (m *mockOutputTable) GetOutput(outputID *string) (*models.AlertOutputItem, error) {
+func (m *mockOutputTable) GetOutput(outputID *string) (*table.AlertOutputItem, error) {
 	args := m.Called(outputID)
-	return args.Get(0).(*models.AlertOutputItem), args.Error(1)
+	return args.Get(0).(*table.AlertOutputItem), args.Error(1)
 }
 
 func (m *mockOutputTable) DeleteOutput(outputID *string) error {
@@ -42,47 +42,27 @@ func (m *mockOutputTable) DeleteOutput(outputID *string) error {
 	return args.Error(0)
 }
 
-func (m *mockOutputTable) GetOutputs() ([]*models.AlertOutputItem, error) {
+func (m *mockOutputTable) GetOutputs() ([]*table.AlertOutputItem, error) {
 	args := m.Called()
-	return args.Get(0).([]*models.AlertOutputItem), args.Error(1)
+	return args.Get(0).([]*table.AlertOutputItem), args.Error(1)
 }
 
-func (m *mockOutputTable) UpdateOutput(input *models.AlertOutputItem) (*models.AlertOutputItem, error) {
+func (m *mockOutputTable) UpdateOutput(input *table.AlertOutputItem) (*table.AlertOutputItem, error) {
 	args := m.Called(input)
-	return args.Get(0).(*models.AlertOutputItem), args.Error(1)
+	return args.Get(0).(*table.AlertOutputItem), args.Error(1)
 }
 
-func (m *mockOutputTable) GetOutputByName(displayName *string) (*models.AlertOutputItem, error) {
+func (m *mockOutputTable) GetOutputByName(displayName *string) (*table.AlertOutputItem, error) {
 	args := m.Called(displayName)
 	alertOutputItem := args.Get(0)
 	if alertOutputItem == nil {
 		return nil, args.Error(1)
 	}
-	return alertOutputItem.(*models.AlertOutputItem), args.Error(1)
+	return alertOutputItem.(*table.AlertOutputItem), args.Error(1)
 }
 
-func (m *mockOutputTable) PutOutput(output *models.AlertOutputItem) error {
+func (m *mockOutputTable) PutOutput(output *table.AlertOutputItem) error {
 	args := m.Called(output)
-	return args.Error(0)
-}
-
-type mockDefaultsTable struct {
-	table.DefaultsTable
-	mock.Mock
-}
-
-func (m *mockDefaultsTable) GetDefaults() ([]*models.DefaultOutputsItem, error) {
-	args := m.Called()
-	return args.Get(0).([]*models.DefaultOutputsItem), args.Error(1)
-}
-
-func (m *mockDefaultsTable) GetDefault(severity *string) (*models.DefaultOutputsItem, error) {
-	args := m.Called()
-	return args.Get(0).(*models.DefaultOutputsItem), args.Error(1)
-}
-
-func (m *mockDefaultsTable) PutDefaults(item *models.DefaultOutputsItem) error {
-	args := m.Called(item)
 	return args.Error(0)
 }
 

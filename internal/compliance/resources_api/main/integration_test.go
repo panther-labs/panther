@@ -266,9 +266,9 @@ func getSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	assert.NoError(t, result.Payload.Validate(nil))
+	require.NoError(t, result.Payload.Validate(nil))
 	bucket.LastModified = result.Payload.LastModified
-	assert.Equal(t, bucket, result.Payload)
+	require.Equal(t, bucket, result.Payload)
 }
 
 func modifyInvalid(t *testing.T) {

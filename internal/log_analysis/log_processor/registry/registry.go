@@ -21,6 +21,7 @@ package registry
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginx"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
@@ -46,6 +47,8 @@ var (
 			&awslogs.AuroraMySQLAudit{}, awslogs.AuroraMySQLAuditDesc),
 		(&awslogs.GuardDutyParser{}).LogType(): DefaultHourlyLogParser(&awslogs.GuardDutyParser{},
 			&awslogs.GuardDuty{}, awslogs.GuardDutyDesc),
+		(&nginx.AccessParser{}).LogType(): DefaultHourlyLogParser(&nginx.AccessParser{},
+			&nginx.Access{}, nginx.AccessDesc),
 		(&osquerylogs.DifferentialParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.DifferentialParser{},
 			&osquerylogs.Differential{}, osquerylogs.DifferentialDesc),
 		(&osquerylogs.BatchParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.BatchParser{},

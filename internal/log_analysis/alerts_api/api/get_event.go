@@ -21,17 +21,23 @@ package api
 import (
 	"encoding/hex"
 
-	"go.uber.org/zap"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 )
 
 // GetEvent retrieves a specific event
-func (API) GetEvent(input *models.GetEventInput) (*models.GetEventOutput, error) {
-	zap.L().Info("getting alert", zap.Any("input", input))
+func (API) GetEvent(input *models.GetEventInput) (output *models.GetEventOutput, err error) {
+	operation := common.OpLogManager.Start("getEvent")
+	defer func() {
+		operation.Stop()
+		operation.Log(err)
+	}()
 
 	binaryEventID, err := hex.DecodeString(*input.EventID)
 	if err != nil {
+		err = errors.Wrap(err, "failed to decode: "+*input.EventID)
 		return nil, err
 	}
 	event, err := alertsDB.GetEvent(binaryEventID)

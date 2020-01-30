@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
 
 var mockUpdateOutputInput = &models.UpdateOutputInput{
@@ -41,10 +42,8 @@ func TestUpdateOutput(t *testing.T) {
 	outputsTable = mockOutputsTable
 	mockEncryptionKey := &mockEncryptionKey{}
 	encryptionKey = mockEncryptionKey
-	mockDefaultsTable := &mockDefaultsTable{}
-	defaultsTable = mockDefaultsTable
 
-	alertOutputItem := &models.AlertOutputItem{
+	alertOutputItem := &table.AlertOutputItem{
 		OutputID:           aws.String("outputId"),
 		DisplayName:        aws.String("displayName"),
 		CreatedBy:          aws.String("createdBy"),
@@ -54,9 +53,6 @@ func TestUpdateOutput(t *testing.T) {
 		EncryptedConfig:    make([]byte, 1),
 	}
 
-	mockDefaultsTable.On("GetDefaults", mock.Anything).Return([]*models.DefaultOutputsItem{}, nil)
-	mockDefaultsTable.On("GetDefault", mock.Anything).Return(&models.DefaultOutputsItem{}, nil)
-	mockDefaultsTable.On("PutDefaults", mock.Anything).Return(nil)
 	mockOutputsTable.On("UpdateOutput", mock.Anything).Return(alertOutputItem, nil)
 	mockOutputsTable.On("GetOutputByName", aws.String("displayName")).Return(nil, nil)
 	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
@@ -78,7 +74,7 @@ func TestUpdateOutputOtherItemExists(t *testing.T) {
 	mockOutputsTable := &mockOutputTable{}
 	outputsTable = mockOutputsTable
 
-	preExistingAlertItem := &models.AlertOutputItem{
+	preExistingAlertItem := &table.AlertOutputItem{
 		OutputID: aws.String("outputId-2"),
 	}
 
@@ -96,10 +92,8 @@ func TestUpdateSameOutpuOutput(t *testing.T) {
 	outputsTable = mockOutputsTable
 	mockEncryptionKey := &mockEncryptionKey{}
 	encryptionKey = mockEncryptionKey
-	mockDefaultsTable := &mockDefaultsTable{}
-	defaultsTable = mockDefaultsTable
 
-	alertOutputItem := &models.AlertOutputItem{
+	alertOutputItem := &table.AlertOutputItem{
 		OutputID:           aws.String("outputId"),
 		DisplayName:        aws.String("displayName"),
 		CreatedBy:          aws.String("createdBy"),
@@ -109,13 +103,10 @@ func TestUpdateSameOutpuOutput(t *testing.T) {
 		EncryptedConfig:    make([]byte, 1),
 	}
 
-	preExistingAlertItem := &models.AlertOutputItem{
+	preExistingAlertItem := &table.AlertOutputItem{
 		OutputID: mockUpdateOutputInput.OutputID,
 	}
 
-	mockDefaultsTable.On("GetDefaults", mock.Anything).Return([]*models.DefaultOutputsItem{}, nil)
-	mockDefaultsTable.On("GetDefault", mock.Anything).Return(&models.DefaultOutputsItem{}, nil)
-	mockDefaultsTable.On("PutDefaults", mock.Anything).Return(nil)
 	mockOutputsTable.On("UpdateOutput", mock.Anything).Return(alertOutputItem, nil)
 	mockOutputsTable.On("GetOutputByName", aws.String("displayName")).Return(preExistingAlertItem, nil)
 	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)

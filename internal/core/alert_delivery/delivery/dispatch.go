@@ -25,7 +25,6 @@ import (
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // outputStatus communicates parallelized alert delivery status via channels.
@@ -38,9 +37,9 @@ type outputStatus struct {
 // Send an alert to one specific output (run as a child goroutine).
 //
 // The statusChannel will be sent a message with the result of the send attempt.
-func send(alert *alertmodels.Alert, outputID string, statusChannel chan outputStatus) {
+func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChannel chan outputStatus) {
 	commonFields := []zap.Field{
-		zap.String("outputID", outputID),
+		zap.String("outputID", *output.OutputID),
 		zap.String("policyId", *alert.PolicyID),
 	}
 	logger := zap.L()
@@ -50,25 +49,13 @@ func send(alert *alertmodels.Alert, outputID string, statusChannel chan outputSt
 		// Otherwise, the main routine will wait forever for this to finish.
 		if r := recover(); r != nil {
 			logger.Error("panic sending alert", append(commonFields, zap.Any("panic", r))...)
-			statusChannel <- outputStatus{outputID: outputID, success: false, needsRetry: false}
+			statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}
 		}
 	}()
 
-	//Get output configuration
-	output, err := getOutput(outputID)
-	if err != nil {
-		logger.Warn("error getting output", append(commonFields, zap.Error(err))...)
-		if lambdaErr, ok := err.(*genericapi.LambdaError); ok && aws.StringValue(lambdaErr.ErrorType) == "DoesNotExistError" {
-			statusChannel <- outputStatus{outputID: outputID, success: false, needsRetry: false}
-		} else {
-			statusChannel <- outputStatus{outputID: outputID, success: false, needsRetry: true}
-		}
-		return
-	}
-
 	if aws.StringValue(output.VerificationStatus) != outputmodels.VerificationStatusSuccess {
 		zap.L().Warn("Output is not verified successfully. Will not send notification")
-		statusChannel <- outputStatus{outputID: outputID, success: false, needsRetry: false}
+		statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}
 		return
 	}
 
@@ -99,25 +86,25 @@ func send(alert *alertmodels.Alert, outputID string, statusChannel chan outputSt
 		alertDeliveryError = outputClient.Sns(alert, output.OutputConfig.Sns)
 	default:
 		logger.Warn("unsupported output type", commonFields...)
-		statusChannel <- outputStatus{outputID: outputID, success: false, needsRetry: false}
+		statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}
 		return
 	}
 	if alertDeliveryError != nil {
 		logger.Warn("failed to send alert", append(commonFields, zap.Error(alertDeliveryError))...)
 		statusChannel <- outputStatus{
-			outputID: outputID, success: false, needsRetry: !alertDeliveryError.Permanent}
+			outputID: *output.OutputID, success: false, needsRetry: !alertDeliveryError.Permanent}
 		return
 	}
 
 	logger.Info("alert success", commonFields...)
-	statusChannel <- outputStatus{outputID: outputID, success: true, needsRetry: false}
+	statusChannel <- outputStatus{outputID: *output.OutputID, success: true, needsRetry: false}
 }
 
 // Dispatch sends the alert to each of its designated outputs.
 //
 // Returns true if the alert was sent successfully, false if it needs to be retried.
 func dispatch(alert *alertmodels.Alert) bool {
-	outputIds, err := getAlertOutputIds(alert)
+	outputs, err := getAlertOutputs(alert)
 
 	if err != nil {
 		zap.L().Warn("failed to get the outputs for the alert",
@@ -128,7 +115,7 @@ func dispatch(alert *alertmodels.Alert) bool {
 		return false
 	}
 
-	if len(outputIds) == 0 {
+	if len(outputs) == 0 {
 		zap.L().Info("no outputs configured",
 			zap.String("policyId", *alert.PolicyID),
 			zap.String("severity", *alert.Severity),
@@ -136,22 +123,16 @@ func dispatch(alert *alertmodels.Alert) bool {
 		return true
 	}
 
-	zap.L().Info(
-		"dispatching alert",
-		zap.Strings("outputIDs", aws.StringValueSlice(outputIds)),
-		zap.String("policyId", *alert.PolicyID),
-	)
-
 	// Dispatch all outputs in parallel.
 	// This ensures one slow or failing output won't block the others.
 	statusChannel := make(chan outputStatus)
-	for _, outputID := range outputIds {
-		go send(alert, *outputID, statusChannel)
+	for _, output := range outputs {
+		go send(alert, output, statusChannel)
 	}
 
 	// Wait until all outputs have finished, gathering any that need to be retried.
 	var retryOutputs []*string
-	for range outputIds {
+	for range outputs {
 		status := <-statusChannel
 		if status.needsRetry {
 			retryOutputs = append(retryOutputs, aws.String(status.outputID))

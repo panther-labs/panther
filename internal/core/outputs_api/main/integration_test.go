@@ -36,9 +36,8 @@ import (
 )
 
 const (
-	outputsAPI        = "panther-outputs-api"
-	defaultsTableName = "panther-default-outputs"
-	tableName         = "panther-outputs"
+	outputsAPI = "panther-outputs-api"
+	tableName  = "panther-outputs"
 )
 
 var (
@@ -73,7 +72,6 @@ func TestIntegrationAPI(t *testing.T) {
 	}
 
 	require.NoError(t, testutils.ClearDynamoTable(awsSession, tableName))
-	require.NoError(t, testutils.ClearDynamoTable(awsSession, defaultsTableName))
 
 	// Add one of each output type in parallel.
 	t.Run("Add", func(t *testing.T) {
@@ -92,32 +90,11 @@ func TestIntegrationAPI(t *testing.T) {
 		return
 	}
 
-	t.Run("SetDefaultOutputs", setDefaultOutput)
-	if t.Failed() {
-		return
-	}
-
 	// Get outputs in parallel
 	t.Run("Get", func(t *testing.T) {
-		t.Run("GetOrganizationOutputs", getOrganizationOutputs)
+		t.Run("GetOutputs", getOutputs)
 		t.Run("GetOutput", getOutput)
-		t.Run("GetDefaults", getDefaults)
 	})
-	if t.Failed() {
-		return
-	}
-
-	t.Run("SetDefaultOutputs", setDefaultOutput)
-	if t.Failed() {
-		return
-	}
-
-	t.Run("DeleteOutputInUse", deleteOutputInUse)
-	if t.Failed() {
-		return
-	}
-
-	t.Run("ForceDeleteOutputInUse", forceDeleteOutputInUse)
 	if t.Failed() {
 		return
 	}
@@ -146,7 +123,6 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("DeleteSnsEmpty", deleteSnsEmpty)
 		t.Run("UpdateSnsEmpty", updateSnsEmpty)
 		t.Run("GetOutputEmpty", getSnsEmpty)
-		t.Run("SetDefaultOutputDoesntExist", setDefaultOutputDoesntExist)
 	})
 	if t.Failed() {
 		return
@@ -189,14 +165,7 @@ func addSlack(t *testing.T) {
 	assert.NotNil(t, output.OutputID)
 	assert.Equal(t, aws.String("alert-channel"), output.DisplayName)
 	assert.Equal(t, aws.String("slack"), output.OutputType)
-
-	defaults, err := getDefaultOutputsInternal()
-	require.NoError(t, err)
-	expectedDefaultOutputs := &models.DefaultOutputs{
-		Severity:  aws.String("HIGH"),
-		OutputIDs: []*string{output.OutputID},
-	}
-	assert.Equal(t, []*models.DefaultOutputs{expectedDefaultOutputs}, defaults.Defaults)
+	assert.Equal(t, aws.StringSlice([]string{"HIGH"}), output.DefaultForSeverity)
 
 	slackOutputID = output.OutputID
 }
@@ -257,63 +226,6 @@ func addSnsDuplicate(t *testing.T) {
 	assert.Equal(t, expected, err)
 }
 
-func setDefaultOutput(t *testing.T) {
-	input := models.LambdaInput{
-		SetDefaultOutputs: &models.SetDefaultOutputsInput{
-			Severity:  aws.String("HIGH"),
-			OutputIDs: []*string{slackOutputID, pagerDutyOutputID},
-		},
-	}
-	assert.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, nil))
-}
-
-func deleteOutputInUse(t *testing.T) {
-	input := models.LambdaInput{
-		DeleteOutput: &models.DeleteOutputInput{
-			OutputID: slackOutputID,
-		},
-	}
-	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
-	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String(
-			"DeleteOutput failed: still in use: This destination is currently in use, please try again in a few seconds"),
-		ErrorType:    aws.String("InUseError"),
-		FunctionName: outputsAPI,
-	}
-	assert.Equal(t, expected, err)
-}
-
-func forceDeleteOutputInUse(t *testing.T) {
-	input := models.LambdaInput{
-		DeleteOutput: &models.DeleteOutputInput{
-			OutputID: pagerDutyOutputID,
-			Force:    aws.Bool(true),
-		},
-	}
-	assert.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, nil))
-
-	// Verify the output is deleted
-	_, err := getOutputInternal(pagerDutyOutputID)
-	require.Error(t, err)
-	expectedError := &genericapi.LambdaError{
-		ErrorMessage: aws.String(
-			"GetOutput failed: does not exist: outputId=" + aws.StringValue(pagerDutyOutputID)),
-		ErrorType:    aws.String("DoesNotExistError"),
-		FunctionName: outputsAPI,
-	}
-	assert.Equal(t, expectedError, err)
-
-	//Verify PagerDuty is not listed in the defaults
-	outputs, _ := getDefaultOutputsInternal()
-	for _, defaultOutput := range outputs.Defaults {
-		for _, output := range defaultOutput.OutputIDs {
-			if *output == *pagerDutyOutputID {
-				assert.Fail(t, "PagerDuty is still present")
-			}
-		}
-	}
-}
-
 func updateInvalid(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
@@ -346,20 +258,13 @@ func updateSlack(t *testing.T) {
 		},
 	}
 	var output models.UpdateOutputOutput
-	assert.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
-	assert.Equal(t, slackOutputID, output.OutputID)
-	assert.Equal(t, aws.String("alert-channel-new"), output.DisplayName)
-	assert.Equal(t, slack, output.OutputConfig.Slack)
-	assert.Equal(t, aws.String("slack"), output.OutputType)
-	assert.Nil(t, output.OutputConfig.Sns)
-
-	defaults, err := getDefaultOutputsInternal()
-	require.NoError(t, err)
-	expectedDefaultOutputs := &models.DefaultOutputs{
-		Severity:  aws.String("CRITICAL"),
-		OutputIDs: []*string{slackOutputID},
-	}
-	assert.Equal(t, []*models.DefaultOutputs{expectedDefaultOutputs}, defaults.Defaults)
+	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
+	require.Equal(t, slackOutputID, output.OutputID)
+	require.Equal(t, aws.String("alert-channel-new"), output.DisplayName)
+	require.Equal(t, slack, output.OutputConfig.Slack)
+	require.Equal(t, aws.String("slack"), output.OutputType)
+	require.Nil(t, output.OutputConfig.Sns)
+	require.Equal(t, aws.StringSlice([]string{"CRITICAL"}), output.DefaultForSeverity)
 }
 
 func updateSns(t *testing.T) {
@@ -406,17 +311,6 @@ func getSnsEmpty(t *testing.T) {
 	assert.Error(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, nil))
 }
 
-func setDefaultOutputDoesntExist(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{
-		SetDefaultOutputs: &models.SetDefaultOutputsInput{
-			Severity:  aws.String("HIGH"),
-			OutputIDs: []*string{snsOutputID},
-		},
-	}
-	assert.Error(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, nil))
-}
-
 func deleteInvalid(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{DeleteOutput: &models.DeleteOutputInput{}}
@@ -456,10 +350,10 @@ func deleteSnsEmpty(t *testing.T) {
 	assert.Equal(t, expected, err)
 }
 
-func getOrganizationOutputs(t *testing.T) {
+func getOutputs(t *testing.T) {
 	t.Parallel()
-	input := models.LambdaInput{GetOrganizationOutputs: &models.GetOrganizationOutputsInput{}}
-	var output models.GetOrganizationOutputsOutput
+	input := models.LambdaInput{GetOutputs: &models.GetOutputsInput{}}
+	var output models.GetOutputsOutput
 	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
 
 	// We need to sort the output because order of returned outputItems is not guaranteed by DDB
@@ -496,7 +390,7 @@ func getOrganizationOutputs(t *testing.T) {
 	assert.Nil(t, output[2].OutputConfig.Slack)
 	assert.Nil(t, output[2].OutputConfig.Sns)
 	assert.Equal(t, pagerDuty, output[2].OutputConfig.PagerDuty)
-	assert.Equal(t, aws.StringSlice([]string{"HIGH"}), output[2].DefaultForSeverity)
+	assert.Equal(t, aws.StringSlice([]string{}), output[2].DefaultForSeverity)
 }
 
 func getOutput(t *testing.T) {
@@ -513,43 +407,6 @@ func getOutput(t *testing.T) {
 	assert.Nil(t, output.OutputConfig.Slack)
 	assert.Equal(t, sns, output.OutputConfig.Sns)
 	assert.Equal(t, []*string{}, output.DefaultForSeverity)
-}
-
-func getDefaults(t *testing.T) {
-	t.Parallel()
-
-	expectedResult := models.GetDefaultOutputsOutput{
-		Defaults: []*models.DefaultOutputs{
-			{
-				Severity:  aws.String("HIGH"),
-				OutputIDs: []*string{slackOutputID, pagerDutyOutputID},
-			},
-		},
-	}
-
-	outputs, err := getDefaultOutputsInternal()
-	require.NoError(t, err)
-	require.Len(t, outputs.Defaults, 1)
-
-	ids := outputs.Defaults[0].OutputIDs
-	sort.Slice(ids, func(i, j int) bool {
-		return *(ids[i]) < *(ids[j])
-	})
-	ids = expectedResult.Defaults[0].OutputIDs
-	sort.Slice(ids, func(i, j int) bool {
-		return *(ids[i]) < *(ids[j])
-	})
-
-	assert.Equal(t, expectedResult, outputs)
-}
-
-func getDefaultOutputsInternal() (models.GetDefaultOutputsOutput, error) {
-	input := models.LambdaInput{
-		GetDefaultOutputs: &models.GetDefaultOutputsInput{},
-	}
-	var output models.GetDefaultOutputsOutput
-	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &output)
-	return output, err
 }
 
 func getOutputInternal(outputID *string) (models.GetOutputOutput, error) {

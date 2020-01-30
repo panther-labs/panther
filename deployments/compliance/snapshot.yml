@@ -256,6 +256,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
+          SNAPSHOT_POLLERS_QUEUE_URL: !Ref Queue
       Events:
         ScheduleScans:
           Type: Schedule
@@ -277,6 +278,22 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+        -
+          Id: SendSQSMessages
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !GetAtt Queue.Arn
+            -
+              Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
 
   SchedulerLogGroup:
     Type: AWS::Logs::LogGroup

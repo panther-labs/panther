@@ -19,7 +19,7 @@
 import { RoleNameEnum, SeverityEnum } from 'Generated/schema';
 import { BadgeProps } from 'pouncejs';
 
-export const AWS_ACCOUNT_ID_REGEX = new RegExp('\\d{12}');
+export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');
 
 export const INCLUDE_DIGITS_REGEX = new RegExp('(?=.*[0-9])');
 
@@ -73,6 +73,7 @@ export const LOG_TYPES = [
   'AWS.GuardDuty',
   'AWS.S3ServerAccess',
   'AWS.VPCFlow',
+  'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
   'Osquery.Snapshot',
@@ -102,5 +103,3 @@ export enum INTEGRATION_TYPES {
   AWS_LOGS = 'aws-s3',
   AWS_INFRA = 'aws-scan',
 }
-
-export const PANTHER_REMEDIATION_SATELLITE_ACCOUNT = 'panther-aws-remediations-satellite-account';

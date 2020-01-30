@@ -87,7 +87,7 @@ func TestUpdate(t *testing.T) {
 	org := &models.Organization{}
 
 	output := &dynamodb.UpdateItemOutput{
-		Attributes: DynamoItem{"id": {S: aws.String("1")}},
+		Attributes: DynamoItem{"id": {S: aws.String(orgID)}},
 	}
 
 	expectedUpdate := expression.
@@ -95,8 +95,7 @@ func TestUpdate(t *testing.T) {
 		Set(expression.Name("awsConfig"), expression.Value(org.AwsConfig)).
 		Set(expression.Name("displayName"), expression.Value(org.DisplayName)).
 		Set(expression.Name("email"), expression.Value(org.Email)).
-		Set(expression.Name("phone"), expression.Value(org.Phone)).
-		Set(expression.Name("remediationConfig"), expression.Value(org.RemediationConfig))
+		Set(expression.Name("phone"), expression.Value(org.Phone))
 	expectedCondition := expression.AttributeExists(expression.Name("id"))
 	expectedExpression, _ := expression.NewBuilder().WithCondition(expectedCondition).WithUpdate(expectedUpdate).Build()
 
@@ -104,7 +103,7 @@ func TestUpdate(t *testing.T) {
 		ConditionExpression:       expectedExpression.Condition(),
 		ExpressionAttributeNames:  expectedExpression.Names(),
 		ExpressionAttributeValues: expectedExpression.Values(),
-		Key:                       DynamoItem{"id": {S: aws.String("1")}},
+		Key:                       DynamoItem{"id": {S: aws.String(orgID)}},
 		ReturnValues:              aws.String("ALL_NEW"),
 		TableName:                 aws.String("test-table"),
 		UpdateExpression:          expectedExpression.Update(),
@@ -123,7 +122,7 @@ func TestUpdate(t *testing.T) {
 func TestAddActions(t *testing.T) {
 	mockClient := &mockDynamoClient{}
 	output := &dynamodb.UpdateItemOutput{
-		Attributes: DynamoItem{"id": {S: aws.String("1")}},
+		Attributes: DynamoItem{"id": {S: aws.String(orgID)}},
 	}
 	mockClient.On("UpdateItem", mock.Anything).Return(output, nil)
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}

@@ -89,13 +89,15 @@ func Handle(batch *events.SQSEvent) error {
 
 func handleCloudtrail(body string, changes map[string]*resourceChange) {
 	// this event potentially requires a change to some number of resources
-	// TODO - store the raw event somewhere
 	for _, summary := range classifyCloudTrailLog(body) {
 		zap.L().Info("resource change required", zap.Any("changeDetail", summary))
-		// TODO - Update this to not overwrite scan requests of different types
-		// More details here: https://panther-labs.atlassian.net/browse/ENG-1113
-		if entry, ok := changes[summary.ResourceID]; !ok || summary.EventTime > entry.EventTime {
-			changes[summary.ResourceID] = summary // the newest event for this resource we've seen so far
+		// Prevents the following from being de-duped mistakenly:
+		// Resources with the same ID in different regions (different regions)
+		// Service scans in the same region (different resource types)
+		// Resources with the same type in the same region (different resource IDs)
+		key := summary.ResourceID + summary.ResourceType + summary.Region
+		if entry, ok := changes[key]; !ok || summary.EventTime > entry.EventTime {
+			changes[key] = summary // the newest event for this resource we've seen so far
 		}
 	}
 }
@@ -111,10 +113,10 @@ func submitChanges(changes map[string]*resourceChange) error {
 			})
 		} else {
 			// Possible configurations:
-			// ID = “”, region =“”:				Account wide service scan
+			// ID = “”, region =“”:				Account wide service scan; use sparingly
 			// ID = “”, region =“west”:			Region wide service scan
 			// ID = “abc-123”, region =“”:		Single resource scan
-			// ID = “abc-123”, region =“west”:	Undefined in spec, treated as single resource scan downstream
+			// ID = “abc-123”, region =“west”:	Undefined in spec, treated as single resource scan
 			var resourceID *string
 			var region *string
 			if change.ResourceID != "" {

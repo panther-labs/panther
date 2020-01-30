@@ -34,15 +34,6 @@ func TestMustParseIntPanic(t *testing.T) {
 	assert.Panics(t, func() { mustParseInt("") })
 }
 
-func TestHandleAlerts(t *testing.T) {
-	mockClient := &mockOutputsClient{}
-	outputClient = mockClient
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return((*outputs.AlertDeliveryError)(nil))
-	setCaches()
-	alerts := []*models.Alert{sampleAlert(), sampleAlert(), sampleAlert()}
-	assert.NotPanics(t, func() { HandleAlerts(alerts) })
-}
-
 func TestHandleAlertsPermanentlyFailed(t *testing.T) {
 	createdAtTime, _ := time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
 	mockClient := &mockOutputsClient{}

@@ -3,7 +3,7 @@
     "airbnb-base", // Use Airbnb's eslinting rule for this project https://github.com/airbnb/javascript/tree/master/packages/eslint-config-airbnb-base
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier",
+    "plugin:prettier/recommended",
     "prettier/@typescript-eslint"
   ],
   "env": {

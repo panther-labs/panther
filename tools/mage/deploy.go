@@ -31,6 +31,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/fatih/color"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -42,10 +43,12 @@ import (
 
 const (
 	// CloudFormation templates + stacks
-	applicationStack    = "panther-app"
-	applicationTemplate = "deployments/template.yml"
-	bucketStack         = "panther-buckets" // prereq stack with Panther S3 buckets
-	bucketTemplate      = "deployments/core/buckets.yml"
+	backendStack     = "panther-app"
+	backendTemplate  = "deployments/backend.yml"
+	frontendStack    = "panther-app-frontend"
+	frontendTemplate = "deployments/frontend.yml"
+	bucketStack      = "panther-buckets" // prereq stack with Panther S3 buckets
+	bucketTemplate   = "deployments/core/buckets.yml"
 
 	// Python layer
 	layerSourceDir   = "out/pip/analysis/python"
@@ -87,53 +90,72 @@ func Deploy() error {
 		return err
 	}
 
-	outputs, err := getStackOutputs(awsSession, bucketStack)
+	bucketOutputs, err := getStackOutputs(awsSession, bucketStack)
 	if err != nil {
 		return err
 	}
-	bucket := outputs["SourceBucketName"]
+	bucket := bucketOutputs["SourceBucketName"]
 
-	template, err := cfnPackage(applicationTemplate, bucket, applicationStack)
-	if err != nil {
-		return err
-	}
-
-	deployParams, err := getDeployParams(awsSession, &config, bucket)
+	backendTemplate, err := cfnPackage(backendTemplate, bucket, backendStack)
 	if err != nil {
 		return err
 	}
 
-	if err = deployTemplate(awsSession, template, applicationStack, deployParams); err != nil {
-		return err
-	}
-
-	outputs, err = getStackOutputs(awsSession, applicationStack)
+	backendDeployParams, err := getBackendDeployParams(awsSession, &config, bucket)
 	if err != nil {
 		return err
 	}
 
-	if err := enableTOTP(awsSession, outputs["UserPoolId"]); err != nil {
+	if err = deployTemplate(awsSession, backendTemplate, backendStack, backendDeployParams); err != nil {
 		return err
 	}
 
-	if err := setupOrganization(awsSession, outputs["UserPoolId"], outputs["RemediationLambdaArn"]); err != nil {
+	backendOutputs, err := getStackOutputs(awsSession, backendStack)
+	if err != nil {
 		return err
 	}
 
-	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], &config); err != nil {
+	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs, "out/.env"); err != nil {
 		return err
 	}
 
-	// TODO - underline link
-	fmt.Printf("\nPanther URL = https://%s\n", outputs["LoadBalancerUrl"])
+	dockerImage, err := buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImageRegistry"])
+	if err != nil {
+		return err
+	}
+
+	frontendTemplate, err := cfnPackage(frontendTemplate, bucket, frontendStack)
+	if err != nil {
+		return err
+	}
+
+	frontendDeployParams := getFrontendDeployParams(dockerImage, backendOutputs)
+
+	if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
+		return err
+	}
+
+	if err := enableTOTP(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
+		return err
+	}
+
+	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
+		return err
+	}
+
+	if err := initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], &config); err != nil {
+		return err
+	}
+
+	color.Yellow("\nPanther URL = https://%s\n", backendOutputs["LoadBalancerUrl"])
 	return nil
 }
 
 // Generate the set of deploy parameters for the main application stack.
 //
 // This will first upload the layer zipfile unless a custom layer is specified.
-func getDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) (map[string]string, error) {
-	v := config.AppParameterValues
+func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) (map[string]string, error) {
+	v := config.BackendParameterValues
 	result := map[string]string{
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
 		"Debug":                        strconv.FormatBool(v.Debug),
@@ -162,6 +184,21 @@ func getDeployParams(awsSession *session.Session, config *PantherConfig, bucket 
 	}
 
 	return result, nil
+}
+
+func getFrontendDeployParams(image string, backendOutputs map[string]string) map[string]string {
+	// If there are params declared in config, we should make sure to add them as well. Currently there are none.
+	result := map[string]string{
+		"WebApplicationImage":                       image,
+		"WebApplicationClusterName":                 backendOutputs["WebApplicationClusterName"],
+		"WebApplicationVpcId":                       backendOutputs["WebApplicationVpcId"],
+		"WebApplicationSubnetOneId":                 backendOutputs["WebApplicationSubnetOneId"],
+		"WebApplicationSubnetTwoId":                 backendOutputs["WebApplicationSubnetTwoId"],
+		"WebApplicationLoadBalancerListenerArn":     backendOutputs["WebApplicationLoadBalancerListenerArn"],
+		"WebApplicationLoadBalancerSecurityGroupId": backendOutputs["WebApplicationLoadBalancerSecurityGroupId"],
+	}
+
+	return result
 }
 
 // Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
@@ -253,7 +290,7 @@ func enableTOTP(awsSession *session.Session, userPoolID string) error {
 }
 
 // If the Admin group is empty (e.g. on the initial deploy), create the initial admin user and organization
-func setupOrganization(awsSession *session.Session, userPoolID string, remediationLambdaArn string) error {
+func setupOrganization(awsSession *session.Session, userPoolID string) error {
 	cognitoClient := cognitoidentityprovider.New(awsSession)
 	group, err := cognitoClient.ListUsersInGroup(&cognitoidentityprovider.ListUsersInGroupInput{
 		GroupName:  aws.String("Admin"),
@@ -289,9 +326,8 @@ func setupOrganization(awsSession *session.Session, userPoolID string, remediati
 	// Hit organization-api.CreateOrganization to create organization entry
 	createOrgInput := &orgmodels.LambdaInput{
 		CreateOrganization: &orgmodels.CreateOrganizationInput{
-			Email:             &email,
-			DisplayName:       aws.String(firstName + "-" + lastName),
-			RemediationConfig: &orgmodels.RemediationConfig{AwsRemediationLambdaArn: aws.String(remediationLambdaArn)},
+			Email:       &email,
+			DisplayName: aws.String(firstName + "-" + lastName),
 		},
 	}
 	if err := invokeLambda(awsSession, "panther-organization-api", createOrgInput); err != nil {

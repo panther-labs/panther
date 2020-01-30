@@ -30,6 +30,8 @@ import (
 
 type TestCustomSimpleType int
 
+type TestCustomSliceType []byte
+
 type TestCustomStructType struct {
 	Foo int
 }
@@ -110,6 +112,7 @@ func TestInferJsonColumns(t *testing.T) {
 		NestedStructField NestedStruct
 
 		CustomTypeField   TestCustomSimpleType
+		CustomSliceField  TestCustomSliceType
 		CustomStructField TestCustomStructType
 	}{
 		BoolField: true,
@@ -169,6 +172,10 @@ func TestInferJsonColumns(t *testing.T) {
 		From: reflect.TypeOf(simpleTestType),
 		To:   "foo",
 	}
+	customSliceTypeMapping := CustomMapping{
+		From: reflect.TypeOf(TestCustomSliceType{}),
+		To:   "baz",
+	}
 	customStructTypeMapping := CustomMapping{
 		From: reflect.TypeOf(TestCustomStructType{}),
 		To:   "bar",
@@ -201,10 +208,11 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "StructField", Type: "struct<Field1:string,Field2:int>"},
 		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int>,B:struct<Field1:string,Field2:int>,C:struct<Field1:string,Field2:int>>"}, // nolint
 		{Name: "CustomTypeField", Type: "foo"},
+		{Name: "CustomSliceField", Type: "baz"},
 		{Name: "CustomStructField", Type: "bar"},
 	}
 
-	cols := InferJSONColumns(obj, customSimpleTypeMapping, customStructTypeMapping)
+	cols := InferJSONColumns(obj, customSimpleTypeMapping, customSliceTypeMapping, customStructTypeMapping)
 
 	// uncomment to see results
 	/*
@@ -226,7 +234,7 @@ type composedStruct struct {
 }
 
 type fooStruct struct {
-	Foo string
+	Foo string `description:"this is Foo field and it is awesome"`
 }
 
 func TestComposeStructs(t *testing.T) {
@@ -239,7 +247,7 @@ func TestComposeStructs(t *testing.T) {
 	}
 	cols := InferJSONColumns(&composition)
 	expectedColumns := []Column{
-		{Name: "Foo", Type: "string"},
+		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
 		{Name: "Bar", Type: "string"},
 	}
 	require.Equal(t, expectedColumns, cols)
