@@ -60,24 +60,24 @@ func (p *AccessParser) Parse(log string) []interface{} {
 
 	records, err := reader.ReadAll()
 	if len(records) == 0 || err != nil {
-		zap.L().Debug("failed to parse the log as csv")
+		zap.L().Debug("failed to parse log (no records found)")
 		return nil
 	}
 
 	// parser should only receive 1 line at a time
 	if len(records) > 1 {
-		zap.L().Debug("failed to parse the log as csv")
+		zap.L().Debug("failed to parse log (parser expected one log line)")
 		return nil
 	}
 	record := records[0]
 
 	if len(record) != accessNumberOfColumns {
-		zap.L().Debug("failed to parse the log as csv (wrong number of columns)")
+		zap.L().Debug("failed to parse log (wrong number of columns)")
 		return nil
 	}
 
 	if record[1] != accessUserIdentifier {
-		zap.L().Debug("failed to parse the log as csv (user identifier should always be '-')")
+		zap.L().Debug("failed to parse log (user identifier should always be '-')")
 		return nil
 	}
 
