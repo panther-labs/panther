@@ -53,14 +53,12 @@ func TestGithubAlert(t *testing.T) {
 	}
 
 	authorization := "token " + *githubConfig.Token
-	accept := "application/json"
-	requestHeader := map[string]*string{
-		"Authorization": &authorization,
-		"Accept":        &accept,
+	requestHeader := map[string]string{
+		AuthorizationHTTPHeader: authorization,
 	}
 	requestEndpoint := "https://api.github.com/repos/profile/reponame/issues"
 	expectedPostInput := &PostInput{
-		url:     &requestEndpoint,
+		url:     requestEndpoint,
 		body:    githubRequest,
 		headers: requestHeader,
 	}

@@ -67,15 +67,13 @@ func (client *OutputClient) Jira(
 
 	auth := *config.UserName + ":" + *config.APIKey
 	basicAuthToken := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
-	accept := "application/json"
 	jiraRestURL := *config.OrgDomain + jiraEndpoint
-	requestHeader := map[string]*string{
-		"Accept":        &accept,
-		"Authorization": &basicAuthToken,
+	requestHeader := map[string]string{
+		AuthorizationHTTPHeader: basicAuthToken,
 	}
 
 	postInput := &PostInput{
-		url:     &jiraRestURL,
+		url:     jiraRestURL,
 		body:    jiraRequest,
 		headers: requestHeader,
 	}

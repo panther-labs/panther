@@ -19,7 +19,7 @@ package outputs
  */
 
 import (
-	"strings"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 
@@ -27,39 +27,29 @@ import (
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
-// Severity colors match those in the Panther UI
 const (
-	githubEndpoint = "https://api.github.com/repos/"
-	requestType    = "/issues"
+	asanaCreateTaskURL             = "https://app.asana.com/api/1.0/tasks"
+	asanaAuthorizationHeaderFormat = "Bearer %s"
 )
 
-// Github alert send an issue.
-func (client *OutputClient) Github(
-	alert *alertmodels.Alert, config *outputmodels.GithubConfig) *AlertDeliveryError {
-
-	var tagsItem = aws.StringValueSlice(alert.Tags)
-
-	description := "**Description:** " + aws.StringValue(alert.PolicyDescription)
-	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"
-	runBook := "\n **Runbook:** " + aws.StringValue(alert.Runbook)
-	severity := "\n **Severity:** " + aws.StringValue(alert.Severity)
-	tags := "\n **Tags:** " + strings.Join(tagsItem, ", ")
-
-	githubRequest := map[string]interface{}{
-		"title": generateAlertTitle(alert),
-		"body":  description + link + runBook + severity + tags,
-	}
-
-	token := "token " + *config.Token
-	repoURL := githubEndpoint + *config.RepoName + requestType
-	requestHeader := map[string]string{
-		AuthorizationHTTPHeader: token,
+// Asana creates a task in Asana projects
+func (client *OutputClient) Asana(alert *alertmodels.Alert, config *outputmodels.AsanaConfig) *AlertDeliveryError {
+	payload := map[string]interface{}{
+		"data": []map[string]interface{}{
+			{
+				"name":     generateAlertTitle(alert),
+				"projects": config.ProjectGids,
+				"notes":    generateDetailedAlertMessage(alert),
+			},
+		},
 	}
 
 	postInput := &PostInput{
-		url:     repoURL,
-		body:    githubRequest,
-		headers: requestHeader,
+		url:  asanaCreateTaskURL,
+		body: payload,
+		headers: map[string]string{
+			AuthorizationHTTPHeader: fmt.Sprintf(asanaAuthorizationHeaderFormat, aws.StringValue(config.PersonalAccessToken)),
+		},
 	}
 	return client.httpWrapper.post(postInput)
 }

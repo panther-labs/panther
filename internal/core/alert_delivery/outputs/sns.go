@@ -19,8 +19,6 @@ package outputs
  */
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -32,8 +30,6 @@ import (
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
-
-const snsEmailTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription:%s"
 
 type snsMessage struct {
 	DefaultMessage string `json:"default"`
@@ -74,7 +70,7 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 
 	outputMessage := &snsMessage{
 		DefaultMessage: serializedDefaultMessage,
-		EmailMessage:   generateSnsEmailMessage(alert),
+		EmailMessage:   generateDetailedAlertMessage(alert),
 	}
 
 	serializedMessage, err := jsoniter.MarshalToString(outputMessage)
@@ -106,17 +102,6 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 		return &AlertDeliveryError{Message: errorMsg}
 	}
 	return nil
-}
-
-func generateSnsEmailMessage(alert *alertmodels.Alert) string {
-	return fmt.Sprintf(
-		snsEmailTemplate,
-		generateAlertMessage(alert),
-		generateURL(alert),
-		aws.StringValue(alert.Severity),
-		aws.StringValue(alert.Runbook),
-		aws.StringValue(alert.PolicyDescription),
-	)
 }
 
 func (client *OutputClient) getSnsClient(topicArn string) (snsiface.SNSAPI, error) {

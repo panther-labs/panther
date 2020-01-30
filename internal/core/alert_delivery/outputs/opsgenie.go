@@ -55,14 +55,12 @@ func (client *OutputClient) Opsgenie(
 		"priority":    pantherToOpsGeniePriority[aws.StringValue(alert.Severity)],
 	}
 	authorization := "GenieKey " + *config.APIKey
-	accept := "application/json"
-	requestHeader := map[string]*string{
-		"Accept":        &accept,
-		"Authorization": &authorization,
+	requestHeader := map[string]string{
+		AuthorizationHTTPHeader: authorization,
 	}
 
 	postInput := &PostInput{
-		url:     &opsgenieEndpoint,
+		url:     opsgenieEndpoint,
 		body:    opsgenieRequest,
 		headers: requestHeader,
 	}

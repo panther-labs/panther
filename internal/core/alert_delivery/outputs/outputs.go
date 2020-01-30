@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -45,9 +46,9 @@ type HTTPWrapper struct {
 
 // PostInput type
 type PostInput struct {
-	url     *string
+	url     string
 	body    map[string]interface{}
-	headers map[string]*string
+	headers map[string]string
 }
 
 // HTTPWrapperiface is the interface for our wrapper around Golang's http client
@@ -71,8 +72,7 @@ type API interface {
 	MsTeams(*alertmodels.Alert, *outputmodels.MsTeamsConfig) *AlertDeliveryError
 	Sqs(*alertmodels.Alert, *outputmodels.SqsConfig) *AlertDeliveryError
 	Sns(*alertmodels.Alert, *outputmodels.SnsConfig) *AlertDeliveryError
-	getSnsClient(topicArn string) (snsiface.SNSAPI, error)
-	getSqsClient(queueURL string) (sqsiface.SQSAPI, error)
+	Asana(*alertmodels.Alert, *outputmodels.AsanaConfig) *AlertDeliveryError
 }
 
 // OutputClient encapsulates the clients that allow sending alerts to multiple outputs
@@ -102,11 +102,24 @@ func New(sess *session.Session) *OutputClient {
 	}
 }
 
+const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription:%s"
+
 func generateAlertMessage(alert *alertmodels.Alert) string {
 	if aws.StringValue(alert.Type) == alertmodels.RuleType {
 		return getDisplayName(alert) + " failed"
 	}
 	return getDisplayName(alert) + " failed on new resources"
+}
+
+func generateDetailedAlertMessage(alert *alertmodels.Alert) string {
+	return fmt.Sprintf(
+		detailedMessageTemplate,
+		generateAlertMessage(alert),
+		generateURL(alert),
+		aws.StringValue(alert.Severity),
+		aws.StringValue(alert.Runbook),
+		aws.StringValue(alert.PolicyDescription),
+	)
 }
 
 func generateAlertTitle(alert *alertmodels.Alert) string {

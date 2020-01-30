@@ -55,10 +55,7 @@ func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.S
 		MessageBody: aws.String(serializedMessage),
 	}
 
-	sqsClient, err := client.getSqsClient(*config.QueueURL)
-	if err != nil {
-		return &AlertDeliveryError{Message: "Failed to create Sqs client for queue", Permanent: true}
-	}
+	sqsClient := client.getSqsClient(*config.QueueURL)
 
 	_, err = sqsClient.SendMessage(sqsSendMessageInput)
 	if err != nil {
@@ -79,13 +76,13 @@ type sqsOutputMessage struct {
 	Tags        []*string `json:"tags,omitempty"`
 }
 
-func (client *OutputClient) getSqsClient(queueURL string) (sqsiface.SQSAPI, error) {
-	// Queue URL is like "https://sqs.us-west-2.amazonaws.com/415773754570/panther-alert-queue"
+func (client *OutputClient) getSqsClient(queueURL string) sqsiface.SQSAPI {
+	// Queue URL is like "https://sqs.us-west-2.amazonaws.com/123456789012/panther-alert-queue"
 	region := strings.Split(queueURL, ".")[1]
 	sqsClient, ok := client.sqsClients[region]
 	if !ok {
 		sqsClient = sqs.New(client.session, aws.NewConfig().WithRegion(region))
 		client.sqsClients[region] = sqsClient
 	}
-	return sqsClient, nil
+	return sqsClient
 }

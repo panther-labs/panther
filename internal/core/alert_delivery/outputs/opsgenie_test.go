@@ -59,14 +59,12 @@ func TestOpsgenieAlert(t *testing.T) {
 
 	authorization := "GenieKey " + *opsgenieConfig.APIKey
 
-	accept := "application/json"
-	requestHeader := map[string]*string{
-		"Accept":        &accept,
-		"Authorization": &authorization,
+	requestHeader := map[string]string{
+		AuthorizationHTTPHeader: authorization,
 	}
 	requestEndpoint := "https://api.opsgenie.com/v2/alerts"
 	expectedPostInput := &PostInput{
-		url:     &requestEndpoint,
+		url:     requestEndpoint,
 		body:    opsgenieRequest,
 		headers: requestHeader,
 	}

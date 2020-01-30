@@ -70,7 +70,7 @@ func TestSlackAlert(t *testing.T) {
 	}
 	requestEndpoint := "slack-channel-url"
 	expectedPostInput := &PostInput{
-		url:  &requestEndpoint,
+		url:  requestEndpoint,
 		body: expectedPostPayload,
 	}
 

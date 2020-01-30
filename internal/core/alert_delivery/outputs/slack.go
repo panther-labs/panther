@@ -70,7 +70,7 @@ func (client *OutputClient) Slack(alert *alertmodels.Alert, config *outputmodels
 	}
 	requestEndpoint := *config.WebhookURL
 	postInput := &PostInput{
-		url:  &requestEndpoint,
+		url:  requestEndpoint,
 		body: payload,
 	}
 
