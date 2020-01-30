@@ -201,6 +201,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
                   userName: '',
                   apiKey: '',
                   assigneeId: '',
+                  issueType: null,
                 },
               },
             }}

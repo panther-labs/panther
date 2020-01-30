@@ -45,7 +45,7 @@ const jiraFieldsValidationSchema = Yup.object().shape({
       apiKey: Yup.string().required(),
       assigneeId: Yup.string(),
       issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
-        Object.keys(JiraIssueTypesEnum).includes(value)
+        Object.values(JiraIssueTypesEnum).includes(value)
       ),
     }),
   }),
@@ -112,6 +112,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         mb={6}
         aria-required
         items={Object.keys(JiraIssueTypesEnum)}
+        inputProps={{ placeholder: 'Select a type of issue' }}
       />
     </BaseDestinationForm>
   );

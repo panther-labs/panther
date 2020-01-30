@@ -267,6 +267,7 @@ export type JiraConfigInput = {
   userName: Scalars['String'];
   apiKey: Scalars['String'];
   assigneeId?: Maybe<Scalars['String']>;
+  issueType?: Maybe<JiraIssueTypesEnum>;
 };
 
 export enum JiraIssueTypesEnum {
