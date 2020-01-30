@@ -78,9 +78,7 @@ func Deploy() error {
 		return err
 	}
 
-	if err = Build.Lambda(Build{}); err != nil {
-		return err
-	}
+	Build.Lambda(Build{})
 
 	if err = generateGlueTables(); err != nil {
 		return err

@@ -21,33 +21,26 @@ package mage
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
 // Clean Remove auto-generated build artifacts
-func Clean() error {
+func Clean() {
 	paths := []string{"out", "internal/core/analysis_api/main/bulk_upload.zip"} // paths to remove
 
 	// Remove __pycache__ folders
 	for _, target := range pyTargets {
-		err := filepath.Walk(target, func(path string, info os.FileInfo, err error) error {
+		walk(target, func(path string, info os.FileInfo) {
 			if strings.HasSuffix(path, "__pycache__") {
 				paths = append(paths, path)
 			}
-			return err
 		})
-		if err != nil {
-			return err
-		}
 	}
 
 	for _, pkg := range paths {
-		fmt.Println("clean: rm -r " + pkg)
+		logger.Info("clean: rm -r " + pkg)
 		if err := os.RemoveAll(pkg); err != nil {
-			return err
+			fatal(fmt.Errorf("failed to remove %s: %v", pkg, err))
 		}
 	}
-
-	return nil
 }

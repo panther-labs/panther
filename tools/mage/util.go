@@ -25,9 +25,11 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -35,31 +37,72 @@ import (
 )
 
 var (
-	setupDirectory       = "./.setup"
+	setupDirectory       = path.Join(".", ".setup")
 	pythonVirtualEnvPath = path.Join(setupDirectory, "venv")
 )
+
+// Wrapper around filepath.Walk, handling fatal errors.
+func walk(root string, handler func(string, os.FileInfo)) {
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("stat %s: %v", path, err)
+		}
+		handler(path, info)
+		return nil
+	})
+	if err != nil {
+		fatal(fmt.Errorf("couldn't traverse %s: %v", root, err))
+	}
+}
 
 // Open and parse a yaml file.
 func loadYamlFile(path string, out interface{}) error {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("failed to open '%s': %s", path, err)
+		return fmt.Errorf("failed to open %s: %v", path, err)
 	}
 
-	if err := yaml.Unmarshal(contents, out); err != nil {
-		return fmt.Errorf("failed to parse yaml file '%s': %s", path, err)
+	if err = yaml.Unmarshal(contents, out); err != nil {
+		return fmt.Errorf("failed to parse yaml file %s: %v", path, err)
 	}
 
 	return nil
 }
 
+// Build the AWS session from the environment or a credentials file.
+func getSession() (*session.Session, error) {
+	awsSession, err := session.NewSession()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AWS session: %v", err)
+	}
+	if aws.StringValue(awsSession.Config.Region) == "" {
+		return nil, errors.New("no region specified, set AWS_REGION or AWS_DEFAULT_REGION")
+	}
+
+	// Load and cache credentials now so we can report a meaningful error
+	creds, err := awsSession.Config.Credentials.Get()
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoCredentialProviders" {
+			return nil, errors.New("no AWS credentials found, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY")
+		}
+		return nil, fmt.Errorf("failed to load AWS credentials: %v", err)
+	}
+
+	logger.Debugw("loaded AWS credentials",
+		"provider", creds.ProviderName,
+		"region", awsSession.Config.Region,
+		"accessKeyId", creds.AccessKeyID)
+	return awsSession, nil
+}
+
 // Get CloudFormation stack outputs as a map.
+// TODO - get the outputs as part of the change set loop
 func getStackOutputs(awsSession *session.Session, name string) (map[string]string, error) {
 	cfnClient := cloudformation.New(awsSession)
 	input := &cloudformation.DescribeStacksInput{StackName: &name}
 	response, err := cfnClient.DescribeStacks(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to describe stack %s: %v", name, err)
 	}
 
 	result := make(map[string]string, len(response.Stacks[0].Outputs))
@@ -76,12 +119,13 @@ func uploadFileToS3(
 
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open %s: %v", path, err)
 	}
 	defer file.Close()
 
 	uploader := s3manager.NewUploader(awsSession)
-	fmt.Printf("deploy: uploading %s to s3://%s/%s\n", path, bucket, key)
+
+	logger.Debugf("uploading %s to s3://%s/%s", path, bucket, key)
 	return uploader.Upload(&s3manager.UploadInput{
 		Body:     file,
 		Bucket:   &bucket,
@@ -114,7 +158,7 @@ func promptUser(prompt string, validator func(string) error) string {
 // Ensure non-empty strings.
 func nonemptyValidator(input string) error {
 	if len(input) == 0 {
-		return errors.New("error: input is blank, please try again")
+		return errors.New("input is blank, please try again")
 	}
 	return nil
 }
@@ -124,23 +168,27 @@ func emailValidator(email string) error {
 	if len(email) >= 4 && strings.Contains(email, "@") && strings.Contains(email, ".") {
 		return nil
 	}
-
-	return errors.New("error: invalid email: must be at least 4 characters and contain '@' and '.'")
+	return errors.New("invalid email: must be at least 4 characters and contain '@' and '.'")
 }
 
 // Download a file in memory.
 func download(url string) ([]byte, error) {
+	logger.Debug("GET " + url)
 	response, err := http.Get(url) // nolint:gosec
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to GET %s: %v", url, err)
 	}
 	defer response.Body.Close()
 
-	return ioutil.ReadAll(response.Body)
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download %s: %v", url, err)
+	}
+
+	return body, nil
 }
 
-// isRunningInCI returns true if the mage command is running inside
-// CI environment
+// isRunningInCI returns true if the mage command is running inside the CI environment
 func isRunningInCI() bool {
 	return os.Getenv("CI") != ""
 }

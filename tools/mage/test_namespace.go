@@ -190,9 +190,7 @@ func (t Test) Cover() error {
 
 // CI Run all required checks
 func (t Test) CI() error {
-	if err := build.Lambda(); err != nil {
-		return err
-	}
+	build.Lambda()
 	if err := t.Unit(); err != nil {
 		return err
 	}
