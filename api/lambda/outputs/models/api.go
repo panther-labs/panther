@@ -261,7 +261,7 @@ type SqsConfig struct {
 // AsanaConfig defines options for each Asana output
 type AsanaConfig struct {
 	PersonalAccessToken *string   `json:"personalAccessToken" validate:"required,min=1"`
-	ProjectGids         []*string `json:"projectGids" validate:"required,min=1,dive,numeric"`
+	ProjectGids         []*string `json:"projectGids" validate:"required,min=1,dive,required"`
 }
 
 // DefaultOutputs is the structure holding the information about default outputs for severity
