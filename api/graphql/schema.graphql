@@ -17,6 +17,7 @@ type Mutation {
   deleteDestination(id: ID!): Boolean
   deleteIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
+  inviteUser(input: InviteUserInput): InviteUserResponse
   remediateResource(input: RemediateResourceInput!): Boolean
   resetUserPassword(id: ID!): Boolean
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
@@ -28,6 +29,7 @@ type Mutation {
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): Boolean
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
+  users(limit: Int, paginationToken: String): ListUsersResponse
 }
 
 type Query {
@@ -636,6 +638,23 @@ type User {
   createdAt: AWSTimestamp
   status: String
   role: RoleNameEnum
+}
+
+type InviteUserResponse {
+  id: ID!
+}
+
+input InviteUserInput {
+  givenName: String
+  familyName: String
+  email: AWSEmail
+  phoneNumber: AWSPhone
+  role: RoleNameEnum
+}
+
+type ListUsersResponse {
+  users: [User]
+  paginationToken: String
 }
 
 enum ComplianceStatusEnum {

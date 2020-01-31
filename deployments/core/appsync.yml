@@ -279,18 +279,63 @@ Resources:
       FieldName: updateUser
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userPoolId", $ctx.identity.claims.iss.split("/")[-1]))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "updateUser": {
-              "id": $ctx.args.input.id,
-              "givenName": $ctx.args.input.givenName,
-              "familyName": $ctx.args.input.familyName,
-              "userPoolId": $ctx.identity.claims.iss.split("/")[-1],
-              "phoneNumber": $ctx.args.input.phoneNumber,
-              "role": $ctx.args.input.role
+            "updateUser": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  ListUsersResolver:
+    Type: 'AWS::AppSync::Resolver'
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Query
+      FieldName: users
+      DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listUsers": {
+              "userPoolId": $ctx.identity.claims.iss.split("/")[-1]
             }
+          })
+        }
+      ResponseMappingTemplate: |
+        #if( $context.error )
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($context.result)
+        #end
+
+  InviteUserResolver:
+    Type: 'AWS::AppSync::Resolver'
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Mutation
+      FieldName: inviteUser
+      DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userPoolId", $ctx.identity.claims.iss.split("/")[-1]))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "inviteUser": $input
           })
         }
       ResponseMappingTemplate: |

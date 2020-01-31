@@ -253,6 +253,19 @@ export type IntegrationConfigInput = {
   awsRoleArn?: Maybe<Scalars['String']>;
 };
 
+export type InviteUserInput = {
+  givenName?: Maybe<Scalars['String']>;
+  familyName?: Maybe<Scalars['String']>;
+  email?: Maybe<Scalars['AWSEmail']>;
+  phoneNumber?: Maybe<Scalars['AWSPhone']>;
+  role?: Maybe<RoleNameEnum>;
+};
+
+export type InviteUserResponse = {
+  __typename?: 'InviteUserResponse';
+  id: Scalars['ID'];
+};
+
 export type JiraConfig = {
   __typename?: 'JiraConfig';
   orgDomain: Scalars['String'];
@@ -383,6 +396,12 @@ export enum ListRulesSortFieldsEnum {
   Severity = 'severity',
 }
 
+export type ListUsersResponse = {
+  __typename?: 'ListUsersResponse';
+  users?: Maybe<Array<Maybe<User>>>;
+  paginationToken?: Maybe<Scalars['String']>;
+};
+
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
   webhookURL: Scalars['String'];
@@ -401,6 +420,7 @@ export type Mutation = {
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteIntegration?: Maybe<Scalars['Boolean']>;
   deletePolicy?: Maybe<Scalars['Boolean']>;
+  inviteUser?: Maybe<InviteUserResponse>;
   remediateResource?: Maybe<Scalars['Boolean']>;
   resetUserPassword?: Maybe<Scalars['Boolean']>;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
@@ -412,6 +432,7 @@ export type Mutation = {
   updateRule?: Maybe<RuleDetails>;
   updateUser?: Maybe<Scalars['Boolean']>;
   uploadPolicies?: Maybe<UploadPoliciesResponse>;
+  users?: Maybe<ListUsersResponse>;
 };
 
 export type MutationAddDestinationArgs = {
@@ -440,6 +461,10 @@ export type MutationDeleteIntegrationArgs = {
 
 export type MutationDeletePolicyArgs = {
   input: DeletePolicyInput;
+};
+
+export type MutationInviteUserArgs = {
+  input?: Maybe<InviteUserInput>;
 };
 
 export type MutationRemediateResourceArgs = {
@@ -484,6 +509,11 @@ export type MutationUpdateUserArgs = {
 
 export type MutationUploadPoliciesArgs = {
   input: UploadPoliciesInput;
+};
+
+export type MutationUsersArgs = {
+  limit?: Maybe<Scalars['Int']>;
+  paginationToken?: Maybe<Scalars['String']>;
 };
 
 export type OpsgenieConfig = {
