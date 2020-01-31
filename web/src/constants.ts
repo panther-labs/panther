@@ -19,11 +19,11 @@
 import { RoleNameEnum, SeverityEnum } from 'Generated/schema';
 import { BadgeProps } from 'pouncejs';
 
-export const AWS_ACCOUNT_ID_REGEX: number = new RegExp('^\\d{12}$');
+export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');
 
-export const INCLUDE_DIGITS_REGEX: number = new RegExp('(?=.*[0-9])');
+export const INCLUDE_DIGITS_REGEX = new RegExp('(?=.*[0-9])');
 
-export const INCLUDE_LOWERCASE_REGEX: number = new RegExp('(?=.*[a-z])');
+export const INCLUDE_LOWERCASE_REGEX = new RegExp('(?=.*[a-z])');
 
 export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
