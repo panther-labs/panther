@@ -42,6 +42,6 @@ module.exports = {
    * 1. There are changes inTS files
    * 2. The TS configuration is modified
    */
-  '**/*.tsx?': () => 'tsc -p .',
+  '**/*.ts?(x)': () => 'tsc -p .',
   'tsconfig.json': () => 'tsc -p .',
 };
