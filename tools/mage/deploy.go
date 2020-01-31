@@ -66,7 +66,7 @@ func Deploy() error {
 		return err
 	}
 
-	awsSession, err := session.NewSession()
+	awsSession, err := getSession()
 	if err != nil {
 		return err
 	}
