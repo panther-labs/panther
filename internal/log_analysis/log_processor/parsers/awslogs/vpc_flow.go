@@ -43,7 +43,7 @@ type VPCFlow struct {
 	SourceAddr  *string            `json:"sourceAddr,omitempty"`
 	DstAddr     *string            `json:"dstAddr,omitempty"`
 	SrcPort     *int               `json:"srcPort,omitempty" validate:"omitempty,min=0,max=65535"`
-	DstPort     *int               `json:"destPort,omitempty" validate:"omitempty,min=0,max=65535"`
+	DstPort     *int               `json:"dstPort,omitempty" validate:"omitempty,min=0,max=65535"`
 	Protocol    *int               `json:"protocol,omitempty"`
 	Packets     *int               `json:"packets,omitempty"`
 	Bytes       *int               `json:"bytes,omitempty"`
