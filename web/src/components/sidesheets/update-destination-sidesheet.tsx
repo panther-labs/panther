@@ -31,6 +31,7 @@ import {
 
 import { BaseDestinationFormValues } from 'Components/forms/common/base-destination-form';
 import {
+  AsanaDestinationForm,
   GithubDestinationForm,
   JiraDestinationForm,
   MicrosoftTeamsDestinationForm,
@@ -82,6 +83,10 @@ const UPDATE_DESTINATION = gql`
         }
         sqs {
           queueUrl
+        }
+        asana {
+          personalAccessToken
+          projectGids
         }
       }
       verificationStatus
@@ -244,6 +249,19 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
             initialValues={{
               ...commonInitialValues,
               outputConfig: pick(destination.outputConfig, 'slack.webhookURL'),
+            }}
+            onSubmit={handleSubmit}
+          />
+        );
+      case DestinationTypeEnum.Asana:
+        return (
+          <AsanaDestinationForm
+            initialValues={{
+              ...commonInitialValues,
+              outputConfig: pick(destination.outputConfig, [
+                'asana.personalAccessToken',
+                'asana.projectGids',
+              ]),
             }}
             onSubmit={handleSubmit}
           />
