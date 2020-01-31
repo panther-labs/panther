@@ -68,19 +68,19 @@ Parameters:
     Description: Alerts which fail to send will be retried for this duration
     Default: 30
     MinValue: 5
-    MaxValue: 10080  # 1 week
+    MaxValue: 10080 # 1 week
   MinRetryDelaySecs:
     Type: Number
     Description: Wait at least this long before retrying a failed alert
     Default: 30
     MinValue: 1
-    MaxValue: 86400  # 1 day
+    MaxValue: 86400 # 1 day
   MaxRetryDelaySecs:
     Type: Number
     Description: Wait at most this long before retrying a failed alert
-    Default: 300  # 5 mins
+    Default: 300 # 5 mins
     MinValue: 1
-    MaxValue: 86400  # 1 day
+    MaxValue: 86400 # 1 day
   MailFrom:
     Type: String
     Description: The email address that will appear in the 'MAIL FROM' field when Panther sends alert email to customers
@@ -88,7 +88,7 @@ Parameters:
   AlertSqsRetentionSec:
     Type: Number
     Description: Number of seconds SQS will retain a message in the alerts queue
-    Default: 259200  # 3 days
+    Default: 259200 # 3 days
     MinValue: 60
     MaxValue: 1209600
   EmailVerificationTemplate:
@@ -131,9 +131,9 @@ Resources:
       KeySchema:
         - AttributeName: outputId
           KeyType: HASH
-      PointInTimeRecoverySpecification:  # Create periodic table backups
+      PointInTimeRecoverySpecification: # Create periodic table backups
         PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
+      SSESpecification: # Enable server-side encryption
         SSEEnabled: True
       TableName: panther-outputs
 
@@ -178,13 +178,15 @@ Resources:
       Timeout: !Ref ApiFunctionTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
-        -
-          Id: OutputsTables
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: OutputsTables
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - dynamodb:DeleteItem
                 - dynamodb:GetItem
@@ -195,34 +197,28 @@ Resources:
               Resource:
                 - !GetAtt OutputsTable.Arn
                 - !Sub '${OutputsTable.Arn}/index/*'
-        -
-          Id: CredentialEncryption
+        - Id: CredentialEncryption
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - kms:Decrypt
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !GetAtt EncryptionKey.Arn
-        -
-          Id: VerifyEmail
+        - Id: VerifyEmail
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - ses:GetIdentityVerificationAttributes
                 - ses:SendCustomVerificationEmail
                 - ses:VerifyEmailAddress
               Resource: '*'
-        -
-          Id: UsersAPI
+        - Id: UsersAPI
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api'
 
@@ -250,14 +246,14 @@ Resources:
         Variables:
           ALERT_QUEUE_URL: !Ref AlertQueue
           ALERT_RETRY_DURATION_MINS: !Ref AlertRetryDurationMins
-          ALERT_URL_PREFIX : !Sub https://${AppFqdn}/alerts/
+          ALERT_URL_PREFIX: !Sub https://${AppFqdn}/alerts/
           MAIL_FROM: !Ref MailFrom
           MAX_RETRY_DELAY_SECS: !Ref MaxRetryDelaySecs
           MIN_RETRY_DELAY_SECS: !Ref MinRetryDelaySecs
           OUTPUTS_API: panther-outputs-api
           OUTPUTS_REFRESH_INTERVAL_MIN: '5'
           POLICY_URL_PREFIX: !Sub https://${AppFqdn}/policies/
-          SES_CONFIGURATION_SET : !Ref SesConfigurationSet
+          SES_CONFIGURATION_SET: !Ref SesConfigurationSet
       Events:
         AlertQueue:
           Type: SQS
@@ -272,16 +268,18 @@ Resources:
       Timeout: !Ref DeliveryFunctionTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
-        -
-          Id: OutputsAPI
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: OutputsAPI
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-outputs-api'
-        -
-          Id: SendEmail
+        - Id: SendEmail
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -290,22 +288,19 @@ Resources:
               Condition:
                 StringLike:
                   'ses:FromAddress': !Ref MailFrom
-        -
-          Id: PublishSnsMessage
+        - Id: PublishSnsMessage
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sns:Publish
               Resource: '*'
-        -
-          Id: SendSqsAlert
+        - Id: SendSqsAlert
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sqs:SendMessage
               Resource: '*'
-        -
-          Id: DecryptAlertMessages
+        - Id: DecryptAlertMessages
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -313,8 +308,7 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-        -
-          Id: ReceiveAndDeleteAlerts
+        - Id: ReceiveAndDeleteAlerts
           Version: 2012-10-17
           Statement:
             - Effect: Allow

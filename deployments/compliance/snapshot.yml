@@ -128,13 +128,15 @@ Resources:
       Timeout: !Ref PollerTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
-        -
-          Id: ManageSQSMessages
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: ManageSQSMessages
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:DeleteMessage
                 - sqs:GetQueueAttributes
@@ -142,21 +144,18 @@ Resources:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !GetAtt Queue.Arn
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-        -
-          Id: InvokeResourcesAPI
+        - Id: InvokeResourcesAPI
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/resource
-        -
-          Id: AssumePantherAuditRoles
+        - Id: AssumePantherAuditRoles
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -183,7 +182,7 @@ Resources:
           KeyType: HASH
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
+      SSESpecification: # Enable server-side encryption
         SSEEnabled: True
 
   ApiLambdaFunction:
@@ -206,9 +205,12 @@ Resources:
       Timeout: !Ref ApiTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
-        -
-          Id: IntegrationsTablePermissions
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: IntegrationsTablePermissions
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -217,24 +219,20 @@ Resources:
                 - dynamodb:Query
                 - dynamodb:Scan
               Resource: !GetAtt IntegrationsTable.Arn
-        -
-          Id: SendSQSMessages
+        - Id: SendSQSMessages
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !GetAtt Queue.Arn
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-        -
-          Id: UpdateLogProcessorQueue
+        - Id: UpdateLogProcessorQueue
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -270,26 +268,26 @@ Resources:
       Timeout: !Ref SchedulerTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
-        -
-          Id: InvokeSnapshotAPI
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: InvokeSnapshotAPI
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
-        -
-          Id: SendSQSMessages
+        - Id: SendSQSMessages
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !GetAtt Queue.Arn
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - kms:Decrypt
                 - kms:GenerateDataKey

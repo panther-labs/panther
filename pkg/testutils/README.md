@@ -1,9 +1,11 @@
 ## testutils
+
 This provides some convenience methods for writing integration tests.
 
 ## Functions
-* `ClearDynamoTable(awsSession, tableName string)` - Delete all items in a DynamoDB table
-* `ClearS3Bucket(awsSession, bucketName string)` - Delete all object versions in an S3 bucket
+
+- `ClearDynamoTable(awsSession, tableName string)` - Delete all items in a DynamoDB table
+- `ClearS3Bucket(awsSession, bucketName string)` - Delete all object versions in an S3 bucket
 
 ## Example Integration Test
 

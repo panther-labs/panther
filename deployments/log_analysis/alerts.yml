@@ -130,9 +130,9 @@ Resources:
       KeySchema:
         - AttributeName: alertId
           KeyType: HASH
-      PointInTimeRecoverySpecification:  # Create periodic table backups
+      PointInTimeRecoverySpecification: # Create periodic table backups
         PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
+      SSESpecification: # Enable server-side encryption
         SSEEnabled: True
 
   ##### Dynamo recent alerts table #####
@@ -147,9 +147,9 @@ Resources:
       KeySchema:
         - AttributeName: ruleId
           KeyType: HASH
-      PointInTimeRecoverySpecification:  # Create periodic table backups
+      PointInTimeRecoverySpecification: # Create periodic table backups
         PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
+      SSESpecification: # Enable server-side encryption
         SSEEnabled: True
 
   ##### Dynamo events table #####
@@ -164,9 +164,9 @@ Resources:
       KeySchema:
         - AttributeName: eventHash
           KeyType: HASH
-      PointInTimeRecoverySpecification:  # Create periodic table backups
+      PointInTimeRecoverySpecification: # Create periodic table backups
         PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
+      SSESpecification: # Enable server-side encryption
         SSEEnabled: True
 
   ###### Lambda API function #####
@@ -198,13 +198,15 @@ Resources:
       Timeout: !Ref AlertsAPITimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
-        -
-          Id: ManageAlerts
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: ManageAlerts
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - dynamodb:GetItem
                 - dynamodb:Query
@@ -214,19 +216,16 @@ Resources:
                 - !Sub
                   - '${TableArn}/index/*'
                   - { TableArn: !GetAtt AlertsTable.Arn }
-        -
-          Id: InvokeGatewayApi
+        - Id: InvokeGatewayApi
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
-        -
-          Id: ReadEvents
+        - Id: ReadEvents
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - dynamodb:BatchGetItem
                 - dynamodb:GetItem
@@ -268,39 +267,37 @@ Resources:
       Timeout: !Ref MergerTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess', !Ref 'AWS::NoValue']
-        -
-          Id: InvokeGatewayApi
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: InvokeGatewayApi
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
-        -
-          Id: SQS
+        - Id: SQS
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:ReceiveMessage
                 - sqs:DeleteMessage
                 - sqs:GetQueueAttributes
               Resource: !GetAtt Queue.Arn
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts
-        -
-          Id: ManageAlerts
+        - Id: ManageAlerts
           Version: 2012-10-17
           Statement:
             - Effect: Allow

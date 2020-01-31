@@ -30,12 +30,12 @@ Parameters:
   DeployAuditRole:
     Type: String
     Description: Creates the panther-audit-role required for compliance scanning.
-    Default: True 
+    Default: True
     AllowedValues: [true, false]
   DeployCloudWatchEventSetup:
     Type: String
     Description: Creates a StackSet Execution Role to configure CloudWatch Events to send to Panther for compliance processing (optional).
-    Default: True 
+    Default: True
     AllowedValues: [true, false]
   DeployRemediation:
     Type: String
@@ -44,9 +44,9 @@ Parameters:
     AllowedValues: [true, false]
 
 Conditions:
-  AuditRole:       !Equals [true, !Ref DeployAuditRole]
-  CloudWatchEventSetup:     !Equals [true, !Ref DeployCloudWatchEventSetup]
-  AutoRemediation:  !Equals [true, !Ref DeployRemediation]
+  AuditRole: !Equals [true, !Ref DeployAuditRole]
+  CloudWatchEventSetup: !Equals [true, !Ref DeployCloudWatchEventSetup]
+  AutoRemediation: !Equals [true, !Ref DeployRemediation]
 
 Resources:
   AuditRole:
@@ -58,8 +58,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
+          - Effect: Allow
             Principal:
               AWS: !Sub arn:aws:iam::${MasterAccountId}:root
             Action: sts:AssumeRole
@@ -69,8 +68,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/SecurityAudit
       Policies:
-        -
-          PolicyName: CloudFormationStackDriftDetection
+        - PolicyName: CloudFormationStackDriftDetection
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -79,8 +77,7 @@ Resources:
                   - cloudformation:DetectStackDrift
                   - cloudformation:DetectStackResourceDrift
                 Resource: '*'
-        -
-          PolicyName: GetWAFACLs
+        - PolicyName: GetWAFACLs
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -92,8 +89,7 @@ Resources:
                   - waf-regional:GetWebACL
                   - waf-regional:GetWebACLForResource
                 Resource: '*'
-        -
-          PolicyName: GetTags
+        - PolicyName: GetTags
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -122,22 +118,18 @@ Resources:
               AWS: !Sub arn:aws:iam::${MasterAccountId}:root
             Action: sts:AssumeRole
       Policies:
-        -
-          PolicyName: ManageCloudFormationStack
+        - PolicyName: ManageCloudFormationStack
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action: cloudformation:*
                 Resource: '*'
-        -
-          PolicyName: PantherSetupRealTimeEvents
+        - PolicyName: PantherSetupRealTimeEvents
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - events:*
                   - sns:*
@@ -152,7 +144,7 @@ Resources:
     Properties:
       RoleName: PantherRemediationRole
       Description: The Panther master account assumes this role for automatic remediation of policy violations
-      MaxSessionDuration: 3600  # 1 hour
+      MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -164,8 +156,7 @@ Resources:
               Bool:
                 aws:SecureTransport: true
       Policies:
-        -
-          PolicyName: AllowRemediativeActions
+        - PolicyName: AllowRemediativeActions
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -210,4 +201,4 @@ Outputs:
   PantherRemediationRoleArn:
     Condition: AutoRemediation
     Description: The Arn of the Panther Auto Remediation IAM Role
-    Value: !GetAtt RemediationRole.Arn 
+    Value: !GetAtt RemediationRole.Arn

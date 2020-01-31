@@ -1,22 +1,26 @@
 # awsbatch
+
 AWS batch operations with input paging, backoff, and retry for failed items.
 
 When reading or writing items in bulk to an AWS service, the caller typically has to worry about:
-* **Maximum request size:** There is an upper bound on the number of items in each request
-* **Retrying failed items:** In each batch operation, a subset of items can fail
-* **Backoff:** There needs to be exponential backoff if a request fails
+
+- **Maximum request size:** There is an upper bound on the number of items in each request
+- **Retrying failed items:** In each batch operation, a subset of items can fail
+- **Backoff:** There needs to be exponential backoff if a request fails
 
 Inspired by Python's super-simple [batch writer](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/dynamodb.html#batch-writing), this library takes care of all of those concerns.
 The caller simply provides the AWS input as usual, and `awsbatch` handles the rest.
 
 ## Functions
-* `dynamodbbatch.BatchGetItem`
-* `dynamodbbatch.BatchWriteItem`
-* `kinesisbatch.PutRecords`
-* `s3batch.DeleteObjects`
-* `sqsbatch.SendMessageBatch`
+
+- `dynamodbbatch.BatchGetItem`
+- `dynamodbbatch.BatchWriteItem`
+- `kinesisbatch.PutRecords`
+- `s3batch.DeleteObjects`
+- `sqsbatch.SendMessageBatch`
 
 ## Example Usage
+
 ```go
 package main
 

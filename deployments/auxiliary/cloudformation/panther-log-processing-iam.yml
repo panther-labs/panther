@@ -32,7 +32,8 @@ Parameters:
       E.g. "arn:aws:s3:::my-bucket,arn:aws:s3:::another-bucket*"
   S3ObjectPrefixes:
     Type: CommaDelimitedList
-    Description: Allow Panther master account access to access S3 objects that have the following patterns.
+    Description:
+      Allow Panther master account access to access S3 objects that have the following patterns.
       E.g. "arn:aws:s3:::my-bucket/prefix*,arn:aws:s3:::my-bucket/prefix-2*"
   EncryptionKeys:
     Type: CommaDelimitedList
@@ -49,7 +50,7 @@ Resources:
     Properties:
       RoleName: PantherLogProcessingRole
       Description: The Panther master account assumes this role to read log data
-      MaxSessionDuration: 3600  # 1 hour
+      MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -61,8 +62,7 @@ Resources:
               Bool:
                 aws:SecureTransport: true
       Policies:
-        -
-          PolicyName: ReadData
+        - PolicyName: ReadData
           PolicyDocument:
             Version: 2012-10-17
             Statement:

@@ -16,7 +16,7 @@
 
 swagger: '2.0'
 info:
-  version: '1.0.0'  # API version, not the SAR code version
+  version: '1.0.0' # API version, not the SAR code version
   title: panther-analysis-api
   description: Panther Python policies/rules
   contact:
@@ -34,7 +34,7 @@ produces:
 # The name of the CloudFormation resource for the Lambda handler function
 x-panther-lambda-cfn-resource: HandlerFunction
 
-parameters:  # Parameters shared across multiple methods
+parameters: # Parameters shared across multiple methods
   policyId:
     name: policyId
     in: query
@@ -101,8 +101,7 @@ paths:
       summary: Get policy details
       parameters:
         - $ref: '#/parameters/policyId'
-        -
-          name: versionId
+        - name: versionId
           in: query
           description: Optional version ID to retrieve (for older versions)
           type: string
@@ -156,8 +155,7 @@ paths:
       summary: Get rule details
       parameters:
         - $ref: '#/parameters/ruleId'
-        -
-          name: versionId
+        - name: versionId
           in: query
           description: Optional version ID to retrieve (for older versions)
           type: string
@@ -295,29 +293,24 @@ paths:
       summary: Page through policies in a customer's account
       parameters:
         # filtering
-        -
-          name: complianceStatus
+        - name: complianceStatus
           in: query
           description: Only include policies with a specific compliance status
           type: string
           enum: [ERROR, FAIL, PASS]
-        -
-          name: nameContains
+        - name: nameContains
           in: query
           description: Only include policies whose ID or display name contains this substring (case-insensitive)
           type: string
-        -
-          name: enabled
+        - name: enabled
           in: query
           description: Only include policies which are enabled or disabled
           type: boolean
-        -
-          name: hasRemediation
+        - name: hasRemediation
           in: query
           description: Only include policies with or without auto-remediation enabled
           type: boolean
-        -
-          name: resourceTypes
+        - name: resourceTypes
           in: query
           description: Only include policies which apply to one of these resource types
           type: array
@@ -325,14 +318,12 @@ paths:
           uniqueItems: true
           items:
             type: string
-        -
-          name: severity
+        - name: severity
           in: query
           description: Only include policies with this severity
           type: string
           enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
-        -
-          name: tags
+        - name: tags
           in: query
           description: Only include policies with all of these tags (case-insensitive)
           type: array
@@ -342,8 +333,7 @@ paths:
             type: string
 
         # sorting
-        -
-          name: sortBy
+        - name: sortBy
           in: query
           description: Name of the field to sort by
           type: string
@@ -355,8 +345,7 @@ paths:
             - resourceTypes
             - severity
           default: severity
-        -
-          name: sortDir
+        - name: sortDir
           in: query
           description: Sort direction
           type: string
@@ -364,16 +353,14 @@ paths:
           default: descending
 
         # paging
-        -
-          name: pageSize
+        - name: pageSize
           in: query
           description: Number of items in each page of results
           type: integer
           minimum: 1
           maximum: 1000
           default: 25
-        -
-          name: page
+        - name: page
           in: query
           description: Which page of results to retrieve
           type: integer
@@ -425,18 +412,15 @@ paths:
       summary: Page through rules in a customer's account
       parameters:
         # filtering
-        -
-          name: nameContains
+        - name: nameContains
           in: query
           description: Only include rules whose ID or display name contains this substring (case-insensitive)
           type: string
-        -
-          name: enabled
+        - name: enabled
           in: query
           description: Only include rules which are enabled or disabled
           type: boolean
-        -
-          name: logTypes
+        - name: logTypes
           in: query
           description: Only include rules which apply to one of these log types
           type: array
@@ -444,14 +428,12 @@ paths:
           uniqueItems: true
           items:
             type: string
-        -
-          name: severity
+        - name: severity
           in: query
           description: Only include policies with this severity
           type: string
           enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
-        -
-          name: tags
+        - name: tags
           in: query
           description: Only include policies with all of these tags (case-insensitive)
           type: array
@@ -461,8 +443,7 @@ paths:
             type: string
 
         # sorting
-        -
-          name: sortBy
+        - name: sortBy
           in: query
           description: Name of the field to sort by
           type: string
@@ -473,8 +454,7 @@ paths:
             - logTypes
             - severity
           default: severity
-        -
-          name: sortDir
+        - name: sortDir
           in: query
           description: Sort direction
           type: string
@@ -482,16 +462,14 @@ paths:
           default: ascending
 
         # paging
-        -
-          name: pageSize
+        - name: pageSize
           in: query
           description: Number of items in each page of results
           type: integer
           minimum: 1
           maximum: 1000
           default: 25
-        -
-          name: page
+        - name: page
           in: query
           description: Which page of results to retrieve
           type: integer
@@ -748,7 +726,6 @@ definitions:
       - POLICY
       - RULE
 
-
   UpdatePolicy:
     type: object
     properties:
@@ -798,7 +775,7 @@ definitions:
         items:
           $ref: '#/definitions/DeleteEntry'
         minItems: 1
-        maxItems: 1000  # max deletes in a single S3 DeleteObjects call
+        maxItems: 1000 # max deletes in a single S3 DeleteObjects call
         uniqueItems: true
     required:
       - policies
@@ -824,7 +801,7 @@ definitions:
 
   EnabledPolicy:
     type: object
-    properties:  # only the fields we need for backend processing
+    properties: # only the fields we need for backend processing
       body:
         $ref: '#/definitions/body'
       id:
@@ -871,7 +848,7 @@ definitions:
 
   PolicySummary:
     type: object
-    properties:  # only the fields we need for the table in the UI
+    properties: # only the fields we need for the table in the UI
       autoRemediationId:
         $ref: '#/definitions/autoRemediationId'
       autoRemediationParameters:
@@ -1102,7 +1079,7 @@ definitions:
 
   RuleSummary:
     type: object
-    properties:  # only the fields we need for the table in the UI
+    properties: # only the fields we need for the table in the UI
       displayName:
         $ref: '#/definitions/displayName'
       enabled:
@@ -1149,15 +1126,15 @@ definitions:
     description: Python policy source code
     type: string
     minLength: 10
-    maxLength: 1000000  # ~1 MB
+    maxLength: 1000000 # ~1 MB
 
   complianceStatus:
     description: Pass/fail compliance status
     type: string
     enum:
-      - ERROR    # Policy raised an exception when evaluating a resource
-      - FAIL     # Policy failed on at least one resource
-      - PASS     # Policy passed for all applicable resources
+      - ERROR # Policy raised an exception when evaluating a resource
+      - FAIL # Policy failed on at least one resource
+      - PASS # Policy passed for all applicable resources
 
   description:
     description: Summary of the policy and its purpose
@@ -1280,4 +1257,4 @@ definitions:
   versionId:
     description: Policy version ID
     type: string
-    pattern: '[a-zA-Z\._0-9]{32}'  # 32-character alphanumeric S3 object version
+    pattern: '[a-zA-Z\._0-9]{32}' # 32-character alphanumeric S3 object version
