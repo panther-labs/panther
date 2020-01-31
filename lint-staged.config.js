@@ -38,10 +38,7 @@ module.exports = {
   '*.{ts,tsx,js}': ['eslint'],
 
   /*
-   * only run the TS compiler when:
-   * 1. There are changes inTS files
-   * 2. The TS configuration is modified
+   * only run the TS compiler when there are changes inTS files
    */
   '**/*.ts?(x)': () => 'tsc -p .',
-  'tsconfig.json': () => 'tsc -p .',
 };
