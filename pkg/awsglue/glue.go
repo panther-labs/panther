@@ -106,6 +106,28 @@ func (gm *GlueMetadata) PartitionPrefix(t time.Time) (prefix string) {
 	return
 }
 
+type Partition struct {
+	Name string
+	Type string
+}
+
+func (gm *GlueMetadata) PartitionKeys() (partitions []Partition) {
+	partitions = []Partition{
+		{Name: "year", Type: "int"},
+	}
+
+	if gm.Timebin() >= GlueTableMonthly {
+		partitions = append(partitions, Partition{Name: "month", Type: "int"})
+	}
+	if gm.Timebin() >= GlueTableDaily {
+		partitions = append(partitions, Partition{Name: "day", Type: "int"})
+	}
+	if gm.Timebin() >= GlueTableHourly {
+		partitions = append(partitions, Partition{Name: "hour", Type: "int"})
+	}
+	return partitions
+}
+
 // Based on Timebin(), return an []*string values (used for Glue APIs)
 func (gm *GlueMetadata) PartitionValues(t time.Time) (values []*string) {
 	var intFormat string

@@ -120,17 +120,12 @@ func GenerateCloudFormation(tables []*awsglue.GlueMetadata) (cf []byte, err erro
 }
 
 func getPartitionKeys(t *awsglue.GlueMetadata) (partitions []Column) {
-	partitions = []Column{
-		{Name: "year", Type: "int", Comment: "year"},
+	for _, partition := range t.PartitionKeys() {
+		partitions = append(partitions, Column{
+			Name:    partition.Name,
+			Type:    partition.Type,
+			Comment: partition.Name,
+		})
 	}
-	if t.Timebin() >= awsglue.GlueTableMonthly {
-		partitions = append(partitions, Column{Name: "month", Type: "int", Comment: "month"})
-	}
-	if t.Timebin() >= awsglue.GlueTableDaily {
-		partitions = append(partitions, Column{Name: "day", Type: "int", Comment: "day"})
-	}
-	if t.Timebin() >= awsglue.GlueTableHourly {
-		partitions = append(partitions, Column{Name: "hour", Type: "int", Comment: "hour"})
-	}
-	return
+	return partitions
 }

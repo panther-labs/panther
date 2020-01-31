@@ -80,13 +80,13 @@ func (aq *AthenaQuery) Wait() (err error) {
 		if err != nil {
 			return errors.Wrapf(err, "athena failed running: %#v", *aq)
 		}
-		if *executionOutput.QueryExecution.Status.State != "RUNNING" {
+		if *executionOutput.QueryExecution.Status.State != athena.QueryExecutionStateRunning {
 			break
 		}
 		time.Sleep(pollDelay)
 	}
 
-	if *executionOutput.QueryExecution.Status.State == "SUCCEEDED" {
+	if *executionOutput.QueryExecution.Status.State == athena.QueryExecutionStateSucceeded {
 		var ip athena.GetQueryResultsInput
 		ip.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
 
