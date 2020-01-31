@@ -50,16 +50,14 @@ func (client *OutputClient) Github(
 		"body":  description + link + runBook + severity + tags,
 	}
 
-	accept := "application/json"
 	token := "token " + *config.Token
 	repoURL := githubEndpoint + *config.RepoName + requestType
-	requestHeader := map[string]*string{
-		"Authorization": &token,
-		"Accept":        &accept,
+	requestHeader := map[string]string{
+		AuthorizationHTTPHeader: token,
 	}
 
 	postInput := &PostInput{
-		url:     &repoURL,
+		url:     repoURL,
 		body:    githubRequest,
 		headers: requestHeader,
 	}

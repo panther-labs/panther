@@ -134,31 +134,30 @@ Resources:
       Runtime: go1.x
       Timeout: !Ref ProcessorTimeoutSec
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
-        -
-          Id: ReadFromSQS
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: ReadFromSQS
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:DeleteMessage
                 - sqs:GetQueueAttributes
                 - sqs:ReceiveMessage
               Resource: !GetAtt Queue.Arn
-            -
-              Effect: Allow
+            - Effect: Allow
               Action: kms:Decrypt
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-        -
-          Id: UpdateTable
+        - Id: UpdateTable
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: dynamodb:UpdateItem
               Resource: !GetAtt Table.Arn
-        -
-          Id: InvokeGatewayApi
+        - Id: InvokeGatewayApi
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -180,9 +179,9 @@ Resources:
       KeySchema:
         - AttributeName: policyId
           KeyType: HASH
-      PointInTimeRecoverySpecification:  # Create periodic table backups
+      PointInTimeRecoverySpecification: # Create periodic table backups
         PointInTimeRecoveryEnabled: True
-      SSESpecification:  # Enable server-side encryption
+      SSESpecification: # Enable server-side encryption
         SSEEnabled: True
       StreamSpecification:
         StreamViewType: NEW_IMAGE
@@ -219,9 +218,12 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       Timeout: !Ref ForwarderTimeoutSec
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
-        -
-          Id: ReadTableStreams
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: ReadTableStreams
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -231,18 +233,15 @@ Resources:
                 - dynamodb:GetShardIterator
                 - dynamodb:ListStreams
               Resource: !Sub ${Table.Arn}/stream/*
-        -
-          Id: PublishToAlertQueue
+        - Id: PublishToAlertQueue
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - kms:Decrypt
                 - kms:GenerateDataKey

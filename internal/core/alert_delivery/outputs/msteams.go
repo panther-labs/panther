@@ -68,15 +68,10 @@ func (client *OutputClient) MsTeams(
 		},
 	}
 
-	accept := "application/json"
-	requestHeader := map[string]*string{
-		"Accept": &accept,
-	}
 	requestURL := *config.WebhookURL
 	postInput := &PostInput{
-		url:     &requestURL,
-		body:    msTeamsRequestBody,
-		headers: requestHeader,
+		url:  requestURL,
+		body: msTeamsRequestBody,
 	}
 	return client.httpWrapper.post(postInput)
 }

@@ -1,10 +1,12 @@
 # lambdalogger
+
 Initialize a zap logger for your Lambda function with the request ID and other initial fields.
 
 This makes it possible to easily search for logs from a given invocation and is required for all
 Panther Go Lambda functions.
 
 ## Example Usage
+
 ```go
 package main
 

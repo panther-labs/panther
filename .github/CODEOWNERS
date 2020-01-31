@@ -1,2 +1,9 @@
-# The default owners for everything in the repo:
-* @panther-labs/eng
+#
+# Default Owners
+#
+* @3nvi @austinbyers @nhakmiller @kostaspap @jacknagz @rleighton
+
+#
+# Documentation
+#
+docs/ @3nvi @austinbyers @nhakmiller @kostaspap @jacknagz @rleighton @kartikeypan

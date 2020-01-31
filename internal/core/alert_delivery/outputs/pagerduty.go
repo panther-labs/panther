@@ -72,7 +72,7 @@ func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmo
 	}
 
 	postInput := &PostInput{
-		url:  &pagerDutyEndpoint,
+		url:  pagerDutyEndpoint,
 		body: pagerDutyRequest,
 	}
 

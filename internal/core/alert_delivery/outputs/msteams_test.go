@@ -76,14 +76,10 @@ func TestMsTeamsAlert(t *testing.T) {
 	}
 
 	requestURL := *msTeamConfig.WebhookURL
-	accept := "application/json"
-	requestHeader := map[string]*string{
-		"Accept": &accept,
-	}
+
 	expectedPostInput := &PostInput{
-		url:     &requestURL,
-		body:    msTeamsPayload,
-		headers: requestHeader,
+		url:  requestURL,
+		body: msTeamsPayload,
 	}
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))

@@ -26,6 +26,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+const (
+	AuthorizationHTTPHeader = "Authorization"
+)
+
 // post sends a JSON body to an endpoint.
 func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryError {
 	payload, err := jsoniter.Marshal(input.body)
@@ -33,16 +37,17 @@ func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryError {
 		return &AlertDeliveryError{Message: "json marshal error: " + err.Error(), Permanent: true}
 	}
 
-	request, err := http.NewRequest("POST", *input.url, bytes.NewBuffer(payload))
+	request, err := http.NewRequest("POST", input.url, bytes.NewBuffer(payload))
 	if err != nil {
 		return &AlertDeliveryError{Message: "http request error: " + err.Error(), Permanent: true}
 	}
 
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
 
 	//Adding dynamic headers
 	for key, value := range input.headers {
-		request.Header.Set(key, *value)
+		request.Header.Set(key, value)
 	}
 
 	response, err := client.httpClient.Do(request)

@@ -42,13 +42,11 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		zap.String("outputID", *output.OutputID),
 		zap.String("policyId", *alert.PolicyID),
 	}
-	logger := zap.L()
-
 	defer func() {
 		// If we panic when sending an alert, log an error and report back to the channel.
 		// Otherwise, the main routine will wait forever for this to finish.
 		if r := recover(); r != nil {
-			logger.Error("panic sending alert", append(commonFields, zap.Any("panic", r))...)
+			zap.L().Error("panic sending alert", append(commonFields, zap.Any("panic", r))...)
 			statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}
 		}
 	}()
@@ -59,7 +57,7 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		return
 	}
 
-	logger.Info(
+	zap.L().Info(
 		"sending alert",
 		append(commonFields, zap.String("name", *output.DisplayName))...,
 	)
@@ -84,19 +82,21 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		alertDeliveryError = outputClient.Sqs(alert, output.OutputConfig.Sqs)
 	case "sns":
 		alertDeliveryError = outputClient.Sns(alert, output.OutputConfig.Sns)
+	case "asana":
+		alertDeliveryError = outputClient.Asana(alert, output.OutputConfig.Asana)
 	default:
-		logger.Warn("unsupported output type", commonFields...)
+		zap.L().Warn("unsupported output type", commonFields...)
 		statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}
 		return
 	}
 	if alertDeliveryError != nil {
-		logger.Warn("failed to send alert", append(commonFields, zap.Error(alertDeliveryError))...)
+		zap.L().Warn("failed to send alert", append(commonFields, zap.Error(alertDeliveryError))...)
 		statusChannel <- outputStatus{
 			outputID: *output.OutputID, success: false, needsRetry: !alertDeliveryError.Permanent}
 		return
 	}
 
-	logger.Info("alert success", commonFields...)
+	zap.L().Info("alert success", commonFields...)
 	statusChannel <- outputStatus{outputID: *output.OutputID, success: true, needsRetry: false}
 }
 

@@ -54,7 +54,7 @@ func (m *mockHTTPClient) Do(request *http.Request) (*http.Response, error) {
 func TestPostInvalidJSON(t *testing.T) {
 	body := map[string]interface{}{"func": TestPostInvalidJSON}
 	postInput := &PostInput{
-		url:  &requestEndpoint,
+		url:  requestEndpoint,
 		body: body,
 	}
 	c := &HTTPWrapper{httpClient: &mockHTTPClient{}}
@@ -64,7 +64,7 @@ func TestPostInvalidJSON(t *testing.T) {
 func TestPostErrorSubmittingRequest(t *testing.T) {
 	c := &HTTPWrapper{httpClient: &mockHTTPClient{requestError: true}}
 	postInput := &PostInput{
-		url:  &requestEndpoint,
+		url:  requestEndpoint,
 		body: map[string]interface{}{"abc": 123},
 	}
 	assert.NotNil(t, c.post(postInput))
@@ -73,7 +73,7 @@ func TestPostErrorSubmittingRequest(t *testing.T) {
 func TestPostNotOk(t *testing.T) {
 	c := &HTTPWrapper{httpClient: &mockHTTPClient{statusCode: http.StatusBadRequest}}
 	postInput := &PostInput{
-		url:  &requestEndpoint,
+		url:  requestEndpoint,
 		body: map[string]interface{}{"abc": 123},
 	}
 	assert.NotNil(t, c.post(postInput))
@@ -82,7 +82,7 @@ func TestPostNotOk(t *testing.T) {
 func TestPostOk(t *testing.T) {
 	c := &HTTPWrapper{httpClient: &mockHTTPClient{statusCode: http.StatusOK}}
 	postInput := &PostInput{
-		url:  &requestEndpoint,
+		url:  requestEndpoint,
 		body: map[string]interface{}{"abc": 123},
 	}
 	assert.Nil(t, c.post(postInput))
@@ -91,7 +91,7 @@ func TestPostOk(t *testing.T) {
 func TestPostCreated(t *testing.T) {
 	c := &HTTPWrapper{httpClient: &mockHTTPClient{statusCode: http.StatusCreated}}
 	postInput := &PostInput{
-		url:  &requestEndpoint,
+		url:  requestEndpoint,
 		body: map[string]interface{}{"abc": 123},
 	}
 	assert.Nil(t, c.post(postInput))

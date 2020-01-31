@@ -1,5 +1,6 @@
+
 {
   "hooks": {
-    "pre-commit": "lint-staged && tsc -p ."
+    "pre-commit": "lint-staged"
   }
 }

@@ -29,18 +29,22 @@ import (
 )
 
 type dummyParserEvent struct {
-	FirstName   string
-	LastName    string
-	DOB         timestamp.RFC3339
-	Anniversary timestamp.ANSICwithTZ
+	commonFields // inherit these fields via composition
+	DOB          timestamp.RFC3339
+	Anniversary  timestamp.ANSICwithTZ
 }
 
-func TestGenerateGlueCloudFormation(t *testing.T) {
-	expectedOutput, err := readTestFile("testdata/gluecf.json")
+type commonFields struct {
+	FirstName string
+	LastName  string
+}
+
+func TestTablesCloudFormation(t *testing.T) {
+	expectedOutput, err := readTestFile("testdata/gluecf.json.cf")
 	require.NoError(t, err)
 
 	// use simple consistent reference set of parsers
-	table, err := awsglue.NewGlueMetadata(awsglue.InternalDatabaseName, "dummy", "dummy",
+	table, err := awsglue.NewGlueMetadata(awsglue.TablesDatabaseName, "dummy", "dummy",
 		awsglue.GlueTableHourly, false, &dummyParserEvent{})
 	require.NoError(t, err)
 	tables := []*awsglue.GlueMetadata{table}

@@ -97,7 +97,6 @@ Conditions:
   SSMEvents: !Equals [!Ref SSMEvents, 'True']
 
 Resources:
-
   # SNS Topic, Policy, and Subscription to SQS
 
   PantherEventsTopic:
@@ -109,18 +108,16 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Sid: CloudWatchEventsPublish
+          - Sid: CloudWatchEventsPublish
             Effect: Allow
             Principal:
-              Service: events.amazonaws.com
+              Service: !Sub events.${AWS::URLSuffix}
             Action: sns:Publish
             Resource: !Ref PantherEventsTopic
-          -
-            Sid: CrossAccountSubscription
+          - Sid: CrossAccountSubscription
             Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
             Action: sns:Subscribe
             Resource: !Ref PantherEventsTopic
       Topics:
@@ -146,8 +143,7 @@ Resources:
           - AWS API Call via CloudTrail
       State: ENABLED
       Targets:
-        -
-          Arn: !Ref PantherEventsTopic
+        - Arn: !Ref PantherEventsTopic
           Id: panther-collect-cloudtrail-events
 
   SecurityRule:

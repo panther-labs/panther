@@ -26,8 +26,9 @@ import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
 import githubLogo from 'Assets/github-minimal-logo.svg';
 import pagerDutyLogo from 'Assets/pagerduty-minimal-logo.svg';
 import jiraLogo from 'Assets/jira-minimal-logo.svg';
-import snsLogo from 'Assets/aws-sns.svg';
-import sqsLogo from 'Assets/aws-sqs.svg';
+import snsLogo from 'Assets/aws-sns-minimal-logo.svg';
+import sqsLogo from 'Assets/aws-sqs-minimal-logo.svg';
+import asanaLogo from 'Assets/asana-minimal-logo.svg';
 
 import { SIDESHEETS } from 'Components/utils/sidesheet-context';
 import { DestinationTypeEnum } from 'Generated/schema';
@@ -72,6 +73,11 @@ const destinationConfigs = [
     logo: sqsLogo,
     title: 'AWS SQS',
     destinationType: DestinationTypeEnum.Sqs,
+  },
+  {
+    logo: asanaLogo,
+    title: 'Asana',
+    destinationType: DestinationTypeEnum.Asana,
   },
 ];
 

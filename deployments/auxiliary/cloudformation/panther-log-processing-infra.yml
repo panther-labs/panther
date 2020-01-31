@@ -30,7 +30,7 @@ Parameters:
     Default: true
     AllowedValues: [true, false]
   DataLifetime:
-    Type: Number 
+    Type: Number
     Description: How long to wait before automatically deleting data, if ExpireData is set to true.
     Default: 30
 
@@ -51,8 +51,9 @@ Resources:
         Rules:
           - Id: 30DayExpiration
             Status: !If [ExpireData, Enabled, Disabled]
-            ExpirationInDays: !If [ExpireData, !Ref DataLifetime, !Ref "AWS::NoValue"]
-            NoncurrentVersionExpirationInDays: !If [ExpireData, !Ref DataLifetime, !Ref "AWS::NoValue"]
+            ExpirationInDays: !If [ExpireData, !Ref DataLifetime, !Ref 'AWS::NoValue']
+            NoncurrentVersionExpirationInDays:
+              !If [ExpireData, !Ref DataLifetime, !Ref 'AWS::NoValue']
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -63,8 +64,7 @@ Resources:
         Status: Enabled
       NotificationConfiguration:
         TopicConfigurations:
-          -
-            Topic: !Ref LogProcessingNotificationsTopic
+          - Topic: !Ref LogProcessingNotificationsTopic
             Event: s3:ObjectCreated:*
 
   # This policy grants the CloudTrail and VPC FLow Logs services write permissions, and blocks
@@ -80,13 +80,13 @@ Resources:
           - Sid: CloudTrailAclCheck
             Effect: Allow
             Principal:
-              Service: cloudtrail.amazonaws.com
+              Service: !Sub cloudtrail.${AWS::URLSuffix}
             Action: s3:GetBucketAcl
             Resource: !GetAtt LogProcessingBucket.Arn
           - Sid: CloudTrailWrite
             Effect: Allow
             Principal:
-              Service: cloudtrail.amazonaws.com
+              Service: !Sub cloudtrail.${AWS::URLSuffix}
             Action: s3:PutObject
             Resource: !Sub ${LogProcessingBucket.Arn}/*
             Condition:
@@ -105,13 +105,13 @@ Resources:
           - Sid: VPCFlowAclCheck
             Effect: Allow
             Principal:
-              Service: delivery.logs.amazonaws.com
+              Service: !Sub delivery.logs.${AWS::URLSuffix}
             Action: s3:GetBucketAcl
             Resource: !GetAtt LogProcessingBucket.Arn
           - Sid: VPCFlowWrite
             Effect: Allow
             Principal:
-              Service: delivery.logs.amazonaws.com
+              Service: !Sub delivery.logs.${AWS::URLSuffix}
             Action: s3:PutObject
             Resource: !Sub ${LogProcessingBucket.Arn}/*
             Condition:
@@ -132,19 +132,17 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            # Reference: https://amzn.to/2ouFmhK
+          - # Reference: https://amzn.to/2ouFmhK
             Sid: S3NotificationPublish
             Effect: Allow
             Principal:
-              Service: 's3.amazonaws.com'
+              Service: !Sub s3.${AWS::URLSuffix}
             Action: sns:Publish
             Resource: !Ref LogProcessingNotificationsTopic
-          -
-            Sid: CrossAccountSubscription
+          - Sid: CrossAccountSubscription
             Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
             Action: sns:Subscribe
             Resource: !Ref LogProcessingNotificationsTopic
       Topics:
@@ -154,7 +152,7 @@ Resources:
   Subscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !Sub arn:aws:sqs:us-west-2:${MasterAccountId}:panther-log-notifications
+      Endpoint: !Sub arn:${AWS::Partition}:sqs:us-west-2:${MasterAccountId}:panther-log-notifications
       Protocol: sqs
       RawMessageDelivery: false
       TopicArn: !Ref LogProcessingNotificationsTopic
@@ -170,7 +168,6 @@ Resources:
       IsMultiRegionTrail: true
       IncludeGlobalServiceEvents: true
       EnableLogFileValidation: true
-
 
 Outputs:
   SnsTopicArn:

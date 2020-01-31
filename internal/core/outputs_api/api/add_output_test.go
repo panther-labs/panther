@@ -296,3 +296,52 @@ func TestAddOutputSqs(t *testing.T) {
 	_, err = uuid.Parse(*result.OutputID)
 	assert.NoError(t, err)
 }
+
+func TestAddOutputAsana(t *testing.T) {
+	mockEncryptionKey := &mockEncryptionKey{}
+	encryptionKey = mockEncryptionKey
+	mockOutputTable := &mockOutputTable{}
+	outputsTable = mockOutputTable
+	mockOutputVerification := &mockOutputVerification{}
+	outputVerification = mockOutputVerification
+
+	mockOutputTable.On("GetOutputByName", aws.String("my-asana-destination")).Return(nil, nil)
+	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
+	mockOutputTable.On("PutOutput", mock.Anything).Return(nil)
+	mockOutputVerification.On("GetVerificationStatus", mock.Anything).Return(aws.String(models.VerificationStatusSuccess), nil)
+
+	input := &models.AddOutputInput{
+		UserID:      aws.String("userId"),
+		DisplayName: aws.String("my-asana-destination"),
+		OutputConfig: &models.OutputConfig{
+			Asana: &models.AsanaConfig{
+				PersonalAccessToken: aws.String("0/8c26ac5222d539ca0ad7000000000000"),
+				ProjectGids:         aws.StringSlice([]string{""}),
+			},
+		},
+	}
+
+	result, err := (API{}).AddOutput(input)
+	require.NoError(t, err)
+
+	expected := &models.AddOutputOutput{
+		DisplayName:    aws.String("my-asana-destination"),
+		OutputType:     aws.String("asana"),
+		LastModifiedBy: aws.String("userId"),
+		CreatedBy:      aws.String("userId"),
+		OutputConfig: &models.OutputConfig{
+			Asana: &models.AsanaConfig{
+				PersonalAccessToken: aws.String("0/8c26ac5222d539ca0ad7000000000000"),
+				ProjectGids:         aws.StringSlice([]string{""}),
+			},
+		},
+		OutputID:           result.OutputID,
+		CreationTime:       result.CreationTime,
+		LastModifiedTime:   result.LastModifiedTime,
+		VerificationStatus: aws.String(models.VerificationStatusSuccess),
+	}
+	assert.Equal(t, expected, result)
+
+	_, err = uuid.Parse(*result.OutputID)
+	assert.NoError(t, err)
+}

@@ -100,10 +100,10 @@ Resources:
       DefinitionBody: api/gateway/resources/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-resources-api
-      StageName: v1  # NOTE: sam also builds a stage called "Stage"
+      StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
 
-  GatewayInvocationPermission:  # allow API gateway to invoke the Lambda function
+  GatewayInvocationPermission: # allow API gateway to invoke the Lambda function
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
@@ -132,9 +132,12 @@ Resources:
       Timeout: !Ref HandlerTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
-        -
-          Id: AccessComplianceApi
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: AccessComplianceApi
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -142,8 +145,7 @@ Resources:
               Resource:
                 - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/describe-org
                 - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/delete
-        -
-          Id: DynamoManageItems
+        - Id: DynamoManageItems
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -152,8 +154,7 @@ Resources:
                 - dynamodb:Scan
                 - dynamodb:*Item
               Resource: !GetAtt ResourcesTable.Arn
-        -
-          Id: PublishToResourceQueue
+        - Id: PublishToResourceQueue
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -188,7 +189,7 @@ Resources:
         PointInTimeRecoveryEnabled: True
       SSESpecification:
         SSEEnabled: True
-      TimeToLiveSpecification:  # Deleted resources are expired after 30 days
+      TimeToLiveSpecification: # Deleted resources are expired after 30 days
         AttributeName: expiresAt
         Enabled: true
 
@@ -238,7 +239,7 @@ Resources:
         Queue:
           Type: SQS
           Properties:
-            BatchSize: 10  # Maximum batch size
+            BatchSize: 10 # Maximum batch size
             Queue: !GetAtt InputQueue.Arn
       FunctionName: panther-resource-processor
       Handler: main
@@ -248,48 +249,43 @@ Resources:
       Timeout: !Ref QueueProcessorTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
-        -
-          Id: SendAndReceiveSqsMessages
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
+            !Ref 'AWS::NoValue',
+          ]
+        - Id: SendAndReceiveSqsMessages
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:DeleteMessage
                 - sqs:GetQueueAttributes
                 - sqs:ReceiveMessage
               Resource: !GetAtt InputQueue.Arn
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alert-processor-queue
-            -
-              Effect: Allow
+            - Effect: Allow
               Action:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-        -
-          Id: InvokePantherAPIs
+        - Id: InvokePantherAPIs
           Version: 2012-10-17
           Statement:
-            -
-              Effect: Allow
+            - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
-            -
-              Effect: Allow
+            - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/v1/GET/list
-            -
-              Effect: Allow
+            - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
-            -
-              Effect: Allow
+            - Effect: Allow
               Action: execute-api:Invoke
               Resource:
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
@@ -306,18 +302,21 @@ Resources:
       MemorySize: !Ref EngineMemorySizeMB
       Layers: !If
         - AttachBaseLayers
-        - !Split
-          # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
-          - ","
+        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ','
           - !Sub
-            - "${base},${pip}"
-            - {base: !Join [",", !Ref LayerVersionArns], pip: !Ref PythonLayerArn}
+            - '${base},${pip}'
+            - { base: !Join [',', !Ref LayerVersionArns], pip: !Ref PythonLayerArn }
         - [!Ref PythonLayerArn]
       Runtime: python3.7
       Timeout: !Ref EngineTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [TracingEnabled, 'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess', !Ref 'AWS::NoValue']
+        - !If [
+            TracingEnabled,
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
+            !Ref 'AWS::NoValue',
+          ]
 
   EngineLogGroup:
     Type: AWS::Logs::LogGroup

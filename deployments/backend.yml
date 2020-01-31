@@ -70,10 +70,10 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: apigateway.amazonaws.com
+              Service: !Sub apigateway.${AWS::URLSuffix}
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 
   GatewayAccount:
     Type: AWS::ApiGateway::Account
@@ -95,7 +95,7 @@ Resources:
             Resource: '*'
           - Effect: Allow
             Principal:
-              Service: sns.amazonaws.com
+              Service: !Sub sns.${AWS::URLSuffix}
             Action:
               - kms:GenerateDataKey
               - kms:Decrypt
@@ -196,10 +196,10 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        AnalysisApi: !Sub https://${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
-        ComplianceApi: !Sub https://${ComplianceAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
-        RemediationApi: !Sub https://${RemediationAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
-        ResourcesApi: !Sub https://${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
+        AnalysisApi: !Sub https://${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+        ComplianceApi: !Sub https://${ComplianceAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+        RemediationApi: !Sub https://${RemediationAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+        ResourcesApi: !Sub https://${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
         UserPoolId: !GetAtt Cognito.Outputs.UserPoolId
       TemplateURL: ../out/deployments/core/embedded.appsync.yml
 
@@ -323,7 +323,7 @@ Resources:
         SnsTopicArn: !Ref ProcessedDataNotifications
         ProcessedDataBucket: !Ref ProcessedDataBucket
         SQSKeyId: !Ref QueueEncryptionKey
-        PantherDatabase: !GetAtt GlueTables.Outputs.PantherDatabase
+        PantherDatabase: !GetAtt GlueTables.Outputs.PantherTablesDatabase
       TemplateURL: log_analysis/log_processor.yml
 
   Alerts:
@@ -361,16 +361,43 @@ Resources:
         ProcessedDataBucket: !Ref ProcessedDataBucket
       TemplateURL: ../out/deployments/log_analysis/gluetables.json
 
+  AthenaResultsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub panther-athena-results-${AWS::AccountId}-${AWS::Region}
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 30
+            Status: Enabled
+      LoggingConfiguration:
+        DestinationBucketName: !ImportValue Panther-LogBucket
+        LogFilePrefix: !Sub panther-athena-results-${AWS::AccountId}-${AWS::Region}/
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+
 Outputs:
+  AthenaResultsBucket:
+    Description: Bucket where Athena writes query results
+    Value: !Ref AthenaResultsBucket
   AnalysisApiEndpoint:
     Description: panther-analysis-api Gateway HTTPS endpoint
-    Value: !Sub ${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
+    Value: !Sub ${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
   ComplianceApiEndpoint:
     Description: panther-compliance-api Gateway HTTPS endpoint
-    Value: !Sub ${ComplianceAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
+    Value: !Sub ${ComplianceAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
   ResourcesApiEndpoint:
     Description: panther-resources-api Gateway HTTPS endpoint
-    Value: !Sub ${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.amazonaws.com
+    Value: !Sub ${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
   LoadBalancerUrl:
     Description: Panther URL (application load balancer)
     Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl

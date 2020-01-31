@@ -71,14 +71,12 @@ func TestJiraAlert(t *testing.T) {
 	}
 	auth := *jiraConfig.UserName + ":" + *jiraConfig.APIKey
 	basicAuthToken := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
-	accept := "application/json"
-	requestHeader := map[string]*string{
-		"Authorization": &basicAuthToken,
-		"Accept":        &accept,
+	requestHeader := map[string]string{
+		AuthorizationHTTPHeader: basicAuthToken,
 	}
 	requestEndpoint := "https://panther-labs.atlassian.net/rest/api/latest/issue/"
 	expectedPostInput := &PostInput{
-		url:     &requestEndpoint,
+		url:     requestEndpoint,
 		body:    jiraPayload,
 		headers: requestHeader,
 	}

@@ -104,6 +104,9 @@ func getOutputType(outputConfig *models.OutputConfig) (*string, error) {
 	if outputConfig.Sqs != nil {
 		return aws.String("sqs"), nil
 	}
+	if outputConfig.Asana != nil {
+		return aws.String("asana"), nil
+	}
 
 	return nil, errors.New("no valid output configuration specified for alert output")
 }

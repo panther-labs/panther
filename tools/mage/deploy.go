@@ -20,6 +20,7 @@ package mage
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -38,7 +39,9 @@ import (
 
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/api/lambda/users/models"
+	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/athenaviews"
 )
 
 const (
@@ -114,6 +117,14 @@ func Deploy() error {
 	}
 
 	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs, "out/.env"); err != nil {
+		return err
+	}
+
+	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
+	if err := awsathena.WorkgroupAssociateS3(awsSession, "primary", backendOutputs["AthenaResultsBucket"]); err != nil {
+		return err
+	}
+	if err := athenaviews.CreateOrReplaceViews(backendOutputs["AthenaResultsBucket"]); err != nil {
 		return err
 	}
 
@@ -263,13 +274,73 @@ func cfnPackage(templateFile, bucket, stack string) (string, error) {
 	}
 
 	if mg.Verbose() {
-		return pkgOut, sh.Run("aws", args...)
+		err := sh.Run("aws", args...)
+		if err != nil {
+			return "", err
+		}
+		err = cfnPackagePostProcess(pkgOut)
+		return pkgOut, err
 	}
 
 	// By default, just print a single progress message instead of several lines of explanation
 	fmt.Printf("deploy: cloudformation package %s => %s\n", templateFile, pkgOut)
 	_, err := sh.Output("aws", args...)
+	if err != nil {
+		return "", err
+	}
+	err = cfnPackagePostProcess(pkgOut)
 	return pkgOut, err
+}
+
+// Post-Process all the CFN templates
+func cfnPackagePostProcess(templatePath string) error {
+	templateOriginal, err := ioutil.ReadFile(templatePath)
+	if err != nil {
+		return err
+	}
+
+	var result []string
+	for _, line := range strings.Split(string(templateOriginal), "\n") {
+		line = fixPackageTemplateURL(line)
+		result = append(result, line)
+	}
+
+	err = ioutil.WriteFile(templatePath, []byte(strings.Join(result, "\n")), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Fix CloudFormation package TemplateURL issues.
+// Somewhere there is a bug that is causing the environment variables specifying region to not be properly respected
+// when constructing the template URLs while deploying to another region than the one specified in the aws config.
+//
+// I believe it is related to this issue: https://github.com/aws/aws-cli/issues/4372
+func fixPackageTemplateURL(line string) string {
+	// This code transforms:
+	// TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template
+	// into:
+	// TemplateURL: https://bucket.s3.amazonaws.com/panther-app/1.template
+	if strings.HasPrefix(strings.TrimSpace(line), "TemplateURL: ") {
+		// Break the line down to the pieces we need
+		lineParts := strings.Split(line, "https://")
+		uriParts := strings.Split(lineParts[1], "/")
+		prefixParts := strings.Split(uriParts[0], ".")
+
+		// Build the new URI
+		prefixParts[1] = prefixParts[0]
+		prefixParts[0] = uriParts[1]
+
+		// Rebuild the line
+		newURIPrefix := strings.Join(prefixParts, ".")
+		newURIParts := append([]string{newURIPrefix}, uriParts[2:]...)
+		lineParts[1] = strings.Join(newURIParts, "/")
+		line = strings.Join(lineParts, "https://")
+	}
+
+	return line
 }
 
 // Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.

@@ -25,14 +25,10 @@ PolicyID: Test:Policy
 Enabled: true
 Tags: []
 Tests:
-  -
-    Name: This will be True
+  - Name: This will be True
     ResourceType: AWS.S3.Bucket
     ExpectedResult: true
-    Resource:
-      {
-        "Bucket": "empty"
-      }
+    Resource: { 'Bucket': 'empty' }
 ResourceTypes:
   - AWS.S3.Bucket
 Severity: Medium

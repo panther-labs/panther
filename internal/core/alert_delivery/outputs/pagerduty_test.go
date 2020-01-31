@@ -64,7 +64,7 @@ func TestSendPagerDutyAlert(t *testing.T) {
 	}
 	requestEndpoint := "https://events.pagerduty.com/v2/enqueue"
 	expectedPostInput := &PostInput{
-		url:  &requestEndpoint,
+		url:  requestEndpoint,
 		body: expectedPostPayload,
 	}
 

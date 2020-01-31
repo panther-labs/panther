@@ -21,7 +21,7 @@ package registry
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginx"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
@@ -47,8 +47,8 @@ var (
 			&awslogs.AuroraMySQLAudit{}, awslogs.AuroraMySQLAuditDesc),
 		(&awslogs.GuardDutyParser{}).LogType(): DefaultHourlyLogParser(&awslogs.GuardDutyParser{},
 			&awslogs.GuardDuty{}, awslogs.GuardDutyDesc),
-		(&nginx.AccessParser{}).LogType(): DefaultHourlyLogParser(&nginx.AccessParser{},
-			&nginx.Access{}, nginx.AccessDesc),
+		(&nginxlogs.AccessParser{}).LogType(): DefaultHourlyLogParser(&nginxlogs.AccessParser{},
+			&nginxlogs.Access{}, nginxlogs.AccessDesc),
 		(&osquerylogs.DifferentialParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.DifferentialParser{},
 			&osquerylogs.Differential{}, osquerylogs.DifferentialDesc),
 		(&osquerylogs.BatchParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.BatchParser{},
@@ -67,7 +67,7 @@ func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, descri
 	tableName := p.LogType() // default to LogType()
 
 	// describes Glue table over processed data in S3
-	gm, err := awsglue.NewGlueMetadata(awsglue.InternalDatabaseName, tableName, description, awsglue.GlueTableHourly, false, eventStruct)
+	gm, err := awsglue.NewGlueMetadata(awsglue.TablesDatabaseName, tableName, description, awsglue.GlueTableHourly, false, eventStruct)
 	if err != nil {
 		panic(err) // panic is justified because this means configuration is WRONG
 	}
