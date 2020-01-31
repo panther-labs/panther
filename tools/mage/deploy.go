@@ -293,11 +293,12 @@ func cfnPackagePostProcess(templatePath string) error {
 	// when constructing the template URLs while deploying to another region than the one specified in the aws config.
 	//
 	// Environment variables and flags are being ignored here, so I suspect a bug in the the aws cli cloudformation package command.
+	// I believe it is related to this issue: https://github.com/aws/aws-cli/issues/4372
 	//
 	// This code transforms:
 	// TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template
 	// into:
-	// TemplateURL: https://bucket.s3.region.amazonaws.com/panther-app/1.template
+	// TemplateURL: https://bucket.s3.amazonaws.com/panther-app/1.template
 	for _, line := range strings.Split(string(templateOriginal), "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "TemplateURL: ") {
 			// Break the line down to the pieces we need
