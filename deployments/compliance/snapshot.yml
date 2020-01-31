@@ -130,7 +130,7 @@ Resources:
       Policies:
         - !If [
             TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
             !Ref 'AWS::NoValue',
           ]
         - Id: ManageSQSMessages
@@ -207,7 +207,7 @@ Resources:
       Policies:
         - !If [
             TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
             !Ref 'AWS::NoValue',
           ]
         - Id: IntegrationsTablePermissions
@@ -270,7 +270,7 @@ Resources:
       Policies:
         - !If [
             TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
             !Ref 'AWS::NoValue',
           ]
         - Id: InvokeSnapshotAPI

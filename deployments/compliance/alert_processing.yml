@@ -136,7 +136,7 @@ Resources:
       Policies:
         - !If [
             TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
             !Ref 'AWS::NoValue',
           ]
         - Id: ReadFromSQS
@@ -220,7 +220,7 @@ Resources:
       Policies:
         - !If [
             TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
             !Ref 'AWS::NoValue',
           ]
         - Id: ReadTableStreams
