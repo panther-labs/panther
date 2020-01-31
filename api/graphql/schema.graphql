@@ -29,7 +29,6 @@ type Mutation {
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): Boolean
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
-  users(limit: Int, paginationToken: String): ListUsersResponse
 }
 
 type Query {
@@ -49,6 +48,7 @@ type Query {
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
+  users(limit: Int, paginationToken: String): ListUsersResponse
 }
 
 input ListAlertsInput {
