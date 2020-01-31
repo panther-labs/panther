@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -195,9 +194,4 @@ func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)
-}
-
-func newRawMessage(jsonString string) *jsoniter.RawMessage {
-	rawMsg := (jsoniter.RawMessage)(jsonString)
-	return &rawMsg
 }
