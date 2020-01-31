@@ -25,6 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/common/base-destination-form';
+import { isNumber } from 'Helpers/utils';
 import FormikMultiCombobox from 'Components/fields/multi-combobox';
 import { Text } from 'pouncejs';
 
@@ -73,11 +74,11 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
         label="Project GIDs"
         aria-required
         allowAdditions
-        validateAddition={str => str.length > 0 && !Number.isNaN(str)}
+        validateAddition={isNumber}
         searchable
         items={[]}
         inputProps={{
-          placeholder: 'The projects that will receive the task',
+          placeholder: 'The GIDs of the projects that will receive the task',
         }}
       />
       <Text size="small" color="grey200" mt={2}>

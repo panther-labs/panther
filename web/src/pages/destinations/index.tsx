@@ -70,6 +70,10 @@ export const LIST_DESTINATIONS = gql`
         sqs {
           queueUrl
         }
+        asana {
+          personalAccessToken
+          projectGids
+        }
       }
       verificationStatus
       defaultForSeverity
