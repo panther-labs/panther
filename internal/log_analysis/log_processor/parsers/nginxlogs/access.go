@@ -39,14 +39,14 @@ var AccessDesc = `Access Logs for your Nginx server. We currently support Nginx 
 Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`
 
 type Access struct {
-	RemoteAddress *string            `json:"remoteAddr,omitempty"`
-	RemoteUser    *string            `json:"remoteUser,omitempty"`
-	Time          *timestamp.RFC3339 `json:"time" validate:"required"`
-	Request       *string            `json:"request,omitempty"`
-	Status        *int16             `json:"status,omitempty"`
-	BodyBytesSent *int               `json:"bodyBytesSent,omitempty"`
-	HTTPReferer   *string            `json:"httpReferer,omitempty"`
-	HTTPUserAgent *string            `json:"httpUserAgent,omitempty"`
+	RemoteAddress *string            `json:"remoteAddr,omitempty" description:"The IP address of the client (remote host) which made the request to the server"`
+	RemoteUser    *string            `json:"remoteUser,omitempty" description:"The userid of the person making the request. Usually "-" unless .htaccess has requested authentication"`
+	Time          *timestamp.RFC3339 `json:"time" validate:"required" description:"The time that the request was received"`
+	Request       *string            `json:"request,omitempty" description:"The request line from the client. It includes the HTTP method, the resource requested, and the HTTP protocol"`
+	Status        *int16             `json:"status,omitempty" description:"The HTTP status code returned to the client."`
+	BodyBytesSent *int               `json:"bodyBytesSent,omitempty" description:"The size of the object returned to the client, measured in bytes"`
+	HTTPReferer   *string            `json:"httpReferer,omitempty" description:"The HTTP referrer if any"`
+	HTTPUserAgent *string            `json:"httpUserAgent,omitempty" description:"The agent the user used when making the request"`
 }
 
 // AccessParser parses Nginx Access logs in 'combined' log format
