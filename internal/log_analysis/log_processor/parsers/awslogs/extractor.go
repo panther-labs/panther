@@ -21,6 +21,7 @@ package awslogs
 import (
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/tidwall/gjson"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -42,6 +43,30 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 	// value based matching
 	if strings.HasPrefix(value.Str, "arn:") {
 		e.pl.AppendAnyAWSARNs(value.Str)
+
+		/* arns may contain an embedded account id as well as interesting resources
+		   See: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
+		   Formats:
+		    arn:partition:service:region:account-id:resource-id
+		    arn:partition:service:region:account-id:resource-type/resource-id
+		    arn:partition:service:region:account-id:resource-type:resource-id
+		*/
+		parsedARN, err := arn.Parse(value.Str)
+		if err == nil {
+			if len(parsedARN.AccountID) == 12 {
+				e.pl.AppendAnyAWSAccountIds(parsedARN.AccountID)
+			}
+			// instanceId: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policy-structure.html#EC2_ARN_Format
+			if strings.HasPrefix(parsedARN.Resource, "instance/") {
+				slashIndex := strings.LastIndex(parsedARN.Resource, "/")
+				if slashIndex < len(parsedARN.Resource)-2 { // not if ends in "/"
+					instanceID := parsedARN.Resource[slashIndex+1:]
+					if strings.HasPrefix(instanceID, "i-") {
+						e.pl.AppendAnyAWSInstanceIds(instanceID)
+					}
+				}
+			}
+		}
 		return
 	}
 

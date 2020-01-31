@@ -137,6 +137,9 @@ func (pl *PantherLog) AppendAnyAWSTags(values ...string) {
 func (pl *PantherLog) appendAnyString(any *PantherAnyString, values ...string) {
 	// add new if not present
 	for _, v := range values {
+		if v == "" { // ignore empty strings
+			continue
+		}
 		if _, exists := any.set[v]; exists {
 			continue
 		}

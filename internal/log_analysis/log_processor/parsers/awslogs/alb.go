@@ -66,6 +66,9 @@ type ALB struct {
 	ActionsExecuted        []string           `json:"actionsExecuted,omitempty"`
 	RedirectURL            *string            `json:"redirectUrl,omitempty"`
 	ErrorReason            *string            `json:"errorReason,omitempty"`
+
+	// NOTE: added to end of struct to allow expansion later
+	parsers.PantherLog
 }
 
 // ALBParser parses AWS Application Load Balancer logs
@@ -151,6 +154,8 @@ func (p *ALBParser) Parse(log string) []interface{} {
 		ErrorReason:            parsers.CsvStringToPointer(record[24]),
 	}
 
+	event.updatePantherFields(p)
+
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
@@ -162,4 +167,25 @@ func (p *ALBParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *ALBParser) LogType() string {
 	return "AWS.ALB"
+}
+
+func (event *ALB) updatePantherFields(p *ALBParser) {
+	if event.Timestamp != nil {
+		event.SetRequired(p.LogType(), *event.Timestamp)
+	}
+	if event.ClientIP != nil {
+		event.AppendAnyIPAddresses(*event.ClientIP)
+	}
+	if event.TargetIP != nil {
+		event.AppendAnyIPAddresses(*event.TargetIP)
+	}
+	if event.DomainName != nil {
+		event.AppendAnyDomainNames(*event.DomainName)
+	}
+	if event.TargetGroupARN != nil {
+		event.AppendAnyAWSARNs(*event.TargetGroupARN)
+	}
+	if event.ChosenCertARN != nil {
+		event.AppendAnyAWSARNs(*event.ChosenCertARN)
+	}
 }

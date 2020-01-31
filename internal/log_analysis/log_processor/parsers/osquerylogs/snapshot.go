@@ -39,6 +39,9 @@ type Snapshot struct {
 	Name           *string                `json:"name,omitempty" validate:"required"`
 	Snapshot       []map[string]string    `json:"snapshot,omitempty" validate:"required"`
 	UnixTime       *int                   `json:"unixTime,omitempty,string" validate:"required"`
+
+	// NOTE: added to end of struct to allow expansion later
+	parsers.PantherLog
 }
 
 // SnapshotParser parses OsQuery snapshot logs
@@ -53,6 +56,8 @@ func (p *SnapshotParser) Parse(log string) []interface{} {
 		return nil
 	}
 
+	event.updatePantherFields(p)
+
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
@@ -63,4 +68,14 @@ func (p *SnapshotParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *SnapshotParser) LogType() string {
 	return "Osquery.Snapshot"
+}
+
+func (event *Snapshot) updatePantherFields(p *SnapshotParser) {
+	// panther fields
+	if event.CalendarTime != nil {
+		event.SetRequired(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
+	}
+	if event.HostIdentifier != nil {
+		event.AppendAnyDomainNames(*event.HostIdentifier)
+	}
 }

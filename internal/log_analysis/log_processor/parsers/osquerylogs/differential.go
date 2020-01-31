@@ -42,6 +42,9 @@ type Differential struct {
 	Name                 *string                `json:"name,omitempty" validate:"required"`
 	UnixTime             *int                   `json:"unixTime,omitempty,string" validate:"required"`
 	LogNumericsAsNumbers *bool                  `json:"logNumericsAsNumbers,omitempty,string"`
+
+	// NOTE: added to end of struct to allow expansion later
+	parsers.PantherLog
 }
 
 // DifferentialParser parses OsQuery Differential logs
@@ -62,6 +65,8 @@ func (p *DifferentialParser) Parse(log string) []interface{} {
 	event.LogType = event.LogUnderscoreType
 	event.LogUnderscoreType = nil
 
+	event.updatePantherFields(p)
+
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
@@ -73,4 +78,14 @@ func (p *DifferentialParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *DifferentialParser) LogType() string {
 	return "Osquery.Differential"
+}
+
+func (event *Differential) updatePantherFields(p *DifferentialParser) {
+	// panther fields
+	if event.CalendarTime != nil {
+		event.SetRequired(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
+	}
+	if event.HostIdentifier != nil {
+		event.AppendAnyDomainNames(*event.HostIdentifier)
+	}
 }

@@ -51,8 +51,13 @@ func TestDifferentialLog(t *testing.T) {
 		},
 	}
 
-	parser := &DifferentialParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = "Osquery.Differential"
+	expectedEvent.PantherRowID = "1234"
+	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.AppendAnyDomainNames("Quans-MacBook-Pro-2.local")
+
+	checkOsQueryDifferentialLog(t, log, expectedEvent)
 }
 
 func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
@@ -77,11 +82,30 @@ func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
 		},
 	}
 
-	parser := &DifferentialParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = "Osquery.Differential"
+	expectedEvent.PantherRowID = "1234"
+	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.AppendAnyDomainNames("host.lan")
+
+	checkOsQueryDifferentialLog(t, log, expectedEvent)
 }
 
 func TestOsQueryDifferentialLogType(t *testing.T) {
 	parser := &DifferentialParser{}
 	require.Equal(t, "Osquery.Differential", parser.LogType())
+}
+
+func checkOsQueryDifferentialLog(t *testing.T, log string, expectedEvent *Differential) {
+	parser := &DifferentialParser{}
+	events := parser.Parse(log)
+	require.Equal(t, 1, len(events))
+	event := events[0].(*Differential)
+
+	// rowid changes each time
+	require.Greater(t, len(event.PantherRowID), 0)                      // ensure something is there.
+	require.NotEqual(t, event.PantherRowID, expectedEvent.PantherRowID) // ensure they are not same
+	expectedEvent.PantherRowID = event.PantherRowID
+
+	require.Equal(t, expectedEvent, event)
 }

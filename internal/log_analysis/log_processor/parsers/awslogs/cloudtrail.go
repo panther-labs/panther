@@ -19,11 +19,15 @@ package awslogs
  */
 
 import (
+	"strings"
+
 	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/pkg/extract"
 )
 
 var CloudTrailDesc = `AWSCloudTrail represents the content of a CloudTrail S3 object.
@@ -35,7 +39,7 @@ type CloudTrailRecords struct {
 
 // CloudTrailRecord is an AWS CloudTrail API log.
 type CloudTrail struct {
-	AdditionalEventData interface{}             `json:"additionalEventData,omitempty"`
+	AdditionalEventData *jsoniter.RawMessage    `json:"additionalEventData,omitempty"`
 	APIVersion          *string                 `json:"apiVersion,omitempty" validate:"required"`
 	AWSRegion           *string                 `json:"awsRegion,omitempty" validate:"required"`
 	ErrorCode           *string                 `json:"errorCode,omitempty"`
@@ -50,15 +54,18 @@ type CloudTrail struct {
 	ReadOnly            *bool                   `json:"readOnly,omitempty"`
 	RecipientAccountID  *string                 `json:"recipientAccountId,omitempty" validate:"required,len=12,numeric"`
 	RequestID           *string                 `json:"requestId,omitempty"`
-	RequestParameters   interface{}             `json:"requestParameters,omitempty"`
+	RequestParameters   *jsoniter.RawMessage    `json:"requestParameters,omitempty"`
 	Resources           []CloudTrailResources   `json:"resources,omitempty"`
-	ResponseElements    interface{}             `json:"responseElements,omitempty"`
-	ServiceEventDetails interface{}             `json:"serviceEventDetails,omitempty"`
+	ResponseElements    *jsoniter.RawMessage    `json:"responseElements,omitempty"`
+	ServiceEventDetails *jsoniter.RawMessage    `json:"serviceEventDetails,omitempty"`
 	SharedEventID       *string                 `json:"sharedEventId,omitempty"`
 	SourceIPAddress     *string                 `json:"sourceIpAddress,omitempty"`
 	UserAgent           *string                 `json:"userAgent,omitempty"`
 	UserIdentity        *CloudTrailUserIdentity `json:"userIdentity,omitempty"`
 	VPCEndpointID       *string                 `json:"vpcEndpointId,omitempty"`
+
+	// NOTE: added to end of struct to allow expansion later
+	parsers.PantherLog
 }
 
 // CloudTrailResources are the AWS resources used in the API call.
@@ -105,8 +112,8 @@ type CloudTrailSessionContextSessionIssuer struct {
 
 // CloudTrailSessionContextWebIDFederationData contains Web ID federation data
 type CloudTrailSessionContextWebIDFederationData struct {
-	FederatedProvider *string     `json:"federatedProvider,omitempty"`
-	Attributes        interface{} `json:"attributes,omitempty"`
+	FederatedProvider *string              `json:"federatedProvider,omitempty"`
+	Attributes        *jsoniter.RawMessage `json:"attributes,omitempty"`
 }
 
 // CloudTrailParser parses CloudTrail logs
@@ -119,6 +126,10 @@ func (p *CloudTrailParser) Parse(log string) []interface{} {
 	if err != nil {
 		zap.L().Debug("failed to parse log", zap.Error(err))
 		return nil
+	}
+
+	for _, event := range cloudTrailRecords.Records {
+		event.updatePantherFields(p)
 	}
 
 	if err := parsers.Validator.Struct(cloudTrailRecords); err != nil {
@@ -135,4 +146,74 @@ func (p *CloudTrailParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *CloudTrailParser) LogType() string {
 	return "AWS.CloudTrail"
+}
+
+func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
+	if event.EventTime != nil {
+		event.SetRequired(p.LogType(), *event.EventTime)
+	}
+
+	// structured (parsed) fields
+	if event.SourceIPAddress != nil && !strings.HasSuffix(*event.SourceIPAddress, "amazonaws.com") {
+		event.AppendAnyIPAddresses(*event.SourceIPAddress)
+	}
+
+	for _, resource := range event.Resources {
+		if resource.ARN != nil {
+			event.AppendAnyAWSARNs(*resource.ARN)
+		}
+		if resource.AccountID != nil {
+			event.AppendAnyAWSAccountIds(*resource.AccountID)
+		}
+	}
+	if event.UserIdentity != nil {
+		if event.UserIdentity.AccountID != nil {
+			event.AppendAnyAWSAccountIds(*event.UserIdentity.AccountID)
+		}
+		if event.UserIdentity.ARN != nil {
+			event.AppendAnyAWSARNs(*event.UserIdentity.ARN)
+		}
+
+		if event.UserIdentity.SessionContext != nil {
+			if event.UserIdentity.SessionContext.SessionIssuer != nil {
+				if event.UserIdentity.SessionContext.SessionIssuer.AccountID != nil {
+					event.AppendAnyAWSAccountIds(*event.UserIdentity.SessionContext.SessionIssuer.AccountID)
+				}
+				if event.UserIdentity.SessionContext.SessionIssuer.Arn != nil {
+					event.AppendAnyAWSARNs(*event.UserIdentity.SessionContext.SessionIssuer.Arn)
+				}
+			}
+		}
+	}
+
+	// polymorphic (unparsed) fields
+	awsExtractor := NewAWSExtractor(&(event.PantherLog))
+	if event.AdditionalEventData != nil {
+		result := gjson.Parse(string(*event.AdditionalEventData))
+		extract.Extract(result, awsExtractor)
+	}
+
+	if event.RequestParameters != nil {
+		result := gjson.Parse(string(*event.RequestParameters))
+		extract.Extract(result, awsExtractor)
+	}
+
+	if event.ResponseElements != nil {
+		result := gjson.Parse(string(*event.ResponseElements))
+		extract.Extract(result, awsExtractor)
+	}
+
+	if event.ServiceEventDetails != nil {
+		result := gjson.Parse(string(*event.ServiceEventDetails))
+		extract.Extract(result, awsExtractor)
+	}
+
+	if event.UserIdentity.SessionContext != nil {
+		if event.UserIdentity.SessionContext.WebIDFederationData != nil {
+			if event.UserIdentity.SessionContext.WebIDFederationData.Attributes != nil {
+				result := gjson.Parse(string(*event.UserIdentity.SessionContext.WebIDFederationData.Attributes))
+				extract.Extract(result, awsExtractor)
+			}
+		}
+	}
 }

@@ -85,6 +85,14 @@ func TestAppendAnyString(t *testing.T) {
 	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
 }
 
+func TestAppendAnyStringWithEmptyString(t *testing.T) {
+	event := PantherLog{}
+	value := ""                                                  // should not be stored
+	expectedAny := &PantherAnyString{set: map[string]struct{}{}} // empty map
+	event.AppendAnyAWSAccountIds(value)
+	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
+}
+
 func TestSetRequired(t *testing.T) {
 	event := PantherLog{}
 	const logType = "Data.Source"

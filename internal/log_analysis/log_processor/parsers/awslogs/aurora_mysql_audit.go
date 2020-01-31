@@ -48,6 +48,9 @@ type AuroraMySQLAudit struct {
 	Database     *string            `json:"database,omitempty"`
 	Object       *string            `json:"object,omitempty"`
 	RetCode      *int               `json:"retCode,omitempty"`
+
+	// NOTE: added to end of struct to allow expansion later
+	parsers.PantherLog
 }
 
 // AuroraMySQLAuditParser parses AWS Aurora MySQL Audit logs
@@ -92,6 +95,9 @@ func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
 		Object:       parsers.CsvStringToPointer(objectString),
 		RetCode:      parsers.CsvStringToIntPointer(record[len(record)-1]),
 	}
+
+	event.updatePantherFields(p)
+
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
@@ -103,4 +109,16 @@ func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *AuroraMySQLAuditParser) LogType() string {
 	return "AWS.AuroraMySQLAudit"
+}
+
+func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {
+	if event.Timestamp != nil {
+		event.SetRequired(p.LogType(), *event.Timestamp)
+	}
+	if event.Host != nil {
+		event.AppendAnyIPAddresses(*event.Host)
+	}
+	if event.ServerHost != nil {
+		event.AppendAnyDomainNames(*event.ServerHost)
+	}
 }

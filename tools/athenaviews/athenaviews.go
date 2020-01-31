@@ -34,10 +34,6 @@ import (
 
 // CreateOrReplaceViews will update Athena with all views in the Panther view database
 func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
-	// FIXME take out in next PR ... running this w/out the next PR will not validate in Athena because log sources do not have std fields
-	if athenaResultsBucket != "" {
-		return nil
-	}
 	sess, err := session.NewSession()
 	if err != nil {
 		return errors.Wrap(err, "CreateOrReplaceViews() failed")

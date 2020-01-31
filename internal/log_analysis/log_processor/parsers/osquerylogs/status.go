@@ -41,6 +41,9 @@ type Status struct {
 	Severity          *int                   `json:"severity,omitempty,string" validate:"required"`
 	UnixTime          *int                   `json:"unixTime,omitempty,string" validate:"required"`
 	Version           *string                `json:"version,omitempty" validate:"required"`
+
+	// NOTE: added to end of struct to allow expansion later
+	parsers.PantherLog
 }
 
 // StatusParser parses OsQuery Status logs
@@ -61,6 +64,8 @@ func (p *StatusParser) Parse(log string) []interface{} {
 	event.LogType = event.LogUnderscoreType
 	event.LogUnderscoreType = nil
 
+	event.updatePantherFields(p)
+
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
@@ -71,4 +76,14 @@ func (p *StatusParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *StatusParser) LogType() string {
 	return "Osquery.Status"
+}
+
+func (event *Status) updatePantherFields(p *StatusParser) {
+	// panther fields
+	if event.CalendarTime != nil {
+		event.SetRequired(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
+	}
+	if event.HostIdentifier != nil {
+		event.AppendAnyDomainNames(*event.HostIdentifier)
+	}
 }

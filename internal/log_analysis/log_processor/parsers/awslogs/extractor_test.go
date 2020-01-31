@@ -79,6 +79,9 @@ func TestAWSExtractor(t *testing.T) {
    "imageId":"ami-062f7200baf2fa504"
 },
 
+"instanceArnExample": "arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
+"malformedInstanceArnExample": "arn:aws:ec2:region:111122223333:instance/",
+
 "DNSAction":{
   "actionType":"DNS_REQUEST",
   "dnsRequestAction":{
@@ -122,9 +125,11 @@ func TestAWSExtractor(t *testing.T) {
 `
 	expectedEvent := parsers.PantherLog{}
 	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:instance-profile/EC2Dev",
-		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail")
-	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a")
-	expectedEvent.AppendAnyAWSAccountIds("123456789012")
+		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
+		"arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
+		"arn:aws:ec2:region:111122223333:instance/")
+	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a", "i-0072230f74b3a798e" /* from ARN */)
+	expectedEvent.AppendAnyAWSAccountIds("123456789012", "888888888888" /* from ARN */, "111122223333" /* from ARN */)
 	expectedEvent.AppendAnyIPAddresses("54.152.215.140", "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
 		"172.31.81.237", "151.80.19.228")
 	expectedEvent.AppendAnyAWSTags("tag1:val1")

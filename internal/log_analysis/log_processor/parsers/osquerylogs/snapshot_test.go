@@ -50,11 +50,30 @@ func TestSnapshotLog(t *testing.T) {
 		},
 	}
 
-	parser := &SnapshotParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = "Osquery.Snapshot"
+	expectedEvent.PantherRowID = "1234"
+	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.AppendAnyDomainNames("hostname.local")
+
+	checkOsQuerySnapshotLog(t, log, expectedEvent)
 }
 
 func TestOsQuerySnapshotLogType(t *testing.T) {
 	parser := &SnapshotParser{}
 	require.Equal(t, "Osquery.Snapshot", parser.LogType())
+}
+
+func checkOsQuerySnapshotLog(t *testing.T, log string, expectedEvent *Snapshot) {
+	parser := &SnapshotParser{}
+	events := parser.Parse(log)
+	require.Equal(t, 1, len(events))
+	event := events[0].(*Snapshot)
+
+	// rowid changes each time
+	require.Greater(t, len(event.PantherRowID), 0)                      // ensure something is there.
+	require.NotEqual(t, event.PantherRowID, expectedEvent.PantherRowID) // ensure they are not same
+	expectedEvent.PantherRowID = event.PantherRowID
+
+	require.Equal(t, expectedEvent, event)
 }
