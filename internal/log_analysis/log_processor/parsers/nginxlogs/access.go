@@ -38,9 +38,10 @@ const (
 var AccessDesc = `Access Logs for your Nginx server. We currently support Nginx 'combined' format. 
 Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`
 
+// nolint:lll
 type Access struct {
 	RemoteAddress *string            `json:"remoteAddr,omitempty" description:"The IP address of the client (remote host) which made the request to the server"`
-	RemoteUser    *string            `json:"remoteUser,omitempty" description:"The userid of the person making the request. Usually "-" unless .htaccess has requested authentication"`
+	RemoteUser    *string            `json:"remoteUser,omitempty" description:"The userid of the person making the request. Usually empty unless .htaccess has requested authentication"`
 	Time          *timestamp.RFC3339 `json:"time" validate:"required" description:"The time that the request was received"`
 	Request       *string            `json:"request,omitempty" description:"The request line from the client. It includes the HTTP method, the resource requested, and the HTTP protocol"`
 	Status        *int16             `json:"status,omitempty" description:"The HTTP status code returned to the client."`
