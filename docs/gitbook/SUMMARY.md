@@ -37,7 +37,7 @@
 
 ## Historical Search
 
-- [Background](historical-search/untitled.md)
+- [Background](historical-search/README.md)
 
 ## Compliance <a id="policies"></a>
 

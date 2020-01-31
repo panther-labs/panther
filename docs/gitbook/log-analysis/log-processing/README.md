@@ -34,4 +34,4 @@ Follow the steps below to setup log processing
 
 ## Viewing the Logs
 
-Once you have setup log processing, checkout Panther's [Historical Search](../../historical-search/untitled.md)!
+Once you have setup log processing, checkout Panther's [Historical Search](../../historical-search/README.md)!
