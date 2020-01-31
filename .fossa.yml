@@ -14,6 +14,10 @@ analyze:
       path: web
     # Compliance Backend
 
+
+
+
+
     - name: alert_forwarder
       type: go
       target: github.com/panther-labs/panther/internal/compliance/alert_forwarder/main
