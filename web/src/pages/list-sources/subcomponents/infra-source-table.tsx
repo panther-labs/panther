@@ -31,7 +31,7 @@ export const LIST_INFRA_SOURCES = gql`
         createdBy
         integrationId
         integrationLabel
-      integrationType
+        integrationType
         scanEnabled
         scanIntervalMins
         scanStatus
