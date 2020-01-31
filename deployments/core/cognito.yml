@@ -44,7 +44,6 @@ Resources:
             <br />Panther - runpanther.io
             <br />
             <br /><small>Copyright © 2020 Panther Labs Inc. All rights reserved.</small>
-      MfaConfiguration: 'ON'
       AutoVerifiedAttributes: # Attributes you want the user to verify (poor naming choice by AWS)
         - email
       Policies:
