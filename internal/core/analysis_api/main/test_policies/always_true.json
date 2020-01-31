@@ -22,7 +22,7 @@
             "Resource": {
                 "Bucket": "empty"
             },
-            "ResourceType": "AWS.S3.Bucket2"
+            "ResourceType": "AWS.S3.Bucket"
         }
     ]
 }
