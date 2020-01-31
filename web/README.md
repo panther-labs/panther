@@ -16,8 +16,8 @@ $ npm i
 ### Development
 
 In order to develop locally, you must first have the project deployed on your AWS account. If you've successfully done that,
-then a `.env` file will have appeared in the `/out` directory, which will hold crucial ENV vars that
-are needed for local development. With this file present in `/out/.env`, all you need to do is run:
+then a `.env` file will be present in the `/out` directory, which holds the ENV vars that
+are needed for local development. With this file present in `/out/.env`, all you need to do is run (from the panther root directory):
 
 ```
 npm run start
