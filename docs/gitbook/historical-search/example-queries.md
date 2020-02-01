@@ -60,6 +60,33 @@ WHERE
 ORDER BY p_event_time ASC
 ```
 
+## Show VPC Flowlog activity for an IP address
+
+```sql
+SELECT
+ *
+FROM panther_tables.aws_vpcflow
+WHERE year=2020 AND month=1 AND day=31 AND contains(p_any_ip_addresses, '1.2.3.4')
+ORDER BY p_event_time ASC
+```
+
+## Show VPC Flowlog activity related to CloudTrail sourceIPAddresses
+
+```sql
+WITH cloudTrailIPs as
+(SELECT
+  DISTINCT sourceIPAddress AS ip
+ FROM panther_tables.aws_cloudtrail
+ WHERE year=2020 AND month=2 AND day=1
+)
+SELECT
+ *
+FROM  cloudTrailIPs ips JOIN panther_tables.aws_vpcflow flow ON (ips.ip = flow.srcaddr OR ips.ip = flow.dstaddr)
+WHERE
+  year=2020 AND month=2 AND day=1
+ORDER BY p_event_time ASC
+```
+
 ## Find all console "root" logins in CloudTrail
 
 ```sql
@@ -73,6 +100,21 @@ WHERE
   AND
   useridentity.arn LIKE '%root%'
 ORDER BY p_event_time ASC
+```
+
+## Find all of the sourceIPAddresses for console logins in CloudTrail and rank
+
+```sql
+SELECT
+ sourceipaddress,
+ count(1) as total_rows
+FROM panther_tables.aws_cloudtrail
+WHERE
+  year=2020 AND month=1 AND day=23
+  AND
+  eventtype = 'AwsConsoleSignIn'
+GROUP BY sourceipaddress
+ORDER BY total_rows DESC
 ```
 
 ## Show CloudTrail activity related to an AWS instance
