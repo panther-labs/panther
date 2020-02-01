@@ -44,7 +44,7 @@ func TestVpcFlowLog(t *testing.T) {
 		LogStatus:   aws.String("OK"),
 		Packets:     aws.Int(19),
 		Protocol:    aws.Int(6),
-		SourceAddr:  aws.String("52.119.169.95"),
+		SrcAddr:     aws.String("52.119.169.95"),
 		SrcPort:     aws.Int(443),
 		Start:       (*timestamp.RFC3339)(&expectedStartTime),
 		Version:     aws.Int(2),

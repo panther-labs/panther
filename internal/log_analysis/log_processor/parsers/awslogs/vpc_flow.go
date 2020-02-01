@@ -40,7 +40,7 @@ type VPCFlow struct {
 	Version     *int               `json:"version,omitempty" validate:"required"`
 	Account     *string            `json:"account,omitempty" validate:"omitempty,len=12,numeric"`
 	InterfaceID *string            `json:"interfaceId,omitempty"`
-	SourceAddr  *string            `json:"sourceAddr,omitempty"`
+	SrcAddr     *string            `json:"srcAddr,omitempty"`
 	DstAddr     *string            `json:"dstAddr,omitempty"`
 	SrcPort     *int               `json:"srcPort,omitempty" validate:"omitempty,min=0,max=65535"`
 	DstPort     *int               `json:"dstPort,omitempty" validate:"omitempty,min=0,max=65535"`
@@ -109,7 +109,7 @@ func (p *VPCFlowParser) Parse(log string) []interface{} {
 		Version:     parsers.CsvStringToIntPointer(record[0]),
 		Account:     account,
 		InterfaceID: parsers.CsvStringToPointer(record[2]),
-		SourceAddr:  parsers.CsvStringToPointer(record[3]),
+		SrcAddr:     parsers.CsvStringToPointer(record[3]),
 		DstAddr:     parsers.CsvStringToPointer(record[4]),
 		SrcPort:     parsers.CsvStringToIntPointer(record[5]),
 		DstPort:     parsers.CsvStringToIntPointer(record[6]),
@@ -142,8 +142,8 @@ func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
 	if event.Start != nil {
 		event.SetRequired(p.LogType(), *event.Start)
 	}
-	if event.SourceAddr != nil {
-		event.AppendAnyIPAddresses(*event.SourceAddr)
+	if event.SrcAddr != nil {
+		event.AppendAnyIPAddresses(*event.SrcAddr)
 	}
 	if event.DstAddr != nil {
 		event.AppendAnyIPAddresses(*event.DstAddr)
