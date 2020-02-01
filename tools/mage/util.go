@@ -32,15 +32,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"gopkg.in/yaml.v2"
 )
 
-var (
-	setupDirectory       = filepath.Join(".", ".setup")
-	pythonVirtualEnvPath = filepath.Join(setupDirectory, "venv")
-)
-
-// Wrapper around filepath.Walk, handling fatal errors.
+// Wrapper around filepath.Walk, logging errors as fatal.
 func walk(root string, handler func(string, os.FileInfo)) {
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -54,18 +48,20 @@ func walk(root string, handler func(string, os.FileInfo)) {
 	}
 }
 
-// Open and parse a yaml file.
-func loadYamlFile(path string, out interface{}) error {
+// Wrapper around ioutil.ReadFile, logging errors as fatal.
+func readFile(path string) []byte {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("failed to open %s: %v", path, err)
+		fatal(fmt.Errorf("failed to read %s: %v", path, err))
 	}
+	return contents
+}
 
-	if err = yaml.Unmarshal(contents, out); err != nil {
-		return fmt.Errorf("failed to parse yaml file %s: %v", path, err)
+// Wrapper around ioutil.WriteFile, logging errors as fatal.
+func writeFile(path string, data []byte) {
+	if err := ioutil.WriteFile(path, data, 0644); err != nil {
+		fatal(fmt.Errorf("failed to write %s: %v", path, err))
 	}
-
-	return nil
 }
 
 // Build the AWS session from the environment or a credentials file.

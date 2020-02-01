@@ -33,83 +33,104 @@ const (
 	swaggerVersion  = "0.21.0"
 )
 
+var (
+	setupDirectory       = filepath.Join(".", ".setup")
+	pythonVirtualEnvPath = filepath.Join(setupDirectory, "venv")
+)
+
 // Setup Install development dependencies
-func Setup() error {
+func Setup() {
 	if err := setupPythonVirtualEnv(); err != nil {
-		return err
+		fatal(err)
 	}
+
 	// Some libraries are only needed for development, not for CI
 	if !isRunningInCI() {
-		fmt.Println("setup: installing goimports for local development")
+		logger.Info("setup: installing goimports")
 		if err := sh.RunV("go", "get", "golang.org/x/tools/cmd/goimports"); err != nil {
-			return err
+			fatal(fmt.Errorf("go get goimports failed: %v", err))
 		}
 	}
 
 	env, err := sh.Output("uname")
 	if err != nil {
-		return err
+		fatal(fmt.Errorf("couldn't determine environment: %v", err))
 	}
-
-	if err := installSwagger(env); err != nil {
-		return err
+	if err = installSwagger(env); err != nil {
+		fatal(err)
 	}
-	return installGolangCiLint(env)
+	if err = installGolangCiLint(env); err != nil {
+		fatal(err)
+	}
 }
 
 func setupPythonVirtualEnv() error {
-	fmt.Println("setup: installing python3 venv")
+	logger.Info("setup: installing python3 env to " + pythonVirtualEnvPath)
 	if err := os.RemoveAll(pythonVirtualEnvPath); err != nil {
-		return err
+		return fmt.Errorf("failed to remove existing %s: %v", pythonVirtualEnvPath, err)
 	}
+
 	if err := sh.RunV("python3", "-m", "venv", pythonVirtualEnvPath); err != nil {
 		return err
 	}
+
 	args := []string{"install", "-r", "requirements.txt"}
 	if !mg.Verbose() {
 		args = append(args, "--quiet")
 	}
 	if err := sh.RunV(pythonLibPath("pip3"), args...); err != nil {
-		return err
+		return fmt.Errorf("pip installation failed: %v", err)
 	}
 	return nil
 }
 
 func installSwagger(uname string) error {
-	fmt.Println("setup: installing go-swagger")
+	logger.Info("setup: installing go-swagger")
 	if err := os.MkdirAll(setupDirectory, os.ModePerm); err != nil {
-		return err
+		return fmt.Errorf("failed to create setup directory %s: %v", setupDirectory, err)
 	}
+
 	url := fmt.Sprintf("https://github.com/go-swagger/go-swagger/releases/download/v%s/swagger_%s_amd64",
 		swaggerVersion, strings.ToLower(uname))
 	binary := filepath.Join(setupDirectory, "swagger")
 	if err := sh.RunV("curl", "-o", binary, "-fL", url); err != nil {
-		return err
+		return fmt.Errorf("failed to download %s: %v", url, err)
 	}
-	return sh.RunV("chmod", "+x", binary)
+
+	if err := sh.RunV("chmod", "+x", binary); err != nil {
+		return fmt.Errorf("failed to make %s executable: %v", binary, err)
+	}
+	return nil
 }
 
 func installGolangCiLint(uname string) error {
-	fmt.Println("setup: installing golangci-lint")
+	logger.Info("setup: installing golangci-lint")
 	downloadDir := filepath.Join(setupDirectory, "golangci")
 	if err := os.MkdirAll(downloadDir, os.ModePerm); err != nil {
-		return err
+		return fmt.Errorf("failed to create temporary %s: %v", downloadDir, err)
 	}
 
 	pkg := fmt.Sprintf("golangci-lint-%s-%s-amd64", golangciVersion, strings.ToLower(uname))
 	url := fmt.Sprintf("https://github.com/golangci/golangci-lint/releases/download/v%s/%s.tar.gz",
 		golangciVersion, pkg)
 	if err := sh.RunV("curl", "-o", filepath.Join(downloadDir, "ci.tar.gz"), "-fL", url); err != nil {
-		return err
+		return fmt.Errorf("failed to download %s: %v", url, err)
 	}
 
-	if err := sh.RunV("tar", "-xzvf", filepath.Join(downloadDir, "ci.tar.gz"), "-C", downloadDir); err != nil {
-		return err
+	archive := filepath.Join(downloadDir, "ci.tar.gz")
+	if err := sh.RunV("tar", "-xzvf", archive, "-C", downloadDir); err != nil {
+		return fmt.Errorf("failed to extract %s: %v", archive, err)
 	}
+
 	// moving golangci-lint from download folder to setupDirectory
-	if err := os.Rename(filepath.Join(downloadDir, pkg, "golangci-lint"), filepath.Join(setupDirectory, "golangci-lint")); err != nil {
-		return err
+	src, dst := filepath.Join(downloadDir, pkg, "golangci-lint"), filepath.Join(setupDirectory, "golangci-lint")
+	if err := os.Rename(src, dst); err != nil {
+		return fmt.Errorf("failed to mv %s to %s: %v", src, dst, err)
 	}
+
 	// deleting download folder
-	return os.RemoveAll(downloadDir)
+	if err := os.RemoveAll(downloadDir); err != nil {
+		logger.Warnf("failed to remove temp folder %s", downloadDir)
+	}
+	return nil
 }

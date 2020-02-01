@@ -20,7 +20,6 @@ package mage
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -36,6 +35,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+	"gopkg.in/yaml.v2"
 
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/api/lambda/users/models"
@@ -65,8 +65,8 @@ const (
 // Deploy Deploy application infrastructure
 func Deploy() error {
 	var config PantherConfig
-	if err := loadYamlFile(configFile, &config); err != nil {
-		return err
+	if err := yaml.Unmarshal(readFile(configFile), &config); err != nil {
+		return fmt.Errorf("failed to parse config file %s: %v", configFile, err)
 	}
 
 	awsSession, err := getSession()
@@ -294,10 +294,7 @@ func cfnPackage(templateFile, bucket, stack string) (string, error) {
 
 // Post-Process all the CFN templates
 func cfnPackagePostProcess(templatePath string) error {
-	templateOriginal, err := ioutil.ReadFile(templatePath)
-	if err != nil {
-		return err
-	}
+	templateOriginal := readFile(templatePath)
 
 	var result []string
 	for _, line := range strings.Split(string(templateOriginal), "\n") {
@@ -305,11 +302,7 @@ func cfnPackagePostProcess(templatePath string) error {
 		result = append(result, line)
 	}
 
-	err = ioutil.WriteFile(templatePath, []byte(strings.Join(result, "\n")), 0644)
-	if err != nil {
-		return err
-	}
-
+	writeFile(templatePath, []byte(strings.Join(result, "\n")))
 	return nil
 }
 

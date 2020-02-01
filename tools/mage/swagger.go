@@ -20,7 +20,6 @@ package mage
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -48,10 +47,7 @@ func embedAPISpecs() error {
 	})
 
 	for _, template := range templates {
-		cfn, err := ioutil.ReadFile(template)
-		if err != nil {
-			return fmt.Errorf("failed to open CloudFormation template %s: %v", template, err)
-		}
+		cfn := readFile(template)
 
 		newCfn, err := embedAPIs(cfn)
 		if err != nil {
@@ -66,9 +62,7 @@ func embedAPISpecs() error {
 
 			cfnDest := filepath.Join(outDir, "embedded."+filepath.Base(template))
 			logger.Debugf("deploy: transformed %s => %s with embedded APIs", template, cfnDest)
-			if err := ioutil.WriteFile(cfnDest, newCfn, 0644); err != nil {
-				return fmt.Errorf("failed to write new CloudFormation template %s: %v", cfnDest, err)
-			}
+			writeFile(cfnDest, newCfn)
 		}
 	}
 
@@ -112,8 +106,8 @@ func embedAPIs(cfn []byte) ([]byte, error) {
 // if we just reference a swagger file in S3 - the api spec must be embedded into the CloudFormation itself.
 func loadSwagger(filename string) (*string, error) {
 	var apiBody map[string]interface{}
-	if err := loadYamlFile(filename, &apiBody); err != nil {
-		return nil, err
+	if err := yaml.Unmarshal(readFile(filename), &apiBody); err != nil {
+		return nil, fmt.Errorf("failed to parse file %s: %v", filename, err)
 	}
 
 	// Allow AWS_IAM authorization (i.e. AWS SIGv4 signatures).

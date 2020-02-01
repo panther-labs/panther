@@ -20,7 +20,6 @@ package mage
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -78,10 +77,7 @@ func createChangeSet(awsSession *session.Session, templateFile, stack string, pa
 		})
 	}
 
-	templateBody, err := ioutil.ReadFile(templateFile)
-	if err != nil {
-		return "", err
-	}
+	templateBody := readFile(templateFile)
 
 	createInput := &cloudformation.CreateChangeSetInput{
 		Capabilities: []*string{

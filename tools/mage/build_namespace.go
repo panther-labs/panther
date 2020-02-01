@@ -63,7 +63,9 @@ func (b Build) API() {
 			fatal(fmt.Errorf("%s %s failed: %v", cmd, strings.Join(args, " "), err))
 		}
 
-		// TODO - need to do full Go + license formatting for API files
+		// Add license and our formatting standard to the generated SDK.
+		fmtLicenseGroup(agplSource, client, models)
+		gofmt(dir, client, models)
 	}
 }
 

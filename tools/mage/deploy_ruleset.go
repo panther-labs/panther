@@ -21,7 +21,6 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -69,10 +68,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, config
 		fmt.Println("deploy: uploading " + path)
 		var contents []byte
 		if strings.HasPrefix(path, "file://") {
-			contents, err = ioutil.ReadFile(strings.TrimPrefix(path, "file://"))
-			if err != nil {
-				return err
-			}
+			contents = readFile(strings.TrimPrefix(path, "file://"))
 		} else {
 			contents, err = download(path)
 			if err != nil {
