@@ -32,7 +32,7 @@ func TestSwaggerPattern(t *testing.T) {
 
 	assert.True(t, swaggerPattern.MatchString("DefinitionBody:api.yml"))
 	assert.True(t, swaggerPattern.MatchString("DefinitionBody: api/compliance.yml  "))
-	assert.True(t, swaggerPattern.MatchString("DefinitionBody: api/compliance.yml # trailing comment"))
+	assert.True(t, swaggerPattern.MatchString("DefinitionBody:    api/compliance.yml # trailing comment"))
 
 	// Ensure spaces and comments are consumed
 	replaced := swaggerPattern.ReplaceAllString("DefinitionBody: api/compliance.yml # trailing comment", "X")

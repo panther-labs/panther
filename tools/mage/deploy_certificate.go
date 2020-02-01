@@ -147,10 +147,8 @@ func uploadIAMCertificate(privateKeyBytes, certificateBytes []byte, session *ses
 func getExistingCertificate(awsSession *session.Session) (string, error) {
 	outputs, err := getStackOutputs(awsSession, backendStack)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() != "ValidationError" || !strings.HasSuffix(awsErr.Code(), "does not exist") {
-				return "", nil
-			}
+		if strings.Contains(err.Error(), "Stack with id "+backendStack+" does not exist") {
+			return "", nil // stack doesn't exist yet
 		}
 		return "", err
 	}

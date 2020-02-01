@@ -87,7 +87,7 @@ func Deploy() error {
 		return err
 	}
 
-	if err = embedAPISpecs(); err != nil {
+	if err := embedAPISpecs(); err != nil {
 		return err
 	}
 

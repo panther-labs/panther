@@ -133,6 +133,7 @@ Resources:
       MemorySize: !Ref ProcessorMemorySizeMB
       Runtime: go1.x
       Timeout: !Ref ProcessorTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ReadFromSQS
           Version: 2012-10-17

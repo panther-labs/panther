@@ -66,7 +66,7 @@ func embedAPISpecs() error {
 
 			cfnDest := filepath.Join(outDir, "embedded."+filepath.Base(template))
 			logger.Debugf("deploy: transformed %s => %s with embedded APIs", template, cfnDest)
-			if err := ioutil.WriteFile(cfnDest, cfn, 0644); err != nil {
+			if err := ioutil.WriteFile(cfnDest, newCfn, 0644); err != nil {
 				return fmt.Errorf("failed to write new CloudFormation template %s: %v", cfnDest, err)
 			}
 		}
@@ -85,7 +85,6 @@ func embedAPIs(cfn []byte) ([]byte, error) {
 
 	cfn = swaggerPattern.ReplaceAllFunc(cfn, func(match []byte) []byte {
 		apiFilename := strings.TrimSpace(strings.Split(string(match), " ")[1])
-		logger.Debugf("deploy: embedding swagger DefinitionBody: %s", apiFilename)
 
 		var body *string
 		body, err = loadSwagger(apiFilename)
