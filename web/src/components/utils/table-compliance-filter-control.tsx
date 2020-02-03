@@ -17,32 +17,22 @@
  */
 
 import React from 'react';
-import { PoliciesForResourceInput, ResourcesForPolicyInput } from 'Generated/schema';
 import { Text, TextProps, defaultTheme } from 'pouncejs';
 
-type Filters = PoliciesForResourceInput & ResourcesForPolicyInput;
-
-interface TableComplianceFilterControlProps<FilterKey extends keyof Filters>
-  extends Omit<TextProps, 'size'> {
+interface TableComplianceFilterControlProps extends Omit<TextProps, 'size'> {
   text: string;
-  updateFilter: (filters: { [key: string]: Filters[FilterKey] }) => void;
-  filterKey: FilterKey;
-  filterValue: Filters[FilterKey];
-  activeFilterValue?: Filters[FilterKey];
+  isActive: boolean;
   count?: number;
   countColor?: keyof typeof defaultTheme.colors;
 }
 
-function TableComplianceFilterControl<FilterKey extends keyof Filters>({
-  filterKey,
-  filterValue,
-  updateFilter,
-  activeFilterValue,
+const TableComplianceFilterControl: React.FC<TableComplianceFilterControlProps> = ({
   text,
   count,
   countColor,
+  isActive,
   ...rest
-}: TableComplianceFilterControlProps<FilterKey>): React.ReactElement {
+}) => {
   return (
     <Text
       {...rest}
@@ -51,8 +41,7 @@ function TableComplianceFilterControl<FilterKey extends keyof Filters>({
       color="grey300"
       is="button"
       borderRadius="medium"
-      onClick={() => updateFilter({ [filterKey]: filterValue })}
-      backgroundColor={filterValue === activeFilterValue ? 'grey50' : undefined}
+      backgroundColor={isActive ? 'grey50' : undefined}
     >
       {text}{' '}
       <Text size="medium" color={countColor} is="span">
@@ -60,6 +49,6 @@ function TableComplianceFilterControl<FilterKey extends keyof Filters>({
       </Text>
     </Text>
   );
-}
+};
 
 export default TableComplianceFilterControl;

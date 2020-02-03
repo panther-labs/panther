@@ -178,41 +178,43 @@ const PolicyDetailsPage = () => {
           title="Resources"
           actions={
             <Box ml={6} mr="auto">
-              <TableComplianceFilterControl<'status'>
+              <TableComplianceFilterControl
                 mr={1}
-                filterKey="status"
-                filterValue={undefined}
-                activeFilterValue={requestParams.status}
-                updateFilter={setRequestParamsAndResetPaging}
                 count={getComplianceItemsTotalCount(totalCounts)}
                 text="All"
+                isActive={!requestParams.status && !requestParams.suppressed}
+                onClick={() =>
+                  setRequestParamsAndResetPaging({ status: undefined, suppressed: undefined })
+                }
               />
-              <TableComplianceFilterControl<'status'>
+              <TableComplianceFilterControl
                 mr={1}
-                filterKey="status"
-                filterValue={ComplianceStatusEnum.Fail}
-                activeFilterValue={requestParams.status}
-                updateFilter={setRequestParamsAndResetPaging}
                 count={totalCounts.active.fail}
                 countColor="red300"
                 text="Failing"
+                isActive={requestParams.status === ComplianceStatusEnum.Fail}
+                onClick={() =>
+                  setRequestParamsAndResetPaging({
+                    status: ComplianceStatusEnum.Fail,
+                    suppressed: undefined,
+                  })
+                }
               />
-              <TableComplianceFilterControl<'status'>
+              <TableComplianceFilterControl
                 mr={1}
-                filterKey="status"
-                filterValue={ComplianceStatusEnum.Pass}
-                activeFilterValue={requestParams.status}
-                updateFilter={setRequestParamsAndResetPaging}
                 countColor="green300"
                 count={totalCounts.active.pass}
                 text="Passing"
+                isActive={requestParams.status === ComplianceStatusEnum.Pass}
+                onClick={() =>
+                  setRequestParamsAndResetPaging({
+                    status: ComplianceStatusEnum.Pass,
+                    suppressed: undefined,
+                  })
+                }
               />
-              <TableComplianceFilterControl<'suppressed'>
+              <TableComplianceFilterControl
                 mr={1}
-                filterKey="suppressed"
-                filterValue={true}
-                activeFilterValue={requestParams.suppressed}
-                updateFilter={setRequestParamsAndResetPaging}
                 countColor="orange300"
                 count={
                   totalCounts.suppressed.fail +
@@ -220,6 +222,13 @@ const PolicyDetailsPage = () => {
                   totalCounts.suppressed.error
                 }
                 text="Ignored"
+                isActive={!requestParams.status && requestParams.suppressed}
+                onClick={() =>
+                  setRequestParamsAndResetPaging({
+                    status: undefined,
+                    suppressed: true,
+                  })
+                }
               />
             </Box>
           }

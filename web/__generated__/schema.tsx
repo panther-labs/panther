@@ -43,7 +43,7 @@ export type AlertDetails = {
   lastEventMatched: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
   events: Array<Scalars['AWSJSON']>;
-  eventsLastEvaluatedKey: Scalars['String'];
+  eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
 };
 
 export enum AlertReportFrequencyEnum {
