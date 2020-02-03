@@ -22,17 +22,11 @@ import { FieldConfig, useField } from 'formik';
 
 const FormikRadio: React.FC<RadioProps & Required<Pick<FieldConfig, 'name' | 'value'>>> = props => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue}] = useField(props.name);
+  const [field, meta, { setValue }] = useField(props.name);
 
   // Here `props.value` is the value that the radio button should have according to the typical HTML
   // and not the value that will be forced into Formik
-  return (
-    <Radio
-      {...props}
-      checked={field.value === props.value}
-      onChange={setValue}
-    />
-  );
+  return <Radio {...props} checked={field.value === props.value} onChange={setValue} />;
 };
 
 export default FormikRadio;

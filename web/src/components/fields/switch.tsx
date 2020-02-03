@@ -23,9 +23,7 @@ import { FieldConfig, useField } from 'formik';
 const FormikSwitch: React.FC<SwitchProps & Required<Pick<FieldConfig, 'name'>>> = props => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [field, meta, { setValue }] = useField<boolean>(props.name);
-  return (
-    <Switch {...props} checked={field.value} onChange={setValue} />
-  );
+  return <Switch {...props} checked={field.value} onChange={setValue} />;
 };
 
 export default FormikSwitch;
