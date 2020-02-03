@@ -253,3 +253,5 @@ export const copyTextToClipboard = (text: string) => {
     container.removeChild(textArea);
   }
 };
+
+export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);

@@ -32,7 +32,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: cloudformation.amazonaws.com
+              Service: !Sub cloudformation.${AWS::URLSuffix}
             Action: sts:AssumeRole
       Policies:
         - PolicyName: AssumeRolesInTargetAccounts
@@ -41,7 +41,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sts:AssumeRole
-                Resource: arn:aws:iam::*:role/PantherCloudFormationStackSetExecutionRole
+                Resource: arn:{AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole
 
 Outputs:
   CloudFormationStackSetAdminRoleArn:

@@ -28,6 +28,7 @@ interface ItemCardProps {
 
 const DestinationCard: React.FunctionComponent<ItemCardProps> = ({ logo, title, onClick }) => (
   <Card
+    width={1}
     is="button"
     onClick={onClick}
     css={css`

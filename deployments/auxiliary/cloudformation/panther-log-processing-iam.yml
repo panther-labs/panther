@@ -56,7 +56,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
             Action: sts:AssumeRole
             Condition:
               Bool:

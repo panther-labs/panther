@@ -134,7 +134,7 @@ Resources:
       Policies:
         - !If [
             TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
             !Ref 'AWS::NoValue',
           ]
         - Id: AccessComplianceApi
@@ -251,7 +251,7 @@ Resources:
       Policies:
         - !If [
             TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
             !Ref 'AWS::NoValue',
           ]
         - Id: SendAndReceiveSqsMessages
@@ -314,7 +314,7 @@ Resources:
       Policies:
         - !If [
             TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
+            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
             !Ref 'AWS::NoValue',
           ]
 

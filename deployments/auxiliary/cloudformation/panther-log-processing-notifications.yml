@@ -50,6 +50,12 @@ Parameters:
       - eu-north-1
       - me-south-1
       - sa-east-1
+      # AWS China Regions
+      - cn-north-1
+      - cn-northwest-1
+      # AWS Gov Cloud
+      - us-gov-east-1
+      - us-gov-west-1
 
 Resources:
   # This topic is used to notify the Panther master account whenever new data is written to the
@@ -70,19 +76,19 @@ Resources:
           - Sid: AllowS3EventNotifications
             Effect: Allow
             Principal:
-              Service: s3.amazonaws.com
+              Service: !Sub s3.${AWS::URLSuffix}
             Action: sns:Publish
             Resource: !Ref Topic
           - Sid: AllowCloudTrailNotification
             Effect: Allow
             Principal:
-              Service: cloudtrail.amazonaws.com
+              Service: !Sub cloudtrail.${AWS::URLSuffix}
             Action: sns:Publish
             Resource: !Ref Topic
           - Sid: AllowSubscriptionToPanther
             Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+              AWS: !Sub arn:{AWS::Partition}:iam::${MasterAccountId}:root
             Action: sns:Subscribe
             Resource: !Ref Topic
       Topics:
@@ -92,7 +98,7 @@ Resources:
   Subscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !Sub arn:aws:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications
+      Endpoint: !Sub arn:{AWS::Partition}:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications
       Protocol: sqs
       RawMessageDelivery: false
       TopicArn: !Ref Topic
