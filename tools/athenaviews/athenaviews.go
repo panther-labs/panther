@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -91,10 +92,7 @@ func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string, err error)
 	}
 
 	// collect the Panther fields, add "NULL" for fields not present in some tables but present in others
-	pantherViewColumns := newPantherViewColumns()
-	for _, table := range tables {
-		pantherViewColumns.inferViewColumns(table)
-	}
+	pantherViewColumns := newPantherViewColumns(tables)
 
 	var sqlLines []string
 	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.all_logs as", awsglue.ViewsDatabaseName))
@@ -114,22 +112,36 @@ func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string, err error)
 
 // used to collect the UNION of all Panther "p_" fields for the view for each table
 type pantherViewColumns struct {
-	allColumns     map[string]struct{}            // union of all columns over all tables
+	allColumns     []string                       // union of all columns over all tables as sorted slice
+	allColumnsSet  map[string]struct{}            // union of all columns over all tables as map
 	columnsByTable map[string]map[string]struct{} // table -> map of column names in that table
 }
 
-func newPantherViewColumns() *pantherViewColumns {
-	return &pantherViewColumns{
-		allColumns:     make(map[string]struct{}),
+func newPantherViewColumns(tables []*awsglue.GlueMetadata) *pantherViewColumns {
+	pvc := &pantherViewColumns{
+		allColumnsSet:  make(map[string]struct{}),
 		columnsByTable: make(map[string]map[string]struct{}),
 	}
+
+	for _, table := range tables {
+		pvc.inferViewColumns(table)
+	}
+
+	// convert set to sorted slice
+	pvc.allColumns = make([]string, 0, len(pvc.allColumnsSet))
+	for column := range pvc.allColumnsSet {
+		pvc.allColumns = append(pvc.allColumns, column)
+	}
+	sort.Strings(pvc.allColumns) // order needs to be preserved
+
+	return pvc
 }
 func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueMetadata) {
 	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
 	columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
 	var selectColumns []string
 	for _, col := range columns {
-		if strings.HasPrefix(col.Name, "p_") { // only Panther columns
+		if strings.HasPrefix(col.Name, parsers.PantherFieldPrefix) { // only Panther columns
 			selectColumns = append(selectColumns, col.Name)
 		}
 	}
@@ -143,18 +155,16 @@ func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueMetadata) {
 
 	for _, column := range selectColumns {
 		tableColumns[column] = struct{}{}
-		if _, exists := pvc.allColumns[column]; !exists {
-			pvc.allColumns[column] = struct{}{}
+		if _, exists := pvc.allColumnsSet[column]; !exists {
+			pvc.allColumnsSet[column] = struct{}{}
 		}
 	}
 }
 
 func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueMetadata) string {
-	allColumns := pvc.columns()
 	tableColumns := pvc.columnsByTable[table.TableName()]
-
-	selectColumns := make([]string, 0, len(allColumns))
-	for _, column := range allColumns {
+	selectColumns := make([]string, 0, len(pvc.allColumns))
+	for _, column := range pvc.allColumns {
 		selectColumn := column
 		if _, exists := tableColumns[column]; !exists { // fill in missing columns with NULL
 			selectColumn = "NULL AS " + selectColumn
@@ -163,15 +173,4 @@ func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueMetadata) string {
 	}
 
 	return strings.Join(selectColumns, ",")
-}
-
-// return sorted slice of union of all columns over all tables
-func (pvc *pantherViewColumns) columns() []string {
-	// NOTE: we could cache result but this is not performance intensive code and I do not think the complexity is worth it.
-	allColumns := make([]string, 0, len(pvc.allColumns))
-	for column := range pvc.allColumns {
-		allColumns = append(allColumns, column)
-	}
-	sort.Strings(allColumns) // order needs to be preserved
-	return allColumns
 }

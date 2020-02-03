@@ -26,6 +26,10 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
+const (
+	PantherFieldPrefix = "p_"
+)
+
 var (
 	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 )
