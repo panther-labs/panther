@@ -24,6 +24,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
 
@@ -42,6 +43,25 @@ func Fmt() {
 	args := []string{"--in-place", "--parallel", "--recursive"}
 	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
 		fatal(fmt.Errorf("failed to format python: %v", err))
+	}
+
+	// web/yml formatting
+	logger.Info("fmt: prettier")
+	var err error
+	if mg.Verbose() {
+		// verbose mode - show all files being formatted
+		err = sh.Run("npm", "run", "prettier")
+	} else {
+		// only show output if there was an error
+		var output string
+		output, err = sh.Output("npm", "run", "prettier")
+		if err != nil {
+			fmt.Println(output)
+		}
+	}
+
+	if err != nil {
+		fatal(fmt.Errorf("failed to run prettier: %v", err))
 	}
 }
 

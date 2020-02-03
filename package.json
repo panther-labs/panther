@@ -136,6 +136,7 @@
     "start": "cross-env NODE_ENV=development DOTENV_CONFIG_PATH=out/.env node -r dotenv/config node_modules/.bin/webpack-dev-server",
     "serve": "node web/scripts/serve.js",
     "generate-gql": "graphql-codegen",
-    "lint": "eslint \"{web/src/**,.}/*.{ts,js,tsx}\" && prettier --list-different  \"{web/src/**,.}/*.{ts,js,tsx,md,json,yml}\""
+    "prettier": "prettier --write \"{.circleci,api,build,deployments}/**/*.yml\" && prettier --write \"{web/src/**,.}/*.{ts,js,tsx,md,json,yml}\"",
+    "lint": "eslint \"{web/src/**,.}/*.{ts,js,tsx}\" && prettier --list-different \"{.circleci,api,build,deployments}/**/*.yml\" && prettier --list-different \"{web/src/**,.}/*.{ts,js,tsx,md,json,yml}\""
   }
 }
