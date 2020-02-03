@@ -16,20 +16,32 @@ package extract
  * limitations under the License.
  */
 
-import "github.com/tidwall/gjson"
+import (
+	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
+)
 
 type Extractor interface {
 	Extract(key, value gjson.Result)
 }
 
-// Extract walks parsed JSON extracting tasty things
-func Extract(result gjson.Result, extractors ...Extractor) {
+// Extract parses RAW JSON extracting tasty things by calling Parsed()
+func Extract(rawMessage *jsoniter.RawMessage, extractors ...Extractor) {
+	if rawMessage == nil {
+		return
+	}
+	result := gjson.ParseBytes(*rawMessage)
+	Parsed(result, extractors...)
+}
+
+// Parsed walks parsed JSON extracting tasty things (use if you already parsed the JSON)
+func Parsed(result gjson.Result, extractors ...Extractor) {
 	result.ForEach(func(key, value gjson.Result) bool {
 		for _, extractor := range extractors {
 			extractor.Extract(key, value)
 		}
 		if value.IsArray() || value.IsObject() {
-			Extract(value, extractors...)
+			Parsed(value, extractors...)
 		}
 		return true // keep iterating
 	})

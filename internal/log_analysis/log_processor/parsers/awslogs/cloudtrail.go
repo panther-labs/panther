@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -188,32 +187,11 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 
 	// polymorphic (unparsed) fields
 	awsExtractor := NewAWSExtractor(&(event.PantherLog))
-	if event.AdditionalEventData != nil {
-		result := gjson.Parse(string(*event.AdditionalEventData))
-		extract.Extract(result, awsExtractor)
-	}
-
-	if event.RequestParameters != nil {
-		result := gjson.Parse(string(*event.RequestParameters))
-		extract.Extract(result, awsExtractor)
-	}
-
-	if event.ResponseElements != nil {
-		result := gjson.Parse(string(*event.ResponseElements))
-		extract.Extract(result, awsExtractor)
-	}
-
-	if event.ServiceEventDetails != nil {
-		result := gjson.Parse(string(*event.ServiceEventDetails))
-		extract.Extract(result, awsExtractor)
-	}
-
-	if event.UserIdentity.SessionContext != nil {
-		if event.UserIdentity.SessionContext.WebIDFederationData != nil {
-			if event.UserIdentity.SessionContext.WebIDFederationData.Attributes != nil {
-				result := gjson.Parse(string(*event.UserIdentity.SessionContext.WebIDFederationData.Attributes))
-				extract.Extract(result, awsExtractor)
-			}
-		}
+	extract.Extract(event.AdditionalEventData, awsExtractor)
+	extract.Extract(event.RequestParameters, awsExtractor)
+	extract.Extract(event.ResponseElements, awsExtractor)
+	extract.Extract(event.ServiceEventDetails, awsExtractor)
+	if event.UserIdentity.SessionContext != nil && event.UserIdentity.SessionContext.WebIDFederationData != nil {
+		extract.Extract(event.UserIdentity.SessionContext.WebIDFederationData.Attributes, awsExtractor)
 	}
 }

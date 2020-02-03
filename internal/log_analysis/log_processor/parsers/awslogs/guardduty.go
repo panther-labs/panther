@@ -20,7 +20,6 @@ package awslogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -105,20 +104,13 @@ func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
 
 	// polymorphic (unparsed) fields
 	awsExtractor := NewAWSExtractor(&(event.PantherLog))
-
-	if event.Resource != nil {
-		result := gjson.Parse(string(*event.Resource))
-		extract.Extract(result, awsExtractor)
-	}
-
+	extract.Extract(event.Resource, awsExtractor)
 	if event.Service != nil {
 		if event.Service.AdditionalInfo != nil {
-			result := gjson.Parse(string(*event.Service.AdditionalInfo))
-			extract.Extract(result, awsExtractor)
+			extract.Extract(event.Service.AdditionalInfo, awsExtractor)
 		}
 		if event.Service.Action != nil {
-			result := gjson.Parse(string(*event.Service.Action))
-			extract.Extract(result, awsExtractor)
+			extract.Extract(event.Service.Action, awsExtractor)
 		}
 	}
 }
