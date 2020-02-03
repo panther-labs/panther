@@ -88,7 +88,7 @@ Resources:
             Resource: '*'
             Condition:
               ArnLike:
-                aws:SourceArn: arn:aws:sns:*:*:*-PantherEventsTopic-*
+                aws:SourceArn: !Sub arn:${AWS::Partition}:sns:*:*:*-PantherEventsTopic-*
       Queues:
         - !Ref EventQueue
 
@@ -113,9 +113,9 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           RESOURCES_API_PATH: v1
-          SNAPSHOT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
+          SNAPSHOT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-snapshot-queue
       Events:
         Queue:
           Type: SQS
@@ -130,11 +130,6 @@ Resources:
       Timeout: !Ref TimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: SendAndReceiveSqsMessages
           Version: 2012-10-17
           Statement:
@@ -159,16 +154,16 @@ Resources:
           Statement:
             - Effect: Allow
               Action: sns:ConfirmSubscription
-              Resource: arn:aws:sns:*:*:*-PantherEventsTopic-*
+              Resource: !Sub arn:${AWS::Partition}:sns:*:*:*-PantherEventsTopic-*
         - Id: DeleteResources
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: execute-api:Invoke
-              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/delete
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/delete
         - Id: InvokeSnapshotAPI
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api

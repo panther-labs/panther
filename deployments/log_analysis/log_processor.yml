@@ -145,7 +145,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
-              Resource: 'arn:aws:iam::*:role/PantherLogProcessingRole'
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole
               Condition:
                 Bool:
                   aws:SecureTransport: true
@@ -167,6 +167,6 @@ Resources:
                 - glue:CreatePartition
                 - glue:GetTable
               Resource:
-                - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog
-                - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:database/${PantherDatabase}
-                - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:table/${PantherDatabase}/*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/${PantherDatabase}
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/${PantherDatabase}/*

@@ -83,11 +83,6 @@ Resources:
       Timeout: !Ref TimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: DynamoManageItems
           Version: 2012-10-17
           Statement:
@@ -113,8 +108,8 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref Function
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
+      Principal: !Sub apigateway.${AWS::URLSuffix}
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
 
   ComplianceTable:
     Type: AWS::DynamoDB::Table

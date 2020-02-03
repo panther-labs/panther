@@ -135,7 +135,7 @@ Resources:
       Handler: src.main.lambda_handler
       Environment:
         Variables:
-          ANALYSIS_API_FQDN: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          ANALYSIS_API_FQDN: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
           DEBUG: !Ref Debug
           ALERTS_QUEUE: !Ref AlertsQueue
@@ -158,11 +158,6 @@ Resources:
       Timeout: !Ref TimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: ReceiveFromInputSqsQueue
           Version: 2012-10-17
           Statement:
@@ -201,4 +196,4 @@ Resources:
           Statement:
             - Effect: Allow
               Action: execute-api:Invoke
-              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled

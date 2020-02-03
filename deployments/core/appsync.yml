@@ -52,7 +52,7 @@ Resources:
     Type: AWS::AppSync::GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
-      Definition: api/graphql/schema.graphql
+      DefinitionS3Location: ../../api/graphql/schema.graphql
 
   AppsyncServiceRole:
     Type: AWS::IAM::Role
@@ -64,9 +64,9 @@ Resources:
           - Effect: Allow
             Action: sts:AssumeRole
             Principal:
-              Service: appsync.amazonaws.com
+              Service: !Sub appsync.${AWS::URLSuffix}
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs
       Policies:
         - PolicyName: InvokeLegacyApis
           PolicyDocument:
