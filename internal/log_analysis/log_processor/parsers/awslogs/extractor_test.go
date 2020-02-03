@@ -79,6 +79,7 @@ func TestAWSExtractor(t *testing.T) {
 },
 
 "instanceArnExample": "arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
+"malformedArnExample": "arn:BUT-I-AM-NOT-REALLY-AN-ARN",
 "malformedInstanceArnExample": "arn:aws:ec2:region:111122223333:instance/",
 
 "DNSAction":{

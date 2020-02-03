@@ -40,8 +40,6 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 
 	// value based matching
 	if strings.HasPrefix(value.Str, "arn:") {
-		e.pl.AppendAnyAWSARNs(value.Str)
-
 		/* arns may contain an embedded account id as well as interesting resources
 		   See: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
 		   Formats:
@@ -51,6 +49,7 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 		*/
 		parsedARN, err := arn.Parse(value.Str)
 		if err == nil {
+			e.pl.AppendAnyAWSARNs(value.Str)
 			if len(parsedARN.AccountID) == 12 {
 				e.pl.AppendAnyAWSAccountIds(parsedARN.AccountID)
 			}
