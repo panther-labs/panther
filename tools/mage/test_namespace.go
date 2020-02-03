@@ -264,37 +264,43 @@ func (t Test) CI() {
 	}
 }
 
-// Integration Run TestIntegration* for PKG (default: ./...)
-func (t Test) Integration() error {
+// Integration Run integration tests (integration_test.go,integration.py)
+func (t Test) Integration() {
 	mg.Deps(build.API)
-	if err := sh.Run("go", "clean", "-testcache"); err != nil {
-		return err
+
+	if pkg := os.Getenv("PKG"); pkg != "" {
+		// One specific package requested: run integration tests just for that
+		goPkgIntegrationTest(pkg)
+		return
 	}
 
-	pkg := os.Getenv("PKG")
-	if pkg == "" {
-		pkg = "./..."
-	}
-	// Note: We do NOT run integration tests in parallel
-	testArgs := []string{"test", pkg, "-run=TestIntegration*", "-p", "1"}
-	if mg.Verbose() {
-		testArgs = append(testArgs, "-v")
-	} else {
-		fmt.Println("test:integration: go test " + pkg + " -run=TestIntegration*")
-	}
+	// TODO: snapshot API integration test needs to move
+	walk("internal", func(path string, info os.FileInfo) {
+		if filepath.Base(path) == "integration_test.go" {
+			goPkgIntegrationTest("./" + filepath.Dir(path))
+		}
+	})
 
+	logger.Info("test:integration: python policy engine")
+	if err := sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
+		fatal(fmt.Errorf("python integration test failed: %v", err))
+	}
+}
+
+// Run integration tests for a single Go package.
+func goPkgIntegrationTest(pkg string) {
 	if err := os.Setenv("INTEGRATION_TEST", "True"); err != nil {
-		return err
+		fatal(fmt.Errorf("failed to set INTEGRATION_TEST environment variable: %v", err))
 	}
 	defer os.Unsetenv("INTEGRATION_TEST")
-	if err := sh.RunV("go", testArgs...); err != nil {
-		return err
-	}
 
-	// Run Python integration tests unless a Go pkg is specified
-	if os.Getenv("PKG") == "" {
-		fmt.Println("test:integration: python engine")
-		return sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py")
+	logger.Info("test:integration: go test " + pkg + " -run=TestIntegration*")
+	// -count 1 is the idiomatic way to disable test caching
+	args := []string{"test", pkg, "-run=TestIntegration*", "-p", "1", "-count", "1"}
+	if mg.Verbose() {
+		args = append(args, "-v")
 	}
-	return nil
+	if err := sh.Run("go", args...); err != nil {
+		fatal(fmt.Errorf("go test %s failed: %v", pkg, err))
+	}
 }

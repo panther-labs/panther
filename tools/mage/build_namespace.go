@@ -21,11 +21,13 @@ package mage
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+	"github.com/magefile/mage/target"
 
 	"github.com/panther-labs/panther/pkg/shutil"
 )
@@ -46,6 +48,12 @@ func (b Build) API() {
 
 	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
 	for _, spec := range specs {
+		rebuild, err := apiNeedsRebuilt(spec)
+		if err == nil && !rebuild {
+			logger.Debugf("build:api: %s is up to date", spec)
+			continue
+		}
+
 		// If an API model is deleted, the generated file will still exist after "swagger generate".
 		// So we remove existing client/ and models/ directories before re-generating.
 		dir := filepath.Dir(spec)
@@ -67,6 +75,21 @@ func (b Build) API() {
 		fmtLicenseGroup(agplSource, client, models)
 		gofmt(dir, client, models)
 	}
+}
+
+// Returns true if the generated client + models are older than the given client spec
+func apiNeedsRebuilt(spec string) (bool, error) {
+	clientNeedsUpdate, err := target.Dir(path.Join(path.Dir(spec), "client"), spec)
+	if err != nil {
+		return true, err
+	}
+
+	modelsNeedUpdate, err := target.Dir(path.Join(path.Dir(spec), "models"), spec)
+	if err != nil {
+		return true, err
+	}
+
+	return clientNeedsUpdate || modelsNeedUpdate, nil
 }
 
 // Lambda Compile Go Lambda function source
