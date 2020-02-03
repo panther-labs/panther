@@ -278,7 +278,8 @@ func cfnPackage(templateFile, bucket, stack string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = cfnPackagePostProcess(pkgOut)
+		// TODO - this error handling changed
+		cfnPackagePostProcess(pkgOut)
 		return pkgOut, err
 	}
 
@@ -288,12 +289,12 @@ func cfnPackage(templateFile, bucket, stack string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = cfnPackagePostProcess(pkgOut)
+	cfnPackagePostProcess(pkgOut)
 	return pkgOut, err
 }
 
 // Post-Process all the CFN templates
-func cfnPackagePostProcess(templatePath string) error {
+func cfnPackagePostProcess(templatePath string) {
 	templateOriginal := readFile(templatePath)
 
 	var result []string
@@ -303,7 +304,6 @@ func cfnPackagePostProcess(templatePath string) error {
 	}
 
 	writeFile(templatePath, []byte(strings.Join(result, "\n")))
-	return nil
 }
 
 // Fix CloudFormation package TemplateURL issues.

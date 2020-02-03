@@ -19,13 +19,11 @@ package mage
  */
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSwaggerPattern(t *testing.T) {
@@ -63,7 +61,7 @@ func TestEmbedAPIsInvalidPath(t *testing.T) {
 		panic(err)
 	}
 
-	assert.Panics(t, func() { embedAPIs(data) })
+	assert.Panics(t, func() { _, _ = embedAPIs(data) })
 	require.Error(t, loggedError)
 	assert.Equal(t, "failed to read nowhere.yml: open nowhere.yml: no such file or directory", loggedError.Error())
 }
@@ -77,8 +75,5 @@ func TestEmbedAPIs(t *testing.T) {
 
 	expected, err := ioutil.ReadFile("testdata/valid-api-expected-output.yml")
 	require.NoError(t, err)
-
-	fmt.Print(string(transformed))
-
 	assert.Equal(t, string(expected), string(transformed))
 }
