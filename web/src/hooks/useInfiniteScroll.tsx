@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, Dispatch, SetStateAction } from 'react';
+import React from 'react';
 import { useInfiniteScroll } from 'react-infinite-scroll-hook';
 
 interface UseInfiniteScrollHookProps {
@@ -27,15 +27,9 @@ interface UseInfiniteScrollHookProps {
 }
 
 // This hook builds upon https://www.npmjs.com/package/react-infinite-scroll-hook
-const useInfiniteScrollHook = ({
-  loading,
-  onLoadMore,
-}: UseInfiniteScrollHookProps): [
-  React.MutableRefObject<undefined>,
-  Dispatch<SetStateAction<boolean>>
-] => {
-  const [hasNextPage, setHasNextPage] = useState(true);
-  const infiniteRef = useInfiniteScroll({
+const useInfiniteScrollHook = ({ loading, onLoadMore }: UseInfiniteScrollHookProps) => {
+  const [hasNextPage, setHasNextPage] = React.useState(true);
+  const infiniteRef = useInfiniteScroll<HTMLDivElement>({
     loading,
     hasNextPage,
     onLoadMore,
@@ -43,7 +37,7 @@ const useInfiniteScrollHook = ({
     checkInterval: 800, // The default is 200 which seems a bit too quick
   });
 
-  return [infiniteRef, setHasNextPage];
+  return { infiniteRef, setHasNextPage };
 };
 
 export default useInfiniteScrollHook;
