@@ -50,7 +50,7 @@ type AuroraMySQLAudit struct {
 	RetCode      *int               `json:"retCode,omitempty"`
 
 	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
+	AWSPantherLog
 }
 
 // AuroraMySQLAuditParser parses AWS Aurora MySQL Audit logs

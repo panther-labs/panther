@@ -20,12 +20,12 @@ package athenaviews
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -83,31 +83,25 @@ func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string, err error)
 			return key
 		}
 		referenceKey := genKey(tables[0].PartitionKeys())
-		for _, t := range tables[1:] {
-			if referenceKey != genKey(t.PartitionKeys()) {
+		for _, table := range tables[1:] {
+			if referenceKey != genKey(table.PartitionKeys()) {
 				return "", errors.New("all tables do not share same partition keys for generateViewAllLogs()")
 			}
 		}
 	}
 
-	columns := gluecf.InferJSONColumns(parsers.PantherLog{}, gluecf.GlueMappings...)
-	var selectColumns []string
-	for _, col := range columns {
-		selectColumns = append(selectColumns, col.Name)
+	// collect the Panther fields, add "NULL" for fields not present in some tables but present in others
+	pantherViewColumns := newPantherViewColumns()
+	for _, table := range tables {
+		pantherViewColumns.inferViewColumns(table)
 	}
-
-	for _, partitionKey := range tables[0].PartitionKeys() { // they all have same keys, pick first table
-		selectColumns = append(selectColumns, partitionKey.Name)
-	}
-
-	selectClause := strings.Join(selectColumns, ",")
 
 	var sqlLines []string
 	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.all_logs as", awsglue.ViewsDatabaseName))
 
 	for i, table := range tables {
 		sqlLines = append(sqlLines, fmt.Sprintf("select %s from %s.%s",
-			selectClause, table.DatabaseName(), table.TableName()))
+			pantherViewColumns.viewColumns(table), table.DatabaseName(), table.TableName()))
 		if i < len(tables)-1 {
 			sqlLines = append(sqlLines, fmt.Sprintf("\tunion all"))
 		}
@@ -116,4 +110,68 @@ func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string, err error)
 	sqlLines = append(sqlLines, fmt.Sprintf(";\n"))
 
 	return strings.Join(sqlLines, "\n"), nil
+}
+
+// used to collect the UNION of all Panther "p_" fields for the view for each table
+type pantherViewColumns struct {
+	allColumns     map[string]struct{}            // union of all columns over all tables
+	columnsByTable map[string]map[string]struct{} // table -> map of column names in that table
+}
+
+func newPantherViewColumns() *pantherViewColumns {
+	return &pantherViewColumns{
+		allColumns:     make(map[string]struct{}),
+		columnsByTable: make(map[string]map[string]struct{}),
+	}
+}
+func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueMetadata) {
+	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
+	columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
+	var selectColumns []string
+	for _, col := range columns {
+		if strings.HasPrefix(col.Name, "p_") { // only Panther columns
+			selectColumns = append(selectColumns, col.Name)
+		}
+	}
+
+	for _, partitionKey := range table.PartitionKeys() { // they all have same keys, pick first table
+		selectColumns = append(selectColumns, partitionKey.Name)
+	}
+
+	tableColumns := make(map[string]struct{})
+	pvc.columnsByTable[table.TableName()] = tableColumns
+
+	for _, column := range selectColumns {
+		tableColumns[column] = struct{}{}
+		if _, exists := pvc.allColumns[column]; !exists {
+			pvc.allColumns[column] = struct{}{}
+		}
+	}
+}
+
+func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueMetadata) string {
+	allColumns := pvc.columns()
+	tableColumns := pvc.columnsByTable[table.TableName()]
+
+	selectColumns := make([]string, 0, len(allColumns))
+	for _, column := range allColumns {
+		selectColumn := column
+		if _, exists := tableColumns[column]; !exists { // fill in missing columns with NULL
+			selectColumn = "NULL AS " + selectColumn
+		}
+		selectColumns = append(selectColumns, selectColumn)
+	}
+
+	return strings.Join(selectColumns, ",")
+}
+
+// return sorted slice of union of all columns over all tables
+func (pvc *pantherViewColumns) columns() []string {
+	// NOTE: we could cache result but this is not performance intensive code and I do not think the complexity is worth it.
+	allColumns := make([]string, 0, len(pvc.allColumns))
+	for column := range pvc.allColumns {
+		allColumns = append(allColumns, column)
+	}
+	sort.Strings(allColumns) // order needs to be preserved
+	return allColumns
 }

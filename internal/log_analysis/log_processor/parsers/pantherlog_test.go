@@ -81,16 +81,16 @@ func TestAppendAnyString(t *testing.T) {
 			value: {},
 		},
 	}
-	event.AppendAnyAWSAccountIds(value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
+	event.AppendAnyIPAddresses(value)
+	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
 
 func TestAppendAnyStringWithEmptyString(t *testing.T) {
 	event := PantherLog{}
 	value := ""                                                  // should not be stored
 	expectedAny := &PantherAnyString{set: map[string]struct{}{}} // empty map
-	event.AppendAnyAWSAccountIds(value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
+	event.AppendAnyIPAddresses(value)
+	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
 
 func TestSetRequired(t *testing.T) {

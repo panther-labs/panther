@@ -63,7 +63,7 @@ type S3ServerAccess struct {
 	AdditionalFields   []string           `json:"additionalFields,omitempty"`
 
 	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
+	AWSPantherLog
 }
 
 // S3ServerAccessParser parses AWS S3 Server Access logs

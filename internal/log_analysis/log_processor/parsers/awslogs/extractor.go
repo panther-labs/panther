@@ -23,16 +23,14 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/tidwall/gjson"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 // extracts useful AWS features that can be detected generically (w/context)
 type AWSExtractor struct {
-	pl *parsers.PantherLog
+	pl *AWSPantherLog
 }
 
-func NewAWSExtractor(pl *parsers.PantherLog) *AWSExtractor {
+func NewAWSExtractor(pl *AWSPantherLog) *AWSExtractor {
 	return &AWSExtractor{pl: pl}
 }
 

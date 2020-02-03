@@ -64,7 +64,7 @@ type CloudTrail struct {
 	VPCEndpointID       *string                 `json:"vpcEndpointId,omitempty"`
 
 	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
+	AWSPantherLog
 }
 
 // CloudTrailResources are the AWS resources used in the API call.
@@ -186,7 +186,7 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 	}
 
 	// polymorphic (unparsed) fields
-	awsExtractor := NewAWSExtractor(&(event.PantherLog))
+	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
 	extract.Extract(event.AdditionalEventData, awsExtractor)
 	extract.Extract(event.RequestParameters, awsExtractor)
 	extract.Extract(event.ResponseElements, awsExtractor)

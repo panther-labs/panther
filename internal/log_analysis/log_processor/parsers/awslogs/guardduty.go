@@ -48,7 +48,7 @@ type GuardDuty struct {
 	Service       *GuardDutyService    `json:"service" validate:"required"`
 
 	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
+	AWSPantherLog
 }
 
 type GuardDutyService struct {
@@ -103,7 +103,7 @@ func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
 	}
 
 	// polymorphic (unparsed) fields
-	awsExtractor := NewAWSExtractor(&(event.PantherLog))
+	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
 	extract.Extract(event.Resource, awsExtractor)
 	if event.Service != nil {
 		if event.Service.AdditionalInfo != nil {

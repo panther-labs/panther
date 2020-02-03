@@ -68,7 +68,7 @@ type ALB struct {
 	ErrorReason            *string            `json:"errorReason,omitempty"`
 
 	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
+	AWSPantherLog
 }
 
 // ALBParser parses AWS Application Load Balancer logs

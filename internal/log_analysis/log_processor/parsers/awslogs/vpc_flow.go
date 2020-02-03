@@ -53,7 +53,7 @@ type VPCFlow struct {
 	LogStatus   *string            `json:"status,omitempty" validate:"oneof=OK NODATA SKIPDATA"`
 
 	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
+	AWSPantherLog
 }
 
 // VPCFlowParser parses AWS VPC Flow Parser logs

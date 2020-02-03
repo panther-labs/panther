@@ -24,12 +24,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
 func TestAWSExtractor(t *testing.T) {
-	event := parsers.PantherLog{}
+	event := AWSPantherLog{}
 	// add interesting fragments as new extractions are implemented
 	json := (jsoniter.RawMessage)(`
 {
@@ -124,7 +123,7 @@ func TestAWSExtractor(t *testing.T) {
 }
 `)
 
-	expectedEvent := parsers.PantherLog{}
+	expectedEvent := AWSPantherLog{}
 	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:instance-profile/EC2Dev",
 		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
 		"arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
