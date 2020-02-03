@@ -35,7 +35,7 @@ const (
 )
 
 // Match "DefinitionBody: api/myspec.yml  # possible comment"
-var swaggerPattern = regexp.MustCompile(`DefinitionBody:[ \t]*[\w./]+\.yml[ \t]*(#.+)?`)
+var swaggerPattern = regexp.MustCompile(`\n {6}DefinitionBody:[ \t]*[\w./]+\.yml[ \t]*(#.+)?`)
 
 // Embed swagger specs into all CloudFormation templates, saving them to out/deployments.
 func embedAPISpecs() error {
@@ -78,7 +78,8 @@ func embedAPIs(cfn []byte) ([]byte, error) {
 	changed := false
 
 	cfn = swaggerPattern.ReplaceAllFunc(cfn, func(match []byte) []byte {
-		apiFilename := strings.TrimSpace(strings.Split(string(match), " ")[1])
+		strMatch := strings.TrimSpace(string(match))
+		apiFilename := strings.Split(strMatch, " ")[1]
 
 		var body *string
 		body, err = loadSwagger(apiFilename)
@@ -87,7 +88,7 @@ func embedAPIs(cfn []byte) ([]byte, error) {
 		}
 
 		changed = true
-		return []byte("DefinitionBody:\n" + *body)
+		return []byte("\n      DefinitionBody:\n" + *body)
 	})
 
 	if err != nil {
@@ -174,6 +175,6 @@ func loadSwagger(filename string) (*string, error) {
 	}
 
 	// Add spaces for the correct indentation when embedding.
-	result := space8 + strings.ReplaceAll(string(newBody), "\n", "\n"+space8)
+	result := space8 + strings.ReplaceAll(strings.TrimSpace(string(newBody)), "\n", "\n"+space8)
 	return &result, nil
 }

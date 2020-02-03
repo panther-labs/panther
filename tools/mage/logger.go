@@ -57,7 +57,10 @@ func init() {
 }
 
 // Log an error and exit with status code 1.
-func fatal(err error) {
+// Unit tests can replace this function.
+var fatal = loggerFatal
+
+func loggerFatal(err error) {
 	logger.Error(err)
 
 	// If the error is returned from a mage command, mage will print it, but without our logging format.

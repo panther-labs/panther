@@ -20,25 +20,65 @@ package mage
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSwaggerPattern(t *testing.T) {
 	assert.False(t, swaggerPattern.MatchString(""))
-	assert.False(t, swaggerPattern.MatchString("DefinitionBody: myfile.json"))
-	assert.False(t, swaggerPattern.MatchString("DefinitionBody: \napi.yml"))
+	assert.False(t, swaggerPattern.MatchString("\n      DefinitionBody: myfile.json"))
+	assert.False(t, swaggerPattern.MatchString("\n      DefinitionBody: \napi.yml"))
+	assert.False(t, swaggerPattern.MatchString("DefinitionBody: api.yml"))
 
-	assert.True(t, swaggerPattern.MatchString("DefinitionBody:api.yml"))
-	assert.True(t, swaggerPattern.MatchString("DefinitionBody: api/compliance.yml  "))
-	assert.True(t, swaggerPattern.MatchString("DefinitionBody:    api/compliance.yml # trailing comment"))
+	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody:api.yml"))
+	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody: api/compliance.yml  "))
+	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody:    api/compliance.yml # trailing comment"))
 
 	// Ensure spaces and comments are consumed
-	replaced := swaggerPattern.ReplaceAllString("DefinitionBody: api/compliance.yml # trailing comment", "X")
+	replaced := swaggerPattern.ReplaceAllString("\n      DefinitionBody: api/compliance.yml # trailing comment", "X")
 	assert.Equal(t, replaced, "X")
 }
 
+func TestEmbedAPIsNoChange(t *testing.T) {
+	data, err := ioutil.ReadFile("testdata/no-api.yml")
+	require.NoError(t, err)
+
+	transformed, err := embedAPIs(data)
+	require.NoError(t, err)
+	assert.Nil(t, transformed) // no changes - nil is returned
+}
+
+func TestEmbedAPIsInvalidPath(t *testing.T) {
+	data, err := ioutil.ReadFile("testdata/invalid-path.yml")
+	require.NoError(t, err)
+
+	// Panic instead of exiting so unit tests can verify the fatal error
+	var loggedError error
+	fatal = func(err error) {
+		loggedError = err
+		panic(err)
+	}
+
+	assert.Panics(t, func() { embedAPIs(data) })
+	require.Error(t, loggedError)
+	assert.Equal(t, "failed to read nowhere.yml: open nowhere.yml: no such file or directory", loggedError.Error())
+}
+
 func TestEmbedAPIs(t *testing.T) {
-	fmt.Println("")
+	data, err := ioutil.ReadFile("testdata/valid-api.yml")
+	require.NoError(t, err)
+
+	transformed, err := embedAPIs(data)
+	require.NoError(t, err)
+
+	expected, err := ioutil.ReadFile("testdata/valid-api-expected-output.yml")
+	require.NoError(t, err)
+
+	fmt.Print(string(transformed))
+
+	assert.Equal(t, string(expected), string(transformed))
 }
