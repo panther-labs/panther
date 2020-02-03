@@ -295,6 +295,32 @@ Resources:
           $util.toJson($context.result)
         #end
 
+  DeleteUserResolver:
+    Type: 'AWS::AppSync::Resolver'
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Mutation
+      FieldName: removeUser
+      DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "removeUser": {
+              "id": $ctx.args.id,
+              "userPoolId": $ctx.identity.claims.iss.split("/")[-1]
+            }
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
   ListUsersResolver:
     Type: 'AWS::AppSync::Resolver'
     DependsOn: GraphQLSchema

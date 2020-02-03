@@ -434,6 +434,7 @@ export type Mutation = {
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteIntegration?: Maybe<Scalars['Boolean']>;
   deletePolicy?: Maybe<Scalars['Boolean']>;
+  deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser?: Maybe<InviteUserResponse>;
   remediateResource?: Maybe<Scalars['Boolean']>;
   resetUserPassword?: Maybe<Scalars['Boolean']>;
@@ -446,7 +447,6 @@ export type Mutation = {
   updateRule?: Maybe<RuleDetails>;
   updateUser?: Maybe<Scalars['Boolean']>;
   uploadPolicies?: Maybe<UploadPoliciesResponse>;
-  users?: Maybe<ListUsersResponse>;
 };
 
 export type MutationAddDestinationArgs = {
@@ -475,6 +475,10 @@ export type MutationDeleteIntegrationArgs = {
 
 export type MutationDeletePolicyArgs = {
   input: DeletePolicyInput;
+};
+
+export type MutationDeleteUserArgs = {
+  id: Scalars['ID'];
 };
 
 export type MutationInviteUserArgs = {
@@ -523,11 +527,6 @@ export type MutationUpdateUserArgs = {
 
 export type MutationUploadPoliciesArgs = {
   input: UploadPoliciesInput;
-};
-
-export type MutationUsersArgs = {
-  limit?: Maybe<Scalars['Int']>;
-  paginationToken?: Maybe<Scalars['String']>;
 };
 
 export type OpsgenieConfig = {
@@ -673,6 +672,7 @@ export type Query = {
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
+  users?: Maybe<ListUsersResponse>;
 };
 
 export type QueryAlertArgs = {
@@ -725,6 +725,11 @@ export type QueryRuleArgs = {
 
 export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
+};
+
+export type QueryUsersArgs = {
+  limit?: Maybe<Scalars['Int']>;
+  paginationToken?: Maybe<Scalars['String']>;
 };
 
 export type RemediateResourceInput = {

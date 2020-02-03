@@ -17,6 +17,7 @@ type Mutation {
   deleteDestination(id: ID!): Boolean
   deleteIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
+  deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): InviteUserResponse
   remediateResource(input: RemediateResourceInput!): Boolean
   resetUserPassword(id: ID!): Boolean

@@ -26,7 +26,7 @@ import BaseDeleteModal from 'Components/modals/base-delete-modal';
 
 const DELETE_USER = gql`
   mutation DeleteUser($id: ID!) {
-    removeUser(id: $id)
+    deleteUser(id: $id)
   }
 `;
 
