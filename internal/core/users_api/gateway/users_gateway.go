@@ -28,7 +28,7 @@ import (
 
 // API defines the interface for the user gateway which can be used for mocking.
 type API interface {
-	AddUserToGroup(id *string, groupName *string, userPoolID *string) error
+	AddUserToGroup(id *string, userPoolID *string) error
 	CreateUser(input *CreateUserInput) (*string, error)
 	DeleteUser(id *string, userPoolID *string) error
 	GetUser(id *string, userPoolID *string) (*models.User, error)

@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
@@ -47,7 +46,7 @@ func (API) InviteUser(input *models.InviteUserInput) (*models.InviteUserOutput, 
 		return nil, err
 	}
 
-	if err = userGateway.AddUserToGroup(id, aws.String("Admin"), input.UserPoolID); err != nil {
+	if err = userGateway.AddUserToGroup(id, input.UserPoolID); err != nil {
 		return nil, err
 	}
 

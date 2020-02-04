@@ -19,15 +19,20 @@ package gateway
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
+// Panther free edition only has admin users.
+// Upgrade to enterprise for role-based access control (RBAC).
+const groupName = "Admin"
+
 // AddUserToGroup calls cognito api add a user to a specified group
-func (g *UsersGateway) AddUserToGroup(id *string, groupName *string, userPoolID *string) error {
+func (g *UsersGateway) AddUserToGroup(id *string, userPoolID *string) error {
 	if _, err := g.userPoolClient.AdminAddUserToGroup(&provider.AdminAddUserToGroupInput{
-		GroupName:  groupName,
+		GroupName:  aws.String(groupName),
 		Username:   id,
 		UserPoolId: userPoolID,
 	}); err != nil {
