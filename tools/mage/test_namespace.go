@@ -64,14 +64,23 @@ func testCfn() bool {
 			templates = append(templates, path)
 		}
 	})
+	pass := true
 
+	// cfn-lint
 	logger.Infof("test:cfn: cfn-lint %d templates", len(templates))
 	if err := sh.RunV(pythonLibPath("cfn-lint"), templates...); err != nil {
 		logger.Errorf("cfn-lint failed: %v", err)
-		return false
+		pass = false
 	}
 
-	return true
+	// formatting
+	logger.Infof("test:cfn: formatting")
+	if err := sh.RunV(nodePath("prettier"), "--list-different", "deployments/**.yml"); err != nil {
+		logger.Errorf("prettier diff: %v", err)
+		pass = false
+	}
+
+	return pass
 }
 
 // Go Test Go source
@@ -113,7 +122,7 @@ func testGo() bool {
 		pass = false
 	}
 
-	// linting
+	// metalinting
 	logger.Info("test:go: golangci-lint")
 	args = []string{"run", "--timeout", "10m"}
 	if mg.Verbose() {
@@ -195,6 +204,17 @@ func testPython() bool {
 	}
 	if err := sh.RunV(pythonLibPath("mypy"), append(args, pyTargets...)...); err != nil {
 		logger.Errorf("mypy failed: %v", err)
+		pass = false
+	}
+
+	// python formatting
+	logger.Info("test:python: yapf formatting")
+	args = []string{"--diff", "--parallel", "--recursive"}
+	if mg.Verbose() {
+		args = append(args, "--verbose")
+	}
+	if output, err := sh.Output(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
+		logger.Errorf("yapf diff: %d bytes (err: %v)", len(output), err)
 		pass = false
 	}
 

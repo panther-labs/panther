@@ -38,30 +38,31 @@ func Fmt() {
 	fmtLicense()
 	gofmt(".", goTargets...)
 
-	// python formatting
-	logger.Info("fmt: yapf " + strings.Join(pyTargets, " "))
+	// python
+	logger.Info("fmt: python yapf " + strings.Join(pyTargets, " "))
 	args := []string{"--in-place", "--parallel", "--recursive"}
 	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
 		fatal(fmt.Errorf("failed to format python: %v", err))
 	}
 
-	// web/yml formatting
-	logger.Info("fmt: prettier")
-	var err error
-	if mg.Verbose() {
-		// verbose mode - show all files being formatted
-		err = sh.Run("npm", "run", "prettier")
-	} else {
-		// only show output if there was an error
-		var output string
-		output, err = sh.Output("npm", "run", "prettier")
-		if err != nil {
-			fmt.Println(output)
-		}
+	// cloudformation
+	logger.Info("fmt: prettier deployments")
+	args = []string{"--write", "deployments/**.yml"}
+	if !mg.Verbose() {
+		args = append(args, "--loglevel", "error")
+	}
+	if err := sh.Run(nodePath("prettier"), args...); err != nil {
+		fatal(fmt.Errorf("failed to format CloudFormation: %v", err))
 	}
 
-	if err != nil {
-		fatal(fmt.Errorf("failed to run prettier: %v", err))
+	// web
+	logger.Info("fmt: prettier web")
+	args = []string{"--write", "{web/src/**,.}/*.{ts,js,tsx,md,json,yml}"}
+	if !mg.Verbose() {
+		args = append(args, "--loglevel", "error")
+	}
+	if err := sh.Run(nodePath("prettier"), args...); err != nil {
+		fatal(fmt.Errorf("failed to format web: %v", err))
 	}
 }
 

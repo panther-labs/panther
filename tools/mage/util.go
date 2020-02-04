@@ -219,3 +219,8 @@ func isRunningInCI() bool {
 func pythonLibPath(lib string) string {
 	return filepath.Join(pythonVirtualEnvPath, "bin", lib)
 }
+
+// Path to a node binary
+func nodePath(binary string) string {
+	return filepath.Join("node_modules", ".bin", binary)
+}
