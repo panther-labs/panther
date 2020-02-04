@@ -30,6 +30,7 @@ import (
 type API interface {
 	AddUserToGroup(id *string, groupName *string, userPoolID *string) error
 	CreateUser(input *CreateUserInput) (*string, error)
+	DeleteUser(id *string, userPoolID *string) error
 	GetUser(id *string, userPoolID *string) (*models.User, error)
 	ListGroupsForUser(id *string, userPoolID *string) ([]*models.Group, error)
 	ListUsers(limit *int64, paginationToken *string, userPoolID *string) (*ListUsersOutput, error)

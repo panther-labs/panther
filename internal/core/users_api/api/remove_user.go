@@ -19,37 +19,33 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
 )
 
-// InviteUser adds a new user to the Cognito user pool.
-func (API) InviteUser(input *models.InviteUserInput) (*models.InviteUserOutput, error) {
-	// Add user to org mapping in dynamo
-	if err := addUser(input.Email); err != nil {
-		return nil, err
-	}
-
-	// Create user in Cognito
-	id, err := userGateway.CreateUser(&gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-		UserPoolID: input.UserPoolID,
-	})
+// RemoveUser deletes a user from cognito.
+func (API) RemoveUser(input *models.RemoveUserInput) error {
+	// Get user sub from Cognito
+	user, err := userGateway.GetUser(input.ID, input.UserPoolID)
 	if err != nil {
-		if deleteErr := userTable.Delete(input.Email); deleteErr != nil {
-			zap.L().Error("error deleting user from dynamo after failed invitation", zap.Error(deleteErr))
-		}
-		return nil, err
+		zap.L().Error("error getting user from user pool", zap.Error(err))
+		return err
 	}
 
-	if err = userGateway.AddUserToGroup(id, aws.String("Admin"), input.UserPoolID); err != nil {
-		return nil, err
+	// Delete user from Cognito user pool
+	err = userGateway.DeleteUser(input.ID, input.UserPoolID)
+	if err != nil {
+		zap.L().Error("error deleting user from user pool", zap.Error(err))
+		return err
 	}
 
-	return &models.InviteUserOutput{ID: id}, nil
+	// Delete user from Dynamo
+	err = userTable.Delete(user.Email)
+	if err != nil {
+		zap.L().Error("error deleting user from dynamo", zap.Error(err))
+		return err
+	}
+
+	return nil
 }

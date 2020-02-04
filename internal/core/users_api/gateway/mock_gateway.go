@@ -46,6 +46,12 @@ func (m *MockUserGateway) CreateUser(input *CreateUserInput) (*string, error) {
 	return args.Get(0).(*string), args.Error(1)
 }
 
+// DeleteUser mocks DeleteUser for testing
+func (m *MockUserGateway) DeleteUser(id *string, userPoolID *string) error {
+	args := m.Called(id, userPoolID)
+	return args.Error(0)
+}
+
 // GetUser mocks GetUser for testing
 func (m *MockUserGateway) GetUser(id *string, userPoolID *string) (*models.User, error) {
 	args := m.Called(id, userPoolID)
