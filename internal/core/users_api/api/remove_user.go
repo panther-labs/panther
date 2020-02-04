@@ -1,4 +1,4 @@
-package gateway
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,24 +19,32 @@ package gateway
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/api/lambda/users/models"
 )
 
-// Panther free edition only has admin users.
-// Upgrade to enterprise for role-based access control (RBAC).
-const groupName = "Admin"
+// RemoveUser deletes a user from cognito.
+func (API) RemoveUser(input *models.RemoveUserInput) error {
+	// Get user sub from Cognito
+	user, err := userGateway.GetUser(input.ID, input.UserPoolID)
+	if err != nil {
+		zap.L().Error("error getting user from user pool", zap.Error(err))
+		return err
+	}
 
-// AddUserToGroup calls cognito api add a user to a specified group
-func (g *UsersGateway) AddUserToGroup(id *string, userPoolID *string) error {
-	if _, err := g.userPoolClient.AdminAddUserToGroup(&provider.AdminAddUserToGroupInput{
-		GroupName:  aws.String(groupName),
-		Username:   id,
-		UserPoolId: userPoolID,
-	}); err != nil {
-		return &genericapi.AWSError{Method: "cognito.AdminAddUserToGroup", Err: err}
+	// Delete user from Cognito user pool
+	err = userGateway.DeleteUser(input.ID, input.UserPoolID)
+	if err != nil {
+		zap.L().Error("error deleting user from user pool", zap.Error(err))
+		return err
+	}
+
+	// Delete user from Dynamo
+	err = userTable.Delete(user.Email)
+	if err != nil {
+		zap.L().Error("error deleting user from dynamo", zap.Error(err))
+		return err
 	}
 
 	return nil

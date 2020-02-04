@@ -25,6 +25,8 @@ type LambdaInput struct {
 	GetUser                   *GetUserInput                   `json:"getUser"`
 	GetUserOrganizationAccess *GetUserOrganizationAccessInput `json:"getUserOrganizationAccess"`
 	InviteUser                *InviteUserInput                `json:"inviteUser"`
+	ListUsers                 *ListUsersInput                 `json:"listUsers"`
+	RemoveUser                *RemoveUserInput                `json:"removeUser"`
 	ResetUserPassword         *ResetUserPasswordInput         `json:"resetUserPassword"`
 	UpdateUser                *UpdateUserInput                `json:"updateUser"`
 }
@@ -56,12 +58,30 @@ type InviteUserInput struct {
 	FamilyName *string `json:"familyName" validate:"required,min=1"`
 	Email      *string `json:"email" validate:"required,email"`
 	UserPoolID *string `json:"userPoolId" validate:"required,min=1"`
-	Role       *string `json:"role" validate:"required,min=1"`
 }
 
 // InviteUserOutput returns the randomly generated user id.
 type InviteUserOutput struct {
 	ID *string `json:"id"`
+}
+
+// ListUsersInput lists all users in Panther.
+type ListUsersInput struct {
+	UserPoolID      *string `json:"userPoolId" validate:"required,min=1"`
+	Limit           *int64  `json:"limit" validate:"omitempty,min=1"`
+	PaginationToken *string `json:"paginationToken" validate:"omitempty,min=1"`
+}
+
+// ListUsersOutput returns a page of users.
+type ListUsersOutput struct {
+	Users           []*User `json:"users"`
+	PaginationToken *string `json:"paginationToken"`
+}
+
+// RemoveUserInput deletes a user.
+type RemoveUserInput struct {
+	ID         *string `json:"id" validate:"required,uuid4"`
+	UserPoolID *string `json:"userPoolId" validate:"required,min=1"`
 }
 
 // ResetUserPasswordInput resets the password for a user.

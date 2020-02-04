@@ -19,24 +19,18 @@ package gateway
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// Panther free edition only has admin users.
-// Upgrade to enterprise for role-based access control (RBAC).
-const groupName = "Admin"
-
-// AddUserToGroup calls cognito api add a user to a specified group
-func (g *UsersGateway) AddUserToGroup(id *string, userPoolID *string) error {
-	if _, err := g.userPoolClient.AdminAddUserToGroup(&provider.AdminAddUserToGroupInput{
-		GroupName:  aws.String(groupName),
+// DeleteUser calls cognito api delete user from a user pool
+func (g *UsersGateway) DeleteUser(id *string, userPoolID *string) error {
+	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
 		Username:   id,
 		UserPoolId: userPoolID,
 	}); err != nil {
-		return &genericapi.AWSError{Method: "cognito.AdminAddUserToGroup", Err: err}
+		return &genericapi.AWSError{Method: "cognito.AdminDeleteUser", Err: err}
 	}
 
 	return nil

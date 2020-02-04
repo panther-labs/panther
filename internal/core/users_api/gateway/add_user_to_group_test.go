@@ -43,7 +43,6 @@ func TestAddUserToGroup(t *testing.T) {
 
 	assert.NoError(t, gw.AddUserToGroup(
 		testAddUserToGroupInput.Username,
-		testAddUserToGroupInput.GroupName,
 		testAddUserToGroupInput.UserPoolId,
 	))
 	mockCognitoClient.AssertExpectations(t)
@@ -58,7 +57,6 @@ func TestAddUserToGroupFailure(t *testing.T) {
 
 	assert.Error(t, gw.AddUserToGroup(
 		testAddUserToGroupInput.Username,
-		testAddUserToGroupInput.GroupName,
 		testAddUserToGroupInput.UserPoolId,
 	))
 	mockCognitoClient.AssertExpectations(t)

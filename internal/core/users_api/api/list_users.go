@@ -1,4 +1,4 @@
-package gateway
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -18,26 +18,27 @@ package gateway
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/aws/aws-sdk-go/aws"
-	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+import "github.com/panther-labs/panther/api/lambda/users/models"
 
-	"github.com/panther-labs/panther/pkg/genericapi"
-)
-
-// Panther free edition only has admin users.
-// Upgrade to enterprise for role-based access control (RBAC).
-const groupName = "Admin"
-
-// AddUserToGroup calls cognito api add a user to a specified group
-func (g *UsersGateway) AddUserToGroup(id *string, userPoolID *string) error {
-	if _, err := g.userPoolClient.AdminAddUserToGroup(&provider.AdminAddUserToGroupInput{
-		GroupName:  aws.String(groupName),
-		Username:   id,
-		UserPoolId: userPoolID,
-	}); err != nil {
-		return &genericapi.AWSError{Method: "cognito.AdminAddUserToGroup", Err: err}
+// ListUsers lists details for each user in Panther.
+func (API) ListUsers(input *models.ListUsersInput) (*models.ListUsersOutput, error) {
+	listOutput, err := userGateway.ListUsers(input.Limit, input.PaginationToken, input.UserPoolID)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	for _, user := range listOutput.Users {
+		groups, err := userGateway.ListGroupsForUser(user.ID, input.UserPoolID)
+		if err != nil {
+			return nil, err
+		}
+		if len(groups) > 0 {
+			user.Role = groups[0].Name
+		}
+	}
+
+	return &models.ListUsersOutput{
+		Users:           listOutput.Users,
+		PaginationToken: listOutput.PaginationToken,
+	}, nil
 }
