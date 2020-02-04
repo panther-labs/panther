@@ -49,4 +49,4 @@ Resources:
 Outputs:
   ImageRepo:
     Description: The name of the registry hosting the panther web image
-    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ImageName}
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${ImageName}
