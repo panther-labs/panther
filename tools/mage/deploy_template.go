@@ -94,7 +94,7 @@ func cfnPackage(templatePath, bucket, stack string) string {
 
 	// Discard the output unless running in verbose mode
 	logger.Infof("deploy: packaging %s assets in s3://%s (may take several minutes)", templatePath, bucket)
-	if err := sh.RunV("aws", args...); err != nil {
+	if err := sh.Run("aws", args...); err != nil {
 		fatal(fmt.Errorf("aws cloudformation package %s failed: %v", templatePath, err))
 	}
 

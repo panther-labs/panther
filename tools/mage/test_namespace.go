@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
@@ -266,6 +267,22 @@ func (t Test) CI() {
 
 // Integration Run integration tests (integration_test.go,integration.py)
 func (t Test) Integration() {
+	// Check the AWS account ID
+	awsSession, err := getSession()
+	if err != nil {
+		fatal(err)
+	}
+	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	if err != nil {
+		fatal(fmt.Errorf("failed to get caller identity: %v", err))
+	}
+
+	logger.Warnf("INTEGRATION TESTS WILL ERASE ALL PANTHER DATA IN AWS ACCOUNT %s", *identity.Account)
+	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
+	if strings.ToLower(result) != "yes" {
+		fatal(fmt.Errorf("permission denied: integration tests canceled"))
+	}
+
 	mg.Deps(build.API)
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
