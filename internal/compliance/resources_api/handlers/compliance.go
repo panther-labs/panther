@@ -27,7 +27,9 @@ import (
 	"github.com/panther-labs/panther/api/gateway/resources/models"
 )
 
-const complianceCacheDuration = time.Minute
+// Cache pass/fail status for each policy for a few seconds so that ListResources can filter and
+// sort by compliance status without having to query the compliance-api for every resource.
+const complianceCacheDuration = 3 * time.Second
 
 type complianceCacheEntry struct {
 	ExpiresAt time.Time

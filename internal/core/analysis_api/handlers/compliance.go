@@ -28,7 +28,9 @@ import (
 	compliancemodels "github.com/panther-labs/panther/api/gateway/compliance/models"
 )
 
-const complianceCacheDuration = time.Minute
+// Cache pass/fail status for each policy for a few seconds so that ListPolicies can filter and
+// sort by compliance status without having to query the compliance-api for every policy.
+const complianceCacheDuration = 3 * time.Second
 
 type complianceCacheEntry struct {
 	ExpiresAt time.Time
@@ -47,7 +49,7 @@ var complianceCache *complianceCacheEntry
 
 // Get the pass/fail compliance status for a particular policy.
 //
-// Each org's pass/fail information for all policies is cached for a minute.
+// Each org's pass/fail information for all policies is cached for a very short time.
 func getComplianceStatus(policyID models.ID) (*complianceStatus, error) {
 	entry, err := getOrgCompliance()
 	if err != nil {
