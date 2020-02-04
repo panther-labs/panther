@@ -103,7 +103,7 @@
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
     "react": "^16.12.0",
-    "react-ace": "^8.0.0",
+    "react-ace": "^7.0.5",
     "react-content-loader": "^4.3.4",
     "react-dom": "^16.12.0",
     "react-infinite-scroll-hook": "^2.0.1",
