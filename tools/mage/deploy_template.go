@@ -30,7 +30,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
 
@@ -94,14 +93,8 @@ func cfnPackage(templatePath, bucket, stack string) string {
 	}
 
 	// Discard the output unless running in verbose mode
-	logger.Infof("deploy: uploading %s sources to S3 bucket %s", templatePath, bucket)
-	var err error
-	if mg.Verbose() {
-		err = sh.Run("aws", args...)
-	} else {
-		_, err = sh.Output("aws", args...)
-	}
-	if err != nil {
+	logger.Infof("deploy: packaging %s assets in s3://%s (may take several minutes)", templatePath, bucket)
+	if err := sh.RunV("aws", args...); err != nil {
 		fatal(fmt.Errorf("aws cloudformation package %s failed: %v", templatePath, err))
 	}
 
@@ -141,7 +134,8 @@ func fixPackageTemplateURL(line string) string {
 		lineParts[1] = strings.Join(newURIParts, "/")
 
 		result := strings.Join(lineParts, "https://")
-		logger.Debugf("deploy: package post-processing TemplateURL: %s => %s", line, result)
+		logger.Debugf("deploy: package post-processing %s => %s",
+			strings.TrimSpace(line), strings.TrimSpace(result))
 		return result
 	}
 
@@ -195,7 +189,7 @@ func createChangeSet(
 		TemplateBody: aws.String(string(readFile(templateFile))),
 	}
 
-	logger.Infof("deploy: planning %s for stack %s", changeSetType, stack)
+	logger.Infof("deploy: %s CloudFormation stack %s (may take several minutes)", changeSetType, stack)
 	if _, err = client.CreateChangeSet(createInput); err != nil {
 		fatal(fmt.Errorf("failed to create change set for stack %s: %v", stack, err))
 	}
@@ -216,7 +210,7 @@ func createChangeSet(
 		status := aws.StringValue(response.Status)
 		reason := aws.StringValue(response.StatusReason)
 		if status == "FAILED" && strings.HasPrefix(reason, "The submitted information didn't contain changes") {
-			logger.Infof("deploy: stack %s is up to date", stack)
+			logger.Debugf("deploy: stack %s is already up to date", stack)
 			_, err := client.DeleteChangeSet(&cloudformation.DeleteChangeSetInput{
 				ChangeSetName: createInput.ChangeSetName,
 				StackName:     &stack,
@@ -231,7 +225,7 @@ func createChangeSet(
 		}
 
 		if status != prevStatus {
-			logger.Debugf("deploy: stack %s CreateChangeSet is now %s", stack, status)
+			logger.Debugf("deploy: CreateChangeSet for stack %s is now %s", stack, status)
 			prevStatus = status
 		}
 
@@ -260,7 +254,6 @@ func executeChangeSet(client *cloudformation.CloudFormation, changeSet *string, 
 	}
 
 	// Wait for change set to finish.
-	logger.Infof("deploy: updating stack %s; this may take several minutes", stack)
 	input := &cloudformation.DescribeStacksInput{StackName: &stack}
 	prevStatus := ""
 	for start := time.Now(); time.Since(start) < pollTimeout; {
@@ -276,7 +269,7 @@ func executeChangeSet(client *cloudformation.CloudFormation, changeSet *string, 
 
 		status := *response.Stacks[0].StackStatus
 		if status != prevStatus {
-			logger.Debugf("deploy: stack %s ExecuteChangeSet is now %s", stack, status)
+			logger.Debugf("deploy: ExecuteChangeSet for stack %s is now %s", stack, status)
 			prevStatus = status
 		}
 

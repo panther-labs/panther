@@ -94,6 +94,13 @@ func apiNeedsRebuilt(spec string) (bool, error) {
 
 // Lambda Compile Go Lambda function source
 func (b Build) Lambda() {
+	modified, err := target.Dir("out/bin/internal", "api", "internal", "pkg")
+	if err == nil && !modified {
+		// The source folders are older than all the compiled binaries - nothing has changed
+		logger.Info("build:lambda: up to date")
+		return
+	}
+
 	mg.Deps(b.API)
 
 	var packages []string
