@@ -193,6 +193,7 @@
 
 - [Background](destinations/background.md)
 - [Setup](destinations/alert-setup/README.md)
+  - [Asana](destinations/alert-setup/asana.md)
   - [Email](destinations/alert-setup/email.md)
   - [GitHub](destinations/alert-setup/github.md)
   - [JIRA](destinations/alert-setup/jira.md)
