@@ -91,7 +91,6 @@ func getSession() (*session.Session, error) {
 }
 
 // Get CloudFormation stack outputs as a map.
-// TODO - get the outputs as part of the change set loop
 func getStackOutputs(awsSession *session.Session, name string) (map[string]string, error) {
 	cfnClient := cloudformation.New(awsSession)
 	input := &cloudformation.DescribeStacksInput{StackName: &name}
@@ -100,12 +99,17 @@ func getStackOutputs(awsSession *session.Session, name string) (map[string]strin
 		return nil, fmt.Errorf("failed to describe stack %s: %v", name, err)
 	}
 
-	result := make(map[string]string, len(response.Stacks[0].Outputs))
-	for _, output := range response.Stacks[0].Outputs {
-		result[aws.StringValue(output.OutputKey)] = aws.StringValue(output.OutputValue)
-	}
+	return flattenStackOutputs(response), nil
+}
 
-	return result, nil
+// Flatten CloudFormation stack outputs into a string map.
+func flattenStackOutputs(detail *cloudformation.DescribeStacksOutput) map[string]string {
+	outputs := detail.Stacks[0].Outputs
+	result := make(map[string]string, len(outputs))
+	for _, output := range outputs {
+		result[*output.OutputKey] = *output.OutputValue
+	}
+	return result
 }
 
 // Upload a local file to S3.

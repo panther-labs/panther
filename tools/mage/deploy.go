@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -31,7 +32,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/fatih/color"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -39,9 +39,7 @@ import (
 
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/shutil"
-	"github.com/panther-labs/panther/tools/athenaviews"
 )
 
 const (
@@ -59,105 +57,132 @@ const (
 	layerS3ObjectKey = "layers/python-analysis.zip"
 )
 
+// Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
+//     n. california, us-gov, china, paris, stockholm, brazil, osaka, or bahrain
+// These regions are missing combinations of AppSync, Cognito, Athena, and/or Glue.
+// https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services
+var supportedRegions = map[string]bool{
+	"ap-northeast-1": true, // tokyo
+	"ap-northeast-2": true, // seoul
+	"ap-south-1":     true, // mumbai
+	"ap-southeast-1": true, // singapore
+	"ap-southeast-2": true, // sydney
+	"ca-central-1":   true, // canada
+	"eu-central-1":   true, // frankfurt
+	"eu-west-1":      true, // ireland
+	"eu-west-2":      true, // london
+	"us-east-1":      true, // n. virginia
+	"us-east-2":      true, // ohio
+	"us-west-2":      true, // oregon
+}
+
 // NOTE: Mage ignores the first word of the comment if it matches the function name.
 // So the comment below is intentionally "Deploy Deploy"
 
 // Deploy Deploy application infrastructure
-func Deploy() error {
+func Deploy() {
 	var config PantherConfig
 	if err := yaml.Unmarshal(readFile(configFile), &config); err != nil {
-		return fmt.Errorf("failed to parse config file %s: %v", configFile, err)
+		fatal(fmt.Errorf("failed to parse config file %s: %v", configFile, err))
 	}
 
 	awsSession, err := getSession()
 	if err != nil {
-		return err
+		fatal(err)
 	}
+	deployPrecheck(aws.StringValue(awsSession.Config.Region))
 
+	preprocessTemplates()
 	bucketParams := map[string]string{
 		"AccessLogsBucketName": config.BucketsParameterValues.AccessLogsBucketName,
 	}
-	if err = deployTemplate(awsSession, bucketTemplate, bucketStack, bucketParams); err != nil {
-		return err
-	}
-
-	Build.Lambda(Build{})
-
-	if err = generateGlueTables(); err != nil {
-		return err
-	}
-
-	if err := embedAPISpecs(); err != nil {
-		return err
-	}
-
-	bucketOutputs, err := getStackOutputs(awsSession, bucketStack)
-	if err != nil {
-		return err
-	}
+	bucketOutputs := deployTemplate(awsSession, bucketTemplate, "", bucketStack, bucketParams)
 	bucket := bucketOutputs["SourceBucketName"]
 
-	backendTemplate, err := cfnPackage(backendTemplate, bucket, backendStack)
-	if err != nil {
-		return err
+	fmt.Println(bucket) // TODO - temp
+	//
+	//Build.Lambda(Build{})
+	//
+	//
+	//backendTemplate, err := cfnPackage(backendTemplate, bucket, backendStack)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//backendDeployParams, err := getBackendDeployParams(awsSession, &config, bucket)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if err = deployTemplate(awsSession, backendTemplate, backendStack, backendDeployParams); err != nil {
+	//	return err
+	//}
+	//
+	//backendOutputs, err := getStackOutputs(awsSession, backendStack)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs, "out/.env"); err != nil {
+	//	return err
+	//}
+	//
+	//// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
+	//if err := awsathena.WorkgroupAssociateS3(awsSession, "primary", backendOutputs["AthenaResultsBucket"]); err != nil {
+	//	return err
+	//}
+	//if err := athenaviews.CreateOrReplaceViews(backendOutputs["AthenaResultsBucket"]); err != nil {
+	//	return err
+	//}
+	//
+	//dockerImage, err := buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImageRegistry"])
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//frontendTemplate, err := cfnPackage(frontendTemplate, bucket, frontendStack)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//frontendDeployParams := getFrontendDeployParams(&config, dockerImage, backendOutputs)
+	//
+	//if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
+	//	return err
+	//}
+	//
+	//if err := enableTOTP(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
+	//	return err
+	//}
+	//
+	//if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
+	//	return err
+	//}
+	//
+	//if err := initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], &config); err != nil {
+	//	return err
+	//}
+	//
+	//color.Yellow("\nPanther URL = https://%s\n", backendOutputs["LoadBalancerUrl"])
+	//return nil
+}
+
+// Fail the deploy early if there is a known issue with the user's environment.
+func deployPrecheck(awsRegion string) {
+	// Check the Go version (1.12 fails with a build error)
+	if version := runtime.Version(); version <= "go1.12" {
+		fatal(fmt.Errorf("go %s not supported, upgrade to 1.13+", version))
 	}
 
-	backendDeployParams, err := getBackendDeployParams(awsSession, &config, bucket)
-	if err != nil {
-		return err
+	// Make sure docker is running
+	if _, err := sh.Output("docker", "info"); err != nil {
+		fatal(fmt.Errorf("docker is not available: %v", err))
 	}
 
-	if err = deployTemplate(awsSession, backendTemplate, backendStack, backendDeployParams); err != nil {
-		return err
+	// Ensure the AWS region is supported
+	if !supportedRegions[awsRegion] {
+		fatal(fmt.Errorf("panther is not supported in %s region", awsRegion))
 	}
-
-	backendOutputs, err := getStackOutputs(awsSession, backendStack)
-	if err != nil {
-		return err
-	}
-
-	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs, "out/.env"); err != nil {
-		return err
-	}
-
-	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
-	if err := awsathena.WorkgroupAssociateS3(awsSession, "primary", backendOutputs["AthenaResultsBucket"]); err != nil {
-		return err
-	}
-	if err := athenaviews.CreateOrReplaceViews(backendOutputs["AthenaResultsBucket"]); err != nil {
-		return err
-	}
-
-	dockerImage, err := buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImageRegistry"])
-	if err != nil {
-		return err
-	}
-
-	frontendTemplate, err := cfnPackage(frontendTemplate, bucket, frontendStack)
-	if err != nil {
-		return err
-	}
-
-	frontendDeployParams := getFrontendDeployParams(&config, dockerImage, backendOutputs)
-
-	if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
-		return err
-	}
-
-	if err := enableTOTP(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
-		return err
-	}
-
-	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
-		return err
-	}
-
-	if err := initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], &config); err != nil {
-		return err
-	}
-
-	color.Yellow("\nPanther URL = https://%s\n", backendOutputs["LoadBalancerUrl"])
-	return nil
 }
 
 // Generate the set of deploy parameters for the main application stack.
@@ -254,86 +279,6 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 		return "", err
 	}
 	return *result.VersionID, nil
-}
-
-// Upload resources to S3 and return the path to the modified CloudFormation template.
-// TODO - replace this with our own to avoid relying on the aws cli
-func cfnPackage(templateFile, bucket, stack string) (string, error) {
-	outputDir := filepath.Join("out", filepath.Dir(templateFile))
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return "", err
-	}
-
-	// There is no equivalent to this command in the AWS Go SDK.
-	pkgOut := filepath.Join(outputDir, "package."+filepath.Base(templateFile))
-	args := []string{"cloudformation", "package",
-		"--output-template-file", pkgOut,
-		"--s3-bucket", bucket,
-		"--s3-prefix", stack,
-		"--template-file", templateFile,
-	}
-
-	if mg.Verbose() {
-		err := sh.Run("aws", args...)
-		if err != nil {
-			return "", err
-		}
-		// TODO - this error handling changed
-		cfnPackagePostProcess(pkgOut)
-		return pkgOut, err
-	}
-
-	// By default, just print a single progress message instead of several lines of explanation
-	fmt.Printf("deploy: cloudformation package %s => %s\n", templateFile, pkgOut)
-	_, err := sh.Output("aws", args...)
-	if err != nil {
-		return "", err
-	}
-	cfnPackagePostProcess(pkgOut)
-	return pkgOut, err
-}
-
-// Post-Process all the CFN templates
-func cfnPackagePostProcess(templatePath string) {
-	templateOriginal := readFile(templatePath)
-
-	var result []string
-	for _, line := range strings.Split(string(templateOriginal), "\n") {
-		line = fixPackageTemplateURL(line)
-		result = append(result, line)
-	}
-
-	writeFile(templatePath, []byte(strings.Join(result, "\n")))
-}
-
-// Fix CloudFormation package TemplateURL issues.
-// Somewhere there is a bug that is causing the environment variables specifying region to not be properly respected
-// when constructing the template URLs while deploying to another region than the one specified in the aws config.
-//
-// I believe it is related to this issue: https://github.com/aws/aws-cli/issues/4372
-func fixPackageTemplateURL(line string) string {
-	// This code transforms:
-	// TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template
-	// into:
-	// TemplateURL: https://bucket.s3.amazonaws.com/panther-app/1.template
-	if strings.HasPrefix(strings.TrimSpace(line), "TemplateURL: ") {
-		// Break the line down to the pieces we need
-		lineParts := strings.Split(line, "https://")
-		uriParts := strings.Split(lineParts[1], "/")
-		prefixParts := strings.Split(uriParts[0], ".")
-
-		// Build the new URI
-		prefixParts[1] = prefixParts[0]
-		prefixParts[0] = uriParts[1]
-
-		// Rebuild the line
-		newURIPrefix := strings.Join(prefixParts, ".")
-		newURIParts := append([]string{newURIPrefix}, uriParts[2:]...)
-		lineParts[1] = strings.Join(newURIParts, "/")
-		line = strings.Join(lineParts, "https://")
-	}
-
-	return line
 }
 
 // Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.

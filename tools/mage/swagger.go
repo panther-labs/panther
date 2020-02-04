@@ -38,7 +38,7 @@ const (
 var swaggerPattern = regexp.MustCompile(`\n {6}DefinitionBody:[ \t]*[\w./]+\.yml[ \t]*(#.+)?`)
 
 // Embed swagger specs into all CloudFormation templates, saving them to out/deployments.
-func embedAPISpecs() error {
+func embedAPISpecs() {
 	var templates []string
 	walk("deployments", func(path string, info os.FileInfo) {
 		if strings.HasSuffix(path, ".yml") && path != configFile {
@@ -51,13 +51,13 @@ func embedAPISpecs() error {
 
 		newCfn, err := embedAPIs(cfn)
 		if err != nil {
-			return err
+			fatal(err)
 		}
 		if newCfn != nil {
 			// Changes were made - save the new file
 			outDir := filepath.Join("out", filepath.Dir(template))
 			if err := os.MkdirAll(outDir, 0755); err != nil {
-				return fmt.Errorf("failed to create directory %s: %v", outDir, err)
+				fatal(fmt.Errorf("failed to create directory %s: %v", outDir, err))
 			}
 
 			cfnDest := filepath.Join(outDir, "embedded."+filepath.Base(template))
@@ -65,11 +65,8 @@ func embedAPISpecs() error {
 			writeFile(cfnDest, newCfn)
 		}
 	}
-
-	return nil
 }
 
-// TODO - unit tests for this function
 // Transform a single CloudFormation template by embedding Swagger definitions.
 //
 // Returns the new template body, or nil if no changes were necessary.
