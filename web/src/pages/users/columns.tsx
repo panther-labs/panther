@@ -31,30 +31,30 @@ const columns = [
   // Show given name and family name in two separate column
   {
     key: 'givenName',
-    header: 'First Name',
-    flex: '0 0 10%',
-  },
-  {
-    key: 'familyName',
-    header: 'Last Name',
-    flex: '0 0 10%',
+    header: 'Name',
+    flex: '1 0 150px',
+    renderCell: ({ givenName, familyName }) => (
+      <Text size="medium">
+        {givenName} {familyName}
+      </Text>
+    ),
   },
   {
     key: 'email',
     header: 'Email',
-    flex: '0 0 22%',
+    flex: '1 0 200px',
   },
   // Display user roles Admin, Analyst or ReadOnly
   {
     key: 'role',
     header: 'Role',
-    flex: '0 0 8%',
+    flex: '0 0 100px',
   },
   // Display when user is invited
   {
     key: 'createdAt',
     header: 'Invited at',
-    flex: '0 0 18%',
+    flex: '0 0 250px',
     renderCell: item => (
       <Text size="medium">{dayjs(item.createdAt * 1000).format('MM/DD/YYYY, HH:mm G[M]TZZ')}</Text>
     ),
@@ -63,11 +63,11 @@ const columns = [
   {
     key: 'status',
     header: 'Status',
-    flex: '0 0 250px',
+    flex: '1 0 150px',
   },
   {
     key: 'options',
-    flex: '0 1 auto',
+    flex: '0 1 100px',
     renderColumnHeader: () => <Box mx={5} />,
     renderCell: item => <ListUsersTableRowOptions user={item} />,
   },
