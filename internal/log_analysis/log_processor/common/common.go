@@ -25,6 +25,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
+const (
+	MaxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+)
+
+// Session AWS Session that can be used by components of the system
+var Session = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(MaxRetries)))
+
 // ParsedEvent contains a single event that has already been processed
 type ParsedEvent struct {
 	Event   interface{} `json:"event"`
@@ -73,7 +80,3 @@ const (
 	LogData    = "LogData"
 	RuleOutput = "RuleOutput"
 )
-
-// Session AWS Session that can be used by components of the system
-// Setting Max Retries to a higher number - we'd like to retry several times when reading from S3/pushing to Firehose before failing.
-var Session = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))

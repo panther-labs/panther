@@ -152,7 +152,8 @@ ORDER BY p_event_time ASC
 
 ```sql
 SELECT
- *
+ p_event_time,
+ p_any_aws_instance_ids
 FROM panther_tables.aws_cloudtrail
 WHERE year=2020 AND month=1 AND eventname = 'RunInstances'
 ORDER BY p_event_time ASC

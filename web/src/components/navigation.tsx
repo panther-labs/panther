@@ -181,6 +181,9 @@ const Navigation = () => {
               <Flex is="li">
                 <NavLink icon="settings-alt" to={urls.account.settings.general()} label="General" />
               </Flex>
+              <Flex is="li">
+                <NavLink icon="organization" to={urls.account.settings.users()} label="Users" />
+              </Flex>
             </RoleRestrictedAccess>
             <Flex is="li">
               <NavLink

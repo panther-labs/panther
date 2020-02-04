@@ -62,7 +62,7 @@ func (m *mockGatewayUpdateUserClient) RemoveUserFromGroup(*string, *string, *str
 	return nil
 }
 
-func (m *mockGatewayUpdateUserClient) AddUserToGroup(*string, *string, *string) error {
+func (m *mockGatewayUpdateUserClient) AddUserToGroup(*string, *string) error {
 	if m.removeErr {
 		return &genericapi.AWSError{}
 	}

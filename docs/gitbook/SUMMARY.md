@@ -38,8 +38,8 @@
 ## Historical Search
 
 - [Background](historical-search/README.md)
-  - [Panther Fields](historical-search/panther-fields.md)
-  - [Example Queries](historical-search/example-queries.md)
+- [Panther Fields](historical-search/panther-fields.md)
+- [Example Queries](historical-search/example-queries.md)
 
 ## Compliance <a id="policies"></a>
 
@@ -195,6 +195,7 @@
 
 - [Background](destinations/background.md)
 - [Setup](destinations/alert-setup/README.md)
+  - [Asana](destinations/alert-setup/asana.md)
   - [Email](destinations/alert-setup/email.md)
   - [GitHub](destinations/alert-setup/github.md)
   - [JIRA](destinations/alert-setup/jira.md)
