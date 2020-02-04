@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -54,22 +55,27 @@ func (b Build) API() {
 			continue
 		}
 
-		// If an API model is deleted, the generated file will still exist after "swagger generate".
-		// So we remove existing client/ and models/ directories before re-generating.
 		dir := filepath.Dir(spec)
-		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
-		if err := os.RemoveAll(client); err != nil {
-			fatal(fmt.Errorf("failed to reset %s: %v", client, err))
-		}
-		if err := os.RemoveAll(filepath.Join(dir, "models")); err != nil {
-			fatal(fmt.Errorf("failed to reset %s: %v", models, err))
-		}
-
-		args := []string{"generate", "client", "-q", "-t", filepath.Dir(spec), "-f", spec}
+		start := time.Now().UTC()
+		args := []string{"generate", "client", "-q", "-t", dir, "-f", spec}
 		cmd := filepath.Join(setupDirectory, "swagger")
 		if err := sh.Run(cmd, args...); err != nil {
 			fatal(fmt.Errorf("%s %s failed: %v", cmd, strings.Join(args, " "), err))
 		}
+
+		// If an API model is removed, "swagger generate" will leave the Go file in place.
+		// So we walk the generated directories and remove anything swagger didn't just write.
+		handler := func(path string, info os.FileInfo) {
+			if !info.IsDir() && info.ModTime().Before(start) {
+				logger.Debugf("%s unmodified by swagger: removing", path)
+				if err := os.Remove(path); err != nil {
+					logger.Warnf("failed to remove deleted model %s: %v", path, err)
+				}
+			}
+		}
+		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
+		walk(client, handler)
+		walk(models, handler)
 
 		// Add license and our formatting standard to the generated SDK.
 		fmtLicenseGroup(agplSource, client, models)
