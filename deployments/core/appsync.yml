@@ -301,7 +301,7 @@ Resources:
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
-      FieldName: removeUser
+      FieldName: deleteUser
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
