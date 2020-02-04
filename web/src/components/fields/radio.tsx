@@ -26,7 +26,13 @@ const FormikRadio: React.FC<RadioProps & Required<Pick<FieldConfig, 'name' | 'va
 
   // Here `props.value` is the value that the radio button should have according to the typical HTML
   // and not the value that will be forced into Formik
-  return <Radio {...props} checked={field.value === props.value} onChange={setValue} />;
+  return (
+    <Radio
+      {...props}
+      checked={field.value === props.value}
+      onChange={() => setValue(props.value)}
+    />
+  );
 };
 
 export default FormikRadio;
