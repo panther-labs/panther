@@ -27,16 +27,21 @@ import (
 func TestFixTemplateURL(t *testing.T) {
 	// Basic example
 	originalTemplate := "TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template"
-	expectedTemplate := "TemplateURL: https://bucket.s3.amazonaws.com/panther-app/1.template"
+	expectedTemplate := "TemplateURL: https://s3.amazonaws.com/bucket/panther-app/1.template"
 	assert.Equal(t, expectedTemplate, fixPackageTemplateURL(originalTemplate))
 
 	// Maintains leading whitespace
 	originalTemplate = "   TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template"
-	expectedTemplate = "   TemplateURL: https://bucket.s3.amazonaws.com/panther-app/1.template"
+	expectedTemplate = "   TemplateURL: https://s3.amazonaws.com/bucket/panther-app/1.template"
 	assert.Equal(t, expectedTemplate, fixPackageTemplateURL(originalTemplate))
 
 	// Don't change things that are not TemplateURLs
 	originalTemplate = "https://s3.region.amazonaws.com/bucket/panther-app/1.template"
 	expectedTemplate = "https://s3.region.amazonaws.com/bucket/panther-app/1.template"
+	assert.Equal(t, expectedTemplate, fixPackageTemplateURL(originalTemplate))
+
+	// Don't change things that are not already in global format
+	originalTemplate = "https://s3.amazonaws.com/bucket/panther-app/1.template"
+	expectedTemplate = "https://s3.amazonaws.com/bucket/panther-app/1.template"
 	assert.Equal(t, expectedTemplate, fixPackageTemplateURL(originalTemplate))
 }
