@@ -20,19 +20,16 @@ import React from 'react';
 import { Radio, RadioProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
+const MemoizedRadio = React.memo(Radio);
+
 const FormikRadio: React.FC<RadioProps & Required<Pick<FieldConfig, 'name' | 'value'>>> = props => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [field, meta, { setValue }] = useField(props.name);
 
   // Here `props.value` is the value that the radio button should have according to the typical HTML
   // and not the value that will be forced into Formik
-  return (
-    <Radio
-      {...props}
-      checked={field.value === props.value}
-      onChange={() => setValue(props.value)}
-    />
-  );
+  const onChange = React.useMemo(() => () => setValue(props.value), [props.value]);
+  return <MemoizedRadio {...props} checked={field.value === props.value} onChange={onChange} />;
 };
 
 export default FormikRadio;

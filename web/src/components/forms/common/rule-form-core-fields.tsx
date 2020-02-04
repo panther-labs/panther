@@ -52,11 +52,28 @@ type FormValues = Required<Pick<RuleFormValues, typeof ruleCoreEditableFields[nu
   Pick<PolicyFormValues, 'resourceTypes' | 'suppressions'>;
 
 const severityOptions = Object.values(SeverityEnum);
+const severityItemToString = severity => capitalize(severity.toLowerCase());
+const suppressionInputProps = {
+  placeholder: 'i.e. aws::s3::* (separate with <Enter>)',
+};
+const resourceTypesInputProps = {
+  placeholder: 'Filter affected resource types',
+};
+const tagsInputProps = {
+  placeholder: 'i.e. Bucket Security (separate with <Enter>)',
+};
+const logTypesInputProps = {
+  placeholder: 'Filter affected log types',
+};
 
 const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
   // Read the values from the "parent" form. We expect a formik to be declared in the upper scope
   // since this is a "partial" form. If no Formik context is found this will error out intentionally
   const { values, errors, touched, initialValues } = useFormikContext<FormValues>();
+
+  const tagAdditionValidation = React.useMemo(() => tag => !values.tags.includes(tag), [
+    values.tags,
+  ]);
 
   return (
     <section>
@@ -77,7 +94,7 @@ const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
                 as={FormikCombobox}
                 name="severity"
                 items={severityOptions}
-                itemToString={severity => capitalize(severity.toLowerCase())}
+                itemToString={severityItemToString}
               />
             </Flex>
           </Flex>
@@ -124,9 +141,7 @@ const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
               label="Resource Ignore Patterns"
               items={values.suppressions}
               allowAdditions
-              inputProps={{
-                placeholder: 'i.e. aws::s3::* (separate with <Enter>)',
-              }}
+              inputProps={suppressionInputProps}
             />
             <Box>
               <Field
@@ -135,7 +150,7 @@ const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
                 label="Resource Types"
                 name="resourceTypes"
                 items={RESOURCE_TYPES}
-                inputProps={{ placeholder: 'Filter affected resource types' }}
+                inputProps={resourceTypesInputProps}
               />
               <Text size="small" color="grey300" mt={2}>
                 Leave empty to apply to all resources
@@ -150,10 +165,8 @@ const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
           label="Custom Tags"
           items={values.tags}
           allowAdditions
-          validateAddition={tag => !values.tags.includes(tag)}
-          inputProps={{
-            placeholder: 'i.e. Bucket Security (separate with <Enter>)',
-          }}
+          validateAddition={tagAdditionValidation}
+          inputProps={tagsInputProps}
         />
         {type === 'rule' && (
           <Field
@@ -162,7 +175,7 @@ const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
             label="* Log Types"
             name="logTypes"
             items={LOG_TYPES}
-            inputProps={{ placeholder: 'Filter affected log types' }}
+            inputProps={logTypesInputProps}
           />
         )}
       </Grid>

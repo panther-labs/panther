@@ -18,13 +18,18 @@
 
 import React from 'react';
 import { Combobox, ComboboxProps } from 'pouncejs';
-import { useFormikContext, FieldConfig } from 'formik';
+import { FieldConfig, useField } from 'formik';
+
+const MemoizedCombobox = React.memo(Combobox);
 
 function FormikCombobox<T>(
   props: ComboboxProps<T> & Required<Pick<FieldConfig, 'name'>>
 ): React.ReactNode {
-  const { setFieldValue } = useFormikContext<any>();
-  return <Combobox<T> {...props} onChange={value => setFieldValue(props.name, value)} />;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [field, meta, { setValue }] = useField(props.name);
+
+  const onChange = React.useMemo(() => setValue, []);
+  return <MemoizedCombobox {...props} onChange={onChange} />;
 }
 
 export default FormikCombobox;
