@@ -60,13 +60,13 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
             Action: sts:AssumeRole
             Condition:
               Bool:
                 aws:SecureTransport: true
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/SecurityAudit
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/SecurityAudit
       Policies:
         - PolicyName: CloudFormationStackDriftDetection
           PolicyDocument:
@@ -115,7 +115,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
             Action: sts:AssumeRole
       Policies:
         - PolicyName: ManageCloudFormationStack
@@ -150,7 +150,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${MasterAccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
             Action: sts:AssumeRole
             Condition:
               Bool:

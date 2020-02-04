@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Flex, Heading, Icon, IconButton, SideSheet, useSnackbar, Box } from 'pouncejs';
+import { Alert, Box, Flex, Heading, Icon, IconButton, SideSheet, useSnackbar } from 'pouncejs';
 import React from 'react';
-import { useMutation, gql } from '@apollo/client';
+import { gql, useMutation } from '@apollo/client';
 
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/sidesheet-context';
@@ -30,12 +30,13 @@ import {
 } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/common/base-destination-form';
 import {
-  PagerDutyDestinationForm,
-  JiraDestinationForm,
-  OpsgenieDestinationForm,
-  MicrosoftTeamsDestinationForm,
-  SlackDestinationForm,
+  AsanaDestinationForm,
   GithubDestinationForm,
+  JiraDestinationForm,
+  MicrosoftTeamsDestinationForm,
+  OpsgenieDestinationForm,
+  PagerDutyDestinationForm,
+  SlackDestinationForm,
   SNSDestinationForm,
   SQSDestinationForm,
 } from 'Components/forms/destination-form';
@@ -82,6 +83,10 @@ const ADD_DESTINATION = gql`
         }
         sqs {
           queueUrl
+        }
+        asana {
+          personalAccessToken
+          projectGids
         }
       }
       verificationStatus
@@ -245,6 +250,16 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
             initialValues={{
               ...commonInitialValues,
               outputConfig: { sqs: { queueUrl: '' } },
+            }}
+            onSubmit={handleSubmit}
+          />
+        );
+      case DestinationTypeEnum.Asana:
+        return (
+          <AsanaDestinationForm
+            initialValues={{
+              ...commonInitialValues,
+              outputConfig: { asana: { personalAccessToken: '', projectGids: [] } },
             }}
             onSubmit={handleSubmit}
           />

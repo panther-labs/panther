@@ -43,7 +43,7 @@ export type AlertDetails = {
   lastEventMatched: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
   events: Array<Scalars['AWSJSON']>;
-  eventsLastEvaluatedKey: Scalars['String'];
+  eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
 };
 
 export enum AlertReportFrequencyEnum {
@@ -65,6 +65,17 @@ export enum AnalysisTypeEnum {
   Rule = 'RULE',
   Policy = 'POLICY',
 }
+
+export type AsanaConfig = {
+  __typename?: 'AsanaConfig';
+  personalAccessToken: Scalars['String'];
+  projectGids: Array<Scalars['String']>;
+};
+
+export type AsanaConfigInput = {
+  personalAccessToken: Scalars['String'];
+  projectGids: Array<Scalars['String']>;
+};
 
 export type ComplianceItem = {
   __typename?: 'ComplianceItem';
@@ -157,6 +168,7 @@ export type DestinationConfig = {
   jira?: Maybe<JiraConfig>;
   opsgenie?: Maybe<OpsgenieConfig>;
   msTeams?: Maybe<MsTeamsConfig>;
+  asana?: Maybe<AsanaConfig>;
 };
 
 export type DestinationConfigInput = {
@@ -168,6 +180,7 @@ export type DestinationConfigInput = {
   jira?: Maybe<JiraConfigInput>;
   opsgenie?: Maybe<OpsgenieConfigInput>;
   msTeams?: Maybe<MsTeamsConfigInput>;
+  asana?: Maybe<AsanaConfigInput>;
 };
 
 export type DestinationInput = {
@@ -187,6 +200,7 @@ export enum DestinationTypeEnum {
   Msteams = 'msteams',
   Sns = 'sns',
   Sqs = 'sqs',
+  Asana = 'asana',
 }
 
 export type GetAlertInput = {

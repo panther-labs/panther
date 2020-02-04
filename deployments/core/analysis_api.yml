@@ -81,7 +81,7 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref HandlerFunction
-      Principal: apigateway.amazonaws.com
+      Principal: !Sub apigateway.${AWS::URLSuffix}
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
 
   ##### API Lambda Handler #####
@@ -93,12 +93,12 @@ Resources:
       Environment:
         Variables:
           BUCKET: !Ref Bucket
-          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           COMPLIANCE_API_PATH: v1
           DEBUG: !Ref Debug
           POLICY_ENGINE: panther-policy-engine
           RULES_ENGINE: panther-rules-engine
-          RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-resources
+          RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources
           TABLE: !Ref Table
       FunctionName: panther-analysis-api
       Handler: main
@@ -108,11 +108,6 @@ Resources:
       Timeout: !Ref HandlerTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: InvokeApis
           Version: 2012-10-17
           Statement:

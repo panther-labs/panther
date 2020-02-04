@@ -10,6 +10,7 @@ docker run \
     -v $(pwd):/code \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -e AWS_ACCESS_KEY_ID \
+    -e AWS_PARTITION \
     -e AWS_SECRET_ACCESS_KEY \
     -e AWS_SESSION_TOKEN \
     -e AWS_SECURITY_TOKEN \

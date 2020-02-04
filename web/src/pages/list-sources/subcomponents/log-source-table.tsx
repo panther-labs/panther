@@ -30,6 +30,7 @@ export const LIST_LOG_SOURCES = gql`
       createdAtTime
       integrationId
       integrationLabel
+      integrationType
       s3Buckets
     }
   }

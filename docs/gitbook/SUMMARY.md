@@ -37,7 +37,9 @@
 
 ## Historical Search
 
-- [Background](historical-search/untitled.md)
+- [Background](historical-search/README.md)
+  - [Panther Fields](historical-search/panther-fields.md)
+  - [Example Queries](historical-search/example-queries.md)
 
 ## Compliance <a id="policies"></a>
 

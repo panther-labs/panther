@@ -108,8 +108,8 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref HandlerFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
+      Principal: !Sub apigateway.${AWS::URLSuffix}
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
 
   ##### API Lambda Handler #####
   HandlerFunction:
@@ -119,7 +119,7 @@ Resources:
       Description: Resources API
       Environment:
         Variables:
-          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           COMPLIANCE_API_PATH: v1
           DEBUG: !Ref Debug
           RESOURCES_QUEUE_URL: !Ref InputQueue
@@ -132,19 +132,14 @@ Resources:
       Timeout: !Ref HandlerTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: AccessComplianceApi
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource:
-                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/describe-org
-                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/delete
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/describe-org
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/delete
         - Id: DynamoManageItems
           Version: 2012-10-17
           Statement:
@@ -226,14 +221,14 @@ Resources:
       Description: Scans recently modified resources
       Environment:
         Variables:
-          ALERT_QUEUE_URL: !Sub 'https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-alert-processor-queue'
+          ALERT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alert-processor-queue
           DEBUG: !Ref Debug
-          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
           POLICY_ENGINE: panther-policy-engine
-          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           COMPLIANCE_API_PATH: v1
-          RESOURCE_API_HOST: !Sub '${GatewayApi}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCE_API_HOST: !Sub '${GatewayApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           RESOURCE_API_PATH: v1
       Events:
         Queue:
@@ -249,11 +244,6 @@ Resources:
       Timeout: !Ref QueueProcessorTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: SendAndReceiveSqsMessages
           Version: 2012-10-17
           Statement:
@@ -311,12 +301,6 @@ Resources:
       Runtime: python3.7
       Timeout: !Ref EngineTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
-      Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess',
-            !Ref 'AWS::NoValue',
-          ]
 
   EngineLogGroup:
     Type: AWS::Logs::LogGroup

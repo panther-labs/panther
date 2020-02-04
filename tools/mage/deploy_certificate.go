@@ -36,6 +36,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
+	"github.com/aws/aws-sdk-go/service/iam"
 )
 
 const (
@@ -48,6 +49,8 @@ const (
 )
 
 // Upload a local self-signed TLS certificate to ACM. Only needs to happen once per installation
+//
+// In regions/partitions where ACM is not supported, we fall back to IAM certificate management.
 func uploadLocalCertificate(awsSession *session.Session) (string, error) {
 	// Check if certificate has already been uploaded
 	certArn, err := getExistingCertificate(awsSession)
@@ -55,10 +58,10 @@ func uploadLocalCertificate(awsSession *session.Session) (string, error) {
 		return "", err
 	}
 	if certArn != "" {
-		fmt.Println("deploy: ACM certificate already exists")
+		fmt.Println("deploy: load balancer certificate already exists")
 		return certArn, nil
 	}
-	fmt.Println("deploy: uploading ACM certificate")
+	fmt.Println("deploy: uploading load balancer certificate")
 
 	// Ensure the certificate and key file exist. If not, create them.
 	_, certErr := os.Stat(certificateFile)
@@ -90,6 +93,20 @@ func uploadLocalCertificate(awsSession *session.Session) (string, error) {
 		return "", err
 	}
 
+	// Check if the ACM service is supported before tossing the private key out into the ether
+	acmClient := acm.New(awsSession)
+	_, err = acmClient.ListCertificates(&acm.ListCertificatesInput{MaxItems: aws.Int64(1)})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "SubscriptionRequiredException" {
+				// ACM is not supported in this region or for this user, fall back to IAM
+				fmt.Println("deploy: ACM not supported, falling back to IAM for certificate management")
+				return uploadIAMCertificate(privateKeyBytes, certificateBytes, awsSession)
+			}
+		}
+		// Some other error
+		return "", err
+	}
 	input := &acm.ImportCertificateInput{
 		Certificate: certificateBytes,
 		PrivateKey:  privateKeyBytes,
@@ -100,15 +117,33 @@ func uploadLocalCertificate(awsSession *session.Session) (string, error) {
 			},
 		},
 	}
-
-	acmClient := acm.New(awsSession)
 	output, err := acmClient.ImportCertificate(input)
 	if err != nil {
 		return "", err
 	}
+
 	return *output.CertificateArn, nil
 }
 
+// uploadIAMCertificate creates an IAM certificate resource and returns its ARN
+func uploadIAMCertificate(privateKeyBytes, certificateBytes []byte, session *session.Session) (string, error) {
+	iamClient := iam.New(session)
+	t := time.Now()
+	certName := "PantherCertificate-" + t.Format("2006-01-02T15-04-05")
+	input := &iam.UploadServerCertificateInput{
+		CertificateBody:       aws.String(string(certificateBytes)),
+		PrivateKey:            aws.String(string(privateKeyBytes)),
+		ServerCertificateName: aws.String(certName),
+	}
+	output, err := iamClient.UploadServerCertificate(input)
+	if err != nil {
+		return "", err
+	}
+
+	return *output.ServerCertificateMetadata.Arn, nil
+}
+
+// getExistingCertificate checks to see if there is already an ACM/IAM certificate configured
 func getExistingCertificate(awsSession *session.Session) (string, error) {
 	outputs, err := getStackOutputs(awsSession, backendStack)
 	if err != nil {
@@ -125,7 +160,7 @@ func getExistingCertificate(awsSession *session.Session) (string, error) {
 	return "", nil
 }
 
-// Generate the self signed private key and certificate for HTTPS access to the web application
+// generateKeys generates the self signed private key and certificate for HTTPS access to the web application
 func generateKeys() error {
 	fmt.Println("deploy: WARNING no ACM certificate ARN provided and no certificate file provided, generating a self-signed certificate")
 	// Create the private key

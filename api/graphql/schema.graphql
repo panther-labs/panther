@@ -72,7 +72,7 @@ type AlertDetails {
   lastEventMatched: AWSDateTime!
   eventsMatched: Int!
   events: [AWSJSON!]!
-  eventsLastEvaluatedKey: String!
+  eventsLastEvaluatedKey: String
 }
 
 type ListAlertsResponse {
@@ -343,6 +343,7 @@ type DestinationConfig {
   jira: JiraConfig
   opsgenie: OpsgenieConfig
   msTeams: MsTeamsConfig
+  asana: AsanaConfig
 }
 
 type SqsConfig {
@@ -364,6 +365,11 @@ type JiraConfig {
   apiKey: String!
   assigneeId: String
   issueType: JiraIssueTypesEnum
+}
+
+type AsanaConfig {
+  personalAccessToken: String!
+  projectGids: [String!]!
 }
 
 type GithubConfig {
@@ -400,6 +406,7 @@ input DestinationConfigInput {
   jira: JiraConfigInput
   opsgenie: OpsgenieConfigInput
   msTeams: MsTeamsConfigInput
+  asana: AsanaConfigInput
 }
 
 input SQSConfigInput {
@@ -421,6 +428,11 @@ input JiraConfigInput {
   apiKey: String!
   assigneeId: String
   issueType: JiraIssueTypesEnum
+}
+
+input AsanaConfigInput {
+  personalAccessToken: String!
+  projectGids: [String!]!
 }
 
 input GithubConfigInput {
@@ -706,6 +718,7 @@ enum DestinationTypeEnum {
   msteams
   sns
   sqs
+  asana
 }
 
 enum AnalysisTypeEnum {
