@@ -18,12 +18,11 @@
 
 import React from 'react';
 import { Radio, RadioProps } from 'pouncejs';
-import { useFormikContext, FieldConfig, useField } from 'formik';
+import { FieldConfig, useField } from 'formik';
 
 const FormikRadio: React.FC<RadioProps & Required<Pick<FieldConfig, 'name' | 'value'>>> = props => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta] = useField(props.name);
-  const { setFieldValue } = useFormikContext<any>();
+  const [field, meta, { setValue }] = useField(props.name);
 
   // Here `props.value` is the value that the radio button should have according to the typical HTML
   // and not the value that will be forced into Formik
@@ -31,7 +30,7 @@ const FormikRadio: React.FC<RadioProps & Required<Pick<FieldConfig, 'name' | 'va
     <Radio
       {...props}
       checked={field.value === props.value}
-      onChange={() => setFieldValue(field.name, props.value)}
+      onChange={() => setValue(props.value)}
     />
   );
 };

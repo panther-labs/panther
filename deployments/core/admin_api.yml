@@ -121,11 +121,6 @@ Resources:
       Timeout: !Ref UsersTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: CognitoUserManagement
           Version: 2012-10-17
           Statement:
@@ -153,7 +148,7 @@ Resources:
                 - appsync:GetGraphqlApi
                 - appsync:ListGraphqlApis
                 - appsync:UpdateGraphqlApi
-              Resource: !Sub arn:aws:appsync:${AWS::Region}:${AWS::AccountId}:*
+              Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:*
         - Id: InvokeOrganizationAPI
           Version: 2012-10-17
           Statement:
@@ -194,11 +189,6 @@ Resources:
       Timeout: !Ref UsersTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: GetCognitoUsers
           Version: 2012-10-17
           Statement:
@@ -211,7 +201,7 @@ Resources:
     Properties:
       FunctionName: !GetAtt CustomMessageTriggerFunction.Arn
       Action: lambda:InvokeFunction
-      Principal: cognito-idp.amazonaws.com
+      Principal: !Sub cognito-idp.${AWS::URLSuffix}
       SourceArn: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
 
   ##### Organization API #####
@@ -254,11 +244,6 @@ Resources:
       Timeout: !Ref OrganizationTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: ManageOrganizationTable
           Version: 2012-10-17
           Statement:

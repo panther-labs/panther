@@ -75,7 +75,7 @@ type AlertDetails {
   lastEventMatched: AWSDateTime!
   eventsMatched: Int!
   events: [AWSJSON!]!
-  eventsLastEvaluatedKey: String!
+  eventsLastEvaluatedKey: String
 }
 
 type ListAlertsResponse {

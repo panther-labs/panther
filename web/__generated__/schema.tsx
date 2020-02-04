@@ -43,7 +43,7 @@ export type AlertDetails = {
   lastEventMatched: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
   events: Array<Scalars['AWSJSON']>;
-  eventsLastEvaluatedKey: Scalars['String'];
+  eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
 };
 
 export enum AlertReportFrequencyEnum {
@@ -337,8 +337,10 @@ export type ListPoliciesInput = {
   resourceTypes?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListPoliciesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -365,8 +367,10 @@ export type ListResourcesInput = {
   integrationId?: Maybe<Scalars['ID']>;
   integrationType?: Maybe<AccountTypeEnum>;
   types?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListResourcesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -390,8 +394,10 @@ export type ListRulesInput = {
   logTypes?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListRulesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -588,6 +594,7 @@ export type PoliciesForResourceInput = {
   severity?: Maybe<SeverityEnum>;
   status?: Maybe<ComplianceStatusEnum>;
   suppressed?: Maybe<Scalars['Boolean']>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -754,6 +761,7 @@ export type ResourcesForPolicyInput = {
   policyId?: Maybe<Scalars['ID']>;
   status?: Maybe<ComplianceStatusEnum>;
   suppressed?: Maybe<Scalars['Boolean']>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };

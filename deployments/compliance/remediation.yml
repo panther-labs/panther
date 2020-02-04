@@ -114,8 +114,8 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ApiFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
+      Principal: !Sub apigateway.${AWS::URLSuffix}
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
 
   Queue:
     Type: AWS::SQS::Queue
@@ -145,9 +145,9 @@ Resources:
           DEBUG: !Ref Debug
           SQS_QUEUE_URL: !Ref Queue
           REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
-          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           POLICIES_SERVICE_PATH: v1
-          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           RESOURCES_SERVICE_PATH: v1
       FunctionName: panther-remediation-api
       Handler: main
@@ -157,11 +157,6 @@ Resources:
       Timeout: !Ref ApiTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: SendSqsMessages
           Version: 2012-10-17
           Statement:
@@ -181,8 +176,8 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource:
-                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
-                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !GetAtt RemediationFunction.Arn
@@ -209,9 +204,9 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
-          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           POLICIES_SERVICE_PATH: v1
-          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           RESOURCES_SERVICE_PATH: v1
       Events:
         Queue:
@@ -226,11 +221,6 @@ Resources:
       Runtime: go1.x
       Timeout: !Ref ProcessorTimeoutSec
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: ReceiveAndDeleteSQSMessages
           Version: 2012-10-17
           Statement:
@@ -246,8 +236,8 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource:
-                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
-                - !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !GetAtt RemediationFunction.Arn
@@ -283,17 +273,12 @@ Resources:
       Timeout: !Ref RemediationTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: AssumeRemediationRole
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
-              Resource: !Sub arn:aws:iam::*:role/${RemediationRoleName}
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/${RemediationRoleName}
 
 Outputs:
   GatewayId:

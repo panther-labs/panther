@@ -111,7 +111,7 @@ Resources:
         Variables:
           AUDIT_ROLE_NAME: !Ref AuditRoleName
           DEBUG: !Ref Debug
-          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.amazonaws.com'
+          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           RESOURCES_API_PATH: v1
           SNAPSHOT_QUEUE_URL: !Ref Queue
       Events:
@@ -128,11 +128,6 @@ Resources:
       Timeout: !Ref PollerTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: ManageSQSMessages
           Version: 2012-10-17
           Statement:
@@ -154,13 +149,13 @@ Resources:
           Statement:
             - Effect: Allow
               Action: execute-api:Invoke
-              Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/resource
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/resource
         - Id: AssumePantherAuditRoles
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
-              Resource: !Sub arn:aws:iam::*:role/${AuditRoleName}
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/${AuditRoleName}
 
   PollerLogGroup:
     Type: AWS::Logs::LogGroup
@@ -194,8 +189,8 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           SNAPSHOT_POLLERS_QUEUE_URL: !Ref Queue
-          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${LogAnalysisQueueName}
-          LOG_PROCESSOR_QUEUE_ARN: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
+          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/${LogAnalysisQueueName}
+          LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
           TABLE_NAME: !Ref IntegrationsTable
       FunctionName: panther-snapshot-api
       Handler: main
@@ -205,11 +200,6 @@ Resources:
       Timeout: !Ref ApiTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: IntegrationsTablePermissions
           Version: 2012-10-17
           Statement:
@@ -268,17 +258,12 @@ Resources:
       Timeout: !Ref SchedulerTimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - !If [
-            TracingEnabled,
-            'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess',
-            !Ref 'AWS::NoValue',
-          ]
         - Id: InvokeSnapshotAPI
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
         - Id: SendSQSMessages
           Version: 2012-10-17
           Statement:
