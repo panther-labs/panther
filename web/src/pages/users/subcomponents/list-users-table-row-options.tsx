@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
-import useRouter from 'Hooks/useRouter';
 import { User } from 'Generated/schema';
 import { ADMIN_ROLES_ARRAY } from 'Source/constants';
 import useModal from 'Hooks/useModal';
@@ -30,7 +29,6 @@ interface ListUsersTableRowOptionsProps {
 }
 
 const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ user }) => {
-  const { location, history } = useRouter();
   const { showModal } = useModal();
 
   return (
@@ -42,9 +40,6 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
           </IconButton>
         }
       >
-        <Dropdown.Item onSelect={() => history.push(`${location.pathname}/${user.id}/edit/`)}>
-          <MenuItem variant="default">Edit</MenuItem>
-        </Dropdown.Item>
         <Dropdown.Item
           onSelect={() =>
             showModal({
