@@ -80,7 +80,7 @@ func TestInviteUserAddToGroupErr(t *testing.T) {
 		Email:      input.Email,
 		UserPoolID: input.UserPoolID,
 	}).Return(userID, nil)
-	mockGateway.On("AddUserToGroup", userID, aws.String("Admin"), input.UserPoolID).Return(&genericapi.AWSError{})
+	mockGateway.On("AddUserToGroup", userID, input.UserPoolID).Return(&genericapi.AWSError{})
 
 	// call the code we are testing
 	result, err := (API{}).InviteUser(input)
@@ -175,7 +175,7 @@ func TestInviteUserHandle(t *testing.T) {
 		Email:      input.Email,
 		UserPoolID: input.UserPoolID,
 	}).Return(userID, nil)
-	mockGateway.On("AddUserToGroup", userID, aws.String("Admin"), input.UserPoolID).Return(nil)
+	mockGateway.On("AddUserToGroup", userID, input.UserPoolID).Return(nil)
 
 	// call the code we are testing
 	result, err := (API{}).InviteUser(input)

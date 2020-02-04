@@ -35,8 +35,8 @@ type MockUserGateway struct {
 // and just record the activity, and returns what the Mock object tells it to.
 
 // AddUserToGroup mocks AddUserToGroup for testing
-func (m *MockUserGateway) AddUserToGroup(id *string, groupName *string, userPoolID *string) error {
-	args := m.Called(id, groupName, userPoolID)
+func (m *MockUserGateway) AddUserToGroup(id *string, userPoolID *string) error {
+	args := m.Called(id, userPoolID)
 	return args.Error(0)
 }
 
