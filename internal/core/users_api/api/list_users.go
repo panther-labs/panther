@@ -1,3 +1,5 @@
+package api
+
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,14 +18,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Checkbox, CheckboxProps } from 'pouncejs';
-import { FieldConfig, useField } from 'formik';
+import "github.com/panther-labs/panther/api/lambda/users/models"
 
-const FormikCheckbox: React.FC<CheckboxProps & Required<Pick<FieldConfig, 'name'>>> = props => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue }] = useField<boolean>(props.name);
-  return <Checkbox {...props} checked={field.value} onChange={setValue} />;
-};
+// ListUsers lists details for each user in Panther.
+func (API) ListUsers(input *models.ListUsersInput) (*models.ListUsersOutput, error) {
+	listOutput, err := userGateway.ListUsers(input.Limit, input.PaginationToken, input.UserPoolID)
+	if err != nil {
+		return nil, err
+	}
 
-export default FormikCheckbox;
+	for _, user := range listOutput.Users {
+		groups, err := userGateway.ListGroupsForUser(user.ID, input.UserPoolID)
+		if err != nil {
+			return nil, err
+		}
+		if len(groups) > 0 {
+			user.Role = groups[0].Name
+		}
+	}
+
+	return &models.ListUsersOutput{
+		Users:           listOutput.Users,
+		PaginationToken: listOutput.PaginationToken,
+	}, nil
+}

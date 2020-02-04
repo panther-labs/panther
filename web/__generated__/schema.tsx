@@ -267,6 +267,19 @@ export type IntegrationConfigInput = {
   awsRoleArn?: Maybe<Scalars['String']>;
 };
 
+export type InviteUserInput = {
+  givenName?: Maybe<Scalars['String']>;
+  familyName?: Maybe<Scalars['String']>;
+  email?: Maybe<Scalars['AWSEmail']>;
+  phoneNumber?: Maybe<Scalars['AWSPhone']>;
+  role?: Maybe<RoleNameEnum>;
+};
+
+export type InviteUserResponse = {
+  __typename?: 'InviteUserResponse';
+  id: Scalars['ID'];
+};
+
 export type JiraConfig = {
   __typename?: 'JiraConfig';
   orgDomain: Scalars['String'];
@@ -324,8 +337,10 @@ export type ListPoliciesInput = {
   resourceTypes?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListPoliciesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -352,8 +367,10 @@ export type ListResourcesInput = {
   integrationId?: Maybe<Scalars['ID']>;
   integrationType?: Maybe<AccountTypeEnum>;
   types?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListResourcesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -377,8 +394,10 @@ export type ListRulesInput = {
   logTypes?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListRulesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -396,6 +415,12 @@ export enum ListRulesSortFieldsEnum {
   LogTypes = 'logTypes',
   Severity = 'severity',
 }
+
+export type ListUsersResponse = {
+  __typename?: 'ListUsersResponse';
+  users?: Maybe<Array<Maybe<User>>>;
+  paginationToken?: Maybe<Scalars['String']>;
+};
 
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
@@ -415,6 +440,8 @@ export type Mutation = {
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteIntegration?: Maybe<Scalars['Boolean']>;
   deletePolicy?: Maybe<Scalars['Boolean']>;
+  deleteUser?: Maybe<Scalars['Boolean']>;
+  inviteUser?: Maybe<InviteUserResponse>;
   remediateResource?: Maybe<Scalars['Boolean']>;
   resetUserPassword?: Maybe<Scalars['Boolean']>;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
@@ -454,6 +481,14 @@ export type MutationDeleteIntegrationArgs = {
 
 export type MutationDeletePolicyArgs = {
   input: DeletePolicyInput;
+};
+
+export type MutationDeleteUserArgs = {
+  id: Scalars['ID'];
+};
+
+export type MutationInviteUserArgs = {
+  input?: Maybe<InviteUserInput>;
 };
 
 export type MutationRemediateResourceArgs = {
@@ -559,6 +594,7 @@ export type PoliciesForResourceInput = {
   severity?: Maybe<SeverityEnum>;
   status?: Maybe<ComplianceStatusEnum>;
   suppressed?: Maybe<Scalars['Boolean']>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -643,6 +679,7 @@ export type Query = {
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
+  users?: Maybe<ListUsersResponse>;
 };
 
 export type QueryAlertArgs = {
@@ -697,6 +734,11 @@ export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
 };
 
+export type QueryUsersArgs = {
+  limit?: Maybe<Scalars['Int']>;
+  paginationToken?: Maybe<Scalars['String']>;
+};
+
 export type RemediateResourceInput = {
   policyId: Scalars['ID'];
   resourceId: Scalars['ID'];
@@ -719,6 +761,7 @@ export type ResourcesForPolicyInput = {
   policyId?: Maybe<Scalars['ID']>;
   status?: Maybe<ComplianceStatusEnum>;
   suppressed?: Maybe<Scalars['Boolean']>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };

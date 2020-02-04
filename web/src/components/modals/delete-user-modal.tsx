@@ -16,6 +16,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export interface DeleteUserModalProps {} // eslint-disable-line @typescript-eslint/no-empty-interface
+import React from 'react';
+import { User } from 'Generated/schema';
 
-export default () => null;
+import { useMutation, gql } from '@apollo/client';
+import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
+import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import BaseDeleteModal from 'Components/modals/base-delete-modal';
+
+const DELETE_USER = gql`
+  mutation DeleteUser($id: ID!) {
+    deleteUser(id: $id)
+  }
+`;
+
+export interface DeleteUserModalProps {
+  user: User;
+}
+
+const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
+  const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
+  const mutation = useMutation<boolean, { id: string }>(DELETE_USER, {
+    variables: {
+      id: user.id,
+    },
+    awaitRefetchQueries: true,
+    refetchQueries: [getOperationName(LIST_USERS)],
+  });
+
+  return <BaseDeleteModal mutation={mutation} itemDisplayName={userDisplayName} />;
+};
+
+export default DeleteUserModal;

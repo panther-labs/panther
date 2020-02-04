@@ -8,19 +8,19 @@ Panther performs initial data normalization and processing to store the log data
 
 By navigating to the AWS [Athena](https://console.aws.amazon.com/athena/home) console, you can find a set of Panther pre-built tables under the database dropdown.
 
-![](../.gitbook/assets/screen-shot-2020-01-22-at-2.13.07-pm.png)
+![Athena Tables](../.gitbook/assets/screen-shot-2020-01-22-at-2.13.07-pm.png)
 
 Expanding these tables will show their fields, and you can use the in browser query editor to run SQL like commands against the data.
 
-![](../.gitbook/assets/screen-shot-2020-01-22-at-2.15.29-pm.png)
+![Athena Columns](../.gitbook/assets/screen-shot-2020-01-22-at-2.15.29-pm.png)
 
 If this is your first time using Athena, you will be prompted to setup a bucket to store your search results in.
 
-![](../.gitbook/assets/screen-shot-2020-01-22-at-2.16.28-pm.png)
+![Athena Settings](../.gitbook/assets/screen-shot-2020-01-22-at-2.16.28-pm.png)
 
 After that, data can be queried to answer common questions:
 
-![](../.gitbook/assets/screen-shot-2020-01-22-at-2.18.33-pm.png)
+![Athena Query](../.gitbook/assets/screen-shot-2020-01-22-at-2.18.33-pm.png)
 
 ### Coming soon
 

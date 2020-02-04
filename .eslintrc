@@ -3,8 +3,8 @@
     "airbnb-base", // Use Airbnb's eslinting rule for this project https://github.com/airbnb/javascript/tree/master/packages/eslint-config-airbnb-base
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended",
-    "prettier/@typescript-eslint"
+    "prettier/@typescript-eslint",
+    "plugin:prettier/recommended"
   ],
   "env": {
     "browser": true,
@@ -17,7 +17,6 @@
     "no-unused-vars": "off",
     "react/jsx-filename-extension": 0,
     "react/prop-types": 0,
-    "jsx-a11y/label-has-for": 0,
     "import/no-extraneous-dependencies": 0,
     "@typescript-eslint/no-var-requires": 0,
     "@typescript-eslint/no-empty-function": 0,
@@ -39,9 +38,18 @@
       {
         "properties": "never"
       }
+    ],
+    "import/extensions": [
+      "error",
+      "always",
+      {
+        "ts": "never",
+        "tsx": "never",
+        "js": "never"
+      }
     ]
   },
-  "plugins": ["@typescript-eslint", "prettier"],
+  "plugins": ["@typescript-eslint"],
   "settings": {
     "import/resolver": {
       "webpack": {

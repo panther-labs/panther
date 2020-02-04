@@ -35,7 +35,6 @@ var input = &models.InviteUserInput{
 	Email:      aws.String("joe.blow@panther.io"),
 	FamilyName: aws.String("Blow"),
 	UserPoolID: aws.String("fakePoolId"),
-	Role:       aws.String("Admin"),
 }
 var userID = aws.String("1234-5678-9012")
 
@@ -81,7 +80,7 @@ func TestInviteUserAddToGroupErr(t *testing.T) {
 		Email:      input.Email,
 		UserPoolID: input.UserPoolID,
 	}).Return(userID, nil)
-	mockGateway.On("AddUserToGroup", userID, input.Role, input.UserPoolID).Return(&genericapi.AWSError{})
+	mockGateway.On("AddUserToGroup", userID, input.UserPoolID).Return(&genericapi.AWSError{})
 
 	// call the code we are testing
 	result, err := (API{}).InviteUser(input)
@@ -176,7 +175,7 @@ func TestInviteUserHandle(t *testing.T) {
 		Email:      input.Email,
 		UserPoolID: input.UserPoolID,
 	}).Return(userID, nil)
-	mockGateway.On("AddUserToGroup", userID, input.Role, input.UserPoolID).Return(nil)
+	mockGateway.On("AddUserToGroup", userID, input.UserPoolID).Return(nil)
 
 	// call the code we are testing
 	result, err := (API{}).InviteUser(input)

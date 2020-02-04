@@ -84,6 +84,13 @@ Your AWS credentials _must_ be exported as environment variables for the docker 
 {% endhint %}
 
 {% hint style="info" %}
+Rather than deploying from your local machine, you can opt to use an EC2 instance with Docker and
+git installed. Instead of exporting your AWS credentials as environment variables, you will need to attach an IAM role to your EC2 instance profile, with enough permissions for the creation of all Panther resources.
+
+The minimum requirements for an EC2 machine are 1 vCPU and 2GB of memory. The lowest-cost instance that satisfies those requirements is an EC2 `t2.small`.
+{% endhint %}
+
+{% hint style="info" %}
 Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
 {% endhint %}
 

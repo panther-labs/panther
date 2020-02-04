@@ -1,3 +1,5 @@
+package gateway
+
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,14 +18,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Checkbox, CheckboxProps } from 'pouncejs';
-import { FieldConfig, useField } from 'formik';
+import (
+	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 
-const FormikCheckbox: React.FC<CheckboxProps & Required<Pick<FieldConfig, 'name'>>> = props => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue }] = useField<boolean>(props.name);
-  return <Checkbox {...props} checked={field.value} onChange={setValue} />;
-};
+	"github.com/panther-labs/panther/pkg/genericapi"
+)
 
-export default FormikCheckbox;
+// DeleteUser calls cognito api delete user from a user pool
+func (g *UsersGateway) DeleteUser(id *string, userPoolID *string) error {
+	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
+		Username:   id,
+		UserPoolId: userPoolID,
+	}); err != nil {
+		return &genericapi.AWSError{Method: "cognito.AdminDeleteUser", Err: err}
+	}
+
+	return nil
+}

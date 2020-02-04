@@ -46,7 +46,7 @@ func (API) InviteUser(input *models.InviteUserInput) (*models.InviteUserOutput, 
 		return nil, err
 	}
 
-	if err = userGateway.AddUserToGroup(id, input.Role, input.UserPoolID); err != nil {
+	if err = userGateway.AddUserToGroup(id, input.UserPoolID); err != nil {
 		return nil, err
 	}
 

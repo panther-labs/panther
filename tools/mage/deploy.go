@@ -272,7 +272,6 @@ func setupOrganization(awsSession *session.Session, userPoolID string) error {
 			FamilyName: &lastName,
 			Email:      &email,
 			UserPoolID: &userPoolID,
-			Role:       aws.String("Admin"),
 		},
 	}
 	if err := invokeLambda(awsSession, "panther-users-api", input); err != nil {

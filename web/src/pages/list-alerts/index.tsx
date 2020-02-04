@@ -64,7 +64,7 @@ const ListAlerts = () => {
 
   const alertItems = data?.alerts.alertSummaries || [];
   const lastEvaluatedKey = data?.alerts.lastEvaluatedKey || null;
-  const [infiniteRef, setHasNextPage] = useInfiniteScroll({
+  const { infiniteRef, setHasNextPage } = useInfiniteScroll({
     loading,
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     onLoadMore: () => {
