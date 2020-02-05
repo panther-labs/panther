@@ -324,20 +324,23 @@ func fixPackageTemplateURL(line string) string {
 	// This code transforms:
 	// TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template
 	// into:
-	// TemplateURL: https://bucket.s3.amazonaws.com/panther-app/1.template
+	// TemplateURL: https://s3.amazonaws.com/bucket/panther-app/1.template
+	// Unless that is the format the URL was already in.
 	if strings.HasPrefix(strings.TrimSpace(line), "TemplateURL: ") {
 		// Break the line down to the pieces we need
 		lineParts := strings.Split(line, "https://")
 		uriParts := strings.Split(lineParts[1], "/")
 		prefixParts := strings.Split(uriParts[0], ".")
 
-		// Build the new URI
-		prefixParts[1] = prefixParts[0]
-		prefixParts[0] = uriParts[1]
+		// Check if the format is already correct
+		if prefixParts[1] == "amazonaws" {
+			return line
+		}
 
-		// Rebuild the line
-		newURIPrefix := strings.Join(prefixParts, ".")
-		newURIParts := append([]string{newURIPrefix}, uriParts[2:]...)
+		// Build the new URI
+		prefixParts[1] = "s3"
+		newURIPrefix := strings.Join(prefixParts[1:], ".")
+		newURIParts := append([]string{newURIPrefix}, uriParts[1:]...)
 		lineParts[1] = strings.Join(newURIParts, "/")
 		line = strings.Join(lineParts, "https://")
 	}
