@@ -12,15 +12,18 @@ commands:
     steps:
       - checkout
       - run:
-          name: Setup project dependencies
-          command: mage -v setup
+          name: Install Go and Python libraries
+          command: mage setup:go setup:python
+      - run:
+          name: Install prettier for CloudFormation formatting
+          command: npm install prettier
 
   setup_frontend:
     steps:
       - checkout
       - run:
           name: Install JS dependencies
-          command: npm i
+          command: mage setup:web
 
 # The pool of jobs that that our CI will be able to run
 jobs:
@@ -29,11 +32,8 @@ jobs:
     steps:
       - setup_frontend
       - run:
-          name: Validate the project dependencies do not have any known vulnerabilities
-          command: npm audit
-      - run:
-          name: Lint project and run TS checks
-          command: npm run lint
+          name: Lint and audit web source
+          command: mage test:web
 
   validate_backend:
     executor: panther-buildpack
@@ -42,7 +42,7 @@ jobs:
       - setup_backend
       - run:
           name: Lint and test the backend infrastructure
-          command: mage test:ci
+          command: mage test:cfn test:go test:python
 
 workflows:
   version: 2

@@ -38,12 +38,18 @@ var (
 	pythonVirtualEnvPath = filepath.Join(setupDirectory, "venv")
 )
 
-// Setup Install development dependencies
-func Setup() {
-	if err := setupPythonVirtualEnv(); err != nil {
-		fatal(err)
-	}
+// Setup contains targets for installing development / CI dependencies
+type Setup mg.Namespace
 
+// Dev Install all development dependencies
+func (s Setup) Dev() {
+	s.Go()
+	s.Python()
+	s.Web()
+}
+
+// Go Install goimports, go-swagger, and golangci-lint
+func (Setup) Go() {
 	// Some libraries are only needed for development, not for CI
 	if !isRunningInCI() {
 		logger.Info("setup: installing goimports")
@@ -64,14 +70,15 @@ func Setup() {
 	}
 }
 
-func setupPythonVirtualEnv() error {
+// Python Install the Python virtual env
+func (Setup) Python() {
 	logger.Info("setup: installing python3 env to " + pythonVirtualEnvPath)
 	if err := os.RemoveAll(pythonVirtualEnvPath); err != nil {
-		return fmt.Errorf("failed to remove existing %s: %v", pythonVirtualEnvPath, err)
+		fatal(fmt.Errorf("failed to remove existing %s: %v", pythonVirtualEnvPath, err))
 	}
 
 	if err := sh.RunV("python3", "-m", "venv", pythonVirtualEnvPath); err != nil {
-		return err
+		fatal(fmt.Errorf("failed to create venv %s: %v", pythonVirtualEnvPath, err))
 	}
 
 	args := []string{"install", "-r", "requirements.txt"}
@@ -79,9 +86,15 @@ func setupPythonVirtualEnv() error {
 		args = append(args, "--quiet")
 	}
 	if err := sh.RunV(pythonLibPath("pip3"), args...); err != nil {
-		return fmt.Errorf("pip installation failed: %v", err)
+		fatal(fmt.Errorf("pip installation failed: %v", err))
 	}
-	return nil
+}
+
+// Web Npm install
+func (Setup) Web() {
+	if err := sh.RunV("npm", "i"); err != nil {
+		fatal(fmt.Errorf("npm install failed: %v", err))
+	}
 }
 
 func installSwagger(uname string) error {

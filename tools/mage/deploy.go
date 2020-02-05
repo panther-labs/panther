@@ -142,7 +142,7 @@ func deployPrecheck(awsRegion string) {
 	// Ensure swagger is installed
 	swagger := filepath.Join(setupDirectory, "swagger")
 	if _, err := os.Stat(swagger); err != nil {
-		fatal(fmt.Errorf("%s not found (%v): run 'mage setup'", swagger, err))
+		fatal(fmt.Errorf("%s not found (%v): run 'mage setup:dev'", swagger, err))
 	}
 }
 
