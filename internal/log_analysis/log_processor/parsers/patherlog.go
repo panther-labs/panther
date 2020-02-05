@@ -60,7 +60,7 @@ func NewPantherAnyString() *PantherAnyString {
 }
 
 func (any *PantherAnyString) MarshalJSON() ([]byte, error) {
-	if any != nil { // copy to slice
+	if any != nil && len(any.set) > 0 { // copy to slice
 		values := make([]string, len(any.set))
 		i := 0
 		for k := range any.set {
@@ -86,27 +86,49 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 	return nil
 }
 
+func (pl *PantherLog) SetRequiredPtr(logType string, eventTime *timestamp.RFC3339) {
+	if eventTime != nil {
+		pl.SetRequired(logType, *eventTime)
+	}
+}
+
 func (pl *PantherLog) SetRequired(logType string, eventTime timestamp.RFC3339) {
 	pl.PantherLogType = logType
 	pl.PantherRowID = rowCounter.NewRowID()
 	pl.PantherEventTime = eventTime
 }
 
+func (pl *PantherLog) AppendAnyIPAddressPtrs(values ...*string) {
+	for _, value := range values {
+		if value != nil {
+			pl.AppendAnyIPAddresses(*value)
+		}
+	}
+}
+
 func (pl *PantherLog) AppendAnyIPAddresses(values ...string) {
 	if pl.PantherAnyIPAddresses == nil { // lazy create
 		pl.PantherAnyIPAddresses = NewPantherAnyString()
 	}
-	pl.AppendAnyString(pl.PantherAnyIPAddresses, values...)
+	AppendAnyString(pl.PantherAnyIPAddresses, values...)
+}
+
+func (pl *PantherLog) AppendAnyDomainNamePtrs(values ...*string) {
+	for _, value := range values {
+		if value != nil {
+			pl.AppendAnyDomainNames(*value)
+		}
+	}
 }
 
 func (pl *PantherLog) AppendAnyDomainNames(values ...string) {
 	if pl.PantherAnyDomainNames == nil { // lazy create
 		pl.PantherAnyDomainNames = NewPantherAnyString()
 	}
-	pl.AppendAnyString(pl.PantherAnyDomainNames, values...)
+	AppendAnyString(pl.PantherAnyDomainNames, values...)
 }
 
-func (pl *PantherLog) AppendAnyString(any *PantherAnyString, values ...string) {
+func AppendAnyString(any *PantherAnyString, values ...string) {
 	// add new if not present
 	for _, v := range values {
 		if v == "" { // ignore empty strings

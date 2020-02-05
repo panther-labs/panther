@@ -32,7 +32,7 @@ func TestAnyStringMarshal(t *testing.T) {
 	var any PantherAnyString
 
 	// nil case
-	expectedJSON := `[]`
+	expectedJSON := ``
 	actualJSON, err := jsoniter.Marshal(&any)
 	require.NoError(t, err)
 	require.Equal(t, expectedJSON, string(actualJSON))
@@ -74,23 +74,23 @@ func TestAnyStringUnmarshal(t *testing.T) {
 }
 
 func TestAppendAnyString(t *testing.T) {
-	event := PantherLog{}
 	value := "a"
 	expectedAny := &PantherAnyString{
 		set: map[string]struct{}{
 			value: {},
 		},
 	}
-	event.AppendAnyIPAddresses(value)
-	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+	any := NewPantherAnyString()
+	AppendAnyString(any, value)
+	require.Equal(t, expectedAny, any)
 }
 
 func TestAppendAnyStringWithEmptyString(t *testing.T) {
-	event := PantherLog{}
 	value := ""                                                  // should not be stored
 	expectedAny := &PantherAnyString{set: map[string]struct{}{}} // empty map
-	event.AppendAnyIPAddresses(value)
-	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+	any := NewPantherAnyString()
+	AppendAnyString(any, value)
+	require.Equal(t, expectedAny, any)
 }
 
 func TestSetRequired(t *testing.T) {
@@ -104,4 +104,36 @@ func TestSetRequired(t *testing.T) {
 	event.SetRequired(logType, eventTime)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 	require.Equal(t, expectedEvent, event)
+}
+
+func TestAppendAnyIPAddresses(t *testing.T) {
+	event := PantherLog{}
+	value := "a"
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			value: {},
+		},
+	}
+	event.AppendAnyIPAddresses(value)
+	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+
+	event = PantherLog{}
+	event.AppendAnyIPAddressPtrs(&value)
+	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+}
+
+func TestAppendAnyDomainNames(t *testing.T) {
+	event := PantherLog{}
+	value := "a"
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			value: {},
+		},
+	}
+	event.AppendAnyDomainNames(value)
+	require.Equal(t, expectedAny, event.PantherAnyDomainNames)
+
+	event = PantherLog{}
+	event.AppendAnyDomainNamePtrs(&value)
+	require.Equal(t, expectedAny, event.PantherAnyDomainNames)
 }
