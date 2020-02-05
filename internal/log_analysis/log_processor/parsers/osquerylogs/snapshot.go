@@ -29,16 +29,17 @@ import (
 var SnapshotDesc = `Snapshot contains all the data included in OsQuery differential logs
 Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 
+// nolint:lll
 type Snapshot struct {
-	Action         *string                `json:"action,omitempty" validate:"required,eq=snapshot"`
-	CalendarTime   *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required"`
-	Counter        *int                   `json:"counter,omitempty,string" validate:"required"`
-	Decorations    map[string]string      `json:"decorations,omitempty"`
-	Epoch          *int                   `json:"epoch,omitempty,string" validate:"required"`
-	HostIdentifier *string                `json:"hostIdentifier,omitempty" validate:"required"`
-	Name           *string                `json:"name,omitempty" validate:"required"`
-	Snapshot       []map[string]string    `json:"snapshot,omitempty" validate:"required"`
-	UnixTime       *int                   `json:"unixTime,omitempty,string" validate:"required"`
+	Action         *string                `json:"action,omitempty" validate:"required,eq=snapshot" description:""`
+	CalendarTime   *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	Counter        *int                   `json:"counter,omitempty,string" validate:"required" description:""`
+	Decorations    map[string]string      `json:"decorations,omitempty" description:""`
+	Epoch          *int                   `json:"epoch,omitempty,string" validate:"required" description:""`
+	HostIdentifier *string                `json:"hostIdentifier,omitempty" validate:"required" description:""`
+	Name           *string                `json:"name,omitempty" validate:"required" description:""`
+	Snapshot       []map[string]string    `json:"snapshot,omitempty" validate:"required" description:""`
+	UnixTime       *int                   `json:"unixTime,omitempty,string" validate:"required" description:""`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog

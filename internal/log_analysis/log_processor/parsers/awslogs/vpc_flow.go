@@ -36,21 +36,22 @@ const (
 var VPCFlowDesc = `VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.
 Log format & samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html`
 
+// nolint:lll
 type VPCFlow struct {
-	Version     *int               `json:"version,omitempty" validate:"required"`
-	Account     *string            `json:"account,omitempty" validate:"omitempty,len=12,numeric"`
-	InterfaceID *string            `json:"interfaceId,omitempty"`
-	SrcAddr     *string            `json:"srcAddr,omitempty"`
-	DstAddr     *string            `json:"dstAddr,omitempty"`
-	SrcPort     *int               `json:"srcPort,omitempty" validate:"omitempty,min=0,max=65535"`
-	DstPort     *int               `json:"dstPort,omitempty" validate:"omitempty,min=0,max=65535"`
-	Protocol    *int               `json:"protocol,omitempty"`
-	Packets     *int               `json:"packets,omitempty"`
-	Bytes       *int               `json:"bytes,omitempty"`
-	Start       *timestamp.RFC3339 `json:"start,omitempty" validate:"required"`
-	End         *timestamp.RFC3339 `json:"end,omitempty" validate:"required"`
-	Action      *string            `json:"action,omitempty" validate:"omitempty,oneof=ACCEPT REJECT"`
-	LogStatus   *string            `json:"status,omitempty" validate:"oneof=OK NODATA SKIPDATA"`
+	Version     *int               `json:"version,omitempty" validate:"required" description:"The VPC Flow Logs version. If you use the default format, the version is 2. If you specify a custom format, the version is 3."`
+	Account     *string            `json:"account,omitempty" validate:"omitempty,len=12,numeric" description:"The AWS account ID for the flow log."`
+	InterfaceID *string            `json:"interfaceId,omitempty" description:"The ID of the network interface for which the traffic is recorded."`
+	SrcAddr     *string            `json:"srcAddr,omitempty" description:"The source address for incoming traffic, or the IPv4 or IPv6 address of the network interface for outgoing traffic on the network interface. The IPv4 address of the network interface is always its private IPv4 address. "`
+	DstAddr     *string            `json:"dstAddr,omitempty" description:"The destination address for outgoing traffic, or the IPv4 or IPv6 address of the network interface for incoming traffic on the network interface. The IPv4 address of the network interface is always its private IPv4 address."`
+	SrcPort     *int               `json:"srcPort,omitempty" validate:"omitempty,min=0,max=65535" description:"The source port of the traffic."`
+	DstPort     *int               `json:"dstPort,omitempty" validate:"omitempty,min=0,max=65535" description:"The destination port of the traffic."`
+	Protocol    *int               `json:"protocol,omitempty" description:"The IANA protocol number of the traffic."`
+	Packets     *int               `json:"packets,omitempty" description:"The number of packets transferred during the flow."`
+	Bytes       *int               `json:"bytes,omitempty" description:"The number of bytes transferred during the flow."`
+	Start       *timestamp.RFC3339 `json:"start,omitempty" validate:"required" description:"The time of the start of the flow (UTC)."`
+	End         *timestamp.RFC3339 `json:"end,omitempty" validate:"required" description:"The time of the end of the flow (UTC)."`
+	Action      *string            `json:"action,omitempty" validate:"omitempty,oneof=ACCEPT REJECT" description:"The action that is associated with the traffic. ACCEPT: The recorded traffic was permitted by the security groups or network ACLs. REJECT: The recorded traffic was not permitted by the security groups or network ACLs."`
+	LogStatus   *string            `json:"status,omitempty" validate:"oneof=OK NODATA SKIPDATA" description:"The logging status of the flow log. OK: Data is logging normally to the chosen destinations. NODATA: There was no network traffic to or from the network interface during the capture window. SKIPDATA: Some flow log records were skipped during the capture window. This may be because of an internal capacity constraint, or an internal error."`
 
 	// NOTE: added to end of struct to allow expansion later
 	AWSPantherLog

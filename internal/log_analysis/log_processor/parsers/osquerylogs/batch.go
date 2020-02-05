@@ -28,15 +28,16 @@ import (
 var BatchDesc = `Batch contains all the data included in OsQuery batch logs
 Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/`
 
+// nolint:lll
 type Batch struct {
-	CalendarTime *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required"`
-	Counter      *int                   `json:"counter,omitempty,string"  validate:"required"`
-	Decorations  map[string]string      `json:"decorations,omitempty"`
-	DiffResults  *BatchDiffResults      `json:"diffResults,omitempty" validate:"required"`
-	Epoch        *int                   `json:"epoch,omitempty,string"  validate:"required"`
-	Hostname     *string                `json:"hostname,omitempty"  validate:"required"`
-	Name         *string                `json:"name,omitempty"  validate:"required"`
-	UnixTime     *int                   `json:"unixTime,omitempty,string"  validate:"required"`
+	CalendarTime *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	Counter      *int                   `json:"counter,omitempty,string"  validate:"required" description:""`
+	Decorations  map[string]string      `json:"decorations,omitempty" description:""`
+	DiffResults  *BatchDiffResults      `json:"diffResults,omitempty" validate:"required" description:"Computed differences."`
+	Epoch        *int                   `json:"epoch,omitempty,string"  validate:"required" description:""`
+	Hostname     *string                `json:"hostname,omitempty"  validate:"required" description:""`
+	Name         *string                `json:"name,omitempty"  validate:"required" description:""`
+	UnixTime     *int                   `json:"unixTime,omitempty,string"  validate:"required" description:""`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog

@@ -37,17 +37,18 @@ const (
 	auroraMySQLAuditMinNumberOfColumns = 9
 )
 
+// nolint:lll
 type AuroraMySQLAudit struct {
-	Timestamp    *timestamp.RFC3339 `json:"timestamp,omitempty"`
-	ServerHost   *string            `json:"serverHost,omitempty"`
-	Username     *string            `json:"username,omitempty"`
-	Host         *string            `json:"host,omitempty"`
-	ConnectionID *int               `json:"connectionId,omitempty"`
-	QueryID      *int               `json:"queryId,omitempty"`
-	Operation    *string            `json:"operation,omitempty" validate:"oneof=CONNECT QUERY READ WRITE CREATE ALTER RENAME DROP"`
-	Database     *string            `json:"database,omitempty"`
-	Object       *string            `json:"object,omitempty"`
-	RetCode      *int               `json:"retCode,omitempty"`
+	Timestamp    *timestamp.RFC3339 `json:"timestamp,omitempty" description:"The time stamp for the logged event with microsecond precision (UTC)."`
+	ServerHost   *string            `json:"serverHost,omitempty" description:"The name of the instance that the event is logged for."`
+	Username     *string            `json:"username,omitempty" description:"The connected user name of the user."`
+	Host         *string            `json:"host,omitempty" description:"The host that the user connected from."`
+	ConnectionID *int               `json:"connectionId,omitempty" description:"The connection ID number for the logged operation."`
+	QueryID      *int               `json:"queryId,omitempty" description:"The query ID number, which can be used for finding the relational table events and related queries. For TABLE events, multiple lines are added."`
+	Operation    *string            `json:"operation,omitempty" validate:"oneof=CONNECT QUERY READ WRITE CREATE ALTER RENAME DROP" description:"The recorded action type. Possible values are: CONNECT, QUERY, READ, WRITE, CREATE, ALTER, RENAME, and DROP."`
+	Database     *string            `json:"database,omitempty" description:"The active database, as set by the USE command."`
+	Object       *string            `json:"object,omitempty" description:"For QUERY events, this value indicates the executed query. For TABLE events, it indicates the table name."`
+	RetCode      *int               `json:"retCode,omitempty" description:"The return code of the logged operation."`
 
 	// NOTE: added to end of struct to allow expansion later
 	AWSPantherLog
