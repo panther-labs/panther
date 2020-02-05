@@ -25,6 +25,10 @@ type LogParser interface {
 	// LogType returns the log type supported by this parser
 	LogType() string
 
+	// ParseHeader attempts to parse the provided log line ONE time for the first log line.
+	// If the provided log is not of the supported type the method returns nil
+	ParseHeader(log string) []interface{}
+
 	// Parse attempts to parse the provided log line
 	// If the provided log is not of the supported type the method returns nil
 	Parse(log string) []interface{}

@@ -31,21 +31,22 @@ var GuardDutyDesc = `Amazon GuardDuty is a threat detection service that continu
 and unauthorized behavior inside AWS Accounts. 
 See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html`
 
+// nolint:lll
 type GuardDuty struct {
-	SchemaVersion *string              `json:"schemaVersion" validate:"required"`
-	AccountID     *string              `json:"accountId" validate:"len=12,numeric"`
-	Region        *string              `json:"region" validate:"required"`
-	Partition     *string              `json:"partition" validate:"required"`
-	ID            *string              `json:"id,omitempty" validate:"required"`
-	Arn           *string              `json:"arn" validate:"required"`
-	Type          *string              `json:"type" validate:"required"`
-	Resource      *jsoniter.RawMessage `json:"resource" validate:"required"`
-	Severity      *int                 `json:"severity" validate:"required,min=0"`
-	CreatedAt     *timestamp.RFC3339   `json:"createdAt" validate:"required,min=0"`
-	UpdatedAt     *timestamp.RFC3339   `json:"updatedAt" validate:"required,min=0"`
-	Title         *string              `json:"title" validate:"required"`
-	Description   *string              `json:"description" validate:"required"`
-	Service       *GuardDutyService    `json:"service" validate:"required"`
+	SchemaVersion *string              `json:"schemaVersion" validate:"required" description:"The schema format version of this record."`
+	AccountID     *string              `json:"accountId" validate:"len=12,numeric" description:"The ID of the AWS account in which the activity took place that prompted GuardDuty to generate this finding."`
+	Region        *string              `json:"region" validate:"required" description:"The AWS region in which the finding was generated."`
+	Partition     *string              `json:"partition" validate:"required" description:"The AWS partition in which the finding was generated."`
+	ID            *string              `json:"id,omitempty" validate:"required" description:"A Unique ID for finding."`
+	Arn           *string              `json:"arn" validate:"required" description:"A Unique ID as ARN for finding."`
+	Type          *string              `json:"type" validate:"required" description:"A concise yet readable description of the potential security issue."`
+	Resource      *jsoniter.RawMessage `json:"resource" validate:"required" description:"The AWS resource against which the activity took place that prompted GuardDuty to generate this finding."`
+	Severity      *float32             `json:"severity" validate:"required,min=0" description:"The value of the severity can fall anywhere within the 0.1 to 8.9 range."`
+	CreatedAt     *timestamp.RFC3339   `json:"createdAt" validate:"required,min=0" description:"The initial creation time of the finding (UTC)."`
+	UpdatedAt     *timestamp.RFC3339   `json:"updatedAt" validate:"required,min=0" description:"The last update time of the finding (UTC)."`
+	Title         *string              `json:"title" validate:"required" description:"A short description of finding."`
+	Description   *string              `json:"description" validate:"required" description:"A long description of finding."`
+	Service       *GuardDutyService    `json:"service" validate:"required" description:"Additional information about the affected service."`
 
 	// NOTE: added to end of struct to allow expansion later
 	AWSPantherLog
@@ -65,6 +66,10 @@ type GuardDutyService struct {
 
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type GuardDutyParser struct{}
+
+func (p *GuardDutyParser) ParseHeader(log string) []interface{} {
+	return p.Parse(log) // no header
+}
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *GuardDutyParser) Parse(log string) []interface{} {

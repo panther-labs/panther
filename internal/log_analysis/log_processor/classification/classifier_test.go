@@ -34,6 +34,10 @@ type mockParser struct {
 	mock.Mock
 }
 
+func (m *mockParser) ParseHeader(log string) []interface{} {
+	return m.Parse(log)
+}
+
 func (m *mockParser) Parse(log string) []interface{} {
 	args := m.Called(log)
 	result := args.Get(0)

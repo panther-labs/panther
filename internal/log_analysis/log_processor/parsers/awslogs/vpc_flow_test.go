@@ -81,9 +81,11 @@ func TestVpcFlowLogNoData(t *testing.T) {
 	checkVPCFlowLog(t, log, expectedEvent)
 }
 
+// Expected CSV header line
+const vpcFlowHeader = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
 func TestVpcFlowLogHeader(t *testing.T) {
 	parser := &VPCFlowParser{}
-	require.Equal(t, []interface{}{}, parser.Parse(vpcFlowHeader))
+	require.Equal(t, []interface{}{}, parser.ParseHeader(vpcFlowHeader))
 }
 
 func TestVpcFlowLogType(t *testing.T) {
