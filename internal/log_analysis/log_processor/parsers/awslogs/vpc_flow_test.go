@@ -55,6 +55,7 @@ func TestVpcFlowLog(t *testing.T) {
 	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedStartTime)
 	expectedEvent.AppendAnyIPAddresses("172.31.20.31", "52.119.169.95")
+	expectedEvent.AppendAnyAWSAccountIds("348372346321")
 
 	checkVPCFlowLog(t, log, expectedEvent)
 }

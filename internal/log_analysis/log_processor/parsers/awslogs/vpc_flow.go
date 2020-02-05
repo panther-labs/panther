@@ -142,6 +142,9 @@ func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
 	if event.Start != nil {
 		event.SetRequired(p.LogType(), *event.Start)
 	}
+	if event.Account != nil {
+		event.AppendAnyAWSAccountIds(*event.Account)
+	}
 	if event.SrcAddr != nil {
 		event.AppendAnyIPAddresses(*event.SrcAddr)
 	}
