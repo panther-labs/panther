@@ -33,34 +33,34 @@ var CloudTrailDesc = `AWSCloudTrail represents the content of a CloudTrail S3 ob
 Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`
 
 type CloudTrailRecords struct {
-	Records []*CloudTrail `json:"Records" validate:"required"`
+	Records []*CloudTrail `json:"Records" validate:"required,dive"`
 }
 
 // CloudTrailRecord is an AWS CloudTrail API log.
 type CloudTrail struct {
 	AdditionalEventData *jsoniter.RawMessage    `json:"additionalEventData,omitempty"`
-	APIVersion          *string                 `json:"apiVersion,omitempty" validate:"required"`
+	APIVersion          *string                 `json:"apiVersion,omitempty"`
 	AWSRegion           *string                 `json:"awsRegion,omitempty" validate:"required"`
 	ErrorCode           *string                 `json:"errorCode,omitempty"`
 	ErrorMessage        *string                 `json:"errorMessage,omitempty"`
 	EventID             *string                 `json:"eventId,omitempty" validate:"required"`
-	EventName           *string                 `json:"eventName,omitempty"`
-	EventSource         *string                 `json:"eventSource,omitempty"`
-	EventTime           *timestamp.RFC3339      `json:"eventTime,omitempty"`
-	EventType           *string                 `json:"eventType,omitempty"`
+	EventName           *string                 `json:"eventName,omitempty" validate:"required"`
+	EventSource         *string                 `json:"eventSource,omitempty" validate:"required"`
+	EventTime           *timestamp.RFC3339      `json:"eventTime,omitempty" validate:"required"`
+	EventType           *string                 `json:"eventType,omitempty" validate:"required"`
 	EventVersion        *string                 `json:"eventVersion,omitempty" validate:"required"`
 	ManagementEvent     *bool                   `json:"managementEvent,omitempty"`
 	ReadOnly            *bool                   `json:"readOnly,omitempty"`
 	RecipientAccountID  *string                 `json:"recipientAccountId,omitempty" validate:"required,len=12,numeric"`
-	RequestID           *string                 `json:"requestId,omitempty"`
+	RequestID           *string                 `json:"requestId,omitempty" validate:"required"`
 	RequestParameters   *jsoniter.RawMessage    `json:"requestParameters,omitempty"`
 	Resources           []CloudTrailResources   `json:"resources,omitempty"`
 	ResponseElements    *jsoniter.RawMessage    `json:"responseElements,omitempty"`
 	ServiceEventDetails *jsoniter.RawMessage    `json:"serviceEventDetails,omitempty"`
 	SharedEventID       *string                 `json:"sharedEventId,omitempty"`
-	SourceIPAddress     *string                 `json:"sourceIpAddress,omitempty"`
+	SourceIPAddress     *string                 `json:"sourceIpAddress,omitempty" validate:"required"`
 	UserAgent           *string                 `json:"userAgent,omitempty"`
-	UserIdentity        *CloudTrailUserIdentity `json:"userIdentity,omitempty"`
+	UserIdentity        *CloudTrailUserIdentity `json:"userIdentity,omitempty" validate:"required"`
 	VPCEndpointID       *string                 `json:"vpcEndpointId,omitempty"`
 
 	// NOTE: added to end of struct to allow expansion later
