@@ -35,7 +35,7 @@ func TestVpcFlowLog(t *testing.T) {
 	expectedEndTime := time.Unix(1573642284, 0).UTC()
 	expectedEvent := &VPCFlow{
 		Action:      aws.String("ACCEPT"),
-		Account:     aws.String("348372346321"),
+		AccountID:   aws.String("348372346321"),
 		Bytes:       aws.Int(7119),
 		DstAddr:     aws.String("172.31.20.31"),
 		DstPort:     aws.Int(48316),
@@ -81,11 +81,11 @@ func TestVpcFlowLogNoData(t *testing.T) {
 	checkVPCFlowLog(t, log, expectedEvent)
 }
 
-// Expected CSV header line
-const vpcFlowHeader = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
+const vpcFlowStandardHeader = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status" // nolint:lll
+
 func TestVpcFlowLogHeader(t *testing.T) {
 	parser := &VPCFlowParser{}
-	require.Equal(t, []interface{}{}, parser.ParseHeader(vpcFlowHeader))
+	require.Equal(t, []interface{}{}, parser.ParseHeader(vpcFlowStandardHeader))
 }
 
 func TestVpcFlowLogType(t *testing.T) {
@@ -95,6 +95,7 @@ func TestVpcFlowLogType(t *testing.T) {
 
 func checkVPCFlowLog(t *testing.T, log string, expectedEvent *VPCFlow) {
 	parser := &VPCFlowParser{}
+	parser.ParseHeader(vpcFlowStandardHeader)
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*VPCFlow)
