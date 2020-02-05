@@ -233,6 +233,11 @@ func (t Test) Web() {
 func testWeb() bool {
 	pass := true
 
+	if _, err := os.Stat("node_modules"); err != nil {
+		logger.Errorf("npm not initialized (%v): run 'mage setup:web'", err)
+		return false
+	}
+
 	logger.Info("test:web: npm run lint")
 	if err := sh.RunV("npm", "run", "lint"); err != nil {
 		logger.Errorf("npm lint failed: %v", err)
