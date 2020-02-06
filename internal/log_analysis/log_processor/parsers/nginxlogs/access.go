@@ -121,11 +121,6 @@ func (p *AccessParser) LogType() string {
 }
 
 func (event *Access) updatePantherFields(p *AccessParser) {
-	// panther fields
-	if event.Time != nil {
-		event.SetRequired(p.LogType(), *event.Time)
-	}
-	if event.RemoteAddress != nil {
-		event.AppendAnyIPAddresses(*event.RemoteAddress)
-	}
+	event.SetCoreFieldsPtr(p.LogType(), event.Time)
+	event.AppendAnyIPAddressPtrs(event.RemoteAddress)
 }

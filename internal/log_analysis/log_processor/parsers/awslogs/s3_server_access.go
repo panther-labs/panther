@@ -147,13 +147,9 @@ func (p *S3ServerAccessParser) LogType() string {
 }
 
 func (event *S3ServerAccess) updatePantherFields(p *S3ServerAccessParser) {
-	if event.Time != nil {
-		event.SetRequired(p.LogType(), *event.Time)
-	}
-	if event.RemoteIP != nil {
-		event.AppendAnyIPAddresses(*event.RemoteIP)
-	}
-	if event.Requester != nil && strings.HasPrefix(*event.Requester, "arn") {
+	event.SetCoreFieldsPtr(p.LogType(), event.Time)
+	event.AppendAnyIPAddressPtrs(event.RemoteIP)
+	if event.Requester != nil && strings.HasPrefix(*event.Requester, "arn:") {
 		event.AppendAnyAWSARNs(*event.Requester)
 	}
 }

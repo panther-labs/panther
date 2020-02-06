@@ -27,6 +27,10 @@ import (
 	"strings"
 )
 
+const (
+	maxCommentLength = 255
+)
+
 // Functions to infer schema by reflection
 
 type CustomMapping struct {
@@ -61,6 +65,9 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 			fieldName, jsonType, comment, skip := inferStructFieldType(field, customMappingsTable)
 			if skip {
 				continue
+			}
+			if len(comment) > maxCommentLength { // clip
+				comment = comment[:maxCommentLength-3] + "..."
 			}
 			cols = append(cols, Column{Name: fieldName, Type: jsonType, Comment: comment})
 		}

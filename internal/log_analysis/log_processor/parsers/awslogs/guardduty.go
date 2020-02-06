@@ -91,27 +91,17 @@ func (p *GuardDutyParser) LogType() string {
 }
 
 func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
-	if event.UpdatedAt != nil {
-		event.SetRequired(p.LogType(), *event.UpdatedAt)
-	}
+	event.SetCoreFieldsPtr(p.LogType(), event.UpdatedAt)
 
 	// structured (parsed) fields
-	if event.Arn != nil {
-		event.AppendAnyAWSARNs(*event.Arn)
-	}
-	if event.AccountID != nil {
-		event.AppendAnyAWSAccountIds(*event.AccountID)
-	}
+	event.AppendAnyAWSARNPtrs(event.Arn)
+	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
 
 	// polymorphic (unparsed) fields
 	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
 	extract.Extract(event.Resource, awsExtractor)
 	if event.Service != nil {
-		if event.Service.AdditionalInfo != nil {
-			extract.Extract(event.Service.AdditionalInfo, awsExtractor)
-		}
-		if event.Service.Action != nil {
-			extract.Extract(event.Service.Action, awsExtractor)
-		}
+		extract.Extract(event.Service.AdditionalInfo, awsExtractor)
+		extract.Extract(event.Service.Action, awsExtractor)
 	}
 }

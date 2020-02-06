@@ -80,11 +80,8 @@ func (p *StatusParser) LogType() string {
 }
 
 func (event *Status) updatePantherFields(p *StatusParser) {
-	// panther fields
 	if event.CalendarTime != nil {
-		event.SetRequired(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
+		event.SetCoreFields(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
 	}
-	if event.HostIdentifier != nil {
-		event.AppendAnyDomainNames(*event.HostIdentifier)
-	}
+	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

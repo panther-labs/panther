@@ -32,7 +32,7 @@ func TestAnyStringMarshal(t *testing.T) {
 	var any PantherAnyString
 
 	// nil case
-	expectedJSON := `[]`
+	expectedJSON := ``
 	actualJSON, err := jsoniter.Marshal(&any)
 	require.NoError(t, err)
 	require.Equal(t, expectedJSON, string(actualJSON))
@@ -74,6 +74,39 @@ func TestAnyStringUnmarshal(t *testing.T) {
 }
 
 func TestAppendAnyString(t *testing.T) {
+	value := "a"
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			value: {},
+		},
+	}
+	any := NewPantherAnyString()
+	AppendAnyString(any, value)
+	require.Equal(t, expectedAny, any)
+}
+
+func TestAppendAnyStringWithEmptyString(t *testing.T) {
+	value := ""                                                  // should not be stored
+	expectedAny := &PantherAnyString{set: map[string]struct{}{}} // empty map
+	any := NewPantherAnyString()
+	AppendAnyString(any, value)
+	require.Equal(t, expectedAny, any)
+}
+
+func TestSetRequired(t *testing.T) {
+	event := PantherLog{}
+	logType := "Data.Source"
+	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
+	expectedEvent := PantherLog{
+		PantherLogType:   &logType,
+		PantherEventTime: &eventTime,
+	}
+	event.SetCoreFields(logType, eventTime)
+	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
+	require.Equal(t, expectedEvent, event)
+}
+
+func TestAppendAnyIPAddresses(t *testing.T) {
 	event := PantherLog{}
 	value := "a"
 	expectedAny := &PantherAnyString{
@@ -83,25 +116,24 @@ func TestAppendAnyString(t *testing.T) {
 	}
 	event.AppendAnyIPAddresses(value)
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
-}
 
-func TestAppendAnyStringWithEmptyString(t *testing.T) {
-	event := PantherLog{}
-	value := ""                                                  // should not be stored
-	expectedAny := &PantherAnyString{set: map[string]struct{}{}} // empty map
-	event.AppendAnyIPAddresses(value)
+	event = PantherLog{}
+	event.AppendAnyIPAddressPtrs(&value)
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
 
-func TestSetRequired(t *testing.T) {
+func TestAppendAnyDomainNames(t *testing.T) {
 	event := PantherLog{}
-	const logType = "Data.Source"
-	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
-	expectedEvent := PantherLog{
-		PantherLogType:   logType,
-		PantherEventTime: eventTime,
+	value := "a"
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			value: {},
+		},
 	}
-	event.SetRequired(logType, eventTime)
-	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
-	require.Equal(t, expectedEvent, event)
+	event.AppendAnyDomainNames(value)
+	require.Equal(t, expectedAny, event.PantherAnyDomainNames)
+
+	event = PantherLog{}
+	event.AppendAnyDomainNamePtrs(&value)
+	require.Equal(t, expectedAny, event.PantherAnyDomainNames)
 }

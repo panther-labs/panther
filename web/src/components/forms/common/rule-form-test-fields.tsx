@@ -117,6 +117,13 @@ const RuleFormTestFields: React.FC = () => {
     });
   };
 
+  const resourceTypeInputProps = React.useMemo(
+    () => ({
+      placeholder: `Select a ${isPolicy ? 'resource' : 'log'} type to test`,
+    }),
+    [isPolicy]
+  );
+
   // The field array below gets registered to the upper formik
   const testsCount = tests.length;
   return (
@@ -233,16 +240,11 @@ const RuleFormTestFields: React.FC = () => {
                           * {isPolicy ? 'Resource' : 'Log'} Type
                         </InputElementLabel>
                         <Field
-                          // HELP_WANTED: I don't know why this particular thing fails!
-                          // eslint-disable-next-line
-                          // @ts-ignore
                           as={FormikCombobox}
                           searchable
                           name={`tests[${activeTabIndex}].resourceType`}
                           items={isPolicy ? RESOURCE_TYPES : LOG_TYPES}
-                          inputProps={{
-                            placeholder: `Select a ${isPolicy ? 'resource' : 'log'} type to test`,
-                          }}
+                          inputProps={resourceTypeInputProps}
                         />
                       </Flex>
                       <Box>

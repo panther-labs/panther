@@ -171,22 +171,8 @@ func (p *ALBParser) LogType() string {
 }
 
 func (event *ALB) updatePantherFields(p *ALBParser) {
-	if event.Timestamp != nil {
-		event.SetRequired(p.LogType(), *event.Timestamp)
-	}
-	if event.ClientIP != nil {
-		event.AppendAnyIPAddresses(*event.ClientIP)
-	}
-	if event.TargetIP != nil {
-		event.AppendAnyIPAddresses(*event.TargetIP)
-	}
-	if event.DomainName != nil {
-		event.AppendAnyDomainNames(*event.DomainName)
-	}
-	if event.TargetGroupARN != nil {
-		event.AppendAnyAWSARNs(*event.TargetGroupARN)
-	}
-	if event.ChosenCertARN != nil {
-		event.AppendAnyAWSARNs(*event.ChosenCertARN)
-	}
+	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp)
+	event.AppendAnyIPAddressPtrs(event.ClientIP, event.TargetIP)
+	event.AppendAnyDomainNamePtrs(event.DomainName)
+	event.AppendAnyAWSARNPtrs(event.ChosenCertARN, event.TargetGroupARN)
 }

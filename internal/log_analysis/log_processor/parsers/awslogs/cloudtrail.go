@@ -149,9 +149,7 @@ func (p *CloudTrailParser) LogType() string {
 }
 
 func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
-	if event.EventTime != nil {
-		event.SetRequired(p.LogType(), *event.EventTime)
-	}
+	event.SetCoreFieldsPtr(p.LogType(), event.EventTime)
 
 	// structured (parsed) fields
 	if event.SourceIPAddress != nil && !strings.HasSuffix(*event.SourceIPAddress, "amazonaws.com") {
@@ -159,29 +157,17 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 	}
 
 	for _, resource := range event.Resources {
-		if resource.ARN != nil {
-			event.AppendAnyAWSARNs(*resource.ARN)
-		}
-		if resource.AccountID != nil {
-			event.AppendAnyAWSAccountIds(*resource.AccountID)
-		}
+		event.AppendAnyAWSARNPtrs(resource.ARN)
+		event.AppendAnyAWSAccountIdPtrs(resource.AccountID)
 	}
 	if event.UserIdentity != nil {
-		if event.UserIdentity.AccountID != nil {
-			event.AppendAnyAWSAccountIds(*event.UserIdentity.AccountID)
-		}
-		if event.UserIdentity.ARN != nil {
-			event.AppendAnyAWSARNs(*event.UserIdentity.ARN)
-		}
+		event.AppendAnyAWSAccountIdPtrs(event.UserIdentity.AccountID)
+		event.AppendAnyAWSARNPtrs(event.UserIdentity.ARN)
 
 		if event.UserIdentity.SessionContext != nil {
 			if event.UserIdentity.SessionContext.SessionIssuer != nil {
-				if event.UserIdentity.SessionContext.SessionIssuer.AccountID != nil {
-					event.AppendAnyAWSAccountIds(*event.UserIdentity.SessionContext.SessionIssuer.AccountID)
-				}
-				if event.UserIdentity.SessionContext.SessionIssuer.Arn != nil {
-					event.AppendAnyAWSARNs(*event.UserIdentity.SessionContext.SessionIssuer.Arn)
-				}
+				event.AppendAnyAWSAccountIdPtrs(event.UserIdentity.SessionContext.SessionIssuer.AccountID)
+				event.AppendAnyAWSARNPtrs(event.UserIdentity.SessionContext.SessionIssuer.Arn)
 			}
 		}
 	}
