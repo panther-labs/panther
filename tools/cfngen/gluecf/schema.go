@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	maxCommentLength = 255
+	maxCommentLength = 255 // this is the maximum size for a column comment allowed by CloudFormation
 )
 
 // Functions to infer schema by reflection
