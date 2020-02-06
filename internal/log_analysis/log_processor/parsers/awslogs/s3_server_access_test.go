@@ -56,7 +56,6 @@ func TestS3AccessLogGetHttpOk(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.S3ServerAccess"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(date)
 	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
 
@@ -92,7 +91,6 @@ func TestS3AccessLogGetHttpNotFound(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.S3ServerAccess"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(date)
 	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
 
@@ -129,7 +127,6 @@ func TestS3AccessLogPutHttpOK(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.S3ServerAccess"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(date)
 	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:sts::123456789012:assumed-role/PantherLogProcessingRole/1579693334126446707")
@@ -168,7 +165,6 @@ func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.S3ServerAccess"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(date)
 	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
 
@@ -187,8 +183,7 @@ func checkS3AccessLog(t *testing.T, log string, expectedEvent *S3ServerAccess) {
 	event := events[0].(*S3ServerAccess)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0)                      // ensure something is there.
-	require.NotEqual(t, event.PantherRowID, expectedEvent.PantherRowID) // ensure they are not same
+	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)

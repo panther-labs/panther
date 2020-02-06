@@ -52,7 +52,6 @@ func TestVpcFlowLog(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.VPCFlow"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedStartTime)
 	expectedEvent.AppendAnyIPAddresses("172.31.20.31", "52.119.169.95")
 	expectedEvent.AppendAnyAWSAccountIds("348372346321")
@@ -75,7 +74,6 @@ func TestVpcFlowLogNoData(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.VPCFlow"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedStartTime)
 
 	checkVPCFlowLog(t, log, expectedEvent)
@@ -98,8 +96,7 @@ func checkVPCFlowLog(t *testing.T, log string, expectedEvent *VPCFlow) {
 	event := events[0].(*VPCFlow)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0)                      // ensure something is there.
-	require.NotEqual(t, event.PantherRowID, expectedEvent.PantherRowID) // ensure they are not same
+	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)

@@ -64,7 +64,6 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.GuardDuty"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedDate)
 	expectedEvent.AppendAnyIPAddresses("198.51.100.0")
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
@@ -110,7 +109,6 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.GuardDuty"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedDate)
 	expectedEvent.AppendAnyAWSInstanceIds("i-99999999")
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
@@ -157,7 +155,6 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "AWS.GuardDuty"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedDate)
 	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a")
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
@@ -189,8 +186,7 @@ func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
 	event := events[0].(*GuardDuty)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0)                      // ensure something is there.
-	require.NotEqual(t, event.PantherRowID, expectedEvent.PantherRowID) // ensure they are not same
+	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)

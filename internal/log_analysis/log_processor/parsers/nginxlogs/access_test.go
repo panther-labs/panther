@@ -46,7 +46,6 @@ func TestAccessLog(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "Nginx.Access"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
 	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
 
@@ -70,7 +69,6 @@ func TestAccessLogWithoutReferer(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = "Nginx.Access"
-	expectedEvent.PantherRowID = "1234"
 	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
 	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
 
@@ -89,8 +87,7 @@ func checkAccessLog(t *testing.T, log string, expectedEvent *Access) {
 	event := events[0].(*Access)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0)                      // ensure something is there.
-	require.NotEqual(t, event.PantherRowID, expectedEvent.PantherRowID) // ensure they are not same
+	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)
