@@ -20,6 +20,7 @@ package awslogs
 
 import (
 	"encoding/csv"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -54,7 +55,7 @@ type VPCFlow struct {
 	VpcID         *string `json:"vpcId,omitempty" description:"The ID of the VPC that contains the network interface for which the traffic is recorded."`
 	SubNetID      *string `json:"subNetId,omitempty" description:"The ID of the subnet that contains the network interface for which the traffic is recorded."`
 	InstanceID    *string `json:"instanceId,omitempty" description:"The ID of the instance that's associated with network interface for which the traffic is recorded, if the instance is owned by you. Returns a '-' symbol for a requester-managed network interface; for example, the network interface for a NAT gateway."`
-	TCPFlags      *string `json:"tcpFlags,omitempty" description:"The bitmask value for the following TCP flags: SYN: 2, SYN-ACK: 18, FIN: 1, RST: 4. ACK is reported only when it's accompanied with SYN. TCP flags can be OR-ed during the aggregation interval. For short connections, the flags might be set on the same line in the flow log record, for example, 19 for SYN-ACK and FIN, and 3 for SYN and FIN."`
+	TCPFlags      *int    `json:"tcpFlags,omitempty" description:"The bitmask value for the following TCP flags: SYN: 2, SYN-ACK: 18, FIN: 1, RST: 4. ACK is reported only when it's accompanied with SYN. TCP flags can be OR-ed during the aggregation interval. For short connections, the flags might be set on the same line in the flow log record, for example, 19 for SYN-ACK and FIN, and 3 for SYN and FIN."`
 	Type          *string `json:"trafficType,omitempty" description:"The type of traffic: IPv4, IPv6, or EFA."`
 	PacketSrcAddr *string `json:"pktSrcAddr,omitempty" description:"The packet-level (original) source IP address of the traffic. Use this field with the srcaddr field to distinguish between the IP address of an intermediate layer through which traffic flows, and the original source IP address of the traffic. For example, when traffic flows through a network interface for a NAT gateway, or where the IP address of a pod in Amazon EKS is different from the IP address of the network interface of the instance node on which the pod is running."`
 	PacketDstAddr *string `json:"pktDstAddr,omitempty" description:"The packet-level (original) destination IP address for the traffic. Use this field with the dstaddr field to distinguish between the IP address of an intermediate layer through which traffic flows, and the final destination IP address of the traffic. For example, when traffic flows through a network interface for a NAT gateway, or where the IP address of a pod in Amazon EKS is different from the IP address of the network interface of the instance node on which the pod is running."`
@@ -69,27 +70,28 @@ type VPCFlowParser struct {
 }
 
 const (
-	vpcFlowVersion     = "version"
-	vpcFlowAccountID   = "account-id"
-	vpcFlowInterfaceID = "interface-id"
-	vpcFlowSrcAddr     = "srcaddr"
-	vpcFlowDstAddr     = "dstaddr"
-	vpcFlowSrcPort     = "srcport"
-	vpcFlowDstPort     = "dstport"
-	vpcFlowProtocol    = "protocol"
-	vpcFlowPackets     = "packets"
-	vpcFlowBytes       = "bytes"
-	vpcFlowStart       = "start"
-	vpcFlowEnd         = "end"
-	vpcFlowAction      = "action"
-	vpcFlowLogStatus   = "log-status"
-	vpcFlowVpcID       = "vpc-id"
-	vpcFlowSubNetID    = "subnet-id"
-	vpcFlowInstanceID  = "instance-id"
-	vpcFlowTCPFlags    = "tcp-flags"
-	vpcFlowType        = "type"
-	vpcFlowPktSrcAddr  = "pkt-srcaddr"
-	vpcFlowPktDstAddr  = "pkt-dstaddr"
+	vpcFlowHeaderThreshold = 4 // the number of headers that have to match to detect as VPCFlow
+	vpcFlowVersion         = "version"
+	vpcFlowAccountID       = "account-id"
+	vpcFlowInterfaceID     = "interface-id"
+	vpcFlowSrcAddr         = "srcaddr"
+	vpcFlowDstAddr         = "dstaddr"
+	vpcFlowSrcPort         = "srcport"
+	vpcFlowDstPort         = "dstport"
+	vpcFlowProtocol        = "protocol"
+	vpcFlowPackets         = "packets"
+	vpcFlowBytes           = "bytes"
+	vpcFlowStart           = "start"
+	vpcFlowEnd             = "end"
+	vpcFlowAction          = "action"
+	vpcFlowLogStatus       = "log-status"
+	vpcFlowVpcID           = "vpc-id"
+	vpcFlowSubNetID        = "subnet-id"
+	vpcFlowInstanceID      = "instance-id"
+	vpcFlowTCPFlags        = "tcp-flags"
+	vpcFlowType            = "type"
+	vpcFlowPktSrcAddr      = "pkt-srcaddr"
+	vpcFlowPktDstAddr      = "pkt-dstaddr"
 )
 
 var (
@@ -130,7 +132,7 @@ func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
 			matchCount++
 		}
 	}
-	isHeader := matchCount == len(headers) // should we allow a % match in case new fields are added by AWS?
+	isHeader := matchCount >= vpcFlowHeaderThreshold
 	if isHeader {
 		p.columnMap = make(map[int]string, len(headers))
 		for i, header := range headers {
@@ -202,13 +204,15 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 		case vpcFlowInstanceID:
 			event.InstanceID = parsers.CsvStringToPointer(columns[i])
 		case vpcFlowTCPFlags:
-			event.TCPFlags = parsers.CsvStringToPointer(columns[i])
+			event.TCPFlags = parsers.CsvStringToIntPointer(columns[i])
 		case vpcFlowType:
 			event.Type = parsers.CsvStringToPointer(columns[i])
 		case vpcFlowPktSrcAddr:
 			event.PacketSrcAddr = parsers.CsvStringToPointer(columns[i])
 		case vpcFlowPktDstAddr:
 			event.PacketDstAddr = parsers.CsvStringToPointer(columns[i])
+		default:
+			zap.L().Warn(fmt.Sprintf("unknown %s header %s", p.LogType(), p.columnMap[i]))
 		}
 	}
 
