@@ -62,7 +62,7 @@ LIMIT 10
 ## Show VPC Flowlog activity for SSH and RDP
 
 Remote shells typically have a human at one end. During an investigation isolating sessions from SSH and RDP is often
-a standard activity to try to identify specific actor activity.
+a standard procedure to try to identify specific actor activity.
 
 ```sql
 SELECT
@@ -115,9 +115,9 @@ WHERE
 ORDER BY p_event_time ASC
 ```
 
-## Find all console "root" logins in CloudTrail
+## Find all console "root" signins in CloudTrail
 
-The root account almost always should not be signing into the AWS console. This will check for instance of that activity.
+The root account should almost never sign into the AWS console; find all such signins.
 
 ```sql
 SELECT
@@ -154,7 +154,7 @@ ORDER BY total_rows DESC
 ## Show CloudTrail activity related to an AWS instance
 
 During an investigation a particular instance may become the focus. For example, if it is compromised.
-This query uses the the Panther field p_any_aws_instance_ids to easily search over all CloudTrail events for
+This query uses the the Panther field `p_any_aws_instance_ids` to easily search over all CloudTrail events for
 any related activity.
 
 ```sql
@@ -167,7 +167,7 @@ ORDER BY p_event_time ASC
 
 ## Show CloudTrail activity related to an AWS role
 
-Similar to the above query, the Panther field p_any_aws_arns can be used to quickly and easily find
+Similar to the above query, the Panther field `p_any_aws_arns` can be used to quickly and easily find
 all CloudTrail activity related to an ARN of interest (perhaps an ARN of role known to be compromised).
 
 ```sql
@@ -182,7 +182,7 @@ ORDER BY p_event_time ASC
 ## Show CloudTrail activity related to an AWS account id
 
 This is another variation of using a Panther field to broadly query. In this case finding all CloudTrail
-data related to an account of interest (perhaps the account is compromised and the concern is lateral movement).
+data related to an account of interest using `p_any_aws_account_ids` (perhaps the account is compromised and the concern is lateral movement).
 
 ```sql
 SELECT
