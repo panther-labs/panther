@@ -55,8 +55,8 @@ func TestS3AccessLogGetHttpOk(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.S3ServerAccess"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(date)
+	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
 	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
@@ -90,8 +90,8 @@ func TestS3AccessLogGetHttpNotFound(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.S3ServerAccess"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(date)
+	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
 	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
@@ -126,8 +126,8 @@ func TestS3AccessLogPutHttpOK(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.S3ServerAccess"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(date)
+	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
 	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:sts::123456789012:assumed-role/PantherLogProcessingRole/1579693334126446707")
 
@@ -164,8 +164,8 @@ func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.S3ServerAccess"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(date)
+	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
 	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
@@ -183,7 +183,7 @@ func checkS3AccessLog(t *testing.T, log string, expectedEvent *S3ServerAccess) {
 	event := events[0].(*S3ServerAccess)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)

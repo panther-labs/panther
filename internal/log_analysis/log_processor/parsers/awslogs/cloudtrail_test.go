@@ -63,8 +63,8 @@ func TestCloudTrailLogGenerateDataKey(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.CloudTrail"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedDate)
+	expectedEvent.PantherLogType = aws.String("AWS.CloudTrail")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
 	expectedEvent.AppendAnyAWSARNs("arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0",
 		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
 		//nolint:lll
@@ -89,7 +89,7 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 	for i, expectedEvent := range expectedEvents {
 		// rowid changes each time
 		event := events[i].(*CloudTrail)
-		require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
+		require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 		event.PantherRowID = expectedEvent.PantherRowID
 	}
 

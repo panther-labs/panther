@@ -51,8 +51,8 @@ func TestSnapshotLog(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "Osquery.Snapshot"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.PantherLogType = aws.String("Osquery.Snapshot")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyDomainNames("hostname.local")
 
 	checkOsQuerySnapshotLog(t, log, expectedEvent)
@@ -70,7 +70,7 @@ func checkOsQuerySnapshotLog(t *testing.T, log string, expectedEvent *Snapshot) 
 	event := events[0].(*Snapshot)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)

@@ -59,8 +59,8 @@ func TestBatchLog(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "Osquery.Batch"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.PantherLogType = aws.String("Osquery.Batch")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyDomainNames("hostname.local")
 
 	checkOsQueryBatcLog(t, log, expectedEvent)
@@ -78,7 +78,7 @@ func checkOsQueryBatcLog(t *testing.T, log string, expectedEvent *Batch) {
 	event := events[0].(*Batch)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)

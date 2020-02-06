@@ -69,8 +69,8 @@ func TestHTTPLog(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.ALB"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyIPAddresses("192.168.131.39", "10.0.0.1")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
 
@@ -120,8 +120,8 @@ func TestHTTPSLog(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.ALB"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyIPAddresses("192.168.131.39", "10.0.0.1")
 	expectedEvent.AppendAnyDomainNames("www.example.com")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067",
@@ -173,8 +173,8 @@ func TestHTTP2Log(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.ALB"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyIPAddresses("10.0.1.252", "10.0.0.66")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
 
@@ -223,8 +223,8 @@ func TestHTTPSNoTarget(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "AWS.ALB"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyIPAddresses("138.246.253.5")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
 
@@ -243,7 +243,7 @@ func checkALBLog(t *testing.T, log string, expectedEvent *ALB) {
 	event := events[0].(*ALB)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)

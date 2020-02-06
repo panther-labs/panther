@@ -138,7 +138,7 @@ func (p *VPCFlowParser) LogType() string {
 }
 
 func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
-	event.SetRequiredPtr(p.LogType(), event.Start)
+	event.SetCoreFieldsPtr(p.LogType(), event.Start)
 	event.AppendAnyAWSAccountIdPtrs(event.Account)
 	event.AppendAnyIPAddressPtrs(event.SrcAddr, event.DstAddr)
 }

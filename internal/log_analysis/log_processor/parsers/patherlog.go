@@ -40,9 +40,9 @@ var (
 // nolint(lll)
 type PantherLog struct {
 	//  required
-	PantherLogType   string            `json:"p_log_type,omitempty" validate:"required" description:"Panther added field with type of log"`
-	PantherRowID     string            `json:"p_row_id,omitempty" validate:"required" description:"Panther added field with unique id (within table)"`
-	PantherEventTime timestamp.RFC3339 `json:"p_event_time,omitempty" validate:"required" description:"Panther added standardize event time (UTC)"`
+	PantherLogType   *string            `json:"p_log_type,omitempty" validate:"required" description:"Panther added field with type of log"`
+	PantherRowID     *string            `json:"p_row_id,omitempty" validate:"required" description:"Panther added field with unique id (within table)"`
+	PantherEventTime *timestamp.RFC3339 `json:"p_event_time,omitempty" validate:"required" description:"Panther added standardize event time (UTC)"`
 
 	// optional (any)
 	PantherAnyIPAddresses *PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
@@ -86,16 +86,17 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 	return nil
 }
 
-func (pl *PantherLog) SetRequiredPtr(logType string, eventTime *timestamp.RFC3339) {
+func (pl *PantherLog) SetCoreFieldsPtr(logType string, eventTime *timestamp.RFC3339) {
 	if eventTime != nil {
-		pl.SetRequired(logType, *eventTime)
+		pl.SetCoreFields(logType, *eventTime)
 	}
 }
 
-func (pl *PantherLog) SetRequired(logType string, eventTime timestamp.RFC3339) {
-	pl.PantherLogType = logType
-	pl.PantherRowID = rowCounter.NewRowID()
-	pl.PantherEventTime = eventTime
+func (pl *PantherLog) SetCoreFields(logType string, eventTime timestamp.RFC3339) {
+	pl.PantherLogType = &logType
+	rowID := rowCounter.NewRowID()
+	pl.PantherRowID = &rowID
+	pl.PantherEventTime = &eventTime
 }
 
 func (pl *PantherLog) AppendAnyIPAddressPtrs(values ...*string) {

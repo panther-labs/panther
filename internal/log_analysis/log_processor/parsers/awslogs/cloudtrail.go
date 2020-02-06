@@ -148,7 +148,7 @@ func (p *CloudTrailParser) LogType() string {
 }
 
 func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
-	event.SetRequiredPtr(p.LogType(), event.EventTime)
+	event.SetCoreFieldsPtr(p.LogType(), event.EventTime)
 
 	// structured (parsed) fields
 	if event.SourceIPAddress != nil && !strings.HasSuffix(*event.SourceIPAddress, "amazonaws.com") {

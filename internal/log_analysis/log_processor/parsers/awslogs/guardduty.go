@@ -90,7 +90,7 @@ func (p *GuardDutyParser) LogType() string {
 }
 
 func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
-	event.SetRequiredPtr(p.LogType(), event.UpdatedAt)
+	event.SetCoreFieldsPtr(p.LogType(), event.UpdatedAt)
 
 	// structured (parsed) fields
 	event.AppendAnyAWSARNPtrs(event.Arn)

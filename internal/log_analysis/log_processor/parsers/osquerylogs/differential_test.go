@@ -52,8 +52,8 @@ func TestDifferentialLog(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "Osquery.Differential"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.PantherLogType = aws.String("Osquery.Differential")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyDomainNames("Quans-MacBook-Pro-2.local")
 
 	checkOsQueryDifferentialLog(t, log, expectedEvent)
@@ -82,8 +82,8 @@ func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = "Osquery.Differential"
-	expectedEvent.PantherEventTime = (timestamp.RFC3339)(expectedTime)
+	expectedEvent.PantherLogType = aws.String("Osquery.Differential")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyDomainNames("host.lan")
 
 	checkOsQueryDifferentialLog(t, log, expectedEvent)
@@ -101,7 +101,7 @@ func checkOsQueryDifferentialLog(t *testing.T, log string, expectedEvent *Differ
 	event := events[0].(*Differential)
 
 	// rowid changes each time
-	require.Greater(t, len(event.PantherRowID), 0) // ensure something is there.
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
 	require.Equal(t, expectedEvent, event)
