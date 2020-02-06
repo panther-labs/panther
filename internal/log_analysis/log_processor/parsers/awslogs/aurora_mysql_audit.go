@@ -39,7 +39,7 @@ const (
 
 // nolint:lll
 type AuroraMySQLAudit struct {
-	Timestamp    *timestamp.RFC3339 `json:"timestamp,omitempty" description:"The time stamp for the logged event with microsecond precision (UTC)."`
+	Timestamp    *timestamp.RFC3339 `json:"timestamp,omitempty" description:"The timestamp for the logged event with microsecond precision (UTC)."`
 	ServerHost   *string            `json:"serverHost,omitempty" description:"The name of the instance that the event is logged for."`
 	Username     *string            `json:"username,omitempty" description:"The connected user name of the user."`
 	Host         *string            `json:"host,omitempty" description:"The host that the user connected from."`

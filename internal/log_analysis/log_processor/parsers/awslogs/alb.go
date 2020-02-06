@@ -40,7 +40,7 @@ const (
 type ALB struct {
 	Type                   *string            `json:"type,omitempty" validate:"oneof=http https h2 ws wss" description:"The type of request or connection. "`
 	Timestamp              *timestamp.RFC3339 `json:"timestamp,omitempty" validate:"required" description:"The time when the load balancer generated a response to the client (UTC). For WebSockets, this is the time when the connection is closed."`
-	ELB                    *string            `json:"elb,omitempty" description:"he resource ID of the load balancer. If you are parsing access log entries, note that resources IDs can contain forward slashes (/)."`
+	ELB                    *string            `json:"elb,omitempty" description:"The resource ID of the load balancer. If you are parsing access log entries, note that resources IDs can contain forward slashes (/)."`
 	ClientIP               *string            `json:"clientIp,omitempty" description:"The IP address of the requesting client."`
 	ClientPort             *int               `json:"clientPort,omitempty" description:"The port of the requesting client."`
 	TargetIP               *string            `json:"targetIp,omitempty" description:"The IP address of the target that processed this request."`
@@ -52,9 +52,9 @@ type ALB struct {
 	TargetStatusCode       *int               `json:"targetStatusCode,omitempty" description:"The status code of the response from the target. This value is recorded only if a connection was established to the target and the target sent a response."`
 	ReceivedBytes          *int               `json:"receivedBytes,omitempty" description:"The size of the request, in bytes, received from the client (requester). For HTTP requests, this includes the headers. For WebSockets, this is the total number of bytes received from the client on the connection."`
 	SentBytes              *int               `json:"sentBytes" description:"The size of the response, in bytes, sent to the client (requester). For HTTP requests, this includes the headers. For WebSockets, this is the total number of bytes sent to the client on the connection."`
-	RequestHTTPMethod      *string            `json:"requestHttpMethod,omitempty" description:"The HTTP method parsed from request."`
-	RequestURL             *string            `json:"requestUrl,omitempty" description:"The HTTP URL parsed from request."`
-	RequestHTTPVersion     *string            `json:"requestHttpVersion,omitempty" description:"The HTTP version parsed from request."`
+	RequestHTTPMethod      *string            `json:"requestHttpMethod,omitempty" description:"The HTTP method parsed from the request."`
+	RequestURL             *string            `json:"requestUrl,omitempty" description:"The HTTP URL parsed from the request."`
+	RequestHTTPVersion     *string            `json:"requestHttpVersion,omitempty" description:"The HTTP version parsed from the request."`
 	UserAgent              *string            `json:"userAgent,omitempty" description:"A User-Agent string that identifies the client that originated the request. The string consists of one or more product identifiers, product[/version]. If the string is longer than 8 KB, it is truncated."`
 	SSLCipher              *string            `json:"sslCipher,omitempty" description:"[HTTPS listener] The SSL cipher. This value is set to NULL if the listener is not an HTTPS listener."`
 	SSLProtocol            *string            `json:"sslProtocol,omitempty" description:"[HTTPS listener] The SSL protocol. This value is set to NULL if the listener is not an HTTPS listener."`
