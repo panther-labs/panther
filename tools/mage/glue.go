@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -49,10 +50,13 @@ func (t Glue) Sync() error {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Please input matching string to select tables (or <enter> for all tables): ")
+	fmt.Print("Please input regular expression to select subset of tables (or <enter> for all tables): ")
 	enteredText, _ = reader.ReadString('\n')
 	enteredText = strings.TrimSpace(enteredText)
-	matchTableName := enteredText
+	matchTableName, err := regexp.Compile(enteredText)
+	if err != nil {
+		return err
+	}
 
 	fmt.Print("Please input start day (YYYY-MM-DD): ")
 	enteredText, _ = reader.ReadString('\n')
@@ -104,7 +108,7 @@ func (t Glue) Sync() error {
 	// for each table, for each time partition, delete and re-create
 	for _, table := range registry.AvailableTables() {
 		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
-		if len(matchTableName) > 0 && !strings.Contains(name, matchTableName) {
+		if !matchTableName.MatchString(name) {
 			continue
 		}
 		fmt.Printf("sync'ing %s\n", name)
