@@ -211,7 +211,7 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 		case vpcFlowPktDstAddr:
 			event.PacketDstAddr = parsers.CsvStringToPointer(columns[i])
 		default:
-			zap.L().Warn(fmt.Sprintf("unknown %s header %s", p.LogType(), p.columnMap[i]))
+			zap.L().Warn(fmt.Sprintf("unknown %s header %s (could be new header, check AWS documentation)", p.LogType(), p.columnMap[i]))
 		}
 	}
 
