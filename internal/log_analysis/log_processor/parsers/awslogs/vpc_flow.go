@@ -230,6 +230,7 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 // Parse returns the parsed events or nil if parsing failed
 func (p *VPCFlowParser) Parse(log string) []interface{} {
 	if p.columnMap == nil { // have not read header!
+		zap.L().Error("AWS.VPCFlow Parse() called before header assigned (bug)")
 		return nil
 	}
 
