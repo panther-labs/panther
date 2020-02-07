@@ -34,8 +34,8 @@ var VPCFlowDesc = `VPCFlow is a VPC NetFlow log, which is a layer 3 representati
 Log format & samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html`
 
 // nolint:lll
-type VPCFlow struct {
-	Version     *int               `json:"version,omitempty" validate:"required" description:"The VPC Flow Logs version. If you use the default format, the version is 2. If you specify a custom format, the version is 3."`
+type VPCFlow struct { // NOTE: since fields are customizable by users, the only "required" fields are the Start/End times since those are critical and data is useless w/out those
+	Version     *int               `json:"version,omitempty"  description:"The VPC Flow Logs version. If you use the default format, the version is 2. If you specify a custom format, the version is 3."`
 	AccountID   *string            `json:"account,omitempty" validate:"omitempty,len=12,numeric" description:"The AWS account ID for the flow log."`
 	InterfaceID *string            `json:"interfaceId,omitempty" description:"The ID of the network interface for which the traffic is recorded."`
 	SrcAddr     *string            `json:"srcAddr,omitempty" description:"The source address for incoming traffic, or the IPv4 or IPv6 address of the network interface for outgoing traffic on the network interface. The IPv4 address of the network interface is always its private IPv4 address. "`
@@ -45,8 +45,8 @@ type VPCFlow struct {
 	Protocol    *int               `json:"protocol,omitempty" description:"The IANA protocol number of the traffic."`
 	Packets     *int               `json:"packets,omitempty" description:"The number of packets transferred during the flow."`
 	Bytes       *int               `json:"bytes,omitempty" description:"The number of bytes transferred during the flow."`
-	Start       *timestamp.RFC3339 `json:"start,omitempty"  description:"The time of the start of the flow (UTC)."`
-	End         *timestamp.RFC3339 `json:"end,omitempty" description:"The time of the end of the flow (UTC)."`
+	Start       *timestamp.RFC3339 `json:"start,omitempty"  validate:"required" description:"The time of the start of the flow (UTC)."`
+	End         *timestamp.RFC3339 `json:"end,omitempty" validate:"required" description:"The time of the end of the flow (UTC)."`
 	Action      *string            `json:"action,omitempty" validate:"omitempty,oneof=ACCEPT REJECT" description:"The action that is associated with the traffic. ACCEPT: The recorded traffic was permitted by the security groups or network ACLs. REJECT: The recorded traffic was not permitted by the security groups or network ACLs."`
 	LogStatus   *string            `json:"status,omitempty" validate:"oneof=OK NODATA SKIPDATA" description:"The logging status of the flow log. OK: Data is logging normally to the chosen destinations. NODATA: There was no network traffic to or from the network interface during the capture window. SKIPDATA: Some flow log records were skipped during the capture window. This may be because of an internal capacity constraint, or an internal error."`
 
