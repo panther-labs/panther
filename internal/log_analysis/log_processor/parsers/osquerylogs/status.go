@@ -50,6 +50,10 @@ type Status struct { // FIXME: field descriptions need updating!
 // StatusParser parses OsQuery Status logs
 type StatusParser struct{}
 
+func (p *StatusParser) New() parsers.LogParser {
+	return &StatusParser{}
+}
+
 func (p *StatusParser) ParseHeader(log string) []interface{} {
 	return p.Parse(log) // no header
 }

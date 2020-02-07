@@ -35,7 +35,8 @@ type ParserPriorityQueue struct {
 func (q *ParserPriorityQueue) initialize() {
 	for _, parserMetadata := range parserRegistry.Elements() {
 		q.items = append(q.items, &ParserQueueItem{
-			parser:  parserMetadata.Parser,
+			// must be New() because parsers can be stateful, don't share registry
+			parser:  parserMetadata.Parser.New(),
 			penalty: 1,
 		})
 	}

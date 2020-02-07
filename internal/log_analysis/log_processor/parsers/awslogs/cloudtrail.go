@@ -119,6 +119,10 @@ type CloudTrailSessionContextWebIDFederationData struct {
 // CloudTrailParser parses CloudTrail logs
 type CloudTrailParser struct{}
 
+func (p *CloudTrailParser) New() parsers.LogParser {
+	return &CloudTrailParser{}
+}
+
 func (p *CloudTrailParser) ParseHeader(log string) []interface{} {
 	return p.Parse(log) // no header
 }

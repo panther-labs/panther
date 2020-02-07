@@ -57,6 +57,10 @@ type AuroraMySQLAudit struct {
 // AuroraMySQLAuditParser parses AWS Aurora MySQL Audit logs
 type AuroraMySQLAuditParser struct{}
 
+func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
+	return &AuroraMySQLAuditParser{}
+}
+
 func (p *AuroraMySQLAuditParser) ParseHeader(log string) []interface{} {
 	return p.Parse(log) // no header
 }

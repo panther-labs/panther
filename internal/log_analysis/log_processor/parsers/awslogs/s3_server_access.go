@@ -70,6 +70,10 @@ type S3ServerAccess struct {
 // S3ServerAccessParser parses AWS S3 Server Access logs
 type S3ServerAccessParser struct{}
 
+func (p *S3ServerAccessParser) New() parsers.LogParser {
+	return &S3ServerAccessParser{}
+}
+
 func (p *S3ServerAccessParser) ParseHeader(log string) []interface{} {
 	return p.Parse(log) // no header
 }

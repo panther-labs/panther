@@ -75,6 +75,10 @@ type ALB struct {
 // ALBParser parses AWS Application Load Balancer logs
 type ALBParser struct{}
 
+func (p *ALBParser) New() parsers.LogParser {
+	return &ALBParser{}
+}
+
 func (p *ALBParser) ParseHeader(log string) []interface{} {
 	return p.Parse(log) // no header
 }

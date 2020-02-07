@@ -51,6 +51,10 @@ type Differential struct { // FIXME: field descriptions need updating!
 // DifferentialParser parses OsQuery Differential logs
 type DifferentialParser struct{}
 
+func (p *DifferentialParser) New() parsers.LogParser {
+	return &DifferentialParser{}
+}
+
 func (p *DifferentialParser) ParseHeader(log string) []interface{} {
 	return p.Parse(log) // no header
 }

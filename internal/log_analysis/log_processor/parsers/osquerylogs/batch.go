@@ -52,6 +52,10 @@ type BatchDiffResults struct {
 // BatchParser parses OsQuery Batch logs
 type BatchParser struct{}
 
+func (p *BatchParser) New() parsers.LogParser {
+	return &BatchParser{}
+}
+
 func (p *BatchParser) ParseHeader(log string) []interface{} {
 	return p.Parse(log) // no header
 }

@@ -68,8 +68,12 @@ type VPCFlowParser struct {
 	columnMap map[int]string // column position to header name
 }
 
+func (p *VPCFlowParser) New() parsers.LogParser {
+	return &VPCFlowParser{}
+}
+
 const (
-	vpcFlowHeaderThreshold = 4 // the number of headers that have to match to detect as VPCFlow
+	vpcFlowHeaderThreshold = 5 // the number of headers that have to match to detect as VPCFlow
 	vpcFlowVersion         = "version"
 	vpcFlowAccountID       = "account-id"
 	vpcFlowInterfaceID     = "interface-id"
@@ -123,6 +127,10 @@ var (
 )
 
 func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
+	// CloudTrail can be detected as VPCFlow due to lucky token matching, skip JSON looking things here!
+	if len(log) > 0 && log[0] == '{' {
+		return false
+	}
 	headers := strings.Split(log, " ")
 	matchCount := 0
 	for _, header := range headers {
@@ -131,6 +139,7 @@ func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
 			matchCount++
 		}
 	}
+	// require a minimal number of matching fields
 	isHeader := matchCount >= vpcFlowHeaderThreshold
 	if isHeader {
 		p.columnMap = make(map[int]string, len(headers))
