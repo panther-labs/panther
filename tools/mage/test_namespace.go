@@ -53,7 +53,7 @@ func (t Test) Cfn() {
 	if testCfn() {
 		logger.Info("test:cfn: PASS")
 	} else {
-		fatal(fmt.Errorf("test:cfn: FAIL"))
+		logger.Fatal("test:cfn: FAIL")
 	}
 }
 
@@ -88,7 +88,7 @@ func (t Test) Go() {
 	if testGo() {
 		logger.Info("test:go: PASS")
 	} else {
-		fatal(fmt.Errorf("test:go: FAIL"))
+		logger.Fatal("test:go: FAIL")
 	}
 }
 
@@ -141,7 +141,7 @@ func (t Test) Python() {
 	if testPython() {
 		logger.Info("test:python: PASS")
 	} else {
-		fatal(fmt.Errorf("test:python: FAIL"))
+		logger.Fatal("test:python: FAIL")
 	}
 }
 
@@ -221,12 +221,12 @@ func testPython() bool {
 	return pass
 }
 
-// Web Lint web source
+// Web Test web source
 func (t Test) Web() {
 	if testWeb() {
 		logger.Info("test:web: PASS")
 	} else {
-		fatal(fmt.Errorf("test:web: FAIL"))
+		logger.Fatal("test:web: FAIL")
 	}
 }
 
@@ -286,7 +286,7 @@ func (t Test) CI() {
 	if len(failed) == 0 {
 		logger.Info("test:ci: PASS")
 	} else {
-		fatal(fmt.Errorf("test:ci: FAIL: " + strings.Join(failed, ",")))
+		logger.Fatal("test:ci: FAIL: " + strings.Join(failed, ","))
 	}
 }
 
@@ -295,17 +295,17 @@ func (t Test) Integration() {
 	// Check the AWS account ID
 	awsSession, err := getSession()
 	if err != nil {
-		fatal(err)
+		logger.Fatal(err)
 	}
 	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
-		fatal(fmt.Errorf("failed to get caller identity: %v", err))
+		logger.Fatalf("failed to get caller identity: %v", err)
 	}
 
 	logger.Warnf("INTEGRATION TESTS WILL ERASE ALL PANTHER DATA IN AWS ACCOUNT %s", *identity.Account)
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		fatal(fmt.Errorf("permission denied: integration tests canceled"))
+		logger.Fatal("permission denied: integration tests canceled")
 	}
 
 	mg.Deps(build.API)
@@ -316,7 +316,6 @@ func (t Test) Integration() {
 		return
 	}
 
-	// TODO: snapshot API integration test needs to move
 	walk("internal", func(path string, info os.FileInfo) {
 		if filepath.Base(path) == "integration_test.go" {
 			goPkgIntegrationTest("./" + filepath.Dir(path))
@@ -325,14 +324,14 @@ func (t Test) Integration() {
 
 	logger.Info("test:integration: python policy engine")
 	if err := sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
-		fatal(fmt.Errorf("python integration test failed: %v", err))
+		logger.Fatalf("python integration test failed: %v", err)
 	}
 }
 
 // Run integration tests for a single Go package.
 func goPkgIntegrationTest(pkg string) {
 	if err := os.Setenv("INTEGRATION_TEST", "True"); err != nil {
-		fatal(fmt.Errorf("failed to set INTEGRATION_TEST environment variable: %v", err))
+		logger.Fatalf("failed to set INTEGRATION_TEST environment variable: %v", err)
 	}
 	defer os.Unsetenv("INTEGRATION_TEST")
 
@@ -343,6 +342,6 @@ func goPkgIntegrationTest(pkg string) {
 		args = append(args, "-v")
 	}
 	if err := sh.Run("go", args...); err != nil {
-		fatal(fmt.Errorf("go test %s failed: %v", pkg, err))
+		logger.Fatalf("go test %s failed: %v", pkg, err)
 	}
 }

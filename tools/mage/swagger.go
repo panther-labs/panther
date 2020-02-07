@@ -51,13 +51,13 @@ func embedAPISpecs() {
 
 		newCfn, err := embedAPIs(cfn)
 		if err != nil {
-			fatal(err)
+			logger.Fatal(err)
 		}
 		if newCfn != nil {
 			// Changes were made - save the new file
 			outDir := filepath.Join("out", filepath.Dir(template))
 			if err := os.MkdirAll(outDir, 0755); err != nil {
-				fatal(fmt.Errorf("failed to create directory %s: %v", outDir, err))
+				logger.Fatalf("failed to create directory %s: %v", outDir, err)
 			}
 
 			cfnDest := filepath.Join(outDir, "embedded."+filepath.Base(template))

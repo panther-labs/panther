@@ -88,12 +88,12 @@ func Deploy() {
 	start := time.Now()
 	var config PantherConfig
 	if err := yaml.Unmarshal(readFile(configFile), &config); err != nil {
-		fatal(fmt.Errorf("failed to parse config file %s: %v", configFile, err))
+		logger.Fatalf("failed to parse config file %s: %v", configFile, err)
 	}
 
 	awsSession, err := getSession()
 	if err != nil {
-		fatal(err)
+		logger.Fatal(err)
 	}
 
 	deployPrecheck(aws.StringValue(awsSession.Config.Region))
@@ -111,7 +111,7 @@ func Deploy() {
 	params := getBackendDeployParams(awsSession, &config, bucket)
 	backendOutputs := deployTemplate(awsSession, backendTemplate, bucket, backendStack, params)
 	if err := postDeploySetup(awsSession, backendOutputs, &config); err != nil {
-		fatal(err)
+		logger.Fatal(err)
 	}
 
 	// Deploy frontend stack
@@ -126,23 +126,23 @@ func Deploy() {
 func deployPrecheck(awsRegion string) {
 	// Check the Go version (1.12 fails with a build error)
 	if version := runtime.Version(); version <= "go1.12" {
-		fatal(fmt.Errorf("go %s not supported, upgrade to 1.13+", version))
+		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
 	}
 
 	// Make sure docker is running
 	if _, err := sh.Output("docker", "info"); err != nil {
-		fatal(fmt.Errorf("docker is not available: %v", err))
+		logger.Fatalf("docker is not available: %v", err)
 	}
 
 	// Ensure the AWS region is supported
 	if !supportedRegions[awsRegion] {
-		fatal(fmt.Errorf("panther is not supported in %s region", awsRegion))
+		logger.Fatalf("panther is not supported in %s region", awsRegion)
 	}
 
 	// Ensure swagger is installed
 	swagger := filepath.Join(setupDirectory, "swagger")
 	if _, err := os.Stat(swagger); err != nil {
-		fatal(fmt.Errorf("%s not found (%v): run 'mage setup:dev'", swagger, err))
+		logger.Fatalf("%s not found (%v): run 'mage setup:all'", swagger, err)
 	}
 }
 
@@ -189,14 +189,14 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	// The layer is re-uploaded only if it doesn't exist yet or the library versions changed.
 	logger.Info("deploy: downloading python libraries " + libString)
 	if err := os.RemoveAll(layerSourceDir); err != nil {
-		fatal(fmt.Errorf("failed to remove layer directory %s: %v", layerSourceDir, err))
+		logger.Fatalf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}
 	if err := os.MkdirAll(layerSourceDir, 0755); err != nil {
-		fatal(fmt.Errorf("failed to create layer directory %s: %v", layerSourceDir, err))
+		logger.Fatalf("failed to create layer directory %s: %v", layerSourceDir, err)
 	}
 	args := append([]string{"install", "-t", layerSourceDir}, libs...)
 	if err := sh.Run("pip3", args...); err != nil {
-		fatal(fmt.Errorf("failed to download pip libraries: %v", err))
+		logger.Fatalf("failed to download pip libraries: %v", err)
 	}
 
 	// The package structure needs to be:
@@ -207,13 +207,13 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	//
 	// https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
 	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile); err != nil {
-		fatal(fmt.Errorf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err))
+		logger.Fatalf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
 	}
 
 	// Upload to S3
 	result, err := uploadFileToS3(awsSession, layerZipfile, bucket, key, map[string]*string{"Libs": &libString})
 	if err != nil {
-		fatal(fmt.Errorf("failed to upload %s to S3: %v", layerZipfile, err))
+		logger.Fatalf("failed to upload %s to S3: %v", layerZipfile, err)
 	}
 	return *result.VersionID
 }

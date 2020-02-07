@@ -50,22 +50,6 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 	assert.Nil(t, transformed) // no changes - nil is returned
 }
 
-func TestEmbedAPIsInvalidPath(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/invalid-path.yml")
-	require.NoError(t, err)
-
-	// Panic instead of exiting so unit tests can verify the fatal error
-	var loggedError error
-	fatal = func(err error) {
-		loggedError = err
-		panic(err)
-	}
-
-	assert.Panics(t, func() { _, _ = embedAPIs(data) })
-	require.Error(t, loggedError)
-	assert.Equal(t, "failed to read nowhere.yml: open nowhere.yml: no such file or directory", loggedError.Error())
-}
-
 func TestEmbedAPIs(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/valid-api.yml")
 	require.NoError(t, err)

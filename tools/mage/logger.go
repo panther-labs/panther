@@ -20,7 +20,6 @@ package mage
 
 import (
 	"log"
-	"os"
 	"time"
 
 	"github.com/magefile/mage/mg"
@@ -54,16 +53,4 @@ func init() {
 		log.Fatalf("failed to build logger: %s", err)
 	}
 	logger = rawLogger.Sugar()
-}
-
-// Log an error and exit with status code 1.
-// Unit tests can replace this function.
-var fatal = loggerFatal
-
-func loggerFatal(err error) {
-	logger.Error(err)
-
-	// If the error is returned from a mage command, mage will print it, but without our logging format.
-	// So we log the error ourselves and exit manually for cleaner output.
-	os.Exit(1)
 }

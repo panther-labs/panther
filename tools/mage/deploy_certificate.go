@@ -63,7 +63,7 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 	_, keyErr := os.Stat(privateKeyFile)
 	if os.IsNotExist(certErr) || os.IsNotExist(keyErr) {
 		if err := generateKeys(); err != nil {
-			fatal(err)
+			logger.Fatal(err)
 		}
 	}
 
@@ -77,7 +77,7 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 			logger.Warn("deploy: ACM not supported, falling back to IAM for certificate management")
 			return uploadIAMCertificate(awsSession)
 		}
-		fatal(fmt.Errorf("failed to list certificates: %v", err))
+		logger.Fatalf("failed to list certificates: %v", err)
 	}
 
 	output, err := acmClient.ImportCertificate(&acm.ImportCertificateInput{
@@ -91,7 +91,7 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 		},
 	})
 	if err != nil {
-		fatal(fmt.Errorf("ACM certificate import failed: %v", err))
+		logger.Fatalf("ACM certificate import failed: %v", err)
 	}
 
 	return *output.CertificateArn
@@ -104,7 +104,7 @@ func getExistingCertificate(awsSession *session.Session) *string {
 		if strings.Contains(err.Error(), "Stack with id "+backendStack+" does not exist") {
 			return nil
 		}
-		fatal(err)
+		logger.Fatal(err)
 	}
 	if arn, ok := outputs[certificateOutputKey]; ok {
 		return &arn
@@ -181,7 +181,7 @@ func uploadIAMCertificate(awsSession *session.Session) string {
 	}
 	output, err := iam.New(awsSession).UploadServerCertificate(input)
 	if err != nil {
-		fatal(fmt.Errorf("failed to upload cert to IAM: %v", err))
+		logger.Fatalf("failed to upload cert to IAM: %v", err)
 	}
 
 	return *output.ServerCertificateMetadata.Arn

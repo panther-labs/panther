@@ -26,7 +26,7 @@ Install [Docker](https://docs.docker.com/install/) and make sure the daemon is r
 
 Install [Mage](https://magefile.org/#installation): `go get github.com/magefile/mage`
 
-Finally, install the remaining development libraries with `mage setup:dev`
+Finally, install the remaining development libraries with `mage setup:all`
 
 ## Mage
 
@@ -41,7 +41,7 @@ Targets:
   clean               Remove auto-generated build artifacts
   deploy              Deploy application infrastructure
   fmt                 Format source files
-  setup:dev           Install all development dependencies
+  setup:all           Install all development dependencies
   setup:go            Install goimports, go-swagger, and golangci-lint
   setup:python        Install the Python virtual env
   setup:web           Npm install

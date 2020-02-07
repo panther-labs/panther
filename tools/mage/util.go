@@ -46,7 +46,7 @@ func walk(root string, handler func(string, os.FileInfo)) {
 		return nil
 	})
 	if err != nil {
-		fatal(fmt.Errorf("couldn't traverse %s: %v", root, err))
+		logger.Fatalf("couldn't traverse %s: %v", root, err)
 	}
 }
 
@@ -54,7 +54,7 @@ func walk(root string, handler func(string, os.FileInfo)) {
 func readFile(path string) []byte {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
-		fatal(fmt.Errorf("failed to read %s: %v", path, err))
+		logger.Fatalf("failed to read %s: %v", path, err)
 	}
 	return contents
 }
@@ -62,7 +62,7 @@ func readFile(path string) []byte {
 // Wrapper around ioutil.WriteFile, logging errors as fatal.
 func writeFile(path string, data []byte) {
 	if err := ioutil.WriteFile(path, data, 0644); err != nil {
-		fatal(fmt.Errorf("failed to write %s: %v", path, err))
+		logger.Fatalf("failed to write %s: %v", path, err)
 	}
 }
 

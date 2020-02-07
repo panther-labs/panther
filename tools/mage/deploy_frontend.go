@@ -39,12 +39,12 @@ const (
 
 func deployFrontend(awsSession *session.Session, bucket string, backendOutputs map[string]string, config *PantherConfig) {
 	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs); err != nil {
-		fatal(fmt.Errorf("failed to write env file %s: %v", envFile, err))
+		logger.Fatalf("failed to write env file %s: %v", envFile, err)
 	}
 
 	dockerImage, err := buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImageRegistry"])
 	if err != nil {
-		fatal(err)
+		logger.Fatal(err)
 	}
 
 	params := map[string]string{

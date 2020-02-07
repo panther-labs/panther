@@ -44,7 +44,7 @@ type Build mg.Namespace
 func (b Build) API() {
 	specs, err := filepath.Glob(swaggerGlob)
 	if err != nil {
-		fatal(fmt.Errorf("failed to glob %s: %v", swaggerGlob, err))
+		logger.Fatalf("failed to glob %s: %v", swaggerGlob, err)
 	}
 
 	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
@@ -60,7 +60,7 @@ func (b Build) API() {
 		args := []string{"generate", "client", "-q", "-t", dir, "-f", spec}
 		cmd := filepath.Join(setupDirectory, "swagger")
 		if err := sh.Run(cmd, args...); err != nil {
-			fatal(fmt.Errorf("%s %s failed: %v", cmd, strings.Join(args, " "), err))
+			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
 
 		// If an API model is removed, "swagger generate" will leave the Go file in place.
@@ -119,7 +119,7 @@ func (b Build) Lambda() {
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main)", len(packages))
 	for _, pkg := range packages {
 		if err := buildPackage(pkg); err != nil {
-			fatal(err)
+			logger.Fatal(err)
 		}
 	}
 }

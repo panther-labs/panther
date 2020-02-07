@@ -19,7 +19,6 @@ package mage
  */
 
 import (
-	"fmt"
 	"os"
 	"strings"
 )
@@ -40,7 +39,7 @@ func Clean() {
 	for _, pkg := range paths {
 		logger.Info("clean: rm -r " + pkg)
 		if err := os.RemoveAll(pkg); err != nil {
-			fatal(fmt.Errorf("failed to remove %s: %v", pkg, err))
+			logger.Fatalf("failed to remove %s: %v", pkg, err)
 		}
 	}
 }

@@ -19,7 +19,6 @@ package mage
  */
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -46,7 +45,7 @@ const (
 func preprocessTemplates() {
 	embedAPISpecs()
 	if err := generateGlueTables(); err != nil {
-		fatal(err)
+		logger.Fatal(err)
 	}
 }
 
@@ -76,11 +75,11 @@ func deployTemplate(
 }
 
 // Upload resources to S3 and return the path to the modified CloudFormation template.
-// TODO - implement this directly to avoid shelling out to the aws cli (which has a region bug)
+// TODO - implement this directly to avoid the aws cli (https://github.com/panther-labs/panther/issues/136)
 func cfnPackage(templatePath, bucket, stack string) string {
 	outputDir := filepath.Join("out", filepath.Dir(templatePath))
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		fatal(fmt.Errorf("failed to create directory %s: %v", outputDir, err))
+		logger.Fatalf("failed to create directory %s: %v", outputDir, err)
 	}
 
 	// There is no equivalent to this command in the AWS Go SDK.
@@ -95,7 +94,7 @@ func cfnPackage(templatePath, bucket, stack string) string {
 	// Discard the output unless running in verbose mode
 	logger.Infof("deploy: packaging %s assets in s3://%s (may take several minutes)", templatePath, bucket)
 	if err := sh.Run("aws", args...); err != nil {
-		fatal(fmt.Errorf("aws cloudformation package %s failed: %v", templatePath, err))
+		logger.Fatalf("aws cloudformation package %s failed: %v", templatePath, err)
 	}
 
 	// Post-processing: fix templateURLs to be region-agnostic
@@ -153,7 +152,7 @@ func createChangeSet(
 	changeSetType := "CREATE"
 	if err == nil && len(stackDetail.Stacks) > 0 {
 		// Check if the previous deployment timed out and is still going, if so continue where that left off
-		if status := *stackDetail.Stacks[0].StackStatus; strings.Contains(status, "IN_PROGRESS") {
+		if status := *stackDetail.Stacks[0].StackStatus; strings.Contains(status, cloudformation.OperationStatusInProgress) {
 			logger.Warnf("deploy: %s already in state %s, resuming previous deployment", stack, status)
 			return stackDetail.Stacks[0].ChangeSetId, nil
 		}
@@ -190,7 +189,7 @@ func createChangeSet(
 
 	logger.Infof("deploy: %s CloudFormation stack %s (may take several minutes)", changeSetType, stack)
 	if _, err = client.CreateChangeSet(createInput); err != nil {
-		fatal(fmt.Errorf("failed to create change set for stack %s: %v", stack, err))
+		logger.Fatalf("failed to create change set for stack %s: %v", stack, err)
 	}
 
 	// Wait for change set creation to finish
@@ -202,8 +201,8 @@ func createChangeSet(
 	for start := time.Now(); time.Since(start) < pollTimeout; {
 		response, err := client.DescribeChangeSet(describeInput)
 		if err != nil {
-			fatal(fmt.Errorf("failed to describe change set %s for stack %s: %v",
-				*createInput.ChangeSetName, stack, err))
+			logger.Fatalf("failed to describe change set %s for stack %s: %v",
+				*createInput.ChangeSetName, stack, err)
 		}
 
 		status := aws.StringValue(response.Status)
@@ -232,13 +231,13 @@ func createChangeSet(
 		case "CREATE_COMPLETE":
 			return createInput.ChangeSetName, nil // success!
 		case "FAILED":
-			fatal(fmt.Errorf("create change set for stack %s failed: %s", stack, reason))
+			logger.Fatalf("create change set for stack %s failed: %s", stack, reason)
 		default:
 			time.Sleep(pollInterval)
 		}
 	}
 
-	fatal(fmt.Errorf("create change set for stack %s failed: timeout %s", stack, pollTimeout))
+	logger.Fatalf("create change set for stack %s failed: timeout %s", stack, pollTimeout)
 	return nil, nil // execution will never reach here
 }
 
@@ -249,7 +248,7 @@ func executeChangeSet(client *cloudformation.CloudFormation, changeSet *string, 
 		StackName:     &stack,
 	})
 	if err != nil {
-		fatal(fmt.Errorf("failed to deploy stack %s: %v", stack, err))
+		logger.Fatalf("failed to deploy stack %s: %v", stack, err)
 	}
 
 	// Wait for change set to finish.
@@ -259,11 +258,11 @@ func executeChangeSet(client *cloudformation.CloudFormation, changeSet *string, 
 		response, err := client.DescribeStacks(input)
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ExpiredToken" {
-				fatal(errors.New("deploy: security token expired; " +
+				logger.Fatal("deploy: security token expired; " +
 					"redeploy with fresh credentials to pick up where you left off. " +
-					"CloudFormation is still running in your AWS account, see https://console.aws.amazon.com/cloudformation"))
+					"CloudFormation is still running in your AWS account, see https://console.aws.amazon.com/cloudformation")
 			}
-			fatal(fmt.Errorf("failed to describe stack %s: %v", stack, err))
+			logger.Fatalf("failed to describe stack %s: %v", stack, err)
 		}
 
 		status := *response.Stacks[0].StackStatus
@@ -278,11 +277,11 @@ func executeChangeSet(client *cloudformation.CloudFormation, changeSet *string, 
 			// TODO - show progress of nested stacks (e.g. % updated)
 			time.Sleep(pollInterval)
 		} else {
-			fatal(fmt.Errorf("execute change set for stack %s is %s: %s",
-				stack, status, aws.StringValue(response.Stacks[0].StackStatusReason)))
+			logger.Fatalf("execute change set for stack %s is %s: %s",
+				stack, status, aws.StringValue(response.Stacks[0].StackStatusReason))
 		}
 	}
 
-	fatal(fmt.Errorf("execute change set for stack %s failed: timeout %s", stack, pollTimeout))
+	logger.Fatalf("execute change set for stack %s failed: timeout %s", stack, pollTimeout)
 	return nil // execution will never reach here
 }

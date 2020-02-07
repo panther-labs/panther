@@ -41,8 +41,8 @@ var (
 // Setup contains targets for installing development / CI dependencies
 type Setup mg.Namespace
 
-// Dev Install all development dependencies
-func (s Setup) Dev() {
+// All Install all development dependencies
+func (s Setup) All() {
 	s.Go()
 	s.Python()
 	s.Web()
@@ -54,19 +54,19 @@ func (Setup) Go() {
 	if !isRunningInCI() {
 		logger.Info("setup: installing goimports")
 		if err := sh.RunV("go", "get", "golang.org/x/tools/cmd/goimports"); err != nil {
-			fatal(fmt.Errorf("go get goimports failed: %v", err))
+			logger.Fatalf("go get goimports failed: %v", err)
 		}
 	}
 
 	env, err := sh.Output("uname")
 	if err != nil {
-		fatal(fmt.Errorf("couldn't determine environment: %v", err))
+		logger.Fatalf("couldn't determine environment: %v", err)
 	}
 	if err = installSwagger(env); err != nil {
-		fatal(err)
+		logger.Fatal(err)
 	}
 	if err = installGolangCiLint(env); err != nil {
-		fatal(err)
+		logger.Fatal(err)
 	}
 }
 
@@ -74,11 +74,11 @@ func (Setup) Go() {
 func (Setup) Python() {
 	logger.Info("setup: installing python3 env to " + pythonVirtualEnvPath)
 	if err := os.RemoveAll(pythonVirtualEnvPath); err != nil {
-		fatal(fmt.Errorf("failed to remove existing %s: %v", pythonVirtualEnvPath, err))
+		logger.Fatalf("failed to remove existing %s: %v", pythonVirtualEnvPath, err)
 	}
 
 	if err := sh.RunV("python3", "-m", "venv", pythonVirtualEnvPath); err != nil {
-		fatal(fmt.Errorf("failed to create venv %s: %v", pythonVirtualEnvPath, err))
+		logger.Fatalf("failed to create venv %s: %v", pythonVirtualEnvPath, err)
 	}
 
 	args := []string{"install", "-r", "requirements.txt"}
@@ -86,14 +86,14 @@ func (Setup) Python() {
 		args = append(args, "--quiet")
 	}
 	if err := sh.RunV(pythonLibPath("pip3"), args...); err != nil {
-		fatal(fmt.Errorf("pip installation failed: %v", err))
+		logger.Fatalf("pip installation failed: %v", err)
 	}
 }
 
 // Web Npm install
 func (Setup) Web() {
 	if err := sh.RunV("npm", "i"); err != nil {
-		fatal(fmt.Errorf("npm install failed: %v", err))
+		logger.Fatalf("npm install failed: %v", err)
 	}
 }
 

@@ -20,7 +20,6 @@ package mage
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"strings"
 
@@ -42,27 +41,25 @@ func Fmt() {
 	logger.Info("fmt: python yapf " + strings.Join(pyTargets, " "))
 	args := []string{"--in-place", "--parallel", "--recursive"}
 	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
-		fatal(fmt.Errorf("failed to format python: %v", err))
+		logger.Fatalf("failed to format python: %v", err)
 	}
 
 	// cloudformation
-	logger.Info("fmt: prettier deployments")
+	logger.Info("fmt: prettier")
 	args = []string{"--write", "deployments/**.yml"}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
 	}
 	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		fatal(fmt.Errorf("failed to format CloudFormation: %v", err))
+		logger.Fatalf("failed to format deployments/**.yml: %v", err)
 	}
 
-	// web
-	logger.Info("fmt: prettier web")
 	args = []string{"--write", "{web/src/**,.}/*.{ts,js,tsx,md,json,yml}"}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
 	}
 	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		fatal(fmt.Errorf("failed to format web: %v", err))
+		logger.Fatalf("failed to format {web/src/**,.}: %v", err)
 	}
 }
 
@@ -72,7 +69,7 @@ func gofmt(root string, paths ...string) {
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
 	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, goTargets...)...); err != nil {
-		fatal(fmt.Errorf("gofmt failed: %v", err))
+		logger.Fatalf("gofmt failed: %v", err)
 	}
 
 	// 2) Remove empty newlines from import groups
@@ -85,7 +82,7 @@ func gofmt(root string, paths ...string) {
 	// 3) Goimports to group imports into 3 sections
 	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, goTargets...)
 	if err := sh.Run("goimports", args...); err != nil {
-		fatal(fmt.Errorf("goimports failed: %v", err))
+		logger.Fatalf("goimports failed: %v", err)
 	}
 }
 
