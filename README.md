@@ -23,7 +23,7 @@
 
 ## About Us
 
-We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprised of security engineers who have spent years building large-scale detection and response for cloud-first companies including Airbnb, Amazon, Riverbed, and more. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a cloud-native solution for automated log analysis open-sourced by Airbnb.
+We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprising security engineers who have spent years building large-scale detection and response for cloud-first companies including Airbnb, Amazon, Riverbed, and more. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a cloud-native solution for automated log analysis open-sourced by Airbnb.
 
 Panther is the next step for security teams who need a modern alternative to traditional SIEMs. We designed Panther for massive scale, with a rich and intuitive user experience, in-browser Python rule editing, first-class AWS support, and more.
 
