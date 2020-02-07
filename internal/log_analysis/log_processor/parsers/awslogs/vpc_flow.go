@@ -40,10 +40,10 @@ type VPCFlow struct {
 	Version     *int               `json:"version,omitempty" validate:"required"`
 	Account     *string            `json:"account,omitempty" validate:"omitempty,len=12,numeric"`
 	InterfaceID *string            `json:"interfaceId,omitempty"`
-	SourceAddr  *string            `json:"sourceAddr,omitempty"`
-	Dstaddr     *string            `json:"dstAddr,omitempty"`
+	SrcAddr     *string            `json:"srcAddr,omitempty"`
+	DstAddr     *string            `json:"dstAddr,omitempty"`
 	SrcPort     *int               `json:"srcPort,omitempty" validate:"omitempty,min=0,max=65535"`
-	DstPort     *int               `json:"destPort,omitempty" validate:"omitempty,min=0,max=65535"`
+	DstPort     *int               `json:"dstPort,omitempty" validate:"omitempty,min=0,max=65535"`
 	Protocol    *int               `json:"protocol,omitempty"`
 	Packets     *int               `json:"packets,omitempty"`
 	Bytes       *int               `json:"bytes,omitempty"`
@@ -51,6 +51,9 @@ type VPCFlow struct {
 	End         *timestamp.RFC3339 `json:"end,omitempty" validate:"required"`
 	Action      *string            `json:"action,omitempty" validate:"omitempty,oneof=ACCEPT REJECT"`
 	LogStatus   *string            `json:"status,omitempty" validate:"oneof=OK NODATA SKIPDATA"`
+
+	// NOTE: added to end of struct to allow expansion later
+	AWSPantherLog
 }
 
 // VPCFlowParser parses AWS VPC Flow Parser logs
@@ -106,8 +109,8 @@ func (p *VPCFlowParser) Parse(log string) []interface{} {
 		Version:     parsers.CsvStringToIntPointer(record[0]),
 		Account:     account,
 		InterfaceID: parsers.CsvStringToPointer(record[2]),
-		SourceAddr:  parsers.CsvStringToPointer(record[3]),
-		Dstaddr:     parsers.CsvStringToPointer(record[4]),
+		SrcAddr:     parsers.CsvStringToPointer(record[3]),
+		DstAddr:     parsers.CsvStringToPointer(record[4]),
 		SrcPort:     parsers.CsvStringToIntPointer(record[5]),
 		DstPort:     parsers.CsvStringToIntPointer(record[6]),
 		Protocol:    parsers.CsvStringToIntPointer(record[7]),
@@ -118,6 +121,8 @@ func (p *VPCFlowParser) Parse(log string) []interface{} {
 		Action:      parsers.CsvStringToPointer(record[12]),
 		LogStatus:   parsers.CsvStringToPointer(record[13]),
 	}
+
+	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
@@ -130,4 +135,10 @@ func (p *VPCFlowParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *VPCFlowParser) LogType() string {
 	return "AWS.VPCFlow"
+}
+
+func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Start)
+	event.AppendAnyAWSAccountIdPtrs(event.Account)
+	event.AppendAnyIPAddressPtrs(event.SrcAddr, event.DstAddr)
 }

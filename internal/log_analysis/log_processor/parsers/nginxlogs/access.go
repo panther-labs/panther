@@ -48,6 +48,9 @@ type Access struct {
 	BodyBytesSent *int               `json:"bodyBytesSent,omitempty" description:"The size of the object returned to the client, measured in bytes"`
 	HTTPReferer   *string            `json:"httpReferer,omitempty" description:"The HTTP referrer if any"`
 	HTTPUserAgent *string            `json:"httpUserAgent,omitempty" description:"The agent the user used when making the request"`
+
+	// NOTE: added to end of struct to allow expansion later
+	parsers.PantherLog
 }
 
 // AccessParser parses Nginx Access logs in 'combined' log format
@@ -102,6 +105,8 @@ func (p *AccessParser) Parse(log string) []interface{} {
 		HTTPUserAgent: parsers.CsvStringToPointer(record[9]),
 	}
 
+	event.updatePantherFields(p)
+
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
@@ -113,4 +118,9 @@ func (p *AccessParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *AccessParser) LogType() string {
 	return "Nginx.Access"
+}
+
+func (event *Access) updatePantherFields(p *AccessParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Time)
+	event.AppendAnyIPAddressPtrs(event.RemoteAddress)
 }

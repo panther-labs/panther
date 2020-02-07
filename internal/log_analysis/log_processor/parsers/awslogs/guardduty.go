@@ -24,6 +24,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/pkg/extract"
 )
 
 var GuardDutyDesc = `Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity 
@@ -31,32 +32,35 @@ and unauthorized behavior inside AWS Accounts.
 See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html`
 
 type GuardDuty struct {
-	SchemaVersion *string            `json:"schemaVersion" validate:"required"`
-	AccountID     *string            `json:"accountId" validate:"len=12,numeric"`
-	Region        *string            `json:"region" validate:"required"`
-	Partition     *string            `json:"partition" validate:"required"`
-	ID            *string            `json:"id,omitempty" validate:"required"`
-	Arn           *string            `json:"arn" validate:"required"`
-	Type          *string            `json:"type" validate:"required"`
-	Resource      interface{}        `json:"resource" validate:"required"`
-	Severity      *int               `json:"severity" validate:"required,min=0"`
-	CreatedAt     *timestamp.RFC3339 `json:"createdAt" validate:"required,min=0"`
-	UpdatedAt     *timestamp.RFC3339 `json:"updatedAt" validate:"required,min=0"`
-	Title         *string            `json:"title" validate:"required"`
-	Description   *string            `json:"description" validate:"required"`
-	Service       *GuardDutyService  `json:"service" validate:"required"`
+	SchemaVersion *string              `json:"schemaVersion" validate:"required"`
+	AccountID     *string              `json:"accountId" validate:"len=12,numeric"`
+	Region        *string              `json:"region" validate:"required"`
+	Partition     *string              `json:"partition" validate:"required"`
+	ID            *string              `json:"id,omitempty" validate:"required"`
+	Arn           *string              `json:"arn" validate:"required"`
+	Type          *string              `json:"type" validate:"required"`
+	Resource      *jsoniter.RawMessage `json:"resource" validate:"required"`
+	Severity      *int                 `json:"severity" validate:"required,min=0"`
+	CreatedAt     *timestamp.RFC3339   `json:"createdAt" validate:"required,min=0"`
+	UpdatedAt     *timestamp.RFC3339   `json:"updatedAt" validate:"required,min=0"`
+	Title         *string              `json:"title" validate:"required"`
+	Description   *string              `json:"description" validate:"required"`
+	Service       *GuardDutyService    `json:"service" validate:"required"`
+
+	// NOTE: added to end of struct to allow expansion later
+	AWSPantherLog
 }
 
 type GuardDutyService struct {
-	AdditionalInfo interface{}        `json:"additionalInfo"`
-	Action         interface{}        `json:"action"`
-	ServiceName    *string            `json:"serviceName" validate:"required"`
-	DetectorID     *string            `json:"detectorId" validate:"required"`
-	ResourceRole   *string            `json:"resourceRole"`
-	EventFirstSeen *timestamp.RFC3339 `json:"eventFirstSeen"`
-	EventLastSeen  *timestamp.RFC3339 `json:"eventLastSeen"`
-	Archived       *bool              `json:"archived"`
-	Count          *int               `json:"count"`
+	AdditionalInfo *jsoniter.RawMessage `json:"additionalInfo"`
+	Action         *jsoniter.RawMessage `json:"action"`
+	ServiceName    *string              `json:"serviceName" validate:"required"`
+	DetectorID     *string              `json:"detectorId" validate:"required"`
+	ResourceRole   *string              `json:"resourceRole"`
+	EventFirstSeen *timestamp.RFC3339   `json:"eventFirstSeen"`
+	EventLastSeen  *timestamp.RFC3339   `json:"eventLastSeen"`
+	Archived       *bool                `json:"archived"`
+	Count          *int                 `json:"count"`
 }
 
 // VPCFlowParser parses AWS VPC Flow Parser logs
@@ -71,6 +75,8 @@ func (p *GuardDutyParser) Parse(log string) []interface{} {
 		return nil
 	}
 
+	event.updatePantherFields(p)
+
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
@@ -81,4 +87,20 @@ func (p *GuardDutyParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *GuardDutyParser) LogType() string {
 	return "AWS.GuardDuty"
+}
+
+func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.UpdatedAt)
+
+	// structured (parsed) fields
+	event.AppendAnyAWSARNPtrs(event.Arn)
+	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
+
+	// polymorphic (unparsed) fields
+	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
+	extract.Extract(event.Resource, awsExtractor)
+	if event.Service != nil {
+		extract.Extract(event.Service.AdditionalInfo, awsExtractor)
+		extract.Extract(event.Service.Action, awsExtractor)
+	}
 }

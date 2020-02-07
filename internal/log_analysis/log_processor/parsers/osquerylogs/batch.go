@@ -19,10 +19,7 @@ package osquerylogs
  */
 
 import (
-	"fmt"
-
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -40,6 +37,9 @@ type Batch struct {
 	Hostname     *string                `json:"hostname,omitempty"  validate:"required"`
 	Name         *string                `json:"name,omitempty"  validate:"required"`
 	UnixTime     *int                   `json:"unixTime,omitempty,string"  validate:"required"`
+
+	// NOTE: added to end of struct to allow expansion later
+	parsers.PantherLog
 }
 
 // OsqueryBatchDiffResults contains diff data for OsQuery batch results
@@ -56,15 +56,12 @@ func (p *BatchParser) Parse(log string) []interface{} {
 	event := &Batch{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("failed to unmarshal log", zap.Error(err))
 		return nil
 	}
 
-	tsa, _ := jsoniter.MarshalToString(event)
-	fmt.Println(tsa)
+	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
 	}
 	return []interface{}{event}
@@ -73,4 +70,11 @@ func (p *BatchParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *BatchParser) LogType() string {
 	return "Osquery.Batch"
+}
+
+func (event *Batch) updatePantherFields(p *BatchParser) {
+	if event.CalendarTime != nil {
+		event.SetCoreFields(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
+	}
+	event.AppendAnyDomainNamePtrs(event.Hostname)
 }

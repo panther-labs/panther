@@ -49,11 +49,28 @@ func TestStatusLog(t *testing.T) {
 		},
 	}
 
-	parser := &StatusParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Osquery.Status")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyDomainNames("jacks-mbp.lan")
+
+	checkOsQueryStatusLog(t, log, expectedEvent)
 }
 
 func TestOsQueryStatusLogType(t *testing.T) {
 	parser := &StatusParser{}
 	require.Equal(t, "Osquery.Status", parser.LogType())
+}
+
+func checkOsQueryStatusLog(t *testing.T, log string, expectedEvent *Status) {
+	parser := &StatusParser{}
+	events := parser.Parse(log)
+	require.Equal(t, 1, len(events))
+	event := events[0].(*Status)
+
+	// rowid changes each time
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
+	expectedEvent.PantherRowID = event.PantherRowID
+
+	require.Equal(t, expectedEvent, event)
 }

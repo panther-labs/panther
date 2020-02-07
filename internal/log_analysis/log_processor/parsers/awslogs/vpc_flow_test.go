@@ -29,8 +29,6 @@ import (
 )
 
 func TestVpcFlowLog(t *testing.T) {
-	parser := &VPCFlowParser{}
-
 	log := "2 348372346321 eni-00184058652e5a320 52.119.169.95 172.31.20.31 443 48316 6 19 7119 1573642242 1573642284 ACCEPT OK"
 
 	expectedStartTime := time.Unix(1573642242, 0).UTC()
@@ -39,25 +37,29 @@ func TestVpcFlowLog(t *testing.T) {
 		Action:      aws.String("ACCEPT"),
 		Account:     aws.String("348372346321"),
 		Bytes:       aws.Int(7119),
-		Dstaddr:     aws.String("172.31.20.31"),
+		DstAddr:     aws.String("172.31.20.31"),
 		DstPort:     aws.Int(48316),
 		End:         (*timestamp.RFC3339)(&expectedEndTime),
 		InterfaceID: aws.String("eni-00184058652e5a320"),
 		LogStatus:   aws.String("OK"),
 		Packets:     aws.Int(19),
 		Protocol:    aws.Int(6),
-		SourceAddr:  aws.String("52.119.169.95"),
+		SrcAddr:     aws.String("52.119.169.95"),
 		SrcPort:     aws.Int(443),
 		Start:       (*timestamp.RFC3339)(&expectedStartTime),
 		Version:     aws.Int(2),
 	}
 
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
+	expectedEvent.AppendAnyIPAddresses("172.31.20.31", "52.119.169.95")
+	expectedEvent.AppendAnyAWSAccountIds("348372346321")
+
+	checkVPCFlowLog(t, log, expectedEvent)
 }
 
 func TestVpcFlowLogNoData(t *testing.T) {
-	parser := &VPCFlowParser{}
-
 	log := "2 unknown eni-0608192d5c498fbcd - - - - - - - 1538696170 1538696308 - NODATA"
 
 	expectedStartTime := time.Unix(1538696170, 0).UTC()
@@ -70,7 +72,11 @@ func TestVpcFlowLogNoData(t *testing.T) {
 		LogStatus:   aws.String("NODATA"),
 	}
 
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
+
+	checkVPCFlowLog(t, log, expectedEvent)
 }
 
 func TestVpcFlowLogHeader(t *testing.T) {
@@ -81,4 +87,17 @@ func TestVpcFlowLogHeader(t *testing.T) {
 func TestVpcFlowLogType(t *testing.T) {
 	parser := &VPCFlowParser{}
 	require.Equal(t, "AWS.VPCFlow", parser.LogType())
+}
+
+func checkVPCFlowLog(t *testing.T, log string, expectedEvent *VPCFlow) {
+	parser := &VPCFlowParser{}
+	events := parser.Parse(log)
+	require.Equal(t, 1, len(events))
+	event := events[0].(*VPCFlow)
+
+	// rowid changes each time
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
+	expectedEvent.PantherRowID = event.PantherRowID
+
+	require.Equal(t, expectedEvent, event)
 }

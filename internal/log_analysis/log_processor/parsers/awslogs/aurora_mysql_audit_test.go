@@ -48,11 +48,30 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 		Object:  aws.String("'select `user_id` as `userId`, `address`, `type`, `access`, `ordinal`, `token`, `verified`, `organization_id` as `organizationId`, `expires_at` as `expiresAt`, `created_at` as `createdAt`, `updated_at` as `updatedAt` from `address_verification` where `ordinal` = \\'primary\\' and `access` = \\'public\\' and `type` = \\'phoneNumber\\' and `verified` = true and `user_id` = \\'12345678-8a3b-4d3f-96a7-19cc4c58c25d\\''"),
 		RetCode: aws.Int(0),
 	}
-	parser := &AuroraMySQLAuditParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.AuroraMySQLAudit")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyIPAddresses("10.0.143.147")
+	expectedEvent.AppendAnyDomainNames("db-instance-name")
+
+	checkAuroraMysqlAuditLogLog(t, log, expectedEvent)
 }
 
 func TestAuroraMysqlAuditLogType(t *testing.T) {
 	parser := &AuroraMySQLAuditParser{}
 	require.Equal(t, "AWS.AuroraMySQLAudit", parser.LogType())
+}
+
+func checkAuroraMysqlAuditLogLog(t *testing.T, log string, expectedEvent *AuroraMySQLAudit) {
+	parser := &AuroraMySQLAuditParser{}
+	events := parser.Parse(log)
+	require.Equal(t, 1, len(events))
+	event := events[0].(*AuroraMySQLAudit)
+
+	// rowid changes each time
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
+	expectedEvent.PantherRowID = event.PantherRowID
+
+	require.Equal(t, expectedEvent, event)
 }

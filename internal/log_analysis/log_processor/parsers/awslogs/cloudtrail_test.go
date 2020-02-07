@@ -28,9 +28,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-func TestCloudTrailLog(t *testing.T) {
-	parser := &CloudTrailParser{}
-
+func TestCloudTrailLogGenerateDataKey(t *testing.T) {
 	//nolint:lll
 	log := `{"Records": [{"eventVersion":"1.05","userIdentity":{"type":"AWSService","invokedBy":"cloudtrail.amazonaws.com"},"eventTime":"2018-08-26T14:17:23Z","eventSource":"kms.amazonaws.com","eventName":"GenerateDataKey","awsRegion":"us-west-2","sourceIPAddress":"cloudtrail.amazonaws.com","userAgent":"cloudtrail.amazonaws.com","requestParameters":{"keySpec":"AES_256","encryptionContext":{"aws:cloudtrail:arn":"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail","aws:s3:arn":"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"},"keyId":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"},"responseElements":null,"requestID":"3cff2472-5a91-4bd9-b6d2-8a7a1aaa9086","eventID":"7a215e16-e0ad-4f6c-82b9-33ff6bbdedd2","readOnly":true,"resources":[{"ARN":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0","accountId":"888888888888","type":"AWS::KMS::Key"}],"eventType":"AwsApiCall","recipientAccountId":"888888888888","sharedEventID":"238c190c-1a30-4756-8e08-19fc36ad1b9f"}]}`
 
@@ -60,21 +58,42 @@ func TestCloudTrailLog(t *testing.T) {
 		EventType:          aws.String("AwsApiCall"),
 		RecipientAccountID: aws.String("888888888888"),
 		SharedEventID:      aws.String("238c190c-1a30-4756-8e08-19fc36ad1b9f"),
-		RequestParameters: map[string]interface{}{
-			"keyId":   "arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0",
-			"keySpec": "AES_256",
-			"encryptionContext": map[string]interface{}{
-				"aws:cloudtrail:arn": "arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
-				//nolint:lll
-				"aws:s3:arn": "arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz",
-			},
-		},
+		//nolint:lll
+		RequestParameters: newRawMessage(`{"keySpec":"AES_256","encryptionContext":{"aws:cloudtrail:arn":"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail","aws:s3:arn":"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"},"keyId":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"}`),
 	}
 
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.CloudTrail")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
+	expectedEvent.AppendAnyAWSARNs("arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0",
+		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
+		//nolint:lll
+		"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz")
+	expectedEvent.AppendAnyAWSAccountIds("888888888888")
+
+	checkCloudTrailLog(t, log, []*CloudTrail{expectedEvent})
 }
 
 func TestCloudTrailLogType(t *testing.T) {
 	parser := &CloudTrailParser{}
 	require.Equal(t, "AWS.CloudTrail", parser.LogType())
+}
+
+func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) {
+	parser := &CloudTrailParser{}
+	events := parser.Parse(log)
+
+	require.Equal(t, len(expectedEvents), len(events))
+
+	// panther fields
+	for i, expectedEvent := range expectedEvents {
+		// rowid changes each time
+		event := events[i].(*CloudTrail)
+		require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
+		event.PantherRowID = expectedEvent.PantherRowID
+	}
+
+	for i := range events {
+		require.Equal(t, expectedEvents[i], events[i].(*CloudTrail))
+	}
 }

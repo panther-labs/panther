@@ -1,3 +1,5 @@
+package awslogs
+
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,14 +18,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { TextArea, TextAreaProps } from 'pouncejs';
-import { FieldConfig, useField } from 'formik';
+import jsoniter "github.com/json-iterator/go"
 
-const FormikTextArea: React.FC<TextAreaProps & Required<Pick<FieldConfig, 'name'>>> = props => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta] = useField(props.name);
-  return <TextArea {...props} error={meta.touched && meta.error} />;
-};
-
-export default FormikTextArea;
+func newRawMessage(jsonString string) *jsoniter.RawMessage {
+	rawMsg := (jsoniter.RawMessage)(jsonString)
+	return &rawMsg
+}

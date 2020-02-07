@@ -68,8 +68,13 @@ func TestHTTPLog(t *testing.T) {
 		ErrorReason:            nil,
 	}
 
-	parser := &ALBParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyIPAddresses("192.168.131.39", "10.0.0.1")
+	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
+
+	checkALBLog(t, log, expectedEvent)
 }
 
 func TestHTTPSLog(t *testing.T) {
@@ -114,8 +119,15 @@ func TestHTTPSLog(t *testing.T) {
 		ErrorReason:            nil,
 	}
 
-	parser := &ALBParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyIPAddresses("192.168.131.39", "10.0.0.1")
+	expectedEvent.AppendAnyDomainNames("www.example.com")
+	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067",
+		"arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012")
+
+	checkALBLog(t, log, expectedEvent)
 }
 
 func TestHTTP2Log(t *testing.T) {
@@ -160,8 +172,13 @@ func TestHTTP2Log(t *testing.T) {
 		ErrorReason:            nil,
 	}
 
-	parser := &ALBParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyIPAddresses("10.0.1.252", "10.0.0.66")
+	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
+
+	checkALBLog(t, log, expectedEvent)
 }
 
 func TestHTTPSNoTarget(t *testing.T) {
@@ -204,11 +221,30 @@ func TestHTTPSNoTarget(t *testing.T) {
 		RedirectURL:            nil,
 		ErrorReason:            nil,
 	}
-	parser := &ALBParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyIPAddresses("138.246.253.5")
+	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
+
+	checkALBLog(t, log, expectedEvent)
 }
 
 func TestAlbLogType(t *testing.T) {
 	parser := &ALBParser{}
 	require.Equal(t, "AWS.ALB", parser.LogType())
+}
+
+func checkALBLog(t *testing.T, log string, expectedEvent *ALB) {
+	parser := &ALBParser{}
+	events := parser.Parse(log)
+	require.Equal(t, 1, len(events))
+	event := events[0].(*ALB)
+
+	// rowid changes each time
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
+	expectedEvent.PantherRowID = event.PantherRowID
+
+	require.Equal(t, expectedEvent, event)
 }

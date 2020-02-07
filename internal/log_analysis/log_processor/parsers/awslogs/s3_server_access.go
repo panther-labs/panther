@@ -61,6 +61,9 @@ type S3ServerAccess struct {
 	HostHeader         *string            `json:"hostheader,omitempty"`
 	TLSVersion         *string            `json:"tlsVersion,omitempty"`
 	AdditionalFields   []string           `json:"additionalFields,omitempty"`
+
+	// NOTE: added to end of struct to allow expansion later
+	AWSPantherLog
 }
 
 // S3ServerAccessParser parses AWS S3 Server Access logs
@@ -127,6 +130,8 @@ func (p *S3ServerAccessParser) Parse(log string) []interface{} {
 		AdditionalFields:   additionalFields,
 	}
 
+	event.updatePantherFields(p)
+
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
@@ -138,4 +143,12 @@ func (p *S3ServerAccessParser) Parse(log string) []interface{} {
 // LogType returns the log type supported by this parser
 func (p *S3ServerAccessParser) LogType() string {
 	return "AWS.S3ServerAccess"
+}
+
+func (event *S3ServerAccess) updatePantherFields(p *S3ServerAccessParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Time)
+	event.AppendAnyIPAddressPtrs(event.RemoteIP)
+	if event.Requester != nil && strings.HasPrefix(*event.Requester, "arn:") {
+		event.AppendAnyAWSARNs(*event.Requester)
+	}
 }

@@ -24,21 +24,33 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
+type table1Event struct {
+	parsers.PantherLog
+	FavoriteFruit string
+}
+
+type table2Event struct {
+	awslogs.AWSPantherLog
+	FavoriteColor string
+}
+
 func TestGenerateViewAllLogs(t *testing.T) {
 	table1, err := awsglue.NewGlueMetadata("db", "table1", "test table1", awsglue.GlueTableHourly,
-		false, nil)
+		false, &table1Event{})
 	require.NoError(t, err)
 	table2, err := awsglue.NewGlueMetadata("db", "table2", "test table2", awsglue.GlueTableHourly,
-		false, nil)
+		false, &table2Event{})
 	require.NoError(t, err)
 	// nolint (lll)
 	expectedSQL := `create or replace view panther_views.all_logs as
-select p_log_type,p_row_id,p_event_time,p_any_ip_addresses,p_any_ip_domain_names,p_any_aws_account_ids,p_any_aws_instance_ids,p_any_aws_arns,p_any_aws_tags,year,month,day,hour from db.table1
+select day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_event_time,p_log_type,p_row_id,year from db.table1
 	union all
-select p_log_type,p_row_id,p_event_time,p_any_ip_addresses,p_any_ip_domain_names,p_any_aws_account_ids,p_any_aws_instance_ids,p_any_aws_arns,p_any_aws_tags,year,month,day,hour from db.table2
+select day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_event_time,p_log_type,p_row_id,year from db.table2
 ;
 `
 	sql, err := generateViewAllLogs([]*awsglue.GlueMetadata{table1, table2})

@@ -44,8 +44,12 @@ func TestAccessLog(t *testing.T) {
 		HTTPReferer:   aws.String("https://domain1.com/?p=1"),
 	}
 
-	parser := &AccessParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Nginx.Access")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
+
+	checkAccessLog(t, log, expectedEvent)
 }
 
 func TestAccessLogWithoutReferer(t *testing.T) {
@@ -63,11 +67,28 @@ func TestAccessLogWithoutReferer(t *testing.T) {
 		HTTPUserAgent: aws.String(`Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.htm$`),
 	}
 
-	parser := &AccessParser{}
-	require.Equal(t, []interface{}{expectedEvent}, parser.Parse(log))
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Nginx.Access")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
+
+	checkAccessLog(t, log, expectedEvent)
 }
 
 func TestAccessLogType(t *testing.T) {
 	parser := &AccessParser{}
 	require.Equal(t, "Nginx.Access", parser.LogType())
+}
+
+func checkAccessLog(t *testing.T, log string, expectedEvent *Access) {
+	parser := &AccessParser{}
+	events := parser.Parse(log)
+	require.Equal(t, 1, len(events))
+	event := events[0].(*Access)
+
+	// rowid changes each time
+	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
+	expectedEvent.PantherRowID = event.PantherRowID
+
+	require.Equal(t, expectedEvent, event)
 }
