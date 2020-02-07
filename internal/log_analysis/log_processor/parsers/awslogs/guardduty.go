@@ -37,15 +37,15 @@ type GuardDuty struct {
 	AccountID     *string              `json:"accountId" validate:"len=12,numeric" description:"The ID of the AWS account in which the activity took place that prompted GuardDuty to generate this finding."`
 	Region        *string              `json:"region" validate:"required" description:"The AWS region in which the finding was generated."`
 	Partition     *string              `json:"partition" validate:"required" description:"The AWS partition in which the finding was generated."`
-	ID            *string              `json:"id,omitempty" validate:"required" description:"A Unique ID for finding."`
-	Arn           *string              `json:"arn" validate:"required" description:"A Unique ID as ARN for finding."`
+	ID            *string              `json:"id,omitempty" validate:"required" description:"A unique identifier for the finding."`
+	Arn           *string              `json:"arn" validate:"required" description:"A unique identifier formatted as an ARN for the finding."`
 	Type          *string              `json:"type" validate:"required" description:"A concise yet readable description of the potential security issue."`
 	Resource      *jsoniter.RawMessage `json:"resource" validate:"required" description:"The AWS resource against which the activity took place that prompted GuardDuty to generate this finding."`
 	Severity      *float32             `json:"severity" validate:"required,min=0" description:"The value of the severity can fall anywhere within the 0.1 to 8.9 range."`
 	CreatedAt     *timestamp.RFC3339   `json:"createdAt" validate:"required,min=0" description:"The initial creation time of the finding (UTC)."`
 	UpdatedAt     *timestamp.RFC3339   `json:"updatedAt" validate:"required,min=0" description:"The last update time of the finding (UTC)."`
-	Title         *string              `json:"title" validate:"required" description:"A short description of finding."`
-	Description   *string              `json:"description" validate:"required" description:"A long description of finding."`
+	Title         *string              `json:"title" validate:"required" description:"A short description of the finding."`
+	Description   *string              `json:"description" validate:"required" description:"A long description of the finding."`
 	Service       *GuardDutyService    `json:"service" validate:"required" description:"Additional information about the affected service."`
 
 	// NOTE: added to end of struct to allow expansion later
@@ -95,7 +95,7 @@ func (p *GuardDutyParser) LogType() string {
 }
 
 func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
-	event.SetRequiredPtr(p.LogType(), event.UpdatedAt)
+	event.SetCoreFieldsPtr(p.LogType(), event.UpdatedAt)
 
 	// structured (parsed) fields
 	event.AppendAnyAWSARNPtrs(event.Arn)

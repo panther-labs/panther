@@ -797,7 +797,7 @@ func bulkUploadSuccess(t *testing.T) {
 	assert.NotEqual(t, getResult.Payload.VersionID, policy.VersionID)
 	assert.NotEmpty(t, getResult.Payload.VersionID)
 	policy.AutoRemediationParameters = map[string]string{"hello": "goodbye"}
-	policy.Description = "Matches every resource"
+	policy.Description = "Matches every resource\n"
 	policy.LastModified = getResult.Payload.LastModified
 	policy.Tests[0].Resource = `{"Bucket":"empty"}`
 	policy.Suppressions = []string{}

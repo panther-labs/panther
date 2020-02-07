@@ -35,8 +35,7 @@ Log format & samples can be seen here: https://docs.aws.amazon.com/vpc/latest/us
 
 // nolint:lll
 type VPCFlow struct {
-	// default fields
-	Version     *int               `json:"version,omitempty"  description:"The VPC Flow Logs version. If you use the default format, the version is 2. If you specify a custom format, the version is 3."`
+	Version     *int               `json:"version,omitempty" validate:"required" description:"The VPC Flow Logs version. If you use the default format, the version is 2. If you specify a custom format, the version is 3."`
 	AccountID   *string            `json:"account,omitempty" validate:"omitempty,len=12,numeric" description:"The AWS account ID for the flow log."`
 	InterfaceID *string            `json:"interfaceId,omitempty" description:"The ID of the network interface for which the traffic is recorded."`
 	SrcAddr     *string            `json:"srcAddr,omitempty" description:"The source address for incoming traffic, or the IPv4 or IPv6 address of the network interface for outgoing traffic on the network interface. The IPv4 address of the network interface is always its private IPv4 address. "`
@@ -252,7 +251,7 @@ func (p *VPCFlowParser) LogType() string {
 }
 
 func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
-	event.SetRequiredPtr(p.LogType(), event.Start)
+	event.SetCoreFieldsPtr(p.LogType(), event.Start)
 	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
 	event.AppendAnyAWSInstanceIdPtrs(event.InstanceID)
 	event.AppendAnyIPAddressPtrs(event.SrcAddr, event.DstAddr, event.PacketSrcAddr, event.PacketDstAddr)

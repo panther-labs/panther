@@ -19,39 +19,41 @@ package mage
  */
 
 import (
+	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fatih/color"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+	"gopkg.in/yaml.v2"
 
+	"github.com/panther-labs/panther/api/gateway/analysis/client"
+	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
-	"github.com/panther-labs/panther/api/lambda/users/models"
+	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/awsathena"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/athenaviews"
 )
 
 const (
 	// CloudFormation templates + stacks
-	backendStack     = "panther-app"
-	backendTemplate  = "deployments/backend.yml"
-	frontendStack    = "panther-app-frontend"
-	frontendTemplate = "deployments/frontend.yml"
-	bucketStack      = "panther-buckets" // prereq stack with Panther S3 buckets
-	bucketTemplate   = "deployments/core/buckets.yml"
+	backendStack    = "panther-app"
+	backendTemplate = "deployments/backend.yml"
+	bucketStack     = "panther-buckets" // prereq stack with Panther S3 buckets
+	bucketTemplate  = "deployments/core/buckets.yml"
 
 	// Python layer
 	layerSourceDir   = "out/pip/analysis/python"
@@ -59,113 +61,95 @@ const (
 	layerS3ObjectKey = "layers/python-analysis.zip"
 )
 
+// Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
+//     n. california, us-gov, china, paris, stockholm, brazil, osaka, or bahrain
+// These regions are missing combinations of AppSync, Cognito, Athena, and/or Glue.
+// https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services
+var supportedRegions = map[string]bool{
+	"ap-northeast-1": true, // tokyo
+	"ap-northeast-2": true, // seoul
+	"ap-south-1":     true, // mumbai
+	"ap-southeast-1": true, // singapore
+	"ap-southeast-2": true, // sydney
+	"ca-central-1":   true, // canada
+	"eu-central-1":   true, // frankfurt
+	"eu-west-1":      true, // ireland
+	"eu-west-2":      true, // london
+	"us-east-1":      true, // n. virginia
+	"us-east-2":      true, // ohio
+	"us-west-2":      true, // oregon
+}
+
 // NOTE: Mage ignores the first word of the comment if it matches the function name.
 // So the comment below is intentionally "Deploy Deploy"
 
 // Deploy Deploy application infrastructure
-func Deploy() error {
+func Deploy() {
+	start := time.Now()
 	var config PantherConfig
-	if err := loadYamlFile(configFile, &config); err != nil {
-		return err
+	if err := yaml.Unmarshal(readFile(configFile), &config); err != nil {
+		logger.Fatalf("failed to parse config file %s: %v", configFile, err)
 	}
 
-	awsSession, err := session.NewSession()
+	awsSession, err := getSession()
 	if err != nil {
-		return err
+		logger.Fatal(err)
 	}
 
+	deployPrecheck(aws.StringValue(awsSession.Config.Region))
+	Build.Lambda(Build{})
+	preprocessTemplates()
+
+	// Deploy prerequisite bucket stack
 	bucketParams := map[string]string{
 		"AccessLogsBucketName": config.BucketsParameterValues.AccessLogsBucketName,
 	}
-	if err = deployTemplate(awsSession, bucketTemplate, bucketStack, bucketParams); err != nil {
-		return err
-	}
-
-	if err = Build.Lambda(Build{}); err != nil {
-		return err
-	}
-
-	if err = generateGlueTables(); err != nil {
-		return err
-	}
-
-	if err = embedAPISpecs(); err != nil {
-		return err
-	}
-
-	bucketOutputs, err := getStackOutputs(awsSession, bucketStack)
-	if err != nil {
-		return err
-	}
+	bucketOutputs := deployTemplate(awsSession, bucketTemplate, "", bucketStack, bucketParams)
 	bucket := bucketOutputs["SourceBucketName"]
 
-	backendTemplate, err := cfnPackage(backendTemplate, bucket, backendStack)
-	if err != nil {
-		return err
+	// Deploy main application stack
+	params := getBackendDeployParams(awsSession, &config, bucket)
+	backendOutputs := deployTemplate(awsSession, backendTemplate, bucket, backendStack, params)
+	if err := postDeploySetup(awsSession, backendOutputs, &config); err != nil {
+		logger.Fatal(err)
 	}
 
-	backendDeployParams, err := getBackendDeployParams(awsSession, &config, bucket)
-	if err != nil {
-		return err
-	}
+	// Deploy frontend stack
+	deployFrontend(awsSession, bucket, backendOutputs, &config)
 
-	if err = deployTemplate(awsSession, backendTemplate, backendStack, backendDeployParams); err != nil {
-		return err
-	}
-
-	backendOutputs, err := getStackOutputs(awsSession, backendStack)
-	if err != nil {
-		return err
-	}
-
-	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs, "out/.env"); err != nil {
-		return err
-	}
-
-	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
-	if err := awsathena.WorkgroupAssociateS3(awsSession, "primary", backendOutputs["AthenaResultsBucket"]); err != nil {
-		return err
-	}
-	if err := athenaviews.CreateOrReplaceViews(backendOutputs["AthenaResultsBucket"]); err != nil {
-		return err
-	}
-
-	dockerImage, err := buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImageRegistry"])
-	if err != nil {
-		return err
-	}
-
-	frontendTemplate, err := cfnPackage(frontendTemplate, bucket, frontendStack)
-	if err != nil {
-		return err
-	}
-
-	frontendDeployParams := getFrontendDeployParams(&config, dockerImage, backendOutputs)
-
-	if err = deployTemplate(awsSession, frontendTemplate, frontendStack, frontendDeployParams); err != nil {
-		return err
-	}
-
-	if err := enableTOTP(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
-		return err
-	}
-
-	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
-		return err
-	}
-
-	if err := initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], &config); err != nil {
-		return err
-	}
-
+	// Done!
+	logger.Infof("deploy: finished successfully in %s", time.Since(start))
 	color.Yellow("\nPanther URL = https://%s\n", backendOutputs["LoadBalancerUrl"])
-	return nil
+}
+
+// Fail the deploy early if there is a known issue with the user's environment.
+func deployPrecheck(awsRegion string) {
+	// Check the Go version (1.12 fails with a build error)
+	if version := runtime.Version(); version <= "go1.12" {
+		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
+	}
+
+	// Make sure docker is running
+	if _, err := sh.Output("docker", "info"); err != nil {
+		logger.Fatalf("docker is not available: %v", err)
+	}
+
+	// Ensure the AWS region is supported
+	if !supportedRegions[awsRegion] {
+		logger.Fatalf("panther is not supported in %s region", awsRegion)
+	}
+
+	// Ensure swagger is installed
+	swagger := filepath.Join(setupDirectory, "swagger")
+	if _, err := os.Stat(swagger); err != nil {
+		logger.Fatalf("%s not found (%v): run 'mage setup:all'", swagger, err)
+	}
 }
 
 // Generate the set of deploy parameters for the main application stack.
 //
-// This will first upload the layer zipfile unless a custom layer is specified.
-func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) (map[string]string, error) {
+// This will create a Python layer and a self-signed cert if necessary.
+func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) map[string]string {
 	v := config.BackendParameterValues
 	result := map[string]string{
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
@@ -178,65 +162,41 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 
 	// If no custom Python layer is defined, then we need to build the default one.
 	if result["PythonLayerVersionArn"] == "" {
-		version, err := uploadLayer(awsSession, config.PipLayer, bucket, layerS3ObjectKey)
-		if err != nil {
-			return nil, err
-		}
 		result["PythonLayerKey"] = layerS3ObjectKey
-		result["PythonLayerObjectVersion"] = version
+		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, config.PipLayer, bucket, layerS3ObjectKey)
 	}
 
+	// If no pre-existing cert is provided, then create one if necessary.
 	if result["WebApplicationCertificateArn"] == "" {
-		certificateArn, err := uploadLocalCertificate(awsSession)
-		if err != nil {
-			return nil, err
-		}
-		result["WebApplicationCertificateArn"] = certificateArn
-	}
-
-	return result, nil
-}
-
-func getFrontendDeployParams(config *PantherConfig, image string, backendOutputs map[string]string) map[string]string {
-	frontend := config.FrontendParameterValues
-	result := map[string]string{
-		"WebApplicationFargateTaskCPU":              strconv.Itoa(frontend.WebApplicationFargateTaskCPU),
-		"WebApplicationFargateTaskMemory":           strconv.Itoa(frontend.WebApplicationFargateTaskMemory),
-		"WebApplicationImage":                       image,
-		"WebApplicationClusterName":                 backendOutputs["WebApplicationClusterName"],
-		"WebApplicationVpcId":                       backendOutputs["WebApplicationVpcId"],
-		"WebApplicationSubnetOneId":                 backendOutputs["WebApplicationSubnetOneId"],
-		"WebApplicationSubnetTwoId":                 backendOutputs["WebApplicationSubnetTwoId"],
-		"WebApplicationLoadBalancerListenerArn":     backendOutputs["WebApplicationLoadBalancerListenerArn"],
-		"WebApplicationLoadBalancerSecurityGroupId": backendOutputs["WebApplicationLoadBalancerSecurityGroupId"],
+		result["WebApplicationCertificateArn"] = uploadLocalCertificate(awsSession)
 	}
 
 	return result
 }
 
 // Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
-func uploadLayer(awsSession *session.Session, libs []string, bucket, key string) (string, error) {
+func uploadLayer(awsSession *session.Session, libs []string, bucket, key string) string {
 	s3Client := s3.New(awsSession)
 	head, err := s3Client.HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &key})
 
 	sort.Strings(libs)
 	libString := strings.Join(libs, ",")
 	if err == nil && aws.StringValue(head.Metadata["Libs"]) == libString {
-		fmt.Printf("deploy: s3://%s/%s exists and is up to date\n", bucket, key)
-		return *head.VersionId, nil
+		logger.Debugf("deploy: s3://%s/%s exists and is up to date", bucket, key)
+		return *head.VersionId
 	}
 
 	// The layer is re-uploaded only if it doesn't exist yet or the library versions changed.
-	fmt.Println("deploy: downloading " + libString)
+	logger.Info("deploy: downloading python libraries " + libString)
 	if err := os.RemoveAll(layerSourceDir); err != nil {
-		return "", err
+		logger.Fatalf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}
 	if err := os.MkdirAll(layerSourceDir, 0755); err != nil {
-		return "", err
+		logger.Fatalf("failed to create layer directory %s: %v", layerSourceDir, err)
 	}
 	args := append([]string{"install", "-t", layerSourceDir}, libs...)
 	if err := sh.Run("pip3", args...); err != nil {
-		return "", err
+		logger.Fatalf("failed to download pip libraries: %v", err)
 	}
 
 	// The package structure needs to be:
@@ -246,123 +206,48 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	// └ python/policyuniverse-VERSION.dist-info/
 	//
 	// https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
-	if err := shutil.ZipDirectory(path.Dir(layerSourceDir), layerZipfile); err != nil {
-		return "", err
+	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile); err != nil {
+		logger.Fatalf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
 	}
 
 	// Upload to S3
 	result, err := uploadFileToS3(awsSession, layerZipfile, bucket, key, map[string]*string{"Libs": &libString})
 	if err != nil {
-		return "", err
+		logger.Fatalf("failed to upload %s to S3: %v", layerZipfile, err)
 	}
-	return *result.VersionID, nil
+	return *result.VersionID
 }
 
-// Upload resources to S3 and return the path to the modified CloudFormation template.
-// TODO - replace this with our own to avoid relying on the aws cli
-func cfnPackage(templateFile, bucket, stack string) (string, error) {
-	outputDir := path.Join("out", path.Dir(templateFile))
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return "", err
+// After the main stack is deployed, we need to make several manual API calls
+func postDeploySetup(awsSession *session.Session, backendOutputs map[string]string, config *PantherConfig) error {
+	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
+	workgroup, bucket := "primary", backendOutputs["AthenaResultsBucket"]
+	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, bucket); err != nil {
+		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, bucket, err)
+	}
+	if err := athenaviews.CreateOrReplaceViews(bucket); err != nil {
+		return fmt.Errorf("failed to create/replace athena views for %s bucket: %v", bucket, err)
 	}
 
-	// There is no equivalent to this command in the AWS Go SDK.
-	pkgOut := path.Join(outputDir, "package."+path.Base(templateFile))
-	args := []string{"cloudformation", "package",
-		"--output-template-file", pkgOut,
-		"--s3-bucket", bucket,
-		"--s3-prefix", stack,
-		"--template-file", templateFile,
-	}
-
-	if mg.Verbose() {
-		err := sh.Run("aws", args...)
-		if err != nil {
-			return "", err
-		}
-		err = cfnPackagePostProcess(pkgOut)
-		return pkgOut, err
-	}
-
-	// By default, just print a single progress message instead of several lines of explanation
-	fmt.Printf("deploy: cloudformation package %s => %s\n", templateFile, pkgOut)
-	_, err := sh.Output("aws", args...)
-	if err != nil {
-		return "", err
-	}
-	err = cfnPackagePostProcess(pkgOut)
-	return pkgOut, err
-}
-
-// Post-Process all the CFN templates
-func cfnPackagePostProcess(templatePath string) error {
-	templateOriginal, err := ioutil.ReadFile(templatePath)
-	if err != nil {
-		return err
-	}
-
-	var result []string
-	for _, line := range strings.Split(string(templateOriginal), "\n") {
-		line = fixPackageTemplateURL(line)
-		result = append(result, line)
-	}
-
-	err = ioutil.WriteFile(templatePath, []byte(strings.Join(result, "\n")), 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Fix CloudFormation package TemplateURL issues.
-// Somewhere there is a bug that is causing the environment variables specifying region to not be properly respected
-// when constructing the template URLs while deploying to another region than the one specified in the aws config.
-//
-// I believe it is related to this issue: https://github.com/aws/aws-cli/issues/4372
-func fixPackageTemplateURL(line string) string {
-	// This code transforms:
-	// TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template
-	// into:
-	// TemplateURL: https://s3.amazonaws.com/bucket/panther-app/1.template
-	// Unless that is the format the URL was already in.
-	if strings.HasPrefix(strings.TrimSpace(line), "TemplateURL: ") {
-		// Break the line down to the pieces we need
-		lineParts := strings.Split(line, "https://")
-		uriParts := strings.Split(lineParts[1], "/")
-		prefixParts := strings.Split(uriParts[0], ".")
-
-		// Check if the format is already correct
-		if prefixParts[1] == "amazonaws" {
-			return line
-		}
-
-		// Build the new URI
-		prefixParts[1] = "s3"
-		newURIPrefix := strings.Join(prefixParts[1:], ".")
-		newURIParts := append([]string{newURIPrefix}, uriParts[1:]...)
-		lineParts[1] = strings.Join(newURIParts, "/")
-		line = strings.Join(lineParts, "https://")
-	}
-
-	return line
-}
-
-// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
-func enableTOTP(awsSession *session.Session, userPoolID string) error {
-	if mg.Verbose() {
-		fmt.Printf("deploy: enabling TOTP for user pool %s\n", userPoolID)
-	}
-
-	client := cognitoidentityprovider.New(awsSession)
-	_, err := client.SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
+	// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
+	userPoolID := backendOutputs["WebApplicationUserPoolId"]
+	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
+	_, err := cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
 		MfaConfiguration: aws.String("ON"),
 		SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
 			Enabled: aws.Bool(true),
 		},
 		UserPoolId: &userPoolID,
 	})
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
+	}
+
+	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
+		return err
+	}
+
+	return initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], config)
 }
 
 // If the Admin group is empty (e.g. on the initial deploy), create the initial admin user and organization
@@ -373,21 +258,22 @@ func setupOrganization(awsSession *session.Session, userPoolID string) error {
 		UserPoolId: &userPoolID,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list Admin users in Cognito user pool %s: %v", userPoolID, err)
 	}
 	if len(group.Users) > 0 {
 		return nil // an admin already exists - nothing to do
 	}
 
 	// Prompt the user for email + first/last name
-	fmt.Println("\nSetting up initial Panther admin user...")
+	logger.Info("setting up initial Panther admin user...")
+	fmt.Println()
 	firstName := promptUser("First name: ", nonemptyValidator)
 	lastName := promptUser("Last name: ", nonemptyValidator)
 	email := promptUser("Email: ", emailValidator)
 
 	// Hit users-api.InviteUser to invite a new user to the admin group
-	input := &models.LambdaInput{
-		InviteUser: &models.InviteUserInput{
+	input := &usermodels.LambdaInput{
+		InviteUser: &usermodels.InviteUserInput{
 			GivenName:  &firstName,
 			FamilyName: &lastName,
 			Email:      &email,
@@ -397,6 +283,7 @@ func setupOrganization(awsSession *session.Session, userPoolID string) error {
 	if err := invokeLambda(awsSession, "panther-users-api", input); err != nil {
 		return err
 	}
+	logger.Infof("invite sent to %s: check your email! (it may be in spam)", email)
 
 	// Hit organization-api.CreateOrganization to create organization entry
 	createOrgInput := &orgmodels.LambdaInput{
@@ -405,30 +292,66 @@ func setupOrganization(awsSession *session.Session, userPoolID string) error {
 			DisplayName: aws.String(firstName + "-" + lastName),
 		},
 	}
-	if err := invokeLambda(awsSession, "panther-organization-api", createOrgInput); err != nil {
-		return err
-	}
-	return nil
+	return invokeLambda(awsSession, "panther-organization-api", createOrgInput)
 }
 
-func invokeLambda(awsSession *session.Session, functionName string, input interface{}) error {
-	payload, err := jsoniter.Marshal(input)
-	if err != nil {
-		return err
-	}
+// Install Python rules/policies if they don't already exist.
+func initializeAnalysisSets(awsSession *session.Session, endpoint string, config *PantherConfig) error {
+	httpClient := gatewayapi.GatewayClient(awsSession)
+	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
+		WithBasePath("/v1").WithHost(endpoint))
 
-	lambdaClient := lambda.New(awsSession)
-	response, err := lambdaClient.Invoke(&lambda.InvokeInput{
-		FunctionName: aws.String(functionName),
-		Payload:      payload,
+	policies, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
+		PageSize:   aws.Int64(1),
+		HTTPClient: httpClient,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list existing policies: %v", err)
 	}
 
-	if response.FunctionError != nil {
-		return fmt.Errorf("failed to invoke %s: %s error: %s",
-			functionName, *response.FunctionError, string(response.Payload))
+	rules, err := apiClient.Operations.ListRules(&operations.ListRulesParams{
+		PageSize:   aws.Int64(1),
+		HTTPClient: httpClient,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list existing rules: %v", err)
 	}
+
+	if len(policies.Payload.Policies) > 0 || len(rules.Payload.Rules) > 0 {
+		logger.Debug("deploy: initial analysis set ignored: policies and/or rules already exist")
+		return nil
+	}
+
+	var newRules, newPolicies int64
+	for _, path := range config.InitialAnalysisSets {
+		logger.Info("deploy: uploading initial analysis pack " + path)
+		var contents []byte
+		if strings.HasPrefix(path, "file://") {
+			contents = readFile(strings.TrimPrefix(path, "file://"))
+		} else {
+			contents, err = download(path)
+			if err != nil {
+				return err
+			}
+		}
+
+		// BulkUpload to panther-analysis-api
+		encoded := base64.StdEncoding.EncodeToString(contents)
+		response, err := apiClient.Operations.BulkUpload(&operations.BulkUploadParams{
+			Body: &analysismodels.BulkUpload{
+				Data:   analysismodels.Base64zipfile(encoded),
+				UserID: "00000000-0000-0000-0000-000000000000",
+			},
+			HTTPClient: httpClient,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to upload %s: %v", path, err)
+		}
+
+		newRules += *response.Payload.NewRules
+		newPolicies += *response.Payload.NewPolicies
+	}
+
+	logger.Infof("deploy: initialized with %d policies and %d rules", newPolicies, newRules)
 	return nil
 }

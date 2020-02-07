@@ -20,15 +20,12 @@ package mage
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/magefile/mage/mg"
 	"gopkg.in/yaml.v2"
 )
 
@@ -37,103 +34,78 @@ const (
 	space8           = "        "
 )
 
-var (
-	swaggerPattern = regexp.MustCompile(`DefinitionBody: api/[^#]+\.yml.*`)
-	graphqlPattern = regexp.MustCompile(`Definition: api/[^#]+\.graphql.*`)
-)
+// Match "DefinitionBody: api/myspec.yml  # possible comment"
+var swaggerPattern = regexp.MustCompile(`\n {6}DefinitionBody:[ \t]*[\w./]+\.yml[ \t]*(#.+)?`)
 
-// Embed swagger/graphql specs into all API CloudFormation templates, saving them to out/deployments.
-func embedAPISpecs() error {
-	templates, err := filepath.Glob("deployments/*/*.yml")
-	if err != nil {
-		return err
-	}
+// Embed swagger specs into all CloudFormation templates, saving them to out/deployments.
+func embedAPISpecs() {
+	var templates []string
+	walk("deployments", func(path string, info os.FileInfo) {
+		if strings.HasSuffix(path, ".yml") && path != configFile {
+			templates = append(templates, path)
+		}
+	})
 
 	for _, template := range templates {
-		if _, err := embedAPI(template); err != nil {
-			return err
+		cfn := readFile(template)
+
+		newCfn, err := embedAPIs(cfn)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		if newCfn != nil {
+			// Changes were made - save the new file
+			outDir := filepath.Join("out", filepath.Dir(template))
+			if err := os.MkdirAll(outDir, 0755); err != nil {
+				logger.Fatalf("failed to create directory %s: %v", outDir, err)
+			}
+
+			cfnDest := filepath.Join(outDir, "embedded."+filepath.Base(template))
+			logger.Debugf("deploy: transformed %s => %s with embedded APIs", template, cfnDest)
+			writeFile(cfnDest, newCfn)
 		}
 	}
-
-	return nil
 }
 
-// Transform a CloudFormation template by embedding Swagger + GraphQL definitions.
+// Transform a single CloudFormation template by embedding Swagger definitions.
 //
-// Returns the new template path, which may be unchanged if there was nothing to embed.
-func embedAPI(cfnFilename string) (string, error) {
-	cfn, err := ioutil.ReadFile(cfnFilename)
-	if err != nil {
-		return "", fmt.Errorf("failed to open CloudFormation template %s: %s", cfnFilename, err)
-	}
-
-	var errList []error
+// Returns the new template body, or nil if no changes were necessary.
+func embedAPIs(cfn []byte) ([]byte, error) {
+	var err error
 	changed := false
+
 	cfn = swaggerPattern.ReplaceAllFunc(cfn, func(match []byte) []byte {
-		apiFilename := strings.TrimSpace(strings.Split(string(match), " ")[1])
-		if mg.Verbose() {
-			fmt.Printf("deploy: %s embedding swagger DefinitionBody: %s\n", cfnFilename, apiFilename)
-		}
+		strMatch := strings.TrimSpace(string(match))
+		apiFilename := strings.Split(strMatch, " ")[1]
 
-		body, err := loadSwagger(apiFilename)
+		var body *string
+		body, err = loadSwagger(apiFilename)
 		if err != nil {
-			errList = append(errList, err)
-			return match // return the original string unmodified
+			return nil // stop here and the top-level err will be returned
 		}
 
 		changed = true
-		return []byte("DefinitionBody:\n" + *body)
+		return []byte("\n      DefinitionBody:\n" + *body)
 	})
 
-	cfn = graphqlPattern.ReplaceAllFunc(cfn, func(match []byte) []byte {
-		apiFilename := strings.TrimSpace(strings.Split(string(match), " ")[1])
-		if mg.Verbose() {
-			fmt.Printf("deploy: %s embedding graphql Definition: %s\n", cfnFilename, apiFilename)
-		}
-
-		graphql, err := ioutil.ReadFile(apiFilename)
-		if err != nil {
-			errList = append(errList, err)
-			return match
-		}
-
-		spaced := space8 + strings.ReplaceAll(string(graphql), "\n", "\n"+space8)
-		changed = true
-		return []byte("Definition: |\n" + spaced)
-	})
-
-	if err := JoinErrors("deploy: embedAPI", errList); err != nil {
-		return "", err
+	if err != nil {
+		return nil, err
 	}
-
 	if !changed {
-		// No changes - return original file
-		return cfnFilename, nil
+		return nil, nil
 	}
-
-	outputDir := path.Join("out", path.Dir(cfnFilename))
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to build output dir %s: %s", outputDir, err)
-	}
-
-	cfnDest := path.Join(outputDir, "embedded."+path.Base(cfnFilename))
-	if err := ioutil.WriteFile(cfnDest, cfn, 0644); err != nil {
-		return "", fmt.Errorf("failed to write new CloudFormation template %s: %s", cfnDest, err)
-	}
-
-	return cfnDest, nil
+	return cfn, nil
 }
 
 // Load and transform a Swagger api.yml file for embedding in CloudFormation.
 //
-// TODO - add unit tests for this function
 // This is required so we can interpolate the Region and AccountID - API gateway needs to know
 // the ARN of the Lambda function being invoked for each endpoint. The interpolation does not work
-// if we just reference a swagger file - the api spec must be embedded into the CloudFormation itself.
+// if we just reference a swagger file in S3 - the api spec must be embedded into the CloudFormation itself.
 func loadSwagger(filename string) (*string, error) {
 	var apiBody map[string]interface{}
-	if err := loadYamlFile(filename, &apiBody); err != nil {
-		return nil, err
+	if err := yaml.Unmarshal(readFile(filename), &apiBody); err != nil {
+		return nil, fmt.Errorf("failed to parse file %s: %v", filename, err)
 	}
 
 	// Allow AWS_IAM authorization (i.e. AWS SIGv4 signatures).
@@ -156,7 +128,7 @@ func loadSwagger(filename string) (*string, error) {
 
 	functionResource := apiBody[pantherLambdaKey].(string)
 	if functionResource == "" {
-		return nil, fmt.Errorf("%s is required in '%s'", pantherLambdaKey, filename)
+		return nil, fmt.Errorf("%s must be defined in swagger file %s", pantherLambdaKey, filename)
 	}
 	delete(apiBody, pantherLambdaKey)
 
@@ -196,10 +168,10 @@ func loadSwagger(filename string) (*string, error) {
 
 	newBody, err := yaml.Marshal(apiBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal modified yaml: %s", err)
+		return nil, fmt.Errorf("failed to marshal swagger-embedded yaml: %v", err)
 	}
 
 	// Add spaces for the correct indentation when embedding.
-	result := space8 + strings.ReplaceAll(string(newBody), "\n", "\n"+space8)
+	result := space8 + strings.ReplaceAll(strings.TrimSpace(string(newBody)), "\n", "\n"+space8)
 	return &result, nil
 }

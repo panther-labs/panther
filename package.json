@@ -117,6 +117,6 @@
     "start": "cross-env NODE_ENV=development DOTENV_CONFIG_PATH=out/.env node -r dotenv/config node_modules/.bin/webpack-dev-server",
     "serve": "node web/scripts/serve.js",
     "generate-gql": "graphql-codegen",
-    "lint": "eslint \"{web/src/**,.}/*.{ts,js,tsx}\" && prettier --list-different  \"{web/src/**,.}/*.{ts,js,tsx,md,json,yml}\" && tsc -p ."
+    "lint": "eslint \"{web/src/**,.}/*.{ts,js,tsx}\" && prettier --list-different \"{web/src/**,.}/*.{ts,js,tsx,md,json,yml}\" && tsc -p ."
   }
 }

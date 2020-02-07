@@ -49,19 +49,23 @@
     "Columns": [
      {
       "Name": "FirstName",
-      "Type": "string"
+      "Type": "string",
+      "Comment": "test field"
      },
      {
       "Name": "LastName",
-      "Type": "string"
+      "Type": "string",
+      "Comment": "test field"
      },
      {
       "Name": "DOB",
-      "Type": "timestamp"
+      "Type": "timestamp",
+      "Comment": "test field"
      },
      {
       "Name": "Anniversary",
-      "Type": "timestamp"
+      "Type": "timestamp",
+      "Comment": "test field"
      }
     ]
    },

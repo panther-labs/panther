@@ -19,33 +19,37 @@ package mage
  */
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
 )
 
 // Generate Glue tables for log processor output as CloudFormation
-func generateGlueTables() (err error) {
-	outDir := "out/deployments/log_analysis"
-	err = os.MkdirAll(outDir, 0755)
-	if err != nil {
-		return
+func generateGlueTables() error {
+	outDir := filepath.Join("out", "deployments", "log_analysis")
+	if err := os.MkdirAll(outDir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
 	}
-	glueCfFileName := outDir + "/gluetables.json"
+	glueCfFileName := filepath.Join(outDir, "gluetables.json")
 
 	glueCfFile, err := os.Create(glueCfFileName)
 	if err != nil {
-		return
+		return fmt.Errorf("failed to create file %s: %v", glueCfFileName, err)
 	}
-	defer func() {
-		glueCfFile.Close()
-	}()
+	defer glueCfFile.Close()
 
+	tables := registry.AvailableTables()
+	logger.Debugf("deploy: cfngen: loaded %d glue tables", len(tables))
 	cf, err := gluecf.GenerateCloudFormation(registry.AvailableTables())
 	if err != nil {
-		return
+		return fmt.Errorf("failed to generate Glue Data Catalog CloudFormation template: %v", err)
 	}
-	_, err = glueCfFile.Write(cf)
-	return
+
+	if _, err = glueCfFile.Write(cf); err != nil {
+		return fmt.Errorf("failed to write file %s: %v", glueCfFileName, err)
+	}
+	return nil
 }

@@ -201,7 +201,7 @@ Resources:
         RemediationApi: !Sub https://${RemediationAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
         ResourcesApi: !Sub https://${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
         UserPoolId: !GetAtt Cognito.Outputs.UserPoolId
-      TemplateURL: ../out/deployments/core/embedded.appsync.yml
+      TemplateURL: core/appsync.yml
 
   ##### Nested Stacks: Compliance #####
   ComplianceAPI:

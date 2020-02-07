@@ -95,13 +95,13 @@ func TestAppendAnyStringWithEmptyString(t *testing.T) {
 
 func TestSetRequired(t *testing.T) {
 	event := PantherLog{}
-	const logType = "Data.Source"
+	logType := "Data.Source"
 	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
 	expectedEvent := PantherLog{
-		PantherLogType:   logType,
-		PantherEventTime: eventTime,
+		PantherLogType:   &logType,
+		PantherEventTime: &eventTime,
 	}
-	event.SetRequired(logType, eventTime)
+	event.SetCoreFields(logType, eventTime)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 	require.Equal(t, expectedEvent, event)
 }

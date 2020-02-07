@@ -53,7 +53,7 @@ type CloudTrail struct {
 	ManagementEvent     *bool                   `json:"managementEvent,omitempty" description:"A Boolean value that identifies whether the event is a management event. managementEvent is shown in an event record if eventVersion is 1.06 or higher, and the event type is one of the following: AwsApiCall, AwsConsoleAction, AwsConsoleSignIn,  AwsServiceEvent"`
 	ReadOnly            *bool                   `json:"readOnly,omitempty" description:"Identifies whether this operation is a read-only operation."`
 	RecipientAccountID  *string                 `json:"recipientAccountId,omitempty" validate:"required,len=12,numeric" description:"Represents the account ID that received this event. The recipientAccountID may be different from the CloudTrail userIdentity Element accountId. This can occur in cross-account resource access."`
-	RequestID           *string                 `json:"requestId,omitempty" validate:"required" description:"The value that identifies the request. The service being called generates this value."`
+	RequestID           *string                 `json:"requestId,omitempty" description:"The value that identifies the request. The service being called generates this value."`
 	RequestParameters   *jsoniter.RawMessage    `json:"requestParameters,omitempty" description:"The parameters, if any, that were sent with the request. These parameters are documented in the API reference documentation for the appropriate AWS service."`
 	Resources           []CloudTrailResources   `json:"resources,omitempty" description:"A list of resources accessed in the event."`
 	ResponseElements    *jsoniter.RawMessage    `json:"responseElements,omitempty" description:"The response element for actions that make changes (create, update, or delete actions). If an action does not change state (for example, a request to get or list objects), this element is omitted. These actions are documented in the API reference documentation for the appropriate AWS service."`
@@ -153,7 +153,7 @@ func (p *CloudTrailParser) LogType() string {
 }
 
 func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
-	event.SetRequiredPtr(p.LogType(), event.EventTime)
+	event.SetCoreFieldsPtr(p.LogType(), event.EventTime)
 
 	// structured (parsed) fields
 	if event.SourceIPAddress != nil && !strings.HasSuffix(*event.SourceIPAddress, "amazonaws.com") {

@@ -19,13 +19,9 @@ package mage
  */
 
 import (
-	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/magefile/mage/mg"
 )
 
 const (
@@ -61,94 +57,63 @@ func commentEachLine(prefix, text string) string {
 }
 
 // Add license headers to all applicable source files.
-func fmtLicense() error {
-	if err := fmtLicenseGroup(agplSource, agplPaths...); err != nil {
-		return err
-	}
-	if err := fmtLicenseGroup(apacheSource, apachePaths...); err != nil {
-		return err
-	}
+func fmtLicense() {
+	logger.Info("fmt: license headers")
+	fmtLicenseGroup(agplSource, agplPaths...)
+	fmtLicenseGroup(apacheSource, apachePaths...)
 	if info, err := os.Stat("enterprise"); err == nil && info.IsDir() {
-		return fmtLicenseGroup(commercialSource, commercialPaths...)
+		fmtLicenseGroup(commercialSource, commercialPaths...)
 	}
-
-	return nil
 }
 
 // Add one type of license header to a group of files.
-func fmtLicenseGroup(sourceFile string, basePaths ...string) error {
-	if mg.Verbose() {
-		fmt.Println("fmt: license:", sourceFile, basePaths)
-	}
-
-	rawHeader, err := ioutil.ReadFile(sourceFile)
-	if err != nil {
-		return err
-	}
-	header := strings.TrimSpace(string(rawHeader))
+func fmtLicenseGroup(sourceFile string, basePaths ...string) {
+	logger.Debugf("fmt: license header %s for %s", sourceFile, strings.Join(basePaths, " "))
+	header := strings.TrimSpace(string(readFile(sourceFile)))
 
 	asteriskLicense := "/**\n" + commentEachLine(" *", header) + "\n */"
 	hashtagLicense := commentEachLine("#", header)
 
 	for _, root := range basePaths {
-		err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
+		walk(root, func(path string, info os.FileInfo) {
+			if !info.IsDir() {
+				addFileLicense(path, asteriskLicense, hashtagLicense)
 			}
-			if info.IsDir() {
-				return nil // skip directories
-			}
-			return addFileLicense(path, asteriskLicense, hashtagLicense)
 		})
-
-		if err != nil {
-			return err
-		}
 	}
-
-	return nil
 }
 
-func addFileLicense(path, asteriskLicense, hashtagLicense string) error {
+func addFileLicense(path, asteriskLicense, hashtagLicense string) {
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".go":
-		return modifyFile(path, func(contents string) string {
+		licenseModifier(path, func(contents string) string {
 			return addGoLicense(contents, asteriskLicense)
 		})
 	case ".js", ".ts", ".tsx":
-		return modifyFile(path, func(contents string) string {
+		licenseModifier(path, func(contents string) string {
 			return prependHeader(contents, asteriskLicense)
 		})
 	case ".py", ".sh", ".yml", ".yaml":
-		return modifyFile(path, func(contents string) string {
+		licenseModifier(path, func(contents string) string {
 			return prependHeader(contents, hashtagLicense)
 		})
 	case "":
 		// empty extension - might be called "Dockerfile"
 		if strings.ToLower(filepath.Base(path)) == "dockerfile" {
-			return modifyFile(path, func(contents string) string {
+			licenseModifier(path, func(contents string) string {
 				return prependHeader(contents, hashtagLicense)
 			})
 		}
 	}
-
-	return nil
 }
 
 // Rewrite file contents on disk with the given modifier function.
-func modifyFile(path string, modifier func(string) string) error {
-	contentBytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	contents := string(contentBytes)
-
+func licenseModifier(path string, modifier func(string) string) {
+	contents := string(readFile(path))
 	newContents := modifier(contents)
-	if newContents == contents {
-		return nil // no changes required
+	if newContents != contents {
+		writeFile(path, []byte(newContents))
 	}
-
-	return ioutil.WriteFile(path, []byte(newContents), 0644)
 }
 
 // Add the license to the given Go file contents if necessary, returning the modified body.

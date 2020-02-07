@@ -19,13 +19,12 @@ package mage
  */
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
@@ -49,36 +48,123 @@ var (
 	)
 )
 
-// JoinErrors formats multiple errors into a single error.
-func JoinErrors(command string, errList []error) error {
-	if len(errList) == 0 {
-		return nil
+// Cfn Lint CloudFormation templates
+func (t Test) Cfn() {
+	if testCfn() {
+		logger.Info("test:cfn: PASS")
+	} else {
+		logger.Fatal("test:cfn: FAIL")
 	}
-
-	errString := fmt.Sprintf("%s failed with %d error(s):", command, len(errList))
-	for i, err := range errList {
-		errString += fmt.Sprintf("\n\t[%d] %s", i+1, err)
-	}
-	return errors.New(errString)
 }
 
-// Lint Check code style
-func (t Test) Lint() error {
-	mg.Deps(build.API)
-	var errs []error
+func testCfn() bool {
+	var templates []string
+	walk("deployments", func(path string, info os.FileInfo) {
+		if !info.IsDir() && filepath.Ext(path) == ".yml" && filepath.Base(path) != "panther_config.yml" {
+			templates = append(templates, path)
+		}
+	})
+	pass := true
 
-	// go metalinting
-	fmt.Println("test:lint: golang")
-	args := []string{"run", "--timeout", "10m"}
+	// cfn-lint
+	logger.Infof("test:cfn: cfn-lint %d templates", len(templates))
+	if err := sh.RunV(pythonLibPath("cfn-lint"), templates...); err != nil {
+		logger.Errorf("cfn-lint failed: %v", err)
+		pass = false
+	}
+
+	// formatting
+	logger.Infof("test:cfn: formatting")
+	if err := sh.RunV(nodePath("prettier"), "--list-different", "deployments/**.yml"); err != nil {
+		logger.Errorf("prettier diff: %v", err)
+		pass = false
+	}
+
+	return pass
+}
+
+// Go Test Go source
+func (t Test) Go() {
+	if testGo() {
+		logger.Info("test:go: PASS")
+	} else {
+		logger.Fatal("test:go: FAIL")
+	}
+}
+
+func testGo() bool {
+	pass := true
+
+	// unit tests
+	logger.Info("test:go: unit tests")
+	args := []string{"test", "-vet", "", "-cover", "./..."}
+	var err error
+	if mg.Verbose() {
+		// verbose mode - show "go test" output (all package names)
+		err = sh.Run("go", args...)
+	} else {
+		// standard mode - filter output to show only the errors
+		var output string
+		output, err = sh.Output("go", args...)
+		if err != nil {
+			for _, line := range strings.Split(output, "\n") {
+				if !strings.HasPrefix(line, "ok  	github.com/panther-labs/panther") &&
+					!strings.HasPrefix(line, "?   	github.com/panther-labs/panther") {
+
+					fmt.Println(line)
+				}
+			}
+		}
+	}
+
+	if err != nil {
+		logger.Errorf("go unit tests failed: %v", err)
+		pass = false
+	}
+
+	// metalinting
+	logger.Info("test:go: golangci-lint")
+	args = []string{"run", "--timeout", "10m"}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
-	if err := sh.RunV(path.Join(setupDirectory, "golangci-lint"), args...); err != nil {
-		errs = append(errs, err)
+	if err := sh.RunV(filepath.Join(setupDirectory, "golangci-lint"), args...); err != nil {
+		logger.Errorf("go linting failed: %v", err)
+		pass = false
+	}
+
+	return pass
+}
+
+// Python Test Python source
+func (t Test) Python() {
+	if testPython() {
+		logger.Info("test:python: PASS")
+	} else {
+		logger.Fatal("test:python: FAIL")
+	}
+}
+
+func testPython() bool {
+	pass := true
+
+	args := []string{"-m", "unittest", "discover"}
+	if mg.Verbose() {
+		args = append(args, "--verbose")
+	} else {
+		args = append(args, "--quiet")
+	}
+
+	logger.Info("test:python: unit tests")
+	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
+		if err := sh.RunV(pythonLibPath("python3"), append(args, target)...); err != nil {
+			logger.Errorf("python unit tests failed: %v", err)
+			pass = false
+		}
 	}
 
 	// python bandit (security linting)
-	fmt.Println("test:lint: python security")
+	logger.Info("test:python: bandit security linting")
 	args = []string{"--recursive"}
 	if mg.Verbose() {
 		args = append(args, "--verbose")
@@ -86,20 +172,12 @@ func (t Test) Lint() error {
 		args = append(args, "--quiet")
 	}
 	if err := sh.Run(pythonLibPath("bandit"), append(args, pyTargets...)...); err != nil {
-		errs = append(errs, err)
-	}
-
-	// python yapf
-	fmt.Println("test:lint: python")
-	args = []string{"--diff", "--parallel", "--recursive"}
-	if mg.Verbose() {
-		args = append(args, "--verbose")
-	}
-	if output, err := sh.Output(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
-		errs = append(errs, fmt.Errorf("yapf diff: %d bytes (err: %v)", len(output), err))
+		logger.Errorf("python security linting failed: %v", err)
+		pass = false
 	}
 
 	// python lint - runs twice (once for src directories, once for test directories)
+	logger.Info("test:python: pylint")
 	args = []string{"-j", "0", "--max-line-length", "140", "--score", "no"}
 	if mg.Verbose() {
 		args = append(args, "--verbose")
@@ -107,71 +185,72 @@ func (t Test) Lint() error {
 	// pylint src
 	srcArgs := append(args, "--ignore", "tests", "--disable", strings.Join(pylintSrcDisabled, ","))
 	if err := sh.RunV(pythonLibPath("pylint"), append(srcArgs, pyTargets...)...); err != nil {
-		errs = append(errs, err)
+		logger.Errorf("pylint source failed: %v", err)
+		pass = false
 	}
 	// pylint tests
 	testArgs := append(args, "--ignore", "src", "--disable", strings.Join(pylintTestsDisabled, ","))
 	if err := sh.RunV(pythonLibPath("pylint"), append(testArgs, pyTargets...)...); err != nil {
-		errs = append(errs, err)
+		logger.Errorf("pylint tests failed: %v", err)
+		pass = false
 	}
 
 	// python mypy (type check)
+	logger.Info("test:python: mypy type-checking")
 	args = []string{"--cache-dir", "out/.mypy_cache", "--no-error-summary",
 		"--disallow-untyped-defs", "--ignore-missing-imports", "--warn-unused-ignores"}
 	if mg.Verbose() {
 		args = append(args, "--verbose")
 	}
 	if err := sh.RunV(pythonLibPath("mypy"), append(args, pyTargets...)...); err != nil {
-		errs = append(errs, err)
+		logger.Errorf("mypy failed: %v", err)
+		pass = false
 	}
 
-	// Lint CloudFormation
-	fmt.Println("test:lint: CloudFormation")
-	var templates []string
-	err := filepath.Walk("deployments", func(path string, info os.FileInfo, err error) error {
-		if strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, "config.yml") {
-			templates = append(templates, path)
-		}
-		return err
-	})
-	if err != nil {
-		errs = append(errs, fmt.Errorf("filepath.Walk(deployments) failed: %v", err))
-	}
-	if err := sh.RunV(pythonLibPath("cfn-lint"), templates...); err != nil {
-		errs = append(errs, err)
-	}
-
-	return JoinErrors("test:lint", errs)
-}
-
-// Unit Run unit tests
-func (Test) Unit() error {
-	mg.Deps(build.API)
-	args := []string{"test", "-cover", "./..."}
-	if mg.Verbose() {
-		args = append(args, "-v")
-	}
-
-	fmt.Println("test:unit: go test")
-	if err := sh.RunV("go", args...); err != nil {
-		return err
-	}
-
-	args = []string{"-m", "unittest", "discover"}
+	// python formatting
+	logger.Info("test:python: yapf formatting")
+	args = []string{"--diff", "--parallel", "--recursive"}
 	if mg.Verbose() {
 		args = append(args, "--verbose")
+	}
+	if output, err := sh.Output(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
+		logger.Errorf("yapf diff: %d bytes (err: %v)", len(output), err)
+		pass = false
+	}
+
+	return pass
+}
+
+// Web Test web source
+func (t Test) Web() {
+	if testWeb() {
+		logger.Info("test:web: PASS")
 	} else {
-		args = append(args, "--quiet")
+		logger.Fatal("test:web: FAIL")
+	}
+}
+
+func testWeb() bool {
+	pass := true
+
+	if _, err := os.Stat("node_modules"); err != nil {
+		logger.Errorf("npm not initialized (%v): run 'mage setup:web'", err)
+		return false
 	}
 
-	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		fmt.Println("test:unit python unittest", target)
-		if err := sh.RunV(pythonLibPath("python3"), append(args, target)...); err != nil {
-			return err
-		}
+	logger.Info("test:web: npm run lint")
+	if err := sh.RunV("npm", "run", "lint"); err != nil {
+		logger.Errorf("npm lint failed: %v", err)
+		pass = false
 	}
 
-	return nil
+	logger.Info("test:web: npm audit")
+	if err := sh.RunV("npm", "audit"); err != nil {
+		logger.Errorf("npm audit failed: %v", err)
+		pass = false
+	}
+
+	return pass
 }
 
 // Cover Run Go unit tests and view test coverage in HTML
@@ -189,47 +268,80 @@ func (t Test) Cover() error {
 }
 
 // CI Run all required checks
-func (t Test) CI() error {
-	if err := build.Lambda(); err != nil {
-		return err
+func (t Test) CI() {
+	var failed []string
+	if !testCfn() {
+		failed = append(failed, "cfn")
 	}
-	if err := t.Unit(); err != nil {
-		return err
+	if !testGo() {
+		failed = append(failed, "go")
 	}
-	return t.Lint()
+	if !testPython() {
+		failed = append(failed, "python")
+	}
+	if !testWeb() {
+		failed = append(failed, "web")
+	}
+
+	if len(failed) == 0 {
+		logger.Info("test:ci: PASS")
+	} else {
+		logger.Fatal("test:ci: FAIL: " + strings.Join(failed, ","))
+	}
 }
 
-// Integration Run TestIntegration* for PKG (default: ./...)
-func (t Test) Integration() error {
+// Integration Run integration tests (integration_test.go,integration.py)
+func (t Test) Integration() {
+	// Check the AWS account ID
+	awsSession, err := getSession()
+	if err != nil {
+		logger.Fatal(err)
+	}
+	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	if err != nil {
+		logger.Fatalf("failed to get caller identity: %v", err)
+	}
+
+	logger.Warnf("INTEGRATION TESTS WILL ERASE ALL PANTHER DATA IN AWS ACCOUNT %s", *identity.Account)
+	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
+	if strings.ToLower(result) != "yes" {
+		logger.Fatal("permission denied: integration tests canceled")
+	}
+
 	mg.Deps(build.API)
-	if err := sh.Run("go", "clean", "-testcache"); err != nil {
-		return err
+
+	if pkg := os.Getenv("PKG"); pkg != "" {
+		// One specific package requested: run integration tests just for that
+		goPkgIntegrationTest(pkg)
+		return
 	}
 
-	pkg := os.Getenv("PKG")
-	if pkg == "" {
-		pkg = "./..."
-	}
-	// Note: We do NOT run integration tests in parallel
-	testArgs := []string{"test", pkg, "-run=TestIntegration*", "-p", "1"}
-	if mg.Verbose() {
-		testArgs = append(testArgs, "-v")
-	} else {
-		fmt.Println("test:integration: go test " + pkg + " -run=TestIntegration*")
-	}
+	walk("internal", func(path string, info os.FileInfo) {
+		if filepath.Base(path) == "integration_test.go" {
+			goPkgIntegrationTest("./" + filepath.Dir(path))
+		}
+	})
 
+	logger.Info("test:integration: python policy engine")
+	if err := sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
+		logger.Fatalf("python integration test failed: %v", err)
+	}
+}
+
+// Run integration tests for a single Go package.
+func goPkgIntegrationTest(pkg string) {
 	if err := os.Setenv("INTEGRATION_TEST", "True"); err != nil {
-		return err
+		logger.Fatalf("failed to set INTEGRATION_TEST environment variable: %v", err)
 	}
 	defer os.Unsetenv("INTEGRATION_TEST")
-	if err := sh.RunV("go", testArgs...); err != nil {
-		return err
-	}
 
-	// Run Python integration tests unless a Go pkg is specified
-	if os.Getenv("PKG") == "" {
-		fmt.Println("test:integration: python engine")
-		return sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py")
+	logger.Info("test:integration: go test " + pkg + " -run=TestIntegration*")
+	// -count 1 is the idiomatic way to disable test caching
+	args := []string{"test", pkg, "-run=TestIntegration*", "-p", "1", "-count", "1"}
+	if mg.Verbose() {
+		args = append(args, "-v")
 	}
-	return nil
+	if err := sh.Run("go", args...); err != nil {
+		logger.Fatalf("go test %s failed: %v", pkg, err)
+	}
 }
