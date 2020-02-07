@@ -38,7 +38,7 @@ const (
 
 // nolint:lll
 type ALB struct {
-	Type                   *string            `json:"type,omitempty" validate:"oneof=http https h2 ws wss" description:"The type of request or connection. "`
+	Type                   *string            `json:"type,omitempty" validate:"oneof=http https h2 ws wss" description:"The type of request or connection."`
 	Timestamp              *timestamp.RFC3339 `json:"timestamp,omitempty" validate:"required" description:"The time when the load balancer generated a response to the client (UTC). For WebSockets, this is the time when the connection is closed."`
 	ELB                    *string            `json:"elb,omitempty" description:"The resource ID of the load balancer. If you are parsing access log entries, note that resources IDs can contain forward slashes (/)."`
 	ClientIP               *string            `json:"clientIp,omitempty" description:"The IP address of the requesting client."`

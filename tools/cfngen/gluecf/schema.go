@@ -66,6 +66,11 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 			if skip {
 				continue
 			}
+			comment = strings.TrimSpace(comment)
+			if len(comment) == 0 {
+				panic(fmt.Sprintf("failed to generate CloudFormation for %s: %s does not have the required associated 'description' tag",
+					t.String(), fieldName))
+			}
 			if len(comment) > maxCommentLength { // clip
 				comment = comment[:maxCommentLength-3] + "..."
 			}

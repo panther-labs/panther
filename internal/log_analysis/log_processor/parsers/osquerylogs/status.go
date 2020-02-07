@@ -30,18 +30,18 @@ var StatusDesc = `Status is a diagnostic osquery log about the daemon.
 Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 
 // nolint:lll
-type Status struct {
+type Status struct { // FIXME: field descriptions need updating!
 	CalendarTime      *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
-	Decorations       map[string]string      `json:"decorations,omitempty" description:""`
-	Filename          *string                `json:"filename,omitempty" validate:"required" description:""`
-	HostIdentifier    *string                `json:"hostIdentifier,omitempty" validate:"required" description:""`
-	Line              *int                   `json:"line,omitempty,string" validate:"required" description:""`
-	LogType           *string                `json:"logType,omitempty" validate:"required,eq=status" description:""`
-	LogUnderscoreType *string                `json:"log_type,omitempty" description:""`
-	Message           *string                `json:"message,omitempty" description:""`
-	Severity          *int                   `json:"severity,omitempty,string" validate:"required" description:""`
-	UnixTime          *int                   `json:"unixTime,omitempty,string" validate:"required" description:""`
-	Version           *string                `json:"version,omitempty" validate:"required" description:""`
+	Decorations       map[string]string      `json:"decorations,omitempty" description:"Decorations"`
+	Filename          *string                `json:"filename,omitempty" validate:"required" description:"Filename"`
+	HostIdentifier    *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
+	Line              *int                   `json:"line,omitempty,string" validate:"required" description:"Line"`
+	LogType           *string                `json:"logType,omitempty" validate:"required,eq=status" description:"LogType"`
+	LogUnderscoreType *string                `json:"log_type,omitempty" description:"LogUnderScoreType"`
+	Message           *string                `json:"message,omitempty" description:"Message"`
+	Severity          *int                   `json:"severity,omitempty,string" validate:"required" description:"Severity"`
+	UnixTime          *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
+	Version           *string                `json:"version,omitempty" validate:"required" description:"Version"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
