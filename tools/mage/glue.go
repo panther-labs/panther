@@ -27,7 +27,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/magefile/mage/mg"
@@ -41,7 +40,6 @@ type Glue mg.Namespace
 
 // Sync's all glue table partitions with current table schema (used when table schema changes)
 func (t Glue) Sync() error {
-	const concurrency = 10
 	const dateFormat = "2006-01-02"
 	var enteredText string
 
@@ -79,6 +77,13 @@ func (t Glue) Sync() error {
 		return fmt.Errorf("start day (%s) cannot be after end day (%s)", startDay, endDay)
 	}
 
+	syncPartitions(glueClient, matchTableName, startDay, endDay)
+
+	return nil
+}
+
+func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startDay, endDay time.Time) {
+	const concurrency = 10
 	updateChan := make(chan *gluePartitionUpdate, concurrency)
 
 	// delete and re-create concurrently cuz the Glue API is very slow
@@ -87,18 +92,10 @@ func (t Glue) Sync() error {
 		wg.Add(1)
 		go func() {
 			for update := range updateChan {
-				_, err := update.table.DeletePartition(glueClient, update.at)
+				err := update.table.SyncPartitions(glueClient, update.at)
 				if err != nil {
-					if awsErr, ok := err.(awserr.Error); ok {
-						if awsErr.Code() != "EntityNotFoundException" { // don't fail if partition is not there
-							fmt.Printf("delete partition for %s at %v failed: %s\n", update.table.TableName(), update.at, err)
-							continue
-						}
-					}
-				}
-				err = update.table.CreateJSONPartition(glueClient, update.at)
-				if err != nil {
-					fmt.Printf("create partition for %s at %v failed: %s\n", update.table.TableName(), update.at, err)
+					fmt.Println(err) // best effort, let users know there are failures (this can be re-run)
+					continue
 				}
 			}
 			wg.Done()
@@ -122,8 +119,6 @@ func (t Glue) Sync() error {
 
 	close(updateChan)
 	wg.Wait()
-
-	return nil
 }
 
 type gluePartitionUpdate struct {

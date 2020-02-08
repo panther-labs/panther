@@ -95,3 +95,20 @@ func (gm *GlueMetadata) DeletePartition(client glueiface.GlueAPI, t time.Time) (
 	}
 	return client.DeletePartition(input)
 }
+
+// SyncPartitions deletes and re-creates a partition using the latest table schema. Used when schemas change.
+func (gm *GlueMetadata) SyncPartitions(client glueiface.GlueAPI, t time.Time) (err error) {
+	_, err = gm.DeletePartition(client, t)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() != "EntityNotFoundException" { // don't fail if partition is not there
+				return errors.Wrapf(err, "delete partition for %s.%s at %v failed", gm.DatabaseName(), gm.TableName(), t)
+			}
+		}
+	}
+	err = gm.CreateJSONPartition(client, t)
+	if err != nil {
+		return errors.Wrapf(err, "create partition for %s.%s at %v failed", gm.DatabaseName(), gm.TableName(), t)
+	}
+	return nil
+}
