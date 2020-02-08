@@ -151,19 +151,12 @@ func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
 	return isHeader
 }
 
-func (p *VPCFlowParser) ParseHeader(log string) []interface{} {
-	// If this is a header, return success but no events
-	if p.isVpcFlowHeader(log) {
-		return []interface{}{} // empty list
-	}
-	return nil
-}
-
 func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 	event = &VPCFlow{}
 
 	for i := range columns {
 		switch p.columnMap[i] {
+		// default fields
 		case vpcFlowVersion:
 			event.Version = parsers.CsvStringToIntPointer(columns[i])
 		case vpcFlowAccountID:
@@ -205,6 +198,7 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 		case vpcFlowLogStatus:
 			event.LogStatus = parsers.CsvStringToPointer(columns[i])
 
+			// extended custom fields
 		case vpcFlowVpcID:
 			event.VpcID = parsers.CsvStringToPointer(columns[i])
 		case vpcFlowSubNetID:
@@ -229,8 +223,10 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *VPCFlowParser) Parse(log string) []interface{} {
-	if p.columnMap == nil { // have not read header!
-		zap.L().Error("AWS.VPCFlow Parse() called before header assigned (bug)")
+	if p.columnMap == nil { // must be first log line in file
+		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
+			return []interface{}{}
+		}
 		return nil
 	}
 

@@ -52,10 +52,6 @@ func (p *SnapshotParser) New() parsers.LogParser {
 	return &SnapshotParser{}
 }
 
-func (p *SnapshotParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *SnapshotParser) Parse(log string) []interface{} {
 	event := &Snapshot{}

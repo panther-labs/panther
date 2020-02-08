@@ -54,10 +54,6 @@ func (p *StatusParser) New() parsers.LogParser {
 	return &StatusParser{}
 }
 
-func (p *StatusParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *StatusParser) Parse(log string) []interface{} {
 	event := &Status{}

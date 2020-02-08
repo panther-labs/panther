@@ -74,10 +74,6 @@ func (p *S3ServerAccessParser) New() parsers.LogParser {
 	return &S3ServerAccessParser{}
 }
 
-func (p *S3ServerAccessParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *S3ServerAccessParser) Parse(log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))

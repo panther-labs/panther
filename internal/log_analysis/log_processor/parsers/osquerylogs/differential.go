@@ -55,10 +55,6 @@ func (p *DifferentialParser) New() parsers.LogParser {
 	return &DifferentialParser{}
 }
 
-func (p *DifferentialParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *DifferentialParser) Parse(log string) []interface{} {
 	event := &Differential{}

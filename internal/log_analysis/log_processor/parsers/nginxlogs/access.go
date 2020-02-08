@@ -60,10 +60,6 @@ func (p *AccessParser) New() parsers.LogParser {
 	return &AccessParser{}
 }
 
-func (p *AccessParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *AccessParser) Parse(log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))

@@ -19,17 +19,19 @@ package classification
  */
 
 import (
-	"container/heap"
 	"fmt"
 	"runtime/debug"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
+
+// holds all parsers
+var parserRegistry registry.Interface = registry.AvailableParsers()
 
 // ClassifierAPI is the interface for a classifier
 type ClassifierAPI interface {
@@ -37,8 +39,8 @@ type ClassifierAPI interface {
 	Classify(log string) *ClassifierResult
 	// aggregate stats
 	Stats() *ClassifierStats
-	// per-parser stats, map of LogType -> stats
-	ParserStats() map[string]*ParserStats
+	// specific parser stats
+	ParserStats() *ParserStats
 }
 
 // ClassifierResult is the result of the ClassifierAPI#Classify method
@@ -55,52 +57,55 @@ type ClassifierResult struct {
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
 func NewClassifier() ClassifierAPI {
-	parserQueue := &ParserPriorityQueue{}
-	parserQueue.initialize()
-	return &Classifier{
-		parsers:     parserQueue,
-		parserStats: make(map[string]*ParserStats),
-	}
+	return &Classifier{}
 }
 
-// Classifier is the struct responsible for classifying logs
+// Classifier is the struct responsible for classifying data streams which are assumed to be all 1 LogType()
 type Classifier struct {
-	parsers *ParserPriorityQueue
+	// parser selected for this data stream
+	selectedParser parsers.LogParser
 	// aggregate stats
 	stats ClassifierStats
-	// per-parser stats, map of LogType -> stats
-	parserStats map[string]*ParserStats
-	// set to true after the first log line, used to control ParserHeader()
-	headerParsed bool
+	// specific parser stats
+	parserStats ParserStats
 }
 
 func (c *Classifier) Stats() *ClassifierStats {
 	return &c.stats
 }
 
-func (c *Classifier) ParserStats() map[string]*ParserStats {
-	return c.parserStats
+func (c *Classifier) ParserStats() *ParserStats {
+	return &c.parserStats
 }
 
 // catch panics from parsers, log and continue
-func (c *Classifier) safeLogParse(parser parsers.LogParser, log string) (parsedEvents []interface{}) {
+func (c *Classifier) safeLogParse(log string) (parsedEvents []interface{}) {
 	defer func() {
 		if r := recover(); r != nil {
+			var logType string
+			if c.selectedParser != nil {
+				logType = c.selectedParser.LogType()
+			}
 			zap.L().Error("parser panic",
-				zap.String("parser", parser.LogType()),
+				zap.String("parser", logType),
 				zap.Error(fmt.Errorf("%v", r)),
 				zap.String("stacktrace", string(debug.Stack())),
 				zap.String("log", log))
 			parsedEvents = nil // return indicator that parse failed
 		}
 	}()
-	if c.headerParsed {
-		parsedEvents = parser.Parse(log)
-	} else {
-		parsedEvents = parser.ParseHeader(log)
-		if parsedEvents != nil { // set on first SUCCESSFUL parse
-			c.headerParsed = true
+	if c.selectedParser == nil { // find a parser that works
+		for _, parserMetadata := range parserRegistry.Elements() {
+			// must call Parser.New() because parsers can be stateful, don't share the registry parser!
+			parser := parserMetadata.Parser.New()
+			parsedEvents = parser.Parse(log)
+			if parsedEvents != nil { // set on first SUCCESSFUL parse
+				c.selectedParser = parser
+				break
+			}
 		}
+	} else {
+		parsedEvents = c.selectedParser.Parse(log)
 	}
 	return parsedEvents
 }
@@ -108,8 +113,6 @@ func (c *Classifier) safeLogParse(parser parsers.LogParser, log string) (parsedE
 // Classify attempts to classify the provided log line
 func (c *Classifier) Classify(log string) *ClassifierResult {
 	startClassify := time.Now().UTC()
-	// Slice containing the popped queue items
-	var popped []interface{}
 	result := &ClassifierResult{}
 
 	if len(log) == 0 { // likely empty file, nothing to do
@@ -138,55 +141,22 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 		return result
 	}
 
-	for c.parsers.Len() > 0 {
-		currentItem := c.parsers.Peek()
+	startParseTime := time.Now().UTC()
+	result.Events = c.safeLogParse(log)
+	endParseTime := time.Now().UTC()
 
-		startParseTime := time.Now().UTC()
-		parsedEvents := c.safeLogParse(currentItem.parser, log)
-		endParseTime := time.Now().UTC()
+	if c.selectedParser != nil {
+		logType := c.selectedParser.LogType()
 
-		logType := currentItem.parser.LogType()
+		result.LogType = &logType
 
-		// Parser failed to parse event
-		if parsedEvents == nil {
-			zap.L().Debug("failed to parse event", zap.String("expectedLogType", currentItem.parser.LogType()))
-			// Removing parser from queue
-			popped = append(popped, heap.Pop(c.parsers))
-			// Increasing penalty of the parser
-			// Due to increased penalty the parser will be lower priority in the queue
-			currentItem.penalty++
-			// record failure
-			continue
-		}
-
-		// Since the parsing was successful, remove all penalty from the parser
-		// The parser will be higher priority in the queue
-		currentItem.penalty = 0
-		result.LogType = aws.String(logType)
-		result.Events = parsedEvents
-
-		// update per-parser stats
-		var parserStat *ParserStats
-		var parserStatExists bool
-		// lazy create
-		if parserStat, parserStatExists = c.parserStats[logType]; !parserStatExists {
-			parserStat = &ParserStats{
-				LogType: logType,
-			}
-			c.parserStats[logType] = parserStat
-		}
-		parserStat.ParserTimeMicroseconds += uint64(endParseTime.Sub(startParseTime).Microseconds())
-		parserStat.BytesProcessedCount += uint64(len(log))
-		parserStat.LogLineCount++
-		parserStat.EventCount += uint64(len(result.Events))
-
-		break
+		c.parserStats.LogType = logType
+		c.parserStats.ParserTimeMicroseconds += uint64(endParseTime.Sub(startParseTime).Microseconds())
+		c.parserStats.BytesProcessedCount += uint64(len(log))
+		c.parserStats.LogLineCount++
+		c.parserStats.EventCount += uint64(len(result.Events))
 	}
 
-	// Put back the popped items to the ParserPriorityQueue.
-	for _, item := range popped {
-		heap.Push(c.parsers, item)
-	}
 	return result
 }
 

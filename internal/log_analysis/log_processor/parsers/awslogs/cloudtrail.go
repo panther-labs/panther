@@ -123,10 +123,6 @@ func (p *CloudTrailParser) New() parsers.LogParser {
 	return &CloudTrailParser{}
 }
 
-func (p *CloudTrailParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *CloudTrailParser) Parse(log string) []interface{} {
 	cloudTrailRecords := &CloudTrailRecords{}

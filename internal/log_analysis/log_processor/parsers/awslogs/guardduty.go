@@ -71,10 +71,6 @@ func (p *GuardDutyParser) New() parsers.LogParser {
 	return &GuardDutyParser{}
 }
 
-func (p *GuardDutyParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *GuardDutyParser) Parse(log string) []interface{} {
 	event := &GuardDuty{}

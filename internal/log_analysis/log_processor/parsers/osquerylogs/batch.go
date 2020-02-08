@@ -56,10 +56,6 @@ func (p *BatchParser) New() parsers.LogParser {
 	return &BatchParser{}
 }
 
-func (p *BatchParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *BatchParser) Parse(log string) []interface{} {
 	event := &Batch{}

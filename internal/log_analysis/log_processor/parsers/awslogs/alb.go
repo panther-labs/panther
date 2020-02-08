@@ -79,10 +79,6 @@ func (p *ALBParser) New() parsers.LogParser {
 	return &ALBParser{}
 }
 
-func (p *ALBParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
-}
-
 // Parse returns the parsed events or nil if parsing failed
 func (p *ALBParser) Parse(log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))

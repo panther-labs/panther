@@ -128,7 +128,7 @@ func (p *Processor) run(outputChan chan *common.ParsedEvent) error {
 
 func (p *Processor) processLogLine(line string, outputChan chan *common.ParsedEvent) {
 	classificationResult := p.classifyLogLine(line)
-	if classificationResult.LogType == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
+	if classificationResult.Events == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
 		return
 	}
 	p.sendEvents(classificationResult, outputChan)
@@ -136,7 +136,7 @@ func (p *Processor) processLogLine(line string, outputChan chan *common.ParsedEv
 
 func (p *Processor) classifyLogLine(line string) *classification.ClassifierResult {
 	result := p.classifier.Classify(line)
-	if result.LogType == nil && len(result.LogLine) > 0 { // only if line is not empty do we log (often we get trailing \n's)
+	if result.Events == nil && len(result.LogLine) > 0 { // only if line is not empty do we log (often we get trailing \n's)
 		if p.input.Hints.S3 != nil { // make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
 			p.operation.LogWarn(errors.New("failed to classify log line"),
 				zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
@@ -160,9 +160,7 @@ func (p *Processor) sendEvents(result *classification.ClassifierResult, outputCh
 func (p *Processor) logStats(err error) {
 	p.operation.Stop()
 	p.operation.Log(err, zap.Any(statsKey, *p.classifier.Stats()))
-	for _, parserStats := range p.classifier.ParserStats() {
-		p.operation.Log(err, zap.Any(statsKey, *parserStats))
-	}
+	p.operation.Log(err, zap.Any(statsKey, *p.classifier.ParserStats()))
 }
 
 type Processor struct {
