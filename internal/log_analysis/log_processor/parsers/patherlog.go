@@ -60,7 +60,7 @@ func NewPantherAnyString() *PantherAnyString {
 }
 
 func (any *PantherAnyString) MarshalJSON() ([]byte, error) {
-	if any != nil && len(any.set) > 0 { // copy to slice
+	if any != nil { // copy to slice
 		values := make([]string, len(any.set))
 		i := 0
 		for k := range any.set {
