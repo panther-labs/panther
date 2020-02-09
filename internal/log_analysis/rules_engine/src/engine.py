@@ -106,6 +106,6 @@ class Engine:
                 matched.append(rule.rule_id)
             elif isinstance(result, Exception):
                 # TODO Add reporting of errors in the UI
-                self.logger.error('failed to run rule {} {}'.format(type(result).__name__, result))
+                self.logger.error('failed to run rule {} {} {}'.format(rule.rule_id, type(result).__name__, result))
 
         return matched
