@@ -1,20 +1,32 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest a new feature or other enhancement.
 title: ''
-labels: ''
+labels: enchancement
 assignees: ''
+---### Describe your use cases
 
----
+In order to properly evaluate a feature request, it is necessary to understand the use-cases for it.
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+### How frequently would you use such feature
 
-**Describe the solution you'd like**
+ie. Daily, weekly, monthly
+
+### Describe alternatives you have considered
+
+A clear and concise description of any alternative solutions or features you have considered.
+
+### Describe the ideal solution
+
 A clear and concise description of what you want to happen.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+### References
 
-**Additional context**
+Are there any other GitHub issues, whether open or closed, that are related to the problem you've described above or to the suggested solution? If so, please create a list below that mentions each of them.
+
+-
+-
+
+### Additional context
+
 Add any other context or screenshots about the feature request here.
