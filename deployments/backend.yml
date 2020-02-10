@@ -292,13 +292,12 @@ Resources:
       TopicName: panther-processed-data-notifications
       KmsMasterKeyId: !Ref QueueEncryptionKey
 
-  ProcessedDataBucket:
+  ProcessedData:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub panther-processed-data-${AWS::StackId}
       LoggingConfiguration:
         DestinationBucketName: !ImportValue Panther-LogBucket
-        LogFilePrefix: !Sub panther-processed-data-${AWS::StackId}/
+        LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -321,7 +320,7 @@ Resources:
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
         SnsTopicArn: !Ref ProcessedDataNotifications
-        ProcessedDataBucket: !Ref ProcessedDataBucket
+        ProcessedDataBucket: !Ref ProcessedData
         SQSKeyId: !Ref QueueEncryptionKey
         PantherDatabase: !GetAtt GlueTables.Outputs.PantherTablesDatabase
       TemplateURL: log_analysis/log_processor.yml
@@ -350,7 +349,7 @@ Resources:
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
         SnsTopicArn: !Ref ProcessedDataNotifications
         SQSKeyId: !Ref QueueEncryptionKey
-        ProcessedDataBucket: !Ref ProcessedDataBucket
+        ProcessedDataBucket: !Ref ProcessedData
         PythonLayerArn: !If [CreatePythonLayer, !Ref PythonLayer, !Ref PythonLayerVersionArn]
       TemplateURL: log_analysis/rules_engine.yml
 
@@ -358,20 +357,19 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        ProcessedDataBucket: !Ref ProcessedDataBucket
+        ProcessedDataBucket: !Ref ProcessedData
       TemplateURL: ../out/deployments/log_analysis/gluetables.json
 
-  AthenaResultsBucket:
+  AthenaResults:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub panther-athena-results-${AWS::StackId}
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays: 30
             Status: Enabled
       LoggingConfiguration:
         DestinationBucketName: !ImportValue Panther-LogBucket
-        LogFilePrefix: !Sub panther-athena-results-${AWS::StackId}/
+        LogFilePrefix: !Sub panther-athena-results-${AWS::AccountId}-${AWS::Region}/
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -388,7 +386,7 @@ Resources:
 Outputs:
   AthenaResultsBucket:
     Description: Bucket where Athena writes query results
-    Value: !Ref AthenaResultsBucket
+    Value: !Ref AthenaResults
   AnalysisApiEndpoint:
     Description: panther-analysis-api Gateway HTTPS endpoint
     Value: !Sub ${AnalysisAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
