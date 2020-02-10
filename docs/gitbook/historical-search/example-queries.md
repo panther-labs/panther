@@ -8,7 +8,8 @@ This is often one of the first questions asked in an investigation. Given there 
 as an IP address, then if there is related activity in your network/systems a detailed investigation will need to proceed.
 Panther makes asking such questions easy using the 'all_logs' Athena view which will search all data for the
 indicator of interest. Since most often the answers to these question are negative, making this a fast and efficient
-operation reduces investigation time.
+operation reduces investigation time. In this example the Panther field `p_any_ip_addresses` is used. Panther extracts
+a number of common indicator fields over all data sources into standard fields, see [Panther Fields](./panther-fields.md).
 
 ```sql
 SELECT
@@ -37,7 +38,7 @@ LIMIT 10
 
 ## What are the top 10 IPs by log type over all logs?
 
-This is a variant of the above query where we are ranking the IPs by how many datasets they show activity. This shows
+This is a variant of the above query where we are ranking the IPs by how many data sources they show activity. This shows
 the degree of "reach" the IP address has over all your systems.
 
 ```sql
@@ -94,8 +95,9 @@ ORDER BY p_event_time ASC
 If there are concerns of a credential breach, then accounting for all AWS console activity
 is of critical importance. This query will find all the CloudTrail sourceIPaddresses
 involved in console signins and then return all the VPC Flow activity related. This will
-show if there are common IP addresses. In particular interest are IP addresses outside of your organization
-communicating with the instances as well as logging into the console.
+show if there are common IP addresses. Of particular interest are IP addresses **outside of your organization**
+communicating with the instances as well as logging into the console. This may indicate a compromise where
+an unauthorized actor is accessing account resources.
 
 ```sql
 WITH cloudTrailIPs as
@@ -242,7 +244,7 @@ ORDER BY total_rows DESC
 The misconfiguration of S3 buckets is a major threat vector. If an open bucket is detected that was not intended to be
 world readable, it is of critical importance to understand if there were any inappropriate accesses. This query
 will collect and rank all IP addresses accessing the bucket of interest. These should be reviewed to determine if any are
-outside your organization (if so, you may have had a data leak).
+outside your organization (**if so, you may have had a data leak**).
 
 ```sql
 SELECT

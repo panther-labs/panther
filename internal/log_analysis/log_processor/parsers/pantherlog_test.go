@@ -32,7 +32,7 @@ func TestAnyStringMarshal(t *testing.T) {
 	var any PantherAnyString
 
 	// nil case
-	expectedJSON := ``
+	expectedJSON := `[]`
 	actualJSON, err := jsoniter.Marshal(&any)
 	require.NoError(t, err)
 	require.Equal(t, expectedJSON, string(actualJSON))

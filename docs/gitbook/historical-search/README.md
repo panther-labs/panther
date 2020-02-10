@@ -24,7 +24,7 @@ After that, data can be queried to answer common questions:
 
 ### Accessing the data with Glue
 
-All log data is stored in AWS Glue [Glue](https://aws.amazon.com/glue/) tables. This makes the data
+All log data is stored in AWS [Glue](https://aws.amazon.com/glue/) tables. This makes the data
 available in many tools such as Athena, Redshift, Glue Spark Jobs and SageMaker.
 
 ### Coming soon
