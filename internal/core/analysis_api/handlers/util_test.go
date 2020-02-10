@@ -97,3 +97,15 @@ func TestPoliciesEqual(t *testing.T) {
 	assert.False(t, equal)
 	assert.NoError(t, err)
 }
+
+func TestSortCaseInsensitive(t *testing.T) {
+	input := []string{"AWS.EC2.VPC", "AWS.EC2.Volume"}
+	sortCaseInsensitive(input)
+	assert.Equal(t, []string{"AWS.EC2.Volume", "AWS.EC2.VPC"}, input)
+
+	// Sort by case if lowercase versions are equal
+	input = []string{"panther", "Panther", "Panna Cotta", "panna cotta"}
+	sortCaseInsensitive(input)
+	expected := []string{"Panna Cotta", "panna cotta", "Panther", "panther"}
+	assert.Equal(t, expected, input)
+}

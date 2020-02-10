@@ -22,6 +22,7 @@ import (
 	"errors"
 	"net/http"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -237,4 +238,18 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		// entire API call as a failure.
 	}
 	return changeType, nil
+}
+
+// Sort a slice of strings ignoring case when possible
+func sortCaseInsensitive(values []string) {
+	sort.Slice(values, func(i, j int) bool {
+		first, second := strings.ToLower(values[i]), strings.ToLower(values[j])
+		if first == second {
+			// Same lowercase value, fallback to default sort
+			return values[i] < values[j]
+		}
+
+		// Compare the lowercase version of the strings
+		return first < second
+	})
 }
