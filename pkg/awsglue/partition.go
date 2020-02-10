@@ -96,8 +96,8 @@ func (gm *GlueMetadata) DeletePartition(client glueiface.GlueAPI, t time.Time) (
 	return client.DeletePartition(input)
 }
 
-// SyncPartitions deletes and re-creates a partition using the latest table schema. Used when schemas change.
-func (gm *GlueMetadata) SyncPartitions(client glueiface.GlueAPI, t time.Time) (err error) {
+// SyncPartition deletes and re-creates a partition using the latest table schema. Used when schemas change.
+func (gm *GlueMetadata) SyncPartition(client glueiface.GlueAPI, t time.Time) (err error) {
 	_, err = gm.DeletePartition(client, t)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {

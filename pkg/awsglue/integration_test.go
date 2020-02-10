@@ -109,6 +109,11 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
 
+	// sync it (which does a delete and re-create)
+	err = gm.SyncPartition(glueClient, refTime)
+	require.NoError(t, err)
+	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
+
 	_, err = gm.DeletePartition(glueClient, refTime)
 	require.NoError(t, err)
 

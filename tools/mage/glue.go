@@ -92,7 +92,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startD
 		wg.Add(1)
 		go func() {
 			for update := range updateChan {
-				err := update.table.SyncPartitions(glueClient, update.at)
+				err := update.table.SyncPartition(glueClient, update.at)
 				if err != nil {
 					fmt.Println(err) // best effort, let users know there are failures (this can be re-run)
 					continue
