@@ -45,6 +45,9 @@ class Engine:
         self.logger.info('Retrieved {} rules in {} seconds'.format(len(rules), end - start))
         start = default_timer()
 
+        # Clear old rules
+        self._log_type_to_rules.clear()
+
         # Importing common module. This module MAY hold code common to some rules and if it exists, it must be imported before other rules.
         # However, the presence of this rule is optional.
         for raw_rule in rules:
