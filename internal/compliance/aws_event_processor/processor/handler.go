@@ -58,8 +58,13 @@ func Handle(batch *events.SQSEvent) error {
 		// TODO: Update this switch statement to handle SNS notifications indicating the need to download logs from s3
 		switch gjson.Get(record.Body, "Type").Str {
 		case "Notification": // sns wrapped message
+			// Three possibilities:
+			// Raw CloudTrail ()
+			// S3Event Notification (records)
+			// CloudTrail Notification (s3Bucket + s3ObjectKey list)
 			zap.L().Debug("wrapped sns message - assuming cloudtrail is in Message field")
-			handleCloudtrail(gjson.Get(record.Body, "Message").Str, changes)
+			message := gjson.Get(record.Body, "Message").Str
+			handleCloudtrail(message, changes)
 
 		case "SubscriptionConfirmation": // sns confirmation message
 			topicArn, err := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
@@ -73,7 +78,7 @@ func Handle(batch *events.SQSEvent) error {
 				return err
 			}
 
-		case "": // raw data
+		case "": // raw CloudTrail data from CWE -> SNS -> SQS
 			handleCloudtrail(record.Body, changes)
 		default: // Unexpected type
 			zap.L().Warn("unexpected record type",
