@@ -56,11 +56,11 @@ def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[st
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
             for data in data_stream:
-                try: # bad json data can cause exceptions to be thrown
+                try: # Bad json data can cause exceptions to be thrown. Best effort: log and continue
                     for matched_rule in rules_engine.analyze(log_type, json.loads(data)):
                         matched.append((matched_rule, data))
                 except Exception as err:  # pylint: disable=broad-except
-                    logger.error("Error matching {}: {}".format(data, err))
+                    logger.error("Error during matching: {}".format(err)) # do not log data!
 
     if len(matched) > 0:
         send_to_sqs(matched)
