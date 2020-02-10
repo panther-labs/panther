@@ -178,7 +178,6 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 	for _, item := range popped {
 		heap.Push(c.parsers, item)
 	}
-
 	return result
 }
 

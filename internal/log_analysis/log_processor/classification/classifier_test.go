@@ -19,9 +19,9 @@ package classification
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
