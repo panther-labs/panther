@@ -295,10 +295,10 @@ Resources:
   ProcessedDataBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub panther-processed-data-${AWS::StackId}
       LoggingConfiguration:
         DestinationBucketName: !ImportValue Panther-LogBucket
-        LogFilePrefix: !Sub panther-classified-data-${AWS::AccountId}-${AWS::Region}/
+        LogFilePrefix: !Sub panther-processed-data-${AWS::StackId}/
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -364,14 +364,14 @@ Resources:
   AthenaResultsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub panther-athena-results-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub panther-athena-results-${AWS::StackId}
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays: 30
             Status: Enabled
       LoggingConfiguration:
         DestinationBucketName: !ImportValue Panther-LogBucket
-        LogFilePrefix: !Sub panther-athena-results-${AWS::AccountId}-${AWS::Region}/
+        LogFilePrefix: !Sub panther-athena-results-${AWS::StackId}/
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:

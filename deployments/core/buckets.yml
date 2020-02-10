@@ -37,7 +37,7 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: !Sub panther-s3-logs-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub panther-s3-logs-${AWS::StackId}
       LifecycleConfiguration:
         Rules:
           # Keep access logs for 1 year, permanently delete 30 days after they expire
@@ -45,8 +45,8 @@ Resources:
             NoncurrentVersionExpirationInDays: 30
             Status: Enabled
       LoggingConfiguration:
-        DestinationBucketName: !Sub panther-s3-logs-${AWS::AccountId}-${AWS::Region}
-        LogFilePrefix: !Sub panther-s3-logs-${AWS::AccountId}-${AWS::Region}/
+        DestinationBucketName: !Sub panther-s3-logs-${AWS::StackId}
+        LogFilePrefix: !Sub panther-s3-logs-${AWS::StackId}/
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -63,7 +63,7 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: !Sub panther-source-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub panther-source-${AWS::StackId}
       LifecycleConfiguration:
         Rules:
           # Once a stack is deployed, its resources in S3 can be safely removed.
@@ -72,7 +72,7 @@ Resources:
       LoggingConfiguration:
         DestinationBucketName:
           !If [CreateLogBucket, !Ref AccessLogsBucket, !Ref AccessLogsBucketName]
-        LogFilePrefix: !Sub panther-source-${AWS::AccountId}-${AWS::Region}/
+        LogFilePrefix: !Sub panther-source-${AWS::StackId}/
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true

@@ -186,14 +186,14 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: !Sub panther-analysis-versions-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub panther-analysis-versions-${AWS::StackId}
       LifecycleConfiguration:
         Rules:
           - NoncurrentVersionExpirationInDays: 365
             Status: Enabled
       LoggingConfiguration:
         DestinationBucketName: !Ref S3BucketAccessLogs
-        LogFilePrefix: !Sub panther-analysis-versions-${AWS::AccountId}-${AWS::Region}/
+        LogFilePrefix: !Sub panther-analysis-versions-${AWS::StackId}/
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
