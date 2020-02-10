@@ -126,6 +126,41 @@ var (
 	}
 )
 
+// Parse returns the parsed events or nil if parsing failed
+func (p *VPCFlowParser) Parse(log string) []interface{} {
+	if p.columnMap == nil { // must be first log line in file
+		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
+			return []interface{}{}
+		}
+		return nil
+	}
+
+	reader := csv.NewReader(strings.NewReader(log))
+	reader.Comma = ' '
+
+	records, err := reader.ReadAll()
+	if len(records) == 0 || err != nil {
+		zap.L().Debug("failed to parse the log as csv")
+		return nil
+	}
+
+	event := p.populateEvent(records[0]) // parser should only receive 1 line at a time
+
+	event.updatePantherFields(p)
+
+	if err := parsers.Validator.Struct(event); err != nil {
+		zap.L().Debug("failed to validate log", zap.Error(err))
+		return nil
+	}
+
+	return []interface{}{event}
+}
+
+// LogType returns the log type supported by this parser
+func (p *VPCFlowParser) LogType() string {
+	return "AWS.VPCFlow"
+}
+
 func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
 	// CloudTrail can be detected as VPCFlow due to lucky token matching, skip JSON looking things here!
 	if len(log) > 0 && log[0] == '{' {
@@ -139,16 +174,19 @@ func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
 			matchCount++
 		}
 	}
+
 	// require a minimal number of matching fields
-	isHeader := matchCount >= vpcFlowHeaderThreshold
-	if isHeader {
-		p.columnMap = make(map[int]string, len(headers))
-		for i, header := range headers {
-			header = strings.TrimSpace(header) // just in case
-			p.columnMap[i] = header
-		}
+	if matchCount < vpcFlowHeaderThreshold {
+		return false
 	}
-	return isHeader
+
+	p.columnMap = make(map[int]string, len(headers))
+	for i, header := range headers {
+		header = strings.TrimSpace(header) // just in case there are extra spaces (I don't trust them to get this right)
+		p.columnMap[i] = header
+	}
+
+	return true
 }
 
 func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
@@ -219,41 +257,6 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 	}
 
 	return event
-}
-
-// Parse returns the parsed events or nil if parsing failed
-func (p *VPCFlowParser) Parse(log string) []interface{} {
-	if p.columnMap == nil { // must be first log line in file
-		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
-			return []interface{}{}
-		}
-		return nil
-	}
-
-	reader := csv.NewReader(strings.NewReader(log))
-	reader.Comma = ' '
-
-	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
-		zap.L().Debug("failed to parse the log as csv")
-		return nil
-	}
-
-	event := p.populateEvent(records[0]) // parser should only receive 1 line at a time
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
-	}
-
-	return []interface{}{event}
-}
-
-// LogType returns the log type supported by this parser
-func (p *VPCFlowParser) LogType() string {
-	return "AWS.VPCFlow"
 }
 
 func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
