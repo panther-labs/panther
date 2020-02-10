@@ -89,7 +89,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 		{Parser: failingParser2},
 	}
 	testRegistry := NewTestRegistry()
-	parserRegistry = testRegistry // rebind as interface
+	parserRegistry = testRegistry // re-bind as interface
 	for i := range availableParsers {
 		testRegistry.Add(availableParsers[i]) // update registry
 	}
@@ -174,6 +174,7 @@ func TestClassifyNoMatch(t *testing.T) {
 
 	require.Equal(t, &ClassifierResult{LogLine: logLine}, result)
 	failingParser.AssertNumberOfCalls(t, "Parse", 1)
+	require.Nil(t, classifier.ParserStats()[failingParser.LogType()])
 }
 
 func TestClassifyParserPanic(t *testing.T) {
@@ -279,6 +280,8 @@ func testSkipClassify(logLine string, t *testing.T) {
 	require.Equal(t, expectedStats, classifier.Stats())
 
 	requireLessOrEqualNumberOfCalls(t, failingParser1, "Parse", 1)
+	require.Nil(t, classifier.ParserStats()[failingParser1.LogType()])
+	require.Nil(t, classifier.ParserStats()[failingParser2.LogType()])
 }
 
 func requireLessOrEqualNumberOfCalls(t *testing.T, underTest *mockParser, method string, number int) {

@@ -63,7 +63,7 @@ func NewClassifier() ClassifierAPI {
 	}
 }
 
-// Classifier is the struct responsible for classifying data streams which are assumed to be all 1 LogType()
+// Classifier is the struct responsible for classifying logs
 type Classifier struct {
 	parsers *ParserPriorityQueue
 	// aggregate stats
