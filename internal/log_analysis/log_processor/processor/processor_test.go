@@ -73,12 +73,14 @@ func TestProcess(t *testing.T) {
 		SuccessfullyClassifiedCount: testLogLines,
 		ClassificationFailureCount:  0,
 	}
-	mockParserStats := &classification.ParserStats{
-		ParserTimeMicroseconds: 1,
-		BytesProcessedCount:    (testLogLines) * uint64(len(testLogLine)),
-		LogLineCount:           testLogLines,
-		EventCount:             testLogLines,
-		LogType:                testLogType,
+	mockParserStats := map[string]*classification.ParserStats{
+		testLogType: {
+			ParserTimeMicroseconds: 1,
+			BytesProcessedCount:    (testLogLines) * uint64(len(testLogLine)),
+			LogLineCount:           testLogLines,
+			EventCount:             testLogLines,
+			LogType:                testLogType,
+		},
 	}
 
 	mockClassifier.standardMocks(mockStats, mockParserStats)
@@ -100,7 +102,7 @@ func TestProcessDataStreamError(t *testing.T) {
 
 	// classifier never gets called
 	mockStats := &classification.ClassifierStats{}
-	mockParserStats := &classification.ParserStats{}
+	mockParserStats := map[string]*classification.ParserStats{}
 
 	mockClassifier.standardMocks(mockStats, mockParserStats)
 
@@ -168,12 +170,14 @@ func TestProcessDestinationError(t *testing.T) {
 		SuccessfullyClassifiedCount: testLogLines,
 		ClassificationFailureCount:  0,
 	}
-	mockParserStats := &classification.ParserStats{
-		ParserTimeMicroseconds: 1,
-		BytesProcessedCount:    (testLogLines) * uint64(len(testLogLine)),
-		LogLineCount:           testLogLines,
-		EventCount:             testLogLines,
-		LogType:                testLogType,
+	mockParserStats := map[string]*classification.ParserStats{
+		testLogType: {
+			ParserTimeMicroseconds: 1,
+			BytesProcessedCount:    (testLogLines) * uint64(len(testLogLine)),
+			LogLineCount:           testLogLines,
+			EventCount:             testLogLines,
+			LogType:                testLogType,
+		},
 	}
 
 	mockClassifier.standardMocks(mockStats, mockParserStats)
@@ -206,17 +210,19 @@ func TestProcessClassifyFailure(t *testing.T) {
 		SuccessfullyClassifiedCount: testLogLines - 1,
 		ClassificationFailureCount:  1, // this is the failure
 	}
-	mockParserStats := &classification.ParserStats{
-		ParserTimeMicroseconds: 1,
-		BytesProcessedCount:    (testLogLines - 1) * uint64(len(testLogLine)),
-		LogLineCount:           testLogLines - 1,
-		EventCount:             testLogLines - 1,
-		LogType:                testLogType,
+	mockParserStats := map[string]*classification.ParserStats{
+		testLogType: {
+			ParserTimeMicroseconds: 1,
+			BytesProcessedCount:    (testLogLines - 1) * uint64(len(testLogLine)),
+			LogLineCount:           testLogLines - 1,
+			EventCount:             testLogLines - 1,
+			LogType:                testLogType,
+		},
 	}
 
 	// first one fails
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  nil,
+		Events:  []interface{}{},
 		LogLine: testLogLine,
 		LogType: nil,
 	}).Once()
@@ -283,7 +289,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 			},
 			Context: []zapcore.Field{
 				// custom
-				zap.Any(statsKey, *mockParserStats),
+				zap.Any(statsKey, *mockParserStats[testLogType]),
 
 				// standard
 				zap.String("namespace", common.OpLogNamespace),
@@ -354,13 +360,13 @@ func (c *testClassifier) Stats() *classification.ClassifierStats {
 	return args.Get(0).(*classification.ClassifierStats)
 }
 
-func (c *testClassifier) ParserStats() *classification.ParserStats {
+func (c *testClassifier) ParserStats() map[string]*classification.ParserStats {
 	args := c.Called()
-	return args.Get(0).(*classification.ParserStats)
+	return args.Get(0).(map[string]*classification.ParserStats)
 }
 
 // mocks for normal processing
-func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, pStats *classification.ParserStats) {
+func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, pStats map[string]*classification.ParserStats) {
 	c.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
 		Events:  []interface{}{testLogLine},
 		LogLine: testLogLine,
