@@ -21,7 +21,6 @@ package main
 import (
 	"bufio"
 	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -33,7 +32,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/sts"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -225,21 +223,14 @@ func TestIntegrationAPI(t *testing.T) {
 	response, err := cfnClient.DescribeStacks(
 		&cloudformation.DescribeStacksInput{StackName: aws.String(stackName)})
 	require.NoError(t, err)
-	var endpoint string
+	var endpoint, bucketName string
 	for _, output := range response.Stacks[0].Outputs {
 		if aws.StringValue(output.OutputKey) == "AnalysisApiEndpoint" {
 			endpoint = *output.OutputValue
-			break
+		} else if aws.StringValue(output.OutputKey) == "AnalysisVersionsBucket" {
+			bucketName = *output.OutputValue
 		}
 	}
-
-	// Get accountID
-	stsClient := sts.New(awsSession)
-	account, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	require.NoError(t, err)
-	bucketName := fmt.Sprintf("panther-analysis-versions-%s-%s", *account.Account, *awsSession.Config.Region)
-
-	fmt.Printf("analysis: %s bucket: %s\n", endpoint, bucketName)
 
 	// Reset data stores: S3 bucket and Dynamo table
 	require.NoError(t, testutils.ClearS3Bucket(awsSession, bucketName))

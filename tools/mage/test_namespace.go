@@ -341,7 +341,7 @@ func goPkgIntegrationTest(pkg string) {
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
-	if err := sh.Run("go", args...); err != nil {
+	if err := sh.RunV("go", args...); err != nil {
 		logger.Fatalf("go test %s failed: %v", pkg, err)
 	}
 }

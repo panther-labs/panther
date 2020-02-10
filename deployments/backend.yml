@@ -384,6 +384,9 @@ Resources:
         Status: Enabled
 
 Outputs:
+  AnalysisVersionsBucket:
+    Description: Bucket where Python version histories are stored
+    Value: !GetAtt AnalysisAPI.Outputs.BucketName
   AthenaResultsBucket:
     Description: Bucket where Athena writes query results
     Value: !Ref AthenaResults
