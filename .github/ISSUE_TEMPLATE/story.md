@@ -1,6 +1,6 @@
 ---
 name: Story
-about: A user story represents planned or ongoing development work in Panther project.
+about: Planned or ongoing development work
 title: ''
 labels: story
 assignees: ''
@@ -10,7 +10,7 @@ assignees: ''
 
 Explain what you are trying to achieve and why this story needs to be implemented. What is the value that this will provide?
 
-### Definition of Done
+### Acceptance Criteria
 
 Create a concise list of criteria that have to be matched to consider this story done. This should act as a checklist that
 would allow anyone reading this issue to be able to verify that your implementation is complete and working as expected. For example:
