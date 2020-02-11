@@ -95,6 +95,7 @@ func TestUpdate(t *testing.T) {
 		Set(expression.Name("awsConfig"), expression.Value(org.AwsConfig)).
 		Set(expression.Name("displayName"), expression.Value(org.DisplayName)).
 		Set(expression.Name("email"), expression.Value(org.Email)).
+		Set(expression.Name("errorReportingConsent"), expression.Value(org.ErrorReportingConsent)).
 		Set(expression.Name("phone"), expression.Value(org.Phone))
 	expectedCondition := expression.AttributeExists(expression.Name("id"))
 	expectedExpression, _ := expression.NewBuilder().WithCondition(expectedCondition).WithUpdate(expectedUpdate).Build()

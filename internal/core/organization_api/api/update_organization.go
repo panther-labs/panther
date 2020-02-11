@@ -25,11 +25,12 @@ func (API) UpdateOrganization(
 	input *models.UpdateOrganizationInput) (*models.UpdateOrganizationOutput, error) {
 
 	updated, err := orgTable.Update(&models.Organization{
-		AlertReportFrequency: input.AlertReportFrequency,
-		AwsConfig:            input.AwsConfig,
-		DisplayName:          input.DisplayName,
-		Email:                input.Email,
-		Phone:                input.Phone,
+		AlertReportFrequency:  input.AlertReportFrequency,
+		AwsConfig:             input.AwsConfig,
+		DisplayName:           input.DisplayName,
+		Email:                 input.Email,
+		ErrorReportingConsent: input.ErrorReportingConsent,
+		Phone:                 input.Phone,
 	})
 	if err != nil {
 		return nil, err

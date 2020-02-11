@@ -37,6 +37,7 @@ func (table *OrganizationsTable) Update(org *models.Organization) (*models.Organ
 		Set(expression.Name("awsConfig"), expression.Value(org.AwsConfig)).
 		Set(expression.Name("displayName"), expression.Value(org.DisplayName)).
 		Set(expression.Name("email"), expression.Value(org.Email)).
+		Set(expression.Name("errorReportingConsent"), expression.Value(org.ErrorReportingConsent)).
 		Set(expression.Name("phone"), expression.Value(org.Phone))
 	return table.doUpdate(update)
 }
