@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Example ACM API return values
+// Example ECS API return values
 var (
 	ExampleClusterArn = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster")
 	ExampleTaskArn    = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")

@@ -27,7 +27,7 @@ const (
 	EcsClusterSchema = "AWS.ECS.Cluster"
 )
 
-// EcsCluster contains all the information about an ACM certificate
+// EcsCluster contains all the information about an ECS Cluster
 type EcsCluster struct {
 	// Generic resource fields
 	GenericAWSResource
@@ -51,6 +51,7 @@ type EcsCluster struct {
 	Tasks    []*EcsTask
 }
 
+// EcsService contains all the information about an ECS Service, for embedding into the EcsCluster resource
 type EcsService struct {
 	// Generic resource fields
 	//
@@ -86,6 +87,7 @@ type EcsService struct {
 	TaskSets                      []*ecs.TaskSet
 }
 
+// EcsTask contains all the information about an ECS Task, for embedding into the EcsCluster resource
 type EcsTask struct {
 	// Generic resource fields
 	//

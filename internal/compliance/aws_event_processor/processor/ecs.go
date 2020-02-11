@@ -32,11 +32,6 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 	eventName := detail.Get("eventName").Str
 
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonelasticcontainerservice.html
-	if eventName == "READONLY" {
-		zap.L().Debug("ecs: ignoring event", zap.String("eventName", eventName))
-		return nil
-	}
-
 	var clusterARN string
 	switch eventName {
 	case "CreateTaskSet", "DeleteCluster", "DeleteTaskSet", "UpdateServicePrimaryTaskSet", "UpdateTaskSet":
@@ -44,10 +39,11 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 	case "CreateService", "DeleteAttributes", "DeleteService", "DeregisterContainerInstance", "PutAttributes",
 		"RegisterContainerInstance", "RunTask", "StartTask", "StopTask", "SubmitAttachmentStateChanges", "SubmitContainerStateChange",
 		"SubmitTaskStateChange", "UpdateContainerInstancesState", "UpdateService":
-		// These API calls understand an absent cluster value to mean the default cluster.
+		// These API calls interpret a missing cluster value to mean the default cluster.
 		//
 		// Sadly we can't differentiate between a failed extraction (rare), and a request to modify the
-		// default cluster. We will just default to scanning the default cluster.
+		// default cluster. We will just default to scanning the default cluster, which is the cluster
+		// with the name "default".
 		clusterARN = detail.Get("requestParameters.cluster").Str
 		if clusterARN == "" {
 			clusterARN = "default"
@@ -73,7 +69,7 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 			break
 		}
 
-		// It wasn't a cluster, so we have to scan the whole region.
+		// If it wasn't a cluster, we have to scan the whole region.
 		return []*resourceChange{{
 			AwsAccountID: accountID,
 			Delete:       false,

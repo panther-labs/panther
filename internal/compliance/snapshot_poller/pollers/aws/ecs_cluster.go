@@ -33,9 +33,7 @@ import (
 )
 
 // Set as variables to be overridden in testing
-var (
-	EcsClientFunc = setupEcsClient
-)
+var EcsClientFunc = setupEcsClient
 
 func setupEcsClient(sess *session.Session, cfg *aws.Config) interface{} {
 	cfg.MaxRetries = aws.Int(MaxRetries)
@@ -106,6 +104,11 @@ func getClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.E
 	if err != nil {
 		utils.LogAWSError("ECS.ListTasksPages", err)
 		return nil, err
+	}
+
+	// If there are no tasks stop here
+	if len(taskArns) == 0 {
+		return nil, nil
 	}
 
 	// Describe tasks
@@ -182,6 +185,11 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 		return nil, err
 	}
 
+	// If there are no services stop here
+	if len(serviceArns) == 0 {
+		return nil, nil
+	}
+
 	// Describe services
 	//
 	// Oddly, the DescribeServices API call does not have a version with builtin paging like the list
@@ -193,6 +201,7 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 		Include:  []*string{aws.String("TAGS")},
 		Services: serviceArns,
 	})
+
 	if err != nil {
 		utils.LogAWSError("ECS.DescribeServices", err)
 		return nil, err
