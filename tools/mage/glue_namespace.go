@@ -44,7 +44,7 @@ func (t Glue) Sync() {
 
 	awsSession, err := getSession()
 	if err != nil {
-		logger.Fatalf("Error getting session: %s", err)
+		logger.Fatal(err)
 	}
 	glueClient := glue.New(awsSession)
 
