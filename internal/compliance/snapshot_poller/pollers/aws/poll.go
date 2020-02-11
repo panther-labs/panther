@@ -295,7 +295,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	if scanRequest.ScanAllResources != nil && *scanRequest.ScanAllResources {
 		zap.L().Warn("DEPRECATED: processing full account scan, this operation should not occur during normal operations." +
 			"Either input was malformed or someone has manually initiated this scan.")
-		allPollers := make([]resourcePoller, len(ServicePollers))
+		allPollers := make([]resourcePoller, 0, len(ServicePollers))
 		for _, poller := range ServicePollers {
 			allPollers = append(allPollers, poller)
 		}

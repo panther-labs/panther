@@ -31,7 +31,7 @@ import (
 func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 	eventName := detail.Get("eventName").Str
 
-	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscertificatemanager.html
+	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonelasticcontainerservice.html
 	if eventName == "READONLY" {
 		zap.L().Debug("ecs: ignoring event", zap.String("eventName", eventName))
 		return nil
@@ -69,7 +69,7 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 			)
 			return nil
 		}
-		if strings.HasPrefix("cluster", parsed.Resource) {
+		if strings.HasPrefix(parsed.Resource, "cluster") {
 			break
 		}
 
@@ -90,6 +90,17 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 	default:
 		zap.L().Warn("ecs: encountered unknown event name", zap.String("eventName", eventName))
 		return nil
+	}
+
+	// If the short name was provided, convert to full ARN
+	if _, err := arn.Parse(clusterARN); err != nil {
+		clusterARN = arn.ARN{
+			Partition: "aws",
+			Service:   "ecs",
+			Region:    detail.Get("awsRegion").Str,
+			AccountID: accountID,
+			Resource:  "cluster/" + clusterARN,
+		}.String()
 	}
 
 	return []*resourceChange{{

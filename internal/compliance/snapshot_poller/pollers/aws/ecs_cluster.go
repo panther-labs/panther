@@ -76,7 +76,10 @@ func listClusters(ecsSvc ecsiface.ECSAPI) (clusters []*string) {
 
 // describeCluster provides detailed information for a given ECS cluster
 func describeCluster(ecsSvc ecsiface.ECSAPI, arn *string) (*ecs.Cluster, error) {
-	out, err := ecsSvc.DescribeClusters(&ecs.DescribeClustersInput{Clusters: []*string{arn}})
+	out, err := ecsSvc.DescribeClusters(&ecs.DescribeClustersInput{
+		Clusters: []*string{arn},
+		Include:  []*string{aws.String("TAGS")},
+	})
 	if err != nil {
 		utils.LogAWSError("ECS.DescribeClusters", err)
 		return nil, err
@@ -121,7 +124,7 @@ func getClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.E
 		return nil, err
 	}
 
-	tasks := make([]*awsmodels.EcsTask, len(rawTasks.Tasks))
+	tasks := make([]*awsmodels.EcsTask, 0, len(rawTasks.Tasks))
 	for _, task := range rawTasks.Tasks {
 		tasks = append(tasks, &awsmodels.EcsTask{
 			GenericAWSResource: awsmodels.GenericAWSResource{
@@ -195,7 +198,7 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 		return nil, err
 	}
 
-	services := make([]*awsmodels.EcsService, len(rawServices.Services))
+	services := make([]*awsmodels.EcsService, 0, len(rawServices.Services))
 	for _, service := range rawServices.Services {
 		services = append(services, &awsmodels.EcsService{
 			GenericAWSResource: awsmodels.GenericAWSResource{
