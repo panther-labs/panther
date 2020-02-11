@@ -40,8 +40,15 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
-// s3ObjectKeyFormat represents the format of the S3 object key
-const s3ObjectKeyFormat = "%s%s-%s.gz"
+const (
+	// s3ObjectKeyFormat represents the format of the S3 object key
+	s3ObjectKeyFormat = "%s%s-%s.gz"
+
+	logDataTypeAttributeName = "type"
+	logTypeAttributeName     = "id"
+
+	messageAttributeDataType = "String"
+)
 
 var (
 	maxFileSize = 100 * 1000 * 1000 // 100MB uncompressed file size, should result in ~10MB output file size
@@ -236,6 +243,16 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 	input := &sns.PublishInput{
 		TopicArn: aws.String(destination.snsTopicArn),
 		Message:  aws.String(marshalledNotification),
+		MessageAttributes: map[string]*sns.MessageAttributeValue{
+			logDataTypeAttributeName: {
+				StringValue: aws.String(common.LogData),
+				DataType: aws.String(messageAttributeDataType),
+			},
+			logTypeAttributeName:     {
+				StringValue: aws.String(logType),
+				DataType: aws.String(messageAttributeDataType),
+			},
+		},
 	}
 	if _, err = destination.snsClient.Publish(input); err != nil {
 		err = errors.Wrap(err, "failed to send notification to topic")
