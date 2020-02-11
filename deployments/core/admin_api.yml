@@ -201,7 +201,7 @@ Resources:
     Properties:
       FunctionName: !GetAtt CustomMessageTriggerFunction.Arn
       Action: lambda:InvokeFunction
-      Principal: !Sub cognito-idp.${AWS::URLSuffix}
+      Principal: cognito-idp.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
 
   ##### Organization API #####

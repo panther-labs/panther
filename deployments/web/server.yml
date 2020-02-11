@@ -150,7 +150,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: !Sub ecs-tasks.${AWS::URLSuffix}
+              Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       Path: /
       Policies:

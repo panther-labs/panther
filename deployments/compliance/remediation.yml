@@ -114,7 +114,7 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ApiFunction
-      Principal: !Sub apigateway.${AWS::URLSuffix}
+      Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${GatewayApi}/*
 
   Queue:

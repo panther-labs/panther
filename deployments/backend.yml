@@ -70,7 +70,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: !Sub apigateway.${AWS::URLSuffix}
+              Service: apigateway.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
@@ -95,7 +95,7 @@ Resources:
             Resource: '*'
           - Effect: Allow
             Principal:
-              Service: !Sub sns.${AWS::URLSuffix}
+              Service: sns.amazonaws.com
             Action:
               - kms:GenerateDataKey
               - kms:Decrypt
