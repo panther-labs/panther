@@ -39,7 +39,7 @@ const (
 )
 
 // Sync Sync glue table partitions after schema change
-func (t Glue) Sync() error {
+func (t Glue) Sync() {
 	var enteredText string
 
 	awsSession, err := getSession()
@@ -51,7 +51,7 @@ func (t Glue) Sync() error {
 	enteredText = promptUser("Enter regex to select a subset of tables (or <enter> for all tables): ", regexValidator)
 	matchTableName, err := regexp.Compile(enteredText)
 	if err != nil {
-		logger.Fatalf("Error compiling regexp: %s", err)
+		logger.Fatal(err)
 	}
 
 	enteredText = promptUser("Please input start day (YYYY-MM-DD): ", dateValidator)
@@ -67,8 +67,6 @@ func (t Glue) Sync() error {
 	}
 
 	syncPartitions(glueClient, matchTableName, startDay, endDay)
-
-	return nil
 }
 
 func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startDay, endDay time.Time) {
@@ -97,7 +95,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startD
 		if !matchTableName.MatchString(name) {
 			continue
 		}
-		logger.Infof("sync'ing %s", name)
+		logger.Infof("syncing %s", name)
 		for timeBin := startDay; !timeBin.After(endDay); timeBin = table.Timebin().Next(timeBin) {
 			updateChan <- &gluePartitionUpdate{
 				table: table,
