@@ -46,7 +46,7 @@ type S3ServerAccess struct {
 	Operation          *string            `json:"operation,omitempty" description:"The operation listed here is declared as SOAP.operation, REST.HTTP_method.resource_type, WEBSITE.HTTP_method.resource_type, or BATCH.DELETE.OBJECT."`
 	Key                *string            `json:"key,omitempty" description:"The key part of the request, URL encoded, or NULL if the operation does not take a key parameter."`
 	RequestURI         *string            `json:"requesturi,omitempty" description:"The Request-URI part of the HTTP request message."`
-	HTTPStatus         *int               `json:"httpstatus,omitempty" validate:"required,max=600,min=100" description:"The numeric HTTP status code of the response."`
+	HTTPStatus         *int               `json:"httpstatus,omitempty" description:"The numeric HTTP status code of the response."`
 	ErrorCode          *string            `json:"errorcode,omitempty" description:"The Amazon S3 Error Code, or NULL if no error occurred."`
 	BytesSent          *int               `json:"bytessent,omitempty" description:"The number of response bytes sent, excluding HTTP protocol overhead, or NULL if zero."`
 	ObjectSize         *int               `json:"objectsize,omitempty" description:"The total size of the object in question."`
