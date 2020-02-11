@@ -56,8 +56,8 @@ type Access struct {
 // AccessParser parses Nginx Access logs in 'combined' log format
 type AccessParser struct{}
 
-func (p *AccessParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
+func (p *AccessParser) New() parsers.LogParser {
+	return &AccessParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed

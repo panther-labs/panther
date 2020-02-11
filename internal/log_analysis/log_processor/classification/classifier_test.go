@@ -34,8 +34,8 @@ type mockParser struct {
 	mock.Mock
 }
 
-func (m *mockParser) ParseHeader(log string) []interface{} {
-	return m.Parse(log)
+func (m *mockParser) New() parsers.LogParser {
+	return m // pass through (not stateful)
 }
 
 func (m *mockParser) Parse(log string) []interface{} {

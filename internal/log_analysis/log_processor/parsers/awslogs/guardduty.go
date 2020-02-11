@@ -67,8 +67,8 @@ type GuardDutyService struct {
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type GuardDutyParser struct{}
 
-func (p *GuardDutyParser) ParseHeader(log string) []interface{} {
-	return p.Parse(log) // no header
+func (p *GuardDutyParser) New() parsers.LogParser {
+	return &GuardDutyParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed

@@ -88,7 +88,7 @@ Run Panther in 3 easy steps: clone the repo, install docker, and deploy!
 First, clone the latest release of the [Panther repo](https://github.com/panther-labs/panther):
 
 ```bash
-git clone https://github.com/panther-labs/panther --depth 1 --branch v0.1.1
+git clone https://github.com/panther-labs/panther --depth 1 --branch v0.2.0
 cd panther
 ```
 

@@ -19,7 +19,6 @@ package handlers
  */
 
 import (
-	"sort"
 	"strings"
 	"time"
 
@@ -85,9 +84,9 @@ func (r *tableItem) addExtraFields() {
 
 // Sort string sets before converting to an external Rule/Policy model.
 func (r *tableItem) normalize() {
-	sort.Strings(r.ResourceTypes)
-	sort.Strings(r.Suppressions)
-	sort.Strings(r.Tags)
+	sortCaseInsensitive(r.ResourceTypes)
+	sortCaseInsensitive(r.Suppressions)
+	sortCaseInsensitive(r.Tags)
 }
 
 // Policy converts a Dynamo row into a Policy external model.

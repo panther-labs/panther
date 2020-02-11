@@ -37,9 +37,7 @@ import (
 
 const (
 	// sessionDurationSeconds is the duration in seconds of the STS session the S3 client uses
-	sessionDurationSeconds = 3600
-	// sessionExternalID is external ID that will be used when getting credentials from STS
-	sessionExternalID       = "panther"
+	sessionDurationSeconds  = 3600
 	logProcessingRoleFormat = "arn:aws:iam::%s:role/PantherLogProcessingRole"
 )
 
@@ -138,6 +136,5 @@ func getAwsCredentials(awsAccountID string) *credentials.Credentials {
 
 	return stscreds.NewCredentials(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
 		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
-		p.ExternalID = aws.String(sessionExternalID)
 	})
 }
