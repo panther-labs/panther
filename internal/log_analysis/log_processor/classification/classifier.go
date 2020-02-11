@@ -70,8 +70,6 @@ type Classifier struct {
 	stats ClassifierStats
 	// per-parser stats, map of LogType -> stats
 	parserStats map[string]*ParserStats
-	// set to true after the first log line, used to control ParserHeader()
-	headerParsed bool
 }
 
 func (c *Classifier) Stats() *ClassifierStats {
@@ -83,7 +81,7 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func (c *Classifier) safeLogParse(parser parsers.LogParser, log string) (parsedEvents []interface{}) {
+func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []interface{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			zap.L().Error("parser panic",
@@ -94,14 +92,7 @@ func (c *Classifier) safeLogParse(parser parsers.LogParser, log string) (parsedE
 			parsedEvents = nil // return indicator that parse failed
 		}
 	}()
-	if c.headerParsed {
-		parsedEvents = parser.Parse(log)
-	} else {
-		parsedEvents = parser.ParseHeader(log)
-		if parsedEvents != nil { // set on first SUCCESSFUL parse
-			c.headerParsed = true
-		}
-	}
+	parsedEvents = parser.Parse(log)
 	return parsedEvents
 }
 
@@ -142,7 +133,7 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 		currentItem := c.parsers.Peek()
 
 		startParseTime := time.Now().UTC()
-		parsedEvents := c.safeLogParse(currentItem.parser, log)
+		parsedEvents := safeLogParse(currentItem.parser, log)
 		endParseTime := time.Now().UTC()
 
 		logType := currentItem.parser.LogType()

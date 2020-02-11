@@ -126,11 +126,7 @@ func TestVpcFlowLogNoData(t *testing.T) {
 
 func TestVpcFlowLogHeader(t *testing.T) {
 	parser := &VPCFlowParser{}
-<<<<<<< HEAD
-	require.Equal(t, []interface{}{}, parser.ParseHeader(vpcFlowDefaultHeader))
-=======
 	require.Equal(t, []interface{}{}, parser.Parse(vpcFlowDefaultHeader))
->>>>>>> 813e5607771f87eb6a38917445d784ac947ac5f1
 }
 
 func TestVpcFlowLogType(t *testing.T) {
@@ -140,11 +136,7 @@ func TestVpcFlowLogType(t *testing.T) {
 
 func checkVPCFlowLog(t *testing.T, header, log string, expectedEvent *VPCFlow) {
 	parser := &VPCFlowParser{}
-<<<<<<< HEAD
-	parser.ParseHeader(header)
-=======
 	parser.Parse(header)
->>>>>>> 813e5607771f87eb6a38917445d784ac947ac5f1
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*VPCFlow)

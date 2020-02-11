@@ -68,7 +68,6 @@ type VPCFlowParser struct {
 	columnMap map[int]string // column position to header name
 }
 
-
 func (p *VPCFlowParser) New() parsers.LogParser {
 	return &VPCFlowParser{}
 }
