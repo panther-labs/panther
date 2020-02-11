@@ -84,6 +84,10 @@ Resources:
       Region: !Ref AWS::Region
       TopicArn: !Ref SnsTopicArn
       RawMessageDelivery: true
+      # Receive notifications only for new log events
+      FilterPolicy:
+        type:
+          - LogData
 
   QueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -139,6 +143,8 @@ Resources:
           ANALYSIS_API_PATH: v1
           DEBUG: !Ref Debug
           ALERTS_QUEUE: !Ref AlertsQueue
+          S3_BUCKET: !Ref ProcessedDataBucket
+          SNS_TOPIC_ARN: !Ref SnsTopicArn
       MemorySize: !Ref MemorySizeMB
       Events:
         Queue:
@@ -176,11 +182,13 @@ Resources:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${AlertsQueue}
-        - Id: ReadFromS3
+        - Id: S3ReadWrite
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: s3:GetObject
+              Action:
+                - s3:GetObject
+                - s3:PutObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/*
         - Id: AccessKms
           Version: 2012-10-17

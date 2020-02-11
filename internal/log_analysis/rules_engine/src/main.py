@@ -27,19 +27,54 @@ from .engine import Engine
 from .logging import get_logger
 from .rule import Rule
 from .sqs import send_to_sqs
+from .output import Output
 
 s3_client = boto3.client('s3')
 rules_engine = Engine()
+logger = get_logger()
 
 
 def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[str, Any]]:
-    start = default_timer()
-    logger = get_logger()
-
     # Handle the direct evaluation of a single rule against some number of events
     if 'rules' in event:
         return direct_analysis(event)
+    log_analysis(event)
 
+
+def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Evaluates a single rule against a set of events, and returns the results. Currently used for testing policies directly.
+    """
+    # Since this is used for testing single rules, it should only ever have one rule
+    if len(event['rules']) != 1:
+        raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
+
+    raw_rule = event['rules'][0]
+    test_rule = Rule(raw_rule['id'], raw_rule['body'])
+    results = {'events': []}
+    for single_event in event['events']:
+        result = {
+            'id': single_event['id'],
+            'matched': [],
+            'notMatched': [],
+            'errored': [],
+        }
+        matched = test_rule.run(single_event['data'])
+        if matched is True:
+            result['matched'] = [raw_rule['id']]
+        elif matched is False:
+            result['notMatched'] = [raw_rule['id']]
+        else:
+            result['errored'] = [{
+                'id': raw_rule['id'],
+                'message': str(matched),
+            }]
+
+        results['events'].append(result)
+    return results
+
+
+def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
     # Dictionary containing mapping from log type to list of TextIOWrapper's
     log_type_to_data: Dict[str, TextIOWrapper] = collections.defaultdict(list)
 
@@ -52,53 +87,26 @@ def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[st
 
     # List containing tuple of (rule_id, event) for matched events
     matched: List = []
-
+    output = Output()
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
             for data in data_stream:
                 try: # Bad json data can cause exceptions to be thrown. Best effort: log and continue
-                    for matched_rule in rules_engine.analyze(log_type, json.loads(data)):
-                        matched.append((matched_rule, data))
+                    json_data = json.loads(data)
+                    for matched_rule in rules_engine.analyze(log_type, json_data):
+                        output.matched_event(log_type, matched_rule, json_data)
                 except Exception as err:  # pylint: disable=broad-except
                     logger.error("Error during matching: {}".format(err)) # do not log data!
 
+
+
     if len(matched) > 0:
+        logger.info("sending {} matches".format(len(matched)))
         send_to_sqs(matched)
+    else:
+        logger.info("no matches found")
+    output.complete()
 
-    end = default_timer()
-    logger.info("Matched {} events in {} seconds".format(len(matched), end - start))
-
-# Evaluates a single rule against a set of events, and returns the results
-# Currently used for testing policies directly
-def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
-        # Since this is used for testing single rules, it should only ever have one rule
-        if len(event['rules']) != 1:
-            raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
-
-        raw_rule = event['rules'][0]
-        test_rule = Rule(raw_rule['id'], raw_rule['body'])
-        results = {'events' : []}
-        for single_event in event['events']:
-            result = {
-                'id': single_event['id'],
-                'matched' : [],
-                'notMatched': [],
-                'errored': [],
-            }
-            matched = test_rule.run(single_event['data'])
-            if matched is True:
-                result['matched'] = [raw_rule['id']]
-            elif matched is False:
-                result['notMatched'] = [raw_rule['id']]
-            else:
-                result['errored'] = [{
-                    'id' : raw_rule['id'],
-                    'message': str(matched),
-                    }]
-
-            results['events'].append(result)
-
-        return results
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all
 # contents of S3 object in memory
