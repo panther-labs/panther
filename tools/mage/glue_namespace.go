@@ -19,15 +19,11 @@ package mage
  */
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/magefile/mage/mg"
 
@@ -38,43 +34,36 @@ import (
 // targets for managing Glue tables
 type Glue mg.Namespace
 
-// Sync's all glue table partitions with current table schema (used when table schema changes)
+const (
+	gluePartitionDateFormat = "2006-01-02"
+)
+
+// Sync Sync glue table partitions after schema change
 func (t Glue) Sync() error {
-	const dateFormat = "2006-01-02"
 	var enteredText string
 
-	awsSession := session.Must(session.NewSession())
+	awsSession, err := getSession()
+	if err != nil {
+		logger.Fatalf("Error getting session: %s", err)
+	}
 	glueClient := glue.New(awsSession)
 
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Print("Please input a regular expression to select a subset of tables (or <enter> for all tables): ")
-	enteredText, _ = reader.ReadString('\n')
-	enteredText = strings.TrimSpace(enteredText)
+	enteredText = promptUser("Enter regex to select a subset of tables (or <enter> for all tables): ", regexValidator)
 	matchTableName, err := regexp.Compile(enteredText)
 	if err != nil {
-		return err
+		logger.Fatalf("Error compiling regexp: %s", err)
 	}
 
-	fmt.Print("Please input start day (YYYY-MM-DD): ")
-	enteredText, _ = reader.ReadString('\n')
-	enteredText = strings.TrimSpace(enteredText)
-	startDay, err := time.Parse(dateFormat, enteredText)
-	if err != nil {
-		return fmt.Errorf("cannot parse %s as YYYY-MM-DD", enteredText)
-	}
+	enteredText = promptUser("Please input start day (YYYY-MM-DD): ", dateValidator)
+	startDay, _ := time.Parse(gluePartitionDateFormat, enteredText) // no error check already validated
 
-	fmt.Print("Please input end day (YYYY-MM-DD): ")
-	enteredText, _ = reader.ReadString('\n')
-	enteredText = strings.TrimSpace(enteredText)
-	endDay, err := time.Parse(dateFormat, enteredText)
-	if err != nil {
-		return fmt.Errorf("cannot parse %s as YYYY-MM-DD", enteredText)
-	}
+	enteredText = promptUser("Please input end day (YYYY-MM-DD): ", dateValidator)
+	endDay, _ := time.Parse(gluePartitionDateFormat, enteredText) // no error check already validated
+
 	endDay = endDay.Add(time.Hour * 23) // move to last hour of the day
 
 	if startDay.After(endDay) {
-		return fmt.Errorf("start day (%s) cannot be after end day (%s)", startDay, endDay)
+		logger.Fatalf("start day (%s) cannot be after end day (%s)", startDay, endDay)
 	}
 
 	syncPartitions(glueClient, matchTableName, startDay, endDay)
@@ -94,7 +83,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startD
 			for update := range updateChan {
 				err := update.table.SyncPartition(glueClient, update.at)
 				if err != nil {
-					fmt.Println(err) // best effort, let users know there are failures (this can be re-run)
+					logger.Error(err) // best effort, let users know there are failures (this can be re-run)
 					continue
 				}
 			}
@@ -108,7 +97,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startD
 		if !matchTableName.MatchString(name) {
 			continue
 		}
-		fmt.Printf("sync'ing %s\n", name)
+		logger.Infof("sync'ing %s", name)
 		for timeBin := startDay; !timeBin.After(endDay); timeBin = table.Timebin().Next(timeBin) {
 			updateChan <- &gluePartitionUpdate{
 				table: table,
@@ -119,6 +108,20 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startD
 
 	close(updateChan)
 	wg.Wait()
+}
+
+func regexValidator(text string) error {
+	if _, err := regexp.Compile(text); err != nil {
+		return fmt.Errorf("invalid regex: %v", err)
+	}
+	return nil
+}
+
+func dateValidator(text string) error {
+	if _, err := time.Parse(gluePartitionDateFormat, text); err != nil {
+		return fmt.Errorf("invalid date: %v", err)
+	}
+	return nil
 }
 
 type gluePartitionUpdate struct {

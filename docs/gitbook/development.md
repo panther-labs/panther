@@ -41,6 +41,7 @@ Targets:
   clean               Remove auto-generated build artifacts
   deploy              Deploy application infrastructure
   fmt                 Format source files
+  glue:sync           Sync glue table partitions after schema change
   setup:all           Install all development dependencies
   setup:go            Install goimports, go-swagger, and golangci-lint
   setup:python        Install the Python virtual env

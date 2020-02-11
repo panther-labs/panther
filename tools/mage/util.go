@@ -162,8 +162,8 @@ func promptUser(prompt string, validator func(string) error) string {
 
 	for {
 		fmt.Print(prompt)
-		if _, err := fmt.Scanln(&result); err != nil {
-			fmt.Println(err) // empty line, for example
+		if n, err := fmt.Scanln(&result); err != nil && n != 0 { // n==0 on empty lines, handled below in validator
+			fmt.Println(err)
 			continue
 		}
 
