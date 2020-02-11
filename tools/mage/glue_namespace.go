@@ -48,7 +48,7 @@ func (t Glue) Sync() error {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Please input regular expression to select subset of tables (or <enter> for all tables): ")
+	fmt.Print("Please input a regular expression to select a subset of tables (or <enter> for all tables): ")
 	enteredText, _ = reader.ReadString('\n')
 	enteredText = strings.TrimSpace(enteredText)
 	matchTableName, err := regexp.Compile(enteredText)
