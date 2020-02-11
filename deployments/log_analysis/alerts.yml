@@ -245,9 +245,9 @@ Resources:
           RECENT_ALERTS_TABLE: !Ref RecentAlertsTable
           EVENTS_TABLE: !Ref EventsTable
           ALERTS_TABLE: !Ref AlertsTable
-          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}..amazonaws.com'
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
-          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}..amazonaws.com/${AWS::AccountId}/panther-alerts
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts
       Events:
         Queue:
           Type: SQS
