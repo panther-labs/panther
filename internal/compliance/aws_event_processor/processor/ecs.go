@@ -88,8 +88,17 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 		return nil
 	}
 
-	// If the short name was provided, convert to full ARN
+	// If clusterARN is empty, we failed to parse the ARN out at some point despite trying
+	if clusterARN == "" {
+		zap.L().Error("ecs: known event name, but still failed to parse clusterARN", zap.String("eventName", eventName))
+		return nil
+	}
+
+	// All ECS Cluster API calls can be made with the full ARN or just the cluster name as the 'cluster' parameter.
+	// If we received just the cluster name we can construct the full ARN, which we do in order to reduce
+	// complexity for the snapshot poller.
 	if _, err := arn.Parse(clusterARN); err != nil {
+		// A short cluster name was provided, construct the full ARN
 		clusterARN = arn.ARN{
 			Partition: "aws",
 			Service:   "ecs",

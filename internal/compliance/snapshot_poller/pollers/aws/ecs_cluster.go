@@ -299,11 +299,28 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 	ecsClusterSnapshots := make(map[string]*awsmodels.EcsCluster)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ecs") {
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
+		sess, err := session.NewSession(&aws.Config{Region: regionID})
+		if err != nil {
+			// The session failed to create, log an error and continue to the next region
+			zap.L().Error(
+				"unable to create aws session",
+				zap.String("region", *regionID),
+				zap.String("service", "ecs"),
+				zap.Error(err),
+			)
+			continue
+		}
 
 		creds, err := AssumeRoleFunc(pollerInput, sess)
 		if err != nil {
-			return nil, err
+			// The client failed to create, log an error and continue to the next region
+			zap.L().Error(
+				"unable to create aws client",
+				zap.String("region", *regionID),
+				zap.String("service", "ecs"),
+				zap.Error(err),
+			)
+			continue
 		}
 
 		ecsSvc := EcsClientFunc(sess, &aws.Config{Credentials: creds}).(ecsiface.ECSAPI)
