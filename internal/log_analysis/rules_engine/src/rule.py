@@ -41,12 +41,13 @@ class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: str, rule_body: str, rule_version: str):
+    def __init__(self, rule_id: str, rule_body: str, rule_version: str = 'default'):
         """Import rule contents from disk.
 
         Args:
             rule_id: Unique rule identifier
             rule_body: The rule body
+            rule_version: The version of the rule
         """
         self.rule_id = rule_id
         self.rule_version = rule_version

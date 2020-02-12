@@ -29,7 +29,6 @@ from .sqs import send_to_sqs
 from .output import Output
 
 s3_client = boto3.client('s3')
-rules_engine = Engine()
 logger = get_logger()
 
 
@@ -58,22 +57,24 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
             'notMatched': [],
             'errored': [],
         }
-        matched = test_rule.run(single_event['data'])
-        if matched is True:
-            result['matched'] = [raw_rule['id']]
-        elif matched is False:
-            result['notMatched'] = [raw_rule['id']]
-        else:
+        rule_result = test_rule.run(single_event['data'])
+        if rule_result.exception:
             result['errored'] = [{
                 'id': raw_rule['id'],
-                'message': str(matched),
+                'message': str(rule_result.exception),
             }]
+        elif rule_result.matched:
+            result['matched'] = [raw_rule['id']]
+        else:
+            result['notMatched'] = [raw_rule['id']]
 
         results['events'].append(result)
     return results
 
 
 def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
+    # Creating new engine on every processing
+    rules_engine = Engine()
     # Dictionary containing mapping from log type to list of TextIOWrapper's
     log_type_to_data: Dict[str, TextIOWrapper] = collections.defaultdict(list)
 

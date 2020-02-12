@@ -25,6 +25,9 @@ from .logging import get_logger
 from .rule import Rule, COMMON_MODULE_RULE_ID
 
 _RULES_CACHE_DURATION = timedelta(minutes=5)
+_LAST_RULE_UPDATE_TIME = datetime.utcfromtimestamp(0)
+_LOG_TYPE_TO_RULES: Dict[str, List[Rule]] = collections.defaultdict(list)
+_ANALYSIS_CLIENT = AnalysisAPIClient()
 
 
 class Engine:
@@ -32,20 +35,17 @@ class Engine:
     logger = get_logger()
 
     def __init__(self) -> None:
-        self._last_update = datetime.utcfromtimestamp(0)
-        self._log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
-        self._analysis_client = AnalysisAPIClient()
-        self._populate_rules()
+        self._processing_time = datetime.utcnow()
 
     def analyze(self, log_type: str, event: Dict[str, Any]) -> List[AnalysisMatch]:
         """Analyze an event by running all the rules that apply to the log type.
         """
-        if datetime.utcnow() - self._last_update > _RULES_CACHE_DURATION:
+        if datetime.utcnow() - _LAST_RULE_UPDATE_TIME > _RULES_CACHE_DURATION:
             self._populate_rules()
 
         matched: List[AnalysisMatch] = []
 
-        for rule in self._log_type_to_rules[log_type]:
+        for rule in self._LOG_TYPE_TO_RULES[log_type]:
             result = rule.run(event)
             if result.exception:
                 self.logger.error(
@@ -54,6 +54,8 @@ class Engine:
             if result.matched:
                 matched.append(AnalysisMatch(
                     rule_id=rule.rule_id,
+                    rule_version=rule.rule_version,
+                    analysis_time=self._processing_time,
                     log_type=log_type,
                     dedup=result.dedup,
                     event=event))
@@ -70,33 +72,19 @@ class Engine:
         start = default_timer()
 
         # Clear old rules
-        self._log_type_to_rules.clear()
+        self._LOG_TYPE_TO_RULES.clear()
 
         # Importing common module. This module MAY hold code common to some rules and if it exists, it must be
         # imported before other rules. However, the presence of this rule is optional.
         for raw_rule in rules:
-            if 'id' not in raw_rule:
-                continue
-            if 'body' not in raw_rule:
-                continue
             if raw_rule['id'] == COMMON_MODULE_RULE_ID:
                 Rule(
                     rule_id=raw_rule['id'],
                     rule_body=raw_rule['body'],
-                    rule_version=raw_rule.get('versionId'))
+                    rule_version=raw_rule['versionId'])
                 break
 
-        # Check all keys (do NOT trust data in ddb!), update lookup table
         for raw_rule in rules:
-            if 'id' not in raw_rule:
-                self.logger.error('Rule missing id'.format(str(raw_rule)))
-                continue
-            if 'body' not in raw_rule:
-                self.logger.error('Rule {} missing body'.format(raw_rule['id']))
-                continue
-            if 'resourceTypes' not in raw_rule:
-                self.logger.error('Rule {} missing resourceTypes'.format(raw_rule['id']))
-                continue
             if raw_rule['id'] == COMMON_MODULE_RULE_ID:
                 # skip, should be already loaded above if present
                 continue
@@ -105,18 +93,18 @@ class Engine:
             rule = Rule(
                 rule_id=raw_rule['id'],
                 rule_body=raw_rule['body'],
-                rule_version=raw_rule.get('versionId'))
+                rule_version=raw_rule['versionId'])
             for log_type in raw_rule['resourceTypes']:
-                self._log_type_to_rules[log_type].append(rule)
+                self._LOG_TYPE_TO_RULES[log_type].append(rule)
 
         end = default_timer()
         self.logger.info('Imported {} rules in {} seconds'.format(import_count, end - start))
-        self._last_update = datetime.utcnow()
+        _LAST_RULE_UPDATE_TIME = datetime.utcnow()
 
     def _get_rules(self) -> List[Dict[str, str]]:
         """Retrieves all enabled rules.
 
         Returns:
-            An array of Dict['id': rule_id, 'body': rule_body]
+            An array of Dict['id': rule_id, 'body': rule_body, ...] that contain all fields of a rule.
         """
-        return self._analysis_client.get_enabled_rules()
+        return _ANALYSIS_CLIENT.get_enabled_rules()
