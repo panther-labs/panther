@@ -13,4 +13,25 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict
+
+
+@dataclass
+class AnalysisMatch:
+    rule_id: str
+    rule_version: str
+    log_type: str
+    dedup: str
+    event: Dict[str, Any]
+
+
+@dataclass
+class AlertInfo:
+    alert_id: str
+    alert_creation_time: datetime
+    alert_update_time: datetime
+
+
 

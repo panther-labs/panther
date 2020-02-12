@@ -258,11 +258,11 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 		MessageAttributes: map[string]*sns.MessageAttributeValue{
 			"type": {
 				StringValue: aws.String(common.LogData),
-				DataType: aws.String("String"),
+				DataType:    aws.String("String"),
 			},
-			"id":   {
+			"id": {
 				StringValue: aws.String("testtype"),
-				DataType: aws.String("String"),
+				DataType:    aws.String("String"),
 			},
 		},
 	}

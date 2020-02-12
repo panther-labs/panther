@@ -17,13 +17,14 @@
 import collections
 from datetime import datetime, timedelta
 from timeit import default_timer
-from typing import Any, Dict, List
+from typing import Any, List, Dict
 
+from . import AnalysisMatch
 from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
 from .rule import Rule, COMMON_MODULE_RULE_ID
 
-_CACHE_DURATION = timedelta(minutes=5)
+_RULES_CACHE_DURATION = timedelta(minutes=5)
 
 
 class Engine:
@@ -34,13 +35,36 @@ class Engine:
         self._last_update = datetime.utcfromtimestamp(0)
         self._log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
         self._analysis_client = AnalysisAPIClient()
-        self.populate_rules()
+        self._populate_rules()
 
-    def populate_rules(self) -> None:
+    def analyze(self, log_type: str, event: Dict[str, Any]) -> List[AnalysisMatch]:
+        """Analyze an event by running all the rules that apply to the log type.
+        """
+        if datetime.utcnow() - self._last_update > _RULES_CACHE_DURATION:
+            self._populate_rules()
+
+        matched: List[AnalysisMatch] = []
+
+        for rule in self._log_type_to_rules[log_type]:
+            result = rule.run(event)
+            if result.exception:
+                self.logger.error(
+                    'failed to run rule {} {} {}'.format(rule.rule_id, type(result).__name__, result.exception))
+                continue
+            if result.matched:
+                matched.append(AnalysisMatch(
+                    rule_id=rule.rule_id,
+                    log_type=log_type,
+                    dedup=result.dedup,
+                    event=event))
+
+        return matched
+
+    def _populate_rules(self) -> None:
         """Import all rules."""
         import_count = 0
         start = default_timer()
-        rules = self.get_rules()
+        rules = self._get_rules()
         end = default_timer()
         self.logger.info('Retrieved {} rules in {} seconds'.format(len(rules), end - start))
         start = default_timer()
@@ -48,15 +72,18 @@ class Engine:
         # Clear old rules
         self._log_type_to_rules.clear()
 
-        # Importing common module. This module MAY hold code common to some rules and if it exists, it must be imported before other rules.
-        # However, the presence of this rule is optional.
+        # Importing common module. This module MAY hold code common to some rules and if it exists, it must be
+        # imported before other rules. However, the presence of this rule is optional.
         for raw_rule in rules:
             if 'id' not in raw_rule:
                 continue
             if 'body' not in raw_rule:
                 continue
             if raw_rule['id'] == COMMON_MODULE_RULE_ID:
-                Rule(raw_rule['id'], raw_rule['body'])
+                Rule(
+                    rule_id=raw_rule['id'],
+                    rule_body=raw_rule['body'],
+                    rule_version=raw_rule.get('versionId'))
                 break
 
         # Check all keys (do NOT trust data in ddb!), update lookup table
@@ -75,7 +102,10 @@ class Engine:
                 continue
             # update lookup table from log type to rule
             import_count = import_count + 1
-            rule = Rule(raw_rule['id'], raw_rule['body'])
+            rule = Rule(
+                rule_id=raw_rule['id'],
+                rule_body=raw_rule['body'],
+                rule_version=raw_rule.get('versionId'))
             for log_type in raw_rule['resourceTypes']:
                 self._log_type_to_rules[log_type].append(rule)
 
@@ -83,32 +113,10 @@ class Engine:
         self.logger.info('Imported {} rules in {} seconds'.format(import_count, end - start))
         self._last_update = datetime.utcnow()
 
-    def get_rules(self) -> List[Dict[str, str]]:
+    def _get_rules(self) -> List[Dict[str, str]]:
         """Retrieves all enabled rules.
 
         Returns:
             An array of Dict['id': rule_id, 'body': rule_body]
         """
         return self._analysis_client.get_enabled_rules()
-
-    def analyze(self, log_type: str, event: Dict[str, Any]) -> List[str]:
-        """Analyze an event by running all the rules that apply to the log type.
-
-        Returns:
-            ['rule-id-1', 'rule-id-3']  # rules that matched
-
-        """
-        if datetime.utcnow() - self._last_update > _CACHE_DURATION:
-            self.populate_rules()
-
-        matched: List[str] = []
-
-        for rule in self._log_type_to_rules[log_type]:
-            result = rule.run(event)
-            if result is True:
-                matched.append(rule.rule_id)
-            elif isinstance(result, Exception):
-                # TODO Add reporting of errors in the UI
-                self.logger.error('failed to run rule {} {} {}'.format(rule.rule_id, type(result).__name__, result))
-
-        return matched

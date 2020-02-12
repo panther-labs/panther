@@ -1,4 +1,4 @@
- # Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,9 +17,10 @@
 import os
 import sys
 import tempfile
+from dataclasses import dataclass
 from importlib import util as import_util
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from .logging import get_logger
 
@@ -29,11 +30,18 @@ _RULE_FOLDER = os.path.join(tempfile.gettempdir(), 'rules')
 COMMON_MODULE_RULE_ID = 'aws_globals'
 
 
+@dataclass
+class RuleResult:
+    exception: Exception = None
+    matched: bool = None
+    dedup: str = None
+
+
 class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: str, rule_body: str) -> None:
+    def __init__(self, rule_id: str, rule_body: str, rule_version: str):
         """Import rule contents from disk.
 
         Args:
@@ -41,6 +49,7 @@ class Rule:
             rule_body: The rule body
         """
         self.rule_id = rule_id
+        self.rule_version = rule_version
 
         self._import_error = None
         try:
@@ -85,18 +94,19 @@ class Rule:
         """Return true if the character is part of a valid rule ID."""
         return char.isalnum() or char in {' ', '-', '.'}
 
-    def run(self, event: Dict[str, Any]) -> Union[bool, Exception]:
+    def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
         if self._import_error:
-            return self._import_error
+            return RuleResult(exception=self._import_error)
 
         try:
             # Python source should have a method called "rule"
             matched = self._module.rule(event)
         except Exception as err:  # pylint: disable=broad-except
-            return err
+            return RuleResult(exception=err)
 
         if not isinstance(matched, bool):
-            return Exception('rule returned {}, expected bool'.format(type(matched).__name__))
+            e = Exception('rule returned {}, expected bool'.format(type(matched).__name__))
+            return RuleResult(exception=e)
 
-        return matched
+        return RuleResult(matched=matched, dedup="default")

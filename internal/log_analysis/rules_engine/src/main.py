@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import collections
-from timeit import default_timer
 import json
 from gzip import GzipFile
 from io import TextIOWrapper
@@ -50,7 +49,7 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
         raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
 
     raw_rule = event['rules'][0]
-    test_rule = Rule(raw_rule['id'], raw_rule['body'])
+    test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'])
     results = {'events': []}
     for single_event in event['events']:
         result = {
@@ -91,21 +90,18 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
             for data in data_stream:
-                try: # Bad json data can cause exceptions to be thrown. Best effort: log and continue
-                    json_data = json.loads(data)
-                    for matched_rule in rules_engine.analyze(log_type, json_data):
-                        output.matched_event(log_type, matched_rule, json_data)
+                try:  # Bad json data can cause exceptions to be thrown. Best effort: log and continue
+                    for analysis_result in rules_engine.analyze(log_type, json.loads(data)):
+                        output.add_match(analysis_result)
                 except Exception as err:  # pylint: disable=broad-except
-                    logger.error("Error during matching: {}".format(err)) # do not log data!
-
-
+                    logger.error("Error during matching: {}".format(err))  # do not log data!
 
     if len(matched) > 0:
         logger.info("sending {} matches".format(len(matched)))
         send_to_sqs(matched)
     else:
         logger.info("no matches found")
-    output.complete()
+    output.flush()
 
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all
