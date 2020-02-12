@@ -124,6 +124,24 @@ Resources:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: !Ref TimeoutSec
 
+
+  ##### Dynamo recent alerts table #####
+  AlertsDedup:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-alert-dedup
+      AttributeDefinitions:
+        - AttributeName: partitionKey
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: partitionKey
+          KeyType: HASH
+      PointInTimeRecoverySpecification: # Create periodic table backups
+        PointInTimeRecoveryEnabled: True
+      SSESpecification: # Enable server-side encryption
+        SSEEnabled: True
+
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -145,6 +163,7 @@ Resources:
           ALERTS_QUEUE: !Ref AlertsQueue
           S3_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref SnsTopicArn
+          ALERTS_DEDUP_TABLE: !Ref AlertsDedup
       MemorySize: !Ref MemorySizeMB
       Events:
         Queue:
@@ -160,7 +179,7 @@ Resources:
             - '${base},${pip}'
             - { base: !Join [',', !Ref LayerVersionArns], pip: !Ref PythonLayerArn }
         - [!Ref PythonLayerArn]
-      Runtime: python3.7
+      Runtime: python3.8
       Timeout: !Ref TimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
@@ -190,6 +209,14 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/*
+        - Id: DDBUpdate
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:UpdateItem
+              Resource: !GetAtt AlertsDedup.Arn
         - Id: AccessKms
           Version: 2012-10-17
           Statement:

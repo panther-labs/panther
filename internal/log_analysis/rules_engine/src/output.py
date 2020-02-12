@@ -15,61 +15,96 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import collections
-from typing import Dict, Any
+import datetime
+import gzip
+import json
+import os
+import uuid
+from dataclasses import dataclass
+from io import BytesIO
+from typing import Dict
 
 import boto3
-import json
+
+from .engine import AnalysisMatch
 from .logging import get_logger
-from io import BytesIO
-import datetime
-import uuid
-import os
+from .alert_merger import Merger
 
-import gzip
-
-_key_format = "rules/{}/year={}/month={}/day={}/hour={}/rule_id={}/{}.gz"
+_KEY_FORMAT = 'rules/{}/year={}/month={}/day={}/hour={}/rule_id={}/{}-{}.gz'
+_S3_KEY_DATE_FORMAT = '%Y%m%d%H%M%S'
+_DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f000'
 _s3_bucket = os.environ['S3_BUCKET']
 _s3_client = boto3.client('s3')
 
 
+@dataclass
+class OutputInfo:
+    writer: gzip.GzipFile
+    data_stream: BytesIO
+    processing_time: datetime.datetime
+
+
+def _generate_dict_key(log_type: str, rule_id: str) -> str:
+    return log_type + '-' + rule_id
+
+
+def _dict_key_to_log_type_rule_id(key: str) -> (str, str):
+    values = key.split('-', 1)
+    return values[0], values[1]
+
+
 class Output:
     def __init__(self):
-        self.rule_id_to_data: Dict[str, gzip.GzipFile] = collections.defaultdict()
+        self.merger = Merger()
+        self.rule_id_to_data: Dict[str, OutputInfo] = {}
         self.logger = get_logger()
 
-    def matched_event(self, log_type: str, rule_id: str, event: Dict[str, Any]):
-        dict_key = self._generate_dict_key(log_type, rule_id)
-        compressed_stream = self.rule_id_to_data.get(rule_id)
-        if not compressed_stream:
+    def add_match(self, match: AnalysisMatch) -> None:
+        dict_key = _generate_dict_key(match.log_type, match.rule_id)
+        output_info = self.rule_id_to_data.get(match.rule_id)
+        if not output_info:
             data_stream = BytesIO()
-            compressed_stream = gzip.GzipFile(fileobj=data_stream, mode='wb')
-            self.rule_id_to_data[dict_key] = compressed_stream
-        data = json.dumps(event).encode('utf-8')
-        compressed_stream.write(data)
+            writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
+            current_time = datetime.datetime.utcnow()
+            output_info = OutputInfo(writer, data_stream, current_time)
+            self.rule_id_to_data[dict_key] = output_info
 
-    def complete(self):
-        current_time = datetime.datetime.utcnow()
-        for dict_key, compressed_stream in self.rule_id_to_data.items():
+        serialized_data = self._serialize_event(output_info, match)
+        output_info.writer.write(serialized_data.encode('utf-8'))
+
+    def flush(self):
+        for dict_key, output_info in self.rule_id_to_data.items():
             output_uuid = uuid.uuid4()
-            compressed_stream.flush()
-            log_type, rule_id = self._dict_key_to_log_type_rule_id(dict_key)
-            object_key = _key_format.format(
+            output_info.writer.close()
+            output_info.data_stream.seek(0)
+            log_type, rule_id = _dict_key_to_log_type_rule_id(dict_key)
+            object_key = _KEY_FORMAT.format(
                 log_type,
-                current_time.year,
-                current_time.month,
-                current_time.day,
-                current_time.hour,
+                output_info.processing_time.year,
+                output_info.processing_time.month,
+                output_info.processing_time.day,
+                output_info.processing_time.hour,
                 rule_id,
+                output_info.processing_time.strftime(_S3_KEY_DATE_FORMAT),
                 output_uuid)
             _s3_client.put_object(
                 Bucket=_s3_bucket,
                 ContentType='gzip',
-                Body=compressed_stream.fileobj,
+                Body=output_info.data_stream,
                 Key=object_key)
+        self.rule_id_to_data: Dict[str, OutputInfo] = collections.defaultdict()
 
-    def _generate_dict_key(self, log_type: str, rule_id: str) -> str:
-        return log_type + "-" + rule_id
+    def _serialize_event(self, output_info: OutputInfo, match: AnalysisMatch) -> str:
+        output_event = self._get_common_fields(output_info, match)
+        output_event.update(match.event)
+        serialized_data = json.dumps(output_event) + '\n'
+        return serialized_data
 
-    def _dict_key_to_log_type_rule_id(self, key: str) -> (str, str):
-        values = key.split("-", 1)
-        return values[0], values[1]
+    def _get_common_fields(self, output_info: OutputInfo, match: AnalysisMatch) -> Dict[str, str]:
+        alert_info = self.merger.merge_alert(match, output_info.processing_time)
+        return {
+            'p_rule_id': match.rule_id,
+            'p_alert_id': alert_info.alert_id,
+            'p_alert_creation_time': alert_info.alert_creation_time.strftime(_DATE_FORMAT),
+            'p_alert_update_time': alert_info.alert_update_time.strftime(_DATE_FORMAT)
+        }

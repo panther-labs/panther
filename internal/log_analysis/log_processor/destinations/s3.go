@@ -246,11 +246,11 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 		MessageAttributes: map[string]*sns.MessageAttributeValue{
 			logDataTypeAttributeName: {
 				StringValue: aws.String(common.LogData),
-				DataType: aws.String(messageAttributeDataType),
+				DataType:    aws.String(messageAttributeDataType),
 			},
-			logTypeAttributeName:     {
+			logTypeAttributeName: {
 				StringValue: aws.String(logType),
-				DataType: aws.String(messageAttributeDataType),
+				DataType:    aws.String(messageAttributeDataType),
 			},
 		},
 	}
