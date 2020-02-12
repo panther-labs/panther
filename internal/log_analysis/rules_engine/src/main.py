@@ -92,10 +92,13 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
         for data_stream in data_streams:
             for data in data_stream:
                 try:  # Bad json data can cause exceptions to be thrown. Best effort: log and continue
-                    for analysis_result in rules_engine.analyze(log_type, json.loads(data)):
-                        output.add_match(analysis_result)
+                    json_data = json.loads(data)
                 except Exception as err:  # pylint: disable=broad-except
                     logger.error("Error during matching: {}".format(err))  # do not log data!
+
+                for analysis_result in rules_engine.analyze(log_type,json_data ):
+                    output.add_match(analysis_result)
+
 
     if len(matched) > 0:
         logger.info("sending {} matches".format(len(matched)))
