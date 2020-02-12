@@ -95,21 +95,21 @@ def _update_alerts_conditionally(match: AnalysisMatch) -> AlertInfo:
                 'S': _generate_key(match)
             }
         },
-        UpdateExpression='SET #1=:1, #2=:2, , #3=:3\nADD #4 :4',
+        UpdateExpression='SET #1=:1, #2=:2, #3=:3\nADD #4 :4',
         ConditionExpression='(#5 < :5) OR (attribute_not_exists(#6))',
         ExpressionAttributeNames={
             '#1': _ALERT_CREATION_TIME_ATTR_NAME,
             '#2': _ALERT_UPDATE_TIME_ATTR_NAME,
-            '#3': _ALERT_COUNT_ATTR_NAME,
-            '#4': _RULE_VERSION_ID_ATTR_NAME,
+            '#3': _RULE_VERSION_ID_ATTR_NAME,
+            '#4': _ALERT_COUNT_ATTR_NAME,
             '#5': _ALERT_CREATION_TIME_ATTR_NAME,
             '#6': _PARTITION_KEY_NAME,
         },
         ExpressionAttributeValues={
             ':1': {'N': match.analysis_time.strftime('%s')},
             ':2': {'N': match.analysis_time.strftime('%s')},
-            ':3': {'N': '1'},
-            ':4': {'S': match.rule_version},
+            ':3': {'S': match.rule_version},
+            ':4': {'N': '1'},
             ':5': {'N': '{}'.format(int(match.analysis_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)}
         },
         ReturnValues='ALL_NEW'

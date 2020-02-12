@@ -25,9 +25,10 @@ from .logging import get_logger
 from .rule import Rule, COMMON_MODULE_RULE_ID
 
 _RULES_CACHE_DURATION = timedelta(minutes=5)
-_LAST_RULE_UPDATE_TIME = datetime.utcfromtimestamp(0)
-_LOG_TYPE_TO_RULES: Dict[str, List[Rule]] = collections.defaultdict(list)
 _ANALYSIS_CLIENT = AnalysisAPIClient()
+
+_last_rule_update_time = datetime.utcfromtimestamp(0)
+_log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
 
 
 class Engine:
@@ -35,17 +36,17 @@ class Engine:
     logger = get_logger()
 
     def __init__(self) -> None:
-        self._processing_time = datetime.utcnow()
+        self._initialization_time = datetime.utcnow()
 
     def analyze(self, log_type: str, event: Dict[str, Any]) -> List[AnalysisMatch]:
         """Analyze an event by running all the rules that apply to the log type.
         """
-        if datetime.utcnow() - _LAST_RULE_UPDATE_TIME > _RULES_CACHE_DURATION:
+        if datetime.utcnow() - _last_rule_update_time > _RULES_CACHE_DURATION:
             self._populate_rules()
 
         matched: List[AnalysisMatch] = []
 
-        for rule in self._LOG_TYPE_TO_RULES[log_type]:
+        for rule in _log_type_to_rules[log_type]:
             result = rule.run(event)
             if result.exception:
                 self.logger.error(
@@ -55,7 +56,7 @@ class Engine:
                 matched.append(AnalysisMatch(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
-                    analysis_time=self._processing_time,
+                    analysis_time=self._initialization_time,
                     log_type=log_type,
                     dedup=result.dedup,
                     event=event))
@@ -72,7 +73,8 @@ class Engine:
         start = default_timer()
 
         # Clear old rules
-        self._LOG_TYPE_TO_RULES.clear()
+        _log_type_to_rules.clear()
+
 
         # Importing common module. This module MAY hold code common to some rules and if it exists, it must be
         # imported before other rules. However, the presence of this rule is optional.
@@ -95,11 +97,13 @@ class Engine:
                 rule_body=raw_rule['body'],
                 rule_version=raw_rule['versionId'])
             for log_type in raw_rule['resourceTypes']:
-                self._LOG_TYPE_TO_RULES[log_type].append(rule)
+                _log_type_to_rules[log_type].append(rule)
 
         end = default_timer()
         self.logger.info('Imported {} rules in {} seconds'.format(import_count, end - start))
-        _LAST_RULE_UPDATE_TIME = datetime.utcnow()
+        global _last_rule_update_time
+        _last_rule_update_time = datetime.utcnow()
+
 
     def _get_rules(self) -> List[Dict[str, str]]:
         """Retrieves all enabled rules.
