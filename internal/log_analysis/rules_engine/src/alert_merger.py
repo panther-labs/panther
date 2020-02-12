@@ -40,30 +40,83 @@ def _generate_key(match: AnalysisMatch) -> str:
 
 
 class Merger:
-
+    """Class responsible for merging of Alerts"""
     def __init__(self):
         self.rule_to_alert_id: Dict[str, AlertInfo] = {}
         self.logger = get_logger()
 
-    def merge_alert(self, match: AnalysisMatch, processing_time: datetime) -> AlertInfo:
-        dict_key = _generate_key(match)
-        alert_info = self.rule_to_alert_id.get(dict_key)
+    def get_alert_info(self, match: AnalysisMatch) -> AlertInfo:
+        """The method receives a matched event and the processing time, and """
+        key = _generate_key(match)
+        alert_info = self.rule_to_alert_id.get(key)
         if alert_info:
             return alert_info
 
-        return AlertInfo(
-            alert_id="1",
-            alert_update_time=processing_time,
-            alert_creation_time=processing_time
+        try:
+            alert_info = _update_alerts_conditionally(match)
+            self.rule_to_alert_id[key] = alert_info
+            return alert_info
+        except _ddb_client.exceptions.ConditionalCheckFailedException as e:
+            alert_info = _update_alert(match)
+            self.rule_to_alert_id[key] = alert_info
+            return alert_info
 
-        )
-        # _ddb_client.update_item(
-        #     TableName=_ddb_table,
-        #     Key={
-        #         _PARTITION_KEY_NAME: {
-        #             'S': match.rule_id + '-' + match.dedup
-        #         }
-        #     },
-        #
-        # )
-        # return None
+
+def _update_alert(match: AnalysisMatch) -> AlertInfo:
+    response = _ddb_client.update_item(
+        TableName=_ddb_table,
+        Key={
+            _PARTITION_KEY_NAME: {
+                'S': _generate_key(match)
+            }
+        },
+        UpdateExpression='SET #1=:1',
+        ExpressionAttributeNames={
+            '#1': _ALERT_UPDATE_TIME_ATTR_NAME,
+        },
+        ExpressionAttributeValues={
+            ':1': {'N': match.analysis_time.strftime('%s')},
+        },
+        ReturnValues='ALL_NEW'
+    )
+    alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
+    return AlertInfo(
+        alert_id=match.rule_id + '-' + alert_count,
+        alert_creation_time=match.analysis_time,
+        alert_update_time=match.analysis_time
+    )
+
+
+def _update_alerts_conditionally(match: AnalysisMatch) -> AlertInfo:
+    response = _ddb_client.update_item(
+        TableName=_ddb_table,
+        Key={
+            _PARTITION_KEY_NAME: {
+                'S': _generate_key(match)
+            }
+        },
+        UpdateExpression='SET #1=:1, #2=:2, , #3=:3\nADD #4 :4',
+        ConditionExpression='(#5 < :5) OR (attribute_not_exists(#6))',
+        ExpressionAttributeNames={
+            '#1': _ALERT_CREATION_TIME_ATTR_NAME,
+            '#2': _ALERT_UPDATE_TIME_ATTR_NAME,
+            '#3': _ALERT_COUNT_ATTR_NAME,
+            '#4': _RULE_VERSION_ID_ATTR_NAME,
+            '#5': _ALERT_CREATION_TIME_ATTR_NAME,
+            '#6': _PARTITION_KEY_NAME,
+        },
+        ExpressionAttributeValues={
+            ':1': {'N': match.analysis_time.strftime('%s')},
+            ':2': {'N': match.analysis_time.strftime('%s')},
+            ':3': {'N': '1'},
+            ':4': {'S': match.rule_version},
+            ':5': {'N': '{}'.format(int(match.analysis_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)}
+        },
+        ReturnValues='ALL_NEW'
+    )
+    alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
+    return AlertInfo(
+        alert_id=match.rule_id + '-' + alert_count,
+        alert_creation_time=match.analysis_time,
+        alert_update_time=match.analysis_time
+    )

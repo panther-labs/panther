@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import collections
-import datetime
+from datetime import datetime
 import gzip
 import json
 import os
@@ -41,7 +41,7 @@ _s3_client = boto3.client('s3')
 class OutputInfo:
     writer: gzip.GzipFile
     data_stream: BytesIO
-    processing_time: datetime.datetime
+    processing_time: datetime
 
 
 def _generate_dict_key(log_type: str, rule_id: str) -> str:
@@ -60,19 +60,20 @@ class Output:
         self.logger = get_logger()
 
     def add_match(self, match: AnalysisMatch) -> None:
+        """"""
         dict_key = _generate_dict_key(match.log_type, match.rule_id)
         output_info = self.rule_id_to_data.get(match.rule_id)
         if not output_info:
             data_stream = BytesIO()
             writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
-            current_time = datetime.datetime.utcnow()
-            output_info = OutputInfo(writer, data_stream, current_time)
+            output_info = OutputInfo(writer, data_stream, match.analysis_time)
             self.rule_id_to_data[dict_key] = output_info
 
-        serialized_data = self._serialize_event(output_info, match)
+        serialized_data = self._serialize_event(match)
         output_info.writer.write(serialized_data.encode('utf-8'))
 
     def flush(self):
+        """"""
         for dict_key, output_info in self.rule_id_to_data.items():
             output_uuid = uuid.uuid4()
             output_info.writer.close()
@@ -92,16 +93,18 @@ class Output:
                 ContentType='gzip',
                 Body=output_info.data_stream,
                 Key=object_key)
-        self.rule_id_to_data: Dict[str, OutputInfo] = collections.defaultdict()
+        self.rule_id_to_data: Dict[str, OutputInfo] = {}
 
-    def _serialize_event(self, output_info: OutputInfo, match: AnalysisMatch) -> str:
-        output_event = self._get_common_fields(output_info, match)
+    def _serialize_event(self, match: AnalysisMatch) -> str:
+        """Serialized an event match"""
+        output_event = self._get_common_fields(match)
         output_event.update(match.event)
         serialized_data = json.dumps(output_event) + '\n'
         return serialized_data
 
-    def _get_common_fields(self, output_info: OutputInfo, match: AnalysisMatch) -> Dict[str, str]:
-        alert_info = self.merger.merge_alert(match, output_info.processing_time)
+    def _get_common_fields(self, match: AnalysisMatch) -> Dict[str, str]:
+        """Retrieves a dictionary with common fields"""
+        alert_info = self.merger.get_alert_info(match)
         return {
             'p_rule_id': match.rule_id,
             'p_alert_id': alert_info.alert_id,
