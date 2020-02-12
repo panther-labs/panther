@@ -19,10 +19,10 @@ package processor
  */
 
 import (
-	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
