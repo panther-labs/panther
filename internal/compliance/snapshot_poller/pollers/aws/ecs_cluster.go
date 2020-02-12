@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/aws/aws-sdk-go/service/ecs/ecsiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -306,7 +307,7 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 				"unable to create aws session",
 				zap.String("region", *regionID),
 				zap.String("service", "ecs"),
-				zap.Error(err),
+				zap.Error(errors.WithStack(err)),
 			)
 			continue
 		}
@@ -318,7 +319,7 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 				"unable to create aws client",
 				zap.String("region", *regionID),
 				zap.String("service", "ecs"),
-				zap.Error(err),
+				zap.Error(errors.WithStack(err)),
 			)
 			continue
 		}

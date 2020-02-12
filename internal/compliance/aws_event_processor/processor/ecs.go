@@ -19,6 +19,7 @@ package processor
  */
 
 import (
+	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -62,6 +63,7 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 				"ecs: unable to parse resource ARN",
 				zap.String("eventName", eventName),
 				zap.String("resource ARN", clusterARN),
+				zap.Error(errors.WithStack(err)),
 			)
 			return nil
 		}
