@@ -22,7 +22,7 @@ import QRCode from 'qrcode.react';
 import * as React from 'react';
 import * as Yup from 'yup';
 import { formatSecretCode } from 'Helpers/utils';
-import SubmitButton from 'Components/utils/SubmitButton';
+import SubmitButton from 'Components/submit-button';
 import FormikTextInput from 'Components/fields/text-input';
 import useAuth from 'Hooks/useAuth';
 

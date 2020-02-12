@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, Flex, Modal, Text } from 'pouncejs';
 import useModal from 'Hooks/useModal';
-import SubmitButton from 'Components/utils/SubmitButton';
+import SubmitButton from 'Components/submit-button';
 
 const NetworkErrorModal: React.FC = () => {
   const { hideModal } = useModal();

@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/text-input';
-import SubmitButton from 'Components/utils/SubmitButton';
+import SubmitButton from 'Components/submit-button';
 import * as Yup from 'yup';
 
 export interface UpdateSourceFormValues {

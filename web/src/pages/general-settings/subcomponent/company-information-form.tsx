@@ -21,7 +21,7 @@ import { useMutation, gql } from '@apollo/client';
 import { Field, Formik } from 'formik';
 import { Box, useSnackbar } from 'pouncejs';
 
-import SubmitButton from 'Components/utils/SubmitButton';
+import SubmitButton from 'Components/submit-button';
 import { GET_ORGANIZATION } from 'Pages/general-settings';
 import FormikTextInput from 'Components/fields/text-input';
 import { extractErrorMessage } from 'Helpers/utils';
