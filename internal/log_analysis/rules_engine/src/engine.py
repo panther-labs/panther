@@ -19,16 +19,13 @@ from datetime import datetime, timedelta
 from timeit import default_timer
 from typing import Any, List, Dict
 
-from . import AnalysisMatch
+from . import EventMatch
 from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
 from .rule import Rule, COMMON_MODULE_RULE_ID
 
 _RULES_CACHE_DURATION = timedelta(minutes=5)
 _ANALYSIS_CLIENT = AnalysisAPIClient()
-
-_last_rule_update_time = datetime.utcfromtimestamp(0)
-_log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
 
 
 class Engine:
@@ -41,13 +38,13 @@ class Engine:
         self._analysis_client = AnalysisAPIClient()
         self._populate_rules()
 
-    def analyze(self, time: datetime, log_type: str, event: Dict[str, Any]) -> List[AnalysisMatch]:
+    def analyze(self,log_type: str, event: Dict[str, Any]) -> List[EventMatch]:
         """Analyze an event by running all the rules that apply to the log type.
         """
         if datetime.utcnow() - self._last_update > _RULES_CACHE_DURATION:
             self._populate_rules()
 
-        matched: List[AnalysisMatch] = []
+        matched: List[EventMatch] = []
 
         for rule in self._log_type_to_rules[log_type]:
             result = rule.run(event)
@@ -56,10 +53,9 @@ class Engine:
                     'failed to run rule {} {} {}'.format(rule.rule_id, type(result).__name__, result.exception))
                 continue
             if result.matched:
-                matched.append(AnalysisMatch(
+                matched.append(EventMatch(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
-                    analysis_time=time,
                     log_type=log_type,
                     dedup=result.dedup,
                     event=event))

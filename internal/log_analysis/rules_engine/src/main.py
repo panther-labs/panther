@@ -78,7 +78,6 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
     # Creating new engine on every processing
     # Dictionary containing mapping from log type to list of TextIOWrapper's
     log_type_to_data: Dict[str, TextIOWrapper] = collections.defaultdict(list)
-    processing_time = datetime.utcnow()
     for record in event['Records']:
         record_body = json.loads(record['body'])
         bucket = record_body['s3Bucket']
@@ -88,7 +87,7 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
 
     # List containing tuple of (rule_id, event) for matched events
     matched: List = []
-    output = EventsBuffer()
+    output_buffer = EventsBuffer()
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
             for data in data_stream:
@@ -97,8 +96,10 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
                 except Exception as err:  # pylint: disable=broad-except
                     logger.error("Error during matching: {}".format(err))  # do not log data!
 
-                for analysis_result in rules_engine.analyze(processing_time, log_type,json_data ):
-                    output.add_match(analysis_result)
+                for analysis_result in rules_engine.analyze( log_type,json_data ):
+                    output_buffer.add_event(analysis_result)
+                    # Appends the events to queue of events that will be sent through SQS
+                    matched.append(data)
 
 
     if len(matched) > 0:
@@ -106,7 +107,7 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
         send_to_sqs(matched)
     else:
         logger.info("no matches found")
-    output.flush()
+    output_buffer.flush()
 
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all

@@ -15,11 +15,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from typing import Dict
+from datetime import datetime
 
 import boto3
 
-from . import AlertInfo, AnalysisMatch
+from . import AlertInfo
 from .logging import get_logger
 
 _ddb_table = os.environ['ALERTS_DEDUP_TABLE']
@@ -29,93 +29,95 @@ _PARTITION_KEY_NAME = 'partitionKey'
 _ALERT_CREATION_TIME_ATTR_NAME = 'alertCreationTime'
 _ALERT_UPDATE_TIME_ATTR_NAME = 'alertUpdateTime'
 _ALERT_COUNT_ATTR_NAME = 'alertCount'
-_RULE_VERSION_ID_ATTR_NAME = 'ruleVersionId'
+_ALERT_EVENT_COUNT = 'eventCount'
 
 _ALERT_MERGE_PERIOD_SECONDS = 3600
 
 
-def _generate_key(match: AnalysisMatch) -> str:
-    return match.rule_id + '-' + match.dedup
+def _generate_key(rule_id: str, dedup: str) -> str:
+    return rule_id + '-' + dedup
 
 
 class Merger:
     """Class responsible for merging of Alerts"""
+
     def __init__(self):
-        self.rule_to_alert_id: Dict[str, AlertInfo] = {}
         self.logger = get_logger()
 
-    def get_alert_info(self, match: AnalysisMatch) -> AlertInfo:
-        """The method receives a matched event and the processing time, and """
-        key = _generate_key(match)
-        alert_info = self.rule_to_alert_id.get(key)
-        if alert_info:
-            return alert_info
-
+    def update_get_alert_info(self, match_time: datetime, num_matches: int, rule_id: str, dedup: str) -> AlertInfo:
+        """The method will return the alert information after evaluating if a new alert needs to be created
+        or if we can re-use an existing alert."""
         try:
-            alert_info = _update_alerts_conditionally(match)
-            self.rule_to_alert_id[key] = alert_info
+            alert_info = _update_get_alert_info_conditional(match_time, num_matches, rule_id, dedup)
             return alert_info
         except _ddb_client.exceptions.ConditionalCheckFailedException as e:
-            alert_info = _update_alert(match)
-            self.rule_to_alert_id[key] = alert_info
-            return alert_info
+            # If conditional update failed on Condition, the event needs to be merged
+
+            return _update_get_alert_info(match_time, num_matches, rule_id, dedup)
 
 
-def _update_alert(match: AnalysisMatch) -> AlertInfo:
+def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, rule_id: str, dedup: str) -> AlertInfo:
+    """Performs a conditional update to DDB to verify whether we need to create a new alert"""
     response = _ddb_client.update_item(
         TableName=_ddb_table,
         Key={
             _PARTITION_KEY_NAME: {
-                'S': _generate_key(match)
+                'S': _generate_key(rule_id, dedup)
             }
         },
-        UpdateExpression='SET #1=:1',
-        ExpressionAttributeNames={
-            '#1': _ALERT_UPDATE_TIME_ATTR_NAME,
-        },
-        ExpressionAttributeValues={
-            ':1': {'N': match.analysis_time.strftime('%s')},
-        },
-        ReturnValues='ALL_NEW'
-    )
-    alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
-    return AlertInfo(
-        alert_id=match.rule_id + '-' + alert_count,
-        alert_creation_time=match.analysis_time,
-        alert_update_time=match.analysis_time
-    )
-
-
-def _update_alerts_conditionally(match: AnalysisMatch) -> AlertInfo:
-    response = _ddb_client.update_item(
-        TableName=_ddb_table,
-        Key={
-            _PARTITION_KEY_NAME: {
-                'S': _generate_key(match)
-            }
-        },
+        # Setting proper values for alertCreationTie, alertUpdateTime,
         UpdateExpression='SET #1=:1, #2=:2, #3=:3\nADD #4 :4',
         ConditionExpression='(#5 < :5) OR (attribute_not_exists(#6))',
         ExpressionAttributeNames={
             '#1': _ALERT_CREATION_TIME_ATTR_NAME,
             '#2': _ALERT_UPDATE_TIME_ATTR_NAME,
-            '#3': _RULE_VERSION_ID_ATTR_NAME,
+            '#3': _ALERT_EVENT_COUNT,
             '#4': _ALERT_COUNT_ATTR_NAME,
             '#5': _ALERT_CREATION_TIME_ATTR_NAME,
             '#6': _PARTITION_KEY_NAME,
         },
         ExpressionAttributeValues={
-            ':1': {'N': match.analysis_time.strftime('%s')},
-            ':2': {'N': match.analysis_time.strftime('%s')},
-            ':3': {'S': match.rule_version},
+            ':1': {'N': match_time.analysis_time.strftime('%s')},
+            ':2': {'N': match_time.analysis_time.strftime('%s')},
+            ':3': {'N': num_matches},
             ':4': {'N': '1'},
-            ':5': {'N': '{}'.format(int(match.analysis_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)}
+            ':5': {'N': '{}'.format(int(match_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)}
         },
         ReturnValues='ALL_NEW'
     )
     alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
     return AlertInfo(
-        alert_id=match.rule_id + '-' + alert_count,
-        alert_creation_time=match.analysis_time,
-        alert_update_time=match.analysis_time
+        alert_id=rule_id + '-' + alert_count,
+        alert_creation_time=match_time,
+        alert_update_time=match_time
+    )
+
+
+def _update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str, dedup: str) -> AlertInfo:
+    """Updated alert information"""
+    response = _ddb_client.update_item(
+        TableName=_ddb_table,
+        Key={
+            _PARTITION_KEY_NAME: {
+                'S': _generate_key(rule_id, dedup)
+            }
+        },
+        # Setting proper value to alertUpdateTime. Increase event count
+        UpdateExpression='SET #1=:1\nADD #2 :2',
+        ExpressionAttributeNames={
+            '#1': _ALERT_UPDATE_TIME_ATTR_NAME,
+            '#2': _ALERT_EVENT_COUNT,
+        },
+        ExpressionAttributeValues={
+            ':1': {'N': match_time.analysis_time.strftime('%s')},
+            ':2': {'N': '{}'.format(num_matches)},
+        },
+        ReturnValues='ALL_NEW'
+    )
+    alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
+    alert_creation_time = response['Attributes'][_ALERT_CREATION_TIME_ATTR_NAME]['N']
+    return AlertInfo(
+        alert_id=rule_id + '-' + alert_count,
+        alert_creation_time=datetime.utcfromtimestamp(alert_creation_time),
+        alert_update_time=match_time
     )

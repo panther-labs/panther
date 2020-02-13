@@ -13,19 +13,19 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+import collections
 import gzip
 import json
 import os
 import uuid
-from dataclasses import dataclass,asdict
+from dataclasses import dataclass, asdict
 from datetime import datetime
 from io import BytesIO
-from typing import Dict
+from typing import Dict, List
 
 import boto3
 
-from . import AnalysisMatch, OutputNotification
+from . import EventMatch, OutputNotification, AlertInfo
 from .alert_merger import Merger
 from .logging import get_logger
 
@@ -33,88 +33,81 @@ _KEY_FORMAT = 'rules/{}/year={}/month={}/day={}/hour={}/rule_id={}/{}-{}.gz'
 _S3_KEY_DATE_FORMAT = '%Y%m%d%H%M%S'
 _DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f000'
 _s3_bucket = os.environ['S3_BUCKET']
-_s3_client = boto3.client('s3')
 _sns_topic = os.environ['NOTIFICATIONS_TOPIC']
+
+_s3_client = boto3.client('s3')
 _sns_client = boto3.client('sns')
 
+_logger  = get_logger()
 
 @dataclass
-class OutputInfo:
-    writer: gzip.GzipFile
-    data_stream: BytesIO
-    processing_time: datetime
-    events: int = 0
-
-
-
-@dataclass
-class OutputEventCommonFields:
+class EventCommonFields:
+    """Fields that will be added to all stored events"""
     p_rule_id: str
     p_alert_id: str
     p_alert_creation_time: str
     p_alert_update_time: str
 
 
-def _generate_dict_key(log_type: str, rule_id: str) -> str:
-    return log_type + '-' + rule_id
-
-
-def _dict_key_to_log_type_rule_id(key: str) -> (str, str):
-    values = key.split('-', 1)
-    return values[0], values[1]
+@dataclass(frozen=True, eq=True)
+class BufferDictKey:
+    """"""
+    rule_id: str
+    log_type: str
+    dedup: str
 
 
 class EventsBuffer:
+    """Buffer containing the matched events"""
+
     def __init__(self):
         self.merger = Merger()
-        self.rule_id_to_data: Dict[str, OutputInfo] = {}
-        self.logger = get_logger()
+        self.rule_id_to_data: Dict[BufferDictKey, List[EventMatch]] = collections.defaultDict(list)
 
-    def add_match(self, match: AnalysisMatch) -> None:
-        """Adds a match to the buffer"""
-        dict_key = _generate_dict_key(match.log_type, match.rule_id)
-        output_info = self.rule_id_to_data.get(match.rule_id)
-        if not output_info:
-            data_stream = BytesIO()
-            writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
-            output_info = OutputInfo(writer, data_stream, match.analysis_time)
-            self.rule_id_to_data[dict_key] = output_info
-
-        serialized_data = self._serialize_event(match)
-        output_info.events += 1
-        output_info.writer.write(serialized_data.encode('utf-8'))
+    def add_event(self, match: EventMatch) -> None:
+        """Adds a matched event to the buffer"""
+        dict_key = BufferDictKey(match.rule_id, match.log_type, match.dedup)
+        self.rule_id_to_data[dict_key].append(match)
 
     def flush(self):
         """Flushes the buffer and writes data in S3"""
-        for dict_key, output_info in self.rule_id_to_data.items():
+        current_time = datetime.utcnow()
+        for key, event_matches in self.rule_id_to_data.items():
+            alert_info = self.merger.update_get_alert_info(current_time, len(event_matches, key.rule_id, key.dedup))
+            data_stream = BytesIO()
+            writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
+            for event in event_matches:
+                serialized_data = self._serialize_event(event, alert_info)
+                writer.write(serialized_data.encode('utf-8'))
+
+            writer.close()
+            data_stream.seek(0)
             output_uuid = uuid.uuid4()
-            output_info.writer.close()
-            output_info.data_stream.seek(0)
-            log_type, rule_id = _dict_key_to_log_type_rule_id(dict_key)
             object_key = _KEY_FORMAT.format(
-                log_type,
-                output_info.processing_time.year,
-                output_info.processing_time.month,
-                output_info.processing_time.day,
-                output_info.processing_time.hour,
-                rule_id,
-                output_info.processing_time.strftime(_S3_KEY_DATE_FORMAT),
+                key.log_type,
+                current_time.year,
+                current_time.month,
+                current_time.day,
+                current_time.hour,
+                key.rule_id,
+                current_time.strftime(_S3_KEY_DATE_FORMAT),
                 output_uuid)
 
+            byte_size = data_stream.getbuffer().nbytes
             # Write data to S3
             _s3_client.put_object(
                 Bucket=_s3_bucket,
                 ContentType='gzip',
-                Body=output_info.data_stream,
+                Body=data_stream,
                 Key=object_key)
 
             # Send notification to SNS topic
             notification = OutputNotification(
                 s3Bucket=_s3_bucket,
                 s3ObjectKey=object_key,
-                events=output_info.events,
-                bytes=output_info.data_stream.getbuffer().nbytes,
-                id=rule_id)
+                events=len(event_matches),
+                bytes=byte_size,
+                id=key.rule_id)
 
             _sns_client.publish(
                 TopicArn=_sns_topic,
@@ -131,19 +124,18 @@ class EventsBuffer:
                 }
             )
 
-        self.rule_id_to_data: Dict[str, OutputInfo] = {}
+        self.rule_id_to_data: Dict[BufferDictKey, List[EventMatch]] = {}
 
-    def _serialize_event(self, match: AnalysisMatch) -> str:
+    def _serialize_event(self, match: EventMatch, alert_info: AlertInfo) -> str:
         """Serialized an event match"""
         output_event = self._get_common_fields(match)
         output_event.update(match.event)
         serialized_data = json.dumps(output_event) + '\n'
         return serialized_data
 
-    def _get_common_fields(self, match: AnalysisMatch) -> Dict[str, str]:
+    def _get_common_fields(self, match: EventMatch, alert_info: AlertInfo) -> Dict[str, str]:
         """Retrieves a dictionary with common fields"""
-        alert_info = self.merger.get_alert_info(match)
-        common_fields = OutputEventCommonFields(
+        common_fields = EventCommonFields(
             p_rule_id=match.rule_id,
             p_alert_id=alert_info.alert_id,
             p_alert_creation_time=alert_info.alert_creation_time.strftime(_DATE_FORMAT),
