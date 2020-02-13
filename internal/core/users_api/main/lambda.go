@@ -29,7 +29,7 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var router = genericapi.NewRouter("core", "usersApi", models.Validator(), &api.API{})
+var router = genericapi.NewRouter("admin", "users", models.Validator(), &api.API{})
 
 func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
 	lambdalogger.ConfigureGlobal(ctx, nil)
