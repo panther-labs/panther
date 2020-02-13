@@ -19,11 +19,10 @@ from typing import Any, Dict
 
 
 @dataclass
-class AnalysisMatch:
-    """The result of an event analysis"""
+class EventMatch:
+    """Represents an event that matched a rule"""
     rule_id: str
     rule_version: str
-    analysis_time: datetime
     log_type: str
     dedup: str
     event: Dict[str, Any]
