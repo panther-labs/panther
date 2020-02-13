@@ -27,7 +27,7 @@ _MAX_MESSAGES = 10
 _MAX_MESSAGE_SIZE = 256 * 1000
 
 _SQS_RESOURCE = boto3.resource('sqs')
-_QUEUE_NAME = _SQS_RESOURCE.get_queue_by_name(QueueName=os.environ['ALERTS_QUEUE'])
+_QUEUE_NAME = _SQS_RESOURCE.get_queue_by_name(QueueName=os.environ['ALERTS_QUEUE'])  # pylint: disable=no-member
 
 
 def send_to_sqs(matches: List) -> None:
@@ -53,6 +53,6 @@ def send_to_sqs(matches: List) -> None:
         _QUEUE_NAME.send_messages(Entries=current_entries)
 
 
-def _match_to_sqs_entry_message(match: Tuple[str,str]) -> str:
+def _match_to_sqs_entry_message(match: Tuple[str, str]) -> str:
     notification = {'ruleId': match[0], 'event': match[1], 'timestamp': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}
     return json.dumps(notification)

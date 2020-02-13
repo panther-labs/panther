@@ -51,7 +51,13 @@ class Engine:
                 self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, result.exception)
                 continue
             if result.matched:
-                match = EventMatch(rule_id=rule.rule_id, rule_version=rule.rule_version, log_type=log_type, dedup=result.dedup, event=event)
+                match = EventMatch(
+                    rule_id=rule.rule_id,
+                    rule_version=rule.rule_version,
+                    log_type=log_type,
+                    dedup=result.dedup,  # type: ignore
+                    event=event
+                )
                 matched.append(match)
 
         return matched

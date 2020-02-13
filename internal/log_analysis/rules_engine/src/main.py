@@ -116,4 +116,4 @@ def log_analysis(event: Dict[str, Any]) -> None:
 def _load_contents(bucket: str, key: str) -> TextIOWrapper:
     response = _S3_CLIENT.get_object(Bucket=bucket, Key=key)
     gzipped = GzipFile(None, 'rb', fileobj=response['Body'])
-    return TextIOWrapper(gzipped)
+    return TextIOWrapper(gzipped)  # type: ignore
