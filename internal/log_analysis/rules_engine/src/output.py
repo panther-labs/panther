@@ -101,12 +101,12 @@ class MatchedEventsBuffer:
                     max_size = value.size_in_bytes
                     key_to_remove = key
 
-        if key_to_remove:
-            # Write the data to S3
-            _write_to_s3(datetime.utcnow(), key_to_remove, self.data[key_to_remove].matches)
-            self.total_bytes -= self.data[key_to_remove].size_in_bytes
-            # Delete data from memory
-            del self.data[key_to_remove]
+            if key_to_remove:
+                # Write the data to S3
+                _write_to_s3(datetime.utcnow(), key_to_remove, self.data[key_to_remove].matches)
+                self.total_bytes -= self.data[key_to_remove].size_in_bytes
+                # Delete data from memory
+                del self.data[key_to_remove]
 
     def flush(self) -> None:
         """Flushes the buffer and writes data in S3"""
