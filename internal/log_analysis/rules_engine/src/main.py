@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import collections
+from timeit import default_timer
 import json
 from gzip import GzipFile
 from io import TextIOWrapper
@@ -32,6 +33,7 @@ rules_engine = Engine()
 
 
 def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[str, Any]]:
+    start = default_timer()
     logger = get_logger()
 
     # Handle the direct evaluation of a single rule against some number of events
@@ -54,14 +56,17 @@ def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[st
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
             for data in data_stream:
-                for matched_rule in rules_engine.analyze(log_type, json.loads(data)):
-                    matched.append((matched_rule, data))
+                try: # Bad json data can cause exceptions to be thrown. Best effort: log and continue
+                    for matched_rule in rules_engine.analyze(log_type, json.loads(data)):
+                        matched.append((matched_rule, data))
+                except Exception as err:  # pylint: disable=broad-except
+                    logger.error("Error during matching: {}".format(err)) # do not log data!
 
     if len(matched) > 0:
-        logger.info("sending {} matches".format(len(matched)))
         send_to_sqs(matched)
-    else:
-        logger.info("no matches found")
+
+    end = default_timer()
+    logger.info("Matched {} events in {} seconds".format(len(matched), end - start))
 
 # Evaluates a single rule against a set of events, and returns the results
 # Currently used for testing policies directly

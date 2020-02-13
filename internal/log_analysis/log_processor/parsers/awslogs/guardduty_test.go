@@ -42,7 +42,7 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 		//nolint
 		Arn:      aws.String("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b"),
 		Type:     aws.String("Stealth:IAMUser/LoggingConfigurationModified"),
-		Severity: aws.Int(5),
+		Severity: aws.Float32(5),
 		Title:    aws.String("Unusual changes to API activity logging by GeneratedFindingUserName."),
 		//nolint
 		Description: aws.String("APIs commonly used to stop CloudTrail logging, delete existing logs and other such activity that erases any trace of activity in the account, was invoked by IAM principal GeneratedFindingUserName. Such activity is not typically seen from this principal."),
@@ -87,7 +87,7 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 		//nolint
 		Arn:      aws.String("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56"), // nolint(lll)
 		Type:     aws.String("Trojan:EC2/DGADomainRequest.B"),
-		Severity: aws.Int(8),
+		Severity: aws.Float32(8),
 		Title:    aws.String("DGA domain name queried by EC2 instance i-99999999."),
 		//nolint
 		Description: aws.String("EC2 instance i-99999999 is querying algorithmically generated domains. Such domains are commonly used by malware and could be an indication of a compromised EC2 instance."), // nolint(lll)
@@ -133,7 +133,7 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 		//nolint
 		Arn:      aws.String("arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e"), // nolint(lll)
 		Type:     aws.String("UnauthorizedAccess:EC2/SSHBruteForce"),
-		Severity: aws.Int(2),
+		Severity: aws.Float32(2),
 		Title:    aws.String("151.80.19.228 is performing SSH brute force attacks against i-081de1d7604b11e4a. "),
 		//nolint
 		Description: aws.String("151.80.19.228 is performing SSH brute force attacks against i-081de1d7604b11e4a. Brute force attacks are used to gain unauthorized access to your instance by guessing the SSH password."), // nolint(lll)

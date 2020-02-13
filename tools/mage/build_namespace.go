@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -32,56 +33,54 @@ import (
 	"github.com/panther-labs/panther/pkg/shutil"
 )
 
+const swaggerGlob = "api/gateway/*/api.yml"
+
 var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
 // Build contains targets for compiling source code.
 type Build mg.Namespace
 
 // API Generate Go client/models from Swagger specs in api/
-func (b Build) API() error {
-	specs, err := filepath.Glob("api/gateway/*/api.yml")
+func (b Build) API() {
+	specs, err := filepath.Glob(swaggerGlob)
 	if err != nil {
-		return err
+		logger.Fatalf("failed to glob %s: %v", swaggerGlob, err)
 	}
 
+	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
 	for _, spec := range specs {
-		needsRebuilt, err := apiNeedsRebuilt(spec)
-		if err != nil {
-			return err
-		}
-
-		if !needsRebuilt {
-			if mg.Verbose() {
-				fmt.Printf("build:api: %s client/models up to date\n", spec)
-			}
+		rebuild, err := apiNeedsRebuilt(spec)
+		if err == nil && !rebuild {
+			logger.Debugf("build:api: %s is up to date", spec)
 			continue
 		}
 
-		if !mg.Verbose() {
-			fmt.Println("build:api: swagger generate " + spec)
+		dir := filepath.Dir(spec)
+		start := time.Now().UTC()
+		args := []string{"generate", "client", "-q", "-t", dir, "-f", spec}
+		cmd := filepath.Join(setupDirectory, "swagger")
+		if err := sh.Run(cmd, args...); err != nil {
+			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
 
-		// If an API model is deleted, the generated file will still exist after "swagger generate".
-		// So we remove existing client/ and models/ directories before re-generating.
-		dir := path.Dir(spec)
-		if err := os.RemoveAll(path.Join(dir, "client")); err != nil {
-			return err
+		// If an API model is removed, "swagger generate" will leave the Go file in place.
+		// So we walk the generated directories and remove anything swagger didn't just write.
+		handler := func(path string, info os.FileInfo) {
+			if !info.IsDir() && info.ModTime().Before(start) {
+				logger.Debugf("%s unmodified by swagger: removing", path)
+				if err := os.Remove(path); err != nil {
+					logger.Warnf("failed to remove deleted model %s: %v", path, err)
+				}
+			}
 		}
-		if err := os.RemoveAll(path.Join(dir, "models")); err != nil {
-			return err
-		}
+		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
+		walk(client, handler)
+		walk(models, handler)
 
-		args := []string{"generate", "client", "-q", "-t", path.Dir(spec), "-f", spec}
-		if err := sh.Run(path.Join(setupDirectory, "swagger"), args...); err != nil {
-			return err
-		}
-
-		if err := fmtLicenseGroup(agplSource, dir); err != nil {
-			return err
-		}
+		// Add license and our formatting standard to the generated SDK.
+		fmtLicenseGroup(agplSource, client, models)
+		gofmt(dir, client, models)
 	}
-
-	return nil
 }
 
 // Returns true if the generated client + models are older than the given client spec
@@ -99,42 +98,43 @@ func apiNeedsRebuilt(spec string) (bool, error) {
 	return clientNeedsUpdate || modelsNeedUpdate, nil
 }
 
-// Lambda Compile all Lambda function source
-func (b Build) Lambda() error {
+// Lambda Compile Go Lambda function source
+func (b Build) Lambda() {
+	modified, err := target.Dir("out/bin/internal", "api", "internal", "pkg")
+	if err == nil && !modified {
+		// The source folders are older than all the compiled binaries - nothing has changed
+		logger.Info("build:lambda: up to date")
+		return
+	}
+
 	mg.Deps(b.API)
 
 	var packages []string
-	err := filepath.Walk("internal", func(path string, info os.FileInfo, err error) error {
+	walk("internal", func(path string, info os.FileInfo) {
 		if info.IsDir() && strings.HasSuffix(path, "main") {
 			packages = append(packages, path)
 		}
-		return err
 	})
-	if err != nil {
-		return err
-	}
 
-	fmt.Printf("build:lambda: go build internal/*/main (%d binaries)\n", len(packages))
+	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main)", len(packages))
 	for _, pkg := range packages {
 		if err := buildPackage(pkg); err != nil {
-			return err
+			logger.Fatal(err)
 		}
 	}
-
-	return nil
 }
 
 func buildPackage(pkg string) error {
-	targetDir := path.Join("out", "bin", pkg)
-	binary := path.Join(targetDir, "main")
+	targetDir := filepath.Join("out", "bin", pkg)
+	binary := filepath.Join(targetDir, "main")
 	oldInfo, statErr := os.Stat(binary)
 	oldHash, hashErr := shutil.SHA256(binary)
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return err
+		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
 	}
 	if err := sh.RunWith(buildEnv, "go", "build", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
-		return err
+		return fmt.Errorf("go build %s failed: %v", binary, err)
 	}
 
 	if statErr == nil && hashErr == nil {
@@ -145,11 +145,12 @@ func buildPackage(pkg string) error {
 			// significantly reduce the total deployment time if only one or two functions changed.
 			//
 			// With 5 unmodified Lambda functions, deploy:app went from 146s => 109s with this fix.
-			if mg.Verbose() {
-				fmt.Printf("build:lambda: %s unchanged, reverting timestamp\n", binary)
-			}
+			logger.Debugf("%s binary unchanged, reverting timestamp", binary)
 			modTime := oldInfo.ModTime()
-			return os.Chtimes(binary, modTime, modTime)
+			if err = os.Chtimes(binary, modTime, modTime); err != nil {
+				// Non-critical error - the build process can continue
+				logger.Warnf("failed optimization: can't revert timestamp for %s: %v", binary, err)
+			}
 		}
 	}
 

@@ -19,7 +19,7 @@
 import { Box, Heading, SideSheet, useSnackbar, Text, Alert } from 'pouncejs';
 import React from 'react';
 import { useMutation, gql } from '@apollo/client';
-import SubmitButton from 'Components/utils/SubmitButton';
+import SubmitButton from 'Components/submit-button';
 
 import useSidesheet from 'Hooks/useSidesheet';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';

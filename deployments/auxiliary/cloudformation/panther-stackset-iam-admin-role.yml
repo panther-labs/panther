@@ -32,7 +32,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: !Sub cloudformation.${AWS::URLSuffix}
+              Service: cloudformation.amazonaws.com
             Action: sts:AssumeRole
       Policies:
         - PolicyName: AssumeRolesInTargetAccounts

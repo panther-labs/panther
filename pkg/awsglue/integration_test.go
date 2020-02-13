@@ -98,14 +98,19 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
-	err = gm.CreateJSONPartition(glueClient, testBucket, refTime)
+	err = gm.CreateJSONPartition(glueClient, refTime)
 	require.NoError(t, err)
 
 	// do it again, should fail
-	err = gm.CreateJSONPartition(glueClient, testBucket, refTime)
+	err = gm.CreateJSONPartition(glueClient, refTime)
 	require.Error(t, err)
 
 	partitionInfo, err := gm.GetPartition(glueClient, refTime)
+	require.NoError(t, err)
+	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
+
+	// sync it (which does a delete and re-create)
+	err = gm.SyncPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
 
@@ -140,7 +145,7 @@ func addTables(t *testing.T) {
 			PartitionKeys: partitionKeys,
 			StorageDescriptor: &glue.StorageDescriptor{ // configure as JSON
 				Columns:      columns,
-				Location:     aws.String("bar"),
+				Location:     aws.String("s3://" + testBucket + "/logs/" + testTable),
 				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
 				OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
 				SerdeInfo: &glue.SerDeInfo{

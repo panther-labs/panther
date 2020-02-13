@@ -28,15 +28,16 @@ import (
 var BatchDesc = `Batch contains all the data included in OsQuery batch logs
 Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/`
 
-type Batch struct {
-	CalendarTime *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required"`
-	Counter      *int                   `json:"counter,omitempty,string"  validate:"required"`
-	Decorations  map[string]string      `json:"decorations,omitempty"`
-	DiffResults  *BatchDiffResults      `json:"diffResults,omitempty" validate:"required"`
-	Epoch        *int                   `json:"epoch,omitempty,string"  validate:"required"`
-	Hostname     *string                `json:"hostname,omitempty"  validate:"required"`
-	Name         *string                `json:"name,omitempty"  validate:"required"`
-	UnixTime     *int                   `json:"unixTime,omitempty,string"  validate:"required"`
+// nolint:lll
+type Batch struct { // FIXME: field descriptions need updating!
+	CalendarTime *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	Counter      *int                   `json:"counter,omitempty,string"  validate:"required" description:"Counter"`
+	Decorations  map[string]string      `json:"decorations,omitempty" description:"Decorations"`
+	DiffResults  *BatchDiffResults      `json:"diffResults,omitempty" validate:"required" description:"Computed differences."`
+	Epoch        *int                   `json:"epoch,omitempty,string"  validate:"required" description:"Epoch"`
+	Hostname     *string                `json:"hostname,omitempty"  validate:"required" description:"Hostname"`
+	Name         *string                `json:"name,omitempty"  validate:"required" description:"Name"`
+	UnixTime     *int                   `json:"unixTime,omitempty,string"  validate:"required" description:"Unix epoch"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
@@ -50,6 +51,10 @@ type BatchDiffResults struct {
 
 // BatchParser parses OsQuery Batch logs
 type BatchParser struct{}
+
+func (p *BatchParser) New() parsers.LogParser {
+	return &BatchParser{}
+}
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *BatchParser) Parse(log string) []interface{} {

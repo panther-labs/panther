@@ -37,10 +37,10 @@ type TestCustomStructType struct {
 }
 
 type TestStruct struct {
-	Field1 string
-	Field2 int32
+	Field1 string `description:"test field"`
+	Field2 int32  `description:"test field"`
 
-	TagSuppressed int `json:"-"` // should be skipped cuz of tag
+	TagSuppressed int `json:"-" description:"test field"` // should be skipped cuz of tag
 
 	// should not be emitted because they are private
 	privateField       int      // nolint
@@ -54,13 +54,13 @@ func (ts *TestStruct) Foo() { // admits to TestInterface
 }
 
 type StructToNest struct {
-	InheritedField string
+	InheritedField string `description:"test field"`
 }
 type NestedStruct struct {
-	StructToNest // composed, in this case fields should be inherited
-	A            TestStruct
-	B            TestStruct
-	C            *TestStruct
+	StructToNest             // composed, in this case fields should be inherited
+	A            TestStruct  `description:"test field"`
+	B            TestStruct  `description:"test field"`
+	C            *TestStruct `description:"test field"`
 }
 
 type TestInterface interface {
@@ -75,45 +75,45 @@ func TestInferJsonColumns(t *testing.T) {
 	var simpleTestType TestCustomSimpleType
 
 	obj := struct { // nolint
-		BoolField bool
+		BoolField bool `description:"test field"`
 
-		StringField    string  `json:"stringField"`              // test we use json tags
-		StringPtrField *string `json:"stringPtrField,omitempty"` // test we use json tags
+		StringField    string  `json:"stringField" description:"test field"`              // test we use json tags
+		StringPtrField *string `json:"stringPtrField,omitempty" description:"test field"` // test we use json tags
 
-		IntField    int
-		Int8Field   int8
-		Int16Field  int16
-		Int32Field  int32
-		Int64Field  int64
-		IntPtrField *int32
+		IntField    int    `description:"test field"`
+		Int8Field   int8   `description:"test field"`
+		Int16Field  int16  `description:"test field"`
+		Int32Field  int32  `description:"test field"`
+		Int64Field  int64  `description:"test field"`
+		IntPtrField *int32 `description:"test field"`
 
-		Float32Field    float32
-		Float64Field    float64
-		Float32PtrField *float32
+		Float32Field    float32  `description:"test field"`
+		Float64Field    float64  `description:"test field"`
+		Float32PtrField *float32 `description:"test field"`
 
-		StringSlice []string
+		StringSlice []string `description:"test field"`
 
-		IntSlice   []int
-		Int32Slice []int32
-		Int64Slice []int64
+		IntSlice   []int   `description:"test field"`
+		Int32Slice []int32 `description:"test field"`
+		Int64Slice []int64 `description:"test field"`
 
-		Float32Slice []float32
-		Float64Slice []float64
+		Float32Slice []float32 `description:"test field"`
+		Float64Slice []float64 `description:"test field"`
 
-		StructSlice []TestStruct
+		StructSlice []TestStruct `description:"test field"`
 
-		MapSlice []map[string]string
+		MapSlice []map[string]string `description:"test field"`
 
-		MapStringToInterface map[string]interface{}
-		MapStringToString    map[string]string
-		MapStringToStruct    map[string]TestStruct
+		MapStringToInterface map[string]interface{} `description:"test field"`
+		MapStringToString    map[string]string      `description:"test field"`
+		MapStringToStruct    map[string]TestStruct  `description:"test field"`
 
-		StructField       TestStruct
-		NestedStructField NestedStruct
+		StructField       TestStruct   `description:"test field"`
+		NestedStructField NestedStruct `description:"test field"`
 
-		CustomTypeField   TestCustomSimpleType
-		CustomSliceField  TestCustomSliceType
-		CustomStructField TestCustomStructType
+		CustomTypeField   TestCustomSimpleType `description:"test field"`
+		CustomSliceField  TestCustomSliceType  `description:"test field"`
+		CustomStructField TestCustomStructType `description:"test field"`
 	}{
 		BoolField: true,
 
@@ -182,34 +182,34 @@ func TestInferJsonColumns(t *testing.T) {
 	}
 
 	excpectedCols := []Column{
-		{Name: "BoolField", Type: "boolean"},
-		{Name: "stringField", Type: "string"},
-		{Name: "stringPtrField", Type: "string"},
-		{Name: "IntField", Type: nativeIntMapping()},
-		{Name: "Int8Field", Type: "tinyint"},
-		{Name: "Int16Field", Type: "smallint"},
-		{Name: "Int32Field", Type: "int"},
-		{Name: "Int64Field", Type: "bigint"},
-		{Name: "IntPtrField", Type: "int"},
-		{Name: "Float32Field", Type: "float"},
-		{Name: "Float64Field", Type: "double"},
-		{Name: "Float32PtrField", Type: "float"},
-		{Name: "StringSlice", Type: "array<string>"},
-		{Name: "IntSlice", Type: "array<" + nativeIntMapping() + ">"},
-		{Name: "Int32Slice", Type: "array<int>"},
-		{Name: "Int64Slice", Type: "array<bigint>"},
-		{Name: "Float32Slice", Type: "array<float>"},
-		{Name: "Float64Slice", Type: "array<double>"},
-		{Name: "StructSlice", Type: "array<struct<Field1:string,Field2:int>>"},
-		{Name: "MapSlice", Type: "array<map<string,string>>"},
-		{Name: "MapStringToInterface", Type: "map<string,string>"}, // special case
-		{Name: "MapStringToString", Type: "map<string,string>"},
-		{Name: "MapStringToStruct", Type: "map<string,struct<Field1:string,Field2:int>>"},
-		{Name: "StructField", Type: "struct<Field1:string,Field2:int>"},
-		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int>,B:struct<Field1:string,Field2:int>,C:struct<Field1:string,Field2:int>>"}, // nolint
-		{Name: "CustomTypeField", Type: "foo"},
-		{Name: "CustomSliceField", Type: "baz"},
-		{Name: "CustomStructField", Type: "bar"},
+		{Name: "BoolField", Type: "boolean", Comment: "test field"},
+		{Name: "stringField", Type: "string", Comment: "test field"},
+		{Name: "stringPtrField", Type: "string", Comment: "test field"},
+		{Name: "IntField", Type: nativeIntMapping(), Comment: "test field"},
+		{Name: "Int8Field", Type: "tinyint", Comment: "test field"},
+		{Name: "Int16Field", Type: "smallint", Comment: "test field"},
+		{Name: "Int32Field", Type: "int", Comment: "test field"},
+		{Name: "Int64Field", Type: "bigint", Comment: "test field"},
+		{Name: "IntPtrField", Type: "int", Comment: "test field"},
+		{Name: "Float32Field", Type: "float", Comment: "test field"},
+		{Name: "Float64Field", Type: "double", Comment: "test field"},
+		{Name: "Float32PtrField", Type: "float", Comment: "test field"},
+		{Name: "StringSlice", Type: "array<string>", Comment: "test field"},
+		{Name: "IntSlice", Type: "array<" + nativeIntMapping() + ">", Comment: "test field"},
+		{Name: "Int32Slice", Type: "array<int>", Comment: "test field"},
+		{Name: "Int64Slice", Type: "array<bigint>", Comment: "test field"},
+		{Name: "Float32Slice", Type: "array<float>", Comment: "test field"},
+		{Name: "Float64Slice", Type: "array<double>", Comment: "test field"},
+		{Name: "StructSlice", Type: "array<struct<Field1:string,Field2:int>>", Comment: "test field"},
+		{Name: "MapSlice", Type: "array<map<string,string>>", Comment: "test field"},
+		{Name: "MapStringToInterface", Type: "map<string,string>", Comment: "test field"}, // special case
+		{Name: "MapStringToString", Type: "map<string,string>", Comment: "test field"},
+		{Name: "MapStringToStruct", Type: "map<string,struct<Field1:string,Field2:int>>", Comment: "test field"},
+		{Name: "StructField", Type: "struct<Field1:string,Field2:int>", Comment: "test field"},
+		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int>,B:struct<Field1:string,Field2:int>,C:struct<Field1:string,Field2:int>>", Comment: "test field"}, // nolint
+		{Name: "CustomTypeField", Type: "foo", Comment: "test field"},
+		{Name: "CustomSliceField", Type: "baz", Comment: "test field"},
+		{Name: "CustomStructField", Type: "bar", Comment: "test field"},
 	}
 
 	cols := InferJSONColumns(obj, customSimpleTypeMapping, customSliceTypeMapping, customStructTypeMapping)
@@ -217,7 +217,7 @@ func TestInferJsonColumns(t *testing.T) {
 	// uncomment to see results
 	/*
 		for _, col := range cols {
-			fmt.Printf("{Name: \"%s\", Type: \"%s\"},\n", col.Name, col.Type)
+			fmt.Printf("{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n", col.Name, col.Type)
 		}
 	*/
 	assert.Equal(t, excpectedCols, cols, "Expected columns not found")
@@ -225,12 +225,15 @@ func TestInferJsonColumns(t *testing.T) {
 	// Test using interface
 	var testInterface TestInterface = &TestStruct{}
 	cols = InferJSONColumns(testInterface)
-	assert.Equal(t, []Column{{Name: "Field1", Type: "string"}, {Name: "Field2", Type: "int"}}, cols, "Interface test failed")
+	assert.Equal(t, []Column{
+		{Name: "Field1", Type: "string", Comment: "test field"},
+		{Name: "Field2", Type: "int", Comment: "test field"},
+	}, cols, "Interface test failed")
 }
 
 type composedStruct struct {
 	fooStruct
-	Bar string
+	Bar string `description:"test field"`
 }
 
 type fooStruct struct {
@@ -248,7 +251,7 @@ func TestComposeStructs(t *testing.T) {
 	cols := InferJSONColumns(&composition)
 	expectedColumns := []Column{
 		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
-		{Name: "Bar", Type: "string"},
+		{Name: "Bar", Type: "string", Comment: "test field"},
 	}
 	require.Equal(t, expectedColumns, cols)
 }

@@ -29,16 +29,17 @@ import (
 var SnapshotDesc = `Snapshot contains all the data included in OsQuery differential logs
 Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 
-type Snapshot struct {
-	Action         *string                `json:"action,omitempty" validate:"required,eq=snapshot"`
-	CalendarTime   *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required"`
-	Counter        *int                   `json:"counter,omitempty,string" validate:"required"`
-	Decorations    map[string]string      `json:"decorations,omitempty"`
-	Epoch          *int                   `json:"epoch,omitempty,string" validate:"required"`
-	HostIdentifier *string                `json:"hostIdentifier,omitempty" validate:"required"`
-	Name           *string                `json:"name,omitempty" validate:"required"`
-	Snapshot       []map[string]string    `json:"snapshot,omitempty" validate:"required"`
-	UnixTime       *int                   `json:"unixTime,omitempty,string" validate:"required"`
+// nolint:lll
+type Snapshot struct { // FIXME: field descriptions need updating!
+	Action         *string                `json:"action,omitempty" validate:"required,eq=snapshot" description:"Action"`
+	CalendarTime   *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	Counter        *int                   `json:"counter,omitempty,string" validate:"required" description:"Counter"`
+	Decorations    map[string]string      `json:"decorations,omitempty" description:"Decorations"`
+	Epoch          *int                   `json:"epoch,omitempty,string" validate:"required" description:"Epoch"`
+	HostIdentifier *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
+	Name           *string                `json:"name,omitempty" validate:"required" description:"Name"`
+	Snapshot       []map[string]string    `json:"snapshot,omitempty" validate:"required" description:"Snapshot"`
+	UnixTime       *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
@@ -46,6 +47,10 @@ type Snapshot struct {
 
 // SnapshotParser parses OsQuery snapshot logs
 type SnapshotParser struct{}
+
+func (p *SnapshotParser) New() parsers.LogParser {
+	return &SnapshotParser{}
+}
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *SnapshotParser) Parse(log string) []interface{} {

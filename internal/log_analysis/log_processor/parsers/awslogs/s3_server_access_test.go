@@ -171,6 +171,31 @@ func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
 	checkS3AccessLog(t, log, expectedEvent)
 }
 
+func TestS3AccessLogExpireNoHttpStatusObject(t *testing.T) {
+	//nolint:lll
+	log := `e45ff2803a4a73e13cca79d315b9aed3cf228184ab5c07725da3feaca1db2c98 panther-s3-logs-012345678901-us-east-1 [06/Feb/2019:00:00:38 +0000] - AmazonS3 128E87669E4C15FA S3.EXPIRE.OBJECT panther-s3-logs-012345678901-us-east-1/2020-01-11-22-33-30-23B392B734E22958 "-" - - - 3922 - - "-" "-" DkKg9NTmHopKgqKMcgjFyf4oujClO4J1 JFLmDHDLlTpiqmG5NECMOIsZfzN2Mki0OqHGVbsP20tAVq3176HcY0/F8Y9ONTth - - - - -`
+
+	date := time.Unix(1549411238, 0).UTC()
+	expectedEvent := &S3ServerAccess{
+		BucketOwner: aws.String("e45ff2803a4a73e13cca79d315b9aed3cf228184ab5c07725da3feaca1db2c98"),
+		Bucket:      aws.String("panther-s3-logs-012345678901-us-east-1"),
+		Key:         aws.String("panther-s3-logs-012345678901-us-east-1/2020-01-11-22-33-30-23B392B734E22958"),
+		ObjectSize:  aws.Int(3922),
+		Time:        (*timestamp.RFC3339)(&date),
+		Requester:   aws.String("AmazonS3"),
+		RequestID:   aws.String("128E87669E4C15FA"),
+		Operation:   aws.String("S3.EXPIRE.OBJECT"),
+		HostID:      aws.String("JFLmDHDLlTpiqmG5NECMOIsZfzN2Mki0OqHGVbsP20tAVq3176HcY0/F8Y9ONTth"),
+		VersionID:   aws.String("DkKg9NTmHopKgqKMcgjFyf4oujClO4J1"),
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
+
+	checkS3AccessLog(t, log, expectedEvent)
+}
+
 func TestS3ServerAccessLogType(t *testing.T) {
 	parser := &S3ServerAccessParser{}
 	require.Equal(t, "AWS.S3ServerAccess", parser.LogType())

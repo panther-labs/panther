@@ -51,122 +51,74 @@ const (
 // Upload a local self-signed TLS certificate to ACM. Only needs to happen once per installation
 //
 // In regions/partitions where ACM is not supported, we fall back to IAM certificate management.
-func uploadLocalCertificate(awsSession *session.Session) (string, error) {
+func uploadLocalCertificate(awsSession *session.Session) string {
 	// Check if certificate has already been uploaded
-	certArn, err := getExistingCertificate(awsSession)
-	if err != nil {
-		return "", err
+	if certArn := getExistingCertificate(awsSession); certArn != nil {
+		logger.Debugf("deploy: load balancer certificate %s already exists", *certArn)
+		return *certArn
 	}
-	if certArn != "" {
-		fmt.Println("deploy: load balancer certificate already exists")
-		return certArn, nil
-	}
-	fmt.Println("deploy: uploading load balancer certificate")
 
 	// Ensure the certificate and key file exist. If not, create them.
 	_, certErr := os.Stat(certificateFile)
-	_, keyErr := os.Stat(certificateFile)
+	_, keyErr := os.Stat(privateKeyFile)
 	if os.IsNotExist(certErr) || os.IsNotExist(keyErr) {
 		if err := generateKeys(); err != nil {
-			return "", err
+			logger.Fatal(err)
 		}
 	}
 
-	certificateFile, certificateFileErr := os.Open(certificateFile)
-	if certificateFileErr != nil {
-		return "", certificateFileErr
-	}
-	defer func() { _ = certificateFile.Close() }()
-
-	privateKeyFile, privateKeyFileErr := os.Open(privateKeyFile)
-	if privateKeyFileErr != nil {
-		return "", privateKeyFileErr
-	}
-	defer func() { _ = privateKeyFile.Close() }()
-
-	certificateBytes, err := ioutil.ReadAll(certificateFile)
-	if err != nil {
-		return "", err
-	}
-	privateKeyBytes, err := ioutil.ReadAll(privateKeyFile)
-	if err != nil {
-		return "", err
-	}
+	logger.Infof("deploy: uploading load balancer certificate %s with key %s", certificateFile, privateKeyFile)
 
 	// Check if the ACM service is supported before tossing the private key out into the ether
 	acmClient := acm.New(awsSession)
-	_, err = acmClient.ListCertificates(&acm.ListCertificatesInput{MaxItems: aws.Int64(1)})
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "SubscriptionRequiredException" {
-				// ACM is not supported in this region or for this user, fall back to IAM
-				fmt.Println("deploy: ACM not supported, falling back to IAM for certificate management")
-				return uploadIAMCertificate(privateKeyBytes, certificateBytes, awsSession)
-			}
+	if _, err := acmClient.ListCertificates(&acm.ListCertificatesInput{MaxItems: aws.Int64(1)}); err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "SubscriptionRequiredException" {
+			// ACM is not supported in this region or for this user, fall back to IAM
+			logger.Warn("deploy: ACM not supported, falling back to IAM for certificate management")
+			return uploadIAMCertificate(awsSession)
 		}
-		// Some other error
-		return "", err
+		logger.Fatalf("failed to list certificates: %v", err)
 	}
-	input := &acm.ImportCertificateInput{
-		Certificate: certificateBytes,
-		PrivateKey:  privateKeyBytes,
+
+	output, err := acmClient.ImportCertificate(&acm.ImportCertificateInput{
+		Certificate: readFile(certificateFile),
+		PrivateKey:  readFile(privateKeyFile),
 		Tags: []*acm.Tag{
 			{
 				Key:   aws.String("Application"),
 				Value: aws.String("Panther"),
 			},
 		},
-	}
-	output, err := acmClient.ImportCertificate(input)
+	})
 	if err != nil {
-		return "", err
+		logger.Fatalf("ACM certificate import failed: %v", err)
 	}
 
-	return *output.CertificateArn, nil
-}
-
-// uploadIAMCertificate creates an IAM certificate resource and returns its ARN
-func uploadIAMCertificate(privateKeyBytes, certificateBytes []byte, session *session.Session) (string, error) {
-	iamClient := iam.New(session)
-	t := time.Now()
-	certName := "PantherCertificate-" + t.Format("2006-01-02T15-04-05")
-	input := &iam.UploadServerCertificateInput{
-		CertificateBody:       aws.String(string(certificateBytes)),
-		PrivateKey:            aws.String(string(privateKeyBytes)),
-		ServerCertificateName: aws.String(certName),
-	}
-	output, err := iamClient.UploadServerCertificate(input)
-	if err != nil {
-		return "", err
-	}
-
-	return *output.ServerCertificateMetadata.Arn, nil
+	return *output.CertificateArn
 }
 
 // getExistingCertificate checks to see if there is already an ACM/IAM certificate configured
-func getExistingCertificate(awsSession *session.Session) (string, error) {
+func getExistingCertificate(awsSession *session.Session) *string {
 	outputs, err := getStackOutputs(awsSession, backendStack)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() != "ValidationError" || !strings.HasSuffix(awsErr.Code(), "does not exist") {
-				return "", nil
-			}
+		if strings.Contains(err.Error(), "Stack with id "+backendStack+" does not exist") {
+			return nil
 		}
-		return "", err
+		logger.Fatal(err)
 	}
 	if arn, ok := outputs[certificateOutputKey]; ok {
-		return arn, nil
+		return &arn
 	}
-	return "", nil
+	return nil
 }
 
 // generateKeys generates the self signed private key and certificate for HTTPS access to the web application
 func generateKeys() error {
-	fmt.Println("deploy: WARNING no ACM certificate ARN provided and no certificate file provided, generating a self-signed certificate")
+	logger.Warn("deploy: no certificate provided in config nor in keys/, generating a self-signed certificate")
 	// Create the private key
 	key, err := rsa.GenerateKey(rand.Reader, keyLength)
 	if err != nil {
-		return err
+		return fmt.Errorf("rsa key generation failed: %v", err)
 	}
 
 	// Setup the certificate template
@@ -189,41 +141,48 @@ func generateKeys() error {
 	// Create the certificate
 	certBytes, err := x509.CreateCertificate(rand.Reader, &certificateTemplate, &certificateTemplate, &key.PublicKey, key)
 	if err != nil {
-		return err
+		return fmt.Errorf("x509 cert creation failed: %v", err)
 	}
 
 	// Create the keys directory if it does not already exist
-	err = os.MkdirAll(keysDirectory, certFilePermissions)
-	if err != nil {
-		return err
+	if err = os.MkdirAll(keysDirectory, certFilePermissions); err != nil {
+		return fmt.Errorf("failed to create keys directory %s: %v", keysDirectory, err)
 	}
 
 	// PEM encode the certificate and write it to disk
-	certBuffer := &bytes.Buffer{}
-	err = pem.Encode(
-		certBuffer,
-		&pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: certBytes},
-	)
-	if err != nil {
-		return err
+	var certBuffer bytes.Buffer
+	if err = pem.Encode(&certBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}); err != nil {
+		return fmt.Errorf("cert encoding failed: %v", err)
 	}
-	err = ioutil.WriteFile(certificateFile, certBuffer.Bytes(), certFilePermissions)
-	if err != nil {
-		return err
+	if err = ioutil.WriteFile(certificateFile, certBuffer.Bytes(), certFilePermissions); err != nil {
+		return fmt.Errorf("failed to save cert %s: %v", certificateFile, err)
 	}
 
 	// PEM Encode the private key and write it to disk
-	keyBuffer := &bytes.Buffer{}
-	err = pem.Encode(
-		keyBuffer,
-		&pem.Block{Type: "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(key),
-		},
-	)
+	var keyBuffer bytes.Buffer
+	err = pem.Encode(&keyBuffer, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 	if err != nil {
-		return err
+		return fmt.Errorf("key encoding failed: %v", err)
 	}
-	return ioutil.WriteFile(privateKeyFile, keyBuffer.Bytes(), certFilePermissions)
+	if err = ioutil.WriteFile(privateKeyFile, keyBuffer.Bytes(), certFilePermissions); err != nil {
+		return fmt.Errorf("failed to save key %s: %v", privateKeyFile, err)
+	}
+
+	return nil
+}
+
+// uploadIAMCertificate creates an IAM certificate resource and returns its ARN
+func uploadIAMCertificate(awsSession *session.Session) string {
+	certName := "PantherCertificate-" + time.Now().Format("2006-01-02T15-04-05")
+	input := &iam.UploadServerCertificateInput{
+		CertificateBody:       aws.String(string(readFile(certificateFile))),
+		PrivateKey:            aws.String(string(readFile(privateKeyFile))),
+		ServerCertificateName: aws.String(certName),
+	}
+	output, err := iam.New(awsSession).UploadServerCertificate(input)
+	if err != nil {
+		logger.Fatalf("failed to upload cert to IAM: %v", err)
+	}
+
+	return *output.ServerCertificateMetadata.Arn
 }

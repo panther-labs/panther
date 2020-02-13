@@ -26,7 +26,7 @@ Install [Docker](https://docs.docker.com/install/) and make sure the daemon is r
 
 Install [Mage](https://magefile.org/#installation): `go get github.com/magefile/mage`
 
-Finally, install the remaining development libraries with `mage setup && npm i`
+Finally, install the remaining development libraries with `mage setup:all`
 
 ## Mage
 
@@ -37,16 +37,22 @@ Run `mage` from the repo root to see the list of available commands:
 ```text
 Targets:
   build:api           Generate Go client/models from Swagger specs in api/
-  build:lambda        Compile all Lambda function source
+  build:lambda        Compile Go Lambda function source
   clean               Remove auto-generated build artifacts
   deploy              Deploy application infrastructure
   fmt                 Format source files
-  setup               Install development dependencies
+  glue:sync           Sync glue table partitions after schema change
+  setup:all           Install all development dependencies
+  setup:go            Install goimports, go-swagger, and golangci-lint
+  setup:python        Install the Python virtual env
+  setup:web           Npm install
+  test:cfn            Lint CloudFormation templates
   test:ci             Run all required checks
   test:cover          Run Go unit tests and view test coverage in HTML
-  test:integration    Run TestIntegration* for PKG (default: ./...)
-  test:lint           Check code style
-  test:unit           Run unit tests
+  test:go             Test Go source
+  test:integration    Run integration tests (integration_test.go,integration.py)
+  test:python         Test Python source
+  test:web            Lint web source
 ```
 
 You can easily chain `mage` commands together, for example: `mage fmt test:ci deploy`
@@ -65,7 +71,7 @@ To update your deployment of Panther, follow the steps below:
 
 1. Checkout the latest release:
    1. `git fetch origin master`
-   2. `git checkout tags/v0.1.1`
+   2. `git checkout tags/v0.2.0`
 2. Clean the existing build artifacts: `mage clean`
 3. Deploy the latest application changes: `mage deploy`
 

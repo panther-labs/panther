@@ -29,19 +29,20 @@ import (
 var DifferentialDesc = `Differential contains all the data included in OsQuery differential logs
 Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 
-type Differential struct {
-	Action               *string                `json:"action,omitempty" validate:"required"`
-	CalendarTime         *timestamp.ANSICwithTZ `json:"calendartime,omitempty" validate:"required"`
-	Columns              map[string]string      `json:"columns,omitempty" validate:"required"`
-	Counter              *int                   `json:"counter,omitempty,string"`
-	Decorations          map[string]string      `json:"decorations,omitempty"`
-	Epoch                *int                   `json:"epoch,omitempty,string" validate:"required"`
-	HostIdentifier       *string                `json:"hostIdentifier,omitempty" validate:"required"`
-	LogType              *string                `json:"logType,omitempty" validate:"required,eq=result"`
-	LogUnderscoreType    *string                `json:"log_type,omitempty"`
-	Name                 *string                `json:"name,omitempty" validate:"required"`
-	UnixTime             *int                   `json:"unixTime,omitempty,string" validate:"required"`
-	LogNumericsAsNumbers *bool                  `json:"logNumericsAsNumbers,omitempty,string"`
+// nolint:lll
+type Differential struct { // FIXME: field descriptions need updating!
+	Action               *string                `json:"action,omitempty" validate:"required" description:"Action"`
+	CalendarTime         *timestamp.ANSICwithTZ `json:"calendartime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	Columns              map[string]string      `json:"columns,omitempty" validate:"required" description:"Columns"`
+	Counter              *int                   `json:"counter,omitempty,string" description:"Counter"`
+	Decorations          map[string]string      `json:"decorations,omitempty" description:"Decorations"`
+	Epoch                *int                   `json:"epoch,omitempty,string" validate:"required" description:"Epoch"`
+	HostIdentifier       *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
+	LogType              *string                `json:"logType,omitempty" validate:"required,eq=result" description:"LogType"`
+	LogUnderscoreType    *string                `json:"log_type,omitempty" description:"LogUnderscoreType"`
+	Name                 *string                `json:"name,omitempty" validate:"required" description:"Name"`
+	UnixTime             *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
+	LogNumericsAsNumbers *bool                  `json:"logNumericsAsNumbers,omitempty,string" description:"LogNumericsAsNumbers"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
@@ -49,6 +50,10 @@ type Differential struct {
 
 // DifferentialParser parses OsQuery Differential logs
 type DifferentialParser struct{}
+
+func (p *DifferentialParser) New() parsers.LogParser {
+	return &DifferentialParser{}
+}
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *DifferentialParser) Parse(log string) []interface{} {

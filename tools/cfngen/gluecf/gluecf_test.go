@@ -29,14 +29,14 @@ import (
 )
 
 type dummyParserEvent struct {
-	commonFields // inherit these fields via composition
-	DOB          timestamp.RFC3339
-	Anniversary  timestamp.ANSICwithTZ
+	commonFields                       // inherit these fields via composition
+	DOB          timestamp.RFC3339     `description:"test field"`
+	Anniversary  timestamp.ANSICwithTZ `description:"test field"`
 }
 
 type commonFields struct {
-	FirstName string
-	LastName  string
+	FirstName string `description:"test field"`
+	LastName  string `description:"test field"`
 }
 
 func TestTablesCloudFormation(t *testing.T) {

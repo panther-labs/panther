@@ -251,7 +251,7 @@ func (destination *S3Destination) createGluePartition(logType string, buffer *s3
 	partitionPath := glueMetadata.PartitionPrefix(buffer.firstEventProcessedTime)
 	if _, exists := destination.partitionExistsCache[partitionPath]; !exists {
 		operation := common.OpLogManager.Start("createPartition", common.OpLogGlueServiceDim)
-		partitionErr := glueMetadata.CreateJSONPartition(destination.glueClient, destination.s3Bucket, buffer.firstEventProcessedTime)
+		partitionErr := glueMetadata.CreateJSONPartition(destination.glueClient, buffer.firstEventProcessedTime)
 		// already done? fast path return
 		if partitionErr != nil {
 			if awsErr, ok := partitionErr.(awserr.Error); ok {

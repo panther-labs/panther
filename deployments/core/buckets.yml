@@ -27,8 +27,7 @@ Conditions:
   CreateLogBucket: !Equals [!Ref AccessLogsBucketName, '']
 
 Resources:
-  # S3 bucket for Panther S3 access logs
-  AccessLogsBucket:
+  AccessLogs:
     Condition: CreateLogBucket
     Type: AWS::S3::Bucket
     Properties:
@@ -37,7 +36,6 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: !Sub panther-s3-logs-${AWS::AccountId}-${AWS::Region}
       LifecycleConfiguration:
         Rules:
           # Keep access logs for 1 year, permanently delete 30 days after they expire
@@ -45,8 +43,7 @@ Resources:
             NoncurrentVersionExpirationInDays: 30
             Status: Enabled
       LoggingConfiguration:
-        DestinationBucketName: !Sub panther-s3-logs-${AWS::AccountId}-${AWS::Region}
-        LogFilePrefix: !Sub panther-s3-logs-${AWS::AccountId}-${AWS::Region}/
+        LogFilePrefix: self/
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -56,14 +53,13 @@ Resources:
         Status: Enabled
 
   # S3 bucket for CloudFormation to upload templates, Lambda source, etc
-  SourceBucket:
+  Source:
     Type: AWS::S3::Bucket
     Properties:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: !Sub panther-source-${AWS::AccountId}-${AWS::Region}
       LifecycleConfiguration:
         Rules:
           # Once a stack is deployed, its resources in S3 can be safely removed.
@@ -71,7 +67,7 @@ Resources:
             Status: Enabled
       LoggingConfiguration:
         DestinationBucketName:
-          !If [CreateLogBucket, !Ref AccessLogsBucket, !Ref AccessLogsBucketName]
+          !If [CreateLogBucket, !Ref AccessLogs, !Ref AccessLogsBucketName]
         LogFilePrefix: !Sub panther-source-${AWS::AccountId}-${AWS::Region}/
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
@@ -84,11 +80,11 @@ Resources:
 Outputs:
   LogBucketName:
     Description: S3 bucket name for Panther S3 access logs
-    Value: !If [CreateLogBucket, !Ref AccessLogsBucket, !Ref AccessLogsBucketName]
+    Value: !If [CreateLogBucket, !Ref AccessLogs, !Ref AccessLogsBucketName]
     Export:
       Name: Panther-LogBucket
   SourceBucketName:
     Description: S3 bucket name for Panther CloudFormation packaging
-    Value: !Ref SourceBucket
+    Value: !Ref Source
     Export:
       Name: Panther-SourceBucket

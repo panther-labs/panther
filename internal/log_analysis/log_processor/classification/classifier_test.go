@@ -34,6 +34,10 @@ type mockParser struct {
 	mock.Mock
 }
 
+func (m *mockParser) New() parsers.LogParser {
+	return m // pass through (not stateful)
+}
+
 func (m *mockParser) Parse(log string) []interface{} {
 	args := m.Called(log)
 	result := args.Get(0)

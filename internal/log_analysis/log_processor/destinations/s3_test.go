@@ -94,18 +94,28 @@ type mockGlue struct {
 }
 
 // fixed for our tests
-var testGetTableOutput = &glue.GetTableOutput{
-	Table: &glue.TableData{
-		StorageDescriptor: &glue.StorageDescriptor{
-			SerdeInfo: &glue.SerDeInfo{
-				SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
-				Parameters: map[string]*string{
-					"serialization.format": aws.String("1"),
-					"case.insensitive":     aws.String("TRUE"),
+var (
+	testGetPartitionOutput = &glue.GetPartitionOutput{}
+
+	testGetTableOutput = &glue.GetTableOutput{
+		Table: &glue.TableData{
+			StorageDescriptor: &glue.StorageDescriptor{
+				Location: aws.String("s3://testbucket/logs/table"),
+				SerdeInfo: &glue.SerDeInfo{
+					SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+					Parameters: map[string]*string{
+						"serialization.format": aws.String("1"),
+						"case.insensitive":     aws.String("TRUE"),
+					},
 				},
 			},
 		},
-	},
+	}
+)
+
+func (m *mockGlue) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
 }
 
 func (m *mockGlue) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
@@ -202,6 +212,8 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil)
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil)
+	destination.mockGlue.On("GetPartition", mock.Anything).Return(testGetPartitionOutput,
+		awserr.New("EntityNotFoundException", "EntityNotFoundException", nil))
 	destination.mockGlue.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 	// test error path in createGluePartition() where partition already exists
 	destination.mockGlue.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{},
@@ -273,6 +285,8 @@ func TestSendDataIfSizeLimitHasBeenReached(t *testing.T) {
 
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
+	destination.mockGlue.On("GetPartition", mock.Anything).Return(testGetPartitionOutput,
+		awserr.New("EntityNotFoundException", "EntityNotFoundException", nil)).Twice()
 	destination.mockGlue.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Twice()
 	// test error path in createGluePartition() with failure to create partition
 	destination.mockGlue.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{},
@@ -314,6 +328,8 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
+	destination.mockGlue.On("GetPartition", mock.Anything).Return(testGetPartitionOutput,
+		awserr.New("EntityNotFoundException", "EntityNotFoundException", nil)).Twice()
 	destination.mockGlue.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Twice()
 	destination.mockGlue.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Twice()
 
@@ -351,6 +367,8 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
+	destination.mockGlue.On("GetPartition", mock.Anything).Return(testGetPartitionOutput,
+		awserr.New("EntityNotFoundException", "EntityNotFoundException", nil)).Twice()
 	destination.mockGlue.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Twice()
 	destination.mockGlue.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Twice()
 
@@ -404,6 +422,8 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil)
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, errors.New("test"))
+	destination.mockGlue.On("GetPartition", mock.Anything).Return(testGetPartitionOutput,
+		awserr.New("EntityNotFoundException", "EntityNotFoundException", nil)).Once()
 	destination.mockGlue.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	destination.mockGlue.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 

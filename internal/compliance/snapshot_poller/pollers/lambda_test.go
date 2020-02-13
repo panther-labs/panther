@@ -147,6 +147,9 @@ func TestHandler(t *testing.T) {
 	// Setup EC2 client and function mocks
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
+	// Setup ECS client and function mocks
+	awstest.MockEcsForSetup = awstest.BuildMockEcsSvcAll()
+
 	// Setup KMS client and function mocks
 	awstest.MockKmsForSetup = awstest.BuildMockKmsSvcAll()
 
@@ -198,6 +201,7 @@ func TestHandler(t *testing.T) {
 	awspollers.ConfigServiceClientFunc = awstest.SetupMockConfigService
 	awspollers.DynamoDBClientFunc = awstest.SetupMockDynamoDB
 	awspollers.EC2ClientFunc = awstest.SetupMockEC2
+	awspollers.EcsClientFunc = awstest.SetupMockEcs
 	awspollers.Elbv2ClientFunc = awstest.SetupMockElbv2
 	awspollers.GuardDutyClientFunc = awstest.SetupMockGuardDuty
 	awspollers.IAMClientFunc = awstest.SetupMockIAM

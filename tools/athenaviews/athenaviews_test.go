@@ -31,12 +31,12 @@ import (
 
 type table1Event struct {
 	parsers.PantherLog
-	FavoriteFruit string
+	FavoriteFruit string `description:"test field"`
 }
 
 type table2Event struct {
 	awslogs.AWSPantherLog
-	FavoriteColor string
+	FavoriteColor string `description:"test field"`
 }
 
 func TestGenerateViewAllLogs(t *testing.T) {

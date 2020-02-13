@@ -27,19 +27,18 @@ import (
 )
 
 // CreateOrganization generates a new organization ID.
-//
-// TODO - populate the rules table for new customers
 func (API) CreateOrganization(
 	input *models.CreateOrganizationInput) (*models.CreateOrganizationOutput, error) {
 
 	// Then write the new org to the Dynamo table
 	org := &models.Organization{
-		AlertReportFrequency: input.AlertReportFrequency,
-		AwsConfig:            input.AwsConfig,
-		CreatedAt:            aws.String(time.Now().Format(time.RFC3339)),
-		DisplayName:          input.DisplayName,
-		Email:                input.Email,
-		Phone:                input.Phone,
+		AlertReportFrequency:  input.AlertReportFrequency,
+		AwsConfig:             input.AwsConfig,
+		CreatedAt:             aws.String(time.Now().Format(time.RFC3339)),
+		DisplayName:           input.DisplayName,
+		Email:                 input.Email,
+		ErrorReportingConsent: input.ErrorReportingConsent,
+		Phone:                 input.Phone,
 	}
 
 	if err := orgTable.Put(org); err != nil {

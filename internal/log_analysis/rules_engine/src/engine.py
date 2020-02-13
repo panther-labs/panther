@@ -45,6 +45,9 @@ class Engine:
         self.logger.info('Retrieved {} rules in {} seconds'.format(len(rules), end - start))
         start = default_timer()
 
+        # Clear old rules
+        self._log_type_to_rules.clear()
+
         # Importing common module. This module MAY hold code common to some rules and if it exists, it must be imported before other rules.
         # However, the presence of this rule is optional.
         for raw_rule in rules:
@@ -106,6 +109,6 @@ class Engine:
                 matched.append(rule.rule_id)
             elif isinstance(result, Exception):
                 # TODO Add reporting of errors in the UI
-                self.logger.error('failed to run rule {} {}'.format(type(result).__name__, result))
+                self.logger.error('failed to run rule {} {} {}'.format(rule.rule_id, type(result).__name__, result))
 
         return matched

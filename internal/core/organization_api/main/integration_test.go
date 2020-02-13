@@ -124,13 +124,14 @@ func createOrg(t *testing.T) {
 
 	assert.NotNil(t, org.CreatedAt)
 	expected := &models.Organization{
-		AlertReportFrequency: input.CreateOrganization.AlertReportFrequency,
-		AwsConfig:            input.CreateOrganization.AwsConfig,
-		CompletedActions:     []*string{},
-		CreatedAt:            org.CreatedAt,
-		DisplayName:          input.CreateOrganization.DisplayName,
-		Email:                input.CreateOrganization.Email,
-		Phone:                input.CreateOrganization.Phone,
+		AlertReportFrequency:  input.CreateOrganization.AlertReportFrequency,
+		AwsConfig:             input.CreateOrganization.AwsConfig,
+		CompletedActions:      []*string{},
+		CreatedAt:             org.CreatedAt,
+		DisplayName:           input.CreateOrganization.DisplayName,
+		Email:                 input.CreateOrganization.Email,
+		ErrorReportingConsent: nil,
+		Phone:                 input.CreateOrganization.Phone,
 	}
 	assert.Equal(t, expected, org)
 }
@@ -158,9 +159,10 @@ func updateOrg(t *testing.T) {
 				AppClientID:    aws.String("appClient"),
 				IdentityPoolID: aws.String("identityPool"),
 			},
-			DisplayName: aws.String("panther-org-api-integration-test-update"),
-			Email:       aws.String("eng-update@runpanther.io"),
-			Phone:       aws.String("111-222-3456"),
+			DisplayName:           aws.String("panther-org-api-integration-test-update"),
+			Email:                 aws.String("eng-update@runpanther.io"),
+			ErrorReportingConsent: aws.Bool(true),
+			Phone:                 aws.String("111-222-3456"),
 		},
 	}}
 	var output models.UpdateOrganizationOutput
@@ -168,13 +170,14 @@ func updateOrg(t *testing.T) {
 
 	expected := models.UpdateOrganizationOutput{
 		Organization: &models.Organization{
-			CompletedActions:     org.CompletedActions,
-			CreatedAt:            org.CreatedAt,
-			AlertReportFrequency: input.UpdateOrganization.AlertReportFrequency,
-			AwsConfig:            input.UpdateOrganization.AwsConfig,
-			DisplayName:          input.UpdateOrganization.DisplayName,
-			Email:                input.UpdateOrganization.Email,
-			Phone:                input.UpdateOrganization.Phone,
+			CompletedActions:      org.CompletedActions,
+			CreatedAt:             org.CreatedAt,
+			AlertReportFrequency:  input.UpdateOrganization.AlertReportFrequency,
+			AwsConfig:             input.UpdateOrganization.AwsConfig,
+			DisplayName:           input.UpdateOrganization.DisplayName,
+			Email:                 input.UpdateOrganization.Email,
+			ErrorReportingConsent: input.UpdateOrganization.ErrorReportingConsent,
+			Phone:                 input.UpdateOrganization.Phone,
 		},
 	}
 	require.Equal(t, expected, output)

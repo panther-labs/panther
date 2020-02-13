@@ -20,10 +20,7 @@ package mage
 
 import (
 	"bytes"
-	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/magefile/mage/mg"
@@ -36,61 +33,64 @@ var (
 )
 
 // Fmt Format source files
-func Fmt() error {
-	fmt.Println("fmt: license")
-	if err := fmtLicense(); err != nil {
-		return err
+func Fmt() {
+	fmtLicense()
+	gofmt(".", goTargets...)
+
+	// python
+	logger.Info("fmt: python yapf " + strings.Join(pyTargets, " "))
+	args := []string{"--in-place", "--parallel", "--recursive"}
+	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
+		logger.Fatalf("failed to format python: %v", err)
 	}
 
-	fmt.Println("fmt: gofmt", strings.Join(goTargets, " "))
+	// cloudformation
+	logger.Info("fmt: prettier")
+	args = []string{"--write", "deployments/**.yml"}
+	if !mg.Verbose() {
+		args = append(args, "--loglevel", "error")
+	}
+	if err := sh.Run(nodePath("prettier"), args...); err != nil {
+		logger.Fatalf("failed to format deployments/**.yml: %v", err)
+	}
+
+	args = []string{"--write", "{web/src/**,.}/*.{ts,js,tsx,md,json,yml}"}
+	if !mg.Verbose() {
+		args = append(args, "--loglevel", "error")
+	}
+	if err := sh.Run(nodePath("prettier"), args...); err != nil {
+		logger.Fatalf("failed to format {web/src/**,.}: %v", err)
+	}
+}
+
+// Apply full go formatting to the given paths, which share the common root.
+func gofmt(root string, paths ...string) {
+	logger.Info("fmt: gofmt " + strings.Join(paths, " "))
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
 	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, goTargets...)...); err != nil {
-		return err
+		logger.Fatalf("gofmt failed: %v", err)
 	}
 
 	// 2) Remove empty newlines from import groups
-	if err := removeAllImportNewlines(); err != nil {
-		return err
-	}
+	walk(root, func(path string, info os.FileInfo) {
+		if !info.IsDir() && strings.HasSuffix(path, ".go") {
+			removeImportNewlines(path)
+		}
+	})
 
 	// 3) Goimports to group imports into 3 sections
 	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, goTargets...)
 	if err := sh.Run("goimports", args...); err != nil {
-		return err
+		logger.Fatalf("goimports failed: %v", err)
 	}
-
-	fmt.Println("fmt: yapf", strings.Join(pyTargets, " "))
-	args = []string{"--in-place", "--parallel", "--recursive"}
-	if mg.Verbose() {
-		args = append(args, "--verbose")
-	}
-	return sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...)
-}
-
-func removeAllImportNewlines() error {
-	return filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.IsDir() && strings.HasSuffix(path, ".go") {
-			return removeImportNewlines(path)
-		}
-		return nil
-	})
 }
 
 // Remove empty newlines from formatted import groups so goimports will correctly group them.
-func removeImportNewlines(path string) error {
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
+func removeImportNewlines(path string) {
 	var newLines [][]byte
 	inImport := false
-	for _, line := range bytes.Split(contents, []byte("\n")) {
+	for _, line := range bytes.Split(readFile(path), []byte("\n")) {
 		if inImport {
 			if len(line) == 0 {
 				continue // skip empty newlines in import groups
@@ -105,5 +105,5 @@ func removeImportNewlines(path string) error {
 		newLines = append(newLines, line)
 	}
 
-	return ioutil.WriteFile(path, bytes.Join(newLines, []byte("\n")), 0644)
+	writeFile(path, bytes.Join(newLines, []byte("\n")))
 }

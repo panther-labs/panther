@@ -27,6 +27,10 @@ import (
 	"strings"
 )
 
+const (
+	maxCommentLength = 255 // this is the maximum size for a column comment allowed by CloudFormation
+)
+
 // Functions to infer schema by reflection
 
 type CustomMapping struct {
@@ -61,6 +65,14 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 			fieldName, jsonType, comment, skip := inferStructFieldType(field, customMappingsTable)
 			if skip {
 				continue
+			}
+			comment = strings.TrimSpace(comment)
+			if len(comment) == 0 {
+				panic(fmt.Sprintf("failed to generate CloudFormation for %s: %s does not have the required associated 'description' tag",
+					t.String(), fieldName))
+			}
+			if len(comment) > maxCommentLength { // clip
+				comment = comment[:maxCommentLength-3] + "..."
 			}
 			cols = append(cols, Column{Name: fieldName, Type: jsonType, Comment: comment})
 		}

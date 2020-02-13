@@ -55,6 +55,24 @@ func (tb GlueTableTimebin) Validate() (err error) {
 	return
 }
 
+// return the next time interval
+func (tb GlueTableTimebin) Next(t time.Time) (next time.Time) {
+	switch tb {
+	case GlueTableHourly:
+		return t.Add(time.Hour).Truncate(time.Hour)
+	case GlueTableDaily:
+		return t.Add(time.Hour * 24).Truncate(time.Hour * 24)
+	case GlueTableMonthly:
+		// loop a day at a time until the month changes
+		currentMonth := t.Month()
+		for next = t.Add(time.Hour * 24).Truncate(time.Hour * 24); next.Month() == currentMonth; next = next.Add(time.Hour * 24) {
+		}
+		return next
+	default:
+		panic(fmt.Sprintf("unknown Glue table time bin: %d", tb))
+	}
+}
+
 // Meta data about Glue table over parser data written to S3
 // NOTE: this struct has all accessor behind functions to allow a lazy evaluation
 //       so the cost of creating the schema is only when actually needing this information.

@@ -4,10 +4,7 @@ about: A big feature to add
 title: ''
 labels: epic
 assignees: ''
-
----
-
-# <Epic Title>
+---# <Epic Title>
 
 ## Introduction
 
