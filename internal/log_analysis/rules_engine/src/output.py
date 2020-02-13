@@ -72,7 +72,7 @@ class MatchedEventsBuffer:
         """Flushes the buffer and writes data in S3"""
         current_time = datetime.utcnow()
         for key, events in self.data.items():
-            alert_info = self.merger.update_get_alert_info(current_time, len(events, key.rule_id, key.dedup))
+            alert_info = self.merger.update_get_alert_info(current_time, len(events), key.rule_id, key.dedup)
             data_stream = BytesIO()
             writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
             for event in events:
