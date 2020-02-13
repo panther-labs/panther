@@ -43,7 +43,7 @@ const PromptController: React.FC = () => {
   const { data } = useQuery<ApolloQueryData>(GET_ORGANIZATION_ERROR_REPORTING_CONSENT);
 
   React.useEffect(() => {
-    if (data?.organization.errorReportingConsent === false) {
+    if (data?.organization.errorReportingConsent === null) {
       showModal({ modal: MODALS.ANALYTICS_CONSENT });
     }
   }, [data]);
