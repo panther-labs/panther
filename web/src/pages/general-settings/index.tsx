@@ -26,8 +26,8 @@ import RoleRestrictedAccess from 'Components/role-restricted-access';
 import Page404 from 'Pages/404';
 import ErrorBoundary from 'Components/error-boundary';
 import { extractErrorMessage } from 'Helpers/utils';
+import CompanyInformationForm from 'Components/forms/company-information-form';
 import GeneralSettingsPageSkeleton from './skeleton';
-import CompanyInformationForm from './subcomponents/company-information-form';
 
 export const GET_ORGANIZATION = gql`
   query GetOrganization {
