@@ -24,10 +24,13 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 // Router is a generic API router for golang Lambda functions.
 type Router struct {
+	namespace    string
+	component    string
 	validate     *validator.Validate      // input validation
 	routes       reflect.Value            // handler functions
 	routesByName map[string]reflect.Value // cache routeName => handler function
@@ -37,12 +40,14 @@ type Router struct {
 //
 // validate is an optional custom validator
 // routes is a struct pointer, whose receiver methods are handler functions (e.g. AddRule)
-func NewRouter(validate *validator.Validate, routes interface{}) *Router {
+func NewRouter(namespace, component string, validate *validator.Validate, routes interface{}) *Router {
 	if validate == nil {
 		validate = validator.New()
 	}
 	reflected := reflect.ValueOf(routes)
 	return &Router{
+		namespace:    namespace,
+		component:    component,
 		validate:     validate,
 		routes:       reflected,
 		routesByName: make(map[string]reflect.Value, reflected.NumMethod()),
@@ -54,11 +59,21 @@ func NewRouter(validate *validator.Validate, routes interface{}) *Router {
 // For the sake of efficiency, no attempt is made to validate the routes or function signatures.
 // As a result, this function will panic if a handler does not exist or is invalid.
 // Be sure to VerifyHandlers as part of the unit tests for your function!
-func (r *Router) Handle(input interface{}) (interface{}, error) {
+func (r *Router) Handle(input interface{}) (output interface{}, err error) {
 	req, err := findRequest(input)
 	if err != nil {
+		// we do not have the route yet, special case, use oplog to keep logging standard
+		operation := oplog.NewManager(r.namespace, r.component).Start("findRequest")
+		operation.Stop()
+		operation.Log(err)
 		return nil, err
 	}
+
+	operation := oplog.NewManager(r.namespace, r.component).Start(req.route)
+	defer func() {
+		operation.Stop()
+		operation.Log(err, zap.Any("input", redactedInput(req.input)))
+	}()
 
 	if err = r.validate.Struct(input); err != nil {
 		return nil, &InvalidInputError{Route: req.route, Message: err.Error()}
@@ -73,8 +88,6 @@ func (r *Router) Handle(input interface{}) (interface{}, error) {
 		r.routesByName[req.route] = handler
 	}
 
-	zap.L().Info("handling request",
-		zap.String("route", req.route), zap.Any("input", redactedInput(req.input)))
 	results := handler.Call([]reflect.Value{req.input})
 
 	if len(results) == 1 {

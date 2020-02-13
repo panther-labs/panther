@@ -17,9 +17,6 @@
  */
 
 import { ErrorResponse } from 'apollo-link-error';
-import storage from 'Helpers/storage';
-import { UserInfo } from 'Components/utils/auth-context';
-import { USER_INFO_STORAGE_KEY } from 'Source/constants';
 import { Operation } from '@apollo/client';
 
 interface ErrorData {
@@ -48,12 +45,6 @@ export const logError = (error: Error | ErrorResponse, { operation, extras }: Er
     // As soon as sentry is init, we add a scope to the error. Adding the scope here makes sure that
     // we don't have to manage the scopes on login/logout events
     Sentry.withScope(scope => {
-      // Set the organization data and the email of the user
-      const storedUserInfo = storage.read<UserInfo>(USER_INFO_STORAGE_KEY); // prettier-ignore
-      if (storedUserInfo) {
-        scope.setUser(storedUserInfo);
-      }
-
       // If we have access to the operation that occurred, then we store this info for easier debugging
       if (operation) {
         scope.setTag('operationName', operation.operationName);

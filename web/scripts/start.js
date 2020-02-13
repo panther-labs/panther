@@ -1,5 +1,3 @@
-package main
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -17,31 +15,13 @@ package main
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+const { spawn } = require('child_process');
+const { loadDotEnvVars } = require('./utils');
 
-import (
-	"context"
+// Mark the Node environment as development in order to load the proper webpack configuration
+process.env.NODE_ENV = 'development';
 
-	"github.com/aws/aws-lambda-go/lambda"
+// Add all the aws-related ENV vars to process.env
+loadDotEnvVars('out/.env.aws');
 
-	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/api"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
-)
-
-var router = genericapi.NewRouter("logAnalysis", "alerts", nil, api.API{})
-
-func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	event, err := router.Handle(input)
-	if err != nil {
-		// wrap for api, InternalError the only kind of error from this lambda
-		err = &genericapi.InternalError{Message: err.Error()}
-	}
-	return event, err
-}
-
-func main() {
-	api.Setup()
-	lambda.Start(lambdaHandler)
-}
+spawn('node_modules/.bin/webpack-dev-server', { stdio: 'inherit' });

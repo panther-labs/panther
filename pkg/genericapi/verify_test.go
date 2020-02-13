@@ -46,7 +46,7 @@ func (*missingArgs) AddRule() error { return nil }
 
 func TestVerifyMissingArgument(t *testing.T) {
 	type input struct{ AddRule *addRuleInput }
-	err := NewRouter(nil, &missingArgs{}).VerifyHandlers(&input{})
+	err := NewRouter("testNamespace", "testComponent", nil, &missingArgs{}).VerifyHandlers(&input{})
 	assert.Equal(t, "AddRule should have 1 argument, found 0", err.(*InternalError).Message)
 }
 
@@ -56,7 +56,7 @@ func (*wrongArgType) AddRule(*deleteRuleInput) error { return nil }
 
 func TestVerifyWrongArgType(t *testing.T) {
 	type input struct{ AddRule *addRuleInput }
-	err := NewRouter(nil, &wrongArgType{}).VerifyHandlers(&input{})
+	err := NewRouter("testNamespace", "testComponent", nil, &wrongArgType{}).VerifyHandlers(&input{})
 	assert.Equal(t, "AddRule expects an argument of type *genericapi.deleteRuleInput, "+
 		"input has type *genericapi.addRuleInput", err.(*InternalError).Message)
 }
@@ -67,7 +67,7 @@ func (*wrongReturnSingle) AddRule(*addRuleInput) InternalError { return Internal
 
 func TestVerifySingleReturnNotError(t *testing.T) {
 	type input struct{ AddRule *addRuleInput }
-	err := NewRouter(nil, &wrongReturnSingle{}).VerifyHandlers(&input{})
+	err := NewRouter("testNamespace", "testComponent", nil, &wrongReturnSingle{}).VerifyHandlers(&input{})
 	assert.Equal(
 		t,
 		"AddRule returns genericapi.InternalError, which does not satisfy error",
@@ -81,7 +81,7 @@ func (*wrongReturnDouble) AddRule(*addRuleInput) (*string, *string) { return nil
 
 func TestVerifySecondReturnNotError(t *testing.T) {
 	type input struct{ AddRule *addRuleInput }
-	err := NewRouter(nil, &wrongReturnDouble{}).VerifyHandlers(&input{})
+	err := NewRouter("testNamespace", "testComponent", nil, &wrongReturnDouble{}).VerifyHandlers(&input{})
 	assert.Equal(
 		t,
 		"AddRule second return is *string, which does not satisfy error",
@@ -95,7 +95,7 @@ func (*noReturns) AddRule(*addRuleInput) {}
 
 func TestVerifyNoReturns(t *testing.T) {
 	type input struct{ AddRule *addRuleInput }
-	err := NewRouter(nil, &noReturns{}).VerifyHandlers(&input{})
+	err := NewRouter("testNamespace", "testComponent", nil, &noReturns{}).VerifyHandlers(&input{})
 	assert.Equal(
 		t, "AddRule should have 1 or 2 returns, found 0", err.(*InternalError).Message)
 }

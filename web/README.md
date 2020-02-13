@@ -16,8 +16,8 @@ $ npm i
 ### Development
 
 In order to develop locally, you must first have the project deployed on your AWS account. If you've successfully done that,
-then a `.env` file will be present in the `/out` directory, which holds the ENV vars that
-are needed for local development. With this file present in `/out/.env`, all you need to do is run (from the panther root directory):
+then a `.env.aws` file will be present in the `/out` directory, which holds the ENV vars that
+are needed for local development. With this file present in `/out/.env.aws`, all you need to do is run (from the panther root directory):
 
 ```
 npm run start
@@ -52,7 +52,7 @@ docker run -e SERVER_PORT=8080 -p 8080:8080 {AWS_ACCOUNT_ID}.dkr.ecr.{AWS_REGION
 ```
 
 replacing the variable `AWS_ACCOUNT_ID` and `AWS_REGION` with your account-id and the region that
- panther is deployed.
+panther is deployed.
 
 ### Testing
 

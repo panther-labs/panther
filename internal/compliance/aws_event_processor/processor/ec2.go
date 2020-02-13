@@ -316,7 +316,7 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		// security group scan.
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
-			Delete:       deleteResource,
+			Delete:       false,
 			EventName:    eventName,
 			Region:       region,
 			ResourceType: ec2Type,
@@ -332,7 +332,7 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		// VPC Sub resources
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
-			Delete:       deleteResource,
+			Delete:       false,
 			EventName:    eventName,
 			Region:       region,
 			ResourceType: aws.Ec2VpcSchema,
@@ -341,7 +341,7 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		// Volume sub resources
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
-			Delete:       deleteResource,
+			Delete:       false,
 			EventName:    eventName,
 			Region:       region,
 			ResourceType: aws.Ec2VolumeSchema,
@@ -350,7 +350,7 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		// Instance sub resources
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
-			Delete:       deleteResource,
+			Delete:       false,
 			EventName:    eventName,
 			Region:       region,
 			ResourceType: aws.Ec2InstanceSchema,
@@ -366,7 +366,7 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 			// currently so we do a region wide EC2 VPC scan.
 			return []*resourceChange{{
 				AwsAccountID: ec2ARN.AccountID,
-				Delete:       deleteResource,
+				Delete:       false,
 				EventName:    eventName,
 				Region:       region,
 				ResourceType: aws.Ec2VpcSchema,
@@ -379,7 +379,7 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		// EC2 VPC scan.
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
-			Delete:       deleteResource,
+			Delete:       false,
 			EventName:    eventName,
 			ResourceType: aws.Ec2VpcSchema,
 		}}

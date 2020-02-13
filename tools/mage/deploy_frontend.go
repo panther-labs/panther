@@ -32,14 +32,14 @@ import (
 )
 
 const (
-	envFile          = "out/.env"
+	awsEnvFile       = "out/.env.aws"
 	frontendStack    = "panther-app-frontend"
 	frontendTemplate = "deployments/frontend.yml"
 )
 
 func deployFrontend(awsSession *session.Session, bucket string, backendOutputs map[string]string, config *PantherConfig) {
 	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs); err != nil {
-		logger.Fatalf("failed to write env file %s: %v", envFile, err)
+		logger.Fatalf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
 	dockerImage, err := buildAndPushImageFromSource(awsSession, backendOutputs["WebApplicationImageRegistry"])
@@ -70,7 +70,7 @@ func generateDotEnvFromCfnOutputs(awsSession *session.Session, outputs map[strin
 		"WEB_APPLICATION_USER_POOL_ID":         outputs["WebApplicationUserPoolId"],
 		"WEB_APPLICATION_USER_POOL_CLIENT_ID":  outputs["WebApplicationUserPoolClientId"],
 	}
-	return godotenv.Write(conventionalOutputs, envFile)
+	return godotenv.Write(conventionalOutputs, awsEnvFile)
 }
 
 // Build a personalized docker image from source and push it to the private image repo of the user

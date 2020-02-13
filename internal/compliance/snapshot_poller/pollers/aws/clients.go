@@ -53,6 +53,7 @@ var clientFuncs = map[string]func(session2 *session.Session, config *aws.Config)
 	"configservice":          ConfigServiceClientFunc,
 	"dynamodb":               DynamoDBClientFunc,
 	"ec2":                    EC2ClientFunc,
+	"ecs":                    EcsClientFunc,
 	"elbv2":                  Elbv2ClientFunc,
 	"guardduty":              GuardDutyClientFunc,
 	"iam":                    IAMClientFunc,

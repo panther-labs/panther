@@ -33,6 +33,13 @@ Parameters:
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on GraphQL queries & mutations
+    Default: ''
+
+Conditions:
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
   GraphQLApi:
@@ -47,6 +54,7 @@ Resources:
       LogConfig:
         CloudWatchLogsRoleArn: !GetAtt AppsyncServiceRole.Arn
         FieldLogLevel: ALL
+      XrayEnabled: !If [TracingEnabled, True, !Ref 'AWS::NoValue']
 
   GraphQLSchema:
     Type: AWS::AppSync::GraphQLSchema

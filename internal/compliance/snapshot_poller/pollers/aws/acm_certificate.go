@@ -85,7 +85,7 @@ func describeCertificate(acmSvc acmiface.ACMAPI, arn *string) (*acm.CertificateD
 	return out.Certificate, nil
 }
 
-// listTagsForCertificate provides detailed information for a given ACM certificate
+// listTagsForCertificate returns the tags for an ACM certificate
 func listTagsForCertificate(acmSvc acmiface.ACMAPI, arn *string) ([]*acm.Tag, error) {
 	out, err := acmSvc.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: arn})
 	if err != nil {

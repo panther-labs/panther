@@ -24,8 +24,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/magefile/mage/mg"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -49,29 +51,17 @@ func (t Glue) Sync() {
 	glueClient := glue.New(awsSession)
 
 	enteredText = promptUser("Enter regex to select a subset of tables (or <enter> for all tables): ", regexValidator)
-	matchTableName, err := regexp.Compile(enteredText)
-	if err != nil {
-		logger.Fatal(err)
-	}
+	matchTableName, _ := regexp.Compile(enteredText) // no error check already validated
 
-	enteredText = promptUser("Please input start day (YYYY-MM-DD): ", dateValidator)
-	startDay, _ := time.Parse(gluePartitionDateFormat, enteredText) // no error check already validated
-
-	enteredText = promptUser("Please input end day (YYYY-MM-DD): ", dateValidator)
-	endDay, _ := time.Parse(gluePartitionDateFormat, enteredText) // no error check already validated
-
-	endDay = endDay.Add(time.Hour * 23) // move to last hour of the day
-
-	if startDay.After(endDay) {
-		logger.Fatalf("start day (%s) cannot be after end day (%s)", startDay, endDay)
-	}
-
-	syncPartitions(glueClient, matchTableName, startDay, endDay)
+	syncPartitions(glueClient, matchTableName)
 }
 
-func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startDay, endDay time.Time) {
+func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 	const concurrency = 10
 	updateChan := make(chan *gluePartitionUpdate, concurrency)
+
+	// update to current day at last hour
+	endDay := time.Now().UTC().Truncate(time.Hour * 24).Add(time.Hour * 23)
 
 	// delete and re-create concurrently cuz the Glue API is very slow
 	var wg sync.WaitGroup
@@ -95,8 +85,14 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp, startD
 		if !matchTableName.MatchString(name) {
 			continue
 		}
-		logger.Infof("syncing %s", name)
-		for timeBin := startDay; !timeBin.After(endDay); timeBin = table.Timebin().Next(timeBin) {
+		createTime, err := getTableCreateTime(glueClient, table)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		createTime = createTime.Truncate(time.Hour * 24) // clip to beginning of day
+		logger.Infof("syncing %s from %s to %s",
+			name, createTime.Format(gluePartitionDateFormat), endDay.Format(gluePartitionDateFormat))
+		for timeBin := createTime; !timeBin.After(endDay); timeBin = table.Timebin().Next(timeBin) {
 			updateChan <- &gluePartitionUpdate{
 				table: table,
 				at:    timeBin,
@@ -115,11 +111,18 @@ func regexValidator(text string) error {
 	return nil
 }
 
-func dateValidator(text string) error {
-	if _, err := time.Parse(gluePartitionDateFormat, text); err != nil {
-		return fmt.Errorf("invalid date: %v", err)
+func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueMetadata) (createTime time.Time, err error) {
+	// get the CreateTime for the table, start there for syncing
+	tableInput := &glue.GetTableInput{
+		DatabaseName: aws.String(table.DatabaseName()),
+		Name:         aws.String(table.TableName()),
 	}
-	return nil
+	tableOutput, err := glueClient.GetTable(tableInput)
+	if err != nil {
+		return createTime, errors.Wrap(err, "cannot get table CreateTime")
+	}
+	createTime = *tableOutput.Table.CreateTime
+	return createTime, nil
 }
 
 type gluePartitionUpdate struct {

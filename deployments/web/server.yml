@@ -192,6 +192,8 @@ Resources:
           Environment:
             - Name: SERVER_PORT
               Value: !Ref Port
+            - Name: NODE_ENV
+              Value: production # optimizes the configuration of the front-end NodeJS server
           Essential: true
           Image: !Ref Image
           Interactive: false

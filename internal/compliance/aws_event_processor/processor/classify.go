@@ -49,6 +49,7 @@ var classifiers = map[string]func(gjson.Result, string) []*resourceChange{
 	"config.amazonaws.com":               classifyConfig,
 	"dynamodb.amazonaws.com":             classifyDynamoDB,
 	"ec2.amazonaws.com":                  classifyEC2,
+	"ecs.amazonaws.com":                  classifyECS,
 	"elasticloadbalancing.amazonaws.com": classifyELBV2,
 	"guardduty.amazonaws.com":            classifyGuardDuty,
 	"iam.amazonaws.com":                  classifyIAM,
