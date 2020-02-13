@@ -62,12 +62,7 @@ type GetOrganizationOutput struct {
 
 // UpdateOrganizationInput modifies the details of an existing organization.
 type UpdateOrganizationInput struct {
-	AlertReportFrequency  *string    `json:"alertReportFrequency" validate:"omitempty,oneof=P1D P1W"`
-	AwsConfig             *AwsConfig `json:"awsConfig"`
-	DisplayName           *string    `json:"displayName" validate:"omitempty,min=1"`
-	Email                 *string    `genericapi:"redact" json:"email" validate:"omitempty,email"`
-	ErrorReportingConsent *bool      `json:"errorReportingConsent"`
-	Phone                 *string    `genericapi:"redact" json:"phone"`
+    CreateOrganizationInput
 }
 
 // UpdateOrganizationOutput is the table row representing the modified customer account.
