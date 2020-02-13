@@ -62,7 +62,7 @@ type GetOrganizationOutput struct {
 
 // UpdateOrganizationInput modifies the details of an existing organization.
 type UpdateOrganizationInput struct {
-    CreateOrganizationInput
+	CreateOrganizationInput
 }
 
 // UpdateOrganizationOutput is the table row representing the modified customer account.
