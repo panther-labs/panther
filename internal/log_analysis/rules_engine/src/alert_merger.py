@@ -31,6 +31,7 @@ _ALERT_UPDATE_TIME_ATTR_NAME = 'alertUpdateTime'
 _ALERT_COUNT_ATTR_NAME = 'alertCount'
 _ALERT_EVENT_COUNT = 'eventCount'
 
+# TODO Once rules store alert merge period, retrieve it from there
 _ALERT_MERGE_PERIOD_SECONDS = 3600
 
 

@@ -27,7 +27,7 @@ from .engine import Engine
 from .logging import get_logger
 from .rule import Rule
 from .sqs import send_to_sqs
-from .output import EventsBuffer
+from .output import MatchedEventsBuffer
 
 s3_client = boto3.client('s3')
 logger = get_logger()
@@ -87,7 +87,7 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
 
     # List containing tuple of (rule_id, event) for matched events
     matched: List = []
-    output_buffer = EventsBuffer()
+    output_buffer = MatchedEventsBuffer()
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
             for data in data_stream:

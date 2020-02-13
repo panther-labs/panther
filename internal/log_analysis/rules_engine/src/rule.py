@@ -110,4 +110,5 @@ class Rule:
             e = Exception('rule returned {}, expected bool'.format(type(matched).__name__))
             return RuleResult(exception=e)
 
+        # Todo calculate the dedup string
         return RuleResult(matched=matched, dedup="default")
