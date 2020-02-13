@@ -19,9 +19,8 @@ from typing import Dict
 
 import boto3
 
-from .logging import get_logger
 from . import AlertInfo, AnalysisMatch
-from datetime import datetime
+from .logging import get_logger
 
 _ddb_table = os.environ['ALERTS_DEDUP_TABLE']
 _ddb_client = boto3.client('dynamodb')

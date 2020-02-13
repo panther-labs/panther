@@ -16,6 +16,7 @@
 
 import collections
 import json
+from datetime import datetime
 from gzip import GzipFile
 from io import TextIOWrapper
 from typing import Any, Dict, List, Union
@@ -26,10 +27,11 @@ from .engine import Engine
 from .logging import get_logger
 from .rule import Rule
 from .sqs import send_to_sqs
-from .output import Output
+from .output import EventsBuffer
 
 s3_client = boto3.client('s3')
 logger = get_logger()
+rules_engine = Engine()
 
 
 def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[str, Any]]:
@@ -74,10 +76,9 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
 
 def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
     # Creating new engine on every processing
-    rules_engine = Engine()
     # Dictionary containing mapping from log type to list of TextIOWrapper's
     log_type_to_data: Dict[str, TextIOWrapper] = collections.defaultdict(list)
-
+    processing_time = datetime.utcnow()
     for record in event['Records']:
         record_body = json.loads(record['body'])
         bucket = record_body['s3Bucket']
@@ -87,7 +88,7 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
 
     # List containing tuple of (rule_id, event) for matched events
     matched: List = []
-    output = Output()
+    output = EventsBuffer()
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
             for data in data_stream:
@@ -96,7 +97,7 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
                 except Exception as err:  # pylint: disable=broad-except
                     logger.error("Error during matching: {}".format(err))  # do not log data!
 
-                for analysis_result in rules_engine.analyze(log_type,json_data ):
+                for analysis_result in rules_engine.analyze(processing_time, log_type,json_data ):
                     output.add_match(analysis_result)
 
 
