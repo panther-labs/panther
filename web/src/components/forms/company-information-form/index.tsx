@@ -18,7 +18,8 @@
 
 import * as React from 'react';
 import { Field, Formik } from 'formik';
-import { Box } from 'pouncejs';
+import { Box, Heading } from 'pouncejs';
+import * as Yup from 'yup';
 import SubmitButton from 'Components/utils/SubmitButton';
 import FormikTextInput from 'Components/fields/text-input';
 import ErrorReportingSection from 'Components/forms/analytics-consent-form/error-reporting-section';
@@ -34,23 +35,51 @@ interface CompanyInformationFormProps {
   onSubmit: (values: CompanyInformationFormValues) => Promise<any>;
 }
 
+const validationSchema = Yup.object({
+  displayName: Yup.string().required(),
+  email: Yup.string()
+    .email()
+    .required(),
+  errorReportingConsent: Yup.boolean().required(),
+});
+
 export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
   initialValues,
   onSubmit,
 }) => {
   return (
-    <Formik<CompanyInformationFormValues> initialValues={initialValues} onSubmit={onSubmit}>
+    <Formik<CompanyInformationFormValues>
+      validationSchema={validationSchema}
+      initialValues={initialValues}
+      onSubmit={onSubmit}
+    >
       {({ handleSubmit, isSubmitting, isValid, dirty }) => (
         <Box>
           <form onSubmit={handleSubmit}>
-            <Box mb={8}>
-              <Field as={FormikTextInput} name="displayName" label="Name" aria-required />
-              <Field as={FormikTextInput} name="email" label="Email" aria-required />
+            <Box mb={50}>
+              <Heading size="medium" mb={10} color="grey500">
+                Company Information
+              </Heading>
+              <Field
+                as={FormikTextInput}
+                name="displayName"
+                label="Company Name"
+                aria-required
+                mb={6}
+              />
+              <Field as={FormikTextInput} name="email" label="Email" aria-required mb={6} />
             </Box>
-            <Box mb={8}>
+            <Box mb={50}>
+              <Heading size="medium" mb={6} color="grey500">
+                Preferences
+              </Heading>
               <ErrorReportingSection />
             </Box>
-            <SubmitButton disabled={isValid || isSubmitting || !dirty} submitting={isSubmitting}>
+            <SubmitButton
+              width={1}
+              disabled={!isValid || isSubmitting || !dirty}
+              submitting={isSubmitting}
+            >
               Save
             </SubmitButton>
           </form>

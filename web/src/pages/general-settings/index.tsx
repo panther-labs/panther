@@ -17,11 +17,10 @@
  */
 
 import React from 'react';
-import { Alert, Box, useSnackbar } from 'pouncejs';
+import { Alert, Box, Card, useSnackbar } from 'pouncejs';
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { ADMIN_ROLES_ARRAY } from 'Source/constants';
 import { Organization, UpdateOrganizationInput } from 'Generated/schema';
-import Panel from 'Components/panel';
 import RoleRestrictedAccess from 'Components/role-restricted-access';
 import Page404 from 'Pages/404';
 import ErrorBoundary from 'Components/error-boundary';
@@ -119,16 +118,18 @@ const GeneralSettingsContainer: React.FC = () => {
     <RoleRestrictedAccess allowedRoles={ADMIN_ROLES_ARRAY} fallback={<Page404 />}>
       <Box mb={6}>
         <ErrorBoundary>
-          <Panel size="large" title="Company Information">
-            <CompanyInformationForm
-              initialValues={{
-                displayName,
-                email,
-                errorReportingConsent,
-              }}
-              onSubmit={values => updateOrganization({ variables: { input: values } })}
-            />
-          </Panel>
+          <Card p={10}>
+            <Box width={500} m="auto">
+              <CompanyInformationForm
+                initialValues={{
+                  displayName,
+                  email,
+                  errorReportingConsent,
+                }}
+                onSubmit={values => updateOrganization({ variables: { input: values } })}
+              />
+            </Box>
+          </Card>
         </ErrorBoundary>
       </Box>
     </RoleRestrictedAccess>
