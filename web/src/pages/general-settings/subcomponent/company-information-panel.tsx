@@ -30,7 +30,7 @@ const CompanyInformation: React.FC<CompanyInformationProps> = ({ displayName, em
   const [isEditing, setEditingState] = useState<boolean>(false);
 
   return (
-    <Panel size="large" title={'Company Information'}>
+    <Panel size="large" title="Company Information">
       {isEditing ? (
         <CompanyInformationForm
           onSuccess={() => setEditingState(false)}

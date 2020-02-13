@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box } from 'pouncejs';
 import { useQuery, gql } from '@apollo/client';
 import { ADMIN_ROLES_ARRAY } from 'Source/constants';
-import { GetOrganizationResponse } from 'Generated/schema';
+import { Organization } from 'Generated/schema';
 import CompanyInformation from 'Pages/general-settings/subcomponent/company-information-panel';
 import RoleRestrictedAccess from 'Components/role-restricted-access';
 import Page404 from 'Pages/404';
@@ -31,18 +31,16 @@ import GeneralSettingsPageSkeleton from './skeleton';
 export const GET_ORGANIZATION = gql`
   query GetOrganization {
     organization {
-      organization {
-        id
-        displayName
-        email
-        alertReportFrequency
-      }
+      id
+      displayName
+      email
+      alertReportFrequency
     }
   }
 `;
 
 interface ApolloQueryData {
-  organization: GetOrganizationResponse;
+  organization: Organization;
 }
 
 // Parent container for the general settings section
@@ -74,8 +72,8 @@ const GeneralSettingsContainer: React.FC = () => {
       <Box mb={6}>
         <ErrorBoundary>
           <CompanyInformation
-            displayName={data.organization.organization.displayName}
-            email={data.organization.organization.email}
+            displayName={data.organization.displayName}
+            email={data.organization.email}
           />
         </ErrorBoundary>
       </Box>

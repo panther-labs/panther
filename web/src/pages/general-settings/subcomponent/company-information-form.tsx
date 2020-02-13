@@ -22,24 +22,32 @@ import { Field, Formik } from 'formik';
 import { Box, useSnackbar } from 'pouncejs';
 
 import SubmitButton from 'Components/utils/SubmitButton';
-import { GET_ORGANIZATION } from 'Pages/general-settings';
 import FormikTextInput from 'Components/fields/text-input';
 import { extractErrorMessage } from 'Helpers/utils';
-import { UpdateOrganizationInput } from 'Generated/schema';
+import { Organization, UpdateOrganizationInput } from 'Generated/schema';
 
-export const UPDATE_ORGANIZATION = gql`
+const UPDATE_ORGANIZATION = gql`
   mutation UpdateCompanyInformation($input: UpdateOrganizationInput!) {
-    updateOrganization(input: $input)
+    updateOrganization(input: $input) {
+      id
+      displayName
+      email
+      errorReportingConsent
+    }
   }
 `;
 
 interface UpdateCompanyInformationFormValues {
-  displayName?: string;
-  email?: string;
+  displayName: string;
+  email: string;
 }
 
 interface ApolloMutationInput {
   input: UpdateOrganizationInput;
+}
+
+interface ApolloMutationData {
+  updateOrganization: Pick<Organization, 'id' | 'displayName' | 'email'>;
 }
 
 type UpdateCompanyInformationFormOuterProps = UpdateCompanyInformationFormValues & {
@@ -55,7 +63,7 @@ export const UpdateCompanyInformationForm: React.FC<UpdateCompanyInformationForm
   const [
     updateOrganization,
     { loading: updateOrganizationLoading, error: updateOrganizationError, data },
-  ] = useMutation<boolean, ApolloMutationInput>(UPDATE_ORGANIZATION);
+  ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_ORGANIZATION);
 
   React.useEffect(() => {
     if (updateOrganizationError) {
@@ -84,7 +92,6 @@ export const UpdateCompanyInformationForm: React.FC<UpdateCompanyInformationForm
       onSubmit={async values => {
         await updateOrganization({
           variables: { input: values },
-          refetchQueries: [{ query: GET_ORGANIZATION }],
         });
       }}
     >

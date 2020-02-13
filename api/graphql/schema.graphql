@@ -25,7 +25,7 @@ type Mutation {
   testPolicy(input: TestPolicyInput): TestPolicyResponse
   updateDestination(input: DestinationInput!): Destination
   updateIntegration(input: UpdateIntegrationInput!): Boolean
-  updateOrganization(input: UpdateOrganizationInput!): Boolean
+  updateOrganization(input: UpdateOrganizationInput!): Organization!
   updatePolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): Boolean
@@ -35,7 +35,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
-  organization: GetOrganizationResponse
+  organization: Organization!
   destination(id: ID!): Destination
   destinations: [Destination]
   remediations: AWSJSON
@@ -211,10 +211,6 @@ input OrganizationStatsInput {
   limitTopFailing: Int
 }
 
-type GetOrganizationResponse {
-  organization: Organization
-}
-
 type ComplianceStatusCounts {
   error: Int
   fail: Int
@@ -251,16 +247,18 @@ enum AlertReportFrequencyEnum {
 }
 
 input UpdateOrganizationInput {
-  displayName: String
-  email: String
+  displayName: String!
+  email: String!
   alertReportFrequency: AlertReportFrequencyEnum
+  errorReportingConsent: Boolean!
 }
 
 type Organization {
-  id: String
+  id: String!
   displayName: String
   email: String
   alertReportFrequency: AlertReportFrequencyEnum
+  errorReportingConsent: Boolean
 }
 
 input TestPolicyInput {

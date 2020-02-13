@@ -193,55 +193,6 @@ Resources:
             SigningServiceName: execute-api
         Endpoint: !Ref RemediationApi
 
-  ########## Functions ##########
-  GetOrganizationFunction:
-    Type: AWS::AppSync::FunctionConfiguration
-    Properties:
-      ApiId: !GetAtt GraphQLApi.ApiId
-      Name: PantherGetOrganizationFunction
-      Description: Get organization information
-      FunctionVersion: '2018-05-29'
-      DataSourceName: !GetAtt OrganizationAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "getOrganization": {}
-          })
-        }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $context.stash)
-        #else
-          $util.toJson($context.result)
-        #end
-
-  UpdateOrganizationFunction:
-    Type: AWS::AppSync::FunctionConfiguration
-    Properties:
-      ApiId: !GetAtt GraphQLApi.ApiId
-      Name: PantherUpdateOrganizationFunction
-      Description: Update organization information
-      FunctionVersion: '2018-05-29'
-      DataSourceName: !GetAtt OrganizationAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.stash.input, {}))
-        $util.qr($input.put("awsConfig", $ctx.prev.result.organization.awsConfig))
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "updateOrganization": $input
-          })
-        }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $input)
-        #else
-          true
-        #end
-
   ########## Resolvers ##########
 
   ResetUserPasswordResolver:
@@ -439,7 +390,7 @@ Resources:
         }
       ResponseMappingTemplate: |
         #if($context.error)
-            $util.error($context.error.errorMessage, $context.error.errorType, $input)
+            $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
           $util.toJson($context.result)
         #end
@@ -490,7 +441,7 @@ Resources:
         }
       ResponseMappingTemplate: |
         #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $input)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
           $util.toJson($context.result)
         #end
@@ -551,7 +502,7 @@ Resources:
         }
       ResponseMappingTemplate: |
         #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $sourcesInput)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
           $util.toJson($context.result.get(0))
         #end
@@ -614,14 +565,21 @@ Resources:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Query
       FieldName: organization
-      Kind: PIPELINE
+      DataSourceName: !GetAtt OrganizationAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        {}
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getOrganization": {}
+          })
+        }
       ResponseMappingTemplate: |
-        $util.toJson($ctx.result)
-      PipelineConfig:
-        Functions:
-          - !GetAtt GetOrganizationFunction.FunctionId
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($context.result.organization)
+        #end
 
   UpdateOrganizationResolver:
     Type: AWS::AppSync::Resolver
@@ -630,18 +588,21 @@ Resources:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
       FieldName: updateOrganization
-      Kind: PIPELINE
+      DataSourceName: !GetAtt OrganizationAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        $util.qr($ctx.stash.put("input", $ctx.args.input))
-        {}
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateOrganization": $ctx.args.input
+          })
+        }
       ResponseMappingTemplate: |
-        $util.toJson($ctx.result)
-      PipelineConfig:
-        Functions:
-          # We're calling get organization to pass in the required awsConfig information,
-          # which is not needed on the front end, for the update organization
-          - !GetAtt GetOrganizationFunction.FunctionId
-          - !GetAtt UpdateOrganizationFunction.FunctionId
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result.organization)
+        #end
 
   ListPoliciesResolver:
     Type: AWS::AppSync::Resolver
@@ -1246,7 +1207,7 @@ Resources:
         }
       ResponseMappingTemplate: |
         #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $context.stash)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
           $util.toJson($context.result)
         #end
