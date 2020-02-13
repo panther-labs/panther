@@ -26,6 +26,7 @@ import DeleteSourceModal from 'Components/modals/delete-source-modal';
 import DeleteDestinationModal from 'Components/modals/delete-destination-modal';
 import DeleteRuleModal from 'Components/modals/delete-rule-modal';
 import NetworkErrorModal from 'Components/modals/network-error-modal';
+import AnalyticsConsentModal from 'Components/modals/analytics-consent-modal';
 
 const ModalManager: React.FC = () => {
   const { state: modalState } = useModal();
@@ -48,6 +49,9 @@ const ModalManager: React.FC = () => {
       break;
     case MODALS.NETWORK_ERROR:
       Component = NetworkErrorModal;
+      break;
+    case MODALS.ANALYTICS_CONSENT:
+      Component = AnalyticsConsentModal;
       break;
     case MODALS.DELETE_POLICY:
     default:
