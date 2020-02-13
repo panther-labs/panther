@@ -17,11 +17,12 @@ import collections
 import gzip
 import json
 import os
+import sys
 import uuid
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from io import BytesIO
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import boto3
 
@@ -30,6 +31,8 @@ from .alert_merger import update_get_alert_info
 from .logging import get_logger
 
 _KEY_FORMAT = 'rules/{}/year={}/month={}/day={}/hour={}/rule_id={}/{}-{}.gz'
+# Maximum number of events in an S3 object
+_MAX_BYTES_IN_MEMORY = 100000000
 _S3_KEY_DATE_FORMAT = '%Y%m%d%H%M%S'
 _DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f000'
 _S3_BUCKET = os.environ['S3_BUCKET']
@@ -52,70 +55,105 @@ class EventCommonFields:
 
 
 @dataclass(frozen=True, eq=True)
-class BufferDictKey:
+class BufferKey:
     """Class representing the key for internal buffer"""
     rule_id: str
     log_type: str
     dedup: str
 
 
+@dataclass
+class BufferValue:
+    """Class representing the value of the internal buffer"""
+    matches: List[EventMatch]
+    size_in_bytes: int
+
+
 class MatchedEventsBuffer:
     """Buffer containing the matched events"""
 
     def __init__(self) -> None:
-        self.data: Dict[BufferDictKey, List[EventMatch]] = collections.defaultdict(list)
+        self.data: Dict[BufferKey, BufferValue] = collections.defaultdict()
+        self.total_bytes = 0
 
     def add_event(self, match: EventMatch) -> None:
         """Adds a matched event to the buffer"""
-        key = BufferDictKey(match.rule_id, match.log_type, match.dedup)
-        self.data[key].append(match)
+        key = BufferKey(match.rule_id, match.log_type, match.dedup)
+        # Getting estimation of struct size in memory
+        size = sys.getsizeof(match)
+
+        value = self.data.get(key)
+        if value:
+            value.matches.append(match)
+            value.size_in_bytes += size
+        else:
+            value = BufferValue([match], size)
+            self.data[key] = value
+
+        self.total_bytes += size
+        # Check the total size of data in memory. If we exceed threshold, flush data from the biggest "offender"
+        if self.total_bytes > _MAX_BYTES_IN_MEMORY:
+            _LOGGER.debug('data reached size threshold')
+            max_size = 0
+            key_to_remove: Optional[BufferKey]
+            for key, value in self.data.items():
+                if value.size_in_bytes > max_size:
+                    max_size = value.size_in_bytes
+                    key_to_remove = key
+
+        if key_to_remove:
+            # Write the data to S3
+            _write_to_s3(datetime.utcnow(), key_to_remove, self.data[key_to_remove].matches)
+            self.total_bytes -= self.data[key_to_remove].size_in_bytes
+            # Delete data from memory
+            del self.data[key_to_remove]
 
     def flush(self) -> None:
         """Flushes the buffer and writes data in S3"""
         current_time = datetime.utcnow()
-        for key, events in self.data.items():
-            alert_info = update_get_alert_info(current_time, len(events), key.rule_id, key.dedup)
-            data_stream = BytesIO()
-            writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
-            for event in events:
-                serialized_data = _serialize_event(event, alert_info)
-                writer.write(serialized_data)
-
-            writer.close()
-            data_stream.seek(0)
-            output_uuid = uuid.uuid4()
-            object_key = _KEY_FORMAT.format(
-                key.log_type, current_time.year, current_time.month, current_time.day, current_time.hour, key.rule_id,
-                current_time.strftime(_S3_KEY_DATE_FORMAT), output_uuid
-            )
-
-            byte_size = data_stream.getbuffer().nbytes
-            # Write data to S3
-            _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
-
-            # Send notification to SNS topic
-            notification = OutputNotification(
-                s3Bucket=_S3_BUCKET, s3ObjectKey=object_key, events=len(events), bytes=byte_size, id=key.rule_id
-            )
-
-            # MessageAttributes are required so that subscribers to SNS topic
-            # can filter events in the subscription
-            _SNS_CLIENT.publish(
-                TopicArn=_SNS_TOPIC_ARN,
-                Message=json.dumps(asdict(notification)),
-                MessageAttributes={
-                    "type": {
-                        "DataType": "String",
-                        'StringValue': notification.type
-                    },
-                    "id": {
-                        "DataType": "String",
-                        'StringValue': notification.id
-                    }
-                }
-            )
-
+        for key, values in self.data.items():
+            _write_to_s3(current_time, key, values.matches)
         self.data.clear()
+
+
+def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> None:
+    alert_info = update_get_alert_info(time, len(events), key.rule_id, key.dedup)
+    data_stream = BytesIO()
+    writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
+    for event in events:
+        serialized_data = _serialize_event(event, alert_info)
+        writer.write(serialized_data)
+
+    writer.close()
+    data_stream.seek(0)
+    output_uuid = uuid.uuid4()
+    object_key = _KEY_FORMAT.format(
+        key.log_type, time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT), output_uuid
+    )
+
+    byte_size = data_stream.getbuffer().nbytes
+    # Write data to S3
+    _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
+
+    # Send notification to SNS topic
+    notification = OutputNotification(s3Bucket=_S3_BUCKET, s3ObjectKey=object_key, events=len(events), bytes=byte_size, id=key.rule_id)
+
+    # MessageAttributes are required so that subscribers to SNS topic
+    # can filter events in the subscription
+    _SNS_CLIENT.publish(
+        TopicArn=_SNS_TOPIC_ARN,
+        Message=json.dumps(asdict(notification)),
+        MessageAttributes={
+            "type": {
+                "DataType": "String",
+                'StringValue': notification.type
+            },
+            "id": {
+                "DataType": "String",
+                'StringValue': notification.id
+            }
+        }
+    )
 
 
 def _serialize_event(match: EventMatch, alert_info: AlertInfo) -> bytes:
