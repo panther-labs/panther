@@ -28,6 +28,7 @@ const (
 
 // Organization defines the fields in the table row.
 type Organization struct {
+	Id                    *string    `json:"id"`
 	AlertReportFrequency  *string    `json:"alertReportFrequency"`
 	AwsConfig             *AwsConfig `json:"awsConfig"`
 	CompletedActions      []*Action  `dynamodbav:"completedActions,omitempty,stringset" json:"completedActions"`
