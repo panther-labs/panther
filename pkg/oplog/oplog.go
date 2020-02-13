@@ -40,6 +40,7 @@ package oplog
  */
 
 import (
+	"runtime"
 	"time"
 
 	"go.uber.org/zap"
@@ -67,11 +68,13 @@ func NewManager(namespace, component string) *Manager {
 }
 
 type Operation struct {
-	Manager    *Manager
-	Name       string
-	Dimensions []zap.Field
-	StartTime  time.Time
-	EndTime    time.Time
+	Manager       *Manager
+	Name          string
+	Dimensions    []zap.Field
+	StartTime     time.Time
+	EndTime       time.Time
+	StartMemStats *runtime.MemStats // can be nil!
+	EndMemStats   *runtime.MemStats // can be nil!
 }
 
 func (m *Manager) Start(operation string, dimensions ...zap.Field) *Operation {
@@ -83,8 +86,16 @@ func (m *Manager) Start(operation string, dimensions ...zap.Field) *Operation {
 	}
 }
 
+func (o *Operation) WithMemStats() *Operation {
+	o.StartMemStats = &runtime.MemStats{}
+	runtime.ReadMemStats(o.StartMemStats) // record where we are starting
+	return o
+}
+
 func (o *Operation) Stop() {
 	o.EndTime = time.Now().UTC()
+	o.EndMemStats = &runtime.MemStats{}
+	runtime.ReadMemStats(o.EndMemStats) // record where we are ending
 }
 
 func (o *Operation) zapMsg() string {
@@ -113,7 +124,19 @@ func (o *Operation) standardFields(status string) (fields []zap.Field) {
 	if !o.EndTime.IsZero() {
 		fields = append(fields, zap.Time("endOp", o.EndTime))
 	}
-	return
+	if o.StartMemStats != nil && o.EndMemStats != nil {
+		fields = append(fields, zap.Uint64("heapSizeMB",
+			o.EndMemStats.HeapAlloc/(1024*1024))) // for all time until now
+		fields = append(fields, zap.Int64("heapChangeMB",
+			(int64(o.EndMemStats.HeapAlloc)-int64(o.StartMemStats.HeapAlloc))/(1024*1024))) // signed cuz could go down!
+		fields = append(fields, zap.Float64("gcPercent",
+			o.EndMemStats.GCCPUFraction)) // for all time until now
+		fields = append(fields, zap.Uint64("gcPauseMilliseconds",
+			(o.EndMemStats.PauseTotalNs-o.StartMemStats.PauseTotalNs)/1000000))
+		fields = append(fields, zap.Uint32("gcCycles",
+			o.EndMemStats.NumGC-o.StartMemStats.NumGC))
+	}
+	return fields
 }
 
 // wrapper handling err
