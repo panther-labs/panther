@@ -36,13 +36,13 @@ class AlertInfo:
     alert_update_time: datetime
 
 
+# pylint: disable=invalid-name
 @dataclass
 class OutputNotification:
-    """Output notification"""
+    """Output notification. This class will be serialized to JSON, thus following camelCase rather than snake_case"""
     s3Bucket: str
     s3ObjectKey: str
     events: int
     bytes: int
     id: str
     type: str = 'RuleOutput'
-

@@ -19,6 +19,7 @@ import os
 
 
 def get_logger() -> logging.Logger:
+    """Retrieves a pre-configured logger instance"""
     logging.basicConfig(format='[%(levelname)s %(asctime)s (%(name)s:%(lineno)d)]: %(message)s')
 
     level = 'DEBUG' if os.environ.get('DEBUG', 'false') == 'true' else 'INFO'

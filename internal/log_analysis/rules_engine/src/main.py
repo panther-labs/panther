@@ -16,29 +16,30 @@
 
 import collections
 import json
-from datetime import datetime
 from gzip import GzipFile
 from io import TextIOWrapper
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional
 
 import boto3
 
 from .engine import Engine
 from .logging import get_logger
+from .output import MatchedEventsBuffer
 from .rule import Rule
 from .sqs import send_to_sqs
-from .output import MatchedEventsBuffer
 
-s3_client = boto3.client('s3')
-logger = get_logger()
-rules_engine = Engine()
+_S3_CLIENT = boto3.client('s3')
+_LOGGER = get_logger()
+_RULES_ENGINE = Engine()
 
 
-def lambda_handler(event: Dict[str, Any], unused_context) -> Union[None, Dict[str, Any]]:
-    # Handle the direct evaluation of a single rule against some number of events
+def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Optional[Dict[str, Any]]:
+    """Entry point for the Lambda"""
     if 'rules' in event:
+        # Handle the direct evaluation of a single rule against some number of events
         return direct_analysis(event)
     log_analysis(event)
+    return None
 
 
 def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
@@ -51,7 +52,7 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
 
     raw_rule = event['rules'][0]
     test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'])
-    results = {'events': []}
+    results: Dict[str, Any] = {'events': []}
     for single_event in event['events']:
         result = {
             'id': single_event['id'],
@@ -74,16 +75,17 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
     return results
 
 
-def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
-    # Creating new engine on every processing
+def log_analysis(event: Dict[str, Any]) -> None:
+    """Runs log analysis"""
+
     # Dictionary containing mapping from log type to list of TextIOWrapper's
-    log_type_to_data: Dict[str, TextIOWrapper] = collections.defaultdict(list)
+    log_type_to_data: Dict[str, List[TextIOWrapper]] = collections.defaultdict(list)
     for record in event['Records']:
         record_body = json.loads(record['body'])
         bucket = record_body['s3Bucket']
         object_key = record_body['s3ObjectKey']
-        logger.info("loading object from S3, bucket [{}], key [{}]".format(bucket, object_key))
-        log_type_to_data[record_body['id']].append(load_contents(bucket, object_key))
+        _LOGGER.info("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
+        log_type_to_data[record_body['id']].append(_load_contents(bucket, object_key))
 
     # List containing tuple of (rule_id, event) for matched events
     matched: List = []
@@ -94,25 +96,24 @@ def log_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
                 try:  # Bad json data can cause exceptions to be thrown. Best effort: log and continue
                     json_data = json.loads(data)
                 except Exception as err:  # pylint: disable=broad-except
-                    logger.error("Error during matching: {}".format(err))  # do not log data!
+                    _LOGGER.error("Error during matching: %s", err)  # do not log data!
 
-                for analysis_result in rules_engine.analyze( log_type,json_data ):
+                for analysis_result in _RULES_ENGINE.analyze(log_type, json_data):
                     output_buffer.add_event(analysis_result)
                     # Appends the events to queue of events that will be sent through SQS
                     matched.append(data)
 
-
     if len(matched) > 0:
-        logger.info("sending {} matches".format(len(matched)))
+        _LOGGER.info("sending %d matches", len(matched))
         send_to_sqs(matched)
     else:
-        logger.info("no matches found")
+        _LOGGER.info("no matches found")
     output_buffer.flush()
 
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all
 # contents of S3 object in memory
-def load_contents(bucket: str, key: str) -> TextIOWrapper:
-    response = s3_client.get_object(Bucket=bucket, Key=key)
+def _load_contents(bucket: str, key: str) -> TextIOWrapper:
+    response = _S3_CLIENT.get_object(Bucket=bucket, Key=key)
     gzipped = GzipFile(None, 'rb', fileobj=response['Body'])
     return TextIOWrapper(gzipped)

@@ -37,7 +37,7 @@ class Engine:
         self._analysis_client = AnalysisAPIClient()
         self._populate_rules()
 
-    def analyze(self,log_type: str, event: Dict[str, Any]) -> List[EventMatch]:
+    def analyze(self, log_type: str, event: Dict[str, Any]) -> List[EventMatch]:
         """Analyze an event by running all the rules that apply to the log type.
         """
         if datetime.utcnow() - self._last_update > _RULES_CACHE_DURATION:
@@ -48,16 +48,11 @@ class Engine:
         for rule in self._log_type_to_rules[log_type]:
             result = rule.run(event)
             if result.exception:
-                self.logger.error(
-                    'failed to run rule {} {} {}'.format(rule.rule_id, type(result).__name__, result.exception))
+                self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, result.exception)
                 continue
             if result.matched:
-                matched.append(EventMatch(
-                    rule_id=rule.rule_id,
-                    rule_version=rule.rule_version,
-                    log_type=log_type,
-                    dedup=result.dedup,
-                    event=event))
+                match = EventMatch(rule_id=rule.rule_id, rule_version=rule.rule_version, log_type=log_type, dedup=result.dedup, event=event)
+                matched.append(match)
 
         return matched
 
@@ -67,7 +62,7 @@ class Engine:
         start = default_timer()
         rules = self._get_rules()
         end = default_timer()
-        self.logger.info('Retrieved {} rules in {} seconds'.format(len(rules), end - start))
+        self.logger.info('Retrieved %d rules in %d seconds', len(rules), end - start)
         start = default_timer()
 
         # Clear old rules
@@ -77,10 +72,7 @@ class Engine:
         # imported before other rules. However, the presence of this rule is optional.
         for raw_rule in rules:
             if raw_rule['id'] == COMMON_MODULE_RULE_ID:
-                Rule(
-                    rule_id=raw_rule['id'],
-                    rule_body=raw_rule['body'],
-                    rule_version=raw_rule['versionId'])
+                Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'], rule_version=raw_rule['versionId'])
                 break
 
         for raw_rule in rules:
@@ -89,15 +81,12 @@ class Engine:
                 continue
             # update lookup table from log type to rule
             import_count = import_count + 1
-            rule = Rule(
-                rule_id=raw_rule['id'],
-                rule_body=raw_rule['body'],
-                rule_version=raw_rule['versionId'])
+            rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'], rule_version=raw_rule['versionId'])
             for log_type in raw_rule['resourceTypes']:
                 self._log_type_to_rules[log_type].append(rule)
 
         end = default_timer()
-        self.logger.info('Imported {} rules in {} seconds'.format(import_count, end - start))
+        self.logger.info('Imported %d rules in %d seconds', import_count, end - start)
         self._last_update = datetime.utcnow()
 
     def _get_rules(self) -> List[Dict[str, str]]:

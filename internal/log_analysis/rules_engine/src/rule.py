@@ -20,7 +20,7 @@ import tempfile
 from dataclasses import dataclass
 from importlib import util as import_util
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from .logging import get_logger
 
@@ -32,9 +32,10 @@ COMMON_MODULE_RULE_ID = 'aws_globals'
 
 @dataclass
 class RuleResult:
-    exception: Exception = None
-    matched: bool = None
-    dedup: str = None
+    """Class containing the result of running a rule"""
+    exception: Optional[Exception] = None
+    matched: Optional[bool] = None
+    dedup: Optional[str] = None
 
 
 class Rule:
@@ -54,46 +55,10 @@ class Rule:
 
         self._import_error = None
         try:
-            self.store_rule(rule_id, rule_body)
-            self._module = self.import_rule_as_module(rule_id)
+            self._store_rule(rule_id, rule_body)
+            self._module = self._import_rule_as_module(rule_id)
         except Exception as err:  # pylint: disable=broad-except
             self._import_error = err
-
-    def store_rule(self, rule_id: str, rule_body: str) -> None:
-        """Stores rule to disk."""
-        path = self.rule_id_to_path(rule_id)
-        self.logger.debug('storing rule in path {}'.format(path))
-
-        ## Create dir if it doesn't exist
-        Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as py_file:
-            py_file.write(rule_body)
-
-    def import_rule_as_module(self, rule_id: str) -> Any:
-        """Dynamically import a Python module from a file.
-
-        See also: https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
-        """
-
-        path = self.rule_id_to_path(rule_id)
-        spec = import_util.spec_from_file_location(rule_id, path)
-        mod = import_util.module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore
-        self.logger.debug('imported module {} from path {}'.format(rule_id, path))
-        if rule_id == COMMON_MODULE_RULE_ID:
-            self.logger.debug('imported global module {} from path {}'.format(rule_id, path))
-            # Importing it as a shared module
-            sys.modules[rule_id] = mod
-        return mod
-
-    def rule_id_to_path(self, rule_id: str) -> str:
-        safe_id = ''.join(x if self.allowed_char(x) else '_' for x in rule_id)
-        path = os.path.join(_RULE_FOLDER, safe_id + '.py')
-        return path
-
-    def allowed_char(self, char: str) -> bool:
-        """Return true if the character is part of a valid rule ID."""
-        return char.isalnum() or char in {' ', '-', '.'}
 
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
@@ -107,8 +72,47 @@ class Rule:
             return RuleResult(exception=err)
 
         if not isinstance(matched, bool):
-            e = Exception('rule returned {}, expected bool'.format(type(matched).__name__))
-            return RuleResult(exception=e)
+            exception = Exception('rule returned {}, expected bool'.format(type(matched).__name__))
+            return RuleResult(exception=exception)
 
-        # Todo calculate the dedup string
+        # TODO calculate the dedup string
         return RuleResult(matched=matched, dedup="default")
+
+    def _store_rule(self, rule_id: str, rule_body: str) -> None:
+        """Stores rule to disk."""
+        path = _rule_id_to_path(rule_id)
+        self.logger.debug('storing rule in path %s', path)
+
+        # Create dir if it doesn't exist
+        Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
+        with open(path, 'w') as py_file:
+            py_file.write(rule_body)
+
+    def _import_rule_as_module(self, rule_id: str) -> Any:
+        """Dynamically import a Python module from a file.
+
+        See also: https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
+        """
+
+        path = _rule_id_to_path(rule_id)
+        spec = import_util.spec_from_file_location(rule_id, path)
+        mod = import_util.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore
+        self.logger.debug('imported module %s from path %s', rule_id, path)
+        if rule_id == COMMON_MODULE_RULE_ID:
+            self.logger.debug('imported global module %s from path %s', rule_id, path)
+            # Importing it as a shared module
+            sys.modules[rule_id] = mod
+        return mod
+
+
+def _rule_id_to_path(rule_id: str) -> str:
+    """Methos returns the file path where the rule will be stored"""
+    safe_id = ''.join(x if _allowed_char(x) else '_' for x in rule_id)
+    path = os.path.join(_RULE_FOLDER, safe_id + '.py')
+    return path
+
+
+def _allowed_char(char: str) -> bool:
+    """Return true if the character is part of a valid rule ID."""
+    return char.isalnum() or char in {' ', '-', '.'}
