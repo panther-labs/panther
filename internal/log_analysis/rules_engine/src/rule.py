@@ -42,7 +42,7 @@ class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: str, rule_body: str, rule_version: str = 'default'):
+    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_version: Optional[str] = None):
         """Import rule contents from disk.
 
         Args:
@@ -50,20 +50,30 @@ class Rule:
             rule_body: The rule body
             rule_version: The version of the rule
         """
+        if not rule_id:
+            self._rule_error = Exception("rule_id is required field")
+            return
         self.rule_id = rule_id
-        self.rule_version = rule_version
+        if not rule_body:
+            self._rule_error = Exception("rule_body is required field")
+            return
+        self.rule_body = rule_body
 
-        self._import_error = None
+        if not rule_version:
+            self.rule_version = 'default'
+        else:
+            self.rule_version = rule_version
+
         try:
             self._store_rule(rule_id, rule_body)
             self._module = self._import_rule_as_module(rule_id)
         except Exception as err:  # pylint: disable=broad-except
-            self._import_error = err
+            self._rule_error = err
 
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
-        if self._import_error:
-            return RuleResult(exception=self._import_error)
+        if self._rule_error:
+            return RuleResult(exception=self._rule_error)
 
         try:
             # Python source should have a method called "rule"

@@ -77,17 +77,17 @@ class Engine:
         # Importing common module. This module MAY hold code common to some rules and if it exists, it must be
         # imported before other rules. However, the presence of this rule is optional.
         for raw_rule in rules:
-            if raw_rule['id'] == COMMON_MODULE_RULE_ID:
-                Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'], rule_version=raw_rule['versionId'])
+            if raw_rule.get('id') == COMMON_MODULE_RULE_ID:
+                Rule(rule_id=raw_rule.get('id'), rule_body=raw_rule.get('body'), rule_version=raw_rule.get('versionId'))
                 break
 
         for raw_rule in rules:
-            if raw_rule['id'] == COMMON_MODULE_RULE_ID:
+            if raw_rule.get('id') == COMMON_MODULE_RULE_ID:
                 # skip, should be already loaded above if present
                 continue
             # update lookup table from log type to rule
             import_count = import_count + 1
-            rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'], rule_version=raw_rule['versionId'])
+            rule = Rule(rule_id=raw_rule.get('id'), rule_body=raw_rule.get('body'), rule_version=raw_rule.get('versionId'))
             for log_type in raw_rule['resourceTypes']:
                 self._log_type_to_rules[log_type].append(rule)
 
