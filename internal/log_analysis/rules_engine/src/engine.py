@@ -25,7 +25,6 @@ from .logging import get_logger
 from .rule import Rule, COMMON_MODULE_RULE_ID
 
 _RULES_CACHE_DURATION = timedelta(minutes=5)
-_ANALYSIS_CLIENT = AnalysisAPIClient()
 
 
 class Engine:

@@ -51,34 +51,33 @@ class EventCommonFields:
 
 @dataclass(frozen=True, eq=True)
 class BufferDictKey:
-    """"""
     rule_id: str
     log_type: str
     dedup: str
 
 
-class EventsBuffer:
+class MatchedEventsBuffer:
     """Buffer containing the matched events"""
 
     def __init__(self):
         self.merger = Merger()
-        self.rule_id_to_data: Dict[BufferDictKey, List[EventMatch]] = collections.defaultDict(list)
+        self.data: Dict[BufferDictKey, List[EventMatch]] = collections.defaultdict(list)
 
     def add_event(self, match: EventMatch) -> None:
         """Adds a matched event to the buffer"""
-        dict_key = BufferDictKey(match.rule_id, match.log_type, match.dedup)
-        self.rule_id_to_data[dict_key].append(match)
+        key = BufferDictKey(match.rule_id, match.log_type, match.dedup)
+        self.data[key].append(match)
 
     def flush(self):
         """Flushes the buffer and writes data in S3"""
         current_time = datetime.utcnow()
-        for key, event_matches in self.rule_id_to_data.items():
-            alert_info = self.merger.update_get_alert_info(current_time, len(event_matches, key.rule_id, key.dedup))
+        for key, events in self.data.items():
+            alert_info = self.merger.update_get_alert_info(current_time, len(events, key.rule_id, key.dedup))
             data_stream = BytesIO()
             writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
-            for event in event_matches:
+            for event in events:
                 serialized_data = self._serialize_event(event, alert_info)
-                writer.write(serialized_data.encode('utf-8'))
+                writer.write(serialized_data)
 
             writer.close()
             data_stream.seek(0)
@@ -105,10 +104,12 @@ class EventsBuffer:
             notification = OutputNotification(
                 s3Bucket=_s3_bucket,
                 s3ObjectKey=object_key,
-                events=len(event_matches),
+                events=len(events),
                 bytes=byte_size,
                 id=key.rule_id)
 
+            # MessageAttributes are required so that subscribers to SNS topic
+            # can filter events in the subscription
             _sns_client.publish(
                 TopicArn=_sns_topic,
                 Message=json.dumps(asdict(notification)),
@@ -124,14 +125,14 @@ class EventsBuffer:
                 }
             )
 
-        self.rule_id_to_data: Dict[BufferDictKey, List[EventMatch]] = {}
+        self.data.clear()
 
-    def _serialize_event(self, match: EventMatch, alert_info: AlertInfo) -> str:
-        """Serialized an event match"""
-        output_event = self._get_common_fields(match)
-        output_event.update(match.event)
-        serialized_data = json.dumps(output_event) + '\n'
-        return serialized_data
+    def _serialize_event(self, match: EventMatch, alert_info: AlertInfo) -> bytearray:
+        """Serializes an event match"""
+        common_fields = self._get_common_fields(match, alert_info)
+        common_fields.update(match.event)
+        serialized_data = json.dumps(common_fields) + '\n'
+        return serialized_data.encode('utf-8')
 
     def _get_common_fields(self, match: EventMatch, alert_info: AlertInfo) -> Dict[str, str]:
         """Retrieves a dictionary with common fields"""
