@@ -53,14 +53,14 @@ def _dict_key_to_log_type_rule_id(key: str) -> (str, str):
     return values[0], values[1]
 
 
-class Output:
+class EventsBuffer:
     def __init__(self):
         self.merger = Merger()
         self.rule_id_to_data: Dict[str, OutputInfo] = {}
         self.logger = get_logger()
 
     def add_match(self, match: AnalysisMatch) -> None:
-        """"""
+        """Adds a match to the buffer"""
         dict_key = _generate_dict_key(match.log_type, match.rule_id)
         output_info = self.rule_id_to_data.get(match.rule_id)
         if not output_info:
@@ -73,7 +73,7 @@ class Output:
         output_info.writer.write(serialized_data.encode('utf-8'))
 
     def flush(self):
-        """"""
+        """Flushes the buffer and writes data in S3"""
         for dict_key, output_info in self.rule_id_to_data.items():
             output_uuid = uuid.uuid4()
             output_info.writer.close()
