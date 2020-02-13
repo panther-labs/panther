@@ -20,6 +20,7 @@ from typing import Any, Dict
 
 @dataclass
 class AnalysisMatch:
+    """The result of an event analysis"""
     rule_id: str
     rule_version: str
     analysis_time: datetime
@@ -30,9 +31,19 @@ class AnalysisMatch:
 
 @dataclass
 class AlertInfo:
+    """Information about an alert"""
     alert_id: str
     alert_creation_time: datetime
     alert_update_time: datetime
 
 
+@dataclass
+class OutputNotification:
+    """Output notification"""
+    s3Bucket: str
+    s3ObjectKey: str
+    events: int
+    bytes: int
+    id: str
+    type: str = 'RuleOutput'
 

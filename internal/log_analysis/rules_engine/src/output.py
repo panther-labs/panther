@@ -14,27 +14,28 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import collections
-from datetime import datetime
 import gzip
 import json
 import os
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass,asdict
+from datetime import datetime
 from io import BytesIO
 from typing import Dict
 
 import boto3
 
-from .engine import AnalysisMatch
-from .logging import get_logger
+from . import AnalysisMatch, OutputNotification
 from .alert_merger import Merger
+from .logging import get_logger
 
 _KEY_FORMAT = 'rules/{}/year={}/month={}/day={}/hour={}/rule_id={}/{}-{}.gz'
 _S3_KEY_DATE_FORMAT = '%Y%m%d%H%M%S'
 _DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f000'
 _s3_bucket = os.environ['S3_BUCKET']
 _s3_client = boto3.client('s3')
+_sns_topic = os.environ['NOTIFICATIONS_TOPIC']
+_sns_client = boto3.client('sns')
 
 
 @dataclass
@@ -42,6 +43,16 @@ class OutputInfo:
     writer: gzip.GzipFile
     data_stream: BytesIO
     processing_time: datetime
+    events: int = 0
+
+
+
+@dataclass
+class OutputEventCommonFields:
+    p_rule_id: str
+    p_alert_id: str
+    p_alert_creation_time: str
+    p_alert_update_time: str
 
 
 def _generate_dict_key(log_type: str, rule_id: str) -> str:
@@ -70,6 +81,7 @@ class EventsBuffer:
             self.rule_id_to_data[dict_key] = output_info
 
         serialized_data = self._serialize_event(match)
+        output_info.events += 1
         output_info.writer.write(serialized_data.encode('utf-8'))
 
     def flush(self):
@@ -88,11 +100,37 @@ class EventsBuffer:
                 rule_id,
                 output_info.processing_time.strftime(_S3_KEY_DATE_FORMAT),
                 output_uuid)
+
+            # Write data to S3
             _s3_client.put_object(
                 Bucket=_s3_bucket,
                 ContentType='gzip',
                 Body=output_info.data_stream,
                 Key=object_key)
+
+            # Send notification to SNS topic
+            notification = OutputNotification(
+                s3Bucket=_s3_bucket,
+                s3ObjectKey=object_key,
+                events=output_info.events,
+                bytes=output_info.data_stream.getbuffer().nbytes,
+                id=rule_id)
+
+            _sns_client.publish(
+                TopicArn=_sns_topic,
+                Message=json.dumps(asdict(notification)),
+                MessageAttributes={
+                    "type": {
+                        "DataType": "String",
+                        'StringValue': notification.type
+                    },
+                    "id": {
+                        "DataType": "String",
+                        'StringValue': notification.id
+                    }
+                }
+            )
+
         self.rule_id_to_data: Dict[str, OutputInfo] = {}
 
     def _serialize_event(self, match: AnalysisMatch) -> str:
@@ -105,9 +143,10 @@ class EventsBuffer:
     def _get_common_fields(self, match: AnalysisMatch) -> Dict[str, str]:
         """Retrieves a dictionary with common fields"""
         alert_info = self.merger.get_alert_info(match)
-        return {
-            'p_rule_id': match.rule_id,
-            'p_alert_id': alert_info.alert_id,
-            'p_alert_creation_time': alert_info.alert_creation_time.strftime(_DATE_FORMAT),
-            'p_alert_update_time': alert_info.alert_update_time.strftime(_DATE_FORMAT)
-        }
+        common_fields = OutputEventCommonFields(
+            p_rule_id=match.rule_id,
+            p_alert_id=alert_info.alert_id,
+            p_alert_creation_time=alert_info.alert_creation_time.strftime(_DATE_FORMAT),
+            p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT)
+        )
+        return asdict(common_fields)

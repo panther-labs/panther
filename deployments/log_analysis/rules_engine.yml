@@ -162,7 +162,7 @@ Resources:
           DEBUG: !Ref Debug
           ALERTS_QUEUE: !Ref AlertsQueue
           S3_BUCKET: !Ref ProcessedDataBucket
-          SNS_TOPIC_ARN: !Ref SnsTopicArn
+          NOTIFICATIONS_TOPIC: !Ref SnsTopicArn
           ALERTS_DEDUP_TABLE: !Ref AlertsDedup
       MemorySize: !Ref MemorySizeMB
       Events:
@@ -179,7 +179,7 @@ Resources:
             - '${base},${pip}'
             - { base: !Join [',', !Ref LayerVersionArns], pip: !Ref PythonLayerArn }
         - [!Ref PythonLayerArn]
-      Runtime: python3.8
+      Runtime: python3.7
       Timeout: !Ref TimeoutSec
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
@@ -201,6 +201,13 @@ Resources:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${AlertsQueue}
+        - Id: SendToNotificationsTopic
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sns:Publish
+              Resource: !Ref SnsTopicArn
         - Id: S3ReadWrite
           Version: 2012-10-17
           Statement:
