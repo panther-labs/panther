@@ -38,7 +38,8 @@ _sns_topic = os.environ['NOTIFICATIONS_TOPIC']
 _s3_client = boto3.client('s3')
 _sns_client = boto3.client('sns')
 
-_logger  = get_logger()
+_logger = get_logger()
+
 
 @dataclass
 class EventCommonFields:

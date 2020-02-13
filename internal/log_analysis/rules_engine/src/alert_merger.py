@@ -32,6 +32,7 @@ _ALERT_COUNT_ATTR_NAME = 'alertCount'
 _ALERT_EVENT_COUNT = 'eventCount'
 
 # TODO Once rules store alert merge period, retrieve it from there
+# Currently grouping in 1hr periods
 _ALERT_MERGE_PERIOD_SECONDS = 3600
 
 
@@ -78,9 +79,9 @@ def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, r
             '#6': _PARTITION_KEY_NAME,
         },
         ExpressionAttributeValues={
-            ':1': {'N': match_time.analysis_time.strftime('%s')},
-            ':2': {'N': match_time.analysis_time.strftime('%s')},
-            ':3': {'N': num_matches},
+            ':1': {'N': match_time.strftime('%s')},
+            ':2': {'N': match_time.strftime('%s')},
+            ':3': {'N': '{}'.format(num_matches)},
             ':4': {'N': '1'},
             ':5': {'N': '{}'.format(int(match_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)}
         },
@@ -110,7 +111,7 @@ def _update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str,
             '#2': _ALERT_EVENT_COUNT,
         },
         ExpressionAttributeValues={
-            ':1': {'N': match_time.analysis_time.strftime('%s')},
+            ':1': {'N': match_time.strftime('%s')},
             ':2': {'N': '{}'.format(num_matches)},
         },
         ReturnValues='ALL_NEW'
@@ -119,6 +120,6 @@ def _update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str,
     alert_creation_time = response['Attributes'][_ALERT_CREATION_TIME_ATTR_NAME]['N']
     return AlertInfo(
         alert_id=rule_id + '-' + alert_count,
-        alert_creation_time=datetime.utcfromtimestamp(alert_creation_time),
+        alert_creation_time=datetime.utcfromtimestamp(int(alert_creation_time)),
         alert_update_time=match_time
     )
