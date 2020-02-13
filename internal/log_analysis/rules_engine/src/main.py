@@ -96,7 +96,8 @@ def log_analysis(event: Dict[str, Any]) -> None:
                 try:  # Bad json data can cause exceptions to be thrown. Best effort: log and continue
                     json_data = json.loads(data)
                 except Exception as err:  # pylint: disable=broad-except
-                    _LOGGER.error("Error during matching: %s", err)  # do not log data!
+                    _LOGGER.error("data is not valid JSON %s", err)  # do not log data!
+                    continue
 
                 for analysis_result in _RULES_ENGINE.analyze(log_type, json_data):
                     output_buffer.add_event(analysis_result)
