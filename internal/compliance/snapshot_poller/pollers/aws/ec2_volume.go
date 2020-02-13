@@ -156,7 +156,7 @@ func buildEc2VolumeSnapshot(ec2Svc ec2iface.EC2API, volume *ec2.Volume) *awsmode
 
 	snapshots := describeSnapshots(ec2Svc, volume.VolumeId)
 	if snapshots != nil {
-		ec2Volume.Snapshots = make([]*awsmodels.Ec2Snapshot, len(snapshots))
+		ec2Volume.Snapshots = make([]*awsmodels.Ec2Snapshot, 0, len(snapshots))
 		for _, snapshot := range snapshots {
 			volumeSnapshot := &awsmodels.Ec2Snapshot{Snapshot: snapshot}
 			volumeAttribute, err := describeSnapshotAttribute(ec2Svc, snapshot.SnapshotId)

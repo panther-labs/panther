@@ -88,6 +88,7 @@ var (
 		awsmodels.Ec2SecurityGroupSchema:    PollEC2SecurityGroup,
 		awsmodels.Ec2VolumeSchema:           PollEC2Volume,
 		awsmodels.Ec2VpcSchema:              PollEC2VPC,
+		awsmodels.EcsClusterSchema:          PollECSCluster,
 		awsmodels.Elbv2LoadBalancerSchema:   PollELBV2LoadBalancer,
 		awsmodels.IAMGroupSchema:            PollIAMGroup,
 		awsmodels.IAMPolicySchema:           PollIAMPolicy,
@@ -122,6 +123,7 @@ var (
 		awsmodels.Ec2SecurityGroupSchema:    {"EC2SecurityGroup", PollEc2SecurityGroups},
 		awsmodels.Ec2VolumeSchema:           {"EC2Volume", PollEc2Volumes},
 		awsmodels.Ec2VpcSchema:              {"EC2VPC", PollEc2Vpcs},
+		awsmodels.EcsClusterSchema:          {"ECSCluster", PollEcsClusters},
 		awsmodels.Elbv2LoadBalancerSchema:   {"ELBV2LoadBalancer", PollElbv2ApplicationLoadBalancers},
 		awsmodels.KmsKeySchema:              {"KMSKey", PollKmsKeys},
 		awsmodels.S3BucketSchema:            {"S3Bucket", PollS3Buckets},
@@ -141,44 +143,6 @@ var (
 		awsmodels.PasswordPolicySchema:  {"PasswordPolicy", PollPasswordPolicy},
 		awsmodels.RDSInstanceSchema:     {"RDSInstance", PollRDSInstances},
 		awsmodels.RedshiftClusterSchema: {"RedshiftCluster", PollRedshiftClusters},
-	}
-
-	// ServicePollersOrdered is an ordered list of the resource pollers
-	// to allow for optimizations in account-wide scans.
-	ServicePollersOrdered = []resourcePoller{
-		//
-		// These pollers have optimization options by running after other pollers
-		//
-		// EC2AMI has a optimization possibility after EC2Instance
-		{"EC2Instance", PollEc2Instances},
-		{"EC2AMI", PollEc2Amis},
-		//
-		// The pollers below have no dependencies
-		//
-		{"EC2NetworkACL", PollEc2NetworkAcls},
-		{"EC2SecurityGroup", PollEc2SecurityGroups},
-		{"EC2VPC", PollEc2Vpcs},
-		{"EC2Volume", PollEc2Volumes},
-		{"ACMCertificate", PollAcmCertificates},
-		{"ConfigService", PollConfigServices},
-		{"CloudFormationStack", PollCloudFormationStacks},
-		{"CloudTrail", PollCloudTrails},
-		{"CloudWatchLogsLogGroups", PollCloudWatchLogsLogGroups},
-		{"DynamoDBTable", PollDynamoDBTables},
-		{"ELBV2LoadBalancer", PollElbv2ApplicationLoadBalancers},
-		{"WAFRegionalWebAcl", PollWafRegionalWebAcls},
-		{"WAFWebAcl", PollWafWebAcls},
-		{"GuardDutyDetector", PollGuardDutyDetectors},
-		{"IAMGroups", PollIamGroups},
-		{"IAMPolicies", PollIamPolicies},
-		{"IAMRoles", PollIAMRoles},
-		{"IAMUser", PollIAMUsers},
-		{"KMSKey", PollKmsKeys},
-		{"LambdaFunctions", PollLambdaFunctions},
-		{"PasswordPolicy", PollPasswordPolicy},
-		{"RDSInstance", PollRDSInstances},
-		{"RedshiftCluster", PollRedshiftClusters},
-		{"S3Bucket", PollS3Buckets},
 	}
 )
 
@@ -329,8 +293,13 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// Full account scan
 	if scanRequest.ScanAllResources != nil && *scanRequest.ScanAllResources {
-		zap.L().Info("processing full account scan")
-		return serviceScan(ServicePollersOrdered, pollerResourceInput)
+		zap.L().Warn("DEPRECATED: processing full account scan, this operation should not occur during normal operations." +
+			"Either input was malformed or someone has manually initiated this scan.")
+		allPollers := make([]resourcePoller, 0, len(ServicePollers))
+		for _, poller := range ServicePollers {
+			allPollers = append(allPollers, poller)
+		}
+		return serviceScan(allPollers, pollerResourceInput)
 
 		// Account wide resource type scan
 	} else if scanRequest.ResourceType != nil {
@@ -383,6 +352,7 @@ func singleResourceScan(
 
 	var resource interface{}
 
+	// TODO: does this accept short names?
 	if pollFunction, ok := IndividualResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is not an ARN
 		parsedResourceID := utils.ParseResourceID(*scanRequest.ResourceID)

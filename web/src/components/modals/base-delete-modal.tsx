@@ -19,7 +19,7 @@
 import React from 'react';
 import { Modal, Text, Flex, Button, useSnackbar } from 'pouncejs';
 import { MutationTuple } from '@apollo/client';
-import SubmitButton from 'Components/utils/SubmitButton';
+import SubmitButton from 'Components/submit-button';
 import useModal from 'Hooks/useModal';
 
 export interface BaseDeleteModalProps {

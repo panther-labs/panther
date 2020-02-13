@@ -4,7 +4,7 @@ aws-sam-translator==1.19.0
 bandit==1.6.2
 boto3==1.10.40
 botocore==1.13.40
-cfn-lint==0.26.0
+cfn-lint==0.27.5
 docutils==0.15.2
 gitdb2==2.0.6
 GitPython==3.0.5

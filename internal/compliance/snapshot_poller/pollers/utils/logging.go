@@ -20,6 +20,7 @@ package utils
 
 import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -30,6 +31,7 @@ func LogAWSError(apiCall string, err error) {
 			apiCall,
 			zap.String("errorCode", awsErr.Code()),
 			zap.String("errorMessage", awsErr.Message()),
+			zap.Error(errors.Wrap(err, "AWS API call failed")),
 		)
 	}
 }

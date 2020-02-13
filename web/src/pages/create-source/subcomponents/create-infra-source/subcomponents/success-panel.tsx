@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Flex, Heading, Text } from 'pouncejs';
-import SubmitButton from 'Components/utils/SubmitButton';
+import SubmitButton from 'Components/submit-button';
 
 interface SuccessPanelProps {
   loading: boolean;
