@@ -215,6 +215,9 @@ const AuthProvider: React.FC = ({ children }) => {
       try {
         const signedInUser = await Auth.signIn(email, password);
 
+        // We are forcing an attribute email, since Cognito doesn't return the email of the user
+        // until they pass the MFA challenge.
+        signedInUser.attributes = { email };
         setAuthUser(signedInUser);
 
         onSuccess();
