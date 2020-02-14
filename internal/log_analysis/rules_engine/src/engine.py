@@ -68,7 +68,7 @@ class Engine:
         start = default_timer()
         rules = self._get_rules()
         end = default_timer()
-        self.logger.info('Retrieved %d rules in %d seconds', len(rules), end - start)
+        self.logger.info('Retrieved %d rules in %s seconds', len(rules), end - start)
         start = default_timer()
 
         # Clear old rules
@@ -78,16 +78,22 @@ class Engine:
         # imported before other rules. However, the presence of this rule is optional.
         for raw_rule in rules:
             if raw_rule.get('id') == COMMON_MODULE_RULE_ID:
-                Rule(rule_id=raw_rule.get('id'), rule_body=raw_rule.get('body'), rule_version=raw_rule.get('versionId'))
+                try:
+                    Rule(rule_id=raw_rule.get('id'), rule_body=raw_rule.get('body'), rule_version=raw_rule.get('versionId'))
+                except Exception as err:  # pylint: disable=broad-except
+                    self.logger.error('Failed to import rule %s', err)
+                rules.remove(raw_rule)
                 break
 
         for raw_rule in rules:
-            if raw_rule.get('id') == COMMON_MODULE_RULE_ID:
-                # skip, should be already loaded above if present
+            try:
+                rule = Rule(rule_id=raw_rule.get('id'), rule_body=raw_rule.get('body'), rule_version=raw_rule.get('versionId'))
+            except Exception as err:  # pylint: disable=broad-except
+                self.logger.error('Failed to import rule %s', err)
                 continue
-            # update lookup table from log type to rule
+
             import_count = import_count + 1
-            rule = Rule(rule_id=raw_rule.get('id'), rule_body=raw_rule.get('body'), rule_version=raw_rule.get('versionId'))
+            # update lookup table from log type to rule
             for log_type in raw_rule['resourceTypes']:
                 self._log_type_to_rules[log_type].append(rule)
 

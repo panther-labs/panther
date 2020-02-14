@@ -41,8 +41,8 @@ def _generate_key(rule_id: str, dedup: str) -> str:
 
 
 def update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str, dedup: str) -> AlertInfo:
-    """The method will return the alert information after evaluating if a new alert needs to be created
-        or if we can re-use an existing alert."""
+    """The method will update the alertCreationTime, eventCount of an alert. If a new alert will have to be created,
+    it will also create a new alertId with the appropriate alertCreationTime. """
     try:
         alert_info = _update_get_alert_info_conditional(match_time, num_matches, rule_id, dedup)
         return alert_info
@@ -52,7 +52,8 @@ def update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str, 
 
 
 def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, rule_id: str, dedup: str) -> AlertInfo:
-    """Performs a conditional update to DDB to verify whether we need to create a new alert"""
+    """Performs a conditional update to DDB to verify whether we need to create a new alert.
+    """
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {

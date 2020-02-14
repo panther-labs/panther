@@ -20,7 +20,7 @@ import tempfile
 from dataclasses import dataclass
 from importlib import util as import_util
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Callable
 
 from .logging import get_logger
 
@@ -50,43 +50,47 @@ class Rule:
             rule_body: The rule body
             rule_version: The version of the rule
         """
+        self._rule_error = None
         if not rule_id:
-            self._rule_error = Exception("rule_id is required field")
-            return
+            raise Exception("rule_id is required field")
         self.rule_id = rule_id
         if not rule_body:
-            self._rule_error = Exception("rule_body is required field")
-            return
+            raise Exception("rule_body is required field")
         self.rule_body = rule_body
+
+        self._store_rule(rule_id, rule_body)
+        self._module = self._import_rule_as_module(rule_id)
+
+        if not hasattr(self._module, 'rule'):
+            raise Exception("rule needs to have a method named 'rule'")
 
         if not rule_version:
             self.rule_version = 'default'
         else:
             self.rule_version = rule_version
 
-        try:
-            self._store_rule(rule_id, rule_body)
-            self._module = self._import_rule_as_module(rule_id)
-        except Exception as err:  # pylint: disable=broad-except
-            self._rule_error = err
+        if hasattr(self._module, 'dedup'):
+            self._has_dedup = True
+        else:
+            self._has_dedup = False
 
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
         if self._rule_error:
             return RuleResult(exception=self._rule_error)
 
+        dedup_result: Optional[str] = None
         try:
-            # Python source should have a method called "rule"
-            matched = self._module.rule(event)
+            rule_result = _run_command(self._module.rule, event, bool)
+            if rule_result and self._has_dedup:
+                dedup_result = _run_command(self._module.dedup, event, str)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
-        if not isinstance(matched, bool):
-            exception = Exception('rule returned {}, expected bool'.format(type(matched).__name__))
-            return RuleResult(exception=exception)
-
-        # TODO calculate the dedup string
-        return RuleResult(matched=matched, dedup="default")
+        # If users haven't specified a dedup function return a default value
+        if not dedup_result:
+            dedup_result = "default"
+        return RuleResult(matched=rule_result, dedup=dedup_result)
 
     def _store_rule(self, rule_id: str, rule_body: str) -> None:
         """Stores rule to disk."""
@@ -116,8 +120,15 @@ class Rule:
         return mod
 
 
+def _run_command(function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:
+    result = function(event)
+    if not isinstance(result, expected_type):
+        raise Exception('rule returned {}, expected {}'.format(type(result).__name__, expected_type))
+    return result
+
+
 def _rule_id_to_path(rule_id: str) -> str:
-    """Methos returns the file path where the rule will be stored"""
+    """Method returns the file path where the rule will be stored"""
     safe_id = ''.join(x if _allowed_char(x) else '_' for x in rule_id)
     path = os.path.join(_RULE_FOLDER, safe_id + '.py')
     return path

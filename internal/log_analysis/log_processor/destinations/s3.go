@@ -42,6 +42,8 @@ import (
 
 const (
 	// s3ObjectKeyFormat represents the format of the S3 object key
+	// It has 3 parts:
+	// 1. The key prefix 2. Timestamp in format `20060102T150405Z` 3. UUID4
 	s3ObjectKeyFormat = "%s%s-%s.gz"
 
 	logDataTypeAttributeName = "type"
