@@ -1,7 +1,7 @@
 # Background
 
 The Panther team greatly benefits from knowing runtime issues that occur in Panther installations,
-since it enables it to identify them and resolve them quickly.
+since it enables us to identify and resolve them quickly.
 
 Opting in or out of it is your choice, which you can always modify through your organization's
 **General Settings** page. If you opt in, the following information will be sent to the Panther team
