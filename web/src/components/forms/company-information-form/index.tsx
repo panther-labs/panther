@@ -49,6 +49,7 @@ export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
 }) => {
   return (
     <Formik<CompanyInformationFormValues>
+      enableReinitialize
       validationSchema={validationSchema}
       initialValues={initialValues}
       onSubmit={onSubmit}
