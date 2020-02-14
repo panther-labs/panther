@@ -125,6 +125,8 @@ func (o *Operation) standardFields(status string) (fields []zap.Field) {
 		fields = append(fields, zap.Time("endOp", o.EndTime))
 	}
 	if o.StartMemStats != nil && o.EndMemStats != nil {
+		fields = append(fields, zap.Uint64("sysSizeMB",
+			o.EndMemStats.Sys/(1024*1024))) // for all time until now
 		fields = append(fields, zap.Uint64("heapSizeMB",
 			o.EndMemStats.HeapAlloc/(1024*1024))) // for all time until now
 		fields = append(fields, zap.Int64("heapChangeMB",

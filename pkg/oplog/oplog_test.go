@@ -168,6 +168,7 @@ func TestOperationWithMemStats(t *testing.T) {
 	op.Stop()
 	op.LogSuccess()
 	logMap := logs.FilterMessage(op.zapMsg()).All()[0].ContextMap()
+	assert.NotNil(t, logMap["sysSizeMB"])
 	assert.NotNil(t, logMap["heapSizeMB"])
 	assert.NotNil(t, logMap["heapChangeMB"])
 	assert.NotNil(t, logMap["gcPercent"])
