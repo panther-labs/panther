@@ -20,6 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import FormikCheckbox from 'Components/fields/checkbox';
 import { Box, Flex, InputElementLabel, Text } from 'pouncejs';
+import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 
 const ErrorReportingSection: React.FC = () => {
   return (
@@ -27,12 +28,23 @@ const ErrorReportingSection: React.FC = () => {
       <Field as={FormikCheckbox} name="errorReportingConsent" id="errorReportingConsent" />
       <Box ml={2}>
         <InputElementLabel htmlFor="errorReportingConsent">
-          Report web application errors
+          Report Web Application Errors
         </InputElementLabel>
-        <Text color="grey300" size="medium">
-          Crashes and runtime exceptions will be <b>anonymously</b> reported, in an effort to make
-          the Panther team aware of the related issues
-        </Text>
+        <Flex>
+          <Text color="grey300" size="medium">
+            Crashes and runtime exceptions.
+          </Text>
+          &nbsp;
+          <Text
+            color="grey300"
+            size="medium"
+            is="a"
+            href={`${PANTHER_SCHEMA_DOCS_LINK}/privacy/error-reporting`}
+            rel="noopener noreferrer"
+          >
+            Read more
+          </Text>
+        </Flex>
       </Box>
     </Flex>
   );

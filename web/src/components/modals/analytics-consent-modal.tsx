@@ -77,11 +77,12 @@ const AnalyticsConsentModal: React.FC = () => {
       disableBackdropClick
       disableEscapeKeyDown
       onClose={hideModal}
-      title="Help us make Panther better"
+      title="Help Improve Panther!"
     >
-      <Box width={600} px={100} py={25}>
-        <Text size="large" color="grey300" mb={8} textAlign="center">
-          Which data can the Panther team receive from you?
+      <Box width={600} px={100} pb={25}>
+        <Text size="large" color="grey300" mb={8}>
+          Opt-in to occasionally provide diagnostic information for improving reliability.
+          <b> All information is anonymized.</b>
         </Text>
         {error ? (
           <Alert
