@@ -60,7 +60,9 @@ const initialValues = {
 };
 
 const validationSchema = Yup.object().shape({
-  email: Yup.string().required('Email is required'),
+  email: Yup.string()
+    .email('Must be a valid email')
+    .required('Email is required'),
   familyName: Yup.string().required('Last name is required'),
   givenName: Yup.string().required('First name is required'),
   role: Yup.string().required('Role is required'),
@@ -116,7 +118,7 @@ export const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSucces
               <Field name="familyName" as={FormikTextInput} label="Family Name" />
             </Flex>
             <Field name="email" as={FormikTextInput} type="email" label="Email" />
-            <Field name="role" as={FormikCombobox} label="Role" items={[[RoleNameEnum.Admin]]} />
+            <Field name="role" as={FormikCombobox} label="Role" items={[RoleNameEnum.Admin]} />
           </Box>
           <SubmitButton
             width={1}
