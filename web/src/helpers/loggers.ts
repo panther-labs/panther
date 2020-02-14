@@ -57,7 +57,6 @@ export const logError = (error: Error | ErrorResponse, { operation, extras }: Er
       // If we have access to the operation that occurred, then we store this info for easier debugging
       if (operation) {
         scope.setTag('operationName', operation.operationName);
-        scope.setExtra('operationVariables', operation.variables);
       }
 
       // If we have a custom stacktrace to share we add it here
