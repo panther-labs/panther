@@ -27,7 +27,7 @@ import { Organization, UpdateOrganizationInput } from 'Generated/schema';
 const UPDATE_ORGANIZATION = gql`
   mutation UpdateCompanyDetails($input: UpdateOrganizationInput!) {
     updateOrganization(input: $input) {
-      id
+      email
       errorReportingConsent
     }
   }
@@ -36,7 +36,6 @@ const UPDATE_ORGANIZATION = gql`
 const GET_ORGANIZATION = gql`
   query GetOrganizationDetails {
     organization {
-      id
       displayName
       email
     }
@@ -48,7 +47,7 @@ interface ApolloMutationInput {
 }
 
 interface ApolloMutationData {
-  updateOrganization: Pick<Organization, 'id' | 'errorReportingConsent' | 'displayName' | 'email'>;
+  updateOrganization: Pick<Organization, 'errorReportingConsent' | 'displayName' | 'email'>;
 }
 
 interface ApolloQueryData {

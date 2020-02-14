@@ -31,7 +31,6 @@ import GeneralSettingsPageSkeleton from './skeleton';
 export const GET_ORGANIZATION = gql`
   query GetOrganization {
     organization {
-      id
       displayName
       email
       errorReportingConsent
@@ -42,7 +41,6 @@ export const GET_ORGANIZATION = gql`
 const UPDATE_ORGANIZATION = gql`
   mutation UpdateCompanyInformation($input: UpdateOrganizationInput!) {
     updateOrganization(input: $input) {
-      id
       displayName
       email
       errorReportingConsent
@@ -55,7 +53,7 @@ interface ApolloMutationInput {
 }
 
 interface ApolloMutationData {
-  updateOrganization: Pick<Organization, 'id' | 'displayName' | 'email' | 'errorReportingConsent'>;
+  updateOrganization: Pick<Organization, 'displayName' | 'email' | 'errorReportingConsent'>;
 }
 
 interface ApolloQueryData {

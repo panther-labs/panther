@@ -254,7 +254,6 @@ input UpdateOrganizationInput {
 }
 
 type Organization {
-  id: String!
   displayName: String
   email: String
   alertReportFrequency: AlertReportFrequencyEnum

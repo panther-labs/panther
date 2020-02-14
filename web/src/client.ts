@@ -98,6 +98,7 @@ const createApolloClient = (history: History<LocationErrorState>) =>
           keyFields: ['integrationId'],
         },
         Organization: {
+          keyFields: ['email'],
           fields: {
             errorReportingConsent: {
               merge(oldValue, newValue) {

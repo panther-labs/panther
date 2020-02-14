@@ -26,7 +26,6 @@ import { MODALS } from 'Components/utils/modal-context';
 const GET_ORGANIZATION_ERROR_REPORTING_CONSENT = gql`
   query GetOrganizationErrorReportingConsent {
     organization {
-      id
       displayName
       email
       errorReportingConsent
