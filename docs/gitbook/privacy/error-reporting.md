@@ -6,8 +6,6 @@ since it enables us to identify and resolve them quickly.
 If you opt in to error reporting, the following information will be sent to the Panther team
 everytime there is a web application exception or crash:
 
-- Your Public IPv4
-  > This helps us identify whether the same or a different user is experiencing the error. This information is not used in any other way.
 - The version of your Browser, OS & Panther installation
   > This helps us know how to properly replicate the issue.
 - The type of error, its related stack trace and the URL of the page in which it occurred.
