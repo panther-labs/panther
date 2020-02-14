@@ -26,11 +26,10 @@ Before we cover deployment, let's establish the terminology:
 
 ## Prerequisites
 
-You need an AWS account and an IAM user or role with permission to create resources in Lambda, DynamoDB, S3, ECS, ELB, EC2 \(security groups, subnets, VPC\), SNS, SQS, SES, KMS, IAM, CloudFormation, CloudWatch, API Gateway, Cognito, and AppSync.
+You need an AWS account and an IAM user or role with permission to create and manage the necessary AWS resources. We provide an IAM role you can use for Panther deployment:
 
-{% hint style="info" %}
-Precise deployment policy coming soon!
-{% endhint %}
+- CloudFormation ([source](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml)): [https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
+- Terraform ([source](<(https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf)>))
 
 _We recommend deploying Panther into its own AWS account via_ [_AWS Organizations_](https://aws.amazon.com/blogs/security/how-to-use-aws-organizations-to-automate-end-to-end-account-creation/)_. This ensures that detection infrastructure is contained within a single place._
 
@@ -117,6 +116,7 @@ Rather than deploying from within a docker container, you can instead configure 
 
 You're all set! Run `mage deploy`
 
+- If you use `aws-vault`, you must be authenticated with MFA. Otherwise, IAM role creation will fail with `InvalidClientTokenId`
 - The initial deployment will take 20-30 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off.
 - Near the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
 - You'll get an email from [**no-reply@verificationemail.com**](mailto:no-reply@verificationemail.com) with your temporary password. If you don't see it, be sure to check your spam folder.
