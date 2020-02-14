@@ -89,6 +89,13 @@ Resources:
             Condition:
               ArnLike:
                 aws:SourceArn: !Sub arn:${AWS::Partition}:sns:*:*:*-PantherEventsTopic-*
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:${AWS::Partition}:sns:*:*:panther-input-data-notifications
       Queues:
         - !Ref EventQueue
 
@@ -167,3 +174,12 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+        - Id: AssumePantherLogProcessingRole
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole
+              Condition:
+                Bool:
+                  aws:SecureTransport: true
