@@ -19,6 +19,8 @@ package processor
  */
 
 import (
+	"bufio"
+	"io"
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -26,12 +28,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
 	api "github.com/panther-labs/panther/api/gateway/resources/models"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 
@@ -53,19 +57,26 @@ func Handle(batch *events.SQSEvent) error {
 		return err
 	}
 
+	// Using gjson to get only the fields we need is > 10x faster than running json.Unmarshal multiple times
 	for _, record := range batch.Records {
-		// Using gjson to get only the fields we need is > 10x faster than running json.Unmarshal multiple times
-		// TODO: Update this switch statement to handle SNS notifications indicating the need to download logs from s3
 		switch gjson.Get(record.Body, "Type").Str {
 		case "Notification": // sns wrapped message
 			// Three possibilities:
-			// Raw CloudTrail ()
+			// Raw CloudTrail (detail)
 			// S3Event Notification (records)
 			// CloudTrail Notification (s3Bucket + s3ObjectKey list)
-			zap.L().Debug("wrapped sns message - assuming cloudtrail is in Message field")
+			zap.L().Debug("processing SNS message")
 			message := gjson.Get(record.Body, "Message").Str
-			handleCloudtrail(message, changes)
-
+			err := processSNS(message, changes, gjson.Get(record.Body, "TopicArn").Str)
+			if err != nil {
+				zap.L().Error("error processing SNS message", zap.Error(errors.WithStack(err)))
+			}
+		case "": // raw CloudTrail data from CWE -> SNS -> SQS
+			zap.L().Debug("processing raw CloudTrail")
+			err := processCloudTrail(gjson.Get(record.Body, "detail"), changes)
+			if err != nil {
+				zap.L().Error("error processing raw CloudTrail", zap.Error(errors.WithStack(err)))
+			}
 		case "SubscriptionConfirmation": // sns confirmation message
 			topicArn, err := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
 			if err != nil {
@@ -77,32 +88,113 @@ func Handle(batch *events.SQSEvent) error {
 			if err = handleSnsConfirmation(topicArn, &token); err != nil {
 				return err
 			}
-
-		case "": // raw CloudTrail data from CWE -> SNS -> SQS
-			handleCloudtrail(record.Body, changes)
 		default: // Unexpected type
-			zap.L().Warn("unexpected record type",
+			zap.L().Warn("unexpected SNS record type",
 				zap.String("type", gjson.Get(record.Body, "Type").Str),
 				zap.String("body", record.Body),
 			)
 			continue
 		}
 	}
-
 	return submitChanges(changes)
 }
 
-func handleCloudtrail(body string, changes map[string]*resourceChange) {
+func bulkProcessCloudTrail(cloudtrails string, changes map[string]*resourceChange) {
+	// Wrapper for processing multiple CloudTrail logs at once
+	for _, cloudtrail := range gjson.Get(cloudtrails, "Records").Array() {
+		err := processCloudTrail(cloudtrail, changes)
+		if err != nil {
+			zap.L().Error("error while bulk processing CloudTrail", zap.Error(err))
+		}
+	}
+}
+
+func processCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
+	if !cloudtrail.Exists() {
+		return errors.WithStack(errors.New("dropping bad event"))
+	}
+
 	// this event potentially requires a change to some number of resources
-	for _, summary := range classifyCloudTrailLog(body) {
+	for _, summary := range classifyCloudTrailLog(cloudtrail) {
 		zap.L().Info("resource change required", zap.Any("changeDetail", summary))
 		// Prevents the following from being de-duped mistakenly:
-		// Resources with the same ID in different regions (different regions)
-		// Service scans in the same region (different resource types)
-		// Resources with the same type in the same region (different resource IDs)
+		//
+		// - Resources with the same ID in different regions (different regions)
+		// - Service scans in the same region (different resource types)
+		// - Resources with the same type in the same region (different resource IDs)
 		key := summary.ResourceID + summary.ResourceType + summary.Region
 		if entry, ok := changes[key]; !ok || summary.EventTime > entry.EventTime {
 			changes[key] = summary // the newest event for this resource we've seen so far
+		}
+	}
+	return nil
+}
+
+func processSNS(message string, changes map[string]*resourceChange, topicArn string) error {
+	detail := gjson.Get(message, "detail")
+	if detail.Exists() {
+		zap.L().Debug("SNS message was wrapped CloudTrail, processing CloudTrail")
+		return processCloudTrail(detail, changes)
+	}
+
+	// For either of the remaining cases way we will need to download some S3 objects
+	var s3Objects []*sources.S3ObjectInfo
+	records := gjson.Get(message, "Records")
+	if records.Exists() {
+		zap.L().Debug("SNS message was an S3 Event Notification")
+		records.ForEach(func(_, bucket gjson.Result) bool {
+			s3Objects = append(s3Objects, &sources.S3ObjectInfo{
+				S3Bucket:    bucket.Get("s3.bucket.name").Str,
+				S3ObjectKey: bucket.Get("s3.object.key").Str,
+			})
+			return true
+		})
+		processS3Download(s3Objects, changes, topicArn)
+		return nil
+	}
+
+	bucket := gjson.Get(message, "s3Bucket")
+	if bucket.Exists() {
+		zap.L().Debug("SNS message was a CloudTrail Notification")
+		bucketStr := bucket.Str
+		keys := gjson.Get(message, "s3ObjectKey").Array()
+		for _, key := range keys {
+			s3Objects = append(s3Objects, &sources.S3ObjectInfo{
+				S3Bucket:    bucketStr,
+				S3ObjectKey: key.Str,
+			})
+		}
+		processS3Download(s3Objects, changes, topicArn)
+		return nil
+	}
+
+	return errors.New("unable to determine SNS message type")
+}
+
+func processS3Download(objects []*sources.S3ObjectInfo, changes map[string]*resourceChange, topicArn string) {
+	zap.L().Debug("processing CloudTrail stored in S3, initiating downloads")
+	for _, object := range objects {
+		input, err := sources.ReadS3Object(object, topicArn)
+		if err != nil {
+			zap.L().Error("error setting up s3 connection", zap.Error(errors.WithStack(err)))
+			continue
+		}
+
+		stream := bufio.NewReader(input.Reader)
+		for {
+			var line string
+			line, err = stream.ReadString('\n')
+			if err != nil {
+				if err == io.EOF { // we are done
+					err = nil
+					bulkProcessCloudTrail(line, changes)
+				}
+				break
+			}
+			bulkProcessCloudTrail(line, changes)
+		}
+		if err != nil {
+			zap.L().Error("failed to process S3 download", zap.Error(errors.WithStack(err)))
 		}
 	}
 }
@@ -121,7 +213,7 @@ func submitChanges(changes map[string]*resourceChange) error {
 			// ID = “”, region =“”:				Account wide service scan; use sparingly
 			// ID = “”, region =“west”:			Region wide service scan
 			// ID = “abc-123”, region =“”:		Single resource scan
-			// ID = “abc-123”, region =“west”:	Undefined in spec, treated as single resource scan
+			// ID = “abc-123”, region =“west”:	Undefined, treated as single resource scan
 			var resourceID *string
 			var region *string
 			if change.ResourceID != "" {

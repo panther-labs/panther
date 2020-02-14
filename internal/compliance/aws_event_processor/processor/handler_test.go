@@ -155,11 +155,11 @@ func TestHandleInvalid(t *testing.T) {
 			},
 		},
 		{
-			Entry:   zapcore.Entry{Level: zapcore.WarnLevel, Message: "dropping unknown notification type"},
-			Context: []zapcore.Field{zap.String("body", batch.Records[0].Body)},
+			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "processing raw CloudTrail"},
+			Context: []zapcore.Field{},
 		},
 	}
-	assert.Equal(t, expected, logs.AllUntimed())
+	assert.Equal(t, expected, logs.AllUntimed()[:3])
 }
 
 // Handle sns confirmation end-to-end
@@ -301,11 +301,19 @@ func TestHandleUpdate(t *testing.T) {
 			},
 		},
 		{
+			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "processing raw CloudTrail"},
+			Context: []zapcore.Field{},
+		},
+		{
 			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource change required"},
 			Context: []zapcore.Field{zap.Any("changeDetail", expectedChange)},
 		},
 		{
-			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "wrapped sns message - assuming cloudtrail is in Message field"},
+			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "processing SNS message"},
+			Context: []zapcore.Field{},
+		},
+		{
+			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "SNS message was wrapped CloudTrail, processing CloudTrail"},
 			Context: []zapcore.Field{},
 		},
 		{
@@ -327,6 +335,6 @@ func TestHandleUpdate(t *testing.T) {
 	}
 
 	// The last log message refers to the duration time of the SendMessageBatch which we can't know
-	assert.Len(t, logs.AllUntimed(), 9)
-	assert.Equal(t, expectedLogs, logs.AllUntimed()[:8])
+	assert.Len(t, logs.AllUntimed(), 11)
+	assert.Equal(t, expectedLogs, logs.AllUntimed()[:10])
 }
