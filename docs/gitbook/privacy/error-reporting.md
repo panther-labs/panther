@@ -10,6 +10,6 @@ everytime there is a web application exception or crash:
 - Your Public IPv4
   > This helps us identify whether the same or a different user is experiencing the error. This information is not used in any other way.
 - The version of your Browser, OS & Panther installation
-  > This helps us know how to properly replicate the issue
-- The URL of the page in which the error occurred, as well as the source file associated with it.
-  > This helps us identify the piece of code associated with the issue you are experiencing
+  > This helps us know how to properly replicate the issue.
+- The type of error, its related stack trace and the URL of the page in which it occurred.
+  > This helps us identify the piece of code associated with the issue you are experiencing, while gaining insight on the predecing function calls. **All sensitive parameters or variables are excluded**.
