@@ -6,6 +6,10 @@ labels: enhancement
 assignees: ''
 ---
 
+### Describe the ideal solution
+
+A clear and concise description of what you want to happen.
+
 ### Describe your use cases
 
 In order to properly evaluate a feature request, it is necessary to understand the use-cases for it.
@@ -17,10 +21,6 @@ ie. Daily, weekly, monthly
 ### Describe alternatives you have considered
 
 A clear and concise description of any alternative solutions or features you have considered.
-
-### Describe the ideal solution
-
-A clear and concise description of what you want to happen.
 
 ### References
 

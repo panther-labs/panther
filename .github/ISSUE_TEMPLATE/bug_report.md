@@ -31,10 +31,10 @@ How are you deploying or using Panther?
 - OS: [e.g. MacOS 10.15.3]
 - Browser: [e.g. Chrome 80.0.3987.87, Safari Version 13.0.5 (15608.5.11)]
 
-### Screenshots
-
-If applicable, add screenshots to help explain your problem.
-
 ### Additional context
 
 Add any other context about the problem here.
+
+### Screenshots
+
+If applicable, add screenshots to help explain your problem.
