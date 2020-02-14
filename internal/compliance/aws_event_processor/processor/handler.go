@@ -20,12 +20,14 @@ package processor
 
 import (
 	"bufio"
+	"compress/gzip"
 	"io"
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -58,55 +60,63 @@ func Handle(batch *events.SQSEvent) error {
 	}
 
 	// Using gjson to get only the fields we need is > 10x faster than running json.Unmarshal multiple times
+	//
+	// Since we don't want one bad notification to lose us the rest, we log failures and continue.
 	for _, record := range batch.Records {
-		switch gjson.Get(record.Body, "Type").Str {
-		case "Notification": // sns wrapped message
-			// Three possibilities:
-			// Raw CloudTrail (detail)
-			// S3Event Notification (records)
-			// CloudTrail Notification (s3Bucket + s3ObjectKey list)
-			zap.L().Debug("processing SNS message")
-			message := gjson.Get(record.Body, "Message").Str
-			err := processSNS(message, changes, gjson.Get(record.Body, "TopicArn").Str)
-			if err != nil {
-				zap.L().Error("error processing SNS message", zap.Error(errors.WithStack(err)))
-			}
-		case "": // raw CloudTrail data from CWE -> SNS -> SQS
+		// SNS raw message delivery of CloudTrail
+		detail := gjson.Get(record.Body, "detail")
+		if detail.Exists() {
 			zap.L().Debug("processing raw CloudTrail")
-			err := processCloudTrail(gjson.Get(record.Body, "detail"), changes)
+			err := processCloudTrail(detail, changes)
 			if err != nil {
 				zap.L().Error("error processing raw CloudTrail", zap.Error(errors.WithStack(err)))
 			}
-		case "SubscriptionConfirmation": // sns confirmation message
+			continue
+		}
+
+		// This case is checking for a notification from the log processor that there is newly processed CloudTrail logs
+		bucket := gjson.Get(record.Body, "s3Bucket")
+		if bucket.Exists() {
+			zap.L().Debug("SNS message was an S3 Notification, initiating download")
+			object := &sources.S3ObjectInfo{
+				S3Bucket:    bucket.Str,
+				S3ObjectKey: gjson.Get(record.Body, "s3ObjectKey").Str,
+			}
+			err := processS3Download(object, changes)
+			if err != nil {
+				zap.L().Error("error processing S3 notification", zap.Error(errors.WithStack(err)))
+			}
+			continue
+		}
+
+		// If both the prior cases failed, this must be an SNS Notification or invalid input
+		switch gjson.Get(record.Body, "Type").Str {
+		case "Notification": // SNS notification
+			// This case is checking for CloudTrail logs directly wrapped in SNS Events
+			zap.L().Debug("processing SNS notification")
+			message := gjson.Get(record.Body, "Message").Str
+			detail := gjson.Get(message, "detail")
+			err := processCloudTrail(detail, changes)
+			if err != nil {
+				zap.L().Error("error processing S3 notification", zap.Error(errors.WithStack(err)))
+			}
+		case "SubscriptionConfirmation": // SNS confirmation message
+			zap.L().Debug("processing SNS confirmation")
 			topicArn, err := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
 			if err != nil {
 				zap.L().Warn("invalid confirmation arn", zap.Error(err))
 				continue
 			}
-
 			token := gjson.Get(record.Body, "Token").Str
 			if err = handleSnsConfirmation(topicArn, &token); err != nil {
 				return err
 			}
 		default: // Unexpected type
-			zap.L().Warn("unexpected SNS record type",
-				zap.String("type", gjson.Get(record.Body, "Type").Str),
-				zap.String("body", record.Body),
-			)
-			continue
+			zap.L().Warn("unexpected SNS message")
 		}
 	}
-	return submitChanges(changes)
-}
 
-func bulkProcessCloudTrail(cloudtrails string, changes map[string]*resourceChange) {
-	// Wrapper for processing multiple CloudTrail logs at once
-	for _, cloudtrail := range gjson.Get(cloudtrails, "Records").Array() {
-		err := processCloudTrail(cloudtrail, changes)
-		if err != nil {
-			zap.L().Error("error while bulk processing CloudTrail", zap.Error(err))
-		}
-	}
+	return submitChanges(changes)
 }
 
 func processCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
@@ -114,14 +124,14 @@ func processCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChan
 		return errors.WithStack(errors.New("dropping bad event"))
 	}
 
-	// this event potentially requires a change to some number of resources
+	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)
 	for _, summary := range classifyCloudTrailLog(cloudtrail) {
 		zap.L().Info("resource change required", zap.Any("changeDetail", summary))
 		// Prevents the following from being de-duped mistakenly:
 		//
-		// - Resources with the same ID in different regions (different regions)
-		// - Service scans in the same region (different resource types)
-		// - Resources with the same type in the same region (different resource IDs)
+		// Resources with the same ID in different regions (different regions)
+		// Service scans in the same region (different resource types)
+		// Resources with the same type in the same region (different resource IDs)
 		key := summary.ResourceID + summary.ResourceType + summary.Region
 		if entry, ok := changes[key]; !ok || summary.EventTime > entry.EventTime {
 			changes[key] = summary // the newest event for this resource we've seen so far
@@ -130,73 +140,40 @@ func processCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChan
 	return nil
 }
 
-func processSNS(message string, changes map[string]*resourceChange, topicArn string) error {
-	detail := gjson.Get(message, "detail")
-	if detail.Exists() {
-		zap.L().Debug("SNS message was wrapped CloudTrail, processing CloudTrail")
-		return processCloudTrail(detail, changes)
+func processS3Download(object *sources.S3ObjectInfo, changes map[string]*resourceChange) error {
+	s3Svc := s3.New(sess)
+
+	logs, err := s3Svc.GetObject(&s3.GetObjectInput{
+		Bucket: &object.S3Bucket,
+		Key:    &object.S3ObjectKey,
+	})
+	if err != nil {
+		return errors.Wrap(err, "error reading CloudTrail from S3")
 	}
 
-	// For either of the remaining cases way we will need to download some S3 objects
-	var s3Objects []*sources.S3ObjectInfo
-	records := gjson.Get(message, "Records")
-	if records.Exists() {
-		zap.L().Debug("SNS message was an S3 Event Notification")
-		records.ForEach(func(_, bucket gjson.Result) bool {
-			s3Objects = append(s3Objects, &sources.S3ObjectInfo{
-				S3Bucket:    bucket.Get("s3.bucket.name").Str,
-				S3ObjectKey: bucket.Get("s3.object.key").Str,
-			})
-			return true
-		})
-		processS3Download(s3Objects, changes, topicArn)
-		return nil
+	reader, err := gzip.NewReader(bufio.NewReader(logs.Body))
+	if err != nil {
+		return errors.Wrap(err, "error creating gzip reader for S3 output")
 	}
 
-	bucket := gjson.Get(message, "s3Bucket")
-	if bucket.Exists() {
-		zap.L().Debug("SNS message was a CloudTrail Notification")
-		bucketStr := bucket.Str
-		keys := gjson.Get(message, "s3ObjectKey").Array()
-		for _, key := range keys {
-			s3Objects = append(s3Objects, &sources.S3ObjectInfo{
-				S3Bucket:    bucketStr,
-				S3ObjectKey: key.Str,
-			})
-		}
-		processS3Download(s3Objects, changes, topicArn)
-		return nil
-	}
-
-	return errors.New("unable to determine SNS message type")
-}
-
-func processS3Download(objects []*sources.S3ObjectInfo, changes map[string]*resourceChange, topicArn string) {
-	zap.L().Debug("processing CloudTrail stored in S3, initiating downloads")
-	for _, object := range objects {
-		input, err := sources.ReadS3Object(object, topicArn)
+	stream := bufio.NewReader(reader)
+	for {
+		var line string
+		line, err = stream.ReadString('\n')
 		if err != nil {
-			zap.L().Error("error setting up s3 connection", zap.Error(errors.WithStack(err)))
-			continue
-		}
-
-		stream := bufio.NewReader(input.Reader)
-		for {
-			var line string
-			line, err = stream.ReadString('\n')
-			if err != nil {
-				if err == io.EOF { // we are done
-					err = nil
-					bulkProcessCloudTrail(line, changes)
-				}
-				break
+			if err == io.EOF { // we are done
+				err = nil
 			}
-			bulkProcessCloudTrail(line, changes)
+			break
 		}
+		// Since we don't wont to lose an entire batch of logs to one bad message, we just log failures and continue
+		err = processCloudTrail(gjson.Parse(line), changes)
 		if err != nil {
-			zap.L().Error("failed to process S3 download", zap.Error(errors.WithStack(err)))
+			zap.L().Error("error processing CloudTrail from S3", zap.Error(err))
 		}
 	}
+
+	return err
 }
 
 func submitChanges(changes map[string]*resourceChange) error {

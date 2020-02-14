@@ -103,15 +103,6 @@ Resources:
       RawMessageDelivery: false
       TopicArn: !Ref Topic
 
-  # SNS Topic subscription to Panther for Cloud Security
-  CloudSecuritySubscription:
-    Type: AWS::SNS::Subscription
-    Properties:
-      Endpoint: !Sub arn:{AWS::Partition}:sqs:${PantherRegion}:${MasterAccountId}:panther-aws-events
-      Protocol: sqs
-      RawMessageDelivery: false
-      TopicArn: !Ref Topic
-
 Outputs:
   SnsTopicArn:
     Description: The ARN of the SNS Topic that will be notifying Panther of new data.

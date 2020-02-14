@@ -157,16 +157,6 @@ Resources:
       RawMessageDelivery: false
       TopicArn: !Ref LogProcessingNotificationsTopic
 
-  # This subscription subscribes the Panther Cloud Security SQS queue to the topic created above
-  CloudSecuritySubscription:
-    Type: AWS::SNS::Subscription
-    Properties:
-      Endpoint: !Sub arn:${AWS::Partition}:sqs:us-west-2:${MasterAccountId}:panther-aws-events
-      Protocol: sqs
-      RawMessageDelivery: false
-      TopicArn: !Ref LogProcessingNotificationsTopic
-
-
   # This trail will generate audit logs and send them to an S3 bucket for storage
   LogProcessingCloudTrail:
     Type: AWS::CloudTrail::Trail
