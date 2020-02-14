@@ -50,7 +50,7 @@ const SignInForm: React.FC = () => {
       validationSchema={validationSchema}
       onSubmit={async ({ username, password }, { setErrors }) =>
         signIn({
-          username,
+          email: username,
           password,
           onError: ({ message }) =>
             setErrors({
