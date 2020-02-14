@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { Text, Box, Heading } from 'pouncejs';
+import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 
 /*
 https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml
@@ -34,7 +35,7 @@ const RealTimeEventPanel: React.FC = () => {
         <a
           target="_blank"
           rel="noopener noreferrer"
-          href="https://docs.runpanther.io/amazon-web-services/aws-setup/real-time-events"
+          href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/real-time-events`}
         >
           documentation
         </a>{' '}
