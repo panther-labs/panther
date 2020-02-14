@@ -17,3 +17,7 @@ keys/
 
 # MacOS files
 .DS_Store
+
+# Terraform
+.terraform
+terraform.tfstate*

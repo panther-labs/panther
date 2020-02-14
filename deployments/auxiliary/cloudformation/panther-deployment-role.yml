@@ -21,153 +21,126 @@ Metadata:
   Version: v1.0.0
 
 Resources:
-  AuditRole:
+  DeploymentRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: PantherDeploymentRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:SecureTransport: true
       Description: IAM role for deploying Panther
-      ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/SecurityAudit
-      Policies:
-        - PolicyName: CloudFormation
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - cloudformation:DetectStackDrift
-                  - cloudformation:DetectStackResourceDrift
-                Resource: '*'
       Tags:
         - Key: Application
           Value: Panther
 
-#  {
-#    "Version": "2012-10-17",
-#    "Statement": [
-#    {
-#      "Effect": "Allow",
-#      "Action": "cloudformation:*",
-#      "Resource": [
-#        "arn:aws:cloudformation:us-east-1:101802775469:stack/panther-*",
-#        "arn:aws:cloudformation:us-east-1:aws:transform/Serverless-2016-10-31"
-#      ]
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "dynamodb:*",
-#      "Resource": "arn:aws:dynamodb:us-east-1:101802775469:table/panther-*"
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": [
-#        "ec2:AssociateRouteTable",
-#        "ec2:AssociateSubnetCidrBlock",
-#        "ec2:AssociateVpcCidrBlock",
-#        "ec2:AuthorizeSecurityGroupEgress",
-#        "ec2:AuthorizeSecurityGroupIngress",
-#        "ec2:AttachInternetGateway",
-#        "ec2:CreateInternetGateway",
-#        "ec2:CreateRoute",
-#        "ec2:CreateRouteTable",
-#        "ec2:CreateSecurityGroup",
-#        "ec2:CreateSubnet",
-#        "ec2:CreateTags",
-#        "ec2:CreateVpc",
-#        "ec2:DeleteInternetGateway",
-#        "ec2:DeleteRoute",
-#        "ec2:DeleteRouteTable",
-#        "ec2:DeleteSecurityGroup",
-#        "ec2:DeleteSubnet",
-#        "ec2:DeleteTags",
-#        "ec2:DeleteVpc",
-#        "ec2:Describe*",
-#        "ec2:DetachInternetGateway",
-#        "ec2:DisassociateRouteTable",
-#        "ec2:DisassociateSubnetCidrBlock",
-#        "ec2:ModifySubnetAttribute",
-#        "ec2:ModifyVpcAttribute",
-#        "ec2:ReplaceRoute",
-#        "ec2:ReplaceRouteTableAssociation",
-#        "ec2:RevokeSecurityGroupEgress",
-#        "ec2:RevokeSecurityGroupIngress",
-#        "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
-#        "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
-#        "elasticloadbalancing:*"
-#      ],
-#      "Resource": "*"
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "ecr:*",
-#      "Resource": "arn:aws:ecr:us-east-1:101802775469:repository/panther-*"
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "execute-api:Invoke",
-#      "Resource": "arn:aws:execute-api:us-east-1:101802775469:*"
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "iam:*",
-#      "Resource": "arn:aws:iam::101802775469:role/panther-*"
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "kms:*",
-#      "Resource": [
-#        "arn:aws:kms:us-east-1:101802775469:alias/panther-*",
-#        "arn:aws:kms:us-east-1:101802775469:key/*"
-#      ]
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "lambda:*",
-#      "Resource": [
-#        "arn:aws:lambda:us-east-1:101802775469:event-source-mapping:*",
-#        "arn:aws:lambda:us-east-1:101802775469:function:panther-*",
-#        "arn:aws:lambda:us-east-1:101802775469:layer:panther-*"
-#      ]
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "s3:*",
-#      "Resource": "arn:aws:s3:::panther-*"
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "sns:*",
-#      "Resource": "arn:aws:sns:us-east-1:101802775469:panther-*"
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": "sqs:*",
-#      "Resource": "arn:aws:sqs:us-east-1:101802775469:panther-*"
-#    },
-#    {
-#      "Effect": "Allow",
-#      "Action": [
-#        "acm:*",
-#        "apigateway:*",
-#        "appsync:*",
-#        "athena:*",
-#        "cloudformation:List*",
-#        "cloudwatch:*",
-#        "cognito-idp:*",
-#        "dynamodb:List*",
-#        "ecr:GetAuthorizationToken",
-#        "ecs:*",
-#        "events:*",
-#        "glue:*",
-#        "kms:CreateKey",
-#        "kms:List*",
-#        "lambda:*EventSourceMapping",
-#        "lambda:List*",
-#        "logs:*",
-#        "sns:List*",
-#        "sqs:List*"
-#      ],
-#      "Resource": "*"
-#    }
-#    ]
-#  }
+  DeploymentPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: PantherDeployment
+      Roles:
+        - !Ref DeploymentRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:  # permissions which can't be restricted to specific resources
+              - acm:*
+              - apigateway:*
+              - appsync:*
+              - athena:*
+              - cloudformation:List*
+              - cloudwatch:*
+              - cognito-idp:*
+              - dynamodb:List*
+              - ecr:GetAuthorizationToken
+              - ecs:*
+              - events:*
+              - glue:*
+              - kms:CreateKey
+              - kms:List*
+              - lambda:*EventSourceMapping
+              - lambda:List*
+              - logs:*
+              - sns:List*
+              - sqs:List*
+            Resource: '*'
+          - Effect: Allow
+            Action: cloudformation:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/panther-*
+              - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31
+          - Effect: Allow
+            Action: dynamodb:*
+            Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-*
+          - Effect: Allow
+            Action:
+              - ec2:AssociateRouteTable
+              - ec2:AssociateSubnetCidrBlock
+              - ec2:AssociateVpcCidrBlock
+              - ec2:AuthorizeSecurityGroupEgress
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:AttachInternetGateway
+              - ec2:CreateInternetGateway
+              - ec2:CreateRoute
+              - ec2:CreateRouteTable
+              - ec2:CreateSecurityGroup
+              - ec2:CreateSubnet
+              - ec2:CreateTags
+              - ec2:CreateVpc
+              - ec2:DeleteInternetGateway
+              - ec2:DeleteRoute
+              - ec2:DeleteRouteTable
+              - ec2:DeleteSecurityGroup
+              - ec2:DeleteSubnet
+              - ec2:DeleteTags
+              - ec2:DeleteVpc
+              - ec2:Describe*
+              - ec2:DetachInternetGateway
+              - ec2:DisassociateRouteTable
+              - ec2:DisassociateSubnetCidrBlock
+              - ec2:ModifySubnetAttribute
+              - ec2:ModifyVpcAttribute
+              - ec2:ReplaceRoute
+              - ec2:ReplaceRouteTableAssociation
+              - ec2:RevokeSecurityGroupEgress
+              - ec2:RevokeSecurityGroupIngress
+              - ec2:UpdateSecurityGroupRuleDescriptionsEgress
+              - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+              - elasticloadbalancing:*
+            Resource: '*'
+          - Effect: Allow
+            Action: ecr:*
+            Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/panther-*
+          - Effect: Allow
+            Action: execute-api:Invoke
+            Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: iam:*
+            Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/panther-*
+          - Effect: Allow
+            Action: kms:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:alias/panther-*
+              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/*
+          - Effect: Allow
+            Action: lambda:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:*
+              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-*
+              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-*
+          - Effect: Allow
+            Action: s3:*
+            Resource: !Sub arn:${AWS::Partition}:s3:::panther-*
+          - Effect: Allow
+            Action: sns:*
+            Resource: !Sub arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:panther-*
+          - Effect: Allow
+            Action: sqs:*
+            Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-*
