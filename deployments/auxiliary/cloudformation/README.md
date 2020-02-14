@@ -1,13 +1,16 @@
 # Panther's CloudFormation Templates
 
-A collection of CloudFormation templates to configure data collection and remediation with multiple satellite accounts.
+A collection of CloudFormation templates to configure auxiliary Panther infrastructure. These templates are also available in a public S3 bucket for your convenience:
 
-## Templates
+`https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/TEMPLATE-NAME/VERSION/template.yml`
 
-- `panther-aws-compliance-iam`: The IAM Roles used in conjunction with the compliance features.
-- `panther-remediations-iam`: The IAM Role used for Automatic Remediation in the satellite accounts.
-- `panther-cloudwatch-events`: Configures AWS CloudWatch Events to send to SNS/SQS.
-- `panther-stackset-iam-admin-role`: The IAM Role orchestrating the StackSet creation.
-- `panther-log-processing-iam`: The IAM Roles used in conjunction with the log processing features.
-- `panther-log-processing-infra`: A configuration for log processing in a satellite account.
-- `panther-log-processing-notifications` A minimal configuration for log processing in a satellite account.
+VERSION can be `latest` or a specific version number from the template metadata.
+
+## Makefile
+
+Panther team members can upload templates with the provided `Makefile`:
+
+```
+make upload-single template=panther-deployment-role.yml
+make upload-all
+```
