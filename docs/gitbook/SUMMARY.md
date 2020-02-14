@@ -209,3 +209,7 @@
 ## Operations
 
 - [Background](operations/untitled.md)
+
+## Privacy
+
+- [Error Reporting](privacy/error-reporting.md)
