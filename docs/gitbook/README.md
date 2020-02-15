@@ -11,11 +11,11 @@ description: >-
 
 Panther is a powerful, open-source, cloud-native SIEM designed to be:
 
-- **Flexible:** Python-based detections and alerting support for PagerDuty, Slack, MS Teams, and more
 - **Scalable:** Built on serverless technologies for cost and operational efficiency at scale
-- **Fast**: Near real-time rules analysis, alerting, and automatic remediation
-- **Integrated:** Analyze both security logs and cloud resources for total visibility
-- **Automated:** Fast and simple deployments with AWS CloudFormation
+- **Fast**: Near real-time rules analysis, alerting, and remediation
+- **Flexible:** Python-based detections and alerting support for PagerDuty, Slack, MS Teams, and more
+- **Integrated:** Reduce the amount of tools needed to run your security team
+- **Automated:** Stop threat hunting manually and quickly deploy with infrastructure as code
 - **Secure:** Least-privilege and encrypted infrastructure that you control
 
 Panther's use-cases include:
@@ -27,13 +27,13 @@ Panther's use-cases include:
 
 The following diagram offers a high-level overview of Panther's architecture:
 
-![High-Level Architecture](.gitbook/assets/docs_-basic-diagram.png)
+![High-Level Architecture](.gitbook/assets/high-level-diagram.png)
 
 ### Log Analysis
 
 Panther offers an intuitive way to detect suspicious activity by using **Rules**.
 
-Each Rule evaluates to a given log type, and contains metadata to help analysts understand its purpose along with steps on how to respond.
+Each Rule evaluates to a given log type and contains metadata to help analysts understand its purpose and how to respond.
 
 ![Rule Settings](.gitbook/assets/rule-example-1%20%281%29.png)
 

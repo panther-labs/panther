@@ -1,3 +1,7 @@
+---
+description: Each supported log type
+---
+
 # Supported Logs
 
 Panther can analyze the following log sources below to detect threats.

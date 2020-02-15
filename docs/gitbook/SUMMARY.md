@@ -8,7 +8,7 @@
 ## Log Analysis
 
 - [Background](log-analysis/log-analysis-background.md)
-- [Log Processing](log-analysis/log-processing/README.md)
+- [Setup](log-analysis/log-processing/README.md)
   - [IAM Setup](log-analysis/log-processing/iam-setup.md)
   - [Notifications Setup](log-analysis/log-processing/notifications-setup.md)
 - [Supported Logs](log-analysis/supported-logs/README.md)
@@ -41,7 +41,7 @@
 - [Panther Fields](historical-search/panther-fields.md)
 - [Example Queries](historical-search/example-queries.md)
 
-## Compliance <a id="policies"></a>
+## Cloud Security <a id="policies"></a>
 
 - [Background](policies/compliance-background.md)
 - [Scanning](policies/scanning/README.md)
@@ -191,7 +191,7 @@
     - [AWS Enable S3 Bucket Access Logging](automatic-remediation/auto-remediations/aws/aws-enable-s3-bucket-access-logging.md)
     - [AWS Enable S3 Bucket Versioning](automatic-remediation/auto-remediations/aws/aws-enable-s3-bucket-versioning.md)
 
-## Alerting <a id="destinations"></a>
+## Destinations <a id="destinations"></a>
 
 - [Background](destinations/background.md)
 - [Setup](destinations/alert-setup/README.md)
@@ -208,7 +208,7 @@
 
 ## Operations
 
-- [Background](operations/untitled.md)
+- [Background](operations/ops-home.md)
 
 ## Privacy
 
