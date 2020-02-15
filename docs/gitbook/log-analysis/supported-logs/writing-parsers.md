@@ -1,5 +1,5 @@
 ---
-description: Add support for custom logs
+description: Add support for custom log types
 ---
 
 # Writing a New Parser
