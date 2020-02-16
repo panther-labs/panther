@@ -79,4 +79,4 @@ PipLayer:
 # If the analysis-api is non-empty, this setting is ignored and you can instead
 # use the BulkUpload functionality from the web app to upload new or modified rule sets.
 InitialAnalysisSets:
-  - https://github.com/panther-labs/panther-analysis/releases/download/v1.0.1/panther-analysis-all.zip
+  - https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
