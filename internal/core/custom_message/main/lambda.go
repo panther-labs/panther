@@ -25,14 +25,12 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 
 	custommessage "github.com/panther-labs/panther/internal/core/custom_message/api"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 func lambdaHandler(ctx context.Context, event *events.CognitoEventUserPoolsCustomMessage) (
 	*events.CognitoEventUserPoolsCustomMessage, error) {
 
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return custommessage.HandleEvent(event)
+	return custommessage.HandleEvent(ctx, event)
 }
 
 func main() {

@@ -23,10 +23,13 @@ import (
 	"runtime/debug"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 // RequestHandler is a function which handles an HTTP request for a single method/resource pair.
@@ -52,35 +55,36 @@ func LambdaProxy(methodHandlers map[string]RequestHandler) func(
 			}
 		}()
 
-		_, logger := lambdalogger.ConfigureGlobal(ctx, map[string]interface{}{
+		lc, _ := lambdalogger.ConfigureGlobal(ctx, map[string]interface{}{
 			"requestMethod":          input.HTTPMethod, // e.g. GET
 			"requestPathParameters":  input.PathParameters,
 			"requestQueryParameters": input.QueryStringParameters,
 			"requestResource":        input.Resource, // e.g. /orgs/{orgId}/accounts/{accountType}
 		})
 
-		handler, ok := methodHandlers[input.HTTPMethod+" "+input.Resource]
+		methodKey := input.HTTPMethod + " " + input.Resource
+
+		operation := oplog.NewManager("admin", lc.InvokedFunctionArn).Start(methodKey).WithMemUsed(lambdacontext.MemoryLimitInMB)
+
+		handler, ok := methodHandlers[methodKey]
 		if !ok {
-			logger.Warn("unexpected method/resource")
+			operation.Stop().LogError(errors.New("unexpected method/resource"))
+			// IMPORTANT: do not return any err, result handling manages that
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotImplemented}, nil
 		}
 
-		logger.Info("processing request", zap.Int("bodyLength", len(input.Body)))
 		result = handler(input)
 
 		switch {
 		case result.StatusCode < 400:
-			logger.Info("successful response",
-				zap.Int("statusCode", result.StatusCode), zap.Int("bodyLength", len(result.Body)))
+			operation.Stop().LogSuccess(zap.Int("statusCode", result.StatusCode), zap.Int("bodyLength", len(result.Body)))
 		case result.StatusCode < 500:
-			logger.Warn("client error",
-				zap.Int("statusCode", result.StatusCode), zap.String("responseBody", result.Body))
+			operation.Stop().LogError(errors.New("client error"), zap.Int("statusCode", result.StatusCode), zap.String("responseBody", result.Body))
 		default:
-			logger.Warn("server error",
-				zap.Int("statusCode", result.StatusCode), zap.String("responseBody", result.Body))
+			operation.Stop().LogError(errors.New("server error"), zap.Int("statusCode", result.StatusCode), zap.String("responseBody", result.Body))
 		}
 
-		return
+		return result, nil // IMPORTANT: do not return any err, result handling manages that
 	}
 }
 

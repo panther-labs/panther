@@ -22,10 +22,12 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
@@ -33,6 +35,7 @@ import (
 	api "github.com/panther-labs/panther/api/gateway/resources/models"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const maxBackoffSeconds = 30
@@ -40,7 +43,12 @@ const maxBackoffSeconds = 30
 // Handle is the entry point for the event stream analysis.
 //
 // Do not make any assumptions about the correctness of the incoming data.
-func Handle(batch *events.SQSEvent) error {
+func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error) {
+	operation := oplog.NewManager("cloudsec", "aws_event_processor").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("numEvents", len(batch.Records)))
+	}()
+
 	// De-duplicate all updates and deletes before delivering them.
 	// At most one change will be reported per resource (update or delete).
 	//
@@ -49,7 +57,7 @@ func Handle(batch *events.SQSEvent) error {
 	changes := make(map[string]*resourceChange, len(batch.Records)) // keyed by resourceID
 
 	// Get the most recent integrations to map Account ID to IntegrationID
-	if err := refreshAccounts(); err != nil {
+	if err = refreshAccounts(); err != nil {
 		return err
 	}
 
@@ -62,9 +70,9 @@ func Handle(batch *events.SQSEvent) error {
 			handleCloudtrail(gjson.Get(record.Body, "Message").Str, changes)
 
 		case "SubscriptionConfirmation": // sns confirmation message
-			topicArn, err := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
+			topicArn, parseErr := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
 			if err != nil {
-				zap.L().Warn("invalid confirmation arn", zap.Error(err))
+				operation.LogWarn(errors.Wrap(parseErr, "invalid confirmation arn"))
 				continue
 			}
 
@@ -76,21 +84,20 @@ func Handle(batch *events.SQSEvent) error {
 		case "": // raw data
 			handleCloudtrail(record.Body, changes)
 		default: // Unexpected type
-			zap.L().Warn("unexpected record type",
+			operation.LogWarn(errors.New("dropping unknown notification type"),
 				zap.String("type", gjson.Get(record.Body, "Type").Str),
-				zap.String("body", record.Body),
-			)
+				zap.String("body", record.Body))
 			continue
 		}
 	}
-
-	return submitChanges(changes)
+	err = submitChanges(changes)
+	return err
 }
 
 func handleCloudtrail(body string, changes map[string]*resourceChange) {
 	// this event potentially requires a change to some number of resources
 	for _, summary := range classifyCloudTrailLog(body) {
-		zap.L().Info("resource change required", zap.Any("changeDetail", summary))
+		zap.L().Debug("resource change required", zap.Any("changeDetail", summary))
 		// Prevents the following from being de-duped mistakenly:
 		// Resources with the same ID in different regions (different regions)
 		// Service scans in the same region (different resource types)
@@ -146,13 +153,12 @@ func submitChanges(changes map[string]*resourceChange) error {
 
 	// Send deletes to resources-api
 	if len(deleteRequest.Resources) > 0 {
-		zap.L().Info("deleting resources", zap.Any("deleteRequest", &deleteRequest))
+		zap.L().Debug("deleting resources", zap.Any("deleteRequest", &deleteRequest))
 		_, err := apiClient.Operations.DeleteResources(
 			&operations.DeleteResourcesParams{Body: &deleteRequest, HTTPClient: httpClient})
 
 		if err != nil {
-			zap.L().Error("resource deletion failed", zap.Error(err))
-			return err
+			return errors.Wrapf(err, "resource deletion failed for: %#v", deleteRequest)
 		}
 	}
 
@@ -160,11 +166,10 @@ func submitChanges(changes map[string]*resourceChange) error {
 		batchInput := &sqs.SendMessageBatchInput{QueueUrl: &queueURL}
 		// Send resource scan requests to the poller queue
 		for delay, request := range requestsByDelay {
-			zap.L().Info("queueing resource scans", zap.Any("updateRequest", request))
+			zap.L().Debug("queueing resource scans", zap.Any("updateRequest", request))
 			body, err := jsoniter.MarshalToString(request)
 			if err != nil {
-				zap.L().Error("resource queueing failed: json marshal", zap.Error(err))
-				return err
+				return errors.Wrapf(err, "resource queueing failed: json marshal for: %#v", request)
 			}
 
 			batchInput.Entries = append(batchInput.Entries, &sqs.SendMessageBatchRequestEntry{
