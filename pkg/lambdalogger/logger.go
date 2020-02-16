@@ -65,7 +65,7 @@ func ConfigureGlobal(
 		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
 
-	// always tag with requestId and
+	// always tag with requestId and application
 	if initialFields == nil {
 		config.InitialFields = map[string]interface{}{
 			"requestId":   lc.AwsRequestID,
