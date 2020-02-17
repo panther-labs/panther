@@ -119,6 +119,12 @@ Resources:
             BatchSize: 10
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
+        - Id: ConfirmCrossAccountSubscription
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sns:ConfirmSubscription
+              Resource: !GetAtt Queue.Arn
         - Id: ReceiveFromInputSqsQueue
           Version: 2012-10-17
           Statement:
