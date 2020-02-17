@@ -44,8 +44,7 @@ def update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str, 
     """The method will update the alertCreationTime, eventCount of an alert. If a new alert will have to be created,
     it will also create a new alertId with the appropriate alertCreationTime. """
     try:
-        alert_info = _update_get_alert_info_conditional(match_time, num_matches, rule_id, dedup)
-        return alert_info
+        return _update_get_alert_info_conditional(match_time, num_matches, rule_id, dedup)
     except _DDB_CLIENT.exceptions.ConditionalCheckFailedException:
         # If conditional update failed on Condition, the event needs to be merged
         return _update_get_alert_info(match_time, num_matches, rule_id, dedup)

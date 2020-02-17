@@ -75,6 +75,7 @@ class MatchedEventsBuffer:
     def __init__(self) -> None:
         self.data: Dict[BufferKey, BufferValue] = collections.defaultdict()
         self.total_bytes = 0
+        self.max_bytes = _MAX_BYTES_IN_MEMORY
 
     def add_event(self, match: EventMatch) -> None:
         """Adds a matched event to the buffer"""
@@ -92,7 +93,7 @@ class MatchedEventsBuffer:
 
         self.total_bytes += size
         # Check the total size of data in memory. If we exceed threshold, flush data from the biggest "offender"
-        if self.total_bytes > _MAX_BYTES_IN_MEMORY:
+        if self.total_bytes > self.max_bytes:
             _LOGGER.debug('data reached size threshold')
             max_size = 0
             key_to_remove: Optional[BufferKey]
@@ -114,6 +115,7 @@ class MatchedEventsBuffer:
         for key, values in self.data.items():
             _write_to_s3(current_time, key, values.matches)
         self.data.clear()
+        self.total_bytes = 0
 
 
 def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> None:
