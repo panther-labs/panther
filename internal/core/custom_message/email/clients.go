@@ -34,7 +34,7 @@ var (
 		Product: hermes.Product{
 			// Appears in header & footer of e-mails
 			Name:      "Panther",
-			Link:      "runpanther.io",
+			Link:      "https://runpanther.io",
 			Copyright: "Copyright © " + strconv.Itoa(time.Now().Year()) + " Panther Labs Inc. All rights reserved.",
 			Logo:      pantherEmailLogo,
 		},
