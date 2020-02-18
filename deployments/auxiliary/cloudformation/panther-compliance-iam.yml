@@ -97,6 +97,7 @@ Resources:
                 Action:
                   - dynamodb:ListTagsOfResource
                   - kms:ListResourceTags
+                  - sns:ListTagsForResource
                   - waf:ListTagsForResource
                   - waf-regional:ListTagsForResource
                 Resource: '*'
