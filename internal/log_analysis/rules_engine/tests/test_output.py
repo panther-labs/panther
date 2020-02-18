@@ -23,11 +23,11 @@ from unittest import TestCase, mock
 import boto3
 
 from . import mock_to_return, DDB_MOCK, S3_MOCK, SNS_MOCK
+from ..src import EventMatch
 
 with mock.patch.dict(os.environ, {'ALERTS_DEDUP_TABLE': 'table_name', 'S3_BUCKET': 's3_bucket', 'NOTIFICATIONS_TOPIC': 'sns_topic'}):
     with mock.patch.object(boto3, 'client', side_effect=mock_to_return) as mock_boto:
         from ..src.output import MatchedEventsBuffer
-        from ..src import EventMatch
 
 
 class TestMatchedEventsBuffer(TestCase):
@@ -91,8 +91,9 @@ class TestMatchedEventsBuffer(TestCase):
         # Verify extra fields
         self.assertEqual(content['p_rule_id'], 'rule_id')
         self.assertEqual(content['p_alert_id'], 'rule_id-1')
-        datetime.strptime(content['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000')
-        datetime.strptime(content['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000')
+        # Verify fields are valid dates
+        self.assertIsNotNone(datetime.strptime(content['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+        self.assertIsNotNone(datetime.strptime(content['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         # Actual event
         self.assertEqual(content['data_key'], 'data_value')
 
@@ -110,6 +111,127 @@ class TestMatchedEventsBuffer(TestCase):
                 }
             }
         )
+
+        # Assert that the buffer has been cleared
+        self.assertEqual(len(buffer.data), 0)
+        self.assertEqual(buffer.total_bytes, 0)
+
+    def test_add_same_rule_different_log(self) -> None:
+        buffer = MatchedEventsBuffer()
+        buffer.add_event(EventMatch('id', 'version', 'log1', 'dedup', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id', 'version', 'log2', 'dedup', {'key2': 'value2'}))
+
+        self.assertEqual(len(buffer.data), 2)
+
+        DDB_MOCK.update_item.return_value = {'Attributes': {'alertCount': {'N': '1'}}}
+        buffer.flush()
+
+        self.assertEqual(DDB_MOCK.update_item.call_count, 2)
+        self.assertEqual(S3_MOCK.put_object.call_count, 2)
+        self.assertEqual(SNS_MOCK.publish.call_count, 2)
+
+        call_args_list = S3_MOCK.put_object.call_args_list
+        for _, call_args in call_args_list:
+            data = GzipFile(None, 'rb', fileobj=call_args['Body'])
+            content = json.loads(data.read().decode('utf-8'))
+
+            # Verify fields are valid dates
+            self.assertIsNotNone(datetime.strptime(content['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+            self.assertIsNotNone(datetime.strptime(content['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+
+            if 'key1' in content:
+                # Verify actual event
+                self.assertEqual(content['key1'], 'value1')
+                # Verify extra fields
+                self.assertEqual(content['p_rule_id'], 'id')
+                self.assertEqual(content['p_alert_id'], 'id-1')
+            elif 'key2' in content:
+                # Verify actual event
+                self.assertEqual(content['key2'], 'value2')
+                # Verify extra fields
+                self.assertEqual(content['p_rule_id'], 'id')
+                self.assertEqual(content['p_alert_id'], 'id-1')
+            else:
+                self.fail('unexpected content')
+
+        # Assert that the buffer has been cleared
+        self.assertEqual(len(buffer.data), 0)
+        self.assertEqual(buffer.total_bytes, 0)
+
+    def test_add_same_log_different_rules(self) -> None:
+        buffer = MatchedEventsBuffer()
+        buffer.add_event(EventMatch('id1', 'version', 'log', 'dedup', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id2', 'version', 'log', 'dedup', {'key2': 'value2'}))
+
+        self.assertEqual(len(buffer.data), 2)
+
+        DDB_MOCK.update_item.return_value = {'Attributes': {'alertCount': {'N': '1'}}}
+        buffer.flush()
+
+        self.assertEqual(DDB_MOCK.update_item.call_count, 2)
+        self.assertEqual(S3_MOCK.put_object.call_count, 2)
+        self.assertEqual(SNS_MOCK.publish.call_count, 2)
+
+        call_args_list = S3_MOCK.put_object.call_args_list
+        for _, call_args in call_args_list:
+            data = GzipFile(None, 'rb', fileobj=call_args['Body'])
+            content = json.loads(data.read().decode('utf-8'))
+
+            # Verify fields are valid dates
+            self.assertIsNotNone(datetime.strptime(content['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+            self.assertIsNotNone(datetime.strptime(content['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+
+            if 'key1' in content:
+                # Verify actual event
+                self.assertEqual(content['key1'], 'value1')
+                # Verify extra fields
+                self.assertEqual(content['p_rule_id'], 'id1')
+                self.assertEqual(content['p_alert_id'], 'id1-1')
+            elif 'key2' in content:
+                # Verify actual event
+                self.assertEqual(content['key2'], 'value2')
+                # Verify extra fields
+                self.assertEqual(content['p_rule_id'], 'id2')
+                self.assertEqual(content['p_alert_id'], 'id2-1')
+            else:
+                self.fail('unexpected content')
+
+        # Assert that the buffer has been cleared
+        self.assertEqual(len(buffer.data), 0)
+        self.assertEqual(buffer.total_bytes, 0)
+
+    def test_group_events_together(self) -> None:
+        buffer = MatchedEventsBuffer()
+        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', {'key2': 'value2'}))
+
+        self.assertEqual(len(buffer.data), 1)
+
+        DDB_MOCK.update_item.return_value = {'Attributes': {'alertCount': {'N': '1'}}}
+        buffer.flush()
+
+        DDB_MOCK.update_item.assert_called_once()
+        S3_MOCK.put_object.assert_called_once()
+        SNS_MOCK.publish.assert_called_once()
+
+        _, call_args = S3_MOCK.put_object.call_args
+        data = GzipFile(None, 'rb', fileobj=call_args['Body'])
+
+        # Verify first event
+        event1 = json.loads(data.readline().decode('utf-8'))
+        self.assertIsNotNone(datetime.strptime(event1['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+        self.assertIsNotNone(datetime.strptime(event1['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+        self.assertEqual(event1['p_rule_id'], 'id')
+        self.assertEqual(event1['p_alert_id'], 'id-1')
+        self.assertEqual(event1['key1'], 'value1')
+
+        # Verify first event
+        event2 = json.loads(data.readline().decode('utf-8'))
+        self.assertIsNotNone(datetime.strptime(event2['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+        self.assertIsNotNone(datetime.strptime(event2['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
+        self.assertEqual(event2['p_rule_id'], 'id')
+        self.assertEqual(event2['p_alert_id'], 'id-1')
+        self.assertEqual(event2['key2'], 'value2')
 
         # Assert that the buffer has been cleared
         self.assertEqual(len(buffer.data), 0)

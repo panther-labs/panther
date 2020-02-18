@@ -137,8 +137,6 @@ Resources:
       KeySchema:
         - AttributeName: partitionKey
           KeyType: HASH
-      PointInTimeRecoverySpecification: # Create periodic table backups
-        PointInTimeRecoveryEnabled: True
       SSESpecification: # Enable server-side encryption
         SSEEnabled: True
 
