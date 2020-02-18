@@ -82,7 +82,7 @@ Tools like [aws-vault](https://github.com/99designs/aws-vault) can help with all
 
 ## Deployment
 
-Run Panther in 3 easy steps: clone the repo, install docker, and deploy!
+Run Panther in 4 easy steps: clone the repo, install docker, setup the project and then deploy it!
 
 First, clone the latest release of the [Panther repo](https://github.com/panther-labs/panther):
 
@@ -113,6 +113,8 @@ The minimum requirements for an EC2 machine are 1 vCPU and 2GB of memory. The lo
 {% hint style="info" %}
 Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
 {% endhint %}
+
+Lastly, setup the project's dependencies by running `mage setup:all`.
 
 You're all set! Run `mage deploy`
 
