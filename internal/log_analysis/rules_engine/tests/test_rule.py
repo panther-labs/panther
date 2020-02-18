@@ -50,7 +50,7 @@ class TestRule(TestCase):
 
     def test_rule_matches(self) -> None:
         rule = Rule(rule_id='id', rule_body='def rule(event):\n\treturn True')
-        expected_rule = RuleResult(matched=True, dedup='default')
+        expected_rule = RuleResult(matched=True, dedup_string='default')
         self.assertEqual(rule.run({}), expected_rule)
 
     def test_rule_doesnt_match(self) -> None:
@@ -60,33 +60,33 @@ class TestRule(TestCase):
 
     def test_rule_with_dedup(self) -> None:
         rule = Rule(rule_id='id', rule_body='def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "testdedup"')
-        expected_rule = RuleResult(matched=True, dedup='testdedup')
+        expected_rule = RuleResult(matched=True, dedup_string='testdedup')
         self.assertEqual(rule.run({}), expected_rule)
 
     def test_rule_throws_exception(self) -> None:
         rule = Rule(rule_id='id', rule_body='def rule(event):\n\traise Exception("test")')
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
-        self.assertIsNone(rule_result.dedup)
+        self.assertIsNone(rule_result.dedup_string)
         self.assertIsNotNone(rule_result.exception)
 
     def test_rule_invalid_rule_signature(self) -> None:
         rule = Rule(rule_id='id', rule_body='def rule(event):\n\treturn "test"')
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
-        self.assertIsNone(rule_result.dedup)
+        self.assertIsNone(rule_result.dedup_string)
         self.assertIsNotNone(rule_result.exception)
 
     def test_dedup_throws_exception(self) -> None:
         rule = Rule(rule_id='id', rule_body='def rule(event):\n\treturn True\ndef dedup(event):\n\traise Exception("test")')
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
-        self.assertIsNone(rule_result.dedup)
+        self.assertIsNone(rule_result.dedup_string)
         self.assertIsNotNone(rule_result.exception)
 
     def test_rule_invalid_dedup_signature(self) -> None:
         rule = Rule(rule_id='id', rule_body='def rule(event):\n\treturn True\ndef dedup(event):\n\treturn {}')
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
-        self.assertIsNone(rule_result.dedup)
+        self.assertIsNone(rule_result.dedup_string)
         self.assertIsNotNone(rule_result.exception)

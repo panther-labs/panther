@@ -35,7 +35,7 @@ class RuleResult:
     """Class containing the result of running a rule"""
     exception: Optional[Exception] = None
     matched: Optional[bool] = None
-    dedup: Optional[str] = None
+    dedup_string: Optional[str] = None
 
 
 class Rule:
@@ -74,18 +74,18 @@ class Rule:
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
 
-        dedup_result: Optional[str] = None
+        dedup_string: Optional[str] = None
         try:
             rule_result = _run_command(self._module.rule, event, bool)
             if rule_result and self._has_dedup:
-                dedup_result = _run_command(self._module.dedup, event, str)
+                dedup_string = _run_command(self._module.dedup, event, str)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
         # If users haven't specified a dedup function return a default value
-        if rule_result and not dedup_result:
-            dedup_result = "default"
-        return RuleResult(matched=rule_result, dedup=dedup_result)
+        if rule_result and not dedup_string:
+            dedup_string = "default"
+        return RuleResult(matched=rule_result, dedup_string=dedup_string)
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""
@@ -118,7 +118,7 @@ class Rule:
 def _run_command(function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:
     result = function(event)
     if not isinstance(result, expected_type):
-        raise Exception('rule returned {}, expected {}'.format(type(result).__name__, expected_type))
+        raise Exception('rule returned {}, expected {}'.format(type(result).__name__, expected_type.__name__))
     return result
 
 

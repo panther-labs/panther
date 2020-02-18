@@ -31,10 +31,10 @@ class Engine:
     """The engine that runs Python rules."""
     logger = get_logger()
 
-    def __init__(self) -> None:
+    def __init__(self, analysis_api: AnalysisAPIClient) -> None:
         self._last_update = datetime.utcfromtimestamp(0)
-        self._log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
-        self._analysis_client = AnalysisAPIClient()
+        self.log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
+        self._analysis_client = analysis_api
         self._populate_rules()
 
     def analyze(self, log_type: str, event: Dict[str, Any]) -> List[EventMatch]:
@@ -45,7 +45,7 @@ class Engine:
 
         matched: List[EventMatch] = []
 
-        for rule in self._log_type_to_rules[log_type]:
+        for rule in self.log_type_to_rules[log_type]:
             result = rule.run(event)
             if result.exception:
                 self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, result.exception)
@@ -55,7 +55,7 @@ class Engine:
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
                     log_type=log_type,
-                    dedup=result.dedup,  # type: ignore
+                    dedup=result.dedup_string,  # type: ignore
                     event=event
                 )
                 matched.append(match)
@@ -72,7 +72,7 @@ class Engine:
         start = default_timer()
 
         # Clear old rules
-        self._log_type_to_rules.clear()
+        self.log_type_to_rules.clear()
 
         # Importing common module. This module MAY hold code common to some rules and if it exists, it must be
         # imported before other rules. However, the presence of this rule is optional.
@@ -95,7 +95,7 @@ class Engine:
             import_count = import_count + 1
             # update lookup table from log type to rule
             for log_type in raw_rule['resourceTypes']:
-                self._log_type_to_rules[log_type].append(rule)
+                self.log_type_to_rules[log_type].append(rule)
 
         end = default_timer()
         self.logger.info('Imported %d rules in %d seconds', import_count, end - start)

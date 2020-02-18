@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional
 import boto3
 
 from .engine import Engine
+from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
 from .output import MatchedEventsBuffer
 from .rule import Rule
@@ -30,7 +31,7 @@ from .sqs import send_to_sqs
 
 _S3_CLIENT = boto3.client('s3')
 _LOGGER = get_logger()
-_RULES_ENGINE = Engine()
+_RULES_ENGINE = Engine(AnalysisAPIClient())
 
 
 def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Optional[Dict[str, Any]]:
@@ -84,7 +85,7 @@ def log_analysis(event: Dict[str, Any]) -> None:
         record_body = json.loads(record['body'])
         bucket = record_body['s3Bucket']
         object_key = record_body['s3ObjectKey']
-        _LOGGER.info("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
+        _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
         log_type_to_data[record_body['id']].append(_load_contents(bucket, object_key))
 
     # List containing tuple of (rule_id, event) for matched events
