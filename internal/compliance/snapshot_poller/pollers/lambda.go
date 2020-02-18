@@ -80,8 +80,10 @@ func Handle(ctx context.Context, event events.SQSEvent) (err error) {
 		}
 
 		for _, entry := range scanRequest.Entries {
-			operation.LogSuccess(zap.Any("sqsEntry", entry),
-				zap.Int("messageNumber", indx), zap.String("integrationType", "aws"))
+			zap.L().Debug("starting poller",
+				zap.Any("sqsEntry", entry),
+				zap.Int("messageNumber", indx),
+				zap.String("integrationType", "aws"))
 
 			resources, pollErr := pollers.Poll(entry)
 			if pollErr != nil {
@@ -91,7 +93,7 @@ func Handle(ctx context.Context, event events.SQSEvent) (err error) {
 
 			// Send data to the Resources API
 			if resources != nil {
-				zap.L().Debug("starting poller",
+				zap.L().Debug("total resources generated",
 					zap.Int("messageNumber", indx),
 					zap.Int("numResources", len(resources)),
 					zap.String("integrationType", "aws"),
