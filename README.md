@@ -31,7 +31,7 @@ Panther provides flexible Python detection logic, secure and automated deploymen
 - **Detecting Malicious Behavior:** Analyze logs to identify unauthorized or suspicious activity
 - **Threat Hunting:** Quickly search for matches against indicators of compromise, extracted into common data fields
 - **Achieving Compliance:** Use [built-in policies](https://github.com/panther-labs/panther-analysis) as controls for achieving SOC/PCI/HIPAA compliance
-- **Securing Cloud Resources:** Model security best practices with Python Policies and automatically fix misconfigurations with automatic remediation
+- **Securing Cloud Resources:** Model security best practices with Python policies and automatically fix misconfigurations with automatic remediation
 
 _NOTE: Panther is currently in beta_
 
