@@ -114,7 +114,9 @@ The minimum requirements for an EC2 machine are 1 vCPU and 2GB of memory. The lo
 Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
 {% endhint %}
 
-Lastly, setup the project's dependencies by running `mage setup:all`.
+Lastly, setup the project's deployment dependencies by running `mage setup:deploy`.
+
+> You only need to run `mage setup:deploy` the first time you are installing Panther. Future deployments can omit this step.
 
 You're all set! Run `mage deploy`
 
