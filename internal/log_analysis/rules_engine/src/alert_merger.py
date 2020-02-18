@@ -52,6 +52,9 @@ def update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str, 
 
 def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, rule_id: str, dedup: str) -> AlertInfo:
     """Performs a conditional update to DDB to verify whether we need to create a new alert.
+    The condition will succeed only if:
+    1. It is the first time this rule with this dedup string fires
+    2. This rule with the same dedup string has fired before, but it fired more than _ALERT_MERGE_PERIOD_SECONDS earlier
     """
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
@@ -93,7 +96,10 @@ def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, r
 
 
 def _update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str, dedup: str) -> AlertInfo:
-    """Updated alert information"""
+    """Updates the following attributes in DDB:
+    1. Alert event account - it adds the new events to existing
+    2. Alert Update Time - it sets it to given time
+    """
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
