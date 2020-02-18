@@ -33,7 +33,7 @@ func HandleEvent(ctx context.Context, event *events.CognitoEventUserPoolsCustomM
 	returnedEvent *events.CognitoEventUserPoolsCustomMessage, err error) {
 
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
-	operation := oplog.NewManager("admin", "customer_message").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	operation := oplog.NewManager("api", "custom_message").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
 		operation.Stop().Log(err)
 	}()

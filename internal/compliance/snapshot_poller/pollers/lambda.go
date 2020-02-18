@@ -91,7 +91,8 @@ func Handle(ctx context.Context, event events.SQSEvent) (err error) {
 
 			// Send data to the Resources API
 			if resources != nil {
-				operation.LogSuccess(zap.Int("messageNumber", indx),
+				zap.L().Debug("starting poller",
+					zap.Int("messageNumber", indx),
 					zap.Int("numResources", len(resources)),
 					zap.String("integrationType", "aws"),
 				)

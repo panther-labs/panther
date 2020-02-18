@@ -64,11 +64,11 @@ func LambdaProxy(methodHandlers map[string]RequestHandler) func(
 
 		methodKey := input.HTTPMethod + " " + input.Resource
 
-		operation := oplog.NewManager("admin", lc.InvokedFunctionArn).Start(methodKey).WithMemUsed(lambdacontext.MemoryLimitInMB)
+		operation := oplog.NewManager("api", lc.InvokedFunctionArn).Start(methodKey).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
 		handler, ok := methodHandlers[methodKey]
 		if !ok {
-			operation.Stop().LogError(errors.New("unexpected method/resource"))
+			operation.Stop().LogWarn(errors.New("unexpected method/resource"))
 			// IMPORTANT: do not return any err, result handling manages that
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotImplemented}, nil
 		}
@@ -79,7 +79,7 @@ func LambdaProxy(methodHandlers map[string]RequestHandler) func(
 		case result.StatusCode < 400:
 			operation.Stop().LogSuccess(zap.Int("statusCode", result.StatusCode), zap.Int("bodyLength", len(result.Body)))
 		case result.StatusCode < 500:
-			operation.Stop().LogError(errors.New("client error"), zap.Int("statusCode", result.StatusCode), zap.String("responseBody", result.Body))
+			operation.Stop().LogWarn(errors.New("client error"), zap.Int("statusCode", result.StatusCode), zap.String("responseBody", result.Body))
 		default:
 			operation.Stop().LogError(errors.New("server error"), zap.Int("statusCode", result.StatusCode), zap.String("responseBody", result.Body))
 		}

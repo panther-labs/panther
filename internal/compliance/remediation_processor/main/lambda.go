@@ -51,8 +51,8 @@ func lambdaHandler(ctx context.Context, event events.SQSEvent) (err error) {
 	for _, record := range event.Records {
 		var input models.RemediateResource
 		if err = jsoniter.UnmarshalFromString(record.Body, &input); err != nil {
-			operation.LogError(errors.Wrap(err, "Failed to unmarshal item"))
-			continue
+			err = errors.Wrap(err, "Failed to unmarshal item")
+			return err
 		}
 		if err = invoker.Remediate(&input); err != nil {
 			err = errors.Wrap(err, "encountered issue while processing event")
