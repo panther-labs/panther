@@ -148,8 +148,8 @@ Resources:
       Topics:
         - !Ref LogProcessingNotificationsTopic
 
-  # This subscription subscribes the Panther Log Analysis SQS queue to the topic created above
-  LogAnalysisSubscription:
+  # This subscription subscribes the Panther SQS queue to the topic created above
+  Subscription:
     Type: AWS::SNS::Subscription
     Properties:
       Endpoint: !Sub arn:${AWS::Partition}:sqs:us-west-2:${MasterAccountId}:panther-log-notifications

@@ -83,6 +83,7 @@ Resources:
       VisibilityTimeout: !Ref TimeoutSec
 
   SnsSubscription:
+    # TODO: Update this with SNS Subscription filters to only receive CloudTrail events
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: sqs
@@ -110,7 +111,7 @@ Resources:
             Resource: '*'
             Condition:
               ArnLike:
-                aws:SourceArn: !Sub arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:panther-processed-data-notifications
+                aws:SourceArn: !Ref SnsTopicArn
       Queues:
         - !Ref EventQueue
 

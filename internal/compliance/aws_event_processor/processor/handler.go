@@ -75,12 +75,17 @@ func Handle(batch *events.SQSEvent) error {
 		}
 
 		// This case is checking for a notification from the log processor that there is newly processed CloudTrail logs
-		bucket := gjson.Get(record.Body, "s3Bucket")
-		if bucket.Exists() {
+		results := gjson.GetMany(record.Body, "s3Bucket", "type", "id", "s3ObjectKey")
+		if results[0].Exists() && results[1].Exists() && results[2].Exists() && results[3].Exists() {
+			// Verify that the notification is for CloudTrail
+			// TODO: Move this logic to the SNS Subscription
+			if results[1].Str != "LogData" || results[2].Str != "AWS.CloudTrail" {
+				continue
+			}
 			zap.L().Debug("SNS message was an S3 Notification, initiating download")
 			object := &sources.S3ObjectInfo{
-				S3Bucket:    bucket.Str,
-				S3ObjectKey: gjson.Get(record.Body, "s3ObjectKey").Str,
+				S3Bucket:    results[0].Str,
+				S3ObjectKey: results[3].Str,
 			}
 			err := processS3Download(object, changes)
 			if err != nil {
@@ -98,7 +103,7 @@ func Handle(batch *events.SQSEvent) error {
 			detail := gjson.Get(message, "detail")
 			err := processCloudTrail(detail, changes)
 			if err != nil {
-				zap.L().Error("error processing S3 notification", zap.Error(errors.WithStack(err)))
+				zap.L().Error("error processing SNS wrapped CloudTrail", zap.Error(errors.WithStack(err)))
 			}
 		case "SubscriptionConfirmation": // SNS confirmation message
 			zap.L().Debug("processing SNS confirmation")
@@ -141,8 +146,6 @@ func processCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChan
 }
 
 func processS3Download(object *sources.S3ObjectInfo, changes map[string]*resourceChange) error {
-	s3Svc := s3.New(sess)
-
 	logs, err := s3Svc.GetObject(&s3.GetObjectInput{
 		Bucket: &object.S3Bucket,
 		Key:    &object.S3ObjectKey,
@@ -169,7 +172,7 @@ func processS3Download(object *sources.S3ObjectInfo, changes map[string]*resourc
 		// Since we don't wont to lose an entire batch of logs to one bad message, we just log failures and continue
 		err = processCloudTrail(gjson.Parse(line), changes)
 		if err != nil {
-			zap.L().Error("error processing CloudTrail from S3", zap.Error(err))
+			zap.L().Error("error processing CloudTrail from S3", zap.Error(errors.WithStack(err)))
 		}
 	}
 
