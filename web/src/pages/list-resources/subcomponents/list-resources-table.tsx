@@ -68,7 +68,7 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
       onSort={handleSort}
       sortDir={sortDir}
       sortKey={sortBy}
-      onSelect={resource => history.push(urls.resources.details(resource.id))}
+      onSelect={resource => history.push(urls.compliance.resources.details(resource.id))}
     />
   );
 };

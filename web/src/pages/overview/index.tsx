@@ -163,7 +163,7 @@ const Overview: React.FC = () => {
                 columns={topFailingPoliciesColumns}
                 items={data.organizationStats.topFailingPolicies}
                 getItemKey={policy => policy.id}
-                onSelect={policy => history.push(urls.policies.details(policy.id))}
+                onSelect={policy => history.push(urls.compliance.policies.details(policy.id))}
               />
             </ErrorBoundary>
           </Box>
@@ -175,7 +175,7 @@ const Overview: React.FC = () => {
                 columns={topFailingResourcesColumns}
                 items={data.organizationStats.topFailingResources}
                 getItemKey={resource => resource.id}
-                onSelect={resource => history.push(urls.resources.details(resource.id))}
+                onSelect={resource => history.push(urls.compliance.resources.details(resource.id))}
               />
             </ErrorBoundary>
           </Box>

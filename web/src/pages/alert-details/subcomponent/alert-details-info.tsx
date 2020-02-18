@@ -92,8 +92,11 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             RULE ORIGIN
           </Label>
           <Text size="medium" color="black">
-            {<Link to={urls.rules.details(rule.id)}>{rule.displayName || rule.id}</Link> ||
-              'No rule found'}
+            {(
+              <Link to={urls.logAnalysis.rules.details(rule.id)}>
+                {rule.displayName || rule.id}
+              </Link>
+            ) || 'No rule found'}
           </Text>
         </Box>
         <Box my={1}>

@@ -47,7 +47,13 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
       actions={
         <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY}>
           <Box>
-            <Button size="large" variant="default" mr={4} is={Link} to={urls.rules.edit(rule.id)}>
+            <Button
+              size="large"
+              variant="default"
+              mr={4}
+              is={Link}
+              to={urls.logAnalysis.rules.edit(rule.id)}
+            >
               Edit
             </Button>
             <Button

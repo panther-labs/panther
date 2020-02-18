@@ -21,7 +21,7 @@ import { Box, Button, Flex, Icon } from 'pouncejs';
 import ListInfraSourcesTable from 'Pages/list-sources/subcomponents/infra-source-table';
 import ListLogSourcesTable from 'Pages/list-sources/subcomponents/log-source-table';
 import RoleRestrictedAccess from 'Components/role-restricted-access';
-import { INTEGRATION_TYPES, READONLY_ROLES_ARRAY } from 'Source/constants';
+import { READONLY_ROLES_ARRAY } from 'Source/constants';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/error-boundary';
@@ -40,7 +40,7 @@ const ListSources = () => {
                 size="large"
                 variant="primary"
                 is={Link}
-                to={urls.account.settings.sources.create(INTEGRATION_TYPES.AWS_INFRA)}
+                to={urls.compliance.sources.create()}
               >
                 <Flex alignItems="center">
                   <Icon type="add" size="small" mr={1} />
@@ -65,7 +65,7 @@ const ListSources = () => {
                 size="large"
                 variant="primary"
                 is={Link}
-                to={urls.account.settings.sources.create(INTEGRATION_TYPES.AWS_LOGS)}
+                to={urls.logAnalysis.sources.create()}
               >
                 <Flex alignItems="center">
                   <Icon type="add" size="small" mr={1} />

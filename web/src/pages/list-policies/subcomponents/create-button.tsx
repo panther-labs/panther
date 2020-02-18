@@ -42,7 +42,7 @@ const CreateButton: React.FC = () => {
           </Button>
         }
       >
-        <Dropdown.Item onSelect={() => history.push(urls.policies.create())}>
+        <Dropdown.Item onSelect={() => history.push(urls.compliance.policies.create())}>
           <MenuItem variant="default">Single</MenuItem>
         </Dropdown.Item>
         <Dropdown.Item

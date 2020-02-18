@@ -80,7 +80,7 @@ const CreateRulePage: React.FC = () => {
 
   const { handleSubmit, error } = useCreateRule<ApolloMutationData>({
     mutation,
-    getRedirectUri: data => urls.rules.details(data.addRule.id),
+    getRedirectUri: data => urls.logAnalysis.rules.details(data.addRule.id),
   });
 
   return (
