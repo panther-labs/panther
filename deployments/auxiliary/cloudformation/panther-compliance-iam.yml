@@ -77,6 +77,18 @@ Resources:
                   - cloudformation:DetectStackDrift
                   - cloudformation:DetectStackResourceDrift
                 Resource: '*'
+        - PolicyName: CloudFormationStackDriftDetectionSupplements
+          # These permissions are not directly required for scanning, but are required by AWS in
+          # order to perform CloudFormation Stack drift detection on the corresponding resource types
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:ListTagsForResource
+                  - lambda:GetFunction
+                  - apigateway:GET
+                Resource: '*'
         - PolicyName: GetWAFACLs
           PolicyDocument:
             Version: 2012-10-17
@@ -97,7 +109,6 @@ Resources:
                 Action:
                   - dynamodb:ListTagsOfResource
                   - kms:ListResourceTags
-                  - sns:ListTagsForResource
                   - waf:ListTagsForResource
                   - waf-regional:ListTagsForResource
                 Resource: '*'
