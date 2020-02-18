@@ -26,6 +26,8 @@ _DDB_CLIENT = boto3.client('dynamodb')
 
 # DDB Table attributes and keys
 _PARTITION_KEY_NAME = 'partitionKey'
+_RULE_ID_ATTR_NAME = 'ruleId'
+_DEDUP_STR_ATTR_NAME = 'dedup'
 _ALERT_CREATION_TIME_ATTR_NAME = 'alertCreationTime'
 _ALERT_UPDATE_TIME_ATTR_NAME = 'alertUpdateTime'
 _ALERT_COUNT_ATTR_NAME = 'alertCount'
@@ -62,30 +64,38 @@ def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, r
             'S': _generate_key(rule_id, dedup)
         }},
         # Setting proper values for alertCreationTie, alertUpdateTime,
-        UpdateExpression='SET #1=:1, #2=:2, #3=:3\nADD #4 :4',
-        ConditionExpression='(#5 < :5) OR (attribute_not_exists(#6))',
+        UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5\nADD #6 :6',
+        ConditionExpression='(#7 < :7) OR (attribute_not_exists(#8))',
         ExpressionAttributeNames={
-            '#1': _ALERT_CREATION_TIME_ATTR_NAME,
-            '#2': _ALERT_UPDATE_TIME_ATTR_NAME,
-            '#3': _ALERT_EVENT_COUNT,
-            '#4': _ALERT_COUNT_ATTR_NAME,
-            '#5': _ALERT_CREATION_TIME_ATTR_NAME,
-            '#6': _PARTITION_KEY_NAME,
+            '#1': _RULE_ID_ATTR_NAME,
+            '#2': _DEDUP_STR_ATTR_NAME,
+            '#3': _ALERT_CREATION_TIME_ATTR_NAME,
+            '#4': _ALERT_UPDATE_TIME_ATTR_NAME,
+            '#5': _ALERT_EVENT_COUNT,
+            '#6': _ALERT_COUNT_ATTR_NAME,
+            '#7': _ALERT_CREATION_TIME_ATTR_NAME,
+            '#8': _PARTITION_KEY_NAME,
         },
         ExpressionAttributeValues={
             ':1': {
-                'N': match_time.strftime('%s')
+                'S': rule_id
             },
             ':2': {
-                'N': match_time.strftime('%s')
+                'S': dedup
             },
             ':3': {
-                'N': '{}'.format(num_matches)
+                'N': match_time.strftime('%s')
             },
             ':4': {
-                'N': '1'
+                'N': match_time.strftime('%s')
             },
             ':5': {
+                'N': '{}'.format(num_matches)
+            },
+            ':6': {
+                'N': '1'
+            },
+            ':7': {
                 'N': '{}'.format(int(match_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)
             }
         },

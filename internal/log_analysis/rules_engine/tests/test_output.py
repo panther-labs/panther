@@ -48,29 +48,37 @@ class TestMatchedEventsBuffer(TestCase):
         buffer.flush()
 
         DDB_MOCK.update_item.assert_called_once_with(
-            ConditionExpression='(#5 < :5) OR (attribute_not_exists(#6))',
+            ConditionExpression='(#7 < :7) OR (attribute_not_exists(#8))',
             ExpressionAttributeNames={
-                '#1': 'alertCreationTime',
-                '#2': 'alertUpdateTime',
-                '#3': 'eventCount',
-                '#4': 'alertCount',
-                '#5': 'alertCreationTime',
-                '#6': 'partitionKey'
+                '#1': 'ruleId',
+                '#2': 'dedup',
+                '#3': 'alertCreationTime',
+                '#4': 'alertUpdateTime',
+                '#5': 'eventCount',
+                '#6': 'alertCount',
+                '#7': 'alertCreationTime',
+                '#8': 'partitionKey'
             },
             ExpressionAttributeValues={
                 ':1': {
-                    'N': mock.ANY
+                    'S': 'rule_id'
                 },
                 ':2': {
-                    'N': mock.ANY
+                    'S': 'dedup'
                 },
                 ':3': {
-                    'N': '1'
+                    'N': mock.ANY
                 },
                 ':4': {
-                    'N': '1'
+                    'N': mock.ANY
                 },
                 ':5': {
+                    'N': '1'
+                },
+                ':6': {
+                    'N': '1'
+                },
+                ':7': {
                     'N': mock.ANY
                 }
             },
@@ -79,7 +87,7 @@ class TestMatchedEventsBuffer(TestCase):
             }},
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='SET #1=:1, #2=:2, #3=:3\nADD #4 :4'
+            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5\nADD #6 :6'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)
