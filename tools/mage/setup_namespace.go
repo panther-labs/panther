@@ -41,11 +41,16 @@ var (
 // Setup contains targets for installing development / CI dependencies
 type Setup mg.Namespace
 
-// All Install all development dependencies
+// All Install all development & deployment dependencies
 func (s Setup) All() {
 	s.Go()
 	s.Python()
 	s.Web()
+}
+
+// Deploy Install the necessary dependencies for deployment
+func (s Setup) Deploy() {
+	s.Go()
 }
 
 // Go Install goimports, go-swagger, and golangci-lint
