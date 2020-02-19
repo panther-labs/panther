@@ -21,17 +21,13 @@ import { Link } from 'react-router-dom';
 import { Badge, Box, Button, Grid, Icon, Label, Text } from 'pouncejs';
 import { formatDatetime } from 'Helpers/utils';
 import Panel from 'Components/panel';
+import Linkify from 'Components/linkify';
 import { RuleDetails } from 'Generated/schema';
 import { SEVERITY_COLOR_MAP, READONLY_ROLES_ARRAY } from 'Source/constants';
-import { LinkifyProps } from 'linkifyjs/react';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
 import RoleRestrictedAccess from 'Components/role-restricted-access';
-
-const Linkify = React.lazy(() =>
-  import(/* webpackChunkName: "linkify" */ 'linkifyjs/react.js')
-) as React.FC<LinkifyProps>;
 
 interface ResourceDetailsInfoProps {
   rule?: RuleDetails;
@@ -105,13 +101,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             REFERENCE
           </Label>
           <Text size="medium" color={rule.reference ? 'blue300' : 'grey200'}>
-            {rule.reference ? (
-              <a href={rule.reference} target="_blank" rel="noopener noreferrer">
-                {rule.reference}
-              </a>
-            ) : (
-              'No reference found'
-            )}
+            <Linkify>{rule.reference || 'No reference found'}</Linkify>
           </Text>
         </Box>
         <Box my={1}>
@@ -135,9 +125,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             DESCRIPTION
           </Label>
           <Text size="medium" color={rule.description ? 'black' : 'grey200'}>
-            <React.Suspense fallback={<span>{rule.description}</span>}>
-              <Linkify>{rule.description || 'No description available'}</Linkify>
-            </React.Suspense>
+            <Linkify>{rule.description || 'No description available'}</Linkify>
           </Text>
         </Box>
         <Box my={1}>
@@ -145,9 +133,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             RUNBOOK
           </Label>
           <Text size="medium" color={rule.runbook ? 'black' : 'grey200'}>
-            <React.Suspense fallback={<span>{rule.runbook}</span>}>
-              <Linkify>{rule.runbook || 'No runbook available'}</Linkify>
-            </React.Suspense>
+            <Linkify>{rule.runbook || 'No runbook available'}</Linkify>
           </Text>
         </Box>
         <Box my={1}>

@@ -65,12 +65,7 @@ Parameters:
 
   AppDomainURL:
     Type: String
-    Description: Panther App Domain used as a link for the customer in the invitation email
-    Default: app.runpanther.io
-  SesSourceEmailArn:
-    Type: String
-    Description: The ARN of a verified email address in Amazon SES
-    Default: ''
+    Description: Panther App Domain used as a link for the customer in the password reset email
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -110,9 +105,6 @@ Resources:
           DEBUG: !Ref Debug
           USERS_TABLE_NAME: !Ref UsersTable
           ORGANIZATIONS_API: !Ref OrganizationAPIFunction
-          CUSTOM_MESSAGES_TRIGGER_HANDLER: !GetAtt CustomMessageTriggerFunction.Arn
-          APP_DOMAIN_URL: !Ref AppDomainURL
-          SES_SOURCE_EMAIL_ARN: !Ref SesSourceEmailArn
       FunctionName: panther-users-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -176,7 +168,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ../../out/bin/internal/core/custom_message/main
-      Description: Custom Message trigger for Cognito user events
+      Description: Custom message trigger for Cognito user events
       Environment:
         Variables:
           DEBUG: !Ref Debug
@@ -252,3 +244,8 @@ Resources:
                 - dynamodb:*Item
                 - dynamodb:Scan
               Resource: !GetAtt OrganizationTable.Arn
+
+Outputs:
+  CustomMessageTriggerFunctionArn:
+    Description: Lambda function for custom Cognito message triggers
+    Value: !GetAtt CustomMessageTriggerFunction.Arn

@@ -138,12 +138,6 @@ func deployPrecheck(awsRegion string) {
 	if !supportedRegions[awsRegion] {
 		logger.Fatalf("panther is not supported in %s region", awsRegion)
 	}
-
-	// Ensure swagger is installed
-	swagger := filepath.Join(setupDirectory, "swagger")
-	if _, err := os.Stat(swagger); err != nil {
-		logger.Fatalf("%s not found (%v): run 'mage setup:all'", swagger, err)
-	}
 }
 
 // Generate the set of deploy parameters for the main application stack.

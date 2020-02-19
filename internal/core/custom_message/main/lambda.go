@@ -28,6 +28,7 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+// TODO - merge this with users-api
 func lambdaHandler(ctx context.Context, event *events.CognitoEventUserPoolsCustomMessage) (
 	*events.CognitoEventUserPoolsCustomMessage, error) {
 
