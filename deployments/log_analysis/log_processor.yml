@@ -123,10 +123,10 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              # This policy allows the log processor to confirm SNS->SQS subscriptions
-              # to the panther-input-data-notifications queue. Note that by default SQS queue policy blacklists all accounts
-              # from subscribing to it. When a user onboards a log source, they specify an AWS Account ID they want to onboard logs from
-              # and this whitelists that AWS Account.
+              # This policy allows the log processor to confirm SNS->SQS subscriptions to the panther-input-data-notifications queue.
+              # Note that by default SQS queue policy blocks all accounts from subscribing to it.
+              # When a user onboards a log source, they specify an AWS Account ID they want to onboard logs from.
+              # This account will be whitelisted and SNS topic from it can subscribe to the SQS queue.
               Action: sns:ConfirmSubscription
               Resource: '*'
         - Id: ReceiveFromInputSqsQueue
