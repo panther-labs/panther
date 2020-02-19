@@ -144,6 +144,7 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           APP_DOMAIN_URL: !Ref AppDomainURL
+          USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-cognito-custom-message-trigger
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

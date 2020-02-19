@@ -39,7 +39,7 @@ func (m *mockDynamoClient) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamod
 	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
 }
 
-func TestUpdateDoesntNotExist(t *testing.T) {
+func TestUpdateDoesNotExist(t *testing.T) {
 	mockClient := &mockDynamoClient{}
 	returnErr := awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "", nil)
 	mockClient.On("UpdateItem", mock.Anything).Return(
