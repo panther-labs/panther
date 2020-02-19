@@ -56,7 +56,7 @@ type Alert struct {
 	// Tags is the set of policy tags.
 	Tags []*string `json:"tags,omitempty"`
 
-	// ID specifies the alertId that this Alert is associated with.
+	// AlertID specifies the alertId that this Alert is associated with.
 	AlertID *string `json:"alertId,omitempty"`
 
 	// Type specifies if an alert is for a policy or a rule
