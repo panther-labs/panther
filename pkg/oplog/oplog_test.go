@@ -163,7 +163,7 @@ func TestOperationLogBeforeStop(t *testing.T) {
 
 func TestOperationWithMemStats(t *testing.T) {
 	logs := mockLogger()
-	op := NewManager(testNamespace, testComponent).Start(testOperation).WithMemStats()
+	op := NewManager(testNamespace, testComponent).Start(testOperation).WithMemStats().WithMemUsed(10)
 	require.NotNil(t, op.StartMemStats)
 	op.Stop()
 	op.LogSuccess()
@@ -174,4 +174,5 @@ func TestOperationWithMemStats(t *testing.T) {
 	assert.NotNil(t, logMap["gcPercent"])
 	assert.NotNil(t, logMap["gcPauseMilliseconds"])
 	assert.NotNil(t, logMap["gcCycles"])
+	assert.NotNil(t, logMap["percentMemUsed"])
 }

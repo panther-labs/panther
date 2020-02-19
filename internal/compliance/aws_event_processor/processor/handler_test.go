@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
@@ -31,8 +32,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"go.uber.org/zap/zaptest/observer"
 
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
@@ -124,6 +123,10 @@ const (
 `
 )
 
+var (
+	testContext = &lambdacontext.LambdaContext{AwsRequestID: "test-request-id"}
+)
+
 // Invalid sqs message is dropped and logged
 func TestHandleInvalid(t *testing.T) {
 	logs := mockLogger()
@@ -140,26 +143,11 @@ func TestHandleInvalid(t *testing.T) {
 			{Body: `{this is " not even valid JSON:`},
 		},
 	}
-	require.Nil(t, Handle(batch))
-
-	expected := []observer.LoggedEntry{
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "populating account cache"},
-			Context: []zapcore.Field{},
-		},
-		{
-			Entry: zapcore.Entry{Level: zapcore.InfoLevel, Message: "invoking Lambda function"},
-			Context: []zapcore.Field{
-				zap.String("name", "panther-snapshot-api"),
-				zap.Int("bytes", 230),
-			},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.WarnLevel, Message: "unexpected SNS message"},
-			Context: []zapcore.Field{},
-		},
-	}
-	assert.Equal(t, expected, logs.AllUntimed())
+	require.Nil(t, Handle(testContext, batch))
+	t.Log(logs.AllUntimed())
+	require.Equal(t, 1, len(logs.FilterField(zap.String("body", `{this is " not even valid JSON:`)).AllUntimed()))
+	assert.Equal(t, logs.FilterField(zap.String("body", `{this is " not even valid JSON:`)).AllUntimed()[0].ContextMap()["error"].(string),
+		"unexpected SNS message")
 }
 
 // Handle sns confirmation end-to-end
@@ -190,34 +178,15 @@ func TestHandleConfirmation(t *testing.T) {
 			{Body: sampleConfirmation},
 		},
 	}
-	require.Nil(t, Handle(batch))
 
-	expected := []observer.LoggedEntry{
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "populating account cache"},
-			Context: []zapcore.Field{},
-		},
-		{
-			Entry: zapcore.Entry{Level: zapcore.InfoLevel, Message: "invoking Lambda function"},
-			Context: []zapcore.Field{
-				zap.String("name", "panther-snapshot-api"),
-				zap.Int("bytes", 230),
-			},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "processing SNS confirmation"},
-			Context: []zapcore.Field{},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "confirming sns subscription"},
-			Context: []zapcore.Field{zap.String("topicArn", *expectedInput.TopicArn)},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "sns subscription confirmed successfully"},
-			Context: []zapcore.Field{zap.String("subscriptionArn", *output.SubscriptionArn)},
-		},
-	}
-	assert.Equal(t, expected, logs.AllUntimed())
+	require.Nil(t, Handle(testContext, batch))
+	assert.Equal(t, 1, len(logs.FilterMessage("processing SNS confirmation").AllUntimed()))
+	require.Equal(t, 1, len(logs.FilterMessage("confirming sns subscription").AllUntimed()))
+	assert.Equal(t, logs.FilterMessage("confirming sns subscription").AllUntimed()[0].ContextMap()["topicArn"].(string),
+		*expectedInput.TopicArn)
+	require.Equal(t, 1, len(logs.FilterMessage("sns subscription confirmed successfully").AllUntimed()))
+	assert.Equal(t, logs.FilterMessage("sns subscription confirmed successfully").AllUntimed()[0].ContextMap()["subscriptionArn"].(string),
+		*output.SubscriptionArn)
 }
 
 // Handle update end-to-end
@@ -281,7 +250,7 @@ func TestHandleUpdate(t *testing.T) {
 			{Body: wrappedUpdate}, // same resource - only one entry should be queued for scanning
 		},
 	}
-	require.Nil(t, Handle(batch))
+	require.Nil(t, Handle(testContext, batch))
 	mockSqsClient.AssertExpectations(t)
 
 	expectedChange := &resourceChange{
@@ -292,49 +261,17 @@ func TestHandleUpdate(t *testing.T) {
 		ResourceID:    "arn:aws:s3:::austin-panther",
 		ResourceType:  schemas.S3BucketSchema,
 	}
-	expectedLogs := []observer.LoggedEntry{
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "populating account cache"},
-			Context: []zapcore.Field{},
-		},
-		{
-			Entry: zapcore.Entry{Level: zapcore.InfoLevel, Message: "invoking Lambda function"},
-			Context: []zapcore.Field{
-				zap.String("name", "panther-snapshot-api"),
-				zap.Int("bytes", 230),
-			},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "processing raw CloudTrail"},
-			Context: []zapcore.Field{},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource change required"},
-			Context: []zapcore.Field{zap.Any("changeDetail", expectedChange)},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "processing SNS notification"},
-			Context: []zapcore.Field{},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource change required"},
-			Context: []zapcore.Field{zap.Any("changeDetail", expectedChange)},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "queueing resource scans"},
-			Context: []zapcore.Field{zap.Any("updateRequest", &expectedRequest)},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "starting sqsbatch.SendMessageBatch"},
-			Context: []zapcore.Field{zap.Any("totalEntries", 1)},
-		},
-		{
-			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "invoking sqs.SendMessageBatch"},
-			Context: []zapcore.Field{zap.Any("entries", 1)},
-		},
-	}
 
-	// The last log message refers to the duration time of the SendMessageBatch which we can't know
-	assert.Len(t, logs.AllUntimed(), 10)
-	assert.Equal(t, expectedLogs, logs.AllUntimed()[:9])
+	assert.Equal(t, 2, len(logs.FilterMessage("resource change required").AllUntimed()))
+	for _, log := range logs.FilterMessage("resource change required").AllUntimed() {
+		actualChange := log.ContextMap()["changeDetail"].(*resourceChange)
+		assert.Equal(t, expectedChange, actualChange)
+	}
+	assert.Equal(t, 1, len(logs.FilterMessage("queueing resource scans").AllUntimed()))
+	for _, log := range logs.FilterMessage("queueing resource scans").AllUntimed() {
+		actualRequest := log.ContextMap()["updateRequest"].(*poller.ScanMsg)
+		assert.Equal(t, &expectedRequest, actualRequest)
+	}
+	assert.Equal(t, 1, len(logs.FilterMessage("starting sqsbatch.SendMessageBatch").AllUntimed()))
+	assert.Equal(t, 1, len(logs.FilterMessage("invoking sqs.SendMessageBatch").AllUntimed()))
 }

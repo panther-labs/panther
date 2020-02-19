@@ -20,6 +20,7 @@ package genericapi
 import (
 	"reflect"
 
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
@@ -69,10 +70,9 @@ func (r *Router) Handle(input interface{}) (output interface{}, err error) {
 		return nil, err
 	}
 
-	operation := oplog.NewManager(r.namespace, r.component).Start(req.route)
+	operation := oplog.NewManager(r.namespace, r.component).Start(req.route).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
-		operation.Stop()
-		operation.Log(err, zap.Any("input", redactedInput(req.input)))
+		operation.Stop().Log(err, zap.Any("input", redactedInput(req.input)))
 	}()
 
 	if err = r.validate.Struct(input); err != nil {
