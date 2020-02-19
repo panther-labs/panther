@@ -240,7 +240,8 @@ Resources:
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
-
+        SnsTopicArn: !Ref ProcessedDataNotifications
+        ProcessedDataBucket: !Ref ProcessedData
         ResourcesApiId: !GetAtt ResourcesAPI.Outputs.GatewayId
         SQSKeyId: !Ref QueueEncryptionKey
       TemplateURL: compliance/aws_event_processor.yml
@@ -253,7 +254,6 @@ Resources:
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
-
         ResourcesApiId: !GetAtt ResourcesAPI.Outputs.GatewayId
         SQSKeyId: !Ref QueueEncryptionKey
       TemplateURL: compliance/snapshot.yml

@@ -19,19 +19,25 @@ package processor
  */
 
 import (
+	"bufio"
+	"compress/gzip"
+	"io"
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
 	api "github.com/panther-labs/panther/api/gateway/resources/models"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 
@@ -53,45 +59,75 @@ func Handle(batch *events.SQSEvent) error {
 		return err
 	}
 
+	// Using gjson to get only the fields we need is > 10x faster than running json.Unmarshal multiple times
+	//
+	// Since we don't want one bad notification to lose us the rest, we log failures and continue.
 	for _, record := range batch.Records {
-		// Using gjson to get only the fields we need is > 10x faster than running json.Unmarshal multiple times
-		// TODO: Update this switch statement to handle SNS notifications indicating the need to download logs from s3
-		switch gjson.Get(record.Body, "Type").Str {
-		case "Notification": // sns wrapped message
-			zap.L().Debug("wrapped sns message - assuming cloudtrail is in Message field")
-			handleCloudtrail(gjson.Get(record.Body, "Message").Str, changes)
+		// SNS raw message delivery of CloudTrail
+		detail := gjson.Get(record.Body, "detail")
+		if detail.Exists() {
+			zap.L().Debug("processing raw CloudTrail")
+			err := processCloudTrail(detail, changes)
+			if err != nil {
+				zap.L().Error("error processing raw CloudTrail", zap.Error(errors.WithStack(err)))
+			}
+			continue
+		}
 
-		case "SubscriptionConfirmation": // sns confirmation message
+		// This case is checking for a notification from the log processor that there is newly processed CloudTrail logs
+		results := gjson.GetMany(record.Body, "s3Bucket", "s3ObjectKey")
+		if results[0].Exists() && results[1].Exists() {
+			zap.L().Debug("SNS message was an S3 Notification, initiating download")
+			object := &sources.S3ObjectInfo{
+				S3Bucket:    results[0].Str,
+				S3ObjectKey: results[1].Str,
+			}
+			err := processS3Download(object, changes)
+			if err != nil {
+				return err
+			}
+		}
+
+		// If both the prior cases failed, this must be an SNS Notification or invalid input
+		switch gjson.Get(record.Body, "Type").Str {
+		case "Notification": // SNS notification
+			// This case is checking for CloudTrail logs directly wrapped in SNS Events
+			zap.L().Debug("processing SNS notification")
+			message := gjson.Get(record.Body, "Message").Str
+			detail := gjson.Get(message, "detail")
+			err := processCloudTrail(detail, changes)
+			if err != nil {
+				zap.L().Error("error processing SNS wrapped CloudTrail", zap.Error(errors.WithStack(err)))
+			}
+		case "SubscriptionConfirmation": // SNS confirmation message
+			zap.L().Debug("processing SNS confirmation")
 			topicArn, err := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
 			if err != nil {
 				zap.L().Warn("invalid confirmation arn", zap.Error(err))
 				continue
 			}
-
 			token := gjson.Get(record.Body, "Token").Str
 			if err = handleSnsConfirmation(topicArn, &token); err != nil {
 				return err
 			}
-
-		case "": // raw data
-			handleCloudtrail(record.Body, changes)
 		default: // Unexpected type
-			zap.L().Warn("unexpected record type",
-				zap.String("type", gjson.Get(record.Body, "Type").Str),
-				zap.String("body", record.Body),
-			)
-			continue
+			zap.L().Warn("unexpected SNS message")
 		}
 	}
 
 	return submitChanges(changes)
 }
 
-func handleCloudtrail(body string, changes map[string]*resourceChange) {
-	// this event potentially requires a change to some number of resources
-	for _, summary := range classifyCloudTrailLog(body) {
+func processCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
+	if !cloudtrail.Exists() {
+		return errors.WithStack(errors.New("dropping bad event"))
+	}
+
+	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)
+	for _, summary := range classifyCloudTrailLog(cloudtrail) {
 		zap.L().Info("resource change required", zap.Any("changeDetail", summary))
 		// Prevents the following from being de-duped mistakenly:
+		//
 		// Resources with the same ID in different regions (different regions)
 		// Service scans in the same region (different resource types)
 		// Resources with the same type in the same region (different resource IDs)
@@ -100,6 +136,41 @@ func handleCloudtrail(body string, changes map[string]*resourceChange) {
 			changes[key] = summary // the newest event for this resource we've seen so far
 		}
 	}
+	return nil
+}
+
+func processS3Download(object *sources.S3ObjectInfo, changes map[string]*resourceChange) error {
+	logs, err := s3Svc.GetObject(&s3.GetObjectInput{
+		Bucket: &object.S3Bucket,
+		Key:    &object.S3ObjectKey,
+	})
+	if err != nil {
+		return errors.Wrap(err, "error reading CloudTrail from S3")
+	}
+
+	reader, err := gzip.NewReader(bufio.NewReader(logs.Body))
+	if err != nil {
+		return errors.Wrap(err, "error creating gzip reader for S3 output")
+	}
+
+	stream := bufio.NewReader(reader)
+	for {
+		var line string
+		line, err = stream.ReadString('\n')
+		if err != nil {
+			if err == io.EOF { // we are done
+				err = nil
+			}
+			break
+		}
+		// Since we don't wont to lose an entire batch of logs to one bad message, we just log failures and continue
+		err = processCloudTrail(gjson.Parse(line), changes)
+		if err != nil {
+			zap.L().Error("error processing CloudTrail from S3", zap.Error(errors.WithStack(err)))
+		}
+	}
+
+	return err
 }
 
 func submitChanges(changes map[string]*resourceChange) error {
@@ -116,7 +187,7 @@ func submitChanges(changes map[string]*resourceChange) error {
 			// ID = “”, region =“”:				Account wide service scan; use sparingly
 			// ID = “”, region =“west”:			Region wide service scan
 			// ID = “abc-123”, region =“”:		Single resource scan
-			// ID = “abc-123”, region =“west”:	Undefined in spec, treated as single resource scan
+			// ID = “abc-123”, region =“west”:	Undefined, treated as single resource scan
 			var resourceID *string
 			var region *string
 			if change.ResourceID != "" {
