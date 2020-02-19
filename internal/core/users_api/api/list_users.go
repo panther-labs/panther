@@ -32,7 +32,7 @@ func (API) ListUsers(input *models.ListUsersInput) (*models.ListUsersOutput, err
 	}
 
 	for _, user := range listOutput.Users {
-		user.Role = aws.String("Admin")
+		user.Role = aws.String(roleName)
 	}
 
 	return &models.ListUsersOutput{
