@@ -48,7 +48,7 @@ class Engine:
         for rule in self.log_type_to_rules[log_type]:
             result = rule.run(event)
             if result.exception:
-                self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, result.exception)
+                self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, repr(result.exception))
                 continue
             if result.matched:
                 match = EventMatch(
