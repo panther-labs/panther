@@ -23,6 +23,7 @@ import Routes from 'Source/routes';
 import { History } from 'history';
 import { ApolloProvider } from '@apollo/client';
 import { AuthProvider } from 'Components/utils/auth-context';
+import PromptController from 'Components/utils/prompt-controller';
 import { ModalProvider } from 'Components/utils/modal-context';
 import { SidesheetProvider } from 'Components/utils/sidesheet-context';
 import ModalManager from 'Components/utils/modal-manager';
@@ -47,6 +48,7 @@ const App: React.FC<AppProps> = ({ history }) => {
                     <Routes />
                     <ModalManager />
                     <SidesheetManager />
+                    <PromptController />
                   </SnackbarProvider>
                 </ModalProvider>
               </SidesheetProvider>

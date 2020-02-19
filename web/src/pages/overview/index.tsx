@@ -116,7 +116,7 @@ const Overview: React.FC = () => {
     return (
       <Alert
         variant="error"
-        title="We can\'t display this content right now"
+        title="We can't display this content right now"
         description={extractErrorMessage(error)}
       />
     );

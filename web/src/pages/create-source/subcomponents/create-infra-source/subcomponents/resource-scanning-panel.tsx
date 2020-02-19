@@ -18,6 +18,7 @@
 
 import { Button, Text, Flex, Box, Heading } from 'pouncejs';
 import React from 'react';
+import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 
 const ResourceScanningPanel: React.FC = () => {
   const cfnConsoleLink =
@@ -41,7 +42,7 @@ const ResourceScanningPanel: React.FC = () => {
         <a
           target="_blank"
           rel="noopener noreferrer"
-          href="https://docs.runpanther.io/amazon-web-services/aws-setup/scanning"
+          href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/scanning`}
         >
           documentation
         </a>{' '}

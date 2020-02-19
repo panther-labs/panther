@@ -25,7 +25,7 @@ import (
 	"github.com/matcornic/hermes"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/core/users_api/email"
+	"github.com/panther-labs/panther/internal/core/custom_message/email"
 )
 
 func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
@@ -56,7 +56,7 @@ If you did not request a password reset, you can ignore this email.`,
 				},
 			},
 			Outros: []string{
-				"Need help, or have questions? Just reply to this email, we'd love to help.",
+				"Need help, or have questions? Just email us at support@runpanther.io, we'd love to help.",
 			},
 		},
 	}
