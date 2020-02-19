@@ -20,8 +20,6 @@ package processor
  */
 
 import (
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -33,6 +31,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
@@ -146,8 +145,8 @@ func TestHandleInvalid(t *testing.T) {
 	}
 	require.Nil(t, Handle(testContext, batch))
 	t.Log(logs.AllUntimed())
-	require.Equal(t, 1, len(logs.FilterField(zap.String("body",`{this is " not even valid JSON:`)).AllUntimed()))
-	assert.Equal(t, logs.FilterField(zap.String("body",`{this is " not even valid JSON:`)).AllUntimed()[0].ContextMap()["error"].(string),
+	require.Equal(t, 1, len(logs.FilterField(zap.String("body", `{this is " not even valid JSON:`)).AllUntimed()))
+	assert.Equal(t, logs.FilterField(zap.String("body", `{this is " not even valid JSON:`)).AllUntimed()[0].ContextMap()["error"].(string),
 		"unexpected SNS message")
 }
 
