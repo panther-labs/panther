@@ -67,7 +67,7 @@ type EventInfo struct {
 	Systemname         *string   `json:"systemname,omitempty" description:"Systemname"`
 	URL                *string   `json:"url,omitempty" description:"URL"`
 
-	// Deliberatley ommited because duplicate case insensitive keys cause problems in Athena
+	// Deliberately ommited because duplicate case insensitive keys cause problems in Athena
 	// TimestampString    *string                    `json:"timestamp,omitempty" description:"TimestampString"`
 
 	// NOTE: added to end of struct to allow expansion later
