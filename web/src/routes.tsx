@@ -24,10 +24,6 @@ import ListResourcesPage from 'Pages/list-resources';
 import ResourceDetailsPage from 'Pages/resource-details';
 import PolicyDetailsPage from 'Pages/policy-details';
 import GeneralSettingsPage from 'Pages/general-settings';
-/* eslint-disable */
-import SourcesPage from 'Pages/list-sources';
-import CreateSourcesPage from 'Pages/create-source';
-/* eslint-enable */
 import SignInPage from 'Pages/sign-in';
 import DestinationsPage from 'Pages/destinations';
 import UsersPage from 'Pages/users';
@@ -40,6 +36,10 @@ import EditPolicyPage from 'Pages/edit-policy';
 import CreatePolicyPage from 'Pages/create-policy';
 import ListAlertsPage from 'Pages/list-alerts';
 import Layout from 'Components/layout';
+import CreateComplianceSourcePage from 'Pages/create-compliance-source';
+import CreateLogSourcePage from 'Pages/create-log-source';
+import ListComplianceSourcesPagee from 'Pages/list-compliance-sources';
+import ListLogSourcesPage from 'Pages/list-log-sources';
 import urls from 'Source/urls';
 import GuardedRoute from 'Components/guarded-route';
 import ForgotPasswordPage from 'Pages/forgot-password';
@@ -104,8 +104,16 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.compliance.resources.details(':id')}
                   component={ResourceDetailsPage}
                 />
-                <Route exact path={urls.compliance.sources.list()} component={null} />
-                <Route exact path={urls.compliance.sources.create()} component={null} />
+                <Route
+                  exact
+                  path={urls.compliance.sources.list()}
+                  component={ListComplianceSourcesPagee}
+                />
+                <Route
+                  exact
+                  path={urls.compliance.sources.create()}
+                  component={CreateComplianceSourcePage}
+                />
                 /******************** LOG ANALYSIS ******************************/
                 <Route exact path={urls.logAnalysis.overview()} component={null} />
                 <Route exact path={urls.logAnalysis.rules.list()} component={ListRulesPage} />
@@ -122,8 +130,16 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.logAnalysis.alerts.details(':id')}
                   component={AlertDetailsPage}
                 />
-                <Route exact path={urls.logAnalysis.sources.list()} component={null} />
-                <Route exact path={urls.logAnalysis.sources.create()} component={null} />
+                <Route
+                  exact
+                  path={urls.logAnalysis.sources.list()}
+                  component={ListLogSourcesPage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.sources.create()}
+                  component={CreateLogSourcePage}
+                />
                 /******************** SETTINGS ******************************/
                 <Route
                   exact

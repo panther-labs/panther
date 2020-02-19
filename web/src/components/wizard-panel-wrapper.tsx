@@ -20,19 +20,19 @@ import React from 'react';
 import { WizardRenderStepParams } from 'Components/wizard';
 import { Box, Button, Flex } from 'pouncejs';
 
-interface PanelWrapperWizardActionsProps {
+interface WizardPanelWrapperProps {
   goToPrevStep?: WizardRenderStepParams<{}>['goToPrevStep'];
   goToNextStep?: WizardRenderStepParams<{}>['goToNextStep'];
   isNextStepDisabled?: boolean;
   isPrevStepDisabled?: boolean;
 }
 
-interface PanelWrapperComposition {
-  WizardActions: React.FC<PanelWrapperWizardActionsProps>;
+interface WizardPanelWrapperComposition {
+  Actions: React.FC<WizardPanelWrapperProps>;
   Content: React.FC;
 }
 
-const PanelWrapper: React.FC & PanelWrapperComposition = ({ children }) => {
+const WizardPanelWrapper: React.FC & WizardPanelWrapperComposition = ({ children }) => {
   return (
     <Flex minHeight={550} flexDirection="column">
       {children}
@@ -40,7 +40,7 @@ const PanelWrapper: React.FC & PanelWrapperComposition = ({ children }) => {
   );
 };
 
-const PanelWrapperContent: React.FC = ({ children }) => {
+const WizardPanelWrapperContent: React.FC = ({ children }) => {
   return (
     <Box width={600} m="auto">
       {children}
@@ -48,7 +48,7 @@ const PanelWrapperContent: React.FC = ({ children }) => {
   );
 };
 
-const PanelWrapperWizardActions: React.FC<PanelWrapperWizardActionsProps> = ({
+const WizardPanelWrapperActions: React.FC<WizardPanelWrapperProps> = ({
   isNextStepDisabled,
   isPrevStepDisabled,
   goToPrevStep,
@@ -76,7 +76,7 @@ const PanelWrapperWizardActions: React.FC<PanelWrapperWizardActionsProps> = ({
   );
 };
 
-PanelWrapper.Content = PanelWrapperContent;
-PanelWrapper.WizardActions = PanelWrapperWizardActions;
+WizardPanelWrapper.Content = WizardPanelWrapperContent;
+WizardPanelWrapper.Actions = WizardPanelWrapperActions;
 
-export default PanelWrapper;
+export default WizardPanelWrapper;

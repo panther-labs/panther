@@ -19,9 +19,11 @@
 import React from 'react';
 import { useQuery, gql } from '@apollo/client';
 import { Integration } from 'Generated/schema';
-import columns from 'Pages/list-sources/infra-source-columns';
 import { INTEGRATION_TYPES } from 'Source/constants';
-import BaseSourceTable from 'Pages/list-sources/subcomponents/base-source-table';
+import TablePlaceholder from 'Components/table-placeholder';
+import { Alert, Table } from 'pouncejs';
+import { extractErrorMessage } from 'Helpers/utils';
+import columns from '../compliance-source-columns';
 
 export const LIST_INFRA_SOURCES = gql`
   query ListInfraSources {
@@ -40,12 +42,35 @@ export const LIST_INFRA_SOURCES = gql`
   }
 `;
 
-const InfraSourceTable = () => {
-  const query = useQuery<{ integrations: Integration[] }>(LIST_INFRA_SOURCES, {
+const ComplianceSourceTable = () => {
+  const { loading, error, data } = useQuery<{ integrations: Integration[] }>(LIST_INFRA_SOURCES, {
     fetchPolicy: 'cache-and-network',
   });
 
-  return <BaseSourceTable query={query} columns={columns} />;
+  if (loading && !data) {
+    return <TablePlaceholder />;
+  }
+
+  if (error) {
+    return (
+      <Alert
+        variant="error"
+        title="Couldn't load your sources"
+        description={
+          extractErrorMessage(error) ||
+          'There was an error when performing your request, please contact support@runpanther.io'
+        }
+      />
+    );
+  }
+
+  return (
+    <Table<Integration>
+      items={data.integrations}
+      getItemKey={item => item.integrationId}
+      columns={columns}
+    />
+  );
 };
 
-export default React.memo(InfraSourceTable);
+export default React.memo(ComplianceSourceTable);

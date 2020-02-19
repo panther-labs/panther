@@ -17,19 +17,31 @@
  */
 
 import React from 'react';
-import { Alert, Table, TableProps } from 'pouncejs';
+import { useQuery, gql } from '@apollo/client';
 import { Integration } from 'Generated/schema';
+import { INTEGRATION_TYPES } from 'Source/constants';
 import TablePlaceholder from 'Components/table-placeholder';
+import { Alert, Table } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
-import { QueryResult } from '@apollo/client';
+import columns from '../log-source-columns';
 
-interface BaseSourceTableProps {
-  query: QueryResult<{ integrations: Integration[] }, {}>;
-  columns: TableProps<Integration>['columns'];
-}
+export const LIST_LOG_SOURCES = gql`
+  query ListLogSources {
+    integrations(input: { integrationType: "${INTEGRATION_TYPES.AWS_LOGS}" }) {
+      awsAccountId
+      createdAtTime
+      integrationId
+      integrationLabel
+      integrationType
+      s3Buckets
+    }
+  }
+`;
 
-const BaseSourceTable: React.FC<BaseSourceTableProps> = ({ query, columns }) => {
-  const { loading, error, data } = query;
+const LogSourceTable = () => {
+  const { loading, error, data } = useQuery<{ integrations: Integration[] }>(LIST_LOG_SOURCES, {
+    fetchPolicy: 'cache-and-network',
+  });
 
   if (loading && !data) {
     return <TablePlaceholder />;
@@ -57,4 +69,4 @@ const BaseSourceTable: React.FC<BaseSourceTableProps> = ({ query, columns }) => 
   );
 };
 
-export default BaseSourceTable;
+export default React.memo(LogSourceTable);

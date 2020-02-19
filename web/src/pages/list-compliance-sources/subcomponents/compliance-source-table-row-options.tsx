@@ -26,11 +26,13 @@ import { SIDESHEETS } from 'Components/utils/sidesheet-context';
 import RoleRestrictedAccess from 'Components/role-restricted-access';
 import { READONLY_ROLES_ARRAY } from 'Source/constants';
 
-interface ListSourcesTableRowOptionsProps {
+interface ComplianceSourceTableRowOptionsProps {
   source: Integration;
 }
 
-const ListSourcesTableRowOptions: React.FC<ListSourcesTableRowOptionsProps> = ({ source }) => {
+const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsProps> = ({
+  source,
+}) => {
   const { showModal } = useModal();
   const { showSidesheet } = useSidesheet();
 
@@ -68,4 +70,4 @@ const ListSourcesTableRowOptions: React.FC<ListSourcesTableRowOptionsProps> = ({
   );
 };
 
-export default React.memo(ListSourcesTableRowOptions);
+export default React.memo(ComplianceSourceTableRowOptions);
