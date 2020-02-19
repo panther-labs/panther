@@ -217,8 +217,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "resetUserPassword": {
-              "id": $ctx.args.id,
-              "userPoolId": $ctx.identity.claims.iss.split("/")[-1]
+              "id": $ctx.args.id
             }
           })
         }
@@ -239,7 +238,6 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userPoolId", $ctx.identity.claims.iss.split("/")[-1]))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -268,8 +266,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "removeUser": {
-              "id": $ctx.args.id,
-              "userPoolId": $ctx.identity.claims.iss.split("/")[-1]
+              "id": $ctx.args.id
             }
           })
         }
@@ -293,9 +290,7 @@ Resources:
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "listUsers": {
-              "userPoolId": $ctx.identity.claims.iss.split("/")[-1]
-            }
+            "listUsers": {}
           })
         }
       ResponseMappingTemplate: |
@@ -315,7 +310,6 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userPoolId", $ctx.identity.claims.iss.split("/")[-1]))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
