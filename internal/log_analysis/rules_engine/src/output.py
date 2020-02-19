@@ -133,8 +133,7 @@ def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> No
     data_stream.seek(0)
     output_uuid = uuid.uuid4()
     object_key = _KEY_FORMAT.format(
-        key.log_type, time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT),
-        output_uuid
+        key.log_type, time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT), output_uuid
     )
 
     byte_size = data_stream.getbuffer().nbytes
@@ -142,8 +141,7 @@ def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> No
     _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
     # Send notification to SNS topic
-    notification = OutputNotification(s3Bucket=_S3_BUCKET, s3ObjectKey=object_key, events=len(events), bytes=byte_size,
-                                      id=key.rule_id)
+    notification = OutputNotification(s3Bucket=_S3_BUCKET, s3ObjectKey=object_key, events=len(events), bytes=byte_size, id=key.rule_id)
 
     # MessageAttributes are required so that subscribers to SNS topic
     # can filter events in the subscription

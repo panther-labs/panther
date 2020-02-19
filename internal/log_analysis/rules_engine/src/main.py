@@ -77,6 +77,7 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
     return results
 
 
+# pylint: disable=too-many-locals
 def log_analysis(event: Dict[str, Any]) -> None:
     """Runs log analysis"""
 
@@ -115,7 +116,7 @@ def log_analysis(event: Dict[str, Any]) -> None:
         _LOGGER.info("no matches found")
     output_buffer.flush()
     end = default_timer()
-    _LOGGER.info("Matched {} events in {} seconds".format(len(matched), end - start))
+    _LOGGER.info("Matched %d events in %s seconds", len(matched), end - start)
 
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all

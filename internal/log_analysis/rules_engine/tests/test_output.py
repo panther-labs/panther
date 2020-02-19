@@ -83,7 +83,7 @@ class TestMatchedEventsBuffer(TestCase):
                 }
             },
             Key={'partitionKey': {
-                'S': 'rule_id-dedup'
+                'S': 'rule_id:dedup'
             }},
             ReturnValues='ALL_NEW',
             TableName='table_name',
@@ -109,12 +109,12 @@ class TestMatchedEventsBuffer(TestCase):
             TopicArn='sns_topic',
             Message=mock.ANY,
             MessageAttributes={
-                "type": {
-                    "DataType": "String",
+                'type': {
+                    'DataType': 'String',
                     'StringValue': 'RuleOutput'
                 },
-                "id": {
-                    "DataType": "String",
+                'id': {
+                    'DataType': 'String',
                     'StringValue': 'rule_id'
                 }
             }
