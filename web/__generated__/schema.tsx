@@ -209,11 +209,6 @@ export type GetAlertInput = {
   eventsExclusiveStartKey?: Maybe<Scalars['String']>;
 };
 
-export type GetOrganizationResponse = {
-  __typename?: 'GetOrganizationResponse';
-  organization?: Maybe<Organization>;
-};
-
 export type GetPolicyInput = {
   policyId: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
@@ -448,7 +443,7 @@ export type Mutation = {
   testPolicy?: Maybe<TestPolicyResponse>;
   updateDestination?: Maybe<Destination>;
   updateIntegration?: Maybe<Scalars['Boolean']>;
-  updateOrganization?: Maybe<Scalars['Boolean']>;
+  updateOrganization: Organization;
   updatePolicy?: Maybe<PolicyDetails>;
   updateRule?: Maybe<RuleDetails>;
   updateUser?: Maybe<Scalars['Boolean']>;
@@ -546,10 +541,10 @@ export type OpsgenieConfigInput = {
 
 export type Organization = {
   __typename?: 'Organization';
-  id?: Maybe<Scalars['String']>;
   displayName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   alertReportFrequency?: Maybe<AlertReportFrequencyEnum>;
+  errorReportingConsent?: Maybe<Scalars['Boolean']>;
 };
 
 export type OrganizationReportBySeverity = {
@@ -665,7 +660,7 @@ export type Query = {
   __typename?: 'Query';
   alert?: Maybe<AlertDetails>;
   alerts?: Maybe<ListAlertsResponse>;
-  organization?: Maybe<GetOrganizationResponse>;
+  organization: Organization;
   destination?: Maybe<Destination>;
   destinations?: Maybe<Array<Maybe<Destination>>>;
   remediations?: Maybe<Scalars['AWSJSON']>;
@@ -892,9 +887,10 @@ export type UpdateIntegrationInput = {
 };
 
 export type UpdateOrganizationInput = {
-  displayName?: Maybe<Scalars['String']>;
-  email?: Maybe<Scalars['String']>;
+  displayName: Scalars['String'];
+  email: Scalars['String'];
   alertReportFrequency?: Maybe<AlertReportFrequencyEnum>;
+  errorReportingConsent: Scalars['Boolean'];
 };
 
 export type UpdateUserInput = {

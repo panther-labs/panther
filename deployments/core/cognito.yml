@@ -18,6 +18,9 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Cognito User Pool
 
 Parameters:
+  CustomMessageTriggerFunctionArn:
+    Type: String
+    Description: Lambda function for custom cognito triggers
   PantherHost:
     Type: String
     Description: Load balancer URL hosting the deployed Panther website
@@ -46,6 +49,8 @@ Resources:
             <br /><small>Copyright © 2020 Panther Labs Inc. All rights reserved.</small>
       AutoVerifiedAttributes: # Attributes you want the user to verify (poor naming choice by AWS)
         - email
+      LambdaConfig:
+        CustomMessage: !Ref CustomMessageTriggerFunctionArn
       Policies:
         PasswordPolicy:
           MinimumLength: 12

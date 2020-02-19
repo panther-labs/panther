@@ -11,10 +11,13 @@ npm-debug.log*
 
 # web
 web/dist/
-web/scripts/deploy-sourcemap.js
 
 # Private keys
 keys/
 
 # MacOS files
 .DS_Store
+
+# Terraform
+.terraform
+terraform.tfstate*

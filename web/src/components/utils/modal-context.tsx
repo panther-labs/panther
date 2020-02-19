@@ -34,6 +34,7 @@ export enum MODALS {
   DELETE_SOURCE = 'DELETE_SOURCE',
   DELETE_DESTINATION = 'DELETE_DESTINATION',
   NETWORK_ERROR = 'NETWORK_ERROR',
+  ANALYTICS_CONSENT = 'ANALYTICS_CONSENT',
 }
 
 /* The shape of the reducer state */
@@ -100,6 +101,14 @@ interface ShowNetworkErrorModalAction {
   };
 }
 
+/* Show analytics consent options action */
+interface ShowAnalyticsConsentModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.ANALYTICS_CONSENT;
+  };
+}
+
 /* The available actions that can be dispatched */
 type ModalStateAction =
   | ShowDeleteSourceModalAction
@@ -108,6 +117,7 @@ type ModalStateAction =
   | ShowDeleteRuleModalAction
   | ShowDeleteDestinationModalAction
   | ShowNetworkErrorModalAction
+  | ShowAnalyticsConsentModalAction
   | HideModalAction;
 
 /* initial state of the reducer */

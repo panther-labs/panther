@@ -160,3 +160,18 @@ func TestOperationLogBeforeStop(t *testing.T) {
 	dur := (logs.FilterMessage(op.zapMsg()).All()[0].ContextMap()["opTime"]).(time.Duration)
 	require.True(t, dur >= delay)
 }
+
+func TestOperationWithMemStats(t *testing.T) {
+	logs := mockLogger()
+	op := NewManager(testNamespace, testComponent).Start(testOperation).WithMemStats()
+	require.NotNil(t, op.StartMemStats)
+	op.Stop()
+	op.LogSuccess()
+	logMap := logs.FilterMessage(op.zapMsg()).All()[0].ContextMap()
+	assert.NotNil(t, logMap["sysSizeMB"])
+	assert.NotNil(t, logMap["heapSizeMB"])
+	assert.NotNil(t, logMap["heapChangeMB"])
+	assert.NotNil(t, logMap["gcPercent"])
+	assert.NotNil(t, logMap["gcPauseMilliseconds"])
+	assert.NotNil(t, logMap["gcCycles"])
+}

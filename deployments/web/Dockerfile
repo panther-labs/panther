@@ -22,7 +22,7 @@ FROM node:13.2-alpine AS build-env
 LABEL description="The image that builds the web code and serves it through an express NodeJS server"
 
 # Update debian distro
-RUN apk update && apk add --no-cache --update nasm libtool alpine-sdk autoconf automake
+RUN apk update && apk add --no-cache --update git nasm libtool alpine-sdk autoconf automake
 
 # Move all of our logic
 RUN mkdir /code
@@ -38,15 +38,9 @@ RUN npm i
 
 # Mount the necessary source code
 ADD .babelrc tsconfig.json webpack.config.js ./
-ADD out/.env out/.env
+ADD .git .git
+ADD out/.env.aws out/.env.aws
 ADD web web
-
-# Build argument & ENV var for versioning
-ARG PANTHER_VERSION
-ENV PANTHER_VERSION=$PANTHER_VERSION
-
-# Convert NODE_ENV to production in order to adjust webpack configuration accordingly
-ENV NODE_ENV=production
 
 # Build the project (additional ENV vars are read from a .env)
 RUN npm run build
@@ -70,7 +64,7 @@ COPY --from=build-env /code/web/dist web/dist
 
 # Add the script that runs the express server
 ADD package.json .
-ADD  web/scripts/serve.js web/scripts/serve.js
+ADD  web/scripts web/scripts
 
 # Install express
 #

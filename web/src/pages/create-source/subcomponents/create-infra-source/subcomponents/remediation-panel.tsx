@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { Box, Button, Heading, Text } from 'pouncejs';
+import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 
 const RemediationPanel: React.FC = () => {
   const cfnConsoleLink =
@@ -44,7 +45,7 @@ const RemediationPanel: React.FC = () => {
         <a
           target="_blank"
           rel="noopener noreferrer"
-          href="https://docs.runpanther.io/amazon-web-services/aws-setup/automatic-remediation"
+          href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/automatic-remediation`}
         >
           documentation
         </a>{' '}

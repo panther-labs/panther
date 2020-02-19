@@ -88,7 +88,7 @@ Resources:
           - Sid: AllowSubscriptionToPanther
             Effect: Allow
             Principal:
-              AWS: !Sub arn:{AWS::Partition}:iam::${MasterAccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
             Action: sns:Subscribe
             Resource: !Ref Topic
       Topics:
@@ -98,7 +98,7 @@ Resources:
   Subscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !Sub arn:{AWS::Partition}:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications
+      Endpoint: !Sub arn:${AWS::Partition}:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications
       Protocol: sqs
       RawMessageDelivery: false
       TopicArn: !Ref Topic

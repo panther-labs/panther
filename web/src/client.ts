@@ -26,6 +26,8 @@ import { LocationErrorState } from 'Components/utils/api-error-fallback';
 import { LIST_REMEDIATIONS } from 'Components/forms/policy-form/policy-form-auto-remediation-fields';
 import { logError } from 'Helpers/loggers';
 import { RULE_TEASER } from 'Pages/alert-details';
+import Storage from 'Helpers/storage';
+import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
 
 /**
  * A link to react to GraphQL and/or network errors
@@ -94,6 +96,17 @@ const createApolloClient = (history: History<LocationErrorState>) =>
         },
         Integration: {
           keyFields: ['integrationId'],
+        },
+        Organization: {
+          keyFields: ['email'],
+          fields: {
+            errorReportingConsent: {
+              merge(oldValue, newValue) {
+                Storage.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, newValue);
+                return newValue;
+              },
+            },
+          },
         },
       },
     }),

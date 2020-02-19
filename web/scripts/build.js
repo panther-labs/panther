@@ -1,5 +1,3 @@
-package email
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,27 +16,19 @@ package email
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"os"
-	"strconv"
-	"time"
+const { spawn } = require('child_process');
+const { loadDotEnvVars, getPantherDeploymentVersion } = require('./utils');
 
-	"github.com/matcornic/hermes"
-)
+// Mark the Node environment as production in order to load the webpack configuration
+process.env.NODE_ENV = 'production';
+// Generate  a `PANTHER_VERSION` that the javascript error logging function running in the browser
+// is going to reference when reporting a crash
+process.env.PANTHER_VERSION = getPantherDeploymentVersion();
 
-var (
-	// The logo is fetched from panther-public cloudfront CDN
-	pantherEmailLogo = "https://d14d54mfia7r7w.cloudfront.net/panther-email-logo-white.png"
-	appDomainURL     = os.Getenv("APP_DOMAIN_URL")
-	// PantherEmailTemplate is used as a boilerplate for Panther themed email
-	PantherEmailTemplate = hermes.Hermes{
-		Theme: new(hermes.Flat),
-		Product: hermes.Product{
-			// Appears in header & footer of e-mails
-			Name:      "Panther",
-			Link:      appDomainURL,
-			Copyright: "Copyright © " + strconv.Itoa(time.Now().Year()) + " Panther Labs Inc. All rights reserved.",
-			Logo:      pantherEmailLogo,
-		},
-	}
-)
+// Add all the sentry-related ENV vars to process.env
+loadDotEnvVars('web/.env.sentry');
+
+// Add all the aws-related ENV vars to process.env
+loadDotEnvVars('out/.env.aws');
+
+spawn('node_modules/.bin/webpack', { stdio: 'inherit' });

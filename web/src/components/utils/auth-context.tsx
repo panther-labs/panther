@@ -77,7 +77,7 @@ interface SignOutParams {
 }
 
 interface SignInParams {
-  username: string;
+  email: string;
   password: string;
   onSuccess?: () => void;
   onError?: (err: AuthError) => void;
@@ -174,7 +174,7 @@ const AuthProvider: React.FC = ({ children }) => {
    */
   const userInfo = React.useMemo<UserInfo>(() => {
     // if a user is present, derive the user info from him
-    if (authUser) {
+    if (authUser?.attributes) {
       return {
         ...authUser.attributes,
         roles: authUser?.signInUserSession?.accessToken.payload['cognito:groups'] || [],
@@ -211,9 +211,13 @@ const AuthProvider: React.FC = ({ children }) => {
    *
    */
   const signIn = React.useCallback(
-    async ({ username, password, onSuccess = () => {}, onError = () => {} }: SignInParams) => {
+    async ({ email, password, onSuccess = () => {}, onError = () => {} }: SignInParams) => {
       try {
-        const signedInUser = await Auth.signIn(username, password);
+        const signedInUser = await Auth.signIn(email, password);
+
+        // We are forcing an attribute email, since Cognito doesn't return the email of the user
+        // until they pass the MFA challenge.
+        signedInUser.attributes = { email };
         setAuthUser(signedInUser);
 
         onSuccess();

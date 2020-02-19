@@ -23,6 +23,7 @@ import FormikTextInput from 'Components/fields/text-input';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
 import { useQuery, gql } from '@apollo/client';
 import FormikEditor from 'Components/fields/editor';
+import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { PolicyFormValues } from './index';
 
 export const LIST_REMEDIATIONS = gql`
@@ -67,7 +68,7 @@ const PolicyFormAutoRemediationFields: React.FC = () => {
           '. For more info, please consult the ',
           <a
             key="docs"
-            href="https://docs.runpanther.io/amazon-web-services/aws-setup/automatic-remediation"
+            href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/automatic-remediation`}
             target="_blank"
             rel="noopener noreferrer"
           >

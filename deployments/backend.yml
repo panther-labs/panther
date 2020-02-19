@@ -38,7 +38,7 @@ Parameters:
     Default: ''
   TracingMode:
     Type: String
-    Description: Enable XRay tracing on Lambda and API Gateway
+    Description: Enable XRay tracing on Lambda, API Gateway & Appsync
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
@@ -179,6 +179,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
+        AppDomainURL: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
@@ -189,6 +190,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
+        CustomMessageTriggerFunctionArn: !GetAtt AdminAPI.Outputs.CustomMessageTriggerFunctionArn
         PantherHost: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl
       TemplateURL: core/cognito.yml
 
@@ -201,6 +203,7 @@ Resources:
         RemediationApi: !Sub https://${RemediationAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
         ResourcesApi: !Sub https://${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
         UserPoolId: !GetAtt Cognito.Outputs.UserPoolId
+        TracingMode: !Ref TracingMode
       TemplateURL: core/appsync.yml
 
   ##### Nested Stacks: Compliance #####

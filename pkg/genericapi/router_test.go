@@ -65,7 +65,7 @@ func (*routes) UpdateRule(input *updateRuleInput) error {
 	return errors.New("manual error")
 }
 
-var testRouter = NewRouter(nil, &routes{})
+var testRouter = NewRouter("testNamespace", "testComponent", nil, &routes{})
 
 func TestHandleNoAction(t *testing.T) {
 	result, err := testRouter.Handle(&lambdaInput{})

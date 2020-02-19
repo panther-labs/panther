@@ -30,7 +30,6 @@ const CompressionPlugin = require('compression-webpack-plugin');
 
 const isEnvDevelopment = process.env.NODE_ENV === 'development';
 const isEnvProduction = process.env.NODE_ENV === 'production';
-const shouldUseSourceMap = Boolean(process.env.GENERATE_SOURCEMAP);
 
 module.exports = {
   // webpack automatically makes optimisations depending on the environment that runs. We want to
@@ -39,11 +38,7 @@ module.exports = {
   // Stop compilation early in production, saving time
   bail: isEnvProduction,
   // add a proper source map in order to debug the code easier through the sources tab.
-  devtool: isEnvProduction // eslint-disable-line no-nested-ternary
-    ? shouldUseSourceMap
-      ? 'source-map'
-      : false
-    : isEnvDevelopment && 'cheap-module-source-map',
+  devtool: isEnvProduction ? 'source-map' : isEnvDevelopment && 'cheap-module-source-map',
   output: {
     // This will prevent webpack-dev-server from loading incorrectly because of react-router-v4.
     publicPath: '/',

@@ -17,9 +17,8 @@
  */
 
 import { ErrorResponse } from 'apollo-link-error';
-import storage from 'Helpers/storage';
-import { UserInfo } from 'Components/utils/auth-context';
-import { USER_INFO_STORAGE_KEY } from 'Source/constants';
+import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
+import Storage from 'Helpers/storage';
 import { Operation } from '@apollo/client';
 
 interface ErrorData {
@@ -40,6 +39,13 @@ export const logError = (error: Error | ErrorResponse, { operation, extras }: Er
     return;
   }
 
+  // If he user hasn't  allowed us, then don't report the error
+  // For information on how does this value ended up in the Storage (and how it syncs itself with
+  // the latest updates), see /web/src/client.ts
+  if (Storage.read<boolean>(ERROR_REPORTING_CONSENT_STORAGE_KEY) !== true) {
+    return;
+  }
+
   import(/* webpackChunkName: "sentry" */ '@sentry/browser').then(Sentry => {
     // We don't wanna initialize before any error occurs so we don't have to un-necessarily download
     // the sentry chunk at the user's device. `Init` method is idempotent, meaning that no matter
@@ -48,16 +54,9 @@ export const logError = (error: Error | ErrorResponse, { operation, extras }: Er
     // As soon as sentry is init, we add a scope to the error. Adding the scope here makes sure that
     // we don't have to manage the scopes on login/logout events
     Sentry.withScope(scope => {
-      // Set the organization data and the email of the user
-      const storedUserInfo = storage.read<UserInfo>(USER_INFO_STORAGE_KEY); // prettier-ignore
-      if (storedUserInfo) {
-        scope.setUser(storedUserInfo);
-      }
-
       // If we have access to the operation that occurred, then we store this info for easier debugging
       if (operation) {
         scope.setTag('operationName', operation.operationName);
-        scope.setExtra('operationVariables', operation.variables);
       }
 
       // If we have a custom stacktrace to share we add it here

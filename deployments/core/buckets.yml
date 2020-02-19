@@ -66,8 +66,7 @@ Resources:
           - ExpirationInDays: 90
             Status: Enabled
       LoggingConfiguration:
-        DestinationBucketName:
-          !If [CreateLogBucket, !Ref AccessLogs, !Ref AccessLogsBucketName]
+        DestinationBucketName: !If [CreateLogBucket, !Ref AccessLogs, !Ref AccessLogsBucketName]
         LogFilePrefix: !Sub panther-source-${AWS::AccountId}-${AWS::Region}/
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true

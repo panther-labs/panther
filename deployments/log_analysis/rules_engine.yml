@@ -84,6 +84,10 @@ Resources:
       Region: !Ref AWS::Region
       TopicArn: !Ref SnsTopicArn
       RawMessageDelivery: true
+      # Receive notifications only for new log events
+      FilterPolicy:
+        type:
+          - LogData
 
   QueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -120,6 +124,22 @@ Resources:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: !Ref TimeoutSec
 
+
+  ##### Dynamo alert deduplication table #####
+  AlertsDedup:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-alert-dedup
+      AttributeDefinitions:
+        - AttributeName: partitionKey
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: partitionKey
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: True
+
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -139,6 +159,9 @@ Resources:
           ANALYSIS_API_PATH: v1
           DEBUG: !Ref Debug
           ALERTS_QUEUE: !Ref AlertsQueue
+          S3_BUCKET: !Ref ProcessedDataBucket
+          NOTIFICATIONS_TOPIC: !Ref SnsTopicArn
+          ALERTS_DEDUP_TABLE: !Ref AlertsDedup
       MemorySize: !Ref MemorySizeMB
       Events:
         Queue:
@@ -176,12 +199,29 @@ Resources:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${AlertsQueue}
-        - Id: ReadFromS3
+        - Id: SendToNotificationsTopic
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: s3:GetObject
+              Action:
+                - sns:Publish
+              Resource: !Ref SnsTopicArn
+        - Id: S3ReadWrite
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:PutObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/*
+        - Id: DDBUpdate
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:UpdateItem
+              Resource: !GetAtt AlertsDedup.Arn
         - Id: AccessKms
           Version: 2012-10-17
           Statement:
