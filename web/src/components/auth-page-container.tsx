@@ -57,7 +57,7 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
           <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
           <Flex flexDirection="column" alignItems="center" justifyContent="center" m="auto">
             <Label size="medium" mb={5} color="white" textAlign="center">
-              Panther Open Source
+              Panther Community Edition
             </Label>
             <Heading
               size="medium"
