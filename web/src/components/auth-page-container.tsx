@@ -54,12 +54,10 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
           height="100%"
           flexDirection="column"
         >
-          <Link to="/">
-            <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
-          </Link>
+          <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
           <Flex flexDirection="column" alignItems="center" justifyContent="center" m="auto">
             <Label size="medium" mb={5} color="white" textAlign="center">
-              Panther Cloud-Native Cybersecurity SIEM
+              Panther Open Source
             </Label>
             <Heading
               size="medium"
@@ -68,11 +66,10 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
               letterSpacing="0.5px"
               textAlign="center"
             >
-              Identify threats, misconfigurations, and suspicious activity in all of your
-              environments.
+              Quickly and Automatically Detect Threats in Log Data and Cloud Infrastructure
             </Heading>
             <Text size="large" color="white" mt={5} textAlign="center">
-              Designed for businesses of any size
+              Designed for organizations of any size
             </Text>
           </Flex>
         </Flex>
