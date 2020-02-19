@@ -39,7 +39,10 @@ class AlertInfo:
 # pylint: disable=invalid-name
 @dataclass
 class OutputNotification:
-    """Output notification. This class will be serialized to JSON, thus following camelCase rather than snake_case"""
+    """The notification that will be send to the SNS topic when we create a new object in S3.
+
+    This class will be serialized to JSON, thus following camelCase rather than snake_case
+    """
     s3Bucket: str
     s3ObjectKey: str
     events: int

@@ -19,14 +19,14 @@ import json
 import os
 import sys
 import uuid
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from io import BytesIO
 from typing import Dict, List, Optional
 
 import boto3
 
-from . import EventMatch, OutputNotification, AlertInfo
+from . import AlertInfo, EventMatch, OutputNotification
 from .alert_merger import update_get_alert_info
 from .logging import get_logger
 
@@ -92,7 +92,7 @@ class MatchedEventsBuffer:
             self.data[key] = value
 
         self.total_bytes += size
-        # Check the total size of data in memory. If we exceed threshold, flush data from the biggest "offender"
+        # Check the total size of data in memory. If we exceed threshold, flush data from the biggest 'offender'
         if self.total_bytes > self.max_bytes:
             _LOGGER.debug('data reached size threshold')
             max_size = 0
@@ -146,12 +146,12 @@ def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> No
         TopicArn=_SNS_TOPIC_ARN,
         Message=json.dumps(asdict(notification)),
         MessageAttributes={
-            "type": {
-                "DataType": "String",
+            'type': {
+                'DataType': 'String',
                 'StringValue': notification.type
             },
-            "id": {
-                "DataType": "String",
+            'id': {
+                'DataType': 'String',
                 'StringValue': notification.id
             }
         }

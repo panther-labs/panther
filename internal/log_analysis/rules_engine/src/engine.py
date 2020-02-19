@@ -17,7 +17,7 @@
 import collections
 from datetime import datetime, timedelta
 from timeit import default_timer
-from typing import Any, List, Dict
+from typing import Any, Dict, List
 
 from . import EventMatch
 from .analysis_api import AnalysisAPIClient

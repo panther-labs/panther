@@ -118,7 +118,10 @@ class Rule:
 def _run_command(function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:
     result = function(event)
     if not isinstance(result, expected_type):
-        raise Exception('rule returned {}, expected {}'.format(type(result).__name__, expected_type.__name__))
+        raise Exception(
+            'rule fuction [{}] returned [{}], expected [{}]'.format(function.__name__,
+                                                                    type(result).__name__, expected_type.__name__)
+        )
     return result
 
 

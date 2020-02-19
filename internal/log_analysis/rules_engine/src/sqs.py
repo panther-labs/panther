@@ -27,7 +27,7 @@ _MAX_MESSAGES = 10
 _MAX_MESSAGE_SIZE = 256 * 1000
 
 _SQS_RESOURCE = boto3.resource('sqs')
-_QUEUE_NAME = _SQS_RESOURCE.get_queue_by_name(QueueName=os.environ['ALERTS_QUEUE'])  # pylint: disable=no-member
+_SQS_QUEUE = _SQS_RESOURCE.get_queue_by_name(QueueName=os.environ['ALERTS_QUEUE'])  # pylint: disable=no-member
 
 
 def send_to_sqs(matches: List) -> None:
@@ -42,7 +42,7 @@ def send_to_sqs(matches: List) -> None:
         projected_size = current_byte_size + len(message)
         projected_num_entries = len(current_entries) + 1
         if projected_num_entries > _MAX_MESSAGES or projected_size > _MAX_MESSAGE_SIZE:
-            _QUEUE_NAME.send_messages(Entries=current_entries)
+            _SQS_QUEUE.send_messages(Entries=current_entries)
             current_entries = [entry]
             current_byte_size = len(message)
         else:
@@ -50,7 +50,7 @@ def send_to_sqs(matches: List) -> None:
             current_byte_size += len(message)
 
     if len(current_entries) > 0:
-        _QUEUE_NAME.send_messages(Entries=current_entries)
+        _SQS_QUEUE.send_messages(Entries=current_entries)
 
 
 def _match_to_sqs_entry_message(match: Tuple[str, str]) -> str:

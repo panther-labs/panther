@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 from datetime import datetime
+import os
 
 import boto3
 
@@ -39,11 +39,13 @@ _ALERT_MERGE_PERIOD_SECONDS = 3600
 
 
 def _generate_key(rule_id: str, dedup: str) -> str:
-    return rule_id + '-' + dedup
+    return rule_id + ':' + dedup
 
 
 def update_get_alert_info(match_time: datetime, num_matches: int, rule_id: str, dedup: str) -> AlertInfo:
-    """The method will update the alertCreationTime, eventCount of an alert. If a new alert will have to be created,
+    """Updates the alert information and returns the result.
+
+    The method will update the alertCreationTime, eventCount of an alert. If a new alert will have to be created,
     it will also create a new alertId with the appropriate alertCreationTime. """
     try:
         return _update_get_alert_info_conditional(match_time, num_matches, rule_id, dedup)
@@ -63,7 +65,7 @@ def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, r
         Key={_PARTITION_KEY_NAME: {
             'S': _generate_key(rule_id, dedup)
         }},
-        # Setting proper values for alertCreationTie, alertUpdateTime,
+        # Setting proper values for alertCreationTime, alertUpdateTime,
         UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5\nADD #6 :6',
         ConditionExpression='(#7 < :7) OR (attribute_not_exists(#8))',
         ExpressionAttributeNames={

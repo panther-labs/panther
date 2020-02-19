@@ -46,12 +46,12 @@ class TestEngine(TestCase):
             }, {
                 'id': 'rule_id',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\treturn True'
+                'body': 'from aws_globals import is_true\ndef rule(event):\n\tis_true()'
             }
         ]
         engine = Engine(analysis_api)
 
-        # Should have loaded only the rule_id
+        # Should have loaded only the rule_id and used the global library
         self.assertEqual(len(engine.log_type_to_rules), 1)
         self.assertEqual(len(engine.log_type_to_rules['log']), 1)
         self.assertEqual(engine.log_type_to_rules['log'][0].rule_id, 'rule_id')

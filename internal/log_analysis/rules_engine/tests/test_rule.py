@@ -70,7 +70,7 @@ class TestRule(TestCase):
         self.assertIsNone(rule_result.dedup_string)
         self.assertIsNotNone(rule_result.exception)
 
-    def test_rule_invalid_rule_signature(self) -> None:
+    def test_rule_invalid_rule_return(self) -> None:
         rule = Rule(rule_id='id', rule_body='def rule(event):\n\treturn "test"')
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
@@ -84,7 +84,7 @@ class TestRule(TestCase):
         self.assertIsNone(rule_result.dedup_string)
         self.assertIsNotNone(rule_result.exception)
 
-    def test_rule_invalid_dedup_signature(self) -> None:
+    def test_rule_invalid_dedup_return(self) -> None:
         rule = Rule(rule_id='id', rule_body='def rule(event):\n\treturn True\ndef dedup(event):\n\treturn {}')
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)

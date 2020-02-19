@@ -62,18 +62,18 @@ type S3DataStreamHints struct {
 // S3Notification is sent when new data is available in S3
 type S3Notification struct {
 	// S3Bucket is name of the S3 Bucket where data is available
-	S3Bucket *string `json:"s3Bucket,omitempty"`
+	S3Bucket *string `json:"s3Bucket"`
 	// S3ObjectKey is the key of the S3 object that contains the new data
-	S3ObjectKey *string `json:"s3ObjectKey,omitempty"`
+	S3ObjectKey *string `json:"s3ObjectKey"`
 	// Events is the number of events in the S3 object
-	Events *int `json:"events,omitempty"`
+	Events *int `json:"events"`
 	// Bytes is the uncompressed size in bytes of the S3 object
-	Bytes *int `json:"bytes,omitempty"`
+	Bytes *int `json:"bytes"`
 	// Type is the type of data available in the S3 object (LogData,RuleOutput)
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type"`
 	// ID is an identified for the data in the S3 object. In case of LogData this will be
 	// the Log Type, in case of RuleOutput data this will be the RuleID
-	ID *string `json:"id,omitempty"`
+	ID *string `json:"id"`
 }
 
 const (

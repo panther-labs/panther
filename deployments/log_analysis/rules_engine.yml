@@ -125,7 +125,7 @@ Resources:
       VisibilityTimeout: !Ref TimeoutSec
 
 
-  ##### Dynamo recent alerts table #####
+  ##### Dynamo alert deduplication table #####
   AlertsDedup:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -137,7 +137,7 @@ Resources:
       KeySchema:
         - AttributeName: partitionKey
           KeyType: HASH
-      SSESpecification: # Enable server-side encryption
+      SSESpecification:
         SSEEnabled: True
 
   LogGroup:
