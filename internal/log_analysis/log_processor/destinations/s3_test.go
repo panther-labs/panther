@@ -255,6 +255,16 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	expectedSnsPublishInput := &sns.PublishInput{
 		Message:  aws.String(marshalledExpectedS3Notification),
 		TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:test"),
+		MessageAttributes: map[string]*sns.MessageAttributeValue{
+			"type": {
+				StringValue: aws.String(common.LogData),
+				DataType:    aws.String("String"),
+			},
+			"id": {
+				StringValue: aws.String("testtype"),
+				DataType:    aws.String("String"),
+			},
+		},
 	}
 	require.Equal(t, expectedSnsPublishInput, publishInput)
 }

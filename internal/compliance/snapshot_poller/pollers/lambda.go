@@ -22,7 +22,9 @@ import (
 	"context"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
@@ -30,6 +32,7 @@ import (
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	pollers "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const resourcesAPIBatchSize = 500
@@ -58,42 +61,39 @@ func batchResources(resources []*api.AddResourceEntry) (batches [][]*api.AddReso
 }
 
 // Handle is the main Lambda Handler.
-func Handle(ctx context.Context, event events.SQSEvent) error {
-	_, logger := lambdalogger.ConfigureGlobal(ctx, nil)
-	logger.Info("starting snapshot-pollers",
-		zap.Int("numEvents", len(event.Records)),
-	)
+func Handle(ctx context.Context, event events.SQSEvent) (err error) {
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := oplog.NewManager("cloudsec", "snapshot").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("numEvents", len(event.Records)))
+	}()
 
 	for indx, message := range event.Records {
 		zap.L().Debug("loading message from the queue")
-		scanRequest, err := loadMessage(message.Body)
-		if err != nil || scanRequest == nil {
-			zap.L().Error("unable to load message from the queue",
+		scanRequest, loadErr := loadMessage(message.Body)
+		if loadErr != nil || scanRequest == nil {
+			operation.LogError(errors.Wrap(loadErr, "unable to load message from the queue"),
 				zap.Int("messageNumber", indx),
-				zap.Error(err),
 				zap.String("messageBody", message.Body),
 			)
 			continue
 		}
 
 		for _, entry := range scanRequest.Entries {
-			_, logger := lambdalogger.ConfigureGlobal(ctx, map[string]interface{}{
-				"sqsEntry": entry,
-			})
-			logger.Info(
-				"starting poller",
+			zap.L().Debug("starting poller",
+				zap.Any("sqsEntry", entry),
 				zap.Int("messageNumber", indx),
-			)
+				zap.String("integrationType", "aws"))
 
-			resources, err := pollers.Poll(entry)
-			if err != nil {
-				zap.L().Error("poller failed", zap.Error(err))
+			resources, pollErr := pollers.Poll(entry)
+			if pollErr != nil {
+				operation.LogError(errors.Wrap(pollErr, "poll failed"), zap.Any("sqsEntry", entry))
+				continue
 			}
 
 			// Send data to the Resources API
 			if resources != nil {
-				logger.Info(
-					"total resources generated",
+				zap.L().Debug("total resources generated",
 					zap.Int("messageNumber", indx),
 					zap.Int("numResources", len(resources)),
 					zap.String("integrationType", "aws"),
@@ -105,17 +105,11 @@ func Handle(ctx context.Context, event events.SQSEvent) error {
 						HTTPClient: httpClient,
 					}
 					zap.L().Debug("adding new resources", zap.Any("params.Body", params.Body))
-					if _, err := apiClient.Operations.AddResources(params); err != nil {
+					if _, err = apiClient.Operations.AddResources(params); err != nil {
 						return err
 					}
 				}
 			}
-
-			logger.Info(
-				"polling complete",
-				zap.Int("messageNumber", indx),
-				zap.String("integrationType", "aws"),
-			)
 		}
 	}
 

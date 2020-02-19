@@ -49,7 +49,7 @@ func TestTablesCloudFormation(t *testing.T) {
 	require.NoError(t, err)
 	tables := []*awsglue.GlueMetadata{table}
 
-	cf, err := GenerateCloudFormation(tables)
+	cf, err := GenerateTables(tables)
 	require.NoError(t, err)
 
 	// un-comment to see output

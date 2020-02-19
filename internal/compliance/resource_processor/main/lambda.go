@@ -25,12 +25,10 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/panther-labs/panther/internal/compliance/resource_processor/processor"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 func handler(ctx context.Context, batch *events.SQSEvent) error {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return processor.Handle(batch)
+	return processor.Handle(ctx, batch)
 }
 
 func main() {

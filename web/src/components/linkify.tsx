@@ -1,5 +1,3 @@
-package main
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,24 +16,35 @@ package main
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"context"
+import React from 'react';
+import { Box } from 'pouncejs';
+import { LinkifyProps } from 'linkifyjs/react';
+import { css } from '@emotion/core';
 
-	"github.com/aws/aws-lambda-go/lambda"
+const OriginalReactLinkify = React.lazy(() =>
+  import(/* webpackChunkName: "linkify" */ 'linkifyjs/react.js')
+) as React.FC<LinkifyProps>;
 
-	"github.com/panther-labs/panther/api/lambda/organization/models"
-	"github.com/panther-labs/panther/internal/core/organization_api/api"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
-)
+const linkifyOptions = {
+  attributes: {
+    rel: 'noopener noreferrer',
+  },
+  className: '',
+  defaultProtocol: 'https',
+};
 
-var router = genericapi.NewRouter("api", "organization", nil, api.API{})
+const Linkify: React.FC = ({ children }) => {
+  return (
+    <Box
+      css={css`
+        word-break: break-word;
+      `}
+    >
+      <React.Suspense fallback={<div>{children}</div>}>
+        <OriginalReactLinkify options={linkifyOptions}>{children}</OriginalReactLinkify>
+      </React.Suspense>
+    </Box>
+  );
+};
 
-func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(input)
-}
-
-func main() {
-	lambda.Start(lambdaHandler)
-}
+export default Linkify;
