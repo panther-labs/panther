@@ -19,8 +19,6 @@ package ossec
  */
 
 import (
-	"fmt"
-
 	"go.uber.org/zap"
 
 	jsoniter "github.com/json-iterator/go"
@@ -126,7 +124,6 @@ func (p *EventInfoParser) Parse(log string) []interface{} {
 
 	err := jsoniter.UnmarshalFromString(log, eventInfo)
 	if err != nil {
-		fmt.Println(err)
 		zap.L().Error("failed to parse log", zap.Error(err))
 		return nil
 	}
