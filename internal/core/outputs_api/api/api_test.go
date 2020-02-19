@@ -21,10 +21,8 @@ package api
 import (
 	"github.com/stretchr/testify/mock"
 
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/outputs_api/encryption"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
-	"github.com/panther-labs/panther/internal/core/outputs_api/verification"
 )
 
 type mockOutputTable struct {
@@ -79,19 +77,4 @@ func (m *mockEncryptionKey) DecryptConfig(ciphertext []byte, config interface{})
 func (m *mockEncryptionKey) EncryptConfig(config interface{}) ([]byte, error) {
 	args := m.Called(config)
 	return args.Get(0).([]byte), args.Error(1)
-}
-
-type mockOutputVerification struct {
-	verification.OutputVerificationAPI
-	mock.Mock
-}
-
-func (m *mockOutputVerification) GetVerificationStatus(output *models.AlertOutput) (*string, error) {
-	args := m.Called(output)
-	return args.Get(0).(*string), args.Error(1)
-}
-
-func (m *mockOutputVerification) VerifyOutput(output *models.AlertOutput) (*models.AlertOutput, error) {
-	args := m.Called(output)
-	return args.Get(0).(*models.AlertOutput), args.Error(1)
 }

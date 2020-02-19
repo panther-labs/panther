@@ -50,8 +50,7 @@ var alertOutput = &outputmodels.AlertOutput{
 	OutputConfig: &outputmodels.OutputConfig{
 		Slack: &outputmodels.SlackConfig{WebhookURL: aws.String("https://slack.com")},
 	},
-	VerificationStatus: aws.String(outputmodels.VerificationStatusSuccess),
-	OutputID:           aws.String("output-id"),
+	OutputID: aws.String("output-id"),
 }
 
 func setCaches() {
@@ -82,32 +81,6 @@ func TestSendUnsupportedOutput(t *testing.T) {
 
 	send(sampleAlert(), alertOutput, ch)
 	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID}, <-ch)
-	mockClient.AssertExpectations(t)
-}
-
-func TestSendNotVerifiedOutput(t *testing.T) {
-	mockClient := &mockOutputsClient{}
-	outputClient = mockClient
-
-	// Alert output with VerificationStatus that is not SUCCESS
-	alertOutput := &outputmodels.AlertOutput{
-		OutputType:  aws.String("slack"),
-		DisplayName: aws.String("slack:alerts"),
-		OutputConfig: &outputmodels.OutputConfig{
-			Slack: &outputmodels.SlackConfig{WebhookURL: aws.String("https://slack.com")},
-		},
-		VerificationStatus: aws.String(outputmodels.VerificationStatusNotStarted),
-		OutputID:           aws.String("output-id"),
-	}
-	cache = &outputsCache{
-		Outputs:   []*outputmodels.AlertOutput{alertOutput},
-		Timestamp: time.Now(),
-	}
-
-	ch := make(chan outputStatus, 1)
-
-	send(sampleAlert(), alertOutput, ch)
-	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID, success: false, needsRetry: false}, <-ch)
 	mockClient.AssertExpectations(t)
 }
 
