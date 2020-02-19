@@ -21,6 +21,7 @@ package cfngen
 
 import (
 	"io"
+	"regexp"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -86,4 +87,11 @@ func NewTemplate(description string, parameters map[string]interface{}, resource
 		Outputs:                  outputs,
 	}
 	return
+}
+
+// Re-map characters not allowed in CF names consistently (CF resources must be alphanum)
+var cleanResourceName = regexp.MustCompile(`([^[:alpha:]])`)
+
+func ResourceClean(name string) string {
+	return cleanResourceName.ReplaceAllString(name, "")
 }
