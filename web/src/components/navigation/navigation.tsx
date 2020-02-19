@@ -59,10 +59,10 @@ const Navigation = () => {
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
   return (
-    <Flex is="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} minHeight="100vh">
-      <Box width={72} height="100%" boxShadow="dark150">
-        <Flex justifyContent="center" py={8} m="auto">
-          <IconButton variant="primary" is={Link} to="/" mb={10}>
+    <Flex is="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
+      <Flex flexDirection="column" width={70} height="100%" boxShadow="dark150">
+        <Flex justifyContent="center" pt={7} pb={2}>
+          <IconButton variant="primary" is={Link} to="/">
             <img
               src={PantherIcon}
               alt="Panther logo"
@@ -72,11 +72,17 @@ const Navigation = () => {
             />
           </IconButton>
         </Flex>
-        <Flex flexDirection="column" justifyContent="center" alignItems="center" is="ul">
+        <Flex
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          is="ul"
+          flex="1 0 auto"
+        >
           <Box is="li">
             <NavIconButton
               active={isComplianceNavigationActive}
-              icon="settings"
+              icon="infra-analytics"
               tooltipLabel="Cloud Security"
               onClick={() =>
                 setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
@@ -86,7 +92,7 @@ const Navigation = () => {
           <Box is="li" mb="auto">
             <NavIconButton
               active={isLogAnalysisNavigationActive}
-              icon="settings"
+              icon="log-analytics"
               tooltipLabel="Log Analysis"
               onClick={() =>
                 setSecondaryNav(isLogAnalysisNavigationActive ? null : LOG_ANALYSIS_NAV_KEY)
@@ -113,10 +119,12 @@ const Navigation = () => {
             />
           </Box>
         </Flex>
+      </Flex>
+      <Box width={230} height="100%">
+        {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
+        {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
+        {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
       </Box>
-      {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
-      {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
-      {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
     </Flex>
   );
 };
