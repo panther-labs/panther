@@ -74,8 +74,9 @@ class MatchedEventsBuffer:
 
     def __init__(self) -> None:
         self.data: Dict[BufferKey, BufferValue] = collections.defaultdict()
-        self.total_bytes = 0
+        self.bytes_in_memory = 0
         self.max_bytes = _MAX_BYTES_IN_MEMORY
+        self.total_events = 0
 
     def add_event(self, match: EventMatch) -> None:
         """Adds a matched event to the buffer"""
@@ -91,9 +92,10 @@ class MatchedEventsBuffer:
             value = BufferValue([match], size)
             self.data[key] = value
 
-        self.total_bytes += size
+        self.bytes_in_memory += size
+        self.total_events += 1
         # Check the total size of data in memory. If we exceed threshold, flush data from the biggest 'offender'
-        if self.total_bytes > self.max_bytes:
+        if self.bytes_in_memory > self.max_bytes:
             _LOGGER.debug('data reached size threshold')
             max_size = 0
             key_to_remove: Optional[BufferKey]
@@ -105,7 +107,7 @@ class MatchedEventsBuffer:
             if key_to_remove:
                 # Write the data to S3
                 _write_to_s3(datetime.utcnow(), key_to_remove, self.data[key_to_remove].matches)
-                self.total_bytes -= self.data[key_to_remove].size_in_bytes
+                self.bytes_in_memory -= self.data[key_to_remove].size_in_bytes
                 # Delete data from memory
                 del self.data[key_to_remove]
 
@@ -115,7 +117,8 @@ class MatchedEventsBuffer:
         for key, values in self.data.items():
             _write_to_s3(current_time, key, values.matches)
         self.data.clear()
-        self.total_bytes = 0
+        self.bytes_in_memory = 0
+        self.total_events = 0
 
 
 def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> None:
@@ -130,7 +133,8 @@ def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> No
     data_stream.seek(0)
     output_uuid = uuid.uuid4()
     object_key = _KEY_FORMAT.format(
-        key.log_type, time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT), output_uuid
+        key.log_type, time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT),
+        output_uuid
     )
 
     byte_size = data_stream.getbuffer().nbytes
@@ -138,7 +142,8 @@ def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> No
     _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
     # Send notification to SNS topic
-    notification = OutputNotification(s3Bucket=_S3_BUCKET, s3ObjectKey=object_key, events=len(events), bytes=byte_size, id=key.rule_id)
+    notification = OutputNotification(s3Bucket=_S3_BUCKET, s3ObjectKey=object_key, events=len(events), bytes=byte_size,
+                                      id=key.rule_id)
 
     # MessageAttributes are required so that subscribers to SNS topic
     # can filter events in the subscription

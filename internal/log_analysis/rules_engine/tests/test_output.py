@@ -122,7 +122,7 @@ class TestMatchedEventsBuffer(TestCase):
 
         # Assert that the buffer has been cleared
         self.assertEqual(len(buffer.data), 0)
-        self.assertEqual(buffer.total_bytes, 0)
+        self.assertEqual(buffer.bytes_in_memory, 0)
 
     def test_add_same_rule_different_log(self) -> None:
         buffer = MatchedEventsBuffer()
@@ -164,7 +164,7 @@ class TestMatchedEventsBuffer(TestCase):
 
         # Assert that the buffer has been cleared
         self.assertEqual(len(buffer.data), 0)
-        self.assertEqual(buffer.total_bytes, 0)
+        self.assertEqual(buffer.bytes_in_memory, 0)
 
     def test_add_same_log_different_rules(self) -> None:
         buffer = MatchedEventsBuffer()
@@ -206,7 +206,7 @@ class TestMatchedEventsBuffer(TestCase):
 
         # Assert that the buffer has been cleared
         self.assertEqual(len(buffer.data), 0)
-        self.assertEqual(buffer.total_bytes, 0)
+        self.assertEqual(buffer.bytes_in_memory, 0)
 
     def test_group_events_together(self) -> None:
         buffer = MatchedEventsBuffer()
@@ -243,7 +243,7 @@ class TestMatchedEventsBuffer(TestCase):
 
         # Assert that the buffer has been cleared
         self.assertEqual(len(buffer.data), 0)
-        self.assertEqual(buffer.total_bytes, 0)
+        self.assertEqual(buffer.bytes_in_memory, 0)
 
     def test_add_overflows_buffer(self) -> None:
         buffer = MatchedEventsBuffer()
@@ -261,4 +261,4 @@ class TestMatchedEventsBuffer(TestCase):
 
         # Assert that the buffer has been cleared
         self.assertEqual(len(buffer.data), 0)
-        self.assertEqual(buffer.total_bytes, 0)
+        self.assertEqual(buffer.bytes_in_memory, 0)

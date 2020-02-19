@@ -18,6 +18,7 @@ import collections
 import json
 from gzip import GzipFile
 from io import TextIOWrapper
+from timeit import default_timer
 from typing import Any, Dict, List, Optional
 
 import boto3
@@ -79,6 +80,8 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
 def log_analysis(event: Dict[str, Any]) -> None:
     """Runs log analysis"""
 
+    start = default_timer()
+
     # Dictionary containing mapping from log type to list of TextIOWrapper's
     log_type_to_data: Dict[str, List[TextIOWrapper]] = collections.defaultdict(list)
     for record in event['Records']:
@@ -111,6 +114,8 @@ def log_analysis(event: Dict[str, Any]) -> None:
     else:
         _LOGGER.info("no matches found")
     output_buffer.flush()
+    end = default_timer()
+    _LOGGER.info("Matched {} events in {} seconds".format(len(matched), end - start))
 
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all
