@@ -39,7 +39,7 @@ func (m *mockDynamoClient) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamod
 	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
 }
 
-func TestUpdateDoestNotExist(t *testing.T) {
+func TestUpdateDoesntNotExist(t *testing.T) {
 	mockClient := &mockDynamoClient{}
 	returnErr := awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "", nil)
 	mockClient.On("UpdateItem", mock.Anything).Return(
@@ -70,7 +70,7 @@ func TestUpdateUnmarshalError(t *testing.T) {
 	mockClient := &mockDynamoClient{}
 	// output has wrong type for one of the fields
 	output := &dynamodb.UpdateItemOutput{
-		Attributes: DynamoItem{"awsConfig": {SS: aws.StringSlice([]string{"panther", "labs"})}},
+		Attributes: DynamoItem{"email": {SS: aws.StringSlice([]string{"panther", "labs"})}},
 	}
 	mockClient.On("UpdateItem", mock.Anything).Return(output, nil)
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
@@ -92,11 +92,9 @@ func TestUpdate(t *testing.T) {
 
 	expectedUpdate := expression.
 		Set(expression.Name("alertReportFrequency"), expression.Value(org.AlertReportFrequency)).
-		Set(expression.Name("awsConfig"), expression.Value(org.AwsConfig)).
 		Set(expression.Name("displayName"), expression.Value(org.DisplayName)).
 		Set(expression.Name("email"), expression.Value(org.Email)).
-		Set(expression.Name("errorReportingConsent"), expression.Value(org.ErrorReportingConsent)).
-		Set(expression.Name("phone"), expression.Value(org.Phone))
+		Set(expression.Name("errorReportingConsent"), expression.Value(org.ErrorReportingConsent))
 	expectedCondition := expression.AttributeExists(expression.Name("id"))
 	expectedExpression, _ := expression.NewBuilder().WithCondition(expectedCondition).WithUpdate(expectedUpdate).Build()
 
@@ -114,21 +112,6 @@ func TestUpdate(t *testing.T) {
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
 
 	result, err := table.Update(org)
-	mockClient.AssertExpectations(t)
-	require.NoError(t, err)
-	expected := &models.Organization{}
-	assert.Equal(t, expected, result)
-}
-
-func TestAddActions(t *testing.T) {
-	mockClient := &mockDynamoClient{}
-	output := &dynamodb.UpdateItemOutput{
-		Attributes: DynamoItem{"id": {S: aws.String(orgID)}},
-	}
-	mockClient.On("UpdateItem", mock.Anything).Return(output, nil)
-	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
-	action := models.VisitedOnboardingFlow
-	result, err := table.AddActions([]*models.Action{&action})
 	mockClient.AssertExpectations(t)
 	require.NoError(t, err)
 	expected := &models.Organization{}

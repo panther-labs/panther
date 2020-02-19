@@ -57,10 +57,6 @@ func (m *mockListUsersClient) ListUsers(
 						Name:  aws.String("email"),
 						Value: aws.String("joe@blow.com"),
 					},
-					{
-						Name:  aws.String("phone_number"),
-						Value: aws.String("+1234567890"),
-					},
 				},
 				Enabled:              aws.Bool(true),
 				UserCreateDate:       &time.Time{},
@@ -78,7 +74,6 @@ func TestListUsers(t *testing.T) {
 	result, err := gw.ListUsers(
 		aws.Int64(10),
 		aws.String("paginationToken"),
-		aws.String("userPoolId"),
 	)
 	assert.NotNil(t, result)
 	assert.NoError(t, err)
@@ -89,7 +84,6 @@ func TestListUsersFailed(t *testing.T) {
 	result, err := gw.ListUsers(
 		aws.Int64(10),
 		aws.String("paginationToken"),
-		aws.String("userPoolId"),
 	)
 	assert.Nil(t, result)
 	assert.Error(t, err)

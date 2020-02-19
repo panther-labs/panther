@@ -26,11 +26,9 @@ func (API) UpdateOrganization(
 
 	updated, err := orgTable.Update(&models.Organization{
 		AlertReportFrequency:  input.AlertReportFrequency,
-		AwsConfig:             input.AwsConfig,
 		DisplayName:           input.DisplayName,
 		Email:                 input.Email,
 		ErrorReportingConsent: input.ErrorReportingConsent,
-		Phone:                 input.Phone,
 	})
 	if err != nil {
 		return nil, err

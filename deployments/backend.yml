@@ -184,13 +184,17 @@ Resources:
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
+        UserPoolId: !GetAtt Cognito.Outputs.UserPoolId
       TemplateURL: core/admin_api.yml
 
   Cognito:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        CustomMessageTriggerFunctionArn: !GetAtt AdminAPI.Outputs.CustomMessageTriggerFunctionArn
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        Debug: !Ref Debug
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        TracingMode: !Ref TracingMode
         PantherHost: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl
       TemplateURL: core/cognito.yml
 

@@ -44,10 +44,10 @@ func (m *mockResetUserPasswordClient) AdminResetUserPassword(
 
 func TestResetUserPassword(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockResetUserPasswordClient{}}
-	assert.NoError(t, gw.ResetUserPassword(aws.String("user123"), aws.String("userPoolId")))
+	assert.NoError(t, gw.ResetUserPassword(aws.String("user123")))
 }
 
 func TestResetUserPasswordFailed(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockResetUserPasswordClient{serviceErr: true}}
-	assert.Error(t, gw.ResetUserPassword(aws.String("user123"), aws.String("userPoolId")))
+	assert.Error(t, gw.ResetUserPassword(aws.String("user123")))
 }

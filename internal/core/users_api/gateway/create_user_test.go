@@ -29,11 +29,9 @@ import (
 )
 
 var testCreateUserInput = &CreateUserInput{
-	GivenName:   aws.String("Joe"),
-	FamilyName:  aws.String("Blow"),
-	Email:       aws.String("joe.blow@toe.com"),
-	PhoneNumber: aws.String("+11234567890"),
-	UserPoolID:  aws.String("userPoolId"),
+	GivenName:  aws.String("Joe"),
+	FamilyName: aws.String("Blow"),
+	Email:      aws.String("joe.blow@toe.com"),
 }
 
 var testAdminCreateUserInput = &provider.AdminCreateUserInput{
@@ -53,16 +51,12 @@ var testAdminCreateUserInput = &provider.AdminCreateUserInput{
 			Value: testCreateUserInput.Email,
 		},
 		{
-			Name:  aws.String("phone_number"),
-			Value: testCreateUserInput.PhoneNumber,
-		},
-		{
 			Name:  aws.String("email_verified"),
 			Value: aws.String("true"),
 		},
 	},
 	Username:   testCreateUserInput.Email,
-	UserPoolId: testCreateUserInput.UserPoolID,
+	UserPoolId: &userPoolID,
 }
 
 func TestCreateUser(t *testing.T) {

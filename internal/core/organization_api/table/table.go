@@ -36,7 +36,6 @@ type API interface {
 	Get() (*models.Organization, error)
 	Put(*models.Organization) error
 	Update(*models.Organization) (*models.Organization, error)
-	AddActions(actions []*models.Action) (*models.Organization, error)
 }
 
 // OrganizationsTable encapsulates a connection to the Dynamo table.

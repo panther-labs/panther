@@ -49,11 +49,6 @@ func TestGetOrganization(t *testing.T) {
 	testOrganization := &models.Organization{
 		DisplayName: aws.String("panther-labs"),
 		Email:       aws.String("contact@runpanther.io"),
-		AwsConfig: &models.AwsConfig{
-			UserPoolID:     aws.String("userPool"),
-			AppClientID:    aws.String("appClient"),
-			IdentityPoolID: aws.String("identityPool"),
-		},
 	}
 
 	m := &mockTable{}

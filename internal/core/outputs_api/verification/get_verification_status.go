@@ -19,8 +19,6 @@ package verification
  */
 
 import (
-	"strings"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ses"
 
@@ -70,18 +68,31 @@ func (verification *OutputVerification) GetVerificationStatus(input *models.Aler
 	}
 }
 
+// TODO: get user by email directly after users-api refactor
 func (verification *OutputVerification) isVerifiedUserEmail(email *string) (*bool, error) {
 	input := usermodels.LambdaInput{
-		GetUserOrganizationAccess: &usermodels.GetUserOrganizationAccessInput{
-			Email: email,
+		ListUsers: &usermodels.ListUsersInput{
+			PaginationToken: nil,
 		},
 	}
-	var output usermodels.GetUserOrganizationAccessOutput
-	if err := genericapi.Invoke(verification.lambdaClient, usersAPI, &input, &output); err != nil {
-		if strings.Contains(err.Error(), "does not exist") {
-			return aws.Bool(false), nil
+
+	for {
+		var output usermodels.ListUsersOutput
+		if err := genericapi.Invoke(verification.lambdaClient, usersAPI, &input, &output); err != nil {
+			return nil, err
 		}
-		return nil, err
+
+		for _, user := range output.Users {
+			if *user.Email == *email {
+				return aws.Bool(true), nil
+			}
+		}
+
+		if output.PaginationToken == nil {
+			break
+		}
+		input.ListUsers.PaginationToken = output.PaginationToken
 	}
-	return aws.Bool(true), nil
+
+	return aws.Bool(false), nil
 }

@@ -49,12 +49,7 @@ func TestUpdateOrganizationError(t *testing.T) {
 func TestUpdateOrganization(t *testing.T) {
 	m := &mockTable{}
 	output := &models.Organization{
-		AlertReportFrequency: aws.String("P1W"),
-		AwsConfig: &models.AwsConfig{
-			UserPoolID:     aws.String("userPool"),
-			AppClientID:    aws.String("appClient"),
-			IdentityPoolID: aws.String("identityPool"),
-		},
+		AlertReportFrequency:  aws.String("P1W"),
 		DisplayName:           aws.String("panther-labs"),
 		Email:                 aws.String("fake@email.com"),
 		ErrorReportingConsent: aws.Bool(true),

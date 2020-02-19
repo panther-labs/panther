@@ -33,12 +33,10 @@ func (API) CreateOrganization(
 	// Then write the new org to the Dynamo table
 	org := &models.Organization{
 		AlertReportFrequency:  input.AlertReportFrequency,
-		AwsConfig:             input.AwsConfig,
 		CreatedAt:             aws.String(time.Now().Format(time.RFC3339)),
 		DisplayName:           input.DisplayName,
 		Email:                 input.Email,
 		ErrorReportingConsent: input.ErrorReportingConsent,
-		Phone:                 input.Phone,
 	}
 
 	if err := orgTable.Put(org); err != nil {

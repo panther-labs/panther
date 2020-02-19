@@ -56,10 +56,6 @@ func (m *mockGetUserClient) AdminGetUser(
 				Name:  aws.String("email"),
 				Value: aws.String("joe@blow.com"),
 			},
-			{
-				Name:  aws.String("phone_number"),
-				Value: aws.String("+1234567890"),
-			},
 		},
 		UserCreateDate:       &time.Time{},
 		UserLastModifiedDate: &time.Time{},
@@ -70,20 +66,14 @@ func (m *mockGetUserClient) AdminGetUser(
 
 func TestGetUser(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockGetUserClient{}}
-	result, err := gw.GetUser(
-		aws.String("user123"),
-		aws.String("fakePoolId"),
-	)
+	result, err := gw.GetUser(aws.String("user123"))
 	assert.NotNil(t, result)
 	assert.NoError(t, err)
 }
 
 func TestGetUserFailed(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockGetUserClient{serviceErr: true}}
-	result, err := gw.GetUser(
-		aws.String("user123"),
-		aws.String("fakePoolId"),
-	)
+	result, err := gw.GetUser(aws.String("user123"))
 	assert.Nil(t, result)
 	assert.Error(t, err)
 }

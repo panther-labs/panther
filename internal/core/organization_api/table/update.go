@@ -34,29 +34,9 @@ import (
 func (table *OrganizationsTable) Update(org *models.Organization) (*models.Organization, error) {
 	update := expression.
 		Set(expression.Name("alertReportFrequency"), expression.Value(org.AlertReportFrequency)).
-		Set(expression.Name("awsConfig"), expression.Value(org.AwsConfig)).
 		Set(expression.Name("displayName"), expression.Value(org.DisplayName)).
 		Set(expression.Name("email"), expression.Value(org.Email)).
-		Set(expression.Name("errorReportingConsent"), expression.Value(org.ErrorReportingConsent)).
-		Set(expression.Name("phone"), expression.Value(org.Phone))
-	return table.doUpdate(update)
-}
-
-type flagSet []*models.Action
-
-// Marshal string slice as a Dynamo StringSet instead of a List
-func (s flagSet) MarshalDynamoDBAttributeValue(av *dynamodb.AttributeValue) error {
-	av.SS = make([]*string, 0, len(s))
-	for _, flag := range s {
-		av.SS = append(av.SS, flag)
-	}
-	return nil
-}
-
-// AddActions append additional actions to completed actions and returns the updated organization
-func (table *OrganizationsTable) AddActions(actions []*models.Action) (*models.Organization, error) {
-	update := expression.Add(
-		expression.Name("completedActions"), expression.Value(flagSet(actions)))
+		Set(expression.Name("errorReportingConsent"), expression.Value(org.ErrorReportingConsent))
 	return table.doUpdate(update)
 }
 

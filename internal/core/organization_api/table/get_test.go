@@ -54,7 +54,7 @@ func TestGetItemUnmarshalError(t *testing.T) {
 	// output has wrong type for one of the fields
 	output := &dynamodb.GetItemOutput{
 		Item: DynamoItem{
-			"awsConfig": {SS: aws.StringSlice([]string{"panther", "labs"})},
+			"email": {SS: aws.StringSlice([]string{"panther", "labs"})},
 		},
 	}
 	mockClient.On("GetItem", mock.Anything).Return(output, nil)

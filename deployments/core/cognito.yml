@@ -15,15 +15,48 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
 Description: Cognito User Pool
 
 Parameters:
-  CustomMessageTriggerFunctionArn:
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
     Type: String
-    Description: Lambda function for custom cognito triggers
+    Default: false
+    Description: Toggle debug logging
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of LayerVersion ARNs to attach to each function
+    Default: ''
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
   PantherHost:
     Type: String
     Description: Load balancer URL hosting the deployed Panther website
+
+  CustomMessageMemorySizeMB:
+    Type: Number
+    Description: Memory (MB) available for the custom-message-trigger Lambda function
+    Default: 128
+    MinValue: 128
+    MaxValue: 3008
+  CustomMessageTimeoutSec:
+    Type: Number
+    Description: Timeout (seconds) for the custom-message-trigger Lambda function
+    Default: 60
+    MinValue: 5
+    MaxValue: 900
+
+Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
   UserPool:
@@ -44,13 +77,13 @@ Resources:
             <br />Need help, or have questions? Just email us at support@runpanther.io, we'd love to help.
             <br />
             <br />Yours truly,
-            <br />Panther - runpanther.io
+            <br />Panther - https://runpanther.io
             <br />
             <br /><small>Copyright © 2020 Panther Labs Inc. All rights reserved.</small>
       AutoVerifiedAttributes: # Attributes you want the user to verify (poor naming choice by AWS)
         - email
       LambdaConfig:
-        CustomMessage: !Ref CustomMessageTriggerFunctionArn
+        CustomMessage: !GetAtt CustomMessageTriggerFunction.Arn
       Policies:
         PasswordPolicy:
           MinimumLength: 12
@@ -76,14 +109,6 @@ Resources:
         - email
       UserPoolName: panther-users
 
-  AdminGroup:
-    Type: AWS::Cognito::UserPoolGroup
-    Properties:
-      Description: Administrator for Panther web application
-      GroupName: Admin
-      Precedence: 0
-      UserPoolId: !Ref UserPool
-
   AppClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -95,6 +120,45 @@ Resources:
         - email
         - given_name
         - family_name
+
+  ##### Custom message trigger function #####
+  CustomMessageTriggerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-cognito-custom-message-trigger
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  CustomMessageTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/core/custom_message/main
+      Description: Custom message trigger for Cognito user events
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          APP_DOMAIN_URL: !Ref PantherHost
+      FunctionName: panther-cognito-custom-message-trigger
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref CustomMessageMemorySizeMB
+      Runtime: go1.x
+      Timeout: !Ref CustomMessageTimeoutSec
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: GetCognitoUsers
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: cognito-idp:AdminGetUser
+              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
+
+  CustomMessageTriggerInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CustomMessageTriggerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
 
 Outputs:
   UserPoolId:

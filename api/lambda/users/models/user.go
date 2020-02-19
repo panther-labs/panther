@@ -26,12 +26,11 @@ type Group struct {
 
 // User is a struct describing a Panther User.
 type User struct {
-	CreatedAt   *int64  `json:"createdAt"`
-	Email       *string `json:"email"`
-	FamilyName  *string `json:"familyName"`
-	GivenName   *string `json:"givenName"`
-	ID          *string `json:"id"`
-	PhoneNumber *string `json:"phoneNumber"`
-	Role        *string `json:"role"` // Roles are group name
-	Status      *string `json:"status"`
+	CreatedAt  *int64  `json:"createdAt"`
+	Email      *string `json:"email"`
+	FamilyName *string `json:"familyName"`
+	GivenName  *string `json:"givenName"`
+	ID         *string `json:"id"`
+	Role       *string `json:"role"` // Roles are group name
+	Status     *string `json:"status"`
 }

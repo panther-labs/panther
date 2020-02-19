@@ -60,14 +60,8 @@ func TestCreateOrganization(t *testing.T) {
 
 	input := &models.CreateOrganizationInput{
 		AlertReportFrequency: aws.String("P1W"),
-		AwsConfig: &models.AwsConfig{
-			UserPoolID:     aws.String("userPool"),
-			AppClientID:    aws.String("appClient"),
-			IdentityPoolID: aws.String("identityPool"),
-		},
-		DisplayName: aws.String("panther-labs"),
-		Email:       aws.String("contact@runpanther.io"),
-		Phone:       aws.String("111-222-3333"),
+		DisplayName:          aws.String("panther-labs"),
+		Email:                aws.String("contact@runpanther.io"),
 	}
 
 	// mock Dynamo put
@@ -80,12 +74,9 @@ func TestCreateOrganization(t *testing.T) {
 	expected := &models.CreateOrganizationOutput{
 		Organization: &models.Organization{
 			AlertReportFrequency: input.AlertReportFrequency,
-			AwsConfig:            input.AwsConfig,
-			CompletedActions:     nil,
 			CreatedAt:            result.Organization.CreatedAt,
 			DisplayName:          input.DisplayName,
 			Email:                input.Email,
-			Phone:                input.Phone,
 		},
 	}
 	assert.Equal(t, expected, result)

@@ -28,19 +28,9 @@ const (
 
 // Organization defines the fields in the table row.
 type Organization struct {
-	AlertReportFrequency  *string    `json:"alertReportFrequency"`
-	AwsConfig             *AwsConfig `json:"awsConfig"`
-	CompletedActions      []*Action  `dynamodbav:"completedActions,omitempty,stringset" json:"completedActions"`
-	CreatedAt             *string    `json:"createdAt"`
-	DisplayName           *string    `json:"displayName"`
-	Email                 *string    `json:"email"`
-	ErrorReportingConsent *bool      `json:"errorReportingConsent"`
-	Phone                 *string    `json:"phone"`
-}
-
-// AwsConfig defines metadata related to AWS infrastructure for the organization
-type AwsConfig struct {
-	UserPoolID     *string `json:"userPoolId"`
-	AppClientID    *string `json:"appClientId"`
-	IdentityPoolID *string `json:"identityPoolId"`
+	AlertReportFrequency  *string `json:"alertReportFrequency"`
+	CreatedAt             *string `json:"createdAt"`
+	DisplayName           *string `json:"displayName"`
+	Email                 *string `json:"email"`
+	ErrorReportingConsent *bool   `json:"errorReportingConsent"`
 }
