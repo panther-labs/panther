@@ -35,9 +35,10 @@ type AlertDedupEvent struct {
 	EventCount          int64     `dynamodbav:"eventCount,number"`
 }
 
+// Alert contains all the fields associated to the alert stored in DDB
 type Alert struct {
-	ID string `dynamodbav:"id,string"`
-	TimePartition       string    `dynamodbav:"timePartition,string"`
+	ID            string `dynamodbav:"id,string"`
+	TimePartition string `dynamodbav:"timePartition,string"`
 	AlertDedupEvent
 }
 

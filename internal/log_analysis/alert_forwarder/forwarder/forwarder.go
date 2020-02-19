@@ -40,7 +40,7 @@ const defaultTimePartition = "defaultPartition"
 func Process(event *AlertDedupEvent) error {
 	alert := &Alert{
 		ID:              generateAlertID(event),
-		TimePartition: defaultTimePartition,
+		TimePartition:   defaultTimePartition,
 		AlertDedupEvent: *event,
 	}
 
@@ -60,5 +60,5 @@ func Process(event *AlertDedupEvent) error {
 }
 
 func generateAlertID(event *AlertDedupEvent) string {
-	return event.RuleID + "-" + event.DeduplicationString + "-" + strconv.FormatInt(event.AlertCount, 10)
+	return event.RuleID + ":" + event.DeduplicationString + ":" + strconv.FormatInt(event.AlertCount, 10)
 }
