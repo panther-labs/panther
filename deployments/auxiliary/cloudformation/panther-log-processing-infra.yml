@@ -148,7 +148,7 @@ Resources:
       Topics:
         - !Ref LogProcessingNotificationsTopic
 
-  # This subscription subscribes the Panther Master account SQS queue to the topic created above
+  # This subscription subscribes the Panther SQS queue to the topic created above
   Subscription:
     Type: AWS::SNS::Subscription
     Properties:

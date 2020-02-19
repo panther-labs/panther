@@ -16,8 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import PanelPlaceholder from 'Components/panel-placeholder';
+import React from 'react';
+import TablePlaceholder from 'Components/table-placeholder';
+import { Card } from 'pouncejs';
 
-const GeneralSettingsPageSkeleton = PanelPlaceholder;
+const GeneralSettingsPageSkeleton: React.FC = () => {
+  return (
+    <Card p={9}>
+      <TablePlaceholder />
+    </Card>
+  );
+};
 
 export default GeneralSettingsPageSkeleton;

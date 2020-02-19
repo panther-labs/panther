@@ -20,6 +20,8 @@ package processor
  */
 
 import (
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -143,7 +145,10 @@ func TestHandleInvalid(t *testing.T) {
 		},
 	}
 	require.Nil(t, Handle(testContext, batch))
-	assert.Equal(t, 1, len(logs.FilterMessage("dropping unknown notification type").AllUntimed()))
+	t.Log(logs.AllUntimed())
+	require.Equal(t, 1, len(logs.FilterField(zap.String("body",`{this is " not even valid JSON:`)).AllUntimed()))
+	assert.Equal(t, logs.FilterField(zap.String("body",`{this is " not even valid JSON:`)).AllUntimed()[0].ContextMap()["error"].(string),
+		"unexpected SNS message")
 }
 
 // Handle sns confirmation end-to-end
@@ -174,7 +179,9 @@ func TestHandleConfirmation(t *testing.T) {
 			{Body: sampleConfirmation},
 		},
 	}
+
 	require.Nil(t, Handle(testContext, batch))
+	assert.Equal(t, 1, len(logs.FilterMessage("processing SNS confirmation").AllUntimed()))
 	require.Equal(t, 1, len(logs.FilterMessage("confirming sns subscription").AllUntimed()))
 	assert.Equal(t, logs.FilterMessage("confirming sns subscription").AllUntimed()[0].ContextMap()["topicArn"].(string),
 		*expectedInput.TopicArn)

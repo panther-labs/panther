@@ -26,11 +26,10 @@ Before we cover deployment, let's establish the terminology:
 
 ## Prerequisites
 
-You need an AWS account and an IAM user or role with permission to create resources in Lambda, DynamoDB, S3, ECS, ELB, EC2 \(security groups, subnets, VPC\), SNS, SQS, SES, KMS, IAM, CloudFormation, CloudWatch, API Gateway, Cognito, and AppSync.
+You need an AWS account and an IAM user or role with permission to create and manage the necessary AWS resources. We provide an IAM role you can use for Panther deployment:
 
-{% hint style="info" %}
-Precise deployment policy coming soon!
-{% endhint %}
+- CloudFormation ([source](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml)): [https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
+- Terraform ([source](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf))
 
 _We recommend deploying Panther into its own AWS account via_ [_AWS Organizations_](https://aws.amazon.com/blogs/security/how-to-use-aws-organizations-to-automate-end-to-end-account-creation/)_. This ensures that detection infrastructure is contained within a single place._
 
@@ -104,19 +103,10 @@ Your AWS credentials _must_ be exported as environment variables for the docker 
 `aws-vault exec <profile> -- ./dev.sh`
 {% endhint %}
 
-{% hint style="info" %}
-Rather than deploying from your local machine, you can opt to use an EC2 instance with Docker and
-git installed. Instead of exporting your AWS credentials as environment variables, you will need to attach an IAM role to your EC2 instance profile, with enough permissions for the creation of all Panther resources.
-
-The minimum requirements for an EC2 machine are 1 vCPU and 2GB of memory. The lowest-cost instance that satisfies those requirements is an EC2 `t2.small`.
-{% endhint %}
-
-{% hint style="info" %}
-Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
-{% endhint %}
-
 You're all set! Run `mage deploy`
 
+- If you've made any changes to the source files or want to run tests, you may need to first install development dependencies with `mage setup:all`
+- If you use `aws-vault`, you must be authenticated with MFA. Otherwise, IAM role creation will fail with `InvalidClientTokenId`
 - The initial deployment will take 20-30 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off.
 - Near the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
 - You'll get an email from [**no-reply@verificationemail.com**](mailto:no-reply@verificationemail.com) with your temporary password. If you don't see it, be sure to check your spam folder.
@@ -131,16 +121,22 @@ By default, Panther generates a self-signed certificate, which will cause most b
 Your connection _is_ encrypted, and it's generally safe to continue if the domain matches the output of the deploy command. However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own ACM certificate in the `deployments/panther_config.yml` file.
 {% endhint %}
 
+### Other Deployment Options
+
+Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
+
+Or, you can deploy from an EC2 instance with Docker and git installed (in the same region you're deploying Panther to). This is typically the fastest option since it minimizes the latency when communicating with AWS services. Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](#prerequisites) to your EC2 instance profile. Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
+
 ## Onboarding
 
-Follow the steps below to onboard data, add AWS accounts, configure alert destinations, and more. The first step is configuring your [alert outputs](destinations/alert-setup/). Then, proceed below to configure scans and real-time log analysis.
+Now you can follow the steps below to configure [alert outputs](destinations/alert-setup/), [cloud security scans](policies/scanning/), and [real-time log analysis](log-analysis/log-processing/)!
 
 #### Log Analysis
 
 - [Log Analysis Setup](log-analysis/log-processing/)
 - [Create Rules for supported Log Types](log-analysis/rules/)
 
-#### Cloud Compliance
+#### Cloud Security
 
 - [Background](policies/compliance-background.md)
 - [Compliance Scanning Setup](policies/scanning/)

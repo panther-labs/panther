@@ -17,7 +17,7 @@
 import json
 import os
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 import boto3
 
@@ -26,35 +26,33 @@ _MAX_MESSAGES = 10
 # Max size of an SQS batch request
 _MAX_MESSAGE_SIZE = 256 * 1000
 
-sqs_resource = boto3.resource('sqs')
-queue = sqs_resource.get_queue_by_name(QueueName=os.environ['ALERTS_QUEUE'])
+_SQS_RESOURCE = boto3.resource('sqs')
+_SQS_QUEUE = _SQS_RESOURCE.get_queue_by_name(QueueName=os.environ['ALERTS_QUEUE'])  # pylint: disable=no-member
 
 
 def send_to_sqs(matches: List) -> None:
     """Send a tuple of (rule_id, event) to SQS."""
-    messages = [match_to_sqs_entry_message(i) for i in matches]
+    messages = [_match_to_sqs_entry_message(i) for i in matches]
 
     current_entries: List[Dict[str, str]] = []
     current_byte_size = 0
 
-    for i in range(len(messages)):
-        entry = {'Id': str(i), 'MessageBody': messages[i]}
-        projected_size = current_byte_size + len(messages[i])
+    for i, message in enumerate(messages):
+        entry = {'Id': str(i), 'MessageBody': message}
+        projected_size = current_byte_size + len(message)
         projected_num_entries = len(current_entries) + 1
         if projected_num_entries > _MAX_MESSAGES or projected_size > _MAX_MESSAGE_SIZE:
-            queue.send_messages(Entries=current_entries)
+            _SQS_QUEUE.send_messages(Entries=current_entries)
             current_entries = [entry]
-            current_byte_size = len(messages[i])
+            current_byte_size = len(message)
         else:
             current_entries.append(entry)
-            current_byte_size += len(messages[i])
+            current_byte_size += len(message)
 
     if len(current_entries) > 0:
-        queue.send_messages(Entries=current_entries)
-
-    return
+        _SQS_QUEUE.send_messages(Entries=current_entries)
 
 
-def match_to_sqs_entry_message(match: (str, str)) -> str:
+def _match_to_sqs_entry_message(match: Tuple[str, str]) -> str:
     notification = {'ruleId': match[0], 'event': match[1], 'timestamp': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}
     return json.dumps(notification)

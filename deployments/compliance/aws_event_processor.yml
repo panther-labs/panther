@@ -57,6 +57,12 @@ Parameters:
   SQSKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
+  SnsTopicArn:
+    Type: String
+    Description: The ARN of the SNS topic
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket for storing processed logs
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -76,6 +82,20 @@ Resources:
         maxReceiveCount: 10
       VisibilityTimeout: !Ref TimeoutSec
 
+  SnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt EventQueue.Arn
+      Region: !Ref AWS::Region
+      TopicArn: !Ref SnsTopicArn
+      RawMessageDelivery: true
+      FilterPolicy:
+        type:
+          - LogData
+        id:
+          - AWS.CloudTrail
+
   EventQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
@@ -89,6 +109,13 @@ Resources:
             Condition:
               ArnLike:
                 aws:SourceArn: !Sub arn:${AWS::Partition}:sns:*:*:*-PantherEventsTopic-*
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Ref SnsTopicArn
       Queues:
         - !Ref EventQueue
 
@@ -167,3 +194,9 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+        - Id: ReadFromS3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/*

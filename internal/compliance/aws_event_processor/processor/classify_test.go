@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -34,7 +35,7 @@ import (
 func TestClassifyCloudWatchEventBadSource(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	require.Nil(t, classifyCloudTrailLog(`{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`))
+	require.Nil(t, classifyCloudTrailLog(gjson.Parse(`{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`)))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -49,9 +50,7 @@ func TestClassifyCloudWatchEventBadSource(t *testing.T) {
 func TestClassifyCloudWatchEventErrorCode(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	require.Nil(t, classifyCloudTrailLog(
-		`{"detail": {"errorCode": "AccessDeniedException", "eventSource": "s3.amazonaws.com"}, "detail-type": "AWS API Call via CloudTrail"}`),
-	)
+	require.Nil(t, classifyCloudTrailLog(gjson.Parse(`{"errorCode": "AccessDeniedException", "eventSource": "s3.amazonaws.com"}`)))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -70,7 +69,7 @@ func TestClassifyCloudWatchEventReadOnly(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
 	require.Nil(t, classifyCloudTrailLog(
-		`{"detail": {"eventName": "ListBuckets", "eventSource": "s3.amazonaws.com"}, "detail-type": "AWS API Call via CloudTrail"}`),
+		gjson.Parse(`{"eventName": "ListBuckets", "eventSource": "s3.amazonaws.com"}`)),
 	)
 
 	expected := []observer.LoggedEntry{
@@ -87,13 +86,11 @@ func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
 	body :=
-		`{	"detail": {
+		gjson.Parse(`{
 				"eventName": "DeleteBucket",
 				"recipientAccountId": "111111111111",
 				"eventSource":"s3.amazonaws.com"
-			}, 
-			"account": "111111111111",
-			"detail-type": "AWS API Call via CloudTrail"}`
+			}`)
 	require.Nil(t, classifyCloudTrailLog(body))
 
 	expected := []observer.LoggedEntry{
@@ -111,7 +108,7 @@ func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
 func TestClassifyCloudWatchEventUnauthorized(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	body := `{"eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`
+	body := gjson.Parse(`{"eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`)
 	changes := classifyCloudTrailLog(body)
 	assert.Len(t, changes, 0)
 
@@ -130,11 +127,8 @@ func TestClassifyCloudWatchEventUnauthorized(t *testing.T) {
 func TestClassifyCloudWatchEvent(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	body := `
-{
-	"detail-type": "AWS API Call via CloudTrail",
-	"account": "111111111111",
-    "detail": {
+	body := gjson.Parse(`
+	{
 		"recipientAccountId": "111111111111",
     	"eventSource": "s3.amazonaws.com",
         "awsRegion": "us-west-2",
@@ -142,8 +136,7 @@ func TestClassifyCloudWatchEvent(t *testing.T) {
         "eventTime": "2019-08-01T04:43:00Z",
         "requestParameters": {"bucketName": "panther"},
 		"userIdentity": {"accountId": "111111111111"}
-    }
-}`
+    }`)
 	result := classifyCloudTrailLog(body)
 	expected := []*resourceChange{{
 		AwsAccountID:  "111111111111",

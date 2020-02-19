@@ -27,6 +27,7 @@ import (
 	custommessage "github.com/panther-labs/panther/internal/core/custom_message/api"
 )
 
+// TODO - merge this with users-api
 func lambdaHandler(ctx context.Context, event *events.CognitoEventUserPoolsCustomMessage) (
 	*events.CognitoEventUserPoolsCustomMessage, error) {
 
