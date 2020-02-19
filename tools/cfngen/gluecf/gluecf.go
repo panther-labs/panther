@@ -47,6 +47,10 @@ var (
 			To:   awsglue.GlueTimestampType,
 		},
 		{
+			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
+			To:   awsglue.GlueTimestampType,
+		},
+		{
 			From: reflect.TypeOf(parsers.PantherAnyString{}),
 			To:   "array<string>",
 		},

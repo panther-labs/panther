@@ -33,37 +33,37 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html`
 
 // nolint:lll
 type EventInfo struct {
-	ID                 *string                    `json:"id" validate:"required"`
-	Rule               *Rule                      `json:"rule" validate:"required"`
-	Timestamp          *timestamp.UnixMillisecond `json:"TimeStamp" validate:"required"`
-	Decoder            *string                    `json:"decoder,omitempty"`
-	DecoderParent      *string                    `json:"decoder_parent,omitempty"`
-	DecoderDescription *Decoder                   `json:"decoder_desc,omitempty"`
-	Action             *string                    `json:"action,omitempty"`
-	Protocol           *string                    `json:"protocol,omitempty"`
-	SrcIP              *string                    `json:"srcip,omitempty"`
-	SrcGeoIP           *string                    `json:"srcgeoip,omitempty"`
-	SrcPort            *string                    `json:"srcport,omitempty"`
-	SrcUser            *string                    `json:"srcuser,omitempty"`
-	DstIP              *string                    `json:"dstip,omitempty"`
-	DstGeoIP           *string                    `json:"dstgeoip,omitempty"`
-	DstPort            *string                    `json:"dstport,omitempty"`
-	DstUser            *string                    `json:"dstuser,omitempty"`
-	Location           *string                    `json:"location,omitempty"`
-	FullLog            *string                    `json:"full_log,omitempty"`
-	PreviousOutput     *string                    `json:"previous_output,omitempty"`
-	Hostname           *string                    `json:"hostname,omitempty"`
-	ProgramName        *string                    `json:"program_name,omitempty"`
-	Status             *string                    `json:"status,omitempty"`
-	Command            *string                    `json:"command,omitempty"`
-	URL                *string                    `json:"url,omitempty"`
-	Data               *string                    `json:"data,omitempty"`
-	Systemname         *string                    `json:"systemname,omitempty"`
-	AgentName          *string                    `json:"agent_name,omitempty"`
-	TimestampString    *string                    `json:"timestamp,omitempty"`
-	AgentIP            *string                    `json:"agentip,omitempty"`
-	Logfile            *string                    `json:"logfile,omitempty"`
-	Syscheckfile       *FileDiff                  `json:"SyscheckFile,omitempty"`
+	ID                 *string                    `json:"id" validate:"required" description:"ID"`
+	Rule               *Rule                      `json:"rule" validate:"required" description:"Rule"`
+	Timestamp          *timestamp.UnixMillisecond `json:"TimeStamp" validate:"required" description:"Timestamp"`
+	Decoder            *string                    `json:"decoder,omitempty" description:"Decoder"`
+	DecoderParent      *string                    `json:"decoder_parent,omitempty" description:"DecoderParent"`
+	DecoderDescription *Decoder                   `json:"decoder_desc,omitempty" description:"DecoderDescription"`
+	Action             *string                    `json:"action,omitempty" description:"Action"`
+	Protocol           *string                    `json:"protocol,omitempty" description:"Protocol"`
+	SrcIP              *string                    `json:"srcip,omitempty" description:"SrcIP"`
+	SrcGeoIP           *string                    `json:"srcgeoip,omitempty" description:"SrcGeoIP"`
+	SrcPort            *string                    `json:"srcport,omitempty" description:"SrcPort"`
+	SrcUser            *string                    `json:"srcuser,omitempty" description:"SrcUser"`
+	DstIP              *string                    `json:"dstip,omitempty" description:"DstIP"`
+	DstGeoIP           *string                    `json:"dstgeoip,omitempty" description:"DstGeoIP"`
+	DstPort            *string                    `json:"dstport,omitempty" description:"DstPort"`
+	DstUser            *string                    `json:"dstuser,omitempty" description:"DstUser"`
+	Location           *string                    `json:"location,omitempty" description:"Location"`
+	FullLog            *string                    `json:"full_log,omitempty" description:"FullLog"`
+	PreviousOutput     *string                    `json:"previous_output,omitempty" description:"PreviousOutput"`
+	Hostname           *string                    `json:"hostname,omitempty" description:"Hostname"`
+	ProgramName        *string                    `json:"program_name,omitempty" description:"ProgramName"`
+	Status             *string                    `json:"status,omitempty" description:"Status"`
+	Command            *string                    `json:"command,omitempty" description:"Command"`
+	URL                *string                    `json:"url,omitempty" description:"URL"`
+	Data               *string                    `json:"data,omitempty" description:"Data"`
+	Systemname         *string                    `json:"systemname,omitempty" description:"Systemname"`
+	AgentName          *string                    `json:"agent_name,omitempty" description:"AgentName"`
+	//TimestampString    *string                    `json:"timestamp,omitempty" description:"TimestampString"`
+	AgentIP      *string   `json:"agentip,omitempty" description:"AgentIP"`
+	Logfile      *string   `json:"logfile,omitempty" description:"Logfile"`
+	Syscheckfile *FileDiff `json:"SyscheckFile,omitempty" description:"Syscheckfile"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
