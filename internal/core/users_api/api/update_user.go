@@ -25,17 +25,10 @@ import (
 
 // UpdateUser modifies user attributes and roles.
 func (API) UpdateUser(input *models.UpdateUserInput) error {
-	// Update basic user attributes if needed.
-	if input.GivenName != nil || input.FamilyName != nil {
-		if err := userGateway.UpdateUser(&gateway.UpdateUserInput{
-			GivenName:  input.GivenName,
-			FamilyName: input.FamilyName,
-			Email:      input.Email,
-			ID:         input.ID,
-		}); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return userGateway.UpdateUser(&gateway.UpdateUserInput{
+		GivenName:  input.GivenName,
+		FamilyName: input.FamilyName,
+		Email:      input.Email,
+		ID:         input.ID,
+	})
 }
