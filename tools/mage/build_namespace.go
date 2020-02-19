@@ -59,6 +59,10 @@ func (b Build) API() {
 		start := time.Now().UTC()
 		args := []string{"generate", "client", "-q", "-t", dir, "-f", spec}
 		cmd := filepath.Join(setupDirectory, "swagger")
+		if _, err = os.Stat(cmd); err != nil {
+			logger.Fatalf("%s not found (%v): run 'mage setup:all'", cmd, err)
+		}
+
 		if err := sh.Run(cmd, args...); err != nil {
 			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
