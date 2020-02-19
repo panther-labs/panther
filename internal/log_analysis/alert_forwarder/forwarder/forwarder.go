@@ -2,6 +2,7 @@ package forwarder
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -34,10 +35,13 @@ var (
 	ddbClient   dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
 )
 
+const defaultTimePartition = "defaultPartition"
+
 func Process(event *AlertDedupEvent) error {
 	alert := &Alert{
 		ID:              generateAlertID(event),
-		AlertDedupEvent: &event,
+		TimePartition: defaultTimePartition,
+		AlertDedupEvent: *event,
 	}
 
 	marshalledAlert, err := dynamodbattribute.MarshalMap(alert)
@@ -56,5 +60,5 @@ func Process(event *AlertDedupEvent) error {
 }
 
 func generateAlertID(event *AlertDedupEvent) string {
-	return event.RuleID + "-" + event.DeduplicationString + "-" + string(event.AlertCount)
+	return event.RuleID + "-" + event.DeduplicationString + "-" + strconv.FormatInt(event.AlertCount, 10)
 }

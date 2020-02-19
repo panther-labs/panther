@@ -24,13 +24,10 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
-	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
-
-var validate = validator.New()
 
 func main() {
 	lambda.Start(reporterHandler)

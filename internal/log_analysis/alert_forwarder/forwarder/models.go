@@ -33,11 +33,11 @@ type AlertDedupEvent struct {
 	CreationTime        time.Time `dynamodbav:"creationTime,string"`
 	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
 	EventCount          int64     `dynamodbav:"eventCount,number"`
-	TimePartition       string    `dynamodbav:"timePartition,string"`
 }
 
 type Alert struct {
 	ID string `dynamodbav:"id,string"`
+	TimePartition       string    `dynamodbav:"timePartition,string"`
 	AlertDedupEvent
 }
 

@@ -44,6 +44,9 @@ Parameters:
   SQSKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
+  AlertDedupTableStreamArn:
+    Type: String
+    Description: The stream arn of the alerts dedup table
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -336,7 +339,7 @@ Resources:
         DynamoDBEvent:
           Type: DynamoDB
           Properties:
-            Stream: !GetAtt LogAlertsTable.StreamArn
+            Stream: !Ref AlertDedupTableStreamArn
             StartingPosition: TRIM_HORIZON
             BatchSize: 10
       FunctionName: panther-log-alert-forwarder
