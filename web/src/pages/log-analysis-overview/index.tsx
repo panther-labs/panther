@@ -30,7 +30,7 @@ const LogAnalysisOverview: React.FC = () => {
       flexDirection="column"
     >
       <Box m={10}>
-        <img alt="Construction works" src={WarningImg} width="auto" height={350} />
+        <img alt="Construction works" src={WarningImg} width="auto" height={400} />
       </Box>
       <Heading size="medium" color="grey400" mb={6}>
         Log analysis overview is not available
