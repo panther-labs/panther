@@ -83,7 +83,6 @@ Resources:
       VisibilityTimeout: !Ref TimeoutSec
 
   SnsSubscription:
-    # TODO: Update this with SNS Subscription filters to only receive CloudTrail events
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: sqs
@@ -91,6 +90,11 @@ Resources:
       Region: !Ref AWS::Region
       TopicArn: !Ref SnsTopicArn
       RawMessageDelivery: true
+      FilterPolicy:
+        type:
+          - LogData
+        id:
+          - AWS.CloudTrail
 
   EventQueuePolicy:
     Type: AWS::SQS::QueuePolicy

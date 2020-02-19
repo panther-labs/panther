@@ -75,23 +75,17 @@ func Handle(batch *events.SQSEvent) error {
 		}
 
 		// This case is checking for a notification from the log processor that there is newly processed CloudTrail logs
-		results := gjson.GetMany(record.Body, "s3Bucket", "type", "id", "s3ObjectKey")
-		if results[0].Exists() && results[1].Exists() && results[2].Exists() && results[3].Exists() {
-			// Verify that the notification is for CloudTrail
-			// TODO: Move this logic to the SNS Subscription
-			if results[1].Str != "LogData" || results[2].Str != "AWS.CloudTrail" {
-				continue
-			}
+		results := gjson.GetMany(record.Body, "s3Bucket", "s3ObjectKey")
+		if results[0].Exists() && results[1].Exists() {
 			zap.L().Debug("SNS message was an S3 Notification, initiating download")
 			object := &sources.S3ObjectInfo{
 				S3Bucket:    results[0].Str,
-				S3ObjectKey: results[3].Str,
+				S3ObjectKey: results[1].Str,
 			}
 			err := processS3Download(object, changes)
 			if err != nil {
-				zap.L().Error("error processing S3 notification", zap.Error(errors.WithStack(err)))
+				return err
 			}
-			continue
 		}
 
 		// If both the prior cases failed, this must be an SNS Notification or invalid input
