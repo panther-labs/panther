@@ -1,4 +1,4 @@
-package ossec
+package osseclogs
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.

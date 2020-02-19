@@ -1,4 +1,4 @@
-package ossec
+package osseclogs
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -32,9 +32,9 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html`
 // nolint:lll
 type EventInfo struct {
 	// Required
-	ID        *string                    `json:"id" validate:"required" description:"Event ID (timestamp.streamposition)"`
-	Rule      *Rule                      `json:"rule" validate:"required" description:"Rule object with information about what rule created the alert"`
-	Timestamp *timestamp.UnixMillisecond `json:"TimeStamp" validate:"required" description:"Timestamp in Unix Epoch (Milliseconds)"`
+	ID        *string                    `json:"id" validate:"required" description:"Unique Event ID"`
+	Rule      *Rule                      `json:"rule" validate:"required,dive" description:"Rule object with information about what rule created the alert"`
+	Timestamp *timestamp.UnixMillisecond `json:"TimeStamp" validate:"required" description:"Timestamp in UTC"`
 	Location  *string                    `json:"location" validate:"required" description:"Source of the alert (filename or command)"`
 	Hostname  *string                    `json:"hostname" validate:"required" description:"Hostname of the host that generated the alert"`
 	FullLog   *string                    `json:"full_log" validate:"required" description:"The full captured log of the alert"`
@@ -46,7 +46,7 @@ type EventInfo struct {
 	Command            *string   `json:"command,omitempty" description:"Command"`
 	Data               *string   `json:"data,omitempty" description:"Data"`
 	Decoder            *string   `json:"decoder,omitempty" description:"Decoder"`
-	DecoderDescription *Decoder  `json:"decoder_desc,omitempty" description:"DecoderDescription"`
+	DecoderDescription *Decoder  `json:"decoder_desc,omitempty" validate:"omitempty,dive" description:"DecoderDescription"`
 	DecoderParent      *string   `json:"decoder_parent,omitempty" description:"DecoderParent"`
 	DstGeoIP           *string   `json:"dstgeoip,omitempty" description:"DstGeoIP"`
 	DstIP              *string   `json:"dstip,omitempty" description:"DstIP"`
@@ -61,7 +61,7 @@ type EventInfo struct {
 	SrcPort            *string   `json:"srcport,omitempty" description:"SrcPort"`
 	SrcUser            *string   `json:"srcuser,omitempty" description:"SrcUser"`
 	Status             *string   `json:"status,omitempty" description:"Status"`
-	Syscheckfile       *FileDiff `json:"SyscheckFile,omitempty" description:"Syscheckfile"`
+	Syscheckfile       *FileDiff `json:"SyscheckFile,omitempty" validate:"omitempty,dive" description:"Syscheckfile"`
 	Systemname         *string   `json:"systemname,omitempty" description:"Systemname"`
 	URL                *string   `json:"url,omitempty" description:"URL"`
 
@@ -80,13 +80,13 @@ type Rule struct {
 	SIDID   *int    `json:"sidid" validate:"required"`
 
 	// Optional
-	CIS        *[]string `json:"CIS,omitempty"`
-	CVE        *string   `json:"cve,omitempty"`
-	Firedtimes *int      `json:"firedtimes,omitempty"`
-	Frequency  *int      `json:"frequency,omitempty"`
-	Groups     *[]string `json:"groups,omitempty"`
-	Info       *string   `json:"info,omitempty"`
-	PCIDSS     *[]string `json:"PCI_DSS,omitempty"`
+	CIS        []string `json:"CIS,omitempty"`
+	CVE        *string  `json:"cve,omitempty"`
+	Firedtimes *int     `json:"firedtimes,omitempty"`
+	Frequency  *int     `json:"frequency,omitempty"`
+	Groups     []string `json:"groups,omitempty"`
+	Info       *string  `json:"info,omitempty"`
+	PCIDSS     []string `json:"PCI_DSS,omitempty"`
 }
 
 type FileDiff struct {
@@ -124,7 +124,7 @@ func (p *EventInfoParser) Parse(log string) []interface{} {
 
 	err := jsoniter.UnmarshalFromString(log, eventInfo)
 	if err != nil {
-		zap.L().Error("failed to parse log", zap.Error(err))
+		zap.L().Debug("failed to parse log", zap.Error(err))
 		return nil
 	}
 

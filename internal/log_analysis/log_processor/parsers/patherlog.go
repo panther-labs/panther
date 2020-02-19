@@ -47,6 +47,8 @@ type PantherLog struct {
 	// optional (any)
 	PantherAnyIPAddresses *PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
 	PantherAnyDomainNames *PantherAnyString `json:"p_any_ip_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
+	PantherAnySHA1Hashes  *PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
+	PantherAnyMD5Hashes   *PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
 }
 
 type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
@@ -127,6 +129,20 @@ func (pl *PantherLog) AppendAnyDomainNames(values ...string) {
 		pl.PantherAnyDomainNames = NewPantherAnyString()
 	}
 	AppendAnyString(pl.PantherAnyDomainNames, values...)
+}
+
+func (pl *PantherLog) AppendAnySHA1Hashes(values ...string) {
+	if pl.PantherAnySHA1Hashes == nil { // lazy create
+		pl.PantherAnySHA1Hashes = NewPantherAnyString()
+	}
+	AppendAnyString(pl.PantherAnySHA1Hashes, values...)
+}
+
+func (pl *PantherLog) AppendAnyMD5Hashes(values ...string) {
+	if pl.PantherAnyMD5Hashes == nil { // lazy create
+		pl.PantherAnyMD5Hashes = NewPantherAnyString()
+	}
+	AppendAnyString(pl.PantherAnyMD5Hashes, values...)
 }
 
 func AppendAnyString(any *PantherAnyString, values ...string) {
