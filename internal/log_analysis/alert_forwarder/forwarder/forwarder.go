@@ -30,7 +30,7 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 var (
-	alertsTable                           = os.Getenv("RECENT_ALERTS_TABLE")
+	alertsTable                           = os.Getenv("ALERTS_TABLE")
 	awsSession                            = session.Must(session.NewSession())
 	ddbClient   dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
 )

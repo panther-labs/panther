@@ -37,7 +37,7 @@ func reporterHandler(ctx context.Context, event events.DynamoDBEvent) error {
 	lambdalogger.ConfigureGlobal(ctx, nil)
 
 	for _, record := range event.Records {
-		event, err := forwarder.FromDynamodDBAttribute(record.Change.OldImage)
+		event, err := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
 		if err != nil {
 			return errors.Wrap(err, "failed to unmarshall new image")
 		}
