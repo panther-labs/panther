@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Flex, Heading } from 'pouncejs';
+import { Badge, Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
 import NavLink from './nav-link';
 
@@ -10,8 +10,11 @@ const LogAnalysisNavigation: React.FC = () => {
         <b>LOG ANALYSIS</b>
       </Heading>
       <Flex flexDirection="column" is="ul">
-        <Flex is="li">
+        <Flex is="li" position="relative">
           <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
+          <Box position="absolute" right="10px" top="23px">
+            <Badge color="blue">Coming Soon</Badge>
+          </Box>
         </Flex>
         <Flex is="li">
           <NavLink icon="rule" to={urls.logAnalysis.rules.list()} label="Rules" />

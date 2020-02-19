@@ -19,7 +19,7 @@
 import React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import ListPoliciesPage from 'Pages/list-policies';
-import OverviewPage from 'Pages/overview';
+import OverviewPage from 'Pages/compliance-overview';
 import ListResourcesPage from 'Pages/list-resources';
 import ResourceDetailsPage from 'Pages/resource-details';
 import PolicyDetailsPage from 'Pages/policy-details';
@@ -47,6 +47,7 @@ import ForgotPasswordConfirmPage from 'Pages/forgot-password-confirm';
 import ErrorBoundary from 'Components/error-boundary';
 import Page404 from 'Pages/404';
 import APIErrorFallback from 'Components/utils/api-error-fallback';
+import LogAnalysisOverview from 'Pages/log-analysis-overview';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -115,7 +116,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   component={CreateComplianceSourcePage}
                 />
                 /******************** LOG ANALYSIS ******************************/
-                <Route exact path={urls.logAnalysis.overview()} component={null} />
+                <Route exact path={urls.logAnalysis.overview()} component={LogAnalysisOverview} />
                 <Route exact path={urls.logAnalysis.rules.list()} component={ListRulesPage} />
                 <Route exact path={urls.logAnalysis.rules.create()} component={CreateRulePage} />
                 <Route
