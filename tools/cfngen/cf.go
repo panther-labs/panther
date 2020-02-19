@@ -92,6 +92,6 @@ func NewTemplate(description string, parameters map[string]interface{}, resource
 // Re-map characters not allowed in CF names consistently (CF resources must be alphanum)
 var cleanResourceName = regexp.MustCompile(`([^[:alpha:]])`)
 
-func ResourceClean(name string) string {
+func SanitizeResourceName(name string) string {
 	return cleanResourceName.ReplaceAllString(name, "")
 }

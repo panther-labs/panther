@@ -68,19 +68,19 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 	tablesDB := NewDatabase(CatalogIDRef, awsglue.TablesDatabaseName, awsglue.TablesDatabaseDescription)
 	viewsDB := NewDatabase(CatalogIDRef, awsglue.ViewsDatabaseName, awsglue.ViewsDatabaseDescription)
 	resources := map[string]interface{}{
-		cfngen.ResourceClean(awsglue.TablesDatabaseName): tablesDB,
-		cfngen.ResourceClean(awsglue.ViewsDatabaseName):  viewsDB,
+		cfngen.SanitizeResourceName(awsglue.TablesDatabaseName): tablesDB,
+		cfngen.SanitizeResourceName(awsglue.ViewsDatabaseName):  viewsDB,
 	}
 
 	// output database name
 	outputs := map[string]interface{}{
 		"PantherTablesDatabase": &cfngen.Output{
 			Description: awsglue.TablesDatabaseDescription,
-			Value:       cfngen.Ref{Ref: cfngen.ResourceClean(awsglue.TablesDatabaseName)},
+			Value:       cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.TablesDatabaseName)},
 		},
 		"PantherViewsDatabase": &cfngen.Output{
 			Description: awsglue.ViewsDatabaseDescription,
-			Value:       cfngen.Ref{Ref: cfngen.ResourceClean(awsglue.ViewsDatabaseName)},
+			Value:       cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.ViewsDatabaseName)},
 		},
 	}
 
@@ -93,7 +93,7 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 		// NOTE: current all sources are JSONL (could add a type to LogParserMetadata struct if we need more types)
 		table := NewJSONLTable(&NewTableInput{
 			CatalogID:     CatalogIDRef,
-			DatabaseName:  cfngen.Ref{Ref: cfngen.ResourceClean(awsglue.TablesDatabaseName)},
+			DatabaseName:  cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.TablesDatabaseName)},
 			Name:          t.TableName(),
 			Description:   t.Description(),
 			Location:      location,
@@ -101,7 +101,7 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 			PartitionKeys: getPartitionKeys(t),
 		})
 
-		tableResource := cfngen.ResourceClean(t.DatabaseName() + t.TableName())
+		tableResource := cfngen.SanitizeResourceName(t.DatabaseName() + t.TableName())
 		resources[tableResource] = table
 	}
 
