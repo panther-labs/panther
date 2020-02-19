@@ -92,7 +92,6 @@ export const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSucces
               email: values.email,
               familyName: values.familyName,
               givenName: values.givenName,
-              role: values.role,
             },
           },
           refetchQueries: [getOperationName(LIST_USERS)],

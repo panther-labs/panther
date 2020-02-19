@@ -1,5 +1,4 @@
 scalar AWSEmail
-scalar AWSPhone
 scalar AWSTimestamp
 scalar AWSDateTime
 scalar AWSJSON
@@ -592,8 +591,6 @@ input UpdateUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
-  phoneNumber: AWSPhone
-  role: RoleNameEnum
 }
 
 type UploadPoliciesResponse {
@@ -644,7 +641,6 @@ type User {
   familyName: String
   id: ID!
   email: AWSEmail
-  phoneNumber: AWSPhone
   createdAt: AWSTimestamp
   status: String
   role: RoleNameEnum
@@ -658,8 +654,6 @@ input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
-  phoneNumber: AWSPhone
-  role: RoleNameEnum
 }
 
 type ListUsersResponse {

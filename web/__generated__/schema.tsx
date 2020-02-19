@@ -9,7 +9,6 @@ export type Scalars = {
   AWSDateTime: string;
   AWSJSON: string;
   AWSEmail: string;
-  AWSPhone: string;
   AWSTimestamp: number;
 };
 
@@ -266,8 +265,6 @@ export type InviteUserInput = {
   givenName?: Maybe<Scalars['String']>;
   familyName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['AWSEmail']>;
-  phoneNumber?: Maybe<Scalars['AWSPhone']>;
-  role?: Maybe<RoleNameEnum>;
 };
 
 export type InviteUserResponse = {
@@ -898,8 +895,6 @@ export type UpdateUserInput = {
   givenName?: Maybe<Scalars['String']>;
   familyName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['AWSEmail']>;
-  phoneNumber?: Maybe<Scalars['AWSPhone']>;
-  role?: Maybe<RoleNameEnum>;
 };
 
 export type UploadPoliciesInput = {
@@ -922,7 +917,6 @@ export type User = {
   familyName?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   email?: Maybe<Scalars['AWSEmail']>;
-  phoneNumber?: Maybe<Scalars['AWSPhone']>;
   createdAt?: Maybe<Scalars['AWSTimestamp']>;
   status?: Maybe<Scalars['String']>;
   role?: Maybe<RoleNameEnum>;
