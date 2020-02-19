@@ -29,7 +29,7 @@ const ChartPlaceholder: React.FC = () => (
   </Flex>
 );
 
-const OverviewPageSkeleton: React.FC = () => {
+const ComplianceOverviewPageSkeleton: React.FC = () => {
   return (
     <Box is="article" mb={6}>
       <Grid
@@ -64,4 +64,4 @@ const OverviewPageSkeleton: React.FC = () => {
   );
 };
 
-export default OverviewPageSkeleton;
+export default ComplianceOverviewPageSkeleton;

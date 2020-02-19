@@ -142,7 +142,7 @@ const ComplianceOverview: React.FC = () => {
         is="section"
         mb={3}
       >
-        <DonutChartWrapper title="Policy ComplianceOverview" icon="policy">
+        <DonutChartWrapper title="Policy Overview" icon="policy">
           <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
         </DonutChartWrapper>
         <DonutChartWrapper title="Policy Failure Breakdown" icon="policy">
