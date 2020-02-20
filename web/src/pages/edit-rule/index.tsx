@@ -22,14 +22,11 @@ import { Alert, Button, Card, Box } from 'pouncejs';
 import RuleForm from 'Components/forms/rule-form';
 import { GetRuleInput, RuleDetails } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
-import { READONLY_ROLES_ARRAY } from 'Source/constants';
 import { useMutation, useQuery, gql } from '@apollo/client';
 import useRouter from 'Hooks/useRouter';
 import TablePlaceholder from 'Components/table-placeholder';
 import { MODALS } from 'Components/utils/modal-context';
 import useEditRule from 'Hooks/useEditRule';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
-import Page403 from 'Pages/403';
 import { extractErrorMessage } from 'Helpers/utils';
 
 const RULE_DETAILS = gql`
@@ -142,42 +139,40 @@ const EditRulePage: React.FC = () => {
   }
 
   return (
-    <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY} fallback={<Page403 />}>
-      <Box mb={10}>
-        <Panel
-          size="large"
-          title="Rule Settings"
-          actions={
-            <Button
-              variant="default"
-              size="large"
-              color="red300"
-              onClick={() =>
-                showModal({
-                  modal: MODALS.DELETE_RULE,
-                  props: { rule: queryData.rule },
-                })
-              }
-            >
-              Delete
-            </Button>
-          }
-        >
-          <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
-        </Panel>
-        {updateError && (
-          <Alert
-            mt={2}
-            mb={6}
-            variant="error"
-            title={
-              extractErrorMessage(updateError) ||
-              'An unknown error occured as were trying to update your rule'
+    <Box mb={10}>
+      <Panel
+        size="large"
+        title="Rule Settings"
+        actions={
+          <Button
+            variant="default"
+            size="large"
+            color="red300"
+            onClick={() =>
+              showModal({
+                modal: MODALS.DELETE_RULE,
+                props: { rule: queryData.rule },
+              })
             }
-          />
-        )}
-      </Box>
-    </RoleRestrictedAccess>
+          >
+            Delete
+          </Button>
+        }
+      >
+        <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
+      </Panel>
+      {updateError && (
+        <Alert
+          mt={2}
+          mb={6}
+          variant="error"
+          title={
+            extractErrorMessage(updateError) ||
+            'An unknown error occured as were trying to update your rule'
+          }
+        />
+      )}
+    </Box>
   );
 };
 

@@ -20,7 +20,6 @@ import React from 'react';
 import Auth, { CognitoUser } from '@aws-amplify/auth';
 import { USER_INFO_STORAGE_KEY } from 'Source/constants';
 import storage from 'Helpers/storage';
-import { RoleNameEnum } from 'Generated/schema';
 
 // Challenge names from Cognito from
 // https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_RespondToAuthChallenge.html#API_RespondToAuthChallenge_RequestSyntax
@@ -60,14 +59,14 @@ interface EnhancedCognitoUser extends CognitoUser {
   signInUserSession?: {
     accessToken?: {
       payload: {
-        'cognito:users'?: RoleNameEnum[];
+        'cognito:users'?: string[];
       };
     };
   };
 }
 
 export type UserInfo = EnhancedCognitoUser['attributes'] & {
-  roles: RoleNameEnum[];
+  roles: string[];
 };
 
 interface SignOutParams {

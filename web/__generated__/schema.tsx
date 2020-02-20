@@ -45,11 +45,6 @@ export type AlertDetails = {
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
 };
 
-export enum AlertReportFrequencyEnum {
-  P1D = 'P1D',
-  P1W = 'P1W',
-}
-
 export type AlertSummary = {
   __typename?: 'AlertSummary';
   alertId: Scalars['String'];
@@ -201,6 +196,13 @@ export enum DestinationTypeEnum {
   Sqs = 'sqs',
   Asana = 'asana',
 }
+
+export type GeneralSettings = {
+  __typename?: 'GeneralSettings';
+  displayName?: Maybe<Scalars['String']>;
+  email?: Maybe<Scalars['String']>;
+  errorReportingConsent?: Maybe<Scalars['Boolean']>;
+};
 
 export type GetAlertInput = {
   alertId: Scalars['ID'];
@@ -440,7 +442,7 @@ export type Mutation = {
   testPolicy?: Maybe<TestPolicyResponse>;
   updateDestination?: Maybe<Destination>;
   updateIntegration?: Maybe<Scalars['Boolean']>;
-  updateOrganization: Organization;
+  updateGeneralSettings: GeneralSettings;
   updatePolicy?: Maybe<PolicyDetails>;
   updateRule?: Maybe<RuleDetails>;
   updateUser?: Maybe<Scalars['Boolean']>;
@@ -507,8 +509,8 @@ export type MutationUpdateIntegrationArgs = {
   input: UpdateIntegrationInput;
 };
 
-export type MutationUpdateOrganizationArgs = {
-  input: UpdateOrganizationInput;
+export type MutationUpdateGeneralSettingsArgs = {
+  input: UpdateGeneralSettingsInput;
 };
 
 export type MutationUpdatePolicyArgs = {
@@ -534,14 +536,6 @@ export type OpsgenieConfig = {
 
 export type OpsgenieConfigInput = {
   apiKey: Scalars['String'];
-};
-
-export type Organization = {
-  __typename?: 'Organization';
-  displayName?: Maybe<Scalars['String']>;
-  email?: Maybe<Scalars['String']>;
-  alertReportFrequency?: Maybe<AlertReportFrequencyEnum>;
-  errorReportingConsent?: Maybe<Scalars['Boolean']>;
 };
 
 export type OrganizationReportBySeverity = {
@@ -657,9 +651,9 @@ export type Query = {
   __typename?: 'Query';
   alert?: Maybe<AlertDetails>;
   alerts?: Maybe<ListAlertsResponse>;
-  organization: Organization;
   destination?: Maybe<Destination>;
   destinations?: Maybe<Array<Maybe<Destination>>>;
+  generalSettings: GeneralSettings;
   remediations?: Maybe<Scalars['AWSJSON']>;
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
@@ -769,12 +763,6 @@ export type ResourceSummary = {
   type?: Maybe<Scalars['String']>;
 };
 
-export enum RoleNameEnum {
-  Admin = 'Admin',
-  Analyst = 'Analyst',
-  ReadOnly = 'ReadOnly',
-}
-
 export type RuleDetails = {
   __typename?: 'RuleDetails';
   body?: Maybe<Scalars['String']>;
@@ -877,17 +865,16 @@ export type TestPolicyResponse = {
   testsErrored?: Maybe<Array<Maybe<PolicyUnitTestError>>>;
 };
 
+export type UpdateGeneralSettingsInput = {
+  displayName: Scalars['String'];
+  email: Scalars['String'];
+  errorReportingConsent: Scalars['Boolean'];
+};
+
 export type UpdateIntegrationInput = {
   awsAccountId?: Maybe<Scalars['String']>;
   integrationId: Scalars['String'];
   integrationLabel: Scalars['String'];
-};
-
-export type UpdateOrganizationInput = {
-  displayName: Scalars['String'];
-  email: Scalars['String'];
-  alertReportFrequency?: Maybe<AlertReportFrequencyEnum>;
-  errorReportingConsent: Scalars['Boolean'];
 };
 
 export type UpdateUserInput = {
@@ -919,5 +906,4 @@ export type User = {
   email?: Maybe<Scalars['AWSEmail']>;
   createdAt?: Maybe<Scalars['AWSTimestamp']>;
   status?: Maybe<Scalars['String']>;
-  role?: Maybe<RoleNameEnum>;
 };

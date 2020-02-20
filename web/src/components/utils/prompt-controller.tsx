@@ -18,14 +18,14 @@
 
 import React from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { Organization } from 'Generated/schema';
+import { GeneralSettings } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
 
 // We are intentionally over-fetching, in order to proactively add this data to the cache
 const GET_ORGANIZATION_ERROR_REPORTING_CONSENT = gql`
   query GetOrganizationErrorReportingConsent {
-    organization {
+    generalSettings {
       displayName
       email
       errorReportingConsent
@@ -34,7 +34,7 @@ const GET_ORGANIZATION_ERROR_REPORTING_CONSENT = gql`
 `;
 
 interface ApolloQueryData {
-  organization: Organization;
+  organization: GeneralSettings;
 }
 
 const PromptController: React.FC = () => {

@@ -559,20 +559,20 @@ Resources:
           $util.toJson($context.result)
         #end
 
-  GetOrganizationResolver:
+  GetGeneralSettingsResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Query
-      FieldName: organization
+      FieldName: generalSettings
       DataSourceName: !GetAtt OrganizationAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "getOrganization": {}
+            "getSettings": {}
           })
         }
       ResponseMappingTemplate: |
@@ -582,20 +582,20 @@ Resources:
           $util.toJson($context.result.organization)
         #end
 
-  UpdateOrganizationResolver:
+  UpdateGeneralSettingsResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
-      FieldName: updateOrganization
+      FieldName: updateGeneralSettings
       DataSourceName: !GetAtt OrganizationAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "updateOrganization": $ctx.args.input
+            "updateSettings": $ctx.args.input
           })
         }
       ResponseMappingTemplate: |

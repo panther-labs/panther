@@ -44,11 +44,12 @@ const columns = [
     header: 'Email',
     flex: '1 0 200px',
   },
-  // Display user roles Admin, Analyst or ReadOnly
+  // Display hardcoded Admin role
   {
     key: 'role',
     header: 'Role',
     flex: '0 0 100px',
+    renderCell: <Text size="medium">Admin</Text>,
   },
   // Display when user is invited
   {

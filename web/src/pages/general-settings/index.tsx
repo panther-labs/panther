@@ -19,10 +19,7 @@
 import React from 'react';
 import { Alert, Box, Card, useSnackbar } from 'pouncejs';
 import { useQuery, gql, useMutation } from '@apollo/client';
-import { ADMIN_ROLES_ARRAY } from 'Source/constants';
-import { Organization, UpdateOrganizationInput } from 'Generated/schema';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
-import Page404 from 'Pages/404';
+import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 import ErrorBoundary from 'Components/error-boundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/company-information-form';
@@ -30,7 +27,7 @@ import GeneralSettingsPageSkeleton from './skeleton';
 
 export const GET_ORGANIZATION = gql`
   query GetOrganization {
-    organization {
+    generalSettings {
       displayName
       email
       errorReportingConsent
@@ -39,8 +36,8 @@ export const GET_ORGANIZATION = gql`
 `;
 
 const UPDATE_ORGANIZATION = gql`
-  mutation UpdateCompanyInformation($input: UpdateOrganizationInput!) {
-    updateOrganization(input: $input) {
+  mutation UpdateCompanyInformation($input: UpdateGeneralSettingsInput!) {
+    updateGeneralSettings(input: $input) {
       displayName
       email
       errorReportingConsent
@@ -49,15 +46,15 @@ const UPDATE_ORGANIZATION = gql`
 `;
 
 interface ApolloMutationInput {
-  input: UpdateOrganizationInput;
+  input: UpdateGeneralSettingsInput;
 }
 
 interface ApolloMutationData {
-  updateOrganization: Pick<Organization, 'displayName' | 'email' | 'errorReportingConsent'>;
+  updateOrganization: Pick<GeneralSettings, 'displayName' | 'email' | 'errorReportingConsent'>;
 }
 
 interface ApolloQueryData {
-  organization: Organization;
+  organization: GeneralSettings;
 }
 
 // Parent container for the general settings section
@@ -113,24 +110,22 @@ const GeneralSettingsContainer: React.FC = () => {
 
   const { displayName, email, errorReportingConsent } = getOrganizationData.organization;
   return (
-    <RoleRestrictedAccess allowedRoles={ADMIN_ROLES_ARRAY} fallback={<Page404 />}>
-      <Box mb={6}>
-        <ErrorBoundary>
-          <Card p={10}>
-            <Box width={500} m="auto">
-              <CompanyInformationForm
-                initialValues={{
-                  displayName,
-                  email,
-                  errorReportingConsent,
-                }}
-                onSubmit={values => updateOrganization({ variables: { input: values } })}
-              />
-            </Box>
-          </Card>
-        </ErrorBoundary>
-      </Box>
-    </RoleRestrictedAccess>
+    <Box mb={6}>
+      <ErrorBoundary>
+        <Card p={10}>
+          <Box width={500} m="auto">
+            <CompanyInformationForm
+              initialValues={{
+                displayName,
+                email,
+                errorReportingConsent,
+              }}
+              onSubmit={values => updateOrganization({ variables: { input: values } })}
+            />
+          </Box>
+        </Card>
+      </ErrorBoundary>
+    </Box>
   );
 };
 

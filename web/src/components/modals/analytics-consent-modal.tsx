@@ -22,11 +22,11 @@ import { gql, useMutation, useQuery } from '@apollo/client';
 import useModal from 'Hooks/useModal';
 import AnalyticsConsentForm from 'Components/forms/analytics-consent-form';
 import { extractErrorMessage } from 'Helpers/utils';
-import { Organization, UpdateOrganizationInput } from 'Generated/schema';
+import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 
 const UPDATE_ORGANIZATION = gql`
-  mutation UpdateCompanyDetails($input: UpdateOrganizationInput!) {
-    updateOrganization(input: $input) {
+  mutation UpdateCompanyDetails($input: UpdateGeneralSettingsInput!) {
+    updateGeneralSettings(input: $input) {
       email
       errorReportingConsent
     }
@@ -35,7 +35,7 @@ const UPDATE_ORGANIZATION = gql`
 
 const GET_ORGANIZATION = gql`
   query GetOrganizationDetails {
-    organization {
+    generalSettings {
       displayName
       email
     }
@@ -43,15 +43,15 @@ const GET_ORGANIZATION = gql`
 `;
 
 interface ApolloMutationInput {
-  input: Pick<UpdateOrganizationInput, 'errorReportingConsent' | 'displayName' | 'email'>;
+  input: Pick<UpdateGeneralSettingsInput, 'errorReportingConsent' | 'displayName' | 'email'>;
 }
 
 interface ApolloMutationData {
-  updateOrganization: Pick<Organization, 'errorReportingConsent' | 'displayName' | 'email'>;
+  updateOrganization: Pick<GeneralSettings, 'errorReportingConsent' | 'displayName' | 'email'>;
 }
 
 interface ApolloQueryData {
-  organization: Organization;
+  organization: GeneralSettings;
 }
 
 const AnalyticsConsentModal: React.FC = () => {

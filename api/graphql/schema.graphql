@@ -24,7 +24,7 @@ type Mutation {
   testPolicy(input: TestPolicyInput): TestPolicyResponse
   updateDestination(input: DestinationInput!): Destination
   updateIntegration(input: UpdateIntegrationInput!): Boolean
-  updateOrganization(input: UpdateOrganizationInput!): Organization!
+  updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): Boolean
@@ -34,9 +34,9 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
-  organization: Organization!
   destination(id: ID!): Destination
   destinations: [Destination]
+  generalSettings: GeneralSettings!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -240,22 +240,15 @@ type OrganizationStatsResponse {
   topFailingResources: [ResourceSummary]
 }
 
-enum AlertReportFrequencyEnum {
-  P1D
-  P1W
-}
-
-input UpdateOrganizationInput {
+input UpdateGeneralSettingsInput {
   displayName: String!
   email: String!
-  alertReportFrequency: AlertReportFrequencyEnum
   errorReportingConsent: Boolean!
 }
 
-type Organization {
+type GeneralSettings {
   displayName: String
   email: String
-  alertReportFrequency: AlertReportFrequencyEnum
   errorReportingConsent: Boolean
 }
 
@@ -643,7 +636,6 @@ type User {
   email: AWSEmail
   createdAt: AWSTimestamp
   status: String
-  role: RoleNameEnum
 }
 
 type InviteUserResponse {
@@ -712,12 +704,6 @@ enum JiraIssueTypesEnum {
 
 enum AccountTypeEnum {
   aws
-}
-
-enum RoleNameEnum {
-  Admin
-  Analyst
-  ReadOnly
 }
 
 enum DestinationTypeEnum {
