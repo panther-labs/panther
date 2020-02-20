@@ -40,7 +40,7 @@ const Navigation = () => {
 
   const isCompliancePage = pathname.includes(urls.compliance.home());
   const isLogAnalysisPage = pathname.includes(urls.logAnalysis.home());
-  const isSettingsPage = pathname.includes(urls.account.settings.overview());
+  const isSettingsPage = pathname.includes(urls.settings.overview());
   const [secondaryNav, setSecondaryNav] = React.useState<NavKeys>(null);
 
   React.useEffect(() => {
@@ -82,7 +82,7 @@ const Navigation = () => {
           <Box is="li">
             <NavIconButton
               active={isComplianceNavigationActive}
-              icon="infra-analytics"
+              icon="cloud-security"
               tooltipLabel="Cloud Security"
               onClick={() =>
                 setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
@@ -92,7 +92,7 @@ const Navigation = () => {
           <Box is="li" mb="auto">
             <NavIconButton
               active={isLogAnalysisNavigationActive}
-              icon="log-analytics"
+              icon="log-analysis"
               tooltipLabel="Log Analysis"
               onClick={() =>
                 setSecondaryNav(isLogAnalysisNavigationActive ? null : LOG_ANALYSIS_NAV_KEY)

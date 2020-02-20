@@ -32,14 +32,14 @@ const SettingsNavigation: React.FC = () => {
       <Flex flexDirection="column" is="ul">
         <RoleRestrictedAccess allowedRoles={ADMIN_ROLES_ARRAY}>
           <Flex is="li">
-            <NavLink icon="settings-alt" to={urls.account.settings.general()} label="General" />
+            <NavLink icon="settings-alt" to={urls.settings.general()} label="General" />
           </Flex>
           <Flex is="li">
-            <NavLink icon="organization" to={urls.account.settings.users()} label="Users" />
+            <NavLink icon="organization" to={urls.settings.users()} label="Users" />
           </Flex>
         </RoleRestrictedAccess>
         <Flex is="li">
-          <NavLink icon="output" to={urls.account.settings.destinations()} label="Destinations" />
+          <NavLink icon="output" to={urls.settings.destinations()} label="Destinations" />
         </Flex>
       </Flex>
     </Box>

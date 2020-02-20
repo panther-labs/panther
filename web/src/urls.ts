@@ -60,13 +60,13 @@ const urls = {
       create: () => `${urls.logAnalysis.sources.list()}new/`,
     },
   },
+  settings: {
+    overview: () => `/settings/`,
+    general: () => `${urls.settings.overview()}general`,
+    users: () => `${urls.settings.overview()}users`,
+    destinations: () => `${urls.settings.overview()}destinations`,
+  },
   account: {
-    settings: {
-      overview: () => `/settings/`,
-      general: () => `${urls.account.settings.overview()}general`,
-      users: () => `${urls.account.settings.overview()}users`,
-      destinations: () => `${urls.account.settings.overview()}destinations`,
-    },
     auth: {
       signIn: () => `/sign-in/`,
       forgotPassword: () => `/password-forgot/`,

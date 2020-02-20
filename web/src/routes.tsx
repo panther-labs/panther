@@ -78,6 +78,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
               <Switch>
                 /******************** COMPLIANCE ******************************/
                 <Redirect exact from="/" to={urls.compliance.overview()} />
+                <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
                 <Route exact path={urls.compliance.overview()} component={OverviewPage} />
                 <Route exact path={urls.compliance.policies.list()} component={ListPoliciesPage} />
                 <Route
@@ -116,6 +117,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   component={CreateComplianceSourcePage}
                 />
                 /******************** LOG ANALYSIS ******************************/
+                <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />
                 <Route exact path={urls.logAnalysis.overview()} component={LogAnalysisOverview} />
                 <Route exact path={urls.logAnalysis.rules.list()} component={ListRulesPage} />
                 <Route exact path={urls.logAnalysis.rules.create()} component={CreateRulePage} />
@@ -142,17 +144,9 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   component={CreateLogSourcePage}
                 />
                 /******************** SETTINGS ******************************/
-                <Route
-                  exact
-                  path={urls.account.settings.general()}
-                  component={GeneralSettingsPage}
-                />
-                <Route exact path={urls.account.settings.users()} component={UsersPage} />
-                <Route
-                  exact
-                  path={urls.account.settings.destinations()}
-                  component={DestinationsPage}
-                />
+                <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
+                <Route exact path={urls.settings.users()} component={UsersPage} />
+                <Route exact path={urls.settings.destinations()} component={DestinationsPage} />
                 <Route component={Page404} />
               </Switch>
             </APIErrorFallback>
