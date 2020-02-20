@@ -63,13 +63,14 @@ func Handle(batch *events.SQSEvent) error {
 	//
 	// Since we don't want one bad notification to lose us the rest, we log failures and continue.
 	for _, record := range batch.Records {
-		// SNS raw message delivery of CloudTrail
+		// Check for SNS raw message delivery of CloudTrail
 		detail := gjson.Get(record.Body, "detail")
 		if detail.Exists() {
 			zap.L().Debug("processing raw CloudTrail")
 			metadata, err := preprocessCloudTrailLog(detail)
 			if err != nil {
 				zap.L().Error("error extracting metadata from raw CloudTrail", zap.Error(err))
+				continue
 			}
 			cweAccounts[metadata.generateSourceKey()] = struct{}{}
 
@@ -80,7 +81,7 @@ func Handle(batch *events.SQSEvent) error {
 			continue
 		}
 
-		// This case is checking for a notification from the log processor that there is newly processed CloudTrail logs
+		// Check for a notification from the log processor that there are newly processed CloudTrail logs
 		results := gjson.GetMany(record.Body, "s3Bucket", "s3ObjectKey")
 		if results[0].Exists() && results[1].Exists() {
 			zap.L().Debug("processing s3 notification")
@@ -98,20 +99,21 @@ func Handle(batch *events.SQSEvent) error {
 		// If both the prior cases failed, this must be an SNS Notification or invalid input
 		switch gjson.Get(record.Body, "Type").Str {
 		case "Notification":
-			// This case is checking for CloudTrail logs directly wrapped in SNS Events
+			// Check for CloudTrail logs wrapped in SNS Events
 			zap.L().Debug("processing SNS notification")
 			message := gjson.Get(record.Body, "Message").Str
 			detail := gjson.Get(message, "detail")
 
 			metadata, err := preprocessCloudTrailLog(detail)
 			if err != nil {
-				zap.L().Error("error extracting metadata from raw CloudTrail", zap.Error(err))
+				zap.L().Error("error extracting metadata from SNS wrapped CloudTrail", zap.Error(err))
+				continue
 			}
 			cweAccounts[metadata.generateSourceKey()] = struct{}{}
 
 			err = handleCloudTrail(detail, metadata, changes)
 			if err != nil {
-				zap.L().Error("error processing SNS wrapped CloudTrail", zap.Error(errors.WithStack(err)))
+				zap.L().Error("error processing SNS wrapped CloudTrail", zap.Error(err))
 			}
 
 		case "SubscriptionConfirmation":
@@ -137,7 +139,7 @@ func Handle(batch *events.SQSEvent) error {
 // of the log.
 func handleCloudTrail(cloudtrail gjson.Result, metadata *CloudTrailMetaData, changes map[string]*resourceChange) error {
 	if !cloudtrail.Exists() {
-		return errors.WithStack(errors.New("dropping bad event"))
+		return errors.New("dropping bad event")
 	}
 
 	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)

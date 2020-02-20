@@ -19,7 +19,6 @@ package processor
  */
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -75,22 +74,22 @@ type CloudTrailMetaData struct {
 
 // generateSourceKey creates the key used for the cweAccounts cache for a given CloudTrail metadata struct
 func (metadata *CloudTrailMetaData) generateSourceKey() string {
-	return fmt.Sprintf("%s/%s", metadata.AccountID, metadata.Region)
+	return metadata.AccountID + "/" + metadata.Region
 }
 
 // preprocessCloudTrailLog extracts some meta data that is used repeatedly for a CloudTrail log
 func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetaData, error) {
 	accountID := detail.Get("userIdentity.accountId")
 	if !accountID.Exists() {
-		return nil, errors.WithStack(errors.New("unable to extract CloudTrail accountId field"))
+		return nil, errors.New("unable to extract CloudTrail accountId field")
 	}
 	region := detail.Get("awsRegion")
 	if !region.Exists() {
-		return nil, errors.WithStack(errors.New("unable to extract CloudTrail awsRegion field"))
+		return nil, errors.New("unable to extract CloudTrail awsRegion field")
 	}
 	eventName := detail.Get("eventName")
 	if !eventName.Exists() {
-		return nil, errors.WithStack(errors.New("unable to extract CloudTrail eventName field"))
+		return nil, errors.New("unable to extract CloudTrail eventName field")
 	}
 
 	return &CloudTrailMetaData{
@@ -144,9 +143,12 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetaData) []*
 	changes := classifier(detail, metadata.AccountID)
 	eventTime := detail.Get("eventTime").Str
 	if len(changes) > 0 {
-		readOnly := detail.Get("readonly").Bool()
-		if readOnly {
-			zap.L().Warn("processing changes from event marked readOnly")
+		readOnly := detail.Get("readOnly")
+		if readOnly.Exists() && readOnly.Bool() {
+			zap.L().Warn(
+				"processing changes from event marked readOnly",
+				zap.String("eventName", metadata.eventName),
+			)
 		}
 	}
 
