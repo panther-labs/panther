@@ -237,12 +237,11 @@ Resources:
       FieldName: updateUser
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "updateUser": $input
+            "updateUser": $ctx.args.input
           })
         }
       ResponseMappingTemplate: |

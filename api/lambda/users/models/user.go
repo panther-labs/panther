@@ -18,12 +18,6 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Group is a struct for Panther Group containing employees.
-type Group struct {
-	Description *string `json:"description"`
-	Name        *string `json:"name"`
-}
-
 // User is a struct describing a Panther User.
 type User struct {
 	CreatedAt  *int64  `json:"createdAt"`

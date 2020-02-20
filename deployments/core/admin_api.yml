@@ -104,18 +104,14 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - cognito-idp:AdminAddUserToGroup
                 - cognito-idp:AdminCreateUser
                 - cognito-idp:AdminDeleteUser
                 - cognito-idp:AdminDisableUser
                 - cognito-idp:AdminEnableUser
                 - cognito-idp:AdminGetUser
-                - cognito-idp:AdminListGroupsForUser
-                - cognito-idp:AdminRemoveUserFromGroup
+                - cognito-idp:AdminResetUserPassword
                 - cognito-idp:AdminUpdateUserAttributes
-                - cognito-idp:CreateGroup
                 - cognito-idp:GetUser
-                - cognito-idp:ListGroups
                 - cognito-idp:ListUsers
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
         - Id: AppsyncManagement
