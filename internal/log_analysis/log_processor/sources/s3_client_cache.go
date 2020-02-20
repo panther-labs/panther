@@ -19,7 +19,6 @@ package sources
  */
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -30,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/s3"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
@@ -72,17 +72,18 @@ func init() {
 func getS3Client(s3Bucket string, topicArn string) (*s3.S3, error) {
 	parsedTopicArn, err := arn.Parse(topicArn)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "Cannot parse topic arn: %s", topicArn)
 	}
 
 	awsCreds := getAwsCredentials(parsedTopicArn.AccountID)
 	if awsCreds == nil {
-		return nil, errors.New("failed to fetch credentials for assumed role")
+		return nil, errors.Errorf("failed to fetch credentials for assumed role to read %s from topic %#v",
+			s3Bucket, parsedTopicArn)
 	}
 
 	bucketRegion, ok := bucketCache.Get(s3Bucket)
 	if !ok {
-		zap.L().Info("bucket region was not cached, fetching it", zap.String("bucket", s3Bucket))
+		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", s3Bucket))
 		bucketRegion, err = getBucketRegion(s3Bucket, awsCreds)
 		if err != nil {
 			return nil, err
@@ -100,7 +101,7 @@ func getS3Client(s3Bucket string, topicArn string) (*s3.S3, error) {
 	var client interface{}
 	client, ok = s3ClientCache.Get(cacheKey)
 	if !ok {
-		zap.L().Info("s3 client was not cached, creating it")
+		zap.L().Debug("s3 client was not cached, creating it")
 		client = s3.New(common.Session, aws.NewConfig().
 			WithRegion(bucketRegion.(string)).
 			WithCredentials(awsCreds))
@@ -110,15 +111,13 @@ func getS3Client(s3Bucket string, topicArn string) (*s3.S3, error) {
 }
 
 func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string, error) {
-	zap.L().Debug("searching bucket region",
-		zap.String("bucket", s3Bucket))
+	zap.L().Debug("searching bucket region", zap.String("bucket", s3Bucket))
 
 	locationDiscoveryClient := s3.New(common.Session, &aws.Config{Credentials: awsCreds})
 	input := &s3.GetBucketLocationInput{Bucket: aws.String(s3Bucket)}
 	location, err := locationDiscoveryClient.GetBucketLocation(input)
 	if err != nil {
-		zap.L().Warn("failed to find bucket region", zap.Error(err))
-		return "", err
+		return "", errors.Wrapf(err, "failed to find bucket region for %s", s3Bucket)
 	}
 
 	// Method may return nil if region is us-east-1,https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLocation.html
