@@ -127,17 +127,9 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Route exact path={urls.logAnalysis.sources.list()} component={null} />
                 <Route exact path={urls.logAnalysis.sources.create()} component={null} />
                 /******************** SETTINGS ******************************/
-                <Route
-                  exact
-                  path={urls.account.settings.general()}
-                  component={GeneralSettingsPage}
-                />
-                <Route exact path={urls.account.settings.users()} component={UsersPage} />
-                <Route
-                  exact
-                  path={urls.account.settings.destinations()}
-                  component={DestinationsPage}
-                />
+                <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
+                <Route exact path={urls.settings.users()} component={UsersPage} />
+                <Route exact path={urls.settings.destinations()} component={DestinationsPage} />
                 <Route component={Page404} />
               </Switch>
             </APIErrorFallback>
