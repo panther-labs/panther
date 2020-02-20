@@ -20,10 +20,10 @@ package table
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/stretchr/testify/assert"
@@ -39,18 +39,15 @@ func (m *mockDynamoClient) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamod
 	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
 }
 
-func TestUpdateDoesNotExist(t *testing.T) {
+func TestUpdateEmptyError(t *testing.T) {
 	mockClient := &mockDynamoClient{}
-	returnErr := awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "", nil)
-	mockClient.On("UpdateItem", mock.Anything).Return(
-		(*dynamodb.UpdateItemOutput)(nil), returnErr)
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("table-name")}
 
-	result, err := table.Update(&models.Organization{})
-	mockClient.AssertExpectations(t)
+	result, err := table.Update(&models.GeneralSettings{})
+	fmt.Println(err)
 	assert.Nil(t, result)
 	assert.Error(t, err)
-	assert.IsType(t, &genericapi.DoesNotExistError{}, err)
+	assert.IsType(t, &genericapi.InvalidInputError{}, err)
 }
 
 func TestUpdateServiceError(t *testing.T) {
@@ -59,7 +56,7 @@ func TestUpdateServiceError(t *testing.T) {
 		(*dynamodb.UpdateItemOutput)(nil), errors.New("service unavailable"))
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("table-name")}
 
-	result, err := table.Update(&models.Organization{})
+	result, err := table.Update(&models.GeneralSettings{DisplayName: aws.String("panther-test")})
 	mockClient.AssertExpectations(t)
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -75,7 +72,7 @@ func TestUpdateUnmarshalError(t *testing.T) {
 	mockClient.On("UpdateItem", mock.Anything).Return(output, nil)
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
 
-	result, err := table.Update(&models.Organization{})
+	result, err := table.Update(&models.GeneralSettings{DisplayName: aws.String("panther-test")})
 	mockClient.AssertExpectations(t)
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -84,25 +81,22 @@ func TestUpdateUnmarshalError(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	mockClient := &mockDynamoClient{}
-	org := &models.Organization{}
-
-	output := &dynamodb.UpdateItemOutput{
-		Attributes: DynamoItem{"id": {S: aws.String(orgID)}},
+	newSettings := &models.GeneralSettings{
+		DisplayName: aws.String("panther-test"),
+		Email:       aws.String("test@example.com"),
 	}
 
+	output := &dynamodb.UpdateItemOutput{Attributes: settingsKey}
+
 	expectedUpdate := expression.
-		Set(expression.Name("alertReportFrequency"), expression.Value(org.AlertReportFrequency)).
-		Set(expression.Name("displayName"), expression.Value(org.DisplayName)).
-		Set(expression.Name("email"), expression.Value(org.Email)).
-		Set(expression.Name("errorReportingConsent"), expression.Value(org.ErrorReportingConsent))
-	expectedCondition := expression.AttributeExists(expression.Name("id"))
-	expectedExpression, _ := expression.NewBuilder().WithCondition(expectedCondition).WithUpdate(expectedUpdate).Build()
+		Set(expression.Name("displayName"), expression.Value(newSettings.DisplayName)).
+		Set(expression.Name("email"), expression.Value(newSettings.Email))
+	expectedExpression, _ := expression.NewBuilder().WithUpdate(expectedUpdate).Build()
 
 	expectedUpdateItemInput := &dynamodb.UpdateItemInput{
-		ConditionExpression:       expectedExpression.Condition(),
 		ExpressionAttributeNames:  expectedExpression.Names(),
 		ExpressionAttributeValues: expectedExpression.Values(),
-		Key:                       DynamoItem{"id": {S: aws.String(orgID)}},
+		Key:                       settingsKey,
 		ReturnValues:              aws.String("ALL_NEW"),
 		TableName:                 aws.String("test-table"),
 		UpdateExpression:          expectedExpression.Update(),
@@ -111,9 +105,9 @@ func TestUpdate(t *testing.T) {
 	mockClient.On("UpdateItem", expectedUpdateItemInput).Return(output, nil)
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
 
-	result, err := table.Update(org)
+	result, err := table.Update(newSettings)
 	mockClient.AssertExpectations(t)
 	require.NoError(t, err)
-	expected := &models.Organization{}
+	expected := &models.GeneralSettings{}
 	assert.Equal(t, expected, result)
 }

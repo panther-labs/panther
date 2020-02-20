@@ -232,15 +232,15 @@ func postDeploySetup(awsSession *session.Session, backendOutputs map[string]stri
 		return fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
 	}
 
-	if err := setupOrganization(awsSession); err != nil {
+	if err := inviteFirstUser(awsSession); err != nil {
 		return err
 	}
 
 	return initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], config)
 }
 
-// If the users list is empty (e.g. on the initial deploy), create the user and organization
-func setupOrganization(awsSession *session.Session) error {
+// If the users list is empty (e.g. on the initial deploy), create the first user.
+func inviteFirstUser(awsSession *session.Session) error {
 	input := &usermodels.LambdaInput{
 		ListUsers: &usermodels.ListUsersInput{Limit: aws.Int64(1)},
 	}
@@ -252,12 +252,17 @@ func setupOrganization(awsSession *session.Session) error {
 		return nil
 	}
 
-	// Prompt the user for email + first/last name
+	// Prompt the user for basic information.
 	logger.Info("setting up initial Panther admin user...")
 	fmt.Println()
 	firstName := promptUser("First name: ", nonemptyValidator)
 	lastName := promptUser("Last name: ", nonemptyValidator)
 	email := promptUser("Email: ", emailValidator)
+	defaultOrgName := firstName + "-" + lastName
+	orgName := promptUser("Company/Team name ("+defaultOrgName+"): ", nil)
+	if orgName == "" {
+		orgName = defaultOrgName
+	}
 
 	// Hit users-api.InviteUser to invite a new user
 	input = &usermodels.LambdaInput{
@@ -272,14 +277,11 @@ func setupOrganization(awsSession *session.Session) error {
 	}
 	logger.Infof("invite sent to %s: check your email! (it may be in spam)", email)
 
-	// Hit organization-api.CreateOrganization to create organization entry
-	createOrgInput := &orgmodels.LambdaInput{
-		CreateOrganization: &orgmodels.CreateOrganizationInput{
-			Email:       &email,
-			DisplayName: aws.String(firstName + "-" + lastName),
-		},
+	// Hit organization-api.UpdateSettings to create organization entry
+	updateSettingsInput := &orgmodels.LambdaInput{
+		UpdateSettings: &orgmodels.UpdateSettingsInput{DisplayName: &orgName, Email: &email},
 	}
-	return invokeLambda(awsSession, "panther-organization-api", createOrgInput, nil)
+	return invokeLambda(awsSession, "panther-organization-api", &updateSettingsInput, nil)
 }
 
 // Install Python rules/policies if they don't already exist.

@@ -18,29 +18,9 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"time"
+import "github.com/panther-labs/panther/api/lambda/organization/models"
 
-	"github.com/aws/aws-sdk-go/aws"
-
-	"github.com/panther-labs/panther/api/lambda/organization/models"
-)
-
-// CreateOrganization generates a new organization ID.
-func (API) CreateOrganization(
-	input *models.CreateOrganizationInput) (*models.CreateOrganizationOutput, error) {
-
-	// Then write the new org to the Dynamo table
-	org := &models.Organization{
-		AlertReportFrequency:  input.AlertReportFrequency,
-		CreatedAt:             aws.String(time.Now().Format(time.RFC3339)),
-		DisplayName:           input.DisplayName,
-		Email:                 input.Email,
-		ErrorReportingConsent: input.ErrorReportingConsent,
-	}
-
-	if err := orgTable.Put(org); err != nil {
-		return nil, err
-	}
-	return &models.CreateOrganizationOutput{Organization: org}, nil
+// GetSettings retrieves account settings.
+func (API) GetSettings(_ *models.GetSettingsInput) (*models.GeneralSettings, error) {
+	return orgTable.Get()
 }

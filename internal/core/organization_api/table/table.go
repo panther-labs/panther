@@ -28,14 +28,13 @@ import (
 	"github.com/panther-labs/panther/api/lambda/organization/models"
 )
 
-// The default organization ID. Note that we can currently have only one organization.
-const orgID = "defaultOrganizationId"
+// General settings are stored in a single Dynamo row with this key.
+var settingsKey = DynamoItem{"id": {S: aws.String("generalSettings")}}
 
 // API defines the interface for the table which can be used for mocking.
 type API interface {
-	Get() (*models.Organization, error)
-	Put(*models.Organization) error
-	Update(*models.Organization) (*models.Organization, error)
+	Get() (*models.GeneralSettings, error)
+	Update(settings *models.GeneralSettings) (*models.GeneralSettings, error)
 }
 
 // OrganizationsTable encapsulates a connection to the Dynamo table.

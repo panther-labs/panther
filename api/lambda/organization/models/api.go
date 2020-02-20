@@ -20,39 +20,21 @@ package models
 
 // LambdaInput is the request structure for the organization-api Lambda function.
 type LambdaInput struct {
-	CreateOrganization *CreateOrganizationInput `json:"createOrganization"`
-	GetOrganization    *GetOrganizationInput    `json:"getOrganization"`
-	UpdateOrganization *UpdateOrganizationInput `json:"updateOrganization"`
+	GetSettings    *GetSettingsInput    `json:"getSettings"`
+	UpdateSettings *UpdateSettingsInput `json:"updateSettings"`
 }
 
-// CreateOrganizationInput creates a new Panther customer account.
-type CreateOrganizationInput struct {
-	AlertReportFrequency  *string `json:"alertReportFrequency" validate:"omitempty,oneof=P1D P1W"`
-	DisplayName           *string `json:"displayName" validate:"required,min=1"`
-	Email                 *string `genericapi:"redact" json:"email" validate:"required,email"`
+// GetSettingsInput retrieves general account settings.
+type GetSettingsInput struct{}
+
+// UpdateSettingsInput modifies one or more settings.
+//
+// Only non-nil fields are updated.
+type UpdateSettingsInput = GeneralSettings
+
+// GeneralSettings defines basic settings for a Panther deployment.
+type GeneralSettings struct {
+	DisplayName           *string `json:"displayName" validate:"omitempty,min=1"`
+	Email                 *string `genericapi:"redact" json:"email" validate:"omitempty,email"`
 	ErrorReportingConsent *bool   `json:"errorReportingConsent"`
-}
-
-// CreateOrganizationOutput returns the newly created organization.
-type CreateOrganizationOutput struct {
-	Organization *Organization `json:"organization"`
-}
-
-// GetOrganizationInput retrieves the details of a Panther customer account.
-type GetOrganizationInput struct {
-}
-
-// GetOrganizationOutput is the table row representing a customer account.
-type GetOrganizationOutput struct {
-	Organization *Organization `json:"organization"`
-}
-
-// UpdateOrganizationInput modifies the details of an existing organization.
-type UpdateOrganizationInput struct {
-	CreateOrganizationInput
-}
-
-// UpdateOrganizationOutput is the table row representing the modified customer account.
-type UpdateOrganizationOutput struct {
-	Organization *Organization `json:"organization"`
 }

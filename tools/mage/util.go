@@ -174,9 +174,11 @@ func promptUser(prompt string, validator func(string) error) string {
 		}
 
 		result = strings.TrimSpace(result)
-		if err := validator(result); err != nil {
-			fmt.Println(err)
-			continue
+		if validator != nil {
+			if err := validator(result); err != nil {
+				fmt.Println(err)
+				continue
+			}
 		}
 
 		return result

@@ -20,7 +20,6 @@ package table
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
@@ -31,50 +30,76 @@ import (
 )
 
 // Update updates account details and returns the updated item
-func (table *OrganizationsTable) Update(org *models.Organization) (*models.Organization, error) {
-	update := expression.
-		Set(expression.Name("alertReportFrequency"), expression.Value(org.AlertReportFrequency)).
-		Set(expression.Name("displayName"), expression.Value(org.DisplayName)).
-		Set(expression.Name("email"), expression.Value(org.Email)).
-		Set(expression.Name("errorReportingConsent"), expression.Value(org.ErrorReportingConsent))
-	return table.doUpdate(update)
-}
-
-func (table *OrganizationsTable) doUpdate(update expression.UpdateBuilder) (*models.Organization, error) {
-	condition := expression.AttributeExists(expression.Name("id"))
-
-	expr, err := expression.NewBuilder().WithCondition(condition).WithUpdate(update).Build()
+func (table *OrganizationsTable) Update(settings *models.GeneralSettings) (*models.GeneralSettings, error) {
+	expr, err := buildUpdateExpression(settings)
 	if err != nil {
-		return nil, &genericapi.InternalError{
-			Message: "failed to build update expression: " + err.Error()}
+		return nil, err
 	}
 
 	input := &dynamodb.UpdateItemInput{
-		ConditionExpression:       expr.Condition(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
-		Key:                       DynamoItem{"id": {S: aws.String(orgID)}},
+		Key:                       settingsKey,
 		ReturnValues:              aws.String("ALL_NEW"),
 		TableName:                 table.Name,
 		UpdateExpression:          expr.Update(),
 	}
 
-	zap.L().Info("updating org in dynamo")
+	zap.L().Debug("updating general settings in dynamo")
 	response, err := table.client.UpdateItem(input)
 
 	if err != nil {
-		aerr, ok := err.(awserr.Error)
-		if ok && aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-			return nil, &genericapi.DoesNotExistError{}
-		}
 		return nil, &genericapi.AWSError{Method: "dynamodb.UpdateItem", Err: err}
 	}
 
-	var newOrg models.Organization
-	if err = dynamodbattribute.UnmarshalMap(response.Attributes, &newOrg); err != nil {
+	var newSettings models.GeneralSettings
+	if err = dynamodbattribute.UnmarshalMap(response.Attributes, &newSettings); err != nil {
 		return nil, &genericapi.InternalError{
-			Message: "failed to unmarshal dynamo item to an Organization: " + err.Error()}
+			Message: "failed to unmarshal dynamo item to GeneralSettings: " + err.Error()}
 	}
 
-	return &newOrg, nil
+	return &newSettings, nil
+}
+
+// Update only the fields listed in the request.
+func buildUpdateExpression(settings *models.GeneralSettings) (expression.Expression, error) {
+	var update expression.UpdateBuilder
+	updateInitialized := false
+
+	if settings.DisplayName != nil {
+		update = expression.Set(expression.Name("displayName"), expression.Value(settings.DisplayName))
+		updateInitialized = true
+	}
+
+	if settings.Email != nil {
+		if updateInitialized {
+			update = update.Set(expression.Name("email"), expression.Value(settings.Email))
+		} else {
+			update = expression.Set(expression.Name("email"), expression.Value(settings.Email))
+			updateInitialized = true
+		}
+	}
+
+	if settings.ErrorReportingConsent != nil {
+		if updateInitialized {
+			update = update.Set(expression.Name("errorReportingConsent"), expression.Value(settings.ErrorReportingConsent))
+		} else {
+			update = expression.Set(expression.Name("errorReportingConsent"), expression.Value(settings.ErrorReportingConsent))
+			updateInitialized = true
+		}
+	}
+
+	var expr expression.Expression
+	if !updateInitialized {
+		return expr, &genericapi.InvalidInputError{
+			Message: "at least one setting is required to update",
+		}
+	}
+
+	expr, err := expression.NewBuilder().WithUpdate(update).Build()
+	if err != nil {
+		return expr, &genericapi.InternalError{
+			Message: "failed to build update expression: " + err.Error()}
+	}
+	return expr, nil
 }
