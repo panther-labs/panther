@@ -21,7 +21,6 @@ Parameters:
   ProcessedDataBucket:
     Type: String
     Description: Bucket where log processing writes data
-    Default: ''
 
 Resources:
   # Tables generated from log processing parser outputs
