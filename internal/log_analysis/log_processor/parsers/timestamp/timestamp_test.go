@@ -33,8 +33,7 @@ var (
 
 	jsonUnmarshalString            = `"2019-12-15T01:01:01Z"`
 	osqueryUnmarshalString         = `"Sun Dec 15 01:01:01 2019 UTC"`
-	unixMillisecondUnmarshalInt    = `1576371661000`
-	unixMillisecondUnmarshalString = `"1576371661000"`
+	unixMillisecondUnmarshalString = `1576371661000`
 )
 
 func TestTimestampRFC3339_String(t *testing.T) {
@@ -87,14 +86,7 @@ func TestTimestampUnixMillisecond_Marshal(t *testing.T) {
 	assert.Equal(t, expectedMarshalString, string(jsonTS))
 }
 
-func TestTimestampUnixMillisecond_UnmarshalInt(t *testing.T) {
-	var ts UnixMillisecond
-	err := jsoniter.Unmarshal([]byte(unixMillisecondUnmarshalInt), &ts)
-	assert.NoError(t, err)
-	assert.Equal(t, (UnixMillisecond)(expectedTime), ts)
-}
-
-func TestTimestampUnixMillisecond_UnmarshalString(t *testing.T) {
+func TestTimestampUnixMillisecond_Unmarshal(t *testing.T) {
 	var ts UnixMillisecond
 	err := jsoniter.Unmarshal([]byte(unixMillisecondUnmarshalString), &ts)
 	assert.NoError(t, err)

@@ -20,7 +20,6 @@ package timestamp
 
 import (
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -93,8 +92,7 @@ func (ts *UnixMillisecond) MarshalJSON() ([]byte, error) {
 }
 
 func (ts *UnixMillisecond) UnmarshalJSON(jsonBytes []byte) (err error) {
-	text := strings.Trim(string(jsonBytes), `"`)
-	value, err := strconv.ParseInt(text, 10, 64)
+	value, err := strconv.ParseInt(string(jsonBytes), 10, 64)
 	if err != nil {
 		return err
 	}
