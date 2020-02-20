@@ -148,6 +148,10 @@ func TestAppendAnySHA1Hashes(t *testing.T) {
 	}
 	event.AppendAnySHA1Hashes(value)
 	require.Equal(t, expectedAny, event.PantherAnySHA1Hashes)
+
+	event = PantherLog{}
+	event.AppendAnySHA1HashPtrs(&value)
+	require.Equal(t, expectedAny, event.PantherAnySHA1Hashes)
 }
 
 func TestAppendAnyMD5Hashes(t *testing.T) {
@@ -159,5 +163,9 @@ func TestAppendAnyMD5Hashes(t *testing.T) {
 		},
 	}
 	event.AppendAnyMD5Hashes(value)
+	require.Equal(t, expectedAny, event.PantherAnyMD5Hashes)
+
+	event = PantherLog{}
+	event.AppendAnyMD5HashPtrs(&value)
 	require.Equal(t, expectedAny, event.PantherAnyMD5Hashes)
 }

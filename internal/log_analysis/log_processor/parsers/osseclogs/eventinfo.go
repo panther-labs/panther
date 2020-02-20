@@ -61,7 +61,7 @@ type EventInfo struct {
 	SrcPort            *string   `json:"srcport,omitempty" description:"The source port."`
 	SrcUser            *string   `json:"srcuser,omitempty" description:"The source username."`
 	Status             *string   `json:"status,omitempty" description:"Event status (success, failure, etc)."`
-	Syscheckfile       *FileDiff `json:"SyscheckFile,omitempty" validate:"omitempty,dive" description:"Information about a file integrity check."`
+	SyscheckFile       *FileDiff `json:"SyscheckFile,omitempty" validate:"omitempty,dive" description:"Information about a file integrity check."`
 	Systemname         *string   `json:"systemname,omitempty" description:"The system name extracted by the decoder."`
 	URL                *string   `json:"url,omitempty" description:"URL of the event."`
 
@@ -94,8 +94,8 @@ type Rule struct {
 type FileDiff struct {
 	GroupOwnerAfter  *string `json:"gowner_after,omitempty" description:"The group owner after modification."`
 	GroupOwnerBefore *string `json:"gowner_before,omitempty" description:"The group owner before modification."`
-	Md5After         *string `json:"md5_after,omitempty" description:"MD5 hash of the file after modification."`
-	Md5Before        *string `json:"md5_before,omitempty" description:"MD5 hash of the file before modification."`
+	MD5After         *string `json:"md5_after,omitempty" description:"MD5 hash of the file after modification."`
+	MD5Before        *string `json:"md5_before,omitempty" description:"MD5 hash of the file before modification."`
 	OwnerAfter       *string `json:"owner_after,omitempty" description:"The file owner after modification."`
 	OwnerBefore      *string `json:"owner_before,omitempty" description:"The file owner before modification."`
 	Path             *string `json:"path,omitempty" description:"The path to the file."`
@@ -149,4 +149,8 @@ func (p *EventInfoParser) LogType() string {
 func (event *EventInfo) updatePantherFields(p *EventInfoParser) {
 	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.Timestamp))
 	event.AppendAnyIPAddressPtrs(event.SrcIP, event.DstIP)
+	if event.SyscheckFile != nil {
+		event.AppendAnyMD5HashPtrs(event.SyscheckFile.MD5Before, event.SyscheckFile.MD5After)
+		event.AppendAnySHA1HashPtrs(event.SyscheckFile.SHA1Before, event.SyscheckFile.SHA1After)
+	}
 }

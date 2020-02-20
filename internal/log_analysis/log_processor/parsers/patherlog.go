@@ -131,11 +131,27 @@ func (pl *PantherLog) AppendAnyDomainNames(values ...string) {
 	AppendAnyString(pl.PantherAnyDomainNames, values...)
 }
 
+func (pl *PantherLog) AppendAnySHA1HashPtrs(values ...*string) {
+	for _, value := range values {
+		if value != nil {
+			pl.AppendAnySHA1Hashes(*value)
+		}
+	}
+}
+
 func (pl *PantherLog) AppendAnySHA1Hashes(values ...string) {
 	if pl.PantherAnySHA1Hashes == nil { // lazy create
 		pl.PantherAnySHA1Hashes = NewPantherAnyString()
 	}
 	AppendAnyString(pl.PantherAnySHA1Hashes, values...)
+}
+
+func (pl *PantherLog) AppendAnyMD5HashPtrs(values ...*string) {
+	for _, value := range values {
+		if value != nil {
+			pl.AppendAnyMD5Hashes(*value)
+		}
+	}
 }
 
 func (pl *PantherLog) AppendAnyMD5Hashes(values ...string) {

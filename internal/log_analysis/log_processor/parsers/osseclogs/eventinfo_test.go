@@ -55,6 +55,44 @@ func TestEventInfo(t *testing.T) {
 	checkEventInfo(t, log, expectedEvent)
 }
 
+func TestEventInfoWithSyscheckFile(t *testing.T) {
+	//nolint:lll
+	log := `{"rule":{"level":7,"comment":"Integrity checksum changed.","sidid":550,"group":"ossec,syscheck,"},"id":"1540845340.16991","TimeStamp":1540845340000,"decoder":"syscheck_integrity_changed","location":"syscheck","full_log":"Integrity checksum changed for:'/usr/bin/ssm-cli'\nOld md5sum was:'22271cce0732d887e3980e5a6868e459'\nNew md5sum is :'220a8f105af5e711f99e52583209a871'\nOld sha1sum was:'4df65340f366c18f85be228c26817e20391f32c4'\nNew sha1sum is :'c7414fd048c81361720e2d9c8d2f82faf33748b6'\n","SyscheckFile":{"path":"/usr/bin/ssm-cli","md5_before":"22271cce0732d887e3980e5a6868e459","md5_after":"220a8f105af5e711f99e52583209a871","sha1_before":"4df65340f366c18f85be228c26817e20391f32c4","sha1_after":"c7414fd048c81361720e2d9c8d2f82faf33748b6"},"hostname":"ip-172-16-2-16"}`
+
+	expectedTime := time.Unix(1540845340, 0).UTC()
+
+	//nolint:lll
+	expectedEvent := &EventInfo{
+		Rule: &Rule{
+			Level:   aws.Int(7),
+			Comment: aws.String("Integrity checksum changed."),
+			SIDID:   aws.Int(550),
+			Group:   aws.String("ossec,syscheck,"),
+		},
+		ID:        aws.String("1540845340.16991"),
+		Timestamp: (*timestamp.UnixMillisecond)(&expectedTime),
+		Decoder:   aws.String("syscheck_integrity_changed"),
+		Location:  aws.String("syscheck"),
+		FullLog:   aws.String("Integrity checksum changed for:'/usr/bin/ssm-cli'\nOld md5sum was:'22271cce0732d887e3980e5a6868e459'\nNew md5sum is :'220a8f105af5e711f99e52583209a871'\nOld sha1sum was:'4df65340f366c18f85be228c26817e20391f32c4'\nNew sha1sum is :'c7414fd048c81361720e2d9c8d2f82faf33748b6'\n"),
+		SyscheckFile: &FileDiff{
+			MD5After:   aws.String("220a8f105af5e711f99e52583209a871"),
+			MD5Before:  aws.String("22271cce0732d887e3980e5a6868e459"),
+			SHA1After:  aws.String("c7414fd048c81361720e2d9c8d2f82faf33748b6"),
+			SHA1Before: aws.String("4df65340f366c18f85be228c26817e20391f32c4"),
+			Path:       aws.String("/usr/bin/ssm-cli"),
+		},
+		Hostname: aws.String("ip-172-16-2-16"),
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("OSSEC.EventInfo")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyMD5Hashes("220a8f105af5e711f99e52583209a871", "22271cce0732d887e3980e5a6868e459")
+	expectedEvent.AppendAnySHA1Hashes("c7414fd048c81361720e2d9c8d2f82faf33748b6", "4df65340f366c18f85be228c26817e20391f32c4")
+
+	checkEventInfo(t, log, expectedEvent)
+}
+
 func TestEventInfoType(t *testing.T) {
 	parser := &EventInfoParser{}
 	require.Equal(t, "OSSEC.EventInfo", parser.LogType())
