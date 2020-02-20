@@ -82,7 +82,7 @@ const Navigation = () => {
           <Box is="li">
             <NavIconButton
               active={isComplianceNavigationActive}
-              icon="infra-analytics"
+              icon="cloud-security"
               tooltipLabel="Cloud Security"
               onClick={() =>
                 setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
@@ -92,7 +92,7 @@ const Navigation = () => {
           <Box is="li" mb="auto">
             <NavIconButton
               active={isLogAnalysisNavigationActive}
-              icon="log-analytics"
+              icon="log-analysis"
               tooltipLabel="Log Analysis"
               onClick={() =>
                 setSecondaryNav(isLogAnalysisNavigationActive ? null : LOG_ANALYSIS_NAV_KEY)
