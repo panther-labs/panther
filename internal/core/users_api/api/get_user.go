@@ -19,12 +19,8 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/panther-labs/panther/api/lambda/users/models"
 )
-
-const roleName = "Admin" // All users are admins (upgrade to enterprise for RBAC)
 
 // GetUser calls userGateway to get user information.
 func (API) GetUser(input *models.GetUserInput) (*models.GetUserOutput, error) {
@@ -32,7 +28,5 @@ func (API) GetUser(input *models.GetUserInput) (*models.GetUserOutput, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	user.Role = aws.String(roleName)
 	return user, nil
 }

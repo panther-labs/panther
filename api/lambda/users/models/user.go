@@ -25,6 +25,5 @@ type User struct {
 	FamilyName *string `json:"familyName"`
 	GivenName  *string `json:"givenName"`
 	ID         *string `json:"id"`
-	Role       *string `json:"role"` // Roles are group name
 	Status     *string `json:"status"`
 }
