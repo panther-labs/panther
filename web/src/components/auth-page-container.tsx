@@ -19,7 +19,6 @@
 import React from 'react';
 import { Flex, Grid, Box, Text, Heading, Label } from 'pouncejs';
 import PantherLogoWhite from 'Assets/panther-icon--white.svg';
-import { Link } from 'react-router-dom';
 
 interface AuthPageContainerComposition {
   Caption: React.FC<{ title: string; subtitle?: string }>;
