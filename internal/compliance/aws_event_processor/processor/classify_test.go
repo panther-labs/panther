@@ -104,11 +104,31 @@ func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
 	assert.Equal(t, expected, logs.AllUntimed())
 }
 
+// drop event if the account ID is not present
+func TestClassifyCloudWatchEventNoRecipientAccountId(t *testing.T) {
+	logs := mockLogger()
+	accounts = exampleAccounts
+	body := gjson.Parse(`{"eventName": "foo", "eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`) //nolint:lll
+	changes := classifyCloudTrailLog(body)
+	assert.Len(t, changes, 0)
+
+	expected := []observer.LoggedEntry{
+		{
+			Entry: zapcore.Entry{Level: zapcore.WarnLevel, Message: "dropping event without recipientAccountId field"},
+			Context: []zapcore.Field{
+				zap.String("eventName", "foo"),
+				zap.String("eventSource", "s3.amazonaws.com"),
+			},
+		},
+	}
+	assert.Equal(t, expected, logs.AllUntimed())
+}
+
 // drop event if the account ID is not recognized
 func TestClassifyCloudWatchEventUnauthorized(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	body := gjson.Parse(`{"eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`)
+	body := gjson.Parse(`{"recipientAccountId": "foo", "eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`) //nolint:lll
 	changes := classifyCloudTrailLog(body)
 	assert.Len(t, changes, 0)
 
@@ -116,7 +136,7 @@ func TestClassifyCloudWatchEventUnauthorized(t *testing.T) {
 		{
 			Entry: zapcore.Entry{Level: zapcore.WarnLevel, Message: "dropping event from unauthorized account"},
 			Context: []zapcore.Field{
-				zap.String("accountId", ""),
+				zap.String("accountId", "foo"),
 				zap.String("eventSource", "s3.amazonaws.com"),
 			},
 		},

@@ -88,7 +88,8 @@ func classifyCloudTrailLog(detail gjson.Result) []*resourceChange {
 	if strings.HasPrefix(eventName, "Get") ||
 		strings.HasPrefix(eventName, "BatchGet") ||
 		strings.HasPrefix(eventName, "Describe") ||
-		strings.HasPrefix(eventName, "List") {
+		strings.HasPrefix(eventName, "List") ||
+		strings.HasPrefix(eventName, "Decrypt") {
 
 		zap.L().Debug(source+": ignoring read-only event", zap.String("eventName", eventName))
 		return nil
@@ -98,9 +99,15 @@ func classifyCloudTrailLog(detail gjson.Result) []*resourceChange {
 	accountID := detail.Get("recipientAccountId").Str
 	integration, ok := accounts[accountID]
 	if !ok {
-		zap.L().Warn("dropping event from unauthorized account",
-			zap.String("accountId", accountID),
-			zap.String("eventSource", source))
+		if accountID == "" {
+			zap.L().Warn("dropping event without recipientAccountId field",
+				zap.String("eventName", eventName),
+				zap.String("eventSource", source))
+		} else {
+			zap.L().Warn("dropping event from unauthorized account",
+				zap.String("accountId", accountID),
+				zap.String("eventSource", source))
+		}
 		return nil
 	}
 
