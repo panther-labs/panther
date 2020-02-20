@@ -19,7 +19,6 @@
 import React from 'react';
 import { Flex, Grid, Box, Text, Heading, Label } from 'pouncejs';
 import PantherLogoWhite from 'Assets/panther-icon--white.svg';
-import { Link } from 'react-router-dom';
 
 interface AuthPageContainerComposition {
   Caption: React.FC<{ title: string; subtitle?: string }>;
@@ -54,12 +53,10 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
           height="100%"
           flexDirection="column"
         >
-          <Link to="/">
-            <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
-          </Link>
+          <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
           <Flex flexDirection="column" alignItems="center" justifyContent="center" m="auto">
             <Label size="medium" mb={5} color="white" textAlign="center">
-              Panther Cloud-Native Cybersecurity SIEM
+              Panther Community Edition
             </Label>
             <Heading
               size="medium"
@@ -68,11 +65,10 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
               letterSpacing="0.5px"
               textAlign="center"
             >
-              Identify threats, misconfigurations, and suspicious activity in all of your
-              environments.
+              Quickly and Automatically Detect Threats in Log Data and Cloud Infrastructure
             </Heading>
             <Text size="large" color="white" mt={5} textAlign="center">
-              Designed for businesses of any size
+              Designed for organizations of any size
             </Text>
           </Flex>
         </Flex>
