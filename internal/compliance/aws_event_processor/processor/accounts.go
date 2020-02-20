@@ -38,9 +38,14 @@ const (
 )
 
 var (
-	// Keyed on accountID
+	// Valid accounts, keyed on accountID
 	accounts            = make(map[string]*models.SourceIntegration)
 	accountsLastUpdated time.Time
+
+	// Accounts where CloudWatch Events are enabled, and should be preferred over S3 notifications
+	// Keyed by accountID + region
+	cweAccounts = make(map[string]struct{})
+
 	// Setup the clients to talk to the Snapshot API
 	sess                               = session.Must(session.NewSession())
 	lambdaClient lambdaiface.LambdaAPI = lambda.New(sess)

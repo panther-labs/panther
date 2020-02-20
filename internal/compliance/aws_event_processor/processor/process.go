@@ -19,8 +19,10 @@ package processor
  */
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 )
@@ -63,8 +65,43 @@ var classifiers = map[string]func(gjson.Result, string) []*resourceChange{
 	"waf-regional.amazonaws.com":         classifyWAFRegional,
 }
 
-// Classify the event as an update or delete operation, or drop it altogether.
-func classifyCloudTrailLog(detail gjson.Result) []*resourceChange {
+// CloudTrailMetaData is a data struct that contains re-used fields of CloudTrail logs so that we don't have to keep
+// extracting the same information
+type CloudTrailMetaData struct {
+	Region    string
+	AccountID string
+	eventName string
+}
+
+// generateSourceKey creates the key used for the cweAccounts cache for a given CloudTrail metadata struct
+func (metadata *CloudTrailMetaData) generateSourceKey() string {
+	return fmt.Sprintf("%s/%s", metadata.AccountID, metadata.Region)
+}
+
+// preprocessCloudTrailLog extracts some meta data that is used repeatedly for a CloudTrail log
+func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetaData, error) {
+	accountID := detail.Get("userIdentity.accountId")
+	if !accountID.Exists() {
+		return nil, errors.WithStack(errors.New("unable to extract CloudTrail accountId field"))
+	}
+	region := detail.Get("awsRegion")
+	if !region.Exists() {
+		return nil, errors.WithStack(errors.New("unable to extract CloudTrail awsRegion field"))
+	}
+	eventName := detail.Get("eventName")
+	if !eventName.Exists() {
+		return nil, errors.WithStack(errors.New("unable to extract CloudTrail eventName field"))
+	}
+
+	return &CloudTrailMetaData{
+		Region:    region.Str,
+		AccountID: accountID.Str,
+		eventName: eventName.Str,
+	}, nil
+}
+
+// processCloudTrailLog determines what resources, if any, need to be scanned as a result of a given CloudTrail log
+func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetaData) []*resourceChange {
 	// Determine the AWS service the modified resource belongs to
 	source := detail.Get("eventSource").Str
 	classifier, ok := classifiers[source]
@@ -83,30 +120,36 @@ func classifyCloudTrailLog(detail gjson.Result) []*resourceChange {
 
 	// Ignore the most common read only events
 	//
-	// NOTE: we ignore the "detail.readOnly" field because it is inaccurate
-	eventName := detail.Get("eventName").Str
-	if strings.HasPrefix(eventName, "Get") ||
-		strings.HasPrefix(eventName, "BatchGet") ||
-		strings.HasPrefix(eventName, "Describe") ||
-		strings.HasPrefix(eventName, "List") {
+	// NOTE: we ignore the "detail.readOnly" field because it is not always present or accurate
+	if strings.HasPrefix(metadata.eventName, "Get") ||
+		strings.HasPrefix(metadata.eventName, "BatchGet") ||
+		strings.HasPrefix(metadata.eventName, "Describe") ||
+		strings.HasPrefix(metadata.eventName, "Decrypt") ||
+		strings.HasPrefix(metadata.eventName, "List") {
 
-		zap.L().Debug(source+": ignoring read-only event", zap.String("eventName", eventName))
+		zap.L().Debug(source+": ignoring read-only event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	// Check if this log is from a supported account
-	accountID := detail.Get("recipientAccountId").Str
-	integration, ok := accounts[accountID]
+	integration, ok := accounts[metadata.AccountID]
 	if !ok {
 		zap.L().Warn("dropping event from unauthorized account",
-			zap.String("accountId", accountID),
+			zap.String("accountId", metadata.AccountID),
 			zap.String("eventSource", source))
 		return nil
 	}
 
 	// Process the body
-	changes := classifier(detail, accountID)
+	changes := classifier(detail, metadata.AccountID)
 	eventTime := detail.Get("eventTime").Str
+	if len(changes) > 0 {
+		readOnly := detail.Get("readonly").Bool()
+		if readOnly {
+			zap.L().Warn("processing changes from event marked readOnly")
+		}
+	}
+
 	for _, change := range changes {
 		change.EventTime = eventTime
 		change.IntegrationID = *integration.IntegrationID

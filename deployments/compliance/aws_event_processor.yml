@@ -124,7 +124,7 @@ Resources:
     Properties:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       QueueName: panther-aws-events-dlq
-      VisibilityTimeout: 60
+      VisibilityTimeout: !Ref TimeoutSec
 
   LogGroup:
     Type: AWS::Logs::LogGroup

@@ -31,11 +31,33 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
+var exampleMetadata = &CloudTrailMetaData{
+	Region:    "us-west-2",
+	AccountID: "111111111111",
+	eventName: "Example",
+}
+
+// test the pre-processor
+func TestPreProcessCloudTrail(t *testing.T) {
+	event := `{ "awsRegion": "us-west-2", "userIdentity": { "accountId" : "111111111111" }, "eventName": "Example" }`
+	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
+	require.Nil(t, err)
+	assert.Equal(t, exampleMetadata, actual)
+}
+
+// test the pre-processor on an event with no region
+func TestPreProcessCloudTrailFail(t *testing.T) {
+	event := `{ "userIdentity": { "accountId" : "111111111111" }, "eventName": "Example" }`
+	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
+	assert.NotNil(t, err)
+	assert.Nil(t, actual)
+}
+
 // drop event if the source is not supported
 func TestClassifyCloudWatchEventBadSource(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	require.Nil(t, classifyCloudTrailLog(gjson.Parse(`{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`)))
+	require.Nil(t, processCloudTrailLog(gjson.Parse(`{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`), exampleMetadata))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -50,7 +72,10 @@ func TestClassifyCloudWatchEventBadSource(t *testing.T) {
 func TestClassifyCloudWatchEventErrorCode(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	require.Nil(t, classifyCloudTrailLog(gjson.Parse(`{"errorCode": "AccessDeniedException", "eventSource": "s3.amazonaws.com"}`)))
+	require.Nil(t, processCloudTrailLog(
+		gjson.Parse(`{"errorCode": "AccessDeniedException", "eventSource": "s3.amazonaws.com"}`),
+		exampleMetadata,
+	))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -68,8 +93,12 @@ func TestClassifyCloudWatchEventErrorCode(t *testing.T) {
 func TestClassifyCloudWatchEventReadOnly(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	require.Nil(t, classifyCloudTrailLog(
-		gjson.Parse(`{"eventName": "ListBuckets", "eventSource": "s3.amazonaws.com"}`)),
+	require.Nil(t, processCloudTrailLog(
+		gjson.Parse(`{"eventName": "ListBuckets", "eventSource": "s3.amazonaws.com"}`), &CloudTrailMetaData{
+			Region:    "us-west-2",
+			AccountID: "111111111111",
+			eventName: "ListBuckets",
+		}),
 	)
 
 	expected := []observer.LoggedEntry{
@@ -91,7 +120,11 @@ func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
 				"recipientAccountId": "111111111111",
 				"eventSource":"s3.amazonaws.com"
 			}`)
-	require.Nil(t, classifyCloudTrailLog(body))
+	require.Nil(t, processCloudTrailLog(body, &CloudTrailMetaData{
+		Region:    "us-west-2",
+		AccountID: "111111111111",
+		eventName: "DeleteBucket",
+	}))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -109,14 +142,18 @@ func TestClassifyCloudWatchEventUnauthorized(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
 	body := gjson.Parse(`{"eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`)
-	changes := classifyCloudTrailLog(body)
+	changes := processCloudTrailLog(body, &CloudTrailMetaData{
+		Region:    "us-west-2",
+		AccountID: "222222222222",
+		eventName: "Example",
+	})
 	assert.Len(t, changes, 0)
 
 	expected := []observer.LoggedEntry{
 		{
 			Entry: zapcore.Entry{Level: zapcore.WarnLevel, Message: "dropping event from unauthorized account"},
 			Context: []zapcore.Field{
-				zap.String("accountId", ""),
+				zap.String("accountId", "222222222222"),
 				zap.String("eventSource", "s3.amazonaws.com"),
 			},
 		},
@@ -137,7 +174,7 @@ func TestClassifyCloudWatchEvent(t *testing.T) {
         "requestParameters": {"bucketName": "panther"},
 		"userIdentity": {"accountId": "111111111111"}
     }`)
-	result := classifyCloudTrailLog(body)
+	result := processCloudTrailLog(body, exampleMetadata)
 	expected := []*resourceChange{{
 		AwsAccountID:  "111111111111",
 		Delete:        true,
