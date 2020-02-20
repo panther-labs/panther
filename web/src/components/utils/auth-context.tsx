@@ -281,7 +281,7 @@ const AuthProvider: React.FC = ({ children }) => {
       try {
         await Auth.verifyTotpToken(authUser, mfaCode);
         await Auth.setPreferredMFA(authUser, 'TOTP');
-        // NOTE: User is confirmed at this point so we can go ahead an logged in here
+        // NOTE: User is confirmed at this point so we can go ahead and log in user here
         const confirmedUser = await Auth.currentAuthenticatedUser();
         setAuthUser(confirmedUser);
         setAuthenticated(true);
