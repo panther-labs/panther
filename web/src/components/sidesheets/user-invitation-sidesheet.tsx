@@ -26,7 +26,7 @@ const UserInvitationSidesheet: React.FC = () => {
 
   return (
     <SideSheet open onClose={hideSidesheet}>
-      <Box width={460}>
+      <Box width={425} m="auto">
         <Heading size="medium" mb={8}>
           Invite User
         </Heading>
@@ -34,7 +34,13 @@ const UserInvitationSidesheet: React.FC = () => {
           By inviting users to join your organization, they will receive an email with temporary
           credentials that they can use to sign in to the platform
         </Text>
+
         <InviteUserForm onSuccess={hideSidesheet} />
+        <Text size="small" color="grey300" textAlign="center" mt={6}>
+          All users in the Open-Source version of Panther are admins in the system.
+          <br />
+          Role-based access is a feature available in the Enterprise version
+        </Text>
       </Box>
     </SideSheet>
   );
