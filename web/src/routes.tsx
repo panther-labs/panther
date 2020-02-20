@@ -77,6 +77,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
               <Switch>
                 /******************** COMPLIANCE ******************************/
                 <Redirect exact from="/" to={urls.compliance.overview()} />
+                <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
                 <Route exact path={urls.compliance.overview()} component={OverviewPage} />
                 <Route exact path={urls.compliance.policies.list()} component={ListPoliciesPage} />
                 <Route
@@ -107,6 +108,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Route exact path={urls.compliance.sources.list()} component={null} />
                 <Route exact path={urls.compliance.sources.create()} component={null} />
                 /******************** LOG ANALYSIS ******************************/
+                <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />
                 <Route exact path={urls.logAnalysis.overview()} component={null} />
                 <Route exact path={urls.logAnalysis.rules.list()} component={ListRulesPage} />
                 <Route exact path={urls.logAnalysis.rules.create()} component={CreateRulePage} />
