@@ -1,17 +1,5 @@
 package forwarder
 
-import (
-	"os"
-	"strconv"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/pkg/errors"
-)
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -29,6 +17,19 @@ import (
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"os"
+	"strconv"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/pkg/errors"
+)
+
 var (
 	alertsTable                           = os.Getenv("ALERTS_TABLE")
 	awsSession                            = session.Must(session.NewSession())
@@ -44,18 +45,20 @@ func Process(event *AlertDedupEvent) error {
 		AlertDedupEvent: *event,
 	}
 
-	marshalledAlert, err := dynamodbattribute.MarshalMap(alert)
+	marshaledAlert, err := dynamodbattribute.MarshalMap(alert)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshall alert")
+		return errors.Wrap(err, "failed to marshal alert")
 	}
 	putItemRequest := &dynamodb.PutItemInput{
-		Item:      marshalledAlert,
+		Item:      marshaledAlert,
 		TableName: aws.String(alertsTable),
 	}
 	_, err = ddbClient.PutItem(putItemRequest)
 	if err != nil {
 		return errors.Wrap(err, "failed to update store alert")
 	}
+
+	//TODO Add logic that forwards messages to Alert Delivery SQS queue
 	return nil
 }
 

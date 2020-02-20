@@ -65,11 +65,11 @@ func TestProcess(t *testing.T) {
 		AlertDedupEvent: *testAlertDedupEvent,
 	}
 
-	expectedMarshalledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
+	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
 	assert.NoError(t, err)
 
 	expectedPutItemRequest := &dynamodb.PutItemInput{
-		Item:      expectedMarshalledAlert,
+		Item:      expectedMarshaledAlert,
 		TableName: aws.String("alertsTable"),
 	}
 

@@ -23,26 +23,38 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 func main() {
-	lambda.Start(reporterHandler)
+	lambda.Start(handle)
 }
 
-func reporterHandler(ctx context.Context, event events.DynamoDBEvent) error {
-	lambdalogger.ConfigureGlobal(ctx, nil)
+func handle(ctx context.Context, event events.DynamoDBEvent) error {
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	return reporterHandler(lc, event)
+}
+
+func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent) (err error) {
+	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("messageCount", len(event.Records)))
+	}()
+
 
 	for _, record := range event.Records {
 		event, err := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
 		if err != nil {
-			return errors.Wrap(err, "failed to unmarshall new image")
+			return errors.Wrap(err, "failed to unmarshal new image")
 		}
 
-		if err := forwarder.Process(event); err != nil {
+		if err = forwarder.Process(event); err != nil {
 			return errors.Wrap(err, "encountered issue while handling event")
 		}
 	}

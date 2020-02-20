@@ -25,7 +25,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AlertDedupEvent represents the event sent to the AlertProcessor by the compliance engine.
+// AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
 	RuleID              string    `dynamodbav:"ruleId,string"`
 	DeduplicationString string    `dynamodbav:"dedup,string"`

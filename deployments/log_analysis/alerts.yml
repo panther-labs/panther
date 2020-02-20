@@ -330,7 +330,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ../../out/bin/internal/log_analysis/alert_forwarder/main
-      Description: Lambda for storing events from
+      Description: Lambda that creates and updates alerts in alerts-info table
       Environment:
         Variables:
           DEBUG: !Ref Debug
