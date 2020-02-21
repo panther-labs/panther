@@ -159,7 +159,7 @@ const previousUserSessionExists = Boolean(
   )
 );
 
-const AuthProvider: React.FC = ({ children }) => {
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Stores whether the system should consider the current user as logged-in or not. This can be
   // true without `authUser` being present, since `authUser` comes asynchronously from Cognito, thus
   // it's *always* initially `null`.
@@ -458,4 +458,6 @@ const AuthProvider: React.FC = ({ children }) => {
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
-export { AuthContext, AuthProvider };
+const MemoizedAuthProvider = React.memo(AuthProvider);
+
+export { AuthContext, MemoizedAuthProvider as AuthProvider };
