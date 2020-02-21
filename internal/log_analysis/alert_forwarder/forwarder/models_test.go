@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
 func TestConvertAttribute(t *testing.T) {
 	expectedAlertDedup := &AlertDedupEvent{
 		RuleID:              "testRuleId",
@@ -41,7 +40,6 @@ func TestConvertAttribute(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedAlertDedup, alertDedupEvent)
 }
-
 
 func TestMissingRuleId(t *testing.T) {
 	testInput := getNewTestCase()
@@ -93,7 +91,7 @@ func TestMissingEventCount(t *testing.T) {
 
 func TestInvalidInteger(t *testing.T) {
 	testInput := getNewTestCase()
-	testInput["alertCreationTime"] =  events.NewNumberAttribute("notaninteger")
+	testInput["alertCreationTime"] = events.NewNumberAttribute("notaninteger")
 	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
 	require.Nil(t, alertDedupEvent)
 	require.Error(t, err)
