@@ -22,7 +22,7 @@ import EmptyDataImg from 'Assets/illustrations/empty-box.svg';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 
-const Compliance: React.FC = () => (
+const ComplianceEmptyDataFallback: React.FC = () => (
   <Flex
     height="100%"
     width="100%"
@@ -46,4 +46,4 @@ const Compliance: React.FC = () => (
   </Flex>
 );
 
-export default Compliance;
+export default ComplianceEmptyDataFallback;
