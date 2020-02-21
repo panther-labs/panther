@@ -264,7 +264,7 @@ func inviteFirstUser(awsSession *session.Session) error {
 		orgName = defaultOrgName
 	}
 
-	// Hit users-api.InviteUser to invite a new user
+	// users-api.InviteUser
 	input = &usermodels.LambdaInput{
 		InviteUser: &usermodels.InviteUserInput{
 			GivenName:  &firstName,
@@ -277,7 +277,7 @@ func inviteFirstUser(awsSession *session.Session) error {
 	}
 	logger.Infof("invite sent to %s: check your email! (it may be in spam)", email)
 
-	// Hit organization-api.UpdateSettings to create organization entry
+	// organizations-api.UpdateSettings
 	updateSettingsInput := &orgmodels.LambdaInput{
 		UpdateSettings: &orgmodels.UpdateSettingsInput{DisplayName: &orgName, Email: &email},
 	}
