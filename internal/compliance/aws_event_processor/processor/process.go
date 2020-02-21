@@ -43,26 +43,38 @@ type resourceChange struct {
 //
 // The "classifier" takes a cloudtrail log and summarizes the required change.
 // integrationID does not need to be set by the individual classifiers.
-var classifiers = map[string]func(gjson.Result, string) []*resourceChange{
-	"acm.amazonaws.com":                  classifyACM,
-	"cloudformation.amazonaws.com":       classifyCloudFormation,
-	"cloudtrail.amazonaws.com":           classifyCloudTrail,
-	"config.amazonaws.com":               classifyConfig,
-	"dynamodb.amazonaws.com":             classifyDynamoDB,
-	"ec2.amazonaws.com":                  classifyEC2,
-	"ecs.amazonaws.com":                  classifyECS,
-	"elasticloadbalancing.amazonaws.com": classifyELBV2,
-	"guardduty.amazonaws.com":            classifyGuardDuty,
-	"iam.amazonaws.com":                  classifyIAM,
-	"kms.amazonaws.com":                  classifyKMS,
-	"lambda.amazonaws.com":               classifyLambda,
-	"logs.amazonaws.com":                 classifyCloudWatchLogGroup,
-	"rds.amazonaws.com":                  classifyRDS,
-	"redshift.amazonaws.com":             classifyRedshift,
-	"s3.amazonaws.com":                   classifyS3,
-	"waf.amazonaws.com":                  classifyWAF,
-	"waf-regional.amazonaws.com":         classifyWAFRegional,
-}
+var (
+	classifiers = map[string]func(gjson.Result, string) []*resourceChange{
+		"acm.amazonaws.com":                  classifyACM,
+		"cloudformation.amazonaws.com":       classifyCloudFormation,
+		"cloudtrail.amazonaws.com":           classifyCloudTrail,
+		"config.amazonaws.com":               classifyConfig,
+		"dynamodb.amazonaws.com":             classifyDynamoDB,
+		"ec2.amazonaws.com":                  classifyEC2,
+		"ecs.amazonaws.com":                  classifyECS,
+		"elasticloadbalancing.amazonaws.com": classifyELBV2,
+		"guardduty.amazonaws.com":            classifyGuardDuty,
+		"iam.amazonaws.com":                  classifyIAM,
+		"kms.amazonaws.com":                  classifyKMS,
+		"lambda.amazonaws.com":               classifyLambda,
+		"logs.amazonaws.com":                 classifyCloudWatchLogGroup,
+		"rds.amazonaws.com":                  classifyRDS,
+		"redshift.amazonaws.com":             classifyRedshift,
+		"s3.amazonaws.com":                   classifyS3,
+		"waf.amazonaws.com":                  classifyWAF,
+		"waf-regional.amazonaws.com":         classifyWAFRegional,
+	}
+
+	// These events may have blank/empty userIdentity fields, so we cannot process them.
+	// Luckily, we can just skip them since they are all related to authentication and so won't be changing resources.
+	eventsWithoutAccountID = map[string]struct{}{
+		"SetUserMFAPreference":   {},
+		"GetUser":                {},
+		"InitiateAuth":           {},
+		"RespondToAuthChallenge": {},
+		"AssumeRole":             {},
+	}
+)
 
 // CloudTrailMetaData is a data struct that contains re-used fields of CloudTrail logs so that we don't have to keep
 // extracting the same information
@@ -79,17 +91,21 @@ func (metadata *CloudTrailMetaData) generateSourceKey() string {
 
 // preprocessCloudTrailLog extracts some meta data that is used repeatedly for a CloudTrail log
 func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetaData, error) {
+	eventName := detail.Get("eventName")
+	if !eventName.Exists() {
+		return nil, errors.New("unable to extract CloudTrail eventName field")
+	}
 	accountID := detail.Get("userIdentity.accountId")
 	if !accountID.Exists() {
+		// These events simply do not contain an accountId for us, return nothing
+		if _, ok := eventsWithoutAccountID[eventName.Str]; ok {
+			return nil, nil
+		}
 		return nil, errors.New("unable to extract CloudTrail accountId field")
 	}
 	region := detail.Get("awsRegion")
 	if !region.Exists() {
 		return nil, errors.New("unable to extract CloudTrail awsRegion field")
-	}
-	eventName := detail.Get("eventName")
-	if !eventName.Exists() {
-		return nil, errors.New("unable to extract CloudTrail eventName field")
 	}
 
 	return &CloudTrailMetaData{

@@ -72,6 +72,9 @@ func Handle(batch *events.SQSEvent) error {
 				zap.L().Error("error extracting metadata from raw CloudTrail", zap.Error(err))
 				continue
 			}
+			if metadata == nil {
+				continue
+			}
 			cweAccounts[metadata.generateSourceKey()] = struct{}{}
 
 			err = handleCloudTrail(detail, metadata, changes)
@@ -107,6 +110,9 @@ func Handle(batch *events.SQSEvent) error {
 			metadata, err := preprocessCloudTrailLog(detail)
 			if err != nil {
 				zap.L().Error("error extracting metadata from SNS wrapped CloudTrail", zap.Error(err))
+				continue
+			}
+			if metadata == nil {
 				continue
 			}
 			cweAccounts[metadata.generateSourceKey()] = struct{}{}
@@ -196,6 +202,9 @@ func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resource
 		metadata, err = preprocessCloudTrailLog(detail)
 		if err != nil {
 			return errors.WithMessage(err, "error extracting metadata from CloudTrail in s3")
+		}
+		if metadata == nil {
+			continue
 		}
 		if _, ok := cweAccounts[metadata.generateSourceKey()]; ok {
 			// If we're currently seeing CloudTrail via CWE, we don't process the duplicate data in S3
