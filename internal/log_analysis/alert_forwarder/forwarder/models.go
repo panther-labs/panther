@@ -77,8 +77,8 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*Al
 		RuleID:              ruleID.String(),
 		DeduplicationString: deduplicationString.String(),
 		AlertCount:          alertCount,
-		CreationTime:        time.Unix(alertCreationEpoch, 0),
-		UpdateTime:          time.Unix(alertUpdateEpoch, 0),
+		CreationTime:        time.Unix(alertCreationEpoch, 0).UTC(),
+		UpdateTime:          time.Unix(alertUpdateEpoch, 0).UTC(),
 		EventCount:          eventCount,
 	}, nil
 }
@@ -96,7 +96,7 @@ func getIntegerAttribute(key string, input map[string]events.DynamoDBAttributeVa
 }
 
 func getAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue) (events.DynamoDBAttributeValue, error) {
-	attributeValue, ok := inputMap["alertCount"]
+	attributeValue, ok := inputMap[key]
 	if !ok {
 		return events.DynamoDBAttributeValue{}, errors.Errorf("could not find '%s' attribute", key)
 	}
