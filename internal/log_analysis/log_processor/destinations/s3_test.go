@@ -132,7 +132,7 @@ func registerMockParser(logType string, testEvent *testEvent) (testParser *mockP
 	testParser = &mockParser{}
 	testParser.On("Parse", mock.Anything).Return([]interface{}{testEvent})
 	testParser.On("LogType").Return(logType)
-	p := registry.DefaultHourlyLogParser(testParser, testEvent, "Test "+logType)
+	p := registry.DefaultLogParser(testParser, testEvent, "Test "+logType)
 	testRegistry.Add(p)
 	return
 }

@@ -70,7 +70,7 @@ type Table struct {
 // Core function to create a table
 func newExternalTable(catalogID, databaseName, name, description interface{}, sd *StorageDescriptor, pks []Column) (db *Table) {
 	db = &Table{
-		Type: "AWS::Glue::Table",
+		Type: "AWS::GlueTableMetadata::Table",
 		Properties: TableProperties{
 			CatalogID:    catalogID,
 			DatabaseName: databaseName,

@@ -33,7 +33,7 @@ import (
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
-// targets for managing Glue tables
+// targets for managing GlueTableMetadata tables
 type Glue mg.Namespace
 
 const (
@@ -63,7 +63,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 	// update to current day at last hour
 	endDay := time.Now().UTC().Truncate(time.Hour * 24).Add(time.Hour * 23)
 
-	// delete and re-create concurrently cuz the Glue API is very slow
+	// delete and re-create concurrently cuz the GlueTableMetadata API is very slow
 	var wg sync.WaitGroup
 	for i := 0; i < concurrency; i++ {
 		wg.Add(1)
@@ -118,7 +118,7 @@ func regexValidator(text string) error {
 	return nil
 }
 
-func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueMetadata) (createTime time.Time, err error) {
+func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueTableMetadata) (createTime time.Time, err error) {
 	// get the CreateTime for the table, start there for syncing
 	tableInput := &glue.GetTableInput{
 		DatabaseName: aws.String(table.DatabaseName()),
@@ -133,6 +133,6 @@ func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueMetadata) (cre
 }
 
 type gluePartitionUpdate struct {
-	table *awsglue.GlueMetadata
+	table *awsglue.GlueTableMetadata
 	at    time.Time
 }

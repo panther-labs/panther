@@ -41,7 +41,7 @@ type Database struct {
 
 func NewDatabase(catalogID interface{}, name, description string) (db *Database) {
 	db = &Database{
-		Type: "AWS::Glue::Database",
+		Type: "AWS::GlueTableMetadata::Database",
 		Properties: DatabaseProperties{
 			CatalogID: catalogID,
 			DatabaseInput: DatabaseInput{

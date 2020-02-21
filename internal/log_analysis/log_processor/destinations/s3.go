@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -71,7 +70,7 @@ type S3Destination struct {
 	// snsTopic is the SNS Topic ARN where we will send the notification
 	// when we store new data in S3
 	snsTopicArn string
-	// used to track existing glue partitions, avoids excessive Glue API calls
+	// used to track existing glue partitions, avoids excessive GlueTableMetadata API calls
 	partitionExistsCache map[string]struct{}
 }
 
@@ -266,22 +265,11 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 
 // create glue partition (best effort and log)
 func (destination *S3Destination) createGluePartition(logType string, buffer *s3EventBuffer) {
-	glueMetadata := parserRegistry.LookupParser(logType).Glue
+	glueMetadata := parserRegistry.LookupParser(logType).GlueTableMetadata
 	partitionPath := glueMetadata.PartitionPrefix(buffer.firstEventProcessedTime)
 	if _, exists := destination.partitionExistsCache[partitionPath]; !exists {
 		operation := common.OpLogManager.Start("createPartition", common.OpLogGlueServiceDim)
 		partitionErr := glueMetadata.CreateJSONPartition(destination.glueClient, buffer.firstEventProcessedTime)
-		// already done? fast path return
-		if partitionErr != nil {
-			if awsErr, ok := partitionErr.(awserr.Error); ok {
-				if awsErr.Code() == "AlreadyExistsException" {
-					destination.partitionExistsCache[partitionPath] = struct{}{} // remember
-					return
-				}
-			}
-		} else {
-			destination.partitionExistsCache[partitionPath] = struct{}{} // remember
-		}
 
 		// log outcome
 		operation.Stop()
@@ -293,7 +281,7 @@ func (destination *S3Destination) createGluePartition(logType string, buffer *s3
 
 func getS3ObjectKey(logType string, timestamp time.Time) string {
 	return fmt.Sprintf(s3ObjectKeyFormat,
-		parserRegistry.LookupParser(logType).Glue.PartitionPrefix(timestamp.UTC()), // get the path used in Glue table
+		parserRegistry.LookupParser(logType).GlueTableMetadata.PartitionPrefix(timestamp.UTC()), // get the path used in GlueTableMetadata table
 		timestamp.Format("20060102T150405Z"),
 		uuid.New().String())
 }

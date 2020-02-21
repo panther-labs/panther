@@ -41,7 +41,7 @@ var (
 	}
 )
 
-// Generate Glue tables for log processor output as CloudFormation
+// Generate GlueTableMetadata tables for log processor output as CloudFormation
 func generateGlueTables() error {
 	outDir := filepath.Join("out", "deployments", "log_analysis")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
@@ -59,7 +59,7 @@ func generateGlueTables() error {
 	logger.Debugf("deploy: cfngen: loaded %d glue tables", len(tableResources))
 	cf, err := gluecf.GenerateTables(tableResources)
 	if err != nil {
-		return fmt.Errorf("failed to generate Glue Data Catalog CloudFormation template: %v", err)
+		return fmt.Errorf("failed to generate GlueTableMetadata Data Catalog CloudFormation template: %v", err)
 	}
 
 	if _, err = glueCfFile.Write(cf); err != nil {

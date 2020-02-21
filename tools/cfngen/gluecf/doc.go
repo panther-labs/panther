@@ -1,4 +1,4 @@
-// Package gluecf generates CloudFormation from Go objects to create AWS Glue objects.
+// Package gluecf generates CloudFormation from Go objects to create AWS GlueTableMetadata objects.
 package gluecf
 
 /**
