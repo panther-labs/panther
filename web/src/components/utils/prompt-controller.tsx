@@ -23,8 +23,8 @@ import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
 
 // We are intentionally over-fetching, in order to proactively add this data to the cache
-const GET_ORGANIZATION_ERROR_REPORTING_CONSENT = gql`
-  query GetOrganizationErrorReportingConsent {
+const GET_ERROR_REPORTING_CONSENT = gql`
+  query GetErrorReportingConsent {
     generalSettings {
       displayName
       email
@@ -39,7 +39,7 @@ interface ApolloQueryData {
 
 const PromptController: React.FC = () => {
   const { showModal } = useModal();
-  const { data } = useQuery<ApolloQueryData>(GET_ORGANIZATION_ERROR_REPORTING_CONSENT);
+  const { data } = useQuery<ApolloQueryData>(GET_ERROR_REPORTING_CONSENT);
 
   React.useEffect(() => {
     if (data?.organization.errorReportingConsent === null) {
