@@ -36,7 +36,10 @@ export interface DeleteUserModalProps {
 }
 
 const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
-  const { signOut } = useAuth();
+  const { signOut, userInfo } = useAuth();
+  // Checking if user deleted is the same as the user signed in
+  const onSuccess = () => userInfo.sub === user.id && signOut();
+
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
   const mutation = useMutation<boolean, { id: string }>(DELETE_USER, {
     variables: {
@@ -47,7 +50,7 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
   });
 
   return (
-    <BaseDeleteModal mutation={mutation} itemDisplayName={userDisplayName} onSuccess={signOut} />
+    <BaseDeleteModal mutation={mutation} itemDisplayName={userDisplayName} onSuccess={onSuccess} />
   );
 };
 
