@@ -23,12 +23,16 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws/session"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/remediation_api/remediation"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 var invoker = remediation.NewInvoker(session.Must(session.NewSession()))
@@ -37,15 +41,21 @@ func main() {
 	lambda.Start(lambdaHandler)
 }
 
-func lambdaHandler(ctx context.Context, event events.SQSEvent) error {
-	lambdalogger.ConfigureGlobal(ctx, nil)
+func lambdaHandler(ctx context.Context, event events.SQSEvent) (err error) {
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := oplog.NewManager("cloudsec", "remediation_processor").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("numEvents", len(event.Records)))
+	}()
 
 	for _, record := range event.Records {
 		var input models.RemediateResource
-		if err := jsoniter.UnmarshalFromString(record.Body, &input); err != nil {
+		if err = jsoniter.UnmarshalFromString(record.Body, &input); err != nil {
+			err = errors.Wrap(err, "Failed to unmarshal item")
 			return err
 		}
-		if err := invoker.Remediate(&input); err != nil {
+		if err = invoker.Remediate(&input); err != nil {
+			err = errors.Wrap(err, "encountered issue while processing event")
 			return err
 		}
 	}

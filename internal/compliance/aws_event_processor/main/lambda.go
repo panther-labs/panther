@@ -29,8 +29,8 @@ import (
 )
 
 func handler(ctx context.Context, batch *events.SQSEvent) error {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return processor.Handle(batch)
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	return processor.Handle(lc, batch)
 }
 
 func main() {

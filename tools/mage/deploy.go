@@ -42,10 +42,9 @@ import (
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/awsathena"
+	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
-	"github.com/panther-labs/panther/tools/athenaviews"
 )
 
 const (
@@ -114,6 +113,9 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
+	// Creates Glue/Athena related resources
+	deployDatabases(awsSession, bucket, backendOutputs)
+
 	// Deploy frontend stack
 	deployFrontend(awsSession, bucket, backendOutputs, &config)
 
@@ -142,7 +144,7 @@ func deployPrecheck(awsRegion string) {
 
 // Generate the set of deploy parameters for the main application stack.
 //
-// This will create a Python layer and a self-signed cert if necessary.
+// This will create a Python layer, pass down the name of the log database,  and a self-signed cert if necessary.
 func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) map[string]string {
 	v := config.BackendParameterValues
 	result := map[string]string{
@@ -164,6 +166,8 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 	if result["WebApplicationCertificateArn"] == "" {
 		result["WebApplicationCertificateArn"] = uploadLocalCertificate(awsSession)
 	}
+
+	result["PantherLogProcessingDatabase"] = awsglue.TablesDatabaseName
 
 	return result
 }
@@ -214,15 +218,6 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 
 // After the main stack is deployed, we need to make several manual API calls
 func postDeploySetup(awsSession *session.Session, backendOutputs map[string]string, config *PantherConfig) error {
-	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
-	workgroup, bucket := "primary", backendOutputs["AthenaResultsBucket"]
-	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, bucket); err != nil {
-		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, bucket, err)
-	}
-	if err := athenaviews.CreateOrReplaceViews(bucket); err != nil {
-		return fmt.Errorf("failed to create/replace athena views for %s bucket: %v", bucket, err)
-	}
-
 	// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
 	userPoolID := backendOutputs["WebApplicationUserPoolId"]
 	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)

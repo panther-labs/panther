@@ -19,14 +19,29 @@ package custommessage
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
+
+	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 // HandleEvent routes Custom Message event based on the triggerSource
-func HandleEvent(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
+func HandleEvent(ctx context.Context, event *events.CognitoEventUserPoolsCustomMessage) (
+	returnedEvent *events.CognitoEventUserPoolsCustomMessage, err error) {
+
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := oplog.NewManager("api", "custom_message").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err)
+	}()
+
 	switch ts := event.TriggerSource; ts {
 	case "CustomMessage_ForgotPassword":
-		return handleForgotPassword(event)
+		event, err = handleForgotPassword(event)
+		return event, err
 	default:
 		return event, nil
 	}

@@ -43,10 +43,9 @@ func handle(ctx context.Context, event events.SQSEvent) error {
 }
 
 func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error) {
-	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim)
+	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
-		operation.Stop()
-		operation.Log(err, zap.Int("sqsMessageCount", len(event.Records)))
+		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
 	}()
 
 	// this is not likely to happen in production but needed to avoid opening sessions in tests w/no events
