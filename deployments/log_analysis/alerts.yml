@@ -44,6 +44,9 @@ Parameters:
   SQSKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
+  AlertDedupTableStreamArn:
+    Type: String
+    Description: The stream arn of the alerts dedup table
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -271,3 +274,85 @@ Resources:
                 - !GetAtt AlertsTable.Arn
                 - !GetAtt EventsTable.Arn
                 - !GetAtt RecentAlertsTable.Arn
+
+  ##### Dynamo table that stores alert information #####
+  LogAlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-log-alerts-info
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: creationTime
+          AttributeType: S
+        - AttributeName: ruleId
+          AttributeType: S
+        - AttributeName: timePartition
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - # Add an index ruleId to efficiently list alerts for a specific rule
+          KeySchema:
+            - AttributeName: ruleId
+              KeyType: HASH
+            - AttributeName: creationTime
+              KeyType: RANGE
+          IndexName: ruleId-creationTime-index
+          Projection:
+            ProjectionType: ALL
+        - # Add an index using timePartition to efficiently list alerts by creationTime
+          KeySchema:
+            - AttributeName: timePartition
+              KeyType: HASH
+            - AttributeName: creationTime
+              KeyType: RANGE
+          IndexName: timePartition-creationTime-index
+          Projection:
+            ProjectionType: ALL
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True
+
+  ##### Alert forwarder Lambda
+  AlertForwarderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-log-alert-forwarder
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertsForwarderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/log_analysis/alert_forwarder/main
+      Description: Lambda that creates and updates alerts in alerts-info table
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          ALERTS_TABLE: !Ref LogAlertsTable
+      Events:
+        DynamoDBEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: !Ref AlertDedupTableStreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 10
+      FunctionName: panther-log-alert-forwarder
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 30
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ManageAlerts
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+              Resource:
+                - !GetAtt LogAlertsTable.Arn

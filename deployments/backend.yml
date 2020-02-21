@@ -345,6 +345,7 @@ Resources:
 
         SQSKeyId: !Ref QueueEncryptionKey
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
+        AlertDedupTableStreamArn: !GetAtt RulesEngine.Outputs.AlertDedupTableStreamArn
       TemplateURL: log_analysis/alerts.yml
 
   RulesEngine:
