@@ -1,5 +1,5 @@
 ---
-Description: >-
+description: >-
   This page offers an overview of Panther, its use-cases, and powerful
   capabilities designed to address a wide range of cloud security challenges and
   combat current and emerging threats.
