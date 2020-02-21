@@ -96,6 +96,9 @@ Resources:
       Protocol: HTTPS
 
 Outputs:
+  LoadBalancerFullName:
+    Description: The name of the ALB
+    Value: !GetAtt PublicLoadBalancer.LoadBalancerFullName
   LoadBalancerListenerArn:
     Description: The ARN of the public load balancer that accepts & forwards incoming traffic to ECS tasks
     Value: !Ref PublicLoadBalancerListener

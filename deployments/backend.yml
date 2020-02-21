@@ -417,12 +417,18 @@ Outputs:
   WebApplicationGraphqlApiEndpoint:
     Description: The URL of the GraphQL API that the front-end uses
     Value: !GetAtt Appsync.Outputs.GraphQLApiEndpoint
+  WebApplicationGraphqlApiId:
+    Description: The GraphQL API Id that the front-end uses
+    Value: !GetAtt Appsync.Outputs.GraphQLApiId
   WebApplicationCertificateArn:
     Description: ARN of the certificate used by the web application
     Value: !Ref WebApplicationCertificateArn
   WebApplicationImageRegistry:
     Description: The docker image registry that stores the images used by the web application
     Value: !GetAtt WebApplicationImageRepository.Outputs.ImageRepo
+  WebApplicationLoadBalancerFullName:
+    Description: The name of the load balancer that's used by the web application
+    Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerFullName
   WebApplicationLoadBalancerListenerArn:
     Description: ARN of the load balancer listener that's used by the web application
     Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerListenerArn
