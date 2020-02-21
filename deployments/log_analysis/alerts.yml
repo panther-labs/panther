@@ -350,17 +350,6 @@ Resources:
       Timeout: 30
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - Id: ReadTableStreams
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:DescribeStream
-                - dynamodb:GetRecords
-                - dynamodb:GetShardIterator
-                - dynamodb:ListStreams
-              Resource: !Sub ${LogAlertsTable.Arn}/stream/*
-
         - Id: ManageAlerts
           Version: 2012-10-17
           Statement:
