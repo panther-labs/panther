@@ -64,7 +64,7 @@ func (aq *AthenaQuery) Run() (err error) {
 
 	aq.startResult, err = aq.Client.StartQueryExecution(&startInput)
 	if err != nil {
-		err = errors.Wrapf(err, "athena failed starting: %#v", *aq)
+		err = errors.Wrapf(err, "athena failed to start query: %#v", *aq)
 	}
 	return err
 }
@@ -81,7 +81,7 @@ func (aq *AthenaQuery) Wait() (err error) {
 
 		aq.QueryResult, err = aq.Client.GetQueryResults(&ip)
 		if err != nil {
-			return errors.Wrapf(err, "athena failed getting results: %#v", *aq)
+			return errors.Wrapf(err, "athena failed reading results: %#v", *aq)
 		}
 	} else {
 		return errors.Errorf("athena failed with status %s running: %#v", *executionOutput.QueryExecution.Status.State, *aq)
