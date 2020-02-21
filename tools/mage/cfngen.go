@@ -41,9 +41,9 @@ func generateGlueTables() error {
 	}
 	defer glueCfFile.Close()
 
-	tables := registry.AvailableTables()
-	logger.Debugf("deploy: cfngen: loaded %d glue tables", len(tables))
-	cf, err := gluecf.GenerateCloudFormation(registry.AvailableTables())
+	tableResources := registry.AvailableTables()
+	logger.Debugf("deploy: cfngen: loaded %d glue tables", len(tableResources))
+	cf, err := gluecf.GenerateTables(tableResources)
 	if err != nil {
 		return fmt.Errorf("failed to generate Glue Data Catalog CloudFormation template: %v", err)
 	}

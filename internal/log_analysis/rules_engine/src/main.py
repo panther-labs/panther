@@ -107,7 +107,7 @@ def log_analysis(event: Dict[str, Any]) -> None:
                 for analysis_result in _RULES_ENGINE.analyze(log_type, json_data):
                     output_buffer.add_event(analysis_result)
                     # Appends the events to queue of events that will be sent through SQS
-                    matched.append(data)
+                    matched.append((analysis_result.rule_id, data))
 
     if len(matched) > 0:
         _LOGGER.info("sending %d matches", len(matched))

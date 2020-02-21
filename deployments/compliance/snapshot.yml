@@ -38,43 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  ApiMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the snapshot-api Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  ApiTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the snapshot-api Lambda function
-    Default: 120
-    MinValue: 5
-    MaxValue: 900
-  PollerMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the snapshot-poller Lambda function
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  PollerTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the snapshot-poller Lambda function
-    Default: 900
-    MinValue: 5
-    MaxValue: 900
-  SchedulerMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the snapshot-scheduler Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  SchedulerTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the snapshot-scheduler Lambda function
-    Default: 120
-    MinValue: 5
-    MaxValue: 900
-
   AuditRoleName:
     Type: String
     Default: PantherAuditRole
@@ -100,10 +63,8 @@ Resources:
     Properties:
       QueueName: panther-snapshot-queue
       KmsMasterKeyId: !Ref SQSKeyId
-      # Reference on KeyReuse: https://amzn.to/2ngIsFB
-      KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: !Ref PollerTimeoutSec
-      RedrivePolicy:
+      VisibilityTimeout: 900 # Should match lambda
+  RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 10
 
@@ -134,9 +95,9 @@ Resources:
       FunctionName: panther-snapshot-pollers
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref PollerMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref PollerTimeoutSec
+      Timeout: 900
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageSQSMessages
@@ -206,9 +167,9 @@ Resources:
       FunctionName: panther-snapshot-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref ApiMemorySizeMB
+      MemorySize: 512
       Runtime: go1.x
-      Timeout: !Ref ApiTimeoutSec
+      Timeout: 120
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: IntegrationsTablePermissions
@@ -264,9 +225,9 @@ Resources:
       FunctionName: panther-snapshot-scheduler
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref SchedulerMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref SchedulerTimeoutSec
+      Timeout: 120
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: InvokeSnapshotAPI

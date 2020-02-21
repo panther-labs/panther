@@ -26,7 +26,6 @@ import (
 
 	"github.com/panther-labs/panther/internal/core/outputs_api/encryption"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
-	"github.com/panther-labs/panther/internal/core/outputs_api/verification"
 )
 
 // The API consists of receiver methods for each of the handlers.
@@ -41,6 +40,4 @@ var (
 		os.Getenv("OUTPUTS_TABLE_NAME"),
 		os.Getenv("OUTPUTS_DISPLAY_NAME_INDEX_NAME"),
 		awsSession)
-
-	outputVerification verification.OutputVerificationAPI = verification.NewVerification(awsSession)
 )

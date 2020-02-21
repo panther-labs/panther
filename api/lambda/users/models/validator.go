@@ -29,7 +29,7 @@ func Validator() *validator.Validate {
 
 func atLeastOneUpdate(sl validator.StructLevel) {
 	in := sl.Current().Interface().(UpdateUserInput)
-	if in.GivenName == nil && in.FamilyName == nil && in.PhoneNumber == nil {
-		sl.ReportError(in, "FamilyName|GivenName|PhoneNumber", "", "at_least_one_update", "")
+	if in.GivenName == nil && in.FamilyName == nil && in.Email == nil {
+		sl.ReportError(in, "FamilyName|GivenName|Email", "", "at_least_one_update", "")
 	}
 }

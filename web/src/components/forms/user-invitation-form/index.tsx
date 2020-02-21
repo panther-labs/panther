@@ -21,12 +21,11 @@ import * as Yup from 'yup';
 import { useMutation, gql } from '@apollo/client';
 import { Field, Formik } from 'formik';
 import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
-import { RoleNameEnum, InviteUserInput } from 'Generated/schema';
+import { InviteUserInput } from 'Generated/schema';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
 import SubmitButton from 'Components/submit-button';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import FormikTextInput from 'Components/fields/text-input';
-import FormikCombobox from 'Components/fields/combobox';
 import { extractErrorMessage } from 'Helpers/utils';
 
 const INVITE_USER = gql`
@@ -45,7 +44,6 @@ interface UserInvitationFormValues {
   email?: string;
   familyName?: string;
   givenName?: string;
-  role?: RoleNameEnum;
 }
 
 interface UserInvitationFormProps {
@@ -56,7 +54,6 @@ const initialValues = {
   email: '',
   familyName: '',
   givenName: '',
-  role: RoleNameEnum.Admin,
 };
 
 const validationSchema = Yup.object().shape({
@@ -65,7 +62,6 @@ const validationSchema = Yup.object().shape({
     .required('Email is required'),
   familyName: Yup.string().required('Last name is required'),
   givenName: Yup.string().required('First name is required'),
-  role: Yup.string().required('Role is required'),
 });
 
 export const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSuccess }) => {
@@ -92,7 +88,6 @@ export const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSucces
               email: values.email,
               familyName: values.familyName,
               givenName: values.givenName,
-              role: values.role,
             },
           },
           refetchQueries: [getOperationName(LIST_USERS)],
@@ -118,7 +113,6 @@ export const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSucces
               <Field name="familyName" as={FormikTextInput} label="Family Name" />
             </Flex>
             <Field name="email" as={FormikTextInput} type="email" label="Email" />
-            <Field name="role" as={FormikCombobox} label="Role" items={[RoleNameEnum.Admin]} />
           </Box>
           <SubmitButton
             width={1}

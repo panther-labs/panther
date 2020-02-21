@@ -68,13 +68,14 @@ func NewManager(namespace, component string) *Manager {
 }
 
 type Operation struct {
-	Manager       *Manager
-	Name          string
-	Dimensions    []zap.Field
-	StartTime     time.Time
-	EndTime       time.Time
-	StartMemStats *runtime.MemStats // can be nil!
-	EndMemStats   *runtime.MemStats // can be nil!
+	Manager        *Manager
+	Name           string
+	Dimensions     []zap.Field
+	StartTime      time.Time
+	EndTime        time.Time
+	StartMemStats  *runtime.MemStats // can be nil!
+	EndMemStats    *runtime.MemStats // can be nil!
+	AvailableMemMB int               // if not zero, the available memory, use to calc percentage
 }
 
 func (m *Manager) Start(operation string, dimensions ...zap.Field) *Operation {
@@ -87,15 +88,24 @@ func (m *Manager) Start(operation string, dimensions ...zap.Field) *Operation {
 }
 
 func (o *Operation) WithMemStats() *Operation {
-	o.StartMemStats = &runtime.MemStats{}
-	runtime.ReadMemStats(o.StartMemStats) // record where we are starting
+	if o.StartMemStats == nil {
+		o.StartMemStats = &runtime.MemStats{}
+		runtime.ReadMemStats(o.StartMemStats) // record where we are starting
+	}
 	return o
 }
 
-func (o *Operation) Stop() {
+func (o *Operation) WithMemUsed(availableMemMB int) *Operation {
+	o.WithMemStats()
+	o.AvailableMemMB = availableMemMB
+	return o
+}
+
+func (o *Operation) Stop() *Operation {
 	o.EndTime = time.Now().UTC()
 	o.EndMemStats = &runtime.MemStats{}
 	runtime.ReadMemStats(o.EndMemStats) // record where we are ending
+	return o
 }
 
 func (o *Operation) zapMsg() string {
@@ -137,6 +147,10 @@ func (o *Operation) standardFields(status string) (fields []zap.Field) {
 			(o.EndMemStats.PauseTotalNs-o.StartMemStats.PauseTotalNs)/1000000))
 		fields = append(fields, zap.Uint32("gcCycles",
 			o.EndMemStats.NumGC-o.StartMemStats.NumGC))
+	}
+	if o.AvailableMemMB > 0 && o.EndMemStats != nil {
+		fields = append(fields, zap.Int("percentMemUsed",
+			int(((float32)(o.EndMemStats.Sys/(1024*1024)))/(float32)(o.AvailableMemMB)*100.0))) // for all time until now
 	}
 	return fields
 }

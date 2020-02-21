@@ -97,7 +97,7 @@ const createApolloClient = (history: History<LocationErrorState>) =>
         Integration: {
           keyFields: ['integrationId'],
         },
-        Organization: {
+        GeneralSettings: {
           keyFields: ['email'],
           fields: {
             errorReportingConsent: {

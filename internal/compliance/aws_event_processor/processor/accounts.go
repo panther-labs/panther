@@ -72,11 +72,11 @@ func checkCWECache(key string) bool {
 
 func refreshAccounts() error {
 	if len(accounts) != 0 && accountsLastUpdated.Add(refreshInterval).After(time.Now()) {
-		zap.L().Info("using cached accounts")
+		zap.L().Debug("using cached accounts")
 		return nil
 	}
 
-	zap.L().Info("populating account cache")
+	zap.L().Debug("populating account cache")
 	input := &models.LambdaInput{
 		ListIntegrations: &models.ListIntegrationsInput{
 			IntegrationType: aws.String("aws-scan"),

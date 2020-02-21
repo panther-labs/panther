@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -135,7 +136,7 @@ func uploadFileToS3(
 	})
 }
 
-func invokeLambda(awsSession *session.Session, functionName string, input interface{}) error {
+func invokeLambda(awsSession *session.Session, functionName string, input interface{}, output interface{}) error {
 	payload, err := jsoniter.Marshal(input)
 	if err != nil {
 		return fmt.Errorf("failed to json marshal input to %s: %v", functionName, err)
@@ -153,24 +154,32 @@ func invokeLambda(awsSession *session.Session, functionName string, input interf
 		return fmt.Errorf("%s responded with %s error: %s",
 			functionName, *response.FunctionError, string(response.Payload))
 	}
+
+	if output != nil {
+		if err = jsoniter.Unmarshal(response.Payload, output); err != nil {
+			return fmt.Errorf("failed to json unmarshal response from %s: %v", functionName, err)
+		}
+	}
 	return nil
 }
 
 // Prompt the user for a string input.
 func promptUser(prompt string, validator func(string) error) string {
-	var result string
-
+	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print(prompt)
-		if n, err := fmt.Scanln(&result); err != nil && n != 0 { // n==0 on empty lines, handled below in validator
-			fmt.Println(err)
+		result, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("read string failed: %v\n", err)
 			continue
 		}
 
 		result = strings.TrimSpace(result)
-		if err := validator(result); err != nil {
-			fmt.Println(err)
-			continue
+		if validator != nil {
+			if err := validator(result); err != nil {
+				fmt.Println(err)
+				continue
+			}
 		}
 
 		return result

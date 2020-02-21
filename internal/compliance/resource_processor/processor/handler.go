@@ -19,6 +19,7 @@ package processor
  */
 
 import (
+	"context"
 	"errors"
 	"regexp"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -39,6 +41,8 @@ import (
 	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
 	alertmodels "github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const defaultDelaySeconds = 30
@@ -54,7 +58,13 @@ type batchResults struct {
 }
 
 // Handle is the entry point for the resource analysis.
-func Handle(batch *events.SQSEvent) error {
+func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := oplog.NewManager("cloudsec", "resource_processor").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("numEvents", len(batch.Records)))
+	}()
+
 	resources := make(resourceMap)
 	var results batchResults
 
@@ -63,7 +73,7 @@ func Handle(batch *events.SQSEvent) error {
 
 		if policy != nil {
 			// Policy updated - analyze applicable resources now
-			if err := results.analyzeUpdatedPolicy(policy); err != nil {
+			if err = results.analyzeUpdatedPolicy(policy); err != nil {
 				return err
 			}
 		} else if resource != nil {
@@ -73,11 +83,11 @@ func Handle(batch *events.SQSEvent) error {
 	}
 
 	// Analyze updated resources with applicable policies
-	if err := results.analyze(resources, nil); err != nil {
+	if err = results.analyze(resources, nil); err != nil {
 		return err
 	}
-
-	return results.deliver()
+	err = results.deliver()
+	return err
 }
 
 func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Policy) {

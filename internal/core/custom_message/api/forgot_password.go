@@ -31,7 +31,7 @@ import (
 func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
 	zap.L().Info("generate forget password email for:" + event.UserName)
 
-	user, err := userGateway.GetUser(&event.UserName, &event.UserPoolID)
+	user, err := userGateway.GetUser(&event.UserName)
 	if err != nil {
 		zap.L().Error("failed to generate forget password html email for:"+event.UserName, zap.Error(err))
 		return nil, err

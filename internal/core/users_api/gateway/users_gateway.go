@@ -19,6 +19,8 @@ package gateway
  */
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	userPoolProvider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	userPoolProviderI "github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
@@ -26,15 +28,15 @@ import (
 	"github.com/panther-labs/panther/api/lambda/users/models"
 )
 
+var userPoolID = os.Getenv("USER_POOL_ID")
+
 // API defines the interface for the user gateway which can be used for mocking.
 type API interface {
-	AddUserToGroup(id *string, userPoolID *string) error
 	CreateUser(input *CreateUserInput) (*string, error)
-	DeleteUser(id *string, userPoolID *string) error
-	GetUser(id *string, userPoolID *string) (*models.User, error)
-	ListGroupsForUser(id *string, userPoolID *string) ([]*models.Group, error)
-	ListUsers(limit *int64, paginationToken *string, userPoolID *string) (*ListUsersOutput, error)
-	ResetUserPassword(id *string, userPoolID *string) error
+	DeleteUser(id *string) error
+	GetUser(id *string) (*models.User, error)
+	ListUsers(limit *int64, paginationToken *string) (*ListUsersOutput, error)
+	ResetUserPassword(id *string) error
 	UpdateUser(input *UpdateUserInput) error
 }
 

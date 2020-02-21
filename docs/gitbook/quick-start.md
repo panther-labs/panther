@@ -87,7 +87,7 @@ Run Panther in 3 easy steps: clone the repo, install docker, and deploy!
 First, clone the latest release of the [Panther repo](https://github.com/panther-labs/panther):
 
 ```bash
-git clone https://github.com/panther-labs/panther --depth 1 --branch v0.2.0
+git clone https://github.com/panther-labs/panther --depth 1 --branch v0.3.0
 cd panther
 ```
 
@@ -122,6 +122,7 @@ Your connection _is_ encrypted, and it's generally safe to continue if the domai
 {% endhint %}
 
 ### Other Deployment Options
+
 Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
 
 Or, you can deploy from an EC2 instance with Docker and git installed (in the same region you're deploying Panther to). This is typically the fastest option since it minimizes the latency when communicating with AWS services. Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](#prerequisites) to your EC2 instance profile. Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
@@ -138,7 +139,7 @@ Now you can follow the steps below to configure [alert outputs](destinations/ale
 #### Cloud Security
 
 - [Background](policies/compliance-background.md)
-- [Compliance Scanning Setup](policies/scanning/)
+- [Cloud Security Scanning Setup](policies/scanning/)
 - [Create Policies](policies/compliance-background.md) for the supported [AWS Resources](policies/resources/)
 
 ## **Support**

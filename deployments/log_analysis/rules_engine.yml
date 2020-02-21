@@ -38,19 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  MemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the API Lambda handler
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  TimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the API Lambda handler
-    Default: 120
-    MinValue: 5
-    MaxValue: 900
-
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
@@ -112,7 +99,7 @@ Resources:
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: !Ref TimeoutSec
+      VisibilityTimeout: 120 # Should match lambda
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt [DeadLetterQueue, Arn]
         maxReceiveCount: 10
@@ -122,8 +109,6 @@ Resources:
     Properties:
       QueueName: panther-rules-engine-dlq
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      VisibilityTimeout: !Ref TimeoutSec
-
 
   ##### Dynamo alert deduplication table #####
   AlertsDedup:
@@ -139,6 +124,8 @@ Resources:
           KeyType: HASH
       SSESpecification:
         SSEEnabled: True
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -162,7 +149,7 @@ Resources:
           S3_BUCKET: !Ref ProcessedDataBucket
           NOTIFICATIONS_TOPIC: !Ref SnsTopicArn
           ALERTS_DEDUP_TABLE: !Ref AlertsDedup
-      MemorySize: !Ref MemorySizeMB
+      MemorySize: 512
       Events:
         Queue:
           Type: SQS
@@ -175,10 +162,11 @@ Resources:
           - ','
           - !Sub
             - '${base},${pip}'
-            - { base: !Join [',', !Ref LayerVersionArns], pip: !Ref PythonLayerArn }
+            - base: !Join [',', !Ref LayerVersionArns]
+              pip: !Ref PythonLayerArn
         - [!Ref PythonLayerArn]
       Runtime: python3.7
-      Timeout: !Ref TimeoutSec
+      Timeout: 120
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ReceiveFromInputSqsQueue
@@ -237,3 +225,8 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
+
+Outputs:
+  AlertDedupTableStreamArn:
+    Description: ARN of Alert Dedup table stream
+    Value: !GetAtt AlertsDedup.StreamArn

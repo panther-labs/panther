@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -40,6 +41,7 @@ import (
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const maxBackoffSeconds = 30
@@ -47,7 +49,12 @@ const maxBackoffSeconds = 30
 // Handle is the entry point for the event stream analysis.
 //
 // Do not make any assumptions about the correctness of the incoming data.
-func Handle(batch *events.SQSEvent) error {
+func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error) {
+	operation := oplog.NewManager("cloudsec", "aws_event_processor").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("numEvents", len(batch.Records)))
+	}()
+
 	// De-duplicate all updates and deletes before delivering them.
 	// At most one change will be reported per resource (update or delete).
 	//
@@ -56,7 +63,7 @@ func Handle(batch *events.SQSEvent) error {
 	changes := make(map[string]*resourceChange, len(batch.Records))
 
 	// Get the most recent integrations to map Account ID to IntegrationID
-	if err := refreshAccounts(); err != nil {
+	if err = refreshAccounts(); err != nil {
 		return err
 	}
 
@@ -102,15 +109,15 @@ func Handle(batch *events.SQSEvent) error {
 			}
 			err := handleCloudTrail(detail, changes)
 			if err != nil {
-				zap.L().Error("error processing SNS wrapped CloudTrail", zap.Error(err))
+				operation.LogError(errors.Wrap(err, "error processing SNS wrapped CloudTrail"))
 			}
 			continue
 
 		case "SubscriptionConfirmation":
 			zap.L().Debug("processing SNS confirmation")
-			topicArn, err := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
+			topicArn, parseErr := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
 			if err != nil {
-				zap.L().Warn("invalid confirmation arn", zap.Error(err))
+				operation.LogWarn(errors.Wrap(parseErr, "invalid confirmation arn"))
 				continue
 			}
 			token := gjson.Get(record.Body, "Token").Str
@@ -118,11 +125,13 @@ func Handle(batch *events.SQSEvent) error {
 				return err
 			}
 		default: // Unexpected type
-			zap.L().Warn("unexpected SNS message")
+			operation.LogWarn(errors.New("unexpected SNS message"),
+				zap.String("type", gjson.Get(record.Body, "Type").Str),
+				zap.String("body", record.Body))
 		}
 	}
-
-	return submitChanges(changes)
+	err = submitChanges(changes)
+	return err
 }
 
 // handleCloudTrail takes a single CloudTrail log line and determines what scans if any need to be made as a result
@@ -249,13 +258,12 @@ func submitChanges(changes map[string]*resourceChange) error {
 
 	// Send deletes to resources-api
 	if len(deleteRequest.Resources) > 0 {
-		zap.L().Info("deleting resources", zap.Any("deleteRequest", &deleteRequest))
+		zap.L().Debug("deleting resources", zap.Any("deleteRequest", &deleteRequest))
 		_, err := apiClient.Operations.DeleteResources(
 			&operations.DeleteResourcesParams{Body: &deleteRequest, HTTPClient: httpClient})
 
 		if err != nil {
-			zap.L().Error("resource deletion failed", zap.Error(err))
-			return err
+			return errors.Wrapf(err, "resource deletion failed for: %#v", deleteRequest)
 		}
 	}
 
@@ -263,11 +271,10 @@ func submitChanges(changes map[string]*resourceChange) error {
 		batchInput := &sqs.SendMessageBatchInput{QueueUrl: &queueURL}
 		// Send resource scan requests to the poller queue
 		for delay, request := range requestsByDelay {
-			zap.L().Info("queueing resource scans", zap.Any("updateRequest", request))
+			zap.L().Debug("queueing resource scans", zap.Any("updateRequest", request))
 			body, err := jsoniter.MarshalToString(request)
 			if err != nil {
-				zap.L().Error("resource queueing failed: json marshal", zap.Error(err))
-				return err
+				return errors.Wrapf(err, "resource queueing failed: json marshal for: %#v", request)
 			}
 
 			batchInput.Entries = append(batchInput.Entries, &sqs.SendMessageBatchRequestEntry{

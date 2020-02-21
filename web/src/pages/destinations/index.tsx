@@ -18,8 +18,6 @@
 
 import React from 'react';
 import { Alert, Box, Card, Flex, Table } from 'pouncejs';
-import { READONLY_ROLES_ARRAY } from 'Source/constants';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
 import ErrorBoundary from 'Components/error-boundary';
 import { gql, useQuery } from '@apollo/client';
 import { Destination } from 'Generated/schema';
@@ -113,11 +111,9 @@ const ListDestinations = () => {
 
   return (
     <Box mb={6}>
-      <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY}>
-        <Flex justifyContent="flex-end">
-          <DestinationCreateButton />
-        </Flex>
-      </RoleRestrictedAccess>
+      <Flex justifyContent="flex-end">
+        <DestinationCreateButton />
+      </Flex>
       <Card>
         <ErrorBoundary>
           <Table<Destination>

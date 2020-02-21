@@ -38,18 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  MemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the Lambda function
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  TimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the Lambda function
-    Default: 180
-    MinValue: 5
-    MaxValue: 900
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket for storing processed logs
@@ -77,7 +65,7 @@ Resources:
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: !Ref TimeoutSec
+      VisibilityTimeout: 180 # Should match lambda
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 10
@@ -87,7 +75,6 @@ Resources:
     Properties:
       QueueName: panther-input-data-notifications-dlq
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      VisibilityTimeout: !Ref TimeoutSec
 
   FunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -103,9 +90,9 @@ Resources:
       CodeUri: ../../out/bin/internal/log_analysis/log_processor/main
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref MemorySizeMB
+      MemorySize: 512
       Runtime: go1.x
-      Timeout: !Ref TimeoutSec
+      Timeout: 180
       Environment:
         Variables:
           DEBUG: !Ref Debug
@@ -119,6 +106,16 @@ Resources:
             BatchSize: 10
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
+        - Id: ConfirmSubscriptions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              # This policy allows the log processor to confirm SNS->SQS subscriptions to the panther-input-data-notifications queue.
+              # Note that by default SQS queue policy blocks all accounts from subscribing to it.
+              # When a user onboards a log source, they specify an AWS Account ID they want to onboard logs from.
+              # This account will be whitelisted and SNS topic from it can subscribe to the SQS queue.
+              Action: sns:ConfirmSubscription
+              Resource: '*'
         - Id: ReceiveFromInputSqsQueue
           Version: 2012-10-17
           Statement:

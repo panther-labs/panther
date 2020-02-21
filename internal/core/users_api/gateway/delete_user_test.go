@@ -44,10 +44,10 @@ func (m *mockDeleteUserClient) AdminDeleteUser(
 
 func TestDeleteUser(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockDeleteUserClient{}}
-	assert.NoError(t, gw.DeleteUser(aws.String("user123"), aws.String("userPoolId")))
+	assert.NoError(t, gw.DeleteUser(aws.String("user123")))
 }
 
 func TestDeleteUserFailed(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockDeleteUserClient{serviceErr: true}}
-	assert.Error(t, gw.DeleteUser(aws.String("user123"), aws.String("userPoolId")))
+	assert.Error(t, gw.DeleteUser(aws.String("user123")))
 }

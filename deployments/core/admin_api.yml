@@ -38,34 +38,12 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  UsersMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the users-api Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  UsersTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the users-api Lambda function
-    Default: 60
-    MinValue: 5
-    MaxValue: 900
-  OrganizationMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the organization-api Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  OrganizationTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the organization-api Lambda function
-    Default: 60
-    MinValue: 5
-    MaxValue: 900
-
   AppDomainURL:
     Type: String
     Description: Panther App Domain used as a link for the customer in the password reset email
+  UserPoolId:
+    Type: String
+    Description: Cognito user pool ID
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -79,22 +57,6 @@ Resources:
       LogGroupName: /aws/lambda/panther-users-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
-  UsersTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: S
-      BillingMode: PAY_PER_REQUEST
-      KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-      PointInTimeRecoverySpecification: # Create periodic table backups
-        PointInTimeRecoveryEnabled: True
-      SSESpecification: # Enable server-side encryption
-        SSEEnabled: True
-      TableName: panther-users
-
   UsersAPIFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -103,14 +65,13 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          USERS_TABLE_NAME: !Ref UsersTable
-          ORGANIZATIONS_API: !Ref OrganizationAPIFunction
+          USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-users-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref UsersMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref UsersTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: CognitoUserManagement
@@ -118,20 +79,16 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - cognito-idp:AdminAddUserToGroup
                 - cognito-idp:AdminCreateUser
                 - cognito-idp:AdminDeleteUser
                 - cognito-idp:AdminDisableUser
                 - cognito-idp:AdminEnableUser
                 - cognito-idp:AdminGetUser
-                - cognito-idp:AdminListGroupsForUser
-                - cognito-idp:AdminRemoveUserFromGroup
+                - cognito-idp:AdminResetUserPassword
                 - cognito-idp:AdminUpdateUserAttributes
-                - cognito-idp:CreateGroup
                 - cognito-idp:GetUser
-                - cognito-idp:ListGroups
                 - cognito-idp:ListUsers
-              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
+              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
         - Id: AppsyncManagement
           Version: 2012-10-17
           Statement:
@@ -141,21 +98,6 @@ Resources:
                 - appsync:ListGraphqlApis
                 - appsync:UpdateGraphqlApi
               Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:*
-        - Id: InvokeOrganizationAPI
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: lambda:InvokeFunction
-              Resource: !GetAtt OrganizationAPIFunction.Arn
-        - Id: ManageUsersDB
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:*Item
-                - dynamodb:Query
-                - dynamodb:Scan
-              Resource: !GetAtt UsersTable.Arn
 
   ##### Custom message trigger function #####
   CustomMessageTriggerLogGroup:
@@ -173,12 +115,13 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           APP_DOMAIN_URL: !Ref AppDomainURL
+          USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-cognito-custom-message-trigger
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref UsersMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref UsersTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: GetCognitoUsers
@@ -231,9 +174,9 @@ Resources:
       FunctionName: panther-organization-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref OrganizationMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref OrganizationTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageOrganizationTable
@@ -244,8 +187,3 @@ Resources:
                 - dynamodb:*Item
                 - dynamodb:Scan
               Resource: !GetAtt OrganizationTable.Arn
-
-Outputs:
-  CustomMessageTriggerFunctionArn:
-    Description: Lambda function for custom Cognito message triggers
-    Value: !GetAtt CustomMessageTriggerFunction.Arn
