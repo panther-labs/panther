@@ -19,9 +19,9 @@ package osseclogs
  */
 
 import (
+	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )

@@ -64,26 +64,15 @@ func (aq *AthenaQuery) Run() (err error) {
 
 	aq.startResult, err = aq.Client.StartQueryExecution(&startInput)
 	if err != nil {
-		err = errors.Wrapf(err, "athena failed running: %#v", *aq)
+		err = errors.Wrapf(err, "athena failed to start query: %#v", *aq)
 	}
 	return err
 }
 
 func (aq *AthenaQuery) Wait() (err error) {
-	var executionInput athena.GetQueryExecutionInput
-	executionInput.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
-
-	var executionOutput *athena.GetQueryExecutionOutput
-
-	for {
-		executionOutput, err = aq.Client.GetQueryExecution(&executionInput)
-		if err != nil {
-			return errors.Wrapf(err, "athena failed running: %#v", *aq)
-		}
-		if *executionOutput.QueryExecution.Status.State != athena.QueryExecutionStateRunning {
-			break
-		}
-		time.Sleep(pollDelay)
+	executionOutput, err := aq.poll()
+	if err != nil {
+		return err
 	}
 
 	if *executionOutput.QueryExecution.Status.State == athena.QueryExecutionStateSucceeded {
@@ -92,11 +81,31 @@ func (aq *AthenaQuery) Wait() (err error) {
 
 		aq.QueryResult, err = aq.Client.GetQueryResults(&ip)
 		if err != nil {
-			return errors.Wrapf(err, "athena failed running: %#v", *aq)
+			return errors.Wrapf(err, "athena failed reading results: %#v", *aq)
 		}
 	} else {
 		return errors.Errorf("athena failed with status %s running: %#v", *executionOutput.QueryExecution.Status.State, *aq)
 	}
 
 	return nil
+}
+
+func (aq *AthenaQuery) poll() (executionOutput *athena.GetQueryExecutionOutput, err error) {
+	var executionInput athena.GetQueryExecutionInput
+	executionInput.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
+	for {
+		executionOutput, err = aq.Client.GetQueryExecution(&executionInput)
+		if err != nil {
+			return nil, errors.Wrapf(err, "athena failed running: %#v", *aq)
+		}
+		// not athena.QueryExecutionStateRunning or athena.QueryExecutionStateQueued
+		switch *executionOutput.QueryExecution.Status.State {
+		case
+			athena.QueryExecutionStateSucceeded,
+			athena.QueryExecutionStateFailed,
+			athena.QueryExecutionStateCancelled:
+			return
+		}
+		time.Sleep(pollDelay)
+	}
 }
