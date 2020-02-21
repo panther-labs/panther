@@ -65,9 +65,7 @@ interface EnhancedCognitoUser extends CognitoUser {
   };
 }
 
-export type UserInfo = EnhancedCognitoUser['attributes'] & {
-  roles: string[];
-};
+export type UserInfo = EnhancedCognitoUser['attributes'];
 
 interface SignOutParams {
   global?: boolean;
@@ -168,16 +166,13 @@ const AuthProvider: React.FC = ({ children }) => {
 
   /*
    * Isolate the userInfo from the user. This is an object that will persist in our storage so that
-   * we can boot up the user's information (name, roles, etc.) the next time he visits the app. The
+   * we can boot up the user's information (name, token, etc.) the next time he visits the app. The
    * value changes whenever the cognito session changes
    */
   const userInfo = React.useMemo<UserInfo>(() => {
     // if a user is present, derive the user info from him
     if (authUser?.attributes) {
-      return {
-        ...authUser.attributes,
-        roles: authUser?.signInUserSession?.accessToken.payload['cognito:groups'] || [],
-      };
+      return authUser.attributes;
     }
 
     // if no user is present, attempt to return data from the stored session. This is true when
@@ -193,8 +188,7 @@ const AuthProvider: React.FC = ({ children }) => {
   /**
    * Every time the `userInfo` is updated, we want to store this value in our storage in order to
    * remember it for future logins. If we don't do that, then we don't have a way of knowing the
-   * "roles" of the user on mount time. This means that the user might see a flash of 403 or 404
-   * since we are not yet sure of whether he/she has access to see this page/component or not
+   * user on mount time.
    */
   React.useEffect(() => {
     if (userInfo) {
