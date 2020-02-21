@@ -49,7 +49,7 @@ require (
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
 	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect
-	golang.org/x/tools v0.0.0-20200218205902-f8e42dc47720 // indirect
+	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/russross/blackfriday.v2 v2.0.0 // indirect
