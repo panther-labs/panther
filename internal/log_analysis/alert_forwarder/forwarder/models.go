@@ -43,32 +43,62 @@ type Alert struct {
 }
 
 func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*AlertDedupEvent, error) {
-	alertCount, err := input["alertCount"].Integer()
+	ruleID, err := getAttribute("ruleId", input)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get 'alertCount'")
+		return nil, err
 	}
 
-	alertCreationEpoch, err := input["alertCreationTime"].Integer()
+	deduplicationString, err := getAttribute("dedup", input)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get 'alertCreationTime'")
+		return nil, err
 	}
 
-	alertUpdateEpoch, err := input["alertUpdateTime"].Integer()
+	alertCount, err := getIntegerAttribute("alertCount", input)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get 'alertUpdateTime'")
+		return nil, err
 	}
 
-	eventCount, err := input["eventCount"].Integer()
+	alertCreationEpoch, err := getIntegerAttribute("alertCreationTime", input)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get 'eventCount'")
+		return nil, err
+	}
+
+	alertUpdateEpoch, err := getIntegerAttribute("alertUpdateTime", input)
+	if err != nil {
+		return nil, err
+	}
+
+	eventCount, err := getIntegerAttribute("eventCount", input)
+	if err != nil {
+		return nil, err
 	}
 
 	return &AlertDedupEvent{
-		RuleID:              input["ruleId"].String(),
-		DeduplicationString: input["dedup"].String(),
+		RuleID:              ruleID.String(),
+		DeduplicationString: deduplicationString.String(),
 		AlertCount:          alertCount,
 		CreationTime:        time.Unix(alertCreationEpoch, 0),
 		UpdateTime:          time.Unix(alertUpdateEpoch, 0),
 		EventCount:          eventCount,
 	}, nil
+}
+
+func getIntegerAttribute(key string, input map[string]events.DynamoDBAttributeValue) (int64, error) {
+	value, err := getAttribute(key, input)
+	if err != nil {
+		return 0, err
+	}
+	integerValue, err := value.Integer()
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to convert attribute '%s' to integer", key)
+	}
+	return integerValue, nil
+}
+
+func getAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue) (events.DynamoDBAttributeValue, error) {
+	attributeValue, ok := inputMap["alertCount"]
+	if !ok {
+		return events.DynamoDBAttributeValue{}, errors.Errorf("could not find '%s' attribute", key)
+	}
+	return attributeValue, nil
 }

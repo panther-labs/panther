@@ -50,7 +50,9 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 	for _, record := range event.Records {
 		event, err := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
 		if err != nil {
-			return errors.Wrap(err, "failed to unmarshal new image")
+			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
+			// continuing since there is nothing we can do here
+			continue
 		}
 		// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
 		if err = forwarder.Process(event); err != nil {
