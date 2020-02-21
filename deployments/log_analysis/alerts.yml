@@ -358,5 +358,3 @@ Resources:
                 - dynamodb:PutItem
               Resource:
                 - !GetAtt LogAlertsTable.Arn
-
-
