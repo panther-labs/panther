@@ -35,8 +35,8 @@ export const GET_ORGANIZATION = gql`
   }
 `;
 
-const UPDATE_ORGANIZATION = gql`
-  mutation UpdateCompanyInformation($input: UpdateGeneralSettingsInput!) {
+const UPDATE_ORG_GENERAL_SETTINGS = gql`
+  mutation UpdateOrganizationGeneralSettings($input: UpdateGeneralSettingsInput!) {
     updateGeneralSettings(input: $input) {
       displayName
       email
@@ -65,14 +65,12 @@ const GeneralSettingsContainer: React.FC = () => {
     loading: getOrganizationLoading,
     error: getOrganizationError,
     data: getOrganizationData,
-  } = useQuery<ApolloQueryData>(GET_ORGANIZATION, {
-    fetchPolicy: 'cache-and-network',
-  });
+  } = useQuery<ApolloQueryData>(GET_ORGANIZATION);
 
   const [
     updateGeneralSettings,
     { error: updateOrganizationError, data: updateOrganizationData },
-  ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_ORGANIZATION);
+  ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_ORG_GENERAL_SETTINGS);
 
   React.useEffect(() => {
     if (updateOrganizationData) {

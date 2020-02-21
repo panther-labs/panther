@@ -39,7 +39,7 @@ const UserInvitationSidesheet: React.FC = () => {
         <Text size="small" color="grey300" textAlign="center" mt={6}>
           All users in the Open-Source version of Panther are admins in the system.
           <br />
-          Role-based access is a feature available in the Enterprise version
+          Role-based access is a feature available in the Enterprise version.
         </Text>
       </Box>
     </SideSheet>
