@@ -27,6 +27,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const Application = "panther" // tag all logs with "application" -> "panther" (used for audit)
+
 // DebugEnabled is true if the DEBUG environment variable is set to true.
 var DebugEnabled = strings.ToLower(os.Getenv("DEBUG")) == "true"
 
@@ -63,10 +65,15 @@ func ConfigureGlobal(
 		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
 
+	// always tag with requestId and application
 	if initialFields == nil {
-		config.InitialFields = map[string]interface{}{"requestId": lc.AwsRequestID}
+		config.InitialFields = map[string]interface{}{
+			"requestId":   lc.AwsRequestID,
+			"application": Application,
+		}
 	} else {
 		initialFields["requestId"] = lc.AwsRequestID
+		initialFields["application"] = Application
 		config.InitialFields = initialFields
 	}
 

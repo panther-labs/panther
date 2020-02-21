@@ -29,7 +29,10 @@ import (
 
 var (
 	goTargets = []string{"api", "internal", "pkg", "tools", "magefile.go"}
-	pyTargets = []string{"internal/compliance/remediation_aws", "internal/compliance/policy_engine"}
+	pyTargets = []string{
+		"internal/compliance/remediation_aws",
+		"internal/compliance/policy_engine",
+		"internal/log_analysis/rules_engine"}
 )
 
 // Fmt Format source files

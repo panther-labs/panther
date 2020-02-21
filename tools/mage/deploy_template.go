@@ -41,12 +41,8 @@ const (
 //
 // Generated files are written to out/deployments:
 //     1) Embed swagger APIs directly
-//     2) Generate Glue tables
 func preprocessTemplates() {
 	embedAPISpecs()
-	if err := generateGlueTables(); err != nil {
-		logger.Fatal(err)
-	}
 }
 
 // Deploy a CloudFormation template.

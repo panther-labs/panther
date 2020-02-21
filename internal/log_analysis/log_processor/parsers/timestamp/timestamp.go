@@ -19,6 +19,7 @@ package timestamp
  */
 
 import (
+	"strconv"
 	"time"
 )
 
@@ -77,4 +78,25 @@ func (ts *ANSICwithTZ) UnmarshalJSON(text []byte) (err error) {
 	}
 	*ts = (ANSICwithTZ)(t)
 	return
+}
+
+// UnixMillisecond for JSON timestamps that are in unix epoch milliseconds
+type UnixMillisecond time.Time
+
+func (ts *UnixMillisecond) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func (ts *UnixMillisecond) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
+}
+
+func (ts *UnixMillisecond) UnmarshalJSON(jsonBytes []byte) (err error) {
+	value, err := strconv.ParseInt(string(jsonBytes), 10, 64)
+	if err != nil {
+		return err
+	}
+	t := time.Unix(0, value*time.Millisecond.Nanoseconds()).UTC()
+	*ts = (UnixMillisecond)(t)
+	return nil
 }

@@ -13,3 +13,22 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+from unittest import mock
+
+S3_MOCK = mock.MagicMock()
+DDB_MOCK = mock.MagicMock()
+SNS_MOCK = mock.MagicMock()
+
+
+def mock_to_return(value: str) -> mock.MagicMock:
+    if value == 'sns':
+        return SNS_MOCK
+
+    if value == 's3':
+        return S3_MOCK
+
+    if value == 'dynamodb':
+        return DDB_MOCK
+
+    raise Exception('Unexpected value {}'.format(value))

@@ -13,3 +13,20 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for Panther database related resources
+
+Parameters:
+  ProcessedDataBucket:
+    Type: String
+    Description: Bucket where log processing writes data
+
+Resources:
+  # Tables generated from log processing parser outputs
+  LogProcessingGlueTables:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        ProcessedDataBucket: !Ref ProcessedDataBucket
+      TemplateURL: ../out/deployments/log_analysis/gluetables.json

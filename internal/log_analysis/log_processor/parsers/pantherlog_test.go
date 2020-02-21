@@ -137,3 +137,35 @@ func TestAppendAnyDomainNames(t *testing.T) {
 	event.AppendAnyDomainNamePtrs(&value)
 	require.Equal(t, expectedAny, event.PantherAnyDomainNames)
 }
+
+func TestAppendAnySHA1Hashes(t *testing.T) {
+	event := PantherLog{}
+	value := "a"
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			value: {},
+		},
+	}
+	event.AppendAnySHA1Hashes(value)
+	require.Equal(t, expectedAny, event.PantherAnySHA1Hashes)
+
+	event = PantherLog{}
+	event.AppendAnySHA1HashPtrs(&value)
+	require.Equal(t, expectedAny, event.PantherAnySHA1Hashes)
+}
+
+func TestAppendAnyMD5Hashes(t *testing.T) {
+	event := PantherLog{}
+	value := "a"
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			value: {},
+		},
+	}
+	event.AppendAnyMD5Hashes(value)
+	require.Equal(t, expectedAny, event.PantherAnyMD5Hashes)
+
+	event = PantherLog{}
+	event.AppendAnyMD5HashPtrs(&value)
+	require.Equal(t, expectedAny, event.PantherAnyMD5Hashes)
+}

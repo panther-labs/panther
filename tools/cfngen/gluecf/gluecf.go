@@ -23,7 +23,6 @@ package gluecf
 import (
 	"bytes"
 	"reflect"
-	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -47,6 +46,10 @@ var (
 			To:   awsglue.GlueTimestampType,
 		},
 		{
+			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
+			To:   awsglue.GlueTimestampType,
+		},
+		{
 			From: reflect.TypeOf(parsers.PantherAnyString{}),
 			To:   "array<string>",
 		},
@@ -57,13 +60,8 @@ var (
 	}
 )
 
-// Re-map characters not allow in CF names consistently
-func cfResourceClean(name string) string {
-	return strings.Replace(name, "_", "", -1) // CF resources must be alphanum
-}
-
 // Output CloudFormation for all 'tables'
-func GenerateCloudFormation(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
+func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 	const bucketParam = "ProcessedDataBucket"
 	parameters := make(map[string]interface{})
 	parameters[bucketParam] = &cfngen.Parameter{
@@ -74,19 +72,19 @@ func GenerateCloudFormation(tables []*awsglue.GlueMetadata) (cf []byte, err erro
 	tablesDB := NewDatabase(CatalogIDRef, awsglue.TablesDatabaseName, awsglue.TablesDatabaseDescription)
 	viewsDB := NewDatabase(CatalogIDRef, awsglue.ViewsDatabaseName, awsglue.ViewsDatabaseDescription)
 	resources := map[string]interface{}{
-		cfResourceClean(awsglue.TablesDatabaseName): tablesDB,
-		cfResourceClean(awsglue.ViewsDatabaseName):  viewsDB,
+		cfngen.SanitizeResourceName(awsglue.TablesDatabaseName): tablesDB,
+		cfngen.SanitizeResourceName(awsglue.ViewsDatabaseName):  viewsDB,
 	}
 
 	// output database name
 	outputs := map[string]interface{}{
 		"PantherTablesDatabase": &cfngen.Output{
 			Description: awsglue.TablesDatabaseDescription,
-			Value:       cfngen.Ref{Ref: cfResourceClean(awsglue.TablesDatabaseName)},
+			Value:       cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.TablesDatabaseName)},
 		},
 		"PantherViewsDatabase": &cfngen.Output{
 			Description: awsglue.ViewsDatabaseDescription,
-			Value:       cfngen.Ref{Ref: cfResourceClean(awsglue.ViewsDatabaseName)},
+			Value:       cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.ViewsDatabaseName)},
 		},
 	}
 
@@ -99,7 +97,7 @@ func GenerateCloudFormation(tables []*awsglue.GlueMetadata) (cf []byte, err erro
 		// NOTE: current all sources are JSONL (could add a type to LogParserMetadata struct if we need more types)
 		table := NewJSONLTable(&NewTableInput{
 			CatalogID:     CatalogIDRef,
-			DatabaseName:  cfngen.Ref{Ref: cfResourceClean(awsglue.TablesDatabaseName)},
+			DatabaseName:  cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.TablesDatabaseName)},
 			Name:          t.TableName(),
 			Description:   t.Description(),
 			Location:      location,
@@ -107,7 +105,7 @@ func GenerateCloudFormation(tables []*awsglue.GlueMetadata) (cf []byte, err erro
 			PartitionKeys: getPartitionKeys(t),
 		})
 
-		tableResource := cfResourceClean(t.DatabaseName() + t.TableName())
+		tableResource := cfngen.SanitizeResourceName(t.DatabaseName() + t.TableName())
 		resources[tableResource] = table
 	}
 

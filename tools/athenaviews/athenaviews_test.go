@@ -48,9 +48,9 @@ func TestGenerateViewAllLogs(t *testing.T) {
 	require.NoError(t, err)
 	// nolint (lll)
 	expectedSQL := `create or replace view panther_views.all_logs as
-select day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_event_time,p_log_type,p_row_id,year from db.table1
+select day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_any_md5_hashes,p_any_sha1_hashes,p_event_time,p_log_type,p_row_id,year from db.table1
 	union all
-select day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_event_time,p_log_type,p_row_id,year from db.table2
+select day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_any_md5_hashes,p_any_sha1_hashes,p_event_time,p_log_type,p_row_id,year from db.table2
 ;
 `
 	sql, err := generateViewAllLogs([]*awsglue.GlueMetadata{table1, table2})

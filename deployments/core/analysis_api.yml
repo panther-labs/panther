@@ -38,19 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  HandlerMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the API Lambda handler
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  HandlerTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the API Lambda handler
-    Default: 120
-    MinValue: 5
-    MaxValue: 900
-
   ComplianceApiId:
     Type: String
     Description: API Gateway for compliance-api
@@ -102,10 +89,10 @@ Resources:
           TABLE: !Ref Table
       FunctionName: panther-analysis-api
       Handler: main
-      MemorySize: !Ref HandlerMemorySizeMB
+      MemorySize: 512
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       Runtime: go1.x
-      Timeout: !Ref HandlerTimeoutSec
+      Timeout: 120
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: InvokeApis

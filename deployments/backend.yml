@@ -42,6 +42,12 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
+  # Set automatically by "mage deploy"
+  PantherLogProcessingDatabase:
+    Type: String
+    Description: The name of the database for the output of log processing
+    Default: ''
+
   # Set automatically by "mage deploy" unless PythonLayerVersionArn is specified.
   PythonLayerKey:
     Type: String
@@ -240,7 +246,8 @@ Resources:
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
-
+        SnsTopicArn: !Ref ProcessedDataNotifications
+        ProcessedDataBucket: !Ref ProcessedData
         ResourcesApiId: !GetAtt ResourcesAPI.Outputs.GatewayId
         SQSKeyId: !Ref QueueEncryptionKey
       TemplateURL: compliance/aws_event_processor.yml
@@ -253,7 +260,6 @@ Resources:
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
-
         ResourcesApiId: !GetAtt ResourcesAPI.Outputs.GatewayId
         SQSKeyId: !Ref QueueEncryptionKey
       TemplateURL: compliance/snapshot.yml
@@ -325,7 +331,7 @@ Resources:
         SnsTopicArn: !Ref ProcessedDataNotifications
         ProcessedDataBucket: !Ref ProcessedData
         SQSKeyId: !Ref QueueEncryptionKey
-        PantherDatabase: !GetAtt GlueTables.Outputs.PantherTablesDatabase
+        PantherDatabase: !Ref PantherLogProcessingDatabase
       TemplateURL: log_analysis/log_processor.yml
 
   Alerts:
@@ -355,13 +361,6 @@ Resources:
         ProcessedDataBucket: !Ref ProcessedData
         PythonLayerArn: !If [CreatePythonLayer, !Ref PythonLayer, !Ref PythonLayerVersionArn]
       TemplateURL: log_analysis/rules_engine.yml
-
-  GlueTables:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        ProcessedDataBucket: !Ref ProcessedData
-      TemplateURL: ../out/deployments/log_analysis/gluetables.json
 
   AthenaResults:
     Type: AWS::S3::Bucket
@@ -405,6 +404,9 @@ Outputs:
   LoadBalancerUrl:
     Description: Panther URL (application load balancer)
     Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl
+  ProcessedDataBucket:
+    Description: Bucket where log processing writes data
+    Value: !Ref ProcessedData
   WebApplicationUserPoolId:
     Description: Cognito user pool ID
     Value: !GetAtt Cognito.Outputs.UserPoolId

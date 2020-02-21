@@ -23,14 +23,21 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 
 	"github.com/panther-labs/panther/internal/compliance/snapshot_scheduler/scheduler"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
-func lambdaHandler(ctx context.Context, request events.CloudWatchEvent) error {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return scheduler.PollAndIssueNewScans()
+func lambdaHandler(ctx context.Context, request events.CloudWatchEvent) (err error) {
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := oplog.NewManager("cloudsec", "snapshot").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err)
+	}()
+	err = scheduler.PollAndIssueNewScans()
+	return err
 }
 
 func main() {

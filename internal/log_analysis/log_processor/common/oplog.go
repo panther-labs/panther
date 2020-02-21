@@ -26,9 +26,9 @@ import (
 
 // labels for oplog
 const (
-	OpLogNamespace  = "Panther" // FIXME: move "up" in the stack
-	OpLogComponent  = "LogProcessor"
-	OpLogServiceDim = "Service"
+	OpLogNamespace  = "log_analysis"
+	OpLogComponent  = "log_processor"
+	OpLogServiceDim = "service"
 )
 
 var (
