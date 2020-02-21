@@ -38,31 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  AlertsAPIMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the alerts-api Lambda function
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  AlertsAPITimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the alerts-api Lambda function
-    Default: 180
-    MinValue: 5
-    MaxValue: 900
-  MergerMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the alert-merger Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  MergerTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the alert-merger Lambda function
-    Default: 180
-    MinValue: 5
-    MaxValue: 900
-
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
@@ -81,7 +56,7 @@ Resources:
       QueueName: panther-log-alert-notifications-queue
       KmsMasterKeyId: !Ref SQSKeyId
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      VisibilityTimeout: !Ref AlertsAPITimeoutSec
+      VisibilityTimeout: 180 # Should match lambda
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 10
@@ -91,7 +66,6 @@ Resources:
     Properties:
       QueueName: panther-log-alert-notifications-dlq
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      VisibilityTimeout: !Ref AlertsAPITimeoutSec
 
   ##### Dynamo alerts table #####
   AlertsTable:
@@ -193,9 +167,9 @@ Resources:
       FunctionName: panther-alerts-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref AlertsAPIMemorySizeMB
+      MemorySize: 512
       Runtime: go1.x
-      Timeout: !Ref AlertsAPITimeoutSec
+      Timeout: 180
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageAlerts
@@ -255,9 +229,9 @@ Resources:
       FunctionName: panther-alert-merger
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref MergerMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref MergerTimeoutSec
+      Timeout: 180
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: InvokeGatewayApi

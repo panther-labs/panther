@@ -38,19 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  MemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the Lambda function
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  TimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the Lambda function
-    Default: 180
-    MinValue: 5
-    MaxValue: 900
-
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
@@ -77,10 +64,10 @@ Resources:
           INDEX_NAME: policy-index
       FunctionName: panther-compliance-api
       Handler: main
-      MemorySize: !Ref MemorySizeMB
+      MemorySize: 512
       Runtime: go1.x
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      Timeout: !Ref TimeoutSec
+      Timeout: 180
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: DynamoManageItems

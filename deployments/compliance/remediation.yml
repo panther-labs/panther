@@ -38,43 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  ApiTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the remediation-api Lambda function
-    Default: 120
-    MinValue: 5
-    MaxValue: 900
-  ApiMemorySizeMB:
-    Type: Number
-    Description: The memory that we will allocate for the remediation-api Lambda functxion
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  ProcessorTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the remediation-processor Lambda function
-    Default: 120
-    MinValue: 5
-    MaxValue: 900
-  ProcessorMemorySizeMB:
-    Type: Number
-    Description: The memory that we will allocate for the remediation-processor Lambda functxion
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  RemediationTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the remediation-processor Lambda function
-    Default: 60
-    MinValue: 5
-    MaxValue: 900
-  RemediationMemorySizeMB:
-    Type: Number
-    Description: The memory that we will allocate for the remediation-processor Lambda functxion
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-
   RemediationRoleName:
     Type: String
     Description: The name of the IAM role to assume to perform remediation actions
@@ -123,7 +86,7 @@ Resources:
       QueueName: panther-remediation-queue
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       KmsMasterKeyId: !Ref SQSKeyId
-      VisibilityTimeout: !Ref ProcessorTimeoutSec
+      VisibilityTimeout: 120 # Should match lambda
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt [DeadLetterQueue, Arn]
         maxReceiveCount: 10
@@ -152,9 +115,9 @@ Resources:
       FunctionName: panther-remediation-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref ApiMemorySizeMB
+      MemorySize: 512
       Runtime: go1.x
-      Timeout: !Ref ApiTimeoutSec
+      Timeout: 120
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: SendSqsMessages
@@ -217,9 +180,9 @@ Resources:
       FunctionName: panther-remediation-processor
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref ProcessorMemorySizeMB
+      MemorySize: 512
       Runtime: go1.x
-      Timeout: !Ref ProcessorTimeoutSec
+      Timeout: 120
       Policies:
         - Id: ReceiveAndDeleteSQSMessages
           Version: 2012-10-17
@@ -269,9 +232,9 @@ Resources:
             - base: !Join [',', !Ref LayerVersionArns]
               pip: !Ref PythonLayerArn
         - [!Ref PythonLayerArn]
-      MemorySize: !Ref RemediationMemorySizeMB
+      MemorySize: 128
       Runtime: python3.7
-      Timeout: !Ref RemediationTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: AssumeRemediationRole

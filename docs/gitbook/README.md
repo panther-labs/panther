@@ -21,8 +21,8 @@ Panther is a powerful, open-source, cloud-native SIEM designed to be:
 Panther's use-cases include:
 
 - **Log Analysis:** Centralize and analyze log data with Rules for threats and suspicious activity
-- **Incident Response:** Perform historical queries with SQL over long-term data for analytics, log correlation, and forensics.
-- **Cloud Compliance:** Detect misconfigured cloud infrastructure and enforce best practices.
+- **Incident Response:** Perform historical queries with SQL over long-term data for analytics, log correlation, and forensics
+- **Cloud Security:** Detect misconfigured cloud infrastructure and enforce best practices
 - **Auto Remediation:** Automatically correct non-compliance infrastructure
 
 The following diagram offers a high-level overview of Panther's architecture:
@@ -41,7 +41,7 @@ Python code can be written and tested in the browser to analyze logs:
 
 ![Rule Function Body](.gitbook/assets/rule-example-2%20%281%29.png)
 
-### Compliance
+### Cloud Security
 
 Panther also offers a feature to detect misconfigured AWS resources.
 
@@ -55,4 +55,4 @@ You can also easily search your **Resources** by using filters such as Type, Sou
 
 ### Getting Started
 
-To get set up with Panther, continue with the [Quick Start](quick-start.md) on the next page.
+To get set up with Panther, continue with [Quick Start](quick-start.md) on the next page.

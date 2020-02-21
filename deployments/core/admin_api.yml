@@ -38,31 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  UsersMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the users-api Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  UsersTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the users-api Lambda function
-    Default: 60
-    MinValue: 5
-    MaxValue: 900
-  OrganizationMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the organization-api Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  OrganizationTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the organization-api Lambda function
-    Default: 60
-    MinValue: 5
-    MaxValue: 900
-
   AppDomainURL:
     Type: String
     Description: Panther App Domain used as a link for the customer in the password reset email
@@ -94,9 +69,9 @@ Resources:
       FunctionName: panther-users-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref UsersMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref UsersTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: CognitoUserManagement
@@ -144,9 +119,9 @@ Resources:
       FunctionName: panther-cognito-custom-message-trigger
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref UsersMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref UsersTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: GetCognitoUsers
@@ -199,9 +174,9 @@ Resources:
       FunctionName: panther-organization-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref OrganizationMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref OrganizationTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageOrganizationTable

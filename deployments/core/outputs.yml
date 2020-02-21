@@ -38,31 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  ApiFunctionMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the outputs-api Lambda function
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  ApiFunctionTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the outputs-api Lambda function
-    Default: 60
-    MinValue: 5
-    MaxValue: 900
-  DeliveryFunctionMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the alert-delivery Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  DeliveryFunctionTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the alert-delivery Lambda function
-    Default: 180
-    MinValue: 5
-    MaxValue: 900
-
   AlertRetryDurationMins:
     Type: Number
     Description: Alerts which fail to send will be retried for this duration
@@ -158,9 +133,9 @@ Resources:
       FunctionName: panther-outputs-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref ApiFunctionMemorySizeMB
+      MemorySize: 512
       Runtime: go1.x
-      Timeout: !Ref ApiFunctionTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: OutputsTables
@@ -200,7 +175,7 @@ Resources:
       QueueName: panther-alerts
       MessageRetentionPeriod: !Ref AlertSqsRetentionSec
       KmsMasterKeyId: !Ref SQSKeyId
-      VisibilityTimeout: !Ref DeliveryFunctionTimeoutSec
+      VisibilityTimeout: 60 # Should match lambda timeout
 
   AlertDeliveryFunction:
     Type: AWS::Serverless::Function
@@ -226,9 +201,9 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       FunctionName: panther-alert-delivery
       Handler: main
-      MemorySize: !Ref DeliveryFunctionMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref DeliveryFunctionTimeoutSec
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: OutputsAPI
