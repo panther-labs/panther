@@ -72,10 +72,7 @@ const authLink = (createAuthLink({
   region: process.env.AWS_REGION,
   url: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
   auth: {
-    jwtToken: () =>
-      Auth.currentSession()
-        .then(session => session.getIdToken().getJwtToken())
-        .catch(() => null),
+    jwtToken: () => Auth.currentSession().then(session => session.getIdToken().getJwtToken()),
     type: AUTH_TYPE.AMAZON_COGNITO_USER_POOLS,
   },
 }) as unknown) as ApolloLink;

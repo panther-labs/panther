@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -164,12 +165,12 @@ func invokeLambda(awsSession *session.Session, functionName string, input interf
 
 // Prompt the user for a string input.
 func promptUser(prompt string, validator func(string) error) string {
-	var result string
-
+	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print(prompt)
-		if n, err := fmt.Scanln(&result); err != nil && n != 0 { // n==0 on empty lines, handled below in validator
-			fmt.Println(err)
+		result, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("read string failed: %v\n", err)
 			continue
 		}
 
