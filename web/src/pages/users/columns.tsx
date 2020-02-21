@@ -49,7 +49,7 @@ const columns = [
     key: 'role',
     header: 'Role',
     flex: '0 0 100px',
-    renderCell: <Text size="medium">Admin</Text>,
+    renderCell: () => <Text size="medium">Admin</Text>,
   },
   // Display when user is invited
   {

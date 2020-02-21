@@ -866,9 +866,9 @@ export type TestPolicyResponse = {
 };
 
 export type UpdateGeneralSettingsInput = {
-  displayName: Scalars['String'];
-  email: Scalars['String'];
-  errorReportingConsent: Scalars['Boolean'];
+  displayName?: Maybe<Scalars['String']>;
+  email?: Maybe<Scalars['String']>;
+  errorReportingConsent?: Maybe<Scalars['Boolean']>;
 };
 
 export type UpdateIntegrationInput = {

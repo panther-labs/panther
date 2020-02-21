@@ -50,11 +50,11 @@ interface ApolloMutationInput {
 }
 
 interface ApolloMutationData {
-  updateOrganization: Pick<GeneralSettings, 'displayName' | 'email' | 'errorReportingConsent'>;
+  updateGeneralSettings: Pick<GeneralSettings, 'displayName' | 'email' | 'errorReportingConsent'>;
 }
 
 interface ApolloQueryData {
-  organization: GeneralSettings;
+  generalSettings: GeneralSettings;
 }
 
 // Parent container for the general settings section
@@ -70,7 +70,7 @@ const GeneralSettingsContainer: React.FC = () => {
   });
 
   const [
-    updateOrganization,
+    updateGeneralSettings,
     { error: updateOrganizationError, data: updateOrganizationData },
   ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_ORGANIZATION);
 
@@ -108,7 +108,7 @@ const GeneralSettingsContainer: React.FC = () => {
     );
   }
 
-  const { displayName, email, errorReportingConsent } = getOrganizationData.organization;
+  const { displayName, email, errorReportingConsent } = getOrganizationData.generalSettings;
   return (
     <Box mb={6}>
       <ErrorBoundary>
@@ -120,7 +120,7 @@ const GeneralSettingsContainer: React.FC = () => {
                 email,
                 errorReportingConsent,
               }}
-              onSubmit={values => updateOrganization({ variables: { input: values } })}
+              onSubmit={values => updateGeneralSettings({ variables: { input: values } })}
             />
           </Box>
         </Card>

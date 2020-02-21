@@ -579,7 +579,7 @@ Resources:
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, {})
         #else
-          $util.toJson($context.result.organization)
+          $util.toJson($context.result)
         #end
 
   UpdateGeneralSettingsResolver:
@@ -602,7 +602,7 @@ Resources:
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
-          $util.toJson($context.result.organization)
+          $util.toJson($context.result)
         #end
 
   ListPoliciesResolver:

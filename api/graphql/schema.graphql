@@ -241,9 +241,9 @@ type OrganizationStatsResponse {
 }
 
 input UpdateGeneralSettingsInput {
-  displayName: String!
-  email: String!
-  errorReportingConsent: Boolean!
+  displayName: String
+  email: String
+  errorReportingConsent: Boolean
 }
 
 type GeneralSettings {

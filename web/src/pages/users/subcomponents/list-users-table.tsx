@@ -38,7 +38,6 @@ export const LIST_USERS = gql`
         familyName
         createdAt
         status
-        role
       }
       paginationToken
     }
