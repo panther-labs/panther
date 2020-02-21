@@ -34,7 +34,7 @@ const GET_ERROR_REPORTING_CONSENT = gql`
 `;
 
 interface ApolloQueryData {
-  organization: GeneralSettings;
+  generalSettings: GeneralSettings;
 }
 
 const PromptController: React.FC = () => {
@@ -42,7 +42,7 @@ const PromptController: React.FC = () => {
   const { data } = useQuery<ApolloQueryData>(GET_ERROR_REPORTING_CONSENT);
 
   React.useEffect(() => {
-    if (data?.organization.errorReportingConsent === null) {
+    if (data?.generalSettings.errorReportingConsent === null) {
       showModal({ modal: MODALS.ANALYTICS_CONSENT });
     }
   }, [data]);
