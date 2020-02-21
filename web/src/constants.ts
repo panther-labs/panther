@@ -97,7 +97,7 @@ export const DEFAULT_LARGE_PAGE_SIZE = 25;
 
 // The key under which User-related data will be stored in the storage
 export const USER_INFO_STORAGE_KEY = 'panther.user.info';
-export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.organization.errorReportingConsent';
+export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.errorReportingConsent';
 
 export enum INTEGRATION_TYPES {
   AWS_LOGS = 'aws-s3',

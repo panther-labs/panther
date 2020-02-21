@@ -25,8 +25,8 @@ import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/company-information-form';
 import GeneralSettingsPageSkeleton from './skeleton';
 
-export const GET_ORGANIZATION = gql`
-  query GetOrganization {
+export const GET_GENERAL_SETTINGS = gql`
+  query GetGeneralSettings {
     generalSettings {
       displayName
       email
@@ -35,8 +35,8 @@ export const GET_ORGANIZATION = gql`
   }
 `;
 
-const UPDATE_ORG_GENERAL_SETTINGS = gql`
-  mutation UpdateOrganizationGeneralSettings($input: UpdateGeneralSettingsInput!) {
+const UPDATE_GENERAL_SETTINGS = gql`
+  mutation UpdateGeneralSettings($input: UpdateGeneralSettingsInput!) {
     updateGeneralSettings(input: $input) {
       displayName
       email
@@ -62,51 +62,51 @@ const GeneralSettingsContainer: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
 
   const {
-    loading: getOrganizationLoading,
-    error: getOrganizationError,
-    data: getOrganizationData,
-  } = useQuery<ApolloQueryData>(GET_ORGANIZATION);
+    loading: getGeneralSettingsLoading,
+    error: getGeneralSettingsError,
+    data: getGeneralSettingsData,
+  } = useQuery<ApolloQueryData>(GET_GENERAL_SETTINGS);
 
   const [
     updateGeneralSettings,
-    { error: updateOrganizationError, data: updateOrganizationData },
-  ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_ORG_GENERAL_SETTINGS);
+    { error: updateGeneralSettingsError, data: updateGeneralSettingsData },
+  ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_GENERAL_SETTINGS);
 
   React.useEffect(() => {
-    if (updateOrganizationData) {
+    if (updateGeneralSettingsData) {
       pushSnackbar({ variant: 'success', title: `Successfully updated company information` });
     }
-  }, [updateOrganizationData]);
+  }, [updateGeneralSettingsData]);
 
   React.useEffect(() => {
-    if (updateOrganizationError) {
+    if (updateGeneralSettingsError) {
       pushSnackbar({
         variant: 'error',
         title:
-          extractErrorMessage(updateOrganizationError) ||
+          extractErrorMessage(updateGeneralSettingsError) ||
           'Failed to update company information due to an unknown error',
       });
     }
-  }, [updateOrganizationError]);
+  }, [updateGeneralSettingsError]);
 
-  if (getOrganizationLoading) {
+  if (getGeneralSettingsLoading) {
     return <GeneralSettingsPageSkeleton />;
   }
 
-  if (getOrganizationError) {
+  if (getGeneralSettingsError) {
     return (
       <Alert
         variant="error"
         title="Failed to query company information"
         description={
-          extractErrorMessage(getOrganizationError) ||
+          extractErrorMessage(getGeneralSettingsError) ||
           'Sorry, something went wrong, please reach out to support@runpanther.io if this problem persists'
         }
       />
     );
   }
 
-  const { displayName, email, errorReportingConsent } = getOrganizationData.generalSettings;
+  const { displayName, email, errorReportingConsent } = getGeneralSettingsData.generalSettings;
   return (
     <Box mb={6}>
       <ErrorBoundary>

@@ -24,8 +24,8 @@ import AnalyticsConsentForm from 'Components/forms/analytics-consent-form';
 import { extractErrorMessage } from 'Helpers/utils';
 import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 
-const UPDATE_ORGANIZATION = gql`
-  mutation UpdateCompanyDetails($input: UpdateGeneralSettingsInput!) {
+const UPDATE_GENERAL_SETTINGS = gql`
+  mutation UpdateGeneralSettingsConsents($input: UpdateGeneralSettingsInput!) {
     updateGeneralSettings(input: $input) {
       email
       errorReportingConsent
@@ -38,7 +38,7 @@ interface ApolloMutationInput {
 }
 
 interface ApolloMutationData {
-  updateOrganization: Pick<GeneralSettings, 'errorReportingConsent' | 'email'>;
+  updateGeneralSettings: Pick<GeneralSettings, 'errorReportingConsent' | 'email'>;
 }
 
 const AnalyticsConsentModal: React.FC = () => {
@@ -47,7 +47,7 @@ const AnalyticsConsentModal: React.FC = () => {
   const [saveConsentPreferences, { data, error }] = useMutation<
     ApolloMutationData,
     ApolloMutationInput
-  >(UPDATE_ORGANIZATION);
+  >(UPDATE_GENERAL_SETTINGS);
 
   React.useEffect(() => {
     if (data) {
