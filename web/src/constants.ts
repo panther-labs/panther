@@ -79,6 +79,7 @@ export const LOG_TYPES = [
   'Osquery.Differential',
   'Osquery.Snapshot',
   'Osquery.Status',
+  'OSSEC.EventInfo',
 ] as const;
 
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
