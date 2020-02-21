@@ -309,7 +309,7 @@ func TestHandleUpdate(t *testing.T) {
 			Context: []zapcore.Field{},
 		},
 		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource change required"},
+			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource scan required"},
 			Context: []zapcore.Field{zap.Any("changeDetail", expectedChange)},
 		},
 		{
@@ -317,7 +317,7 @@ func TestHandleUpdate(t *testing.T) {
 			Context: []zapcore.Field{},
 		},
 		{
-			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource change required"},
+			Entry:   zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource scan required"},
 			Context: []zapcore.Field{zap.Any("changeDetail", expectedChange)},
 		},
 		{

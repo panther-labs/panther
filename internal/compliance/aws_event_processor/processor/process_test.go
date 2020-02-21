@@ -21,6 +21,7 @@ package processor
 import (
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
@@ -31,10 +32,16 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-var exampleMetadata = &CloudTrailMetaData{
-	Region:    "us-west-2",
-	AccountID: "111111111111",
-	eventName: "Example",
+var (
+	exampleMetadata = &CloudTrailMetadata{
+		Region:    "us-west-2",
+		AccountID: "111111111111",
+		eventName: "Example",
+	}
+)
+
+func exampleChanges() map[string]*resourceChange {
+	return make(map[string]*resourceChange)
 }
 
 // test the pre-processor
@@ -57,7 +64,10 @@ func TestPreProcessCloudTrailFail(t *testing.T) {
 func TestClassifyCloudWatchEventBadSource(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	require.Nil(t, processCloudTrailLog(gjson.Parse(`{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`), exampleMetadata))
+	require.Nil(t, processCloudTrailLog(
+		gjson.Parse(`{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`),
+		exampleMetadata,
+		exampleChanges()))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -75,6 +85,7 @@ func TestClassifyCloudWatchEventErrorCode(t *testing.T) {
 	require.Nil(t, processCloudTrailLog(
 		gjson.Parse(`{"errorCode": "AccessDeniedException", "eventSource": "s3.amazonaws.com"}`),
 		exampleMetadata,
+		exampleChanges(),
 	))
 
 	expected := []observer.LoggedEntry{
@@ -94,12 +105,12 @@ func TestClassifyCloudWatchEventReadOnly(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
 	require.Nil(t, processCloudTrailLog(
-		gjson.Parse(`{"eventName": "ListBuckets", "eventSource": "s3.amazonaws.com"}`), &CloudTrailMetaData{
+		gjson.Parse(`{"eventName": "ListBuckets", "eventSource": "s3.amazonaws.com"}`), &CloudTrailMetadata{
 			Region:    "us-west-2",
 			AccountID: "111111111111",
 			eventName: "ListBuckets",
-		}),
-	)
+		},
+		exampleChanges()))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -120,11 +131,14 @@ func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
 				"recipientAccountId": "111111111111",
 				"eventSource":"s3.amazonaws.com"
 			}`)
-	require.Nil(t, processCloudTrailLog(body, &CloudTrailMetaData{
-		Region:    "us-west-2",
-		AccountID: "111111111111",
-		eventName: "DeleteBucket",
-	}))
+	require.Nil(t, processCloudTrailLog(
+		body,
+		&CloudTrailMetadata{
+			Region:    "us-west-2",
+			AccountID: "111111111111",
+			eventName: "DeleteBucket",
+		},
+		exampleChanges()))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -139,26 +153,18 @@ func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
 
 // drop event if the account ID is not recognized
 func TestClassifyCloudWatchEventUnauthorized(t *testing.T) {
-	logs := mockLogger()
 	accounts = exampleAccounts
 	body := gjson.Parse(`{"eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`)
-	changes := processCloudTrailLog(body, &CloudTrailMetaData{
-		Region:    "us-west-2",
-		AccountID: "222222222222",
-		eventName: "Example",
-	})
-	assert.Len(t, changes, 0)
-
-	expected := []observer.LoggedEntry{
-		{
-			Entry: zapcore.Entry{Level: zapcore.WarnLevel, Message: "dropping event from unauthorized account"},
-			Context: []zapcore.Field{
-				zap.String("accountId", "222222222222"),
-				zap.String("eventSource", "s3.amazonaws.com"),
-			},
+	err := processCloudTrailLog(
+		body,
+		&CloudTrailMetadata{
+			Region:    "us-west-2",
+			AccountID: "222222222222",
+			eventName: "Example",
 		},
-	}
-	assert.Equal(t, expected, logs.AllUntimed())
+		exampleChanges())
+	require.NotNil(t, err)
+	assert.Equal(t, errors.New("dropping event from unauthorized account 222222222222").Error(), err.Error())
 }
 
 func TestClassifyCloudWatchEvent(t *testing.T) {
@@ -174,8 +180,8 @@ func TestClassifyCloudWatchEvent(t *testing.T) {
         "requestParameters": {"bucketName": "panther"},
 		"userIdentity": {"accountId": "111111111111"}
     }`)
-	result := processCloudTrailLog(body, exampleMetadata)
-	expected := []*resourceChange{{
+	changeResults := exampleChanges()
+	expected := &resourceChange{
 		AwsAccountID:  "111111111111",
 		Delete:        true,
 		EventName:     "DeleteBucket",
@@ -183,7 +189,18 @@ func TestClassifyCloudWatchEvent(t *testing.T) {
 		IntegrationID: "ebb4d69f-177b-4eff-a7a6-9251fdc72d21",
 		ResourceID:    "arn:aws:s3:::panther",
 		ResourceType:  schemas.S3BucketSchema,
-	}}
-	assert.Equal(t, expected, result)
-	assert.Empty(t, logs.AllUntimed())
+	}
+	expectedLogs := []observer.LoggedEntry{
+		{
+			Entry: zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource scan required"},
+			Context: []zapcore.Field{
+				zap.Any("changeDetail", expected),
+			},
+		},
+	}
+
+	err := processCloudTrailLog(body, exampleMetadata, changeResults)
+	require.Nil(t, err)
+	assert.Equal(t, expected, changeResults[expected.ResourceID+expected.ResourceType+expected.Region])
+	assert.Equal(t, expectedLogs, logs.AllUntimed())
 }

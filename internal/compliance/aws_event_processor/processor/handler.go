@@ -23,6 +23,7 @@ import (
 	"compress/gzip"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
@@ -52,7 +53,7 @@ func Handle(batch *events.SQSEvent) error {
 	//
 	// For example, if a bucket is Deleted, Created, then Modified all in this batch,
 	// we will send a single update request (i.e. queue a bucket scan).
-	changes := make(map[string]*resourceChange, len(batch.Records)) // keyed by resourceID
+	changes := make(map[string]*resourceChange, len(batch.Records))
 
 	// Get the most recent integrations to map Account ID to IntegrationID
 	if err := refreshAccounts(); err != nil {
@@ -67,19 +68,9 @@ func Handle(batch *events.SQSEvent) error {
 		detail := gjson.Get(record.Body, "detail")
 		if detail.Exists() {
 			zap.L().Debug("processing raw CloudTrail")
-			metadata, err := preprocessCloudTrailLog(detail)
+			err := handleCloudTrail(detail, changes)
 			if err != nil {
-				zap.L().Error("error extracting metadata from raw CloudTrail", zap.Error(err))
-				continue
-			}
-			if metadata == nil {
-				continue
-			}
-			cweAccounts[metadata.generateSourceKey()] = struct{}{}
-
-			err = handleCloudTrail(detail, metadata, changes)
-			if err != nil {
-				zap.L().Error("error processing raw CloudTrail", zap.Error(errors.WithStack(err)))
+				zap.L().Error("error processing raw CloudTrail", zap.Error(err))
 			}
 			continue
 		}
@@ -106,21 +97,14 @@ func Handle(batch *events.SQSEvent) error {
 			zap.L().Debug("processing SNS notification")
 			message := gjson.Get(record.Body, "Message").Str
 			detail := gjson.Get(message, "detail")
-
-			metadata, err := preprocessCloudTrailLog(detail)
-			if err != nil {
-				zap.L().Error("error extracting metadata from SNS wrapped CloudTrail", zap.Error(err))
-				continue
+			if !detail.Exists() {
+				zap.L().Error("error extracting detail from SNS wrapped CloudTrail")
 			}
-			if metadata == nil {
-				continue
-			}
-			cweAccounts[metadata.generateSourceKey()] = struct{}{}
-
-			err = handleCloudTrail(detail, metadata, changes)
+			err := handleCloudTrail(detail, changes)
 			if err != nil {
 				zap.L().Error("error processing SNS wrapped CloudTrail", zap.Error(err))
 			}
+			continue
 
 		case "SubscriptionConfirmation":
 			zap.L().Debug("processing SNS confirmation")
@@ -143,25 +127,18 @@ func Handle(batch *events.SQSEvent) error {
 
 // handleCloudTrail takes a single CloudTrail log line and determines what scans if any need to be made as a result
 // of the log.
-func handleCloudTrail(cloudtrail gjson.Result, metadata *CloudTrailMetaData, changes map[string]*resourceChange) error {
-	if !cloudtrail.Exists() {
-		return errors.New("dropping bad event")
+func handleCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
+	metadata, err := preprocessCloudTrailLog(cloudtrail)
+	if err != nil {
+		zap.L().Error("error extracting metadata from CloudTrail", zap.Error(err))
+		return err
 	}
+	if metadata == nil {
+		return nil
+	}
+	cweAccounts[generateSourceKey(metadata)] = time.Now()
 
-	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)
-	for _, summary := range processCloudTrailLog(cloudtrail, metadata) {
-		zap.L().Info("resource change required", zap.Any("changeDetail", summary))
-		// Prevents the following from being de-duped mistakenly:
-		//
-		// Resources with the same ID in different regions (different regions)
-		// Service scans in the same region (different resource types)
-		// Resources with the same type in the same region (different resource IDs)
-		key := summary.ResourceID + summary.ResourceType + summary.Region
-		if entry, ok := changes[key]; !ok || summary.EventTime > entry.EventTime {
-			changes[key] = summary // the newest event for this resource we've seen so far
-		}
-	}
-	return nil
+	return processCloudTrailLog(cloudtrail, metadata, changes)
 }
 
 // handleS3Download processes an s3 Notification from the log analysis pipeline by downloading
@@ -198,7 +175,7 @@ func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resource
 
 		// Parse the line and determine if we should continue
 		detail := gjson.Parse(line)
-		var metadata *CloudTrailMetaData
+		var metadata *CloudTrailMetadata
 		metadata, err = preprocessCloudTrailLog(detail)
 		if err != nil {
 			return errors.WithMessage(err, "error extracting metadata from CloudTrail in s3")
@@ -206,7 +183,7 @@ func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resource
 		if metadata == nil {
 			continue
 		}
-		if _, ok := cweAccounts[metadata.generateSourceKey()]; ok {
+		if checkCWECache(generateSourceKey(metadata)) {
 			// If we're currently seeing CloudTrail via CWE, we don't process the duplicate data in S3
 			zap.L().Debug(
 				"skipping s3 notification in favor of CloudTrail via CWE",
@@ -217,10 +194,15 @@ func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resource
 		}
 
 		// Process the line
-		err = handleCloudTrail(detail, metadata, changes)
+		err = processCloudTrailLog(detail, metadata, changes)
 	}
 
 	return err
+}
+
+// generateSourceKey creates the key used for the cweAccounts cache for a given CloudTrail metadata struct
+func generateSourceKey(metadata *CloudTrailMetadata) string {
+	return metadata.AccountID + "/" + metadata.Region
 }
 
 func submitChanges(changes map[string]*resourceChange) error {

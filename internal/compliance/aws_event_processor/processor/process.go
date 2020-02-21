@@ -78,19 +78,18 @@ var (
 
 // CloudTrailMetaData is a data struct that contains re-used fields of CloudTrail logs so that we don't have to keep
 // extracting the same information
-type CloudTrailMetaData struct {
+type CloudTrailMetadata struct {
 	Region    string
 	AccountID string
 	eventName string
 }
 
-// generateSourceKey creates the key used for the cweAccounts cache for a given CloudTrail metadata struct
-func (metadata *CloudTrailMetaData) generateSourceKey() string {
-	return metadata.AccountID + "/" + metadata.Region
-}
-
 // preprocessCloudTrailLog extracts some meta data that is used repeatedly for a CloudTrail log
-func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetaData, error) {
+//
+// Returning an error means that we were unable to extract the information we need, although it should be present.
+// Returning nil, nil means that we were unable to extract the information we need, but that it was not a failure on
+// our part the information is simply not present.
+func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
 	eventName := detail.Get("eventName")
 	if !eventName.Exists() {
 		return nil, errors.New("unable to extract CloudTrail eventName field")
@@ -108,7 +107,7 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetaData, error) {
 		return nil, errors.New("unable to extract CloudTrail awsRegion field")
 	}
 
-	return &CloudTrailMetaData{
+	return &CloudTrailMetadata{
 		Region:    region.Str,
 		AccountID: accountID.Str,
 		eventName: eventName.Str,
@@ -116,7 +115,13 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetaData, error) {
 }
 
 // processCloudTrailLog determines what resources, if any, need to be scanned as a result of a given CloudTrail log
-func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetaData) []*resourceChange {
+func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, changes map[string]*resourceChange) error {
+	// Check if this log is from a supported account
+	integration, ok := accounts[metadata.AccountID]
+	if !ok {
+		return errors.New("dropping event from unauthorized account " + metadata.AccountID)
+	}
+
 	// Determine the AWS service the modified resource belongs to
 	source := detail.Get("eventSource").Str
 	classifier, ok := classifiers[source]
@@ -146,32 +151,34 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetaData) []*
 		return nil
 	}
 
-	// Check if this log is from a supported account
-	integration, ok := accounts[metadata.AccountID]
-	if !ok {
-		zap.L().Warn("dropping event from unauthorized account",
-			zap.String("accountId", metadata.AccountID),
-			zap.String("eventSource", source))
-		return nil
-	}
-
 	// Process the body
-	changes := classifier(detail, metadata.AccountID)
+	newChanges := classifier(detail, metadata.AccountID)
 	eventTime := detail.Get("eventTime").Str
-	if len(changes) > 0 {
+	if len(newChanges) > 0 {
 		readOnly := detail.Get("readOnly")
 		if readOnly.Exists() && readOnly.Bool() {
 			zap.L().Warn(
-				"processing changes from event marked readOnly",
+				"processing newChanges from event marked readOnly",
 				zap.String("eventName", metadata.eventName),
 			)
 		}
 	}
 
-	for _, change := range changes {
+	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)
+	for _, change := range newChanges {
 		change.EventTime = eventTime
 		change.IntegrationID = *integration.IntegrationID
+		zap.L().Info("resource scan required", zap.Any("changeDetail", change))
+		// Prevents the following from being de-duped mistakenly:
+		//
+		// Resources with the same ID in different regions (different regions)
+		// Service scans in the same region (different resource types)
+		// Resources with the same type in the same region (different resource IDs)
+		key := change.ResourceID + change.ResourceType + change.Region
+		if entry, ok := changes[key]; !ok || change.EventTime > entry.EventTime {
+			changes[key] = change // the newest event for this resource we've seen so far
+		}
 	}
 
-	return changes
+	return nil
 }
