@@ -139,7 +139,7 @@ Now you can follow the steps below to configure [alert outputs](destinations/ale
 #### Cloud Security
 
 - [Background](policies/compliance-background.md)
-- [Compliance Scanning Setup](policies/scanning/)
+- [Cloud Security Scanning Setup](policies/scanning/)
 - [Create Policies](policies/compliance-background.md) for the supported [AWS Resources](policies/resources/)
 
 ## **Support**
