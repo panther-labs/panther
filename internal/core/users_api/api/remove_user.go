@@ -33,7 +33,7 @@ func (API) RemoveUser(input *models.RemoveUserInput) error {
 		return err
 	}
 
-	if len(users) == 0 {
+	if len(users) == 1 {
 		return &genericapi.InUseError{Message: "can't delete the last user"}
 	}
 

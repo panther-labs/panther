@@ -53,7 +53,7 @@ func TestRemoveLastUser(t *testing.T) {
 	mockGateway := &gateway.MockUserGateway{}
 	userGateway = mockGateway
 
-	mockGateway.On("ListUsers").Return(make([]*models.User, 0), nil)
+	mockGateway.On("ListUsers").Return(make([]*models.User, 1), nil)
 
 	err := (API{}).RemoveUser(removeUserInput)
 	assert.Error(t, err)
