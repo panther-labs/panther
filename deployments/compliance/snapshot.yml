@@ -64,7 +64,7 @@ Resources:
       QueueName: panther-snapshot-queue
       KmsMasterKeyId: !Ref SQSKeyId
       VisibilityTimeout: 900 # Should match lambda
-  RedrivePolicy:
+      RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 10
 
