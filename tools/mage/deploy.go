@@ -242,7 +242,7 @@ func postDeploySetup(awsSession *session.Session, backendOutputs map[string]stri
 // If the users list is empty (e.g. on the initial deploy), create the first user.
 func inviteFirstUser(awsSession *session.Session) error {
 	input := &usermodels.LambdaInput{
-		ListUsers: &usermodels.ListUsersInput{Limit: aws.Int64(1)},
+		ListUsers: &usermodels.ListUsersInput{},
 	}
 	var output usermodels.ListUsersOutput
 	if err := invokeLambda(awsSession, "panther-users-api", input, &output); err != nil {

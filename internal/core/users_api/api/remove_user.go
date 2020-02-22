@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
@@ -28,13 +27,13 @@ import (
 
 // RemoveUser deletes a user from cognito.
 func (API) RemoveUser(input *models.RemoveUserInput) error {
-	list, err := userGateway.ListUsers(aws.Int64(1), nil)
+	users, err := userGateway.ListUsers()
 	if err != nil {
 		zap.L().Error("error listing users", zap.Error(err))
 		return err
 	}
 
-	if len(list.Users) == 0 {
+	if len(users) == 0 {
 		return &genericapi.InUseError{Message: "can't delete the last user"}
 	}
 

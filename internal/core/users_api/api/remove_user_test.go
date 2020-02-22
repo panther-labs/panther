@@ -39,8 +39,7 @@ func TestRemoveUserCognitoErr(t *testing.T) {
 	// replace the global variables with our mock objects
 	userGateway = mockGateway
 
-	mockGateway.On("ListUsers", aws.Int64(1), (*string)(nil)).Return(
-		&gateway.ListUsersOutput{Users: make([]*models.User, 3)}, nil)
+	mockGateway.On("ListUsers").Return(make([]*models.User, 3), nil)
 	mockGateway.On("DeleteUser", removeUserInput.ID).Return(&genericapi.AWSError{})
 
 	err := (API{}).RemoveUser(removeUserInput)
@@ -54,8 +53,7 @@ func TestRemoveLastUser(t *testing.T) {
 	mockGateway := &gateway.MockUserGateway{}
 	userGateway = mockGateway
 
-	mockGateway.On("ListUsers", aws.Int64(1), (*string)(nil)).Return(
-		&gateway.ListUsersOutput{Users: nil}, nil)
+	mockGateway.On("ListUsers").Return(make([]*models.User, 0), nil)
 
 	err := (API{}).RemoveUser(removeUserInput)
 	assert.Error(t, err)
@@ -67,8 +65,7 @@ func TestRemoveUserHandle(t *testing.T) {
 	mockGateway := &gateway.MockUserGateway{}
 	userGateway = mockGateway
 
-	mockGateway.On("ListUsers", aws.Int64(1), (*string)(nil)).Return(
-		&gateway.ListUsersOutput{Users: make([]*models.User, 3)}, nil)
+	mockGateway.On("ListUsers").Return(make([]*models.User, 3), nil)
 	mockGateway.On("DeleteUser", removeUserInput.ID).Return(nil)
 
 	assert.NoError(t, (API{}).RemoveUser(removeUserInput))
