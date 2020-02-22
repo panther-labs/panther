@@ -37,7 +37,12 @@ func deployMonitoring(awsSession *session.Session, bucket string, backendOutputs
 		logger.Fatal(err)
 	}
 
-	if err := generateAlarms(config.MonitoringParameterValues.AlarmSNSTopicARN, backendOutputs); err != nil {
+	// get user specified SNS topic
+	alarmsSNSTopicARN := config.MonitoringParameterValues.AlarmSNSTopicARN
+	if alarmsSNSTopicARN == "" { // if not set, default to Panther created topic
+		alarmsSNSTopicARN = backendOutputs["AlarmsSNSTopic"]
+	}
+	if err := generateAlarms(alarmsSNSTopicARN, backendOutputs); err != nil {
 		logger.Fatal(err)
 	}
 

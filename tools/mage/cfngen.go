@@ -30,6 +30,17 @@ import (
 	"github.com/panther-labs/panther/tools/dashboards"
 )
 
+var (
+	// These are the CF dirs under "deployments" that we want to analyze to generate metrics and alarms
+	// NOTE: keep these up to date!
+	cfDirs = []string{
+		"deployments/compliance",
+		"deployments/core",
+		"deployments/log_analysis",
+		"deployments/web",
+	}
+)
+
 // Generate Glue tables for log processor output as CloudFormation
 func generateGlueTables() error {
 	outDir := filepath.Join("out", "deployments", "log_analysis")
@@ -101,19 +112,9 @@ const alarmStackResourceTemplate = `
 
 // Generate CloudWatch alarms as CloudFormation
 func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
-	const deploymentsCFDir = "./deployments"
 	outDir := filepath.Join("out", "deployments", "cloudwatch")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
-	}
-
-	// divide up the work by dir to avoid 200 resource / stack CF limit
-	cfDirs := []string{
-		// NOTE: keep these up to date!
-		"compliance",
-		"core",
-		"log_analysis",
-		"web",
 	}
 
 	// write master template that refers to the alarm stack templates generated
@@ -130,26 +131,27 @@ func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
 
 	// loop over deployment CF dirs generating alarms for each
 	for _, cfDir := range cfDirs {
-		alarmsCfBasename := cfDir + "_alarms.json"
-		alarmsCfFileName := filepath.Join(outDir, alarmsCfBasename) // where we will write
+		logger.Debugf("generating alarm cloudformation for %s", cfDir)
+		alarmsCfBasename := filepath.Base(cfDir) + "_alarms.json"
+		alarmsCfFilePath := filepath.Join(outDir, alarmsCfBasename) // where we will write
 		// add to master template
 		_, err = masterAlarmsCfFile.WriteString(fmt.Sprintf(alarmStackResourceTemplate,
-			cfngen.SanitizeResourceName(cfDir), alarmsCfBasename))
+			cfngen.SanitizeResourceName(filepath.Base(cfDir)), alarmsCfBasename))
 		if err != nil {
 			return fmt.Errorf("failed to write file %s: %v", masterAlarmsCfFileName, err)
 		}
 		// generate alarms
-		cf, err := cloudwatchcf.GenerateAlarms(filepath.Join(deploymentsCFDir, cfDir), snsTopicArn, stackOutputs)
+		cf, err := cloudwatchcf.GenerateAlarms(snsTopicArn, stackOutputs, cfDir)
 		if err != nil {
-			return fmt.Errorf("failed to generate alarms CloudFormation template %s: %v", alarmsCfFileName, err)
+			return fmt.Errorf("failed to generate alarms CloudFormation template %s: %v", alarmsCfFilePath, err)
 		}
 		// write cf to file referenced in master template
-		alarmsCfFile, err := os.Create(alarmsCfFileName)
+		alarmsCfFile, err := os.Create(alarmsCfFilePath)
 		if err != nil {
-			return fmt.Errorf("failed to create file %s: %v", alarmsCfFileName, err)
+			return fmt.Errorf("failed to create file %s: %v", alarmsCfFilePath, err)
 		}
 		if _, err = alarmsCfFile.Write(cf); err != nil {
-			return fmt.Errorf("failed to write file %s: %v", alarmsCfFileName, err)
+			return fmt.Errorf("failed to write file %s: %v", alarmsCfFilePath, err)
 		}
 		alarmsCfFile.Close()
 	}
@@ -171,7 +173,7 @@ func generateMetrics() error {
 	}
 	defer metricsCfFile.Close()
 
-	cf, err := cloudwatchcf.GenerateMetrics("./deployments")
+	cf, err := cloudwatchcf.GenerateMetrics(cfDirs...)
 	if err != nil {
 		return fmt.Errorf("failed to generate alarms CloudFormation template: %v", err)
 	}

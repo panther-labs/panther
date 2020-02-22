@@ -37,7 +37,7 @@ func NewAppSyncAlarm(graphQlID, alarmType, metricName, message string, resource 
 	alarmName := AlarmName(alarmType, appSyncName)
 	alarm = &AppSyncAlarm{
 		Alarm: *NewAlarm(alarmName,
-			fmt.Sprintf("AppSync %s %s. See: %s#%s", appSyncName, message, documentationURL, alarmName),
+			fmt.Sprintf("AppSync %s %s. See: %s#%s", appSyncName, message, documentationURL, appSyncName),
 			config.snsTopicArn),
 	}
 	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: graphQlID}})
@@ -60,7 +60,7 @@ func generateAppSyncAlarms(resource map[interface{}]interface{}, config *Config)
 	alarms = append(alarms, NewAppSyncAlarm(graphQlID, "AppSyncServerError", "5XXError",
 		"is failing", resource, config).SumNoUnitsThreshold(0, 60*5))
 
-	// client errors
+	// client errors, here we are concerned with surfacing bugs in the Panther UI as it talks to AppSync
 	alarms = append(alarms, NewAppSyncAlarm(graphQlID, "AppSyncClientError", "4XXError",
 		"has has elevated 4XX errors", resource, config).SumNoUnitsThreshold(20, 60*5) /* tolerate a few client errors */)
 

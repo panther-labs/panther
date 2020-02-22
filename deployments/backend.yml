@@ -63,10 +63,22 @@ Parameters:
     Type: String
     Description: The ARN of the TLS certificate that is going to be used by the web application
 
+  # Set automatically by "mage deploy" unless specified in panther_config
+  AlarmSNSTopicArn:
+    Type: String
+    Description: The ARN of SNS topic to send alarms
+
 Conditions:
   CreatePythonLayer: !Equals [!Ref PythonLayerVersionArn, '']
+  CreateAlarmSNSTopic: !Equals [!Ref AlarmSNSTopicArn, '']
 
 Resources:
+  AlarmNotifications:
+    Condition: CreateAlarmSNSTopic
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: panther-alarms
+
   GatewayLoggingRole:
     Type: AWS::IAM::Role
     Properties:
@@ -145,7 +157,6 @@ Resources:
         VpcId: !GetAtt WebApplicationNetworking.Outputs.VpcId
         SubnetOneId: !GetAtt WebApplicationNetworking.Outputs.SubnetOneId
         SubnetTwoId: !GetAtt WebApplicationNetworking.Outputs.SubnetTwoId
-        LoadBalancerName: web
         CertificateArn: !Ref WebApplicationCertificateArn
       TemplateURL: web/alb.yml
 
@@ -387,6 +398,9 @@ Resources:
         Status: Enabled
 
 Outputs:
+  AlarmsSNSTopic:
+    Description: The SNS topic to be associated with alarms
+    Value: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmSNSTopicArn]
   AnalysisVersionsBucket:
     Description: Bucket where Python version histories are stored
     Value: !GetAtt AnalysisAPI.Outputs.BucketName

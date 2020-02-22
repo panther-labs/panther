@@ -3,7 +3,9 @@ package cloudwatchcf
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -24,6 +26,22 @@ import (
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+func walkYamlFiles(cfDir string, generatorFunc func(string) error) error {
+	return filepath.Walk(cfDir, func(path string, info os.FileInfo, fileErr error) error {
+		if fileErr != nil {
+			return errors.Wrap(fileErr, path)
+		}
+		if info.IsDir() { // skip dirs
+			return nil
+		}
+		err := generatorFunc(path)
+		if err != nil {
+			return errors.Wrap(err, path)
+		}
+		return nil
+	})
+}
 
 type YamlDispatcher func(resourceType string, resource map[interface{}]interface{})
 
@@ -54,17 +72,17 @@ func walkYamlMap(yamlObj interface{}, dispatcher YamlDispatcher) {
 func readYaml(fileName string) (yamlObj interface{}, err error) {
 	fh, err := os.Open(fileName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fileName)
 	}
 
 	inputCf, err := ioutil.ReadAll(fh)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fileName)
 	}
 
 	err = yaml.Unmarshal(inputCf, &yamlObj)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fileName)
 	}
 
 	return yamlObj, nil

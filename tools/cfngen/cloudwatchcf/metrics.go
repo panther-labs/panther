@@ -19,11 +19,6 @@ package cloudwatchcf
  */
 
 import (
-	"bytes"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/panther-labs/panther/tools/cfngen"
 )
 
@@ -97,25 +92,22 @@ func LambdaMetricFilterName(lambdaName, metricName string) string {
 	return lambdaName + "-" + metricName
 }
 
-// GenerateMetrics will read the CF in yml files in the cfDir, and generate CF for CloudWatch metric filters for the infrastructure.
+// GenerateMetrics will read the CF in yml files in the cfDirs, and generate CF for CloudWatch metric filters for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateMetrics(cfDir string) ([]byte, error) {
+func GenerateMetrics(cfDirs ...string) ([]byte, error) {
 	var metricFilters []*MetricFilter
-	err := filepath.Walk(cfDir, func(path string, info os.FileInfo, fileErr error) error {
-		if fileErr != nil {
-			return fileErr
+
+	for _, cfDir := range cfDirs {
+		err := walkYamlFiles(cfDir, func(path string) (err error) {
+			fileMetricFilters, err := generateMetricFilters(path)
+			if err == nil {
+				metricFilters = append(metricFilters, fileMetricFilters...)
+			}
+			return err
+		})
+		if err != nil {
+			return nil, err
 		}
-		if info.IsDir() || strings.Contains(path, "/auxiliary/") { // the auxiliary dir is not loaded during deployment
-			return nil
-		}
-		fileMetricFilters, generateErr := generateMetricFilters(path)
-		if generateErr == nil {
-			metricFilters = append(metricFilters, fileMetricFilters...)
-		}
-		return generateErr
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	resources := make(map[string]interface{})
@@ -124,11 +116,7 @@ func GenerateMetrics(cfDir string) ([]byte, error) {
 	}
 
 	// generate CF using cfngen
-	cfTemplate := cfngen.NewTemplate("Panther Metrics", nil, resources, nil)
-	buffer := bytes.Buffer{}
-	err = cfTemplate.WriteCloudFormation(&buffer)
-	buffer.WriteString("\n") // add trailing \n that is expected in text files
-	return buffer.Bytes(), err
+	return cfngen.NewTemplate("Panther Metrics", nil, resources, nil).CloudFormation()
 }
 
 func generateMetricFilters(fileName string) (metricFilters []*MetricFilter, err error) {

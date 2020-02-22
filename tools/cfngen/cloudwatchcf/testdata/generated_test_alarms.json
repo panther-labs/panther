@@ -2,36 +2,11 @@
  "AWSTemplateFormatVersion": "2010-09-09",
  "Description": "Panther Alarms",
  "Resources": {
-  "PantherAlarmApiGatewayClientErrorpantherresourcesapi": {
- "Type": "AWS::CloudWatch::Alarm",
- "Properties": {
-  "AlarmName": "PantherAlarm-ApiGatewayClientError-panther-resources-api",
-  "AlarmDescription": "ApiGateway panther-resources-api is failing. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-ApiGatewayClientError-panther-resources-api",
-  "AlarmActions": [
-   "my-sns-topic-arn"
-  ],
-  "TreatMissingData": "notBreaching",
-  "Namespace": "AWS/ApiGateway",
-  "MetricName": "4XXError",
-  "Dimensions": [
-   {
-    "Name": "Name",
-    "Value": "panther-resources-api"
-   }
-  ],
-  "ComparisonOperator": "GreaterThanThreshold",
-  "EvaluationPeriods": 1,
-  "Period": 300,
-  "Threshold": 0,
-  "Unit": "None",
-  "Statistic": "Sum"
- }
-},
   "PantherAlarmApiGatewayHighIntegationLatencypantherresourcesapi": {
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-ApiGatewayHighIntegationLatency-panther-resources-api",
-  "AlarmDescription": "ApiGateway panther-resources-api is experience high integration latency. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-ApiGatewayHighIntegationLatency-panther-resources-api",
+  "AlarmDescription": "ApiGateway panther-resources-api is experience high integration latency. See: https://docs.runpanther.io/operations/alarms.html#panther-resources-api",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -56,7 +31,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-ApiGatewayHighLatency-panther-resources-api",
-  "AlarmDescription": "ApiGateway panther-resources-api is experience high latency. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-ApiGatewayHighLatency-panther-resources-api",
+  "AlarmDescription": "ApiGateway panther-resources-api is experience high latency. See: https://docs.runpanther.io/operations/alarms.html#panther-resources-api",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -81,7 +56,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-ApiGatewayServerError-panther-resources-api",
-  "AlarmDescription": "ApiGateway panther-resources-api is failing. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-ApiGatewayServerError-panther-resources-api",
+  "AlarmDescription": "ApiGateway panther-resources-api is failing. See: https://docs.runpanther.io/operations/alarms.html#panther-resources-api",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -106,7 +81,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-AppSyncClientError-panther-graphql-api",
-  "AlarmDescription": "AppSync panther-graphql-api has has elevated 4XX errors. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-AppSyncClientError-panther-graphql-api",
+  "AlarmDescription": "AppSync panther-graphql-api has has elevated 4XX errors. See: https://docs.runpanther.io/operations/alarms.html#panther-graphql-api",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -131,7 +106,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-AppSyncHighLatency-panther-graphql-api",
-  "AlarmDescription": "AppSync panther-graphql-api is experience high latency. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-AppSyncHighLatency-panther-graphql-api",
+  "AlarmDescription": "AppSync panther-graphql-api is experience high latency. See: https://docs.runpanther.io/operations/alarms.html#panther-graphql-api",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -156,7 +131,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-AppSyncServerError-panther-graphql-api",
-  "AlarmDescription": "AppSync panther-graphql-api is failing. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-AppSyncServerError-panther-graphql-api",
+  "AlarmDescription": "AppSync panther-graphql-api is failing. See: https://docs.runpanther.io/operations/alarms.html#panther-graphql-api",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -181,7 +156,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBBatchWriteItemError-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is failing BatchWriteItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBBatchWriteItemError-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is failing BatchWriteItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -210,7 +185,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBBatchWriteItemHighLatency-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency BatchWriteItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBBatchWriteItemHighLatency-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency BatchWriteItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -239,7 +214,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBBatchWriteItemThrottle-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is throttling BatchWriteItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBBatchWriteItemThrottle-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is throttling BatchWriteItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -268,7 +243,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBGetItemError-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is failing GetItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBGetItemError-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is failing GetItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -297,7 +272,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBGetItemHighLatency-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency GetItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBGetItemHighLatency-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency GetItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -326,7 +301,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBGetItemThrottle-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is throttling GetItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBGetItemThrottle-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is throttling GetItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -355,7 +330,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBPutItemError-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is failing PutItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBPutItemError-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is failing PutItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -384,7 +359,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBPutItemHighLatency-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency PutItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBPutItemHighLatency-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency PutItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -413,7 +388,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBPutItemThrottle-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is throttling PutItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBPutItemThrottle-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is throttling PutItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -442,7 +417,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBScanError-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is failing Scan operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBScanError-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is failing Scan operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -471,7 +446,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBScanHighLatency-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency Scan operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBScanHighLatency-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency Scan operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -500,7 +475,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBScanThrottle-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is throttling Scan operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBScanThrottle-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is throttling Scan operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -529,7 +504,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBUpdateItemError-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is failing UpdateItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBUpdateItemError-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is failing UpdateItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -558,7 +533,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBUpdateItemHighLatency-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency UpdateItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBUpdateItemHighLatency-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is experiencing high latency UpdateItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -587,7 +562,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-DDBUpdateItemThrottle-panther-compliance",
-  "AlarmDescription": "DynamoDB panther-compliance is throttling UpdateItem operations. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-DDBUpdateItemThrottle-panther-compliance",
+  "AlarmDescription": "DynamoDB panther-compliance is throttling UpdateItem operations. See: https://docs.runpanther.io/operations/alarms.html#panther-compliance",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -616,7 +591,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-ELBError-testLoadbalancer",
-  "AlarmDescription": "ALB testLoadbalancer has elevated ELB 4XX errors. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-ELBError-testLoadbalancer",
+  "AlarmDescription": "ALB testLoadbalancer has elevated ELB 4XX errors. See: https://docs.runpanther.io/operations/alarms.html#web",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -641,7 +616,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-ELBHighLatency-testLoadbalancer",
-  "AlarmDescription": "ALB testLoadbalancer is experience high latency. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-ELBHighLatency-testLoadbalancer",
+  "AlarmDescription": "ALB testLoadbalancer is experience high latency. See: https://docs.runpanther.io/operations/alarms.html#web",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -666,7 +641,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-ELBTargetError-testLoadbalancer",
-  "AlarmDescription": "ALB testLoadbalancer has elevated Target 4XX errors. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-ELBTargetError-testLoadbalancer",
+  "AlarmDescription": "ALB testLoadbalancer has elevated Target 4XX errors. See: https://docs.runpanther.io/operations/alarms.html#web",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -691,7 +666,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-ELBUnhealthy-testLoadbalancer",
-  "AlarmDescription": "ALB testLoadbalancer has unhealthy hosts. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-ELBUnhealthy-testLoadbalancer",
+  "AlarmDescription": "ALB testLoadbalancer has unhealthy hosts. See: https://docs.runpanther.io/operations/alarms.html#web",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -716,7 +691,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-LambdaApplicationErrors-test-lambda",
-  "AlarmDescription": "Lambda test-lambda is failing. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-LambdaApplicationErrors-test-lambda",
+  "AlarmDescription": "Lambda test-lambda is failing. See: https://docs.runpanther.io/operations/alarms.html#test-lambda",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -735,7 +710,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-LambdaApplicationWarns-test-lambda",
-  "AlarmDescription": "Lambda test-lambda is warning. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-LambdaApplicationWarns-test-lambda",
+  "AlarmDescription": "Lambda test-lambda is warning. See: https://docs.runpanther.io/operations/alarms.html#test-lambda",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -754,7 +729,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-LambdaErrors-test-lambda",
-  "AlarmDescription": "Lambda test-lambda is failing. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-LambdaErrors-test-lambda",
+  "AlarmDescription": "Lambda test-lambda is failing. See: https://docs.runpanther.io/operations/alarms.html#test-lambda",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -779,7 +754,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-LambdaHighExecutionTimeWarn-test-lambda",
-  "AlarmDescription": "Lambda test-lambda is using more than 90% of available execution time (60000msec). See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-LambdaHighExecutionTimeWarn-test-lambda",
+  "AlarmDescription": "Lambda test-lambda is using more than 90% of available execution time (60000msec). See: https://docs.runpanther.io/operations/alarms.html#test-lambda",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -804,7 +779,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-LambdaHighMemoryWarn-test-lambda",
-  "AlarmDescription": "Lambda test-lambda is using more than 90% of available memory (128MB). See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-LambdaHighMemoryWarn-test-lambda",
+  "AlarmDescription": "Lambda test-lambda is using more than 90% of available memory (128MB). See: https://docs.runpanther.io/operations/alarms.html#test-lambda",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -823,7 +798,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-LambdaThrottles-test-lambda",
-  "AlarmDescription": "Lambda test-lambda is being throttled. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-LambdaThrottles-test-lambda",
+  "AlarmDescription": "Lambda test-lambda is being throttled. See: https://docs.runpanther.io/operations/alarms.html#test-lambda",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -848,7 +823,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-SNSError-test-notifications",
-  "AlarmDescription": "SNS topic test-notifications is failing. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-SNSError-test-notifications",
+  "AlarmDescription": "SNS topic test-notifications is failing. See: https://docs.runpanther.io/operations/alarms.html#test-notifications",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -873,7 +848,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-SQSDeadLetters-test-sqs-dlq",
-  "AlarmDescription": "SQS queue test-sqs-dlq has failed items fromtest-sqs. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-SQSDeadLetters-test-sqs-dlq",
+  "AlarmDescription": "SQS queue test-sqs-dlq has failed items fromtest-sqs. See: https://docs.runpanther.io/operations/alarms.html#test-sqs-dlq",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],
@@ -898,7 +873,7 @@
  "Type": "AWS::CloudWatch::Alarm",
  "Properties": {
   "AlarmName": "PantherAlarm-SQSTooOld-test-sqs",
-  "AlarmDescription": "SQS queue test-sqs has items not being processed at the expected rate. See: https://docs.runpanther.io/operations/alarms.html#PantherAlarm-SQSTooOld-test-sqs",
+  "AlarmDescription": "SQS queue test-sqs has items not being processed at the expected rate. See: https://docs.runpanther.io/operations/alarms.html#test-sqs",
   "AlarmActions": [
    "my-sns-topic-arn"
   ],

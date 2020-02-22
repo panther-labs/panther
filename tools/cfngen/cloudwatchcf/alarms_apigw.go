@@ -37,7 +37,7 @@ func NewAPIGatewayAlarm(alarmType, metricName, message string, resource map[inte
 	alarmName := AlarmName(alarmType, apiGatewayName)
 	alarm = &APIGatewayAlarm{
 		Alarm: *NewAlarm(alarmName,
-			fmt.Sprintf("ApiGateway %s %s. See: %s#%s", apiGatewayName, message, documentationURL, alarmName),
+			fmt.Sprintf("ApiGateway %s %s. See: %s#%s", apiGatewayName, message, documentationURL, apiGatewayName),
 			config.snsTopicArn),
 	}
 	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: apiGatewayName}})
@@ -51,9 +51,7 @@ func generateAPIGatewayAlarms(resource map[interface{}]interface{}, config *Conf
 	alarms = append(alarms, NewAPIGatewayAlarm("ApiGatewayServerError", "5XXError",
 		"is failing", resource, config).SumNoUnitsThreshold(0, 60*5))
 
-	// client errors, we currently only use api gw internally so client errors are serious
-	alarms = append(alarms, NewAPIGatewayAlarm("ApiGatewayClientError", "4XXError",
-		"is failing", resource, config).SumNoUnitsThreshold(0, 60*5))
+	// client errors are used for signalling internally so we do not alarm on them
 
 	// latency
 	alarms = append(alarms, NewAPIGatewayAlarm("ApiGatewayHighLatency", "Latency",

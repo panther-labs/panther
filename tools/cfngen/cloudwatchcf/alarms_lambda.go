@@ -38,7 +38,7 @@ func NewLambdaAlarm(alarmType, metricName, message string, resource map[interfac
 	alarmName := AlarmName(alarmType, lambdaName)
 	alarm = &LambdaAlarm{
 		Alarm: *NewAlarm(alarmName,
-			fmt.Sprintf("Lambda %s %s. See: %s#%s", lambdaName, message, documentationURL, alarmName),
+			fmt.Sprintf("Lambda %s %s. See: %s#%s", lambdaName, message, documentationURL, lambdaName),
 			config.snsTopicArn),
 		lambdaName: lambdaName,
 	}

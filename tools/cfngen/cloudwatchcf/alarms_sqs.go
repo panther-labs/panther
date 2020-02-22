@@ -37,7 +37,7 @@ func NewSQSAlarm(queueName, alarmType, metricName, message string, resource map[
 	alarmName := AlarmName(alarmType, queueName)
 	alarm = &SQSAlarm{
 		Alarm: *NewAlarm(alarmName,
-			fmt.Sprintf("SQS queue %s %s. See: %s#%s", queueName, message, documentationURL, alarmName),
+			fmt.Sprintf("SQS queue %s %s. See: %s#%s", queueName, message, documentationURL, queueName),
 			config.snsTopicArn),
 	}
 	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: queueName}})

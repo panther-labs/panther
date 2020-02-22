@@ -29,7 +29,7 @@ func TestGenerateAlarms(t *testing.T) {
 		"WebApplicationLoadBalancerFullName": "testLoadbalancer",
 		"WebApplicationGraphqlApiId":         "testGraphqlId",
 	}
-	cf, err := GenerateAlarms("./testdata", "my-sns-topic-arn", stackOutputs)
+	cf, err := GenerateAlarms("my-sns-topic-arn", stackOutputs, "./testdata")
 	require.NoError(t, err)
 	const expectedFile = "./testdata/generated_test_alarms.json"
 	// uncomment to make a new expected file

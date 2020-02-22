@@ -18,10 +18,9 @@
 
 # CloudFormation parameters for the monitoring.yml which deploys the monitoring stack.
 MonitoringParameterValues:
-  # This is the arn for the SNS topic you want to associated with Panther system alarms.
-  # If this is not set, alarms will be visible in CloudWatch dashboard but you will
-  # not receive any notifications.
-  AlarmSNSTopicARN: 'arn:aws:sns:us-east-1:050603629990:TestSNSTopic'
+  # This is the arn for the SNS topic you want associated with Panther system alarms.
+  # If this is not set alarms will be associated with the SNS topic `panther-alarms`.
+  AlarmSNSTopicARN: ''
 
 # CloudFormation parameter overrides for the core/buckets.yml prerequisite stack.
 BucketsParameterValues:
@@ -86,4 +85,4 @@ PipLayer:
 # If the analysis-api is non-empty, this setting is ignored and you can instead
 # use the BulkUpload functionality from the web app to upload new or modified rule sets.
 InitialAnalysisSets:
-  - https://github.com/panther-labs/panther-analysis/releases/download/v1.0.2/panther-analysis-all.zip
+  - https://github.com/panther-labs/panther-analysis/releases/download/latest/panther-analysis-all.zip

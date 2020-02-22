@@ -19,11 +19,6 @@ package cloudwatchcf
  */
 
 import (
-	"bytes"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 
 	"github.com/panther-labs/panther/tools/cfngen"
@@ -156,27 +151,24 @@ func AlarmName(alarmType, resourceName string) string {
 
 // GenerateAlarms will read the CF in yml files in the cfDir, and generate CF for CloudWatch alarms for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateAlarms(cfDir, snsTopicArn string, stackOutputs map[string]string) ([]byte, error) {
+func GenerateAlarms(snsTopicArn string, stackOutputs map[string]string, cfDirs ...string) ([]byte, error) {
 	var alarms []*Alarm
 	config := &Config{
 		snsTopicArn:  snsTopicArn,
 		stackOutputs: stackOutputs,
 	}
-	err := filepath.Walk(cfDir, func(path string, info os.FileInfo, fileErr error) error {
-		if fileErr != nil {
-			return fileErr
+
+	for _, cfDir := range cfDirs {
+		err := walkYamlFiles(cfDir, func(path string) (err error) {
+			fileAlarms, err := generateAlarms(path, config)
+			if err == nil {
+				alarms = append(alarms, fileAlarms...)
+			}
+			return err
+		})
+		if err != nil {
+			return nil, err
 		}
-		if info.IsDir() || strings.Contains(path, "/auxiliary/") { // the auxiliary dir is not loaded during deployment
-			return nil
-		}
-		fileAlarms, generateErr := generateAlarms(path, config)
-		if generateErr == nil {
-			alarms = append(alarms, fileAlarms...)
-		}
-		return generateErr
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	resources := make(map[string]interface{})
@@ -185,11 +177,7 @@ func GenerateAlarms(cfDir, snsTopicArn string, stackOutputs map[string]string) (
 	}
 
 	// generate CF using cfngen
-	cfTemplate := cfngen.NewTemplate("Panther Alarms", nil, resources, nil)
-	buffer := bytes.Buffer{}
-	err = cfTemplate.WriteCloudFormation(&buffer)
-	buffer.WriteString("\n") // add trailing \n that is expected in text files
-	return buffer.Bytes(), err
+	return cfngen.NewTemplate("Panther Alarms", nil, resources, nil).CloudFormation()
 }
 
 func generateAlarms(fileName string, config *Config) (alarms []*Alarm, err error) {

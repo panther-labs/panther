@@ -1,9 +1,5 @@
 package cloudwatchcf
 
-import (
-	"fmt"
-)
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -22,6 +18,10 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import (
+	"fmt"
+)
+
 type ApplicationELB struct {
 	Alarm
 }
@@ -33,10 +33,11 @@ func NewApplicationELBAlarm(loadBalancer, alarmType, metricName, message string,
 		metricDimension = "LoadBalancer"
 		metricNamespace = "AWS/ApplicationELB"
 	)
+	loadBalancerName := getResourceProperty("Name", resource)
 	alarmName := AlarmName(alarmType, loadBalancer)
 	alarm = &ApplicationELB{
 		Alarm: *NewAlarm(alarmName,
-			fmt.Sprintf("ALB %s %s. See: %s#%s", loadBalancer, message, documentationURL, alarmName),
+			fmt.Sprintf("ALB %s %s. See: %s#%s", loadBalancer, message, documentationURL, loadBalancerName),
 			config.snsTopicArn),
 	}
 	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: loadBalancer}})
