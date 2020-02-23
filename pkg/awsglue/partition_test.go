@@ -46,7 +46,8 @@ type partitionTestEvent struct{}
 
 func TestCreateJSONPartition(t *testing.T) {
 	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
-	gm, err := NewGlueMetadata(partitionTestDb, partitionTestTable, partitionTestTable, GlueTableHourly, false, &partitionTestEvent{})
+	gm, err := NewGlueMetadata(LogS3Prefix, partitionTestDb, partitionTestTable, partitionTestTable,
+		GlueTableHourly, false, &partitionTestEvent{})
 	require.NoError(t, err)
 
 	// test no errors and partition does not exist (no error)
@@ -105,7 +106,8 @@ func TestCreateJSONPartition(t *testing.T) {
 
 func TestSyncPartition(t *testing.T) {
 	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
-	gm, err := NewGlueMetadata(partitionTestDb, partitionTestTable, partitionTestTable, GlueTableHourly, false, &partitionTestEvent{})
+	gm, err := NewGlueMetadata(LogS3Prefix, partitionTestDb, partitionTestTable, partitionTestTable,
+		GlueTableHourly, false, &partitionTestEvent{})
 	require.NoError(t, err)
 
 	// test not exists error in DeletePartition (should not fail)

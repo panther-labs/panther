@@ -40,10 +40,10 @@ type table2Event struct {
 }
 
 func TestGenerateViewAllLogs(t *testing.T) {
-	table1, err := awsglue.NewGlueMetadata("db", "table1", "test table1", awsglue.GlueTableHourly,
+	table1, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, "db", "table1", "test table1", awsglue.GlueTableHourly,
 		false, &table1Event{})
 	require.NoError(t, err)
-	table2, err := awsglue.NewGlueMetadata("db", "table2", "test table2", awsglue.GlueTableHourly,
+	table2, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, "db", "table2", "test table2", awsglue.GlueTableHourly,
 		false, &table2Event{})
 	require.NoError(t, err)
 	// nolint (lll)
@@ -65,10 +65,10 @@ func TestGenerateViewAllLogsFail(t *testing.T) {
 	require.True(t, strings.Contains(err.Error(), "no tables"))
 
 	// one has daily partitions and one has hourly
-	table1, err := awsglue.NewGlueMetadata("db", "table1", "test table1", awsglue.GlueTableDaily,
+	table1, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, "db", "table1", "test table1", awsglue.GlueTableDaily,
 		false, nil)
 	require.NoError(t, err)
-	table2, err := awsglue.NewGlueMetadata("db", "table2", "test table2", awsglue.GlueTableHourly,
+	table2, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, "db", "table2", "test table2", awsglue.GlueTableHourly,
 		false, nil)
 	require.NoError(t, err)
 	_, err = generateViewAllLogs([]*awsglue.GlueMetadata{table1, table2})
