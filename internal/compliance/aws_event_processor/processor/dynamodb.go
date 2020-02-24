@@ -26,21 +26,19 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyDynamoDB(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyDynamoDB(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazondynamodb.html
-	if eventName == "BatchGetItem" ||
-		eventName == "ConditionCheckItem" ||
-		eventName == "DeleteBackup" ||
-		eventName == "DeleteItem" ||
-		eventName == "PutItem" ||
-		eventName == "Query" ||
-		eventName == "Scan" ||
-		eventName == "UpdateItem" ||
-		eventName == "BatchWriteItem" {
+	if metadata.eventName == "BatchGetItem" ||
+		metadata.eventName == "ConditionCheckItem" ||
+		metadata.eventName == "DeleteBackup" ||
+		metadata.eventName == "DeleteItem" ||
+		metadata.eventName == "PutItem" ||
+		metadata.eventName == "Query" ||
+		metadata.eventName == "Scan" ||
+		metadata.eventName == "UpdateItem" ||
+		metadata.eventName == "BatchWriteItem" {
 
-		zap.L().Debug("dynamodb: ignoring event", zap.String("eventName", eventName))
+		zap.L().Debug("dynamodb: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
@@ -48,10 +46,10 @@ func classifyDynamoDB(detail gjson.Result, accountID string) []*resourceChange {
 		Partition: "aws",
 		Service:   "dynamodb",
 		Region:    detail.Get("awsRegion").Str,
-		AccountID: accountID,
+		AccountID: metadata.accountID,
 		Resource:  "table/",
 	}
-	switch eventName {
+	switch metadata.eventName {
 	case "CreateBackup", "CreateTable", "DeleteTable", "UpdateContinuousBackups", "UpdateTable", "UpdateTimeToLive":
 		dynamoARN.Resource += detail.Get("requestParameters.tableName").Str
 	case "CreateGlobalTable":
@@ -60,8 +58,8 @@ func classifyDynamoDB(detail gjson.Result, accountID string) []*resourceChange {
 		for _, repl := range detail.Get("requestParameters.replicationGroup").Array() {
 			dynamoARN.Region = repl.Get("regionName").Str
 			tables = append(tables, &resourceChange{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   dynamoARN.String(),
 				ResourceType: schemas.DynamoDBTableSchema,
 			})
@@ -76,8 +74,8 @@ func classifyDynamoDB(detail gjson.Result, accountID string) []*resourceChange {
 			if region != "" {
 				dynamoARN.Region = region
 				tables = append(tables, &resourceChange{
-					AwsAccountID: accountID,
-					EventName:    eventName,
+					AwsAccountID: metadata.accountID,
+					EventName:    metadata.eventName,
 					ResourceID:   dynamoARN.String(),
 					ResourceType: schemas.DynamoDBTableSchema,
 				})
@@ -86,8 +84,8 @@ func classifyDynamoDB(detail gjson.Result, accountID string) []*resourceChange {
 			if region != "" {
 				dynamoARN.Region = region
 				tables = append(tables, &resourceChange{
-					AwsAccountID: accountID,
-					EventName:    eventName,
+					AwsAccountID: metadata.accountID,
+					EventName:    metadata.eventName,
 					ResourceID:   dynamoARN.String(),
 					ResourceType: schemas.DynamoDBTableSchema,
 				})
@@ -101,8 +99,8 @@ func classifyDynamoDB(detail gjson.Result, accountID string) []*resourceChange {
 		for _, replica := range detail.Get("responseElements.replicaSettings").Array() {
 			dynamoARN.Region = replica.Get("regionName").Str
 			tables = append(tables, &resourceChange{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   dynamoARN.String(),
 				ResourceType: schemas.DynamoDBTableSchema,
 			})
@@ -118,14 +116,14 @@ func classifyDynamoDB(detail gjson.Result, accountID string) []*resourceChange {
 		}
 		dynamoARN = tableARN
 	default:
-		zap.L().Warn("dynamodb: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("dynamodb: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
-		Delete:       eventName == "DeleteTable",
-		EventName:    eventName,
+		AwsAccountID: metadata.accountID,
+		Delete:       metadata.eventName == "DeleteTable",
+		EventName:    metadata.eventName,
 		ResourceID:   dynamoARN.String(),
 		ResourceType: schemas.DynamoDBTableSchema,
 	}}

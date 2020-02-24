@@ -34,8 +34,8 @@ import (
 
 var (
 	exampleMetadata = &CloudTrailMetadata{
-		Region:    "us-west-2",
-		AccountID: "111111111111",
+		region:    "us-west-2",
+		accountID: "111111111111",
 		eventName: "Example",
 	}
 )
@@ -106,8 +106,8 @@ func TestClassifyCloudWatchEventReadOnly(t *testing.T) {
 	accounts = exampleAccounts
 	require.Nil(t, processCloudTrailLog(
 		gjson.Parse(`{"eventName": "ListBuckets", "eventSource": "s3.amazonaws.com"}`), &CloudTrailMetadata{
-			Region:    "us-west-2",
-			AccountID: "111111111111",
+			region:    "us-west-2",
+			accountID: "111111111111",
 			eventName: "ListBuckets",
 		},
 		exampleChanges()))
@@ -134,8 +134,8 @@ func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
 	require.Nil(t, processCloudTrailLog(
 		body,
 		&CloudTrailMetadata{
-			Region:    "us-west-2",
-			AccountID: "111111111111",
+			region:    "us-west-2",
+			accountID: "111111111111",
 			eventName: "DeleteBucket",
 		},
 		exampleChanges()))
@@ -158,8 +158,8 @@ func TestClassifyCloudWatchEventUnauthorized(t *testing.T) {
 	err := processCloudTrailLog(
 		body,
 		&CloudTrailMetadata{
-			Region:    "us-west-2",
-			AccountID: "222222222222",
+			region:    "us-west-2",
+			accountID: "222222222222",
 			eventName: "Example",
 		},
 		exampleChanges())
@@ -180,6 +180,11 @@ func TestClassifyCloudWatchEvent(t *testing.T) {
         "requestParameters": {"bucketName": "panther"},
 		"userIdentity": {"accountId": "111111111111"}
     }`)
+	metadata := &CloudTrailMetadata{
+		region:    "us-west-2",
+		accountID: "111111111111",
+		eventName: "DeleteBucket",
+	}
 	changeResults := exampleChanges()
 	expected := &resourceChange{
 		AwsAccountID:  "111111111111",
@@ -199,7 +204,7 @@ func TestClassifyCloudWatchEvent(t *testing.T) {
 		},
 	}
 
-	err := processCloudTrailLog(body, exampleMetadata, changeResults)
+	err := processCloudTrailLog(body, metadata, changeResults)
 	require.Nil(t, err)
 	assert.Equal(t, expected, changeResults[expected.ResourceID+expected.ResourceType+expected.Region])
 	assert.Equal(t, expectedLogs, logs.AllUntimed())

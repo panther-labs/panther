@@ -44,7 +44,7 @@ type resourceChange struct {
 // The "classifier" takes a cloudtrail log and summarizes the required change.
 // integrationID does not need to be set by the individual classifiers.
 var (
-	classifiers = map[string]func(gjson.Result, string) []*resourceChange{
+	classifiers = map[string]func(gjson.Result, *CloudTrailMetadata) []*resourceChange{
 		"acm.amazonaws.com":                  classifyACM,
 		"cloudformation.amazonaws.com":       classifyCloudFormation,
 		"cloudtrail.amazonaws.com":           classifyCloudTrail,
@@ -79,8 +79,8 @@ var (
 // CloudTrailMetaData is a data struct that contains re-used fields of CloudTrail logs so that we don't have to keep
 // extracting the same information
 type CloudTrailMetadata struct {
-	Region    string
-	AccountID string
+	region    string
+	accountID string
 	eventName string
 }
 
@@ -108,8 +108,8 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
 	}
 
 	return &CloudTrailMetadata{
-		Region:    region.Str,
-		AccountID: accountID.Str,
+		region:    region.Str,
+		accountID: accountID.Str,
 		eventName: eventName.Str,
 	}, nil
 }
@@ -117,9 +117,9 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
 // processCloudTrailLog determines what resources, if any, need to be scanned as a result of a given CloudTrail log
 func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, changes map[string]*resourceChange) error {
 	// Check if this log is from a supported account
-	integration, ok := accounts[metadata.AccountID]
+	integration, ok := accounts[metadata.accountID]
 	if !ok {
-		return errors.New("dropping event from unauthorized account " + metadata.AccountID)
+		return errors.New("dropping event from unauthorized account " + metadata.accountID)
 	}
 
 	// Determine the AWS service the modified resource belongs to
@@ -152,7 +152,7 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 	}
 
 	// Process the body
-	newChanges := classifier(detail, metadata.AccountID)
+	newChanges := classifier(detail, metadata)
 	eventTime := detail.Get("eventTime").Str
 	if len(newChanges) > 0 {
 		readOnly := detail.Get("readOnly")

@@ -31,15 +31,13 @@ import (
 const lambdaNameRegex = `(arn:(aws[a-zA-Z-]*)?:lambda:)?([a-z]{2}(-gov)?-[a-z]+-\d{1}:)?(\d{12}:)?` +
 	`(function:)?([a-zA-Z0-9-_]+)(:(\$LATEST|[a-zA-Z0-9-_]+))?`
 
-func classifyLambda(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awslambda.html
-	if eventName == "AddLayerVersionPermission" ||
-		eventName == "InvokeAsync" ||
-		eventName == "InvokeFunction" {
+	if metadata.eventName == "AddLayerVersionPermission" ||
+		metadata.eventName == "InvokeAsync" ||
+		metadata.eventName == "InvokeFunction" {
 
-		zap.L().Debug("lambda: ignoring event", zap.String("eventName", eventName))
+		zap.L().Debug("lambda: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
@@ -48,10 +46,10 @@ func classifyLambda(detail gjson.Result, accountID string) []*resourceChange {
 		Partition: "aws",
 		Service:   "lambda",
 		Region:    region,
-		AccountID: accountID,
+		AccountID: metadata.accountID,
 		Resource:  "function:",
 	}
-	switch eventName {
+	switch metadata.eventName {
 	case "AddPermission", "CreateAlias", "CreateEventSourceMapping", "CreateFunction", "DeleteAlias", "DeleteFunction",
 		"DeleteFunctionConcurrency", "PublishVersion", "PutFunctionConcurrency", "RemovePermission", "UpdateAlias",
 		"UpdateAlias20150331", "UpdateEventSourceMapping", "UpdateFunctionCode", "UpdateFunctionConfiguration",
@@ -73,18 +71,18 @@ func classifyLambda(detail gjson.Result, accountID string) []*resourceChange {
 		var err error
 		lambdaARN, err = arn.Parse(detail.Get("requestParameters.resource").Str)
 		if err != nil {
-			zap.L().Error("lambda: error parsing ARN", zap.String("eventName", eventName), zap.Error(err))
+			zap.L().Error("lambda: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
 			return nil
 		}
 	default:
-		zap.L().Warn("lambda: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("lambda: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
-		Delete:       eventName == "DeleteFunction",
-		EventName:    eventName,
+		AwsAccountID: metadata.accountID,
+		Delete:       metadata.eventName == "DeleteFunction",
+		EventName:    metadata.eventName,
 		ResourceID:   lambdaARN.String(),
 		ResourceType: schemas.LambdaFunctionSchema,
 	}}

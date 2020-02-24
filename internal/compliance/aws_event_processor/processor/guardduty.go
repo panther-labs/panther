@@ -27,39 +27,37 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyGuardDuty(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyGuardDuty(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonguardduty.html
-	if eventName == "ArchiveFindings" ||
-		eventName == "CreateIPSet" ||
-		eventName == "CreateSampleFindings" ||
-		eventName == "CreateThreatIntelSet" ||
-		eventName == "DeclineInvitations" ||
-		eventName == "DeleteFilter" ||
-		eventName == "DeleteIPSet" ||
-		eventName == "DeleteInvitations" ||
-		eventName == "DeleteThreatIntelSet" ||
-		eventName == "InviteMembers" ||
-		eventName == "UnarchiveFindings" ||
-		eventName == "UpdateFilter" ||
-		eventName == "UpdateFindingsFeedback" ||
-		eventName == "UpdateIPSet" ||
-		eventName == "UpdateThreatIntelSet" ||
-		eventName == "CreateFilter" {
+	if metadata.eventName == "ArchiveFindings" ||
+		metadata.eventName == "CreateIPSet" ||
+		metadata.eventName == "CreateSampleFindings" ||
+		metadata.eventName == "CreateThreatIntelSet" ||
+		metadata.eventName == "DeclineInvitations" ||
+		metadata.eventName == "DeleteFilter" ||
+		metadata.eventName == "DeleteIPSet" ||
+		metadata.eventName == "DeleteInvitations" ||
+		metadata.eventName == "DeleteThreatIntelSet" ||
+		metadata.eventName == "InviteMembers" ||
+		metadata.eventName == "UnarchiveFindings" ||
+		metadata.eventName == "UpdateFilter" ||
+		metadata.eventName == "UpdateFindingsFeedback" ||
+		metadata.eventName == "UpdateIPSet" ||
+		metadata.eventName == "UpdateThreatIntelSet" ||
+		metadata.eventName == "CreateFilter" {
 
-		zap.L().Debug("guardduty: ignoring event", zap.String("eventName", eventName))
+		zap.L().Debug("guardduty: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
-	switch eventName {
+	switch metadata.eventName {
 	case "TagResource", "UntagResource", "UpdateDetector":
 		// Single resource/region scan (only one detector can exist per region)
 		return []*resourceChange{{
-			AwsAccountID: accountID,
-			EventName:    eventName,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
 			ResourceID: strings.Join([]string{
-				accountID,
+				metadata.accountID,
 				detail.Get("awsRegion").Str,
 				schemas.GuardDutySchema,
 			}, ":"),
@@ -69,31 +67,31 @@ func classifyGuardDuty(detail gjson.Result, accountID string) []*resourceChange 
 		"DisassociateMembers", "StartMonitoringMembers", "StopMonitoringMembers":
 		// Full account scan
 		return []*resourceChange{{
-			AwsAccountID: accountID,
-			EventName:    eventName,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
 			ResourceType: schemas.GuardDutySchema,
 		}}
 	case "DeleteDetector":
 		// Special case where need to queue both a delete action and a meta re-scan
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       true,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID: strings.Join([]string{
-					accountID,
+					metadata.accountID,
 					detail.Get("awsRegion").Str,
 					schemas.GuardDutySchema,
 				}, ":"),
 				ResourceType: schemas.GuardDutySchema,
 			},
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceType: schemas.GuardDutySchema,
 			}}
 	default:
-		zap.L().Warn("guardduty: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("guardduty: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 }

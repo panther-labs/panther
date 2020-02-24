@@ -28,18 +28,16 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyELBV2(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_elasticloadbalancingv2.html
-	if eventName == "DeleteTargetGroup" ||
-		eventName == "CreateTargetGroup" ||
-		eventName == "ModifyTargetGroup" ||
-		eventName == "ModifyTargetGroupAttributes" ||
-		eventName == "RegisterTargets" ||
-		eventName == "DeregisterTargets" {
+	if metadata.eventName == "DeleteTargetGroup" ||
+		metadata.eventName == "CreateTargetGroup" ||
+		metadata.eventName == "ModifyTargetGroup" ||
+		metadata.eventName == "ModifyTargetGroupAttributes" ||
+		metadata.eventName == "RegisterTargets" ||
+		metadata.eventName == "DeregisterTargets" {
 
-		zap.L().Debug("elbv2: ignoring event", zap.String("eventName", eventName))
+		zap.L().Debug("elbv2: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
@@ -49,7 +47,7 @@ func classifyELBV2(detail gjson.Result, accountID string) []*resourceChange {
 		Partition: "aws",
 		Service:   "elasticloadbalancing",
 		Region:    region,
-		AccountID: accountID,
+		AccountID: metadata.accountID,
 	}
 
 	// We don't have a separate resource for listeners or listener rules yet, but they're built into
@@ -60,7 +58,7 @@ func classifyELBV2(detail gjson.Result, accountID string) []*resourceChange {
 	// arn:aws:elasticloadbalancing:region:account-id:listener-rule/[app|net]/lb-name/lb-id/listener-id/rule-id
 	// So if we split the resource on the '/' character, we always need the elements at indices one,
 	// two and three.
-	switch eventName {
+	switch metadata.eventName {
 	case "AddListenerCertificates", "CreateRule", "DeleteListener", "ModifyListener", "RemoveListenerCertificates":
 		listenerARN := detail.Get("requestParameters.listenerArn").Str
 		arnComponents := strings.Split(listenerARN, "/")
@@ -84,16 +82,16 @@ func classifyELBV2(detail gjson.Result, accountID string) []*resourceChange {
 		for _, resource := range detail.Get("requestParameters.resourceArns").Array() {
 			resourceARN, err := arn.Parse(resource.Str)
 			if err != nil {
-				zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", eventName), zap.Error(err))
+				zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
 				return changes
 			}
 			if strings.HasPrefix(resourceARN.Resource, "targetgroup/") {
 				continue
 			}
 			changes = append(changes, &resourceChange{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   resourceARN.String(),
 				ResourceType: schemas.Elbv2LoadBalancerSchema,
 			})
@@ -106,13 +104,13 @@ func classifyELBV2(detail gjson.Result, accountID string) []*resourceChange {
 		for _, lb := range detail.Get("responseElements.loadBalancers").Array() {
 			lbARN, err := arn.Parse(lb.Get("loadBalancerArn").Str)
 			if err != nil {
-				zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", eventName), zap.Error(err))
+				zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
 				return changes
 			}
 			changes = append(changes, &resourceChange{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   lbARN.String(),
 				ResourceType: schemas.Elbv2LoadBalancerSchema,
 			})
@@ -130,26 +128,26 @@ func classifyELBV2(detail gjson.Result, accountID string) []*resourceChange {
 				arnComponents[3],
 			}, "/")
 			changes = append(changes, &resourceChange{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   lbARN.String(),
 				ResourceType: schemas.Elbv2LoadBalancerSchema,
 			})
 		}
 		return changes
 	default:
-		zap.L().Error("elbv2: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Error("elbv2: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	if parseErr != nil {
-		zap.L().Warn("elbv2: error parsing ARN", zap.String("eventName", eventName), zap.Error(parseErr))
+		zap.L().Warn("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(parseErr))
 	}
 	return []*resourceChange{{
-		AwsAccountID: accountID,
-		Delete:       eventName == "DeleteLoadBalancer",
-		EventName:    eventName,
+		AwsAccountID: metadata.accountID,
+		Delete:       metadata.eventName == "DeleteLoadBalancer",
+		EventName:    metadata.eventName,
 		ResourceID:   lbARN.String(),
 		ResourceType: schemas.Elbv2LoadBalancerSchema,
 	}}

@@ -26,23 +26,21 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyCloudWatchLogGroup(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyCloudWatchLogGroup(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazoncloudwatchlogs.html
-	if eventName == "CancelExportTask" ||
-		eventName == "CreateExportTask" ||
-		eventName == "PutDestination" ||
-		eventName == "PutDestinationPolicy" ||
-		eventName == "PutLogEvents" ||
-		eventName == "PutResourcePolicy" ||
-		eventName == "StartQuery" ||
-		eventName == "StopQuery" ||
-		eventName == "TestMetricFilter" ||
-		eventName == "CreateLogStream" ||
-		eventName == "FilterLogEvents" {
+	if metadata.eventName == "CancelExportTask" ||
+		metadata.eventName == "CreateExportTask" ||
+		metadata.eventName == "PutDestination" ||
+		metadata.eventName == "PutDestinationPolicy" ||
+		metadata.eventName == "PutLogEvents" ||
+		metadata.eventName == "PutResourcePolicy" ||
+		metadata.eventName == "StartQuery" ||
+		metadata.eventName == "StopQuery" ||
+		metadata.eventName == "TestMetricFilter" ||
+		metadata.eventName == "CreateLogStream" ||
+		metadata.eventName == "FilterLogEvents" {
 
-		zap.L().Debug("loggroup: ignoring event", zap.String("eventName", eventName))
+		zap.L().Debug("loggroup: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
@@ -51,10 +49,10 @@ func classifyCloudWatchLogGroup(detail gjson.Result, accountID string) []*resour
 		Partition: "aws",
 		Service:   "logs",
 		Region:    region,
-		AccountID: accountID,
+		AccountID: metadata.accountID,
 		Resource:  "log-group:",
 	}
-	switch eventName {
+	switch metadata.eventName {
 	case "AssociateKmsKey", "CreateLogGroup", "DeleteLogGroup", "DeleteLogStream", "DeleteMetricFilter",
 		"DeleteRetentionPolicy", "DeleteSubscriptionFilter", "DisassociateKmsKey", "PutMetricFilter",
 		"PutRetentionPolicy", "PutSubscriptionFilter", "TagLogGroup", "UntagLogGroup":
@@ -62,14 +60,14 @@ func classifyCloudWatchLogGroup(detail gjson.Result, accountID string) []*resour
 		// explanation.
 		logGroupARN.Resource += detail.Get("requestParameters.logGroupName").Str
 	default:
-		zap.L().Warn("loggroup: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("loggroup: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
-		Delete:       eventName == "DeleteLogGroup",
-		EventName:    eventName,
+		AwsAccountID: metadata.accountID,
+		Delete:       metadata.eventName == "DeleteLogGroup",
+		EventName:    metadata.eventName,
 		ResourceID:   logGroupARN.String(),
 		ResourceType: schemas.CloudWatchLogGroupSchema,
 	}}

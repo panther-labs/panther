@@ -196,8 +196,8 @@ func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resource
 			// If we're currently seeing CloudTrail via CWE, we don't process the duplicate data in S3
 			zap.L().Debug(
 				"skipping s3 notification in favor of CloudTrail via CWE",
-				zap.String("region", metadata.Region),
-				zap.String("accountID", metadata.AccountID),
+				zap.String("region", metadata.region),
+				zap.String("accountID", metadata.accountID),
 			)
 			continue
 		}
@@ -211,7 +211,7 @@ func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resource
 
 // generateSourceKey creates the key used for the cweAccounts cache for a given CloudTrail metadata struct
 func generateSourceKey(metadata *CloudTrailMetadata) string {
-	return metadata.AccountID + "/" + metadata.Region
+	return metadata.accountID + "/" + metadata.region
 }
 
 func submitChanges(changes map[string]*resourceChange) error {

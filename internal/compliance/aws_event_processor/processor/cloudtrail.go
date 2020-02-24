@@ -28,12 +28,10 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyCloudTrail(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyCloudTrail(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscloudtrail.html
-	if strings.HasPrefix(eventName, "Lookup") {
-		zap.L().Debug("cloudtrail: ignoring event", zap.String("eventName", eventName))
+	if strings.HasPrefix(metadata.eventName, "Lookup") {
+		zap.L().Debug("cloudtrail: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
@@ -41,19 +39,19 @@ func classifyCloudTrail(detail gjson.Result, accountID string) []*resourceChange
 		Partition: "aws",
 		Service:   "cloudtrail",
 		Region:    detail.Get("awsRegion").Str,
-		AccountID: accountID,
+		AccountID: metadata.accountID,
 	}
 	var err error
 
 	// WARNING: regional service scans for CloudTrail are ignored, and default to account wide scans.
 	// This is to ensure the correctness of the CloudTrail.Meta resource.
-	switch eventName {
+	switch metadata.eventName {
 	case "AddTags", "RemoveTags":
 		// This will always be an ARN
 		trailARNBase, err = arn.Parse(detail.Get("requestParameters.resourceId").Str)
 		if err != nil {
 			zap.L().Error("cloudtrail: unable to parse ARN",
-				zap.String("eventName", eventName),
+				zap.String("eventName", metadata.eventName),
 				zap.String("resourceId", detail.Get("requestParameters.resourceId").Str))
 			return nil
 		}
@@ -68,8 +66,8 @@ func classifyCloudTrail(detail gjson.Result, accountID string) []*resourceChange
 	case "CreateTrail", "PutEventSelectors":
 		// These events may effect the CloudTrail Meta resource, so must launch a full account scan
 		return []*resourceChange{{
-			AwsAccountID: accountID,
-			EventName:    eventName,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
 			ResourceType: schemas.CloudTrailSchema,
 		}}
 	case "DeleteTrail":
@@ -83,35 +81,35 @@ func classifyCloudTrail(detail gjson.Result, accountID string) []*resourceChange
 		}
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       true,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   trailARNBase.String(),
 				ResourceType: schemas.CloudTrailSchema,
 			},
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceType: schemas.CloudTrailSchema,
 			}}
 	default:
-		zap.L().Warn("cloudtrail: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("cloudtrail: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	// This will only happen when the name parameter is an ARN and also the resource exists in a
 	// different account than the account this event was logged in
-	if accountID != trailARNBase.AccountID {
+	if metadata.accountID != trailARNBase.AccountID {
 		zap.L().Info("cloudtrail: discarding resource from another account",
 			zap.String("ResourceID", trailARNBase.String()),
-			zap.String("AccountID", accountID))
+			zap.String("AccountID", metadata.accountID))
 		return nil
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
+		AwsAccountID: metadata.accountID,
 		Delete:       false,
-		EventName:    eventName,
+		EventName:    metadata.eventName,
 		ResourceID:   trailARNBase.String(),
 		ResourceType: schemas.CloudTrailSchema,
 	}}

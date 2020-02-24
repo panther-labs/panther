@@ -28,18 +28,16 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyCloudFormation(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyCloudFormation(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscloudformation.html
-	if eventName == "DeleteChangeSet" ||
-		eventName == "CreateStackSet" ||
+	if metadata.eventName == "DeleteChangeSet" ||
+		metadata.eventName == "CreateStackSet" ||
 		// ExecuteChangeSet will make UpdateStack calls when the changes actually happen
-		eventName == "EstimateTemplateCost" ||
-		eventName == "ValidateTemplate" ||
-		strings.HasPrefix(eventName, "Detect") {
+		metadata.eventName == "EstimateTemplateCost" ||
+		metadata.eventName == "ValidateTemplate" ||
+		strings.HasPrefix(metadata.eventName, "Detect") {
 
-		zap.L().Debug("cloudformation: ignoring event", zap.String("eventName", eventName))
+		zap.L().Debug("cloudformation: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
@@ -48,17 +46,17 @@ func classifyCloudFormation(detail gjson.Result, accountID string) []*resourceCh
 		Partition: "aws",
 		Service:   "cloudformation",
 		Region:    region,
-		AccountID: accountID,
+		AccountID: metadata.accountID,
 		Resource:  "stack/",
 	}
 
-	switch eventName {
+	switch metadata.eventName {
 	case "CancelUpdateStack", "CreateChangeSet", "ContinueUpdateRollback", "DeleteStack", "SetStackPolicy", "UpdateStack", "ExecuteChangeSet":
 
 		// stackName can either be the stack name or the stack ARN
 		stackName := detail.Get("requestParameters.stackName").Str
 		if stackName == "" {
-			zap.L().Error("cloudformation: unable to process known event", zap.String("eventName", eventName))
+			zap.L().Error("cloudformation: unable to process known event", zap.String("eventName", metadata.eventName))
 			return nil
 		}
 
@@ -88,9 +86,9 @@ func classifyCloudFormation(detail gjson.Result, accountID string) []*resourceCh
 		// The UpdateTerminationProtection log in CloudTrail does not include the request parameters,
 		// so we must perform a region wide scan, I suspect an AWS bug. Ticket opened with support.
 		return []*resourceChange{{
-			AwsAccountID: accountID,
+			AwsAccountID: metadata.accountID,
 			Delete:       false,
-			EventName:    eventName,
+			EventName:    metadata.eventName,
 			Region:       region,
 			ResourceType: schemas.CloudFormationStackSchema,
 		}}
@@ -101,23 +99,23 @@ func classifyCloudFormation(detail gjson.Result, accountID string) []*resourceCh
 		// TODO: I believe every stack created by this also requires a CreateStack call, maybe we
 		// ignore this for now? research required.
 		return []*resourceChange{{
-			AwsAccountID: accountID,
+			AwsAccountID: metadata.accountID,
 			Delete:       false,
-			EventName:    eventName,
+			EventName:    metadata.eventName,
 			ResourceType: schemas.CloudFormationStackSchema,
 		}}
 	default:
-		zap.L().Warn("cloudformation: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("cloudformation: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
+		AwsAccountID: metadata.accountID,
 		// Give the stacks time to finish updating so the detect stack drift call doesn't get stuck
 		// for as long. Measured in seconds.
 		Delay:        120,
-		Delete:       eventName == "DeleteStack",
-		EventName:    eventName,
+		Delete:       metadata.eventName == "DeleteStack",
+		EventName:    metadata.eventName,
 		ResourceID:   stackARN.String(),
 		ResourceType: schemas.CloudFormationStackSchema,
 	}}
