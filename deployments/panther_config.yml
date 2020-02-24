@@ -86,4 +86,3 @@ PipLayer:
 # use the BulkUpload functionality from the web app to upload new or modified rule sets.
 InitialAnalysisSets:
   - https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
-
