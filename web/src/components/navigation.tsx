@@ -27,6 +27,7 @@ import {
   Label,
   MenuItem,
   Tooltip,
+  Text,
 } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link } from 'react-router-dom';
@@ -95,8 +96,15 @@ const Navigation = () => {
   return (
     <Flex is="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} minHeight="100vh">
       <Box width={72} height="100%" boxShadow="dark150">
-        <Flex justifyContent="center" py={8} m="auto">
-          <IconButton variant="primary" is={Link} to="/" mb={10}>
+        <Flex
+          justifyContent="center"
+          alignItems="center"
+          py={8}
+          m="auto"
+          flexDirection="column"
+          mb={10}
+        >
+          <IconButton variant="primary" is={Link} to="/">
             <img
               src={PantherIcon}
               alt="Panther logo"
@@ -105,6 +113,11 @@ const Navigation = () => {
               style={{ display: 'block' }}
             />
           </IconButton>
+          {process.env.PANTHER_VERSION && (
+            <Text color="primary300" size="small">
+              <b>{process.env.PANTHER_VERSION.split('-')[0]}</b>
+            </Text>
+          )}
         </Flex>
         <Flex flexDirection="column" justifyContent="center" alignItems="center" is="ul">
           <li>
