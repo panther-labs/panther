@@ -106,6 +106,7 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 			detail := gjson.Get(message, "detail")
 			if !detail.Exists() {
 				zap.L().Error("error extracting detail from SNS wrapped CloudTrail")
+				continue
 			}
 			err := handleCloudTrail(detail, changes)
 			if err != nil {
@@ -139,8 +140,7 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 func handleCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
 	metadata, err := preprocessCloudTrailLog(cloudtrail)
 	if err != nil {
-		zap.L().Error("error extracting metadata from CloudTrail", zap.Error(err))
-		return err
+		return errors.Wrap(err, "error extracting metadata from CloudTrail")
 	}
 	if metadata == nil {
 		return nil
