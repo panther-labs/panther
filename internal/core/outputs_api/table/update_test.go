@@ -44,63 +44,11 @@ var mockUpdateItemAlertOutput = &AlertOutputItem{
 	LastModifiedBy:     aws.String("lastModifiedBy"),
 	LastModifiedTime:   aws.String("lastModifiedTime"),
 	OutputType:         aws.String("outputType"),
-	VerificationStatus: aws.String("verificationStatus"),
 	DefaultForSeverity: aws.StringSlice([]string{"INFO", "WARN"}),
 	EncryptedConfig:    make([]byte, 1),
 }
 
 func TestUpdateOutput(t *testing.T) {
-	dynamoDBClient := &mockDynamoDB{}
-	table := &OutputsTable{client: dynamoDBClient, Name: aws.String("TableName")}
-
-	expectedUpdateExpression := expression.
-		Set(expression.Name("displayName"), expression.Value(mockUpdateItemAlertOutput.DisplayName)).
-		Set(expression.Name("lastModifiedBy"), expression.Value(mockUpdateItemAlertOutput.LastModifiedBy)).
-		Set(expression.Name("lastModifiedTime"), expression.Value(mockUpdateItemAlertOutput.LastModifiedTime)).
-		Set(expression.Name("outputType"), expression.Value(mockUpdateItemAlertOutput.OutputType)).
-		Set(expression.Name("encryptedConfig"), expression.Value(mockUpdateItemAlertOutput.EncryptedConfig)).
-		Set(expression.Name("defaultForSeverity"), expression.Value(mockUpdateItemAlertOutput.DefaultForSeverity)).
-		Set(expression.Name("verificationStatus"), expression.Value(mockUpdateItemAlertOutput.VerificationStatus))
-
-	expectedConditionExpression := expression.Name("outputId").Equal(expression.Value(mockUpdateItemAlertOutput.OutputID))
-
-	expectedExpression, _ := expression.NewBuilder().
-		WithCondition(expectedConditionExpression).
-		WithUpdate(expectedUpdateExpression).
-		Build()
-
-	expectedUpdateItemInput := &dynamodb.UpdateItemInput{
-		Key: DynamoItem{
-			"outputId": {S: aws.String("outputId")},
-		},
-		TableName:                 aws.String("TableName"),
-		UpdateExpression:          expectedExpression.Update(),
-		ConditionExpression:       expectedExpression.Condition(),
-		ExpressionAttributeNames:  expectedExpression.Names(),
-		ExpressionAttributeValues: expectedExpression.Values(),
-		ReturnValues:              aws.String(dynamodb.ReturnValueAllNew),
-	}
-	expectedResult := &AlertOutputItem{
-		OutputID: aws.String("outputId"),
-	}
-
-	dynamoDBClient.On("UpdateItem", expectedUpdateItemInput).Return(mockUpdateItemOutput, nil)
-	result, err := table.UpdateOutput(mockUpdateItemAlertOutput)
-	assert.NoError(t, err)
-	assert.Equal(t, expectedResult, result)
-	dynamoDBClient.AssertExpectations(t)
-}
-
-func TestUpdateOutputWithoutVerificationStatus(t *testing.T) {
-	var mockUpdateItemAlertOutput = &AlertOutputItem{
-		OutputID:         aws.String("outputId"),
-		DisplayName:      aws.String("displayName"),
-		LastModifiedBy:   aws.String("lastModifiedBy"),
-		LastModifiedTime: aws.String("lastModifiedTime"),
-		OutputType:       aws.String("outputType"),
-		EncryptedConfig:  make([]byte, 1),
-	}
-
 	dynamoDBClient := &mockDynamoDB{}
 	table := &OutputsTable{client: dynamoDBClient, Name: aws.String("TableName")}
 

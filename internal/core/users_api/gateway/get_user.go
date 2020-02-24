@@ -37,8 +37,6 @@ func mapGetUserOutputToPantherUser(u *provider.AdminGetUserOutput) *models.User 
 		switch *attribute.Name {
 		case "email":
 			user.Email = attribute.Value
-		case "phone_number":
-			user.PhoneNumber = attribute.Value
 		case "given_name":
 			user.GivenName = attribute.Value
 		case "family_name":
@@ -50,10 +48,10 @@ func mapGetUserOutputToPantherUser(u *provider.AdminGetUserOutput) *models.User 
 }
 
 // GetUser calls cognito api to get user info
-func (g *UsersGateway) GetUser(id *string, userPoolID *string) (*models.User, error) {
+func (g *UsersGateway) GetUser(id *string) (*models.User, error) {
 	user, err := g.userPoolClient.AdminGetUser(&provider.AdminGetUserInput{
 		Username:   id,
-		UserPoolId: userPoolID,
+		UserPoolId: &userPoolID,
 	})
 	if err != nil {
 		return nil, &genericapi.AWSError{Method: "cognito.AdminGetUser", Err: err}

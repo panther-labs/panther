@@ -32,8 +32,6 @@ import (
 type mockGatewayUpdateUserClient struct {
 	gateway.API
 	updateErr bool
-	listErr   bool
-	removeErr bool
 }
 
 func (m *mockGatewayUpdateUserClient) UpdateUser(*gateway.UpdateUserInput) error {
@@ -43,57 +41,20 @@ func (m *mockGatewayUpdateUserClient) UpdateUser(*gateway.UpdateUserInput) error
 	return nil
 }
 
-func (m *mockGatewayUpdateUserClient) ListGroupsForUser(*string, *string) ([]*models.Group, error) {
-	if m.listErr {
-		return nil, &genericapi.AWSError{}
-	}
-	return []*models.Group{
-		{
-			Name:        aws.String("Admins"),
-			Description: aws.String("Administrator of the group"),
-		},
-	}, nil
-}
-
-func (m *mockGatewayUpdateUserClient) RemoveUserFromGroup(*string, *string, *string) error {
-	if m.removeErr {
-		return &genericapi.AWSError{}
-	}
-	return nil
-}
-
-func (m *mockGatewayUpdateUserClient) AddUserToGroup(*string, *string) error {
-	if m.removeErr {
-		return &genericapi.AWSError{}
-	}
-	return nil
-}
-
 func TestUpdateUserGatewayErr(t *testing.T) {
 	userGateway = &mockGatewayUpdateUserClient{updateErr: true}
 	input := &models.UpdateUserInput{
-		GivenName:  aws.String("Richie"),
-		ID:         aws.String("user123"),
-		UserPoolID: aws.String("fakePoolId"),
+		GivenName: aws.String("Richie"),
+		ID:        aws.String("user123"),
 	}
 	assert.Error(t, (API{}).UpdateUser(input))
-}
-
-func TestUpdateUserChangeRole(t *testing.T) {
-	userGateway = &mockGatewayUpdateUserClient{}
-	input := &models.UpdateUserInput{
-		ID:         aws.String("user123"),
-		UserPoolID: aws.String("fakePoolId"),
-	}
-	assert.NoError(t, (API{}).UpdateUser(input))
 }
 
 func TestUpdateUserHandle(t *testing.T) {
 	userGateway = &mockGatewayUpdateUserClient{}
 	input := &models.UpdateUserInput{
-		GivenName:  aws.String("Richie"),
-		ID:         aws.String("user123"),
-		UserPoolID: aws.String("fakePoolId"),
+		GivenName: aws.String("Richie"),
+		ID:        aws.String("user123"),
 	}
 	assert.NoError(t, (API{}).UpdateUser(input))
 }

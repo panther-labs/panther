@@ -51,12 +51,6 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		}
 	}()
 
-	if aws.StringValue(output.VerificationStatus) != outputmodels.VerificationStatusSuccess {
-		zap.L().Warn("Output is not verified successfully. Will not send notification")
-		statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}
-		return
-	}
-
 	zap.L().Info(
 		"sending alert",
 		append(commonFields, zap.String("name", *output.DisplayName))...,
@@ -64,8 +58,6 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 
 	var alertDeliveryError *outputs.AlertDeliveryError
 	switch *output.OutputType {
-	case "email":
-		alertDeliveryError = outputClient.Email(alert, output.OutputConfig.Email)
 	case "slack":
 		alertDeliveryError = outputClient.Slack(alert, output.OutputConfig.Slack)
 	case "pagerduty":

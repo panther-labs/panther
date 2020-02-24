@@ -33,26 +33,22 @@ func TestUpdateUserNoFields(t *testing.T) {
 
 func TestUpdateUserBlankField(t *testing.T) {
 	assert.Error(t, Validator().Struct(&UpdateUserInput{
-		ID:         mockID,
-		GivenName:  aws.String(""),
-		UserPoolID: aws.String("fakePoolId"),
+		ID:        mockID,
+		GivenName: aws.String(""),
 	}))
 }
 
 func TestUpdateUserOneField(t *testing.T) {
 	assert.NoError(t, Validator().Struct(&UpdateUserInput{
-		ID:         mockID,
-		GivenName:  aws.String("panther"),
-		UserPoolID: aws.String("fakePoolId"),
+		ID:        mockID,
+		GivenName: aws.String("panther"),
 	}))
 }
 
 func TestUpdateUserAllFields(t *testing.T) {
 	assert.NoError(t, Validator().Struct(&UpdateUserInput{
-		ID:          mockID,
-		GivenName:   aws.String("given-name"),
-		FamilyName:  aws.String("family-name"),
-		PhoneNumber: aws.String("phone-num"),
-		UserPoolID:  aws.String("fakePoolId"),
+		ID:         mockID,
+		GivenName:  aws.String("given-name"),
+		FamilyName: aws.String("family-name"),
 	}))
 }

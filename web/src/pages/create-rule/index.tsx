@@ -24,10 +24,8 @@ import RuleForm from 'Components/forms/rule-form';
 import { GetRuleInput, RuleDetails } from 'Generated/schema';
 
 import { useMutation, gql } from '@apollo/client';
-import { DEFAULT_RULE_FUNCTION, READONLY_ROLES_ARRAY } from 'Source/constants';
+import { DEFAULT_RULE_FUNCTION } from 'Source/constants';
 import useCreateRule from 'Hooks/useCreateRule';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
-import Page403 from 'Pages/403';
 import { extractErrorMessage } from 'Helpers/utils';
 
 const initialValues: RuleDetails = {
@@ -84,24 +82,22 @@ const CreateRulePage: React.FC = () => {
   });
 
   return (
-    <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY} fallback={<Page403 />}>
-      <Box mb={10}>
-        <Panel size="large" title="Rule Settings">
-          <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
-        </Panel>
-        {error && (
-          <Alert
-            mt={2}
-            mb={6}
-            variant="error"
-            title={
-              extractErrorMessage(error) ||
-              'An unknown error occured as we were trying to create your rule'
-            }
-          />
-        )}
-      </Box>
-    </RoleRestrictedAccess>
+    <Box mb={10}>
+      <Panel size="large" title="Rule Settings">
+        <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
+      </Panel>
+      {error && (
+        <Alert
+          mt={2}
+          mb={6}
+          variant="error"
+          title={
+            extractErrorMessage(error) ||
+            'An unknown error occured as we were trying to create your rule'
+          }
+        />
+      )}
+    </Box>
   );
 };
 

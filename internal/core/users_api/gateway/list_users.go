@@ -43,8 +43,6 @@ func mapCognitoUserTypeToUser(u *provider.UserType) *models.User {
 		switch *attribute.Name {
 		case "email":
 			user.Email = attribute.Value
-		case "phone_number":
-			user.PhoneNumber = attribute.Value
 		case "given_name":
 			user.GivenName = attribute.Value
 		case "family_name":
@@ -56,11 +54,11 @@ func mapCognitoUserTypeToUser(u *provider.UserType) *models.User {
 }
 
 // ListUsers calls cognito api to list users that belongs to a user pool
-func (g *UsersGateway) ListUsers(limit *int64, paginationToken *string, userPoolID *string) (*ListUsersOutput, error) {
+func (g *UsersGateway) ListUsers(limit *int64, paginationToken *string) (*ListUsersOutput, error) {
 	usersOutput, err := g.userPoolClient.ListUsers(&provider.ListUsersInput{
 		Limit:           limit,
 		PaginationToken: paginationToken,
-		UserPoolId:      userPoolID,
+		UserPoolId:      &userPoolID,
 	})
 	if err != nil {
 		return nil, &genericapi.AWSError{Method: "cognito.ListUsers", Err: err}

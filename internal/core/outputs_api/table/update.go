@@ -38,10 +38,6 @@ func (table *OutputsTable) UpdateOutput(alertOutput *AlertOutputItem) (*AlertOut
 		Set(expression.Name("encryptedConfig"), expression.Value(alertOutput.EncryptedConfig)).
 		Set(expression.Name("defaultForSeverity"), expression.Value(alertOutput.DefaultForSeverity))
 
-	if alertOutput.VerificationStatus != nil {
-		updateExpression.Set(expression.Name("verificationStatus"), expression.Value(alertOutput.VerificationStatus))
-	}
-
 	conditionExpression := expression.Name("outputId").Equal(expression.Value(alertOutput.OutputID))
 	combinedExpression, err := expression.NewBuilder().
 		WithCondition(conditionExpression).

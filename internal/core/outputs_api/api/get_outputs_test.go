@@ -40,7 +40,6 @@ var alertOutputItem = &table.AlertOutputItem{
 	LastModifiedBy:     aws.String("lastModifiedBy"),
 	LastModifiedTime:   aws.String("lastModifiedTime"),
 	OutputType:         aws.String("slack"),
-	VerificationStatus: aws.String(models.VerificationStatusSuccess),
 	EncryptedConfig:    make([]byte, 1),
 	DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
 }
@@ -50,8 +49,6 @@ func TestGetOutputs(t *testing.T) {
 	outputsTable = mockOutputsTable
 	mockEncryptionKey := new(mockEncryptionKey)
 	encryptionKey = mockEncryptionKey
-	mockOutputVerification := &mockOutputVerification{}
-	outputVerification = mockOutputVerification
 
 	mockOutputsTable.On("GetOutputs").Return([]*table.AlertOutputItem{alertOutputItem}, nil)
 	mockEncryptionKey.On("DecryptConfig", make([]byte, 1), mock.Anything).Return(nil)
@@ -64,7 +61,6 @@ func TestGetOutputs(t *testing.T) {
 		DisplayName:        aws.String("displayName"),
 		LastModifiedBy:     aws.String("lastModifiedBy"),
 		LastModifiedTime:   aws.String("lastModifiedTime"),
-		VerificationStatus: aws.String(models.VerificationStatusSuccess),
 		OutputConfig:       &models.OutputConfig{},
 		DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
 	}

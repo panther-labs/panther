@@ -30,26 +30,10 @@ type MockCognitoClient struct {
 	mock.Mock
 }
 
-// AdminAddUserToGroup mocks AdminAddUserToGroup for testing
-func (m *MockCognitoClient) AdminAddUserToGroup(
-	input *provider.AdminAddUserToGroupInput) (*provider.AdminAddUserToGroupOutput, error) {
-
-	args := m.Called(input)
-	return args.Get(0).(*provider.AdminAddUserToGroupOutput), args.Error(1)
-}
-
 // AdminCreateUser mocks AdminCreateUser for testing
 func (m *MockCognitoClient) AdminCreateUser(
 	input *provider.AdminCreateUserInput) (*provider.AdminCreateUserOutput, error) {
 
 	args := m.Called(input)
 	return args.Get(0).(*provider.AdminCreateUserOutput), args.Error(1)
-}
-
-// CreateGroup mocks CreateGroup for testing
-func (m *MockCognitoClient) CreateGroup(
-	input *provider.CreateGroupInput) (*provider.CreateGroupOutput, error) {
-
-	args := m.Called(input)
-	return args.Get(0).(*provider.CreateGroupOutput), args.Error(1)
 }
