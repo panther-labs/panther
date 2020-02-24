@@ -20,6 +20,11 @@ package outputs
 
 import "github.com/stretchr/testify/mock"
 
+func init() {
+	policyURLPrefix = "https://panther.io/policies/"
+	alertURLPrefix = "https://panther.io/alerts/"
+}
+
 type mockHTTPWrapper struct {
 	HTTPWrapper
 	mock.Mock

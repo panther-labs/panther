@@ -20,12 +20,10 @@ import React from 'react';
 import { Button, ButtonProps, useSnackbar } from 'pouncejs';
 import { useMutation, gql } from '@apollo/client';
 
-import { READONLY_ROLES_ARRAY } from 'Source/constants';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { RESOURCE_DETAILS } from 'Pages/resource-details';
 import { POLICY_DETAILS } from 'Pages/policy-details';
 import { ResourceDetails, RemediateResourceInput, PolicyDetails } from 'Generated/schema';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
 import { extractErrorMessage } from 'Helpers/utils';
 
 interface RemediationButtonProps {
@@ -83,20 +81,18 @@ const RemediationButton: React.FC<RemediationButtonProps> = ({
   }, [remediationSuccess]);
 
   return (
-    <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY}>
-      <Button
-        size="small"
-        variant={buttonVariant}
-        onClick={e => {
-          // Table row is clickable, we don't want to navigate away
-          e.stopPropagation();
-          remediateResource();
-        }}
-        disabled={remediationInProgress}
-      >
-        Remediate
-      </Button>
-    </RoleRestrictedAccess>
+    <Button
+      size="small"
+      variant={buttonVariant}
+      onClick={e => {
+        // Table row is clickable, we don't want to navigate away
+        e.stopPropagation();
+        remediateResource();
+      }}
+      disabled={remediationInProgress}
+    >
+      Remediate
+    </Button>
   );
 };
 

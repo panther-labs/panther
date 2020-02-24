@@ -157,4 +157,4 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
   );
 };
 
-export default PrimaryPageLayout;
+export default React.memo(PrimaryPageLayout);

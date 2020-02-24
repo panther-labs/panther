@@ -18,8 +18,8 @@
 
 /* eslint-disable react/display-name */
 import React from 'react';
-import { Card, Flex, Alert } from 'pouncejs';
-import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX, ADMIN_ROLES_ARRAY } from 'Source/constants';
+import { Card, Flex, Alert, Box } from 'pouncejs';
+import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import Wizard from 'Components/wizard';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -28,8 +28,6 @@ import { LIST_INFRA_SOURCES } from 'Pages/list-compliance-sources/subcomponents/
 import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
-import Page404 from 'Pages/404';
 import { AddIntegrationInput, Integration } from 'Generated/schema';
 import WizardPanelWrapper from 'Components/wizard-panel-wrapper';
 import RemediationPanel from './subcomponents/remediation-panel';
@@ -99,7 +97,7 @@ const Index: React.FC = () => {
   });
 
   return (
-    <RoleRestrictedAccess allowedRoles={ADMIN_ROLES_ARRAY} fallback={<Page404 />}>
+    <Box>
       {error && (
         <Alert
           variant="error"
@@ -204,7 +202,7 @@ const Index: React.FC = () => {
           )}
         </Formik>
       </Card>
-    </RoleRestrictedAccess>
+    </Box>
   );
 };
 

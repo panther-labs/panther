@@ -185,9 +185,7 @@ Resources:
                 - dynamodb:Scan
               Resource:
                 - !GetAtt AlertsTable.Arn
-                - !Sub
-                  - '${TableArn}/index/*'
-                  - { TableArn: !GetAtt AlertsTable.Arn }
+                - !Sub '${AlertsTable.Arn}/index/*'
         - Id: InvokeGatewayApi
           Version: 2012-10-17
           Statement:

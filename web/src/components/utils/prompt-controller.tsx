@@ -18,14 +18,14 @@
 
 import React from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { Organization } from 'Generated/schema';
+import { GeneralSettings } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
 
 // We are intentionally over-fetching, in order to proactively add this data to the cache
-const GET_ORGANIZATION_ERROR_REPORTING_CONSENT = gql`
-  query GetOrganizationErrorReportingConsent {
-    organization {
+const GET_ERROR_REPORTING_CONSENT = gql`
+  query GetErrorReportingConsent {
+    generalSettings {
       displayName
       email
       errorReportingConsent
@@ -34,15 +34,15 @@ const GET_ORGANIZATION_ERROR_REPORTING_CONSENT = gql`
 `;
 
 interface ApolloQueryData {
-  organization: Organization;
+  generalSettings: GeneralSettings;
 }
 
 const PromptController: React.FC = () => {
   const { showModal } = useModal();
-  const { data } = useQuery<ApolloQueryData>(GET_ORGANIZATION_ERROR_REPORTING_CONSENT);
+  const { data } = useQuery<ApolloQueryData>(GET_ERROR_REPORTING_CONSENT);
 
   React.useEffect(() => {
-    if (data?.organization.errorReportingConsent === null) {
+    if (data?.generalSettings.errorReportingConsent === null) {
       showModal({ modal: MODALS.ANALYTICS_CONSENT });
     }
   }, [data]);

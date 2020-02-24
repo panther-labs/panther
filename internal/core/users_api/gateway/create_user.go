@@ -29,11 +29,9 @@ import (
 
 // CreateUserInput is input for CreateUser request
 type CreateUserInput struct {
-	GivenName   *string `json:"givenName"`
-	FamilyName  *string `json:"familyName"`
-	Email       *string `json:"email"`
-	PhoneNumber *string `json:"phoneNumber"`
-	UserPoolID  *string `json:"userPoolId"`
+	GivenName  *string `json:"givenName"`
+	FamilyName *string `json:"familyName"`
+	Email      *string `json:"email"`
 }
 
 // Create a AdminCreateUserInput from the CreateUserInput.
@@ -63,13 +61,6 @@ func (g *UsersGateway) cognitoInputFromAPIInput(
 		})
 	}
 
-	if input.PhoneNumber != nil {
-		userAttrs = append(userAttrs, &provider.AttributeType{
-			Name:  aws.String("phone_number"),
-			Value: input.PhoneNumber,
-		})
-	}
-
 	userAttrs = append(userAttrs, &provider.AttributeType{
 		Name:  aws.String("email_verified"),
 		Value: aws.String("true"),
@@ -80,7 +71,7 @@ func (g *UsersGateway) cognitoInputFromAPIInput(
 		ForceAliasCreation:     aws.Bool(false),                // todo: Get from os environment or configuration database
 		UserAttributes:         userAttrs,
 		Username:               lowercaseEmail,
-		UserPoolId:             input.UserPoolID,
+		UserPoolId:             &userPoolID,
 	}
 }
 

@@ -23,12 +23,11 @@ import { capitalize, formatDatetime } from 'Helpers/utils';
 import Panel from 'Components/panel';
 import Linkify from 'Components/linkify';
 import { ComplianceStatusEnum, PolicyDetails } from 'Generated/schema';
-import { READONLY_ROLES_ARRAY, SEVERITY_COLOR_MAP } from 'Source/constants';
+import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import urls from 'Source/urls';
 import JsonViewer from 'Components/json-viewer';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
 
 interface ResourceDetailsInfoProps {
   policy?: PolicyDetails;
@@ -42,32 +41,30 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
       size="large"
       title="Policy Details"
       actions={
-        <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY}>
-          <Box>
-            <Button
-              size="large"
-              variant="default"
-              mr={4}
-              is={Link}
-              to={urls.compliance.policies.edit(policy.id)}
-            >
-              Edit
-            </Button>
-            <Button
-              size="large"
-              variant="default"
-              color="red300"
-              onClick={() =>
-                showModal({
-                  modal: MODALS.DELETE_POLICY,
-                  props: { policy },
-                })
-              }
-            >
-              Delete
-            </Button>
-          </Box>
-        </RoleRestrictedAccess>
+        <Box>
+          <Button
+            size="large"
+            variant="default"
+            mr={4}
+            is={Link}
+            to={urls.compliance.policies.edit(policy.id)}
+          >
+            Edit
+          </Button>
+          <Button
+            size="large"
+            variant="default"
+            color="red300"
+            onClick={() =>
+              showModal({
+                modal: MODALS.DELETE_POLICY,
+                props: { policy },
+              })
+            }
+          >
+            Delete
+          </Button>
+        </Box>
       }
     >
       <Grid gridTemplateColumns="repeat(3, 1fr)" gridGap={6}>

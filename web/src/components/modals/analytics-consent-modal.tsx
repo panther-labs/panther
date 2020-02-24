@@ -18,57 +18,43 @@
 
 import React from 'react';
 import { Modal, Text, Box, useSnackbar, Alert } from 'pouncejs';
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { gql, useMutation } from '@apollo/client';
 import useModal from 'Hooks/useModal';
 import AnalyticsConsentForm from 'Components/forms/analytics-consent-form';
 import { extractErrorMessage } from 'Helpers/utils';
-import { Organization, UpdateOrganizationInput } from 'Generated/schema';
+import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 
-const UPDATE_ORGANIZATION = gql`
-  mutation UpdateCompanyDetails($input: UpdateOrganizationInput!) {
-    updateOrganization(input: $input) {
+const UPDATE_GENERAL_SETTINGS = gql`
+  mutation UpdateGeneralSettingsConsents($input: UpdateGeneralSettingsInput!) {
+    updateGeneralSettings(input: $input) {
       email
       errorReportingConsent
     }
   }
 `;
 
-const GET_ORGANIZATION = gql`
-  query GetOrganizationDetails {
-    organization {
-      displayName
-      email
-    }
-  }
-`;
-
 interface ApolloMutationInput {
-  input: Pick<UpdateOrganizationInput, 'errorReportingConsent' | 'displayName' | 'email'>;
+  input: Pick<UpdateGeneralSettingsInput, 'errorReportingConsent'>;
 }
 
 interface ApolloMutationData {
-  updateOrganization: Pick<Organization, 'errorReportingConsent' | 'displayName' | 'email'>;
-}
-
-interface ApolloQueryData {
-  organization: Organization;
+  updateGeneralSettings: Pick<GeneralSettings, 'errorReportingConsent' | 'email'>;
 }
 
 const AnalyticsConsentModal: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { hideModal } = useModal();
-  const [saveConsentPreferences, { data: updateOrganizationData, error }] = useMutation<
+  const [saveConsentPreferences, { data, error }] = useMutation<
     ApolloMutationData,
     ApolloMutationInput
-  >(UPDATE_ORGANIZATION);
-  const { data: getOrganizationData } = useQuery<ApolloQueryData>(GET_ORGANIZATION);
+  >(UPDATE_GENERAL_SETTINGS);
 
   React.useEffect(() => {
-    if (updateOrganizationData) {
+    if (data) {
       pushSnackbar({ variant: 'success', title: `Successfully updated your preferences` });
       hideModal();
     }
-  }, [updateOrganizationData]);
+  }, [data]);
 
   return (
     <Modal
@@ -94,11 +80,7 @@ const AnalyticsConsentModal: React.FC = () => {
             onSubmit={values =>
               saveConsentPreferences({
                 variables: {
-                  input: {
-                    displayName: getOrganizationData.organization.displayName,
-                    email: getOrganizationData.organization.email,
-                    ...values,
-                  },
+                  input: values,
                 },
               })
             }

@@ -37,7 +37,7 @@ func Validator() (*validator.Validate, error) {
 	return result, nil
 }
 
-var outputTypes = []string{"Slack", "Sns", "Email", "PagerDuty", "Github", "Jira", "Opsgenie", "MsTeams", "Sqs", "Asana"}
+var outputTypes = []string{"Slack", "Sns", "PagerDuty", "Github", "Jira", "Opsgenie", "MsTeams", "Sqs", "Asana"}
 
 func ensureOneOutput(sl validator.StructLevel) {
 	input := sl.Current()
