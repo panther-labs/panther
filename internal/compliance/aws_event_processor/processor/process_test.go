@@ -60,14 +60,23 @@ func TestPreProcessCloudTrailFail(t *testing.T) {
 	assert.Nil(t, actual)
 }
 
+// drop event if its read-only
+func TestPreProcessIgnoredEvent(t *testing.T) {
+	event := `{ "userIdentity": { "accountId" : "111111111111" }, "eventName": "ListBuckets" }`
+	metadata, err := preprocessCloudTrailLog(
+		gjson.Parse(event),
+	)
+
+	require.Nil(t, err)
+	assert.Nil(t, metadata)
+}
+
 // drop event if the source is not supported
-func TestClassifyCloudWatchEventBadSource(t *testing.T) {
+func TestProcessCloudTrailBadSource(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	require.Nil(t, processCloudTrailLog(
-		gjson.Parse(`{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`),
-		exampleMetadata,
-		exampleChanges()))
+	event := `{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`
+	require.Nil(t, processCloudTrailLog(gjson.Parse(event), exampleMetadata, exampleChanges()))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -79,14 +88,11 @@ func TestClassifyCloudWatchEventBadSource(t *testing.T) {
 }
 
 // drop event if it describes a failed API call
-func TestClassifyCloudWatchEventErrorCode(t *testing.T) {
+func TestProcessCloudTrailErrorCode(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	require.Nil(t, processCloudTrailLog(
-		gjson.Parse(`{"errorCode": "AccessDeniedException", "eventSource": "s3.amazonaws.com"}`),
-		exampleMetadata,
-		exampleChanges(),
-	))
+	event := `{"errorCode": "AccessDeniedException", "eventSource": "s3.amazonaws.com"}`
+	require.Nil(t, processCloudTrailLog(gjson.Parse(event), exampleMetadata, exampleChanges()))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -100,45 +106,22 @@ func TestClassifyCloudWatchEventErrorCode(t *testing.T) {
 	assert.Equal(t, expected, logs.AllUntimed())
 }
 
-// drop event if its read-only
-func TestClassifyCloudWatchEventReadOnly(t *testing.T) {
-	logs := mockLogger()
-	accounts = exampleAccounts
-	require.Nil(t, processCloudTrailLog(
-		gjson.Parse(`{"eventName": "ListBuckets", "eventSource": "s3.amazonaws.com"}`), &CloudTrailMetadata{
-			region:    "us-west-2",
-			accountID: "111111111111",
-			eventName: "ListBuckets",
-		},
-		exampleChanges()))
-
-	expected := []observer.LoggedEntry{
-		{
-			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "s3.amazonaws.com: ignoring read-only event"},
-			Context: []zapcore.Field{zap.String("eventName", "ListBuckets")},
-		},
-	}
-	assert.Equal(t, expected, logs.AllUntimed())
-}
-
 // drop event if the service classifier doesn't understand it
-func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
+func TestProcessCloudTrailClassifyError(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	body :=
-		gjson.Parse(`{
-				"eventName": "DeleteBucket",
-				"recipientAccountId": "111111111111",
-				"eventSource":"s3.amazonaws.com"
-			}`)
-	require.Nil(t, processCloudTrailLog(
-		body,
-		&CloudTrailMetadata{
-			region:    "us-west-2",
-			accountID: "111111111111",
-			eventName: "DeleteBucket",
-		},
-		exampleChanges()))
+	event := `
+{
+"eventName": "DeleteBucket",
+"recipientAccountId": "111111111111",
+"eventSource":"s3.amazonaws.com"
+}`
+	metadata := &CloudTrailMetadata{
+		region:    "us-west-2",
+		accountID: "111111111111",
+		eventName: "DeleteBucket",
+	}
+	require.Nil(t, processCloudTrailLog(gjson.Parse(event), metadata, exampleChanges()))
 
 	expected := []observer.LoggedEntry{
 		{
@@ -152,25 +135,24 @@ func TestClassifyCloudWatchEventClassifyError(t *testing.T) {
 }
 
 // drop event if the account ID is not recognized
-func TestClassifyCloudWatchEventUnauthorized(t *testing.T) {
+func TestProcessCloudTrailUnauthorized(t *testing.T) {
 	accounts = exampleAccounts
-	body := gjson.Parse(`{"eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`)
-	err := processCloudTrailLog(
-		body,
-		&CloudTrailMetadata{
-			region:    "us-west-2",
-			accountID: "222222222222",
-			eventName: "Example",
-		},
-		exampleChanges())
+	event := `{"eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`
+	metadata := &CloudTrailMetadata{
+		region:    "us-west-2",
+		accountID: "222222222222",
+		eventName: "Example",
+	}
+	err := processCloudTrailLog(gjson.Parse(event), metadata, exampleChanges())
+
 	require.NotNil(t, err)
 	assert.Equal(t, errors.New("dropping event from unauthorized account 222222222222").Error(), err.Error())
 }
 
-func TestClassifyCloudWatchEvent(t *testing.T) {
+func TestProcessCloudTrail(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	body := gjson.Parse(`
+	event := `
 	{
 		"recipientAccountId": "111111111111",
     	"eventSource": "s3.amazonaws.com",
@@ -179,13 +161,15 @@ func TestClassifyCloudWatchEvent(t *testing.T) {
         "eventTime": "2019-08-01T04:43:00Z",
         "requestParameters": {"bucketName": "panther"},
 		"userIdentity": {"accountId": "111111111111"}
-    }`)
+    }`
 	metadata := &CloudTrailMetadata{
 		region:    "us-west-2",
 		accountID: "111111111111",
 		eventName: "DeleteBucket",
 	}
 	changeResults := exampleChanges()
+	err := processCloudTrailLog(gjson.Parse(event), metadata, changeResults)
+
 	expected := &resourceChange{
 		AwsAccountID:  "111111111111",
 		Delete:        true,
@@ -203,8 +187,6 @@ func TestClassifyCloudWatchEvent(t *testing.T) {
 			},
 		},
 	}
-
-	err := processCloudTrailLog(body, metadata, changeResults)
 	require.Nil(t, err)
 	assert.Equal(t, expected, changeResults[expected.ResourceID+expected.ResourceType+expected.Region])
 	assert.Equal(t, expectedLogs, logs.AllUntimed())

@@ -30,23 +30,11 @@ import (
 
 func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_elasticloadbalancingv2.html
-	if metadata.eventName == "DeleteTargetGroup" ||
-		metadata.eventName == "CreateTargetGroup" ||
-		metadata.eventName == "ModifyTargetGroup" ||
-		metadata.eventName == "ModifyTargetGroupAttributes" ||
-		metadata.eventName == "RegisterTargets" ||
-		metadata.eventName == "DeregisterTargets" {
-
-		zap.L().Debug("elbv2: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	var parseErr error
-	region := detail.Get("awsRegion").Str
 	lbARN := arn.ARN{
 		Partition: "aws",
 		Service:   "elasticloadbalancing",
-		Region:    region,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 	}
 

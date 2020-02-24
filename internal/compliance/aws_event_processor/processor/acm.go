@@ -27,13 +27,6 @@ import (
 
 func classifyACM(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscertificatemanager.html
-	if metadata.eventName == "ExportCertificate" ||
-		metadata.eventName == "ResendValidationEmail" {
-
-		zap.L().Debug("acm: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	var certARN string
 	switch metadata.eventName {
 	case "AddTagsToCertificate", "DeleteCertificate", "RemoveTags", "RenewCertificate", "UpdateCertificateOptions",

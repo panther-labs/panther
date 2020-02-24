@@ -30,12 +30,12 @@ import (
 
 func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonec2.html
-	region := detail.Get("awsRegion").Str
+
 	// arn:aws:ec2:region:account-id:resource-type/resource-id
 	ec2ARN := arn.ARN{
 		Partition: "aws",
 		Service:   "ec2",
-		Region:    region,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 	}
 
@@ -295,7 +295,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 				EventName:    metadata.eventName,
 				ResourceID: strings.Join([]string{
 					"arn:aws:ec2",
-					region,
+					metadata.region,
 					detail.Get("responseElements.ownerId").Str,
 					"instance/" + instance.Get("instanceId").Str,
 				}, ":"),
@@ -316,7 +316,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
 			EventName:    metadata.eventName,
-			Region:       region,
+			Region:       metadata.region,
 			ResourceType: ec2Type,
 		}}
 	case "DisassociateRouteTable", "AssociateRouteTable", "DeleteRouteTable", "ReplaceRoute", "CreateRoute",
@@ -332,7 +332,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
 			EventName:    metadata.eventName,
-			Region:       region,
+			Region:       metadata.region,
 			ResourceType: aws.Ec2VpcSchema,
 		}}
 	case "DeleteSnapshot", "ModifySnapshotAttribute":
@@ -341,7 +341,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
 			EventName:    metadata.eventName,
-			Region:       region,
+			Region:       metadata.region,
 			ResourceType: aws.Ec2VolumeSchema,
 		}}
 	case "DetachNetworkInterface":
@@ -350,7 +350,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
 			EventName:    metadata.eventName,
-			Region:       region,
+			Region:       metadata.region,
 			ResourceType: aws.Ec2InstanceSchema,
 		}}
 	case "ReplaceIamInstanceProfileAssociation":
@@ -366,7 +366,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 				AwsAccountID: ec2ARN.AccountID,
 				Delete:       false,
 				EventName:    metadata.eventName,
-				Region:       region,
+				Region:       metadata.region,
 				ResourceType: aws.Ec2VpcSchema,
 			}}
 		}

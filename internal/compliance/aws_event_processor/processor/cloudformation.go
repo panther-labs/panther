@@ -19,8 +19,6 @@ package processor
  */
 
 import (
-	"strings"
-
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
@@ -30,22 +28,10 @@ import (
 
 func classifyCloudFormation(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscloudformation.html
-	if metadata.eventName == "DeleteChangeSet" ||
-		metadata.eventName == "CreateStackSet" ||
-		// ExecuteChangeSet will make UpdateStack calls when the changes actually happen
-		metadata.eventName == "EstimateTemplateCost" ||
-		metadata.eventName == "ValidateTemplate" ||
-		strings.HasPrefix(metadata.eventName, "Detect") {
-
-		zap.L().Debug("cloudformation: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
-	region := detail.Get("awsRegion").Str
 	stackARN := arn.ARN{
 		Partition: "aws",
 		Service:   "cloudformation",
-		Region:    region,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 		Resource:  "stack/",
 	}
@@ -89,7 +75,7 @@ func classifyCloudFormation(detail gjson.Result, metadata *CloudTrailMetadata) [
 			AwsAccountID: metadata.accountID,
 			Delete:       false,
 			EventName:    metadata.eventName,
-			Region:       region,
+			Region:       metadata.region,
 			ResourceType: schemas.CloudFormationStackSchema,
 		}}
 	case "CreateStackInstances", "DeleteStackInstances":

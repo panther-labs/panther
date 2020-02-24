@@ -33,19 +33,10 @@ const lambdaNameRegex = `(arn:(aws[a-zA-Z-]*)?:lambda:)?([a-z]{2}(-gov)?-[a-z]+-
 
 func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awslambda.html
-	if metadata.eventName == "AddLayerVersionPermission" ||
-		metadata.eventName == "InvokeAsync" ||
-		metadata.eventName == "InvokeFunction" {
-
-		zap.L().Debug("lambda: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
-	region := detail.Get("awsRegion").Str
 	lambdaARN := arn.ARN{
 		Partition: "aws",
 		Service:   "lambda",
-		Region:    region,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 		Resource:  "function:",
 	}

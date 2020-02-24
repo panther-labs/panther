@@ -28,27 +28,10 @@ import (
 
 func classifyCloudWatchLogGroup(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazoncloudwatchlogs.html
-	if metadata.eventName == "CancelExportTask" ||
-		metadata.eventName == "CreateExportTask" ||
-		metadata.eventName == "PutDestination" ||
-		metadata.eventName == "PutDestinationPolicy" ||
-		metadata.eventName == "PutLogEvents" ||
-		metadata.eventName == "PutResourcePolicy" ||
-		metadata.eventName == "StartQuery" ||
-		metadata.eventName == "StopQuery" ||
-		metadata.eventName == "TestMetricFilter" ||
-		metadata.eventName == "CreateLogStream" ||
-		metadata.eventName == "FilterLogEvents" {
-
-		zap.L().Debug("loggroup: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
-	region := detail.Get("awsRegion").Str
 	logGroupARN := arn.ARN{
 		Partition: "aws",
 		Service:   "logs",
-		Region:    region,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 		Resource:  "log-group:",
 	}

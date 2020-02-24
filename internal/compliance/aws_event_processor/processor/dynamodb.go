@@ -28,24 +28,10 @@ import (
 
 func classifyDynamoDB(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazondynamodb.html
-	if metadata.eventName == "BatchGetItem" ||
-		metadata.eventName == "ConditionCheckItem" ||
-		metadata.eventName == "DeleteBackup" ||
-		metadata.eventName == "DeleteItem" ||
-		metadata.eventName == "PutItem" ||
-		metadata.eventName == "Query" ||
-		metadata.eventName == "Scan" ||
-		metadata.eventName == "UpdateItem" ||
-		metadata.eventName == "BatchWriteItem" {
-
-		zap.L().Debug("dynamodb: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	dynamoARN := arn.ARN{
 		Partition: "aws",
 		Service:   "dynamodb",
-		Region:    detail.Get("awsRegion").Str,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 		Resource:  "table/",
 	}

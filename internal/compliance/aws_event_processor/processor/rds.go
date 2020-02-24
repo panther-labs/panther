@@ -34,34 +34,17 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		strings.HasSuffix(metadata.eventName, "Subscription") || // 5 APIs
 		strings.HasSuffix(metadata.eventName, "OptionGroup") || // 4 APIs
 		strings.HasSuffix(metadata.eventName, "GlobalCluster") || // 4 APIs
-		strings.HasSuffix(metadata.eventName, "ClusterSnapshot") || // 3 APIs
-		metadata.eventName == "CreateDBClusterEndpoint" ||
-		metadata.eventName == "DeleteDBClusterEndpoint" ||
-		metadata.eventName == "CreateDBSecurityGroup" ||
-		metadata.eventName == "DeleteDBSecurityGroup" ||
-		metadata.eventName == "AuthorizeDBSecurityGroupIngress" ||
-		metadata.eventName == "DeleteDBSubnetGroup" ||
-		metadata.eventName == "DownloadDBLogFilePortion" ||
-		metadata.eventName == "ModifyCurrentDBClusterCapacity" ||
-		metadata.eventName == "ModifyDBClusterEndpoint" ||
-		metadata.eventName == "ModifyDBClusterSnapshotAttribute" ||
-		metadata.eventName == "RestoreDBClusterFromS3" ||
-		metadata.eventName == "RestoreDBClusterFromSnapshot" ||
-		metadata.eventName == "RestoreDBClusterToPointInTime" ||
-		metadata.eventName == "RevokeDBSecurityGroupIngress" ||
-		metadata.eventName == "StartActivityStream" ||
-		metadata.eventName == "StopActivityStream" {
+		strings.HasSuffix(metadata.eventName, "ClusterSnapshot") { // 3 APIs
 
 		zap.L().Debug("rds: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonrds.html
-	region := detail.Get("awsRegion").Str
 	rdsARN := arn.ARN{
 		Partition: "aws",
 		Service:   "rds",
-		Region:    region,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 		Resource:  "db:",
 	}
@@ -115,7 +98,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			ResourceID: arn.ARN{
 				Partition: "aws",
 				Service:   "ec2",
-				Region:    region,
+				Region:    metadata.region,
 				AccountID: metadata.accountID,
 				Resource:  "vpc/" + detail.Get("responseElements.dBSubnetGroup.vpcId").Str,
 			}.String(),
@@ -130,7 +113,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		return []*resourceChange{{
 			AwsAccountID: metadata.accountID,
 			EventName:    metadata.eventName,
-			Region:       region,
+			Region:       metadata.region,
 			ResourceType: schemas.RDSInstanceSchema,
 		}}
 	case "RestoreDBInstanceToPointInTime":

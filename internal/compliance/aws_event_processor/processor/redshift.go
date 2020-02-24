@@ -29,39 +29,15 @@ import (
 )
 
 func classifyRedshift(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
-	if metadata.eventName == "AcceptReservedNodeExchange" ||
-		metadata.eventName == "CreateClusterSecurityGroup" ||
-		metadata.eventName == "CreateHsmClientCertificate" ||
-		metadata.eventName == "CreateHsmConfiguration" ||
-		metadata.eventName == "DeleteClusterParameterGroup" ||
-		metadata.eventName == "DeleteClusterSecurityGroup" ||
-		metadata.eventName == "DeleteClusterSubnetGroup" ||
-		metadata.eventName == "DeleteEventSubscription" ||
-		metadata.eventName == "DeleteHsmClientCertificate" ||
-		metadata.eventName == "DeleteHsmConfiguration" ||
-		metadata.eventName == "DeleteSnapshotCopyGrant" ||
-		metadata.eventName == "DeleteSnapshotSchedule" ||
-		metadata.eventName == "ModifyClusterParameterGroup" ||
-		metadata.eventName == "ModifyClusterSubnetGroup" ||
-		metadata.eventName == "ResetClusterParameterGroup" ||
-		metadata.eventName == "RevokeClusterSecurityGroupIngress" ||
-		metadata.eventName == "CreateClusterParameterGroup" {
-
-		zap.L().Debug("redshift: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonredshift.html
-	region := detail.Get("awsRegion").Str
 	redshiftARN := arn.ARN{
 		Partition: "aws",
 		Service:   "redshift",
-		Region:    region,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 		Resource:  "cluster:",
 	}
 
-	// CreateClusterUser???
 	switch metadata.eventName {
 	case "AuthorizeSnapshotAccess", "CopyClusterSnapshot", "DeleteClusterSnapshot", "ModifyClusterSnapshot", "RevokeSnapshotAccess":
 		// If we add a cluster snapshot resource, this should be updated to include that as well
@@ -71,7 +47,7 @@ func classifyRedshift(detail gjson.Result, metadata *CloudTrailMetadata) []*reso
 		return []*resourceChange{{
 			AwsAccountID: metadata.accountID,
 			EventName:    metadata.eventName,
-			Region:       region,
+			Region:       metadata.region,
 			ResourceType: schemas.RedshiftClusterSchema,
 		}}
 	case "CancelResize", "CreateCluster", "CreateClusterSnapshot", "DeleteCluster", "DisableLogging", "DisableSnapshotCopy",
@@ -86,7 +62,7 @@ func classifyRedshift(detail gjson.Result, metadata *CloudTrailMetadata) []*reso
 			ResourceID: arn.ARN{
 				Partition: "aws",
 				Service:   "ec2",
-				Region:    region,
+				Region:    metadata.region,
 				AccountID: metadata.accountID,
 				Resource:  "vpc/" + detail.Get("responseElements.clusterSubnetGroup.vpcId").Str,
 			}.String(),

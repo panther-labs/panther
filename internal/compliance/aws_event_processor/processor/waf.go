@@ -44,10 +44,7 @@ func classifyWAF(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 	// All the API calls we don't care about (until we build resources for them)
 	if strings.HasSuffix(metadata.eventName, "Set") || // 11
 		strings.HasSuffix(metadata.eventName, "Rule") || // 6
-		strings.HasSuffix(metadata.eventName, "RuleGroup") || // 3
-		// Permission policies affect rule groups
-		metadata.eventName == "DeletePermissionPolicy" ||
-		metadata.eventName == "PutPermissionPolicy" {
+		strings.HasSuffix(metadata.eventName, "RuleGroup") { // 3
 
 		zap.L().Debug("waf: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil

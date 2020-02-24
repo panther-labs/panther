@@ -19,8 +19,6 @@ package processor
  */
 
 import (
-	"strings"
-
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
@@ -30,15 +28,10 @@ import (
 
 func classifyCloudTrail(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscloudtrail.html
-	if strings.HasPrefix(metadata.eventName, "Lookup") {
-		zap.L().Debug("cloudtrail: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	trailARNBase := arn.ARN{
 		Partition: "aws",
 		Service:   "cloudtrail",
-		Region:    detail.Get("awsRegion").Str,
+		Region:    metadata.region,
 		AccountID: metadata.accountID,
 	}
 	var err error

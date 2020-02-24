@@ -27,29 +27,8 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyGuardDuty(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
+func classifyGuardDuty(_ gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonguardduty.html
-	if metadata.eventName == "ArchiveFindings" ||
-		metadata.eventName == "CreateIPSet" ||
-		metadata.eventName == "CreateSampleFindings" ||
-		metadata.eventName == "CreateThreatIntelSet" ||
-		metadata.eventName == "DeclineInvitations" ||
-		metadata.eventName == "DeleteFilter" ||
-		metadata.eventName == "DeleteIPSet" ||
-		metadata.eventName == "DeleteInvitations" ||
-		metadata.eventName == "DeleteThreatIntelSet" ||
-		metadata.eventName == "InviteMembers" ||
-		metadata.eventName == "UnarchiveFindings" ||
-		metadata.eventName == "UpdateFilter" ||
-		metadata.eventName == "UpdateFindingsFeedback" ||
-		metadata.eventName == "UpdateIPSet" ||
-		metadata.eventName == "UpdateThreatIntelSet" ||
-		metadata.eventName == "CreateFilter" {
-
-		zap.L().Debug("guardduty: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	switch metadata.eventName {
 	case "TagResource", "UntagResource", "UpdateDetector":
 		// Single resource/region scan (only one detector can exist per region)
@@ -58,7 +37,7 @@ func classifyGuardDuty(detail gjson.Result, metadata *CloudTrailMetadata) []*res
 			EventName:    metadata.eventName,
 			ResourceID: strings.Join([]string{
 				metadata.accountID,
-				detail.Get("awsRegion").Str,
+				metadata.region,
 				schemas.GuardDutySchema,
 			}, ":"),
 			ResourceType: schemas.GuardDutySchema,
@@ -80,7 +59,7 @@ func classifyGuardDuty(detail gjson.Result, metadata *CloudTrailMetadata) []*res
 				EventName:    metadata.eventName,
 				ResourceID: strings.Join([]string{
 					metadata.accountID,
-					detail.Get("awsRegion").Str,
+					metadata.region,
 					schemas.GuardDutySchema,
 				}, ":"),
 				ResourceType: schemas.GuardDutySchema,

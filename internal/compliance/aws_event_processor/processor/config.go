@@ -27,33 +27,9 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyConfig(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
+func classifyConfig(_ gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// We need to add more config resources, just a config recorder is too high level
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awsconfig.html
-	if metadata.eventName == "PutAggregationAuthorization" ||
-		metadata.eventName == "PutConfigurationAggregator" ||
-		metadata.eventName == "PutDeliveryChannel" ||
-		metadata.eventName == "PutEvaluations" ||
-		metadata.eventName == "PutRemediationConfigurations" ||
-		metadata.eventName == "PutRetentionConfiguration" ||
-		metadata.eventName == "StartRemediationExecution" ||
-		metadata.eventName == "TagResource" ||
-		metadata.eventName == "UntagResource" ||
-		metadata.eventName == "DeleteDeliveryChannel" ||
-		metadata.eventName == "DeleteEvaluationResults" ||
-		metadata.eventName == "DeletePendingAggregationRequest" ||
-		metadata.eventName == "DeleteRemediationConfiguration" ||
-		metadata.eventName == "DeleteRetentionConfiguration" ||
-		metadata.eventName == "DeliverConfigSnapshot" ||
-		metadata.eventName == "DeleteAggregationAuthorization" ||
-		metadata.eventName == "DeleteConfigRule" ||
-		metadata.eventName == "DeleteConfigurationAggregator" ||
-		metadata.eventName == "PutConfigRule" {
-
-		zap.L().Debug("config: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	switch metadata.eventName {
 	case "StartConfigRulesEvaluation", "StartConfigurationRecorder", "StopConfigurationRecorder":
 		// This case handles when a recorder is updated in a way that does not require a full account
@@ -63,7 +39,7 @@ func classifyConfig(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 			EventName:    metadata.eventName,
 			ResourceID: strings.Join([]string{
 				metadata.accountID,
-				detail.Get("awsRegion").Str,
+				metadata.region,
 				schemas.ConfigServiceSchema,
 			}, ":"),
 			ResourceType: schemas.ConfigServiceSchema,
@@ -85,7 +61,7 @@ func classifyConfig(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 				EventName:    metadata.eventName,
 				ResourceID: strings.Join([]string{
 					metadata.accountID,
-					detail.Get("awsRegion").Str,
+					metadata.region,
 					schemas.ConfigServiceSchema,
 				}, ":"),
 				ResourceType: schemas.ConfigServiceSchema,

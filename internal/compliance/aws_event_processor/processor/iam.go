@@ -30,17 +30,6 @@ const rootUserName = "AWS ROOT USER"
 
 func classifyIAM(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_identityandaccessmanagement.html
-	if metadata.eventName == "ChangePassword" ||
-		metadata.eventName == "ResetServiceSpecificCredential" ||
-		metadata.eventName == "GenerateCredentialReport" ||
-		metadata.eventName == "CreateVirtualMFADevice" || // MFA device creation/deletion is not related to
-		metadata.eventName == "DeleteVirtualMFADevice" || // users. See (Enable/Disable)MFADevice for that.
-		metadata.eventName == "CreateInstanceProfile" {
-
-		zap.L().Debug("iam: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	var resourceType string
 	var err error
 	resourceDelete := false
@@ -171,7 +160,7 @@ func classifyIAM(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		// credentials for an account that has no other users.
 		iamARN, err = arn.Parse(detail.Get("userIdentity.arn").Str)
 
-		// Error check here because we are about the use iamARN
+		// Error check here because we are about to use the iamARN
 		if err != nil {
 			zap.L().Error("iam: error handling iam user event", zap.String("eventName", metadata.eventName), zap.Error(err))
 			return nil
@@ -231,7 +220,7 @@ func classifyIAM(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		resourceType = aws.IAMRoleSchema
 		iamARN.Resource = "role/" + detail.Get("requestParameters.roleName").Str
 	case "UpdateGroup":
-		// Special case cause the name could change, thus changing the ARN. We handle this by creating
+		// Special case because the name could change, thus changing the ARN. We handle this by creating
 		// a new group resource, and allowing the old one to eventually time out
 		resourceType = aws.IAMGroupSchema
 		newName := detail.Get("requestParameters.newGroupName").Str

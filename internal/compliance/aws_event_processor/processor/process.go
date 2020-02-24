@@ -65,14 +65,185 @@ var (
 		"waf-regional.amazonaws.com":         classifyWAFRegional,
 	}
 
-	// These events may have blank/empty userIdentity fields, so we cannot process them.
-	// Luckily, we can just skip them since they are all related to authentication and so won't be changing resources.
-	eventsWithoutAccountID = map[string]struct{}{
+	ignoredEvents = map[string]struct{}{
+		// acm
+		"ExportCertificate":     {},
+		"ResendValidationEmail": {},
+
+		// cloudformation
+		"DeleteChangeSet":          {},
+		"DetectStackDrift":         {},
+		"DetectStackResourceDrift": {},
+		"DetectStackSetDrift":      {},
+		"CreateStackSet":           {},
+		"EstimateTemplateCost":     {},
+		"ValidateTemplate":         {},
+
+		// cloudtrail
+		"LookupEvents": {},
+
+		// cloudwatch log group
+		"CancelExportTask":     {},
+		"CreateExportTask":     {},
+		"PutDestination":       {},
+		"PutDestinationPolicy": {},
+		"PutLogEvents":         {},
+		"PutResourcePolicy":    {},
+		"StartQuery":           {},
+		"StopQuery":            {},
+		"TestMetricFilter":     {},
+		"CreateLogStream":      {},
+		"FilterLogEvents":      {},
+
+		// config
+		"PutAggregationAuthorization":     {},
+		"PutConfigurationAggregator":      {},
+		"PutDeliveryChannel":              {},
+		"PutEvaluations":                  {},
+		"PutRemediationConfigurations":    {},
+		"PutRetentionConfiguration":       {},
+		"StartRemediationExecution":       {},
+		"TagResource":                     {},
+		"UntagResource":                   {},
+		"DeleteDeliveryChannel":           {},
+		"DeleteEvaluationResults":         {},
+		"DeletePendingAggregationRequest": {},
+		"DeleteRemediationConfiguration":  {},
+		"DeleteRetentionConfiguration":    {},
+		"DeliverConfigSnapshot":           {},
+		"DeleteAggregationAuthorization":  {},
+		"DeleteConfigRule":                {},
+		"DeleteConfigurationAggregator":   {},
+		"PutConfigRule":                   {},
+
+		// dynamo
+		"BatchGetItem":       {},
+		"ConditionCheckItem": {},
+		"DeleteBackup":       {},
+		"DeleteItem":         {},
+		"PutItem":            {},
+		"Query":              {},
+		"Scan":               {},
+		"UpdateItem":         {},
+		"BatchWriteItem":     {},
+
+		// ecs
+		"DeleteAccountSetting":     {},
+		"DeregisterTaskDefinition": {},
+		"PutAccountSetting":        {},
+		"PutAccountSettingDefault": {},
+		"RegisterTaskDefinition":   {},
+		"UpdateContainerAgent":     {},
+
+		// elbv2
+		"DeleteTargetGroup":           {},
+		"CreateTargetGroup":           {},
+		"ModifyTargetGroup":           {},
+		"ModifyTargetGroupAttributes": {},
+		"RegisterTargets":             {},
+		"DeregisterTargets":           {},
+
+		// guardduty
+		"ArchiveFindings":        {},
+		"CreateIPSet":            {},
+		"CreateSampleFindings":   {},
+		"CreateThreatIntelSet":   {},
+		"DeclineInvitations":     {},
+		"DeleteFilter":           {},
+		"DeleteIPSet":            {},
+		"DeleteInvitations":      {},
+		"DeleteThreatIntelSet":   {},
+		"InviteMembers":          {},
+		"UnarchiveFindings":      {},
+		"UpdateFilter":           {},
+		"UpdateFindingsFeedback": {},
+		"UpdateIPSet":            {},
+		"UpdateThreatIntelSet":   {},
+		"CreateFilter":           {},
+
+		// iam
+		"ChangePassword":                 {},
+		"ResetServiceSpecificCredential": {},
+		"GenerateCredentialReport":       {},
+		"CreateVirtualMFADevice":         {}, // MFA device creation/deletion is not related to
+		"DeleteVirtualMFADevice":         {}, // users. See (Enable/Disable)MFADevice for that.
+		"CreateInstanceProfile":          {},
+
+		// kms
+		"Decrypt":                         {},
+		"Encrypt":                         {},
+		"GenerateDataKey":                 {},
+		"GenerateDataKeyWithoutPlaintext": {},
+
+		// lambda
+		"AddLayerVersionPermission": {},
+		"InvokeAsync":               {},
+		"InvokeFunction":            {},
+
+		// rds
+		// TODO get suffixes
+		"CreateDBClusterEndpoint":          {},
+		"DeleteDBClusterEndpoint":          {},
+		"CreateDBSecurityGroup":            {},
+		"DeleteDBSecurityGroup":            {},
+		"AuthorizeDBSecurityGroupIngress":  {},
+		"DeleteDBSubnetGroup":              {},
+		"DownloadDBLogFilePortion":         {},
+		"ModifyCurrentDBClusterCapacity":   {},
+		"ModifyDBClusterEndpoint":          {},
+		"ModifyDBClusterSnapshotAttribute": {},
+		"RestoreDBClusterFromS3":           {},
+		"RestoreDBClusterFromSnapshot":     {},
+		"RestoreDBClusterToPointInTime":    {},
+		"RevokeDBSecurityGroupIngress":     {},
+		"StartActivityStream":              {},
+		"StopActivityStream":               {},
+
+		// redshift
+		"AcceptReservedNodeExchange":        {},
+		"CreateClusterSecurityGroup":        {},
+		"CreateHsmClientCertificate":        {},
+		"CreateHsmConfiguration":            {},
+		"DeleteClusterParameterGroup":       {},
+		"DeleteClusterSecurityGroup":        {},
+		"DeleteClusterSubnetGroup":          {},
+		"DeleteEventSubscription":           {},
+		"DeleteHsmClientCertificate":        {},
+		"DeleteHsmConfiguration":            {},
+		"DeleteSnapshotCopyGrant":           {},
+		"DeleteSnapshotSchedule":            {},
+		"ModifyClusterParameterGroup":       {},
+		"ModifyClusterSubnetGroup":          {},
+		"ResetClusterParameterGroup":        {},
+		"RevokeClusterSecurityGroupIngress": {},
+		"CreateClusterParameterGroup":       {},
+
+		// s3
+		"UploadPart":              {},
+		"CreateMultipartUpload":   {},
+		"CompleteMultipartUpload": {},
+		"HeadBucket":              {},
+		"PutObject":               {},
+
+		// waf, waf-regional
+		// TODO get suffixes
+		"DeletePermissionPolicy": {},
+		"PutPermissionPolicy":    {},
+
+		// No accountID
 		"SetUserMFAPreference":   {},
-		"GetUser":                {},
 		"InitiateAuth":           {},
 		"RespondToAuthChallenge": {},
 		"AssumeRole":             {},
+	}
+
+	// Some prefixes are common to so many API calls (and new ones are so constantly being added) that we do a prefix
+	// check to save developer time from having to maintain an even more massive list
+	ignoredPrefixes = []string{
+		// general
+		"Get",
+		"Describe",
+		"List",
 	}
 )
 
@@ -94,12 +265,14 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
 	if !eventName.Exists() {
 		return nil, errors.New("unable to extract CloudTrail eventName field")
 	}
+	// If this is an ignored event, immediately halt processing
+	if isIgnoredEvent(eventName.Str) {
+		zap.L().Debug("ignoring read only event", zap.String("eventName", eventName.Str))
+		return nil, nil
+	}
+
 	accountID := detail.Get("userIdentity.accountId")
 	if !accountID.Exists() {
-		// These events simply do not contain an accountId for us, return nothing
-		if _, ok := eventsWithoutAccountID[eventName.Str]; ok {
-			return nil, nil
-		}
 		return nil, errors.New("unable to extract CloudTrail accountId field")
 	}
 	region := detail.Get("awsRegion")
@@ -112,6 +285,24 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
 		accountID: accountID.Str,
 		eventName: eventName.Str,
 	}, nil
+}
+
+// isIgnoredEvent determines whether or not an event can safely be ignored. Events can be ignored for many reasons,
+// most common of which is either being a read only event or being an event that effects resources we don't scan
+//
+// NOTE: we ignore the "detail.readOnly" field because it is not always present or accurate
+func isIgnoredEvent(eventName string) bool {
+	_, ok := ignoredEvents[eventName]
+	return ok || hasIgnoredPrefix(eventName)
+}
+
+func hasIgnoredPrefix(eventName string) bool {
+	for _, prefix := range ignoredPrefixes {
+		if strings.HasPrefix(eventName, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // processCloudTrailLog determines what resources, if any, need to be scanned as a result of a given CloudTrail log
@@ -135,19 +326,6 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 		zap.L().Debug("dropping failed event",
 			zap.String("eventSource", source),
 			zap.String("errorCode", errorCode))
-		return nil
-	}
-
-	// Ignore the most common read only events
-	//
-	// NOTE: we ignore the "detail.readOnly" field because it is not always present or accurate
-	if strings.HasPrefix(metadata.eventName, "Get") ||
-		strings.HasPrefix(metadata.eventName, "BatchGet") ||
-		strings.HasPrefix(metadata.eventName, "Describe") ||
-		strings.HasPrefix(metadata.eventName, "Decrypt") ||
-		strings.HasPrefix(metadata.eventName, "List") {
-
-		zap.L().Debug(source+": ignoring read-only event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

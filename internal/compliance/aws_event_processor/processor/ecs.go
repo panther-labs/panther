@@ -74,15 +74,9 @@ func classifyECS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			AwsAccountID: metadata.accountID,
 			Delete:       false,
 			EventName:    metadata.eventName,
-			Region:       detail.Get("awsRegion").Str,
+			Region:       metadata.region,
 			ResourceType: schemas.EcsClusterSchema,
 		}}
-	case "DeleteAccountSetting", "DeregisterTaskDefinition", "PutAccountSetting", "PutAccountSettingDefault",
-		"RegisterTaskDefinition", "UpdateContainerAgent":
-		// Nothing to do here
-		//
-		// If we add an ECS account wide resource or an ECS TaskDefinition resource we can use these
-		return nil
 	default:
 		zap.L().Warn("ecs: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
@@ -102,7 +96,7 @@ func classifyECS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		clusterARN = arn.ARN{
 			Partition: "aws",
 			Service:   "ecs",
-			Region:    detail.Get("awsRegion").Str,
+			Region:    metadata.region,
 			AccountID: metadata.accountID,
 			Resource:  "cluster/" + clusterARN,
 		}.String()

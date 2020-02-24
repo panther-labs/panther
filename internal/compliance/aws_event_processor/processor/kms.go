@@ -30,14 +30,6 @@ import (
 
 func classifyKMS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awskeymanagementservice.html
-	if strings.HasPrefix(metadata.eventName, "Decrypt") ||
-		strings.HasPrefix(metadata.eventName, "GenerateDataKey") ||
-		strings.HasPrefix(metadata.eventName, "Encrypt") {
-
-		zap.L().Debug("kms: ignoring event", zap.String("eventName", metadata.eventName))
-		return nil
-	}
-
 	var keyARN string
 	switch metadata.eventName {
 	/*

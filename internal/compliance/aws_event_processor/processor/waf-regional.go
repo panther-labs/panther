@@ -44,10 +44,7 @@ func classifyWAFRegional(detail gjson.Result, metadata *CloudTrailMetadata) []*r
 	// All the API calls we don't care about (until we build resources for them)
 	if strings.HasSuffix(metadata.eventName, "Set") || // 11
 		strings.HasSuffix(metadata.eventName, "Rule") || // 6
-		strings.HasSuffix(metadata.eventName, "RuleGroup") || // 3
-		// Permission policies affect rule groups
-		metadata.eventName == "DeletePermissionPolicy" ||
-		metadata.eventName == "PutPermissionPolicy" {
+		strings.HasSuffix(metadata.eventName, "RuleGroup") { // 3
 
 		zap.L().Debug("waf-regional: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
@@ -64,10 +61,10 @@ func classifyWAFRegional(detail gjson.Result, metadata *CloudTrailMetadata) []*r
 		// arn:aws:waf::account-id:resource-type/resource-id
 		wafRegionalARN = strings.Join([]string{
 			"arn",
-			"aws",                       // Partition
-			"waf-regional",              // Service
-			detail.Get("awsRegion").Str, // Region
-			metadata.accountID,          // Account ID
+			"aws",              // Partition
+			"waf-regional",     // Service
+			metadata.region,    // Region
+			metadata.accountID, // Account ID
 			"webacl/" + detail.Get("requestParameters.webACLId").Str, // Resource-type/id
 		}, ":")
 	case "PutLoggingConfiguration":
@@ -93,7 +90,7 @@ func classifyWAFRegional(detail gjson.Result, metadata *CloudTrailMetadata) []*r
 			ResourceID: arn.ARN{
 				Partition: "aws",
 				Service:   "waf-regional",
-				Region:    detail.Get("awsRegion").Str,
+				Region:    metadata.region,
 				AccountID: metadata.accountID,
 				Resource:  "webacl/" + detail.Get("requestParameters.webAclId").Str,
 			}.String(),
@@ -123,7 +120,7 @@ func classifyWAFRegional(detail gjson.Result, metadata *CloudTrailMetadata) []*r
 		changes = append(changes, &resourceChange{
 			AwsAccountID: metadata.accountID,
 			EventName:    metadata.eventName,
-			Region:       detail.Get("awsRegion").Str,
+			Region:       metadata.region,
 			ResourceType: schemas.WafRegionalWebAclSchema,
 		})
 		return changes
