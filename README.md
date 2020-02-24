@@ -38,7 +38,7 @@ Panther provides flexible Python detection logic, secure and automated deploymen
 
 - **Detecting Unauthorized Access:** Analyze host-based logs to identify unauthorized access that could indicate a system breach
 - **Powering Your Investigations:** Join data from various sources to determine if a potential compromise has occurred
-- **Threat Hunting:** Quickly search all of your logs for matches against indicators of compromise by utilizing Panther's standardized data fields
+- **Threat Hunting:** Utilize Panther's standardized data fields to quickly search your logs for matches against indicators of compromise
 - **Achieving Compliance:** Use [built-in policies](https://github.com/panther-labs/panther-analysis) as controls for achieving SOC/PCI/HIPAA compliance
 - **Securing Cloud Resources:** Model security best practices with Python policies and automatically fix misconfigurations with automatic remediation
 
