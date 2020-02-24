@@ -25,10 +25,10 @@ import (
 )
 
 // DeleteUser calls cognito api delete user from a user pool
-func (g *UsersGateway) DeleteUser(id *string, userPoolID *string) error {
+func (g *UsersGateway) DeleteUser(id *string) error {
 	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
 		Username:   id,
-		UserPoolId: userPoolID,
+		UserPoolId: &userPoolID,
 	}); err != nil {
 		return &genericapi.AWSError{Method: "cognito.AdminDeleteUser", Err: err}
 	}

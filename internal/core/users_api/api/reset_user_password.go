@@ -24,5 +24,5 @@ import (
 
 // ResetUserPassword resets a user password.
 func (API) ResetUserPassword(input *models.ResetUserPasswordInput) error {
-	return userGateway.ResetUserPassword(input.ID, input.UserPoolID)
+	return userGateway.ResetUserPassword(input.ID)
 }

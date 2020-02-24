@@ -37,7 +37,6 @@ func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error
 		LastModifiedTime:   input.LastModifiedTime,
 		OutputID:           input.OutputID,
 		OutputType:         input.OutputType,
-		VerificationStatus: input.VerificationStatus,
 		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
@@ -62,7 +61,6 @@ func ItemToAlertOutput(input *table.AlertOutputItem) (alertOutput *models.AlertO
 		LastModifiedTime:   input.LastModifiedTime,
 		OutputID:           input.OutputID,
 		OutputType:         input.OutputType,
-		VerificationStatus: input.VerificationStatus,
 		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
@@ -82,9 +80,6 @@ func getOutputType(outputConfig *models.OutputConfig) (*string, error) {
 	}
 	if outputConfig.PagerDuty != nil {
 		return aws.String("pagerduty"), nil
-	}
-	if outputConfig.Email != nil {
-		return aws.String("email"), nil
 	}
 	if outputConfig.Github != nil {
 		return aws.String("github"), nil

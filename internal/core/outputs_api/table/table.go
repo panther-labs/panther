@@ -83,9 +83,5 @@ type AlertOutputItem struct {
 	// ("type" is a reserved Dynamo keyword, so we use "OutputType" instead)
 	OutputType *string `json:"outputType"`
 
-	// VerificationStatus is the current state of the output destination.
-	// When an AlertOutput is not in 'VERIFIED' state it cannot be used to send notifications
-	VerificationStatus *string `json:"verificationStatus"`
-
 	DefaultForSeverity []*string `json:"defaultForSeverity" dynamodbav:"defaultForSeverity,stringset"`
 }

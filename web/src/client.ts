@@ -72,7 +72,10 @@ const authLink = (createAuthLink({
   region: process.env.AWS_REGION,
   url: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
   auth: {
-    jwtToken: () => Auth.currentSession().then(session => session.getIdToken().getJwtToken()),
+    jwtToken: () =>
+      Auth.currentSession()
+        .then(session => session.getIdToken().getJwtToken())
+        .catch(() => null),
     type: AUTH_TYPE.AMAZON_COGNITO_USER_POOLS,
   },
 }) as unknown) as ApolloLink;
@@ -97,7 +100,7 @@ const createApolloClient = (history: History<LocationErrorState>) =>
         Integration: {
           keyFields: ['integrationId'],
         },
-        Organization: {
+        GeneralSettings: {
           keyFields: ['email'],
           fields: {
             errorReportingConsent: {
