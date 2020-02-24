@@ -64,7 +64,7 @@ const GuardedRoute: React.FC<GuardedRouteProps> = ({ limitAccessTo, ...rest }) =
     // referrer will exist)
   } else {
     redirectData = {
-      pathname: location?.state?.referrer.pathname || '/',
+      pathname: location?.state?.referrer?.pathname || '/',
       state: undefined,
     };
   }

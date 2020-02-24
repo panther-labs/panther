@@ -20,12 +20,7 @@ package api
 
 import "github.com/panther-labs/panther/api/lambda/organization/models"
 
-// GetOrganization retrieves customer account details.
-func (API) GetOrganization(_ *models.GetOrganizationInput) (*models.GetOrganizationOutput, error) {
-	org, err := orgTable.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.GetOrganizationOutput{Organization: org}, nil
+// GetSettings retrieves account settings.
+func (API) GetSettings(_ *models.GetSettingsInput) (*models.GeneralSettings, error) {
+	return orgTable.Get()
 }

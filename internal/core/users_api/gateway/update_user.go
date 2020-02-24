@@ -27,12 +27,10 @@ import (
 
 // UpdateUserInput is input for UpdateUser request
 type UpdateUserInput struct {
-	ID          *string `json:"id"`
-	GivenName   *string `json:"givenName"`
-	FamilyName  *string `json:"familyName"`
-	Email       *string `json:"email"`
-	PhoneNumber *string `json:"phoneNumber"`
-	UserPoolID  *string `json:"userPoolId"`
+	ID         *string `json:"id"`
+	GivenName  *string `json:"givenName"`
+	FamilyName *string `json:"familyName"`
+	Email      *string `json:"email"`
 }
 
 // Create a AdminUpdateUserAttributesInput from the UpdateUserInput.
@@ -66,17 +64,10 @@ func (g *UsersGateway) updateInputMapping(
 		})
 	}
 
-	if input.PhoneNumber != nil {
-		userAttrs = append(userAttrs, &provider.AttributeType{
-			Name:  aws.String("phone_number"),
-			Value: input.PhoneNumber,
-		})
-	}
-
 	return &provider.AdminUpdateUserAttributesInput{
 		UserAttributes: userAttrs,
 		Username:       input.ID,
-		UserPoolId:     input.UserPoolID,
+		UserPoolId:     &userPoolID,
 	}
 }
 

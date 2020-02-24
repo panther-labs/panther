@@ -22,42 +22,27 @@ package models
 //
 // Exactly one action must be specified.
 type LambdaInput struct {
-	GetUser                   *GetUserInput                   `json:"getUser"`
-	GetUserOrganizationAccess *GetUserOrganizationAccessInput `json:"getUserOrganizationAccess"`
-	InviteUser                *InviteUserInput                `json:"inviteUser"`
-	ListUsers                 *ListUsersInput                 `json:"listUsers"`
-	RemoveUser                *RemoveUserInput                `json:"removeUser"`
-	ResetUserPassword         *ResetUserPasswordInput         `json:"resetUserPassword"`
-	UpdateUser                *UpdateUserInput                `json:"updateUser"`
+	GetUser           *GetUserInput           `json:"getUser"`
+	InviteUser        *InviteUserInput        `json:"inviteUser"`
+	ListUsers         *ListUsersInput         `json:"listUsers"`
+	RemoveUser        *RemoveUserInput        `json:"removeUser"`
+	ResetUserPassword *ResetUserPasswordInput `json:"resetUserPassword"`
+	UpdateUser        *UpdateUserInput        `json:"updateUser"`
 }
 
 // GetUserInput retrieves a user's information based on id.
 type GetUserInput struct {
-	ID         *string `json:"id" validate:"required,uuid4"`
-	UserPoolID *string `json:"userPoolId" validate:"required,min=1"`
+	ID *string `json:"id" validate:"required,uuid4"`
 }
 
 // GetUserOutput returns the Panther user details.
 type GetUserOutput = User
-
-// GetUserOrganizationAccessInput retrieves a user's organization id based on email.
-type GetUserOrganizationAccessInput struct {
-	Email *string `json:"email" validate:"required,email"`
-}
-
-// GetUserOrganizationAccessOutput retrieves a user's organization id based on email.
-type GetUserOrganizationAccessOutput struct {
-	UserPoolID     *string `json:"userPoolId"`
-	AppClientID    *string `json:"appClientId"`
-	IdentityPoolID *string `json:"identityPoolId"`
-}
 
 // InviteUserInput creates a new user with minimal permissions and sends them an invite.
 type InviteUserInput struct {
 	GivenName  *string `json:"givenName" validate:"required,min=1"`
 	FamilyName *string `json:"familyName" validate:"required,min=1"`
 	Email      *string `json:"email" validate:"required,email"`
-	UserPoolID *string `json:"userPoolId" validate:"required,min=1"`
 }
 
 // InviteUserOutput returns the randomly generated user id.
@@ -66,38 +51,29 @@ type InviteUserOutput struct {
 }
 
 // ListUsersInput lists all users in Panther.
-type ListUsersInput struct {
-	UserPoolID      *string `json:"userPoolId" validate:"required,min=1"`
-	Limit           *int64  `json:"limit" validate:"omitempty,min=1"`
-	PaginationToken *string `json:"paginationToken" validate:"omitempty,min=1"`
-}
+type ListUsersInput struct{}
 
 // ListUsersOutput returns a page of users.
 type ListUsersOutput struct {
-	Users           []*User `json:"users"`
-	PaginationToken *string `json:"paginationToken"`
+	Users []*User `json:"users"`
 }
 
 // RemoveUserInput deletes a user.
 type RemoveUserInput struct {
-	ID         *string `json:"id" validate:"required,uuid4"`
-	UserPoolID *string `json:"userPoolId" validate:"required,min=1"`
+	ID *string `json:"id" validate:"required,uuid4"`
 }
 
 // ResetUserPasswordInput resets the password for a user.
 type ResetUserPasswordInput struct {
-	ID         *string `json:"id" validate:"required,uuid4"`
-	UserPoolID *string `json:"userPoolId" validate:"required,min=1"`
+	ID *string `json:"id" validate:"required,uuid4"`
 }
 
 // UpdateUserInput updates user details.
 type UpdateUserInput struct {
-	ID         *string `json:"id" validate:"required,uuid4"`
-	UserPoolID *string `json:"userPoolId" validate:"required,min=1"`
+	ID *string `json:"id" validate:"required,uuid4"`
 
 	// At least one of the following must be specified:
-	GivenName   *string `json:"givenName" validate:"omitempty,min=1"`
-	FamilyName  *string `json:"familyName" validate:"omitempty,min=1"`
-	Email       *string `json:"email" validate:"omitempty,min=1"`
-	PhoneNumber *string `json:"phoneNumber" validate:"omitempty,min=1"`
+	GivenName  *string `json:"givenName" validate:"omitempty,min=1"`
+	FamilyName *string `json:"familyName" validate:"omitempty,min=1"`
+	Email      *string `json:"email" validate:"omitempty,min=1"`
 }

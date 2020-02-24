@@ -58,19 +58,6 @@ func (API) AddOutput(input *models.AddOutputInput) (*models.AddOutputOutput, err
 		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
-	status, err := outputVerification.GetVerificationStatus(alertOutput)
-	if err != nil {
-		return nil, err
-	}
-	alertOutput.VerificationStatus = status
-
-	if *status != models.VerificationStatusSuccess {
-		alertOutput, err = outputVerification.VerifyOutput(alertOutput)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	alertOutputItem, err := AlertOutputToItem(alertOutput)
 	if err != nil {
 		return nil, err

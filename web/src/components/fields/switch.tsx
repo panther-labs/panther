@@ -20,17 +20,11 @@ import React from 'react';
 import { Switch, SwitchProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
-const MemoizedSwitch = React.memo(Switch);
-
 const FormikSwitch: React.FC<SwitchProps & Required<Pick<FieldConfig, 'name'>>> = props => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [field, meta, { setValue }] = useField<boolean>(props.name);
 
-  // we are memoizing the reference of `setValue` so that our Switch component doesn't
-  // un-necessarily re-render on different field changes
-  // https://github.com/jaredpalmer/formik/issues/2268
-  const onChange = React.useMemo(() => setValue, []);
-  return <MemoizedSwitch {...props} checked={field.value} onChange={onChange} />;
+  return <Switch {...props} checked={field.value} onChange={setValue} />;
 };
 
 export default FormikSwitch;

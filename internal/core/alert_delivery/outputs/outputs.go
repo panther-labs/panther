@@ -25,8 +25,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
-	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 
@@ -64,7 +62,6 @@ type HTTPiface interface {
 // API is the interface for output delivery that can be used for mocks in tests.
 type API interface {
 	Slack(*alertmodels.Alert, *outputmodels.SlackConfig) *AlertDeliveryError
-	Email(*alertmodels.Alert, *outputmodels.EmailConfig) *AlertDeliveryError
 	PagerDuty(*alertmodels.Alert, *outputmodels.PagerDutyConfig) *AlertDeliveryError
 	Github(*alertmodels.Alert, *outputmodels.GithubConfig) *AlertDeliveryError
 	Jira(*alertmodels.Alert, *outputmodels.JiraConfig) *AlertDeliveryError
@@ -79,11 +76,9 @@ type API interface {
 type OutputClient struct {
 	session     *session.Session
 	httpWrapper HTTPWrapperiface
-	sesClient   sesiface.SESAPI
 	// Map from region -> client
 	sqsClients map[string]sqsiface.SQSAPI
 	snsClients map[string]snsiface.SNSAPI
-	mailFrom   *string
 }
 
 // OutputClient must satisfy the API interface.
@@ -95,10 +90,8 @@ func New(sess *session.Session) *OutputClient {
 		session:     sess,
 		httpWrapper: &HTTPWrapper{httpClient: &http.Client{}},
 		// TODO Lazy initialization of clients
-		sesClient:  ses.New(sess),
 		sqsClients: make(map[string]sqsiface.SQSAPI),
 		snsClients: make(map[string]snsiface.SNSAPI),
-		mailFrom:   aws.String(os.Getenv("MAIL_FROM")),
 	}
 }
 

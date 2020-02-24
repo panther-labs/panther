@@ -153,26 +153,9 @@ type AlertOutput struct {
 	// OutputConfig contains the configuration for this output
 	OutputConfig *OutputConfig `json:"outputConfig"`
 
-	// VerificationStatus is the current state of the output verification process.
-	VerificationStatus *string `json:"verificationStatus"`
-
 	// DefaultForSeverity defines the alert severities that will be forwarded through this output
 	DefaultForSeverity []*string `json:"defaultForSeverity"`
 }
-
-const (
-	// VerificationStatusNotStarted shows that the verification process hasn't started yet
-	VerificationStatusNotStarted = "NOT_STARTED"
-
-	// VerificationStatusPending shows that a verification is pending
-	VerificationStatusPending = "PENDING"
-
-	// VerificationStatusFailed shows that the verification process has failed
-	VerificationStatusFailed = "FAILED"
-
-	// VerificationStatusSuccess shows that a verification is successful
-	VerificationStatusSuccess = "SUCCESS"
-)
 
 // OutputConfig contains the configuration for the output
 type OutputConfig struct {
@@ -181,9 +164,6 @@ type OutputConfig struct {
 
 	// SnsConfig contains the configuration for SNS alert output
 	Sns *SnsConfig `json:"sns,omitempty"`
-
-	// SnsConfig contains the configuration for Email alert output
-	Email *EmailConfig `json:"email,omitempty"`
 
 	// PagerDuty contains the configuration for PagerDuty alert output
 	PagerDuty *PagerDutyConfig `json:"pagerDuty,omitempty"`
@@ -220,11 +200,6 @@ type SnsConfig struct {
 // PagerDutyConfig defines options for each PagerDuty output
 type PagerDutyConfig struct {
 	IntegrationKey *string `json:"integrationKey" validate:"required,hexadecimal,len=32"`
-}
-
-// EmailConfig defines options for each Email output
-type EmailConfig struct {
-	DestinationAddress *string `json:"destinationAddress" validate:"required"`
 }
 
 // GithubConfig defines options for each Github output

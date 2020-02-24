@@ -1,4 +1,4 @@
-package users
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -18,20 +18,9 @@ package users
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+import "github.com/panther-labs/panther/api/lambda/organization/models"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-)
-
-type mockDynamoClient struct {
-	dynamodbiface.DynamoDBAPI
-	mock.Mock
-}
-
-func TestNew(t *testing.T) {
-	assert.NotNil(t, New("table", session.Must(session.NewSession())))
+// UpdateSettings updates account settings.
+func (API) UpdateSettings(input *models.UpdateSettingsInput) (*models.GeneralSettings, error) {
+	return orgTable.Update(input)
 }

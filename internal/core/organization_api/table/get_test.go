@@ -54,7 +54,7 @@ func TestGetItemUnmarshalError(t *testing.T) {
 	// output has wrong type for one of the fields
 	output := &dynamodb.GetItemOutput{
 		Item: DynamoItem{
-			"awsConfig": {SS: aws.StringSlice([]string{"panther", "labs"})},
+			"email": {SS: aws.StringSlice([]string{"panther", "labs"})},
 		},
 	}
 	mockClient.On("GetItem", mock.Anything).Return(output, nil)
@@ -67,27 +67,14 @@ func TestGetItemUnmarshalError(t *testing.T) {
 	assert.IsType(t, &genericapi.InternalError{}, err)
 }
 
-func TestGetItemDoesNotExistError(t *testing.T) {
-	mockClient := &mockDynamoClient{}
-	output := &dynamodb.GetItemOutput{Item: DynamoItem{}}
-	mockClient.On("GetItem", mock.Anything).Return(output, nil)
-	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
-
-	result, err := table.Get()
-	mockClient.AssertExpectations(t)
-	assert.Nil(t, result)
-	assert.Error(t, err)
-	assert.IsType(t, &genericapi.DoesNotExistError{}, err)
-}
-
 func TestGetItem(t *testing.T) {
 	mockClient := &mockDynamoClient{}
 	expectedInput := &dynamodb.GetItemInput{
-		Key:       DynamoItem{"id": {S: aws.String(orgID)}},
+		Key:       settingsKey,
 		TableName: aws.String("test-table"),
 	}
 	output := &dynamodb.GetItemOutput{Item: DynamoItem{
-		"id":    {S: aws.String(orgID)},
+		"id":    {S: aws.String("generalSettings")},
 		"email": {S: aws.String("email")},
 	}}
 	mockClient.On("GetItem", expectedInput).Return(output, nil)

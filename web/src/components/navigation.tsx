@@ -31,10 +31,9 @@ import {
 import urls from 'Source/urls';
 import { Link } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
-import { PANTHER_SCHEMA_DOCS_LINK, ADMIN_ROLES_ARRAY } from 'Source/constants';
+import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
 import { css } from '@emotion/core';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
 
 type INavIconButtonProps = Omit<IconButtonProps, 'variant'> & {
   icon: IconProps['type'];
@@ -177,14 +176,12 @@ const Navigation = () => {
       {isSettingsNavOpen && (
         <Box width={205} height="100%">
           <Flex flexDirection="column" mt="35vh" is="ul">
-            <RoleRestrictedAccess allowedRoles={ADMIN_ROLES_ARRAY}>
-              <Flex is="li">
-                <NavLink icon="settings-alt" to={urls.account.settings.general()} label="General" />
-              </Flex>
-              <Flex is="li">
-                <NavLink icon="organization" to={urls.account.settings.users()} label="Users" />
-              </Flex>
-            </RoleRestrictedAccess>
+            <Flex is="li">
+              <NavLink icon="settings-alt" to={urls.account.settings.general()} label="General" />
+            </Flex>
+            <Flex is="li">
+              <NavLink icon="organization" to={urls.account.settings.users()} label="Users" />
+            </Flex>
             <Flex is="li">
               <NavLink
                 icon="infra-source"
