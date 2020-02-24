@@ -140,7 +140,7 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 func handleCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
 	metadata, err := preprocessCloudTrailLog(cloudtrail)
 	if err != nil {
-		return errors.Wrap(err, "error extracting metadata from CloudTrail")
+		return err
 	}
 	if metadata == nil {
 		return nil
@@ -187,7 +187,7 @@ func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resource
 		var metadata *CloudTrailMetadata
 		metadata, err = preprocessCloudTrailLog(detail)
 		if err != nil {
-			return errors.WithMessage(err, "error extracting metadata from CloudTrail in s3")
+			return err
 		}
 		if metadata == nil {
 			continue
