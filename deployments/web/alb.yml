@@ -58,6 +58,9 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: web
+      # <cfndoc>
+      # The load balancer associated with the Panther UI.
+      # </cfndoc>
       Scheme: internet-facing
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds

@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/tools/cfndoc"
 	"github.com/panther-labs/panther/tools/cfngen"
 	"github.com/panther-labs/panther/tools/cfngen/cloudwatchcf"
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
@@ -112,6 +113,8 @@ const alarmStackResourceTemplate = `
 
 // Generate CloudWatch alarms as CloudFormation
 func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
+	var alarms []*cloudwatchcf.Alarm
+
 	outDir := filepath.Join("out", "deployments", "cloudwatch")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
@@ -141,10 +144,11 @@ func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
 			return fmt.Errorf("failed to write file %s: %v", masterAlarmsCfFileName, err)
 		}
 		// generate alarms
-		cf, err := cloudwatchcf.GenerateAlarms(snsTopicArn, stackOutputs, cfDir)
+		fileAlarms, cf, err := cloudwatchcf.GenerateAlarms(snsTopicArn, stackOutputs, cfDir)
 		if err != nil {
 			return fmt.Errorf("failed to generate alarms CloudFormation template %s: %v", alarmsCfFilePath, err)
 		}
+		alarms = append(alarms, fileAlarms...) // save for validation
 		// write cf to file referenced in master template
 		alarmsCfFile, err := os.Create(alarmsCfFilePath)
 		if err != nil {
@@ -156,7 +160,33 @@ func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
 		alarmsCfFile.Close()
 	}
 
+	// confirm all alarms generated are documented by cfndoc tags
+	resourceLookup := resourceDocumentation()
+	failedValidation := false
+	for _, alarm := range alarms {
+		if _, found := resourceLookup[alarm.Resource]; !found {
+			logger.Errorf("resource %s is missing cfndoc for alarm %s", alarm.Resource, alarm.Properties.AlarmName)
+			failedValidation = true
+		}
+	}
+	if failedValidation {
+		logger.Fatal("all alarms must be documented")
+	}
+
 	return nil
+}
+
+// return a map to look up if a resource has associated cfndoc documentation
+func resourceDocumentation() (resourceLookup map[string]struct{}) {
+	docs, err := cfndoc.ReadDirs(cfDirs...)
+	if err != nil {
+		logger.Fatalf("failed to generate operational documentation: %v", err)
+	}
+	resourceLookup = make(map[string]struct{})
+	for _, doc := range docs {
+		resourceLookup[doc.Resource] = struct{}{}
+	}
+	return resourceLookup
 }
 
 // Generate CloudWatch metrics as CloudFormation

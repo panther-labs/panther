@@ -69,6 +69,9 @@ Resources:
       DefinitionBody: api/gateway/remediation/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-remediation-api
+      # <cfndoc>
+      # The panther-remediation-api API calls the panther-remediation-api lambda.
+      # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
@@ -84,6 +87,11 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: panther-remediation-queue
+      # <cfndoc>
+      # This sqs q does what???
+      # There should be no items in the associated
+      # dead letter queue.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       KmsMasterKeyId: !Ref SQSKeyId
       VisibilityTimeout: 120 # Should match lambda
@@ -94,7 +102,10 @@ Resources:
   DeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-remediation-dlq
+      QueueName: panther-remediation-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for panther-remediation-queue.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
 
@@ -113,6 +124,12 @@ Resources:
           RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           RESOURCES_SERVICE_PATH: v1
       FunctionName: panther-remediation-api
+      # <cfndoc>
+      # The panther-remediation-api lambda triggers AWS remediations.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -178,6 +195,13 @@ Resources:
             Queue: !GetAtt Queue.Arn
             BatchSize: 1
       FunctionName: panther-remediation-processor
+      # <cfndoc>
+      # The panther-remediation-processor lambda processes queued remediations
+      # in the panther-remediation-queue.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -218,6 +242,12 @@ Resources:
       CodeUri: ../../../internal/compliance/remediation_aws/src
       Description: Function that remediates issues with AWS resources
       FunctionName: panther-aws-remediation
+      # <cfndoc>
+      # The panther-aws-remediation lambda does what?
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: app.main.lambda_handler
       Environment:
         Variables:

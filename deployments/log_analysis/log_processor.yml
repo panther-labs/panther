@@ -61,7 +61,13 @@ Resources:
   Queue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-input-data-notifications
+      QueueName: panther-input-data-notifications-queue
+      # <cfndoc>
+      # This sqs queue receives S3 notifications
+      # of log files to be processed by panther-log-processor lambda.
+      # There should be no items in the associated
+      # dead letter queue.
+      # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
@@ -73,7 +79,10 @@ Resources:
   DeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-input-data-notifications-dlq
+      QueueName: panther-input-data-notifications-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for panther-input-data-notifications-queue.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   FunctionLogGroup:
@@ -86,6 +95,17 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: panther-log-processor
+      # <cfndoc>
+      # The lambda function that processes S3 files from
+      # notifications posted to the panther-input-data-notifications-queue SQS queue.
+      # ## Troubleshooting
+      #
+      # * If files cannot be parsed errors will be generated. Some root causes can be:
+      #   * S3 event configured against a whole bucket rather than a prefix, which causes
+      #     files other than the intended logs to be processed.
+      #   * Variations in the log format not handled by the parsers.
+      #     [Open a bug report](https://github.com/panther-labs/panther/issues).
+      # </cfndoc>
       Description: Downloads security logs from S3 for Panther analysis
       CodeUri: ../../out/bin/internal/log_analysis/log_processor/main
       Handler: main

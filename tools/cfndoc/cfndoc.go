@@ -33,9 +33,8 @@ import (
 /*
 This looks for tagged comments in CloudFormation resources and extracts them for documentation.
 
-The tags <cfndoc> (to open) and </cfndoc> (to close) are used. The text immediately to the right
-of the open tag is extracted as a label up to the first white space. The rest of the text is
-used as documentation. Lines leading with '#' have the '#' skipped.
+The tags <cfndoc> (to open) and </cfndoc> (to close) are used. The resource immediately above the
+tags is extracted as the label. The rest of the text isused as documentation. Lines leading with '#' have the '#' skipped.
 
 Example:
 Resources:
@@ -44,7 +43,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: panther-input-data-notifications
-      # <cfndoc> panther-input-data-notifications
+      # <cfndoc>
       # This sqs queue receives S3 notifications
       # of log files to be processed.
       # </cfndoc>
@@ -65,7 +64,7 @@ const (
 
 var (
 	commentMarkers      = regexp.MustCompile(`\n\s*[#]`)
-	extractResourceDocs = regexp.MustCompile(`(?s)` + StartTag + `[\s#]*([\S^]+)[\s]+[#]?(.+?)` + EndTag)
+	extractResourceDocs = regexp.MustCompile(`(?s)[[:alpha:]]+:[\s]*([\S^]+)[\s\#]*` + StartTag + `(.+?)` + EndTag)
 )
 
 type ResourceDoc struct {

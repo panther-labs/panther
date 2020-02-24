@@ -60,6 +60,9 @@ Resources:
       DefinitionBody: api/gateway/analysis/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-analysis-api
+      # <cfndoc>
+      # This API does what?
+      # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
@@ -85,9 +88,15 @@ Resources:
           DEBUG: !Ref Debug
           POLICY_ENGINE: panther-policy-engine
           RULES_ENGINE: panther-rules-engine
-          RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources
+          RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources-queue
           TABLE: !Ref Table
       FunctionName: panther-analysis-api
+      # <cfndoc>
+      # This lambda implements the analysis api.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       MemorySize: 512
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -136,7 +145,7 @@ Resources:
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-resources
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-resources-queue
             - Effect: Allow
               Action:
                 - kms:Decrypt
@@ -165,6 +174,9 @@ Resources:
       SSESpecification:
         SSEEnabled: True
       TableName: panther-analysis
+      # <cfndoc>
+      # This table does what???
+      # </cfndoc>
 
   AnalysisVersions:
     Type: AWS::S3::Bucket

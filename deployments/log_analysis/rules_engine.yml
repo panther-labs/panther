@@ -95,7 +95,13 @@ Resources:
   Queue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-rules-engine
+      QueueName: panther-rules-engine-queue
+      # <cfndoc>
+      # The panther-rules-engine sqs queue receives S3 notifications
+      # of log files to be processed by panther-rules-engine lambda.
+      # There should be no items in the associated
+      # dead letter queue.
+      # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
@@ -107,7 +113,10 @@ Resources:
   DeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-rules-engine-dlq
+      QueueName: panther-rules-engine-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for panther-rules-engine-dlq.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   ##### Dynamo alert deduplication table #####
@@ -115,6 +124,11 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-alert-dedup
+      # <cfndoc>
+      # This ddb table implements deduplication of alerts.
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: partitionKey
           AttributeType: S
@@ -139,6 +153,13 @@ Resources:
       CodeUri: ../../internal/log_analysis/rules_engine
       Description: Python Rules Engine
       FunctionName: panther-rules-engine
+      # <cfndoc>
+      # The panther-rules-engine lambda function processes S3 files from
+      # notifications posted to the panther-rules-engine SQS queue.
+      # Matching events are written to S3.
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: src.main.lambda_handler
       Environment:
         Variables:

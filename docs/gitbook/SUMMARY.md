@@ -210,6 +210,7 @@
 ## Operations
 
 - [Background](operations/ops-home.md)
+- [Cloud Infrastructure Inventory](operations/inventory.md)
 
 ## Privacy
 

@@ -34,27 +34,26 @@ func TestMatch(t *testing.T) {
 		},
 	}
 
-	match = `<cfndoc> label doc doc</cfndoc>`
+	match = `Resource: label <cfndoc> doc doc</cfndoc>`
 	require.Equal(t, expected, Parse(match))
 
-	match = `<cfndoc> label 
+	match = `Resource: label <cfndoc> 
 doc doc</cfndoc>`
 	require.Equal(t, expected, Parse(match))
 
-	match = `<cfndoc> 
-label 
-doc doc</cfndoc>`
-	require.Equal(t, expected, Parse(match))
-
-	match = `
-<cfndoc> 
-label 
+	match = `Resource: label <cfndoc>
 doc doc</cfndoc>`
 	require.Equal(t, expected, Parse(match))
 
 	match = `
-<cfndoc> 
-label 
+Resource: label
+<cfndoc>
+doc doc</cfndoc>`
+	require.Equal(t, expected, Parse(match))
+
+	match = `
+Resource: label
+<cfndoc>
 doc doc
 </cfndoc>
 
@@ -62,8 +61,8 @@ doc doc
 	require.Equal(t, expected, Parse(match))
 
 	match = `
-# <cfndoc> 
-# label 
+Resource: label
+# <cfndoc>
 #
 # doc doc
 #
@@ -79,8 +78,8 @@ doc doc
 		},
 	}
 	match = `
-# <cfndoc> 
-# label 
+Resource: label
+# <cfndoc>
 #
 # # doc 
 #   ## doc
@@ -123,9 +122,9 @@ func TestSort(t *testing.T) {
 	}
 
 	match = `
-<cfndoc> label2 doc doc</cfndoc>
-<cfndoc> label1 doc doc</cfndoc>
-<cfndoc> label3 doc doc</cfndoc>
+Resource: label2 <cfndoc> doc doc</cfndoc>
+Resource: label1 <cfndoc> doc doc</cfndoc>
+Resource: label3 <cfndoc> doc doc</cfndoc>
 `
 	docs := Parse(match)
 	sort.Sort(ByLabel(docs))

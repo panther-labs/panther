@@ -111,6 +111,9 @@ Resources:
       SSESpecification: # Enable server-side encryption
         SSEEnabled: True
       TableName: panther-outputs
+      # <cfndoc>
+      # This table does what???
+      # </cfndoc>
 
   EncryptionKeyAlias:
     Type: AWS::KMS::Alias
@@ -146,6 +149,9 @@ Resources:
           SES_CONFIGURATION_SET: !Ref SesConfigurationSet
           USERS_API: panther-users-api
       FunctionName: panther-outputs-api
+      # <cfndoc>
+      # This lambda implements CRUD actions for alert outputs.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -202,10 +208,28 @@ Resources:
   AlertQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-alerts
+      QueueName: panther-alerts-queue
+      # <cfndoc>
+      # This sqs q does what???
+      # There should be no items in the associated
+      # dead letter queue.
+      # </cfndoc>
       MessageRetentionPeriod: !Ref AlertSqsRetentionSec
       KmsMasterKeyId: !Ref SQSKeyId
       VisibilityTimeout: 60 # Should match lambda timeout
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt [DeadLetterQueue, Arn]
+        maxReceiveCount: 10
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-alerts-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for panther-alerts-queue.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: 60
 
   AlertDeliveryFunction:
     Type: AWS::Serverless::Function
@@ -232,6 +256,9 @@ Resources:
             BatchSize: 10
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       FunctionName: panther-alert-delivery
+      # <cfndoc>
+      # This lambda dispatches alerts to their specified outputs.
+      # </cfndoc>
       Handler: main
       MemorySize: 128
       Runtime: go1.x

@@ -49,6 +49,9 @@ Resources:
       DefinitionBody: api/gateway/compliance/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-compliance-api
+      # <cfndoc>
+      # This API does what?
+      # </cfndoc>
       StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
 
@@ -63,6 +66,12 @@ Resources:
           DEBUG: !Ref Debug
           INDEX_NAME: policy-index
       FunctionName: panther-compliance-api
+      # <cfndoc>
+      # This lambda implements the compliance API.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       MemorySize: 512
       Runtime: go1.x
@@ -102,6 +111,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-compliance
+      # <cfndoc>
+      # This table does what???
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: policyId
           AttributeType: S

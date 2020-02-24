@@ -63,6 +63,9 @@ Resources:
       DefinitionBody: api/gateway/resources/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-resources-api
+      # <cfndoc>
+      # The panther-resources-api API calls the panther-resources-api lambda.
+      # </cfndoc>
       StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
 
@@ -88,6 +91,12 @@ Resources:
           RESOURCES_QUEUE_URL: !Ref InputQueue
           RESOURCES_TABLE: !Ref ResourcesTable
       FunctionName: panther-resources-api
+      # <cfndoc>
+      # The panther-resources-api lambda implements the resources API for the UI.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -136,6 +145,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-resources
+      # <cfndoc>
+      # This table does what???
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -157,7 +169,12 @@ Resources:
     Properties:
       KmsMasterKeyId: !Ref SQSKeyId
       MessageRetentionPeriod: 86400 # 24 hours
-      QueueName: panther-resources
+      QueueName: panther-resources-queue
+      # <cfndoc>
+      # This sqs q does what???
+      # There should be no items in the associated
+      # dead letter queue.
+      # </cfndoc>
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 10
@@ -167,7 +184,10 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      QueueName: panther-resources-dlq
+      QueueName: panther-resources-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for panther-resources-queue.
+      # </cfndoc>
       VisibilityTimeout: 60
 
   ##### Resource Processor #####
@@ -200,6 +220,12 @@ Resources:
             BatchSize: 10 # Maximum batch size
             Queue: !GetAtt InputQueue.Arn
       FunctionName: panther-resource-processor
+      # <cfndoc>
+      # This lambda implements what?.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 256
@@ -251,6 +277,12 @@ Resources:
       CodeUri: ../../../internal/compliance/policy_engine
       Description: Python Policy Engine
       FunctionName: panther-policy-engine
+      # <cfndoc>
+      # This lambda executes the policies against the infrastructure.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: src.main.lambda_handler
       MemorySize: 512
       Layers: !If

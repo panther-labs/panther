@@ -69,6 +69,9 @@ Resources:
       SSESpecification: # Enable server-side encryption
         SSEEnabled: True
       TableName: panther-users
+      # <cfndoc>
+      # This table holds user profile information.
+      # </cfndoc>
 
   UsersAPIFunction:
     Type: AWS::Serverless::Function
@@ -81,6 +84,12 @@ Resources:
           USERS_TABLE_NAME: !Ref UsersTable
           ORGANIZATIONS_API: !Ref OrganizationAPIFunction
       FunctionName: panther-users-api
+      # <cfndoc>
+      # This lambda implements user api.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
@@ -149,6 +158,12 @@ Resources:
           DEBUG: !Ref Debug
           APP_DOMAIN_URL: !Ref AppDomainURL
       FunctionName: panther-cognito-custom-message-trigger
+      # <cfndoc>
+      # This lambda implements what?
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
@@ -187,6 +202,9 @@ Resources:
       SSESpecification: # Enable server-side encryption
         SSEEnabled: True
       TableName: panther-organization
+      # <cfndoc>
+      # This table is deprecated.
+      # </cfndoc>
 
   OrganizationAPILogGroup:
     Type: AWS::Logs::LogGroup
@@ -204,6 +222,12 @@ Resources:
           DEBUG: !Ref Debug
           ORG_TABLE_NAME: !Ref OrganizationTable
       FunctionName: panther-organization-api
+      # <cfndoc>
+      # This lambda implements organization api (deprecated).
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128

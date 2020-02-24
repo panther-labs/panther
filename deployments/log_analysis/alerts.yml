@@ -57,6 +57,12 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: panther-log-alert-notifications-queue
+      # <cfndoc>
+      # This sqs queue receives alert notifications
+      # to be processed by panther-log-alert-forwarder lambda.
+      # There should be no items in the associated
+      # dead letter queue.
+      # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 180 # Should match lambda
@@ -67,7 +73,10 @@ Resources:
   DeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-log-alert-notifications-dlq
+      QueueName: panther-log-alert-notifications-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for panther-log-alert-notifications.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   ##### Dynamo alerts table #####
@@ -75,6 +84,11 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-log-alerts
+      # <cfndoc>
+      # This ddb table implements records all alerts.
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: alertId
           AttributeType: S
@@ -117,6 +131,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-recent-alerts
+      # <cfndoc>
+      # Deprecated.
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: ruleId
           AttributeType: S
@@ -134,6 +151,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-events
+      # <cfndoc>
+      # Deprecated.
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: eventHash
           AttributeType: B
@@ -168,6 +188,9 @@ Resources:
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
       FunctionName: panther-alerts-api
+      # <cfndoc>
+      # Lambda for CRUD actions for the alerts database.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -224,7 +247,7 @@ Resources:
           ALERTS_TABLE: !Ref AlertsTable
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
-          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         Queue:
           Type: SQS
@@ -232,6 +255,9 @@ Resources:
             Queue: !GetAtt Queue.Arn
             BatchSize: 10
       FunctionName: panther-alert-merger
+      # <cfndoc>
+      # deprecated?
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
@@ -263,7 +289,7 @@ Resources:
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts-queue
         - Id: ManageAlerts
           Version: 2012-10-17
           Statement:
@@ -282,6 +308,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-log-alerts-info
+      # <cfndoc>
+      # This table maps alerts to rules.
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -343,6 +372,11 @@ Resources:
             StartingPosition: TRIM_HORIZON
             BatchSize: 10
       FunctionName: panther-log-alert-forwarder
+      # <cfndoc>
+      # Lambda that forwards alerts to destinations.
+      #
+      # ## Troubleshooting
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128

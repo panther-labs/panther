@@ -60,7 +60,14 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 86400 # 24 hours
-      QueueName: panther-aws-events
+      QueueName: panther-aws-events-queue
+      # <cfndoc>
+      # This sqs q has CloudTrail events delivered by CloudWatch events
+      # as well as S3 notifications from log processing.
+      #
+      # There should be no items in the associated
+      # dead letter queue.
+      # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
@@ -110,7 +117,10 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      QueueName: panther-aws-events-dlq
+      QueueName: panther-aws-events-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for panther-aws-events-queue.
+      # </cfndoc>
       VisibilityTimeout: 60
 
   LogGroup:
@@ -137,6 +147,14 @@ Resources:
             BatchSize: 10 # Maximum batch size
             Queue: !GetAtt EventQueue.Arn
       FunctionName: panther-aws-event-processor
+      # <cfndoc>
+      # This lambda reads events from the panther-aws-events-queue sqs queue and determines if
+      # the infrastructure referenced in the event has changed. If so, it writes events to the
+      # panther-shapshot-queue to be scanned for the nature of the changes.
+      #
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128

@@ -46,6 +46,11 @@ Resources:
     Type: AWS::AppSync::GraphQLApi
     Properties:
       Name: panther-graphql-api
+      # <cfndoc>
+      # This is the GraphQL endpoint for the Panther UI.
+      # ## Troubleshooting
+      #
+      # </cfndoc>
       AuthenticationType: AMAZON_COGNITO_USER_POOLS
       UserPoolConfig:
         AwsRegion: !Ref AWS::Region
