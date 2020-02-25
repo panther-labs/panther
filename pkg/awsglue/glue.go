@@ -212,9 +212,5 @@ func NewGlueMetadata(s3Prefix, databaseName, tableName, description string, time
 }
 
 func standardizeS3Prefix(s3Prefix, tableName string) string {
-	s3Prefix += "/" + tableName
-	if s3Prefix[len(s3Prefix)-1] != '/' { // ensure last char is '/'
-		s3Prefix += "/"
-	}
-	return s3Prefix
+	return s3Prefix + "/" + tableName + "/" // ensure last char is '/'
 }

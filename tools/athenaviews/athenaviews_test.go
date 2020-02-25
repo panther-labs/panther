@@ -59,11 +59,6 @@ select day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_id
 }
 
 func TestGenerateViewAllLogsFail(t *testing.T) {
-	// no tables
-	_, err := generateViewAllLogs([]*awsglue.GlueMetadata{})
-	require.Error(t, err)
-	require.True(t, strings.Contains(err.Error(), "no tables"))
-
 	// one has daily partitions and one has hourly
 	table1, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, "db", "table1", "test table1", awsglue.GlueTableDaily,
 		false, nil)
@@ -74,4 +69,11 @@ func TestGenerateViewAllLogsFail(t *testing.T) {
 	_, err = generateViewAllLogs([]*awsglue.GlueMetadata{table1, table2})
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "all tables do not share same partition keys"))
+}
+
+func TestGenerateLogsViewsFail(t *testing.T) {
+	// no tables
+	_, err := generateLogViews([]*awsglue.GlueMetadata{})
+	require.Error(t, err)
+	require.True(t, strings.Contains(err.Error(), "no tables"))
 }

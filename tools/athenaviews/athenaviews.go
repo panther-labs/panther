@@ -60,6 +60,9 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 
 // generateLogViews creates useful Athena views in the panther views database
 func generateLogViews(tables []*awsglue.GlueMetadata) (sqlStatements []string, err error) {
+	if len(tables) == 0 {
+		return nil, errors.New("no tables specified for generateLogViews()")
+	}
 	sqlStatement, err := generateViewAllLogs(tables)
 	if err != nil {
 		return nil, err
@@ -83,16 +86,13 @@ func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string, err error)
 func generateViewAllRuleMatches(tables []*awsglue.GlueMetadata) (sql string, err error) {
 	// the rule match tables share the same structure as the logs with some extra columns
 	var ruleTables []*awsglue.GlueMetadata
-	for _, t := range tables {
-		ruleTables = append(ruleTables, t.Clone(awsglue.RuleMatchS3Prefix, awsglue.RuleMatchDatabaseName))
+	for _, table := range tables {
+		ruleTables = append(ruleTables, table.Clone(awsglue.RuleMatchS3Prefix, awsglue.RuleMatchDatabaseName))
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, gluecf.RuleMatchColumns)
 }
 
 func generateViewAllHelper(viewName string, tables []*awsglue.GlueMetadata, extraColumns []gluecf.Column) (sql string, err error) {
-	if len(tables) == 0 {
-		return "", errors.New("no tables specified for generateViewAllHelper()")
-	}
 	// validate they all have the same partition keys
 	if len(tables) > 1 {
 		// create string of partition for comparison
