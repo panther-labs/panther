@@ -51,7 +51,7 @@ type RFC5424 struct {
 	parsers.PantherLog
 }
 
-// RFC5424Parser parses Syslog RFC5424 alerts in the JSON format
+// RFC5424Parser parses Syslog logs in the RFC5424 format
 type RFC5424Parser struct{}
 
 func (p *RFC5424Parser) New() parsers.LogParser {
@@ -104,7 +104,7 @@ func (event *RFC5424) updatePantherFields(p *RFC5424Parser) {
 	if event.Timestamp != nil {
 		event.SetCoreFieldsPtr(p.LogType(), event.Timestamp)
 	} else {
-		// A null timestamp is valid in RFC5242 (https://tools.ietf.org/html/rfc5424#section-6.2.3).
+		// A null timestamp is valid in RFC5424 (https://tools.ietf.org/html/rfc5424#section-6.2.3).
 		// Record the current time instead, and set PantherEventTimeWhenParsed to indicate the reconstructed time.
 		event.SetCoreFields(p.LogType(), (timestamp.RFC3339)(time.Now().UTC()))
 		event.PantherEventTimeWhenParsed = aws.Bool(true)
