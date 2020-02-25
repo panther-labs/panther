@@ -35,7 +35,7 @@ type API interface {
 	CreateUser(input *CreateUserInput) (*string, error)
 	DeleteUser(id *string) error
 	GetUser(id *string) (*models.User, error)
-	ListUsers(limit *int64, paginationToken *string) (*ListUsersOutput, error)
+	ListUsers() ([]*models.User, error)
 	ResetUserPassword(id *string) error
 	UpdateUser(input *UpdateUserInput) error
 }

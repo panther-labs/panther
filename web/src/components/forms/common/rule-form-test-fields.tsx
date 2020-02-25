@@ -256,7 +256,6 @@ const RuleFormTestFields: React.FC = () => {
                             as={FormikRadio}
                             id="expected-result-true"
                             name={`tests[${activeTabIndex}].expectedResult`}
-                            checked={tests[activeTabIndex].expectedResult}
                             value={true}
                           />
                         </Flex>
@@ -268,7 +267,6 @@ const RuleFormTestFields: React.FC = () => {
                             as={FormikRadio}
                             id="expected-result-false"
                             name={`tests[${activeTabIndex}].expectedResult`}
-                            checked={tests[activeTabIndex].expectedResult}
                             value={false}
                           />
                         </Flex>
