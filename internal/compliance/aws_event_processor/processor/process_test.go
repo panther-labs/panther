@@ -21,7 +21,6 @@ package processor
 import (
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
@@ -145,8 +144,7 @@ func TestProcessCloudTrailUnauthorized(t *testing.T) {
 	}
 	err := processCloudTrailLog(gjson.Parse(event), metadata, exampleChanges())
 
-	require.NotNil(t, err)
-	assert.Equal(t, errors.New("dropping event from unauthorized account 222222222222").Error(), err.Error())
+	assert.Nil(t, err)
 }
 
 func TestProcessCloudTrail(t *testing.T) {
