@@ -36,7 +36,6 @@ export interface ResetUserPasswordProps {
 
 const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
-  // TODO: Log out if user reset own password
   const mutation = useMutation<boolean, { id: string }>(RESET_USER_PASS, {
     variables: {
       id: user.id,
