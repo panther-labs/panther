@@ -56,24 +56,12 @@ Parameters:
     Default: 300 # 5 mins
     MinValue: 1
     MaxValue: 86400 # 1 day
-  MailFrom:
-    Type: String
-    Description: The email address that will appear in the 'MAIL FROM' field when Panther sends alert email to customers
-    Default: alerts@runpanther.io
   AlertSqsRetentionSec:
     Type: Number
     Description: Number of seconds SQS will retain a message in the alerts queue
     Default: 259200 # 3 days
     MinValue: 60
     MaxValue: 1209600
-  EmailVerificationTemplate:
-    Type: String
-    Description: The name of the SES template used for verifying emails
-    Default: EmailVerificationTemplate
-  SesConfigurationSet:
-    Type: String
-    Description: The name of the SES Configuration set that will be used when sending emails
-    Default: PantherConfigurationSet
   AppFqdn:
     Type: String
     Description: FQDN for the Panther web app (e.g. 1.2.3.4 or app.runpanther.io)
@@ -142,9 +130,6 @@ Resources:
           KEY_ID: !Ref EncryptionKey
           OUTPUTS_TABLE_NAME: !Ref OutputsTable
           OUTPUTS_DISPLAY_NAME_INDEX_NAME: displayName-index
-          EMAIL_VERIFICATION_TEMPLATE: !Ref EmailVerificationTemplate
-          SES_CONFIGURATION_SET: !Ref SesConfigurationSet
-          USERS_API: panther-users-api
       FunctionName: panther-outputs-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -176,21 +161,6 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !GetAtt EncryptionKey.Arn
-        - Id: VerifyEmail
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - ses:GetIdentityVerificationAttributes
-                - ses:SendCustomVerificationEmail
-                - ses:VerifyEmailAddress
-              Resource: '*'
-        - Id: UsersAPI
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: lambda:InvokeFunction
-              Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api'
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -217,13 +187,11 @@ Resources:
           ALERT_QUEUE_URL: !Ref AlertQueue
           ALERT_RETRY_DURATION_MINS: !Ref AlertRetryDurationMins
           ALERT_URL_PREFIX: !Sub https://${AppFqdn}/alerts/
-          MAIL_FROM: !Ref MailFrom
           MAX_RETRY_DELAY_SECS: !Ref MaxRetryDelaySecs
           MIN_RETRY_DELAY_SECS: !Ref MinRetryDelaySecs
           OUTPUTS_API: panther-outputs-api
           OUTPUTS_REFRESH_INTERVAL_MIN: '5'
           POLICY_URL_PREFIX: !Sub https://${AppFqdn}/policies/
-          SES_CONFIGURATION_SET: !Ref SesConfigurationSet
       Events:
         AlertQueue:
           Type: SQS
@@ -244,15 +212,6 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-outputs-api'
-        - Id: SendEmail
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: ses:SendEmail
-              Resource: '*'
-              Condition:
-                StringLike:
-                  'ses:FromAddress': !Ref MailFrom
         - Id: PublishSnsMessage
           Version: 2012-10-17
           Statement:

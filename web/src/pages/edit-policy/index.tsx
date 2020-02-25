@@ -26,10 +26,7 @@ import { useMutation, useQuery, gql } from '@apollo/client';
 import useRouter from 'Hooks/useRouter';
 import TablePlaceholder from 'Components/table-placeholder';
 import { MODALS } from 'Components/utils/modal-context';
-import { READONLY_ROLES_ARRAY } from 'Source/constants';
 import useEditRule from 'Hooks/useEditRule';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
-import Page403 from 'Pages/403';
 import { extractErrorMessage } from 'Helpers/utils';
 
 const POLICY_DETAILS = gql`
@@ -148,42 +145,40 @@ const EditPolicyPage: React.FC = () => {
   }
 
   return (
-    <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY} fallback={<Page403 />}>
-      <Box mb={6}>
-        <Panel
-          size="large"
-          title="Policy Settings"
-          actions={
-            <Button
-              variant="default"
-              size="large"
-              color="red300"
-              onClick={() =>
-                showModal({
-                  modal: MODALS.DELETE_POLICY,
-                  props: { policy: queryData.policy },
-                })
-              }
-            >
-              Delete
-            </Button>
-          }
-        >
-          <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
-        </Panel>
-        {updateError && (
-          <Alert
-            mt={2}
-            mb={6}
-            variant="error"
-            title={
-              extractErrorMessage(updateError) ||
-              'Unknown error occured during update. Please contact support@runpanther.io'
+    <Box mb={6}>
+      <Panel
+        size="large"
+        title="Policy Settings"
+        actions={
+          <Button
+            variant="default"
+            size="large"
+            color="red300"
+            onClick={() =>
+              showModal({
+                modal: MODALS.DELETE_POLICY,
+                props: { policy: queryData.policy },
+              })
             }
-          />
-        )}
-      </Box>
-    </RoleRestrictedAccess>
+          >
+            Delete
+          </Button>
+        }
+      >
+        <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
+      </Panel>
+      {updateError && (
+        <Alert
+          mt={2}
+          mb={6}
+          variant="error"
+          title={
+            extractErrorMessage(updateError) ||
+            'Unknown error occured during update. Please contact support@runpanther.io'
+          }
+        />
+      )}
+    </Box>
   );
 };
 

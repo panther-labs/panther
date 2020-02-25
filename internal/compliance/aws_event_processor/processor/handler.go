@@ -23,6 +23,7 @@ import (
 	"compress/gzip"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -59,7 +60,7 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 	//
 	// For example, if a bucket is Deleted, Created, then Modified all in this batch,
 	// we will send a single update request (i.e. queue a bucket scan).
-	changes := make(map[string]*resourceChange, len(batch.Records)) // keyed by resourceID
+	changes := make(map[string]*resourceChange, len(batch.Records))
 
 	// Get the most recent integrations to map Account ID to IntegrationID
 	if err = refreshAccounts(); err != nil {
@@ -70,43 +71,50 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 	//
 	// Since we don't want one bad notification to lose us the rest, we log failures and continue.
 	for _, record := range batch.Records {
-		// SNS raw message delivery of CloudTrail
+		// Check for SNS raw message delivery of CloudTrail
 		detail := gjson.Get(record.Body, "detail")
 		if detail.Exists() {
 			zap.L().Debug("processing raw CloudTrail")
-			err := processCloudTrail(detail, changes)
+			err := handleCloudTrail(detail, changes)
 			if err != nil {
-				zap.L().Error("error processing raw CloudTrail", zap.Error(errors.WithStack(err)))
+				zap.L().Error("error processing raw CloudTrail", zap.Error(err))
 			}
 			continue
 		}
 
-		// This case is checking for a notification from the log processor that there is newly processed CloudTrail logs
+		// Check for a notification from the log processor that there are newly processed CloudTrail logs
 		results := gjson.GetMany(record.Body, "s3Bucket", "s3ObjectKey")
 		if results[0].Exists() && results[1].Exists() {
-			zap.L().Debug("SNS message was an S3 Notification, initiating download")
+			zap.L().Debug("processing s3 notification")
 			object := &sources.S3ObjectInfo{
 				S3Bucket:    results[0].Str,
 				S3ObjectKey: results[1].Str,
 			}
-			err := processS3Download(object, changes)
+			err := handleS3Download(object, changes)
 			if err != nil {
 				return err
 			}
+			continue
 		}
 
 		// If both the prior cases failed, this must be an SNS Notification or invalid input
 		switch gjson.Get(record.Body, "Type").Str {
-		case "Notification": // SNS notification
-			// This case is checking for CloudTrail logs directly wrapped in SNS Events
+		case "Notification":
+			// Check for CloudTrail logs wrapped in SNS Events
 			zap.L().Debug("processing SNS notification")
 			message := gjson.Get(record.Body, "Message").Str
 			detail := gjson.Get(message, "detail")
-			err := processCloudTrail(detail, changes)
+			if !detail.Exists() {
+				zap.L().Error("error extracting detail from SNS wrapped CloudTrail")
+				continue
+			}
+			err := handleCloudTrail(detail, changes)
 			if err != nil {
 				operation.LogError(errors.Wrap(err, "error processing SNS wrapped CloudTrail"))
 			}
-		case "SubscriptionConfirmation": // SNS confirmation message
+			continue
+
+		case "SubscriptionConfirmation":
 			zap.L().Debug("processing SNS confirmation")
 			topicArn, parseErr := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
 			if err != nil {
@@ -127,28 +135,26 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 	return err
 }
 
-func processCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
-	if !cloudtrail.Exists() {
-		return errors.WithStack(errors.New("dropping bad event"))
+// handleCloudTrail takes a single CloudTrail log line and determines what scans if any need to be made as a result
+// of the log.
+func handleCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
+	metadata, err := preprocessCloudTrailLog(cloudtrail)
+	if err != nil {
+		return err
 	}
+	if metadata == nil {
+		return nil
+	}
+	cweAccounts[generateSourceKey(metadata)] = time.Now()
 
-	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)
-	for _, summary := range classifyCloudTrailLog(cloudtrail) {
-		zap.L().Info("resource change required", zap.Any("changeDetail", summary))
-		// Prevents the following from being de-duped mistakenly:
-		//
-		// Resources with the same ID in different regions (different regions)
-		// Service scans in the same region (different resource types)
-		// Resources with the same type in the same region (different resource IDs)
-		key := summary.ResourceID + summary.ResourceType + summary.Region
-		if entry, ok := changes[key]; !ok || summary.EventTime > entry.EventTime {
-			changes[key] = summary // the newest event for this resource we've seen so far
-		}
-	}
-	return nil
+	return processCloudTrailLog(cloudtrail, metadata, changes)
 }
 
-func processS3Download(object *sources.S3ObjectInfo, changes map[string]*resourceChange) error {
+// handleS3Download processes an s3 Notification from the log analysis pipeline by downloading
+// the already processed CloudTrail logs and sending them to the CloudTrail classifier.
+//
+// Because this data has already been pre-processed, we assume it is in the correct format and return all errors.
+func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resourceChange) error {
 	logs, err := s3Svc.GetObject(&s3.GetObjectInput{
 		Bucket: &object.S3Bucket,
 		Key:    &object.S3ObjectKey,
@@ -163,23 +169,49 @@ func processS3Download(object *sources.S3ObjectInfo, changes map[string]*resourc
 	}
 
 	stream := bufio.NewReader(reader)
-	for {
+	for err == nil {
+		// First download the next line of CloudTrail logs
 		var line string
 		line, err = stream.ReadString('\n')
 		if err != nil {
 			if err == io.EOF { // we are done
 				err = nil
+			} else {
+				err = errors.Wrap(err, "unexpected error reading line from s3")
 			}
 			break
 		}
-		// Since we don't wont to lose an entire batch of logs to one bad message, we just log failures and continue
-		err = processCloudTrail(gjson.Parse(line), changes)
+
+		// Parse the line and determine if we should continue
+		detail := gjson.Parse(line)
+		var metadata *CloudTrailMetadata
+		metadata, err = preprocessCloudTrailLog(detail)
 		if err != nil {
-			zap.L().Error("error processing CloudTrail from S3", zap.Error(errors.WithStack(err)))
+			return err
 		}
+		if metadata == nil {
+			continue
+		}
+		if checkCWECache(generateSourceKey(metadata)) {
+			// If we're currently seeing CloudTrail via CWE, we don't process the duplicate data in S3
+			zap.L().Debug(
+				"skipping s3 notification in favor of CloudTrail via CWE",
+				zap.String("region", metadata.region),
+				zap.String("accountID", metadata.accountID),
+			)
+			continue
+		}
+
+		// Process the line
+		err = processCloudTrailLog(detail, metadata, changes)
 	}
 
 	return err
+}
+
+// generateSourceKey creates the key used for the cweAccounts cache for a given CloudTrail metadata struct
+func generateSourceKey(metadata *CloudTrailMetadata) string {
+	return metadata.accountID + "/" + metadata.region
 }
 
 func submitChanges(changes map[string]*resourceChange) error {

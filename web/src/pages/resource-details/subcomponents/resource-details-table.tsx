@@ -44,7 +44,9 @@ const ResourcesDetailsTable: React.FC<ResourcesDetailsTableProps> = ({
       columns={enumeratedColumns}
       getItemKey={complianceItem => complianceItem.policyId}
       items={items}
-      onSelect={complianceItem => history.push(urls.policies.details(complianceItem.policyId))}
+      onSelect={complianceItem =>
+        history.push(urls.compliance.policies.details(complianceItem.policyId))
+      }
     />
   );
 };

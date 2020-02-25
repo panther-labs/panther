@@ -47,7 +47,7 @@ func Fmt() {
 		logger.Fatalf("failed to format python: %v", err)
 	}
 
-	// cloudformation
+	// prettier (cloudformation)
 	logger.Info("fmt: prettier")
 	args = []string{"--write", "deployments/**.yml"}
 	if !mg.Verbose() {
@@ -57,7 +57,8 @@ func Fmt() {
 		logger.Fatalf("failed to format deployments/**.yml: %v", err)
 	}
 
-	args = []string{"--write", "{web/src/**,.}/*.{ts,js,tsx,md,json,yml}"}
+	// prettier (web)
+	args = []string{"--write", "{web/src/**,web/__generated__,.}/*.{ts,js,tsx,md,json,yml}"}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
 	}

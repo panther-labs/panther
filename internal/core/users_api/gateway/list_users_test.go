@@ -34,14 +34,16 @@ type mockListUsersClient struct {
 	serviceErr bool
 }
 
-func (m *mockListUsersClient) ListUsers(
-	*provider.ListUsersInput) (*provider.ListUsersOutput, error) {
+func (m *mockListUsersClient) ListUsersPages(
+	input *provider.ListUsersInput,
+	pager func(*provider.ListUsersOutput, bool) bool,
+) error {
 
 	if m.serviceErr {
-		return nil, errors.New("cognito does not exist")
+		return errors.New("cognito does not exist")
 	}
 
-	return &provider.ListUsersOutput{
+	pager(&provider.ListUsersOutput{
 		Users: []*provider.UserType{
 			{
 				Attributes: []*provider.AttributeType{
@@ -57,10 +59,6 @@ func (m *mockListUsersClient) ListUsers(
 						Name:  aws.String("email"),
 						Value: aws.String("joe@blow.com"),
 					},
-					{
-						Name:  aws.String("phone_number"),
-						Value: aws.String("+1234567890"),
-					},
 				},
 				Enabled:              aws.Bool(true),
 				UserCreateDate:       &time.Time{},
@@ -69,28 +67,20 @@ func (m *mockListUsersClient) ListUsers(
 				UserStatus:           aws.String("CONFIRMED"),
 			},
 		},
-		PaginationToken: aws.String("token123"),
-	}, nil
+	}, true)
+	return nil
 }
 
 func TestListUsers(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockListUsersClient{}}
-	result, err := gw.ListUsers(
-		aws.Int64(10),
-		aws.String("paginationToken"),
-		aws.String("userPoolId"),
-	)
+	result, err := gw.ListUsers()
 	assert.NotNil(t, result)
 	assert.NoError(t, err)
 }
 
 func TestListUsersFailed(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockListUsersClient{serviceErr: true}}
-	result, err := gw.ListUsers(
-		aws.Int64(10),
-		aws.String("paginationToken"),
-		aws.String("userPoolId"),
-	)
+	result, err := gw.ListUsers()
 	assert.Nil(t, result)
 	assert.Error(t, err)
 }

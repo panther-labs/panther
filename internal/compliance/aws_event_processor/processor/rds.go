@@ -28,46 +28,27 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyRDS(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
+func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
+	if strings.HasSuffix(metadata.eventName, "DBCluster") || // 9 APIs
+		strings.HasSuffix(metadata.eventName, "ParameterGroup") || // 10 APIs
+		strings.HasSuffix(metadata.eventName, "Subscription") || // 5 APIs
+		strings.HasSuffix(metadata.eventName, "OptionGroup") || // 4 APIs
+		strings.HasSuffix(metadata.eventName, "GlobalCluster") || // 4 APIs
+		strings.HasSuffix(metadata.eventName, "ClusterSnapshot") { // 3 APIs
 
-	if strings.HasSuffix(eventName, "DBCluster") || // 9 APIs
-		strings.HasSuffix(eventName, "ParameterGroup") || // 10 APIs
-		strings.HasSuffix(eventName, "Subscription") || // 5 APIs
-		strings.HasSuffix(eventName, "OptionGroup") || // 4 APIs
-		strings.HasSuffix(eventName, "GlobalCluster") || // 4 APIs
-		strings.HasSuffix(eventName, "ClusterSnapshot") || // 3 APIs
-		eventName == "CreateDBClusterEndpoint" ||
-		eventName == "DeleteDBClusterEndpoint" ||
-		eventName == "CreateDBSecurityGroup" ||
-		eventName == "DeleteDBSecurityGroup" ||
-		eventName == "AuthorizeDBSecurityGroupIngress" ||
-		eventName == "DeleteDBSubnetGroup" ||
-		eventName == "DownloadDBLogFilePortion" ||
-		eventName == "ModifyCurrentDBClusterCapacity" ||
-		eventName == "ModifyDBClusterEndpoint" ||
-		eventName == "ModifyDBClusterSnapshotAttribute" ||
-		eventName == "RestoreDBClusterFromS3" ||
-		eventName == "RestoreDBClusterFromSnapshot" ||
-		eventName == "RestoreDBClusterToPointInTime" ||
-		eventName == "RevokeDBSecurityGroupIngress" ||
-		eventName == "StartActivityStream" ||
-		eventName == "StopActivityStream" {
-
-		zap.L().Debug("rds: ignoring event", zap.String("eventName", eventName))
+		zap.L().Debug("rds: ignoring event", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonrds.html
-	region := detail.Get("awsRegion").Str
 	rdsARN := arn.ARN{
 		Partition: "aws",
 		Service:   "rds",
-		Region:    region,
-		AccountID: accountID,
+		Region:    metadata.region,
+		AccountID: metadata.accountID,
 		Resource:  "db:",
 	}
-	switch eventName {
+	switch metadata.eventName {
 	case "AddRoleToDBInstance", "CreateDBInstance", "CreateDBSnapshot", "DeleteDBInstance", "ModifyDBInstance",
 		"PromoteReadReplica", "RebootDBInstance", "RemoveRoleFromDBInstance", "RestoreDBInstanceFromDBSnapshot",
 		"RestoreDBInstanceFromS3", "StartDBInstance", "StopDBInstance":
@@ -75,7 +56,7 @@ func classifyRDS(detail gjson.Result, accountID string) []*resourceChange {
 	case "AddTagsToResource", "RemoveTagsFromResource":
 		resourceARN, err := arn.Parse(detail.Get("requestParameters.resourceName").Str)
 		if err != nil {
-			zap.L().Error("rds: error parsing ARN", zap.String("eventName", eventName), zap.Error(err))
+			zap.L().Error("rds: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
 		}
 		if strings.HasPrefix(resourceARN.Resource, "db:") {
 			rdsARN = resourceARN
@@ -86,7 +67,7 @@ func classifyRDS(detail gjson.Result, accountID string) []*resourceChange {
 		// Similar to AddTagsToResource except that it uses a different parameter name
 		resourceARN, err := arn.Parse(detail.Get("requestParameters.resourceIdentifier").Str)
 		if err != nil {
-			zap.L().Error("rds: error parsing ARN", zap.String("eventName", eventName), zap.Error(err))
+			zap.L().Error("rds: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
 			return nil
 		}
 		if strings.HasPrefix(resourceARN.Resource, "db:") {
@@ -99,26 +80,26 @@ func classifyRDS(detail gjson.Result, accountID string) []*resourceChange {
 		rdsARN.Resource += detail.Get("responseElements.dBSnapshot.dBInstanceIdentifier").Str
 	case "CreateDBInstanceReadReplica":
 		return []*resourceChange{{
-			AwsAccountID: accountID,
-			EventName:    eventName,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
 			ResourceID:   rdsARN.String() + detail.Get("requestParameters.dBInstanceIdentifier").Str,
 			ResourceType: schemas.RDSInstanceSchema,
 		}, {
-			AwsAccountID: accountID,
-			EventName:    eventName,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
 			ResourceID:   rdsARN.String() + detail.Get("requestParameters.sourcedBInstanceIdentifier").Str,
 			ResourceType: schemas.RDSInstanceSchema,
 		}}
 	case "CreateDBSubnetGroup", "ModifyDBSubnetGroup":
 		// If we create an RDS DBSubnetGroup resource, we will need to update this to scan that as well
 		return []*resourceChange{{
-			AwsAccountID: accountID,
-			EventName:    eventName,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
 			ResourceID: arn.ARN{
 				Partition: "aws",
 				Service:   "ec2",
-				Region:    region,
-				AccountID: accountID,
+				Region:    metadata.region,
+				AccountID: metadata.accountID,
 				Resource:  "vpc/" + detail.Get("responseElements.dBSubnetGroup.vpcId").Str,
 			}.String(),
 			ResourceType: schemas.Ec2VpcSchema,
@@ -130,33 +111,33 @@ func classifyRDS(detail gjson.Result, accountID string) []*resourceChange {
 		// RDS instance scan for now. With a linking table or resource lookups + snapshot resource
 		// we could avoid this.
 		return []*resourceChange{{
-			AwsAccountID: accountID,
-			EventName:    eventName,
-			Region:       region,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
+			Region:       metadata.region,
 			ResourceType: schemas.RDSInstanceSchema,
 		}}
 	case "RestoreDBInstanceToPointInTime":
 		// Similar to CreateDBInstanceReadReplica but with different field names
 		return []*resourceChange{{
-			AwsAccountID: accountID,
-			EventName:    eventName,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
 			ResourceID:   rdsARN.String() + detail.Get("requestParameters.targetdBInstanceIdentifier").Str,
 			ResourceType: schemas.RDSInstanceSchema,
 		}, {
-			AwsAccountID: accountID,
-			EventName:    eventName,
+			AwsAccountID: metadata.accountID,
+			EventName:    metadata.eventName,
 			ResourceID:   rdsARN.String() + detail.Get("requestParameters.sourcedBInstanceIdentifier").Str,
 			ResourceType: schemas.RDSInstanceSchema,
 		}}
 	default:
-		zap.L().Warn("rds: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("rds: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
-		Delete:       eventName == "DeleteDBInstance",
-		EventName:    eventName,
+		AwsAccountID: metadata.accountID,
+		Delete:       metadata.eventName == "DeleteDBInstance",
+		EventName:    metadata.eventName,
 		ResourceID:   rdsARN.String(),
 		ResourceType: schemas.RDSInstanceSchema,
 	}}

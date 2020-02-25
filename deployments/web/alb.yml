@@ -27,9 +27,6 @@ Parameters:
   SubnetTwoId:
     Type: String
     Description: The ID of another subnet in the VPC above
-  LoadBalancerName:
-    Type: String
-    Description: The name of the load balancer that will sit in front of the web stack and accept traffic
   CertificateArn:
     Type: String
     Description: The ARN of the TLS certificate that is going to be used by the ALB listener
@@ -42,7 +39,7 @@ Resources:
   PublicLoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub ${LoadBalancerName}-lb
+      GroupName: web-lb
       GroupDescription: Access to the public facing load balancer
       VpcId: !Ref VpcId
       SecurityGroupIngress:
@@ -60,7 +57,7 @@ Resources:
   PublicLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Ref LoadBalancerName
+      Name: web
       Scheme: internet-facing
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
@@ -96,6 +93,9 @@ Resources:
       Protocol: HTTPS
 
 Outputs:
+  LoadBalancerFullName:
+    Description: The name of the ALB
+    Value: !GetAtt PublicLoadBalancer.LoadBalancerFullName
   LoadBalancerListenerArn:
     Description: The ARN of the public load balancer that accepts & forwards incoming traffic to ECS tasks
     Value: !Ref PublicLoadBalancerListener

@@ -35,8 +35,6 @@ func TestGetOutput(t *testing.T) {
 	outputsTable = mockOutputsTable
 	mockEncryptionKey := &mockEncryptionKey{}
 	encryptionKey = mockEncryptionKey
-	mockOutputVerification := &mockOutputVerification{}
-	outputVerification = mockOutputVerification
 
 	mockGetOutputInput := &models.GetOutputInput{
 		OutputID: aws.String("outputId"),
@@ -51,7 +49,6 @@ func TestGetOutput(t *testing.T) {
 		LastModifiedTime:   aws.String("lastModifiedTime"),
 		OutputType:         aws.String("slack"),
 		EncryptedConfig:    make([]byte, 1),
-		VerificationStatus: aws.String(models.VerificationStatusSuccess),
 		DefaultForSeverity: aws.StringSlice([]string{"HIGH", "CRITICAL"}),
 	}
 	mockEncryptionKey.On("DecryptConfig", make([]byte, 1), mock.Anything).Return(nil)
@@ -66,7 +63,6 @@ func TestGetOutput(t *testing.T) {
 		LastModifiedBy:     aws.String("lastModifiedBy"),
 		LastModifiedTime:   aws.String("lastModifiedTime"),
 		OutputConfig:       &models.OutputConfig{},
-		VerificationStatus: aws.String(models.VerificationStatusSuccess),
 		DefaultForSeverity: aws.StringSlice([]string{"HIGH", "CRITICAL"}),
 	}
 

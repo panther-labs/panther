@@ -61,6 +61,10 @@ class BufferKey:
     log_type: str
     dedup: str
 
+    def table_name(self) -> str:
+        """ Output the name of the Glue table name for this log type"""
+        return self.log_type.lower().replace('.', '_')
+
 
 @dataclass
 class BufferValue:
@@ -133,7 +137,7 @@ def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> No
     data_stream.seek(0)
     output_uuid = uuid.uuid4()
     object_key = _KEY_FORMAT.format(
-        key.log_type, time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT), output_uuid
+        key.table_name(), time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT), output_uuid
     )
 
     byte_size = data_stream.getbuffer().nbytes

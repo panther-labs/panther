@@ -64,6 +64,15 @@ Resources:
       QueueName: panther-snapshot-queue
       KmsMasterKeyId: !Ref SQSKeyId
       VisibilityTimeout: 900 # Should match lambda
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 10
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      QueueName: panther-snapshot-queue-dlq
 
   PollerFunction:
     Type: AWS::Serverless::Function

@@ -35,10 +35,6 @@ func (API) GetOutputs(input *models.GetOutputsInput) (models.GetOutputsOutput, e
 		if err != nil {
 			return nil, err
 		}
-
-		if err = checkAndUpdateVerificationStatus(alertOutput); err != nil {
-			return nil, err
-		}
 		outputs[i] = alertOutput
 	}
 	return outputs, nil

@@ -92,7 +92,7 @@ const Index: React.FC = () => {
 
   React.useEffect(() => {
     if (data) {
-      history.push(urls.account.settings.sources.list());
+      history.push(urls.compliance.sources.list());
     }
   });
 

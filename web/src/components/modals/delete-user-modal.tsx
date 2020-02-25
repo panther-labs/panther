@@ -23,6 +23,7 @@ import { useMutation, gql } from '@apollo/client';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import BaseDeleteModal from 'Components/modals/base-delete-modal';
+import useAuth from 'Hooks/useAuth';
 
 const DELETE_USER = gql`
   mutation DeleteUser($id: ID!) {
@@ -35,6 +36,10 @@ export interface DeleteUserModalProps {
 }
 
 const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
+  const { signOut, userInfo } = useAuth();
+  // Checking if user deleted is the same as the user signed in
+  const onSuccess = () => userInfo.sub === user.id && signOut();
+
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
   const mutation = useMutation<boolean, { id: string }>(DELETE_USER, {
     variables: {
@@ -44,7 +49,9 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
     refetchQueries: [getOperationName(LIST_USERS)],
   });
 
-  return <BaseDeleteModal mutation={mutation} itemDisplayName={userDisplayName} />;
+  return (
+    <BaseDeleteModal mutation={mutation} itemDisplayName={userDisplayName} onSuccess={onSuccess} />
+  );
 };
 
 export default DeleteUserModal;
