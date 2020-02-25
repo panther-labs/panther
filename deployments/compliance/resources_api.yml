@@ -221,7 +221,10 @@ Resources:
             Queue: !GetAtt InputQueue.Arn
       FunctionName: panther-resource-processor
       # <cfndoc>
-      # This lambda implements what?.
+      # This lambda reads from panther-resources-queue which has events concerning
+      # recently changed infrastructure. The lambda calls the policy-engine lambda to determine if
+      # there are any policy engine violations. Each violation is deduplicated and new results are sent as alerts to
+      # the panther-alert-processor-queue for delivery.
       #
       # ## Troubleshooting
       #
