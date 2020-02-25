@@ -310,7 +310,8 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 	// Check if this log is from a supported account
 	integration, ok := accounts[metadata.accountID]
 	if !ok {
-		return errors.New("dropping event from unauthorized account " + metadata.accountID)
+		zap.L().Debug("dropping event from unregistered account", zap.String("accountID", metadata.accountID))
+		return nil
 	}
 
 	// Determine the AWS service the modified resource belongs to
