@@ -67,19 +67,12 @@ type Registry map[string]*LogParserMetadata
 
 // Most parsers follow this structure, these are currently assumed to all be JSON based, using LogType() as tableName
 func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, description string) *LogParserMetadata {
-	tableName := p.LogType() // default to LogType()
-
 	// describes Glue table over processed data in S3
-	gm, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, awsglue.LogProcessingDatabaseName,
-		tableName, description, awsglue.GlueTableHourly, false, eventStruct)
-	if err != nil {
-		panic(err) // panic is justified because this means configuration is WRONG
-	}
+	gm := awsglue.NewLogTableMetadata(p.LogType(), description)
 
 	return &LogParserMetadata{
 		Parser:      p,
 		EventStruct: eventStruct,
-		Description: description,
 		Glue:        gm,
 	}
 }
@@ -89,7 +82,7 @@ type LogParserMetadata struct {
 	Parser      parsers.LogParser     // does the work
 	EventStruct interface{}           // should be a struct that defines a log event
 	Description string                // describes the  data for documentation and will be added into Glue table
-	Glue        *awsglue.GlueMetadata // describes associated AWS Glue table (used to generate CF)
+	Glue        *awsglue.GlueTableMetadata // describes associated AWS Glue table (used to generate CF)
 }
 
 // Return a map containing all the available parsers
@@ -98,7 +91,7 @@ func AvailableParsers() Registry {
 }
 
 // Return a slice containing just the Glue tables
-func AvailableTables() (tables []*awsglue.GlueMetadata) {
+func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
 	for _, lpm := range parsersRegistry {
 		tables = append(tables, lpm.Glue)
 	}

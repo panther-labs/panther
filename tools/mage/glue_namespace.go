@@ -79,7 +79,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		}()
 	}
 
-	listPartitions := func(name string, table *awsglue.GlueMetadata) {
+	listPartitions := func(name string, table *awsglue.GlueTableMetadata) {
 		createTime, err := getTableCreateTime(glueClient, table)
 		if err != nil {
 			logger.Fatal(err)

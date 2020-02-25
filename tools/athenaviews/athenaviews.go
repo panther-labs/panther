@@ -59,7 +59,7 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 }
 
 // generateLogViews creates useful Athena views in the panther views database
-func generateLogViews(tables []*awsglue.GlueMetadata) (sqlStatements []string, err error) {
+func generateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []string, err error) {
 	if len(tables) == 0 {
 		return nil, errors.New("no tables specified for generateLogViews()")
 	}
@@ -78,21 +78,21 @@ func generateLogViews(tables []*awsglue.GlueMetadata) (sqlStatements []string, e
 }
 
 // generateViewAllLogs creates a view over all log sources in log db using "panther" fields
-func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string, err error) {
+func generateViewAllLogs(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
 	return generateViewAllHelper("all_logs", tables, []gluecf.Column{})
 }
 
 // generateViewAllRuleMatches creates a view over all log sources in rule match db the using "panther" fields
-func generateViewAllRuleMatches(tables []*awsglue.GlueMetadata) (sql string, err error) {
+func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
 	// the rule match tables share the same structure as the logs with some extra columns
-	var ruleTables []*awsglue.GlueMetadata
+	var ruleTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
-		ruleTables = append(ruleTables, table.Clone(awsglue.RuleMatchS3Prefix, awsglue.RuleMatchDatabaseName))
+		ruleTables = append(ruleTables, awsglue.NewRuleTableMetadata(table.))
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, gluecf.RuleMatchColumns)
 }
 
-func generateViewAllHelper(viewName string, tables []*awsglue.GlueMetadata, extraColumns []gluecf.Column) (sql string, err error) {
+func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []gluecf.Column) (sql string, err error) {
 	// validate they all have the same partition keys
 	if len(tables) > 1 {
 		// create string of partition for comparison
@@ -136,7 +136,7 @@ type pantherViewColumns struct {
 	columnsByTable map[string]map[string]struct{} // table -> map of column names in that table
 }
 
-func newPantherViewColumns(tables []*awsglue.GlueMetadata, extraColumns []gluecf.Column) *pantherViewColumns {
+func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []gluecf.Column) *pantherViewColumns {
 	pvc := &pantherViewColumns{
 		allColumnsSet:  make(map[string]struct{}),
 		columnsByTable: make(map[string]map[string]struct{}),
@@ -155,7 +155,7 @@ func newPantherViewColumns(tables []*awsglue.GlueMetadata, extraColumns []gluecf
 
 	return pvc
 }
-func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueMetadata, extraColumns []gluecf.Column) {
+func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []gluecf.Column) {
 	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
 	columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
 	columns = append(columns, extraColumns...)
@@ -181,7 +181,7 @@ func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueMetadata, ext
 	}
 }
 
-func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueMetadata) string {
+func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueTableMetadata) string {
 	tableColumns := pvc.columnsByTable[table.TableName()]
 	selectColumns := make([]string, 0, len(pvc.allColumns))
 	for _, column := range pvc.allColumns {

@@ -84,7 +84,7 @@ var (
 )
 
 // Output CloudFormation for all 'tables'
-func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
+func GenerateTables(tables []*awsglue.GlueTableMetadata) (cf []byte, err error) {
 	const bucketParam = "ProcessedDataBucket"
 	parameters := make(map[string]interface{})
 	parameters[bucketParam] = &cfngen.Parameter{
@@ -117,7 +117,7 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 		},
 	}
 
-	addTable := func(t *awsglue.GlueMetadata, extraColumns ...Column) {
+	addTable := func(t *awsglue.GlueTableMetadata, extraColumns ...Column) {
 		location := cfngen.Sub{Sub: "s3://${" + bucketParam + "}/" + t.S3Prefix()}
 
 		columns := InferJSONColumns(t.EventStruct(), GlueMappings...)
@@ -146,7 +146,7 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 	return cfngen.NewTemplate("Panther Glue Resources", parameters, resources, outputs).CloudFormation()
 }
 
-func getPartitionKeys(t *awsglue.GlueMetadata) (partitions []Column) {
+func getPartitionKeys(t *awsglue.GlueTableMetadata) (partitions []Column) {
 	for _, partition := range t.PartitionKeys() {
 		partitions = append(partitions, Column{
 			Name:    partition.Name,

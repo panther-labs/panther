@@ -28,8 +28,5 @@ type GluePartition struct {
 	partitions map[string]string
 }
 
-func PartitionFromS3Key(s3ObjectKey string) *GluePartition {
-
-}
 
 
