@@ -19,6 +19,7 @@ package sysloglogs
  */
 
 import (
+	"net"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -105,5 +106,16 @@ func (event *RFC5424) updatePantherFields(p *RFC5424Parser) {
 		// Record the current time instead, and set PantherEventTimeWhenParsed to indicate the reconstructed time.
 		event.SetCoreFields(p.LogType(), (timestamp.RFC3339)(time.Now().UTC()))
 		event.PantherEventTimeWhenParsed = aws.Bool(true)
+	}
+
+	if event.Hostname != nil {
+		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
+		// add as a domain name. https://tools.ietf.org/html/rfc5424#section-6.2.4
+		hostname := *event.Hostname
+		if net.ParseIP(hostname) != nil {
+			event.AppendAnyIPAddresses(hostname)
+		} else {
+			event.AppendAnyDomainNames(hostname)
+		}
 	}
 }
