@@ -1,6 +1,6 @@
 # Background
 
-Panther has 5 CloudWatch dashboards to provide visibility in the operation of the system:
+Panther has 5 CloudWatch dashboards to provide visibility into the operation of the system:
 
 - PantherOverview: An overview all errors and performance of all Panther components.
 - PantherCloudSecurity: Details of the components monitoring infrastructure for CloudSecurity.
