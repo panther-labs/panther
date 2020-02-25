@@ -149,6 +149,7 @@ func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
 			return fmt.Errorf("failed to generate alarms CloudFormation template %s: %v", alarmsCfFilePath, err)
 		}
 		alarms = append(alarms, fileAlarms...) // save for validation
+
 		// write cf to file referenced in master template
 		alarmsCfFile, err := os.Create(alarmsCfFilePath)
 		if err != nil {

@@ -45,7 +45,7 @@ func TestHandleForgotPasswordGeneratePlainTextEmail(t *testing.T) {
 			CodeParameter: codeParam,
 		},
 	}
-	mockGateway.On("GetUser", &username, &poolID).Return(&models.User{
+	mockGateway.On("GetUser", &username).Return(&models.User{
 		GivenName:  aws.String("user-given-name-123"),
 		FamilyName: aws.String("user-family-name-123"),
 		Email:      aws.String("user@test.pizza"),

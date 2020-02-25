@@ -44,14 +44,13 @@ func TestUpdateOutput(t *testing.T) {
 	encryptionKey = mockEncryptionKey
 
 	alertOutputItem := &table.AlertOutputItem{
-		OutputID:           aws.String("outputId"),
-		DisplayName:        aws.String("displayName"),
-		CreatedBy:          aws.String("createdBy"),
-		CreationTime:       aws.String("createdTime"),
-		LastModifiedBy:     aws.String("userId"),
-		OutputType:         aws.String("sns"),
-		VerificationStatus: aws.String(models.VerificationStatusSuccess),
-		EncryptedConfig:    make([]byte, 1),
+		OutputID:        aws.String("outputId"),
+		DisplayName:     aws.String("displayName"),
+		CreatedBy:       aws.String("createdBy"),
+		CreationTime:    aws.String("createdTime"),
+		LastModifiedBy:  aws.String("userId"),
+		OutputType:      aws.String("sns"),
+		EncryptedConfig: make([]byte, 1),
 	}
 
 	mockOutputsTable.On("UpdateOutput", mock.Anything).Return(alertOutputItem, nil)
@@ -95,14 +94,13 @@ func TestUpdateSameOutpuOutput(t *testing.T) {
 	encryptionKey = mockEncryptionKey
 
 	alertOutputItem := &table.AlertOutputItem{
-		OutputID:           aws.String("outputId"),
-		DisplayName:        aws.String("displayName"),
-		CreatedBy:          aws.String("createdBy"),
-		CreationTime:       aws.String("createdTime"),
-		LastModifiedBy:     aws.String("userId"),
-		OutputType:         aws.String("sns"),
-		VerificationStatus: aws.String(models.VerificationStatusSuccess),
-		EncryptedConfig:    make([]byte, 1),
+		OutputID:        aws.String("outputId"),
+		DisplayName:     aws.String("displayName"),
+		CreatedBy:       aws.String("createdBy"),
+		CreationTime:    aws.String("createdTime"),
+		LastModifiedBy:  aws.String("userId"),
+		OutputType:      aws.String("sns"),
+		EncryptedConfig: make([]byte, 1),
 	}
 
 	preExistingAlertItem := &table.AlertOutputItem{
@@ -122,7 +120,6 @@ func TestUpdateSameOutpuOutput(t *testing.T) {
 	assert.Equal(t, aws.String("createdBy"), result.CreatedBy)
 	assert.Equal(t, aws.String("userId"), result.LastModifiedBy)
 	assert.Equal(t, aws.String("sns"), result.OutputType)
-	assert.Equal(t, aws.String(models.VerificationStatusSuccess), result.VerificationStatus)
 
 	mockOutputsTable.AssertExpectations(t)
 }

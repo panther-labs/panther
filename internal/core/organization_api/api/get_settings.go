@@ -18,18 +18,9 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/stretchr/testify/mock"
-)
+import "github.com/panther-labs/panther/api/lambda/organization/models"
 
-type mockLambdaClient struct {
-	lambdaiface.LambdaAPI
-	mock.Mock
-}
-
-func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+// GetSettings retrieves account settings.
+func (API) GetSettings(_ *models.GetSettingsInput) (*models.GeneralSettings, error) {
+	return orgTable.Get()
 }

@@ -16,19 +16,40 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { Flex, Icon, IconButtonProps, IconProps, MenuItem } from 'pouncejs';
 import React from 'react';
-import RoleRestrictedAccess, { RoleRestrictedAccessProps } from 'Components/role-restricted-access';
+import useRouter from 'Hooks/useRouter';
+import { Link } from 'react-router-dom';
+import { css } from '@emotion/core';
 
-function withRoleRestrictedAccess<P>(config: Omit<RoleRestrictedAccessProps, 'children'>) {
-  return (Component: React.FC<P>) => {
-    const RoleRestrictedComponent: React.FC<P> = props => (
-      <RoleRestrictedAccess {...config}>
-        <Component {...props} />
-      </RoleRestrictedAccess>
-    );
+type NavLinkProps = Omit<IconButtonProps, 'variant'> & {
+  icon: IconProps['type'];
+  label: string;
+  to: string;
+};
 
-    return RoleRestrictedComponent;
-  };
-}
+const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
+  const { location } = useRouter();
 
-export default withRoleRestrictedAccess;
+  return (
+    <MenuItem
+      width={1}
+      variant="primary"
+      selected={location.pathname === to}
+      my={2}
+      is={Link}
+      to={to}
+      css={css`
+        text-decoration: none;
+      `}
+      aria-label={label}
+    >
+      <Flex alignItems="center" px={4}>
+        <Icon type={icon} size="small" mr={6} />
+        {label}
+      </Flex>
+    </MenuItem>
+  );
+};
+
+export default NavLink;

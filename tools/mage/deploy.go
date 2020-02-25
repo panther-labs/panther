@@ -242,56 +242,56 @@ func postDeploySetup(awsSession *session.Session, backendOutputs map[string]stri
 		return fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
 	}
 
-	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
+	if err := inviteFirstUser(awsSession); err != nil {
 		return err
 	}
 
 	return initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], config)
 }
 
-// If the Admin group is empty (e.g. on the initial deploy), create the initial admin user and organization
-func setupOrganization(awsSession *session.Session, userPoolID string) error {
-	cognitoClient := cognitoidentityprovider.New(awsSession)
-	group, err := cognitoClient.ListUsersInGroup(&cognitoidentityprovider.ListUsersInGroupInput{
-		GroupName:  aws.String("Admin"),
-		UserPoolId: &userPoolID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to list Admin users in Cognito user pool %s: %v", userPoolID, err)
+// If the users list is empty (e.g. on the initial deploy), create the first user.
+func inviteFirstUser(awsSession *session.Session) error {
+	input := &usermodels.LambdaInput{
+		ListUsers: &usermodels.ListUsersInput{},
 	}
-	if len(group.Users) > 0 {
-		return nil // an admin already exists - nothing to do
+	var output usermodels.ListUsersOutput
+	if err := invokeLambda(awsSession, "panther-users-api", input, &output); err != nil {
+		return fmt.Errorf("failed to list users: %v", err)
+	}
+	if len(output.Users) > 0 {
+		return nil
 	}
 
-	// Prompt the user for email + first/last name
+	// Prompt the user for basic information.
 	logger.Info("setting up initial Panther admin user...")
 	fmt.Println()
 	firstName := promptUser("First name: ", nonemptyValidator)
 	lastName := promptUser("Last name: ", nonemptyValidator)
 	email := promptUser("Email: ", emailValidator)
+	defaultOrgName := firstName + "-" + lastName
+	orgName := promptUser("Company/Team name ("+defaultOrgName+"): ", nil)
+	if orgName == "" {
+		orgName = defaultOrgName
+	}
 
-	// Hit users-api.InviteUser to invite a new user to the admin group
-	input := &usermodels.LambdaInput{
+	// users-api.InviteUser
+	input = &usermodels.LambdaInput{
 		InviteUser: &usermodels.InviteUserInput{
 			GivenName:  &firstName,
 			FamilyName: &lastName,
 			Email:      &email,
-			UserPoolID: &userPoolID,
 		},
 	}
-	if err := invokeLambda(awsSession, "panther-users-api", input); err != nil {
+	if err := invokeLambda(awsSession, "panther-users-api", input, nil); err != nil {
 		return err
 	}
 	logger.Infof("invite sent to %s: check your email! (it may be in spam)", email)
 
-	// Hit organization-api.CreateOrganization to create organization entry
-	createOrgInput := &orgmodels.LambdaInput{
-		CreateOrganization: &orgmodels.CreateOrganizationInput{
-			Email:       &email,
-			DisplayName: aws.String(firstName + "-" + lastName),
-		},
+	// organizations-api.UpdateSettings
+	updateSettingsInput := &orgmodels.LambdaInput{
+		UpdateSettings: &orgmodels.UpdateSettingsInput{DisplayName: &orgName, Email: &email},
 	}
-	return invokeLambda(awsSession, "panther-organization-api", createOrgInput)
+	return invokeLambda(awsSession, "panther-organization-api", &updateSettingsInput, nil)
 }
 
 // Install Python rules/policies if they don't already exist.

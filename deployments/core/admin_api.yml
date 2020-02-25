@@ -41,6 +41,9 @@ Parameters:
   AppDomainURL:
     Type: String
     Description: Panther App Domain used as a link for the customer in the password reset email
+  UserPoolId:
+    Type: String
+    Description: Cognito user pool ID
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -54,25 +57,6 @@ Resources:
       LogGroupName: /aws/lambda/panther-users-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
-  UsersTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: S
-      BillingMode: PAY_PER_REQUEST
-      KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-      PointInTimeRecoverySpecification: # Create periodic table backups
-        PointInTimeRecoveryEnabled: True
-      SSESpecification: # Enable server-side encryption
-        SSEEnabled: True
-      TableName: panther-users
-      # <cfndoc>
-      # This table holds user profile information.
-      # </cfndoc>
-
   UsersAPIFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -81,8 +65,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          USERS_TABLE_NAME: !Ref UsersTable
-          ORGANIZATIONS_API: !Ref OrganizationAPIFunction
+          USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-users-api
       # <cfndoc>
       # This lambda implements user api.
@@ -102,20 +85,16 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - cognito-idp:AdminAddUserToGroup
                 - cognito-idp:AdminCreateUser
                 - cognito-idp:AdminDeleteUser
                 - cognito-idp:AdminDisableUser
                 - cognito-idp:AdminEnableUser
                 - cognito-idp:AdminGetUser
-                - cognito-idp:AdminListGroupsForUser
-                - cognito-idp:AdminRemoveUserFromGroup
+                - cognito-idp:AdminResetUserPassword
                 - cognito-idp:AdminUpdateUserAttributes
-                - cognito-idp:CreateGroup
                 - cognito-idp:GetUser
-                - cognito-idp:ListGroups
                 - cognito-idp:ListUsers
-              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
+              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
         - Id: AppsyncManagement
           Version: 2012-10-17
           Statement:
@@ -125,21 +104,6 @@ Resources:
                 - appsync:ListGraphqlApis
                 - appsync:UpdateGraphqlApi
               Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:*
-        - Id: InvokeOrganizationAPI
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: lambda:InvokeFunction
-              Resource: !GetAtt OrganizationAPIFunction.Arn
-        - Id: ManageUsersDB
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:*Item
-                - dynamodb:Query
-                - dynamodb:Scan
-              Resource: !GetAtt UsersTable.Arn
 
   ##### Custom message trigger function #####
   CustomMessageTriggerLogGroup:
@@ -157,6 +121,7 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           APP_DOMAIN_URL: !Ref AppDomainURL
+          USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-cognito-custom-message-trigger
       # <cfndoc>
       # This lambda implements what?
@@ -243,8 +208,3 @@ Resources:
                 - dynamodb:*Item
                 - dynamodb:Scan
               Resource: !GetAtt OrganizationTable.Arn
-
-Outputs:
-  CustomMessageTriggerFunctionArn:
-    Description: Lambda function for custom Cognito message triggers
-    Value: !GetAtt CustomMessageTriggerFunction.Arn

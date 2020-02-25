@@ -33,14 +33,20 @@ import (
 )
 
 const (
+	cweAccountTimeout       = 15 * time.Minute
 	refreshInterval         = 2 * time.Minute
 	snapshotAPIFunctionName = "panther-snapshot-api"
 )
 
 var (
-	// Keyed on accountID
+	// Valid accounts, keyed on accountID
 	accounts            = make(map[string]*models.SourceIntegration)
 	accountsLastUpdated time.Time
+
+	// Accounts where CloudWatch Events are enabled, and should be preferred over S3 notifications
+	// Keyed by accountID + region
+	cweAccounts = make(map[string]time.Time)
+
 	// Setup the clients to talk to the Snapshot API
 	sess                               = session.Must(session.NewSession())
 	lambdaClient lambdaiface.LambdaAPI = lambda.New(sess)
@@ -49,6 +55,19 @@ var (
 
 func resetAccountCache() {
 	accounts = make(map[string]*models.SourceIntegration)
+}
+
+// checkCWECache looks up an accountId in the cweAccounts cache and returns true only if the accountId is present and
+// not expired. This is to prevent a long delay in clearing the cache after removing a CWE configuration.
+func checkCWECache(key string) bool {
+	if timestamp, ok := cweAccounts[key]; ok {
+		if time.Since(timestamp) > cweAccountTimeout {
+			delete(cweAccounts, key)
+			return false
+		}
+		return true
+	}
+	return false
 }
 
 func refreshAccounts() error {

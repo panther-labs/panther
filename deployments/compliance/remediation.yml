@@ -259,7 +259,8 @@ Resources:
           - ','
           - !Sub
             - '${base},${pip}'
-            - { base: !Join [',', !Ref LayerVersionArns], pip: !Ref PythonLayerArn }
+            - base: !Join [',', !Ref LayerVersionArns]
+              pip: !Ref PythonLayerArn
         - [!Ref PythonLayerArn]
       MemorySize: 128
       Runtime: python3.7

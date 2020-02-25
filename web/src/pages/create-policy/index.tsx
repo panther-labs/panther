@@ -23,12 +23,10 @@ import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/policy-form';
 import { GetPolicyInput, PolicyDetails, ResourceDetails } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
-import { DEFAULT_POLICY_FUNCTION, READONLY_ROLES_ARRAY } from 'Source/constants';
+import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
 import useCreateRule from 'Hooks/useCreateRule';
 import { LIST_POLICIES } from 'Pages/list-policies';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
-import Page403 from 'Pages/403';
 import { extractErrorMessage } from 'Helpers/utils';
 
 const initialValues: PolicyDetails = {
@@ -89,28 +87,26 @@ const EditPolicyPage: React.FC = () => {
 
   const { handleSubmit, error } = useCreateRule<ApolloMutationData>({
     mutation,
-    getRedirectUri: data => urls.policies.details(data.addPolicy.id),
+    getRedirectUri: data => urls.compliance.policies.details(data.addPolicy.id),
   });
 
   return (
-    <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY} fallback={<Page403 />}>
-      <Box mb={6}>
-        <Panel size="large" title="Policy Settings">
-          <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
-        </Panel>
-        {error && (
-          <Alert
-            mt={2}
-            mb={6}
-            variant="error"
-            title={
-              extractErrorMessage(error) ||
-              'An unknown error occured as we were trying to create your policy'
-            }
-          />
-        )}
-      </Box>
-    </RoleRestrictedAccess>
+    <Box mb={6}>
+      <Panel size="large" title="Policy Settings">
+        <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
+      </Panel>
+      {error && (
+        <Alert
+          mt={2}
+          mb={6}
+          variant="error"
+          title={
+            extractErrorMessage(error) ||
+            'An unknown error occured as we were trying to create your policy'
+          }
+        />
+      )}
+    </Box>
   );
 };
 

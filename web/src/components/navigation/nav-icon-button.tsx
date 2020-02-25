@@ -1,5 +1,3 @@
-package models
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,7 +16,22 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// UserItem defines the fields in the Users table row.
-type UserItem struct {
-	ID *string `json:"id"`
-}
+import { Flex, Icon, IconButton, IconButtonProps, IconProps, Label, Tooltip } from 'pouncejs';
+import React from 'react';
+
+type NavIconButtonProps = Omit<IconButtonProps, 'variant'> & {
+  icon: IconProps['type'];
+  tooltipLabel: string;
+};
+
+const NavIconButton: React.FC<NavIconButtonProps> = ({ icon, active, tooltipLabel, ...rest }) => (
+  <Tooltip content={<Label size="medium">{tooltipLabel}</Label>}>
+    <Flex>
+      <IconButton {...rest} variant="primary" my={4} active={active} aria-label={tooltipLabel}>
+        <Icon type={icon} size="small" />
+      </IconButton>
+    </Flex>
+  </Tooltip>
+);
+
+export default NavIconButton;

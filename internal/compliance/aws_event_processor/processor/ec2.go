@@ -28,22 +28,20 @@ import (
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonec2.html
-	region := detail.Get("awsRegion").Str
+
 	// arn:aws:ec2:region:account-id:resource-type/resource-id
 	ec2ARN := arn.ARN{
 		Partition: "aws",
 		Service:   "ec2",
-		Region:    region,
-		AccountID: accountID,
+		Region:    metadata.region,
+		AccountID: metadata.accountID,
 	}
 
 	var ec2Type string
 	var deleteResource bool
-	switch eventName {
+	switch metadata.eventName {
 	case "AssociateAddress", "ModifyInstanceAttribute", "AttachNetworkInterface",
 		"ModifyInstanceCapacityReservationAttributes", "ModifyInstanceCreditSpecificationResponse", "ResetInstanceAttribute":
 		// Generic EC2 Instance event request handler
@@ -72,14 +70,14 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 	case "AttachVolume":
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "instance/" + detail.Get("requestParameters.instanceId").Str,
 				ResourceType: aws.Ec2InstanceSchema,
 			},
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "volume/" + detail.Get("requestParameters.volumeId").Str,
 				ResourceType: aws.Ec2VolumeSchema,
 			},
@@ -88,8 +86,8 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		var instancesChanged []*resourceChange
 		for _, instance := range detail.Get("responseElements.ModifyInstanceCreditSpecificationResponse.items").Array() {
 			instancesChanged = append(instancesChanged, &resourceChange{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "instance/" + instance.Get("instanceId").Str,
 				ResourceType: aws.Ec2InstanceSchema,
 			})
@@ -112,9 +110,9 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		var instancesChanged []*resourceChange
 		for _, instance := range detail.Get("requestParameters.instancesSet.items").Array() {
 			instancesChanged = append(instancesChanged, &resourceChange{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       true,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "instance/" + instance.Get("instanceId").Str,
 				ResourceType: aws.Ec2InstanceSchema,
 			})
@@ -128,14 +126,14 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		// VPC resource by adding the network ACL (which is not embedded, but its ARN is referenced)
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "vpc/" + detail.Get("responseElements.networkAcl.vpcId").Str,
 				ResourceType: aws.Ec2VpcSchema,
 			},
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "network-acl/" + detail.Get("responseElements.networkAcl.networkAclId").Str,
 				ResourceType: aws.Ec2NetworkAclSchema,
 			},
@@ -185,14 +183,14 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		// Same situation as CreateNetworkAcl
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "vpc/" + detail.Get("requestParameters.vpcId").Str,
 				ResourceType: aws.Ec2VpcSchema,
 			},
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "security-group/" + detail.Get("responseElements.groupId").Str,
 				ResourceType: aws.Ec2SecurityGroupSchema,
 			},
@@ -231,8 +229,8 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 				continue
 			}
 			changes = append(changes, &resourceChange{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + resourceID,
 				ResourceType: resourceType,
 			})
@@ -255,14 +253,14 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 	case "DetachVolume":
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "instance/" + detail.Get("requestParameters.instanceId").Str,
 				ResourceType: aws.Ec2InstanceSchema,
 			},
 			{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "volume/" + detail.Get("requestParameters.volumeId").Str,
 				ResourceType: aws.Ec2VolumeSchema,
 			},
@@ -281,8 +279,8 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		var instancesChanged []*resourceChange
 		for _, instance := range detail.Get("requestParameters.instancesSet.items").Array() {
 			instancesChanged = append(instancesChanged, &resourceChange{
-				AwsAccountID: accountID,
-				EventName:    eventName,
+				AwsAccountID: metadata.accountID,
+				EventName:    metadata.eventName,
 				ResourceID:   ec2ARN.String() + "instance/" + instance.Get("instanceId").Str,
 				ResourceType: aws.Ec2InstanceSchema,
 			})
@@ -294,10 +292,10 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		for _, instance := range detail.Get("responseElements.instancesSet.items").Array() {
 			instancesChanged = append(instancesChanged, &resourceChange{
 				AwsAccountID: detail.Get("responseElements.ownerId").Str,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID: strings.Join([]string{
 					"arn:aws:ec2",
-					region,
+					metadata.region,
 					detail.Get("responseElements.ownerId").Str,
 					"instance/" + instance.Get("instanceId").Str,
 				}, ":"),
@@ -317,8 +315,8 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
-			EventName:    eventName,
-			Region:       region,
+			EventName:    metadata.eventName,
+			Region:       metadata.region,
 			ResourceType: ec2Type,
 		}}
 	case "DisassociateRouteTable", "AssociateRouteTable", "DeleteRouteTable", "ReplaceRoute", "CreateRoute",
@@ -333,8 +331,8 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
-			EventName:    eventName,
-			Region:       region,
+			EventName:    metadata.eventName,
+			Region:       metadata.region,
 			ResourceType: aws.Ec2VpcSchema,
 		}}
 	case "DeleteSnapshot", "ModifySnapshotAttribute":
@@ -342,8 +340,8 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
-			EventName:    eventName,
-			Region:       region,
+			EventName:    metadata.eventName,
+			Region:       metadata.region,
 			ResourceType: aws.Ec2VolumeSchema,
 		}}
 	case "DetachNetworkInterface":
@@ -351,8 +349,8 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
-			EventName:    eventName,
-			Region:       region,
+			EventName:    metadata.eventName,
+			Region:       metadata.region,
 			ResourceType: aws.Ec2InstanceSchema,
 		}}
 	case "ReplaceIamInstanceProfileAssociation":
@@ -367,8 +365,8 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 			return []*resourceChange{{
 				AwsAccountID: ec2ARN.AccountID,
 				Delete:       false,
-				EventName:    eventName,
-				Region:       region,
+				EventName:    metadata.eventName,
+				Region:       metadata.region,
 				ResourceType: aws.Ec2VpcSchema,
 			}}
 		}
@@ -380,7 +378,7 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 		return []*resourceChange{{
 			AwsAccountID: ec2ARN.AccountID,
 			Delete:       false,
-			EventName:    eventName,
+			EventName:    metadata.eventName,
 			ResourceType: aws.Ec2VpcSchema,
 		}}
 	default:
@@ -413,14 +411,14 @@ func classifyEC2(detail gjson.Result, accountID string) []*resourceChange {
 			ec2ARN.Resource = "vpc/" + id
 			break
 		}
-		zap.L().Warn("ec2: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("ec2: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	return []*resourceChange{{
 		AwsAccountID: ec2ARN.AccountID,
 		Delete:       deleteResource,
-		EventName:    eventName,
+		EventName:    metadata.eventName,
 		ResourceID:   ec2ARN.String(),
 		ResourceType: ec2Type,
 	}}

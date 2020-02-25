@@ -19,18 +19,15 @@
 import React from 'react';
 import { Alert, Box, Card, useSnackbar } from 'pouncejs';
 import { useQuery, gql, useMutation } from '@apollo/client';
-import { ADMIN_ROLES_ARRAY } from 'Source/constants';
-import { Organization, UpdateOrganizationInput } from 'Generated/schema';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
-import Page404 from 'Pages/404';
+import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 import ErrorBoundary from 'Components/error-boundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/company-information-form';
 import GeneralSettingsPageSkeleton from './skeleton';
 
-export const GET_ORGANIZATION = gql`
-  query GetOrganization {
-    organization {
+export const GET_GENERAL_SETTINGS = gql`
+  query GetGeneralSettings {
+    generalSettings {
       displayName
       email
       errorReportingConsent
@@ -38,9 +35,9 @@ export const GET_ORGANIZATION = gql`
   }
 `;
 
-const UPDATE_ORGANIZATION = gql`
-  mutation UpdateCompanyInformation($input: UpdateOrganizationInput!) {
-    updateOrganization(input: $input) {
+const UPDATE_GENERAL_SETTINGS = gql`
+  mutation UpdateGeneralSettings($input: UpdateGeneralSettingsInput!) {
+    updateGeneralSettings(input: $input) {
       displayName
       email
       errorReportingConsent
@@ -49,15 +46,15 @@ const UPDATE_ORGANIZATION = gql`
 `;
 
 interface ApolloMutationInput {
-  input: UpdateOrganizationInput;
+  input: UpdateGeneralSettingsInput;
 }
 
 interface ApolloMutationData {
-  updateOrganization: Pick<Organization, 'displayName' | 'email' | 'errorReportingConsent'>;
+  updateGeneralSettings: Pick<GeneralSettings, 'displayName' | 'email' | 'errorReportingConsent'>;
 }
 
 interface ApolloQueryData {
-  organization: Organization;
+  generalSettings: GeneralSettings;
 }
 
 // Parent container for the general settings section
@@ -65,72 +62,68 @@ const GeneralSettingsContainer: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
 
   const {
-    loading: getOrganizationLoading,
-    error: getOrganizationError,
-    data: getOrganizationData,
-  } = useQuery<ApolloQueryData>(GET_ORGANIZATION, {
-    fetchPolicy: 'cache-and-network',
-  });
+    loading: getGeneralSettingsLoading,
+    error: getGeneralSettingsError,
+    data: getGeneralSettingsData,
+  } = useQuery<ApolloQueryData>(GET_GENERAL_SETTINGS);
 
   const [
-    updateOrganization,
-    { error: updateOrganizationError, data: updateOrganizationData },
-  ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_ORGANIZATION);
+    updateGeneralSettings,
+    { error: updateGeneralSettingsError, data: updateGeneralSettingsData },
+  ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_GENERAL_SETTINGS);
 
   React.useEffect(() => {
-    if (updateOrganizationData) {
+    if (updateGeneralSettingsData) {
       pushSnackbar({ variant: 'success', title: `Successfully updated company information` });
     }
-  }, [updateOrganizationData]);
+  }, [updateGeneralSettingsData]);
 
   React.useEffect(() => {
-    if (updateOrganizationError) {
+    if (updateGeneralSettingsError) {
       pushSnackbar({
         variant: 'error',
         title:
-          extractErrorMessage(updateOrganizationError) ||
+          extractErrorMessage(updateGeneralSettingsError) ||
           'Failed to update company information due to an unknown error',
       });
     }
-  }, [updateOrganizationError]);
+  }, [updateGeneralSettingsError]);
 
-  if (getOrganizationLoading) {
+  if (getGeneralSettingsLoading) {
     return <GeneralSettingsPageSkeleton />;
   }
 
-  if (getOrganizationError) {
+  if (getGeneralSettingsError) {
     return (
       <Alert
         variant="error"
         title="Failed to query company information"
         description={
-          extractErrorMessage(getOrganizationError) ||
+          extractErrorMessage(getGeneralSettingsError) ||
           'Sorry, something went wrong, please reach out to support@runpanther.io if this problem persists'
         }
       />
     );
   }
 
-  const { displayName, email, errorReportingConsent } = getOrganizationData.organization;
+  const { displayName, email, errorReportingConsent } = getGeneralSettingsData.generalSettings;
   return (
-    <RoleRestrictedAccess allowedRoles={ADMIN_ROLES_ARRAY} fallback={<Page404 />}>
-      <Box mb={6}>
-        <ErrorBoundary>
-          <Card p={10}>
-            <Box width={500} m="auto">
-              <CompanyInformationForm
-                initialValues={{
-                  displayName,
-                  email,
-                  errorReportingConsent,
-                }}
-                onSubmit={values => updateOrganization({ variables: { input: values } })}
-              />
-            </Box>
-          </Card>
-        </ErrorBoundary>
-      </Box>
-    </RoleRestrictedAccess>
+    <Box mb={6}>
+      <ErrorBoundary>
+        <Card p={10}>
+          <Box width={500} m="auto">
+            <CompanyInformationForm
+              initialValues={{
+                displayName,
+                email,
+                errorReportingConsent,
+              }}
+              onSubmit={values => updateGeneralSettings({ variables: { input: values } })}
+            />
+          </Box>
+        </Card>
+      </ErrorBoundary>
+    </Box>
   );
 };
 

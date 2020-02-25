@@ -183,7 +183,8 @@ Resources:
           - ','
           - !Sub
             - '${base},${pip}'
-            - { base: !Join [',', !Ref LayerVersionArns], pip: !Ref PythonLayerArn }
+            - base: !Join [',', !Ref LayerVersionArns]
+              pip: !Ref PythonLayerArn
         - [!Ref PythonLayerArn]
       Runtime: python3.7
       Timeout: 120

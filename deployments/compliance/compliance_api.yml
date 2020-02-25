@@ -91,7 +91,7 @@ Resources:
                 - !GetAtt ComplianceTable.Arn
                 - !Sub
                   - '${arn}/index/*'
-                  - { arn: !GetAtt ComplianceTable.Arn }
+                  - arn: !GetAtt ComplianceTable.Arn
 
   LogGroup:
     Type: AWS::Logs::LogGroup
