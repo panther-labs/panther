@@ -67,7 +67,7 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
       onSort={handleSort}
       sortDir={sortDir}
       sortKey={sortBy}
-      onSelect={policy => history.push(urls.policies.details(policy.id))}
+      onSelect={policy => history.push(urls.compliance.policies.details(policy.id))}
     />
   );
 };

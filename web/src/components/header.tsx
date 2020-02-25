@@ -18,7 +18,7 @@
 
 import React from 'react';
 import Breadcrumbs from 'Components/breadcrumbs';
-import { Button, Flex, Icon, IconButton, Text, Dropdown, MenuItem } from 'pouncejs';
+import { Button, Flex, Icon, IconButton, Text, Dropdown, MenuItem, Box } from 'pouncejs';
 import useAuth from 'Hooks/useAuth';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/sidesheet-context';
@@ -29,16 +29,25 @@ const Header = () => {
 
   const userButton = React.useMemo(
     () => (
-      <Button size="small" variant="default" my="auto" is="div">
-        <Flex alignItems="center">
-          <Icon type="user" size="small" mr={2} borderRadius="circle" bg="grey200" color="white" />
-          {userInfo && (
-            <Text size="medium">
-              {userInfo.given_name} {userInfo.family_name[0]}.
-            </Text>
-          )}
-        </Flex>
-      </Button>
+      <Box flex="0 0 auto">
+        <Button size="small" variant="default" my="auto" is="div">
+          <Flex alignItems="center">
+            <Icon
+              type="user"
+              size="small"
+              mr={2}
+              borderRadius="circle"
+              bg="grey200"
+              color="white"
+            />
+            {userInfo && (
+              <Text size="medium">
+                {userInfo.given_name} {userInfo.family_name[0]}.
+              </Text>
+            )}
+          </Flex>
+        </Button>
+      </Box>
     ),
     [userInfo]
   );

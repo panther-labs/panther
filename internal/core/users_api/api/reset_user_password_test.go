@@ -34,7 +34,7 @@ type mockGatewayResetUserPasswordClient struct {
 	gatewayErr bool
 }
 
-func (m *mockGatewayResetUserPasswordClient) ResetUserPassword(*string, *string) error {
+func (m *mockGatewayResetUserPasswordClient) ResetUserPassword(*string) error {
 	if m.gatewayErr {
 		return &genericapi.AWSError{}
 	}
@@ -44,8 +44,7 @@ func (m *mockGatewayResetUserPasswordClient) ResetUserPassword(*string, *string)
 func TestResetUserPasswordGatewayErr(t *testing.T) {
 	userGateway = &mockGatewayResetUserPasswordClient{gatewayErr: true}
 	input := &models.ResetUserPasswordInput{
-		ID:         aws.String("user123"),
-		UserPoolID: aws.String("fakePoolId"),
+		ID: aws.String("user123"),
 	}
 	assert.Error(t, (API{}).ResetUserPassword(input))
 }
@@ -53,8 +52,7 @@ func TestResetUserPasswordGatewayErr(t *testing.T) {
 func TestResetUserPasswordHandle(t *testing.T) {
 	userGateway = &mockGatewayResetUserPasswordClient{}
 	input := &models.ResetUserPasswordInput{
-		ID:         aws.String("user123"),
-		UserPoolID: aws.String("fakePoolId"),
+		ID: aws.String("user123"),
 	}
 	assert.NoError(t, (API{}).ResetUserPassword(input))
 }

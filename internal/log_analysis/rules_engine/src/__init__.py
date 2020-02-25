@@ -13,4 +13,39 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict
 
+
+@dataclass
+class EventMatch:
+    """Represents an event that matched a rule"""
+    rule_id: str
+    rule_version: str
+    log_type: str
+    dedup: str
+    event: Dict[str, Any]
+
+
+@dataclass
+class AlertInfo:
+    """Information about an alert"""
+    alert_id: str
+    alert_creation_time: datetime
+    alert_update_time: datetime
+
+
+# pylint: disable=invalid-name
+@dataclass
+class OutputNotification:
+    """The notification that will be send to the SNS topic when we create a new object in S3.
+
+    This class will be serialized to JSON, thus following camelCase rather than snake_case
+    """
+    s3Bucket: str
+    s3ObjectKey: str
+    events: int
+    bytes: int
+    id: str
+    type: str = 'RuleOutput'

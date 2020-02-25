@@ -42,10 +42,9 @@ import (
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/awsathena"
+	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
-	"github.com/panther-labs/panther/tools/athenaviews"
 )
 
 const (
@@ -114,8 +113,14 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
+	// Creates Glue/Athena related resources
+	deployDatabases(awsSession, bucket, backendOutputs)
+
 	// Deploy frontend stack
 	deployFrontend(awsSession, bucket, backendOutputs, &config)
+
+	// Deploy monitoring (must be last due to possible references to frontend/backend resources)
+	deployMonitoring(awsSession, bucket, backendOutputs, &config)
 
 	// Done!
 	logger.Infof("deploy: finished successfully in %s", time.Since(start))
@@ -138,17 +143,12 @@ func deployPrecheck(awsRegion string) {
 	if !supportedRegions[awsRegion] {
 		logger.Fatalf("panther is not supported in %s region", awsRegion)
 	}
-
-	// Ensure swagger is installed
-	swagger := filepath.Join(setupDirectory, "swagger")
-	if _, err := os.Stat(swagger); err != nil {
-		logger.Fatalf("%s not found (%v): run 'mage setup:all'", swagger, err)
-	}
 }
 
 // Generate the set of deploy parameters for the main application stack.
 //
-// This will create a Python layer and a self-signed cert if necessary.
+// This will create a Python layer, pass down the name of the log database,
+// pass down user supplied alarm SNS topic and a self-signed cert if necessary.
 func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) map[string]string {
 	v := config.BackendParameterValues
 	result := map[string]string{
@@ -170,6 +170,11 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 	if result["WebApplicationCertificateArn"] == "" {
 		result["WebApplicationCertificateArn"] = uploadLocalCertificate(awsSession)
 	}
+
+	// set alarm sns topic if configured
+	result["AlarmSNSTopicArn"] = config.MonitoringParameterValues.AlarmSNSTopicARN
+
+	result["PantherLogProcessingDatabase"] = awsglue.LogProcessingDatabaseName
 
 	return result
 }
@@ -220,15 +225,6 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 
 // After the main stack is deployed, we need to make several manual API calls
 func postDeploySetup(awsSession *session.Session, backendOutputs map[string]string, config *PantherConfig) error {
-	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
-	workgroup, bucket := "primary", backendOutputs["AthenaResultsBucket"]
-	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, bucket); err != nil {
-		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, bucket, err)
-	}
-	if err := athenaviews.CreateOrReplaceViews(bucket); err != nil {
-		return fmt.Errorf("failed to create/replace athena views for %s bucket: %v", bucket, err)
-	}
-
 	// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
 	userPoolID := backendOutputs["WebApplicationUserPoolId"]
 	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
@@ -243,56 +239,56 @@ func postDeploySetup(awsSession *session.Session, backendOutputs map[string]stri
 		return fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
 	}
 
-	if err := setupOrganization(awsSession, backendOutputs["WebApplicationUserPoolId"]); err != nil {
+	if err := inviteFirstUser(awsSession); err != nil {
 		return err
 	}
 
 	return initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], config)
 }
 
-// If the Admin group is empty (e.g. on the initial deploy), create the initial admin user and organization
-func setupOrganization(awsSession *session.Session, userPoolID string) error {
-	cognitoClient := cognitoidentityprovider.New(awsSession)
-	group, err := cognitoClient.ListUsersInGroup(&cognitoidentityprovider.ListUsersInGroupInput{
-		GroupName:  aws.String("Admin"),
-		UserPoolId: &userPoolID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to list Admin users in Cognito user pool %s: %v", userPoolID, err)
+// If the users list is empty (e.g. on the initial deploy), create the first user.
+func inviteFirstUser(awsSession *session.Session) error {
+	input := &usermodels.LambdaInput{
+		ListUsers: &usermodels.ListUsersInput{},
 	}
-	if len(group.Users) > 0 {
-		return nil // an admin already exists - nothing to do
+	var output usermodels.ListUsersOutput
+	if err := invokeLambda(awsSession, "panther-users-api", input, &output); err != nil {
+		return fmt.Errorf("failed to list users: %v", err)
+	}
+	if len(output.Users) > 0 {
+		return nil
 	}
 
-	// Prompt the user for email + first/last name
+	// Prompt the user for basic information.
 	logger.Info("setting up initial Panther admin user...")
 	fmt.Println()
 	firstName := promptUser("First name: ", nonemptyValidator)
 	lastName := promptUser("Last name: ", nonemptyValidator)
 	email := promptUser("Email: ", emailValidator)
+	defaultOrgName := firstName + "-" + lastName
+	orgName := promptUser("Company/Team name ("+defaultOrgName+"): ", nil)
+	if orgName == "" {
+		orgName = defaultOrgName
+	}
 
-	// Hit users-api.InviteUser to invite a new user to the admin group
-	input := &usermodels.LambdaInput{
+	// users-api.InviteUser
+	input = &usermodels.LambdaInput{
 		InviteUser: &usermodels.InviteUserInput{
 			GivenName:  &firstName,
 			FamilyName: &lastName,
 			Email:      &email,
-			UserPoolID: &userPoolID,
 		},
 	}
-	if err := invokeLambda(awsSession, "panther-users-api", input); err != nil {
+	if err := invokeLambda(awsSession, "panther-users-api", input, nil); err != nil {
 		return err
 	}
 	logger.Infof("invite sent to %s: check your email! (it may be in spam)", email)
 
-	// Hit organization-api.CreateOrganization to create organization entry
-	createOrgInput := &orgmodels.LambdaInput{
-		CreateOrganization: &orgmodels.CreateOrganizationInput{
-			Email:       &email,
-			DisplayName: aws.String(firstName + "-" + lastName),
-		},
+	// organizations-api.UpdateSettings
+	updateSettingsInput := &orgmodels.LambdaInput{
+		UpdateSettings: &orgmodels.UpdateSettingsInput{DisplayName: &orgName, Email: &email},
 	}
-	return invokeLambda(awsSession, "panther-organization-api", createOrgInput)
+	return invokeLambda(awsSession, "panther-organization-api", &updateSettingsInput, nil)
 }
 
 // Install Python rules/policies if they don't already exist.

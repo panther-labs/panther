@@ -23,13 +23,16 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/processor"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 var validate = validator.New()
@@ -38,22 +41,27 @@ func main() {
 	lambda.Start(reporterHandler)
 }
 
-func reporterHandler(ctx context.Context, event events.SQSEvent) error {
-	_, logger := lambdalogger.ConfigureGlobal(ctx, nil)
+func reporterHandler(ctx context.Context, event events.SQSEvent) (err error) {
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := oplog.NewManager("cloudsec", "alert_processor").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("numEvents", len(event.Records)))
+	}()
+
 	for _, record := range event.Records {
 		var input models.ComplianceNotification
-		if err := jsoniter.UnmarshalFromString(record.Body, &input); err != nil {
-			zap.L().Warn("failed to unmarshall event", zap.Error(err))
-			return err
-		}
-
-		if err := validate.Struct(input); err != nil {
-			logger.Error("invalid message received", zap.Error(err))
+		if err = jsoniter.UnmarshalFromString(record.Body, &input); err != nil {
+			operation.LogError(errors.Wrap(err, "Failed to unmarshal item"))
 			continue
 		}
 
-		if err := processor.Handle(&input); err != nil {
-			zap.L().Warn("encountered issue while processing event", zap.Error(err))
+		if err = validate.Struct(input); err != nil {
+			operation.LogError(errors.Wrap(err, "invalid message received"))
+			continue
+		}
+
+		if err = processor.Handle(&input); err != nil {
+			err = errors.Wrap(err, "encountered issue while processing event")
 			return err
 		}
 	}

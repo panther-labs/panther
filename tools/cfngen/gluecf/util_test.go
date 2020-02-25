@@ -26,11 +26,23 @@ import (
 )
 
 // Read CF
-func readTestFile(filename string) (string, error) {
+func readTestFile(filename string) ([]byte, error) {
 	fd, err := os.Open(filename)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	contents, err := ioutil.ReadAll(fd)
-	return string(contents), err
+	defer fd.Close()
+	return ioutil.ReadAll(fd)
+}
+
+// Write CF (used to easily re-create expected test files)
+//nolint:unused,deadcode
+func writeTestFile(cf []byte, filename string) error {
+	fd, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+	_, err = fd.Write(cf)
+	return err
 }

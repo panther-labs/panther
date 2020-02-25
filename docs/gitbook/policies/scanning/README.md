@@ -8,7 +8,7 @@ description: >-
 
 ## How It Works
 
-When onboarding a new AWS account for compliance, Panther conducts a baseline scan to compile existing resources in your account. Resource changes are tracked in real-time and scans periodically run on your account to ensure the most consistent state possible.
+When onboarding a new AWS account for cloud security, Panther conducts a baseline scan to compile existing resources in your account. Resource changes are tracked in real-time and scans periodically run on your account to ensure the most consistent state possible.
 
 This functionality is enabled by creating a [read-only IAM Role](https://docs.aws.amazon.com/general/latest/gr/aws-security-audit-guide.html) and [AWS CloudWatch Event Rules](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/WhatIsCloudWatchEvents.html) to stream real-time events. Automatic remediation can also be configured to reactively fix insecure infrastructure.
 

@@ -20,7 +20,9 @@ package cfngen
  */
 
 import (
+	"bytes"
 	"io"
+	"regexp"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -64,14 +66,25 @@ type Template struct {
 	Outputs                  map[string]interface{} `json:",omitempty"`
 }
 
-// Emit CF as JSON
+// Emit CF as JSON to io.Writer
 func (t *Template) WriteCloudFormation(w io.Writer) (err error) {
 	jsonBytes, err := json.MarshalIndent(t, "", " ")
 	if err != nil {
-		return
+		return err
 	}
 	_, err = w.Write(jsonBytes)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write([]byte("\n")) // add trailing \n that is expected in text files
 	return
+}
+
+// Emit CF as JSON return []bytes
+func (t *Template) CloudFormation() ([]byte, error) {
+	buffer := bytes.Buffer{}
+	err := t.WriteCloudFormation(&buffer)
+	return buffer.Bytes(), err
 }
 
 // Create a CF template , use WriteCloudFormation() to emit.
@@ -86,4 +99,11 @@ func NewTemplate(description string, parameters map[string]interface{}, resource
 		Outputs:                  outputs,
 	}
 	return
+}
+
+// Re-map characters not allowed in CF names consistently (CF resources must be alphanum)
+var sanitizeResourceName = regexp.MustCompile(`([^[:alpha:]])`)
+
+func SanitizeResourceName(name string) string {
+	return sanitizeResourceName.ReplaceAllString(name, "")
 }

@@ -18,10 +18,10 @@ import json
 import os
 from typing import Dict, List
 
-import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from botocore.session import Session
+import requests
 
 
 class AnalysisAPIClient:
@@ -33,8 +33,8 @@ class AnalysisAPIClient:
         creds = current_session.get_credentials()
         self.signer = SigV4Auth(creds, 'execute-api', region)
 
-        analysis_api_fqdn = os.environ.get('ANALYSIS_API_FQDN')
-        analysis_api_path = os.environ.get('ANALYSIS_API_PATH')
+        analysis_api_fqdn = os.environ['ANALYSIS_API_FQDN']
+        analysis_api_path = os.environ['ANALYSIS_API_PATH']
         self.url = 'https://' + analysis_api_fqdn + '/' + analysis_api_path
 
     def get_enabled_rules(self) -> List[Dict[str, str]]:

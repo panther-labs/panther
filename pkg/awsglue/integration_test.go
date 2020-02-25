@@ -94,7 +94,7 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 		removeTables(t)
 	}()
 
-	gm, err := NewGlueMetadata(testDb, testTable, "test table", GlueTableHourly, false, &testEvent{})
+	gm, err := NewGlueMetadata(LogS3Prefix, testDb, testTable, "test table", GlueTableHourly, false, &testEvent{})
 	require.NoError(t, err)
 
 	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"

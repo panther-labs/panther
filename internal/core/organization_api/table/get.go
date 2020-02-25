@@ -19,7 +19,6 @@ package table
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"go.uber.org/zap"
@@ -29,24 +28,18 @@ import (
 )
 
 // Get retrieves account details from the table.
-func (table *OrganizationsTable) Get() (*models.Organization, error) {
-	zap.L().Info("retrieving organization from dynamo")
-	response, err := table.client.GetItem(&dynamodb.GetItemInput{
-		Key:       DynamoItem{"id": {S: aws.String(orgID)}},
-		TableName: table.Name,
-	})
+func (table *OrganizationsTable) Get() (*models.GeneralSettings, error) {
+	zap.L().Debug("retrieving general settings from dynamo")
+	response, err := table.client.GetItem(&dynamodb.GetItemInput{Key: settingsKey, TableName: table.Name})
 	if err != nil {
 		return nil, &genericapi.AWSError{Method: "dynamodb.GetItem", Err: err}
 	}
 
-	var org models.Organization
-	if err = dynamodbattribute.UnmarshalMap(response.Item, &org); err != nil {
+	var settings models.GeneralSettings
+	if err = dynamodbattribute.UnmarshalMap(response.Item, &settings); err != nil {
 		return nil, &genericapi.InternalError{
-			Message: "failed to unmarshal dynamo item to an Organization: " + err.Error()}
-	}
-	if org.Email == nil {
-		return nil, &genericapi.DoesNotExistError{}
+			Message: "failed to unmarshal dynamo item to GeneralSettings: " + err.Error()}
 	}
 
-	return &org, nil
+	return &settings, nil
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
@@ -57,6 +58,8 @@ var (
 			&osquerylogs.Status{}, osquerylogs.StatusDesc),
 		(&osquerylogs.SnapshotParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.SnapshotParser{},
 			&osquerylogs.Snapshot{}, osquerylogs.SnapshotDesc),
+		(&osseclogs.EventInfoParser{}).LogType(): DefaultHourlyLogParser(&osseclogs.EventInfoParser{},
+			&osseclogs.EventInfo{}, osseclogs.EventInfoDesc),
 	}
 )
 
@@ -67,7 +70,8 @@ func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, descri
 	tableName := p.LogType() // default to LogType()
 
 	// describes Glue table over processed data in S3
-	gm, err := awsglue.NewGlueMetadata(awsglue.TablesDatabaseName, tableName, description, awsglue.GlueTableHourly, false, eventStruct)
+	gm, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, awsglue.LogProcessingDatabaseName,
+		tableName, description, awsglue.GlueTableHourly, false, eventStruct)
 	if err != nil {
 		panic(err) // panic is justified because this means configuration is WRONG
 	}

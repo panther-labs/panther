@@ -38,37 +38,15 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  AlertsAPIMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the alerts-api Lambda function
-    Default: 512
-    MinValue: 128
-    MaxValue: 3008
-  AlertsAPITimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the alerts-api Lambda function
-    Default: 180
-    MinValue: 5
-    MaxValue: 900
-  MergerMemorySizeMB:
-    Type: Number
-    Description: Memory (MB) available for the alert-merger Lambda function
-    Default: 128
-    MinValue: 128
-    MaxValue: 3008
-  MergerTimeoutSec:
-    Type: Number
-    Description: Timeout (seconds) for the alert-merger Lambda function
-    Default: 180
-    MinValue: 5
-    MaxValue: 900
-
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
   SQSKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
+  AlertDedupTableStreamArn:
+    Type: String
+    Description: The stream arn of the alerts dedup table
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -81,7 +59,7 @@ Resources:
       QueueName: panther-log-alert-notifications-queue
       KmsMasterKeyId: !Ref SQSKeyId
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      VisibilityTimeout: !Ref AlertsAPITimeoutSec
+      VisibilityTimeout: 180 # Should match lambda
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 10
@@ -91,7 +69,6 @@ Resources:
     Properties:
       QueueName: panther-log-alert-notifications-dlq
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      VisibilityTimeout: !Ref AlertsAPITimeoutSec
 
   ##### Dynamo alerts table #####
   AlertsTable:
@@ -193,9 +170,9 @@ Resources:
       FunctionName: panther-alerts-api
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref AlertsAPIMemorySizeMB
+      MemorySize: 512
       Runtime: go1.x
-      Timeout: !Ref AlertsAPITimeoutSec
+      Timeout: 180
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageAlerts
@@ -208,9 +185,7 @@ Resources:
                 - dynamodb:Scan
               Resource:
                 - !GetAtt AlertsTable.Arn
-                - !Sub
-                  - '${TableArn}/index/*'
-                  - { TableArn: !GetAtt AlertsTable.Arn }
+                - !Sub '${AlertsTable.Arn}/index/*'
         - Id: InvokeGatewayApi
           Version: 2012-10-17
           Statement:
@@ -257,9 +232,9 @@ Resources:
       FunctionName: panther-alert-merger
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: !Ref MergerMemorySizeMB
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: !Ref MergerTimeoutSec
+      Timeout: 180
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: InvokeGatewayApi
@@ -299,3 +274,85 @@ Resources:
                 - !GetAtt AlertsTable.Arn
                 - !GetAtt EventsTable.Arn
                 - !GetAtt RecentAlertsTable.Arn
+
+  ##### Dynamo table that stores alert information #####
+  LogAlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-log-alerts-info
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: creationTime
+          AttributeType: S
+        - AttributeName: ruleId
+          AttributeType: S
+        - AttributeName: timePartition
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - # Add an index ruleId to efficiently list alerts for a specific rule
+          KeySchema:
+            - AttributeName: ruleId
+              KeyType: HASH
+            - AttributeName: creationTime
+              KeyType: RANGE
+          IndexName: ruleId-creationTime-index
+          Projection:
+            ProjectionType: ALL
+        - # Add an index using timePartition to efficiently list alerts by creationTime
+          KeySchema:
+            - AttributeName: timePartition
+              KeyType: HASH
+            - AttributeName: creationTime
+              KeyType: RANGE
+          IndexName: timePartition-creationTime-index
+          Projection:
+            ProjectionType: ALL
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True
+
+  ##### Alert forwarder Lambda
+  AlertForwarderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-log-alert-forwarder
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertsForwarderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../out/bin/internal/log_analysis/alert_forwarder/main
+      Description: Lambda that creates and updates alerts in alerts-info table
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          ALERTS_TABLE: !Ref LogAlertsTable
+      Events:
+        DynamoDBEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: !Ref AlertDedupTableStreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 10
+      FunctionName: panther-log-alert-forwarder
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 30
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ManageAlerts
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+              Resource:
+                - !GetAtt LogAlertsTable.Arn

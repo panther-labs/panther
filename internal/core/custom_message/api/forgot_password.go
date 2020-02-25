@@ -25,13 +25,13 @@ import (
 	"github.com/matcornic/hermes"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/core/users_api/email"
+	"github.com/panther-labs/panther/internal/core/custom_message/email"
 )
 
 func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
 	zap.L().Info("generate forget password email for:" + event.UserName)
 
-	user, err := userGateway.GetUser(&event.UserName, &event.UserPoolID)
+	user, err := userGateway.GetUser(&event.UserName)
 	if err != nil {
 		zap.L().Error("failed to generate forget password html email for:"+event.UserName, zap.Error(err))
 		return nil, err
@@ -56,7 +56,7 @@ If you did not request a password reset, you can ignore this email.`,
 				},
 			},
 			Outros: []string{
-				"Need help, or have questions? Just reply to this email, we'd love to help.",
+				"Need help, or have questions? Just email us at support@runpanther.io, we'd love to help.",
 			},
 		},
 	}

@@ -45,9 +45,8 @@ func (m *mockUpdateUserClient) AdminUpdateUserAttributes(
 func TestUpdateUserGivenName(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{}}
 	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
-		GivenName:  aws.String("Richie"),
-		ID:         aws.String("user123"),
-		UserPoolID: aws.String("userPoolId"),
+		GivenName: aws.String("Richie"),
+		ID:        aws.String("user123"),
 	}))
 }
 
@@ -56,45 +55,31 @@ func TestUpdateUserFamilyName(t *testing.T) {
 	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
 		FamilyName: aws.String("Homie"),
 		ID:         aws.String("user123"),
-		UserPoolID: aws.String("userPoolId"),
-	}))
-}
-
-func TestUpdateUserPhoneNumber(t *testing.T) {
-	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{}}
-	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
-		PhoneNumber: aws.String("+1234567890"),
-		ID:          aws.String("user123"),
-		UserPoolID:  aws.String("userPoolId"),
 	}))
 }
 
 func TestUpdateUserEmail(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{}}
 	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
-		Email:      aws.String("rich@homie.com"),
-		ID:         aws.String("user123"),
-		UserPoolID: aws.String("userPoolId"),
+		Email: aws.String("rich@homie.com"),
+		ID:    aws.String("user123"),
 	}))
 }
 
 func TestUpdateMultipleAttributes(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{}}
 	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
-		GivenName:   aws.String("Richie"),
-		FamilyName:  aws.String("Homie"),
-		PhoneNumber: aws.String("+1234567890"),
-		Email:       aws.String("rich@homie.com"),
-		ID:          aws.String("user123"),
-		UserPoolID:  aws.String("userPoolId"),
+		GivenName:  aws.String("Richie"),
+		FamilyName: aws.String("Homie"),
+		Email:      aws.String("rich@homie.com"),
+		ID:         aws.String("user123"),
 	}))
 }
 
 func TestUpdateUserFailed(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{serviceErr: true}}
 	assert.Error(t, gw.UpdateUser(&UpdateUserInput{
-		ID:         aws.String("user123"),
-		GivenName:  aws.String("Richie"),
-		UserPoolID: aws.String("userPoolId"),
+		ID:        aws.String("user123"),
+		GivenName: aws.String("Richie"),
 	}))
 }

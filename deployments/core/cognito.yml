@@ -41,11 +41,13 @@ Resources:
             <br />Need help, or have questions? Just email us at support@runpanther.io, we'd love to help.
             <br />
             <br />Yours truly,
-            <br />Panther - runpanther.io
+            <br />Panther - https://runpanther.io
             <br />
             <br /><small>Copyright © 2020 Panther Labs Inc. All rights reserved.</small>
       AutoVerifiedAttributes: # Attributes you want the user to verify (poor naming choice by AWS)
         - email
+      LambdaConfig:
+        CustomMessage: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cognito-custom-message-trigger
       Policies:
         PasswordPolicy:
           MinimumLength: 12
@@ -70,14 +72,6 @@ Resources:
       UsernameAttributes:
         - email
       UserPoolName: panther-users
-
-  AdminGroup:
-    Type: AWS::Cognito::UserPoolGroup
-    Properties:
-      Description: Administrator for Panther web application
-      GroupName: Admin
-      Precedence: 0
-      UserPoolId: !Ref UserPool
 
   AppClient:
     Type: AWS::Cognito::UserPoolClient

@@ -19,20 +19,28 @@ package processor
  */
 
 import (
+	"bufio"
+	"compress/gzip"
+	"io"
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
 	api "github.com/panther-labs/panther/api/gateway/resources/models"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const maxBackoffSeconds = 30
@@ -40,7 +48,12 @@ const maxBackoffSeconds = 30
 // Handle is the entry point for the event stream analysis.
 //
 // Do not make any assumptions about the correctness of the incoming data.
-func Handle(batch *events.SQSEvent) error {
+func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error) {
+	operation := oplog.NewManager("cloudsec", "aws_event_processor").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("numEvents", len(batch.Records)))
+	}()
+
 	// De-duplicate all updates and deletes before delivering them.
 	// At most one change will be reported per resource (update or delete).
 	//
@@ -49,49 +62,81 @@ func Handle(batch *events.SQSEvent) error {
 	changes := make(map[string]*resourceChange, len(batch.Records)) // keyed by resourceID
 
 	// Get the most recent integrations to map Account ID to IntegrationID
-	if err := refreshAccounts(); err != nil {
+	if err = refreshAccounts(); err != nil {
 		return err
 	}
 
+	// Using gjson to get only the fields we need is > 10x faster than running json.Unmarshal multiple times
+	//
+	// Since we don't want one bad notification to lose us the rest, we log failures and continue.
 	for _, record := range batch.Records {
-		// Using gjson to get only the fields we need is > 10x faster than running json.Unmarshal multiple times
-		// TODO: Update this switch statement to handle SNS notifications indicating the need to download logs from s3
-		switch gjson.Get(record.Body, "Type").Str {
-		case "Notification": // sns wrapped message
-			zap.L().Debug("wrapped sns message - assuming cloudtrail is in Message field")
-			handleCloudtrail(gjson.Get(record.Body, "Message").Str, changes)
-
-		case "SubscriptionConfirmation": // sns confirmation message
-			topicArn, err := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
+		// SNS raw message delivery of CloudTrail
+		detail := gjson.Get(record.Body, "detail")
+		if detail.Exists() {
+			zap.L().Debug("processing raw CloudTrail")
+			err := processCloudTrail(detail, changes)
 			if err != nil {
-				zap.L().Warn("invalid confirmation arn", zap.Error(err))
+				zap.L().Error("error processing raw CloudTrail", zap.Error(errors.WithStack(err)))
+			}
+			continue
+		}
+
+		// This case is checking for a notification from the log processor that there is newly processed CloudTrail logs
+		results := gjson.GetMany(record.Body, "s3Bucket", "s3ObjectKey")
+		if results[0].Exists() && results[1].Exists() {
+			zap.L().Debug("SNS message was an S3 Notification, initiating download")
+			object := &sources.S3ObjectInfo{
+				S3Bucket:    results[0].Str,
+				S3ObjectKey: results[1].Str,
+			}
+			err := processS3Download(object, changes)
+			if err != nil {
+				return err
+			}
+		}
+
+		// If both the prior cases failed, this must be an SNS Notification or invalid input
+		switch gjson.Get(record.Body, "Type").Str {
+		case "Notification": // SNS notification
+			// This case is checking for CloudTrail logs directly wrapped in SNS Events
+			zap.L().Debug("processing SNS notification")
+			message := gjson.Get(record.Body, "Message").Str
+			detail := gjson.Get(message, "detail")
+			err := processCloudTrail(detail, changes)
+			if err != nil {
+				operation.LogError(errors.Wrap(err, "error processing SNS wrapped CloudTrail"))
+			}
+		case "SubscriptionConfirmation": // SNS confirmation message
+			zap.L().Debug("processing SNS confirmation")
+			topicArn, parseErr := arn.Parse(gjson.Get(record.Body, "TopicArn").Str)
+			if err != nil {
+				operation.LogWarn(errors.Wrap(parseErr, "invalid confirmation arn"))
 				continue
 			}
-
 			token := gjson.Get(record.Body, "Token").Str
 			if err = handleSnsConfirmation(topicArn, &token); err != nil {
 				return err
 			}
-
-		case "": // raw data
-			handleCloudtrail(record.Body, changes)
 		default: // Unexpected type
-			zap.L().Warn("unexpected record type",
+			operation.LogWarn(errors.New("unexpected SNS message"),
 				zap.String("type", gjson.Get(record.Body, "Type").Str),
-				zap.String("body", record.Body),
-			)
-			continue
+				zap.String("body", record.Body))
 		}
 	}
-
-	return submitChanges(changes)
+	err = submitChanges(changes)
+	return err
 }
 
-func handleCloudtrail(body string, changes map[string]*resourceChange) {
-	// this event potentially requires a change to some number of resources
-	for _, summary := range classifyCloudTrailLog(body) {
+func processCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChange) error {
+	if !cloudtrail.Exists() {
+		return errors.WithStack(errors.New("dropping bad event"))
+	}
+
+	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)
+	for _, summary := range classifyCloudTrailLog(cloudtrail) {
 		zap.L().Info("resource change required", zap.Any("changeDetail", summary))
 		// Prevents the following from being de-duped mistakenly:
+		//
 		// Resources with the same ID in different regions (different regions)
 		// Service scans in the same region (different resource types)
 		// Resources with the same type in the same region (different resource IDs)
@@ -100,6 +145,41 @@ func handleCloudtrail(body string, changes map[string]*resourceChange) {
 			changes[key] = summary // the newest event for this resource we've seen so far
 		}
 	}
+	return nil
+}
+
+func processS3Download(object *sources.S3ObjectInfo, changes map[string]*resourceChange) error {
+	logs, err := s3Svc.GetObject(&s3.GetObjectInput{
+		Bucket: &object.S3Bucket,
+		Key:    &object.S3ObjectKey,
+	})
+	if err != nil {
+		return errors.Wrap(err, "error reading CloudTrail from S3")
+	}
+
+	reader, err := gzip.NewReader(bufio.NewReader(logs.Body))
+	if err != nil {
+		return errors.Wrap(err, "error creating gzip reader for S3 output")
+	}
+
+	stream := bufio.NewReader(reader)
+	for {
+		var line string
+		line, err = stream.ReadString('\n')
+		if err != nil {
+			if err == io.EOF { // we are done
+				err = nil
+			}
+			break
+		}
+		// Since we don't wont to lose an entire batch of logs to one bad message, we just log failures and continue
+		err = processCloudTrail(gjson.Parse(line), changes)
+		if err != nil {
+			zap.L().Error("error processing CloudTrail from S3", zap.Error(errors.WithStack(err)))
+		}
+	}
+
+	return err
 }
 
 func submitChanges(changes map[string]*resourceChange) error {
@@ -116,7 +196,7 @@ func submitChanges(changes map[string]*resourceChange) error {
 			// ID = “”, region =“”:				Account wide service scan; use sparingly
 			// ID = “”, region =“west”:			Region wide service scan
 			// ID = “abc-123”, region =“”:		Single resource scan
-			// ID = “abc-123”, region =“west”:	Undefined in spec, treated as single resource scan
+			// ID = “abc-123”, region =“west”:	Undefined, treated as single resource scan
 			var resourceID *string
 			var region *string
 			if change.ResourceID != "" {
@@ -146,13 +226,12 @@ func submitChanges(changes map[string]*resourceChange) error {
 
 	// Send deletes to resources-api
 	if len(deleteRequest.Resources) > 0 {
-		zap.L().Info("deleting resources", zap.Any("deleteRequest", &deleteRequest))
+		zap.L().Debug("deleting resources", zap.Any("deleteRequest", &deleteRequest))
 		_, err := apiClient.Operations.DeleteResources(
 			&operations.DeleteResourcesParams{Body: &deleteRequest, HTTPClient: httpClient})
 
 		if err != nil {
-			zap.L().Error("resource deletion failed", zap.Error(err))
-			return err
+			return errors.Wrapf(err, "resource deletion failed for: %#v", deleteRequest)
 		}
 	}
 
@@ -160,11 +239,10 @@ func submitChanges(changes map[string]*resourceChange) error {
 		batchInput := &sqs.SendMessageBatchInput{QueueUrl: &queueURL}
 		// Send resource scan requests to the poller queue
 		for delay, request := range requestsByDelay {
-			zap.L().Info("queueing resource scans", zap.Any("updateRequest", request))
+			zap.L().Debug("queueing resource scans", zap.Any("updateRequest", request))
 			body, err := jsoniter.MarshalToString(request)
 			if err != nil {
-				zap.L().Error("resource queueing failed: json marshal", zap.Error(err))
-				return err
+				return errors.Wrapf(err, "resource queueing failed: json marshal for: %#v", request)
 			}
 
 			batchInput.Entries = append(batchInput.Entries, &sqs.SendMessageBatchRequestEntry{

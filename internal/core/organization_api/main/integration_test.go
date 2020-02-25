@@ -43,7 +43,6 @@ var (
 	integrationTest bool
 	awsSession      = session.Must(session.NewSession())
 	lambdaClient    = lambda.New(awsSession)
-	org             *models.Organization
 )
 
 func TestMain(m *testing.M) {
@@ -59,174 +58,61 @@ func TestIntegrationAPI(t *testing.T) {
 
 	require.NoError(t, testutils.ClearDynamoTable(awsSession, tableName))
 
-	// Test endpoints against the non-existent organization (setup failed)
-	t.Run("Empty", func(t *testing.T) {
-		t.Run("GetOrgDeleted", getOrgDeleted)
-		t.Run("UpdateOrgDeleted", updateOrgDeleted)
-	})
-
-	t.Run("Create", func(t *testing.T) {
-		t.Run("CreateOrgInvalid", createOrgInvalid)
-		t.Run("CreateOrg", createOrg)
-	})
-	if t.Failed() {
-		return
-	}
-
-	t.Run("Read", func(t *testing.T) {
-		t.Run("GetOrg", getOrg)
-	})
-	t.Run("Update", func(t *testing.T) {
-		t.Run("UpdateOrg", updateOrg)
-		t.Run("CompleteAction", completeAction)
-	})
-	if t.Failed() {
-		return
-	}
+	t.Run("GetSettingsEmpty", getSettingsEmpty)
+	t.Run("UpdateSettings", updateSettings)
+	t.Run("GetSettings", getSettings)
 }
 
 // ********** Subtests **********
 
-func createOrgInvalid(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{CreateOrganization: &models.CreateOrganizationInput{
-		DisplayName:          aws.String("panther-labs"),
-		Email:                aws.String("runpanther.io"),
-		AlertReportFrequency: aws.String("P1W"),
-	}}
-	err := genericapi.Invoke(lambdaClient, orgAPI, &input, nil)
-	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("CreateOrganization failed: invalid input: " +
-			"Key: 'LambdaInput.CreateOrganization.Email' Error:" +
-			"Field validation for 'Email' failed on the 'email' tag"),
-		ErrorType:    aws.String("InvalidInputError"),
-		FunctionName: orgAPI,
-	}
-	assert.Equal(t, expected, err)
+func getSettingsEmpty(t *testing.T) {
+	input := models.LambdaInput{GetSettings: &models.GetSettingsInput{}}
+	var output models.GeneralSettings
+	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
+
+	var expected models.GeneralSettings
+	assert.Equal(t, expected, output)
 }
 
-func createOrg(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{CreateOrganization: &models.CreateOrganizationInput{
-		AlertReportFrequency: aws.String("P1W"),
-		AwsConfig: &models.AwsConfig{
-			UserPoolID:     aws.String("userPool"),
-			AppClientID:    aws.String("appClient"),
-			IdentityPoolID: aws.String("identityPool"),
+func updateSettings(t *testing.T) {
+	// Update only email
+	input := models.LambdaInput{
+		UpdateSettings: &models.UpdateSettingsInput{
+			Email: aws.String("test@example.com"),
 		},
-		DisplayName: aws.String("panther-org-api-integration-test"),
-		Email:       aws.String("eng@runpanther.io"),
-		Phone:       aws.String("111-222-3333"),
-	}}
-	var output models.CreateOrganizationOutput
-	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
-	org = output.Organization
-
-	assert.NotNil(t, org.CreatedAt)
-	expected := &models.Organization{
-		AlertReportFrequency:  input.CreateOrganization.AlertReportFrequency,
-		AwsConfig:             input.CreateOrganization.AwsConfig,
-		CompletedActions:      []*string{},
-		CreatedAt:             org.CreatedAt,
-		DisplayName:           input.CreateOrganization.DisplayName,
-		Email:                 input.CreateOrganization.Email,
-		ErrorReportingConsent: nil,
-		Phone:                 input.CreateOrganization.Phone,
 	}
-	assert.Equal(t, expected, org)
-}
-
-func getTest(t *testing.T) {
-	input := models.LambdaInput{GetOrganization: &models.GetOrganizationInput{}}
-	var output models.GetOrganizationOutput
+	var output models.GeneralSettings
 	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
 
-	expected := models.GetOrganizationOutput{Organization: org}
-	require.Equal(t, expected, output)
-}
+	expected := models.GeneralSettings{Email: aws.String("test@example.com")}
+	assert.Equal(t, expected, output)
 
-func getOrg(t *testing.T) {
-	t.Parallel()
-	getTest(t)
-}
-
-func updateOrg(t *testing.T) {
-	input := models.LambdaInput{UpdateOrganization: &models.UpdateOrganizationInput{
-		CreateOrganizationInput: models.CreateOrganizationInput{
-			AlertReportFrequency: aws.String("P1D"),
-			AwsConfig: &models.AwsConfig{
-				UserPoolID:     aws.String("userPool"),
-				AppClientID:    aws.String("appClient"),
-				IdentityPoolID: aws.String("identityPool"),
-			},
-			DisplayName:           aws.String("panther-org-api-integration-test-update"),
-			Email:                 aws.String("eng-update@runpanther.io"),
+	// Update other settings
+	input = models.LambdaInput{
+		UpdateSettings: &models.UpdateSettingsInput{
+			DisplayName:           aws.String("panther-test"),
 			ErrorReportingConsent: aws.Bool(true),
-			Phone:                 aws.String("111-222-3456"),
-		},
-	}}
-	var output models.UpdateOrganizationOutput
-	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
-
-	expected := models.UpdateOrganizationOutput{
-		Organization: &models.Organization{
-			CompletedActions:      org.CompletedActions,
-			CreatedAt:             org.CreatedAt,
-			AlertReportFrequency:  input.UpdateOrganization.AlertReportFrequency,
-			AwsConfig:             input.UpdateOrganization.AwsConfig,
-			DisplayName:           input.UpdateOrganization.DisplayName,
-			Email:                 input.UpdateOrganization.Email,
-			ErrorReportingConsent: input.UpdateOrganization.ErrorReportingConsent,
-			Phone:                 input.UpdateOrganization.Phone,
 		},
 	}
-	require.Equal(t, expected, output)
-	org = output.Organization
-	getTest(t)
-}
-
-func completeAction(t *testing.T) {
-	action := models.VisitedOnboardingFlow
-	input := models.LambdaInput{CompleteAction: &models.CompleteActionInput{
-		CompletedActions: []*models.Action{&action},
-	}}
-	var output models.CompleteActionOutput
 	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
 
-	expected := models.CompleteActionOutput{
-		CompletedActions: []*models.Action{&action},
+	expected = models.GeneralSettings{
+		DisplayName:           aws.String("panther-test"),
+		Email:                 aws.String("test@example.com"),
+		ErrorReportingConsent: aws.Bool(true),
 	}
 	assert.Equal(t, expected, output)
-	org.CompletedActions = output.CompletedActions
-
-	getTest(t) // verify update
 }
 
-func getOrgDeleted(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{GetOrganization: &models.GetOrganizationInput{}}
-	err := genericapi.Invoke(lambdaClient, orgAPI, &input, nil)
-	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("GetOrganization failed: does not exist: "),
-		ErrorType:    aws.String("DoesNotExistError"),
-		FunctionName: orgAPI,
-	}
-	assert.Equal(t, expected, err)
-}
+func getSettings(t *testing.T) {
+	input := models.LambdaInput{GetSettings: &models.GetSettingsInput{}}
+	var output models.GeneralSettings
+	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
 
-func updateOrgDeleted(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{UpdateOrganization: &models.UpdateOrganizationInput{
-		CreateOrganizationInput: models.CreateOrganizationInput{
-			DisplayName: aws.String("a new name"),
-			Email:       aws.String("eng-update@runpanther.io"),
-		},
-	}}
-	err := genericapi.Invoke(lambdaClient, orgAPI, &input, nil)
-	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("UpdateOrganization failed: does not exist: "),
-		ErrorType:    aws.String("DoesNotExistError"),
-		FunctionName: orgAPI,
+	expected := models.GeneralSettings{
+		DisplayName:           aws.String("panther-test"),
+		Email:                 aws.String("test@example.com"),
+		ErrorReportingConsent: aws.Bool(true),
 	}
-	assert.Equal(t, expected, err)
+	assert.Equal(t, expected, output)
 }

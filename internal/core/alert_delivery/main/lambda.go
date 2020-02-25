@@ -23,39 +23,44 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/core/alert_delivery/delivery"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 var validate = validator.New()
 
-func lambdaHandler(ctx context.Context, event events.SQSEvent) {
-	_, logger := lambdalogger.ConfigureGlobal(ctx, nil)
+func lambdaHandler(ctx context.Context, event events.SQSEvent) (err error) {
 	var alerts []*models.Alert
+
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := oplog.NewManager("cloudsec", "alert_delivery").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err, zap.Int("numEvents", len(event.Records)), zap.Int("numAlerts", len(alerts)))
+	}()
 
 	for _, record := range event.Records {
 		alert := &models.Alert{}
-		if err := jsoniter.UnmarshalFromString(record.Body, alert); err != nil {
-			logger.Error("failed to parse SQS message", zap.Error(err))
+		if err = jsoniter.UnmarshalFromString(record.Body, alert); err != nil {
+			operation.LogError(errors.Wrap(err, "Failed to unmarshal item"))
 			continue
 		}
-		if err := validate.Struct(alert); err != nil {
-			logger.Error("invalid message received", zap.Error(err))
+		if err = validate.Struct(alert); err != nil {
+			operation.LogError(errors.Wrap(err, "invalid message received"))
 			continue
 		}
 		alerts = append(alerts, alert)
 	}
 
-	if len(alerts) > 0 {
-		delivery.HandleAlerts(alerts)
-	} else {
-		logger.Info("no alerts to process")
-	}
+	delivery.HandleAlerts(alerts)
+	return err
 }
 
 func main() {

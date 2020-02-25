@@ -40,20 +40,22 @@ type commonFields struct {
 }
 
 func TestTablesCloudFormation(t *testing.T) {
-	expectedOutput, err := readTestFile("testdata/gluecf.json.cf")
-	require.NoError(t, err)
+	expectedFile := "testdata/gluecf.json.cf"
 
 	// use simple consistent reference set of parsers
-	table, err := awsglue.NewGlueMetadata(awsglue.TablesDatabaseName, "dummy", "dummy",
+	table, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, awsglue.LogProcessingDatabaseName, "dummy", "dummy",
 		awsglue.GlueTableHourly, false, &dummyParserEvent{})
 	require.NoError(t, err)
 	tables := []*awsglue.GlueMetadata{table}
 
-	cf, err := GenerateCloudFormation(tables)
+	cf, err := GenerateTables(tables)
 	require.NoError(t, err)
 
-	// un-comment to see output
-	// os.Stdout.Write(cf)
+	// uncomment to make a new expected file
+	// writeTestFile(cf, expectedFile)
 
-	assert.Equal(t, expectedOutput, string(cf))
+	expectedOutput, err := readTestFile(expectedFile)
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedOutput, cf)
 }

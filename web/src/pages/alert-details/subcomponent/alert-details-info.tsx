@@ -21,7 +21,7 @@ import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import React from 'react';
 import { AlertDetails, RuleDetails } from 'Generated/schema';
-import Linkify from 'linkifyjs/react';
+import Linkify from 'Components/linkify';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
 import Panel from 'Components/panel';
@@ -92,8 +92,11 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             RULE ORIGIN
           </Label>
           <Text size="medium" color="black">
-            {<Link to={urls.rules.details(rule.id)}>{rule.displayName || rule.id}</Link> ||
-              'No rule found'}
+            {(
+              <Link to={urls.logAnalysis.rules.details(rule.id)}>
+                {rule.displayName || rule.id}
+              </Link>
+            ) || 'No rule found'}
           </Text>
         </Box>
         <Box my={1}>
@@ -117,9 +120,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             DESCRIPTION
           </Label>
           <Text size="medium" color={rule.description ? 'black' : 'grey200'}>
-            <React.Suspense fallback={<span>{rule.description}</span>}>
-              <Linkify>{rule.description || 'No description available'}</Linkify>
-            </React.Suspense>
+            <Linkify>{rule.description || 'No description available'}</Linkify>
           </Text>
         </Box>
         <Box my={1}>
@@ -127,9 +128,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             RUNBOOK
           </Label>
           <Text size="medium" color={rule.runbook ? 'black' : 'grey200'}>
-            <React.Suspense fallback={<span>{rule.runbook}</span>}>
-              <Linkify>{rule.runbook || 'No runbook available'}</Linkify>
-            </React.Suspense>
+            <Linkify>{rule.runbook || 'No runbook available'}</Linkify>
           </Text>
         </Box>
         <Box my={1}>

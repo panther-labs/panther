@@ -21,18 +21,13 @@ import { Link } from 'react-router-dom';
 import { Badge, Box, Button, Grid, Icon, Label, Text } from 'pouncejs';
 import { capitalize, formatDatetime } from 'Helpers/utils';
 import Panel from 'Components/panel';
+import Linkify from 'Components/linkify';
 import { ComplianceStatusEnum, PolicyDetails } from 'Generated/schema';
-import { READONLY_ROLES_ARRAY, SEVERITY_COLOR_MAP } from 'Source/constants';
-import { LinkifyProps } from 'linkifyjs/react';
+import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import urls from 'Source/urls';
 import JsonViewer from 'Components/json-viewer';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
-import RoleRestrictedAccess from 'Components/role-restricted-access';
-
-const Linkify = React.lazy(() =>
-  import(/* webpackChunkName: "linkify" */ 'linkifyjs/react.js')
-) as React.FC<LinkifyProps>;
 
 interface ResourceDetailsInfoProps {
   policy?: PolicyDetails;
@@ -46,32 +41,30 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
       size="large"
       title="Policy Details"
       actions={
-        <RoleRestrictedAccess deniedRoles={READONLY_ROLES_ARRAY}>
-          <Box>
-            <Button
-              size="large"
-              variant="default"
-              mr={4}
-              is={Link}
-              to={urls.policies.edit(policy.id)}
-            >
-              Edit
-            </Button>
-            <Button
-              size="large"
-              variant="default"
-              color="red300"
-              onClick={() =>
-                showModal({
-                  modal: MODALS.DELETE_POLICY,
-                  props: { policy },
-                })
-              }
-            >
-              Delete
-            </Button>
-          </Box>
-        </RoleRestrictedAccess>
+        <Box>
+          <Button
+            size="large"
+            variant="default"
+            mr={4}
+            is={Link}
+            to={urls.compliance.policies.edit(policy.id)}
+          >
+            Edit
+          </Button>
+          <Button
+            size="large"
+            variant="default"
+            color="red300"
+            onClick={() =>
+              showModal({
+                modal: MODALS.DELETE_POLICY,
+                props: { policy },
+              })
+            }
+          >
+            Delete
+          </Button>
+        </Box>
       }
     >
       <Grid gridTemplateColumns="repeat(3, 1fr)" gridGap={6}>
@@ -133,13 +126,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
             REFERENCE
           </Label>
           <Text size="medium" color={policy.reference ? 'blue300' : 'grey200'}>
-            {policy.reference ? (
-              <a href={policy.reference} target="_blank" rel="noopener noreferrer">
-                {policy.reference}
-              </a>
-            ) : (
-              'No reference found'
-            )}
+            <Linkify>{policy.reference || 'No reference found'}</Linkify>
           </Text>
         </Box>
         <Box my={1}>
@@ -163,9 +150,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
             DESCRIPTION
           </Label>
           <Text size="medium" color={policy.description ? 'black' : 'grey200'}>
-            <React.Suspense fallback={<span>{policy.description}</span>}>
-              <Linkify>{policy.description || 'No description available'}</Linkify>
-            </React.Suspense>
+            <Linkify>{policy.description || 'No description available'}</Linkify>
           </Text>
         </Box>
         <Box my={1}>
@@ -173,9 +158,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
             RUNBOOK
           </Label>
           <Text size="medium" color={policy.runbook ? 'black' : 'grey200'}>
-            <React.Suspense fallback={<span>{policy.runbook}</span>}>
-              <Linkify>{policy.runbook || 'No runbook available'}</Linkify>
-            </React.Suspense>
+            <Linkify>{policy.runbook || 'No runbook available'}</Linkify>
           </Text>
         </Box>
         <Box my={1}>

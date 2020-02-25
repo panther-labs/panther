@@ -4,7 +4,7 @@ description: >-
   Panther.
 ---
 
-# Background
+# Automatic Remediation
 
 ## Background
 
