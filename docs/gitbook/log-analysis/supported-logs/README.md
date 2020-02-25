@@ -4,7 +4,7 @@ description: Each supported log type
 
 # Supported Logs
 
-Panther can analyze the following log sources below to detect threats.
+Panther can analyze the following log sources to detect threats.
 
 To request a new one, please open a [Github issue](https://github.com/panther-labs/panther/issues)!
 
