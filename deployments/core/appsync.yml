@@ -1247,3 +1247,6 @@ Outputs:
   GraphQLApiEndpoint:
     Description: The URL to the Appsync GraphQL Endpoint
     Value: !GetAtt GraphQLApi.GraphQLUrl
+  GraphQLApiId:
+    Description: The id of the Appsync GraphQL Endpoint
+    Value: !GetAtt GraphQLApi.ApiId

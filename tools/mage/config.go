@@ -38,11 +38,16 @@ type frontendParameters struct {
 	WebApplicationFargateTaskMemory int `yaml:"WebApplicationFargateTaskMemory"`
 }
 
+type monitoringParameters struct {
+	AlarmSNSTopicARN string `yaml:"AlarmSNSTopicARN"` // where to send alarms (optional)
+}
+
 // PantherConfig describes the panther_config.yml file.
 type PantherConfig struct {
-	BucketsParameterValues  bucketsParameters  `yaml:"BucketsParameterValues"`
-	BackendParameterValues  backendParameters  `yaml:"BackendParameterValues"`
-	FrontendParameterValues frontendParameters `yaml:"FrontendParameterValues"`
-	PipLayer                []string           `yaml:"PipLayer"`
-	InitialAnalysisSets     []string           `yaml:"InitialAnalysisSets"`
+	BucketsParameterValues    bucketsParameters    `yaml:"BucketsParameterValues"`
+	BackendParameterValues    backendParameters    `yaml:"BackendParameterValues"`
+	FrontendParameterValues   frontendParameters   `yaml:"FrontendParameterValues"`
+	MonitoringParameterValues monitoringParameters `yaml:"MonitoringParameterValues"`
+	PipLayer                  []string             `yaml:"PipLayer"`
+	InitialAnalysisSets       []string             `yaml:"InitialAnalysisSets"`
 }
