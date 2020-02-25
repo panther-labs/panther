@@ -40,6 +40,16 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
       <Dropdown.Item
         onSelect={() =>
           showModal({
+            modal: MODALS.RESET_USER_PASS,
+            props: { user },
+          })
+        }
+      >
+        <MenuItem variant="default">Force change password </MenuItem>
+      </Dropdown.Item>
+      <Dropdown.Item
+        onSelect={() =>
+          showModal({
             modal: MODALS.DELETE_USER,
             props: { user },
           })
