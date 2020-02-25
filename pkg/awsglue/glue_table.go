@@ -146,17 +146,12 @@ func (gm *GlueTableMetadata) PartitionValues(t time.Time) (values []*string) {
 }
 
 
-
 func NewLogTableMetadata(logType, description string, eventStruct interface{}) *GlueTableMetadata {
 	// clean table name to make sql friendly
 	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
 	tableName = strings.ToLower(logType)
 
-	s3Prefix := LogS3Prefix + "/" + tableName
-	if s3Prefix[len(s3Prefix)-1] != '/' { // ensure last char is '/'
-		s3Prefix += "/"
-	}
-
+	s3Prefix := LogS3Prefix + "/" + tableName + "/"
 	return &GlueTableMetadata{
 		databaseName: LogTableDatabaseName,
 		tableName:    tableName,
@@ -195,31 +190,6 @@ func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t tim
 	return err
 }
 
-// CreateJSONPartition creates a new JSON partition in a GlueTableMetadata table. If the partition already exists, it doesn't perform an operation.
-func (gm *GlueTableMetadata) Tsa(client glueiface.GlueAPI, t time.Time) error {
-	partitionPrefix := "s3://" +  gm.PartitionPrefix(t)
-
-	partitionInput := &glue.PartitionInput{
-		Values:            gm.PartitionValues(t),
-		StorageDescriptor: getJSONPartitionDescriptor(partitionPrefix),
-	}
-	input := &glue.CreatePartitionInput{
-		DatabaseName:   aws.String(gm.databaseName),
-		TableName:      aws.String(gm.tableName),
-		PartitionInput: partitionInput,
-	}
-	_, err := client.CreatePartition(input)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AlreadyExistsException" {
-				return nil
-			}
-		}
-		return errors.Wrap(err, "failed to create new JSON partition")
-	}
-
-	return err
-}
 
 func (gm *GlueTableMetadata) GetPartition(client glueiface.GlueAPI, t time.Time) (output *glue.GetPartitionOutput, err error) {
 	input := &glue.GetPartitionInput{
