@@ -139,7 +139,7 @@ func GenerateTables(tables []*awsglue.GlueTableMetadata) (cf []byte, err error) 
 	for _, t := range tables {
 		addTable(t)
 		// add a matching table for rule matches, add the columns that the rules engine appends
-		addTable(t.Clone(awsglue.RuleMatchS3Prefix, awsglue.RuleMatchDatabaseName), RuleMatchColumns...)
+		addTable(awsglue.NewRuleTableMetadata(t.LogType(), t.Description(), t.EventStruct()), RuleMatchColumns...)
 	}
 
 	// generate CF using cfngen
