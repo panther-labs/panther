@@ -61,7 +61,7 @@ Resources:
       EndpointConfiguration: REGIONAL
       Name: panther-analysis-api
       # <cfndoc>
-      # This API does what?
+      # The `panther-analysis-api` API Gateway called the `panther-analysis-api` lambda.
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -92,10 +92,7 @@ Resources:
           TABLE: !Ref Table
       FunctionName: panther-analysis-api
       # <cfndoc>
-      # This lambda implements the analysis api.
-      #
-      # ## Troubleshooting
-      #
+      # This lambda implements the analysis apii.
       # </cfndoc>
       Handler: main
       MemorySize: 512

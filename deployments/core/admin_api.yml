@@ -125,9 +125,6 @@ Resources:
       FunctionName: panther-cognito-custom-message-trigger
       # <cfndoc>
       # This lambda implements what?
-      #
-      # ## Troubleshooting
-      #
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -189,9 +186,6 @@ Resources:
       FunctionName: panther-organization-api
       # <cfndoc>
       # This lambda implements organization api (deprecated).
-      #
-      # ## Troubleshooting
-      #
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

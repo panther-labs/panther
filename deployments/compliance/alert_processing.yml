@@ -66,8 +66,8 @@ Resources:
       # The `panther-alert-processor` lambda reads from this queue to
       # determine if the event requires action or is a duplicate.
       #
-      # There should be no items in the associated
-      # dead letter queue.
+      # ### Failure Impact
+      # Failure of this sqs q will impact delivery of alert to output destinations.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       KmsMasterKeyId: !Ref SQSKeyId
@@ -161,8 +161,7 @@ Resources:
       TableName: panther-alert-forwarder
       # <cfndoc>
       # The `panther-alert-forwarder` ddb table is updated conditionally when new policies have a violation
-      # or a time limit has been exceeded. The `panther-alert-forwarder` lambda subscribes
-      # to this table's event stream to deliver the associated alerts.
+      # or a time limit has been exceeded.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: policyId
@@ -205,7 +204,7 @@ Resources:
             BatchSize: 1
       FunctionName: panther-alert-forwarder
       # <cfndoc>
-      # The `panther-alert-forwarder` lambda reads alerts from the ddb stream from the ddb table `panther-alert-forwarder`
+      # The `panther-alert-forwarder` lambda reads from the ddb stream for the table `panther-alert-forwarder`
       # and sends them to the `panther-alerts-queue` sqs queue.
       # </cfndoc>
       Handler: main

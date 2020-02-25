@@ -99,8 +99,6 @@ Resources:
       # <cfndoc>
       # The `panther-rules-engine-queue` sqs queue receives S3 notifications
       # of log files to be processed by `panther-rules-engine` lambda.
-      # There should be no items in the associated
-      # dead letter queue.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB

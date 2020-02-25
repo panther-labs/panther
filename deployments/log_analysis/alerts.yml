@@ -369,7 +369,7 @@ Resources:
             BatchSize: 10
       FunctionName: panther-log-alert-forwarder
       # <cfndoc>
-      # This lambda forwards alerts to destinations (e.g., SNS, Slack).
+      # This lambda writes alerts to the `panther-log-alerts-info` ddb table.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

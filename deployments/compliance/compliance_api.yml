@@ -50,7 +50,7 @@ Resources:
       EndpointConfiguration: REGIONAL
       Name: panther-compliance-api
       # <cfndoc>
-      # This API does what?
+      # The `panther-compliance-api` API Gateway calls the `panther-compliance-api` lambda.
       # </cfndoc>
       StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -68,9 +68,6 @@ Resources:
       FunctionName: panther-compliance-api
       # <cfndoc>
       # This lambda implements the compliance API.
-      #
-      # ## Troubleshooting
-      #
       # </cfndoc>
       Handler: main
       MemorySize: 512
@@ -112,7 +109,7 @@ Resources:
     Properties:
       TableName: panther-compliance
       # <cfndoc>
-      # This table does what???
+      # This table holds policy violation events for resources.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: policyId

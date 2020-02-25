@@ -65,8 +65,6 @@ Resources:
       # This sqs q receives CloudTrail events delivered by CloudWatch events
       # as well as S3 notifications from log processing.
       # The `panther-aws-event-processor` lambda processes these events.
-      # There should be no items in the associated
-      # dead letter queue.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
@@ -148,7 +146,7 @@ Resources:
             Queue: !GetAtt EventQueue.Arn
       FunctionName: panther-aws-event-processor
       # <cfndoc>
-      # This lambda reads events from the panther-aws-events-queue sqs queue and determines if
+      # This lambda reads events from the `panther-aws-events-queue` sqs queue and determines if
       # the infrastructure referenced in the event has changed. If so, it writes events to the
       # `panther-shapshot-queue` to be scanned for the nature of the changes.
       # </cfndoc>

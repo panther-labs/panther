@@ -64,7 +64,7 @@ Resources:
       EndpointConfiguration: REGIONAL
       Name: panther-resources-api
       # <cfndoc>
-      # The panther-resources-api API calls the `panther-resources-api` lambda.
+      # The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
       # </cfndoc>
       StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -92,7 +92,7 @@ Resources:
           RESOURCES_TABLE: !Ref ResourcesTable
       FunctionName: panther-resources-api
       # <cfndoc>
-      # The panther-resources-api lambda implements the resources API for the UI.
+      # The `panther-resources-api` lambda implements the resources API for the UI.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -144,7 +144,7 @@ Resources:
       TableName: panther-resources
       # <cfndoc>
       # This table holds descriptions of the AWS resources in all accounts being monitored.
-      # The `resources-api` lambda manages this table.
+      # The `panther-resources-api` lambda manages this table.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: id
@@ -171,8 +171,6 @@ Resources:
       # <cfndoc>
       # This sqs q has events from recently changed infrastructure.
       # The lambda `panther-resource-processor` consumes these events to generate alerts.
-      # There should be no items in the associated
-      # dead letter queue.
       # </cfndoc>
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
@@ -185,7 +183,7 @@ Resources:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       QueueName: panther-resources-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-resources-queue.
+      # The dead letter queue for the `panther-resources-queue`.
       # </cfndoc>
       VisibilityTimeout: 60
 
@@ -278,7 +276,7 @@ Resources:
       FunctionName: panther-policy-engine
       # <cfndoc>
       # This lambda executes the user-defined policies against infrastructure events.
-      # It is called directy from the `panther-resource-processor` lambda.
+      # It is called directly from the `panther-resource-processor` lambda.
       # </cfndoc>
       Handler: src.main.lambda_handler
       MemorySize: 512

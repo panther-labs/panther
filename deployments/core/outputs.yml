@@ -135,7 +135,7 @@ Resources:
           OUTPUTS_DISPLAY_NAME_INDEX_NAME: displayName-index
       FunctionName: panther-outputs-api
       # <cfndoc>
-      # This lambda implements CRUD actions for alert outputs.
+      # This lambda implements CRUD actions for alert outputs (destinations).
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -181,8 +181,6 @@ Resources:
       QueueName: panther-alerts-queue
       # <cfndoc>
       # This sqs q does what???
-      # There should be no items in the associated
-      # dead letter queue.
       # </cfndoc>
       MessageRetentionPeriod: !Ref AlertSqsRetentionSec
       KmsMasterKeyId: !Ref SQSKeyId
@@ -196,7 +194,7 @@ Resources:
     Properties:
       QueueName: panther-alerts-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-alerts-queue.
+      # The dead letter queue for the `panther-alerts-queue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
@@ -225,7 +223,7 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       FunctionName: panther-alert-delivery
       # <cfndoc>
-      # This lambda dispatches alerts to their specified outputs.
+      # This lambda dispatches alerts to their specified outputs (destinations).
       # </cfndoc>
       Handler: main
       MemorySize: 128

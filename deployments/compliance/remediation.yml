@@ -70,7 +70,7 @@ Resources:
       EndpointConfiguration: REGIONAL
       Name: panther-remediation-api
       # <cfndoc>
-      # The panther-remediation-api API calls the panther-remediation-api lambda.
+      # The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -88,9 +88,8 @@ Resources:
     Properties:
       QueueName: panther-remediation-queue
       # <cfndoc>
-      # This sqs q does what???
-      # There should be no items in the associated
-      # dead letter queue.
+      # This sqs q has remediation request events that are
+      # processed by the `panther-remediation-processor` lambda.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       KmsMasterKeyId: !Ref SQSKeyId
@@ -104,7 +103,7 @@ Resources:
     Properties:
       QueueName: panther-remediation-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-remediation-queue.
+      # The dead letter queue for the `panther-remediation-queue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
@@ -125,10 +124,7 @@ Resources:
           RESOURCES_SERVICE_PATH: v1
       FunctionName: panther-remediation-api
       # <cfndoc>
-      # The panther-remediation-api lambda triggers AWS remediations.
-      #
-      # ## Troubleshooting
-      #
+      # The `panther-remediation-api` lambda triggers AWS remediations.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -196,11 +192,8 @@ Resources:
             BatchSize: 1
       FunctionName: panther-remediation-processor
       # <cfndoc>
-      # The panther-remediation-processor lambda processes queued remediations
-      # in the panther-remediation-queue.
-      #
-      # ## Troubleshooting
-      #
+      # The `panther-remediation-processor` lambda processes queued remediations
+      # in the `panther-remediation-queue`.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -243,10 +236,7 @@ Resources:
       Description: Function that remediates issues with AWS resources
       FunctionName: panther-aws-remediation
       # <cfndoc>
-      # The panther-aws-remediation lambda does what?
-      #
-      # ## Troubleshooting
-      #
+      # The `panther-aws-remediation` lambda executes automated infrastructure remediations.
       # </cfndoc>
       Handler: app.main.lambda_handler
       Environment:

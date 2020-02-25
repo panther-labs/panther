@@ -44,6 +44,8 @@ and
 [Log Analysis](https://docs.runpanther.io/log-analysis/log-processing#how-it-works)
 architecture diagrams for context.
 
+Resource names below refer to resources in the Cloud Formation templates in Panther.
+
 `
 )
 

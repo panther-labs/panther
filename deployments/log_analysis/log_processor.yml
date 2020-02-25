@@ -65,8 +65,8 @@ Resources:
       # <cfndoc>
       # This sqs queue receives S3 notifications
       # of log files to be processed by `panther-log-processor` lambda.
-      # There should be no items in the associated
-      # dead letter queue.
+      # ### Failure Impact
+      # Failure of this sqs q will cause log analysis to stop.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
@@ -100,11 +100,15 @@ Resources:
       # notifications posted to the `panther-input-data-notifications-queue` SQS queue.
       # ### Troubleshooting
       #
-      # * If files cannot be parsed errors will be generated. Some root causes can be:
+      # * If files cannot be processed errors will be generated. Some root causes can be:
       #   * S3 event configured against a whole bucket rather than a prefix, which causes
       #     files other than the intended logs to be processed.
       #   * Variations in the log format not handled by the parsers.
       #     [Open a bug report](https://github.com/panther-labs/panther/issues).
+      #
+      # ### Failure Impact
+      # Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
+      # Look for items in the `panther-input-data-notifications-queue-dlq`.
       # </cfndoc>
       Description: Downloads security logs from S3 for Panther analysis
       CodeUri: ../../out/bin/internal/log_analysis/log_processor/main

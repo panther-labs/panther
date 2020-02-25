@@ -64,8 +64,6 @@ Resources:
       QueueName: panther-snapshot-queue
       # <cfndoc>
       # This sqs q does what???
-      # There should be no items in the associated
-      # dead letter queue.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       VisibilityTimeout: 900 # Should match lambda
@@ -78,7 +76,7 @@ Resources:
     Properties:
       QueueName: panther-snapshot-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-snapshot-queue.
+      # The dead letter queue for the `panther-snapshot-queue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
@@ -104,9 +102,6 @@ Resources:
       FunctionName: panther-snapshot-pollers
       # <cfndoc>
       # This  does what?
-      #
-      # ## Troubleshooting
-      #
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -184,10 +179,7 @@ Resources:
           TABLE_NAME: !Ref IntegrationsTable
       FunctionName: panther-snapshot-api
       # <cfndoc>
-      # The panther-snapshot-api lambda implements the resources API for the UI.
-      #
-      # ## Troubleshooting
-      #
+      # The `panther-snapshot-api` lambda implements the resources API for the UI.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -248,10 +240,8 @@ Resources:
             Schedule: rate(24 hours)
       FunctionName: panther-snapshot-scheduler
       # <cfndoc>
-      # The panther-snapshot-scheduler lambda implements what?.
-      #
-      # ## Troubleshooting
-      #
+      # The `panther-snapshot-scheduler` lambda does infrastructure scans triggered
+      # by a 24 hour CloudWatch timer events.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
