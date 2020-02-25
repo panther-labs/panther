@@ -19,13 +19,12 @@ package sysloglogs
  */
 
 import (
-	"fmt"
 	"time"
-
-	"go.uber.org/zap"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/influxdata/go-syslog/v3/rfc5424"
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
