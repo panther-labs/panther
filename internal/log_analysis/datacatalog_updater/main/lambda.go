@@ -24,14 +24,20 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"gopkg.in/go-playground/validator.v9"
 )
+
+var validation =  validator.New()
 
 func main() {
 	lambda.Start(handle)
@@ -48,15 +54,20 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
 	}()
 
-	// this is not likely to happen in production but needed to avoid opening sessions in tests w/no events
-	if len(event.Records) == 0 {
-		return err
+	for _, record := range event.Records {
+		notification := &models.S3Notification{}
+		if err :=  jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
+			zap.L().Error("failed to unmarshal record", zap.Error(errors.WithStack(err)))
+			continue
+		}
+
+		if err := validation.Struct(notification); err != nil {
+			zap.L().Error("received invalid message", zap.Error(errors.WithStack(err)))
+			continue
+		}
+
+		gluePartition := notification.S3ObjectKey
+
 	}
 
-	dataStreams, err := sources.ReadSQSMessages(event.Records)
-	if err != nil {
-		return err
-	}
-	err = processor.Process(dataStreams, destinations.CreateDestination())
-	return err
 }

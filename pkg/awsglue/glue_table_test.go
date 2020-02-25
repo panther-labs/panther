@@ -39,7 +39,7 @@ const (
 var (
 	nonAWSError         = errors.New("nonAWSError") // nolint:golint
 	entityNotFoundError = awserr.New("EntityNotFoundException", "EntityNotFoundException", nil)
-	entityExistsError   = awserr.New("AlreadyExistsException", "Partition already exists.", nil)
+	entityExistsError   = awserr.New("AlreadyExistsException", "PartitionKey already exists.", nil)
 	otherAWSError       = awserr.New("SomeException", "Some problem.", nil) // aws error other than those we code against
 )
 
@@ -53,9 +53,9 @@ func TestGlueMetadataPartitionPrefix(t *testing.T) {
 	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
 
 	gm = &GlueTableMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableHourly,
-		timeUnpadded: false,
+		s3TablePrefix: s3Prefix,
+		timebin:       GlueTableHourly,
+		timeUnpadded:  false,
 	}
 	expected = "foo/year=2020/month=01/day=03/hour=01/"
 	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
@@ -64,9 +64,9 @@ func TestGlueMetadataPartitionPrefix(t *testing.T) {
 	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
 
 	gm = &GlueTableMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableDaily,
-		timeUnpadded: false,
+		s3TablePrefix: s3Prefix,
+		timebin:       GlueTableDaily,
+		timeUnpadded:  false,
 	}
 	expected = "foo/year=2020/month=01/day=03/"
 	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
@@ -75,9 +75,9 @@ func TestGlueMetadataPartitionPrefix(t *testing.T) {
 	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
 
 	gm = &GlueTableMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableMonthly,
-		timeUnpadded: false,
+		s3TablePrefix: s3Prefix,
+		timebin:       GlueTableMonthly,
+		timeUnpadded:  false,
 	}
 	expected = "foo/year=2020/month=01/"
 	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
@@ -93,9 +93,9 @@ func TestGlueMetadataPartitionValues(t *testing.T) {
 	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
 
 	gm = &GlueTableMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableHourly,
-		timeUnpadded: false,
+		s3TablePrefix: s3Prefix,
+		timebin:       GlueTableHourly,
+		timeUnpadded:  false,
 	}
 	expected = []*string{
 		aws.String(fmt.Sprintf("%d", refTime.Year())),
@@ -103,7 +103,7 @@ func TestGlueMetadataPartitionValues(t *testing.T) {
 		aws.String(fmt.Sprintf("%02d", refTime.Day())),
 		aws.String(fmt.Sprintf("%02d", refTime.Hour())),
 	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
+	assert.Equal(t, expected, gm.partitionValues(refTime))
 	gm.timeUnpadded = true
 	expected = []*string{
 		aws.String(fmt.Sprintf("%d", refTime.Year())),
@@ -111,43 +111,43 @@ func TestGlueMetadataPartitionValues(t *testing.T) {
 		aws.String(fmt.Sprintf("%d", refTime.Day())),
 		aws.String(fmt.Sprintf("%d", refTime.Hour())),
 	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
+	assert.Equal(t, expected, gm.partitionValues(refTime))
 
 	gm = &GlueTableMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableDaily,
-		timeUnpadded: false,
+		s3TablePrefix: s3Prefix,
+		timebin:       GlueTableDaily,
+		timeUnpadded:  false,
 	}
 	expected = []*string{
 		aws.String(fmt.Sprintf("%d", refTime.Year())),
 		aws.String(fmt.Sprintf("%02d", refTime.Month())),
 		aws.String(fmt.Sprintf("%02d", refTime.Day())),
 	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
+	assert.Equal(t, expected, gm.partitionValues(refTime))
 	gm.timeUnpadded = true
 	expected = []*string{
 		aws.String(fmt.Sprintf("%d", refTime.Year())),
 		aws.String(fmt.Sprintf("%d", refTime.Month())),
 		aws.String(fmt.Sprintf("%d", refTime.Day())),
 	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
+	assert.Equal(t, expected, gm.partitionValues(refTime))
 
 	gm = &GlueTableMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableMonthly,
-		timeUnpadded: false,
+		s3TablePrefix: s3Prefix,
+		timebin:       GlueTableMonthly,
+		timeUnpadded:  false,
 	}
 	expected = []*string{
 		aws.String(fmt.Sprintf("%d", refTime.Year())),
 		aws.String(fmt.Sprintf("%02d", refTime.Month())),
 	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
+	assert.Equal(t, expected, gm.partitionValues(refTime))
 	gm.timeUnpadded = true
 	expected = []*string{
 		aws.String(fmt.Sprintf("%d", refTime.Year())),
 		aws.String(fmt.Sprintf("%d", refTime.Month())),
 	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
+	assert.Equal(t, expected, gm.partitionValues(refTime))
 }
 
 func TestGlueTableTimebinNext(t *testing.T) {
@@ -184,7 +184,7 @@ func TestGlueTableTimebinNext(t *testing.T) {
 
 func TestCreateJSONPartition(t *testing.T) {
 	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
-	gm := NewLogTableMetadata(partitionTestTable, partitionTestTable, &partitionTestEvent{})
+	gm := NewLogTableMetadata(partitionTestTable, partitionTestTable)
 
 	// test no errors and partition does not exist (no error)
 	glueClient := &mockGlue{}
@@ -242,7 +242,7 @@ func TestCreateJSONPartition(t *testing.T) {
 
 func TestSyncPartition(t *testing.T) {
 	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
-	gm := NewLogTableMetadata(partitionTestTable, partitionTestTable,  &partitionTestEvent{})
+	gm := NewLogTableMetadata(partitionTestTable, partitionTestTable)
 
 	// test not exists error in DeletePartition (should not fail)
 	glueClient := &mockGlue{}

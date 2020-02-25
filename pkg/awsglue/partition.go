@@ -16,3 +16,20 @@ package awsglue
  * limitations under the License.
  */
 
+// Meta data about GlueTableMetadata table over parser data written to S3
+// NOTE: this struct has all accessor behind functions to allow a lazy evaluation
+//       so the cost of creating the schema is only when actually needing this information.
+
+type GluePartition struct {
+	tableMetadata  *GlueTableMetadata
+	s3ObjectKey string
+	dataFormat string // Can currently be only "json"
+	compression *string // an only be "gzip" or empty
+	partitions map[string]string
+}
+
+func PartitionFromS3Key(s3ObjectKey string) *GluePartition {
+
+}
+
+

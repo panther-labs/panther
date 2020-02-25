@@ -96,7 +96,7 @@ func generateViewAllHelper(viewName string, tables []*awsglue.GlueMetadata, extr
 	// validate they all have the same partition keys
 	if len(tables) > 1 {
 		// create string of partition for comparison
-		genKey := func(partitions []awsglue.Partition) (key string) {
+		genKey := func(partitions []awsglue.PartitionKey) (key string) {
 			for _, p := range partitions {
 				key += p.Name + p.Type
 			}
