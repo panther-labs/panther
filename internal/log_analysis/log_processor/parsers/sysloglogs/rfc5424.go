@@ -34,10 +34,10 @@ Reference: https://tools.ietf.org/html/rfc5424`
 
 // nolint:lll
 type RFC5424 struct {
-	Priority       *int16                        `json:"priority" validate:"required" description:"Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message."`
-	Facility       *int16                        `json:"facility" validate:"required" description:"Facility value helps determine which process created the message. Eg: 0 = kernel messages, 3 = system daemons."`
-	Severity       *int16                        `json:"severity" validate:"required" description:"Severity indicates how severe the message is. Eg: 0=Emergency to 7=Debug."`
-	Version        *int16                        `json:"version" validate:"required" description:"Version of the syslog message protocol. RFC5424 mandates that version cannot be 0, so a 0 value signals no version."`
+	Priority       *uint8                        `json:"priority" validate:"required" description:"Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message."`
+	Facility       *uint8                        `json:"facility" validate:"required" description:"Facility value helps determine which process created the message. Eg: 0 = kernel messages, 3 = system daemons."`
+	Severity       *uint8                        `json:"severity" validate:"required" description:"Severity indicates how severe the message is. Eg: 0=Emergency to 7=Debug."`
+	Version        *uint16                       `json:"version" validate:"required" description:"Version of the syslog message protocol. RFC5424 mandates that version cannot be 0, so a 0 value signals no version."`
 	Timestamp      *timestamp.RFC3339            `json:"timestamp,omitempty" description:"Timestamp of the syslog message in UTC."`
 	Hostname       *string                       `json:"hostname,omitempty" description:"Hostname identifies the machine that originally sent the syslog message."`
 	Appname        *string                       `json:"appname,omitempty" description:"Appname identifies the device or application that originated the syslog message."`
@@ -69,10 +69,10 @@ func (p *RFC5424Parser) Parse(log string) []interface{} {
 	internalRFC5424 := msg.(*rfc5424.SyslogMessage)
 
 	externalRFC5424 := &RFC5424{
-		Priority:       aws.Int16(int16(*internalRFC5424.Priority)),
-		Facility:       aws.Int16(int16(*internalRFC5424.Facility)),
-		Severity:       aws.Int16(int16(*internalRFC5424.Severity)),
-		Version:        aws.Int16(int16(internalRFC5424.Version)),
+		Priority:       internalRFC5424.Priority,
+		Facility:       internalRFC5424.Facility,
+		Severity:       internalRFC5424.Severity,
+		Version:        &internalRFC5424.Version,
 		Timestamp:      (*timestamp.RFC3339)(internalRFC5424.Timestamp),
 		Hostname:       internalRFC5424.Hostname,
 		Appname:        internalRFC5424.Appname,

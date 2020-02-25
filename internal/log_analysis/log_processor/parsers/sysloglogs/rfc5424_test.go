@@ -35,10 +35,10 @@ func TestRFC5424Version4(t *testing.T) {
 	expectedTime, _ := time.Parse(time.RFC3339, "2018-10-11T22:14:15.003Z")
 
 	expectedEvent := &RFC5424{
-		Priority:  aws.Int16(165),
-		Facility:  aws.Int16(20),
-		Severity:  aws.Int16(5),
-		Version:   aws.Int16(4),
+		Priority:  aws.Uint8(165),
+		Facility:  aws.Uint8(20),
+		Severity:  aws.Uint8(5),
+		Version:   aws.Uint16(4),
 		Timestamp: (*timestamp.RFC3339)(&expectedTime),
 		Hostname:  aws.String("mymach.it"),
 		Appname:   aws.String("e"),
@@ -66,10 +66,10 @@ func TestRFC5424NoTimestmap(t *testing.T) {
 	expectedTime := time.Now().UTC()
 
 	expectedEvent := &RFC5424{
-		Priority:  aws.Int16(165),
-		Facility:  aws.Int16(20),
-		Severity:  aws.Int16(5),
-		Version:   aws.Int16(4),
+		Priority:  aws.Uint8(165),
+		Facility:  aws.Uint8(20),
+		Severity:  aws.Uint8(5),
+		Version:   aws.Uint16(4),
 		Timestamp: nil,
 		Hostname:  aws.String("mymach.it"),
 		Appname:   aws.String("e"),
@@ -98,10 +98,10 @@ func TestRFC5424NoStructuredDataNoProcID(t *testing.T) {
 	expectedTime, _ := time.Parse(time.RFC3339, "2003-10-11T22:14:15.003Z")
 
 	expectedEvent := &RFC5424{
-		Priority:       aws.Int16(34),
-		Facility:       aws.Int16(4),
-		Severity:       aws.Int16(2),
-		Version:        aws.Int16(1),
+		Priority:       aws.Uint8(34),
+		Facility:       aws.Uint8(4),
+		Severity:       aws.Uint8(2),
+		Version:        aws.Uint16(1),
 		Timestamp:      (*timestamp.RFC3339)(&expectedTime),
 		Hostname:       aws.String("mymachine.example.com"),
 		Appname:        aws.String("su"),
@@ -125,10 +125,10 @@ func TestRFC5424NoStructuredDataNoMsgID(t *testing.T) {
 	expectedTime, _ := time.Parse(time.RFC3339, "2003-08-24T05:14:15.000003-07:00")
 
 	expectedEvent := &RFC5424{
-		Priority:       aws.Int16(165),
-		Facility:       aws.Int16(20),
-		Severity:       aws.Int16(5),
-		Version:        aws.Int16(1),
+		Priority:       aws.Uint8(165),
+		Facility:       aws.Uint8(20),
+		Severity:       aws.Uint8(5),
+		Version:        aws.Uint16(1),
 		Timestamp:      (*timestamp.RFC3339)(&expectedTime),
 		Hostname:       aws.String("192.0.2.1"),
 		Appname:        aws.String("myproc"),
@@ -152,10 +152,10 @@ func TestRFC5424WithStructuredData(t *testing.T) {
 	expectedTime, _ := time.Parse(time.RFC3339, "2003-10-11T22:14:15.003Z")
 
 	expectedEvent := &RFC5424{
-		Priority:  aws.Int16(165),
-		Facility:  aws.Int16(20),
-		Severity:  aws.Int16(5),
-		Version:   aws.Int16(1),
+		Priority:  aws.Uint8(165),
+		Facility:  aws.Uint8(20),
+		Severity:  aws.Uint8(5),
+		Version:   aws.Uint16(1),
 		Timestamp: (*timestamp.RFC3339)(&expectedTime),
 		Hostname:  aws.String("mymachine.example.com"),
 		Appname:   aws.String("evntslog"),
@@ -185,10 +185,10 @@ func TestRFC5424StructuredDataOnly(t *testing.T) {
 	expectedTime, _ := time.Parse(time.RFC3339, "2003-10-11T22:14:15.003Z")
 
 	expectedEvent := &RFC5424{
-		Priority:  aws.Int16(165),
-		Facility:  aws.Int16(20),
-		Severity:  aws.Int16(5),
-		Version:   aws.Int16(1),
+		Priority:  aws.Uint8(165),
+		Facility:  aws.Uint8(20),
+		Severity:  aws.Uint8(5),
+		Version:   aws.Uint16(1),
 		Timestamp: (*timestamp.RFC3339)(&expectedTime),
 		Hostname:  aws.String("mymachine.example.com"),
 		Appname:   aws.String("evntslog"),

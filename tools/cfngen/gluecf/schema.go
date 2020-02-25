@@ -225,6 +225,12 @@ func toJSONType(t reflect.Type) (jsonType string) {
 		jsonType = "double"
 	case "interface {}":
 		jsonType = "string" // best we can do in this case
+	case "uint8":
+		jsonType = "smallint" // Athena doesn't have an unsigned integer type
+	case "uint16":
+		jsonType = "int"
+	case "uint32":
+		jsonType = "bigint"
 	default:
 		panic("Cannot map " + t.String())
 	}
