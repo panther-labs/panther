@@ -28,7 +28,7 @@ const ErrorReportingSection: React.FC = () => {
       <Field as={FormikCheckbox} name="errorReportingConsent" id="errorReportingConsent" />
       <Box ml={2}>
         <InputElementLabel htmlFor="errorReportingConsent">
-          Report Web Application Errors
+          Report Web Application Errors2
         </InputElementLabel>
         <Flex>
           <Text color="grey300" size="medium">
