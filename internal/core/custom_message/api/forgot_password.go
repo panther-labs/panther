@@ -19,13 +19,11 @@ package custommessage
  */
 
 import (
+	"net/url"
 	"strings"
-    "net/url"
-
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/matcornic/hermes"
 	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/internal/core/custom_message/email"
 )
 
