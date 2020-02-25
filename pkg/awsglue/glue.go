@@ -18,6 +18,7 @@ package awsglue
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -57,10 +58,42 @@ type GlueTableMetadata struct {
 	tableName     string
 	description   string
 	logType string
-	s3TablePrefix string           // All data for this table are stored in this S3 prefix
+	s3Prefix string
 	timebin       GlueTableTimebin // at what time resolution is this table partitioned
-	timeUnpadded  bool             // if true, do not zero pad partition time values
 	eventStruct interface{}
+}
+
+func NewLogTableMetadata(logType, logDescription string, eventStruct interface{}) *GlueTableMetadata{
+	tableName := standardizeTableName(logType)
+	return &GlueTableMetadata{
+		databaseName:  LogProcessingDatabaseName,
+		tableName:     tableName,
+		description:   logDescription,
+		timebin:       GlueTableHourly,
+		logType: logType,
+		s3Prefix: LogS3Prefix + "/" + tableName + "/",
+		eventStruct: eventStruct,
+	}
+}
+
+func NewRuleTableMetadata(logType, logDescription string, eventStruct interface{}) *GlueTableMetadata{
+	tableName := standardizeTableName(logType)
+	return &GlueTableMetadata{
+		databaseName:  RuleMatchDatabaseName,
+		tableName:     tableName,
+		description:   logDescription,
+		timebin:       GlueTableHourly,
+		logType: logType,
+		s3Prefix: RuleMatchS3Prefix + "/" + tableName + "/",
+		eventStruct: eventStruct,
+	}
+}
+
+
+func standardizeTableName(logType string) string {
+	// clean table name to make sql friendly
+	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
+	return strings.ToLower(tableName)
 }
 
 func (gm *GlueTableMetadata) DatabaseName() string {
@@ -75,16 +108,17 @@ func (gm *GlueTableMetadata) Description() string {
 	return gm.description
 }
 
+// All data for this table are stored in this S3 prefix
 func (gm *GlueTableMetadata) S3Prefix() string {
-	return gm.s3TablePrefix
+	return gm.s3Prefix
 }
 
 func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
 	return gm.timebin
 }
 
-func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
-	return gm.timebin
+func (gm *GlueTableMetadata) LogType() string {
+	return gm.logType
 }
 
 func (gm *GlueTableMetadata) EventStruct() interface{} {
@@ -92,9 +126,7 @@ func (gm *GlueTableMetadata) EventStruct() interface{} {
 }
 
 func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
-	partitions = []PartitionKey{
-		{Name: "year", Type: "int"},
-	}
+	partitions = []PartitionKey{{Name: "year", Type: "int"}}
 
 	if gm.Timebin() >= GlueTableMonthly {
 		partitions = append(partitions, PartitionKey{Name: "month", Type: "int"})
@@ -109,102 +141,17 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 }
 
 // Based on Timebin(), return an S3 prefix for objects
-func (gm *GlueTableMetadata) PartitionPrefix(t time.Time) (prefix string) {
-	partitionValues := gm.partitionValues(t)
-	prefix = gm.s3TablePrefix
+func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
+	prefix = gm.S3Prefix()
 	switch gm.timebin {
 	case GlueTableHourly:
-		prefix += fmt.Sprintf("year=%s/month=%s/day=%s/hour=%s/",
-			*partitionValues[0], *partitionValues[1], *partitionValues[2], *partitionValues[3])
+		prefix += fmt.Sprintf("year=%d/month=%d/day=%d/hour=%d/", t.Year(), t.Month(), t.Day(), t.Hour())
 	case GlueTableDaily:
-		prefix += fmt.Sprintf("year=%s/month=%s/day=%s/",
-			*partitionValues[0], *partitionValues[1], *partitionValues[2])
+		prefix += fmt.Sprintf("year=%s/month=%s/day=%s/", t.Year(), t.Month(), t.Day())
 	case GlueTableMonthly:
-		prefix += fmt.Sprintf("year=%s/month=%s/",
-			*partitionValues[0], *partitionValues[1])
+		prefix += fmt.Sprintf("year=%s/month=%s/", t.Year(), t.Month())
 	}
 	return
-}
-
-// Based on Timebin(), return an []*string values (used for GlueTableMetadata APIs)
-func (gm *GlueTableMetadata) partitionValues(t time.Time) (values []*string) {
-	var intFormat string
-
-	if gm.timeUnpadded {
-		intFormat = "%d"
-	} else {
-		intFormat = "%02d"
-	}
-
-	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))} // always unpadded
-
-	if gm.timebin >= GlueTableMonthly {
-		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Month())))
-	}
-	if gm.timebin >= GlueTableDaily {
-		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Day())))
-	}
-	if gm.timebin >= GlueTableHourly {
-		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Hour())))
-	}
-	return
-}
-
-func NewLogTableMetadata(logType, description string) *GlueTableMetadata {
-	return &GlueTableMetadata{
-		databaseName:  LogProcessingDatabaseName,
-		tableName:     standardizeTableName(logType),
-		description:   description,
-		s3TablePrefix: standardizeS3Prefix(LogS3Prefix, logType),
-		timebin:       GlueTableHourly,
-		timeUnpadded:  false,
-	}
-}
-
-func NewRuleTableMetadata(logType, description string) *GlueTableMetadata {
-	return &GlueTableMetadata{
-		databaseName:  RuleMatchDatabaseName,
-		tableName:     standardizeTableName(logType),
-		description:   description,
-		s3TablePrefix: standardizeS3Prefix(RuleMatchS3Prefix, logType),
-		timebin:       GlueTableHourly,
-		timeUnpadded:  false,
-	}
-}
-
-func standardizeTableName(logType string) string {
-	// clean table name to make sql friendly
-	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
-	return strings.ToLower(tableName)
-}
-
-func standardizeS3Prefix(s3Prefix, logType string) string {
-	return s3Prefix + "/" + standardizeTableName(logType) + "/" // ensure last char is '/'
-}
-
-// CreateJSONPartition creates a new JSON partition in a GlueTableMetadata table. If the partition already exists, no partition is added.
-func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) error {
-	partitionPrefix := "s3://" +  gm.PartitionPrefix(t)
-
-	partitionInput := &glue.PartitionInput{
-		Values:            gm.partitionValues(t),
-		StorageDescriptor: getJSONPartitionDescriptor(partitionPrefix),
-	}
-	input := &glue.CreatePartitionInput{
-		DatabaseName:   aws.String(gm.databaseName),
-		TableName:      aws.String(gm.tableName),
-		PartitionInput: partitionInput,
-	}
-	_, err := client.CreatePartition(input)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AlreadyExistsException" {
-				return nil
-			}
-		}
-		return errors.Wrap(err, "failed to create new JSON partition")
-	}
-	return err
 }
 
 
@@ -232,17 +179,63 @@ func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Ti
 	return client.DeletePartition(input)
 }
 
-func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
-	return &glue.StorageDescriptor{
-		InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
-		OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
-		SerdeInfo: &glue.SerDeInfo{
-			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
-			Parameters: map[string]*string{
-				"serialization.format": aws.String("1"),
-				"case.insensitive":     aws.String("TRUE"), // treat as lower case
-			},
-		},
-		Location: aws.String(s3Path),
+func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) error {
+	// inherit StorageDescriptor from table
+	tableInput := &glue.GetTableInput{
+		DatabaseName: aws.String(gm.databaseName),
+		Name:         aws.String(gm.tableName),
 	}
+	tableOutput, err := client.GetTable(tableInput)
+	if err != nil {
+		return err
+	}
+
+	// ensure this is a JSON table, use Contains() because there are multiple json serdes
+	if !strings.Contains(*tableOutput.Table.StorageDescriptor.SerdeInfo.SerializationLibrary, "json") {
+		return errors.Errorf("not a JSON table: %#v", *tableOutput.Table.StorageDescriptor)
+	}
+
+	location, err := url.Parse(*tableOutput.Table.StorageDescriptor.Location)
+	if err != nil {
+		return errors.Wrapf(err, "Cannot parse table %s.%s s3 path: %s",
+			gm.DatabaseName(), gm.TableName(),
+			*tableOutput.Table.StorageDescriptor.Location)
+	}
+
+	tableOutput.Table.StorageDescriptor.Location = aws.String("s3://" + location.Host + "/" + gm.GetPartitionPrefix(t))
+
+	partitionInput := &glue.PartitionInput{
+		Values:            gm.partitionValues(t),
+		StorageDescriptor: tableOutput.Table.StorageDescriptor,
+	}
+	input := &glue.CreatePartitionInput{
+		DatabaseName:   aws.String(gm.databaseName),
+		TableName:      aws.String(gm.tableName),
+		PartitionInput: partitionInput,
+	}
+	_, err = client.CreatePartition(input)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "EntityNotFoundException" {
+			return err
+		}
+	}
+	return nil
+}
+
+// Based on Timebin(), return an []*string values (used for GlueTableMetadata APIs)
+func (gm *GlueTableMetadata) partitionValues(t time.Time) (values []*string) {
+	var intFormat string
+
+	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))} // always unpadded
+
+	if gm.timebin >= GlueTableMonthly {
+		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Month())))
+	}
+	if gm.timebin >= GlueTableDaily {
+		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Day())))
+	}
+	if gm.timebin >= GlueTableHourly {
+		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Hour())))
+	}
+	return
 }

@@ -87,7 +87,7 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 	// the rule match tables share the same structure as the logs with some extra columns
 	var ruleTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
-		ruleTables = append(ruleTables, awsglue.NewRuleTableMetadata(table.))
+		ruleTables = append(ruleTables, awsglue.NewRuleTableMetadata(table.LogType(), table.Description(), table.EventStruct()))
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, gluecf.RuleMatchColumns)
 }

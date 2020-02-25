@@ -1,5 +1,16 @@
 package awsglue
 
+import (
+	"strconv"
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/pkg/errors"
+)
+
 /**
  * Copyright 2020 Panther Labs Inc
  *
@@ -21,11 +32,140 @@ package awsglue
 //       so the cost of creating the schema is only when actually needing this information.
 
 type GluePartition struct {
-	tableMetadata  *GlueTableMetadata
-	s3ObjectKey string
+	databaseName string
+	tableName string
+	s3Bucket string
 	dataFormat string // Can currently be only "json"
-	compression *string // an only be "gzip" or empty
-	partitions map[string]string
+	compression string // Can only be "gzip" currently
+	partitionFields []*PartitionKeyValue
+}
+
+type PartitionKeyValue struct {
+	column string
+	value string
+}
+
+func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
+	partitionValues := make([]*string, len(gp.partitionFields))
+	for i, field := range gp.partitionFields {
+		partitionValues[i] = aws.String(field.value)
+	}
+
+	partitionInput := &glue.PartitionInput{
+		Values:            partitionValues,
+		StorageDescriptor: getJSONPartitionDescriptor(gp.partitionPrefix()), // We only support JSON currently
+	}
+	input := &glue.CreatePartitionInput{
+		DatabaseName:   aws.String(gp.databaseName),
+		TableName:      aws.String(gp.tableName),
+		PartitionInput: partitionInput,
+	}
+	_, err := client.CreatePartition(input)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "AlreadyExistsException" {
+				return nil
+			}
+		}
+		return errors.Wrap(err, "failed to create new partition")
+	}
+	return err
+}
+
+func (gp *GluePartition) partitionPrefix() string {
+	prefix := "s3://" + gp.s3Bucket + "/"
+	for _, partitionField := range gp.partitionFields {
+		prefix += partitionField.column + "=" + partitionField.value
+	}
+	return prefix
+}
+
+func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
+	return &glue.StorageDescriptor{
+		InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
+		OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
+		SerdeInfo: &glue.SerDeInfo{
+			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+			Parameters: map[string]*string{
+				"serialization.format": aws.String("1"),
+				"case.insensitive":     aws.String("TRUE"), // treat as lower case
+			},
+		},
+		Location: aws.String(s3Path),
+	}
+}
+
+func GetPartition(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
+	partition := &GluePartition{s3Bucket: s3Bucket}
+
+	if !strings.HasSuffix(s3ObjectKey, ".json.gz") {
+		return nil, errors.New("currently only GZIP json is supported")
+	}
+	partition.compression = "gzip"
+	partition.dataFormat = "json"
+
+	s3Keys := strings.Split(s3ObjectKey, "/")
+	if len(s3Keys) < 4 {
+		return nil, errors.Errorf("s3 object key [%s] doesn't have the appropriate format", s3ObjectKey)
+	}
+
+	switch s3Keys[0] {
+	case LogS3Prefix:
+		partition.databaseName = LogProcessingDatabaseName
+	case RuleMatchS3Prefix:
+		partition.databaseName = RuleMatchDatabaseName
+	default:
+		return nil, errors.Errorf("unsupported S3 object prefix %s", s3Keys[0])
+	}
+
+	partition.tableName = s3Keys[1]
+
+	yearPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[2], "year")
+	if err != nil {
+		return nil, err
+	}
+
+	partition.partitionFields = []*PartitionKeyValue{yearPartitionKeyValue}
+
+	monthPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[3], "month")
+	if err != nil {
+		return nil, err
+	}
+
+	partition.partitionFields = append(partition.partitionFields, monthPartitionKeyValue)
+	if len(s3Keys) == 4 {
+		// if there are no more fields, stop here
+		return partition, nil
+	}
+
+	dayPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[4], "day")
+	if err != nil {
+		return partition, nil
+	}
+	partition.partitionFields = append(partition.partitionFields, dayPartitionKeyValue)
+	if len(s3Keys) == 5 {
+		return partition, nil
+	}
+
+	hourPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[4], "hour")
+	if err != nil {
+		return partition, nil
+	}
+	partition.partitionFields = append(partition.partitionFields, hourPartitionKeyValue)
+	return partition, nil
+}
+
+func getTimePartitionColumnField(input string, partitionName string) (*PartitionKeyValue, error) {
+	fields := strings.Split(input, "=")
+	if len(fields) != 2 || fields[0] != partitionName {
+		return nil, errors.Errorf("failed to get partition column %s from %", partitionName, input)
+	}
+
+	_, err := strconv.Atoi(fields[1])
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse to integer %s", fields[1])
+	}
+	return &PartitionKeyValue{column: partitionName, value: fields[1]}, nil
 }
 
 
