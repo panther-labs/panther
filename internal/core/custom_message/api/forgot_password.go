@@ -20,6 +20,7 @@ package custommessage
 
 import (
 	"strings"
+    "net/url"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/matcornic/hermes"
@@ -51,7 +52,7 @@ If you did not request a password reset, you can ignore this email.`,
 						TextColor: "#FFFFFF",
 						Color:     "#6967F4", // Optional action button color
 						Text:      "Reset my password",
-						Link:      "https://" + appDomainURL + "/password-reset?token=" + event.Request.CodeParameter + "&email=" + *user.Email,
+						Link:      "https://" + appDomainURL + "/password-reset?token=" + event.Request.CodeParameter + "&email=" + url.QueryEscape(*user.Email),
 					},
 				},
 			},
