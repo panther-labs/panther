@@ -64,7 +64,7 @@ Resources:
       EndpointConfiguration: REGIONAL
       Name: panther-resources-api
       # <cfndoc>
-      # The panther-resources-api API calls the panther-resources-api lambda.
+      # The panther-resources-api API calls the `panther-resources-api` lambda.
       # </cfndoc>
       StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -93,9 +93,6 @@ Resources:
       FunctionName: panther-resources-api
       # <cfndoc>
       # The panther-resources-api lambda implements the resources API for the UI.
-      #
-      # ## Troubleshooting
-      #
       # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -146,7 +143,8 @@ Resources:
     Properties:
       TableName: panther-resources
       # <cfndoc>
-      # This table does what???
+      # This table holds descriptions of the AWS resources in all accounts being monitored.
+      # The `resources-api` lambda manages this table.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: id
@@ -171,7 +169,8 @@ Resources:
       MessageRetentionPeriod: 86400 # 24 hours
       QueueName: panther-resources-queue
       # <cfndoc>
-      # This sqs q does what???
+      # This sqs q has events from recently changed infrastructure.
+      # The lambda `panther-resource-processor` consumes these events to generate alerts.
       # There should be no items in the associated
       # dead letter queue.
       # </cfndoc>
@@ -221,13 +220,10 @@ Resources:
             Queue: !GetAtt InputQueue.Arn
       FunctionName: panther-resource-processor
       # <cfndoc>
-      # This lambda reads from panther-resources-queue which has events concerning
-      # recently changed infrastructure. The lambda calls the policy-engine lambda to determine if
-      # there are any policy engine violations. Each violation is deduplicated and new results are sent as alerts to
-      # the panther-alert-processor-queue for delivery.
-      #
-      # ## Troubleshooting
-      #
+      # This lambda reads from `panther-resources-queue` which has events concerning
+      # recently changed infrastructure. The lambda calls the `policy-engine` lambda to determine if
+      # there are any policy engine violations. Each violation is sent to
+      # the `panther-alert-processor-queue` for deduplication and delivery.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -281,10 +277,8 @@ Resources:
       Description: Python Policy Engine
       FunctionName: panther-policy-engine
       # <cfndoc>
-      # This lambda executes the policies against the infrastructure.
-      #
-      # ## Troubleshooting
-      #
+      # This lambda executes the user-defined policies against infrastructure events.
+      # It is called directy from the `panther-resource-processor` lambda.
       # </cfndoc>
       Handler: src.main.lambda_handler
       MemorySize: 512
