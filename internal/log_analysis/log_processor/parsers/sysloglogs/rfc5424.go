@@ -64,7 +64,6 @@ func (p *RFC5424Parser) Parse(log string) []interface{} {
 
 	msg, err := parser.Parse([]byte(log))
 	if err != nil {
-		fmt.Println(err)
 		zap.L().Debug("failed to parse log", zap.Error(err))
 		return nil
 	}
@@ -87,7 +86,6 @@ func (p *RFC5424Parser) Parse(log string) []interface{} {
 	externalRFC5424.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(externalRFC5424); err != nil {
-		fmt.Println(err)
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
 	}
