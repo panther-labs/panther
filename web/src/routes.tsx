@@ -24,8 +24,10 @@ import ListResourcesPage from 'Pages/list-resources';
 import ResourceDetailsPage from 'Pages/resource-details';
 import PolicyDetailsPage from 'Pages/policy-details';
 import GeneralSettingsPage from 'Pages/general-settings';
+/* eslint-disable */
 import SourcesPage from 'Pages/list-sources';
 import CreateSourcesPage from 'Pages/create-source';
+/* eslint-enable */
 import SignInPage from 'Pages/sign-in';
 import DestinationsPage from 'Pages/destinations';
 import UsersPage from 'Pages/users';
@@ -74,37 +76,61 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
           <ErrorBoundary>
             <APIErrorFallback>
               <Switch>
-                <Route exact path={urls.overview()} component={OverviewPage} />
-                <Route exact path={urls.policies.list()} component={ListPoliciesPage} />
-                <Route exact path={urls.policies.create()} component={CreatePolicyPage} />
-                <Route exact path={`${urls.policies.list()}:id`} component={PolicyDetailsPage} />
-                <Route exact path={`${urls.policies.list()}:id/edit`} component={EditPolicyPage} />
-                <Route exact path={urls.resources.list()} component={ListResourcesPage} />
-                <Route exact path={`${urls.resources.list()}:id`} component={ResourceDetailsPage} />
-                <Route exact path={urls.account.settings.sources.list()} component={SourcesPage} />
+                /******************** COMPLIANCE ******************************/
+                <Redirect exact from="/" to={urls.compliance.overview()} />
+                <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
+                <Route exact path={urls.compliance.overview()} component={OverviewPage} />
+                <Route exact path={urls.compliance.policies.list()} component={ListPoliciesPage} />
                 <Route
                   exact
-                  path={urls.account.settings.general()}
-                  component={GeneralSettingsPage}
-                />
-                <Route exact path={urls.account.settings.users()} component={UsersPage} />
-                <Route
-                  exact
-                  path={urls.account.settings.destinations()}
-                  component={DestinationsPage}
+                  path={urls.compliance.policies.create()}
+                  component={CreatePolicyPage}
                 />
                 <Route
                   exact
-                  path={urls.account.settings.sources.create()}
-                  component={CreateSourcesPage}
+                  path={urls.compliance.policies.details(':id')}
+                  component={PolicyDetailsPage}
                 />
-                <Route exact path={`${urls.alerts.list()}:id`} component={AlertDetailsPage} />
-                <Route exact path={urls.rules.list()} component={ListRulesPage} />
-                <Route exact path={urls.alerts.list()} component={ListAlertsPage} />
-                <Route exact path={urls.rules.create()} component={CreateRulePage} />
-                <Route exact path={`${urls.rules.list()}:id`} component={RuleDetailsPage} />
-                <Route exact path={`${urls.rules.list()}:id/edit`} component={EditRulePage} />
-                <Redirect exact from="/" to={urls.overview()} />
+                <Route
+                  exact
+                  path={urls.compliance.policies.edit(':id')}
+                  component={EditPolicyPage}
+                />
+                <Route
+                  exact
+                  path={urls.compliance.resources.list()}
+                  component={ListResourcesPage}
+                />
+                <Route
+                  exact
+                  path={urls.compliance.resources.details(':id')}
+                  component={ResourceDetailsPage}
+                />
+                <Route exact path={urls.compliance.sources.list()} component={null} />
+                <Route exact path={urls.compliance.sources.create()} component={null} />
+                /******************** LOG ANALYSIS ******************************/
+                <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />
+                <Route exact path={urls.logAnalysis.overview()} component={null} />
+                <Route exact path={urls.logAnalysis.rules.list()} component={ListRulesPage} />
+                <Route exact path={urls.logAnalysis.rules.create()} component={CreateRulePage} />
+                <Route
+                  exact
+                  path={urls.logAnalysis.rules.details(':id')}
+                  component={RuleDetailsPage}
+                />
+                <Route exact path={urls.logAnalysis.rules.edit(':id')} component={EditRulePage} />
+                <Route exact path={urls.logAnalysis.alerts.list()} component={ListAlertsPage} />
+                <Route
+                  exact
+                  path={urls.logAnalysis.alerts.details(':id')}
+                  component={AlertDetailsPage}
+                />
+                <Route exact path={urls.logAnalysis.sources.list()} component={null} />
+                <Route exact path={urls.logAnalysis.sources.create()} component={null} />
+                /******************** SETTINGS ******************************/
+                <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
+                <Route exact path={urls.settings.users()} component={UsersPage} />
+                <Route exact path={urls.settings.destinations()} component={DestinationsPage} />
                 <Route component={Page404} />
               </Switch>
             </APIErrorFallback>

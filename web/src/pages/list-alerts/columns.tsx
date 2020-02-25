@@ -34,7 +34,7 @@ const columns = [
     header: 'Alert ID',
     flex: '0 0 350px',
     renderCell: item => (
-      <Link to={urls.alerts.details(item.alertId)}>
+      <Link to={urls.logAnalysis.alerts.details(item.alertId)}>
         <Text size="medium">{item.alertId}</Text>
       </Link>
     ),

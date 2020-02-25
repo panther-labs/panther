@@ -21,7 +21,6 @@ package gluecf
 // CloudFormation generation for Glue tables from parser event struct
 
 import (
-	"bytes"
 	"reflect"
 
 	jsoniter "github.com/json-iterator/go"
@@ -110,11 +109,7 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 	}
 
 	// generate CF using cfngen
-	cfTemplate := cfngen.NewTemplate("Panther Glue Resources", parameters, resources, outputs)
-	buffer := bytes.Buffer{}
-	err = cfTemplate.WriteCloudFormation(&buffer)
-	buffer.WriteString("\n") // add trailing \n that is expected in text files
-	return buffer.Bytes(), err
+	return cfngen.NewTemplate("Panther Glue Resources", parameters, resources, outputs).CloudFormation()
 }
 
 func getPartitionKeys(t *awsglue.GlueMetadata) (partitions []Column) {

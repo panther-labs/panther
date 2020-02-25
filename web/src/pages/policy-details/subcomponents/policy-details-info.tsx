@@ -47,7 +47,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
             variant="default"
             mr={4}
             is={Link}
-            to={urls.policies.edit(policy.id)}
+            to={urls.compliance.policies.edit(policy.id)}
           >
             Edit
           </Button>

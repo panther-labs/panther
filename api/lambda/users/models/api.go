@@ -51,15 +51,11 @@ type InviteUserOutput struct {
 }
 
 // ListUsersInput lists all users in Panther.
-type ListUsersInput struct {
-	Limit           *int64  `json:"limit" validate:"omitempty,min=1"`
-	PaginationToken *string `json:"paginationToken" validate:"omitempty,min=1"`
-}
+type ListUsersInput struct{}
 
 // ListUsersOutput returns a page of users.
 type ListUsersOutput struct {
-	Users           []*User `json:"users"`
-	PaginationToken *string `json:"paginationToken"`
+	Users []*User `json:"users"`
 }
 
 // RemoveUserInput deletes a user.

@@ -20,7 +20,6 @@ import React from 'react';
 import { Box, Button, Flex, Icon } from 'pouncejs';
 import ListInfraSourcesTable from 'Pages/list-sources/subcomponents/infra-source-table';
 import ListLogSourcesTable from 'Pages/list-sources/subcomponents/log-source-table';
-import { INTEGRATION_TYPES } from 'Source/constants';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/error-boundary';
@@ -34,12 +33,7 @@ const ListSources = () => {
           title="AWS Account Sources"
           size="large"
           actions={
-            <Button
-              size="large"
-              variant="primary"
-              is={Link}
-              to={urls.account.settings.sources.create(INTEGRATION_TYPES.AWS_INFRA)}
-            >
+            <Button size="large" variant="primary" is={Link} to={urls.compliance.sources.create()}>
               <Flex alignItems="center">
                 <Icon type="add" size="small" mr={1} />
                 Add Account
@@ -57,12 +51,7 @@ const ListSources = () => {
           title="Log Sources"
           size="large"
           actions={
-            <Button
-              size="large"
-              variant="primary"
-              is={Link}
-              to={urls.account.settings.sources.create(INTEGRATION_TYPES.AWS_LOGS)}
-            >
+            <Button size="large" variant="primary" is={Link} to={urls.logAnalysis.sources.create()}>
               <Flex alignItems="center">
                 <Icon type="add" size="small" mr={1} />
                 Add Source

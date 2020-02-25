@@ -34,42 +34,33 @@ type mockGatewayListUsersClient struct {
 	listUserGatewayErr bool
 }
 
-func (m *mockGatewayListUsersClient) ListUsers(limit *int64, paginationToken *string) (*gateway.ListUsersOutput, error) {
+func (m *mockGatewayListUsersClient) ListUsers() ([]*models.User, error) {
 	if m.listUserGatewayErr {
 		return nil, &genericapi.AWSError{}
 	}
 
-	return &gateway.ListUsersOutput{
-		Users: []*models.User{
-			{
-				GivenName:  aws.String("Joe"),
-				FamilyName: aws.String("Blow"),
-				ID:         aws.String("user123"),
-				Email:      aws.String("joe@blow.com"),
-				CreatedAt:  aws.Int64(1545442826),
-				Status:     aws.String("CONFIRMED"),
-			},
+	return []*models.User{
+		{
+			GivenName:  aws.String("Joe"),
+			FamilyName: aws.String("Blow"),
+			ID:         aws.String("user123"),
+			Email:      aws.String("joe@blow.com"),
+			CreatedAt:  aws.Int64(1545442826),
+			Status:     aws.String("CONFIRMED"),
 		},
-		PaginationToken: paginationToken,
 	}, nil
 }
 
 func TestListUsersGatewayErr(t *testing.T) {
 	userGateway = &mockGatewayListUsersClient{listUserGatewayErr: true}
-	result, err := (API{}).ListUsers(&models.ListUsersInput{
-		Limit:           aws.Int64(10),
-		PaginationToken: aws.String("paginationToken"),
-	})
+	result, err := (API{}).ListUsers(&models.ListUsersInput{})
 	assert.Nil(t, result)
 	assert.Error(t, err)
 }
 
 func TestListUsersHandle(t *testing.T) {
 	userGateway = &mockGatewayListUsersClient{}
-	result, err := (API{}).ListUsers(&models.ListUsersInput{
-		Limit:           aws.Int64(10),
-		PaginationToken: aws.String("paginationToken"),
-	})
+	result, err := (API{}).ListUsers(&models.ListUsersInput{})
 	assert.NotNil(t, result)
 	assert.NoError(t, err)
 }
