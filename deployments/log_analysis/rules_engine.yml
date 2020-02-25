@@ -97,8 +97,8 @@ Resources:
     Properties:
       QueueName: panther-rules-engine-queue
       # <cfndoc>
-      # The panther-rules-engine sqs queue receives S3 notifications
-      # of log files to be processed by panther-rules-engine lambda.
+      # The `panther-rules-engine-queue` sqs queue receives S3 notifications
+      # of log files to be processed by `panther-rules-engine` lambda.
       # There should be no items in the associated
       # dead letter queue.
       # </cfndoc>
@@ -115,7 +115,7 @@ Resources:
     Properties:
       QueueName: panther-rules-engine-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-rules-engine-dlq.
+      # The dead letter queue for the `panther-rules-engine-queue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
@@ -126,8 +126,6 @@ Resources:
       TableName: panther-alert-dedup
       # <cfndoc>
       # This ddb table implements deduplication of alerts.
-      # ## Troubleshooting
-      #
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: partitionKey
@@ -154,11 +152,9 @@ Resources:
       Description: Python Rules Engine
       FunctionName: panther-rules-engine
       # <cfndoc>
-      # The panther-rules-engine lambda function processes S3 files from
-      # notifications posted to the panther-rules-engine SQS queue.
+      # The `panther-rules-engine` lambda function processes S3 files from
+      # notifications posted to the `panther-rules-engine-queue` SQS queue.
       # Matching events are written to S3.
-      # ## Troubleshooting
-      #
       # </cfndoc>
       Handler: src.main.lambda_handler
       Environment:

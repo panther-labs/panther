@@ -62,9 +62,9 @@ Resources:
       MessageRetentionPeriod: 86400 # 24 hours
       QueueName: panther-aws-events-queue
       # <cfndoc>
-      # This sqs q has CloudTrail events delivered by CloudWatch events
+      # This sqs q receives CloudTrail events delivered by CloudWatch events
       # as well as S3 notifications from log processing.
-      #
+      # The `panther-aws-event-processor` lambda processes these events.
       # There should be no items in the associated
       # dead letter queue.
       # </cfndoc>
@@ -119,7 +119,7 @@ Resources:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       QueueName: panther-aws-events-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-aws-events-queue.
+      # The dead letter queue for the `panther-aws-events-queue`.
       # </cfndoc>
       VisibilityTimeout: 60
 
@@ -150,10 +150,7 @@ Resources:
       # <cfndoc>
       # This lambda reads events from the panther-aws-events-queue sqs queue and determines if
       # the infrastructure referenced in the event has changed. If so, it writes events to the
-      # panther-shapshot-queue to be scanned for the nature of the changes.
-      #
-      # ## Troubleshooting
-      #
+      # `panther-shapshot-queue` to be scanned for the nature of the changes.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

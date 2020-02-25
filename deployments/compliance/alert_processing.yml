@@ -65,6 +65,7 @@ Resources:
       # This sqs q contains events that may become alerts.
       # The `panther-alert-processor` lambda reads from this queue to
       # determine if the event requires action or is a duplicate.
+      #
       # There should be no items in the associated
       # dead letter queue.
       # </cfndoc>
@@ -80,7 +81,7 @@ Resources:
     Properties:
       QueueName: panther-alert-processor-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-alert-processor-queue.
+      # The dead letter queue for the `panther-alert-processor-queue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
@@ -205,7 +206,7 @@ Resources:
       FunctionName: panther-alert-forwarder
       # <cfndoc>
       # The `panther-alert-forwarder` lambda reads alerts from the ddb stream from the ddb table `panther-alert-forwarder`
-      # and sends them to the panther-alerts-queue sqs queue.
+      # and sends them to the `panther-alerts-queue` sqs queue.
       # </cfndoc>
       Handler: main
       MemorySize: 128

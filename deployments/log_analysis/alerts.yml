@@ -59,7 +59,7 @@ Resources:
       QueueName: panther-log-alert-notifications-queue
       # <cfndoc>
       # This sqs queue receives alert notifications
-      # to be processed by panther-log-alert-forwarder lambda.
+      # to be processed by `panther-log-alert-forwarder` lambda.
       # There should be no items in the associated
       # dead letter queue.
       # </cfndoc>
@@ -75,7 +75,7 @@ Resources:
     Properties:
       QueueName: panther-log-alert-notifications-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-log-alert-notifications.
+      # The dead letter queue for the `anther-log-alert-notifications-queue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
@@ -85,9 +85,7 @@ Resources:
     Properties:
       TableName: panther-log-alerts
       # <cfndoc>
-      # This ddb table implements records all alerts.
-      # ## Troubleshooting
-      #
+      # decprecated
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: alertId
@@ -152,7 +150,7 @@ Resources:
     Properties:
       TableName: panther-events
       # <cfndoc>
-      # Deprecated.
+      # deprecated.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: eventHash
@@ -189,7 +187,7 @@ Resources:
           ANALYSIS_API_PATH: v1
       FunctionName: panther-alerts-api
       # <cfndoc>
-      # Lambda for CRUD actions for the alerts database.
+      # Lambda for CRUD actions for the alerts API.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -254,7 +252,7 @@ Resources:
             BatchSize: 10
       FunctionName: panther-alert-merger
       # <cfndoc>
-      # deprecated?
+      # deprecated
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -371,9 +369,7 @@ Resources:
             BatchSize: 10
       FunctionName: panther-log-alert-forwarder
       # <cfndoc>
-      # Lambda that forwards alerts to destinations.
-      #
-      # ## Troubleshooting
+      # This lambda forwards alerts to destinations (e.g., SNS, Slack).
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

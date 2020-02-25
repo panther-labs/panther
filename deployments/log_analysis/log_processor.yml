@@ -64,7 +64,7 @@ Resources:
       QueueName: panther-input-data-notifications-queue
       # <cfndoc>
       # This sqs queue receives S3 notifications
-      # of log files to be processed by panther-log-processor lambda.
+      # of log files to be processed by `panther-log-processor` lambda.
       # There should be no items in the associated
       # dead letter queue.
       # </cfndoc>
@@ -81,7 +81,7 @@ Resources:
     Properties:
       QueueName: panther-input-data-notifications-queue-dlq
       # <cfndoc>
-      # The dead letter queue for panther-input-data-notifications-queue.
+      # The dead letter queue for the `panther-input-data-notifications-queue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
@@ -97,8 +97,8 @@ Resources:
       FunctionName: panther-log-processor
       # <cfndoc>
       # The lambda function that processes S3 files from
-      # notifications posted to the panther-input-data-notifications-queue SQS queue.
-      # ## Troubleshooting
+      # notifications posted to the `panther-input-data-notifications-queue` SQS queue.
+      # ### Troubleshooting
       #
       # * If files cannot be parsed errors will be generated. Some root causes can be:
       #   * S3 event configured against a whole bucket rather than a prefix, which causes

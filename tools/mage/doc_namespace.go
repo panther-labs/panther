@@ -36,7 +36,13 @@ const (
 	inventoryDocHeader = `
 <!-- This document is generated. DO NOT EDIT! -->
 
-# <p align=center><bold>Cloud Infrastructure Inventory</bold></p>
+# Panther Application Cloud Infrastructure
+
+Refer to the 
+[Cloud Security](https://docs.runpanther.io/policies/scanning#how-it-works)
+and
+[Log Analysis](https://docs.runpanther.io/log-analysis/log-processing#how-it-works)
+architecture diagrams for context.
 
 `
 )
@@ -68,7 +74,7 @@ func (t Doc) Cfn() {
 		if doc.Resource == lastResource { // append, since these are in sorted order
 			docsBuffer.WriteString(fmt.Sprintf("%s\n", doc.Documentation))
 		} else {
-			docsBuffer.WriteString(fmt.Sprintf("# %s\n%s\n", doc.Resource, doc.Documentation))
+			docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n", doc.Resource, doc.Documentation))
 		}
 		lastResource = doc.Resource
 	}
