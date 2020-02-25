@@ -18,18 +18,36 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Template for Panther monitoring related resources (e.g., metrics, alarms and dashboards)
 
 Resources:
+
   ##### Nested Stacks: CloudWatch #####
-  Dashboards:
+  GeneratedDashboards:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ../out/deployments/cloudwatch/dashboards.json
 
-  Metrics:
+  # Standard metrics generated from CF
+  GenratedMetrics:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ../out/deployments/cloudwatch/metrics.json
 
-  Alarms:
+  # Standard alarms generated from CF
+  GeneratedAlarms:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ../out/deployments/cloudwatch/alarms.json
+
+  ##### Specific Monitoring #####
+
+  # Collect the number of rules matches from the lambda panther-rules-engine log
+  RuleMatchesMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      # Example log: [INFO] 2020-02-25T12:46:40.965Z f2f7cae7-2086-5c03-b471-9c2839e940bb Matched 0 events in 0.016868855000211624 seconds
+      FilterPattern: '[ ..., matched_label="Matched", nevents, event_label="events", in_label="in", seconds, units="seconds" ]'
+      LogGroupName: /aws/lambda/panther-rules-engine
+      MetricTransformations:
+        - DefaultValue: 0
+          MetricNamespace: Panther
+          MetricName: panther-rules-engine-matches
+          MetricValue: '$nevents'
