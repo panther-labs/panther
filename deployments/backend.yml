@@ -63,10 +63,22 @@ Parameters:
     Type: String
     Description: The ARN of the TLS certificate that is going to be used by the web application
 
+  # Set automatically by "mage deploy" unless specified in panther_config
+  AlarmSNSTopicArn:
+    Type: String
+    Description: The ARN of SNS topic to send alarms
+
 Conditions:
   CreatePythonLayer: !Equals [!Ref PythonLayerVersionArn, '']
+  CreateAlarmSNSTopic: !Equals [!Ref AlarmSNSTopicArn, '']
 
 Resources:
+  AlarmNotifications:
+    Condition: CreateAlarmSNSTopic
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: panther-alarms
+
   GatewayLoggingRole:
     Type: AWS::IAM::Role
     Properties:
@@ -145,7 +157,6 @@ Resources:
         VpcId: !GetAtt WebApplicationNetworking.Outputs.VpcId
         SubnetOneId: !GetAtt WebApplicationNetworking.Outputs.SubnetOneId
         SubnetTwoId: !GetAtt WebApplicationNetworking.Outputs.SubnetTwoId
-        LoadBalancerName: web
         CertificateArn: !Ref WebApplicationCertificateArn
       TemplateURL: web/alb.yml
 
@@ -387,6 +398,9 @@ Resources:
         Status: Enabled
 
 Outputs:
+  AlarmsSNSTopic:
+    Description: The SNS topic to be associated with alarms
+    Value: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmSNSTopicArn]
   AnalysisVersionsBucket:
     Description: Bucket where Python version histories are stored
     Value: !GetAtt AnalysisAPI.Outputs.BucketName
@@ -417,12 +431,18 @@ Outputs:
   WebApplicationGraphqlApiEndpoint:
     Description: The URL of the GraphQL API that the front-end uses
     Value: !GetAtt Appsync.Outputs.GraphQLApiEndpoint
+  WebApplicationGraphqlApiId:
+    Description: The GraphQL API Id that the front-end uses
+    Value: !GetAtt Appsync.Outputs.GraphQLApiId
   WebApplicationCertificateArn:
     Description: ARN of the certificate used by the web application
     Value: !Ref WebApplicationCertificateArn
   WebApplicationImageRegistry:
     Description: The docker image registry that stores the images used by the web application
     Value: !GetAtt WebApplicationImageRepository.Outputs.ImageRepo
+  WebApplicationLoadBalancerFullName:
+    Description: The name of the load balancer that's used by the web application
+    Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerFullName
   WebApplicationLoadBalancerListenerArn:
     Description: ARN of the load balancer listener that's used by the web application
     Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerListenerArn

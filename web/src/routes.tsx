@@ -48,6 +48,7 @@ import ErrorBoundary from 'Components/error-boundary';
 import Page404 from 'Pages/404';
 import APIErrorFallback from 'Components/utils/api-error-fallback';
 import LogAnalysisOverview from 'Pages/log-analysis-overview';
+import PromptController from 'Components/utils/prompt-controller';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -152,6 +153,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
             </APIErrorFallback>
           </ErrorBoundary>
         </Layout>
+        <PromptController />
       </GuardedRoute>
     </Switch>
   );

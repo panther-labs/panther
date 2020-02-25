@@ -20,14 +20,11 @@ import React from 'react';
 import { Checkbox, CheckboxProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
-const MemoizedCheckbox = React.memo(Checkbox);
-
 const FormikCheckbox: React.FC<CheckboxProps & Required<Pick<FieldConfig, 'name'>>> = props => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [field, meta, { setValue }] = useField<boolean>(props.name);
 
-  const onChange = React.useMemo(() => setValue, []);
-  return <MemoizedCheckbox {...props} checked={field.value} onChange={onChange} />;
+  return <Checkbox {...props} checked={field.value} onChange={setValue} />;
 };
 
 export default FormikCheckbox;

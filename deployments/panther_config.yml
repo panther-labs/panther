@@ -16,6 +16,12 @@
 
 ##### Panther deployment configuration #####
 
+# CloudFormation parameters for the monitoring.yml which deploys the monitoring stack.
+MonitoringParameterValues:
+  # This is the arn for the SNS topic you want associated with Panther system alarms.
+  # If this is not set alarms will be associated with the SNS topic `panther-alarms`.
+  AlarmSNSTopicARN: ''
+
 # CloudFormation parameter overrides for the core/buckets.yml prerequisite stack.
 BucketsParameterValues:
   # Use an existing S3 bucket for storing access logs. If not specified, one is created for you.

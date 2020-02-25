@@ -26,12 +26,6 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// ListUsersOutput is output type for ListUsers
-type ListUsersOutput struct {
-	Users           []*models.User
-	PaginationToken *string
-}
-
 func mapCognitoUserTypeToUser(u *provider.UserType) *models.User {
 	user := models.User{
 		CreatedAt: aws.Int64(u.UserCreateDate.Unix()),
@@ -54,19 +48,21 @@ func mapCognitoUserTypeToUser(u *provider.UserType) *models.User {
 }
 
 // ListUsers calls cognito api to list users that belongs to a user pool
-func (g *UsersGateway) ListUsers(limit *int64, paginationToken *string) (*ListUsersOutput, error) {
-	usersOutput, err := g.userPoolClient.ListUsers(&provider.ListUsersInput{
-		Limit:           limit,
-		PaginationToken: paginationToken,
-		UserPoolId:      &userPoolID,
+func (g *UsersGateway) ListUsers() ([]*models.User, error) {
+	input := &provider.ListUsersInput{UserPoolId: &userPoolID}
+	var result []*models.User
+
+	// There will almost always be 1 page of users and there is no paging for this in the frontend.
+	// In the very unlikely event there is more than 1 page, we loop over all pages here.
+	err := g.userPoolClient.ListUsersPages(input, func(page *provider.ListUsersOutput, lastPage bool) bool {
+		for _, user := range page.Users {
+			result = append(result, mapCognitoUserTypeToUser(user))
+		}
+		return true
 	})
 	if err != nil {
 		return nil, &genericapi.AWSError{Method: "cognito.ListUsers", Err: err}
 	}
 
-	users := make([]*models.User, len(usersOutput.Users))
-	for i, uo := range usersOutput.Users {
-		users[i] = mapCognitoUserTypeToUser(uo)
-	}
-	return &ListUsersOutput{Users: users, PaginationToken: usersOutput.PaginationToken}, nil
+	return result, nil
 }
