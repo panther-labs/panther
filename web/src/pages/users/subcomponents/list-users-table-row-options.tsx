@@ -45,7 +45,7 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
           })
         }
       >
-        <MenuItem variant="default">Force change password </MenuItem>
+        <MenuItem variant="default">Force password reset</MenuItem>
       </Dropdown.Item>
       <Dropdown.Item
         onSelect={() =>
