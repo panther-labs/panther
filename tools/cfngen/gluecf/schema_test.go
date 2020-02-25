@@ -104,9 +104,10 @@ func TestInferJsonColumns(t *testing.T) {
 
 		MapSlice []map[string]string `description:"test field"`
 
-		MapStringToInterface map[string]interface{} `description:"test field"`
-		MapStringToString    map[string]string      `description:"test field"`
-		MapStringToStruct    map[string]TestStruct  `description:"test field"`
+		MapStringToInterface map[string]interface{}       `description:"test field"`
+		MapStringToString    map[string]string            `description:"test field"`
+		MapStringToStruct    map[string]TestStruct        `description:"test field"`
+		MapStringToMap       map[string]map[string]string `description:"test field"`
 
 		StructField       TestStruct   `description:"test field"`
 		NestedStructField NestedStruct `description:"test field"`
@@ -149,6 +150,7 @@ func TestInferJsonColumns(t *testing.T) {
 		MapStringToInterface: make(map[string]interface{}),
 		MapStringToString:    make(map[string]string),
 		MapStringToStruct:    make(map[string]TestStruct),
+		MapStringToMap:       make(map[string]map[string]string),
 
 		StructField: TestStruct{},
 		NestedStructField: NestedStruct{
@@ -205,6 +207,7 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "MapStringToInterface", Type: "map<string,string>", Comment: "test field"}, // special case
 		{Name: "MapStringToString", Type: "map<string,string>", Comment: "test field"},
 		{Name: "MapStringToStruct", Type: "map<string,struct<Field1:string,Field2:int>>", Comment: "test field"},
+		{Name: "MapStringToMap", Type: "map<string,map<string,string>>", Comment: "test field"},
 		{Name: "StructField", Type: "struct<Field1:string,Field2:int>", Comment: "test field"},
 		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int>,B:struct<Field1:string,Field2:int>,C:struct<Field1:string,Field2:int>>", Comment: "test field"}, // nolint
 		{Name: "CustomTypeField", Type: "foo", Comment: "test field"},

@@ -186,6 +186,9 @@ func inferMap(t reflect.Type, customMappingsTable map[string]string) (jsonType s
 	if mapOfType.Kind() == reflect.Struct {
 		jsonType = fmt.Sprintf("map<%s,struct<%s>>", t.Key(), inferStruct(mapOfType, customMappingsTable))
 		return
+	} else if mapOfType.Kind() == reflect.Map {
+		jsonType = fmt.Sprintf("map<%s,%s>", t.Key(), inferMap(mapOfType, customMappingsTable))
+		return
 	}
 	jsonType = fmt.Sprintf("map<%s,%s>", t.Key(), toJSONType(mapOfType))
 	return
