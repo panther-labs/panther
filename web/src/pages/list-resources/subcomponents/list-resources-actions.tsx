@@ -18,10 +18,9 @@
 
 import React from 'react';
 import { Alert, Button, Card, Flex, Icon } from 'pouncejs';
-import { INTEGRATION_TYPES, RESOURCE_TYPES } from 'Source/constants';
+import { RESOURCE_TYPES } from 'Source/constants';
 import GenerateFiltersGroup from 'Components/utils/generate-filters-group';
 
-import { useQuery, gql } from '@apollo/client';
 import { ComplianceStatusEnum, ListResourcesInput, Integration } from 'Generated/schema';
 import { capitalize } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/text-input';
@@ -31,6 +30,7 @@ import ErrorBoundary from 'Components/error-boundary';
 import pick from 'lodash-es/pick';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash-es/isEmpty';
+import { useListAccountIdsQuery } from './listAccountIds.generated';
 
 const statusOptions = Object.values(ComplianceStatusEnum);
 
@@ -78,15 +78,6 @@ export const filters = {
   },
 };
 
-const LIST_ACCOUNT_IDS = gql`
-  query ListAccountIds {
-    integrations(input: { integrationType: "${INTEGRATION_TYPES.AWS_INFRA}"}) {
-        integrationLabel
-        integrationId
-    }
-  }
-`;
-
 // The values of the filters that the resources page will show
 export type ListResourcesFiltersValues = Pick<
   ListResourcesInput,
@@ -99,21 +90,13 @@ type MutatedListResourcesFiltersValues = Omit<ListResourcesFiltersValues, 'integ
   integrationId: Pick<Integration, 'integrationId' | 'integrationLabel'>;
 };
 
-interface ListResourcesFiltersProps {
-  onCancel: () => void;
-  onSubmit: (values: ListResourcesFiltersValues) => void;
-  initialValues: ListResourcesFiltersValues;
-}
-
 const ListResourcesActions: React.FC = () => {
   const [areFiltersVisible, setFiltersVisibility] = React.useState(false);
   const { requestParams, updateRequestParamsAndResetPaging } = useRequestParamsWithPagination<
     ListResourcesInput
   >();
 
-  const { error, data } = useQuery<{ integrations: Integration[] }>(LIST_ACCOUNT_IDS, {
-    fetchPolicy: 'cache-first',
-  });
+  const { error, data } = useListAccountIdsQuery();
 
   if (data) {
     filters.integrationId.props.items = data.integrations;
