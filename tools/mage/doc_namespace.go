@@ -74,7 +74,7 @@ func (t Doc) Cfn() {
 	var docsBuffer bytes.Buffer
 	docsBuffer.WriteString(inventoryDocHeader)
 	for _, doc := range docs {
-			docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n", doc.Resource, doc.Documentation))
+		docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n", doc.Resource, doc.Documentation))
 	}
 	if _, err = inventoryFile.Write(docsBuffer.Bytes()); err != nil {
 		logger.Fatalf("failed to write file %s: %v", inventoryFileName, err)
