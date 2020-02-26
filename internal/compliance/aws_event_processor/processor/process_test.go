@@ -33,9 +33,10 @@ import (
 
 var (
 	exampleMetadata = &CloudTrailMetadata{
-		region:    "us-west-2",
-		accountID: "111111111111",
-		eventName: "Example",
+		region:      "us-west-2",
+		accountID:   "111111111111",
+		eventName:   "Example",
+		eventSource: "aws.nuka",
 	}
 )
 
@@ -45,15 +46,70 @@ func exampleChanges() map[string]*resourceChange {
 
 // test the pre-processor
 func TestPreProcessCloudTrail(t *testing.T) {
-	event := `{ "awsRegion": "us-west-2", "userIdentity": { "accountId" : "111111111111" }, "eventName": "Example" }`
+	event := `{ 
+"eventSource": "aws.nuka", 
+"awsRegion": "us-west-2", 
+"userIdentity": { "accountId" : "111111111111" }, 
+"eventName": "Example" 
+}`
 	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
 	require.Nil(t, err)
 	assert.Equal(t, exampleMetadata, actual)
 }
 
+// test the pre-processor with no userIdentity BUT with recipientAccountId
+func TestPreProcessCloudTrailNoUserIdentity(t *testing.T) {
+	event := `{ 
+"eventSource": "aws.nuka", 
+"awsRegion": "us-west-2",
+"recipientAccountId": "111111111111",
+"eventName": "Example" 
+}`
+	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
+	require.Nil(t, err)
+	assert.Equal(t, exampleMetadata, actual)
+}
+
+// test the pre-processor on an event with no event source
+func TestPreProcessCloudTrailFailNoEventSource(t *testing.T) {
+	event := `{
+"userIdentity": { "accountId" : "111111111111" }, 
+"eventName": "Example" 
+}`
+	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
+	assert.NotNil(t, err)
+	assert.Nil(t, actual)
+}
+
+// test the pre-processor on an event with no event name
+func TestPreProcessCloudTrailFailNoEventName(t *testing.T) {
+	event := `{
+"eventSource": "aws.nuka", 
+"userIdentity": { "accountId" : "111111111111" } 
+}`
+	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
+	assert.NotNil(t, err)
+	assert.Nil(t, actual)
+}
+
+// test the pre-processor on an event with no account id
+func TestPreProcessCloudTrailFailNoAccountId(t *testing.T) {
+	event := `{
+"eventSource": "aws.nuka", 
+"eventName": "Example" 
+}`
+	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
+	assert.NotNil(t, err)
+	assert.Nil(t, actual)
+}
+
 // test the pre-processor on an event with no region
-func TestPreProcessCloudTrailFail(t *testing.T) {
-	event := `{ "userIdentity": { "accountId" : "111111111111" }, "eventName": "Example" }`
+func TestPreProcessCloudTrailFailNoRegion(t *testing.T) {
+	event := `{ 
+"eventSource": "aws.nuka", 
+"userIdentity": { "accountId" : "111111111111" }, 
+"eventName": "Example" 
+}`
 	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
@@ -61,7 +117,11 @@ func TestPreProcessCloudTrailFail(t *testing.T) {
 
 // drop event if its read-only
 func TestPreProcessIgnoredEvent(t *testing.T) {
-	event := `{ "userIdentity": { "accountId" : "111111111111" }, "eventName": "ListBuckets" }`
+	event := `{
+"eventSource":"s3.amazonaws.com", 
+"userIdentity": { "accountId" : "111111111111" }, 
+"eventName": "ListBuckets" 
+}`
 	metadata, err := preprocessCloudTrailLog(
 		gjson.Parse(event),
 	)
@@ -74,13 +134,24 @@ func TestPreProcessIgnoredEvent(t *testing.T) {
 func TestProcessCloudTrailBadSource(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	event := `{"eventSource": "aws.nuka", "eventType": "AwsApiCall"}`
-	require.Nil(t, processCloudTrailLog(gjson.Parse(event), exampleMetadata, exampleChanges()))
+	event := `{ 
+"eventSource": "aws.nuka", 
+"awsRegion": "us-west-2", 
+"userIdentity": { "accountId" : "111111111111" }, 
+"eventName": "Example" 
+}`
+	metadata, err := preprocessCloudTrailLog(gjson.Parse(event))
+	require.Nil(t, err)
+	require.NotNil(t, metadata)
+	require.Nil(t, processCloudTrailLog(gjson.Parse(event), metadata, exampleChanges()))
 
 	expected := []observer.LoggedEntry{
 		{
-			Entry:   zapcore.Entry{Level: zapcore.DebugLevel, Message: "dropping event from unsupported source"},
-			Context: []zapcore.Field{zap.String("eventSource", "aws.nuka")},
+			Entry: zapcore.Entry{Level: zapcore.DebugLevel, Message: "dropping event from unsupported source"},
+			Context: []zapcore.Field{
+				zap.String("eventSource", "aws.nuka"),
+				zap.String("eventName", "Example"),
+			},
 		},
 	}
 	assert.Equal(t, expected, logs.AllUntimed())
@@ -90,14 +161,24 @@ func TestProcessCloudTrailBadSource(t *testing.T) {
 func TestProcessCloudTrailErrorCode(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
-	event := `{"errorCode": "AccessDeniedException", "eventSource": "s3.amazonaws.com"}`
-	require.Nil(t, processCloudTrailLog(gjson.Parse(event), exampleMetadata, exampleChanges()))
+	event := `{
+"errorCode": "AccessDeniedException", 
+"eventSource": "s3.amazonaws.com", 
+"eventName": "CreateBucket", 
+"awsRegion": "us-west-2", 
+"userIdentity": { "accountId" : "111111111111" }
+}`
+	metadata, err := preprocessCloudTrailLog(gjson.Parse(event))
+	require.Nil(t, err)
+	require.NotNil(t, metadata)
+	require.Nil(t, processCloudTrailLog(gjson.Parse(event), metadata, exampleChanges()))
 
 	expected := []observer.LoggedEntry{
 		{
 			Entry: zapcore.Entry{Level: zapcore.DebugLevel, Message: "dropping failed event"},
 			Context: []zapcore.Field{
 				zap.String("eventSource", "s3.amazonaws.com"),
+				zap.String("eventName", "CreateBucket"),
 				zap.String("errorCode", "AccessDeniedException"),
 			},
 		},
@@ -116,9 +197,10 @@ func TestProcessCloudTrailClassifyError(t *testing.T) {
 "eventSource":"s3.amazonaws.com"
 }`
 	metadata := &CloudTrailMetadata{
-		region:    "us-west-2",
-		accountID: "111111111111",
-		eventName: "DeleteBucket",
+		region:      "us-west-2",
+		accountID:   "111111111111",
+		eventName:   "DeleteBucket",
+		eventSource: "s3.amazonaws.com",
 	}
 	require.Nil(t, processCloudTrailLog(gjson.Parse(event), metadata, exampleChanges()))
 
@@ -136,11 +218,16 @@ func TestProcessCloudTrailClassifyError(t *testing.T) {
 // drop event if the account ID is not recognized
 func TestProcessCloudTrailUnauthorized(t *testing.T) {
 	accounts = exampleAccounts
-	event := `{"eventType" : "AwsApiCall", "eventSource": "s3.amazonaws.com", "requestParameters": {"bucketName": "panther"}}`
+	event := `{
+"eventType" : "AwsApiCall", 
+"eventSource": "s3.amazonaws.com", 
+"requestParameters": {"bucketName": "panther"}
+}`
 	metadata := &CloudTrailMetadata{
-		region:    "us-west-2",
-		accountID: "222222222222",
-		eventName: "Example",
+		region:      "us-west-2",
+		accountID:   "222222222222",
+		eventName:   "Example",
+		eventSource: "s3.amazonaws.com",
 	}
 	err := processCloudTrailLog(gjson.Parse(event), metadata, exampleChanges())
 
@@ -161,9 +248,10 @@ func TestProcessCloudTrail(t *testing.T) {
 		"userIdentity": {"accountId": "111111111111"}
     }`
 	metadata := &CloudTrailMetadata{
-		region:    "us-west-2",
-		accountID: "111111111111",
-		eventName: "DeleteBucket",
+		region:      "us-west-2",
+		accountID:   "111111111111",
+		eventName:   "DeleteBucket",
+		eventSource: "s3.amazonaws.com",
 	}
 	changeResults := exampleChanges()
 	err := processCloudTrailLog(gjson.Parse(event), metadata, changeResults)

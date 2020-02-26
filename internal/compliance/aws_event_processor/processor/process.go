@@ -177,6 +177,7 @@ var (
 		"Encrypt":                         {},
 		"GenerateDataKey":                 {},
 		"GenerateDataKeyWithoutPlaintext": {},
+		"RetireGrant":                     {},
 
 		// lambda
 		"AddLayerVersionPermission": {},
@@ -253,9 +254,10 @@ var (
 // CloudTrailMetaData is a data struct that contains re-used fields of CloudTrail logs so that we don't have to keep
 // extracting the same information
 type CloudTrailMetadata struct {
-	region    string
-	accountID string
-	eventName string
+	region      string
+	accountID   string
+	eventSource string
+	eventName   string
 }
 
 // preprocessCloudTrailLog extracts some meta data that is used repeatedly for a CloudTrail log
@@ -264,29 +266,44 @@ type CloudTrailMetadata struct {
 // Returning nil, nil means that we were unable to extract the information we need, but that it was not a failure on
 // our part the information is simply not present.
 func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
+	eventSource := detail.Get("eventSource")
+	if !eventSource.Exists() {
+		return nil, errors.New("unable to extract CloudTrail eventSource field")
+	}
+
 	eventName := detail.Get("eventName")
 	if !eventName.Exists() {
-		return nil, errors.New("unable to extract CloudTrail eventName field")
+		return nil, errors.Errorf("unable to extract CloudTrail eventName field for %s",
+			eventSource.Str)
 	}
 	// If this is an ignored event, immediately halt processing
 	if isIgnoredEvent(eventName.Str) {
-		zap.L().Debug("ignoring read only event", zap.String("eventName", eventName.Str))
+		zap.L().Debug("ignoring read only event",
+			zap.String("evenSource", eventSource.Str),
+			zap.String("eventName", eventName.Str))
 		return nil, nil
 	}
 
 	accountID := detail.Get("userIdentity.accountId")
 	if !accountID.Exists() {
-		return nil, errors.New("unable to extract CloudTrail accountId field")
+		// fall back to "recipientAccountId"
+		accountID = detail.Get("recipientAccountId")
+		if !accountID.Exists() {
+			return nil, errors.Errorf("unable to extract CloudTrail accountId field for %s event %s",
+				eventSource.Str, eventName.Str)
+		}
 	}
 	region := detail.Get("awsRegion")
 	if !region.Exists() {
-		return nil, errors.New("unable to extract CloudTrail awsRegion field")
+		return nil, errors.Errorf("unable to extract CloudTrail awsRegion field for %s event %s from account %s",
+			eventSource.Str, eventName.Str, accountID.Str)
 	}
 
 	return &CloudTrailMetadata{
-		region:    region.Str,
-		accountID: accountID.Str,
-		eventName: eventName.Str,
+		region:      region.Str,
+		accountID:   accountID.Str,
+		eventSource: eventSource.Str,
+		eventName:   eventName.Str,
 	}, nil
 }
 
@@ -313,22 +330,27 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 	// Check if this log is from a supported account
 	integration, ok := accounts[metadata.accountID]
 	if !ok {
-		zap.L().Debug("dropping event from unregistered account", zap.String("accountID", metadata.accountID))
+		zap.L().Debug("dropping event from unregistered account",
+			zap.String("eventSource", metadata.eventSource),
+			zap.String("eventName", metadata.eventName),
+			zap.String("accountID", metadata.accountID))
 		return nil
 	}
 
 	// Determine the AWS service the modified resource belongs to
-	source := detail.Get("eventSource").Str
-	classifier, ok := classifiers[source]
+	classifier, ok := classifiers[metadata.eventSource]
 	if !ok {
-		zap.L().Debug("dropping event from unsupported source", zap.String("eventSource", source))
+		zap.L().Debug("dropping event from unsupported source",
+			zap.String("eventSource", metadata.eventSource),
+			zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	// Drop failed events, as they do not result in a resource change
 	if errorCode := detail.Get("errorCode").Str; errorCode != "" {
 		zap.L().Debug("dropping failed event",
-			zap.String("eventSource", source),
+			zap.String("eventSource", metadata.eventSource),
+			zap.String("eventName", metadata.eventName),
 			zap.String("errorCode", errorCode))
 		return nil
 	}
@@ -341,6 +363,7 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 		if readOnly.Exists() && readOnly.Bool() {
 			zap.L().Warn(
 				"processing newChanges from event marked readOnly",
+				zap.String("eventSource", metadata.eventSource),
 				zap.String("eventName", metadata.eventName),
 			)
 		}
