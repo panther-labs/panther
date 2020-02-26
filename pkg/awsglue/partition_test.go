@@ -15,7 +15,7 @@ import (
 )
 
 func TestCreatePartitionFromS3Rule(t *testing.T) {
-	s3ObjectKey := "rules/aws_cloudtrail/year=2020/month=02/day=26/hour=15/rule_id=AWS.CloudTrail.All/20200226154932-d76e884b-183f-4e81-b05a-b4fb23918c13.json.gz"
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
@@ -40,16 +40,16 @@ func TestCreatePartitionFromS3Rule(t *testing.T) {
 
 	assert.Equal(t, RuleMatchDatabaseName, partition.databaseName)
 	assert.Equal(t, models.RuleData, partition.datatype)
-	assert.Equal(t, "aws_cloudtrail", partition.tableName)
+	assert.Equal(t, "table", partition.tableName)
 	assert.Equal(t, "bucket", partition.s3Bucket)
 	assert.Equal(t, "json", partition.dataFormat)
 	assert.Equal(t, "gzip", partition.compression)
-	assert.Equal(t, "s3://bucket/rules/aws_cloudtrail/year=2020/month=02/day=26/hour=15/", partition.partitionPrefix())
+	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.partitionPrefix())
 	assert.Equal(t, expectedPartitionValues, partition.partitionFields)
 }
 
 func TestCreatePartitionFromS3Log(t *testing.T) {
-	s3ObjectKey := "logs/aws_cloudtrail/year=2020/month=02/day=26/hour=15/20200226154932-d76e884b-183f-4e81-b05a-b4fb23918c13.json.gz"
+	s3ObjectKey := "logs/table/year=2020/month=02/day=26/hour=15/item.json.gz"
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
@@ -74,22 +74,22 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 
 	assert.Equal(t, LogProcessingDatabaseName, partition.databaseName)
 	assert.Equal(t, models.LogData, partition.datatype)
-	assert.Equal(t, "aws_cloudtrail", partition.tableName)
+	assert.Equal(t, "table", partition.tableName)
 	assert.Equal(t, "bucket", partition.s3Bucket)
 	assert.Equal(t, "json", partition.dataFormat)
 	assert.Equal(t, "gzip", partition.compression)
-	assert.Equal(t, "s3://bucket/logs/aws_cloudtrail/year=2020/month=02/day=26/hour=15/", partition.partitionPrefix())
+	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.partitionPrefix())
 	assert.Equal(t, expectedPartitionValues, partition.partitionFields)
 }
 
 func TestCreatePartition(t *testing.T) {
-	s3ObjectKey := "rules/aws_cloudtrail/year=2020/month=02/day=26/hour=15/rule_id=AWS.CloudTrail.All/20200226154932-d76e884b-183f-4e81-b05a-b4fb23918c13.json.gz"
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	expectedCreatePartitionInput := &glue.CreatePartitionInput{
 		DatabaseName:   aws.String(RuleMatchDatabaseName),
-		TableName:      aws.String("aws_cloudtrail"),
+		TableName:      aws.String("table"),
 		PartitionInput: &glue.PartitionInput{
 			StorageDescriptor: &glue.StorageDescriptor{
 				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
@@ -101,7 +101,7 @@ func TestCreatePartition(t *testing.T) {
 						"case.insensitive":     aws.String("TRUE"), // treat as lower case
 					},
 				},
-				Location: aws.String("s3://bucket/rules/aws_cloudtrail/year=2020/month=02/day=26/hour=15/"),
+				Location: aws.String("s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/"),
 			},
 			Values:            aws.StringSlice([]string{"2020", "02", "26", "15"}),
 		},
@@ -114,8 +114,32 @@ func TestCreatePartition(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
+func TestCreatePartitionUnknownPrefix(t *testing.T) {
+	s3ObjectKey := "wrong_prefix/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.Error(t, err)
+}
+
+func TestCreatePartitionWroteYearFormat(t *testing.T) {
+	s3ObjectKey := "rules/table/year=no_year/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.Error(t, err)
+}
+
+func TestCreatePartitionMisingYearPartition(t *testing.T) {
+	s3ObjectKey := "rules/table/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.Error(t, err)
+}
+
+func TestCreatePartitionUknownFormat(t *testing.T) {
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.parquet"
+	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.Error(t, err)
+}
+
 func TestCreatePartitionPartitionAlreadExists(t *testing.T) {
-	s3ObjectKey := "rules/aws_cloudtrail/year=2020/month=02/day=26/hour=15/rule_id=AWS.CloudTrail.All/20200226154932-d76e884b-183f-4e81-b05a-b4fb23918c13.json.gz"
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
@@ -127,7 +151,7 @@ func TestCreatePartitionPartitionAlreadExists(t *testing.T) {
 }
 
 func TestCreatePartitionAwsError(t *testing.T) {
-	s3ObjectKey := "rules/aws_cloudtrail/year=2020/month=02/day=26/hour=15/rule_id=AWS.CloudTrail.All/20200226154932-d76e884b-183f-4e81-b05a-b4fb23918c13.json.gz"
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
@@ -139,7 +163,7 @@ func TestCreatePartitionAwsError(t *testing.T) {
 }
 
 func TestCreatePartitionGeneralError(t *testing.T) {
-	s3ObjectKey := "rules/aws_cloudtrail/year=2020/month=02/day=26/hour=15/rule_id=AWS.CloudTrail.All/20200226154932-d76e884b-183f-4e81-b05a-b4fb23918c13.json.gz"
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
