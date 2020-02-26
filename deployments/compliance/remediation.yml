@@ -132,6 +132,9 @@ Resources:
       FunctionName: panther-remediation-api
       # <cfndoc>
       # The `panther-remediation-api` lambda triggers AWS remediations.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact ?
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -200,7 +203,11 @@ Resources:
       FunctionName: panther-remediation-processor
       # <cfndoc>
       # The `panther-remediation-processor` lambda processes queued remediations
-      # in the `panther-remediation-queue`.
+      # in the `panther-remediation-queue` and calls the `panther-aws-remediation` lambda.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
+      # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -244,6 +251,9 @@ Resources:
       FunctionName: panther-aws-remediation
       # <cfndoc>
       # The `panther-aws-remediation` lambda executes automated infrastructure remediations.
+      #
+      # Failure Impact
+      # * Failure of this lambda will mean specific remediations are failing and infrastructure will remain in violation of policy.
       # </cfndoc>
       Handler: app.main.lambda_handler
       Environment:

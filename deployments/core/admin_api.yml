@@ -124,7 +124,10 @@ Resources:
           USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-cognito-custom-message-trigger
       # <cfndoc>
-      # This lambda implements what?
+      # This lambda implements sending new user invite and password reset emails.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact sending new user invite and password reset emails.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

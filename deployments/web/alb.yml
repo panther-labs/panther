@@ -60,6 +60,9 @@ Resources:
       Name: web
       # <cfndoc>
       # The load balancer associated with the Panther UI.
+      #
+      # Failure Impact
+      # * The Panther user interface will not be available.
       # </cfndoc>
       Scheme: internet-facing
       LoadBalancerAttributes:

@@ -136,6 +136,9 @@ Resources:
       FunctionName: panther-outputs-api
       # <cfndoc>
       # This lambda implements CRUD actions for alert outputs (destinations).
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact ?
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -180,7 +183,10 @@ Resources:
     Properties:
       QueueName: panther-alerts-queue
       # <cfndoc>
-      # This sqs q does what???
+      # This sqs q does hold alerts to be delivery to user configured destinations.
+      # Failure Impact
+      # * Failure of this sqs q will impact delivery of alerts to output destinations.
+      # * Failed events will go into the `panther-alerts-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alerts-queue` using the Panther tool `requeue`.
       # </cfndoc>
       MessageRetentionPeriod: !Ref AlertSqsRetentionSec
       KmsMasterKeyId: !Ref SQSKeyId
@@ -194,7 +200,10 @@ Resources:
     Properties:
       QueueName: panther-alerts-queue-dlq
       # <cfndoc>
-      # The dead letter queue for the `panther-alerts-queue`.
+      # This is the dead letter queue for the `panther-alerts-queue`.
+      # Items are in this queue due to a failure of the `panther-alerts-delivery` lambda.
+      # When the system has recovered they should be re-queued to the `panther-alerts-queue` using
+      # the Panther tool `requeue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
@@ -224,6 +233,10 @@ Resources:
       FunctionName: panther-alert-delivery
       # <cfndoc>
       # This lambda dispatches alerts to their specified outputs (destinations).
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact delivery of alerts.
+      # * Failed events will go into the `panther-alerts-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alerts-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
       MemorySize: 128

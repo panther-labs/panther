@@ -93,6 +93,9 @@ Resources:
       FunctionName: panther-analysis-api
       # <cfndoc>
       # This lambda implements the analysis API.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact ?
       # </cfndoc>
       Handler: main
       MemorySize: 512

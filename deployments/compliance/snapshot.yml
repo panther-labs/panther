@@ -109,6 +109,9 @@ Resources:
       FunctionName: panther-snapshot-pollers
       # <cfndoc>
       # This  does what?
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -249,6 +252,9 @@ Resources:
       # <cfndoc>
       # The `panther-snapshot-scheduler` lambda does infrastructure scans triggered
       # by a 24 hour CloudWatch timer events.
+      #
+      # Failure Impact
+      # * Failure of this lambda will prevent daily infrastructure scans of accounts from running.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

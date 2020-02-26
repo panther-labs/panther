@@ -67,7 +67,12 @@ Resources:
           INDEX_NAME: policy-index
       FunctionName: panther-compliance-api
       # <cfndoc>
-      # This lambda implements the compliance API.
+      # This lambda implements the compliance API which is responsible for tracking resource and policy pass/fail states.
+      #
+      # Failure Impact
+      # * The UI experiences errors on nearly every page for cloud security related data.
+      # * Alerts for cloud security stop.
+      # * Policy failures are no longer be recorded.
       # </cfndoc>
       Handler: main
       MemorySize: 512
@@ -109,7 +114,7 @@ Resources:
     Properties:
       TableName: panther-compliance
       # <cfndoc>
-      # This table holds policy violation events for associated resources in the `panther-resources` ddb table.
+      # This ddb table holds policy violation events for associated resources in the `panther-resources` ddb table.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: policyId

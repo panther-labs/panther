@@ -93,6 +93,8 @@ Resources:
       FunctionName: panther-resources-api
       # <cfndoc>
       # The `panther-resources-api` lambda implements the resources API.
+      # Failure Impact
+      # * Failure of this lambda will impact ?
       # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -173,7 +175,7 @@ Resources:
       # The lambda `panther-resource-processor` consumes these events to generate alerts.
       #
       # Failure Impact
-      # * Failure of this sqs q will impact the delivery of alerts for recently changed infrastucture.
+      # * Failure of this sqs q will impact the delivery of alerts for recently changed infrastructure.
       # * Failed events will go into the `panther-resources-queue-dlq`. When the system has recovered they should be re-queued to the `panther-resources-queue` using the Panther tool `requeue`.
       # </cfndoc>
       RedrivePolicy:
@@ -229,6 +231,9 @@ Resources:
       # recently changed infrastructure. The lambda calls the `policy-engine` lambda to determine if
       # there are any policy engine violations. Each violation is sent to
       # the `panther-alert-processor-queue` for deduplication and delivery.
+      # Failure Impact
+      # * Failure of this lambda will impact continuous monitoring of infrastructure.
+      # * Failed events will go into the `panther-resources-queue-dlq`. When the system has recovered they should be re-queued to the `panther-resources-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -284,6 +289,8 @@ Resources:
       # <cfndoc>
       # This lambda executes the user-defined policies against infrastructure events.
       # It is called directly from the `panther-resource-processor` lambda.
+      # Failure Impact
+      # * Failure of this lambda will impact evaluating policies.
       # </cfndoc>
       Handler: src.main.lambda_handler
       MemorySize: 512

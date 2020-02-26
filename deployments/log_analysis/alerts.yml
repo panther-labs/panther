@@ -193,6 +193,9 @@ Resources:
       FunctionName: panther-alerts-api
       # <cfndoc>
       # Lambda for CRUD actions for the alerts API.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact ?
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
