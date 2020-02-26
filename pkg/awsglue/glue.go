@@ -27,6 +27,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
 const (
@@ -52,46 +54,27 @@ type PartitionKey struct {
 // NOTE: this struct has all accessor behind functions to allow a lazy evaluation
 //       so the cost of creating the schema is only when actually needing this information.
 type GlueTableMetadata struct {
-	databaseName  string
-	tableName     string
-	description   string
-	logType string
-	s3Prefix string
-	timebin       GlueTableTimebin // at what time resolution is this table partitioned
-	eventStruct interface{}
+	databaseName string
+	tableName    string
+	description  string
+	logType      string
+	prefix       string
+	timebin      GlueTableTimebin // at what time resolution is this table partitioned
+	eventStruct  interface{}
 }
 
-func NewLogTableMetadata(logType, logDescription string, eventStruct interface{}) *GlueTableMetadata{
-	tableName := standardizeTableName(logType)
+func NewGlueTableMetadata(datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata{
+	tableName := getTableName(logType)
+	tablePrefix := getTablePrefix(datatype, tableName)
 	return &GlueTableMetadata{
-		databaseName:  LogProcessingDatabaseName,
-		tableName:     tableName,
-		description:   logDescription,
-		timebin:       GlueTableHourly,
-		logType: logType,
-		s3Prefix: LogS3Prefix + "/" + tableName + "/",
-		eventStruct: eventStruct,
+		databaseName: getDatabase(datatype),
+		tableName:    tableName,
+		description:  logDescription,
+		timebin:      timebin,
+		logType:      logType,
+		prefix:       tablePrefix,
+		eventStruct:  eventStruct,
 	}
-}
-
-func NewRuleTableMetadata(logType, logDescription string, eventStruct interface{}) *GlueTableMetadata{
-	tableName := standardizeTableName(logType)
-	return &GlueTableMetadata{
-		databaseName:  RuleMatchDatabaseName,
-		tableName:     tableName,
-		description:   logDescription,
-		timebin:       GlueTableHourly,
-		logType: logType,
-		s3Prefix: RuleMatchS3Prefix + "/" + tableName + "/",
-		eventStruct: eventStruct,
-	}
-}
-
-
-func standardizeTableName(logType string) string {
-	// clean table name to make sql friendly
-	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
-	return strings.ToLower(tableName)
 }
 
 func (gm *GlueTableMetadata) DatabaseName() string {
@@ -107,8 +90,8 @@ func (gm *GlueTableMetadata) Description() string {
 }
 
 // All data for this table are stored in this S3 prefix
-func (gm *GlueTableMetadata) S3Prefix() string {
-	return gm.s3Prefix
+func (gm *GlueTableMetadata) Prefix() string {
+	return gm.prefix
 }
 
 func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
@@ -123,6 +106,7 @@ func (gm *GlueTableMetadata) EventStruct() interface{} {
 	return gm.eventStruct
 }
 
+// The partition keys for this table
 func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 	partitions = []PartitionKey{{Name: "year", Type: "int"}}
 
@@ -138,9 +122,9 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 	return partitions
 }
 
-// Based on Timebin(), return an S3 prefix for objects
+// Based on Timebin(), return an S3 prefix for objects of this table
 func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
-	prefix = gm.S3Prefix()
+	prefix = gm.Prefix()
 	switch gm.timebin {
 	case GlueTableHourly:
 		prefix += fmt.Sprintf("year=%02d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
@@ -151,7 +135,6 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
 	}
 	return
 }
-
 
 // SyncPartition deletes and re-creates a partition using the latest table schema. Used when schemas change.
 func (gm *GlueTableMetadata) SyncPartition(client glueiface.GlueAPI, t time.Time) error {
@@ -177,6 +160,31 @@ func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Ti
 	return client.DeletePartition(input)
 }
 
+// Returns the prefix of the table in S3 or error if it failed to generate it
+func getDatabase(dataType models.DataType) string {
+	if dataType == models.LogData {
+		return LogProcessingDatabaseName
+	} else {
+		return RuleMatchDatabaseName
+	}
+}
+
+// Returns the prefix of the table in S3 or error if it failed to generate it
+func getTablePrefix(dataType models.DataType, tableName string) string {
+	if dataType == models.LogData {
+		return LogS3Prefix + "/" + tableName + "/"
+	} else {
+		return RuleMatchS3Prefix + "/" + tableName + "/"
+	}
+}
+
+func getTableName(logType string) string {
+	// clean table name to make sql friendly
+	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
+	return strings.ToLower(tableName)
+}
+
+// Deprecated - use GluePartition.CreatePartition instead
 func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) error {
 	// inherit StorageDescriptor from table
 	tableInput := &glue.GetTableInput{

@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
 /**
@@ -33,15 +35,16 @@ import (
 //       so the cost of creating the schema is only when actually needing this information.
 
 type GluePartition struct {
+	datatype models.DataType
 	databaseName string
 	tableName string
 	s3Bucket string
 	dataFormat string // Can currently be only "json"
 	compression string // Can only be "gzip" currently
-	partitionFields []*PartitionKeyValue
+	partitionFields []*partitionKeyValue
 }
 
-type PartitionKeyValue struct {
+type partitionKeyValue struct {
 	column string
 	value string
 }
@@ -51,17 +54,20 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	for i, field := range gp.partitionFields {
 		partitionValues[i] = aws.String(field.value)
 	}
-
+	partitionPrefix, err := gp.partitionPrefix()
+	if err != nil {
+		return err
+	}
 	partitionInput := &glue.PartitionInput{
 		Values:            partitionValues,
-		StorageDescriptor: getJSONPartitionDescriptor(gp.partitionPrefix()), // We only support JSON currently
+		StorageDescriptor: getJSONPartitionDescriptor(partitionPrefix), // We only support JSON currently
 	}
 	input := &glue.CreatePartitionInput{
 		DatabaseName:   aws.String(gp.databaseName),
 		TableName:      aws.String(gp.tableName),
 		PartitionInput: partitionInput,
 	}
-	_, err := client.CreatePartition(input)
+	_, err = client.CreatePartition(input)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			if awsErr.Code() == "AlreadyExistsException" {
@@ -73,12 +79,13 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	return err
 }
 
-func (gp *GluePartition) partitionPrefix() string {
-	prefix := "s3://" + gp.s3Bucket + "/"
+func (gp *GluePartition) partitionPrefix() (string, error) {
+	tablePrefix:= getTablePrefix(gp.datatype, gp.tableName)
+	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
 	for _, partitionField := range gp.partitionFields {
-		prefix += partitionField.column + "=" + partitionField.value
+		prefix += partitionField.column + "=" + partitionField.value + "/"
 	}
-	return prefix
+	return prefix, nil
 }
 
 func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
@@ -96,7 +103,8 @@ func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
 	}
 }
 
-func GetPartition(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
+// Gets the partition from S3
+func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	zap.L().Info("I got this", zap.String("s3Bucket", s3Bucket), zap.String("s3ObjectKey", s3ObjectKey))
 	partition := &GluePartition{s3Bucket: s3Bucket}
 
@@ -114,8 +122,10 @@ func GetPartition(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	switch s3Keys[0] {
 	case LogS3Prefix:
 		partition.databaseName = LogProcessingDatabaseName
+		partition.datatype = models.LogData
 	case RuleMatchS3Prefix:
 		partition.databaseName = RuleMatchDatabaseName
+		partition.datatype = models.RuleData
 	default:
 		return nil, errors.Errorf("unsupported S3 object prefix %s", s3Keys[0])
 	}
@@ -127,7 +137,7 @@ func GetPartition(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 		return nil, err
 	}
 
-	partition.partitionFields = []*PartitionKeyValue{yearPartitionKeyValue}
+	partition.partitionFields = []*partitionKeyValue{yearPartitionKeyValue}
 
 	monthPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[3], "month")
 	if err != nil {
@@ -157,7 +167,7 @@ func GetPartition(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	return partition, nil
 }
 
-func getTimePartitionColumnField(input string, partitionName string) (*PartitionKeyValue, error) {
+func getTimePartitionColumnField(input string, partitionName string) (*partitionKeyValue, error) {
 	fields := strings.Split(input, "=")
 	if len(fields) != 2 || fields[0] != partitionName {
 		return nil, errors.Errorf("failed to get partition column %s from %s", partitionName, input)
@@ -167,7 +177,7 @@ func getTimePartitionColumnField(input string, partitionName string) (*Partition
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse to integer %s", fields[1])
 	}
-	return &PartitionKeyValue{column: partitionName, value: fields[1]}, nil
+	return &partitionKeyValue{column: partitionName, value: fields[1]}, nil
 }
 
 

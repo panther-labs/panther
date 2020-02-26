@@ -19,6 +19,7 @@ package registry
  */
 
 import (
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
@@ -68,8 +69,7 @@ type Registry map[string]*LogParserMetadata
 // Most parsers follow this structure, these are currently assumed to all be JSON based, using LogType() as tableName
 func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, description string) *LogParserMetadata {
 	// describes Glue table over processed data in S3
-	gm := awsglue.NewLogTableMetadata(p.LogType(), description, eventStruct)
-
+	gm := awsglue.NewGlueTableMetadata(models.LogData, p.LogType(), description, awsglue.GlueTableHourly, eventStruct)
 	return &LogParserMetadata{
 		Parser:      p,
 		EventStruct: eventStruct,

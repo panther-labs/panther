@@ -230,7 +230,7 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 		S3ObjectKey: aws.String(key),
 		Events:      aws.Int(buffer.events),
 		Bytes:       aws.Int(buffer.bytes),
-		Type:        aws.String(models.LogData),
+		Type:        aws.String(models.LogData.String()),
 		ID:          aws.String(logType),
 	}
 
@@ -245,7 +245,7 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 		Message:  aws.String(marshalledNotification),
 		MessageAttributes: map[string]*sns.MessageAttributeValue{
 			logDataTypeAttributeName: {
-				StringValue: aws.String(models.LogData),
+				StringValue: aws.String(models.LogData.String()),
 				DataType:    aws.String(messageAttributeDataType),
 			},
 			logTypeAttributeName: {

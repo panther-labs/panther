@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsathena"
@@ -87,7 +88,8 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 	// the rule match tables share the same structure as the logs with some extra columns
 	var ruleTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
-		ruleTables = append(ruleTables, awsglue.NewRuleTableMetadata(table.LogType(), table.Description(), table.EventStruct()))
+		ruleTable :=  awsglue.NewGlueTableMetadata(models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		ruleTables = append(ruleTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, gluecf.RuleMatchColumns)
 }

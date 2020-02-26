@@ -19,15 +19,21 @@ package awsglue
 import (
 	"fmt"
 	"testing"
+
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/stretchr/testify/mock"
 )
 
 
 
 func TestGetPartition(t *testing.T) {
 
-	partition, err := GetPartition("s3Bucket", "rules/aws_cloudtrail/year=2020/month=2/day=26/hour=9/rule_id=AWS.CloudTrail.All/20200226094921-1312f718-8ce5-483d-be07-9103c0fdbb0d.json.gz")
+	partition, err := GetPartitionFromS3("s3Bucket", "rules/aws_cloudtrail/year=2020/month=02/day=26/hour=09/rule_id=AWS.CloudTrail.All/20200226094921-1312f718-8ce5-483d-be07-9103c0fdbb0d.json.gz")
 	fmt.Println(partition)
 	fmt.Println(err)
+	client := &mockGlue{}
+	partition.CreatePartition(client)
 
 }
 
@@ -53,7 +59,7 @@ func TestGetPartition(t *testing.T) {
 //
 //	// test no errors and partition does not exist (no error)
 //	glueClient := &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
 //	err = gm.CreateJSONPartition(glueClient, refTime)
@@ -61,25 +67,25 @@ func TestGetPartition(t *testing.T) {
 //
 //	// test partition exists at start
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityExistsError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityExistsError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.CreateJSONPartition(glueClient, refTime)
 //	assert.Error(t, err)
 //	assert.Equal(t, entityExistsError, err)
 //
-//	// test other AWS err in GetPartition()
+//	// test other AWS err in GetPartitionFromS3()
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, otherAWSError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, otherAWSError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.CreateJSONPartition(glueClient, refTime)
 //	assert.Error(t, err)
 //	assert.Equal(t, otherAWSError, err)
 //
-//	// test non AWS err in GetPartition()
+//	// test non AWS err in GetPartitionFromS3()
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, nonAWSError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, nonAWSError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.CreateJSONPartition(glueClient, refTime)
@@ -88,7 +94,7 @@ func TestGetPartition(t *testing.T) {
 //
 //	// test error in GetTable
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nonAWSError).Once()
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.CreateJSONPartition(glueClient, refTime)
@@ -97,7 +103,7 @@ func TestGetPartition(t *testing.T) {
 //
 //	// test error in CreatePartition
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nonAWSError).Once()
 //	err = gm.CreateJSONPartition(glueClient, refTime)
@@ -114,7 +120,7 @@ func TestGetPartition(t *testing.T) {
 //	// test not exists error in DeletePartition (should not fail)
 //	glueClient := &mockGlue{}
 //	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, entityNotFoundError).Once()
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
 //	err = gm.SyncPartition(glueClient, refTime)
@@ -123,7 +129,7 @@ func TestGetPartition(t *testing.T) {
 //	// test other AWS error in DeletePartition (should fail)
 //	glueClient = &mockGlue{}
 //	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, otherAWSError).Once()
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.SyncPartition(glueClient, refTime)
@@ -133,7 +139,7 @@ func TestGetPartition(t *testing.T) {
 //	// test non AWS error in DeletePartition (should fail)
 //	glueClient = &mockGlue{}
 //	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, nonAWSError).Once()
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.SyncPartition(glueClient, refTime)
@@ -141,10 +147,10 @@ func TestGetPartition(t *testing.T) {
 //	assert.Equal(t, nonAWSError.Error(), errors.Cause(err).Error())
 //}
 //
-//type mockGlue struct {
-//	glueiface.GlueAPI
-//	mock.Mock
-//}
+type mockGlue struct {
+	glueiface.GlueAPI
+	mock.Mock
+}
 //
 //// fixed for our tests
 //var (
@@ -170,22 +176,22 @@ func TestGetPartition(t *testing.T) {
 //	}
 //)
 
-//func (m *mockGlue) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
-//	args := m.Called(input)
-//	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
-//}
-//
-//func (m *mockGlue) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
-//	args := m.Called(input)
-//	return args.Get(0).(*glue.GetTableOutput), args.Error(1)
-//}
-//
-//func (m *mockGlue) CreatePartition(input *glue.CreatePartitionInput) (*glue.CreatePartitionOutput, error) {
-//	args := m.Called(input)
-//	return args.Get(0).(*glue.CreatePartitionOutput), args.Error(1)
-//}
-//
-//func (m *mockGlue) DeletePartition(input *glue.DeletePartitionInput) (*glue.DeletePartitionOutput, error) {
-//	args := m.Called(input)
-//	return args.Get(0).(*glue.DeletePartitionOutput), args.Error(1)
-//}
+func (m *mockGlue) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
+}
+
+func (m *mockGlue) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetTableOutput), args.Error(1)
+}
+
+func (m *mockGlue) CreatePartition(input *glue.CreatePartitionInput) (*glue.CreatePartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.CreatePartitionOutput), args.Error(1)
+}
+
+func (m *mockGlue) DeletePartition(input *glue.DeletePartitionInput) (*glue.DeletePartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.DeletePartitionOutput), args.Error(1)
+}

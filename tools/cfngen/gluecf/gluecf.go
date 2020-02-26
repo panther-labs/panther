@@ -25,6 +25,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -121,7 +122,7 @@ func GenerateTables(tables []*awsglue.GlueTableMetadata) (cf []byte, err error) 
 	}
 
 	addTable := func(t *awsglue.GlueTableMetadata, extraColumns ...Column) {
-		location := cfngen.Sub{Sub: "s3://${" + bucketParam + "}/" + t.S3Prefix()}
+		location := cfngen.Sub{Sub: "s3://${" + bucketParam + "}/" + t.Prefix()}
 
 		columns := InferJSONColumns(t.EventStruct(), GlueMappings...)
 		columns = append(columns, extraColumns...)
@@ -139,10 +140,11 @@ func GenerateTables(tables []*awsglue.GlueTableMetadata) (cf []byte, err error) 
 	}
 
 	// add tables for all parsers, and matching tables for rule matches
-	for _, t := range tables {
-		addTable(t)
+	for _, table := range tables {
+		addTable(table)
+		ruleTable :=  awsglue.NewGlueTableMetadata(models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		// add a matching table for rule matches, add the columns that the rules engine appends
-		addTable(awsglue.NewRuleTableMetadata(t.LogType(), t.Description(), t.EventStruct()), RuleMatchColumns...)
+		addTable(ruleTable, RuleMatchColumns...)
 	}
 
 	// generate CF using cfngen

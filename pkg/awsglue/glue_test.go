@@ -44,7 +44,7 @@ type partitionTestEvent struct{}
 //	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
 //
 //	gm = &GlueTableMetadata{
-//		s3TablePrefix: s3Prefix,
+//		s3TablePrefix: prefix,
 //		timebin:       GlueTableHourly,
 //		timeUnpadded:  false,
 //	}
@@ -55,7 +55,7 @@ type partitionTestEvent struct{}
 //	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
 //
 //	gm = &GlueTableMetadata{
-//		s3TablePrefix: s3Prefix,
+//		s3TablePrefix: prefix,
 //		timebin:       GlueTableDaily,
 //		timeUnpadded:  false,
 //	}
@@ -66,7 +66,7 @@ type partitionTestEvent struct{}
 //	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
 //
 //	gm = &GlueTableMetadata{
-//		s3TablePrefix: s3Prefix,
+//		s3TablePrefix: prefix,
 //		timebin:       GlueTableMonthly,
 //		timeUnpadded:  false,
 //	}
@@ -84,7 +84,7 @@ type partitionTestEvent struct{}
 //	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
 //
 //	gm = &GlueTableMetadata{
-//		s3TablePrefix: s3Prefix,
+//		s3TablePrefix: prefix,
 //		timebin:       GlueTableHourly,
 //		timeUnpadded:  false,
 //	}
@@ -105,7 +105,7 @@ type partitionTestEvent struct{}
 //	assert.Equal(t, expected, gm.partitionValues(refTime))
 //
 //	gm = &GlueTableMetadata{
-//		s3TablePrefix: s3Prefix,
+//		s3TablePrefix: prefix,
 //		timebin:       GlueTableDaily,
 //		timeUnpadded:  false,
 //	}
@@ -124,7 +124,7 @@ type partitionTestEvent struct{}
 //	assert.Equal(t, expected, gm.partitionValues(refTime))
 //
 //	gm = &GlueTableMetadata{
-//		s3TablePrefix: s3Prefix,
+//		s3TablePrefix: prefix,
 //		timebin:       GlueTableMonthly,
 //		timeUnpadded:  false,
 //	}
@@ -179,7 +179,7 @@ type partitionTestEvent struct{}
 //
 //	// test no errors and partition does not exist (no error)
 //	glueClient := &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
 //	err := gm.CreateJSONPartition(glueClient, refTime)
@@ -187,25 +187,25 @@ type partitionTestEvent struct{}
 //
 //	// test partition exists at start
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityExistsError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityExistsError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.CreateJSONPartition(glueClient, refTime)
 //	assert.Error(t, err)
 //	assert.Equal(t, entityExistsError, err)
 //
-//	// test other AWS err in GetPartition()
+//	// test other AWS err in GetPartitionFromS3()
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, otherAWSError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, otherAWSError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.CreateJSONPartition(glueClient, refTime)
 //	assert.Error(t, err)
 //	assert.Equal(t, otherAWSError, err)
 //
-//	// test non AWS err in GetPartition()
+//	// test non AWS err in GetPartitionFromS3()
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, nonAWSError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, nonAWSError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.CreateJSONPartition(glueClient, refTime)
@@ -214,7 +214,7 @@ type partitionTestEvent struct{}
 //
 //	// test error in GetTable
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nonAWSError).Once()
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.CreateJSONPartition(glueClient, refTime)
@@ -223,7 +223,7 @@ type partitionTestEvent struct{}
 //
 //	// test error in CreatePartition
 //	glueClient = &mockGlue{}
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nonAWSError).Once()
 //	err = gm.CreateJSONPartition(glueClient, refTime)
@@ -238,7 +238,7 @@ type partitionTestEvent struct{}
 //	// test not exists error in DeletePartition (should not fail)
 //	glueClient := &mockGlue{}
 //	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, entityNotFoundError).Once()
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
 //	err := gm.SyncPartition(glueClient, refTime)
@@ -247,7 +247,7 @@ type partitionTestEvent struct{}
 //	// test other AWS error in DeletePartition (should fail)
 //	glueClient = &mockGlue{}
 //	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, otherAWSError).Once()
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.SyncPartition(glueClient, refTime)
@@ -257,7 +257,7 @@ type partitionTestEvent struct{}
 //	// test non AWS error in DeletePartition (should fail)
 //	glueClient = &mockGlue{}
 //	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, nonAWSError).Once()
-//	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
+//	glueClient.On("GetPartitionFromS3", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
 //	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 //	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 //	err = gm.SyncPartition(glueClient, refTime)
@@ -294,7 +294,7 @@ type partitionTestEvent struct{}
 //	}
 //)
 //
-//func (m *mockGlue) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
+//func (m *mockGlue) GetPartitionFromS3(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
 //	args := m.Called(input)
 //	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
 //}

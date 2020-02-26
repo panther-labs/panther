@@ -103,7 +103,7 @@ func TestMain(m *testing.M) {
 //	err = gm.CreateJSONPartition(glueClient, refTime)
 //	require.Error(t, err)
 //
-//	partitionInfo, err := gm.GetPartition(glueClient, refTime)
+//	partitionInfo, err := gm.GetPartitionFromS3(glueClient, refTime)
 //	require.NoError(t, err)
 //	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
 //
@@ -116,7 +116,7 @@ func TestMain(m *testing.M) {
 //	require.NoError(t, err)
 //
 //	// ensure deleted
-//	_, err = gm.GetPartition(glueClient, refTime)
+//	_, err = gm.GetPartitionFromS3(glueClient, refTime)
 //	require.Error(t, err)
 //}
 

@@ -17,8 +17,14 @@ type S3Notification struct {
 	ID *string `json:"id" validate:"required"`
 }
 
+type DataType string
+
 const (
-	LogData    = "LogData"
-	RuleOutput = "RuleOutput"
+	LogData  DataType  = "LogData"
+	RuleData DataType = "RuleMatches"
 )
+
+func (d *DataType) String() string {
+	return string(*d)
+}
 

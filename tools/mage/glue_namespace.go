@@ -29,6 +29,7 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
@@ -53,10 +54,12 @@ func (t Glue) Sync() {
 	enteredText = promptUser("Enter regex to select a subset of tables (or <enter> for all tables): ", regexValidator)
 	matchTableName, _ := regexp.Compile(enteredText) // no error check already validated
 
-	syncPartitions(glueClient, matchTableName)
+	if err := syncPartitions(glueClient, matchTableName); err != nil {
+		logger.Fatalf("failed to sync partitions %v", err)
+	}
 }
 
-func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
+func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) error {
 	const concurrency = 10
 	updateChan := make(chan *gluePartitionUpdate, concurrency)
 
@@ -104,11 +107,13 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		listPartitions(name, table)
 		// the rule match tables share the same structure as the logs
 		name = fmt.Sprintf("%s.%s", awsglue.RuleMatchDatabaseName, table.TableName())
-		listPartitions(name, awsglue.NewRuleTableMetadata(table.LogType(), table.Description(), table.EventStruct()))
+		ruleTable := awsglue.NewGlueTableMetadata(models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		listPartitions(name, ruleTable)
 	}
 
 	close(updateChan)
 	wg.Wait()
+	return nil
 }
 
 func regexValidator(text string) error {
