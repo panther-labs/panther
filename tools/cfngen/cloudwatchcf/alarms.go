@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	documentationURL = "https://docs.runpanther.io/operations/inventory.md" // where all alarms are documented
+	documentationURL = "https://docs.runpanther.io/operations/runbooks.md" // where all alarms are documented
 	alarmPrefix      = "PantherAlarm"
 )
 

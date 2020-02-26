@@ -36,7 +36,7 @@ const (
 	inventoryDocHeader = `
 <!-- This document is generated. DO NOT EDIT! -->
 
-# Panther Application Cloud Infrastructure
+# Panther Application Run Books
 
 Refer to the 
 [Cloud Security](https://docs.runpanther.io/policies/scanning#how-it-works)
@@ -45,6 +45,7 @@ and
 architecture diagrams for context.
 
 Resource names below refer to resources in the Cloud Formation templates in Panther.
+Each resource describes its function and failure impacts.
 
 `
 )
@@ -56,7 +57,7 @@ func (t Doc) Cfn() {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		logger.Fatalf("failed to create directory %s: %v", outDir, err)
 	}
-	inventoryFileName := filepath.Join(outDir, "inventory.md")
+	inventoryFileName := filepath.Join(outDir, "runbooks.md")
 
 	inventoryFile, err := os.Create(inventoryFileName)
 	if err != nil {
