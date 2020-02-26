@@ -219,7 +219,7 @@ the `panther-alert-processor-queue` for deduplication and delivery.
 ## panther-resources
 
 This table holds descriptions of the AWS resources in all accounts being monitored.
-The `resources-api` lambda manages this table.
+The `panther-resources-api` lambda manages this table.
 
 ## panther-resources-api
 

@@ -18,7 +18,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Template for Panther monitoring related resources (e.g., metrics, alarms and dashboards)
 
 Resources:
-
   ##### Nested Stacks: CloudWatch #####
   GeneratedDashboards:
     Type: AWS::CloudFormation::Stack
