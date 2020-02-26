@@ -34,7 +34,7 @@ import (
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
-// targets for managing GlueTableMetadata tables
+// targets for managing Glue tables
 type Glue mg.Namespace
 
 const (
