@@ -142,7 +142,8 @@ func GenerateTables(tables []*awsglue.GlueTableMetadata) (cf []byte, err error) 
 	// add tables for all parsers, and matching tables for rule matches
 	for _, table := range tables {
 		addTable(table)
-		ruleTable := awsglue.NewGlueTableMetadata(models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		// add a matching table for rule matches, add the columns that the rules engine appends
 		addTable(ruleTable, RuleMatchColumns...)
 	}

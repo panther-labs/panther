@@ -72,7 +72,8 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 
 		gluePartition, err := awsglue.GetPartitionFromS3(*notification.S3Bucket, *notification.S3ObjectKey)
 		if err != nil {
-			zap.L().Error("failed to get partition information from notification", zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
+			zap.L().Error("failed to get partition information from notification",
+				zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
 			continue
 		}
 		err = gluePartition.CreatePartition(glueClient)

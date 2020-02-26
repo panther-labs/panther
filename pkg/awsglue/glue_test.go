@@ -38,8 +38,6 @@ var (
 	entityNotFoundError = awserr.New(glue.ErrCodeEntityNotFoundException, "Entity not found", nil)
 	otherAWSError       = awserr.New("SomeException", "Some problem.", nil) // aws error other than those we code against
 
-	testGetPartitionOutput = &glue.GetPartitionOutput{}
-
 	testCreatePartitionOutput = &glue.CreatePartitionOutput{}
 
 	testDeletePartitionOutput = &glue.DeletePartitionOutput{}

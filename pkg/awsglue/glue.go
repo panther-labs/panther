@@ -62,7 +62,9 @@ type GlueTableMetadata struct {
 }
 
 // Creates a new GlueTableMetadata object
-func NewGlueTableMetadata(datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
+func NewGlueTableMetadata(
+	datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
+
 	tableName := getTableName(logType)
 	tablePrefix := getTablePrefix(datatype, tableName)
 	return &GlueTableMetadata{
@@ -139,18 +141,16 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
 func getDatabase(dataType models.DataType) string {
 	if dataType == models.LogData {
 		return LogProcessingDatabaseName
-	} else {
-		return RuleMatchDatabaseName
 	}
+	return RuleMatchDatabaseName
 }
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getTablePrefix(dataType models.DataType, tableName string) string {
 	if dataType == models.LogData {
 		return logS3Prefix + "/" + tableName + "/"
-	} else {
-		return ruleMatchS3Prefix + "/" + tableName + "/"
 	}
+	return ruleMatchS3Prefix + "/" + tableName + "/"
 }
 
 func getTableName(logType string) string {
@@ -218,15 +218,6 @@ func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t tim
 	return nil
 }
 
-func (gm *GlueTableMetadata) getPartition(client glueiface.GlueAPI, t time.Time) (output *glue.GetPartitionOutput, err error) {
-	input := &glue.GetPartitionInput{
-		DatabaseName:    aws.String(gm.databaseName),
-		TableName:       aws.String(gm.tableName),
-		PartitionValues: gm.partitionValues(t),
-	}
-	return client.GetPartition(input)
-}
-
 func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Time) (output *glue.DeletePartitionOutput, err error) {
 	input := &glue.DeletePartitionInput{
 		DatabaseName:    aws.String(gm.databaseName),
@@ -251,4 +242,3 @@ func (gm *GlueTableMetadata) partitionValues(t time.Time) (values []*string) {
 	}
 	return
 }
-

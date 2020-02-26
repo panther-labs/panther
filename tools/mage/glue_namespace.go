@@ -105,7 +105,8 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		listPartitions(name, table)
 		// the rule match tables share the same structure as the logs
 		name = fmt.Sprintf("%s.%s", awsglue.RuleMatchDatabaseName, table.TableName())
-		ruleTable := awsglue.NewGlueTableMetadata(models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		listPartitions(name, ruleTable)
 	}
 

@@ -55,10 +55,7 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	for i, field := range gp.partitionFields {
 		partitionValues[i] = aws.String(field.value)
 	}
-	partitionPrefix, err := gp.partitionPrefix()
-	if err != nil {
-		return err
-	}
+	partitionPrefix := gp.partitionPrefix()
 	partitionInput := &glue.PartitionInput{
 		Values:            partitionValues,
 		StorageDescriptor: getJSONPartitionDescriptor(partitionPrefix), // We only support JSON currently
@@ -68,7 +65,7 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 		TableName:      aws.String(gp.tableName),
 		PartitionInput: partitionInput,
 	}
-	_, err = client.CreatePartition(input)
+	_, err := client.CreatePartition(input)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			if awsErr.Code() == glue.ErrCodeAlreadyExistsException {
@@ -80,13 +77,13 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	return nil
 }
 
-func (gp *GluePartition) partitionPrefix() (string, error) {
+func (gp *GluePartition) partitionPrefix() string {
 	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
 	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
 	for _, partitionField := range gp.partitionFields {
 		prefix += partitionField.key + "=" + partitionField.value + "/"
 	}
-	return prefix, nil
+	return prefix
 }
 
 func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
