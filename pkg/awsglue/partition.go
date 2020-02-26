@@ -45,10 +45,11 @@ type GluePartition struct {
 }
 
 type partitionKeyValue struct {
-	column string
-	value  string
+	key   string
+	value string
 }
 
+// Creates a new partition in Glue using the client provided.
 func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	partitionValues := make([]*string, len(gp.partitionFields))
 	for i, field := range gp.partitionFields {
@@ -76,14 +77,14 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 		}
 		return errors.Wrap(err, "failed to create new partition")
 	}
-	return err
+	return nil
 }
 
 func (gp *GluePartition) partitionPrefix() (string, error) {
 	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
 	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
 	for _, partitionField := range gp.partitionFields {
-		prefix += partitionField.column + "=" + partitionField.value + "/"
+		prefix += partitionField.key + "=" + partitionField.value + "/"
 	}
 	return prefix, nil
 }
@@ -170,12 +171,12 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 func getTimePartitionColumnField(input string, partitionName string) (*partitionKeyValue, error) {
 	fields := strings.Split(input, "=")
 	if len(fields) != 2 || fields[0] != partitionName {
-		return nil, errors.Errorf("failed to get partition column %s from %s", partitionName, input)
+		return nil, errors.Errorf("failed to get partition key %s from %s", partitionName, input)
 	}
 
 	_, err := strconv.Atoi(fields[1])
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse to integer %s", fields[1])
 	}
-	return &partitionKeyValue{column: partitionName, value: fields[1]}, nil
+	return &partitionKeyValue{key: partitionName, value: fields[1]}, nil
 }

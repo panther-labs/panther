@@ -50,9 +50,7 @@ type PartitionKey struct {
 	Type string
 }
 
-// Meta data about GlueTableMetadata table over parser data written to S3
-// NOTE: this struct has all accessor behind functions to allow a lazy evaluation
-//       so the cost of creating the schema is only when actually needing this information.
+// Metadata about Glue table
 type GlueTableMetadata struct {
 	databaseName string
 	tableName    string
@@ -63,6 +61,8 @@ type GlueTableMetadata struct {
 	eventStruct  interface{}
 }
 
+
+// Creates a new GlueTableMetadata object
 func NewGlueTableMetadata(datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 	tableName := getTableName(logType)
 	tablePrefix := getTablePrefix(datatype, tableName)

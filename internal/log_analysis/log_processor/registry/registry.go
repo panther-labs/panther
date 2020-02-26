@@ -37,29 +37,29 @@ type Interface interface {
 var (
 	// mapping of LogType -> LogParserMetadata
 	parsersRegistry = Registry{
-		(&awslogs.CloudTrailParser{}).LogType(): DefaultHourlyLogParser(&awslogs.CloudTrailParser{},
+		(&awslogs.CloudTrailParser{}).LogType(): DefaultLogParser(&awslogs.CloudTrailParser{},
 			&awslogs.CloudTrail{}, awslogs.CloudTrailDesc),
-		(&awslogs.S3ServerAccessParser{}).LogType(): DefaultHourlyLogParser(&awslogs.S3ServerAccessParser{},
+		(&awslogs.S3ServerAccessParser{}).LogType(): DefaultLogParser(&awslogs.S3ServerAccessParser{},
 			&awslogs.S3ServerAccess{}, awslogs.S3ServerAccessDesc),
-		(&awslogs.VPCFlowParser{}).LogType(): DefaultHourlyLogParser(&awslogs.VPCFlowParser{},
+		(&awslogs.VPCFlowParser{}).LogType(): DefaultLogParser(&awslogs.VPCFlowParser{},
 			&awslogs.VPCFlow{}, awslogs.VPCFlowDesc),
-		(&awslogs.ALBParser{}).LogType(): DefaultHourlyLogParser(&awslogs.ALBParser{},
+		(&awslogs.ALBParser{}).LogType(): DefaultLogParser(&awslogs.ALBParser{},
 			&awslogs.ALB{}, awslogs.ALBDesc),
-		(&awslogs.AuroraMySQLAuditParser{}).LogType(): DefaultHourlyLogParser(&awslogs.AuroraMySQLAuditParser{},
+		(&awslogs.AuroraMySQLAuditParser{}).LogType(): DefaultLogParser(&awslogs.AuroraMySQLAuditParser{},
 			&awslogs.AuroraMySQLAudit{}, awslogs.AuroraMySQLAuditDesc),
-		(&awslogs.GuardDutyParser{}).LogType(): DefaultHourlyLogParser(&awslogs.GuardDutyParser{},
+		(&awslogs.GuardDutyParser{}).LogType(): DefaultLogParser(&awslogs.GuardDutyParser{},
 			&awslogs.GuardDuty{}, awslogs.GuardDutyDesc),
-		(&nginxlogs.AccessParser{}).LogType(): DefaultHourlyLogParser(&nginxlogs.AccessParser{},
+		(&nginxlogs.AccessParser{}).LogType(): DefaultLogParser(&nginxlogs.AccessParser{},
 			&nginxlogs.Access{}, nginxlogs.AccessDesc),
-		(&osquerylogs.DifferentialParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.DifferentialParser{},
+		(&osquerylogs.DifferentialParser{}).LogType(): DefaultLogParser(&osquerylogs.DifferentialParser{},
 			&osquerylogs.Differential{}, osquerylogs.DifferentialDesc),
-		(&osquerylogs.BatchParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.BatchParser{},
+		(&osquerylogs.BatchParser{}).LogType(): DefaultLogParser(&osquerylogs.BatchParser{},
 			&osquerylogs.Batch{}, osquerylogs.BatchDesc),
-		(&osquerylogs.StatusParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.StatusParser{},
+		(&osquerylogs.StatusParser{}).LogType(): DefaultLogParser(&osquerylogs.StatusParser{},
 			&osquerylogs.Status{}, osquerylogs.StatusDesc),
-		(&osquerylogs.SnapshotParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.SnapshotParser{},
+		(&osquerylogs.SnapshotParser{}).LogType(): DefaultLogParser(&osquerylogs.SnapshotParser{},
 			&osquerylogs.Snapshot{}, osquerylogs.SnapshotDesc),
-		(&osseclogs.EventInfoParser{}).LogType(): DefaultHourlyLogParser(&osseclogs.EventInfoParser{},
+		(&osseclogs.EventInfoParser{}).LogType(): DefaultLogParser(&osseclogs.EventInfoParser{},
 			&osseclogs.EventInfo{}, osseclogs.EventInfoDesc),
 	}
 )
@@ -67,12 +67,11 @@ var (
 type Registry map[string]*LogParserMetadata
 
 // Most parsers follow this structure, these are currently assumed to all be JSON based, using LogType() as tableName
-func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, description string) *LogParserMetadata {
+func DefaultLogParser(p parsers.LogParser, eventStruct interface{}, description string) *LogParserMetadata {
 	// describes Glue table over processed data in S3
 	gm := awsglue.NewGlueTableMetadata(models.LogData, p.LogType(), description, awsglue.GlueTableHourly, eventStruct)
 	return &LogParserMetadata{
 		Parser:            p,
-		EventStruct:       eventStruct,
 		GlueTableMetadata: gm,
 	}
 }
@@ -80,8 +79,6 @@ func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, descri
 // Describes each parser
 type LogParserMetadata struct {
 	Parser            parsers.LogParser          // does the work
-	EventStruct       interface{}                // should be a struct that defines a log event
-	Description       string                     // describes the  data for documentation and will be added into Glue table
 	GlueTableMetadata *awsglue.GlueTableMetadata // describes associated AWS Glue table (used to generate CF)
 }
 

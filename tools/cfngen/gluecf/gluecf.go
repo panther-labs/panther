@@ -33,7 +33,7 @@ import (
 )
 
 // Glue tables typ for timestamps that we will re-map Go times
-const GlueTimestampType = "timestamp" //
+const GlueTimestampType = "timestamp"
 
 var (
 	CatalogIDRef = cfngen.Ref{Ref: "AWS::AccountId"} // macro expand to accountId for CF

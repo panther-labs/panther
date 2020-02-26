@@ -54,19 +54,17 @@ func (t Glue) Sync() {
 	enteredText = promptUser("Enter regex to select a subset of tables (or <enter> for all tables): ", regexValidator)
 	matchTableName, _ := regexp.Compile(enteredText) // no error check already validated
 
-	if err := syncPartitions(glueClient, matchTableName); err != nil {
-		logger.Fatalf("failed to sync partitions %v", err)
-	}
+	syncPartitions(glueClient, matchTableName)
 }
 
-func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) error {
+func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 	const concurrency = 10
 	updateChan := make(chan *gluePartitionUpdate, concurrency)
 
 	// update to current day at last hour
 	endDay := time.Now().UTC().Truncate(time.Hour * 24).Add(time.Hour * 23)
 
-	// delete and re-create concurrently cuz the GlueTableMetadata API is very slow
+	// delete and re-create concurrently cuz the Glue API is very slow
 	var wg sync.WaitGroup
 	for i := 0; i < concurrency; i++ {
 		wg.Add(1)
@@ -113,7 +111,6 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) error 
 
 	close(updateChan)
 	wg.Wait()
-	return nil
 }
 
 func regexValidator(text string) error {

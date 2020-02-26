@@ -35,7 +35,7 @@ var (
 )
 
 // All log parsers should extend from this to get standardized fields (all prefixed with 'p_' as JSON for uniqueness)
-// NOTE: It is VERY important that fields are added to END of the structure to avoid needed to re-build existing GlueTableMetadata partitions.
+// NOTE: It is VERY important that fields are added to END of the structure to avoid needed to re-build existing Glue partitions.
 //       See https://github.com/awsdocs/amazon-athena-user-guide/blob/master/doc_source/updates-and-partitions.md
 // nolint(lll)
 type PantherLog struct {

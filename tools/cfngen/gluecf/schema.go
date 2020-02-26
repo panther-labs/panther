@@ -18,7 +18,7 @@ package gluecf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Infers GlueTableMetadata table column types from Go types, recursively descends types
+// Infers Glue table column types from Go types, recursively descends types
 
 import (
 	"fmt"

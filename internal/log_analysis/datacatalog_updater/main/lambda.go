@@ -77,7 +77,7 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 		}
 		err = gluePartition.CreatePartition(glueClient)
 		if err != nil {
-			zap.L().Error("failed to update partition", zap.Any("request", *gluePartition))
+			zap.L().Error("failed to create partition", zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
 			return err
 		}
 	}
