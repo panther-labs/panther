@@ -286,12 +286,8 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
 
 	accountID := detail.Get("userIdentity.accountId")
 	if !accountID.Exists() {
-		// fall back to "recipientAccountId"
-		accountID = detail.Get("recipientAccountId")
-		if !accountID.Exists() {
-			return nil, errors.Errorf("unable to extract CloudTrail accountId field for %s event %s",
-				eventSource.Str, eventName.Str)
-		}
+		return nil, errors.Errorf("unable to extract CloudTrail accountId field for %s event %s",
+			eventSource.Str, eventName.Str)
 	}
 	region := detail.Get("awsRegion")
 	if !region.Exists() {

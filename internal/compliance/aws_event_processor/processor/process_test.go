@@ -57,19 +57,6 @@ func TestPreProcessCloudTrail(t *testing.T) {
 	assert.Equal(t, exampleMetadata, actual)
 }
 
-// test the pre-processor with no userIdentity BUT with recipientAccountId
-func TestPreProcessCloudTrailNoUserIdentity(t *testing.T) {
-	event := `{ 
-"eventSource": "aws.nuka", 
-"awsRegion": "us-west-2",
-"recipientAccountId": "111111111111",
-"eventName": "Example" 
-}`
-	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
-	require.Nil(t, err)
-	assert.Equal(t, exampleMetadata, actual)
-}
-
 // test the pre-processor on an event with no event source
 func TestPreProcessCloudTrailFailNoEventSource(t *testing.T) {
 	event := `{
