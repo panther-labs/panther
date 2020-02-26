@@ -128,11 +128,11 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
 	prefix = gm.Prefix()
 	switch gm.timebin {
 	case GlueTableHourly:
-		prefix += fmt.Sprintf("year=%02d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
+		prefix += fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
 	case GlueTableDaily:
-		prefix += fmt.Sprintf("year=%02d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
+		prefix += fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
 	case GlueTableMonthly:
-		prefix += fmt.Sprintf("year=%02d/month=%02d/", t.Year(), t.Month())
+		prefix += fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
 	}
 	return
 }
@@ -227,9 +227,9 @@ func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Ti
 	return client.DeletePartition(input)
 }
 
-// Based on Timebin(), return an []*string values (used for GlueTableMetadata APIs)
+// Based on Timebin(), return an []*string values (used for Glue APIs)
 func (gm *GlueTableMetadata) partitionValues(t time.Time) (values []*string) {
-	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))} // always unpadded
+	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))}
 
 	if gm.timebin >= GlueTableMonthly {
 		values = append(values, aws.String(fmt.Sprintf("%02d", t.Month())))
