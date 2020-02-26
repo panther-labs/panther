@@ -317,7 +317,7 @@ func (t Test) Integration() {
 		return
 	}
 
-	walk("internal", func(path string, info os.FileInfo) {
+	walk(".", func(path string, info os.FileInfo) {
 		if filepath.Base(path) == "integration_test.go" {
 			goPkgIntegrationTest("./" + filepath.Dir(path))
 		}
