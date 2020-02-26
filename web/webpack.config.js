@@ -179,8 +179,8 @@ module.exports = {
       // make sure that all the packages that attempt to resolve the following packages utilise the
       // same version, so we don't end up bundling multiple versions of it.
       // the same version
-      'aws-sdk': path.resolve(__dirname, '../node_modules/aws-sdk'),
-      'apollo-link': path.resolve(__dirname, '../node_modules/@apollo/client'),
+      'aws-sdk': path.resolve(process.cwd(), 'node_modules/aws-sdk'),
+      'apollo-link': path.resolve(process.cwd(), 'node_modules/@apollo/client'),
     },
   },
   plugins: [
