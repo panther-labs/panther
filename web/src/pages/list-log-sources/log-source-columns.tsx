@@ -22,7 +22,7 @@ import React from 'react';
 import { TableProps, Box, Text } from 'pouncejs';
 import { Integration } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
-import ListSourcesTableRowOptionsProps from 'Pages/list-sources/subcomponents/list-sources-table-row-options';
+import LogSourceTableRowOptions from './subcomponents/log-source-table-row-options';
 
 // The columns that the associated table will show
 const columns = [
@@ -60,7 +60,7 @@ const columns = [
     key: 'options',
     flex: '0 1 auto',
     renderColumnHeader: () => <Box mx={5} />,
-    renderCell: item => <ListSourcesTableRowOptionsProps source={item} />,
+    renderCell: item => <LogSourceTableRowOptions source={item} />,
   },
 ] as TableProps<Integration>['columns'];
 

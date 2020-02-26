@@ -21,7 +21,7 @@ import React from 'react';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import { Badge, TableProps } from 'pouncejs';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
-import { TopFailingPolicy, TopFailingResource } from 'Pages/overview/index';
+import { TopFailingPolicy, TopFailingResource } from 'Pages/compliance-overview/index';
 
 /**
  * The columns that the top failing policies table will show

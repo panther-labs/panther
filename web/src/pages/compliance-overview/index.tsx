@@ -37,8 +37,8 @@ import PoliciesByStatusChart from './subcomponents/policies-by-status-chart';
 import ResourcesByPlatformChart from './subcomponents/resources-by-platform-chart';
 import ResourcesByStatusChart from './subcomponents/resources-by-status-chart';
 import DonutChartWrapper from './subcomponents/donut-chart-wrapper';
-import OverviewPageEmptyDataFallback from './empty-data-fallback';
-import OverviewPageSkeleton from './skeleton';
+import ComplianceOverviewPageEmptyDataFallback from './empty-data-fallback';
+import ComplianceOverviewPageSkeleton from './skeleton';
 
 const GET_ORGANIZATION_STATS = gql`
   query GetOrganizationStats {
@@ -102,14 +102,14 @@ interface ApolloQueryData {
   integrations: Integration[];
 }
 
-const Overview: React.FC = () => {
+const ComplianceOverview: React.FC = () => {
   const { history } = useRouter();
   const { data, loading, error } = useQuery<ApolloQueryData>(GET_ORGANIZATION_STATS, {
     fetchPolicy: 'cache-and-network',
   });
 
   if (loading && !data) {
-    return <OverviewPageSkeleton />;
+    return <ComplianceOverviewPageSkeleton />;
   }
 
   if (error) {
@@ -123,7 +123,7 @@ const Overview: React.FC = () => {
   }
 
   if (!data.integrations.length) {
-    return <OverviewPageEmptyDataFallback />;
+    return <ComplianceOverviewPageEmptyDataFallback />;
   }
 
   return (
@@ -185,4 +185,4 @@ const Overview: React.FC = () => {
   );
 };
 
-export default Overview;
+export default ComplianceOverview;

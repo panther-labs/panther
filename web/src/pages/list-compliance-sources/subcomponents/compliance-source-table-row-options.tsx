@@ -24,11 +24,13 @@ import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
 import { SIDESHEETS } from 'Components/utils/sidesheet-context';
 
-interface ListSourcesTableRowOptionsProps {
+interface ComplianceSourceTableRowOptionsProps {
   source: Integration;
 }
 
-const ListSourcesTableRowOptions: React.FC<ListSourcesTableRowOptionsProps> = ({ source }) => {
+const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsProps> = ({
+  source,
+}) => {
   const { showModal } = useModal();
   const { showSidesheet } = useSidesheet();
 
@@ -64,4 +66,4 @@ const ListSourcesTableRowOptions: React.FC<ListSourcesTableRowOptionsProps> = ({
   );
 };
 
-export default React.memo(ListSourcesTableRowOptions);
+export default React.memo(ComplianceSourceTableRowOptions);

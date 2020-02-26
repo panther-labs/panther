@@ -24,16 +24,16 @@ import Wizard from 'Components/wizard';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useMutation, gql } from '@apollo/client';
-import { LIST_INFRA_SOURCES } from 'Pages/list-sources/subcomponents/infra-source-table';
+import { LIST_INFRA_SOURCES } from 'Pages/list-compliance-sources/subcomponents/compliance-source-table';
 import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { AddIntegrationInput, Integration } from 'Generated/schema';
+import WizardPanelWrapper from 'Components/wizard-panel-wrapper';
 import RemediationPanel from './subcomponents/remediation-panel';
 import RealTimeEventPanel from './subcomponents/real-time-event-panel';
 import ResourceScanningPanel from './subcomponents/resource-scanning-panel';
 import SuccessPanel from './subcomponents/success-panel';
-import PanelWrapper from '../panel-wrapper';
 import SourceDetailsPanel from './subcomponents/source-details-panel';
 
 const ADD_INFRA_SOURCE = gql`
@@ -126,15 +126,15 @@ const Index: React.FC = () => {
                       renderStep: ({ goToNextStep }) => {
                         const shouldEnableNextButton = dirty && isValid;
                         return (
-                          <PanelWrapper>
-                            <PanelWrapper.Content>
+                          <WizardPanelWrapper>
+                            <WizardPanelWrapper.Content>
                               <SourceDetailsPanel />
-                            </PanelWrapper.Content>
-                            <PanelWrapper.WizardActions
+                            </WizardPanelWrapper.Content>
+                            <WizardPanelWrapper.Actions
                               goToNextStep={goToNextStep}
                               isNextStepDisabled={!shouldEnableNextButton}
                             />
-                          </PanelWrapper>
+                          </WizardPanelWrapper>
                         );
                       },
                     },
@@ -142,57 +142,57 @@ const Index: React.FC = () => {
                       title: 'Scanning',
                       icon: 'search',
                       renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <PanelWrapper>
-                          <PanelWrapper.Content>
+                        <WizardPanelWrapper>
+                          <WizardPanelWrapper.Content>
                             <ResourceScanningPanel />
-                          </PanelWrapper.Content>
-                          <PanelWrapper.WizardActions
+                          </WizardPanelWrapper.Content>
+                          <WizardPanelWrapper.Actions
                             goToNextStep={goToNextStep}
                             goToPrevStep={goToPrevStep}
                           />
-                        </PanelWrapper>
+                        </WizardPanelWrapper>
                       ),
                     },
                     {
                       title: 'Real Time',
                       icon: 'sync',
                       renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <PanelWrapper>
-                          <PanelWrapper.Content>
+                        <WizardPanelWrapper>
+                          <WizardPanelWrapper.Content>
                             <RealTimeEventPanel />
-                          </PanelWrapper.Content>
-                          <PanelWrapper.WizardActions
+                          </WizardPanelWrapper.Content>
+                          <WizardPanelWrapper.Actions
                             goToNextStep={goToNextStep}
                             goToPrevStep={goToPrevStep}
                           />
-                        </PanelWrapper>
+                        </WizardPanelWrapper>
                       ),
                     },
                     {
                       title: 'Remediation',
                       icon: 'wrench',
                       renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <PanelWrapper>
-                          <PanelWrapper.Content>
+                        <WizardPanelWrapper>
+                          <WizardPanelWrapper.Content>
                             <RemediationPanel />
-                          </PanelWrapper.Content>
-                          <PanelWrapper.WizardActions
+                          </WizardPanelWrapper.Content>
+                          <WizardPanelWrapper.Actions
                             goToNextStep={goToNextStep}
                             goToPrevStep={goToPrevStep}
                           />
-                        </PanelWrapper>
+                        </WizardPanelWrapper>
                       ),
                     },
                     {
                       title: 'Done!',
                       icon: 'check',
                       renderStep: ({ goToPrevStep }) => (
-                        <PanelWrapper>
-                          <PanelWrapper.Content>
+                        <WizardPanelWrapper>
+                          <WizardPanelWrapper.Content>
                             <SuccessPanel loading={loading} />
-                          </PanelWrapper.Content>
-                          <PanelWrapper.WizardActions goToPrevStep={goToPrevStep} />
-                        </PanelWrapper>
+                          </WizardPanelWrapper.Content>
+                          <WizardPanelWrapper.Actions goToPrevStep={goToPrevStep} />
+                        </WizardPanelWrapper>
                       ),
                     },
                   ]}

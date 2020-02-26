@@ -127,6 +127,9 @@ var (
 		"UpdateItem":         {},
 		"BatchWriteItem":     {},
 
+		// ec2
+		"DeleteNetworkInterface": {}, // we handle "DetachNetworkInterface"
+
 		// ecs
 		"DeleteAccountSetting":     {},
 		"DeregisterTaskDefinition": {},

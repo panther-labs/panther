@@ -16,7 +16,7 @@ In the following steps, we will create an SNS Topic and SNS Subscription to noti
    1. `Stack name`: Give the stack a name of your choice, e.g. `panther-log-processing-notifications`
    2. `PantherAccountId` : The 12 digit AWS Account ID where Panther is deployed
    3. `PantherRegion`: The region where Panther is deployed
-   4. `SnsTopicName`: The name for your SNS topic  
+   4. `SnsTopicName`: The name for your SNS topic
 6. Click on **Next** and again **Next**. Click on **Create Stack**. This stack has one output named`SnsTopicArn`
 7. Add [event notifications](https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html) to the S3 buckets intended for data ingestion so they will notify the SNS Topic
 
