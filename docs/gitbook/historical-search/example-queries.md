@@ -4,12 +4,12 @@ Please note that all queries should be qualified with partition columns (year, m
 
 ## Did this IP address have any activity in my network (and in what logs)?
 
-This is often one of the first questions asked in an investigation. Given there is some known-bad indicator such
-as an IP address, then if there is related activity in your network/systems a detailed investigation will need to proceed.
+This is often one of the first questions asked in an investigation. Given there is some known bad indicator such
+as an IP address, then if there is related activity in your network/systems, a detailed investigation will be needed to proceed.
 Panther makes asking such questions easy using the 'all_logs' Athena view which will search all data for the
 indicator of interest. Since most often the answers to these question are negative, making this a fast and efficient
 operation reduces investigation time. In this example the Panther field `p_any_ip_addresses` is used. Panther extracts
-a number of common indicator fields over all data sources into standard fields, see [Panther Fields](./panther-fields.md).
+a number of common indicator fields over all data sources into standard fields (see [Panther Fields](./panther-fields.md)).
 
 ```sql
 SELECT
@@ -62,8 +62,8 @@ LIMIT 10
 
 ## Show VPC Flowlog activity for SSH and RDP
 
-Remote shells typically have a human at one end. During an investigation isolating sessions from SSH and RDP is often
-a standard procedure to try to identify specific actor activity.
+Remote shells typically have a human at one end. During an investigation, isolating sessions from SSH and RDP is often
+a standard procedure to identify specific actor activity.
 
 ```sql
 SELECT
@@ -136,7 +136,7 @@ ORDER BY p_event_time ASC
 
 ## Find all of the sourceIPAddresses for console logins in CloudTrail and rank
 
-This query is similar to the above query but instead ranking the IP addresses for all console logins to understand both which
+This query is similar to the above query but instead we are ranking the IP addresses for all console logins to understand which
 IP addresses are signing into the console as well as ranking the relative activity. This can often highlight
 anomalous behaviors.
 
@@ -196,7 +196,7 @@ ORDER BY p_event_time ASC
 
 ## Show all instance launches in CloudTrail
 
-Often when credentials have been breached there is concern about an actor creating or modifying infrastructure. The
+Often when credentials have been breached, there is concern about an actor creating or modifying infrastructure. The
 below query finds all RunInstances commands. These should be reviewed for anomalous activity. For example, actors
 have been known to spin-up large numbers of GPU instances for bitcoin mining in compromised accounts.
 
@@ -261,7 +261,7 @@ ORDER BY total_rows DESC
 
 ## Rank UserAgent strings over all Nginx and ALB logs
 
-This query will characterize activity by UserAgent over ALB and Nginx logs. This can be useful in an investigation
+This query will characterize activity by UserAgent over ALB and Nginx logs. This can be useful in an investigation,
 if an actor has a known set of characteristic UserAgents.
 
 ```sql
