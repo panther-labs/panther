@@ -70,8 +70,8 @@ Resources:
       # <cfndoc>
       # This lambda implements user api.
       #
-      # ## Troubleshooting
-      #
+      # Failure Impact
+      # * Failure of this lambda will impact user administration in the Panther user interface.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

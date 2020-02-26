@@ -170,6 +170,9 @@ Resources:
       # <cfndoc>
       # The `panther-alert-forwarder` ddb table is updated conditionally when new policies have a violation
       # or a time limit has been exceeded.
+      #
+      # Failure Impact
+      # * Processing of alerts could be slowed or stopped if there are errors/throttles.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: policyId
@@ -217,7 +220,7 @@ Resources:
       #
       # Failure Impact
       # * Failure of this lambda will stop delivery of alerts to destinations.
-      # * Data will not be lost as the lambda will be re-tried indefinitely.
+      # * There will be no data loss until events are purged from the ddb stream (24 hours).
       # </cfndoc>
       Handler: main
       MemorySize: 128

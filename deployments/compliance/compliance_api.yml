@@ -51,6 +51,9 @@ Resources:
       Name: panther-compliance-api
       # <cfndoc>
       # The `panther-compliance-api` API Gateway calls the `panther-compliance-api` lambda.
+      #
+      # Failure Impact
+      # * Failure of this API Gateway will prevent calls to the `panther-compliance-api` lambda.
       # </cfndoc>
       StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -115,6 +118,9 @@ Resources:
       TableName: panther-compliance
       # <cfndoc>
       # This ddb table holds policy violation events for associated resources in the `panther-resources` ddb table.
+      #
+      # Failure Impact
+      # * Processing of policies could be slowed or stopped if there are errors/throttles.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: policyId

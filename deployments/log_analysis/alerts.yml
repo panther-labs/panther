@@ -90,7 +90,7 @@ Resources:
     Properties:
       TableName: panther-log-alerts
       # <cfndoc>
-      # decprecated
+      # will be removed before v1
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: alertId
@@ -135,7 +135,7 @@ Resources:
     Properties:
       TableName: panther-recent-alerts
       # <cfndoc>
-      # Deprecated.
+      # will be removed before v1
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: ruleId
@@ -155,7 +155,7 @@ Resources:
     Properties:
       TableName: panther-events
       # <cfndoc>
-      # deprecated.
+      # will be removed before v1
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: eventHash
@@ -195,7 +195,7 @@ Resources:
       # Lambda for CRUD actions for the alerts API.
       #
       # Failure Impact
-      # * Failure of this lambda will impact ?
+      # * Failure of this lambda will impact the Panther user interface.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -260,7 +260,7 @@ Resources:
             BatchSize: 10
       FunctionName: panther-alert-merger
       # <cfndoc>
-      # deprecated
+      # will be removed before v1
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -313,7 +313,11 @@ Resources:
     Properties:
       TableName: panther-log-alerts-info
       # <cfndoc>
-      # This table maps alerts to rules.
+      # This table holds the alerts history and is managed by the `panther-log-alert-forwarder` lambda.
+      #
+      # Failure Impact
+      # * Delivery of alerts could be slowed or stopped if there are errors/throttles.
+      # * The Panther user interface may be impacted.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: id
@@ -377,7 +381,11 @@ Resources:
             BatchSize: 10
       FunctionName: panther-log-alert-forwarder
       # <cfndoc>
-      # This lambda writes alerts to the `panther-log-alerts-info` ddb table.
+      # This lambda reads from a ddb stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alerts-info` ddb table.
+      #
+      # Failure Impact
+      # * Delivery of alerts could be slowed or stopped.
+      # * There will be no data loss until events are purged from the ddb stream (24 hours).
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

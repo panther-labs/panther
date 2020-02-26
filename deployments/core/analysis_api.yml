@@ -62,6 +62,9 @@ Resources:
       Name: panther-analysis-api
       # <cfndoc>
       # The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+      #
+      # Failure Impact
+      # * Failure of this API Gateway will prevent calls to the `panther-analysis-api` lambda.
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -177,6 +180,10 @@ Resources:
       # <cfndoc>
       # This ddb table holds the policies applied by the `panther-rules-engine` lambda and
       # managed by the `panther-analysis-api`.
+      #
+      # Failure Impact
+      # * Processing of policies could be slowed or stopped if there are errors/throttles.
+      # * The Panther user interface could be impacted.
       # </cfndoc>
 
   AnalysisVersions:

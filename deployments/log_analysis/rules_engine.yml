@@ -130,7 +130,11 @@ Resources:
     Properties:
       TableName: panther-alert-dedup
       # <cfndoc>
-      # This ddb table implements deduplication of alerts.
+      # The `panther-rules-engine` lambda manages this table and it is used to
+      # deduplicate of alerts. The `panther-log-alert-forwarder` read the ddb stream from this table.
+      #
+      # Failure Impact
+      # * Processing of rules could be slowed or stopped if there are errors/throttles.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: partitionKey

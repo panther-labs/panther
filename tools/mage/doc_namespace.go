@@ -45,6 +45,7 @@ and
 architecture diagrams for context.
 
 Resource names below refer to resources in the Cloud Formation templates in Panther.
+
 Each resource describes its function and failure impacts.
 
 `
@@ -72,14 +73,8 @@ func (t Doc) Cfn() {
 
 	var docsBuffer bytes.Buffer
 	docsBuffer.WriteString(inventoryDocHeader)
-	var lastResource string
 	for _, doc := range docs {
-		if doc.Resource == lastResource { // append, since these are in sorted order
-			docsBuffer.WriteString(fmt.Sprintf("%s\n", doc.Documentation))
-		} else {
 			docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n", doc.Resource, doc.Documentation))
-		}
-		lastResource = doc.Resource
 	}
 	if _, err = inventoryFile.Write(docsBuffer.Bytes()); err != nil {
 		logger.Fatalf("failed to write file %s: %v", inventoryFileName, err)

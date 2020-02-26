@@ -65,6 +65,9 @@ Resources:
       Name: panther-resources-api
       # <cfndoc>
       # The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
+      #
+      # Failure Impact
+      # * Failure of this API Gateway will prevent calls to the `panther-resources-api` lambda.
       # </cfndoc>
       StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -93,8 +96,10 @@ Resources:
       FunctionName: panther-resources-api
       # <cfndoc>
       # The `panther-resources-api` lambda implements the resources API.
+      #
       # Failure Impact
-      # * Failure of this lambda will impact ?
+      # * Infrastructure scans may be impacted when updating resources.
+      # * The Panther user interface for display of resources.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -147,6 +152,10 @@ Resources:
       # <cfndoc>
       # This table holds descriptions of the AWS resources in all accounts being monitored.
       # The `panther-resources-api` lambda manages this table.
+      #
+      # Failure Impact
+      # * Processing of policies could be slowed or stopped if there are errors/throttles.
+      # * The Panther user interface could be impacted.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: id

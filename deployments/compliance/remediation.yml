@@ -134,7 +134,7 @@ Resources:
       # The `panther-remediation-api` lambda triggers AWS remediations.
       #
       # Failure Impact
-      # * Failure of this lambda will impact ?
+      # * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
