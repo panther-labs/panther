@@ -56,9 +56,9 @@ func createFirehoseDestination() Destination {
 
 func createS3Destination(s3BucketName string) Destination {
 	return &S3Destination{
-		s3Client:             s3.New(common.Session),
-		snsClient:            sns.New(common.Session),
-		s3Bucket:             s3BucketName,
-		snsTopicArn:          os.Getenv("SNS_TOPIC_ARN"),
+		s3Client:    s3.New(common.Session),
+		snsClient:   sns.New(common.Session),
+		s3Bucket:    s3BucketName,
+		snsTopicArn: os.Getenv("SNS_TOPIC_ARN"),
 	}
 }

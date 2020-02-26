@@ -62,8 +62,8 @@ var (
 
 // S3Destination sends normalized events to S3
 type S3Destination struct {
-	s3Client   s3iface.S3API
-	snsClient  snsiface.SNSAPI
+	s3Client  s3iface.S3API
+	snsClient snsiface.SNSAPI
 	// s3Bucket is the s3Bucket where the data will be stored
 	s3Bucket string
 	// snsTopic is the SNS Topic ARN where we will send the notification

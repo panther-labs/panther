@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	refTime = time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
+	refTime             = time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
 	nonAWSError         = errors.New("nonAWSError") // nolint:golint
 	entityExistsError   = awserr.New(glue.ErrCodeAlreadyExistsException, "PartitionKey already exists.", nil)
 	entityNotFoundError = awserr.New(glue.ErrCodeEntityNotFoundException, "Entity not found", nil)
@@ -62,9 +62,8 @@ var (
 
 type partitionTestEvent struct{}
 
-
 func TestGlueTableMetadataLogData(t *testing.T) {
-	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{} )
+	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{})
 
 	assert.Equal(t, "description", gm.Description())
 	assert.Equal(t, "My.Logs.Type", gm.LogType())
@@ -77,7 +76,7 @@ func TestGlueTableMetadataLogData(t *testing.T) {
 }
 
 func TestGlueTableMetadataRuleMatches(t *testing.T) {
-	gm := NewGlueTableMetadata(models.RuleData, "My.Rule", "description", GlueTableHourly, partitionTestEvent{} )
+	gm := NewGlueTableMetadata(models.RuleData, "My.Rule", "description", GlueTableHourly, partitionTestEvent{})
 
 	assert.Equal(t, "description", gm.Description())
 	assert.Equal(t, "My.Rule", gm.LogType())
@@ -170,12 +169,10 @@ func TestSyncPartitionDeletePartitionNonAWSError(t *testing.T) {
 	glueClient.AssertExpectations(t)
 }
 
-
 type mockGlue struct {
 	glueiface.GlueAPI
 	mock.Mock
 }
-
 
 func (m *mockGlue) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
 	args := m.Called(input)

@@ -61,7 +61,6 @@ type GlueTableMetadata struct {
 	eventStruct  interface{}
 }
 
-
 // Creates a new GlueTableMetadata object
 func NewGlueTableMetadata(datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 	tableName := getTableName(logType)
@@ -151,7 +150,6 @@ func (gm *GlueTableMetadata) SyncPartition(client glueiface.GlueAPI, t time.Time
 	return nil
 }
 
-
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getDatabase(dataType models.DataType) string {
 	if dataType == models.LogData {
@@ -228,7 +226,6 @@ func (gm *GlueTableMetadata) getPartition(client glueiface.GlueAPI, t time.Time)
 	}
 	return client.GetPartition(input)
 }
-
 
 func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Time) (output *glue.DeletePartitionOutput, err error) {
 	input := &glue.DeletePartitionInput{

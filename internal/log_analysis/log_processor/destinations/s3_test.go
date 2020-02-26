@@ -123,8 +123,8 @@ func initTest() {
 type testS3Destination struct {
 	S3Destination
 	// back pointers to mocks
-	mockSns  *mockSns
-	mockS3   *mockS3
+	mockSns *mockSns
+	mockS3  *mockS3
 }
 
 func newS3Destination() *testS3Destination {
@@ -132,13 +132,13 @@ func newS3Destination() *testS3Destination {
 	mockS3 := &mockS3{}
 	return &testS3Destination{
 		S3Destination: S3Destination{
-			snsTopicArn:          "arn:aws:sns:us-west-2:123456789012:test",
-			s3Bucket:             "testbucket",
-			snsClient:            mockSns,
-			s3Client:             mockS3,
+			snsTopicArn: "arn:aws:sns:us-west-2:123456789012:test",
+			s3Bucket:    "testbucket",
+			snsClient:   mockSns,
+			s3Client:    mockS3,
 		},
-		mockSns:  mockSns,
-		mockS3:   mockS3,
+		mockSns: mockSns,
+		mockS3:  mockS3,
 	}
 }
 
