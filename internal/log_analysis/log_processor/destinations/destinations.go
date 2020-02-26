@@ -22,7 +22,6 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/service/firehose"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"go.uber.org/zap"
@@ -59,9 +58,7 @@ func createS3Destination(s3BucketName string) Destination {
 	return &S3Destination{
 		s3Client:             s3.New(common.Session),
 		snsClient:            sns.New(common.Session),
-		glueClient:           glue.New(common.Session),
 		s3Bucket:             s3BucketName,
 		snsTopicArn:          os.Getenv("SNS_TOPIC_ARN"),
-		partitionExistsCache: make(map[string]struct{}),
 	}
 }

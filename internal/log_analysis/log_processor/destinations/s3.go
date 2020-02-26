@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -65,14 +64,11 @@ var (
 type S3Destination struct {
 	s3Client   s3iface.S3API
 	snsClient  snsiface.SNSAPI
-	glueClient glueiface.GlueAPI
 	// s3Bucket is the s3Bucket where the data will be stored
 	s3Bucket string
 	// snsTopic is the SNS Topic ARN where we will send the notification
 	// when we store new data in S3
 	snsTopicArn string
-	// used to track existing glue partitions, avoids excessive GlueTableMetadata API calls
-	partitionExistsCache map[string]struct{}
 }
 
 // SendEvents stores events in S3.

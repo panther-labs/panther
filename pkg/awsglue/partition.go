@@ -122,10 +122,10 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 
 	switch s3Keys[0] {
 	case logS3Prefix:
-		partition.databaseName = logProcessingDatabaseName
+		partition.databaseName = LogProcessingDatabaseName
 		partition.datatype = models.LogData
 	case ruleMatchS3Prefix:
-		partition.databaseName = ruleMatchDatabaseName
+		partition.databaseName = RuleMatchDatabaseName
 		partition.datatype = models.RuleData
 	default:
 		return nil, errors.Errorf("unsupported S3 object prefix %s", s3Keys[0])

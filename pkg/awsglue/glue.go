@@ -35,14 +35,14 @@ const (
 	logS3Prefix       = "logs"
 	ruleMatchS3Prefix = "rules"
 
-	logProcessingDatabaseName        = "panther_logs"
-	logProcessingDatabaseDescription = "Holds tables with data from Panther log processing"
+	LogProcessingDatabaseName        = "panther_logs"
+	LogProcessingDatabaseDescription = "Holds tables with data from Panther log processing"
 
-	ruleMatchDatabaseName        = "panther_rule_matches"
-	ruleMatchDatabaseDescription = "Holds tables with data from Panther rule matching (same table structure as panther_logs)"
+	RuleMatchDatabaseName        = "panther_rule_matches"
+	RuleMatchDatabaseDescription = "Holds tables with data from Panther rule matching (same table structure as panther_logs)"
 
-	viewsDatabaseName        = "panther_views"
-	viewsDatabaseDescription = "Holds views useful for querying Panther data"
+	ViewsDatabaseName        = "panther_views"
+	ViewsDatabaseDescription = "Holds views useful for querying Panther data"
 )
 
 type PartitionKey struct {
@@ -155,9 +155,9 @@ func (gm *GlueTableMetadata) SyncPartition(client glueiface.GlueAPI, t time.Time
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getDatabase(dataType models.DataType) string {
 	if dataType == models.LogData {
-		return logProcessingDatabaseName
+		return LogProcessingDatabaseName
 	} else {
-		return ruleMatchDatabaseName
+		return RuleMatchDatabaseName
 	}
 }
 
