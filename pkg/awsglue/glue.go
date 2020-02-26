@@ -252,4 +252,3 @@ func (gm *GlueTableMetadata) partitionValues(t time.Time) (values []*string) {
 	return
 }
 
-
