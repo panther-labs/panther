@@ -32,17 +32,17 @@ import (
 )
 
 const (
-	LogS3Prefix       = "logs"
-	RuleMatchS3Prefix = "rules"
+	logS3Prefix       = "logs"
+	ruleMatchS3Prefix = "rules"
 
-	LogProcessingDatabaseName        = "panther_logs"
-	LogProcessingDatabaseDescription = "Holds tables with data from Panther log processing"
+	logProcessingDatabaseName        = "panther_logs"
+	logProcessingDatabaseDescription = "Holds tables with data from Panther log processing"
 
-	RuleMatchDatabaseName        = "panther_rule_matches"
-	RuleMatchDatabaseDescription = "Holds tables with data from Panther rule matching (same table structure as panther_logs)"
+	ruleMatchDatabaseName        = "panther_rule_matches"
+	ruleMatchDatabaseDescription = "Holds tables with data from Panther rule matching (same table structure as panther_logs)"
 
-	ViewsDatabaseName        = "panther_views"
-	ViewsDatabaseDescription = "Holds views useful for querying Panther data"
+	viewsDatabaseName        = "panther_views"
+	viewsDatabaseDescription = "Holds views useful for querying Panther data"
 )
 
 type PartitionKey struct {
@@ -163,18 +163,18 @@ func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Ti
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getDatabase(dataType models.DataType) string {
 	if dataType == models.LogData {
-		return LogProcessingDatabaseName
+		return logProcessingDatabaseName
 	} else {
-		return RuleMatchDatabaseName
+		return ruleMatchDatabaseName
 	}
 }
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getTablePrefix(dataType models.DataType, tableName string) string {
 	if dataType == models.LogData {
-		return LogS3Prefix + "/" + tableName + "/"
+		return logS3Prefix + "/" + tableName + "/"
 	} else {
-		return RuleMatchS3Prefix + "/" + tableName + "/"
+		return ruleMatchS3Prefix + "/" + tableName + "/"
 	}
 }
 

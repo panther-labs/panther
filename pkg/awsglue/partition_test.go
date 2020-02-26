@@ -16,25 +16,6 @@ package awsglue
  * limitations under the License.
  */
 
-import (
-	"fmt"
-	"testing"
-
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
-	"github.com/stretchr/testify/mock"
-)
-
-func TestGetPartition(t *testing.T) {
-
-	partition, err := GetPartitionFromS3("s3Bucket", "rules/aws_cloudtrail/year=2020/month=02/day=26/hour=09/rule_id=AWS.CloudTrail.All/20200226094921-1312f718-8ce5-483d-be07-9103c0fdbb0d.json.gz")
-	fmt.Println(partition)
-	fmt.Println(err)
-	client := &mockGlue{}
-	partition.CreatePartition(client)
-
-}
-
 //const (
 //	partitionTestDb    = "testDb"
 //	partitionTestTable = "testTable"
@@ -145,10 +126,6 @@ func TestGetPartition(t *testing.T) {
 //	assert.Equal(t, nonAWSError.Error(), errors.Cause(err).Error())
 //}
 //
-type mockGlue struct {
-	glueiface.GlueAPI
-	mock.Mock
-}
 
 //
 //// fixed for our tests
@@ -174,23 +151,3 @@ type mockGlue struct {
 //		},
 //	}
 //)
-
-func (m *mockGlue) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
-}
-
-func (m *mockGlue) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*glue.GetTableOutput), args.Error(1)
-}
-
-func (m *mockGlue) CreatePartition(input *glue.CreatePartitionInput) (*glue.CreatePartitionOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*glue.CreatePartitionOutput), args.Error(1)
-}
-
-func (m *mockGlue) DeletePartition(input *glue.DeletePartitionInput) (*glue.DeletePartitionOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*glue.DeletePartitionOutput), args.Error(1)
-}
