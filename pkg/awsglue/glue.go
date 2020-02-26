@@ -241,13 +241,13 @@ func (gm *GlueTableMetadata) partitionValues(t time.Time) (values []*string) {
 	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))} // always unpadded
 
 	if gm.timebin >= GlueTableMonthly {
-		values = append(values, aws.String(fmt.Sprintf("%2d", t.Month())))
+		values = append(values, aws.String(fmt.Sprintf("%02d", t.Month())))
 	}
 	if gm.timebin >= GlueTableDaily {
-		values = append(values, aws.String(fmt.Sprintf("%2d", t.Day())))
+		values = append(values, aws.String(fmt.Sprintf("%02d", t.Day())))
 	}
 	if gm.timebin >= GlueTableHourly {
-		values = append(values, aws.String(fmt.Sprintf("%2d", t.Hour())))
+		values = append(values, aws.String(fmt.Sprintf("%02d", t.Hour())))
 	}
 	return
 }
