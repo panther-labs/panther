@@ -24,20 +24,25 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"gopkg.in/go-playground/validator.v9"
+
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
+	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
-	"gopkg.in/go-playground/validator.v9"
 )
 
-var validation =  validator.New()
+var (
+	validation =  validator.New()
+	glueClient glueiface.GlueAPI = glue.New(session.Must(session.NewSession()))
+)
 
 func main() {
 	lambda.Start(handle)
@@ -66,8 +71,14 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 			continue
 		}
 
-		gluePartition := notification.S3ObjectKey
-
+		gluePartition, err := awsglue.GetPartition(*notification.S3Bucket, *notification.S3ObjectKey)
+		if err != nil {
+			zap.L().Error("failed to get partition information from notification", zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
+		}
+		err = gluePartition.CreatePartition(glueClient)
+		if err != nil {
+			return err
+		}
 	}
-
+	return nil
 }
