@@ -8,11 +8,11 @@ Navigate to the AWS [SQS Console](https://console.aws.amazon.com/sqs/home) and s
 
 ![](../../.gitbook/assets/screen-shot-2019-11-08-at-8.23.27-am.png)
 
-Select the newly created or existing queue you wish to send messages to, then select the `Permissions` tab and then the `Add a Permission` button.
+Select the newly created or existing queue you wish to send messages to, then select the `Permissions` tab and then the `Add a Permission` button:
 
 ![](../../.gitbook/assets/screen-shot-2019-11-08-at-8.25.01-am.png)
 
-Grant the `SendMessage` permission to the principal `891530560157` .
+Grant the `SendMessage` permission to the principal `891530560157`:
 
 ![](../../.gitbook/assets/screen-shot-2019-11-08-at-8.29.20-am.png)
 
