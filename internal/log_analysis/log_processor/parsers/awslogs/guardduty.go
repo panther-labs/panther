@@ -19,6 +19,8 @@ package awslogs
  */
 
 import (
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -72,7 +74,7 @@ func (p *GuardDutyParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *GuardDutyParser) Parse(log string) []interface{} {
+func (p *GuardDutyParser) Parse(parseTime *time.Time, log string) []interface{} {
 	event := &GuardDuty{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -80,7 +82,7 @@ func (p *GuardDutyParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	event.updatePantherFields(p)
+	event.updatePantherFields(parseTime, p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
@@ -94,8 +96,8 @@ func (p *GuardDutyParser) LogType() string {
 	return "AWS.GuardDuty"
 }
 
-func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.UpdatedAt)
+func (event *GuardDuty) updatePantherFields(parseTime *time.Time, p *GuardDutyParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.UpdatedAt, (*timestamp.RFC3339)(parseTime))
 
 	// structured (parsed) fields
 	event.AppendAnyAWSARNPtrs(event.Arn)

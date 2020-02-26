@@ -21,6 +21,7 @@ package awslogs
 import (
 	"encoding/csv"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -75,7 +76,7 @@ func (p *S3ServerAccessParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *S3ServerAccessParser) Parse(log string) []interface{} {
+func (p *S3ServerAccessParser) Parse(parseTime *time.Time, log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))
 	reader.LazyQuotes = true
 	reader.Comma = ' '
@@ -135,7 +136,7 @@ func (p *S3ServerAccessParser) Parse(log string) []interface{} {
 		AdditionalFields:   additionalFields,
 	}
 
-	event.updatePantherFields(p)
+	event.updatePantherFields(parseTime, p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
@@ -150,8 +151,8 @@ func (p *S3ServerAccessParser) LogType() string {
 	return "AWS.S3ServerAccess"
 }
 
-func (event *S3ServerAccess) updatePantherFields(p *S3ServerAccessParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Time)
+func (event *S3ServerAccess) updatePantherFields(parseTime *time.Time, p *S3ServerAccessParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Time, (*timestamp.RFC3339)(parseTime))
 	event.AppendAnyIPAddressPtrs(event.RemoteIP)
 	if event.Requester != nil && strings.HasPrefix(*event.Requester, "arn:") {
 		event.AppendAnyAWSARNs(*event.Requester)

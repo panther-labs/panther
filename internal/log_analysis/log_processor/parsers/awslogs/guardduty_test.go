@@ -33,6 +33,7 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 	log := `{"schemaVersion":"2.0","accountId":"123456789012","region":"eu-west-1","partition":"aws","id":"44b7c4e9781822beb75d3fbd518abf5b","arn":"arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b","type":"Stealth:IAMUser/LoggingConfigurationModified","resource":{"resourceType":"AccessKey","accessKeyDetails":{"accessKeyId":"GeneratedFindingAccessKeyId","principalId":"GeneratedFindingPrincipalId","userType":"IAMUser","userName":"GeneratedFindingUserName"}},"service":{"serviceName":"guardduty","detectorId":"b2b7c4e8df224d1b74bece34cc2cf1d5","action":{"actionType":"AWS_API_CALL","awsApiCallAction":{"api":"GeneratedFindingAPIName","serviceName":"GeneratedFindingAPIServiceName","callerType":"Remote IP","remoteIpDetails":{"ipAddressV4":"198.51.100.0","organization":{"asn":"-1","asnOrg":"GeneratedFindingASNOrg","isp":"GeneratedFindingISP","org":"GeneratedFindingORG"},"country":{"countryName":"GeneratedFindingCountryName"},"city":{"cityName":"GeneratedFindingCityName"},"geoLocation":{"lat":0,"lon":0}},"affectedResources":{}}},"resourceRole":"TARGET","additionalInfo":{"recentApiCalls":[{"count":2,"api":"GeneratedFindingAPIName1"},{"count":2,"api":"GeneratedFindingAPIName2"}],"sample":true},"eventFirstSeen":"2018-08-26T14:17:23.000Z","eventLastSeen":"2018-08-26T14:17:23.000Z","archived":false,"count":20},"severity":5,"createdAt":"2018-08-26T14:17:23.000Z","updatedAt":"2018-08-26T14:17:23.000Z","title":"Unusual changes to API activity logging by GeneratedFindingUserName.","description":"APIs commonly used to stop CloudTrail logging, delete existing logs and other such activity that erases any trace of activity in the account, was invoked by IAM principal GeneratedFindingUserName. Such activity is not typically seen from this principal."}`
 
 	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 	expectedEvent := &GuardDuty{
 		SchemaVersion: aws.String("2.0"),
 		AccountID:     aws.String("123456789012"),
@@ -65,12 +66,13 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.GuardDuty")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyIPAddresses("198.51.100.0")
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
 	// nolint(lll)
 	expectedEvent.AppendAnyAWSARNs("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b")
 
-	checkGuardDutyLog(t, log, expectedEvent)
+	checkGuardDutyLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
@@ -78,6 +80,7 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 	log := `{"schemaVersion":"2.0","accountId":"123456789012","region":"eu-west-1","partition":"aws","id":"96b7c4e9781a57ad76e82080578d7d56","arn":"arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56","type":"Trojan:EC2/DGADomainRequest.B","resource":{"resourceType":"Instance","instanceDetails":{"instanceId":"i-99999999","instanceType":"m3.xlarge","launchTime":"2018-08-26T14:17:23Z","instanceState":"running","availabilityZone":"GeneratedFindingInstaceAvailabilityZone","imageId":"ami-99999999","imageDescription":"GeneratedFindingInstaceImageDescription"}},"service":{"serviceName":"guardduty","detectorId":"b2b7c4e8df224d1b74bece34cc2cf1d5","action":{"actionType":"DNS_REQUEST","dnsRequestAction":{"domain":"GeneratedFindingDomainName","protocol":"0","blocked":true}},"resourceRole":"ACTOR","additionalInfo":{"domain":"GeneratedFindingAdditionalDomainName","sample":true},"eventFirstSeen":"2018-08-26T14:17:23.000Z","eventLastSeen":"2018-08-26T14:17:23.000Z","archived":false,"count":18},"severity":8,"createdAt":"2018-08-26T14:17:23.000Z","updatedAt":"2018-08-26T14:17:23.000Z","title":"DGA domain name queried by EC2 instance i-99999999.","description":"EC2 instance i-99999999 is querying algorithmically generated domains. Such domains are commonly used by malware and could be an indication of a compromised EC2 instance."}`
 
 	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 	expectedEvent := &GuardDuty{
 		SchemaVersion: aws.String("2.0"),
 		AccountID:     aws.String("123456789012"),
@@ -110,13 +113,14 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.GuardDuty")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyAWSInstanceIds("i-99999999")
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
 	expectedEvent.AppendAnyDomainNames("GeneratedFindingDomainName", "GeneratedFindingAdditionalDomainName")
 	// nolint(lll)
 	expectedEvent.AppendAnyAWSARNs("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56") // nolint(lll)
 
-	checkGuardDutyLog(t, log, expectedEvent)
+	checkGuardDutyLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestGuardDutyLogSSHBruteForce(t *testing.T) {
@@ -124,6 +128,7 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 	log := `{"schemaVersion":"2.0","accountId":"123456789012","region":"us-east-1","partition":"aws","id":"70b7e42a3241b4c73d8d8cf7b1781f7e","arn":"arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e","type":"UnauthorizedAccess:EC2/SSHBruteForce","resource":{"resourceType":"Instance","instanceDetails":{"platform":null,"tags":[{"key":"tag1","value":"val1"}],"availabilityZone":"us-east-1b","imageDescription":"Amazon Linux 2 AMI 2.0.20191217.0 x86_64 HVM gp2","instanceId":"i-081de1d7604b11e4a","instanceType":"t2.micro","launchTime":"2020-01-13T20:22:32Z","productCodes":[],"iamInstanceProfile":{"id":"AIPAQXSBWDWTIWB5KZKXA","arn":"arn:aws:iam::123456789012:instance-profile/EC2Dev"},"networkInterfaces":[{"subnetId":"subnet-48998e66","privateDnsName":"ip-172-31-81-237.ec2.internal","publicIp":"54.152.215.140","networkInterfaceId":"eni-0fd8e8a70bb7804e3","vpcId":"vpc-4a486c30","securityGroups":[{"groupName":"launch-wizard-31","groupId":"sg-0225c1ef2723cd87d"}],"ipv6Addresses":["2001:0db8:85a3:0000:0000:8a2e:0370:7334"],"publicDnsName":"ec2-54-152-215-140.compute-1.amazonaws.com","privateIpAddress":"172.31.81.237","privateIpAddresses":[{"privateDnsName":"ip-172-31-81-237.ec2.internal","privateIpAddress":"172.31.81.237"}]}],"instanceState":"running","imageId":"ami-062f7200baf2fa504"}},"severity":2,"createdAt":"2018-08-26T14:17:23.000Z","updatedAt":"2018-08-26T14:17:23.000Z","title":"151.80.19.228 is performing SSH brute force attacks against i-081de1d7604b11e4a. ","description":"151.80.19.228 is performing SSH brute force attacks against i-081de1d7604b11e4a. Brute force attacks are used to gain unauthorized access to your instance by guessing the SSH password.","service":{"additionalInfo":{},"action":{"actionType":"NETWORK_CONNECTION","networkConnectionAction":{"localPortDetails":{"portName":"SSH","port":22},"protocol":"TCP","blocked":false,"connectionDirection":"INBOUND","remoteIpDetails":{"ipAddressV4":"151.80.19.228","organization":{"asn":"16276","asnOrg":"OVH SAS","isp":"OVH SAS","org":"OVH SAS"},"country":{"countryName":"France"},"city":{"cityName":"Roubaix"},"geoLocation":{"lon":3.178,"lat":50.6974}},"remotePortDetails":{"port":32938,"portName":"Unknown"}}},"serviceName":"guardduty","detectorId":"6eb7d75a6563c71411485bf5e38adb2f","resourceRole":"TARGET","eventFirstSeen":"2018-08-26T14:17:23.000Z","eventLastSeen":"2018-08-26T14:17:23.000Z","archived":false,"count":3}}`
 
 	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 	expectedEvent := &GuardDuty{
 		SchemaVersion: aws.String("2.0"),
 		AccountID:     aws.String("123456789012"),
@@ -156,6 +161,7 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.GuardDuty")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a")
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
 	expectedEvent.AppendAnyIPAddresses("54.152.215.140",
@@ -165,13 +171,13 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:instance-profile/EC2Dev",
 		"arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e")
 
-	checkGuardDutyLog(t, log, expectedEvent)
+	checkGuardDutyLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestGuardDutyLogMissingRequiredField(t *testing.T) {
 	log := `{"schemaVersion":"2.0","region":"eu-west-1","partition":"aws"}`
 	parser := &GuardDutyParser{}
-	require.Nil(t, parser.Parse(log))
+	require.Nil(t, parser.Parse(nil, log))
 }
 
 func TestGuardDutyLogType(t *testing.T) {
@@ -179,15 +185,20 @@ func TestGuardDutyLogType(t *testing.T) {
 	require.Equal(t, "AWS.GuardDuty", parser.LogType())
 }
 
-func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
+func checkGuardDutyLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *GuardDuty) {
 	parser := &GuardDutyParser{}
-	events := parser.Parse(log)
+	events := parser.Parse(expectedParseTime, log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*GuardDuty)
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
+
+	// For a nil timestamp, expect the event time to be the parse time
+	if expectedEvent.PantherEventTime == nil {
+		expectedEvent.PantherEventTime = event.PantherParseTime
+	}
 
 	require.Equal(t, expectedEvent, event)
 }

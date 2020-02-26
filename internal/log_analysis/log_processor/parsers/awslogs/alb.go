@@ -80,7 +80,7 @@ func (p *ALBParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ALBParser) Parse(log string) []interface{} {
+func (p *ALBParser) Parse(parseTime *time.Time, log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))
 	reader.Comma = ' '
 
@@ -159,7 +159,7 @@ func (p *ALBParser) Parse(log string) []interface{} {
 		ErrorReason:            parsers.CsvStringToPointer(record[24]),
 	}
 
-	event.updatePantherFields(p)
+	event.updatePantherFields(parseTime, p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
@@ -174,8 +174,8 @@ func (p *ALBParser) LogType() string {
 	return "AWS.ALB"
 }
 
-func (event *ALB) updatePantherFields(p *ALBParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp)
+func (event *ALB) updatePantherFields(parseTime *time.Time, p *ALBParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp, (*timestamp.RFC3339)(parseTime))
 	event.AppendAnyIPAddressPtrs(event.ClientIP, event.TargetIP)
 	event.AppendAnyDomainNamePtrs(event.DomainName)
 	event.AppendAnyAWSARNPtrs(event.ChosenCertARN, event.TargetGroupARN)

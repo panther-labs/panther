@@ -19,6 +19,8 @@ package osquerylogs
  */
 
 import (
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -55,7 +57,7 @@ func (p *StatusParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *StatusParser) Parse(log string) []interface{} {
+func (p *StatusParser) Parse(parseTime *time.Time, log string) []interface{} {
 	event := &Status{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -69,7 +71,7 @@ func (p *StatusParser) Parse(log string) []interface{} {
 	event.LogType = event.LogUnderscoreType
 	event.LogUnderscoreType = nil
 
-	event.updatePantherFields(p)
+	event.updatePantherFields(parseTime, p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
@@ -83,9 +85,7 @@ func (p *StatusParser) LogType() string {
 	return "Osquery.Status"
 }
 
-func (event *Status) updatePantherFields(p *StatusParser) {
-	if event.CalendarTime != nil {
-		event.SetCoreFields(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
-	}
+func (event *Status) updatePantherFields(parseTime *time.Time, p *StatusParser) {
+	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), (*timestamp.RFC3339)(parseTime))
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

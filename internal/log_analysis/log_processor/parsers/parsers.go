@@ -18,7 +18,11 @@ package parsers
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "gopkg.in/go-playground/validator.v9"
+import (
+	"time"
+
+	"gopkg.in/go-playground/validator.v9"
+)
 
 // LogParser represents a parser for a supported log type
 type LogParser interface {
@@ -27,7 +31,7 @@ type LogParser interface {
 
 	// Parse attempts to parse the provided log line
 	// If the provided log is not of the supported type the method returns nil
-	Parse(log string) []interface{}
+	Parse(parseTime *time.Time, log string) []interface{}
 
 	// New returns a new instance of the log parser, used like a factory method for stateful parsers
 	New() LogParser

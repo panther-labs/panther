@@ -33,6 +33,7 @@ func TestCloudTrailLogGenerateDataKey(t *testing.T) {
 	log := `{"Records": [{"eventVersion":"1.05","userIdentity":{"type":"AWSService","invokedBy":"cloudtrail.amazonaws.com"},"eventTime":"2018-08-26T14:17:23Z","eventSource":"kms.amazonaws.com","eventName":"GenerateDataKey","awsRegion":"us-west-2","sourceIPAddress":"cloudtrail.amazonaws.com","userAgent":"cloudtrail.amazonaws.com","requestParameters":{"keySpec":"AES_256","encryptionContext":{"aws:cloudtrail:arn":"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail","aws:s3:arn":"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"},"keyId":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"},"responseElements":null,"requestID":"3cff2472-5a91-4bd9-b6d2-8a7a1aaa9086","eventID":"7a215e16-e0ad-4f6c-82b9-33ff6bbdedd2","readOnly":true,"resources":[{"ARN":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0","accountId":"888888888888","type":"AWS::KMS::Key"}],"eventType":"AwsApiCall","recipientAccountId":"888888888888","sharedEventID":"238c190c-1a30-4756-8e08-19fc36ad1b9f"}]}`
 
 	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 	expectedEvent := &CloudTrail{
 		EventVersion: aws.String("1.05"),
 		UserIdentity: &CloudTrailUserIdentity{
@@ -65,13 +66,14 @@ func TestCloudTrailLogGenerateDataKey(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.CloudTrail")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyAWSARNs("arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0",
 		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
 		//nolint:lll
 		"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz")
 	expectedEvent.AppendAnyAWSAccountIds("888888888888")
 
-	checkCloudTrailLog(t, log, []*CloudTrail{expectedEvent})
+	checkCloudTrailLog(t, &expectedParseTime, log, []*CloudTrail{expectedEvent})
 }
 
 func TestCloudTrailLogDecrypt(t *testing.T) {
@@ -79,6 +81,7 @@ func TestCloudTrailLogDecrypt(t *testing.T) {
 	log := `{"Records": [{"eventVersion":"1.05","userIdentity":{"type":"AssumedRole","principalId":"AROAQXSBWDWTDYDZAXXXX:panther-log-processor","arn":"arn:aws:sts::888888888888:assumed-role/panther-app-LogProcessor-XXXXXXXXXXXX-FunctionRole-XXXXXXXXXX/panther-log-processor","accountId":"888888888888","accessKeyId":"ASIAQXSBWDWTC6ITXXXX","sessionContext":{"sessionIssuer":{"type":"Role","principalId":"AROAQXSBWDWTDYDZAXXXX","arn":"arn:aws:iam::888888888888:role/panther-app-LogProcessor-XXXXXXXXXXXX-FunctionRole-XXXXXXXXXX","accountId":"888888888888","userName":"panther-app-LogProcessor-XXXXXXXXXXXX-FunctionRole-XXXXXXXXXX"},"attributes":{"mfaAuthenticated":"false","creationDate":"2018-02-20T13:13:35Z"}}},"eventTime":"2018-08-26T14:17:23Z","eventSource":"kms.amazonaws.com","eventName":"Decrypt","awsRegion":"us-east-1","sourceIPAddress":"1.2.3.4","userAgent":"aws-internal/3 aws-sdk-java/1.11.706 Linux/4.14.77-70.59.amzn1.x86_64 OpenJDK_64-Bit_Server_VM/25.242-b08 java/1.8.0_242 vendor/Oracle_Corporation","requestParameters":{"encryptionContext":{"aws:lambda:FunctionArn":"arn:aws:lambda:us-east-1:888888888888:function:panther-log-processor"},"encryptionAlgorithm":"SYMMETRIC_DEFAULT"},"responseElements":null,"requestID":"3c5a008c-80d5-491a-bf76-0cac924f6ebb","eventID":"1852a808-86e8-4b4c-9d4d-01a85b6a39cd","readOnly":true,"resources":[{"accountId":"888888888888","type":"AWS::KMS::Key","ARN":"arn:aws:kms:us-east-1:888888888888:key/90be6df2-db60-4237-ad9b-a49260XXXXX"}],"eventType":"AwsApiCall"}]}`
 
 	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 	expectedEvent := &CloudTrail{
 		EventVersion: aws.String("1.05"),
 		UserIdentity: &CloudTrailUserIdentity{
@@ -127,6 +130,7 @@ func TestCloudTrailLogDecrypt(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.CloudTrail")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyAWSARNs("arn:aws:kms:us-east-1:888888888888:key/90be6df2-db60-4237-ad9b-a49260XXXXX",
 		"arn:aws:iam::888888888888:role/panther-app-LogProcessor-XXXXXXXXXXXX-FunctionRole-XXXXXXXXXX",
 		"arn:aws:sts::888888888888:assumed-role/panther-app-LogProcessor-XXXXXXXXXXXX-FunctionRole-XXXXXXXXXX/panther-log-processor",
@@ -134,7 +138,7 @@ func TestCloudTrailLogDecrypt(t *testing.T) {
 	expectedEvent.AppendAnyAWSAccountIds("888888888888")
 	expectedEvent.AppendAnyIPAddresses("1.2.3.4")
 
-	checkCloudTrailLog(t, log, []*CloudTrail{expectedEvent})
+	checkCloudTrailLog(t, &expectedParseTime, log, []*CloudTrail{expectedEvent})
 }
 
 func TestCloudTrailLogType(t *testing.T) {
@@ -142,9 +146,9 @@ func TestCloudTrailLogType(t *testing.T) {
 	require.Equal(t, "AWS.CloudTrail", parser.LogType())
 }
 
-func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) {
+func checkCloudTrailLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvents []*CloudTrail) {
 	parser := &CloudTrailParser{}
-	events := parser.Parse(log)
+	events := parser.Parse(expectedParseTime, log)
 
 	require.Equal(t, len(expectedEvents), len(events))
 
@@ -154,6 +158,11 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 		event := events[i].(*CloudTrail)
 		require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 		event.PantherRowID = expectedEvent.PantherRowID
+
+		// For a nil timestamp, expect the event time to be the parse time
+		if expectedEvent.PantherEventTime == nil {
+			expectedEvent.PantherEventTime = event.PantherParseTime
+		}
 	}
 
 	for i := range events {

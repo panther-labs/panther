@@ -46,6 +46,10 @@ func Unix(sec int64, nsec int64) RFC3339 {
 	return (RFC3339)(time.Unix(sec, nsec).UTC())
 }
 
+func Now() RFC3339 {
+	return (RFC3339)(time.Now().UTC())
+}
+
 type RFC3339 time.Time
 
 func (ts *RFC3339) String() string {

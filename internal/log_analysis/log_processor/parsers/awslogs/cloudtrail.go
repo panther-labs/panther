@@ -20,6 +20,7 @@ package awslogs
 
 import (
 	"strings"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
@@ -124,7 +125,7 @@ func (p *CloudTrailParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) Parse(log string) []interface{} {
+func (p *CloudTrailParser) Parse(parseTime *time.Time, log string) []interface{} {
 	cloudTrailRecords := &CloudTrailRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailRecords)
 	if err != nil {
@@ -133,7 +134,7 @@ func (p *CloudTrailParser) Parse(log string) []interface{} {
 	}
 
 	for _, event := range cloudTrailRecords.Records {
-		event.updatePantherFields(p)
+		event.updatePantherFields(parseTime, p)
 	}
 
 	if err := parsers.Validator.Struct(cloudTrailRecords); err != nil {
@@ -152,8 +153,8 @@ func (p *CloudTrailParser) LogType() string {
 	return "AWS.CloudTrail"
 }
 
-func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.EventTime)
+func (event *CloudTrail) updatePantherFields(parseTime *time.Time, p *CloudTrailParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.EventTime, (*timestamp.RFC3339)(parseTime))
 
 	// structured (parsed) fields
 	if event.SourceIPAddress != nil && !strings.HasSuffix(*event.SourceIPAddress, "amazonaws.com") {

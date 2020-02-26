@@ -33,6 +33,7 @@ func TestAccessLog(t *testing.T) {
 	log := `180.76.15.143 - - [06/Feb/2019:00:00:38 +0000] "GET / HTTP/1.1" 301 193 "https://domain1.com/?p=1" "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.htm$"`
 
 	expectedTime := time.Unix(1549411238, 0).UTC()
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 
 	expectedEvent := &Access{
 		RemoteAddress: aws.String("180.76.15.143"),
@@ -47,9 +48,10 @@ func TestAccessLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Nginx.Access")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
 
-	checkAccessLog(t, log, expectedEvent)
+	checkAccessLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestAccessLogWithoutReferer(t *testing.T) {
@@ -57,6 +59,7 @@ func TestAccessLogWithoutReferer(t *testing.T) {
 	log := `180.76.15.143 - - [06/Feb/2019:00:00:38 +0000] "GET / HTTP/1.1" 301 193 "-" "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.htm$"`
 
 	expectedTime := time.Unix(1549411238, 0).UTC()
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 
 	expectedEvent := &Access{
 		RemoteAddress: aws.String("180.76.15.143"),
@@ -70,9 +73,10 @@ func TestAccessLogWithoutReferer(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Nginx.Access")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
 
-	checkAccessLog(t, log, expectedEvent)
+	checkAccessLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestAccessLogType(t *testing.T) {
@@ -80,15 +84,20 @@ func TestAccessLogType(t *testing.T) {
 	require.Equal(t, "Nginx.Access", parser.LogType())
 }
 
-func checkAccessLog(t *testing.T, log string, expectedEvent *Access) {
+func checkAccessLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *Access) {
 	parser := &AccessParser{}
-	events := parser.Parse(log)
+	events := parser.Parse(expectedParseTime, log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*Access)
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
+
+	// For a nil timestamp, expect the event time to be the parse time
+	if expectedEvent.PantherEventTime == nil {
+		expectedEvent.PantherEventTime = event.PantherParseTime
+	}
 
 	require.Equal(t, expectedEvent, event)
 }

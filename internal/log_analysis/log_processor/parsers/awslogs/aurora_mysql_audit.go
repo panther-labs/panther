@@ -22,6 +22,7 @@ import (
 	"encoding/csv"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -62,7 +63,7 @@ func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
+func (p *AuroraMySQLAuditParser) Parse(parseTime *time.Time, log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))
 	records, err := reader.ReadAll()
 	if len(records) == 0 || err != nil {
@@ -101,7 +102,7 @@ func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
 		RetCode:      parsers.CsvStringToIntPointer(record[len(record)-1]),
 	}
 
-	event.updatePantherFields(p)
+	event.updatePantherFields(parseTime, p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
@@ -116,8 +117,8 @@ func (p *AuroraMySQLAuditParser) LogType() string {
 	return "AWS.AuroraMySQLAudit"
 }
 
-func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp)
+func (event *AuroraMySQLAudit) updatePantherFields(parseTime *time.Time, p *AuroraMySQLAuditParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp, (*timestamp.RFC3339)(parseTime))
 	event.AppendAnyIPAddressPtrs(event.Host)
 	event.AppendAnyDomainNamePtrs(event.ServerHost)
 }

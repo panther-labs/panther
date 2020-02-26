@@ -19,6 +19,8 @@ package osquerylogs
  */
 
 import (
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -57,14 +59,14 @@ func (p *BatchParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *BatchParser) Parse(log string) []interface{} {
+func (p *BatchParser) Parse(parseTime *time.Time, log string) []interface{} {
 	event := &Batch{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
 		return nil
 	}
 
-	event.updatePantherFields(p)
+	event.updatePantherFields(parseTime, p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		return nil
@@ -77,9 +79,7 @@ func (p *BatchParser) LogType() string {
 	return "Osquery.Batch"
 }
 
-func (event *Batch) updatePantherFields(p *BatchParser) {
-	if event.CalendarTime != nil {
-		event.SetCoreFields(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
-	}
+func (event *Batch) updatePantherFields(parseTime *time.Time, p *BatchParser) {
+	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), (*timestamp.RFC3339)(parseTime))
 	event.AppendAnyDomainNamePtrs(event.Hostname)
 }

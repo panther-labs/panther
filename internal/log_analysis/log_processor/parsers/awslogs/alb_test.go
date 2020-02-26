@@ -35,6 +35,7 @@ func TestHTTPLog(t *testing.T) {
 		"\"Root=1-58337262-36d228ad5d99923122bbe354\" \"-\" \"-\" 0 2018-08-26T14:17:23.186641Z \"forward\" \"-\" \"-\""
 
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 
 	expectedEvent := &ALB{
 		Type:                   aws.String("http"),
@@ -71,10 +72,11 @@ func TestHTTPLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyIPAddresses("192.168.131.39", "10.0.0.1")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
 
-	checkALBLog(t, log, expectedEvent)
+	checkALBLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestHTTPSLog(t *testing.T) {
@@ -86,6 +88,7 @@ func TestHTTPSLog(t *testing.T) {
 		"1 2018-08-26T14:17:23.186641Z \"authenticate,forward\" \"-\" \"-\""
 
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 
 	expectedEvent := &ALB{
 		Type:                   aws.String("https"),
@@ -122,12 +125,13 @@ func TestHTTPSLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyIPAddresses("192.168.131.39", "10.0.0.1")
 	expectedEvent.AppendAnyDomainNames("www.example.com")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067",
 		"arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012")
 
-	checkALBLog(t, log, expectedEvent)
+	checkALBLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestHTTP2Log(t *testing.T) {
@@ -139,6 +143,7 @@ func TestHTTP2Log(t *testing.T) {
 		"\"redirect\" \"https://example.com:80/\" \"-\""
 
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 
 	expectedEvent := &ALB{
 		Type:                   aws.String("h2"),
@@ -175,10 +180,11 @@ func TestHTTP2Log(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyIPAddresses("10.0.1.252", "10.0.0.66")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
 
-	checkALBLog(t, log, expectedEvent)
+	checkALBLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestHTTPSNoTarget(t *testing.T) {
@@ -189,6 +195,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 `
 
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	expectedParseTime := time.Unix(1582754209, 0).UTC()
 
 	expectedEvent := &ALB{
 		Type:                   aws.String("https"),
@@ -225,10 +232,11 @@ func TestHTTPSNoTarget(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyIPAddresses("138.246.253.5")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
 
-	checkALBLog(t, log, expectedEvent)
+	checkALBLog(t, &expectedParseTime, log, expectedEvent)
 }
 
 func TestAlbLogType(t *testing.T) {
@@ -236,15 +244,20 @@ func TestAlbLogType(t *testing.T) {
 	require.Equal(t, "AWS.ALB", parser.LogType())
 }
 
-func checkALBLog(t *testing.T, log string, expectedEvent *ALB) {
+func checkALBLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *ALB) {
 	parser := &ALBParser{}
-	events := parser.Parse(log)
+	events := parser.Parse(expectedParseTime, log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*ALB)
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
+
+	// For a nil timestamp, expect the event time to be the parse time
+	if expectedEvent.PantherEventTime == nil {
+		expectedEvent.PantherEventTime = event.PantherParseTime
+	}
 
 	require.Equal(t, expectedEvent, event)
 }

@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -127,7 +128,7 @@ var (
 )
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *VPCFlowParser) Parse(log string) []interface{} {
+func (p *VPCFlowParser) Parse(parseTime *time.Time, log string) []interface{} {
 	if p.columnMap == nil { // must be first log line in file
 		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
 			return []interface{}{}
@@ -146,7 +147,7 @@ func (p *VPCFlowParser) Parse(log string) []interface{} {
 
 	event := p.populateEvent(records[0]) // parser should only receive 1 line at a time
 
-	event.updatePantherFields(p)
+	event.updatePantherFields(parseTime, p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
@@ -259,8 +260,8 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 	return event
 }
 
-func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Start)
+func (event *VPCFlow) updatePantherFields(parseTime *time.Time, p *VPCFlowParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Start, (*timestamp.RFC3339)(parseTime))
 	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
 	event.AppendAnyAWSInstanceIdPtrs(event.InstanceID)
 	event.AppendAnyIPAddressPtrs(event.SrcAddr, event.DstAddr, event.PacketSrcAddr, event.PacketDstAddr)
