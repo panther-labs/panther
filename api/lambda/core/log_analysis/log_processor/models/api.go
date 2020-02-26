@@ -25,9 +25,9 @@ type S3Notification struct {
 	// S3ObjectKey is the key of the S3 object that contains the new data
 	S3ObjectKey *string `json:"s3ObjectKey" validate:"required"`
 	// Events is the number of events in the S3 object
-	Events *int `json:"events" validate:"required"`
+	Events *int `json:"events"`
 	// Bytes is the uncompressed size in bytes of the S3 object
-	Bytes *int `json:"bytes" validate:"required"`
+	Bytes *int `json:"bytes"`
 	// Type is the type of data available in the S3 object (LogData,RuleOutput)
 	Type *string `json:"type" validate:"required"`
 	// ID is an identified for the data in the S3 object. In case of LogData this will be

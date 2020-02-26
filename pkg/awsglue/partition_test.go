@@ -1,5 +1,21 @@
 package awsglue
 
+/**
+ * Copyright 2020 Panther Labs Inc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import (
 	"errors"
 	"testing"
@@ -21,19 +37,19 @@ func TestCreatePartitionFromS3Rule(t *testing.T) {
 
 	expectedPartitionValues := []*partitionKeyValue{
 		{
-			key: "year",
+			key:   "year",
 			value: "2020",
 		},
 		{
-			key: "month",
+			key:   "month",
 			value: "02",
 		},
 		{
-			key: "day",
+			key:   "day",
 			value: "26",
 		},
 		{
-			key: "hour",
+			key:   "hour",
 			value: "15",
 		},
 	}
@@ -55,19 +71,19 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 
 	expectedPartitionValues := []*partitionKeyValue{
 		{
-			key: "year",
+			key:   "year",
 			value: "2020",
 		},
 		{
-			key: "month",
+			key:   "month",
 			value: "02",
 		},
 		{
-			key: "day",
+			key:   "day",
 			value: "26",
 		},
 		{
-			key: "hour",
+			key:   "hour",
 			value: "15",
 		},
 	}
@@ -88,8 +104,8 @@ func TestCreatePartition(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedCreatePartitionInput := &glue.CreatePartitionInput{
-		DatabaseName:   aws.String(RuleMatchDatabaseName),
-		TableName:      aws.String("table"),
+		DatabaseName: aws.String(RuleMatchDatabaseName),
+		TableName:    aws.String("table"),
 		PartitionInput: &glue.PartitionInput{
 			StorageDescriptor: &glue.StorageDescriptor{
 				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
@@ -103,7 +119,7 @@ func TestCreatePartition(t *testing.T) {
 				},
 				Location: aws.String("s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/"),
 			},
-			Values:            aws.StringSlice([]string{"2020", "02", "26", "15"}),
+			Values: aws.StringSlice([]string{"2020", "02", "26", "15"}),
 		},
 	}
 
@@ -144,7 +160,8 @@ func TestCreatePartitionPartitionAlreadExists(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := &mockGlue{}
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeAlreadyExistsException, "error", nil))
+	mockClient.On("CreatePartition", mock.Anything).
+		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeAlreadyExistsException, "error", nil))
 
 	assert.NoError(t, partition.CreatePartition(mockClient))
 	mockClient.AssertExpectations(t)
@@ -156,7 +173,8 @@ func TestCreatePartitionAwsError(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := &mockGlue{}
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeInternalServiceException, "error", nil))
+	mockClient.On("CreatePartition", mock.Anything).
+		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeInternalServiceException, "error", nil))
 
 	assert.Error(t, partition.CreatePartition(mockClient))
 	mockClient.AssertExpectations(t)

@@ -47,17 +47,16 @@ func main() {
 	lambda.Start(handle)
 }
 
-func handle(ctx context.Context, event events.SQSEvent) error {
+func handle(ctx context.Context, event events.SQSEvent) (err error) {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
-	return process(lc, event)
-}
-
-func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error) {
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
 	}()
+	return process(event)
+}
 
+func process(event events.SQSEvent) error {
 	for _, record := range event.Records {
 		notification := &models.S3Notification{}
 		if err := jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
