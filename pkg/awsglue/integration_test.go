@@ -20,11 +20,14 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
 const (
@@ -78,47 +81,36 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-//func TestIntegrationGlueMetadataPartitions(t *testing.T) {
-//	if !integrationTest {
-//		t.Skip()
-//	}
-//
-//	var err error
-//
-//	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
-//
-//	setupTables(t)
-//	defer func() {
-//		removeTables(t)
-//	}()
-//
-//	gm, err := NewGlueMetadata(LogS3Prefix, testDb, testTable, "test table", GlueTableHourly, false, &testEvent{})
-//	require.NoError(t, err)
-//
-//	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
-//	err = gm.CreateJSONPartition(glueClient, refTime)
-//	require.NoError(t, err)
-//
-//	// do it again, should fail
-//	err = gm.CreateJSONPartition(glueClient, refTime)
-//	require.Error(t, err)
-//
-//	partitionInfo, err := gm.GetPartitionFromS3(glueClient, refTime)
-//	require.NoError(t, err)
-//	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
-//
-//	// sync it (which does a delete and re-create)
-//	err = gm.SyncPartition(glueClient, refTime)
-//	require.NoError(t, err)
-//	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
-//
-//	_, err = gm.DeletePartition(glueClient, refTime)
-//	require.NoError(t, err)
-//
-//	// ensure deleted
-//	_, err = gm.GetPartitionFromS3(glueClient, refTime)
-//	require.Error(t, err)
-//}
+func TestIntegrationGlueMetadataPartitions(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	var err error
+
+	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
+
+	setupTables(t)
+	defer func() {
+		removeTables(t)
+	}()
+
+	gm := NewGlueTableMetadata(models.LogData, testTable, "test table", GlueTableHourly, &testEvent{})
+	// overwriting DB for test purposes
+	gm.databaseName = testDb
+
+	//expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
+	err = gm.CreateJSONPartition(glueClient, refTime)
+	require.NoError(t, err)
+
+	// sync it (which does a delete and re-create)
+	err = gm.SyncPartition(glueClient, refTime)
+	require.NoError(t, err)
+	//assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
+
+	_, err = gm.deletePartition(glueClient, refTime)
+	require.NoError(t, err)
+}
 
 func setupTables(t *testing.T) {
 	removeTables(t) // in case of left over
