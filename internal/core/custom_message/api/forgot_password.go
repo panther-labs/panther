@@ -20,6 +20,7 @@ package custommessage
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
@@ -54,7 +55,7 @@ func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*ev
 
 	event.Response.EmailMessage = fmt.Sprintf(template,
 		aws.StringValue(user.GivenName), aws.StringValue(user.FamilyName),
-		appDomainURL, event.Request.CodeParameter, aws.StringValue(user.Email))
+		appDomainURL, event.Request.CodeParameter, url.QueryEscape(aws.StringValue(user.Email)))
 	event.Response.EmailSubject = "Panther Password Reset"
 	return event, nil
 }
