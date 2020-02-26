@@ -135,21 +135,6 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
 	return
 }
 
-// SyncPartition deletes and re-creates a partition using the latest table schema. Used when schemas change.
-func (gm *GlueTableMetadata) SyncPartition(client glueiface.GlueAPI, t time.Time) error {
-	_, err := gm.deletePartition(client, t)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "EntityNotFoundException" {
-			return errors.Wrapf(err, "delete partition for %s.%s at %v failed", gm.DatabaseName(), gm.TableName(), t)
-		}
-	}
-	err = gm.CreateJSONPartition(client, t)
-	if err != nil {
-		return errors.Wrapf(err, "create partition for %s.%s at %v failed", gm.DatabaseName(), gm.TableName(), t)
-	}
-	return nil
-}
-
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getDatabase(dataType models.DataType) string {
 	if dataType == models.LogData {
@@ -172,6 +157,21 @@ func getTableName(logType string) string {
 	// clean table name to make sql friendly
 	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
 	return strings.ToLower(tableName)
+}
+
+// SyncPartition deletes and re-creates a partition using the latest table schema. Used when schemas change.
+func (gm *GlueTableMetadata) SyncPartition(client glueiface.GlueAPI, t time.Time) error {
+	_, err := gm.deletePartition(client, t)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "EntityNotFoundException" {
+			return errors.Wrapf(err, "delete partition for %s.%s at %v failed", gm.DatabaseName(), gm.TableName(), t)
+		}
+	}
+	err = gm.CreateJSONPartition(client, t)
+	if err != nil {
+		return errors.Wrapf(err, "create partition for %s.%s at %v failed", gm.DatabaseName(), gm.TableName(), t)
+	}
+	return nil
 }
 
 // Deprecated - use GluePartition.CreatePartition instead
@@ -238,18 +238,18 @@ func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Ti
 
 // Based on Timebin(), return an []*string values (used for GlueTableMetadata APIs)
 func (gm *GlueTableMetadata) partitionValues(t time.Time) (values []*string) {
-	var intFormat string
-
 	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))} // always unpadded
 
 	if gm.timebin >= GlueTableMonthly {
-		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Month())))
+		values = append(values, aws.String(fmt.Sprintf("%2d", t.Month())))
 	}
 	if gm.timebin >= GlueTableDaily {
-		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Day())))
+		values = append(values, aws.String(fmt.Sprintf("%2d", t.Day())))
 	}
 	if gm.timebin >= GlueTableHourly {
-		values = append(values, aws.String(fmt.Sprintf(intFormat, t.Hour())))
+		values = append(values, aws.String(fmt.Sprintf("%2d", t.Hour())))
 	}
 	return
 }
+
+
