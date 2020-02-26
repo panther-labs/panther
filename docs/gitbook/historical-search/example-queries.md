@@ -5,7 +5,7 @@ Please note that all queries should be qualified with partition columns (year, m
 ## Did this IP address have any activity in my network (and in what logs)?
 
 This is often one of the first questions asked in an investigation. Given there is some known bad indicator such
-as an IP address, then if there is related activity in your network/systems, a detailed investigation will be needed to proceed.
+as an IP address, then if there is related activity in your network/systems, a detailed investigation will be needed.
 Panther makes asking such questions easy using the 'all_logs' Athena view which will search all data for the
 indicator of interest. Since most often the answers to these question are negative, making this a fast and efficient
 operation reduces investigation time. In this example the Panther field `p_any_ip_addresses` is used. Panther extracts
@@ -136,8 +136,8 @@ ORDER BY p_event_time ASC
 
 ## Find all of the sourceIPAddresses for console logins in CloudTrail and rank
 
-This query is similar to the above query but instead we are ranking the IP addresses for all console logins to understand which
-IP addresses are signing into the console as well as ranking the relative activity. This can often highlight
+This query is similar to the above query, with the IP addresses ranked for all console logins. This helps identify which
+IP addresses are signing into the console while ranking the relative activity. This can often highlight
 anomalous behaviors.
 
 ```sql
