@@ -41,8 +41,6 @@ const (
 
 	ViewsDatabaseName        = "panther_views"
 	ViewsDatabaseDescription = "Holds views useful for querying Panther data"
-
-	GlueTimestampType = "timestamp" // type in Glue tables for timestamps that we will re-map Go times
 )
 
 type PartitionKey struct {
@@ -147,9 +145,9 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
 	case GlueTableHourly:
 		prefix += fmt.Sprintf("year=%d/month=%d/day=%d/hour=%d/", t.Year(), t.Month(), t.Day(), t.Hour())
 	case GlueTableDaily:
-		prefix += fmt.Sprintf("year=%s/month=%s/day=%s/", t.Year(), t.Month(), t.Day())
+		prefix += fmt.Sprintf("year=%d/month=%d/day=%d/", t.Year(), t.Month(), t.Day())
 	case GlueTableMonthly:
-		prefix += fmt.Sprintf("year=%s/month=%s/", t.Year(), t.Month())
+		prefix += fmt.Sprintf("year=%d/month=%d/", t.Year(), t.Month())
 	}
 	return
 }

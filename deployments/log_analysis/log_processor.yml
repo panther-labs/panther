@@ -167,3 +167,94 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/${PantherDatabase}
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/${PantherDatabase}/*
+
+  UpdaterSnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt UpdaterQueue.Arn
+      Region: !Ref AWS::Region
+      TopicArn: !Ref SnsTopicArn
+      RawMessageDelivery: true
+
+  UpdaterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref UpdaterQueue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Ref SnsTopicArn
+
+  UpdaterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-datacatalog-updater
+      KmsMasterKeyId: !Ref SQSKeyId
+      VisibilityTimeout: 30 # Should match lambda
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt UpdaterDeadLetterQueue.Arn
+        maxReceiveCount: 10
+
+  UpdaterDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-datacatalog-updater-dlq
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+
+  UpdaterFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-datacatalog-updater
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  UpdaterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: panther-datacatalog-updater
+      Description: Updates the glue data catalog
+      CodeUri: ../../out/bin/internal/log_analysis/datacatalog_updater/main
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 30
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt UpdaterQueue.Arn
+            BatchSize: 10
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: AccessSqsKms
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:Encrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+        - Id: WriteGluePartitions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:GetPartition
+                - glue:CreatePartition
+                - glue:GetTable
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*

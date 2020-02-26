@@ -30,7 +30,7 @@ from . import AlertInfo, EventMatch, OutputNotification
 from .alert_merger import update_get_alert_info
 from .logging import get_logger
 
-_KEY_FORMAT = 'rules/{}/year={}/month={}/day={}/hour={}/rule_id={}/{}-{}.gz'
+_KEY_FORMAT = 'rules/{}/year={}/month={}/day={}/hour={}/rule_id={}/{}-{}.json.gz'
 # Maximum number of events in an S3 object
 _MAX_BYTES_IN_MEMORY = 100000000
 _S3_KEY_DATE_FORMAT = '%Y%m%d%H%M%S'

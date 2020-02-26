@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 /**
@@ -96,6 +97,7 @@ func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
 }
 
 func GetPartition(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
+	zap.L().Info("I got this", zap.String("s3Bucket", s3Bucket), zap.String("s3ObjectKey", s3ObjectKey))
 	partition := &GluePartition{s3Bucket: s3Bucket}
 
 	if !strings.HasSuffix(s3ObjectKey, ".json.gz") {
@@ -147,7 +149,7 @@ func GetPartition(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 		return partition, nil
 	}
 
-	hourPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[4], "hour")
+	hourPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[5], "hour")
 	if err != nil {
 		return partition, nil
 	}
@@ -158,7 +160,7 @@ func GetPartition(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 func getTimePartitionColumnField(input string, partitionName string) (*PartitionKeyValue, error) {
 	fields := strings.Split(input, "=")
 	if len(fields) != 2 || fields[0] != partitionName {
-		return nil, errors.Errorf("failed to get partition column %s from %", partitionName, input)
+		return nil, errors.Errorf("failed to get partition column %s from %s", partitionName, input)
 	}
 
 	_, err := strconv.Atoi(fields[1])

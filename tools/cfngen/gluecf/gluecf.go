@@ -31,6 +31,9 @@ import (
 	"github.com/panther-labs/panther/tools/cfngen"
 )
 
+// Glue tables typ for timestamps that we will re-map Go times
+const GlueTimestampType = "timestamp" //
+
 var (
 	CatalogIDRef = cfngen.Ref{Ref: "AWS::AccountId"} // macro expand to accountId for CF
 
@@ -38,15 +41,15 @@ var (
 	GlueMappings = []CustomMapping{
 		{
 			From: reflect.TypeOf(timestamp.RFC3339{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(timestamp.ANSICwithTZ{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(parsers.PantherAnyString{}),
