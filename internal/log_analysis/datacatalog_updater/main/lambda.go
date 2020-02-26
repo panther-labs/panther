@@ -58,6 +58,7 @@ func handle(ctx context.Context, event events.SQSEvent) (err error) {
 
 func process(event events.SQSEvent) error {
 	for _, record := range event.Records {
+		zap.L().Debug("processing record", zap.String("content", record.Body))
 		notification := &models.S3Notification{}
 		if err := jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
 			zap.L().Error("failed to unmarshal record", zap.Error(errors.WithStack(err)))

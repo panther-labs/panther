@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
@@ -103,7 +102,6 @@ func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
 
 // Gets the partition from S3
 func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
-	zap.L().Info("I got this", zap.String("s3Bucket", s3Bucket), zap.String("s3ObjectKey", s3ObjectKey))
 	partition := &GluePartition{s3Bucket: s3Bucket}
 
 	if !strings.HasSuffix(s3ObjectKey, ".json.gz") {
