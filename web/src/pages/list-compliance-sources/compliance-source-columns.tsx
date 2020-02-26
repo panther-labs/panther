@@ -22,7 +22,7 @@ import React from 'react';
 import { Text, TableProps, Icon, Box } from 'pouncejs';
 import { Integration } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
-import ListSourcesTableRowOptionsProps from 'Pages/list-sources/subcomponents/list-sources-table-row-options';
+import ComplianceSourceTableRowOptions from './subcomponents/compliance-source-table-row-options';
 
 // The columns that the associated table will show
 const columns = [
@@ -63,7 +63,7 @@ const columns = [
     key: 'options',
     flex: '0 1 auto',
     renderColumnHeader: () => <Box mx={5} />,
-    renderCell: item => <ListSourcesTableRowOptionsProps source={item} />,
+    renderCell: item => <ComplianceSourceTableRowOptions source={item} />,
   },
 ] as TableProps<Integration>['columns'];
 

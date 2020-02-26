@@ -24,15 +24,15 @@ import Wizard from 'Components/wizard';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useMutation, gql } from '@apollo/client';
-import { LIST_LOG_SOURCES } from 'Pages/list-sources/subcomponents/log-source-table';
+import { LIST_LOG_SOURCES } from 'Pages/list-log-sources/subcomponents/log-source-table';
 import { AddIntegrationInput, Integration } from 'Generated/schema';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import WizardPanelWrapper from 'Components/wizard-panel-wrapper';
 import useRouter from 'Hooks/useRouter';
 import SourceDetailsPanel from './subcomponents/source-details-panel';
 import CfnLaunchPanel from './subcomponents/cfn-launch-panel';
 import SuccessPanel from './subcomponents/success-panel';
-import PanelWrapper from '../panel-wrapper';
 
 const ADD_LOG_SOURCE = gql`
   mutation AddSource($input: AddIntegrationInput!) {
@@ -134,15 +134,15 @@ const CreateLogSource: React.FC = () => {
                           dirty && !errors.integrationLabel && !errors.s3Buckets && !errors.kmsKeys;
 
                         return (
-                          <PanelWrapper>
-                            <PanelWrapper.Content>
+                          <WizardPanelWrapper>
+                            <WizardPanelWrapper.Content>
                               <SourceDetailsPanel />
-                            </PanelWrapper.Content>
-                            <PanelWrapper.WizardActions
+                            </WizardPanelWrapper.Content>
+                            <WizardPanelWrapper.Actions
                               goToNextStep={goToNextStep}
                               isNextStepDisabled={!shouldEnableNextButton}
                             />
-                          </PanelWrapper>
+                          </WizardPanelWrapper>
                         );
                       },
                     },
@@ -152,16 +152,16 @@ const CreateLogSource: React.FC = () => {
                       renderStep: ({ goToPrevStep, goToNextStep }) => {
                         const shouldEnableNextButton = dirty && isValid;
                         return (
-                          <PanelWrapper>
-                            <PanelWrapper.Content>
+                          <WizardPanelWrapper>
+                            <WizardPanelWrapper.Content>
                               <CfnLaunchPanel />
-                            </PanelWrapper.Content>
-                            <PanelWrapper.WizardActions
+                            </WizardPanelWrapper.Content>
+                            <WizardPanelWrapper.Actions
                               goToPrevStep={goToPrevStep}
                               goToNextStep={goToNextStep}
                               isNextStepDisabled={!shouldEnableNextButton}
                             />
-                          </PanelWrapper>
+                          </WizardPanelWrapper>
                         );
                       },
                     },
@@ -169,12 +169,12 @@ const CreateLogSource: React.FC = () => {
                       title: 'Done!',
                       icon: 'check',
                       renderStep: ({ goToPrevStep }) => (
-                        <PanelWrapper>
-                          <PanelWrapper.Content>
+                        <WizardPanelWrapper>
+                          <WizardPanelWrapper.Content>
                             <SuccessPanel loading={loading} />
-                          </PanelWrapper.Content>
-                          <PanelWrapper.WizardActions goToPrevStep={goToPrevStep} />
-                        </PanelWrapper>
+                          </WizardPanelWrapper.Content>
+                          <WizardPanelWrapper.Actions goToPrevStep={goToPrevStep} />
+                        </WizardPanelWrapper>
                       ),
                     },
                   ]}

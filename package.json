@@ -90,7 +90,7 @@
     "aws-appsync-auth-link": "^2.0.1",
     "brace": "^0.11.1",
     "dayjs": "^1.8.19",
-    "echarts": "^4.6.0",
+    "echarts": "^4.2.1",
     "express": "~4.17.1",
     "express-static-gzip": "~2.0.6",
     "formik": "^2.1.3",

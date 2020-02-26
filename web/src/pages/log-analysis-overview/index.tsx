@@ -17,16 +17,29 @@
  */
 
 import React from 'react';
-import queryString from 'query-string';
-import { INTEGRATION_TYPES } from 'Source/constants';
-import useRouter from 'Hooks/useRouter';
-import CreateInfraSource from './subcomponents/create-infra-source';
-import CreateLogSource from './subcomponents/create-log-source';
+import WarningImg from 'Assets/illustrations/warning.svg';
+import { Box, Flex, Heading, Text } from 'pouncejs';
 
-const CreateSourcePage: React.FC = () => {
-  const { location } = useRouter();
-  const { type } = queryString.parse(location.search) as { type: INTEGRATION_TYPES };
-  return type === INTEGRATION_TYPES.AWS_INFRA ? <CreateInfraSource /> : <CreateLogSource />;
+const LogAnalysisOverview: React.FC = () => {
+  return (
+    <Flex
+      height="100%"
+      width="100%"
+      justifyContent="center"
+      alignItems="center"
+      flexDirection="column"
+    >
+      <Box m={10}>
+        <img alt="Construction works" src={WarningImg} width="auto" height={400} />
+      </Box>
+      <Heading size="medium" color="grey400" mb={6}>
+        Log analysis overview is not available
+      </Heading>
+      <Text size="large" color="grey200" textAlign="center" mb={10}>
+        We are currently developing this page and will release it in the near future
+      </Text>
+    </Flex>
+  );
 };
 
-export default CreateSourcePage;
+export default LogAnalysisOverview;

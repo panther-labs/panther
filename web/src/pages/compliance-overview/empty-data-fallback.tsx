@@ -22,7 +22,7 @@ import EmptyDataImg from 'Assets/illustrations/empty-box.svg';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 
-const OverviewPageEmptyDataFallback: React.FC = () => (
+const ComplianceEmptyDataFallback: React.FC = () => (
   <Flex
     height="100%"
     width="100%"
@@ -37,7 +37,7 @@ const OverviewPageEmptyDataFallback: React.FC = () => (
       It{"'"}s empty in here
     </Heading>
     <Text size="large" color="grey200" textAlign="center" mb={10}>
-      You don{"'"}t seem to have any sources connected to our system. <br />
+      You don{"'"}t seem to have any compliance sources connected to our system. <br />
       When you do, a high level overview of your system{"'"}s health will appear here.
     </Text>
     <Button size="large" variant="primary" is={Link} to={urls.compliance.sources.create()}>
@@ -46,4 +46,4 @@ const OverviewPageEmptyDataFallback: React.FC = () => (
   </Flex>
 );
 
-export default OverviewPageEmptyDataFallback;
+export default ComplianceEmptyDataFallback;
