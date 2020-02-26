@@ -143,11 +143,11 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
 	prefix = gm.S3Prefix()
 	switch gm.timebin {
 	case GlueTableHourly:
-		prefix += fmt.Sprintf("year=%d/month=%d/day=%d/hour=%d/", t.Year(), t.Month(), t.Day(), t.Hour())
+		prefix += fmt.Sprintf("year=%02d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
 	case GlueTableDaily:
-		prefix += fmt.Sprintf("year=%d/month=%d/day=%d/", t.Year(), t.Month(), t.Day())
+		prefix += fmt.Sprintf("year=%02d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
 	case GlueTableMonthly:
-		prefix += fmt.Sprintf("year=%d/month=%d/", t.Year(), t.Month())
+		prefix += fmt.Sprintf("year=%02d/month=%02d/", t.Year(), t.Month())
 	}
 	return
 }

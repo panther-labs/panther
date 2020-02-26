@@ -25,7 +25,7 @@ import (
 
 func TestGetPartition(t *testing.T) {
 
-	partition, err := GetPartition("s3Bucket", "logs/aws_cloudtrail/year=2020/month=2/day=26/hour=9/20200226T092639Z-6b0c5d38-82db-4a01-a460-563b9893cb59.json.gz")
+	partition, err := GetPartition("s3Bucket", "rules/aws_cloudtrail/year=2020/month=2/day=26/hour=9/rule_id=AWS.CloudTrail.All/20200226094921-1312f718-8ce5-483d-be07-9103c0fdbb0d.json.gz")
 	fmt.Println(partition)
 	fmt.Println(err)
 
