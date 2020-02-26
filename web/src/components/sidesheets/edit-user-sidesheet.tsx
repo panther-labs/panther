@@ -22,7 +22,7 @@ import ChangePasswordForm from 'Components/forms/change-password-form';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 
-const EditAccountSidesheet: React.FC = () => {
+const EditUserSideSheet: React.FC = () => {
   const { hideSidesheet } = useSidesheet();
   return (
     <SideSheet open onClose={hideSidesheet}>
@@ -42,4 +42,4 @@ const EditAccountSidesheet: React.FC = () => {
   );
 };
 
-export default EditAccountSidesheet;
+export default EditUserSideSheet;
