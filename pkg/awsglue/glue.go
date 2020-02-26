@@ -151,14 +151,6 @@ func (gm *GlueTableMetadata) SyncPartition(client glueiface.GlueAPI, t time.Time
 	return nil
 }
 
-func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Time) (output *glue.DeletePartitionOutput, err error) {
-	input := &glue.DeletePartitionInput{
-		DatabaseName:    aws.String(gm.databaseName),
-		TableName:       aws.String(gm.tableName),
-		PartitionValues: gm.partitionValues(t),
-	}
-	return client.DeletePartition(input)
-}
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getDatabase(dataType models.DataType) string {
@@ -221,11 +213,30 @@ func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t tim
 	}
 	_, err = client.CreatePartition(input)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "EntityNotFoundException" {
+		if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != glue.ErrCodeAlreadyExistsException {
 			return err
 		}
 	}
 	return nil
+}
+
+func (gm *GlueTableMetadata) getPartition(client glueiface.GlueAPI, t time.Time) (output *glue.GetPartitionOutput, err error) {
+	input := &glue.GetPartitionInput{
+		DatabaseName:    aws.String(gm.databaseName),
+		TableName:       aws.String(gm.tableName),
+		PartitionValues: gm.partitionValues(t),
+	}
+	return client.GetPartition(input)
+}
+
+
+func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Time) (output *glue.DeletePartitionOutput, err error) {
+	input := &glue.DeletePartitionInput{
+		DatabaseName:    aws.String(gm.databaseName),
+		TableName:       aws.String(gm.tableName),
+		PartitionValues: gm.partitionValues(t),
+	}
+	return client.DeletePartition(input)
 }
 
 // Based on Timebin(), return an []*string values (used for GlueTableMetadata APIs)

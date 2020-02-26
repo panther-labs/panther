@@ -71,7 +71,7 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	_, err = client.CreatePartition(input)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AlreadyExistsException" {
+			if awsErr.Code() == glue.ErrCodeAlreadyExistsException {
 				return nil
 			}
 		}
