@@ -116,15 +116,6 @@ Resources:
               # This account will be whitelisted and SNS topic from it can subscribe to the SQS queue.
               Action: sns:ConfirmSubscription
               Resource: '*'
-        - Id: ReceiveFromInputSqsQueue
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - sqs:DeleteMessage
-                - sqs:GetQueueAttributes
-                - sqs:ReceiveMessage
-              Resource: !GetAtt Queue.Arn
         - Id: OutputToS3
           Version: 2012-10-17
           Statement:
