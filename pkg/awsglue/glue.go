@@ -63,7 +63,7 @@ type GlueTableMetadata struct {
 	eventStruct  interface{}
 }
 
-func NewGlueTableMetadata(datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata{
+func NewGlueTableMetadata(datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 	tableName := getTableName(logType)
 	tablePrefix := getTablePrefix(datatype, tableName)
 	return &GlueTableMetadata{

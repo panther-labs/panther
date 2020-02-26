@@ -262,7 +262,6 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 	return err
 }
 
-
 func getS3ObjectKey(logType string, timestamp time.Time) string {
 	return fmt.Sprintf(s3ObjectKeyFormat,
 		parserRegistry.LookupParser(logType).GlueTableMetadata.GetPartitionPrefix(timestamp.UTC()), // get the path used in GlueTableMetadata table

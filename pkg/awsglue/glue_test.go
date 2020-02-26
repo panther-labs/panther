@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	s3Prefix = "foo/"
+	s3Prefix           = "foo/"
 	partitionTestDb    = "testDb"
 	partitionTestTable = "testTable"
 )

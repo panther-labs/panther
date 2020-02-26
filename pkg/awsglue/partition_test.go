@@ -25,8 +25,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-
-
 func TestGetPartition(t *testing.T) {
 
 	partition, err := GetPartitionFromS3("s3Bucket", "rules/aws_cloudtrail/year=2020/month=02/day=26/hour=09/rule_id=AWS.CloudTrail.All/20200226094921-1312f718-8ce5-483d-be07-9103c0fdbb0d.json.gz")
@@ -151,6 +149,7 @@ type mockGlue struct {
 	glueiface.GlueAPI
 	mock.Mock
 }
+
 //
 //// fixed for our tests
 //var (

@@ -35,18 +35,18 @@ import (
 //       so the cost of creating the schema is only when actually needing this information.
 
 type GluePartition struct {
-	datatype models.DataType
-	databaseName string
-	tableName string
-	s3Bucket string
-	dataFormat string // Can currently be only "json"
-	compression string // Can only be "gzip" currently
+	datatype        models.DataType
+	databaseName    string
+	tableName       string
+	s3Bucket        string
+	dataFormat      string // Can currently be only "json"
+	compression     string // Can only be "gzip" currently
 	partitionFields []*partitionKeyValue
 }
 
 type partitionKeyValue struct {
 	column string
-	value string
+	value  string
 }
 
 func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
@@ -80,7 +80,7 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 }
 
 func (gp *GluePartition) partitionPrefix() (string, error) {
-	tablePrefix:= getTablePrefix(gp.datatype, gp.tableName)
+	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
 	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
 	for _, partitionField := range gp.partitionFields {
 		prefix += partitionField.column + "=" + partitionField.value + "/"
@@ -179,6 +179,3 @@ func getTimePartitionColumnField(input string, partitionName string) (*partition
 	}
 	return &partitionKeyValue{column: partitionName, value: fields[1]}, nil
 }
-
-
-

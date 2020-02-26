@@ -71,18 +71,18 @@ func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, descri
 	// describes Glue table over processed data in S3
 	gm := awsglue.NewGlueTableMetadata(models.LogData, p.LogType(), description, awsglue.GlueTableHourly, eventStruct)
 	return &LogParserMetadata{
-		Parser:      p,
-		EventStruct: eventStruct,
-		GlueTableMetadata:        gm,
+		Parser:            p,
+		EventStruct:       eventStruct,
+		GlueTableMetadata: gm,
 	}
 }
 
 // Describes each parser
 type LogParserMetadata struct {
-	Parser      parsers.LogParser     // does the work
-	EventStruct interface{}           // should be a struct that defines a log event
-	Description string                // describes the  data for documentation and will be added into Glue table
-	GlueTableMetadata        *awsglue.GlueTableMetadata // describes associated AWS Glue table (used to generate CF)
+	Parser            parsers.LogParser          // does the work
+	EventStruct       interface{}                // should be a struct that defines a log event
+	Description       string                     // describes the  data for documentation and will be added into Glue table
+	GlueTableMetadata *awsglue.GlueTableMetadata // describes associated AWS Glue table (used to generate CF)
 }
 
 // Return a map containing all the available parsers

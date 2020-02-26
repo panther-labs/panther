@@ -30,7 +30,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -40,7 +39,7 @@ import (
 )
 
 var (
-	validation =  validator.New()
+	validation                   = validator.New()
 	glueClient glueiface.GlueAPI = glue.New(session.Must(session.NewSession()))
 )
 
@@ -61,7 +60,7 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 
 	for _, record := range event.Records {
 		notification := &models.S3Notification{}
-		if err :=  jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
+		if err := jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
 			zap.L().Error("failed to unmarshal record", zap.Error(errors.WithStack(err)))
 			continue
 		}
