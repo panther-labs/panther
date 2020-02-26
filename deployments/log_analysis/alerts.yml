@@ -60,8 +60,10 @@ Resources:
       # <cfndoc>
       # This sqs queue receives alert notifications
       # to be processed by `panther-log-alert-forwarder` lambda.
-      # There should be no items in the associated
-      # dead letter queue.
+      #
+      # Failure Impact
+      # * Failure of this sqs q will impact the send of alerts to destinations.
+      # * Failed events will go into the `panther-log-alert-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using the Panther tool `requeue`.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
@@ -75,7 +77,10 @@ Resources:
     Properties:
       QueueName: panther-log-alert-notifications-queue-dlq
       # <cfndoc>
-      # The dead letter queue for the `anther-log-alert-notifications-queue`.
+      # This is the dead letter queue for the `anther-log-alert-notifications-queue`.
+      # Items are in this queue due to a failure of the `panther-log-alert-forwarder` lambda.
+      # When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using
+      # the Panther tool `requeue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 

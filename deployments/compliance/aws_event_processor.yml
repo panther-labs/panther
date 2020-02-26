@@ -65,6 +65,10 @@ Resources:
       # This sqs q receives CloudTrail events delivered by CloudWatch events
       # as well as S3 notifications from log processing.
       # The `panther-aws-event-processor` lambda processes these events.
+      #
+      # Failure Impact
+      # * Failure of this sqs q will impact the continuous scanning accounts.
+      # * Failed events will go into the `panther-aws-events-queue-dlq`. When the system has recovered they should be re-queued to the `panther-aws-events-queue` using the Panther tool `requeue`.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
@@ -117,7 +121,10 @@ Resources:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       QueueName: panther-aws-events-queue-dlq
       # <cfndoc>
-      # The dead letter queue for the `panther-aws-events-queue`.
+      # This is the dead letter queue for the `panther-aws-events-queue`.
+      # Items are in this queue due to a failure of the `panther-aws-event-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-aws-events-queue` using
+      # the Panther tool `requeue`.
       # </cfndoc>
       VisibilityTimeout: 60
 

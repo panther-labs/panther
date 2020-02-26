@@ -92,7 +92,7 @@ Resources:
           RESOURCES_TABLE: !Ref ResourcesTable
       FunctionName: panther-resources-api
       # <cfndoc>
-      # The `panther-resources-api` lambda implements the resources API for the UI.
+      # The `panther-resources-api` lambda implements the resources API.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -171,6 +171,10 @@ Resources:
       # <cfndoc>
       # This sqs q has events from recently changed infrastructure.
       # The lambda `panther-resource-processor` consumes these events to generate alerts.
+      #
+      # Failure Impact
+      # * Failure of this sqs q will impact the delivery of alerts for recently changed infrastucture.
+      # * Failed events will go into the `panther-resources-queue-dlq`. When the system has recovered they should be re-queued to the `panther-resources-queue` using the Panther tool `requeue`.
       # </cfndoc>
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
@@ -184,6 +188,9 @@ Resources:
       QueueName: panther-resources-queue-dlq
       # <cfndoc>
       # The dead letter queue for the `panther-resources-queue`.
+      # Items are in this queue due to a failure of the `panther-resource-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-resources-queue` using
+      # the Panther tool `requeue`.
       # </cfndoc>
       VisibilityTimeout: 60
 

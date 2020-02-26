@@ -109,7 +109,7 @@ Resources:
     Properties:
       TableName: panther-compliance
       # <cfndoc>
-      # This table holds policy violation events for resources.
+      # This table holds policy violation events for associated resources in the `panther-resources` ddb table.
       # </cfndoc>
       AttributeDefinitions:
         - AttributeName: policyId

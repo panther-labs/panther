@@ -63,7 +63,11 @@ Resources:
     Properties:
       QueueName: panther-snapshot-queue
       # <cfndoc>
-      # This sqs q does what???
+      # This sqs q has snapshot request events processed by the `panther-snapshot-pollers` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs q will impact the scanning for changes in infrastrucure.
+      # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       VisibilityTimeout: 900 # Should match lambda
@@ -77,6 +81,9 @@ Resources:
       QueueName: panther-snapshot-queue-dlq
       # <cfndoc>
       # The dead letter queue for the `panther-snapshot-queue`.
+      # Items are in this queue due to a failure of the `panther-snapshot-pollers` lambda.
+      # When the system has recovered they should be re-queued to the `panther-snapshot-queue` using
+      # the Panther tool `requeue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
@@ -179,7 +186,7 @@ Resources:
           TABLE_NAME: !Ref IntegrationsTable
       FunctionName: panther-snapshot-api
       # <cfndoc>
-      # The `panther-snapshot-api` lambda implements the resources API for the UI.
+      # The `panther-snapshot-api` lambda implements the snapshot API.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

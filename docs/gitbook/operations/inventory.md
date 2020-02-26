@@ -41,13 +41,17 @@ This sqs q contains events that may become alerts.
 The `panther-alert-processor` lambda reads from this queue to
 determine if the event requires action or is a duplicate.
 
-### Failure Impact
+Failure Impact
 
-Failure of this sqs q will impact delivery of alert to output destinations.
+- Failure of this sqs q will impact delivery of alerts to output destinations.
+- Failed events will go into the `panther-alert-processor-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using the Panther tool `requeue`.
 
 ## panther-alert-processor-queue-dlq
 
-The dead letter queue for the `panther-alert-processor-queue`.
+This is the dead letter queue for the `panther-alert-processor-queue`.
+Items are in this queue due to a failure of the `panther-alert-processor` lambda.
+When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using
+the Panther tool `requeue`.
 
 ## panther-alerts-api
 
@@ -63,12 +67,13 @@ The dead letter queue for the `panther-alerts-queue`.
 
 ## panther-analysis
 
-This table does what???
+This ddb table holds the policies applied by the `panther-rules-engine` lambda and
+managed by the `panther-analysis-api`.
 
 ## panther-analysis-api
 
-The `panther-analysis-api` API Gateway called the `panther-analysis-api` lambda.
-This lambda implements the analysis apii.
+The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+This lambda implements the analysis API.
 
 ## panther-aws-event-processor
 
@@ -82,9 +87,17 @@ This sqs q receives CloudTrail events delivered by CloudWatch events
 as well as S3 notifications from log processing.
 The `panther-aws-event-processor` lambda processes these events.
 
+Failure Impact
+
+- Failure of this sqs q will impact the continuous scanning accounts.
+- Failed events will go into the `panther-aws-events-queue-dlq`. When the system has recovered they should be re-queued to the `panther-aws-events-queue` using the Panther tool `requeue`.
+
 ## panther-aws-events-queue-dlq
 
-The dead letter queue for the `panther-aws-events-queue`.
+This is the dead letter queue for the `panther-aws-events-queue`.
+Items are in this queue due to a failure of the `panther-aws-event-processor` lambda.
+When the system has recovered they should be re-queued to the `panther-aws-events-queue` using
+the Panther tool `requeue`.
 
 ## panther-aws-remediation
 
@@ -96,7 +109,7 @@ This lambda implements what?
 
 ## panther-compliance
 
-This table holds policy violation events for resources.
+This table holds policy violation events for associated resources in the `panther-resources` ddb table.
 
 ## panther-compliance-api
 
@@ -116,13 +129,17 @@ This is the GraphQL endpoint for the Panther UI.
 This sqs queue receives S3 notifications
 of log files to be processed by `panther-log-processor` lambda.
 
-### Failure Impact
+Failure Impact
 
-Failure of this sqs q will cause log analysis to stop.
+- Failure of this sqs q will impact stop log analysis (log ingest and rule processing).
+- Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
 
 ## panther-input-data-notifications-queue-dlq
 
-The dead letter queue for the `panther-input-data-notifications-queue`.
+This is the dead letter queue for the `panther-input-data-notifications-queue`.
+Items are in this queue due to a failure of the `panther-log-processor` lambda.
+When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
+the Panther tool `requeue`.
 
 ## panther-log-alert-forwarder
 
@@ -132,12 +149,18 @@ This lambda writes alerts to the `panther-log-alerts-info` ddb table.
 
 This sqs queue receives alert notifications
 to be processed by `panther-log-alert-forwarder` lambda.
-There should be no items in the associated
-dead letter queue.
+
+Failure Impact
+
+- Failure of this sqs q will impact the send of alerts to destinations.
+- Failed events will go into the `panther-log-alert-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using the Panther tool `requeue`.
 
 ## panther-log-alert-notifications-queue-dlq
 
-The dead letter queue for the `anther-log-alert-notifications-queue`.
+This is the dead letter queue for the `anther-log-alert-notifications-queue`.
+Items are in this queue due to a failure of the `panther-log-alert-forwarder` lambda.
+When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using
+the Panther tool `requeue`.
 
 ## panther-log-alerts
 
@@ -152,7 +175,7 @@ This table maps alerts to rules.
 The lambda function that processes S3 files from
 notifications posted to the `panther-input-data-notifications-queue` SQS queue.
 
-### Troubleshooting
+Troubleshooting
 
 - If files cannot be processed errors will be generated. Some root causes can be:
   - S3 event configured against a whole bucket rather than a prefix, which causes
@@ -160,10 +183,10 @@ notifications posted to the `panther-input-data-notifications-queue` SQS queue.
   - Variations in the log format not handled by the parsers.
     [Open a bug report](https://github.com/panther-labs/panther/issues).
 
-### Failure Impact
+Failure Impact
 
-Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
-Look for items in the `panther-input-data-notifications-queue-dlq`.
+- Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
+- Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
 
 ## panther-organization
 
@@ -205,9 +228,17 @@ in the `panther-remediation-queue`.
 This sqs q has remediation request events that are
 processed by the `panther-remediation-processor` lambda.
 
+Failure Impact
+
+- Failure of this sqs q will impact the remediation of policy violations.
+- Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
+
 ## panther-remediation-queue-dlq
 
-The dead letter queue for the `panther-remediation-queue`.
+This is the dead letter queue for the `panther-remediation-queue`.
+Items are in this queue due to a failure of the `panther-remediation-processor` lambda.
+When the system has recovered they should be re-queued to the `panther-remediation-queue` using
+the Panther tool `requeue`.
 
 ## panther-resource-processor
 
@@ -224,16 +255,24 @@ The `panther-resources-api` lambda manages this table.
 ## panther-resources-api
 
 The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
-The `panther-resources-api` lambda implements the resources API for the UI.
+The `panther-resources-api` lambda implements the resources API.
 
 ## panther-resources-queue
 
 This sqs q has events from recently changed infrastructure.
 The lambda `panther-resource-processor` consumes these events to generate alerts.
 
+Failure Impact
+
+- Failure of this sqs q will impact the delivery of alerts for recently changed infrastucture.
+- Failed events will go into the `panther-resources-queue-dlq`. When the system has recovered they should be re-queued to the `panther-resources-queue` using the Panther tool `requeue`.
+
 ## panther-resources-queue-dlq
 
 The dead letter queue for the `panther-resources-queue`.
+Items are in this queue due to a failure of the `panther-resource-processor` lambda.
+When the system has recovered they should be re-queued to the `panther-resources-queue` using
+the Panther tool `requeue`.
 
 ## panther-rules-engine
 
@@ -248,11 +287,14 @@ of log files to be processed by `panther-rules-engine` lambda.
 
 ## panther-rules-engine-queue-dlq
 
-The dead letter queue for the `panther-rules-engine-queue`.
+This is the dead letter queue for the `panther-rules-engine-queue`.
+Items are in this queue due to a failure of the `panther-rules-engine` lambda.
+When the system has recovered they should be re-queued to the `panther-rules-engine-queue` using
+the Panther tool `requeue`.
 
 ## panther-snapshot-api
 
-The `panther-snapshot-api` lambda implements the resources API for the UI.
+The `panther-snapshot-api` lambda implements the snapshot API.
 
 ## panther-snapshot-pollers
 
@@ -260,11 +302,19 @@ This does what?
 
 ## panther-snapshot-queue
 
-This sqs q does what???
+This sqs q has snapshot request events processed by the `panther-snapshot-pollers` lambda.
+
+Failure Impact
+
+- Failure of this sqs q will impact the scanning for changes in infrastrucure.
+- Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
 
 ## panther-snapshot-queue-dlq
 
 The dead letter queue for the `panther-snapshot-queue`.
+Items are in this queue due to a failure of the `panther-snapshot-pollers` lambda.
+When the system has recovered they should be re-queued to the `panther-snapshot-queue` using
+the Panther tool `requeue`.
 
 ## panther-snapshot-scheduler
 

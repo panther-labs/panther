@@ -65,8 +65,10 @@ Resources:
       # <cfndoc>
       # This sqs queue receives S3 notifications
       # of log files to be processed by `panther-log-processor` lambda.
-      # ### Failure Impact
-      # Failure of this sqs q will cause log analysis to stop.
+      #
+      # Failure Impact
+      # * Failure of this sqs q will impact stop log analysis (log ingest and rule processing).
+      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
@@ -81,7 +83,10 @@ Resources:
     Properties:
       QueueName: panther-input-data-notifications-queue-dlq
       # <cfndoc>
-      # The dead letter queue for the `panther-input-data-notifications-queue`.
+      # This is the dead letter queue for the `panther-input-data-notifications-queue`.
+      # Items are in this queue due to a failure of the `panther-log-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
+      # the Panther tool `requeue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
@@ -98,17 +103,17 @@ Resources:
       # <cfndoc>
       # The lambda function that processes S3 files from
       # notifications posted to the `panther-input-data-notifications-queue` SQS queue.
-      # ### Troubleshooting
       #
+      # Troubleshooting
       # * If files cannot be processed errors will be generated. Some root causes can be:
       #   * S3 event configured against a whole bucket rather than a prefix, which causes
       #     files other than the intended logs to be processed.
       #   * Variations in the log format not handled by the parsers.
       #     [Open a bug report](https://github.com/panther-labs/panther/issues).
       #
-      # ### Failure Impact
-      # Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
-      # Look for items in the `panther-input-data-notifications-queue-dlq`.
+      # Failure Impact
+      # * Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
+      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Description: Downloads security logs from S3 for Panther analysis
       CodeUri: ../../out/bin/internal/log_analysis/log_processor/main

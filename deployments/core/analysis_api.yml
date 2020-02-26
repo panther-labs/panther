@@ -61,7 +61,7 @@ Resources:
       EndpointConfiguration: REGIONAL
       Name: panther-analysis-api
       # <cfndoc>
-      # The `panther-analysis-api` API Gateway called the `panther-analysis-api` lambda.
+      # The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
@@ -92,7 +92,7 @@ Resources:
           TABLE: !Ref Table
       FunctionName: panther-analysis-api
       # <cfndoc>
-      # This lambda implements the analysis apii.
+      # This lambda implements the analysis API.
       # </cfndoc>
       Handler: main
       MemorySize: 512
@@ -172,7 +172,8 @@ Resources:
         SSEEnabled: True
       TableName: panther-analysis
       # <cfndoc>
-      # This table does what???
+      # This ddb table holds the policies applied by the `panther-rules-engine` lambda and
+      # managed by the `panther-analysis-api`.
       # </cfndoc>
 
   AnalysisVersions:
