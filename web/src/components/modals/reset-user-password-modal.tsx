@@ -46,9 +46,9 @@ const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
   return (
     <BaseConfirmModal
       mutation={mutation}
-      title={`Force change password for ${userDisplayName}`}
+      title={`Force a password change for ${userDisplayName}`}
       subtitle={`Are you sure you want to reset password for ${userDisplayName}?`}
-      onSuccessMsg={`Successfully reset password for ${userDisplayName}`}
+      onSuccessMsg={`Successfully forced a password change for ${userDisplayName}`}
       onErrorMsg={`Failed to reset password for ${userDisplayName}`}
     />
   );
