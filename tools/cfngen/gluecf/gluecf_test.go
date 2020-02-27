@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
@@ -40,20 +41,20 @@ type commonFields struct {
 }
 
 func TestTablesCloudFormation(t *testing.T) {
-	expectedOutput, err := readTestFile("testdata/gluecf.json.cf")
-	require.NoError(t, err)
+	expectedFile := "testdata/gluecf.json.cf"
 
 	// use simple consistent reference set of parsers
-	table, err := awsglue.NewGlueMetadata(awsglue.TablesDatabaseName, "dummy", "dummy",
-		awsglue.GlueTableHourly, false, &dummyParserEvent{})
-	require.NoError(t, err)
-	tables := []*awsglue.GlueMetadata{table}
+	table := awsglue.NewGlueTableMetadata(models.LogData, "Log.Type", "dummy", awsglue.GlueTableHourly, &dummyParserEvent{})
+	tables := []*awsglue.GlueTableMetadata{table}
 
 	cf, err := GenerateTables(tables)
 	require.NoError(t, err)
 
-	// un-comment to see output
-	// os.Stdout.Write(cf)
+	// uncomment to make a new expected file
+	//writeTestFile(cf, expectedFile)
 
-	assert.Equal(t, expectedOutput, string(cf))
+	expectedOutput, err := readTestFile(expectedFile)
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedOutput, cf)
 }

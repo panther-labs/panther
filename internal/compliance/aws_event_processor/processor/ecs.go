@@ -29,12 +29,10 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyECS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonelasticcontainerservice.html
 	var clusterARN string
-	switch eventName {
+	switch metadata.eventName {
 	case "CreateTaskSet", "DeleteCluster", "DeleteTaskSet", "UpdateServicePrimaryTaskSet", "UpdateTaskSet":
 		clusterARN = detail.Get("requestParameters.cluster").Str
 	case "CreateService", "DeleteAttributes", "DeleteService", "DeregisterContainerInstance", "PutAttributes",
@@ -61,7 +59,7 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 		if err != nil {
 			zap.L().Error(
 				"ecs: unable to parse resource ARN",
-				zap.String("eventName", eventName),
+				zap.String("eventName", metadata.eventName),
 				zap.String("resource ARN", clusterARN),
 				zap.Error(errors.WithStack(err)),
 			)
@@ -73,26 +71,20 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 
 		// If it wasn't a cluster, we have to scan the whole region.
 		return []*resourceChange{{
-			AwsAccountID: accountID,
+			AwsAccountID: metadata.accountID,
 			Delete:       false,
-			EventName:    eventName,
-			Region:       detail.Get("awsRegion").Str,
+			EventName:    metadata.eventName,
+			Region:       metadata.region,
 			ResourceType: schemas.EcsClusterSchema,
 		}}
-	case "DeleteAccountSetting", "DeregisterTaskDefinition", "PutAccountSetting", "PutAccountSettingDefault",
-		"RegisterTaskDefinition", "UpdateContainerAgent":
-		// Nothing to do here
-		//
-		// If we add an ECS account wide resource or an ECS TaskDefinition resource we can use these
-		return nil
 	default:
-		zap.L().Warn("ecs: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("ecs: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	// If clusterARN is empty, we failed to parse the ARN out at some point despite trying
 	if clusterARN == "" {
-		zap.L().Error("ecs: known event name, but still failed to parse clusterARN", zap.String("eventName", eventName))
+		zap.L().Error("ecs: known event name, but still failed to parse clusterARN", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
@@ -104,16 +96,16 @@ func classifyECS(detail gjson.Result, accountID string) []*resourceChange {
 		clusterARN = arn.ARN{
 			Partition: "aws",
 			Service:   "ecs",
-			Region:    detail.Get("awsRegion").Str,
-			AccountID: accountID,
+			Region:    metadata.region,
+			AccountID: metadata.accountID,
 			Resource:  "cluster/" + clusterARN,
 		}.String()
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
-		Delete:       eventName == "DeleteCluster",
-		EventName:    eventName,
+		AwsAccountID: metadata.accountID,
+		Delete:       metadata.eventName == "DeleteCluster",
+		EventName:    metadata.eventName,
 		ResourceID:   clusterARN,
 		ResourceType: schemas.EcsClusterSchema,
 	}}

@@ -28,20 +28,10 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyKMS(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyKMS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awskeymanagementservice.html
-	if strings.HasPrefix(eventName, "Decrypt") ||
-		strings.HasPrefix(eventName, "GenerateDataKey") ||
-		strings.HasPrefix(eventName, "Encrypt") {
-
-		zap.L().Debug("kms: ignoring event", zap.String("eventName", eventName))
-		return nil
-	}
-
 	var keyARN string
-	switch eventName {
+	switch metadata.eventName {
 	/*
 		Missing (not sure if needed in all cases):
 			(Connect/Create/Delete/Update)CustomKeyStore
@@ -57,7 +47,7 @@ func classifyKMS(detail gjson.Result, accountID string) []*resourceChange {
 		for _, resource := range resources {
 			resourceARN, err := arn.Parse(resource.Get("ARN").Str)
 			if err != nil {
-				zap.L().Error("kms: unable to extract ARN", zap.String("eventName", eventName))
+				zap.L().Error("kms: unable to extract ARN", zap.String("eventName", metadata.eventName))
 				return nil
 			}
 			if strings.HasPrefix(resourceARN.Resource, "key/") {
@@ -65,14 +55,14 @@ func classifyKMS(detail gjson.Result, accountID string) []*resourceChange {
 			}
 		}
 	default:
-		zap.L().Warn("kms: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("kms: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
-		Delete:       eventName == "DeleteKey",
-		EventName:    eventName,
+		AwsAccountID: metadata.accountID,
+		Delete:       metadata.eventName == "DeleteKey",
+		EventName:    metadata.eventName,
 		ResourceID:   keyARN,
 		ResourceType: schemas.KmsKeySchema,
 	}}

@@ -19,6 +19,7 @@ package registry
  */
 
 import (
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
@@ -36,29 +37,29 @@ type Interface interface {
 var (
 	// mapping of LogType -> LogParserMetadata
 	parsersRegistry = Registry{
-		(&awslogs.CloudTrailParser{}).LogType(): DefaultHourlyLogParser(&awslogs.CloudTrailParser{},
+		(&awslogs.CloudTrailParser{}).LogType(): DefaultLogParser(&awslogs.CloudTrailParser{},
 			&awslogs.CloudTrail{}, awslogs.CloudTrailDesc),
-		(&awslogs.S3ServerAccessParser{}).LogType(): DefaultHourlyLogParser(&awslogs.S3ServerAccessParser{},
+		(&awslogs.S3ServerAccessParser{}).LogType(): DefaultLogParser(&awslogs.S3ServerAccessParser{},
 			&awslogs.S3ServerAccess{}, awslogs.S3ServerAccessDesc),
-		(&awslogs.VPCFlowParser{}).LogType(): DefaultHourlyLogParser(&awslogs.VPCFlowParser{},
+		(&awslogs.VPCFlowParser{}).LogType(): DefaultLogParser(&awslogs.VPCFlowParser{},
 			&awslogs.VPCFlow{}, awslogs.VPCFlowDesc),
-		(&awslogs.ALBParser{}).LogType(): DefaultHourlyLogParser(&awslogs.ALBParser{},
+		(&awslogs.ALBParser{}).LogType(): DefaultLogParser(&awslogs.ALBParser{},
 			&awslogs.ALB{}, awslogs.ALBDesc),
-		(&awslogs.AuroraMySQLAuditParser{}).LogType(): DefaultHourlyLogParser(&awslogs.AuroraMySQLAuditParser{},
+		(&awslogs.AuroraMySQLAuditParser{}).LogType(): DefaultLogParser(&awslogs.AuroraMySQLAuditParser{},
 			&awslogs.AuroraMySQLAudit{}, awslogs.AuroraMySQLAuditDesc),
-		(&awslogs.GuardDutyParser{}).LogType(): DefaultHourlyLogParser(&awslogs.GuardDutyParser{},
+		(&awslogs.GuardDutyParser{}).LogType(): DefaultLogParser(&awslogs.GuardDutyParser{},
 			&awslogs.GuardDuty{}, awslogs.GuardDutyDesc),
-		(&nginxlogs.AccessParser{}).LogType(): DefaultHourlyLogParser(&nginxlogs.AccessParser{},
+		(&nginxlogs.AccessParser{}).LogType(): DefaultLogParser(&nginxlogs.AccessParser{},
 			&nginxlogs.Access{}, nginxlogs.AccessDesc),
-		(&osquerylogs.DifferentialParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.DifferentialParser{},
+		(&osquerylogs.DifferentialParser{}).LogType(): DefaultLogParser(&osquerylogs.DifferentialParser{},
 			&osquerylogs.Differential{}, osquerylogs.DifferentialDesc),
-		(&osquerylogs.BatchParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.BatchParser{},
+		(&osquerylogs.BatchParser{}).LogType(): DefaultLogParser(&osquerylogs.BatchParser{},
 			&osquerylogs.Batch{}, osquerylogs.BatchDesc),
-		(&osquerylogs.StatusParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.StatusParser{},
+		(&osquerylogs.StatusParser{}).LogType(): DefaultLogParser(&osquerylogs.StatusParser{},
 			&osquerylogs.Status{}, osquerylogs.StatusDesc),
-		(&osquerylogs.SnapshotParser{}).LogType(): DefaultHourlyLogParser(&osquerylogs.SnapshotParser{},
+		(&osquerylogs.SnapshotParser{}).LogType(): DefaultLogParser(&osquerylogs.SnapshotParser{},
 			&osquerylogs.Snapshot{}, osquerylogs.SnapshotDesc),
-		(&osseclogs.EventInfoParser{}).LogType(): DefaultHourlyLogParser(&osseclogs.EventInfoParser{},
+		(&osseclogs.EventInfoParser{}).LogType(): DefaultLogParser(&osseclogs.EventInfoParser{},
 			&osseclogs.EventInfo{}, osseclogs.EventInfoDesc),
 	}
 )
@@ -66,29 +67,19 @@ var (
 type Registry map[string]*LogParserMetadata
 
 // Most parsers follow this structure, these are currently assumed to all be JSON based, using LogType() as tableName
-func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, description string) *LogParserMetadata {
-	tableName := p.LogType() // default to LogType()
-
+func DefaultLogParser(p parsers.LogParser, eventStruct interface{}, description string) *LogParserMetadata {
 	// describes Glue table over processed data in S3
-	gm, err := awsglue.NewGlueMetadata(awsglue.TablesDatabaseName, tableName, description, awsglue.GlueTableHourly, false, eventStruct)
-	if err != nil {
-		panic(err) // panic is justified because this means configuration is WRONG
-	}
-
+	gm := awsglue.NewGlueTableMetadata(models.LogData, p.LogType(), description, awsglue.GlueTableHourly, eventStruct)
 	return &LogParserMetadata{
-		Parser:      p,
-		EventStruct: eventStruct,
-		Description: description,
-		Glue:        gm,
+		Parser:            p,
+		GlueTableMetadata: gm,
 	}
 }
 
 // Describes each parser
 type LogParserMetadata struct {
-	Parser      parsers.LogParser     // does the work
-	EventStruct interface{}           // should be a struct that defines a log event
-	Description string                // describes the  data for documentation and will be added into Glue table
-	Glue        *awsglue.GlueMetadata // describes associated AWS Glue table (used to generate CF)
+	Parser            parsers.LogParser          // does the work
+	GlueTableMetadata *awsglue.GlueTableMetadata // describes associated AWS Glue table (used to generate CF)
 }
 
 // Return a map containing all the available parsers
@@ -97,9 +88,9 @@ func AvailableParsers() Registry {
 }
 
 // Return a slice containing just the Glue tables
-func AvailableTables() (tables []*awsglue.GlueMetadata) {
+func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
 	for _, lpm := range parsersRegistry {
-		tables = append(tables, lpm.Glue)
+		tables = append(tables, lpm.GlueTableMetadata)
 	}
 	return
 }

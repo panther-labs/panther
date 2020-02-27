@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -40,38 +41,32 @@ type table2Event struct {
 }
 
 func TestGenerateViewAllLogs(t *testing.T) {
-	table1, err := awsglue.NewGlueMetadata("db", "table1", "test table1", awsglue.GlueTableHourly,
-		false, &table1Event{})
-	require.NoError(t, err)
-	table2, err := awsglue.NewGlueMetadata("db", "table2", "test table2", awsglue.GlueTableHourly,
-		false, &table2Event{})
-	require.NoError(t, err)
+	table1 := awsglue.NewGlueTableMetadata(models.LogData, "table1", "test table1", awsglue.GlueTableHourly, &table1Event{})
+	table2 := awsglue.NewGlueTableMetadata(models.LogData, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
 	// nolint (lll)
 	expectedSQL := `create or replace view panther_views.all_logs as
-select day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_any_md5_hashes,p_any_sha1_hashes,p_event_time,p_log_type,p_row_id,year from db.table1
+select day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_any_md5_hashes,p_any_sha1_hashes,p_event_time,p_log_type,p_row_id,year from panther_logs.table1
 	union all
-select day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_any_md5_hashes,p_any_sha1_hashes,p_event_time,p_log_type,p_row_id,year from db.table2
+select day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_ip_addresses,p_any_ip_domain_names,p_any_md5_hashes,p_any_sha1_hashes,p_event_time,p_log_type,p_row_id,year from panther_logs.table2
 ;
 `
-	sql, err := generateViewAllLogs([]*awsglue.GlueMetadata{table1, table2})
+	sql, err := generateViewAllLogs([]*awsglue.GlueTableMetadata{table1, table2})
 	require.NoError(t, err)
 	require.Equal(t, expectedSQL, sql)
 }
 
 func TestGenerateViewAllLogsFail(t *testing.T) {
-	// no tables
-	_, err := generateViewAllLogs([]*awsglue.GlueMetadata{})
-	require.Error(t, err)
-	require.True(t, strings.Contains(err.Error(), "no tables"))
-
 	// one has daily partitions and one has hourly
-	table1, err := awsglue.NewGlueMetadata("db", "table1", "test table1", awsglue.GlueTableDaily,
-		false, nil)
-	require.NoError(t, err)
-	table2, err := awsglue.NewGlueMetadata("db", "table2", "test table2", awsglue.GlueTableHourly,
-		false, nil)
-	require.NoError(t, err)
-	_, err = generateViewAllLogs([]*awsglue.GlueMetadata{table1, table2})
+	table1 := awsglue.NewGlueTableMetadata(models.LogData, "table1", "test table1", awsglue.GlueTableDaily, &table1Event{})
+	table2 := awsglue.NewGlueTableMetadata(models.LogData, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
+	_, err := generateViewAllLogs([]*awsglue.GlueTableMetadata{table1, table2})
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "all tables do not share same partition keys"))
+}
+
+func TestGenerateLogsViewsFail(t *testing.T) {
+	// no tables
+	_, err := generateLogViews([]*awsglue.GlueTableMetadata{})
+	require.Error(t, err)
+	require.True(t, strings.Contains(err.Error(), "no tables"))
 }

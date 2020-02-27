@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsathena"
@@ -40,7 +41,7 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 		return errors.Wrap(err, "CreateOrReplaceViews() failed")
 	}
 	s3Path := "s3://" + athenaResultsBucket + "/athena/"
-	sqlStatements, err := generateSQLViews(registry.AvailableTables())
+	sqlStatements, err := generateLogViews(registry.AvailableTables())
 	if err != nil {
 		return err
 	}
@@ -58,26 +59,47 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 	return err
 }
 
-// generateSQLViews creates useful Athena views in the panther views database
-func generateSQLViews(tables []*awsglue.GlueMetadata) (sqlStatements []string, err error) {
+// generateLogViews creates useful Athena views in the panther views database
+func generateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []string, err error) {
+	if len(tables) == 0 {
+		return nil, errors.New("no tables specified for generateLogViews()")
+	}
 	sqlStatement, err := generateViewAllLogs(tables)
 	if err != nil {
-		return sqlStatements, err
+		return nil, err
+	}
+	sqlStatements = append(sqlStatements, sqlStatement)
+	sqlStatement, err = generateViewAllRuleMatches(tables)
+	if err != nil {
+		return nil, err
 	}
 	sqlStatements = append(sqlStatements, sqlStatement)
 	// add future views here
 	return sqlStatements, nil
 }
 
-// generateViewAllLogs creates a view over all log sources using "panther" fields
-func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string, err error) {
-	if len(tables) == 0 {
-		return "", errors.New("no tables specified for generateViewAllLogs()")
+// generateViewAllLogs creates a view over all log sources in log db using "panther" fields
+func generateViewAllLogs(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
+	return generateViewAllHelper("all_logs", tables, []gluecf.Column{})
+}
+
+// generateViewAllRuleMatches creates a view over all log sources in rule match db the using "panther" fields
+func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
+	// the rule match tables share the same structure as the logs with some extra columns
+	var ruleTables []*awsglue.GlueTableMetadata
+	for _, table := range tables {
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		ruleTables = append(ruleTables, ruleTable)
 	}
+	return generateViewAllHelper("all_rule_matches", ruleTables, gluecf.RuleMatchColumns)
+}
+
+func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []gluecf.Column) (sql string, err error) {
 	// validate they all have the same partition keys
 	if len(tables) > 1 {
 		// create string of partition for comparison
-		genKey := func(partitions []awsglue.Partition) (key string) {
+		genKey := func(partitions []awsglue.PartitionKey) (key string) {
 			for _, p := range partitions {
 				key += p.Name + p.Type
 			}
@@ -86,16 +108,16 @@ func generateViewAllLogs(tables []*awsglue.GlueMetadata) (sql string, err error)
 		referenceKey := genKey(tables[0].PartitionKeys())
 		for _, table := range tables[1:] {
 			if referenceKey != genKey(table.PartitionKeys()) {
-				return "", errors.New("all tables do not share same partition keys for generateViewAllLogs()")
+				return "", errors.New("all tables do not share same partition keys for generateViewAllHelper()")
 			}
 		}
 	}
 
 	// collect the Panther fields, add "NULL" for fields not present in some tables but present in others
-	pantherViewColumns := newPantherViewColumns(tables)
+	pantherViewColumns := newPantherViewColumns(tables, extraColumns)
 
 	var sqlLines []string
-	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.all_logs as", awsglue.ViewsDatabaseName))
+	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.%s as", awsglue.ViewsDatabaseName, viewName))
 
 	for i, table := range tables {
 		sqlLines = append(sqlLines, fmt.Sprintf("select %s from %s.%s",
@@ -117,14 +139,14 @@ type pantherViewColumns struct {
 	columnsByTable map[string]map[string]struct{} // table -> map of column names in that table
 }
 
-func newPantherViewColumns(tables []*awsglue.GlueMetadata) *pantherViewColumns {
+func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []gluecf.Column) *pantherViewColumns {
 	pvc := &pantherViewColumns{
 		allColumnsSet:  make(map[string]struct{}),
 		columnsByTable: make(map[string]map[string]struct{}),
 	}
 
 	for _, table := range tables {
-		pvc.inferViewColumns(table)
+		pvc.inferViewColumns(table, extraColumns)
 	}
 
 	// convert set to sorted slice
@@ -136,9 +158,10 @@ func newPantherViewColumns(tables []*awsglue.GlueMetadata) *pantherViewColumns {
 
 	return pvc
 }
-func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueMetadata) {
+func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []gluecf.Column) {
 	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
 	columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
+	columns = append(columns, extraColumns...)
 	var selectColumns []string
 	for _, col := range columns {
 		if strings.HasPrefix(col.Name, parsers.PantherFieldPrefix) { // only Panther columns
@@ -161,7 +184,7 @@ func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueMetadata) {
 	}
 }
 
-func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueMetadata) string {
+func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueTableMetadata) string {
 	tableColumns := pvc.columnsByTable[table.TableName()]
 	selectColumns := make([]string, 0, len(pvc.allColumns))
 	for _, column := range pvc.allColumns {

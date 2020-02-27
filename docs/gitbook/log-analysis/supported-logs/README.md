@@ -44,9 +44,9 @@ AWS contains a variety of critical data sources used to audit API usage, databas
 
 [OSSEC](https://www.ossec.net/) is a widely used open source host intrusion detection system. Panther supports the JSON alerts.json log file format for OSSEC EventInfo alerts.
 
-| Log Type          | Reference                                              |
-| ----------------- | ------------------------------------------------------ |
-| `OSSEC.EventInfo` | https://www.ossec.net/docs/docs/formats/alerts.html    |
+| Log Type          | Reference                                           |
+| ----------------- | --------------------------------------------------- |
+| `OSSEC.EventInfo` | https://www.ossec.net/docs/docs/formats/alerts.html |
 
 ## Built-in Rule Packs
 

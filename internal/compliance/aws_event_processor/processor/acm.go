@@ -25,33 +25,24 @@ import (
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-func classifyACM(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyACM(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awscertificatemanager.html
-	if eventName == "ExportCertificate" ||
-		eventName == "ResendValidationEmail" {
-
-		zap.L().Debug("acm: ignoring event", zap.String("eventName", eventName))
-		return nil
-	}
-
 	var certARN string
-	switch eventName {
+	switch metadata.eventName {
 	case "AddTagsToCertificate", "DeleteCertificate", "RemoveTags", "RenewCertificate", "UpdateCertificateOptions",
 		"RemoveTagsFromCertificate":
 		certARN = detail.Get("requestParameters.certificateArn").Str
 	case "ImportCertificate", "RequestCertificate":
 		certARN = detail.Get("responseElements.certificateArn").Str
 	default:
-		zap.L().Warn("acm: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("acm: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	return []*resourceChange{{
-		AwsAccountID: accountID,
-		Delete:       eventName == "DeleteCertificate",
-		EventName:    eventName,
+		AwsAccountID: metadata.accountID,
+		Delete:       metadata.eventName == "DeleteCertificate",
+		EventName:    metadata.eventName,
 		ResourceID:   certARN,
 		ResourceType: schemas.AcmCertificateSchema,
 	}}

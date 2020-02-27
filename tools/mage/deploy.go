@@ -174,7 +174,7 @@ func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, 
 	// set alarm sns topic if configured
 	result["AlarmSNSTopicArn"] = config.MonitoringParameterValues.AlarmSNSTopicARN
 
-	result["PantherLogProcessingDatabase"] = awsglue.TablesDatabaseName
+	result["PantherLogProcessingDatabase"] = awsglue.LogProcessingDatabaseName
 
 	return result
 }

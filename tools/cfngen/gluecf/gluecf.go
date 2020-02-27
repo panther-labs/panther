@@ -25,11 +25,15 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/tools/cfngen"
 )
+
+// Glue tables typ for timestamps that we will re-map Go times
+const GlueTimestampType = "timestamp"
 
 var (
 	CatalogIDRef = cfngen.Ref{Ref: "AWS::AccountId"} // macro expand to accountId for CF
@@ -38,15 +42,15 @@ var (
 	GlueMappings = []CustomMapping{
 		{
 			From: reflect.TypeOf(timestamp.RFC3339{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(timestamp.ANSICwithTZ{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(parsers.PantherAnyString{}),
@@ -57,10 +61,34 @@ var (
 			To:   "string",
 		},
 	}
+
+	// RuleMatchColumns are columns added by the rules engine
+	RuleMatchColumns = []Column{
+		{
+			Name:    "p_rule_id",
+			Type:    "string",
+			Comment: "Rule id",
+		},
+		{
+			Name:    "p_alert_id",
+			Type:    "string",
+			Comment: "Alert id",
+		},
+		{
+			Name:    "p_alert_creation_time",
+			Type:    "timestamp",
+			Comment: "The time the alert was initially created (first match)",
+		},
+		{
+			Name:    "p_alert_update_time",
+			Type:    "timestamp",
+			Comment: "The time the alert last updated (last match)",
+		},
+	}
 )
 
 // Output CloudFormation for all 'tables'
-func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
+func GenerateTables(tables []*awsglue.GlueTableMetadata) (cf []byte, err error) {
 	const bucketParam = "ProcessedDataBucket"
 	parameters := make(map[string]interface{})
 	parameters[bucketParam] = &cfngen.Parameter{
@@ -68,18 +96,24 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 		Description: "Bucket to hold data for tables",
 	}
 
-	tablesDB := NewDatabase(CatalogIDRef, awsglue.TablesDatabaseName, awsglue.TablesDatabaseDescription)
+	logsDB := NewDatabase(CatalogIDRef, awsglue.LogProcessingDatabaseName, awsglue.LogProcessingDatabaseDescription)
+	ruleMatchDB := NewDatabase(CatalogIDRef, awsglue.RuleMatchDatabaseName, awsglue.RuleMatchDatabaseDescription)
 	viewsDB := NewDatabase(CatalogIDRef, awsglue.ViewsDatabaseName, awsglue.ViewsDatabaseDescription)
 	resources := map[string]interface{}{
-		cfngen.SanitizeResourceName(awsglue.TablesDatabaseName): tablesDB,
-		cfngen.SanitizeResourceName(awsglue.ViewsDatabaseName):  viewsDB,
+		cfngen.SanitizeResourceName(awsglue.LogProcessingDatabaseName): logsDB,
+		cfngen.SanitizeResourceName(awsglue.RuleMatchDatabaseName):     ruleMatchDB,
+		cfngen.SanitizeResourceName(awsglue.ViewsDatabaseName):         viewsDB,
 	}
 
-	// output database name
+	// output databases
 	outputs := map[string]interface{}{
-		"PantherTablesDatabase": &cfngen.Output{
-			Description: awsglue.TablesDatabaseDescription,
-			Value:       cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.TablesDatabaseName)},
+		"PantherLogsDatabase": &cfngen.Output{
+			Description: awsglue.LogProcessingDatabaseDescription,
+			Value:       cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.LogProcessingDatabaseName)},
+		},
+		"PantherRuleMatchDatabase": &cfngen.Output{
+			Description: awsglue.RuleMatchDatabaseDescription,
+			Value:       cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.RuleMatchDatabaseName)},
 		},
 		"PantherViewsDatabase": &cfngen.Output{
 			Description: awsglue.ViewsDatabaseDescription,
@@ -87,32 +121,38 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 		},
 	}
 
-	// add tables for all parsers
-	for _, t := range tables {
-		location := cfngen.Sub{Sub: "s3://${" + bucketParam + "}/" + t.S3Prefix()}
+	addTable := func(t *awsglue.GlueTableMetadata, extraColumns ...Column) {
+		location := cfngen.Sub{Sub: "s3://${" + bucketParam + "}/" + t.Prefix()}
 
 		columns := InferJSONColumns(t.EventStruct(), GlueMappings...)
+		columns = append(columns, extraColumns...)
 
-		// NOTE: current all sources are JSONL (could add a type to LogParserMetadata struct if we need more types)
-		table := NewJSONLTable(&NewTableInput{
+		// NOTE: currently all sources are JSONL (could add a type to LogParserMetadata struct if we need more types)
+		resources[cfngen.SanitizeResourceName(t.DatabaseName()+t.TableName())] = NewJSONLTable(&NewTableInput{
 			CatalogID:     CatalogIDRef,
-			DatabaseName:  cfngen.Ref{Ref: cfngen.SanitizeResourceName(awsglue.TablesDatabaseName)},
+			DatabaseName:  cfngen.Ref{Ref: cfngen.SanitizeResourceName(t.DatabaseName())},
 			Name:          t.TableName(),
 			Description:   t.Description(),
 			Location:      location,
 			Columns:       columns,
 			PartitionKeys: getPartitionKeys(t),
 		})
+	}
 
-		tableResource := cfngen.SanitizeResourceName(t.DatabaseName() + t.TableName())
-		resources[tableResource] = table
+	// add tables for all parsers, and matching tables for rule matches
+	for _, table := range tables {
+		addTable(table)
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		// add a matching table for rule matches, add the columns that the rules engine appends
+		addTable(ruleTable, RuleMatchColumns...)
 	}
 
 	// generate CF using cfngen
 	return cfngen.NewTemplate("Panther Glue Resources", parameters, resources, outputs).CloudFormation()
 }
 
-func getPartitionKeys(t *awsglue.GlueMetadata) (partitions []Column) {
+func getPartitionKeys(t *awsglue.GlueTableMetadata) (partitions []Column) {
 	for _, partition := range t.PartitionKeys() {
 		partitions = append(partitions, Column{
 			Name:    partition.Name,

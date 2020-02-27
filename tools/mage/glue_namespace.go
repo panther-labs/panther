@@ -29,6 +29,7 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
@@ -79,12 +80,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		}()
 	}
 
-	// for each table, for each time partition, delete and re-create
-	for _, table := range registry.AvailableTables() {
-		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
-		if !matchTableName.MatchString(name) {
-			continue
-		}
+	listPartitions := func(name string, table *awsglue.GlueTableMetadata) {
 		createTime, err := getTableCreateTime(glueClient, table)
 		if err != nil {
 			logger.Fatal(err)
@@ -100,6 +96,20 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		}
 	}
 
+	// for each table, for each time partition, delete and re-create
+	for _, table := range registry.AvailableTables() {
+		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
+		if !matchTableName.MatchString(name) {
+			continue
+		}
+		listPartitions(name, table)
+		// the rule match tables share the same structure as the logs
+		name = fmt.Sprintf("%s.%s", awsglue.RuleMatchDatabaseName, table.TableName())
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		listPartitions(name, ruleTable)
+	}
+
 	close(updateChan)
 	wg.Wait()
 }
@@ -111,7 +121,7 @@ func regexValidator(text string) error {
 	return nil
 }
 
-func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueMetadata) (createTime time.Time, err error) {
+func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueTableMetadata) (createTime time.Time, err error) {
 	// get the CreateTime for the table, start there for syncing
 	tableInput := &glue.GetTableInput{
 		DatabaseName: aws.String(table.DatabaseName()),
@@ -126,6 +136,6 @@ func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueMetadata) (cre
 }
 
 type gluePartitionUpdate struct {
-	table *awsglue.GlueMetadata
+	table *awsglue.GlueTableMetadata
 	at    time.Time
 }

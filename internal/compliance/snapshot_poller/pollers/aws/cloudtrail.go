@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudtrail"
 	"github.com/aws/aws-sdk-go/service/cloudtrail/cloudtrailiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -112,6 +113,7 @@ func getTrailStatus(
 func listTagsCloudTrail(svc cloudtrailiface.CloudTrailAPI, trailArn *string) ([]*cloudtrail.Tag, error) {
 	out, err := svc.ListTags(&cloudtrail.ListTagsInput{ResourceIdList: []*string{trailArn}})
 	if err != nil {
+		err = errors.WithMessagef(err, "ListTags failed for arn %s", *trailArn)
 		utils.LogAWSError("CloudTrail.ListTags", err)
 		return nil, err
 	}
@@ -134,10 +136,10 @@ func getEventSelectors(svc cloudtrailiface.CloudTrailAPI, trailARN *string) ([]*
 func buildCloudTrailSnapshot(svc cloudtrailiface.CloudTrailAPI, trail *cloudtrail.Trail, region *string) *awsmodels.CloudTrail {
 	// Return on empty requests and shadow trails (trails not from this region)
 	if trail == nil || *trail.HomeRegion != *region {
-		zap.L().Info("shadow trail or nil request")
+		zap.L().Debug("shadow trail or nil request")
 		return nil
 	}
-	zap.L().Info("cloudtrail has valid arn", zap.String("arn", *trail.TrailARN))
+	zap.L().Debug("cloudtrail has valid arn", zap.String("arn", *trail.TrailARN))
 	cloudTrail := &awsmodels.CloudTrail{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   trail.TrailARN,
