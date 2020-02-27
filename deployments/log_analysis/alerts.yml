@@ -58,11 +58,11 @@ Resources:
     Properties:
       QueueName: panther-log-alert-notifications-queue
       # <cfndoc>
-      # This sqs queue receives alert notifications
+      # This sqs qeueue receives alert notifications
       # to be processed by `panther-log-alert-forwarder` lambda.
       #
       # Failure Impact
-      # * Failure of this sqs q will impact the send of alerts to destinations.
+      # * Failure of this sqs queue will impact the send of alerts to destinations.
       # * Failed events will go into the `panther-log-alert-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using the Panther tool `requeue`.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId

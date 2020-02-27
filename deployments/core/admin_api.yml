@@ -124,10 +124,10 @@ Resources:
           USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-cognito-custom-message-trigger
       # <cfndoc>
-      # This lambda implements sending new user invite and password reset emails.
+      # This lambda implements sending password reset emails.
       #
       # Failure Impact
-      # * Failure of this lambda will impact sending new user invite and password reset emails.
+      # * Failure of this lambda will impact sending password reset emails.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -168,7 +168,7 @@ Resources:
         SSEEnabled: True
       TableName: panther-organization
       # <cfndoc>
-      # This table is deprecated.
+      # This ddb table stores general settings about an organizations.
       # </cfndoc>
 
   OrganizationAPILogGroup:
@@ -188,7 +188,7 @@ Resources:
           ORG_TABLE_NAME: !Ref OrganizationTable
       FunctionName: panther-organization-api
       # <cfndoc>
-      # This lambda implements organization api (deprecated).
+      # This lambda implements organization API to manage settings.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

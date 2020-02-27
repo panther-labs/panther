@@ -95,10 +95,11 @@ Resources:
           TABLE: !Ref Table
       FunctionName: panther-analysis-api
       # <cfndoc>
-      # This lambda implements the analysis API.
+      # This lambda implements the analysis API which is responsible for
+      # policies/rules from being created, updated, and deleted.
       #
       # Failure Impact
-      # * Failure of this lambda will impact ?
+      # * Failure of this lambda will prevent policies/rules from being created, updated, deleted. Additionally, policies and rules will stop being evaluated by the policy/rules engines.
       # </cfndoc>
       Handler: main
       MemorySize: 512

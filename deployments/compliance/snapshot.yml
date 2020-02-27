@@ -63,10 +63,10 @@ Resources:
     Properties:
       QueueName: panther-snapshot-queue
       # <cfndoc>
-      # This sqs q has snapshot request events processed by the `panther-snapshot-pollers` lambda.
+      # This sqs queue has snapshot request events processed by the `panther-snapshot-pollers` lambda.
       #
       # Failure Impact
-      # * Failure of this sqs q will impact the scanning for changes in infrastrucure.
+      # * Failure of this sqs queue will impact the scanning for changes in infrastrucure.
       # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId

@@ -88,11 +88,11 @@ Resources:
     Properties:
       QueueName: panther-remediation-queue
       # <cfndoc>
-      # This sqs q has remediation request events that are
+      # This sqs queue has remediation request events that are
       # processed by the `panther-remediation-processor` lambda.
       #
       # Failure Impact
-      # * Failure of this sqs q will impact the remediation of policy violations.
+      # * Failure of this sqs queue will impact the remediation of policy violations.
       # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
       # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days

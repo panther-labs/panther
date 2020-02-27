@@ -30,7 +30,7 @@ const (
 )
 
 type Alarm struct {
-	Resource   string `json:"-"` // do not serialize
+	Resource   string `json:"-"` // use '-' tag so field is not serialized
 	Type       string
 	Properties AlarmProperties
 }
