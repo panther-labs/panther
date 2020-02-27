@@ -53,3 +53,18 @@ type SourceIntegrationScanInformation struct {
 	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
 	LastScanStartTime    *time.Time `json:"lastScanStartTime"`
 }
+
+type SourceIntegrationHealth struct {
+	AWSAccountID    *string `json:"awsAccountId"`
+	IntegrationType *string `json:"integrationType"`
+
+	// Checks for cloudsec integrations
+	AuditRoleGood       *bool `json:"auditRoleGood"`
+	CWERoleGood         *bool `json:"cweRoleGood"`
+	RemediationRoleGood *bool `json:"remediationRoleGood"`
+
+	// Checks for log analysis integrations
+	ProcessingRoleGood *bool            `json:"processingRoleGood"`
+	S3BucketsGood      map[string]*bool `json:"s3BucketsGood"`
+	KmsKeysGood        map[string]*bool `json:"kmsKeysGood"`
+}
