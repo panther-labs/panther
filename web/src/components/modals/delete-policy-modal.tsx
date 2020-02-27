@@ -60,7 +60,7 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
       onSuccess={() => {
         if (location.pathname.includes(policy.id)) {
           // if we were on the particular policy's details page or edit page --> redirect on delete
-          history.push(urls.policies.list());
+          history.push(urls.compliance.policies.list());
         }
       }}
     />

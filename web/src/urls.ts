@@ -16,56 +16,62 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AlertSummary, PolicySummary, ResourceSummary, RuleSummary } from 'Generated/schema';
-import { INTEGRATION_TYPES } from 'Source/constants';
+import { AlertDetails, PolicyDetails, ResourceDetails, RuleDetails } from 'Generated/schema';
+
+// Typical URL encoding, allowing colons (:) to be present in the URL. Colons are safe.
+// https://stackoverflow.com/questions/14872629/uriencode-and-colon
+const urlEncode = (str: string) => encodeURIComponent(str).replace(/%3A/g, unescape);
 
 const urls = {
-  overview: () => '/overview',
-  rules: {
-    list: () => '/rules/',
-    details: (id: RuleSummary['id']) => `${urls.rules.list()}${encodeURIComponent(id)}/`,
-    edit: (id: RuleSummary['id']) => `${urls.rules.details(id)}edit/`,
-    create: () => `${urls.rules.list()}new/`,
+  compliance: {
+    home: () => '/cloud-security/',
+    overview: () => `${urls.compliance.home()}overview/`,
+    policies: {
+      list: () => `${urls.compliance.home()}policies/`,
+      create: () => `${urls.compliance.policies.list()}new/`,
+      details: (id: PolicyDetails['id']) => `${urls.compliance.policies.list()}${urlEncode(id)}/`,
+      edit: (id: PolicyDetails['id']) => `${urls.compliance.policies.details(id)}edit/`,
+    },
+    resources: {
+      list: () => `${urls.compliance.home()}resources/`,
+      details: (id: ResourceDetails['id']) => `${urls.compliance.resources.list()}${urlEncode(id)}/`, // prettier-ignore
+      edit: (id: ResourceDetails['id']) => `${urls.compliance.resources.details(id)}edit/`,
+    },
+    sources: {
+      list: () => `${urls.compliance.home()}sources/`,
+      create: () => `${urls.compliance.sources.list()}new/`,
+    },
   },
-  policies: {
-    list: () => '/policies/',
-    details: (id: PolicySummary['id']) => `${urls.policies.list()}${encodeURIComponent(id)}/`,
-    edit: (id: PolicySummary['id']) => `${urls.policies.details(id)}edit/`,
-    create: () => `${urls.policies.list()}new/`,
+  logAnalysis: {
+    home: () => '/log-analysis/',
+    overview: () => `${urls.logAnalysis.home()}overview/`,
+    rules: {
+      list: () => `${urls.logAnalysis.home()}rules/`,
+      create: () => `${urls.logAnalysis.rules.list()}new/`,
+      details: (id: RuleDetails['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
+      edit: (id: RuleDetails['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
+    },
+    alerts: {
+      list: () => `${urls.logAnalysis.home()}alerts/`,
+      details: (id: AlertDetails['alertId']) => `${urls.logAnalysis.alerts.list()}${urlEncode(id)}/` // prettier-ignore
+    },
+    sources: {
+      list: () => `${urls.logAnalysis.home()}sources/`,
+      create: () => `${urls.logAnalysis.sources.list()}new/`,
+    },
   },
-  resources: {
-    list: () => '/resources/',
-    details: (id: ResourceSummary['id']) => `${urls.resources.list()}${encodeURIComponent(id)}/`,
-    edit: (id: ResourceSummary['id']) => `${urls.resources.details(id)}edit/`,
-  },
-  alerts: {
-    list: () => '/alerts/',
-    details: (id: AlertSummary['alertId']) => `${urls.alerts.list()}${encodeURIComponent(id)}/`,
+  settings: {
+    overview: () => `/settings/`,
+    general: () => `${urls.settings.overview()}general`,
+    users: () => `${urls.settings.overview()}users`,
+    destinations: () => `${urls.settings.overview()}destinations`,
   },
   account: {
-    settings: {
-      overview: () => `/settings/`,
-      general: () => `${urls.account.settings.overview()}general`,
-      users: () => `${urls.account.settings.overview()}users`,
-      sources: {
-        list: () => `${urls.account.settings.overview()}sources/`,
-        create: (integrationType?: INTEGRATION_TYPES) =>
-          `${urls.account.settings.sources.list()}new/${
-            integrationType ? `?type=${integrationType}` : ''
-          }`,
-      },
-      destinations: () => `${urls.account.settings.overview()}destinations`,
-    },
-
     auth: {
       signIn: () => `/sign-in/`,
       forgotPassword: () => `/password-forgot/`,
       resetPassword: () => `/password-reset/`,
     },
-  },
-
-  integrations: {
-    details: (serviceName: string) => `/integrations/${serviceName}`,
   },
 };
 

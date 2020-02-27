@@ -262,7 +262,7 @@ func TestHandleUpdate(t *testing.T) {
 		ResourceType:  schemas.S3BucketSchema,
 	}
 
-	assert.Equal(t, 2, len(logs.FilterMessage("resource change required").AllUntimed()))
+	assert.Equal(t, 2, len(logs.FilterMessage("resource scan required").AllUntimed()))
 	for _, log := range logs.FilterMessage("resource change required").AllUntimed() {
 		actualChange := log.ContextMap()["changeDetail"].(*resourceChange)
 		assert.Equal(t, expectedChange, actualChange)

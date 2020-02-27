@@ -4,7 +4,7 @@ description: Each supported log type
 
 # Supported Logs
 
-Panther can analyze the following log sources below to detect threats.
+Panther can analyze the following log sources to detect threats.
 
 To request a new one, please open a [Github issue](https://github.com/panther-labs/panther/issues)!
 
@@ -44,9 +44,9 @@ AWS contains a variety of critical data sources used to audit API usage, databas
 
 [OSSEC](https://www.ossec.net/) is a widely used open source host intrusion detection system. Panther supports the JSON alerts.json log file format for OSSEC EventInfo alerts.
 
-| Log Type          | Reference                                              |
-| ----------------- | ------------------------------------------------------ |
-| `OSSEC.EventInfo` | https://www.ossec.net/docs/docs/formats/alerts.html    |
+| Log Type          | Reference                                           |
+| ----------------- | --------------------------------------------------- |
+| `OSSEC.EventInfo` | https://www.ossec.net/docs/docs/formats/alerts.html |
 
 ## [Syslog](https://github.com/panther-labs/panther/tree/master/internal/log_analysis/log_processor/parsers/sysloglogs)
 

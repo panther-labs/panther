@@ -87,7 +87,7 @@ const EditPolicyPage: React.FC = () => {
 
   const { handleSubmit, error } = useCreateRule<ApolloMutationData>({
     mutation,
-    getRedirectUri: data => urls.policies.details(data.addPolicy.id),
+    getRedirectUri: data => urls.compliance.policies.details(data.addPolicy.id),
   });
 
   return (

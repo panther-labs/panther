@@ -47,7 +47,7 @@ const ListPoliciesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = 
           </IconButton>
         }
       >
-        <Dropdown.Item onSelect={() => history.push(urls.policies.edit(policy.id))}>
+        <Dropdown.Item onSelect={() => history.push(urls.compliance.policies.edit(policy.id))}>
           <MenuItem variant="default">Edit</MenuItem>
         </Dropdown.Item>
         <Dropdown.Item

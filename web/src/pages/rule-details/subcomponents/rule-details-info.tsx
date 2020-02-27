@@ -41,7 +41,13 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
       title="Rule Details"
       actions={
         <Box>
-          <Button size="large" variant="default" mr={4} is={Link} to={urls.rules.edit(rule.id)}>
+          <Button
+            size="large"
+            variant="default"
+            mr={4}
+            is={Link}
+            to={urls.logAnalysis.rules.edit(rule.id)}
+          >
             Edit
           </Button>
           <Button

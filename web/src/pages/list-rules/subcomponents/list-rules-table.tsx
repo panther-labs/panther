@@ -67,7 +67,7 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
       onSort={handleSort}
       sortDir={sortDir}
       sortKey={sortBy}
-      onSelect={rule => history.push(urls.rules.details(rule.id))}
+      onSelect={rule => history.push(urls.logAnalysis.rules.details(rule.id))}
     />
   );
 };

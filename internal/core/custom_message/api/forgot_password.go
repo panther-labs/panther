@@ -19,58 +19,43 @@ package custommessage
  */
 
 import (
-	"strings"
+	"fmt"
+	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/matcornic/hermes"
+	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
-
-	"github.com/panther-labs/panther/internal/core/custom_message/email"
 )
 
+// This is similar to the template in deployments/core/cognito.yml for the invite email.
+const template = `
+<br />Hi %s %s,
+<br />
+<br />A password reset has been requested for this email address. If you did not request a password reset, you can ignore this email.
+<br />
+<br />To set a new password for your Panther account, please click here:
+<br />https://%s/password-reset?token=%s&email=%s
+<br />
+<br />Need help, or have questions? Just email us at support@runpanther.io, we'd love to help.
+<br />
+<br />Yours truly,
+<br />Panther - https://runpanther.io
+<br />
+<br /><small>Copyright © 2020 Panther Labs Inc. All rights reserved.</small>
+`
+
 func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
-	zap.L().Info("generate forget password email for:" + event.UserName)
+	zap.L().Info("generating forget password email for:" + event.UserName)
 
 	user, err := userGateway.GetUser(&event.UserName)
 	if err != nil {
-		zap.L().Error("failed to generate forget password html email for:"+event.UserName, zap.Error(err))
+		zap.L().Error("failed to get user "+event.UserName, zap.Error(err))
 		return nil, err
 	}
 
-	emailParams := hermes.Email{
-		Body: hermes.Body{
-			Name: *user.GivenName + " " + *user.FamilyName,
-			Intros: []string{
-				`A password reset has been requested for this email address.
-If you did not request a password reset, you can ignore this email.`,
-			},
-			Actions: []hermes.Action{
-				{
-					Instructions: "To set a new password for your Panther account, please click here:",
-					Button: hermes.Button{
-						TextColor: "#FFFFFF",
-						Color:     "#6967F4", // Optional action button color
-						Text:      "Reset my password",
-						Link:      "https://" + appDomainURL + "/password-reset?token=" + event.Request.CodeParameter + "&email=" + *user.Email,
-					},
-				},
-			},
-			Outros: []string{
-				"Need help, or have questions? Just email us at support@runpanther.io, we'd love to help.",
-			},
-		},
-	}
-	// Generate an HTML email with the provided contents (for modern clients)
-	emailBody, err := email.PantherEmailTemplate.GeneratePlainText(emailParams)
-
-	// We have to do this because most email clients are not friendly with basic new line markup
-	// replacing \n with a <br /> is the easiest way to mitigate this issue
-	emailBody = strings.Replace(emailBody, "\n", "<br />", -1)
-	if err != nil {
-		zap.L().Error("failed to generate forget password html email for:"+event.UserName, zap.Error(err))
-		return nil, err
-	}
-	event.Response.EmailMessage = emailBody
+	event.Response.EmailMessage = fmt.Sprintf(template,
+		aws.StringValue(user.GivenName), aws.StringValue(user.FamilyName),
+		appDomainURL, event.Request.CodeParameter, url.QueryEscape(aws.StringValue(user.Email)))
 	event.Response.EmailSubject = "Panther Password Reset"
 	return event, nil
 }

@@ -73,7 +73,8 @@ func DefaultHourlyLogParser(p parsers.LogParser, eventStruct interface{}, descri
 	tableName := p.LogType() // default to LogType()
 
 	// describes Glue table over processed data in S3
-	gm, err := awsglue.NewGlueMetadata(awsglue.TablesDatabaseName, tableName, description, awsglue.GlueTableHourly, false, eventStruct)
+	gm, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, awsglue.LogProcessingDatabaseName,
+		tableName, description, awsglue.GlueTableHourly, false, eventStruct)
 	if err != nil {
 		panic(err) // panic is justified because this means configuration is WRONG
 	}

@@ -19,7 +19,6 @@ package gluecf
  */
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,8 +28,7 @@ import (
 )
 
 func TestDatabase(t *testing.T) {
-	expectedOutput, err := readTestFile("testdata/db.template.json")
-	require.NoError(t, err)
+	expectedFile := "testdata/db.template.json"
 
 	catalogID := "12345"
 	dbName := "db1"
@@ -44,12 +42,14 @@ func TestDatabase(t *testing.T) {
 
 	cfTemplate := cfngen.NewTemplate("Test template", nil, resources, nil)
 
-	cf := &bytes.Buffer{}
+	cf, err := cfTemplate.CloudFormation()
+	require.NoError(t, err)
 
-	require.NoError(t, cfTemplate.WriteCloudFormation(cf))
+	// uncomment to make a new expected file
+	// writeTestFile(cf, expectedFile)
 
-	// uncomment to see output
-	// os.Stdout.Write(cf.Bytes())
+	expectedOutput, err := readTestFile(expectedFile)
+	require.NoError(t, err)
 
-	assert.Equal(t, expectedOutput, cf.String())
+	assert.Equal(t, expectedOutput, cf)
 }

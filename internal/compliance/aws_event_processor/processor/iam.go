@@ -28,21 +28,8 @@ import (
 
 const rootUserName = "AWS ROOT USER"
 
-func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
-	eventName := detail.Get("eventName").Str
-
+func classifyIAM(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceChange {
 	// https://docs.aws.amazon.com/IAM/latest/UserGuide/list_identityandaccessmanagement.html
-	if eventName == "ChangePassword" ||
-		eventName == "ResetServiceSpecificCredential" ||
-		eventName == "GenerateCredentialReport" ||
-		eventName == "CreateVirtualMFADevice" || // MFA device creation/deletion is not related to
-		eventName == "DeleteVirtualMFADevice" || // users. See (Enable/Disable)MFADevice for that.
-		eventName == "CreateInstanceProfile" {
-
-		zap.L().Debug("iam: ignoring event", zap.String("eventName", eventName))
-		return nil
-	}
-
 	var resourceType string
 	var err error
 	resourceDelete := false
@@ -50,9 +37,9 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 		Partition: "aws",
 		Service:   "iam",
 		Region:    "",
-		AccountID: accountID,
+		AccountID: metadata.accountID,
 	}
-	switch eventName {
+	switch metadata.eventName {
 	case "AddRoleToInstanceProfile", "DeleteRolePermissionsBoundary", "DeleteRolePolicy":
 		resourceType = aws.IAMRoleSchema
 		iamARN.Resource = "role/" + detail.Get("requestParameters.roleName").Str
@@ -71,16 +58,16 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   iamARN.String() + "group/" + detail.Get("requestParameters.groupName").Str,
 				ResourceType: aws.IAMGroupSchema,
 			},
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   iamARN.String() + userName,
 				ResourceType: userType,
 			},
@@ -88,16 +75,16 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 	case "AttachGroupPolicy", "DetachGroupPolicy":
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   detail.Get("requestParameters.policyArn").Str,
 				ResourceType: aws.IAMPolicySchema,
 			},
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   iamARN.String() + "group/" + detail.Get("requestParameters.groupName").Str,
 				ResourceType: aws.IAMGroupSchema,
 			},
@@ -105,16 +92,16 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 	case "AttachRolePolicy", "DetachRolePolicy":
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   detail.Get("requestParameters.policyArn").Str,
 				ResourceType: aws.IAMPolicySchema,
 			},
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   iamARN.String() + "role/" + detail.Get("requestParameters.roleName").Str,
 				ResourceType: aws.IAMRoleSchema,
 			},
@@ -133,16 +120,16 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   detail.Get("requestParameters.policyArn").Str,
 				ResourceType: aws.IAMPolicySchema,
 			},
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				Delete:       false,
-				EventName:    eventName,
+				EventName:    metadata.eventName,
 				ResourceID:   iamARN.String() + userName,
 				ResourceType: userType,
 			},
@@ -173,9 +160,9 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 		// credentials for an account that has no other users.
 		iamARN, err = arn.Parse(detail.Get("userIdentity.arn").Str)
 
-		// Error check here because we are about the use iamARN
+		// Error check here because we are about to use the iamARN
 		if err != nil {
-			zap.L().Error("iam: error handling iam user event", zap.String("eventName", eventName), zap.Error(err))
+			zap.L().Error("iam: error handling iam user event", zap.String("eventName", metadata.eventName), zap.Error(err))
 			return nil
 		}
 
@@ -199,12 +186,12 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 	case "DeleteAccountPasswordPolicy", "UpdateAccountPasswordPolicy":
 		return []*resourceChange{
 			{
-				AwsAccountID: accountID,
+				AwsAccountID: metadata.accountID,
 				// We don't actually allow an account to not have a PasswordPolicy resource, it's
 				// just marked as 'AnyExist = False' in it's attributes
 				Delete:       false,
-				EventName:    eventName,
-				ResourceID:   accountID + "::" + aws.PasswordPolicySchema,
+				EventName:    metadata.eventName,
+				ResourceID:   metadata.accountID + "::" + aws.PasswordPolicySchema,
 				ResourceType: aws.PasswordPolicySchema,
 			},
 		}
@@ -233,7 +220,7 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 		resourceType = aws.IAMRoleSchema
 		iamARN.Resource = "role/" + detail.Get("requestParameters.roleName").Str
 	case "UpdateGroup":
-		// Special case cause the name could change, thus changing the ARN. We handle this by creating
+		// Special case because the name could change, thus changing the ARN. We handle this by creating
 		// a new group resource, and allowing the old one to eventually time out
 		resourceType = aws.IAMGroupSchema
 		newName := detail.Get("requestParameters.newGroupName").Str
@@ -258,14 +245,14 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 			}
 		}
 	default:
-		zap.L().Warn("iam: encountered unknown event name", zap.String("eventName", eventName))
+		zap.L().Warn("iam: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
 	if err != nil {
 		zap.L().Error(
 			"iam: error occurred during event processing",
-			zap.String("eventName", eventName),
+			zap.String("eventName", metadata.eventName),
 			zap.Error(err))
 		return nil
 	}
@@ -273,7 +260,7 @@ func classifyIAM(detail gjson.Result, accountID string) []*resourceChange {
 	return []*resourceChange{{
 		AwsAccountID: iamARN.AccountID,
 		Delete:       resourceDelete,
-		EventName:    eventName,
+		EventName:    metadata.eventName,
 		ResourceID:   iamARN.String(),
 		ResourceType: resourceType,
 	}}

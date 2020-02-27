@@ -35,7 +35,7 @@ import useRouter from 'Hooks/useRouter';
 // that can fit our usecase that doesn't involve complex JS calculations, so please help out
 const widthSentinelStyles = {
   display: 'block',
-  maxWidth: '700px',
+  maxWidth: '550px',
   whiteSpace: 'nowrap' as const,
   overflow: 'hidden' as const,
   textOverflow: 'ellipsis' as const,
@@ -56,8 +56,12 @@ const Breadcrumbs: React.FC = () => {
     // is before-and-including our key). The key is essentially the URL path itself just prettified
     // for displat
     return pathKeys.map(key => ({
-      text: capitalize(decodeURIComponent(key).replace(/-_/g, ' ')),
       href: `${pathname.substr(0, pathname.indexOf(`/${key}/`))}/${key}/`,
+      text: decodeURIComponent(key)
+        .replace(/([-_])+/g, ' ')
+        .split(' ')
+        .map(capitalize)
+        .join(' '),
     }));
   }, [pathname]);
 

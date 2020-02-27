@@ -115,7 +115,7 @@ const RuleDetailsPage = () => {
               columns={columns}
               getItemKey={alert => alert.alertId}
               items={data.alerts.alertSummaries}
-              onSelect={alert => history.push(urls.alerts.details(alert.alertId))}
+              onSelect={alert => history.push(urls.logAnalysis.alerts.details(alert.alertId))}
             />
           </ErrorBoundary>
         </Panel>

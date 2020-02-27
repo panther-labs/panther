@@ -79,12 +79,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		}()
 	}
 
-	// for each table, for each time partition, delete and re-create
-	for _, table := range registry.AvailableTables() {
-		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
-		if !matchTableName.MatchString(name) {
-			continue
-		}
+	listPartitions := func(name string, table *awsglue.GlueMetadata) {
 		createTime, err := getTableCreateTime(glueClient, table)
 		if err != nil {
 			logger.Fatal(err)
@@ -98,6 +93,18 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 				at:    timeBin,
 			}
 		}
+	}
+
+	// for each table, for each time partition, delete and re-create
+	for _, table := range registry.AvailableTables() {
+		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
+		if !matchTableName.MatchString(name) {
+			continue
+		}
+		listPartitions(name, table)
+		// the rule match tables share the same structure as the logs
+		name = fmt.Sprintf("%s.%s", awsglue.RuleMatchDatabaseName, table.TableName())
+		listPartitions(name, table.Clone(awsglue.RuleMatchS3Prefix, awsglue.RuleMatchDatabaseName))
 	}
 
 	close(updateChan)

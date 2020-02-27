@@ -21,7 +21,6 @@ import { Box, Button, Flex, Heading, Text } from 'pouncejs';
 import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
 import urls from 'Source/urls';
 import { Link } from 'react-router-dom';
-import { INTEGRATION_TYPES } from 'Source/constants';
 
 const ListResourcesPageEmptyDataFallback: React.FC = () => {
   return (
@@ -35,12 +34,7 @@ const ListResourcesPageEmptyDataFallback: React.FC = () => {
       <Text size="large" color="grey200" textAlign="center" mb={10}>
         You don{"'"}t have any resources connected to your Panther account
       </Text>
-      <Button
-        size="large"
-        variant="primary"
-        to={urls.account.settings.sources.create(INTEGRATION_TYPES.AWS_INFRA)}
-        is={Link}
-      >
+      <Button size="large" variant="primary" to={urls.compliance.sources.create()} is={Link}>
         Get started
       </Button>
     </Flex>
