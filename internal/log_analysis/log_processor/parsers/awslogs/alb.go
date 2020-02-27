@@ -80,7 +80,7 @@ func (p *ALBParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ALBParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (p *ALBParser) Parse(log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))
 	reader.Comma = ' '
 
@@ -159,7 +159,7 @@ func (p *ALBParser) Parse(parseTime *time.Time, log string) []interface{} {
 		ErrorReason:            parsers.CsvStringToPointer(record[24]),
 	}
 
-	event.updatePantherFields(parseTime, p)
+	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))

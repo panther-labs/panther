@@ -33,8 +33,6 @@ func TestBatchLog(t *testing.T) {
 	log := `{"diffResults": {"added": [ { "name": "osqueryd", "path": "/usr/local/bin/osqueryd", "pid": "97830" } ],"removed": [ { "name": "osqueryd", "path": "/usr/local/bin/osqueryd", "pid": "97650" } ] },"name": "processes", "hostname": "hostname.local", "calendarTime": "Tue Nov 5 06:08:26 2018 UTC","unixTime": "1412123850", "epoch": "314159265", "counter": "1" }`
 
 	expectedTime := time.Unix(1541398106, 0).UTC()
-	expectedParseTime := time.Unix(1582754209, 0).UTC()
-
 	expectedEvent := &Batch{
 		CalendarTime: (*timestamp.ANSICwithTZ)(&expectedTime),
 		Name:         aws.String("processes"),
@@ -63,10 +61,9 @@ func TestBatchLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Osquery.Batch")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyDomainNames("hostname.local")
 
-	checkOsQueryBatcLog(t, &expectedParseTime, log, expectedEvent)
+	checkOsQueryBatcLog(t, log, expectedEvent)
 }
 
 func TestOsQueryBatchLogType(t *testing.T) {
@@ -74,9 +71,9 @@ func TestOsQueryBatchLogType(t *testing.T) {
 	require.Equal(t, "Osquery.Batch", parser.LogType())
 }
 
-func checkOsQueryBatcLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *Batch) {
+func checkOsQueryBatcLog(t *testing.T, log string, expectedEvent *Batch) {
 	parser := &BatchParser{}
-	events := parser.Parse(expectedParseTime, log)
+	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*Batch)
 

@@ -20,7 +20,6 @@ package awslogs
 
 import (
 	"strings"
-	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
@@ -125,7 +124,7 @@ func (p *CloudTrailParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (p *CloudTrailParser) Parse(log string) []interface{} {
 	cloudTrailRecords := &CloudTrailRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailRecords)
 	if err != nil {
@@ -134,7 +133,7 @@ func (p *CloudTrailParser) Parse(parseTime *time.Time, log string) []interface{}
 	}
 
 	for _, event := range cloudTrailRecords.Records {
-		event.updatePantherFields(parseTime, p)
+		event.updatePantherFields(p)
 	}
 
 	if err := parsers.Validator.Struct(cloudTrailRecords); err != nil {

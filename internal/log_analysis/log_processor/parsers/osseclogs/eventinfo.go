@@ -19,8 +19,6 @@ package osseclogs
  */
 
 import (
-	"time"
-
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -124,7 +122,7 @@ func (p *EventInfoParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *EventInfoParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (p *EventInfoParser) Parse(log string) []interface{} {
 	eventInfo := &EventInfo{}
 
 	err := jsoniter.UnmarshalFromString(log, eventInfo)
@@ -133,7 +131,7 @@ func (p *EventInfoParser) Parse(parseTime *time.Time, log string) []interface{} 
 		return nil
 	}
 
-	eventInfo.updatePantherFields(parseTime, p)
+	eventInfo.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(eventInfo); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
@@ -148,8 +146,8 @@ func (p *EventInfoParser) LogType() string {
 	return "OSSEC.EventInfo"
 }
 
-func (event *EventInfo) updatePantherFields(parseTime *time.Time, p *EventInfoParser) {
-	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.Timestamp), (*timestamp.RFC3339)(parseTime))
+func (event *EventInfo) updatePantherFields(p *EventInfoParser) {
+	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.Timestamp))
 	event.AppendAnyIPAddressPtrs(event.SrcIP, event.DstIP)
 	if event.SyscheckFile != nil {
 		event.AppendAnyMD5HashPtrs(event.SyscheckFile.MD5Before, event.SyscheckFile.MD5After)

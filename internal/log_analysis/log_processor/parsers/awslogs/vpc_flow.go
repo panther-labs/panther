@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -128,7 +127,7 @@ var (
 )
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *VPCFlowParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (p *VPCFlowParser) Parse(log string) []interface{} {
 	if p.columnMap == nil { // must be first log line in file
 		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
 			return []interface{}{}
@@ -147,7 +146,7 @@ func (p *VPCFlowParser) Parse(parseTime *time.Time, log string) []interface{} {
 
 	event := p.populateEvent(records[0]) // parser should only receive 1 line at a time
 
-	event.updatePantherFields(parseTime, p)
+	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))

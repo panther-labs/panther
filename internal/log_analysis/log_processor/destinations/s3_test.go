@@ -49,7 +49,7 @@ type mockParser struct {
 	mock.Mock
 }
 
-func (m *mockParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (m *mockParser) Parse(log string) []interface{} {
 	args := m.Called(log)
 	result := args.Get(0)
 	if result == nil {

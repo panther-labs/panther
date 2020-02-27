@@ -33,7 +33,6 @@ func TestEventInfo(t *testing.T) {
 	log := `{"rule":{"level":5,"comment":"Syslogd restarted.","sidid":1005,"group":"syslog,errors,"},"id":"1510376401.0","TimeStamp":1510376401000,"location":"/var/log/messages","full_log":"Nov 11 00:00:01 ix syslogd[72090]: restart","hostname":"ix","program_name":"syslogd"}`
 
 	expectedTime := time.Unix(1510376401, 0).UTC()
-	expectedParseTime := time.Unix(1582754209, 0).UTC()
 
 	expectedEvent := &EventInfo{
 		Rule: &Rule{
@@ -53,9 +52,8 @@ func TestEventInfo(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("OSSEC.EventInfo")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 
-	checkEventInfo(t, &expectedParseTime, log, expectedEvent)
+	checkEventInfo(t, log, expectedEvent)
 }
 
 func TestEventInfoWithSyscheckFile(t *testing.T) {
@@ -63,7 +61,6 @@ func TestEventInfoWithSyscheckFile(t *testing.T) {
 	log := `{"rule":{"level":7,"comment":"Integrity checksum changed.","sidid":550,"group":"ossec,syscheck,"},"id":"1540845340.16991","TimeStamp":1540845340000,"decoder":"syscheck_integrity_changed","location":"syscheck","full_log":"Integrity checksum changed for:'/usr/bin/ssm-cli'\nOld md5sum was:'22271cce0732d887e3980e5a6868e459'\nNew md5sum is :'220a8f105af5e711f99e52583209a871'\nOld sha1sum was:'4df65340f366c18f85be228c26817e20391f32c4'\nNew sha1sum is :'c7414fd048c81361720e2d9c8d2f82faf33748b6'\n","SyscheckFile":{"path":"/usr/bin/ssm-cli","md5_before":"22271cce0732d887e3980e5a6868e459","md5_after":"220a8f105af5e711f99e52583209a871","sha1_before":"4df65340f366c18f85be228c26817e20391f32c4","sha1_after":"c7414fd048c81361720e2d9c8d2f82faf33748b6"},"hostname":"ip-172-16-2-16"}`
 
 	expectedTime := time.Unix(1540845340, 0).UTC()
-	expectedParseTime := time.Unix(1582754209, 0).UTC()
 
 	//nolint:lll
 	expectedEvent := &EventInfo{
@@ -91,11 +88,10 @@ func TestEventInfoWithSyscheckFile(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("OSSEC.EventInfo")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyMD5Hashes("220a8f105af5e711f99e52583209a871", "22271cce0732d887e3980e5a6868e459")
 	expectedEvent.AppendAnySHA1Hashes("c7414fd048c81361720e2d9c8d2f82faf33748b6", "4df65340f366c18f85be228c26817e20391f32c4")
 
-	checkEventInfo(t, &expectedParseTime, log, expectedEvent)
+	checkEventInfo(t, log, expectedEvent)
 }
 
 func TestEventInfoType(t *testing.T) {
@@ -103,9 +99,9 @@ func TestEventInfoType(t *testing.T) {
 	require.Equal(t, "OSSEC.EventInfo", parser.LogType())
 }
 
-func checkEventInfo(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *EventInfo) {
+func checkEventInfo(t *testing.T, log string, expectedEvent *EventInfo) {
 	parser := &EventInfoParser{}
-	events := parser.Parse(expectedParseTime, log)
+	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*EventInfo)
 

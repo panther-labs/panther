@@ -33,8 +33,6 @@ func TestStatusLog(t *testing.T) {
 	log := `{"hostIdentifier":"jacks-mbp.lan","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","unixTime":"1535731040","severity":"0","filename":"scheduler.cpp","line":"83","message":"Executing scheduled query pack_incident-response_arp_cache: select * from arp_cache;","version":"3.2.6","decorations":{"host_uuid":"37821E12-CC8A-5AA3-A90C-FAB28A5BF8F9","username":"user"},"log_type":"status"}`
 
 	expectedTime := time.Unix(1541398106, 0).UTC()
-	expectedParseTime := time.Unix(1582754209, 0).UTC()
-
 	expectedEvent := &Status{
 		HostIdentifier: aws.String("jacks-mbp.lan"),
 		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
@@ -54,10 +52,9 @@ func TestStatusLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Osquery.Status")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyDomainNames("jacks-mbp.lan")
 
-	checkOsQueryStatusLog(t, &expectedParseTime, log, expectedEvent)
+	checkOsQueryStatusLog(t, log, expectedEvent)
 }
 
 func TestOsQueryStatusLogType(t *testing.T) {
@@ -65,9 +62,9 @@ func TestOsQueryStatusLogType(t *testing.T) {
 	require.Equal(t, "Osquery.Status", parser.LogType())
 }
 
-func checkOsQueryStatusLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *Status) {
+func checkOsQueryStatusLog(t *testing.T, log string, expectedEvent *Status) {
 	parser := &StatusParser{}
-	events := parser.Parse(expectedParseTime, log)
+	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*Status)
 

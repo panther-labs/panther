@@ -22,7 +22,6 @@ import (
 	"encoding/csv"
 	"strconv"
 	"strings"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -63,7 +62,7 @@ func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuroraMySQLAuditParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))
 	records, err := reader.ReadAll()
 	if len(records) == 0 || err != nil {
@@ -102,7 +101,7 @@ func (p *AuroraMySQLAuditParser) Parse(parseTime *time.Time, log string) []inter
 		RetCode:      parsers.CsvStringToIntPointer(record[len(record)-1]),
 	}
 
-	event.updatePantherFields(parseTime, p)
+	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))

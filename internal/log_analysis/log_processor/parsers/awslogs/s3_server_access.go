@@ -21,7 +21,6 @@ package awslogs
 import (
 	"encoding/csv"
 	"strings"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -76,7 +75,7 @@ func (p *S3ServerAccessParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *S3ServerAccessParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (p *S3ServerAccessParser) Parse(log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))
 	reader.LazyQuotes = true
 	reader.Comma = ' '
@@ -136,7 +135,7 @@ func (p *S3ServerAccessParser) Parse(parseTime *time.Time, log string) []interfa
 		AdditionalFields:   additionalFields,
 	}
 
-	event.updatePantherFields(parseTime, p)
+	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))

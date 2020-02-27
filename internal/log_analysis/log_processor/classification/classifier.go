@@ -81,7 +81,7 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(parseTime *time.Time, parser parsers.LogParser, log string) (parsedEvents []interface{}) {
+func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []interface{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			zap.L().Error("parser panic",
@@ -92,7 +92,7 @@ func safeLogParse(parseTime *time.Time, parser parsers.LogParser, log string) (p
 			parsedEvents = nil // return indicator that parse failed
 		}
 	}()
-	parsedEvents = parser.Parse(parseTime, log)
+	parsedEvents = parser.Parse(log)
 	return parsedEvents
 }
 
@@ -133,7 +133,7 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 		currentItem := c.parsers.Peek()
 
 		startParseTime := time.Now().UTC()
-		parsedEvents := safeLogParse(&startParseTime, currentItem.parser, log)
+		parsedEvents := safeLogParse(currentItem.parser, log)
 		endParseTime := time.Now().UTC()
 
 		logType := currentItem.parser.LogType()

@@ -33,8 +33,6 @@ func TestSnapshotLog(t *testing.T) {
 	log := `{"action": "snapshot","snapshot": [{"parent": "0","path": "/sbin/launchd","pid": "1"}],"name": "process_snapshot","hostIdentifier": "hostname.local","calendarTime": "Tue Nov 5 06:08:26 2018 UTC","unixTime": "1462228052","epoch": "314159265","counter": "1","numerics": false}`
 
 	expectedTime := time.Unix(1541398106, 0).UTC()
-	expectedParseTime := time.Unix(1582754209, 0).UTC()
-
 	expectedEvent := &Snapshot{
 		Action:         aws.String("snapshot"),
 		Name:           aws.String("process_snapshot"),
@@ -55,10 +53,9 @@ func TestSnapshotLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Osquery.Snapshot")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyDomainNames("hostname.local")
 
-	checkOsQuerySnapshotLog(t, &expectedParseTime, log, expectedEvent)
+	checkOsQuerySnapshotLog(t, log, expectedEvent)
 }
 
 func TestOsQuerySnapshotLogType(t *testing.T) {
@@ -66,9 +63,9 @@ func TestOsQuerySnapshotLogType(t *testing.T) {
 	require.Equal(t, "Osquery.Snapshot", parser.LogType())
 }
 
-func checkOsQuerySnapshotLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *Snapshot) {
+func checkOsQuerySnapshotLog(t *testing.T, log string, expectedEvent *Snapshot) {
 	parser := &SnapshotParser{}
-	events := parser.Parse(expectedParseTime, log)
+	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*Snapshot)
 

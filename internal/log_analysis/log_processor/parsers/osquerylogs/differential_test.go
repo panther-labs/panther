@@ -33,8 +33,6 @@ func TestDifferentialLog(t *testing.T) {
 	log := `{"name":"pack_incident-response_mounts","hostIdentifier":"Quans-MacBook-Pro-2.local","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","unixTime":"1572934106","epoch":"0","counter":"62","logNumericsAsNumbers":"false","decorations":{"host_uuid":"F919E9BF-0BF1-5456-8F6C-335243AEA537"},"columns":{"blocks":"61202533"},"action":"added","log_type":"result"}`
 
 	expectedTime := time.Unix(1541398106, 0).UTC()
-	expectedParseTime := time.Unix(1582754209, 0).UTC()
-
 	expectedEvent := &Differential{
 		Action:               aws.String("added"),
 		Name:                 aws.String("pack_incident-response_mounts"),
@@ -56,10 +54,9 @@ func TestDifferentialLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Osquery.Differential")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyDomainNames("Quans-MacBook-Pro-2.local")
 
-	checkOsQueryDifferentialLog(t, &expectedParseTime, log, expectedEvent)
+	checkOsQueryDifferentialLog(t, log, expectedEvent)
 }
 
 func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
@@ -67,8 +64,6 @@ func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
 	log := `{"action":"added","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","columns":{"build_distro":"10.12"},"counter":"255","decorations":{"host_uuid":"37821E12-CC8A-5AA3-A90C-FAB28A5BF8F9" },"epoch":"0","hostIdentifier":"host.lan","log_type":"result","name":"pack_osquery-monitoring_osquery_info","unixTime":"1536682461"}`
 
 	expectedTime := time.Unix(1541398106, 0).UTC()
-	expectedParseTime := time.Unix(1582754209, 0).UTC()
-
 	expectedEvent := &Differential{
 		Action:         aws.String("added"),
 		Name:           aws.String("pack_osquery-monitoring_osquery_info"),
@@ -89,10 +84,9 @@ func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Osquery.Differential")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyDomainNames("host.lan")
 
-	checkOsQueryDifferentialLog(t, &expectedParseTime, log, expectedEvent)
+	checkOsQueryDifferentialLog(t, log, expectedEvent)
 }
 
 func TestOsQueryDifferentialLogType(t *testing.T) {
@@ -100,9 +94,9 @@ func TestOsQueryDifferentialLogType(t *testing.T) {
 	require.Equal(t, "Osquery.Differential", parser.LogType())
 }
 
-func checkOsQueryDifferentialLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *Differential) {
+func checkOsQueryDifferentialLog(t *testing.T, log string, expectedEvent *Differential) {
 	parser := &DifferentialParser{}
-	events := parser.Parse(expectedParseTime, log)
+	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*Differential)
 

@@ -21,7 +21,6 @@ package nginxlogs
 import (
 	"encoding/csv"
 	"strings"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -62,7 +61,7 @@ func (p *AccessParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AccessParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (p *AccessParser) Parse(log string) []interface{} {
 	reader := csv.NewReader(strings.NewReader(log))
 	// Separator between fields is the empty space
 	reader.Comma = ' '
@@ -110,7 +109,7 @@ func (p *AccessParser) Parse(parseTime *time.Time, log string) []interface{} {
 		HTTPUserAgent: parsers.CsvStringToPointer(record[9]),
 	}
 
-	event.updatePantherFields(parseTime, p)
+	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))

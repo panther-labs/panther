@@ -20,7 +20,6 @@ package classification
 
 import (
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +38,7 @@ func (m *mockParser) New() parsers.LogParser {
 	return m // pass through (not stateful)
 }
 
-func (m *mockParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (m *mockParser) Parse(log string) []interface{} {
 	args := m.Called(log)
 	result := args.Get(0)
 	if result == nil {

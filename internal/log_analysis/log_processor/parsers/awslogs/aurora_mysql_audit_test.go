@@ -35,8 +35,6 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 		"from `address_verification` where `ordinal` = \\'primary\\' and `access` = \\'public\\' and `type` = \\'phoneNumber\\' and `verified` = true and `user_id` = \\'12345678-8a3b-4d3f-96a7-19cc4c58c25d\\'',0"
 
 	expectedTime := time.Unix(1572546356, 975302000).UTC()
-	expectedParseTime := time.Unix(1582754209, 0).UTC()
-
 	expectedEvent := &AuroraMySQLAudit{
 		Timestamp:    (*timestamp.RFC3339)(&expectedTime),
 		ServerHost:   aws.String("db-instance-name"),
@@ -54,11 +52,10 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.AuroraMySQLAudit")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.PantherParseTime = (*timestamp.RFC3339)(&expectedParseTime)
 	expectedEvent.AppendAnyIPAddresses("10.0.143.147")
 	expectedEvent.AppendAnyDomainNames("db-instance-name")
 
-	checkAuroraMysqlAuditLogLog(t, &expectedParseTime, log, expectedEvent)
+	checkAuroraMysqlAuditLogLog(t, log, expectedEvent)
 }
 
 func TestAuroraMysqlAuditLogType(t *testing.T) {
@@ -66,9 +63,9 @@ func TestAuroraMysqlAuditLogType(t *testing.T) {
 	require.Equal(t, "AWS.AuroraMySQLAudit", parser.LogType())
 }
 
-func checkAuroraMysqlAuditLogLog(t *testing.T, expectedParseTime *time.Time, log string, expectedEvent *AuroraMySQLAudit) {
+func checkAuroraMysqlAuditLogLog(t *testing.T, log string, expectedEvent *AuroraMySQLAudit) {
 	parser := &AuroraMySQLAuditParser{}
-	events := parser.Parse(expectedParseTime, log)
+	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*AuroraMySQLAudit)
 

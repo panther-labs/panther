@@ -19,8 +19,6 @@ package osquerylogs
  */
 
 import (
-	"time"
-
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -57,7 +55,7 @@ func (p *StatusParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *StatusParser) Parse(parseTime *time.Time, log string) []interface{} {
+func (p *StatusParser) Parse(log string) []interface{} {
 	event := &Status{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -71,7 +69,7 @@ func (p *StatusParser) Parse(parseTime *time.Time, log string) []interface{} {
 	event.LogType = event.LogUnderscoreType
 	event.LogUnderscoreType = nil
 
-	event.updatePantherFields(parseTime, p)
+	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
 		zap.L().Debug("failed to validate log", zap.Error(err))
