@@ -219,6 +219,7 @@ The lambda function that processes S3 files from
    * Variations in the log format not handled by the parsers.
      [Open a bug report](https://github.com/panther-labs/panther/issues).
 
+
  Failure Impact
  * Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
  * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.

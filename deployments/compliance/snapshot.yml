@@ -50,7 +50,7 @@ Parameters:
     Description: KMS key ID for SQS encryption
   LogAnalysisQueueName:
     Type: String
-    Default: panther-input-data-notifications
+    Default: panther-input-data-notifications-queue
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
