@@ -47,7 +47,10 @@ var testAlertDedupEvent = &AlertDedupEvent{
 	AlertCount:          10,
 	CreationTime:        time.Now().UTC(),
 	UpdateTime:          time.Now().UTC(),
-	EventCount:          100,
+	EventPerLogType: map[string]int64{
+		"LogType1": 5,
+		"LogType2": 10,
+	},
 }
 
 func init() {

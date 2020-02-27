@@ -39,7 +39,7 @@ func (table *AlertsTable) ListByRule(ruleID string, exclusiveStartKey *string, p
 func (table *AlertsTable) ListAll(exclusiveStartKey *string, pageSize *int) (
 	summaries []*models.AlertItem, lastEvaluatedKey *string, err error) {
 
-	return table.list(TimePartitionKey, TimePartitionKey, exclusiveStartKey, pageSize)
+	return table.list(TimePartitionKey, TimePartitionValue, exclusiveStartKey, pageSize)
 }
 
 // list returns a page of alerts ordered by creationTime, last evaluated key, any error

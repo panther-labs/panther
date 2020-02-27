@@ -40,7 +40,7 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_and_flush_event_generate_new_alert(self) -> None:
         buffer = MatchedEventsBuffer()
-        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', {'data_key': 'data_value'})
+        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', 'INFO', {'data_key': 'data_value'})
         buffer.add_event(event_match)
 
         self.assertEqual(len(buffer.data), 1)
@@ -49,16 +49,17 @@ class TestMatchedEventsBuffer(TestCase):
         buffer.flush()
 
         DDB_MOCK.update_item.assert_called_once_with(
-            ConditionExpression='(#7 < :7) OR (attribute_not_exists(#8))',
+            ConditionExpression='(#8 < :8) OR (attribute_not_exists(#9))',
             ExpressionAttributeNames={
                 '#1': 'ruleId',
                 '#2': 'dedup',
                 '#3': 'alertCreationTime',
                 '#4': 'alertUpdateTime',
                 '#5': 'eventCount',
-                '#6': 'alertCount',
-                '#7': 'alertCreationTime',
-                '#8': 'partitionKey'
+                '#6': 'severity',
+                '#7': 'alertCount',
+                '#8': 'alertCreationTime',
+                '#9': 'partitionKey'
             },
             ExpressionAttributeValues={
                 ':1': {
@@ -77,9 +78,12 @@ class TestMatchedEventsBuffer(TestCase):
                     'N': '1'
                 },
                 ':6': {
-                    'N': '1'
+                    'S': 'INFO'
                 },
                 ':7': {
+                    'N': '1'
+                },
+                ':8': {
                     'N': mock.ANY
                 }
             },
@@ -88,7 +92,7 @@ class TestMatchedEventsBuffer(TestCase):
             }},
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5\nADD #6 :6'
+            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6\nADD #7 :7'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)
@@ -131,8 +135,8 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_same_rule_different_log(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id', 'version', 'log1', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id', 'version', 'log2', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(EventMatch('id', 'version', 'log1', 'dedup', 'INFO', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id', 'version', 'log2', 'dedup', 'INFO', {'key2': 'value2'}))
 
         self.assertEqual(len(buffer.data), 2)
 
@@ -173,8 +177,8 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_same_log_different_rules(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id1', 'version', 'log', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id2', 'version', 'log', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(EventMatch('id1', 'version', 'log', 'dedup', 'INFO', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id2', 'version', 'log', 'dedup', 'INFO', {'key2': 'value2'}))
 
         self.assertEqual(len(buffer.data), 2)
 
@@ -215,8 +219,8 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_group_events_together(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', 'INFO', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', 'INFO', {'key2': 'value2'}))
 
         self.assertEqual(len(buffer.data), 1)
 
@@ -254,7 +258,7 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         # Reducing max_bytes so that it will cause the overflow condition to trigger earlier
         buffer.max_bytes = 50
-        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', {'data_key': 'data_value'})
+        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', 'INFO', {'data_key': 'data_value'})
 
         DDB_MOCK.update_item.return_value = {'Attributes': {'alertCount': {'N': '1'}}}
 

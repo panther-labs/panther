@@ -25,6 +25,7 @@ class EventMatch:
     rule_version: str
     log_type: str
     dedup: str
+    severity: str
     event: Dict[str, Any]
 
 

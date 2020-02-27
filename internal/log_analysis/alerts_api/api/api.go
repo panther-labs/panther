@@ -20,26 +20,26 @@ package api
  */
 
 import (
-	"net/http"
+	"encoding/base64"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // API has all of the handlers as receiver methods.
 type API struct{}
 
 var (
-	env            envConfig
-	awsSession     *session.Session
-	httpClient     *http.Client
-	policiesClient *client.PantherAnalysis
-	alertsDB       table.API
+	env        envConfig
+	awsSession *session.Session
+	alertsDB   table.API
+	glueClient glueiface.GlueAPI
 )
 
 type envConfig struct {
@@ -56,13 +56,6 @@ func Setup() {
 	envconfig.MustProcess("", &env)
 
 	awsSession = session.Must(session.NewSession())
-
-	httpClient = gatewayapi.GatewayClient(awsSession)
-	policiesClient = client.NewHTTPClientWithConfig(
-		nil, client.DefaultTransportConfig().
-			WithHost(env.AnalysisAPIHost).
-			WithBasePath("/"+env.AnalysisAPIPath))
-
 	alertsDB = &table.AlertsTable{
 		AlertsTableName:                    env.AlertsTableName,
 		Client:                             dynamodb.New(awsSession),
@@ -70,4 +63,31 @@ func Setup() {
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
+	glueClient = glue.New(awsSession)
+}
+
+type paginationToken struct {
+	currentEventIndex int
+	currentLog        string
+	alreadyProcessed  map[string]int
+}
+
+func (pt *paginationToken) encode() (string, error) {
+	marshalled, err := jsoniter.Marshal(pt)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(marshalled), nil
+}
+
+func decodePaginationToken(token string) (*paginationToken, error) {
+	unmarshalled, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return nil, err
+	}
+	result := &paginationToken{}
+	if err = jsoniter.Unmarshal(unmarshalled, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

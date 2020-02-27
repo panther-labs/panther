@@ -27,18 +27,15 @@ import (
 )
 
 const (
-	RuleIDKey        = "ruleId"
-	AlertIDKey       = "alertId"
-	TimePartitionKey = "timePartition"
-	CreationTimeKey  = "creationTime"
-	EventHashKey     = "eventHash"
-	EventKey         = "event"
+	RuleIDKey          = "ruleId"
+	AlertIDKey         = "alertId"
+	TimePartitionKey   = "timePartition"
+	TimePartitionValue = "default"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
 	GetAlert(*string) (*models.AlertItem, error)
-	GetEvent([]byte) (*string, error)
 	ListByRule(string, *string, *int) ([]*models.AlertItem, *string, error)
 	ListAll(*string, *int) ([]*models.AlertItem, *string, error)
 }

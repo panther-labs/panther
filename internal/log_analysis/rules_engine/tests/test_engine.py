@@ -28,7 +28,8 @@ class TestEngine(TestCase):
             {
                 'id': 'rule_id',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\treturn True'
+                'body': 'def rule(event):\n\treturn True',
+                'severity': 'INFO'
             }
         ]
         engine = Engine(analysis_api)
@@ -42,11 +43,13 @@ class TestEngine(TestCase):
             {
                 'id': 'aws_globals',
                 'resourceTypes': ['log'],
-                'body': 'def is_true():\n\treturn True'
+                'body': 'def is_true():\n\treturn True',
+                'severity': 'INFO'
             }, {
                 'id': 'rule_id',
                 'resourceTypes': ['log'],
-                'body': 'from aws_globals import is_true\ndef rule(event):\n\tis_true()'
+                'body': 'from aws_globals import is_true\ndef rule(event):\n\tis_true()',
+                'severity': 'INFO'
             }
         ]
         engine = Engine(analysis_api)
@@ -62,18 +65,22 @@ class TestEngine(TestCase):
             {
                 'id': 'rule_id_1',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\treturn True'
+                'body': 'def rule(event):\n\treturn True',
+                'severity': 'INFO'
             },  # This rule should match the event
             {
                 'id': 'rule_id_2',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\treturn False'
+                'body': 'def rule(event):\n\treturn False',
+                'severity': 'INFO'
             }  # This rule shouldn't match the event
         ]
         engine = Engine(analysis_api)
         result = engine.analyze('log', {})
 
-        self.assertEqual(result, [EventMatch(rule_id='rule_id_1', rule_version='default', log_type='log', dedup='default', event={})])
+        self.assertEqual(
+            result, [EventMatch(rule_id='rule_id_1', rule_version='default', log_type='log', severity='INFO', dedup='default', event={})]
+        )
 
     def test_analyse_many_rules_one_throws_exception(self) -> None:
         analysis_api = mock.MagicMock()
@@ -81,15 +88,18 @@ class TestEngine(TestCase):
             {
                 'id': 'rule_id_1',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\treturn True'
+                'body': 'def rule(event):\n\treturn True',
+                'severity': 'INFO'
             }, {
                 'id': 'rule_id_2',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\traise Exception()'
+                'body': 'def rule(event):\n\traise Exception()',
+                'severity': 'INFO'
             }, {
                 'id': 'rule_id_3',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\treturn True'
+                'body': 'def rule(event):\n\treturn True',
+                'severity': 'INFO'
             }
         ]
         engine = Engine(analysis_api)
@@ -97,7 +107,7 @@ class TestEngine(TestCase):
 
         self.assertEqual(
             result, [
-                EventMatch(rule_id='rule_id_1', rule_version='default', log_type='log', dedup='default', event={}),
-                EventMatch(rule_id='rule_id_3', rule_version='default', log_type='log', dedup='default', event={})
+                EventMatch(rule_id='rule_id_1', rule_version='default', log_type='log', severity='INFO', dedup='default', event={}),
+                EventMatch(rule_id='rule_id_3', rule_version='default', log_type='log', severity='INFO', dedup='default', event={})
             ]
         )

@@ -28,7 +28,6 @@ from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
 from .output import MatchedEventsBuffer
 from .rule import Rule
-from .sqs import send_to_sqs
 
 _S3_CLIENT = boto3.client('s3')
 _LOGGER = get_logger()
@@ -53,7 +52,12 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
         raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
 
     raw_rule = event['rules'][0]
-    test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'])
+    # It is possible that during direct analysis the rule doesn't include a severity
+    # in this case, we set it to a default value
+    severity = raw_rule.get('severity')
+    if not severity:
+        severity = 'INFO'
+    test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'], rule_severity=severity)
     results: Dict[str, Any] = {'events': []}
     for single_event in event['events']:
         result = {
@@ -92,8 +96,7 @@ def log_analysis(event: Dict[str, Any]) -> None:
         _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
         log_type_to_data[record_body['id']].append(_load_contents(bucket, object_key))
 
-    # List containing tuple of (rule_id, event) for matched events
-    matched: List = []
+    matches = 0
     output_buffer = MatchedEventsBuffer()
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
@@ -105,18 +108,11 @@ def log_analysis(event: Dict[str, Any]) -> None:
                     continue
 
                 for analysis_result in _RULES_ENGINE.analyze(log_type, json_data):
+                    matches += 1
                     output_buffer.add_event(analysis_result)
-                    # Appends the events to queue of events that will be sent through SQS
-                    matched.append((analysis_result.rule_id, data))
-
-    if len(matched) > 0:
-        _LOGGER.info("sending %d matches", len(matched))
-        send_to_sqs(matched)
-    else:
-        _LOGGER.info("no matches found")
     output_buffer.flush()
     end = default_timer()
-    _LOGGER.info("Matched %d events in %s seconds", len(matched), end - start)
+    _LOGGER.info("Matched %d events in %s seconds", matches, end - start)
 
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all

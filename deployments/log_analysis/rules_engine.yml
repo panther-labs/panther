@@ -128,7 +128,7 @@ Resources:
   AlertsDedup:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: panther-alert-dedup
+      TableName: panther-log-alert-dedup
       # <cfndoc>
       # The `panther-rules-engine` lambda manages this table and it is used to
       # deduplicate of alerts. The `panther-log-alert-forwarder` read the ddb stream from this table.
