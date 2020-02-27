@@ -104,10 +104,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) =>
             as={FormikTextInput}
             label="Email address"
             placeholder="john@doe.com"
-            disabled
             name="email"
             aria-required
-            readonly
             mb={3}
           />
           <Flex mb={6} justifyContent="space-between">
