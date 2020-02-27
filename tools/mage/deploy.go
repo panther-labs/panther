@@ -122,9 +122,6 @@ func Deploy() {
 	// Deploy monitoring (must be last due to possible references to frontend/backend resources)
 	deployMonitoring(awsSession, bucket, backendOutputs, &config)
 
-	// Build opstools
-	Build.Opstools(Build{})
-
 	// Done!
 	logger.Infof("deploy: finished successfully in %s", time.Since(start))
 	color.Yellow("\nPanther URL = https://%s\n", backendOutputs["LoadBalancerUrl"])
