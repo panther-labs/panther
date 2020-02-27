@@ -17,29 +17,36 @@
  */
 
 import { Box, Heading, SideSheet } from 'pouncejs';
-import EditProfileForm from 'Components/forms/edit-profile-form';
-import ChangePasswordForm from 'Components/forms/change-password-form';
+// import EditProfileForm from 'Components/forms/edit-profile-form';
+import EditUserForm from 'Components/forms/edit-user-form';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
+import { User } from 'Generated/schema';
 
-const EditUserSideSheet: React.FC = () => {
+// const RESET_USER_PASS = gql`
+//   mutation ResetUserPassword($id: ID!) {
+//     resetUserPassword(id: $id)
+//   }
+// `;
+
+export interface EditUserSidesheetProps {
+  user: User;
+}
+
+const EditUserSideSheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
   const { hideSidesheet } = useSidesheet();
+
   return (
     <SideSheet open onClose={hideSidesheet}>
       <Box mx={10} mb={10}>
         <Heading pt={1} pb={8} size="medium">
           Edit Profile
         </Heading>
-        <EditProfileForm onSuccess={hideSidesheet} />
-      </Box>
-      <Box borderTop="1px solid" borderColor="grey100" mx={10}>
-        <Heading py={8} size="medium">
-          Account Security
-        </Heading>
-        <ChangePasswordForm />
+        <EditUserForm onSuccess={hideSidesheet} user={user} />
       </Box>
     </SideSheet>
   );
 };
 
+// create ticket for user email verification
 export default EditUserSideSheet;

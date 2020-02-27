@@ -21,6 +21,7 @@ import { UpdateSourceSidesheetProps } from 'Components/sidesheets/update-source-
 import { AddDestinationSidesheetProps } from 'Components/sidesheets/add-destination-sidesheet';
 import { UpdateDestinationSidesheetProps } from 'Components/sidesheets/update-destination-sidesheet';
 import { PolicyBulkUploadSideSheetProps } from 'Components/sidesheets/policy-bulk-upload-sidesheet';
+import { EditUserSidesheetProps } from 'Components/sidesheets/edit-user-sidesheet';
 
 const SHOW_SIDESHEET = 'SHOW_SIDESHEET';
 const HIDE_SIDESHEET = 'HIDE_SIDESHEET';
@@ -99,6 +100,7 @@ interface EditUserSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.EDIT_USER;
+    props: EditUserSidesheetProps;
   };
 }
 
