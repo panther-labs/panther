@@ -65,10 +65,10 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
               letterSpacing="0.5px"
               textAlign="center"
             >
-              Quickly and Automatically Detect Threats in Log Data and Cloud Infrastructure
+              Detect threats with log data and improve cloud security posture
             </Heading>
             <Text size="large" color="white" mt={5} textAlign="center">
-              Designed for organizations of any size
+              Designed for any scale
             </Text>
           </Flex>
         </Flex>
