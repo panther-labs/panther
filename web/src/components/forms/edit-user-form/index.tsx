@@ -18,11 +18,24 @@
 
 import * as React from 'react';
 import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
-import { User } from 'Generated/schema';
+import { UpdateUserInput, User } from 'Generated/schema';
 import { Field, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/text-input';
 import SubmitButton from 'Components/submit-button';
-import useAuth from 'Hooks/useAuth';
+import { gql, useMutation } from '@apollo/client';
+import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
+import { extractErrorMessage } from 'Helpers/utils';
+
+const EDIT_USER = gql`
+  mutation EditUser($input: UpdateUserInput!) {
+    updateUser(input: $input)
+  }
+`;
+
+interface ApolloMutationInput {
+  input: UpdateUserInput;
+}
 
 interface EditProfileFormProps {
   onSuccess: () => void;
@@ -30,16 +43,28 @@ interface EditProfileFormProps {
 }
 
 interface EditProfileFormValues {
+  id: string;
   givenName: string;
   familyName: string;
   email: string;
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) => {
-  const { updateUserInfo } = useAuth();
+  const [editUser, { error: editUserError, data }] = useMutation<boolean, ApolloMutationInput>(
+    EDIT_USER
+  );
   const { pushSnackbar } = useSnackbar();
 
+  React.useEffect(() => {
+    if (data) {
+      pushSnackbar({ variant: 'success', title: `Successfully edited user` });
+      // TODO: Refetch user if updating self
+      onSuccess();
+    }
+  }, [data]);
+
   const initialValues = {
+    id: user.id,
     email: user.email || '',
     familyName: user.familyName || '',
     givenName: user.givenName || '',
@@ -48,28 +73,32 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) =>
   return (
     <Formik<EditProfileFormValues>
       initialValues={initialValues}
-      onSubmit={async ({ givenName, familyName }, { setStatus }) =>
-        updateUserInfo({
-          newAttributes: {
-            given_name: givenName,
-            family_name: familyName,
+      onSubmit={async values => {
+        await editUser({
+          variables: {
+            input: {
+              id: values.id,
+              email: values.email,
+              familyName: values.familyName,
+              givenName: values.givenName,
+            },
           },
-          onSuccess: () => {
-            onSuccess();
-            pushSnackbar({ title: 'Successfully updated profile!', variant: 'success' });
-          },
-          onError: ({ message }) =>
-            setStatus({
-              title: 'Unable to update profile',
-              message,
-            }),
-        })
-      }
+          refetchQueries: [getOperationName(LIST_USERS)],
+        });
+      }}
     >
-      {({ handleSubmit, status, isSubmitting, isValid, dirty }) => (
+      {({ handleSubmit, isSubmitting, isValid, dirty }) => (
         <Box is="form" onSubmit={handleSubmit}>
-          {status && (
-            <Alert variant="error" title={status.title} description={status.message} mb={6} />
+          {editUserError && (
+            <Alert
+              variant="error"
+              title="Failed to invite user"
+              description={
+                extractErrorMessage(editUserError) ||
+                'Failed to edit user due to an unforeseen error'
+              }
+              mb={6}
+            />
           )}
           <Field
             as={FormikTextInput}
