@@ -35,17 +35,34 @@ import (
 )
 
 func TestProcessSuccess(t *testing.T) {
-	mockClient := &mockGlue{}
-	glueClient = mockClient
+	mockClient := initTest()
 
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil)
 	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockClient.AssertExpectations(t)
 }
 
+func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
+	mockClient := initTest()
+
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once() // we should invoke it only once
+	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/new_item.json.gz"))) // different s3 key, same partition prefix
+	mockClient.AssertExpectations(t)
+}
+
+func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
+	mockClient := initTest()
+
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("err")).Once() // First we fail
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once() // Second we succeed
+	assert.Error(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"))) // This should fail
+	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"))) // This should succeed
+	mockClient.AssertExpectations(t)
+}
+
 func TestProcessGlueFailure(t *testing.T) {
-	mockClient := &mockGlue{}
-	glueClient = mockClient
+	mockClient := initTest()
 
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error"))
 	assert.Error(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
@@ -55,6 +72,13 @@ func TestProcessGlueFailure(t *testing.T) {
 func TestProcessInvalidS3Key(t *testing.T) {
 	//Invalid keys should just be ignored
 	assert.NoError(t, process(getEvent(t, "test")))
+}
+
+func initTest() *mockGlue {
+	partitionPrefixCache = make(map[string]struct{})
+	mockClient := &mockGlue{}
+	glueClient = mockClient
+	return mockClient
 }
 
 func getEvent(t *testing.T, s3Keys ...string) events.SQSEvent {
@@ -75,6 +99,8 @@ func getEvent(t *testing.T, s3Keys ...string) events.SQSEvent {
 	}
 	return result
 }
+
+
 
 type mockGlue struct {
 	glueiface.GlueAPI

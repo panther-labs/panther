@@ -33,28 +33,63 @@ import (
 // NOTE: this struct has all accessor behind functions to allow a lazy evaluation
 //       so the cost of creating the schema is only when actually needing this information.
 
+// A partition in Glue containing Panther data
 type GluePartition struct {
-	datatype        models.DataType
-	databaseName    string
-	tableName       string
-	s3Bucket        string
-	dataFormat      string // Can currently be only "json"
-	compression     string // Can only be "gzip" currently
-	partitionFields []*partitionKeyValue
+	datatype         models.DataType
+	databaseName     string
+	tableName        string
+	s3Bucket         string
+	dataFormat       string // Can currently be only "json"
+	compression      string // Can only be "gzip" currently
+	partitionColumns []PartitionColumnInfo
 }
 
-type partitionKeyValue struct {
-	key   string
-	value string
+func (gp *GluePartition) GetDatabase() string {
+	return gp.databaseName
+}
+
+func (gp *GluePartition) GetTable() string {
+	return gp.tableName
+}
+
+func (gp *GluePartition) GetS3Bucket() string {
+	return gp.s3Bucket
+}
+
+func (gp *GluePartition) GetDataFormat() string {
+	return gp.dataFormat
+}
+
+func (gp *GluePartition) GetCompression() string {
+	return gp.compression
+}
+
+func (gp *GluePartition) GetPartitionColumnsInfo() []PartitionColumnInfo {
+	return gp.partitionColumns
+}
+
+func (gp *GluePartition) GetPartitionPrefix() string {
+	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
+	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
+	for _, partitionField := range gp.partitionColumns {
+		prefix += partitionField.Key + "=" + partitionField.Value + "/"
+	}
+	return prefix
+}
+
+// Contains information about partition columns
+type PartitionColumnInfo struct {
+	Key   string
+	Value string
 }
 
 // Creates a new partition in Glue using the client provided.
 func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
-	partitionValues := make([]*string, len(gp.partitionFields))
-	for i, field := range gp.partitionFields {
-		partitionValues[i] = aws.String(field.value)
+	partitionValues := make([]*string, len(gp.partitionColumns))
+	for i, field := range gp.partitionColumns {
+		partitionValues[i] = aws.String(field.Value)
 	}
-	partitionPrefix := gp.partitionPrefix()
+	partitionPrefix := gp.GetPartitionPrefix()
 	partitionInput := &glue.PartitionInput{
 		Values:            partitionValues,
 		StorageDescriptor: getJSONPartitionDescriptor(partitionPrefix), // We only support JSON currently
@@ -76,15 +111,6 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	return nil
 }
 
-func (gp *GluePartition) partitionPrefix() string {
-	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
-	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
-	for _, partitionField := range gp.partitionFields {
-		prefix += partitionField.key + "=" + partitionField.value + "/"
-	}
-	return prefix
-}
-
 func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
 	return &glue.StorageDescriptor{
 		InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
@@ -100,7 +126,9 @@ func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
 	}
 }
 
-// Gets the partition from S3
+// Gets the partition from S3bucket and S3 object key info.
+// The s3Object key is expected to be in the the format
+// `{logs,rules}/{table_name}/year=d{4}/month=d{2}/[day=d{2}/][hour=d{2}/]/{S+}.json.gz` otherwise an error is returned.
 func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	partition := &GluePartition{s3Bucket: s3Bucket}
 
@@ -128,50 +156,50 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 
 	partition.tableName = s3Keys[1]
 
-	yearPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[2], "year")
+	yearPartitionKeyValue, err := inferPartitionColumnInfo(s3Keys[2], "year")
 	if err != nil {
 		return nil, err
 	}
 
-	partition.partitionFields = []*partitionKeyValue{yearPartitionKeyValue}
+	partition.partitionColumns = []PartitionColumnInfo{yearPartitionKeyValue}
 
-	monthPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[3], "month")
+	monthPartitionKeyValue, err := inferPartitionColumnInfo(s3Keys[3], "month")
 	if err != nil {
 		return nil, err
 	}
 
-	partition.partitionFields = append(partition.partitionFields, monthPartitionKeyValue)
+	partition.partitionColumns = append(partition.partitionColumns, monthPartitionKeyValue)
 	if len(s3Keys) == 4 {
 		// if there are no more fields, stop here
 		return partition, nil
 	}
 
-	dayPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[4], "day")
+	dayPartitionKeyValue, err := inferPartitionColumnInfo(s3Keys[4], "day")
 	if err != nil {
 		return partition, nil
 	}
-	partition.partitionFields = append(partition.partitionFields, dayPartitionKeyValue)
+	partition.partitionColumns = append(partition.partitionColumns, dayPartitionKeyValue)
 	if len(s3Keys) == 5 {
 		return partition, nil
 	}
 
-	hourPartitionKeyValue, err := getTimePartitionColumnField(s3Keys[5], "hour")
+	hourPartitionKeyValue, err := inferPartitionColumnInfo(s3Keys[5], "hour")
 	if err != nil {
 		return partition, nil
 	}
-	partition.partitionFields = append(partition.partitionFields, hourPartitionKeyValue)
+	partition.partitionColumns = append(partition.partitionColumns, hourPartitionKeyValue)
 	return partition, nil
 }
 
-func getTimePartitionColumnField(input string, partitionName string) (*partitionKeyValue, error) {
+func inferPartitionColumnInfo(input string, partitionName string) (PartitionColumnInfo, error) {
 	fields := strings.Split(input, "=")
 	if len(fields) != 2 || fields[0] != partitionName {
-		return nil, errors.Errorf("failed to get partition key %s from %s", partitionName, input)
+		return PartitionColumnInfo{}, errors.Errorf("failed to get partition key %s from %s", partitionName, input)
 	}
 
 	_, err := strconv.Atoi(fields[1])
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse to integer %s", fields[1])
+		return PartitionColumnInfo{}, errors.Wrapf(err, "failed to parse to integer %s", fields[1])
 	}
-	return &partitionKeyValue{key: partitionName, value: fields[1]}, nil
+	return PartitionColumnInfo{Key: partitionName, Value: fields[1]}, nil
 }

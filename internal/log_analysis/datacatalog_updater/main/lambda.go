@@ -41,6 +41,9 @@ import (
 var (
 	validation                   = validator.New()
 	glueClient glueiface.GlueAPI = glue.New(session.Must(session.NewSession()))
+	// partitionPrefixCache is a cache that stores all the prefixes of the partitions we have created
+	// The cache is used to avoid attempts to create the same partitions in Glue table
+	partitionPrefixCache = make(map[string]struct{})
 )
 
 func main() {
@@ -76,11 +79,18 @@ func process(event events.SQSEvent) error {
 				zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
 			continue
 		}
+
+		if _, ok := partitionPrefixCache[gluePartition.GetPartitionPrefix()]; ok {
+			zap.L().Debug("partition has already been created")
+			continue
+		}
+
 		err = gluePartition.CreatePartition(glueClient)
 		if err != nil {
 			zap.L().Error("failed to create partition", zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
 			return err
 		}
+		partitionPrefixCache[gluePartition.GetPartitionPrefix()] = struct{}{}
 	}
 	return nil
 }

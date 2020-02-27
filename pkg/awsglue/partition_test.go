@@ -26,8 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
 func TestCreatePartitionFromS3Rule(t *testing.T) {
@@ -35,33 +33,32 @@ func TestCreatePartitionFromS3Rule(t *testing.T) {
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
-	expectedPartitionValues := []*partitionKeyValue{
+	expectedPartitionValues := []PartitionColumnInfo{
 		{
-			key:   "year",
-			value: "2020",
+			Key:   "year",
+			Value: "2020",
 		},
 		{
-			key:   "month",
-			value: "02",
+			Key:   "month",
+			Value: "02",
 		},
 		{
-			key:   "day",
-			value: "26",
+			Key:   "day",
+			Value: "26",
 		},
 		{
-			key:   "hour",
-			value: "15",
+			Key:   "hour",
+			Value: "15",
 		},
 	}
 
-	assert.Equal(t, RuleMatchDatabaseName, partition.databaseName)
-	assert.Equal(t, models.RuleData, partition.datatype)
-	assert.Equal(t, "table", partition.tableName)
-	assert.Equal(t, "bucket", partition.s3Bucket)
-	assert.Equal(t, "json", partition.dataFormat)
-	assert.Equal(t, "gzip", partition.compression)
-	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.partitionPrefix())
-	assert.Equal(t, expectedPartitionValues, partition.partitionFields)
+	assert.Equal(t, RuleMatchDatabaseName, partition.GetDatabase())
+	assert.Equal(t, "table", partition.GetTable())
+	assert.Equal(t, "bucket", partition.GetS3Bucket())
+	assert.Equal(t, "json", partition.GetDataFormat())
+	assert.Equal(t, "gzip", partition.GetCompression())
+	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionPrefix())
+	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
 func TestCreatePartitionFromS3Log(t *testing.T) {
@@ -69,33 +66,32 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
-	expectedPartitionValues := []*partitionKeyValue{
+	expectedPartitionValues := []PartitionColumnInfo{
 		{
-			key:   "year",
-			value: "2020",
+			Key:   "year",
+			Value: "2020",
 		},
 		{
-			key:   "month",
-			value: "02",
+			Key:   "month",
+			Value: "02",
 		},
 		{
-			key:   "day",
-			value: "26",
+			Key:   "day",
+			Value: "26",
 		},
 		{
-			key:   "hour",
-			value: "15",
+			Key:   "hour",
+			Value: "15",
 		},
 	}
 
-	assert.Equal(t, LogProcessingDatabaseName, partition.databaseName)
-	assert.Equal(t, models.LogData, partition.datatype)
-	assert.Equal(t, "table", partition.tableName)
-	assert.Equal(t, "bucket", partition.s3Bucket)
-	assert.Equal(t, "json", partition.dataFormat)
-	assert.Equal(t, "gzip", partition.compression)
-	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.partitionPrefix())
-	assert.Equal(t, expectedPartitionValues, partition.partitionFields)
+	assert.Equal(t, LogProcessingDatabaseName, partition.GetDatabase())
+	assert.Equal(t, "table", partition.GetTable())
+	assert.Equal(t, "bucket", partition.GetS3Bucket())
+	assert.Equal(t, "json", partition.GetDataFormat())
+	assert.Equal(t, "gzip", partition.GetCompression())
+	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionPrefix())
+	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
 func TestCreatePartition(t *testing.T) {
