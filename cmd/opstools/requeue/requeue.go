@@ -11,38 +11,38 @@ import (
 )
 
 const (
-	waitTimeSeconds   = 20
-	messageBatchSize  = 10
-	visibilityTimeout = 20
+	waitTimeSeconds          = 20
+	messageBatchSize         = 10
+	visibilityTimeoutSeconds = 2 * waitTimeSeconds
 )
 
-func Requeue(sqsClient sqsiface.SQSAPI, fromq, toq string) error {
+func Requeue(sqsClient sqsiface.SQSAPI, fromQueueName, toQueueName string) error {
 	fromQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &fromq,
+		QueueName: &fromQueueName,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "cannot get source queue url for %s", fromq)
+		return errors.Wrapf(err, "cannot get source queue url for %s", fromQueueName)
 	}
 
 	toQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &toq,
+		QueueName: &toQueueName,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "cannot get destination queue url for %s", toq)
+		return errors.Wrapf(err, "cannot get destination queue url for %s", toQueueName)
 	}
 
-	log.Printf("Moving messages from %s to %s", fromq, toq)
+	log.Printf("Moving messages from %s to %s", fromQueueName, toQueueName)
 	totalMessages := 0
 	for {
 		resp, err := sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
 			WaitTimeSeconds:     aws.Int64(waitTimeSeconds),
 			MaxNumberOfMessages: aws.Int64(messageBatchSize),
-			VisibilityTimeout:   aws.Int64(visibilityTimeout),
+			VisibilityTimeout:   aws.Int64(visibilityTimeoutSeconds),
 			QueueUrl:            fromQueueURL.QueueUrl,
 		})
 
 		if err != nil {
-			return errors.Wrapf(err, "failure receiving messages to move from %s", fromq)
+			return errors.Wrapf(err, "failure receiving messages to move from %s", fromQueueName)
 		}
 
 		messages := resp.Messages
@@ -68,7 +68,7 @@ func Requeue(sqsClient sqsiface.SQSAPI, fromq, toq string) error {
 			QueueUrl: toQueueURL.QueueUrl,
 		})
 		if err != nil {
-			return errors.Wrapf(err, "failure moving messages to %s", toq)
+			return errors.Wrapf(err, "failure moving messages to %s", toQueueName)
 		}
 
 		var deleteMessageBatchRequestEntries []*sqs.DeleteMessageBatchRequestEntry
@@ -84,7 +84,7 @@ func Requeue(sqsClient sqsiface.SQSAPI, fromq, toq string) error {
 			QueueUrl: fromQueueURL.QueueUrl,
 		})
 		if err != nil {
-			return errors.Wrapf(err, "failure deleting moved messages from %s", fromq)
+			return errors.Wrapf(err, "failure deleting moved messages from %s", fromQueueName)
 		}
 	}
 }

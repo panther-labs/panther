@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/pkg/errors"
@@ -20,10 +19,9 @@ const (
 )
 
 var (
-	ACCOUNTID = flag.String("accountid", "", "The AWS account id where the queues exists")
-	REGION    = flag.String("region", "", "The AWS region where the queues exists")
-	FROMQ     = flag.String("from.q", "", "The name of the queue to copy from")
-	TOQ       = flag.String("to.q", "", "The name of the queue to copy to")
+	REGION = flag.String("region", "", "The AWS region where the queues exists (optional, defaults to session env vars)")
+	FROMQ  = flag.String("from.q", "", "The name of the queue to copy from")
+	TOQ    = flag.String("to.q", "", "The name of the queue to copy to")
 )
 
 func usage() {
@@ -37,6 +35,27 @@ func init() {
 	flag.Usage = usage
 }
 
+func main() {
+	flag.Parse()
+
+	sess, err := session.NewSession()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if *REGION != "" { //override
+		sess.Config.Region = REGION
+	}
+
+	validateFlags()
+
+	err = requeue.Requeue(sqs.New(sess), *FROMQ, *TOQ)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func validateFlags() {
 	var err error
 	defer func() {
@@ -47,16 +66,6 @@ func validateFlags() {
 		}
 	}()
 
-	flag.Parse()
-
-	if *ACCOUNTID == "" {
-		err = errors.New("-accountid not set")
-		return
-	}
-	if *REGION == "" {
-		err = errors.New("-region not set")
-		return
-	}
 	if *FROMQ == "" {
 		err = errors.New("-from.q not set")
 		return
@@ -64,20 +73,5 @@ func validateFlags() {
 	if *TOQ == "" {
 		err = errors.New("-to.q not set")
 		return
-	}
-}
-
-func main() {
-	validateFlags()
-
-	sess, err := session.NewSession(&aws.Config{Region: REGION})
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	err = requeue.Requeue(sqs.New(sess), *FROMQ, *TOQ)
-	if err != nil {
-		log.Fatal(err)
 	}
 }

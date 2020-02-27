@@ -65,8 +65,7 @@ func TestIntegrationRequeue(t *testing.T) {
 	err = createQueue(toq)
 	require.NoError(t, err)
 
-	// add some messages to fromq
-	err = addQueue(fromq, numberTestBatches)
+	err = addMessagesToQueue(fromq, numberTestBatches)
 	require.NoError(t, err)
 
 	// move them to toq
@@ -74,7 +73,7 @@ func TestIntegrationRequeue(t *testing.T) {
 	require.NoError(t, err)
 
 	// check
-	numberMovedMessages, err := countQueue(toq)
+	numberMovedMessages, err := countMessagesInQueue(toq)
 	assert.NoError(t, err)
 	assert.Equal(t, numberTestMessages, numberMovedMessages)
 
@@ -105,7 +104,7 @@ func createQueue(qname string) (err error) {
 	return err
 }
 
-func addQueue(qname string, nBatches int) (err error) {
+func addMessagesToQueue(qname string, nBatches int) (err error) {
 	addQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &qname,
 	})
@@ -135,7 +134,7 @@ func addQueue(qname string, nBatches int) (err error) {
 	return nil
 }
 
-func countQueue(qname string) (totalMessages int, err error) {
+func countMessagesInQueue(qname string) (totalMessages int, err error) {
 	countQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &qname,
 	})
@@ -147,7 +146,7 @@ func countQueue(qname string) (totalMessages int, err error) {
 	for {
 		resp, err := sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
 			MaxNumberOfMessages: aws.Int64(messageBatchSize),
-			VisibilityTimeout:   aws.Int64(visibilityTimeout),
+			VisibilityTimeout:   aws.Int64(visibilityTimeoutSeconds),
 			QueueUrl:            countQueueURL.QueueUrl,
 		})
 
