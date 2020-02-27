@@ -29,6 +29,7 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
@@ -79,7 +80,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		}()
 	}
 
-	listPartitions := func(name string, table *awsglue.GlueMetadata) {
+	listPartitions := func(name string, table *awsglue.GlueTableMetadata) {
 		createTime, err := getTableCreateTime(glueClient, table)
 		if err != nil {
 			logger.Fatal(err)
@@ -104,7 +105,9 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		listPartitions(name, table)
 		// the rule match tables share the same structure as the logs
 		name = fmt.Sprintf("%s.%s", awsglue.RuleMatchDatabaseName, table.TableName())
-		listPartitions(name, table.Clone(awsglue.RuleMatchS3Prefix, awsglue.RuleMatchDatabaseName))
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		listPartitions(name, ruleTable)
 	}
 
 	close(updateChan)
@@ -118,7 +121,7 @@ func regexValidator(text string) error {
 	return nil
 }
 
-func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueMetadata) (createTime time.Time, err error) {
+func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueTableMetadata) (createTime time.Time, err error) {
 	// get the CreateTime for the table, start there for syncing
 	tableInput := &glue.GetTableInput{
 		DatabaseName: aws.String(table.DatabaseName()),
@@ -133,6 +136,6 @@ func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueMetadata) (cre
 }
 
 type gluePartitionUpdate struct {
-	table *awsglue.GlueMetadata
+	table *awsglue.GlueTableMetadata
 	at    time.Time
 }

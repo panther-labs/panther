@@ -25,11 +25,12 @@ import (
 )
 
 const (
-	documentationURL = "https://docs.runpanther.io/operations/alarms.html" // where all alarms are documented
+	documentationURL = "https://docs.runpanther.io/operations/runbooks.md" // where all alarms are documented
 	alarmPrefix      = "PantherAlarm"
 )
 
 type Alarm struct {
+	Resource   string `json:"-"` // use '-' tag so field is not serialized
 	Type       string
 	Properties AlarmProperties
 }
@@ -61,9 +62,10 @@ type Config struct {
 	stackOutputs map[string]string // used to lookup dynamically configured references created previously
 }
 
-func NewAlarm(name, description, snsTopicArn string) (alarm *Alarm) {
+func NewAlarm(resource, name, description, snsTopicArn string) (alarm *Alarm) {
 	alarm = &Alarm{
-		Type: "AWS::CloudWatch::Alarm",
+		Resource: resource,
+		Type:     "AWS::CloudWatch::Alarm",
 		Properties: AlarmProperties{
 			AlarmName:         name,
 			AlarmDescription:  description,
@@ -151,8 +153,7 @@ func AlarmName(alarmType, resourceName string) string {
 
 // GenerateAlarms will read the CF in yml files in the cfDir, and generate CF for CloudWatch alarms for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateAlarms(snsTopicArn string, stackOutputs map[string]string, cfDirs ...string) ([]byte, error) {
-	var alarms []*Alarm
+func GenerateAlarms(snsTopicArn string, stackOutputs map[string]string, cfDirs ...string) (alarms []*Alarm, cf []byte, err error) {
 	config := &Config{
 		snsTopicArn:  snsTopicArn,
 		stackOutputs: stackOutputs,
@@ -167,7 +168,7 @@ func GenerateAlarms(snsTopicArn string, stackOutputs map[string]string, cfDirs .
 			return err
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -177,7 +178,11 @@ func GenerateAlarms(snsTopicArn string, stackOutputs map[string]string, cfDirs .
 	}
 
 	// generate CF using cfngen
-	return cfngen.NewTemplate("Panther Alarms", nil, resources, nil).CloudFormation()
+	cf, err = cfngen.NewTemplate("Panther Alarms", nil, resources, nil).CloudFormation()
+	if err != nil {
+		return nil, nil, err
+	}
+	return alarms, cf, nil
 }
 
 func generateAlarms(fileName string, config *Config) (alarms []*Alarm, err error) {

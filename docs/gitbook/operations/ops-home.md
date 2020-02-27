@@ -1,11 +1,11 @@
 # Background
 
-Panther has 5 CloudWatch dashboards to provide visibility in the operation of the system:
+Panther has 5 CloudWatch dashboards to provide visibility into the operation of the system:
 
-- **PantherOverview**: An overview of all errors and performance of all Panther components.
-- **PantherInfrastructure**: Details of the components monitoring infrastructure for CloudSecurity.
+- **PantherOverview** An overview all errors and performance of all Panther components.
+- **PantherCloudSecurity**: Details of the components monitoring infrastructure for CloudSecurity.
 - **PantherAlertProcessing**: Details of the components that relay alerts for CloudSecurity and Log Processing.
-- **PantherLogProcessing**: Details of the components processing logs and running rules.
+- **PantherLogAnalysis**: Details of the components processing logs and running rules.
 - **PantherRemediation**: Details of the components that remediate infrastructure issues.
 
 Panther uses CloudWatch Alarms to monitor the health of each component. Edit the `deployments/panther_config.yml`
@@ -21,4 +21,5 @@ MonitoringParameterValues:
 
 To configure alarms to send to your team, follow the guides below:
 
+- [SNS Email and SMS Integration](https://docs.aws.amazon.com/sns/latest/dg/sns-user-notifications.html)
 - [PagerDuty Integration](https://support.pagerduty.com/docs/aws-cloudwatch-integration-guide)

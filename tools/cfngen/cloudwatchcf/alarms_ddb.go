@@ -36,7 +36,7 @@ func NewDynamoDBAlarm(operation, alarmType, metricName, message string, resource
 	tableName := getResourceProperty(metricDimension, resource)
 	alarmName := AlarmName(alarmType, tableName)
 	alarm = &DynamoDBAlarm{
-		Alarm: *NewAlarm(alarmName,
+		Alarm: *NewAlarm(tableName, alarmName,
 			fmt.Sprintf("DynamoDB %s %s %s operations. See: %s#%s", tableName, message, operation, documentationURL, tableName),
 			config.snsTopicArn),
 	}

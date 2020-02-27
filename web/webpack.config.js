@@ -154,10 +154,41 @@ module.exports = {
         },
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
-        use: ['file-loader', 'image-webpack-loader'],
-        enforce: 'pre',
+        test: /\.(jpe?g|png|gif)$/,
+        loader: 'url-loader',
+        options: {
+          limit: 10 * 1024,
+        },
       },
+      {
+        test: /\.svg$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'svg-url-loader',
+            options: {
+              limit: 10 * 1024,
+              noquotes: true,
+            },
+          },
+          {
+            loader: 'svgo-loader',
+            options: {
+              plugins: [{ removeTitle: true }, { mergePaths: true }],
+              multipass: true,
+            },
+          },
+        ],
+      },
+
+      // FIXME: Disable image optimization until security vulnerability is assessed
+      // Related ticket: https://github.com/tcoopman/image-webpack-loader/issues/219
+
+      // {
+      //   test: /\.(png|svg|jpg|gif)$/,
+      //   use: ['file-loader', 'image-webpack-loader'],
+      //   enforce: 'pre',
+      // },
       {
         test: /\.hbs$/,
         loader: 'handlebars-loader',
