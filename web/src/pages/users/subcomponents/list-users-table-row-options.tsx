@@ -21,6 +21,8 @@ import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
 import { User } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
+import { SIDESHEETS } from 'Components/utils/sidesheet-context';
+import useSidesheet from 'Hooks/useSidesheet';
 
 interface ListUsersTableRowOptionsProps {
   user: User;
@@ -28,6 +30,7 @@ interface ListUsersTableRowOptionsProps {
 
 const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ user }) => {
   const { showModal } = useModal();
+  const { showSidesheet } = useSidesheet();
 
   return (
     <Dropdown
@@ -38,6 +41,11 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
         </IconButton>
       }
     >
+      <Dropdown.Item
+        onSelect={() => showSidesheet({ sidesheet: SIDESHEETS.EDIT_USER, props: { user } })}
+      >
+        <MenuItem variant="default">Edit Profile</MenuItem>
+      </Dropdown.Item>
       <Dropdown.Item
         onSelect={() =>
           showModal({
