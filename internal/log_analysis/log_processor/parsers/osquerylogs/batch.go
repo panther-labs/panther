@@ -77,7 +77,7 @@ func (p *BatchParser) LogType() string {
 	return "Osquery.Batch"
 }
 
-func (event *Batch) updatePantherFields(parseTime *time.Time, p *BatchParser) {
-	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), (*timestamp.RFC3339)(parseTime))
+func (event *Batch) updatePantherFields(p *BatchParser) {
+	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), nil)
 	event.AppendAnyDomainNamePtrs(event.Hostname)
 }

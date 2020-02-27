@@ -174,8 +174,8 @@ func (p *ALBParser) LogType() string {
 	return "AWS.ALB"
 }
 
-func (event *ALB) updatePantherFields(parseTime *time.Time, p *ALBParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp, (*timestamp.RFC3339)(parseTime))
+func (event *ALB) updatePantherFields(p *ALBParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp, nil)
 	event.AppendAnyIPAddressPtrs(event.ClientIP, event.TargetIP)
 	event.AppendAnyDomainNamePtrs(event.DomainName)
 	event.AppendAnyAWSARNPtrs(event.ChosenCertARN, event.TargetGroupARN)

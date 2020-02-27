@@ -116,8 +116,8 @@ func (p *AuroraMySQLAuditParser) LogType() string {
 	return "AWS.AuroraMySQLAudit"
 }
 
-func (event *AuroraMySQLAudit) updatePantherFields(parseTime *time.Time, p *AuroraMySQLAuditParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp, (*timestamp.RFC3339)(parseTime))
+func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp, nil)
 	event.AppendAnyIPAddressPtrs(event.Host)
 	event.AppendAnyDomainNamePtrs(event.ServerHost)
 }

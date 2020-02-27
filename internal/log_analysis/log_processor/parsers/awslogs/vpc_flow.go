@@ -259,8 +259,8 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 	return event
 }
 
-func (event *VPCFlow) updatePantherFields(parseTime *time.Time, p *VPCFlowParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Start, (*timestamp.RFC3339)(parseTime))
+func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Start, nil)
 	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
 	event.AppendAnyAWSInstanceIdPtrs(event.InstanceID)
 	event.AppendAnyIPAddressPtrs(event.SrcAddr, event.DstAddr, event.PacketSrcAddr, event.PacketDstAddr)

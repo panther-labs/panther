@@ -124,7 +124,7 @@ func (p *AccessParser) LogType() string {
 	return "Nginx.Access"
 }
 
-func (event *Access) updatePantherFields(parseTime *time.Time, p *AccessParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Time, (*timestamp.RFC3339)(parseTime))
+func (event *Access) updatePantherFields(p *AccessParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.Time, nil)
 	event.AppendAnyIPAddressPtrs(event.RemoteAddress)
 }

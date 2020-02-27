@@ -85,7 +85,7 @@ func (p *DifferentialParser) LogType() string {
 	return "Osquery.Differential"
 }
 
-func (event *Differential) updatePantherFields(parseTime *time.Time, p *DifferentialParser) {
-	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), (*timestamp.RFC3339)(parseTime))
+func (event *Differential) updatePantherFields(p *DifferentialParser) {
+	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), nil)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

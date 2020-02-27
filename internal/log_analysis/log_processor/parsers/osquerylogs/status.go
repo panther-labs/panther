@@ -83,7 +83,7 @@ func (p *StatusParser) LogType() string {
 	return "Osquery.Status"
 }
 
-func (event *Status) updatePantherFields(parseTime *time.Time, p *StatusParser) {
-	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), (*timestamp.RFC3339)(parseTime))
+func (event *Status) updatePantherFields(p *StatusParser) {
+	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), nil)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

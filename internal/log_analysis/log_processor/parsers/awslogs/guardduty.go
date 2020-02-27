@@ -94,8 +94,8 @@ func (p *GuardDutyParser) LogType() string {
 	return "AWS.GuardDuty"
 }
 
-func (event *GuardDuty) updatePantherFields(parseTime *time.Time, p *GuardDutyParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.UpdatedAt, (*timestamp.RFC3339)(parseTime))
+func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
+	event.SetCoreFieldsPtr(p.LogType(), event.UpdatedAt, nil)
 
 	// structured (parsed) fields
 	event.AppendAnyAWSARNPtrs(event.Arn)

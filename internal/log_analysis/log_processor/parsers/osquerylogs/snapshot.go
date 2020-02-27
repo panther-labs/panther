@@ -75,7 +75,7 @@ func (p *SnapshotParser) LogType() string {
 	return "Osquery.Snapshot"
 }
 
-func (event *Snapshot) updatePantherFields(parseTime *time.Time, p *SnapshotParser) {
-	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), (*timestamp.RFC3339)(parseTime))
+func (event *Snapshot) updatePantherFields(p *SnapshotParser) {
+	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), nil)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }
