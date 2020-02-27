@@ -60,6 +60,12 @@ Resources:
       DefinitionBody: api/gateway/analysis/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-analysis-api
+      # <cfndoc>
+      # The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+      #
+      # Failure Impact
+      # * Failure of this API Gateway will prevent calls to the `panther-analysis-api` lambda.
+      # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
@@ -85,9 +91,16 @@ Resources:
           DEBUG: !Ref Debug
           POLICY_ENGINE: panther-policy-engine
           RULES_ENGINE: panther-rules-engine
-          RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources
+          RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources-queue
           TABLE: !Ref Table
       FunctionName: panther-analysis-api
+      # <cfndoc>
+      # This lambda implements the analysis API which is responsible for
+      # policies/rules from being created, updated, and deleted.
+      #
+      # Failure Impact
+      # * Failure of this lambda will prevent policies/rules from being created, updated, deleted. Additionally, policies and rules will stop being evaluated by the policy/rules engines.
+      # </cfndoc>
       Handler: main
       MemorySize: 512
       Layers: !If [AttachBaseLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -136,7 +149,7 @@ Resources:
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-resources
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-resources-queue
             - Effect: Allow
               Action:
                 - kms:Decrypt
@@ -165,6 +178,14 @@ Resources:
       SSESpecification:
         SSEEnabled: True
       TableName: panther-analysis
+      # <cfndoc>
+      # This ddb table holds the policies applied by the `panther-rules-engine` lambda and
+      # managed by the `panther-analysis-api`.
+      #
+      # Failure Impact
+      # * Processing of policies could be slowed or stopped if there are errors/throttles.
+      # * The Panther user interface could be impacted.
+      # </cfndoc>
 
   AnalysisVersions:
     Type: AWS::S3::Bucket

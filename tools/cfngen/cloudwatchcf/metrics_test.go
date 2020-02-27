@@ -25,7 +25,7 @@ import (
 )
 
 func TestGenerateMetrics(t *testing.T) {
-	cf, err := GenerateMetrics("./testdata")
+	cf, err := GenerateMetrics("./testdata/cf.yml")
 	require.NoError(t, err)
 	const expectedFile = "./testdata/generated_test_metrics.json"
 	// uncomment to make a new expected file

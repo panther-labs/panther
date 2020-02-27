@@ -65,6 +65,9 @@ func Fmt() {
 	if err := sh.Run(nodePath("prettier"), args...); err != nil {
 		logger.Fatalf("failed to format {web/src/**,.}: %v", err)
 	}
+
+	// Generate documentation
+	Doc.Cfn(Doc{})
 }
 
 // Apply full go formatting to the given paths, which share the common root.

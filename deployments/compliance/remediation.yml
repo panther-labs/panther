@@ -69,6 +69,9 @@ Resources:
       DefinitionBody: api/gateway/remediation/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-remediation-api
+      # <cfndoc>
+      # The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
+      # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
@@ -84,6 +87,14 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: panther-remediation-queue
+      # <cfndoc>
+      # This sqs queue has remediation request events that are
+      # processed by the `panther-remediation-processor` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact the remediation of policy violations.
+      # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       KmsMasterKeyId: !Ref SQSKeyId
       VisibilityTimeout: 120 # Should match lambda
@@ -94,7 +105,13 @@ Resources:
   DeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-remediation-dlq
+      QueueName: panther-remediation-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-remediation-queue`.
+      # Items are in this queue due to a failure of the `panther-remediation-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-remediation-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
 
@@ -113,6 +130,12 @@ Resources:
           RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           RESOURCES_SERVICE_PATH: v1
       FunctionName: panther-remediation-api
+      # <cfndoc>
+      # The `panther-remediation-api` lambda triggers AWS remediations.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -178,6 +201,14 @@ Resources:
             Queue: !GetAtt Queue.Arn
             BatchSize: 1
       FunctionName: panther-remediation-processor
+      # <cfndoc>
+      # The `panther-remediation-processor` lambda processes queued remediations
+      # in the `panther-remediation-queue` and calls the `panther-aws-remediation` lambda.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
+      # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -218,6 +249,12 @@ Resources:
       CodeUri: ../../../internal/compliance/remediation_aws/src
       Description: Function that remediates issues with AWS resources
       FunctionName: panther-aws-remediation
+      # <cfndoc>
+      # The `panther-aws-remediation` lambda executes automated infrastructure remediations.
+      #
+      # Failure Impact
+      # * Failure of this lambda will mean specific remediations are failing and infrastructure will remain in violation of policy.
+      # </cfndoc>
       Handler: app.main.lambda_handler
       Environment:
         Variables:

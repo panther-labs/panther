@@ -36,7 +36,7 @@ func NewAPIGatewayAlarm(alarmType, metricName, message string, resource map[inte
 	apiGatewayName := getResourceProperty(metricDimension, resource)
 	alarmName := AlarmName(alarmType, apiGatewayName)
 	alarm = &APIGatewayAlarm{
-		Alarm: *NewAlarm(alarmName,
+		Alarm: *NewAlarm(apiGatewayName, alarmName,
 			fmt.Sprintf("ApiGateway %s %s. See: %s#%s", apiGatewayName, message, documentationURL, apiGatewayName),
 			config.snsTopicArn),
 	}

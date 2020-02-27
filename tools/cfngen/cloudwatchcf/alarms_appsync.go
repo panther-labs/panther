@@ -36,7 +36,7 @@ func NewAppSyncAlarm(graphQlID, alarmType, metricName, message string, resource 
 	appSyncName := getResourceProperty("Name", resource)
 	alarmName := AlarmName(alarmType, appSyncName)
 	alarm = &AppSyncAlarm{
-		Alarm: *NewAlarm(alarmName,
+		Alarm: *NewAlarm(appSyncName, alarmName,
 			fmt.Sprintf("AppSync %s %s. See: %s#%s", appSyncName, message, documentationURL, appSyncName),
 			config.snsTopicArn),
 	}
