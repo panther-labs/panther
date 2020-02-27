@@ -43,7 +43,16 @@ type Alert struct {
 	AlertDedupEvent
 }
 
-func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*AlertDedupEvent, error) {
+func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (event *AlertDedupEvent, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = errors.Wrap(err, "panicked while getting alert dedup event")
+			}
+		}
+	}()
 	ruleID, err := getAttribute("ruleId", input)
 	if err != nil {
 		return nil, err
@@ -79,7 +88,7 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*Al
 		return nil, err
 	}
 
-	return &AlertDedupEvent{
+	event = &AlertDedupEvent{
 		RuleID:              ruleID.String(),
 		DeduplicationString: deduplicationString.String(),
 		AlertCount:          alertCount,
@@ -87,7 +96,8 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*Al
 		UpdateTime:          time.Unix(alertUpdateEpoch, 0).UTC(),
 		Severity:            severity.String(),
 		EventPerLogType:     eventsPerLogType,
-	}, nil
+	}
+	return event, nil
 }
 
 func getIntegerAttribute(key string, input map[string]events.DynamoDBAttributeValue) (int64, error) {
