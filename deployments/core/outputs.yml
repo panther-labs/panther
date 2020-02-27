@@ -186,12 +186,12 @@ Resources:
         Variables:
           ALERT_QUEUE_URL: !Ref AlertQueue
           ALERT_RETRY_DURATION_MINS: !Ref AlertRetryDurationMins
-          ALERT_URL_PREFIX: !Sub https://${AppFqdn}/alerts/
+          ALERT_URL_PREFIX: !Sub https://${AppFqdn}/log-analysis/alerts/
           MAX_RETRY_DELAY_SECS: !Ref MaxRetryDelaySecs
           MIN_RETRY_DELAY_SECS: !Ref MinRetryDelaySecs
           OUTPUTS_API: panther-outputs-api
           OUTPUTS_REFRESH_INTERVAL_MIN: '5'
-          POLICY_URL_PREFIX: !Sub https://${AppFqdn}/policies/
+          POLICY_URL_PREFIX: !Sub https://${AppFqdn}/cloud-security/policies/
       Events:
         AlertQueue:
           Type: SQS
