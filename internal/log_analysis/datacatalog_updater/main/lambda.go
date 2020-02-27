@@ -87,7 +87,7 @@ func process(event events.SQSEvent) error {
 
 		err = gluePartition.CreatePartition(glueClient)
 		if err != nil {
-			zap.L().Error("failed to create partition", zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
+			err = errors.Wrapf(err, "failed to create partition: %#v", notification)
 			return err
 		}
 		partitionPrefixCache[gluePartition.GetPartitionPrefix()] = struct{}{}
