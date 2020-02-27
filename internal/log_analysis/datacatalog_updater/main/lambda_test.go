@@ -45,19 +45,28 @@ func TestProcessSuccess(t *testing.T) {
 func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
 	mockClient := initTest()
 
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once() // we should invoke it only once
+	// We should attempt to create the partition only once. We shouldn't try to re-create it a second time
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
+
+	// First object should invoke Glue API
 	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
-	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/new_item.json.gz"))) // different s3 key, same partition prefix
+	// Second object is in the same partition as the first one. It shouldn't invoke the Glue API since the partition is already created.
+	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/new_item.json.gz")))
 	mockClient.AssertExpectations(t)
 }
 
 func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
 	mockClient := initTest()
 
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("err")).Once()       // First we fail
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()                     // Second we succeed
-	assert.Error(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))   // This should fail
-	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"))) // This should succeed
+	// First glue operation fails
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("err")).Once()
+	// Second glue operation succeeds
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
+
+	// First invocation fails
+	assert.Error(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	// Second invocation succeeds
+	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockClient.AssertExpectations(t)
 }
 
