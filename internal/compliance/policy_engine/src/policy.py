@@ -17,8 +17,16 @@
 import collections
 import sys
 from importlib import util as import_util
+import importlib
 from typing import Any, Dict, List, Union
 
+# Setup panther helper function
+# from . import helpers as helpers
+# from . import helpers as panther_helpers
+mod = importlib.import_module('helpers')
+spec = import_util.find_spec('helpers')
+spec.loader.exec_module(mod)
+sys.modules['panther_helpers'] = mod
 AWS_GLOBALS = 'aws_globals'
 
 

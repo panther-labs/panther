@@ -265,6 +265,14 @@ Resources:
       Runtime: python3.7
       Timeout: 120
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ResourceLookup
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource: !GetAtt HandlerFunction.Arn
 
   EngineLogGroup:
     Type: AWS::Logs::LogGroup
