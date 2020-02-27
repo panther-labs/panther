@@ -210,6 +210,7 @@
 ## Operations
 
 - [Background](operations/ops-home.md)
+- [Run Books](operations/runbooks.md)
 
 ## Privacy
 

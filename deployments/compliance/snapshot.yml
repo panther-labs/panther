@@ -66,6 +66,13 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: panther-snapshot-queue
+      # <cfndoc>
+      # This sqs queue has snapshot request events processed by the `panther-snapshot-pollers` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact the scanning for changes in infrastrucure.
+      # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
+      # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       VisibilityTimeout: 900 # Should match lambda
       RedrivePolicy:
@@ -75,8 +82,15 @@ Resources:
   DeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
       QueueName: panther-snapshot-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for the `panther-snapshot-queue`.
+      # Items are in this queue due to a failure of the `panther-snapshot-pollers` lambda.
+      # When the system has recovered they should be re-queued to the `panther-snapshot-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: 60
 
   PollerFunction:
     Type: AWS::Serverless::Function
@@ -97,6 +111,14 @@ Resources:
             Queue: !GetAtt Queue.Arn
             BatchSize: 1
       FunctionName: panther-snapshot-pollers
+      # <cfndoc>
+      # This lambda read requests from the `panther-snapshot-queue` and scans infrastructure
+      # calling the `panther-resource-api` to trigger policy evaluations.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact cloud security infrastructure editing.
+      # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
@@ -144,6 +166,13 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-source-integrations
+      # <cfndoc>
+      # This table does hold the configured accounts and log sources for monitoring.
+      #
+      # Failure Impact
+      # * Processing of policies could be slowed or stopped if there are errors/throttles.
+      # * The Panther user interface could be impacted.
+      # </cfndoc>
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: integrationId
@@ -169,6 +198,14 @@ Resources:
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
           TABLE_NAME: !Ref IntegrationsTable
       FunctionName: panther-snapshot-api
+      # <cfndoc>
+      # The `panther-snapshot-api` lambda triggers scans when called by writing requests
+      # to the `panther-snapshot-queue`.
+      #
+      # Failure Impact
+      # * Failure of this lambda will prevent infrastructure scans of accounts from running.
+      # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -235,6 +272,13 @@ Resources:
           Properties:
             Schedule: rate(24 hours)
       FunctionName: panther-snapshot-scheduler
+      # <cfndoc>
+      # The `panther-snapshot-scheduler` lambda calls the `panther-snapshot-api` for infrastructure scans triggered
+      # by a 24 hour CloudWatch timer events.
+      #
+      # Failure Impact
+      # * Failure of this lambda will prevent daily infrastructure scans of accounts from running.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128

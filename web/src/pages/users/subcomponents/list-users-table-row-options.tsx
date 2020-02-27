@@ -31,12 +31,23 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
 
   return (
     <Dropdown
+      position="relative"
       trigger={
         <IconButton is="div" variant="default" my={-2}>
           <Icon type="more" size="small" />
         </IconButton>
       }
     >
+      <Dropdown.Item
+        onSelect={() =>
+          showModal({
+            modal: MODALS.RESET_USER_PASS,
+            props: { user },
+          })
+        }
+      >
+        <MenuItem variant="default">Force password reset</MenuItem>
+      </Dropdown.Item>
       <Dropdown.Item
         onSelect={() =>
           showModal({

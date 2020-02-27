@@ -115,8 +115,8 @@ var logProcessingJSON = `
             "height": 3,
             "properties": {
                 "metrics": [
-                    [ "AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", "panther-input-data-notifications-dlq", { "yAxis": "right" } ],
-                    [ ".", "NumberOfMessagesReceived", ".", "panther-input-data-notifications" ],
+                    [ "AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", "panther-input-data-notifications-queue-dlq", { "yAxis": "right" } ],
+                    [ ".", "NumberOfMessagesReceived", ".", "panther-input-data-notifications-queue" ],
                     [ ".", "NumberOfMessagesSent", ".", "." ]
                 ],
                 "view": "timeSeries",

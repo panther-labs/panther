@@ -22,54 +22,60 @@ import { MutationTuple } from '@apollo/client';
 import SubmitButton from 'Components/submit-button';
 import useModal from 'Hooks/useModal';
 
-export interface BaseDeleteModalProps {
+export interface BaseConfirmModalProps {
   mutation: MutationTuple<boolean, { [key: string]: any }>;
-  itemDisplayName: string;
+  title: string;
+  subtitle: string;
+  onSuccessMsg: string;
+  onErrorMsg: string;
   onSuccess?: () => void;
   onError?: () => void;
 }
 
-const BaseDeleteModal: React.FC<BaseDeleteModalProps> = ({
+const BaseConfirmModal: React.FC<BaseConfirmModalProps> = ({
   mutation,
-  itemDisplayName,
+  title,
+  subtitle,
+  onErrorMsg,
+  onSuccessMsg,
   onSuccess = () => {},
   onError = () => {},
 }) => {
   const { pushSnackbar } = useSnackbar();
   const { hideModal } = useModal();
-  const [deleteItem, { loading, data, error }] = mutation;
+  const [confirm, { loading, data, error }] = mutation;
 
   React.useEffect(() => {
     if (error) {
-      pushSnackbar({ variant: 'error', title: `Failed to delete ${itemDisplayName}` });
+      pushSnackbar({ variant: 'error', title: onErrorMsg });
       onError();
     }
   }, [error]);
 
   React.useEffect(() => {
     if (data) {
-      pushSnackbar({ variant: 'success', title: `Successfully deleted ${itemDisplayName}` });
+      pushSnackbar({ variant: 'success', title: onSuccessMsg });
       hideModal();
       onSuccess();
     }
   }, [data]);
 
   return (
-    <Modal open onClose={hideModal} title={`Delete ${itemDisplayName}`}>
+    <Modal open onClose={hideModal} title={title}>
       <Text size="large" color="grey500" mb={8} textAlign="center">
-        Are you sure you want to delete <b>{itemDisplayName}</b>?
+        {subtitle}
       </Text>
 
       <Flex justifyContent="flex-end">
         <Button size="large" variant="default" onClick={hideModal} mr={3}>
           Cancel
         </Button>
-        <SubmitButton onClick={() => deleteItem()} submitting={loading} disabled={loading}>
-          Delete
+        <SubmitButton onClick={() => confirm()} submitting={loading} disabled={loading}>
+          Confirm
         </SubmitButton>
       </Flex>
     </Modal>
   );
 };
 
-export default BaseDeleteModal;
+export default BaseConfirmModal;

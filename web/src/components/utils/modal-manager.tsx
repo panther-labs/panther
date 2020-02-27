@@ -22,6 +22,7 @@ import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
 import DeletePolicyModal from 'Components/modals/delete-policy-modal';
 import DeleteUserModal from 'Components/modals/delete-user-modal';
+import ResetUserPasswordModal from 'Components/modals/reset-user-password-modal';
 import DeleteSourceModal from 'Components/modals/delete-source-modal';
 import DeleteDestinationModal from 'Components/modals/delete-destination-modal';
 import DeleteRuleModal from 'Components/modals/delete-rule-modal';
@@ -40,6 +41,9 @@ const ModalManager: React.FC = () => {
       break;
     case MODALS.DELETE_USER:
       Component = DeleteUserModal;
+      break;
+    case MODALS.RESET_USER_PASS:
+      Component = ResetUserPasswordModal;
       break;
     case MODALS.DELETE_RULE:
       Component = DeleteRuleModal;

@@ -32,7 +32,8 @@ var infraJSON = `
             "properties": {
                 "metrics": [
                     [ "AWS/SQS", "NumberOfMessagesReceived", "QueueName", "panther-snapshot-queue" ],
-                    [ ".", "NumberOfMessagesSent", ".", "." ]
+                    [ ".", "NumberOfMessagesSent", ".", "." ],
+                    [ ".", "ApproximateNumberOfMessagesVisible", ".", "panther-snapshot-queue-dlq", { "yAxis": "right" } ]
                 ],
                 "view": "timeSeries",
                 "stacked": false,
@@ -651,9 +652,9 @@ var infraJSON = `
             "height": 3,
             "properties": {
                 "metrics": [
-                    [ "AWS/SQS", "NumberOfMessagesSent", "QueueName", "panther-aws-events" ],
+                    [ "AWS/SQS", "NumberOfMessagesSent", "QueueName", "panther-aws-events-queue" ],
                     [ ".", "NumberOfMessagesReceived", ".", "." ],
-                    [ ".", "ApproximateNumberOfMessagesVisible", ".", "panther-aws-events-dlq", { "yAxis": "right" } ]
+                    [ ".", "ApproximateNumberOfMessagesVisible", ".", "panther-aws-events-queue-dlq", { "yAxis": "right" } ]
                 ],
                 "view": "timeSeries",
                 "stacked": false,
@@ -671,9 +672,9 @@ var infraJSON = `
             "height": 3,
             "properties": {
                 "metrics": [
-                    [ "AWS/SQS", "NumberOfMessagesReceived", "QueueName", "panther-resources" ],
-                    [ ".", "ApproximateNumberOfMessagesVisible", ".", "panther-resources-dlq", { "yAxis": "right" } ],
-                    [ ".", "NumberOfMessagesSent", ".", "panther-resources" ]
+                    [ "AWS/SQS", "NumberOfMessagesReceived", "QueueName", "panther-resources-queue" ],
+                    [ ".", "ApproximateNumberOfMessagesVisible", ".", "panther-resources-queue-dlq", { "yAxis": "right" } ],
+                    [ ".", "NumberOfMessagesSent", ".", "panther-resources-queue" ]
                 ],
                 "view": "timeSeries",
                 "stacked": false,
