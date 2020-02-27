@@ -77,6 +77,9 @@ func checkAuroraMysqlAuditLogLog(t *testing.T, log string, expectedEvent *Aurora
 	if expectedEvent.PantherEventTime == nil {
 		expectedEvent.PantherEventTime = event.PantherParseTime
 	}
+	// PantherParseTime is set to time.Now().UTC(). Require not nil
+	require.NotNil(t, event.PantherParseTime)
+	expectedEvent.PantherParseTime = event.PantherParseTime
 
 	require.Equal(t, expectedEvent, event)
 }

@@ -159,6 +159,9 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 		if expectedEvent.PantherEventTime == nil {
 			expectedEvent.PantherEventTime = event.PantherParseTime
 		}
+		// PantherParseTime is set to time.Now().UTC(). Require not nil
+		require.NotNil(t, event.PantherParseTime)
+		expectedEvent.PantherParseTime = event.PantherParseTime
 	}
 
 	for i := range events {
