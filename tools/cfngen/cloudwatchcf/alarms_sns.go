@@ -36,7 +36,7 @@ func NewSNSAlarm(alarmType, metricName, message string, resource map[interface{}
 	topicName := getResourceProperty(metricDimension, resource)
 	alarmName := AlarmName(alarmType, topicName)
 	alarm = &SNSAlarm{
-		Alarm: *NewAlarm(alarmName,
+		Alarm: *NewAlarm(topicName, alarmName,
 			fmt.Sprintf("SNS topic %s %s. See: %s#%s", topicName, message, documentationURL, topicName),
 			config.snsTopicArn),
 	}

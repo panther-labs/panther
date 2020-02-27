@@ -10,19 +10,19 @@ GitHub has fairly thorough documentation available [here](https://help.github.co
 
 1. First enter the repository name into the Panther destination configuration. This will be in the form `owner/repo_name`
 
-2. Using the service account, or the account of any developer that has access to the repo, first go to `Settings` and then `Developer settings`.
+2. Using the service account, or the account of any developer that has access to the repo, first go to `Settings` and then `Developer settings`:
 
 ![](../../.gitbook/assets/screen-shot-2019-10-23-at-10.18.30-am.png)
 
-3. From the developer settings page, go to `Personal access tokens` and select the `Generate new token` button.
+3. From the developer settings page, go to `Personal access tokens` and select the `Generate new token` button:
 
 ![](../../.gitbook/assets/screen-shot-2019-10-23-at-10.22.52-am.png)
 
-4. From the token configuration screen, name the token and select the `repo` permissions checkbox. This is a fairly broad permission, but GitHub does not currently support fine-grained permissions for creating issues. If this level of access is a concern, consider creating a dedicated issue tracking repository per GitHub's recommendations [here](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-an-issues-only-repository).
+4. From the token configuration screen, name the token and select the `repo` permissions checkbox. This is a fairly broad permission, but GitHub does not currently support fine-grained permissions for creating issues. If this level of access is a concern, consider creating a dedicated issue tracking repository per GitHub's recommendations [here](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-an-issues-only-repository):
 
 ![](../../.gitbook/assets/screen-shot-2019-10-23-at-10.24.35-am%20%281%29.png)
 
-Select the `Generate Token` button, and copy the token out into the Panther Destinations configuration. GitHub will not allow you to access this token again, you will need to re-generate it if it is lost.
+Select the `Generate Token` button, and copy the token out into the Panther Destinations configuration. GitHub will not allow you to access this token again, you will need to re-generate it if it is lost:
 
 ![](../../.gitbook/assets/screen-shot-2019-10-23-at-10.14.48-am.png)
 

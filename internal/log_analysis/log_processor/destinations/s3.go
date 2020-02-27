@@ -25,8 +25,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -36,6 +34,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
@@ -44,7 +43,7 @@ const (
 	// s3ObjectKeyFormat represents the format of the S3 object key
 	// It has 3 parts:
 	// 1. The key prefix 2. Timestamp in format `20060102T150405Z` 3. UUID4
-	s3ObjectKeyFormat = "%s%s-%s.gz"
+	s3ObjectKeyFormat = "%s%s-%s.json.gz"
 
 	logDataTypeAttributeName = "type"
 	logTypeAttributeName     = "id"
@@ -63,16 +62,13 @@ var (
 
 // S3Destination sends normalized events to S3
 type S3Destination struct {
-	s3Client   s3iface.S3API
-	snsClient  snsiface.SNSAPI
-	glueClient glueiface.GlueAPI
+	s3Client  s3iface.S3API
+	snsClient snsiface.SNSAPI
 	// s3Bucket is the s3Bucket where the data will be stored
 	s3Bucket string
 	// snsTopic is the SNS Topic ARN where we will send the notification
 	// when we store new data in S3
 	snsTopicArn string
-	// used to track existing glue partitions, avoids excessive Glue API calls
-	partitionExistsCache map[string]struct{}
 }
 
 // SendEvents stores events in S3.
@@ -211,8 +207,6 @@ func (destination *S3Destination) sendData(logType string, buffer *s3EventBuffer
 		return err
 	}
 
-	destination.createGluePartition(logType, buffer) // best effort
-
 	err = destination.sendSNSNotification(key, logType, buffer) // if send fails we fail whole operation
 
 	return err
@@ -227,12 +221,12 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 			zap.String("topicArn", destination.snsTopicArn))
 	}()
 
-	s3Notification := &common.S3Notification{
+	s3Notification := &models.S3Notification{
 		S3Bucket:    aws.String(destination.s3Bucket),
 		S3ObjectKey: aws.String(key),
 		Events:      aws.Int(buffer.events),
 		Bytes:       aws.Int(buffer.bytes),
-		Type:        aws.String(common.LogData),
+		Type:        aws.String(models.LogData.String()),
 		ID:          aws.String(logType),
 	}
 
@@ -247,7 +241,7 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 		Message:  aws.String(marshalledNotification),
 		MessageAttributes: map[string]*sns.MessageAttributeValue{
 			logDataTypeAttributeName: {
-				StringValue: aws.String(common.LogData),
+				StringValue: aws.String(models.LogData.String()),
 				DataType:    aws.String(messageAttributeDataType),
 			},
 			logTypeAttributeName: {
@@ -264,36 +258,9 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 	return err
 }
 
-// create glue partition (best effort and log)
-func (destination *S3Destination) createGluePartition(logType string, buffer *s3EventBuffer) {
-	glueMetadata := parserRegistry.LookupParser(logType).Glue
-	partitionPath := glueMetadata.PartitionPrefix(buffer.firstEventProcessedTime)
-	if _, exists := destination.partitionExistsCache[partitionPath]; !exists {
-		operation := common.OpLogManager.Start("createPartition", common.OpLogGlueServiceDim)
-		partitionErr := glueMetadata.CreateJSONPartition(destination.glueClient, buffer.firstEventProcessedTime)
-		// already done? fast path return
-		if partitionErr != nil {
-			if awsErr, ok := partitionErr.(awserr.Error); ok {
-				if awsErr.Code() == "AlreadyExistsException" {
-					destination.partitionExistsCache[partitionPath] = struct{}{} // remember
-					return
-				}
-			}
-		} else {
-			destination.partitionExistsCache[partitionPath] = struct{}{} // remember
-		}
-
-		// log outcome
-		operation.Stop()
-		operation.Log(partitionErr,
-			zap.String("bucket", destination.s3Bucket),
-			zap.String("partition", partitionPath))
-	}
-}
-
 func getS3ObjectKey(logType string, timestamp time.Time) string {
 	return fmt.Sprintf(s3ObjectKeyFormat,
-		parserRegistry.LookupParser(logType).Glue.PartitionPrefix(timestamp.UTC()), // get the path used in Glue table
+		parserRegistry.LookupParser(logType).GlueTableMetadata.GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
 		timestamp.Format("20060102T150405Z"),
 		uuid.New().String())
 }

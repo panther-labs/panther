@@ -19,6 +19,7 @@
 import React from 'react';
 import { DeletePolicyModalProps } from 'Components/modals/delete-policy-modal';
 import { DeleteUserModalProps } from 'Components/modals/delete-user-modal';
+import { ResetUserPasswordProps } from 'Components/modals/reset-user-password-modal';
 import { DeleteSourceModalProps } from 'Components/modals/delete-source-modal';
 import { DeleteDestinationModalProps } from 'Components/modals/delete-destination-modal';
 import { DeleteRuleModalProps } from 'Components/modals/delete-rule-modal';
@@ -31,6 +32,7 @@ export enum MODALS {
   DELETE_POLICY = 'DELETE_POLICY',
   DELETE_RULE = 'DELETE_RULE',
   DELETE_USER = 'DELETE_USER',
+  RESET_USER_PASS = 'RESET_USER_PASS',
   DELETE_SOURCE = 'DELETE_SOURCE',
   DELETE_DESTINATION = 'DELETE_DESTINATION',
   NETWORK_ERROR = 'NETWORK_ERROR',
@@ -63,6 +65,15 @@ interface ShowDeleteUserModalAction {
   payload: {
     modal: MODALS.DELETE_USER;
     props: DeleteUserModalProps;
+  };
+}
+
+/* Reset user password */
+interface ShowResetUserPasswordModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.RESET_USER_PASS;
+    props: ResetUserPasswordProps;
   };
 }
 
@@ -113,6 +124,7 @@ interface ShowAnalyticsConsentModalAction {
 type ModalStateAction =
   | ShowDeleteSourceModalAction
   | ShowDeleteUserModalAction
+  | ShowResetUserPasswordModalAction
   | ShowPolicyModalAction
   | ShowDeleteRuleModalAction
   | ShowDeleteDestinationModalAction

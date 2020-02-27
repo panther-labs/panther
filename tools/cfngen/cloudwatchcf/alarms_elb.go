@@ -36,7 +36,7 @@ func NewApplicationELBAlarm(loadBalancer, alarmType, metricName, message string,
 	loadBalancerName := getResourceProperty("Name", resource)
 	alarmName := AlarmName(alarmType, loadBalancer)
 	alarm = &ApplicationELB{
-		Alarm: *NewAlarm(alarmName,
+		Alarm: *NewAlarm(loadBalancerName, alarmName,
 			fmt.Sprintf("ALB %s %s. See: %s#%s", loadBalancer, message, documentationURL, loadBalancerName),
 			config.snsTopicArn),
 	}
