@@ -59,12 +59,16 @@ type SourceIntegrationHealth struct {
 	IntegrationType *string `json:"integrationType"`
 
 	// Checks for cloudsec integrations
-	AuditRoleGood       *bool `json:"auditRoleGood"`
-	CWERoleGood         *bool `json:"cweRoleGood"`
-	RemediationRoleGood *bool `json:"remediationRoleGood"`
+	AuditRoleStatus       *SourceIntegrationItemStatus `json:"auditRoleStatus"`
+	CWERoleStatus         *SourceIntegrationItemStatus `json:"cweRoleStatus"`
+	RemediationRoleStatus *SourceIntegrationItemStatus `json:"remediationRoleStatus"`
 
 	// Checks for log analysis integrations
-	ProcessingRoleGood *bool            `json:"processingRoleGood"`
-	S3BucketsGood      map[string]*bool `json:"s3BucketsGood"`
-	KmsKeysGood        map[string]*bool `json:"kmsKeysGood"`
+	ProcessingRoleStatus *SourceIntegrationItemStatus            `json:"processingRoleStatus"`
+	S3BucketsStatus      map[string]*SourceIntegrationItemStatus `json:"s3BucketsStatus"`
+}
+
+type SourceIntegrationItemStatus struct {
+	Healthy      *bool   `json:"healthy"`
+	ErrorMessage *string `json:"errorMessage"`
 }

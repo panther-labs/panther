@@ -46,6 +46,14 @@ Parameters:
     Type: String
     Default: PantherRemediationRole
     Description: The name of the IAM role to assume to perform AWS account/service scans
+  CWERoleName:
+    Type: String
+    Default: PantherCloudFormationStackSetExecutionRole
+    Description: The name of the IAM role to assume to perform AWS account/service scans
+  LogProcessingRoleName:
+    Type: String
+    Default: PantherLogProcessingRole
+    Description: The name of the IAM role to assume to perform AWS account/service scans
   ResourcesApiId:
     Type: String
     Description: API Gateway for resources-api
@@ -249,6 +257,8 @@ Resources:
               Resource:
               - !Sub arn:${AWS::Partition}:iam::*:role/${AuditRoleName}
               - !Sub arn:${AWS::Partition}:iam::*:role/${RemediationRoleName}
+              - !Sub arn:${AWS::Partition}:iam::*:role/${CWERoleName}
+              - !Sub arn:${AWS::Partition}:iam::*:role/${LogProcessingRoleName}
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
