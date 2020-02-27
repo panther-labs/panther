@@ -169,7 +169,7 @@ will be removed before v1
 This is the GraphQL endpoint for the Panther UI.
 
  Failure Impact
- * The Panther user interface be impacted.
+ * The Panther user interface will show errors.
 ## panther-input-data-notifications-queue
 This sqs queue receives S3 notifications
  of log files to be processed by `panther-log-processor` lambda.
