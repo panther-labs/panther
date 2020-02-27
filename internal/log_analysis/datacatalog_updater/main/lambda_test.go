@@ -54,9 +54,9 @@ func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
 func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
 	mockClient := initTest()
 
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("err")).Once() // First we fail
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once() // Second we succeed
-	assert.Error(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"))) // This should fail
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("err")).Once()       // First we fail
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()                     // Second we succeed
+	assert.Error(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))   // This should fail
 	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"))) // This should succeed
 	mockClient.AssertExpectations(t)
 }
@@ -99,8 +99,6 @@ func getEvent(t *testing.T, s3Keys ...string) events.SQSEvent {
 	}
 	return result
 }
-
-
 
 type mockGlue struct {
 	glueiface.GlueAPI
