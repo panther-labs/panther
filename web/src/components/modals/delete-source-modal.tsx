@@ -21,8 +21,8 @@ import { Integration } from 'Generated/schema';
 import { LIST_INFRA_SOURCES } from 'Pages/list-compliance-sources/subcomponents/compliance-source-table';
 import { LIST_LOG_SOURCES } from 'Pages/list-log-sources/subcomponents/log-source-table';
 import { useMutation, gql } from '@apollo/client';
-import BaseDeleteModal from 'Components/modals/base-delete-modal';
 import { INTEGRATION_TYPES } from 'Source/constants';
+import BaseConfirmModal from 'Components/modals/base-confirm-modal';
 
 const DELETE_SOURCE = gql`
   mutation DeleteSource($id: ID!) {
@@ -44,7 +44,15 @@ const DeleteSourceModal: React.FC<DeleteSourceModalProps> = ({ source }) => {
     refetchQueries: [{ query: isInfraSource ? LIST_INFRA_SOURCES : LIST_LOG_SOURCES }],
   });
 
-  return <BaseDeleteModal mutation={mutation} itemDisplayName={sourceDisplayName} />;
+  return (
+    <BaseConfirmModal
+      mutation={mutation}
+      title={`Delete ${sourceDisplayName}`}
+      subtitle={`Are you sure you want to delete ${sourceDisplayName}?`}
+      onSuccessMsg={`Successfully deleted ${sourceDisplayName}`}
+      onErrorMsg={`Failed to delete ${sourceDisplayName}`}
+    />
+  );
 };
 
 export default DeleteSourceModal;

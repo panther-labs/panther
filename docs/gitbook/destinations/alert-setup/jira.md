@@ -2,7 +2,7 @@
 
 This page will walk you through configuring Jira as a Destination for your Panther alerts.
 
-The Jira Destination requires an `Organization Domain`, `Project Key`, `User Name`, `Jira API Key`, and `Assignee ID`. When an alert is forwarded to a Jira Destination, a task is created and assigned to the specified assignee in the specified project.
+The Jira Destination requires an `Organization Domain`, `Project Key`, `User Name`, `Jira API Key`, and `Assignee ID`. When an alert is forwarded to a Jira Destination, a task is created and assigned to the specified assignee in the specified project:
 
 ![](../../.gitbook/assets/screen-shot-2019-10-21-at-12.51.45-pm.png)
 
@@ -16,11 +16,11 @@ The Project Key is the project identifier within your organization, which can be
 
 The User Name is the Jira user name of the user that will be creating the new issues.
 
-The Jira API Key is the API key of the user that will be creating the issues. This can be acquired by going to [https://id.atlassian.com/manage/api-tokens](https://id.atlassian.com/manage/api-tokens) while logged in as the user and selecting the `Create API Token` button.
+The Jira API Key is the API key of the user that will be creating the issues. This can be acquired by going to [https://id.atlassian.com/manage/api-tokens](https://id.atlassian.com/manage/api-tokens) while logged in as the user and selecting the `Create API Token` button:
 
 ![](../../.gitbook/assets/screen-shot-2019-10-22-at-10.02.51-am.png)
 
-After creating the token, you will have an opportunity to copy it. As Jira warns this token should be treated just as sensitively as a password and you will not be able to access it again in the future.
+After creating the token, you will have an opportunity to copy it. As Jira warns this token should be treated just as sensitively as a password and you will not be able to access it again in the future:
 
 ![](../../.gitbook/assets/screen-shot-2019-10-22-at-10.03.30-am.png)
 

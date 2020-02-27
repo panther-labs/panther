@@ -17,12 +17,13 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, useSnackbar } from 'pouncejs';
+import { Alert, Box, useSnackbar, Text, Flex } from 'pouncejs';
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 import ErrorBoundary from 'Components/error-boundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/company-information-form';
+import Panel from 'Components/panel';
 import GeneralSettingsPageSkeleton from './skeleton';
 
 export const GET_GENERAL_SETTINGS = gql`
@@ -110,8 +111,30 @@ const GeneralSettingsContainer: React.FC = () => {
   return (
     <Box mb={6}>
       <ErrorBoundary>
-        <Card p={10}>
-          <Box width={500} m="auto">
+        <Box mb={2}>
+          <Panel title="About Panther" size="large">
+            <Box width={500} m="auto">
+              <Flex mb={6}>
+                <Text color="grey300" size="large" width={80}>
+                  Plan
+                </Text>
+                <Text color="grey500" size="large" fontWeight="bold">
+                  Community
+                </Text>
+              </Flex>
+              <Flex>
+                <Text color="grey300" size="large" width={80}>
+                  Version
+                </Text>
+                <Text color="grey500" size="large" fontWeight="bold">
+                  {process.env.PANTHER_VERSION || 'N/A'}
+                </Text>
+              </Flex>
+            </Box>
+          </Panel>
+        </Box>
+        <Panel title="General Settings" size="large">
+          <Box width={500} mx="auto" mt={10}>
             <CompanyInformationForm
               initialValues={{
                 displayName,
@@ -121,7 +144,7 @@ const GeneralSettingsContainer: React.FC = () => {
               onSubmit={values => updateGeneralSettings({ variables: { input: values } })}
             />
           </Box>
-        </Card>
+        </Panel>
       </ErrorBoundary>
     </Box>
   );

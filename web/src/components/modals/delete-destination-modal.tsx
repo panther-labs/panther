@@ -20,7 +20,7 @@ import React from 'react';
 import { Destination } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
 import { LIST_DESTINATIONS } from 'Pages/destinations';
-import BaseDeleteModal from 'Components/modals/base-delete-modal';
+import BaseConfirmModal from 'Components/modals/base-confirm-modal';
 
 const DELETE_DESTINATION = gql`
   mutation DeleteOutput($id: ID!) {
@@ -45,7 +45,15 @@ const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destina
     refetchQueries: [{ query: LIST_DESTINATIONS }],
   });
 
-  return <BaseDeleteModal mutation={mutation} itemDisplayName={destinationDisplayName} />;
+  return (
+    <BaseConfirmModal
+      mutation={mutation}
+      title={`Delete ${destinationDisplayName}`}
+      subtitle={`Are you sure you want to delete ${destinationDisplayName}?`}
+      onSuccessMsg={`Successfully deleted ${destinationDisplayName}`}
+      onErrorMsg={`Failed to delete ${destinationDisplayName}`}
+    />
+  );
 };
 
 export default DeleteDestinationModal;

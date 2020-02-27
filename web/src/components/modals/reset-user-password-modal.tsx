@@ -22,43 +22,36 @@ import { User } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import useAuth from 'Hooks/useAuth';
 import BaseConfirmModal from 'Components/modals/base-confirm-modal';
 
-const DELETE_USER = gql`
-  mutation DeleteUser($id: ID!) {
-    deleteUser(id: $id)
+const RESET_USER_PASS = gql`
+  mutation ResetUserPassword($id: ID!) {
+    resetUserPassword(id: $id)
   }
 `;
 
-export interface DeleteUserModalProps {
+export interface ResetUserPasswordProps {
   user: User;
 }
 
-const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
-  const { signOut, userInfo } = useAuth();
-  // Checking if user deleted is the same as the user signed in
-  const onSuccess = () => userInfo.sub === user.id && signOut();
-
+const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
-  const mutation = useMutation<boolean, { id: string }>(DELETE_USER, {
+  const mutation = useMutation<boolean, { id: string }>(RESET_USER_PASS, {
     variables: {
       id: user.id,
     },
     awaitRefetchQueries: true,
     refetchQueries: [getOperationName(LIST_USERS)],
   });
-
   return (
     <BaseConfirmModal
       mutation={mutation}
-      title={`Delete ${userDisplayName}`}
-      subtitle={`Are you sure you want to delete ${userDisplayName}?`}
-      onSuccessMsg={`Successfully deleted ${userDisplayName}`}
-      onErrorMsg={`Failed to delete ${userDisplayName}`}
-      onSuccess={onSuccess}
+      title={`Force a password change for ${userDisplayName}`}
+      subtitle={`Are you sure you want to reset password for ${userDisplayName}?`}
+      onSuccessMsg={`Successfully forced a password change for ${userDisplayName}`}
+      onErrorMsg={`Failed to reset password for ${userDisplayName}`}
     />
   );
 };
 
-export default DeleteUserModal;
+export default ResetUserPasswordModal;

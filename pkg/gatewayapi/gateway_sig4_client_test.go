@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -43,7 +44,7 @@ func TestSig4ClientMissingPathParameters(t *testing.T) {
 	c := GatewayClient(session.Must(session.NewSession(nil)))
 	result, err := c.Get("https://example.com/path//missing")
 	require.Error(t, err)
-	assert.Equal(t, "Get https://example.com/path//missing: sig4: missing path parameter", err.Error())
+	assert.True(t, strings.HasSuffix(err.Error(), "sig4: missing path parameter"))
 	assert.Nil(t, result)
 }
 
