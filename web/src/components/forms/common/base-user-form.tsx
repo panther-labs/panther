@@ -21,6 +21,7 @@ import { Field, Formik } from 'formik';
 import SubmitButton from 'Components/submit-button';
 import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/text-input';
+import * as Yup from 'yup';
 
 interface IdValue {
   id: string;
@@ -34,6 +35,14 @@ export interface BaseUserFormProps<BaseUserFormValues extends IdValue> {
   onSubmit: (values: BaseUserFormValues) => void;
 }
 
+const validationSchema = Yup.object().shape({
+  email: Yup.string()
+    .email('Must be a valid email')
+    .required('Email is required'),
+  familyName: Yup.string().required('Last name is required'),
+  givenName: Yup.string().required('First name is required'),
+});
+
 function BaseUserForm<BaseUserFormValues extends IdValue>({
   initialValues,
   onSubmit,
@@ -45,6 +54,7 @@ function BaseUserForm<BaseUserFormValues extends IdValue>({
       initialValues={initialValues}
       onSubmit={onSubmit}
       enableReinitialize
+      validationSchema={validationSchema}
     >
       {({ handleSubmit, isSubmitting, isValid, dirty }) => {
         return (
