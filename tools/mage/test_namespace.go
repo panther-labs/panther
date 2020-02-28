@@ -244,12 +244,11 @@ func testWeb() bool {
 		pass = false
 	}
 
-	// TODO - re-enable once https://npmjs.com/advisories/1217 is resolved
-	//logger.Info("test:web: npm audit")
-	//if err := sh.RunV("npm", "audit"); err != nil {
-	//	logger.Errorf("npm audit failed: %v", err)
-	//	pass = false
-	//}
+	logger.Info("test:web: npm audit")
+	if err := sh.RunV("npm", "audit"); err != nil {
+		logger.Errorf("npm audit failed: %v", err)
+		pass = false
+	}
 
 	return pass
 }
@@ -317,7 +316,7 @@ func (t Test) Integration() {
 		return
 	}
 
-	walk("internal", func(path string, info os.FileInfo) {
+	walk(".", func(path string, info os.FileInfo) {
 		if filepath.Base(path) == "integration_test.go" {
 			goPkgIntegrationTest("./" + filepath.Dir(path))
 		}

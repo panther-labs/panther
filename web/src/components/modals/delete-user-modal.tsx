@@ -22,8 +22,8 @@ import { User } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import BaseDeleteModal from 'Components/modals/base-delete-modal';
 import useAuth from 'Hooks/useAuth';
+import BaseConfirmModal from 'Components/modals/base-confirm-modal';
 
 const DELETE_USER = gql`
   mutation DeleteUser($id: ID!) {
@@ -50,7 +50,14 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
   });
 
   return (
-    <BaseDeleteModal mutation={mutation} itemDisplayName={userDisplayName} onSuccess={onSuccess} />
+    <BaseConfirmModal
+      mutation={mutation}
+      title={`Delete ${userDisplayName}`}
+      subtitle={`Are you sure you want to delete ${userDisplayName}?`}
+      onSuccessMsg={`Successfully deleted ${userDisplayName}`}
+      onErrorMsg={`Failed to delete ${userDisplayName}`}
+      onSuccess={onSuccess}
+    />
   );
 };
 

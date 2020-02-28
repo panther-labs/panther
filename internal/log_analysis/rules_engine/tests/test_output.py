@@ -16,6 +16,7 @@
 
 import json
 import os
+import re
 from datetime import datetime
 from gzip import GzipFile
 from unittest import TestCase, mock
@@ -92,8 +93,12 @@ class TestMatchedEventsBuffer(TestCase):
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)
 
-        # Verify content
         _, call_args = S3_MOCK.put_object.call_args
+        # Verify key format
+        key = call_args['Key']
+        pattern = re.compile("^rules/log_type/year=\\d{4}/month=\\d{2}/day=\\d{2}/hour=\\d{2}/.*json.gz$")
+        self.assertIsNotNone(pattern.match(key))
+        # Verify content
         data = GzipFile(None, 'rb', fileobj=call_args['Body'])
         content = json.loads(data.read().decode('utf-8'))
         # Verify extra fields
@@ -111,7 +116,7 @@ class TestMatchedEventsBuffer(TestCase):
             MessageAttributes={
                 'type': {
                     'DataType': 'String',
-                    'StringValue': 'RuleOutput'
+                    'StringValue': 'RuleMatches'
                 },
                 'id': {
                     'DataType': 'String',

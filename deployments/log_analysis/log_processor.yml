@@ -61,7 +61,15 @@ Resources:
   Queue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-input-data-notifications
+      QueueName: panther-input-data-notifications-queue
+      # <cfndoc>
+      # This sqs queue receives S3 notifications
+      # of log files to be processed by `panther-log-processor` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact stop log analysis (log ingest and rule processing).
+      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
+      # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
@@ -73,7 +81,13 @@ Resources:
   DeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-input-data-notifications-dlq
+      QueueName: panther-input-data-notifications-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-input-data-notifications-queue`.
+      # Items are in this queue due to a failure of the `panther-log-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   FunctionLogGroup:
@@ -86,6 +100,23 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: panther-log-processor
+      # <cfndoc>
+      # The lambda function that processes S3 files from
+      # notifications posted to the `panther-input-data-notifications-queue` SQS queue.
+      #
+      # Troubleshooting
+      # * If files cannot be processed errors will be generated. Some root causes can be:
+      #   * S3 event configured against a whole bucket rather than a prefix, which causes
+      #     files other than the intended logs to be processed.
+      #   * Variations in the log format not handled by the parsers.
+      #     [Open a bug report](https://github.com/panther-labs/panther/issues).
+      #
+      #
+      # Failure Impact
+      # * Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
+      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
+      # * There is the possibility of duplicate data ingested if the failures had partial results.
+      # </cfndoc>
       Description: Downloads security logs from S3 for Panther analysis
       CodeUri: ../../out/bin/internal/log_analysis/log_processor/main
       Handler: main
@@ -116,15 +147,6 @@ Resources:
               # This account will be whitelisted and SNS topic from it can subscribe to the SQS queue.
               Action: sns:ConfirmSubscription
               Resource: '*'
-        - Id: ReceiveFromInputSqsQueue
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - sqs:DeleteMessage
-                - sqs:GetQueueAttributes
-                - sqs:ReceiveMessage
-              Resource: !GetAtt Queue.Arn
         - Id: OutputToS3
           Version: 2012-10-17
           Statement:
@@ -167,3 +189,117 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/${PantherDatabase}
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/${PantherDatabase}/*
+
+  UpdaterSnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt UpdaterQueue.Arn
+      Region: !Ref AWS::Region
+      TopicArn: !Ref SnsTopicArn
+      RawMessageDelivery: true
+
+  UpdaterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref UpdaterQueue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Ref SnsTopicArn
+
+  UpdaterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-datacatalog-updater-queue
+      # <cfndoc>
+      # This queue contains notifications that include information of new log data.
+      #
+      # Failure Impact
+      # The tables in `panther*` Glue databases  will not be updated with new partitions. This will result in:
+      # * Users will not be able to search the latest log data
+      # * Users will not be able to see new events that matched some rule.
+      # </cfndoc>
+      KmsMasterKeyId: !Ref SQSKeyId
+      VisibilityTimeout: 30 # Should match lambda
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt UpdaterDeadLetterQueue.Arn
+        maxReceiveCount: 10
+
+  UpdaterDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-datacatalog-updater-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-datacatalog-updater-queue`.
+      # Items are in this queue due to a failure of the `panther-datacatalog-updater` lambda.
+      # When the system has recovered they should be re-queued to the `panther-datacatalog-updater-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+
+  UpdaterFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-datacatalog-updater
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  UpdaterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: panther-datacatalog-updater
+      # <cfndoc>
+      # This lambda reads events from the `panther-datacatalog-updater-queue` generated by
+      # generated by the `panther-rules-engine` and `panther-log-processor` lambda.  It creates new partitions to the Glue tables in `panther*` Glue Databases.
+      #
+      # Failure Impact
+      # The tables in `panther*` Glue databases  will not be updated with new partitions. This will result in:
+      # * Users will not be able to search the latest log data
+      # * Users will not be able to see new events that matched some rule.
+      # </cfndoc>
+      Description: Updates the glue data catalog
+      CodeUri: ../../out/bin/internal/log_analysis/datacatalog_updater/main
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 30
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt UpdaterQueue.Arn
+            BatchSize: 10
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: AccessSqsKms
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:Encrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+        - Id: WriteGluePartitions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:GetPartition
+                - glue:CreatePartition
+                - glue:GetTable
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*

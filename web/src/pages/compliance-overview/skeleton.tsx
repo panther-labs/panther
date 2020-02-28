@@ -39,16 +39,16 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
         is="section"
         mb={3}
       >
-        <DonutChartWrapper title="Policy Overview" icon="policy">
+        <DonutChartWrapper title="Policy Severity" icon="policy">
           <ChartPlaceholder />
         </DonutChartWrapper>
-        <DonutChartWrapper title="Policy Failure Breakdown" icon="policy">
+        <DonutChartWrapper title="Policy Failure" icon="policy">
           <ChartPlaceholder />
         </DonutChartWrapper>
-        <DonutChartWrapper title="Resources Platforms" icon="resource">
+        <DonutChartWrapper title="Resource Type" icon="resource">
           <ChartPlaceholder />
         </DonutChartWrapper>
-        <DonutChartWrapper title="Resources Health" icon="resource">
+        <DonutChartWrapper title="Resource Health" icon="resource">
           <ChartPlaceholder />
         </DonutChartWrapper>
       </Grid>
