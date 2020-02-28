@@ -199,24 +199,6 @@ Resources:
       Timeout: 120
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - Id: ReceiveFromInputSqsQueue
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - sqs:DeleteMessage
-                - sqs:GetQueueAttributes
-                - sqs:ReceiveMessage
-              Resource: !GetAtt Queue.Arn
-        - Id: SendToSqsQueue
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - sqs:GetQueueUrl
-                - sqs:SendMessage
-                - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${AlertsQueue}
         - Id: SendToNotificationsTopic
           Version: 2012-10-17
           Statement:
@@ -224,20 +206,26 @@ Resources:
               Action:
                 - sns:Publish
               Resource: !Ref SnsTopicArn
-        - Id: S3ReadWrite
+        - Id: ReadLogs
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
+        - Id: ReadWriteRuleMatches
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
                 - s3:GetObject
                 - s3:PutObject
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/*
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
         - Id: DDBUpdate
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
-                - dynamodb:GetItem
                 - dynamodb:UpdateItem
               Resource: !GetAtt AlertsDedup.Arn
         - Id: AccessKms
