@@ -407,7 +407,7 @@ The dead letter queue for the `panther-snapshot-queue`.
  the Panther tool `requeue`.
 
 ## panther-snapshot-scheduler
-The `panther-snapshot-scheduler` lambda calls the `panther-snapshot-api` for infrastructure scans triggered
+The `panther-snapshot-scheduler` lambda calls the `panther-source-api` for infrastructure scans triggered
  by a 24 hour CloudWatch timer events.
 
  Failure Impact
