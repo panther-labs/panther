@@ -52,6 +52,8 @@ func TestRFC5424Version4(t *testing.T) {
 		},
 	}
 
+	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
+
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
@@ -83,6 +85,8 @@ func TestRFC5424NoTimestmap(t *testing.T) {
 		},
 	}
 
+	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
+
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
@@ -110,6 +114,8 @@ func TestRFC5424NoStructuredDataNoProcID(t *testing.T) {
 		StructuredData: nil,
 	}
 
+	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
+
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
@@ -136,6 +142,8 @@ func TestRFC5424NoStructuredDataNoMsgID(t *testing.T) {
 		Message:        aws.String("%% It's time to make the do-nuts."),
 		StructuredData: nil,
 	}
+
+	expectedEvent.AppendAnyIPAddressPtrs(expectedEvent.Hostname)
 
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
@@ -169,6 +177,8 @@ func TestRFC5424WithStructuredData(t *testing.T) {
 			},
 		},
 	}
+
+	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
 
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
@@ -206,6 +216,8 @@ func TestRFC5424StructuredDataOnly(t *testing.T) {
 		},
 	}
 
+	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
+
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
@@ -227,14 +239,6 @@ func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
-
-	// For a nil timestamp, expect the event time to be the parse time
-	if expectedEvent.PantherEventTime == nil {
-		expectedEvent.PantherEventTime = event.PantherParseTime
-	}
-	// PantherParseTime is set to time.Now().UTC(). Require not nil
-	require.NotNil(t, event.PantherParseTime)
-	expectedEvent.PantherParseTime = event.PantherParseTime
 
 	require.Equal(t, expectedEvent, event)
 }

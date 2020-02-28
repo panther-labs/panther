@@ -39,7 +39,6 @@ type table2Event struct {
 	awslogs.AWSPantherLog
 	FavoriteColor string `description:"test field"`
 }
-}
 
 func TestGenerateViewAllLogs(t *testing.T) {
 	table1 := awsglue.NewGlueTableMetadata(models.LogData, "table1", "test table1", awsglue.GlueTableHourly, &table1Event{})

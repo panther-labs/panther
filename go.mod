@@ -18,6 +18,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/golang-lru v0.5.4
+	github.com/influxdata/go-syslog/v3 v3.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.9
 	github.com/kelseyhightower/envconfig v1.4.0

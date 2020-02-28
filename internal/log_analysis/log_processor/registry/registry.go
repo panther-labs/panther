@@ -62,7 +62,7 @@ var (
 			&osquerylogs.Snapshot{}, osquerylogs.SnapshotDesc),
 		(&osseclogs.EventInfoParser{}).LogType(): DefaultLogParser(&osseclogs.EventInfoParser{},
 			&osseclogs.EventInfo{}, osseclogs.EventInfoDesc),
-		(&sysloglogs.RFC5424Parser{}).LogType(): DefaultHourlyLogParser(&sysloglogs.RFC5424Parser{},
+		(&sysloglogs.RFC5424Parser{}).LogType(): DefaultLogParser(&sysloglogs.RFC5424Parser{},
 			&sysloglogs.RFC5424{}, sysloglogs.RFC5424Desc),
 	}
 )

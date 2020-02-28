@@ -20,9 +20,7 @@ package sysloglogs
 
 import (
 	"net"
-	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/influxdata/go-syslog/v3/rfc5424"
 	"go.uber.org/zap"
 
@@ -99,7 +97,7 @@ func (p *RFC5424Parser) LogType() string {
 }
 
 func (event *RFC5424) updatePantherFields(p *RFC5424Parser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp, nil)
+	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp)
 
 	if event.Hostname != nil {
 		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
