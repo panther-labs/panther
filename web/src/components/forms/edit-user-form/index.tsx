@@ -17,15 +17,13 @@
  */
 
 import * as React from 'react';
-import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
+import { Alert, Box, useSnackbar } from 'pouncejs';
 import { UpdateUserInput, User } from 'Generated/schema';
-import { Field, Formik } from 'formik';
-import FormikTextInput from 'Components/fields/text-input';
-import SubmitButton from 'Components/submit-button';
 import { gql, useMutation } from '@apollo/client';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
 import { extractErrorMessage } from 'Helpers/utils';
+import BaseUserForm from 'Components/forms/common/base-user-form';
 
 const EDIT_USER = gql`
   mutation EditUser($input: UpdateUserInput!) {
@@ -71,69 +69,34 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) =>
   };
 
   return (
-    <Formik<EditProfileFormValues>
-      initialValues={initialValues}
-      onSubmit={async values => {
-        await editUser({
-          variables: {
-            input: {
-              id: values.id,
-              email: values.email,
-              familyName: values.familyName,
-              givenName: values.givenName,
-            },
-          },
-          refetchQueries: [getOperationName(LIST_USERS)],
-        });
-      }}
-    >
-      {({ handleSubmit, isSubmitting, isValid, dirty }) => (
-        <Box is="form" onSubmit={handleSubmit}>
-          {editUserError && (
-            <Alert
-              variant="error"
-              title="Failed to invite user"
-              description={
-                extractErrorMessage(editUserError) ||
-                'Failed to edit user due to an unforeseen error'
-              }
-              mb={6}
-            />
-          )}
-          <Field
-            as={FormikTextInput}
-            label="Email address"
-            placeholder="john@doe.com"
-            name="email"
-            aria-required
-            mb={3}
-          />
-          <Flex mb={6} justifyContent="space-between">
-            <Field
-              as={FormikTextInput}
-              label="First Name"
-              placeholder="John"
-              name="givenName"
-              aria-required
-            />
-            <Field
-              as={FormikTextInput}
-              label="Last Name"
-              placeholder="Doe"
-              name="familyName"
-              aria-required
-            />
-          </Flex>
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
-            Update
-          </SubmitButton>
-        </Box>
+    <Box>
+      {editUserError && (
+        <Alert
+          variant="error"
+          title="Failed to invite user"
+          description={
+            extractErrorMessage(editUserError) || 'Failed to edit user due to an unforeseen error'
+          }
+          mb={6}
+        />
       )}
-    </Formik>
+      <BaseUserForm
+        initialValues={initialValues}
+        onSubmit={async values => {
+          await editUser({
+            variables: {
+              input: {
+                id: values.id,
+                email: values.email,
+                familyName: values.familyName,
+                givenName: values.givenName,
+              },
+            },
+            refetchQueries: [getOperationName(LIST_USERS)],
+          });
+        }}
+      />
+    </Box>
   );
 };
 
