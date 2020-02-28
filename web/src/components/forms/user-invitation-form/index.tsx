@@ -17,16 +17,13 @@
  */
 
 import * as React from 'react';
-import * as Yup from 'yup';
 import { useMutation, gql } from '@apollo/client';
-import { Field, Formik } from 'formik';
-import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
+import { Alert, Box, useSnackbar } from 'pouncejs';
 import { InviteUserInput } from 'Generated/schema';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
-import SubmitButton from 'Components/submit-button';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import FormikTextInput from 'Components/fields/text-input';
 import { extractErrorMessage } from 'Helpers/utils';
+import BaseUserForm from 'Components/forms/common/base-user-form';
 
 const INVITE_USER = gql`
   mutation InviteUser($input: InviteUserInput!) {
@@ -40,29 +37,16 @@ interface ApolloMutationInput {
   input: InviteUserInput;
 }
 
-interface UserInvitationFormValues {
-  email?: string;
-  familyName?: string;
-  givenName?: string;
-}
-
 interface UserInvitationFormProps {
   onSuccess: () => void;
 }
 
 const initialValues = {
+  id: null,
   email: '',
   familyName: '',
   givenName: '',
 };
-
-const validationSchema = Yup.object().shape({
-  email: Yup.string()
-    .email('Must be a valid email')
-    .required('Email is required'),
-  familyName: Yup.string().required('Last name is required'),
-  givenName: Yup.string().required('First name is required'),
-});
 
 export const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSuccess }) => {
   const [inviteUser, { error: inviteUserError, data }] = useMutation<boolean, ApolloMutationInput>(
@@ -78,52 +62,34 @@ export const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSucces
   }, [data]);
 
   return (
-    <Formik<UserInvitationFormValues>
-      validationSchema={validationSchema}
-      initialValues={initialValues}
-      onSubmit={async values => {
-        await inviteUser({
-          variables: {
-            input: {
-              email: values.email,
-              familyName: values.familyName,
-              givenName: values.givenName,
-            },
-          },
-          refetchQueries: [getOperationName(LIST_USERS)],
-        });
-      }}
-    >
-      {({ handleSubmit, isSubmitting, dirty, isValid }) => (
-        <form onSubmit={handleSubmit}>
-          {inviteUserError && (
-            <Alert
-              variant="error"
-              title="Failed to invite user"
-              description={
-                extractErrorMessage(inviteUserError) ||
-                'Failed to invite user due to an unforeseen error'
-              }
-              mb={6}
-            />
-          )}
-          <Box mb={8}>
-            <Flex justifyContent="space-between">
-              <Field name="givenName" as={FormikTextInput} label="First Name" />
-              <Field name="familyName" as={FormikTextInput} label="Family Name" />
-            </Flex>
-            <Field name="email" as={FormikTextInput} type="email" label="Email" />
-          </Box>
-          <SubmitButton
-            width={1}
-            disabled={isSubmitting || !isValid || !dirty}
-            submitting={isSubmitting}
-          >
-            Invite User
-          </SubmitButton>
-        </form>
+    <Box>
+      {inviteUserError && (
+        <Alert
+          variant="error"
+          title="Failed to invite user"
+          description={
+            extractErrorMessage(inviteUserError) ||
+            'Failed to invite user due to an unforeseen error'
+          }
+          mb={6}
+        />
       )}
-    </Formik>
+      <BaseUserForm
+        initialValues={initialValues}
+        onSubmit={async values => {
+          await inviteUser({
+            variables: {
+              input: {
+                email: values.email,
+                familyName: values.familyName,
+                givenName: values.givenName,
+              },
+            },
+            refetchQueries: [getOperationName(LIST_USERS)],
+          });
+        }}
+      />
+    </Box>
   );
 };
 
