@@ -31,7 +31,7 @@ const EditUserSideSheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
 
   return (
     <SideSheet open onClose={hideSidesheet}>
-      <Box mx={10} mb={10}>
+      <Box width={425} m="auto">
         <Heading pt={1} pb={8} size="medium">
           Edit Profile
         </Heading>
