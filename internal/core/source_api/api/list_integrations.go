@@ -1,12 +1,4 @@
-package main
-
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-)
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -26,6 +18,15 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-func TestRouter(t *testing.T) {
-	assert.Nil(t, router.VerifyHandlers(&models.LambdaInput{}))
+import (
+	"github.com/panther-labs/panther/api/lambda/source/models"
+)
+
+// ListIntegrations returns all enabled integrations across each organization.
+//
+// The output of this handler is used to schedule pollers.
+func (API) ListIntegrations(
+	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
+
+	return db.ScanEnabledIntegrations(input)
 }

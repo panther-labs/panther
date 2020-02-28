@@ -30,13 +30,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 const (
-	functionName = "panther-snapshot-api"
+	functionName = "panther-source-api"
 	tableName    = "panther-source-integrations"
 	testUserID   = "97c4db4e-61d5-40a7-82de-6dd63b199bd2"
 	testUserID2  = "1ffa65fe-54fc-49ff-aafc-3f8bd386079e"

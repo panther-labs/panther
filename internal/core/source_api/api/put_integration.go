@@ -28,7 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	awspoller "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"

@@ -1,4 +1,4 @@
-package main
+package ddb
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,31 +19,33 @@ package main
  */
 
 import (
-	"context"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
-	"github.com/aws/aws-lambda-go/lambda"
-
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_api/api"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var router *genericapi.Router
-
-func init() {
-	validator, err := models.Validator()
+// GetIntegration returns an integration by its ID
+func (ddb *DDB) GetIntegration(integrationID *string) (*models.SourceIntegrationMetadata, error) {
+	output, err := ddb.Client.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(ddb.TableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			hashKey: {S: integrationID},
+		},
+	})
 	if err != nil {
-		panic(err)
+		return nil, &genericapi.AWSError{Err: err, Method: "Dynamodb.GetItem"}
 	}
-	router = genericapi.NewRouter("cloudsec", "snapshot", validator, api.API{})
-}
 
-func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(request)
-}
+	var integration models.SourceIntegrationMetadata
+	if output.Item == nil {
+		return nil, err
+	}
+	if err := dynamodbattribute.UnmarshalMap(output.Item, &integration); err != nil {
+		return nil, err
+	}
 
-func main() {
-	lambda.Start(lambdaHandler)
+	return &integration, nil
 }
