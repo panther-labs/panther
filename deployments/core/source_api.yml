@@ -41,29 +41,6 @@ Parameters:
     Type: String
     Description: KMS key ID for SQS encryption
 
-  AuditRoleName:
-    Type: String
-    Default: PantherAuditRole
-    Description: The name of the IAM role to assume to perform AWS account/service scans
-  RemediationRoleName:
-    Type: String
-    Default: PantherRemediationRole
-    Description: The name of the IAM role to assume to perform AWS account/service scans
-  CWERoleName:
-    Type: String
-    Default: PantherCloudFormationStackSetExecutionRole
-    Description: The name of the IAM role to assume to perform AWS account/service scans
-  LogProcessingRoleName:
-    Type: String
-    Default: PantherLogProcessingRole
-    Description: The name of the IAM role to assume to perform AWS account/service scans
-  LogAnalysisQueueName:
-    Type: String
-    Default: panther-input-data-notifications-queue
-  SnapshotPollerQueueName:
-    Type: String
-    Default: panther-snapshot-queue
-
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
@@ -101,9 +78,9 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SnapshotPollerQueueName}
-          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${LogAnalysisQueueName}
-          LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
+          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
+          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
+          LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
           TABLE_NAME: !Ref IntegrationsTable
       FunctionName: panther-source-api
       # <cfndoc>
@@ -115,9 +92,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
+      MemorySize: 128
       Runtime: go1.x
-      Timeout: 120
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: IntegrationsTablePermissions
@@ -136,7 +113,7 @@ Resources:
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${SnapshotPollerQueueName}
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-snapshot-queue
             - Effect: Allow
               Action:
                 - kms:Decrypt
@@ -147,17 +124,17 @@ Resources:
           Statement:
             - Effect: Allow
               Action: sqs:*QueueAttributes
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
         - Id: AssumePantherAuditRoles
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
               Resource:
-                - !Sub arn:${AWS::Partition}:iam::*:role/${AuditRoleName}
-                - !Sub arn:${AWS::Partition}:iam::*:role/${RemediationRoleName}
-                - !Sub arn:${AWS::Partition}:iam::*:role/${CWERoleName}
-                - !Sub arn:${AWS::Partition}:iam::*:role/${LogProcessingRoleName}
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherAuditRole
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
