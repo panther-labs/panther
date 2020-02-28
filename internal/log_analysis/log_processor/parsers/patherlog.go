@@ -97,15 +97,15 @@ func (pl *PantherLog) SetCoreFieldsPtr(logType string, eventTime *timestamp.RFC3
 	if eventTime == nil {
 		eventTime = parseTime
 	}
-	pl.SetCoreFields(logType, *eventTime, *parseTime)
+	rowID := rowCounter.NewRowID()
+	pl.PantherRowID = &rowID
+	pl.PantherLogType = &logType
+	pl.PantherEventTime = eventTime
+	pl.PantherParseTime = parseTime
 }
 
 func (pl *PantherLog) SetCoreFields(logType string, eventTime timestamp.RFC3339, parseTime timestamp.RFC3339) {
-	pl.PantherLogType = &logType
-	rowID := rowCounter.NewRowID()
-	pl.PantherRowID = &rowID
-	pl.PantherEventTime = &eventTime
-	pl.PantherParseTime = &parseTime
+	pl.SetCoreFieldsPtr(logType, &eventTime, &parseTime)
 }
 
 func (pl *PantherLog) AppendAnyIPAddressPtrs(values ...*string) {
