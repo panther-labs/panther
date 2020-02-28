@@ -86,6 +86,6 @@ func (p *DifferentialParser) LogType() string {
 }
 
 func (event *Differential) updatePantherFields(p *DifferentialParser) {
-	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), nil)
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime))
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

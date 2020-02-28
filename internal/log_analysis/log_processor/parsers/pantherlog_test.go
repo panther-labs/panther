@@ -93,41 +93,7 @@ func TestAppendAnyStringWithEmptyString(t *testing.T) {
 	require.Equal(t, expectedAny, any)
 }
 
-func TestSetRequired(t *testing.T) {
-	event := PantherLog{}
-	logType := "Data.Source"
-	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
-	parseTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 1, time.UTC))
-	expectedEvent := PantherLog{
-		PantherLogType:   &logType,
-		PantherEventTime: &eventTime,
-		PantherParseTime: &parseTime,
-	}
-	event.SetCoreFields(logType, eventTime, parseTime)
-	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
-	require.Equal(t, expectedEvent, event)
-
-	event = PantherLog{}
-	event.SetCoreFieldsPtr(logType, &eventTime, &parseTime)
-	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
-	require.Equal(t, expectedEvent, event)
-}
-
-func TestSetCoreFieldsNilEventTime(t *testing.T) {
-	event := PantherLog{}
-	logType := "Data.Source"
-	parseTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 1, time.UTC))
-	expectedEvent := PantherLog{
-		PantherLogType:   &logType,
-		PantherEventTime: &parseTime, // Expecting EventTime to be set to ParseTime
-		PantherParseTime: &parseTime,
-	}
-	event.SetCoreFieldsPtr(logType, nil, &parseTime)
-	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
-	require.Equal(t, expectedEvent, event)
-}
-
-func TestSetCoreFieldsNilParseTime(t *testing.T) {
+func TestSetCoreFields(t *testing.T) {
 	event := PantherLog{}
 	logType := "Data.Source"
 	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
@@ -137,7 +103,7 @@ func TestSetCoreFieldsNilParseTime(t *testing.T) {
 		PantherEventTime: &eventTime,
 		PantherParseTime: &expectedNow,
 	}
-	event.SetCoreFieldsPtr(logType, &eventTime, nil)
+	event.SetCoreFields(logType, &eventTime)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 
 	// PantherParseTime will be set to time.Now().UTC(), require it to be within one second of expectedNow
@@ -149,7 +115,7 @@ func TestSetCoreFieldsNilParseTime(t *testing.T) {
 	require.Equal(t, expectedEvent, event)
 }
 
-func TestSetCoreFieldsNilParseTimeNilEventTime(t *testing.T) {
+func TestSetCoreFieldsNilEventTime(t *testing.T) {
 	event := PantherLog{}
 	logType := "Data.Source"
 	expectedNow := timestamp.Now()
@@ -158,7 +124,7 @@ func TestSetCoreFieldsNilParseTimeNilEventTime(t *testing.T) {
 		PantherEventTime: &expectedNow,
 		PantherParseTime: &expectedNow,
 	}
-	event.SetCoreFieldsPtr(logType, nil, nil)
+	event.SetCoreFields(logType, nil)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 
 	// PantherEventTime will be set to time.Now().UTC(), require it to be within one second of expectedNow

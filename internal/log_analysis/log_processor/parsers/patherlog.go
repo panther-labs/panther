@@ -89,23 +89,17 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 	return nil
 }
 
-func (pl *PantherLog) SetCoreFieldsPtr(logType string, eventTime *timestamp.RFC3339, parseTime *timestamp.RFC3339) {
-	if parseTime == nil {
-		pt := timestamp.Now()
-		parseTime = &pt
-	}
+func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339) {
+	parseTime := timestamp.Now()
+
 	if eventTime == nil {
-		eventTime = parseTime
+		eventTime = &parseTime
 	}
 	rowID := rowCounter.NewRowID()
 	pl.PantherRowID = &rowID
 	pl.PantherLogType = &logType
 	pl.PantherEventTime = eventTime
-	pl.PantherParseTime = parseTime
-}
-
-func (pl *PantherLog) SetCoreFields(logType string, eventTime timestamp.RFC3339, parseTime timestamp.RFC3339) {
-	pl.SetCoreFieldsPtr(logType, &eventTime, &parseTime)
+	pl.PantherParseTime = &parseTime
 }
 
 func (pl *PantherLog) AppendAnyIPAddressPtrs(values ...*string) {
