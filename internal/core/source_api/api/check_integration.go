@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"go.uber.org/zap"
@@ -62,9 +63,42 @@ func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.Source
 		if len(input.S3Buckets) > 0 && *out.ProcessingRoleStatus.Healthy {
 			out.S3BucketsStatus = checkBuckets(roleCreds, input.S3Buckets)
 		}
+		if len(input.KmsKeys) > 0 && *out.ProcessingRoleStatus.Healthy {
+			out.KMSKeysStatus = checkKeys(roleCreds, input.KmsKeys)
+		}
 	}
 
 	return out, nil
+}
+func checkKeys(roleCredentials *credentials.Credentials, keys []*string) map[string]*models.SourceIntegrationItemStatus {
+	kmsClient := kms.New(sess, &aws.Config{Credentials: roleCredentials})
+
+	keyStatuses := make(map[string]*models.SourceIntegrationItemStatus, len(keys))
+	for _, key := range keys {
+		info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
+		if err != nil {
+			keyStatuses[*key] = &models.SourceIntegrationItemStatus{
+				Healthy:      aws.Bool(false),
+				ErrorMessage: aws.String(err.Error()),
+			}
+			continue
+		}
+
+		if !*info.KeyMetadata.Enabled {
+			// If the key is disabled, we should fail as well
+			keyStatuses[*key] = &models.SourceIntegrationItemStatus{
+				Healthy:      aws.Bool(false),
+				ErrorMessage: aws.String("key disabled"),
+			}
+			continue
+		}
+
+		keyStatuses[*key] = &models.SourceIntegrationItemStatus{
+			Healthy: aws.Bool(true),
+		}
+	}
+
+	return keyStatuses
 }
 
 func checkBuckets(roleCredentials *credentials.Credentials, buckets []*string) map[string]*models.SourceIntegrationItemStatus {
@@ -92,7 +126,7 @@ func getCredentialsWithStatus(
 	roleARN *string,
 ) (*credentials.Credentials, *models.SourceIntegrationItemStatus) {
 
-	zap.L().Info("checking role", zap.String("roleArn", *roleARN))
+	zap.L().Debug("checking role", zap.String("roleArn", *roleARN))
 	// Setup new credentials with the role
 	roleCredentials := stscreds.NewCredentials(
 		sess,

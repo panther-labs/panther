@@ -66,6 +66,7 @@ type SourceIntegrationHealth struct {
 	// Checks for log analysis integrations
 	ProcessingRoleStatus *SourceIntegrationItemStatus            `json:"processingRoleStatus"`
 	S3BucketsStatus      map[string]*SourceIntegrationItemStatus `json:"s3BucketsStatus"`
+	KMSKeysStatus        map[string]*SourceIntegrationItemStatus `json:"kmsKeysStatus"`
 }
 
 type SourceIntegrationItemStatus struct {

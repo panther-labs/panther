@@ -171,11 +171,11 @@ Resources:
             Schedule: rate(24 hours)
       FunctionName: panther-snapshot-scheduler
       # <cfndoc>
-      # The `panther-snapshot-scheduler` lambda calls the `panther-source-api` for infrastructure scans triggered
-      # by a 24 hour CloudWatch timer events.
+      # The `panther-snapshot-scheduler` lambda enumerates aws-scan sources by calling the panther-source-api
+      # and then scans those sources. Triggered by 24 hour CloudWatch timer events.
       #
       # Failure Impact
-      # * Failure of this lambda will prevent daily infrastructure scans of accounts from running.
+      # * Failure of this lambda will prevent daily infrastructure scans from running.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']

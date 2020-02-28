@@ -32,7 +32,7 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-const snapshotAPIFunctionName = "panther-source-api"
+const sourceAPIFunctionName = "panther-source-api"
 
 var (
 	sess                               = session.Must(session.NewSession())
@@ -69,7 +69,7 @@ func PollAndIssueNewScans() error {
 func getEnabledIntegrations() (integrations []*models.SourceIntegration, err error) {
 	err = genericapi.Invoke(
 		lambdaClient,
-		snapshotAPIFunctionName,
+		sourceAPIFunctionName,
 		&models.LambdaInput{ListIntegrations: &models.ListIntegrationsInput{
 			IntegrationType: aws.String("aws-scan"),
 		}},

@@ -407,11 +407,11 @@ The dead letter queue for the `panther-snapshot-queue`.
  the Panther tool `requeue`.
 
 ## panther-snapshot-scheduler
-The `panther-snapshot-scheduler` lambda calls the `panther-source-api` for infrastructure scans triggered
- by a 24 hour CloudWatch timer events.
+The `panther-snapshot-scheduler` lambda enumerates aws-scan sources by calling the panther-source-api
+ and then scans those sources. Triggered by 24 hour CloudWatch timer events.
 
  Failure Impact
- * Failure of this lambda will prevent daily infrastructure scans of accounts from running.
+ * Failure of this lambda will prevent daily infrastructure scans from running.
 
 ## panther-source-api
 The `panther-source-api` lambda manages Cloud Security and Log Analysis sources. This includes
