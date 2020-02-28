@@ -36,6 +36,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
@@ -77,7 +78,7 @@ type S3Destination struct {
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 func (destination *S3Destination) SendEvents(parsedEventChannel chan *common.ParsedEvent, errChan chan error) {
 	failed := false // set to true on error and loop will drain channel
-	logTypeToBuffer := make(map[string]*s3EventBuffer)
+	bufferSet := newS3EventBufferSet()
 	eventsProcessed := 0
 	zap.L().Debug("starting to read events from channel")
 	for event := range parsedEventChannel {
@@ -93,11 +94,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *common.Par
 			continue
 		}
 
-		buffer, ok := logTypeToBuffer[event.LogType]
-		if !ok {
-			buffer = &s3EventBuffer{}
-			logTypeToBuffer[event.LogType] = buffer
-		}
+		buffer := bufferSet.getBuffer(event)
 
 		canAdd, err := buffer.addEvent(data)
 		if err != nil {
@@ -128,7 +125,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *common.Par
 		}
 
 		// Check if any buffers has data for longer than 1 minute
-		if err = destination.sendExpiredData(logTypeToBuffer); err != nil {
+		if err = destination.sendExpiredData(bufferSet); err != nil {
 			failed = true
 			errChan <- err
 			continue
@@ -142,28 +139,32 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *common.Par
 	zap.L().Debug("output channel closed, sending last events")
 	// If the channel has been closed
 	// send the buffered messages before terminating
-	for logType, data := range logTypeToBuffer {
-		if err := destination.sendData(logType, data); err != nil {
+	_ = bufferSet.apply(func(logType string, buffer *s3EventBuffer) error {
+		if err := destination.sendData(logType, buffer); err != nil {
 			errChan <- err
-			return
 		}
-	}
+		return nil
+	})
+
 	zap.L().Debug("finished sending messages", zap.Int("events", eventsProcessed))
 }
 
-func (destination *S3Destination) sendExpiredData(logTypeToEvents map[string]*s3EventBuffer) error {
+func (destination *S3Destination) sendExpiredData(bufferSet s3EventBufferSet) error {
 	currentTime := time.Now().UTC()
-	for logType, buffer := range logTypeToEvents {
+	return bufferSet.apply(func(logType string, buffer *s3EventBuffer) error {
 		if currentTime.Sub(buffer.firstEventProcessedTime) > maxDuration {
 			err := destination.sendData(logType, buffer)
 			if err != nil {
 				return err
 			}
-			// delete the entry after sending the data
-			delete(logTypeToEvents, logType)
+			// purge after sending the data
+			err = buffer.reset()
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 // sendData puts data in S3 and sends notification to SNS
@@ -265,6 +266,50 @@ func getS3ObjectKey(logType string, timestamp time.Time) string {
 		uuid.New().String())
 }
 
+// s3BufferSet is a group of buffers associated with hour time bins, pointing to maps logtype->s3EventBuffer
+type s3EventBufferSet map[time.Time]map[string]*s3EventBuffer
+
+func newS3EventBufferSet() s3EventBufferSet {
+	return make(map[time.Time]map[string]*s3EventBuffer)
+}
+
+func (bs s3EventBufferSet) getBuffer(event *common.ParsedEvent) *s3EventBuffer {
+	// this will panic() if event is not composed of a PantherLog (which is ok, because all events must be)
+	pantherLogEvent := parsers.ExtractPantherLog(event.Event)
+	if pantherLogEvent == nil {
+		panic(fmt.Sprintf("event is not componse of a PantherLog: %#v", event))
+	}
+
+	// bin by hour (this is our partition size)
+	hour := (time.Time)(*pantherLogEvent.PantherEventTime).Truncate(time.Hour)
+
+	logTypeToBuffer, ok := bs[hour]
+	if !ok {
+		logTypeToBuffer = make(map[string]*s3EventBuffer)
+		bs[hour] = logTypeToBuffer
+	}
+
+	buffer, ok := logTypeToBuffer[event.LogType]
+	if !ok {
+		buffer = &s3EventBuffer{}
+		logTypeToBuffer[event.LogType] = buffer
+	}
+
+	return buffer
+}
+
+func (bs s3EventBufferSet) apply(f func(logType string, buffer *s3EventBuffer) error) error {
+	for _, logTypeToBuffer := range bs {
+		for logType, buffer := range logTypeToBuffer {
+			err := f(logType, buffer)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // s3EventBuffer is a group of events of the same type
 // that will be stored in the same S3 object
 type s3EventBuffer struct {
@@ -321,7 +366,7 @@ func (b *s3EventBuffer) reset() error {
 	b.bytes = 0
 	b.events = 0
 	if err := b.writer.Close(); err != nil {
-		return err
+		return errors.Wrap(err, "close failed in buffer reset()")
 	}
 	b.writer = nil
 	b.buffer = nil

@@ -39,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
@@ -79,6 +80,17 @@ type mockSns struct {
 // testEvent is a test event used for the purposes of this test
 type testEvent struct {
 	data string
+	parsers.PantherLog
+}
+
+func newTestEvent() *testEvent {
+	refTime := (timestamp.RFC3339)(time.Date(2020, 1, 1, 0, 1, 1, 0, time.UTC))
+	return &testEvent{
+		PantherLog: parsers.PantherLog{
+			PantherEventTime: &refTime, // require field used for writing s3 files
+		},
+		data: "test",
+	}
 }
 
 func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
@@ -148,7 +160,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *common.ParsedEvent, 1)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newTestEvent()
 
 	// wire it up
 	logType := "testtype"
@@ -156,7 +168,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 		Event:   testEvent,
 		LogType: logType,
 	}
-	registerMockParser(logType, &testEvent)
+	registerMockParser(logType, testEvent)
 
 	// sending event to buffered channel
 	eventChannel <- parsedEvent
@@ -219,11 +231,11 @@ func TestSendDataIfSizeLimitHasBeenReached(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *common.ParsedEvent, 2)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newTestEvent()
 
 	// wire it up
 	logType := "testtype"
-	registerMockParser(logType, &testEvent)
+	registerMockParser(logType, testEvent)
 
 	// sending 2 events to buffered channel
 	// The second should already cause the S3 object size limits to be exceeded
@@ -253,11 +265,11 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *common.ParsedEvent, 2)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newTestEvent()
 
 	// wire it up
 	logType := "testtype"
-	registerMockParser(logType, &testEvent)
+	registerMockParser(logType, testEvent)
 
 	// sending 2 events to buffered channel
 	// The second should already cause the S3 object size limits to be exceeded
@@ -286,13 +298,13 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *common.ParsedEvent, 2)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newTestEvent()
 
 	// wire it up
 	logType1 := "testtype1"
-	registerMockParser(logType1, &testEvent)
+	registerMockParser(logType1, testEvent)
 	logType2 := "testtype2"
-	registerMockParser(logType2, &testEvent)
+	registerMockParser(logType2, testEvent)
 
 	eventChannel <- &common.ParsedEvent{
 		Event:   testEvent,
@@ -315,11 +327,11 @@ func TestSendDataFailsIfS3Fails(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *common.ParsedEvent, 1)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newTestEvent()
 
 	// wire it up
 	logType := "testtype"
-	registerMockParser(logType, &testEvent)
+	registerMockParser(logType, testEvent)
 
 	eventChannel <- &common.ParsedEvent{
 		Event:   testEvent,
@@ -337,11 +349,11 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *common.ParsedEvent, 1)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newTestEvent()
 
 	// wire it up
 	logType := "testtype"
-	registerMockParser(logType, &testEvent)
+	registerMockParser(logType, testEvent)
 
 	eventChannel <- &common.ParsedEvent{
 		Event:   testEvent,

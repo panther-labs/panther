@@ -19,6 +19,7 @@ package parsers
  */
 
 import (
+	"reflect"
 	"sort"
 
 	jsoniter "github.com/json-iterator/go"
@@ -49,6 +50,26 @@ type PantherLog struct {
 	PantherAnyDomainNames *PantherAnyString `json:"p_any_ip_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
 	PantherAnySHA1Hashes  *PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
 	PantherAnyMD5Hashes   *PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
+}
+
+func ExtractPantherLog(log interface{}) (pl *PantherLog) {
+	objValue := reflect.ValueOf(log)
+	objType := objValue.Type()
+	// dereference pointers
+	if objType.Kind() == reflect.Ptr {
+		objType = objType.Elem()
+		objValue = objValue.Elem()
+	}
+
+	nfields := objType.NumField()
+	if nfields > 0 && objType.Field(nfields-1).Anonymous { // log sources declare PantherLog at the end, so index last field
+		switch ptr := objValue.Field(nfields - 1).Interface().(type) {
+		case PantherLog:
+			return &ptr
+		}
+	}
+
+	return nil
 }
 
 type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
