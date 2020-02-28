@@ -46,6 +46,12 @@ Resources:
     Type: AWS::AppSync::GraphQLApi
     Properties:
       Name: panther-graphql-api
+      # <cfndoc>
+      # This is the GraphQL endpoint for the Panther UI.
+      #
+      # Failure Impact
+      # * The Panther user interface will show errors.
+      # </cfndoc>
       AuthenticationType: AMAZON_COGNITO_USER_POOLS
       UserPoolConfig:
         AwsRegion: !Ref AWS::Region
@@ -121,15 +127,15 @@ Resources:
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-outputs-api
 
-  SnapshotAPILambdaDataSource:
+  SourceAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
-      Name: PantherSnapshotAPILambda
+      Name: PantherSourceAPILambda
       Type: AWS_LAMBDA
       ServiceRoleArn: !GetAtt AppsyncServiceRole.Arn
       LambdaConfig:
-        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
 
   OrganizationAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
@@ -454,7 +460,7 @@ Resources:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Query
       FieldName: integrations
-      DataSourceName: !GetAtt SnapshotAPILambdaDataSource.Name
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
@@ -479,7 +485,7 @@ Resources:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
       FieldName: addIntegration
-      DataSourceName: !GetAtt SnapshotAPILambdaDataSource.Name
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($sourcesInput = [])
         #foreach($item in $ctx.args.input.integrations)
@@ -515,7 +521,7 @@ Resources:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
       FieldName: updateIntegration
-      DataSourceName: !GetAtt SnapshotAPILambdaDataSource.Name
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         $util.qr($input.put("scanIntervalMins", 1440))
@@ -541,7 +547,7 @@ Resources:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
       FieldName: deleteIntegration
-      DataSourceName: !GetAtt SnapshotAPILambdaDataSource.Name
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",

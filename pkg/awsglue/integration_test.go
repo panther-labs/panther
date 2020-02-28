@@ -23,10 +23,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
 const (
@@ -94,32 +96,27 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 		removeTables(t)
 	}()
 
-	gm, err := NewGlueMetadata(LogS3Prefix, testDb, testTable, "test table", GlueTableHourly, false, &testEvent{})
-	require.NoError(t, err)
+	gm := NewGlueTableMetadata(models.LogData, testTable, "test table", GlueTableHourly, &testEvent{})
+	// overwriting default database
+	gm.databaseName = testDb
 
 	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
 	err = gm.CreateJSONPartition(glueClient, refTime)
 	require.NoError(t, err)
-
-	// do it again, should fail
-	err = gm.CreateJSONPartition(glueClient, refTime)
-	require.Error(t, err)
-
-	partitionInfo, err := gm.GetPartition(glueClient, refTime)
-	require.NoError(t, err)
-	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
+	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	require.Equal(t, expectedPath, *partitionLocation)
 
 	// sync it (which does a delete and re-create)
 	err = gm.SyncPartition(glueClient, refTime)
 	require.NoError(t, err)
-	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
 
-	_, err = gm.DeletePartition(glueClient, refTime)
+	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	require.Equal(t, expectedPath, *partitionLocation)
+
+	_, err = gm.deletePartition(glueClient, refTime)
 	require.NoError(t, err)
-
-	// ensure deleted
-	_, err = gm.GetPartition(glueClient, refTime)
-	require.Error(t, err)
+	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	require.Nil(t, partitionLocation)
 }
 
 func setupTables(t *testing.T) {
@@ -176,4 +173,18 @@ func removeTables(t *testing.T) {
 		Name: aws.String(testDb),
 	}
 	glueClient.DeleteDatabase(dbInput) // nolint (errcheck)
+}
+
+// Fetches the location of a partition. Return nil it the partition doesn't exist
+func getPartitionLocation(t *testing.T, partitionValues []string) *string {
+	response, err := glueClient.GetPartition(&glue.GetPartitionInput{
+		DatabaseName:    aws.String(testDb),
+		PartitionValues: aws.StringSlice(partitionValues),
+		TableName:       aws.String(testTable),
+	})
+	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+		return nil
+	}
+	require.NoError(t, err)
+	return response.Partition.StorageDescriptor.Location
 }

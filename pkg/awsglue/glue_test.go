@@ -17,150 +17,177 @@ package awsglue
  */
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
-const (
-	s3Prefix = "foo/"
+var (
+	refTime             = time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
+	nonAWSError         = errors.New("nonAWSError") // nolint:golint
+	entityExistsError   = awserr.New(glue.ErrCodeAlreadyExistsException, "PartitionKey already exists.", nil)
+	entityNotFoundError = awserr.New(glue.ErrCodeEntityNotFoundException, "Entity not found", nil)
+	otherAWSError       = awserr.New("SomeException", "Some problem.", nil) // aws error other than those we code against
+
+	testCreatePartitionOutput = &glue.CreatePartitionOutput{}
+
+	testDeletePartitionOutput = &glue.DeletePartitionOutput{}
+
+	testGetTableOutput = &glue.GetTableOutput{
+		Table: &glue.TableData{
+			StorageDescriptor: &glue.StorageDescriptor{
+				Location: aws.String("s3://testbucket/logs/table"),
+				SerdeInfo: &glue.SerDeInfo{
+					SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+					Parameters: map[string]*string{
+						"serialization.format": aws.String("1"),
+						"case.insensitive":     aws.String("TRUE"),
+					},
+				},
+			},
+		},
+	}
 )
 
-func TestGlueMetadata_PartitionPrefix(t *testing.T) {
-	var gm *GlueMetadata
-	var expected string
+type partitionTestEvent struct{}
 
-	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
+func TestGlueTableMetadataLogData(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{})
 
-	gm = &GlueMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableHourly,
-		timeUnpadded: false,
-	}
-	expected = "foo/year=2020/month=01/day=03/hour=01/"
-	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
-	gm.timeUnpadded = true
-	expected = "foo/year=2020/month=1/day=3/hour=1/"
-	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
-
-	gm = &GlueMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableDaily,
-		timeUnpadded: false,
-	}
-	expected = "foo/year=2020/month=01/day=03/"
-	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
-	gm.timeUnpadded = true
-	expected = "foo/year=2020/month=1/day=3/"
-	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
-
-	gm = &GlueMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableMonthly,
-		timeUnpadded: false,
-	}
-	expected = "foo/year=2020/month=01/"
-	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
-	gm.timeUnpadded = true
-	expected = "foo/year=2020/month=1/"
-	assert.Equal(t, expected, gm.PartitionPrefix(refTime))
+	assert.Equal(t, "description", gm.Description())
+	assert.Equal(t, "My.Logs.Type", gm.LogType())
+	assert.Equal(t, GlueTableHourly, gm.Timebin())
+	assert.Equal(t, "my_logs_type", gm.TableName())
+	assert.Equal(t, LogProcessingDatabaseName, gm.DatabaseName())
+	assert.Equal(t, "logs/my_logs_type/", gm.Prefix())
+	assert.Equal(t, partitionTestEvent{}, gm.eventStruct)
+	assert.Equal(t, "logs/my_logs_type/year=2020/month=01/day=03/hour=01/", gm.GetPartitionPrefix(refTime))
 }
 
-func TestGlueMetadata_PartitionValues(t *testing.T) {
-	var gm *GlueMetadata
-	var expected []*string
+func TestGlueTableMetadataRuleMatches(t *testing.T) {
+	gm := NewGlueTableMetadata(models.RuleData, "My.Rule", "description", GlueTableHourly, partitionTestEvent{})
 
-	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
-
-	gm = &GlueMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableHourly,
-		timeUnpadded: false,
-	}
-	expected = []*string{
-		aws.String(fmt.Sprintf("%d", refTime.Year())),
-		aws.String(fmt.Sprintf("%02d", refTime.Month())),
-		aws.String(fmt.Sprintf("%02d", refTime.Day())),
-		aws.String(fmt.Sprintf("%02d", refTime.Hour())),
-	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
-	gm.timeUnpadded = true
-	expected = []*string{
-		aws.String(fmt.Sprintf("%d", refTime.Year())),
-		aws.String(fmt.Sprintf("%d", refTime.Month())),
-		aws.String(fmt.Sprintf("%d", refTime.Day())),
-		aws.String(fmt.Sprintf("%d", refTime.Hour())),
-	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
-
-	gm = &GlueMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableDaily,
-		timeUnpadded: false,
-	}
-	expected = []*string{
-		aws.String(fmt.Sprintf("%d", refTime.Year())),
-		aws.String(fmt.Sprintf("%02d", refTime.Month())),
-		aws.String(fmt.Sprintf("%02d", refTime.Day())),
-	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
-	gm.timeUnpadded = true
-	expected = []*string{
-		aws.String(fmt.Sprintf("%d", refTime.Year())),
-		aws.String(fmt.Sprintf("%d", refTime.Month())),
-		aws.String(fmt.Sprintf("%d", refTime.Day())),
-	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
-
-	gm = &GlueMetadata{
-		s3Prefix:     s3Prefix,
-		timebin:      GlueTableMonthly,
-		timeUnpadded: false,
-	}
-	expected = []*string{
-		aws.String(fmt.Sprintf("%d", refTime.Year())),
-		aws.String(fmt.Sprintf("%02d", refTime.Month())),
-	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
-	gm.timeUnpadded = true
-	expected = []*string{
-		aws.String(fmt.Sprintf("%d", refTime.Year())),
-		aws.String(fmt.Sprintf("%d", refTime.Month())),
-	}
-	assert.Equal(t, expected, gm.PartitionValues(refTime))
+	assert.Equal(t, "description", gm.Description())
+	assert.Equal(t, "My.Rule", gm.LogType())
+	assert.Equal(t, GlueTableHourly, gm.Timebin())
+	assert.Equal(t, "my_rule", gm.TableName())
+	assert.Equal(t, RuleMatchDatabaseName, gm.DatabaseName())
+	assert.Equal(t, "rules/my_rule/", gm.Prefix())
+	assert.Equal(t, partitionTestEvent{}, gm.eventStruct)
+	assert.Equal(t, "rules/my_rule/year=2020/month=01/day=03/hour=01/", gm.GetPartitionPrefix(refTime))
 }
 
-func TestGlueTableTimebinNext(t *testing.T) {
-	var tb GlueTableTimebin
-	refTime := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+func TestCreateJSONPartition(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 
-	// hour and day are fixed offsets, so only need simple tests
+	// test no errors and partition does not exist (no error)
+	glueClient := &mockGlue{}
+	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
+	assert.NoError(t, gm.CreateJSONPartition(glueClient, refTime))
+	glueClient.AssertExpectations(t)
+}
 
-	// test hour ...
-	tb = GlueTableHourly
-	expectedTime := refTime.Add(time.Hour)
-	next := tb.Next(refTime)
-	assert.Equal(t, expectedTime, next)
+func TestCreateJSONPartitionPartitionExists(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 
-	// test day ...
-	tb = GlueTableDaily
-	expectedTime = refTime.Add(time.Hour * 24)
-	next = tb.Next(refTime)
-	assert.Equal(t, expectedTime, next)
+	// test partition exists at start
+	glueClient := &mockGlue{}
+	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
+	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, entityExistsError)
+	err := gm.CreateJSONPartition(glueClient, refTime)
+	assert.NoError(t, err)
+	glueClient.AssertExpectations(t)
+}
 
-	// test month ... this needs to test crossing year boundaries
-	tb = GlueTableMonthly
-	// Jan to Feb
-	refTime = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-	expectedTime = time.Date(2020, 2, 1, 0, 0, 0, 0, time.UTC)
-	next = tb.Next(refTime)
-	assert.Equal(t, expectedTime, next)
-	// Dec to Jan, over year boundary
-	refTime = time.Date(2020, 12, 1, 0, 0, 0, 0, time.UTC)
-	expectedTime = time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
-	next = tb.Next(refTime)
-	assert.Equal(t, expectedTime, next)
+func TestCreateJSONPartitionErrorGettingTable(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	// test error in GetTable
+	glueClient := &mockGlue{}
+	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nonAWSError).Once()
+	err := gm.CreateJSONPartition(glueClient, refTime)
+	assert.Error(t, err)
+	assert.Equal(t, nonAWSError, err)
+	glueClient.AssertExpectations(t)
+}
+
+func TestCreateJSONPartitionNon(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	// test error in CreatePartition
+	glueClient := &mockGlue{}
+	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nonAWSError).Once()
+	err := gm.CreateJSONPartition(glueClient, refTime)
+	assert.Error(t, err)
+	assert.Equal(t, nonAWSError, err)
+	glueClient.AssertExpectations(t)
+}
+
+func TestSyncPartitionPartitionDoesntExist(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+
+	// test not exists error in DeletePartition (should not fail)
+	glueClient := &mockGlue{}
+	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, entityNotFoundError).Once()
+	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
+	err := gm.SyncPartition(glueClient, refTime)
+	assert.NoError(t, err)
+	glueClient.AssertExpectations(t)
+}
+
+func TestSyncPartitionDeletePartitionOtherAWSError(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	// test other AWS error in DeletePartition (should fail)
+	glueClient := &mockGlue{}
+	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, otherAWSError).Once()
+	err := gm.SyncPartition(glueClient, refTime)
+	assert.Error(t, err)
+	assert.Equal(t, otherAWSError.Error(), errors.Cause(err).Error())
+	glueClient.AssertExpectations(t)
+}
+
+func TestSyncPartitionDeletePartitionNonAWSError(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	// test non AWS error in DeletePartition (should fail)
+	glueClient := &mockGlue{}
+	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, nonAWSError).Once()
+	err := gm.SyncPartition(glueClient, refTime)
+	assert.Error(t, err)
+	assert.Equal(t, nonAWSError.Error(), errors.Cause(err).Error())
+	glueClient.AssertExpectations(t)
+}
+
+type mockGlue struct {
+	glueiface.GlueAPI
+	mock.Mock
+}
+
+func (m *mockGlue) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
+}
+
+func (m *mockGlue) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetTableOutput), args.Error(1)
+}
+
+func (m *mockGlue) CreatePartition(input *glue.CreatePartitionInput) (*glue.CreatePartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.CreatePartitionOutput), args.Error(1)
+}
+
+func (m *mockGlue) DeletePartition(input *glue.DeletePartitionInput) (*glue.DeletePartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.DeletePartitionOutput), args.Error(1)
 }

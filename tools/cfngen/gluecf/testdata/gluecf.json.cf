@@ -20,7 +20,7 @@
   }
  }
 },
-  "pantherlogsdummy": {
+  "pantherlogslogtype": {
  "Type": "AWS::Glue::Table",
  "Properties": {
   "CatalogId": {
@@ -31,13 +31,13 @@
   },
   "TableInput": {
    "TableType": "EXTERNAL_TABLE",
-   "Name": "dummy",
+   "Name": "log_type",
    "Description": "dummy",
    "StorageDescriptor": {
     "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
     "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
     "Location": {
-     "Fn::Sub": "s3://${ProcessedDataBucket}/logs/dummy/"
+     "Fn::Sub": "s3://${ProcessedDataBucket}/logs/log_type/"
     },
     "SerdeInfo": {
      "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
@@ -106,7 +106,7 @@
   }
  }
 },
-  "pantherrulematchesdummy": {
+  "pantherrulematcheslogtype": {
  "Type": "AWS::Glue::Table",
  "Properties": {
   "CatalogId": {
@@ -117,13 +117,13 @@
   },
   "TableInput": {
    "TableType": "EXTERNAL_TABLE",
-   "Name": "dummy",
+   "Name": "log_type",
    "Description": "dummy",
    "StorageDescriptor": {
     "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
     "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
     "Location": {
-     "Fn::Sub": "s3://${ProcessedDataBucket}/rules/dummy/"
+     "Fn::Sub": "s3://${ProcessedDataBucket}/rules/log_type/"
     },
     "SerdeInfo": {
      "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",

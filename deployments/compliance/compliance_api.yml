@@ -49,6 +49,12 @@ Resources:
       DefinitionBody: api/gateway/compliance/api.yml
       EndpointConfiguration: REGIONAL
       Name: panther-compliance-api
+      # <cfndoc>
+      # The `panther-compliance-api` API Gateway calls the `panther-compliance-api` lambda.
+      #
+      # Failure Impact
+      # * Failure of this API Gateway will prevent calls to the `panther-compliance-api` lambda.
+      # </cfndoc>
       StageName: v1 # NOTE: sam also builds a stage called "Stage"
       TracingEnabled: !If [TracingEnabled, true, false]
 
@@ -63,6 +69,14 @@ Resources:
           DEBUG: !Ref Debug
           INDEX_NAME: policy-index
       FunctionName: panther-compliance-api
+      # <cfndoc>
+      # This lambda implements the compliance API which is responsible for tracking resource and policy pass/fail states.
+      #
+      # Failure Impact
+      # * The UI experiences errors on nearly every page for cloud security related data.
+      # * Alerts for cloud security stop.
+      # * Policy failures are no longer be recorded.
+      # </cfndoc>
       Handler: main
       MemorySize: 512
       Runtime: go1.x
@@ -102,6 +116,12 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-compliance
+      # <cfndoc>
+      # This ddb table holds policy violation events for associated resources in the `panther-resources` ddb table.
+      #
+      # Failure Impact
+      # * Processing of policies could be slowed or stopped if there are errors/throttles.
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: policyId
           AttributeType: S

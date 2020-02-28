@@ -98,7 +98,7 @@ Resources:
   Subscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !Sub arn:${AWS::Partition}:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications
+      Endpoint: !Sub arn:${AWS::Partition}:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications-queue
       Protocol: sqs
       RawMessageDelivery: false
       TopicArn: !Ref Topic

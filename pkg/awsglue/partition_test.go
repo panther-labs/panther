@@ -17,174 +17,173 @@ package awsglue
  */
 
 import (
+	"errors"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	partitionTestDb    = "testDb"
-	partitionTestTable = "testTable"
-)
-
-var (
-	nonAWSError         = errors.New("nonAWSError") // nolint:golint
-	entityNotFoundError = awserr.New("EntityNotFoundException", "EntityNotFoundException", nil)
-	entityExistsError   = awserr.New("AlreadyExistsException", "Partition already exists.", nil)
-	otherAWSError       = awserr.New("SomeException", "Some problem.", nil) // aws error other than those we code against
-)
-
-type partitionTestEvent struct{}
-
-func TestCreateJSONPartition(t *testing.T) {
-	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
-	gm, err := NewGlueMetadata(LogS3Prefix, partitionTestDb, partitionTestTable, partitionTestTable,
-		GlueTableHourly, false, &partitionTestEvent{})
+func TestCreatePartitionFromS3Rule(t *testing.T) {
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
-	// test no errors and partition does not exist (no error)
-	glueClient := &mockGlue{}
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
-	err = gm.CreateJSONPartition(glueClient, refTime)
-	assert.NoError(t, err)
+	expectedPartitionValues := []PartitionColumnInfo{
+		{
+			Key:   "year",
+			Value: "2020",
+		},
+		{
+			Key:   "month",
+			Value: "02",
+		},
+		{
+			Key:   "day",
+			Value: "26",
+		},
+		{
+			Key:   "hour",
+			Value: "15",
+		},
+	}
 
-	// test partition exists at start
-	glueClient = &mockGlue{}
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityExistsError).Once()
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
-	err = gm.CreateJSONPartition(glueClient, refTime)
-	assert.Error(t, err)
-	assert.Equal(t, entityExistsError, err)
-
-	// test other AWS err in GetPartition()
-	glueClient = &mockGlue{}
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, otherAWSError).Once()
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
-	err = gm.CreateJSONPartition(glueClient, refTime)
-	assert.Error(t, err)
-	assert.Equal(t, otherAWSError, err)
-
-	// test non AWS err in GetPartition()
-	glueClient = &mockGlue{}
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, nonAWSError).Once()
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
-	err = gm.CreateJSONPartition(glueClient, refTime)
-	assert.Error(t, err)
-	assert.Equal(t, nonAWSError, err)
-
-	// test error in GetTable
-	glueClient = &mockGlue{}
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nonAWSError).Once()
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
-	err = gm.CreateJSONPartition(glueClient, refTime)
-	assert.Error(t, err)
-	assert.Equal(t, nonAWSError, err)
-
-	// test error in CreatePartition
-	glueClient = &mockGlue{}
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nonAWSError).Once()
-	err = gm.CreateJSONPartition(glueClient, refTime)
-	assert.Error(t, err)
-	assert.Equal(t, nonAWSError, err)
+	assert.Equal(t, RuleMatchDatabaseName, partition.GetDatabase())
+	assert.Equal(t, "table", partition.GetTable())
+	assert.Equal(t, "bucket", partition.GetS3Bucket())
+	assert.Equal(t, "json", partition.GetDataFormat())
+	assert.Equal(t, "gzip", partition.GetCompression())
+	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionPrefix())
+	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
-func TestSyncPartition(t *testing.T) {
-	refTime := time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
-	gm, err := NewGlueMetadata(LogS3Prefix, partitionTestDb, partitionTestTable, partitionTestTable,
-		GlueTableHourly, false, &partitionTestEvent{})
+func TestCreatePartitionFromS3Log(t *testing.T) {
+	s3ObjectKey := "logs/table/year=2020/month=02/day=26/hour=15/item.json.gz"
+	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
-	// test not exists error in DeletePartition (should not fail)
-	glueClient := &mockGlue{}
-	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, entityNotFoundError).Once()
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Once()
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
-	err = gm.SyncPartition(glueClient, refTime)
-	assert.NoError(t, err)
+	expectedPartitionValues := []PartitionColumnInfo{
+		{
+			Key:   "year",
+			Value: "2020",
+		},
+		{
+			Key:   "month",
+			Value: "02",
+		},
+		{
+			Key:   "day",
+			Value: "26",
+		},
+		{
+			Key:   "hour",
+			Value: "15",
+		},
+	}
 
-	// test other AWS error in DeletePartition (should fail)
-	glueClient = &mockGlue{}
-	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, otherAWSError).Once()
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
-	err = gm.SyncPartition(glueClient, refTime)
-	assert.Error(t, err)
-	assert.Equal(t, otherAWSError.Error(), errors.Cause(err).Error())
-
-	// test non AWS error in DeletePartition (should fail)
-	glueClient = &mockGlue{}
-	glueClient.On("DeletePartition", mock.Anything).Return(testDeletePartitionOutput, nonAWSError).Once()
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
-	err = gm.SyncPartition(glueClient, refTime)
-	assert.Error(t, err)
-	assert.Equal(t, nonAWSError.Error(), errors.Cause(err).Error())
+	assert.Equal(t, LogProcessingDatabaseName, partition.GetDatabase())
+	assert.Equal(t, "table", partition.GetTable())
+	assert.Equal(t, "bucket", partition.GetS3Bucket())
+	assert.Equal(t, "json", partition.GetDataFormat())
+	assert.Equal(t, "gzip", partition.GetCompression())
+	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionPrefix())
+	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
-type mockGlue struct {
-	glueiface.GlueAPI
-	mock.Mock
-}
+func TestCreatePartition(t *testing.T) {
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.NoError(t, err)
 
-// fixed for our tests
-var (
-	testGetPartitionOutput = &glue.GetPartitionOutput{}
-
-	testCreatePartitionOutput = &glue.CreatePartitionOutput{}
-
-	testDeletePartitionOutput = &glue.DeletePartitionOutput{}
-
-	testGetTableOutput = &glue.GetTableOutput{
-		Table: &glue.TableData{
+	expectedCreatePartitionInput := &glue.CreatePartitionInput{
+		DatabaseName: aws.String(RuleMatchDatabaseName),
+		TableName:    aws.String("table"),
+		PartitionInput: &glue.PartitionInput{
 			StorageDescriptor: &glue.StorageDescriptor{
-				Location: aws.String("s3://testbucket/logs/table"),
+				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
+				OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
 				SerdeInfo: &glue.SerDeInfo{
 					SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
 					Parameters: map[string]*string{
 						"serialization.format": aws.String("1"),
-						"case.insensitive":     aws.String("TRUE"),
+						"case.insensitive":     aws.String("TRUE"), // treat as lower case
 					},
 				},
+				Location: aws.String("s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/"),
 			},
+			Values: aws.StringSlice([]string{"2020", "02", "26", "15"}),
 		},
 	}
-)
 
-func (m *mockGlue) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
+	mockClient := &mockGlue{}
+	mockClient.On("CreatePartition", expectedCreatePartitionInput).Return(&glue.CreatePartitionOutput{}, nil)
+
+	assert.NoError(t, partition.CreatePartition(mockClient))
+	mockClient.AssertExpectations(t)
 }
 
-func (m *mockGlue) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*glue.GetTableOutput), args.Error(1)
+func TestCreatePartitionUnknownPrefix(t *testing.T) {
+	s3ObjectKey := "wrong_prefix/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.Error(t, err)
 }
 
-func (m *mockGlue) CreatePartition(input *glue.CreatePartitionInput) (*glue.CreatePartitionOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*glue.CreatePartitionOutput), args.Error(1)
+func TestCreatePartitionWroteYearFormat(t *testing.T) {
+	s3ObjectKey := "rules/table/year=no_year/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.Error(t, err)
 }
 
-func (m *mockGlue) DeletePartition(input *glue.DeletePartitionInput) (*glue.DeletePartitionOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*glue.DeletePartitionOutput), args.Error(1)
+func TestCreatePartitionMisingYearPartition(t *testing.T) {
+	s3ObjectKey := "rules/table/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.Error(t, err)
+}
+
+func TestCreatePartitionUknownFormat(t *testing.T) {
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.parquet"
+	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.Error(t, err)
+}
+
+func TestCreatePartitionPartitionAlreadExists(t *testing.T) {
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.NoError(t, err)
+
+	mockClient := &mockGlue{}
+	mockClient.On("CreatePartition", mock.Anything).
+		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeAlreadyExistsException, "error", nil))
+
+	assert.NoError(t, partition.CreatePartition(mockClient))
+	mockClient.AssertExpectations(t)
+}
+
+func TestCreatePartitionAwsError(t *testing.T) {
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.NoError(t, err)
+
+	mockClient := &mockGlue{}
+	mockClient.On("CreatePartition", mock.Anything).
+		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeInternalServiceException, "error", nil))
+
+	assert.Error(t, partition.CreatePartition(mockClient))
+	mockClient.AssertExpectations(t)
+}
+
+func TestCreatePartitionGeneralError(t *testing.T) {
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.NoError(t, err)
+
+	mockClient := &mockGlue{}
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error"))
+
+	assert.Error(t, partition.CreatePartition(mockClient))
+	mockClient.AssertExpectations(t)
 }

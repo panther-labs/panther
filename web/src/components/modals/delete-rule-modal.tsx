@@ -24,7 +24,7 @@ import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { LIST_RULES } from 'Pages/list-rules';
-import BaseDeleteModal from 'Components/modals/base-delete-modal';
+import BaseConfirmModal from 'Components/modals/base-confirm-modal';
 
 // Delete Rule and Delete Policy uses the same endpoint
 const DELETE_RULE = gql`
@@ -55,9 +55,12 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   });
 
   return (
-    <BaseDeleteModal
+    <BaseConfirmModal
       mutation={mutation}
-      itemDisplayName={ruleDisplayName}
+      title={`Delete ${ruleDisplayName}`}
+      subtitle={`Are you sure you want to delete ${ruleDisplayName}?`}
+      onSuccessMsg={`Successfully deleted ${ruleDisplayName}`}
+      onErrorMsg={`Failed to delete ${ruleDisplayName}`}
       onSuccess={() => {
         if (location.pathname.includes(rule.id)) {
           // if we were on the particular rule's details page or edit page --> redirect on delete

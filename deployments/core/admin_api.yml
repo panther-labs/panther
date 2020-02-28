@@ -67,6 +67,12 @@ Resources:
           DEBUG: !Ref Debug
           USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-users-api
+      # <cfndoc>
+      # This lambda implements user api.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact user administration in the Panther user interface.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
@@ -117,6 +123,12 @@ Resources:
           APP_DOMAIN_URL: !Ref AppDomainURL
           USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-cognito-custom-message-trigger
+      # <cfndoc>
+      # This lambda implements sending password reset emails.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact sending password reset emails.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
@@ -155,6 +167,9 @@ Resources:
       SSESpecification: # Enable server-side encryption
         SSEEnabled: True
       TableName: panther-organization
+      # <cfndoc>
+      # This ddb table stores general settings about an organizations.
+      # </cfndoc>
 
   OrganizationAPILogGroup:
     Type: AWS::Logs::LogGroup
@@ -172,6 +187,9 @@ Resources:
           DEBUG: !Ref Debug
           ORG_TABLE_NAME: !Ref OrganizationTable
       FunctionName: panther-organization-api
+      # <cfndoc>
+      # This lambda implements organization API to manage settings.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128

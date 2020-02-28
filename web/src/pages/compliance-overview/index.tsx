@@ -142,16 +142,16 @@ const ComplianceOverview: React.FC = () => {
         is="section"
         mb={3}
       >
-        <DonutChartWrapper title="Policy Overview" icon="policy">
+        <DonutChartWrapper title="Policy Severity" icon="policy">
           <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
         </DonutChartWrapper>
-        <DonutChartWrapper title="Policy Failure Breakdown" icon="policy">
+        <DonutChartWrapper title="Policy Failure" icon="policy">
           <PoliciesByStatusChart policies={data.organizationStats.appliedPolicies} />
         </DonutChartWrapper>
-        <DonutChartWrapper title="Resources Platforms" icon="resource">
+        <DonutChartWrapper title="Resource Type" icon="resource">
           <ResourcesByPlatformChart resources={data.organizationStats.scannedResources} />
         </DonutChartWrapper>
-        <DonutChartWrapper title="Resources Health" icon="resource">
+        <DonutChartWrapper title="Resource Health" icon="resource">
           <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
         </DonutChartWrapper>
       </Grid>

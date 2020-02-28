@@ -24,7 +24,7 @@ import { useMutation, gql } from '@apollo/client';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import BaseDeleteModal from 'Components/modals/base-delete-modal';
+import BaseConfirmModal from 'Components/modals/base-confirm-modal';
 
 const DELETE_POLICY = gql`
   mutation DeletePolicy($input: DeletePolicyInput!) {
@@ -54,9 +54,12 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
   });
 
   return (
-    <BaseDeleteModal
+    <BaseConfirmModal
       mutation={mutation}
-      itemDisplayName={policyDisplayName}
+      title={`Delete ${policyDisplayName}`}
+      subtitle={`Are you sure you want to delete ${policyDisplayName}?`}
+      onSuccessMsg={`Successfully deleted ${policyDisplayName}`}
+      onErrorMsg={`Failed to delete ${policyDisplayName}`}
       onSuccess={() => {
         if (location.pathname.includes(policy.id)) {
           // if we were on the particular policy's details page or edit page --> redirect on delete

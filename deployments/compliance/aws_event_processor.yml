@@ -60,7 +60,16 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 86400 # 24 hours
-      QueueName: panther-aws-events
+      QueueName: panther-aws-events-queue
+      # <cfndoc>
+      # This sqs q receives CloudTrail events delivered by CloudWatch events
+      # as well as S3 notifications from log processing.
+      # The `panther-aws-event-processor` lambda processes these events.
+      #
+      # Failure Impact
+      # * Failure of this sqs q will impact the continuous scanning accounts.
+      # * Failed events will go into the `panther-aws-events-queue-dlq`. When the system has recovered they should be re-queued to the `panther-aws-events-queue` using the Panther tool `requeue`.
+      # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
@@ -110,7 +119,14 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      QueueName: panther-aws-events-dlq
+      QueueName: panther-aws-events-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-aws-events-queue`.
+      # Items are in this queue due to a failure of the `panther-aws-event-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-aws-events-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      VisibilityTimeout: 60
 
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -136,6 +152,15 @@ Resources:
             BatchSize: 10 # Maximum batch size
             Queue: !GetAtt EventQueue.Arn
       FunctionName: panther-aws-event-processor
+      # <cfndoc>
+      # This lambda reads events from the `panther-aws-events-queue` sqs queue and determines if
+      # the infrastructure referenced in the event has changed. If so, it writes events to the
+      # `panther-shapshot-queue` to be scanned for the nature of the changes.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact from continuous infrastructure monitoring.
+      # * Failed events will go into the `panther-aws-events-queue-dlq`. When the system has recovered they should be re-queued to the `panther-aws-events-queue` using the Panther tool `requeue`.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
@@ -174,12 +199,12 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/delete
-        - Id: InvokeSnapshotAPI
+        - Id: InvokeSourceAPI
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
         - Id: ReadFromS3
           Version: 2012-10-17
           Statement:

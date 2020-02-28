@@ -57,6 +57,14 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: panther-log-alert-notifications-queue
+      # <cfndoc>
+      # This sqs qeueue receives alert notifications
+      # to be processed by `panther-log-alert-forwarder` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact the send of alerts to destinations.
+      # * Failed events will go into the `panther-log-alert-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using the Panther tool `requeue`.
+      # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 180 # Should match lambda
@@ -67,7 +75,13 @@ Resources:
   DeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: panther-log-alert-notifications-dlq
+      QueueName: panther-log-alert-notifications-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `anther-log-alert-notifications-queue`.
+      # Items are in this queue due to a failure of the `panther-log-alert-forwarder` lambda.
+      # When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   ##### Dynamo alerts table #####
@@ -75,6 +89,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-log-alerts
+      # <cfndoc>
+      # will be removed before v1
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: alertId
           AttributeType: S
@@ -117,6 +134,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-recent-alerts
+      # <cfndoc>
+      # will be removed before v1
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: ruleId
           AttributeType: S
@@ -134,6 +154,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-events
+      # <cfndoc>
+      # will be removed before v1
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: eventHash
           AttributeType: B
@@ -168,6 +191,12 @@ Resources:
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
       FunctionName: panther-alerts-api
+      # <cfndoc>
+      # Lambda for CRUD actions for the alerts API.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact the Panther user interface.
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 512
@@ -222,7 +251,7 @@ Resources:
           ALERTS_TABLE: !Ref AlertsTable
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
-          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         Queue:
           Type: SQS
@@ -230,6 +259,9 @@ Resources:
             Queue: !GetAtt Queue.Arn
             BatchSize: 10
       FunctionName: panther-alert-merger
+      # <cfndoc>
+      # will be removed before v1
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
@@ -261,7 +293,7 @@ Resources:
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts-queue
         - Id: ManageAlerts
           Version: 2012-10-17
           Statement:
@@ -280,6 +312,13 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: panther-log-alerts-info
+      # <cfndoc>
+      # This table holds the alerts history and is managed by the `panther-log-alert-forwarder` lambda.
+      #
+      # Failure Impact
+      # * Delivery of alerts could be slowed or stopped if there are errors/throttles.
+      # * The Panther user interface may be impacted.
+      # </cfndoc>
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -341,6 +380,13 @@ Resources:
             StartingPosition: TRIM_HORIZON
             BatchSize: 10
       FunctionName: panther-log-alert-forwarder
+      # <cfndoc>
+      # This lambda reads from a ddb stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alerts-info` ddb table.
+      #
+      # Failure Impact
+      # * Delivery of alerts could be slowed or stopped.
+      # * There will be no data loss until events are purged from the ddb stream (24 hours).
+      # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128

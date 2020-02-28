@@ -48,4 +48,4 @@ class OutputNotification:
     events: int
     bytes: int
     id: str
-    type: str = 'RuleOutput'
+    type: str = 'RuleMatches'
