@@ -17,17 +17,10 @@
  */
 
 import { Box, Heading, SideSheet } from 'pouncejs';
-// import EditProfileForm from 'Components/forms/edit-profile-form';
 import EditUserForm from 'Components/forms/edit-user-form';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 import { User } from 'Generated/schema';
-
-// const RESET_USER_PASS = gql`
-//   mutation ResetUserPassword($id: ID!) {
-//     resetUserPassword(id: $id)
-//   }
-// `;
 
 export interface EditUserSidesheetProps {
   user: User;
