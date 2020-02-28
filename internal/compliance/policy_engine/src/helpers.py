@@ -16,13 +16,14 @@
 """Utility functions provided to policies during execution."""
 import boto3
 import json
+from typing import Any, Dict
 
 
 class BadLookup(Exception):
     pass
 
 
-def resource_lookup(resource_id: str):
+def resource_lookup(resource_id: str) -> Dict[str, Any]:
     lc = boto3.client('lambda')
 
     # Setup the request
@@ -44,7 +45,7 @@ def resource_lookup(resource_id: str):
 
     # The response HTTPStatusCode is always 200, so we check the payload statusCode for success
     if response_payload['statusCode'] != 200:
-        raise BadLookup('status code: ' + str(response['statusCode']))
+        raise BadLookup('status code - ' + str(response_payload['statusCode']))
 
     body = json.loads(response_payload['body'])
     return body['attributes']

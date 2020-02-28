@@ -20,13 +20,14 @@ from importlib import util as import_util
 import importlib
 from typing import Any, Dict, List, Union
 
-# Setup panther helper function
-# from . import helpers as helpers
-# from . import helpers as panther_helpers
-mod = importlib.import_module('helpers')
-spec = import_util.find_spec('helpers')
-spec.loader.exec_module(mod)
-sys.modules['panther_helpers'] = mod
+# Other methods of importing have not proved reliable, not sure if it is something to do with
+# running in lambda.
+from . import helpers
+helpers_spec = import_util.spec_from_file_location(helpers.__name__, helpers.__file__)
+helpers_mod = import_util.module_from_spec(helpers_spec)
+sys.modules['panther_helpers'] = helpers_mod
+helpers_spec.loader.exec_module(helpers_mod)
+
 AWS_GLOBALS = 'aws_globals'
 
 
@@ -74,7 +75,6 @@ class Policy:
         return matched
 
 
-# TODO: Support helpers
 class PolicySet:
     """A collection of Panther policies."""
 
@@ -84,6 +84,11 @@ class PolicySet:
         self._policies_by_type: Dict[str, List[Policy]] = collections.defaultdict(list)
         self._global_policies: List[Policy] = []  # List of policies that apply to all log types
 
+        # Setup panther helper functions
+        #mod = importlib.import_module('helpers')
+        #spec = import_util.find_spec('helpers')
+        #spec.loader.exec_module(mod)
+        #sys.modules['panther_helpers'] = mod
         for index, raw_policy in enumerate(policies):
             if raw_policy['id'] == AWS_GLOBALS:
                 sys.modules[AWS_GLOBALS] = Policy.import_module(AWS_GLOBALS, raw_policy['body'])
