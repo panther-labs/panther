@@ -35,5 +35,5 @@ module.exports = {
   /*
    * only run the TS compiler when there are changes inTS files
    */
-  '**/*.ts?(x)': () => 'tsc -p .',
+  '*.ts?(x)': () => 'tsc -p .',
 };
