@@ -19,13 +19,10 @@ package sysloglogs
  */
 
 import (
-	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -64,8 +61,6 @@ func TestRFC3164WithRFC3339Timestamp(t *testing.T) {
 
 	expectedTime, _ := time.Parse(time.RFC3339, "2019-12-02T16:49:23+02:00")
 
-	fmt.Println(expectedTime)
-
 	expectedEvent := &RFC3164{
 		Priority:  aws.Uint8(28),
 		Facility:  aws.Uint8(3),
@@ -76,6 +71,90 @@ func TestRFC3164WithRFC3339Timestamp(t *testing.T) {
 		ProcID:    aws.String("23410"),
 		MsgID:     nil,
 		Message:   aws.String("Test"),
+	}
+
+	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+
+	checkRFC3164(t, log, expectedEvent)
+}
+
+// Example1 from https://tools.ietf.org/html/rfc3164#section-5.4
+func TestRFC3164Example1(t *testing.T) {
+	//nolint:lll
+	log := `<34>Oct 11 22:14:15 mymachine su: 'su root' failed for lonvick on /dev/pts/8`
+
+	expectedTime := time.Date(time.Now().UTC().Year(), 10, 11, 22, 14, 15, 0, time.UTC)
+
+	expectedEvent := &RFC3164{
+		Priority:  aws.Uint8(34),
+		Facility:  aws.Uint8(4),
+		Severity:  aws.Uint8(2),
+		Timestamp: (*timestamp.RFC3339)(&expectedTime),
+		Hostname:  aws.String("mymachine"),
+		Appname:   aws.String("su"),
+		ProcID:    nil,
+		MsgID:     nil,
+		Message:   aws.String("'su root' failed for lonvick on /dev/pts/8"),
+	}
+
+	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+
+	checkRFC3164(t, log, expectedEvent)
+}
+
+// Example2 from https://tools.ietf.org/html/rfc3164#section-5.4
+func TestRFC3164Example2(t *testing.T) {
+	//nolint:lll
+	log := `<13>Feb  5 17:32:18 10.0.0.99 Use the BFG!`
+
+	expectedTime := time.Date(time.Now().UTC().Year(), 2, 5, 17, 32, 18, 0, time.UTC)
+
+	expectedEvent := &RFC3164{
+		Priority:  aws.Uint8(13),
+		Facility:  aws.Uint8(1),
+		Severity:  aws.Uint8(5),
+		Timestamp: (*timestamp.RFC3339)(&expectedTime),
+		Hostname:  aws.String("10.0.0.99"),
+		Appname:   nil,
+		ProcID:    nil,
+		MsgID:     nil,
+		Message:   aws.String("Use the BFG!"),
+	}
+
+	expectedEvent.AppendAnyIPAddressPtrs(expectedEvent.Hostname)
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+
+	checkRFC3164(t, log, expectedEvent)
+}
+
+// Example3 from https://tools.ietf.org/html/rfc3164#section-5.4
+func TestRFC3164Example3(t *testing.T) {
+	//nolint:lll
+	log := `<165>Aug 24 05:34:00 CST 1987 mymachine myproc[10]: %% It's time to make the do-nuts %%`
+
+	expectedTime := time.Date(time.Now().UTC().Year(), 8, 24, 5, 34, 0, 0, time.UTC)
+
+	expectedEvent := &RFC3164{
+		Priority:  aws.Uint8(165),
+		Facility:  aws.Uint8(20),
+		Severity:  aws.Uint8(5),
+		Timestamp: (*timestamp.RFC3339)(&expectedTime),
+		Hostname:  aws.String("CST"),
+		Appname:   nil,
+		ProcID:    nil,
+		MsgID:     nil,
+		Message:   aws.String("1987 mymachine myproc[10]: %% It's time to make the do-nuts %%"),
 	}
 
 	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
@@ -101,10 +180,6 @@ func checkRFC3164(t *testing.T, log string, expectedEvent *RFC3164) {
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
-
-	spew.Dump(event)
-	spew.Dump(expectedEvent)
-	fmt.Println(reflect.DeepEqual(expectedEvent, event))
 
 	require.Equal(t, expectedEvent, event)
 }

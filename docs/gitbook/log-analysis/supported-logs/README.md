@@ -48,6 +48,15 @@ AWS contains a variety of critical data sources used to audit API usage, databas
 | ----------------- | --------------------------------------------------- |
 | `OSSEC.EventInfo` | https://www.ossec.net/docs/docs/formats/alerts.html |
 
+## [Syslog](https://github.com/panther-labs/panther/tree/master/internal/log_analysis/log_processor/parsers/sysloglogs)
+
+[Syslog](https://en.wikipedia.org/wiki/Syslog) is a protocol for message logging. It has become the standard logging solution on Unix-like systems.
+
+| Log Type          | Reference                                              |
+| ----------------- | ------------------------------------------------------ |
+| `Syslog.RFC3164`  | https://tools.ietf.org/html/rfc3164                    |
+
+
 ## Built-in Rule Packs
 
 {% hint style="info" %}
