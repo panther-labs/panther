@@ -415,8 +415,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   /**
    * @public
-   * A method to initiate a forgot password request. This will send the user an email containing
-   * a link to reset his password
+   * A method to refetch user info in order to update state when a user edits self
    */
   const getCurrentUserInfo = React.useCallback(
     async ({ onSuccess = () => {}, onError = () => {} }: GetCurrentUserInfoParams) => {

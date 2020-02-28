@@ -24,6 +24,7 @@ import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
 import { extractErrorMessage } from 'Helpers/utils';
 import BaseUserForm from 'Components/forms/common/base-user-form';
+import useAuth from 'Hooks/useAuth';
 
 const EDIT_USER = gql`
   mutation EditUser($input: UpdateUserInput!) {
@@ -48,6 +49,7 @@ interface EditProfileFormValues {
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) => {
+  const { getCurrentUserInfo, userInfo } = useAuth();
   const [editUser, { error: editUserError, data }] = useMutation<boolean, ApolloMutationInput>(
     EDIT_USER
   );
@@ -56,7 +58,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) =>
   React.useEffect(() => {
     if (data) {
       pushSnackbar({ variant: 'success', title: `Successfully edited user` });
-      // TODO: Refetch user if updating self
+      // Refetch user info if editing self
+      if (user.id === userInfo.sub) getCurrentUserInfo({});
       onSuccess();
     }
   }, [data]);
