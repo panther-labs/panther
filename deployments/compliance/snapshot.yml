@@ -42,27 +42,12 @@ Parameters:
     Type: String
     Default: PantherAuditRole
     Description: The name of the IAM role to assume to perform AWS account/service scans
-  RemediationRoleName:
-    Type: String
-    Default: PantherRemediationRole
-    Description: The name of the IAM role to assume to perform AWS account/service scans
-  CWERoleName:
-    Type: String
-    Default: PantherCloudFormationStackSetExecutionRole
-    Description: The name of the IAM role to assume to perform AWS account/service scans
-  LogProcessingRoleName:
-    Type: String
-    Default: PantherLogProcessingRole
-    Description: The name of the IAM role to assume to perform AWS account/service scans
   ResourcesApiId:
     Type: String
     Description: API Gateway for resources-api
   SQSKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
-  LogAnalysisQueueName:
-    Type: String
-    Default: panther-input-data-notifications-queue
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -169,103 +154,6 @@ Resources:
       LogGroupName: /aws/lambda/panther-snapshot-pollers
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
-  ##### Snapshot API #####
-  IntegrationsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: panther-source-integrations
-      # <cfndoc>
-      # This table does hold the configured accounts and log sources for monitoring.
-      #
-      # Failure Impact
-      # * Processing of policies could be slowed or stopped if there are errors/throttles.
-      # * The Panther user interface could be impacted.
-      # </cfndoc>
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: integrationId
-          AttributeType: S
-      KeySchema:
-        - AttributeName: integrationId
-          KeyType: HASH
-      PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: True
-      SSESpecification: # Enable server-side encryption
-        SSEEnabled: True
-
-  ApiLambdaFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ../../out/bin/internal/compliance/snapshot_api/main
-      Description: Manages database of source integrations
-      Environment:
-        Variables:
-          DEBUG: !Ref Debug
-          SNAPSHOT_POLLERS_QUEUE_URL: !Ref Queue
-          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${LogAnalysisQueueName}
-          LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
-          TABLE_NAME: !Ref IntegrationsTable
-      FunctionName: panther-snapshot-api
-      # <cfndoc>
-      # The `panther-snapshot-api` lambda triggers scans when called by writing requests
-      # to the `panther-snapshot-queue`.
-      #
-      # Failure Impact
-      # * Failure of this lambda will prevent infrastructure scans of accounts from running.
-      # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
-      # </cfndoc>
-      Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
-      Runtime: go1.x
-      Timeout: 120
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
-      Policies:
-        - Id: IntegrationsTablePermissions
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:*Item
-                - dynamodb:Query
-                - dynamodb:Scan
-              Resource: !GetAtt IntegrationsTable.Arn
-        - Id: SendSQSMessages
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - sqs:SendMessage
-                - sqs:SendMessageBatch
-              Resource: !GetAtt Queue.Arn
-            - Effect: Allow
-              Action:
-                - kms:Decrypt
-                - kms:GenerateDataKey
-              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-        - Id: UpdateLogProcessorQueue
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: sqs:*QueueAttributes
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${LogAnalysisQueueName}
-        - Id: AssumePantherAuditRoles
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Resource:
-              - !Sub arn:${AWS::Partition}:iam::*:role/${AuditRoleName}
-              - !Sub arn:${AWS::Partition}:iam::*:role/${RemediationRoleName}
-              - !Sub arn:${AWS::Partition}:iam::*:role/${CWERoleName}
-              - !Sub arn:${AWS::Partition}:iam::*:role/${LogProcessingRoleName}
-
-  ApiLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/panther-snapshot-api
-      RetentionInDays: !Ref CloudWatchLogRetentionDays
-
   ##### Snapshot Scheduler #####
   SchedulerLambdaFunction:
     Type: AWS::Serverless::Function
@@ -283,7 +171,7 @@ Resources:
             Schedule: rate(24 hours)
       FunctionName: panther-snapshot-scheduler
       # <cfndoc>
-      # The `panther-snapshot-scheduler` lambda calls the `panther-snapshot-api` for infrastructure scans triggered
+      # The `panther-snapshot-scheduler` lambda calls the `panther-source-api` for infrastructure scans triggered
       # by a 24 hour CloudWatch timer events.
       #
       # Failure Impact
@@ -301,7 +189,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-snapshot-api
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
         - Id: SendSQSMessages
           Version: 2012-10-17
           Statement:

@@ -27,12 +27,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-	snapshotapi "github.com/panther-labs/panther/internal/compliance/snapshot_api/api"
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	snapshotapi "github.com/panther-labs/panther/internal/core/source_api/api"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-const snapshotAPIFunctionName = "panther-snapshot-api"
+const snapshotAPIFunctionName = "panther-source-api"
 
 var (
 	sess                               = session.Must(session.NewSession())

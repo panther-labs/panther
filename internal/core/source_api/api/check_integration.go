@@ -28,7 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
 const (

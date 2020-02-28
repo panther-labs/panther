@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 
-	"github.com/panther-labs/panther/internal/compliance/snapshot_api/ddb"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 )
 
 var (

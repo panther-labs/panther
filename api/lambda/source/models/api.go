@@ -72,6 +72,7 @@ type PutIntegrationSettings struct {
 	ScanIntervalMins *int      `json:"scanIntervalMins,omitempty" validate:"omitempty,oneof=60 180 360 720 1440"`
 	UserID           *string   `json:"userId" validate:"required,uuid4"`
 	S3Buckets        []*string `json:"s3Buckets"`
+	KmsKeys          []*string `json:"kmsKeys"`
 }
 
 //

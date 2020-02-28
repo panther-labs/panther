@@ -1,4 +1,4 @@
-package api
+package main
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,14 +19,31 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"context"
+
+	"github.com/aws/aws-lambda-go/lambda"
+
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/api"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-// ListIntegrations returns all enabled integrations across each organization.
-//
-// The output of this handler is used to schedule pollers.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
+var router *genericapi.Router
 
-	return db.ScanEnabledIntegrations(input)
+func init() {
+	validator, err := models.Validator()
+	if err != nil {
+		panic(err)
+	}
+	router = genericapi.NewRouter("cloudsec", "snapshot", validator, api.API{})
+}
+
+func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(request)
+}
+
+func main() {
+	lambda.Start(lambdaHandler)
 }
