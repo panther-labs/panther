@@ -99,14 +99,7 @@ func (p *RFC5424Parser) LogType() string {
 }
 
 func (event *RFC5424) updatePantherFields(p *RFC5424Parser) {
-	if event.Timestamp != nil {
-		event.SetCoreFieldsPtr(p.LogType(), event.Timestamp)
-	} else {
-		// A null timestamp is valid in RFC5424 (https://tools.ietf.org/html/rfc5424#section-6.2.3).
-		// Record the current time instead, and set PantherEventTimeWhenParsed to indicate the reconstructed time.
-		event.SetCoreFields(p.LogType(), (timestamp.RFC3339)(time.Now().UTC()))
-		event.PantherEventTimeWhenParsed = aws.Bool(true)
-	}
+	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp, nil)
 
 	if event.Hostname != nil {
 		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
