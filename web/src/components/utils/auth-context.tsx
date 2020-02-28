@@ -125,6 +125,10 @@ interface ForgotPasswordParams {
   onError?: (err: AuthError) => void;
 }
 
+interface GetCurrentUserInfoParams {
+  onSuccess?: () => void;
+  onError?: (err: AuthError) => void;
+}
 /*
   We intentionaly use `undefined` and `null` in the interface below to showcase the possible values
  */
@@ -134,6 +138,7 @@ export interface AuthContextValue {
   userInfo: UserInfo | null;
   signIn: (params: SignInParams) => Promise<void>;
   confirmSignIn: (params: ConfirmSignInParams) => Promise<void>;
+  getCurrentUserInfo: (params: GetCurrentUserInfoParams) => Promise<void>;
   setNewPassword: (params: SetNewPasswordParams) => Promise<void>;
   verifyTotpSetup: (params: VerifyTotpSetupParams) => Promise<void>;
   requestTotpSecretCode: () => Promise<string>;
@@ -409,6 +414,25 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   );
 
   /**
+   * @public
+   * A method to initiate a forgot password request. This will send the user an email containing
+   * a link to reset his password
+   */
+  const getCurrentUserInfo = React.useCallback(
+    async ({ onSuccess = () => {}, onError = () => {} }: GetCurrentUserInfoParams) => {
+      try {
+        const currentUserInfo = await Auth.currentUserInfo();
+        setAuthUser(currentUserInfo);
+        onSuccess();
+      } catch (err) {
+        onError(err as AuthError);
+        signOut();
+      }
+    },
+    []
+  );
+
+  /**
    * During mount time only, after having - possibly - set up the Auth configuration, attempt to
    * boot up the user from a previous session
    */
@@ -432,6 +456,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       currentAuthChallengeName: authUser?.challengeName || null,
       userInfo,
       updateUserInfo,
+      getCurrentUserInfo,
 
       signIn,
       confirmSignIn,
