@@ -14,17 +14,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """Utility functions provided to policies during execution."""
-import boto3
 import json
 from typing import Any, Dict
+import boto3
 
 
 class BadLookup(Exception):
-    pass
+    """Error returned when a resource lookup fails."""
 
 
 def resource_lookup(resource_id: str) -> Dict[str, Any]:
-    lc = boto3.client('lambda')
+    """This function is used to get a resource from the resources-api based on its resourceID."""
+    lambda_client = boto3.client('lambda')
 
     # Setup the request
     request_payload = {
@@ -36,7 +37,7 @@ def resource_lookup(resource_id: str) -> Dict[str, Any]:
     }
 
     # Invoke the resources-api
-    response = lc.invoke(
+    response = lambda_client.invoke(
         FunctionName='panther-resources-api', InvocationType='RequestResponse', LogType='None', Payload=json.dumps(request_payload)
     )
 
