@@ -246,10 +246,6 @@ func checkALBLog(t *testing.T, log string, expectedEvent *ALB) {
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
-	// For a nil timestamp, expect the event time to be the parse time
-	if expectedEvent.PantherEventTime == nil {
-		expectedEvent.PantherEventTime = event.PantherParseTime
-	}
 	// PantherParseTime is set to time.Now().UTC(). Require not nil
 	require.NotNil(t, event.PantherParseTime)
 	expectedEvent.PantherParseTime = event.PantherParseTime
