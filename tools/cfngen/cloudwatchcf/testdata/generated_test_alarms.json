@@ -865,7 +865,7 @@
   "EvaluationPeriods": 1,
   "Period": 300,
   "Threshold": 0,
-  "Unit": "None",
+  "Unit": "Count",
   "Statistic": "Sum"
  }
 },
