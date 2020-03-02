@@ -18,6 +18,46 @@ import unittest
 
 from ..src import helpers
 
+TEST_RESOURCE_ID = 'arn:aws:s3:::example_bucket'
+
+DYNAMO_ERROR_RESPONSE = {
+    'ResponseMetadata':
+        {
+            'RequestId': 'ABC123',
+            'HTTPStatusCode': 501,
+            'HTTPHeaders':
+                {
+                    'server': 'Server',
+                    'date': 'Wed, 01 Jan 2020 00:00:00 GMT',
+                    'content-type': 'application/x-amz-json-1.0',
+                    'content-length': '2',
+                    'connection': 'keep-alive',
+                    'x-amzn-requestid': 'ABC123',
+                    'x-amz-crc32': '12345'
+                },
+            'RetryAttempts': 0
+        }
+}
+
+DYNAMO_NOT_FOUND_RESPONSE = {
+    'ResponseMetadata':
+        {
+            'RequestId': 'ABC123',
+            'HTTPStatusCode': 200,
+            'HTTPHeaders':
+                {
+                    'server': 'Server',
+                    'date': 'Wed, 01 Jan 2020 00:00:00 GMT',
+                    'content-type': 'application/x-amz-json-1.0',
+                    'content-length': '2',
+                    'connection': 'keep-alive',
+                    'x-amzn-requestid': 'ABC123',
+                    'x-amz-crc32': '12345'
+                },
+            'RetryAttempts': 0
+        }
+}
+
 DYNAMO_GOOD_RESPONSE = {
     'Item':
         {
@@ -123,8 +163,44 @@ class TestHelpers(unittest.TestCase):
     """Unit tests for policy.Policy"""
 
     def test_lookup(self) -> None:
-        """Imported policy body returns True."""
+        """Test a lookup with an expected response."""
         helpers.dynamo_lookup = lambda _: DYNAMO_GOOD_RESPONSE
 
-        resource = helpers.resource_lookup('arn:aws:s3:::example_bucket')
-        assert resource == DYNAMO_GOOD_RESPONSE['Item']['attributes']
+        resource = helpers.resource_lookup(TEST_RESOURCE_ID)
+        self.assertEqual(DYNAMO_GOOD_RESPONSE['Item']['attributes'], resource)
+
+    def test_lookup_not_found(self) -> None:
+        """Test a lookup where the resource was not found."""
+        helpers.dynamo_lookup = lambda _: DYNAMO_NOT_FOUND_RESPONSE
+
+        try:
+            _ = helpers.resource_lookup(TEST_RESOURCE_ID)
+        except helpers.BadLookup as lookup_exception:
+            self.assertEqual(TEST_RESOURCE_ID + ' not found', str(lookup_exception))
+            return
+        self.fail('BadLookup exception was expected but not raised')
+
+    def test_lookup_failed(self) -> None:
+        """Test a lookup where dynamo fails."""
+        helpers.dynamo_lookup = lambda _: DYNAMO_ERROR_RESPONSE
+
+        try:
+            _ = helpers.resource_lookup(TEST_RESOURCE_ID)
+        except helpers.BadLookup as lookup_exception:
+            self.assertEqual('dynamodb - 501 HTTPStatusCode', str(lookup_exception))
+            return
+        self.fail('BadLookup exception was expected but not raised')
+
+    def test_lookup_bad_input(self) -> None:
+        """Test a lookup with bad user input."""
+        try:
+            _ = helpers.resource_lookup('')
+        except helpers.PantherBadInput as lookup_exception:
+            self.assertEqual('resourceId cannot be blank', str(lookup_exception))
+            return
+        self.fail('PantherBadInput exception was expected but not raised')
+
+    def test_get_s3_arn(self) -> None:
+        """Test constructing an s3 arn."""
+        s3_arn = helpers.get_s3_arn_from_name('example_bucket')
+        self.assertEqual(TEST_RESOURCE_ID, s3_arn)

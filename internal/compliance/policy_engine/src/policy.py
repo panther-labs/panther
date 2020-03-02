@@ -78,10 +78,7 @@ class PolicySet:
 
         # Import panther helper functions, and add them to sys.modules so they can be imported by
         # user defined policies
-        helpers_spec = import_util.spec_from_file_location(helpers.__name__, helpers.__file__)
-        helpers_mod = import_util.module_from_spec(helpers_spec)
-        sys.modules['panther_helpers'] = helpers_mod
-        helpers_spec.loader.exec_module(helpers_mod)  # type: ignore
+        sys.modules['panther'] = Policy.import_module(helpers.__name__, helpers.__file__)
 
         for index, raw_policy in enumerate(policies):
             if raw_policy['id'] == AWS_GLOBALS:

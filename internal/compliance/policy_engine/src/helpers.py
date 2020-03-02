@@ -28,7 +28,7 @@ class PantherBadInput(Exception):
     """Error returned when a Panther helper function is provided bad input."""
 
 
-def get_s3_arn_from_name(name: str) -> str:
+def get_s3_arn_by_name(name: str) -> str:
     """This function is used to construct an s3 bucket ARN from its name."""
     if name == '':
         raise PantherBadInput('s3 name cant be blank')
@@ -37,7 +37,7 @@ def get_s3_arn_from_name(name: str) -> str:
 
 def s3_lookup_by_name(name: str) -> Dict[str, Any]:
     """This function is used to get an S3 bucket resource from just its name."""
-    return resource_lookup(get_s3_arn_from_name(name))
+    return resource_lookup(get_s3_arn_by_name(name))
 
 
 def dynamo_lookup(key: str) -> Dict[str, Any]:
