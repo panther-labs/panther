@@ -27,7 +27,6 @@ import (
 const (
 	agplSource       = "docs/LICENSE_HEADER_AGPL.txt"
 	apacheSource     = "docs/LICENSE_HEADER_APACHE.txt"
-	commercialSource = "docs/LICENSE_HEADER_PANTHER.txt"
 )
 
 var (
@@ -36,9 +35,6 @@ var (
 
 	// Standalone Go packages are Apache
 	apachePaths = []string{"pkg"}
-
-	// Enterprise closed-source code is Panther commercial license
-	commercialPaths = []string{"enterprise"}
 )
 
 // Add a comment character in front of each line in a block of license text.
@@ -61,9 +57,6 @@ func fmtLicense() {
 	logger.Info("fmt: license headers")
 	fmtLicenseGroup(agplSource, agplPaths...)
 	fmtLicenseGroup(apacheSource, apachePaths...)
-	if info, err := os.Stat("enterprise"); err == nil && info.IsDir() {
-		fmtLicenseGroup(commercialSource, commercialPaths...)
-	}
 }
 
 // Add one type of license header to a group of files.
