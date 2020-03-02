@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	agplSource       = "docs/LICENSE_HEADER_AGPL.txt"
-	apacheSource     = "docs/LICENSE_HEADER_APACHE.txt"
+	agplSource   = "docs/LICENSE_HEADER_AGPL.txt"
+	apacheSource = "docs/LICENSE_HEADER_APACHE.txt"
 )
 
 var (
