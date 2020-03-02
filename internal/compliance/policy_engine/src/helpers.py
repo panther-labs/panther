@@ -31,7 +31,7 @@ class PantherBadInput(Exception):
 def get_s3_arn_by_name(name: str) -> str:
     """This function is used to construct an s3 bucket ARN from its name."""
     if name == '':
-        raise PantherBadInput('s3 name cant be blank')
+        raise PantherBadInput('s3 name cannot be blank')
     return 'arn:aws:s3:::' + name
 
 

@@ -195,12 +195,21 @@ class TestHelpers(unittest.TestCase):
         """Test a lookup with bad user input."""
         try:
             _ = helpers.resource_lookup('')
-        except helpers.PantherBadInput as lookup_exception:
-            self.assertEqual('resourceId cannot be blank', str(lookup_exception))
+        except helpers.PantherBadInput as input_exception:
+            self.assertEqual('resourceId cannot be blank', str(input_exception))
             return
         self.fail('PantherBadInput exception was expected but not raised')
 
     def test_get_s3_arn(self) -> None:
         """Test constructing an s3 arn."""
-        s3_arn = helpers.get_s3_arn_from_name('example_bucket')
+        s3_arn = helpers.get_s3_arn_by_name('example_bucket')
         self.assertEqual(TEST_RESOURCE_ID, s3_arn)
+
+    def test_get_s3_arn_bad_input(self) -> None:
+        """Test constructing an s3 arn."""
+        try:
+            _ = helpers.get_s3_arn_by_name('')
+        except helpers.PantherBadInput as input_exception:
+            self.assertEqual('s3 name cannot be blank', str(input_exception))
+            return
+        self.fail('PantherBadInput exception was expected but not raised')
