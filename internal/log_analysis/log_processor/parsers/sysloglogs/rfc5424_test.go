@@ -80,12 +80,8 @@ func testRFC5424Version4(t *testing.T) {
 }
 
 func testRFC5424NoTimestmap(t *testing.T) {
-	t.Skipf("Depends on functionality in #304")
-
 	//nolint:lll
 	log := `<165>4 - mymach.it e - 1 [ex@32473 iut="3"] An application event log entry...`
-
-	expectedTime := time.Now().UTC()
 
 	expectedEvent := &RFC5424{
 		Priority:  aws.Uint8(165),
@@ -109,7 +105,7 @@ func testRFC5424NoTimestmap(t *testing.T) {
 
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.PantherEventTime = nil
 
 	checkRFC5424(t, log, expectedEvent)
 }
@@ -258,6 +254,15 @@ func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
+
+	// PantherParseTime is set to time.Now().UTC(). Require not nil
+	require.NotNil(t, event.PantherParseTime)
+	expectedEvent.PantherParseTime = event.PantherParseTime
+
+	// For nil event times, expect Panther to set the event time to the parse time.
+	if expectedEvent.PantherEventTime == nil {
+		expectedEvent.PantherEventTime = event.PantherParseTime
+	}
 
 	require.Equal(t, expectedEvent, event)
 }
