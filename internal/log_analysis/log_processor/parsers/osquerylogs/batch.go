@@ -78,8 +78,6 @@ func (p *BatchParser) LogType() string {
 }
 
 func (event *Batch) updatePantherFields(p *BatchParser) {
-	if event.CalendarTime != nil {
-		event.SetCoreFields(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
-	}
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime))
 	event.AppendAnyDomainNamePtrs(event.Hostname)
 }

@@ -81,5 +81,9 @@ func checkOsQueryBatcLog(t *testing.T, log string, expectedEvent *Batch) {
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 	expectedEvent.PantherRowID = event.PantherRowID
 
+	// PantherParseTime is set to time.Now().UTC(). Require not nil
+	require.NotNil(t, event.PantherParseTime)
+	expectedEvent.PantherParseTime = event.PantherParseTime
+
 	require.Equal(t, expectedEvent, event)
 }
