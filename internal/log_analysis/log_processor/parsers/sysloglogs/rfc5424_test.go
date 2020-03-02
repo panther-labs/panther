@@ -24,11 +24,29 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-func TestRFC5424Version4(t *testing.T) {
+var parser parsers.LogParser
+
+func TestRFC5424(t *testing.T) {
+	zap.ReplaceGlobals(zaptest.NewLogger(t))
+	syslogRFC5424 := &RFC5424Parser{}
+	parser = syslogRFC5424.New()
+
+	t.Run("Version4", testRFC5424Version4)
+	t.Run("NoTimestmap", testRFC5424NoTimestmap)
+	t.Run("NoStructuredDataNoProcID", testRFC5424NoStructuredDataNoProcID)
+	t.Run("NoStructuredDataNoMsgID", testRFC5424NoStructuredDataNoMsgID)
+	t.Run("WithStructuredData", testRFC5424WithStructuredData)
+	t.Run("StructuredDataOnly", testRFC5424StructuredDataOnly)
+}
+
+func testRFC5424Version4(t *testing.T) {
 	//nolint:lll
 	log := `<165>4 2018-10-11T22:14:15.003Z mymach.it e - 1 [ex@32473 iut="3"] An application event log entry...`
 
@@ -61,7 +79,9 @@ func TestRFC5424Version4(t *testing.T) {
 	checkRFC5424(t, log, expectedEvent)
 }
 
-func TestRFC5424NoTimestmap(t *testing.T) {
+func testRFC5424NoTimestmap(t *testing.T) {
+	t.Skipf("Depends on functionality in #304")
+
 	//nolint:lll
 	log := `<165>4 - mymach.it e - 1 [ex@32473 iut="3"] An application event log entry...`
 
@@ -94,7 +114,7 @@ func TestRFC5424NoTimestmap(t *testing.T) {
 	checkRFC5424(t, log, expectedEvent)
 }
 
-func TestRFC5424NoStructuredDataNoProcID(t *testing.T) {
+func testRFC5424NoStructuredDataNoProcID(t *testing.T) {
 	//nolint:lll
 	log := `<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su - ID47 - BOM'su root' failed for lonvick on /dev/pts/8`
 
@@ -123,7 +143,7 @@ func TestRFC5424NoStructuredDataNoProcID(t *testing.T) {
 	checkRFC5424(t, log, expectedEvent)
 }
 
-func TestRFC5424NoStructuredDataNoMsgID(t *testing.T) {
+func testRFC5424NoStructuredDataNoMsgID(t *testing.T) {
 	//nolint:lll
 	log := `<165>1 2003-08-24T05:14:15.000003-07:00 192.0.2.1 myproc 8710 - - %% It's time to make the do-nuts.`
 
@@ -152,7 +172,7 @@ func TestRFC5424NoStructuredDataNoMsgID(t *testing.T) {
 	checkRFC5424(t, log, expectedEvent)
 }
 
-func TestRFC5424WithStructuredData(t *testing.T) {
+func testRFC5424WithStructuredData(t *testing.T) {
 	//nolint:lll
 	log := `<165>1 2003-10-11T22:14:15.003Z mymachine.example.com evntslog - ID47 [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"] BOMAn application event log entry...`
 
@@ -187,7 +207,7 @@ func TestRFC5424WithStructuredData(t *testing.T) {
 	checkRFC5424(t, log, expectedEvent)
 }
 
-func TestRFC5424StructuredDataOnly(t *testing.T) {
+func testRFC5424StructuredDataOnly(t *testing.T) {
 	//nolint:lll
 	log := `<165>1 2003-10-11T22:14:15.003Z mymachine.example.com evntslog - ID47 [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"][examplePriority@32473 class="high"]`
 
@@ -231,7 +251,6 @@ func TestRFC5424Type(t *testing.T) {
 }
 
 func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
-	parser := &RFC5424Parser{}
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*RFC5424)

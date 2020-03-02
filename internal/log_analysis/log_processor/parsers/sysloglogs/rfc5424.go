@@ -19,8 +19,10 @@ package sysloglogs
  */
 
 import (
+	"errors"
 	"net"
 
+	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/rfc5424"
 	"go.uber.org/zap"
 
@@ -50,17 +52,24 @@ type RFC5424 struct {
 }
 
 // RFC5424Parser parses Syslog logs in the RFC5424 format
-type RFC5424Parser struct{}
+type RFC5424Parser struct {
+	parser syslog.Machine
+}
 
+// New returns an initialized LogParser for Syslog RFC5424 logs
 func (p *RFC5424Parser) New() parsers.LogParser {
-	return &RFC5424Parser{}
+	return &RFC5424Parser{
+		parser: rfc5424.NewParser(rfc5424.WithBestEffort()),
+	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *RFC5424Parser) Parse(log string) []interface{} {
-	parser := rfc5424.NewParser(rfc5424.WithBestEffort())
-
-	msg, err := parser.Parse([]byte(log))
+	if p.parser == nil {
+		zap.L().Debug("failed to parse log", zap.Error(errors.New("parser can not be nil")))
+		return nil
+	}
+	msg, err := p.parser.Parse([]byte(log))
 	if err != nil {
 		zap.L().Debug("failed to parse log", zap.Error(err))
 		return nil
