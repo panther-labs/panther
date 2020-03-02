@@ -77,3 +77,6 @@ type UpdateUserInput struct {
 	FamilyName *string `json:"familyName" validate:"omitempty,min=1"`
 	Email      *string `json:"email" validate:"omitempty,min=1"`
 }
+
+// UpdateUserOutput returns the new Panther user details.
+type UpdateUserOutput = User

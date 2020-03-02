@@ -20,15 +20,14 @@ package api
 
 import (
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
 )
 
 // UpdateUser modifies user attributes and roles.
-func (API) UpdateUser(input *models.UpdateUserInput) error {
-	return userGateway.UpdateUser(&gateway.UpdateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-		ID:         input.ID,
-	})
+func (API) UpdateUser(input *models.UpdateUserInput) (*models.UpdateUserOutput, error) {
+	if err := userGateway.UpdateUser(input); err != nil {
+		return nil, err
+	}
+
+	// Return updated user attributes
+	return userGateway.GetUser(input.ID)
 }

@@ -24,9 +24,5 @@ import (
 
 // GetUser calls userGateway to get user information.
 func (API) GetUser(input *models.GetUserInput) (*models.GetUserOutput, error) {
-	user, err := userGateway.GetUser(input.ID)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
+	return userGateway.GetUser(input.ID)
 }

@@ -43,11 +43,7 @@ func TestInviteUserCreateErr(t *testing.T) {
 	userGateway = mockGateway
 
 	// setup gateway expectations
-	mockGateway.On("CreateUser", &gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-	}).Return(aws.String(""), &genericapi.AWSError{})
+	mockGateway.On("CreateUser", input).Return(aws.String(""), &genericapi.AWSError{})
 
 	// call the code we are testing
 	result, err := (API{}).InviteUser(input)
@@ -66,11 +62,7 @@ func TestInviteUserDeleteErr(t *testing.T) {
 	userGateway = mockGateway
 
 	// setup expectations
-	mockGateway.On("CreateUser", &gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-	}).Return(aws.String(""), &genericapi.AWSError{})
+	mockGateway.On("CreateUser", input).Return(aws.String(""), &genericapi.AWSError{})
 
 	// call the code we are testing
 	result, err := (API{}).InviteUser(input)
@@ -89,11 +81,7 @@ func TestInviteUserHandle(t *testing.T) {
 	userGateway = mockGateway
 
 	// setup gateway expectations
-	mockGateway.On("CreateUser", &gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-	}).Return(userID, nil)
+	mockGateway.On("CreateUser", input).Return(userID, nil)
 
 	// call the code we are testing
 	result, err := (API{}).InviteUser(input)

@@ -20,17 +20,12 @@ package api
 
 import (
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
 )
 
 // InviteUser adds a new user to the Cognito user pool.
 func (API) InviteUser(input *models.InviteUserInput) (*models.InviteUserOutput, error) {
 	// Create user in Cognito
-	id, err := userGateway.CreateUser(&gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-	})
+	id, err := userGateway.CreateUser(input)
 	if err != nil {
 		return nil, err
 	}

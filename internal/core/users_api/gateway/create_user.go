@@ -24,19 +24,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 
+	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// CreateUserInput is input for CreateUser request
-type CreateUserInput struct {
-	GivenName  *string `json:"givenName"`
-	FamilyName *string `json:"familyName"`
-	Email      *string `json:"email"`
-}
-
 // Create a AdminCreateUserInput from the CreateUserInput.
 func (g *UsersGateway) cognitoInputFromAPIInput(
-	input *CreateUserInput) *provider.AdminCreateUserInput {
+	input *models.InviteUserInput) *provider.AdminCreateUserInput {
 
 	var userAttrs []*provider.AttributeType
 	var lowercaseEmail = aws.String(strings.ToLower(*input.Email))
@@ -76,7 +70,7 @@ func (g *UsersGateway) cognitoInputFromAPIInput(
 }
 
 // CreateUser calls cognito api and creates a new user with specified attributes and sends out an email invitation
-func (g *UsersGateway) CreateUser(input *CreateUserInput) (*string, error) {
+func (g *UsersGateway) CreateUser(input *models.InviteUserInput) (*string, error) {
 	cognitoInput := g.cognitoInputFromAPIInput(input)
 	userOutput, err := g.userPoolClient.AdminCreateUser(cognitoInput)
 	if err != nil {
