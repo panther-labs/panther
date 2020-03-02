@@ -147,7 +147,7 @@ func (p *EventInfoParser) LogType() string {
 }
 
 func (event *EventInfo) updatePantherFields(p *EventInfoParser) {
-	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.Timestamp))
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp))
 	event.AppendAnyIPAddressPtrs(event.SrcIP, event.DstIP)
 	if event.SyscheckFile != nil {
 		event.AppendAnyMD5HashPtrs(event.SyscheckFile.MD5Before, event.SyscheckFile.MD5After)

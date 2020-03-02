@@ -154,6 +154,10 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 		event := events[i].(*CloudTrail)
 		require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 		event.PantherRowID = expectedEvent.PantherRowID
+
+		// PantherParseTime is set to time.Now().UTC(). Require not nil
+		require.NotNil(t, event.PantherParseTime)
+		expectedEvent.PantherParseTime = event.PantherParseTime
 	}
 
 	for i := range events {

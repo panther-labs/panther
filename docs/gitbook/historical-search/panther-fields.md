@@ -22,6 +22,9 @@ The fields below are appended to all log records.
 | p_log_type   | string    | The type of log.                                                                 |
 | p_row_id     | string    | Unique id (UUID) for the row.                                                    |
 | p_event_time | timestamp | The associated event time for the log type is copied here and normalized to UTC. |
+| p_parse_time | timestamp | The current time when the event was parsed normalized to UTC.                    |
+
+Note: If an event does not have a timestamp, then "p_event_time" will be set to "p_parse_time", the current time when the event was parsed.
 
 # The "any" fields
 
@@ -39,6 +42,8 @@ The "all_logs" Athena view is provided over all data sources to make queries eas
 | p_any_aws_instance_ids | [string,string…] | List of was instance ids related to row.                       |
 | p_any_aws_arns         | [string,string…] | List of arns related to row.                                   |
 | p_any_aws_tags         | [string,string…] | List of tags related to row as "key:value" pairs.              |
+| p_any_md5_hashes       | [string,string…] | List of MD5 hashes related to row.                             |
+| p_any_sha1_hashes      | [string,string…] | List of SHA1 hashes related to row.                            |
 
 # Using the "all_logs" Athena view to search all logs at once
 
