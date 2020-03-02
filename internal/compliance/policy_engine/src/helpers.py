@@ -19,7 +19,8 @@ from typing import Any, Dict
 
 import boto3
 
-TABLE = boto3.resource('dynamodb', os.environ['AWS_REGION']).Table('panther-resources')  # pylint: disable=no-member
+# Default to us-east-1 so this doesn't fail during CI (env variable is not always present in CI)
+TABLE = boto3.resource('dynamodb', os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')).Table('panther-resources')  # pylint: disable=no-member
 
 
 class BadLookup(Exception):
