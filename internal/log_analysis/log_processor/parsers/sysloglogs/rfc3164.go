@@ -19,9 +19,11 @@ package sysloglogs
  */
 
 import (
+	"errors"
 	"net"
 	"time"
 
+	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/rfc3164"
 	"go.uber.org/zap"
 
@@ -49,22 +51,29 @@ type RFC3164 struct {
 }
 
 // RFC3164Parser parses Syslog logs in the RFC3164 format
-type RFC3164Parser struct{}
+type RFC3164Parser struct {
+	parser syslog.Machine
+}
 
+// New returns an initialized LogParser for Syslog RFC3164 logs
 func (p *RFC3164Parser) New() parsers.LogParser {
-	return &RFC3164Parser{}
+	return &RFC3164Parser{
+		parser: rfc3164.NewParser(
+			rfc3164.WithBestEffort(),
+			rfc3164.WithTimezone(time.UTC),
+			rfc3164.WithYear(rfc3164.CurrentYear{}),
+			rfc3164.WithRFC3339(),
+		),
+	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *RFC3164Parser) Parse(log string) []interface{} {
-	parser := rfc3164.NewParser(
-		rfc3164.WithBestEffort(),
-		rfc3164.WithTimezone(time.UTC),
-		rfc3164.WithYear(rfc3164.CurrentYear{}),
-		rfc3164.WithRFC3339(),
-	)
-
-	msg, err := parser.Parse([]byte(log))
+	if p.parser == nil {
+		zap.L().Debug("failed to parse log", zap.Error(errors.New("parser can not be nil")))
+		return nil
+	}
+	msg, err := p.parser.Parse([]byte(log))
 	if err != nil {
 		zap.L().Debug("failed to parse log", zap.Error(err))
 		return nil
