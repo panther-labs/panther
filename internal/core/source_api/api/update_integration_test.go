@@ -46,7 +46,6 @@ func TestUpdateIntegrationSettings(t *testing.T) {
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		ScanEnabled:      aws.Bool(false),
 		IntegrationID:    aws.String(testIntegrationID),
-		AWSAccountID:     aws.String(testAccountID),
 		IntegrationLabel: aws.String("NewAWSTestingAccount"),
 		ScanIntervalMins: aws.Int(1440),
 	})
