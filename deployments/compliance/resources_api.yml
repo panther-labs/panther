@@ -321,8 +321,8 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - lambda:InvokeFunction
-              Resource: !GetAtt HandlerFunction.Arn
+                - dynamodb:GetItem
+              Resource: !GetAtt ResourcesTable.Arn
 
   EngineLogGroup:
     Type: AWS::Logs::LogGroup

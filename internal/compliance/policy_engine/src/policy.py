@@ -19,8 +19,6 @@ import sys
 from importlib import util as import_util
 from typing import Any, Dict, List, Union
 
-# Other methods of importing have not proved reliable, not sure if it is something to do with
-# running in lambda.
 from . import helpers
 AWS_GLOBALS = 'aws_globals'
 
@@ -78,7 +76,8 @@ class PolicySet:
         self._policies_by_type: Dict[str, List[Policy]] = collections.defaultdict(list)
         self._global_policies: List[Policy] = []  # List of policies that apply to all log types
 
-        # Setup panther helper functions
+        # Import panther helper functions, and add them to sys.modules so they can be imported by
+        # user defined policies
         helpers_spec = import_util.spec_from_file_location(helpers.__name__, helpers.__file__)
         helpers_mod = import_util.module_from_spec(helpers_spec)
         sys.modules['panther_helpers'] = helpers_mod
