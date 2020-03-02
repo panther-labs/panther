@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
 //
@@ -67,7 +67,7 @@ func getTestInvokeInput() *lambda.InvokeInput {
 	}
 
 	return &lambda.InvokeInput{
-		FunctionName: aws.String("panther-snapshot-api"),
+		FunctionName: aws.String("panther-source-api"),
 		Payload:      payload,
 	}
 }

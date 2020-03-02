@@ -22,6 +22,8 @@ import "time"
 
 // LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
+	CheckIntegration *CheckIntegrationInput `json:"integrationHealthCheck"`
+
 	PutIntegration *PutIntegrationInput `json:"putIntegration"`
 
 	ListIntegrations *ListIntegrationsInput `json:"getEnabledIntegrations"`
@@ -31,6 +33,24 @@ type LambdaInput struct {
 	UpdateIntegrationSettings      *UpdateIntegrationSettingsInput      `json:"updateIntegrationSettings"`
 
 	DeleteIntegration *DeleteIntegrationInput `json:"deleteIntegration"`
+}
+
+//
+// CheckIntegration: Used by the UI to determine integration status
+//
+
+// CheckIntegrationInput is used to check the health of a potential configuration.
+type CheckIntegrationInput struct {
+	AWSAccountID    *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType *string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+
+	// Checks for cloudsec integrations
+	EnableCWESetup    *bool `json:"enableCWESetup"`
+	EnableRemediation *bool `json:"enableRemediation"`
+
+	// Checks for log analysis integrations
+	S3Buckets []*string `json:"s3Buckets"`
+	KmsKeys   []*string `json:"kmsKeys"`
 }
 
 //

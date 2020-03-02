@@ -52,7 +52,7 @@ func generateSQSAlarms(resource map[interface{}]interface{}, config *Config) (al
 		referenceQueue := strings.Replace(queueName, "-dlq", "", -1)
 		// NOTE: this metric appears to have no units
 		alarms = append(alarms, NewSQSAlarm(queueName, "SQSDeadLetters", "ApproximateNumberOfMessagesVisible",
-			"has failed items from"+referenceQueue, resource, config).SumNoUnitsThreshold(0, 60*5))
+			"has failed items from"+referenceQueue, resource, config).SumCountThreshold(0, 60*5))
 	} else { // regular q's
 		// nothing in our queues should be older than 5min
 		const tooOldSec float32 = 60.0 * 5.0

@@ -97,17 +97,17 @@ This ddb table holds the policies applied by the `panther-rules-engine` lambda a
  * The Panther user interface could be impacted.
 
 ## panther-analysis-api
-The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
-
- Failure Impact
- * Failure of this API Gateway will prevent calls to the `panther-analysis-api` lambda.
-
-## panther-analysis-api
 This lambda implements the analysis API which is responsible for
  policies/rules from being created, updated, and deleted.
 
  Failure Impact
  * Failure of this lambda will prevent policies/rules from being created, updated, deleted. Additionally, policies and rules will stop being evaluated by the policy/rules engines.
+
+## panther-analysis-api
+The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+
+ Failure Impact
+ * Failure of this API Gateway will prevent calls to the `panther-analysis-api` lambda.
 
 ## panther-aws-event-processor
 This lambda reads events from the `panther-aws-events-queue` sqs queue and determines if
@@ -385,14 +385,6 @@ This is the dead letter queue for the `panther-rules-engine-queue`.
  When the system has recovered they should be re-queued to the `panther-rules-engine-queue` using
  the Panther tool `requeue`.
 
-## panther-snapshot-api
-The `panther-snapshot-api` lambda triggers scans when called by writing requests
- to the `panther-snapshot-queue`.
-
- Failure Impact
- * Failure of this lambda will prevent infrastructure scans of accounts from running.
- * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
-
 ## panther-snapshot-pollers
 This lambda read requests from the `panther-snapshot-queue` and scans infrastructure
  calling the `panther-resource-api` to trigger policy evaluations.
@@ -415,11 +407,18 @@ The dead letter queue for the `panther-snapshot-queue`.
  the Panther tool `requeue`.
 
 ## panther-snapshot-scheduler
-The `panther-snapshot-scheduler` lambda calls the `panther-snapshot-api` for infrastructure scans triggered
- by a 24 hour CloudWatch timer events.
+The `panther-snapshot-scheduler` lambda enumerates aws-scan sources by calling the panther-source-api
+ and then scans those sources. Triggered by 24 hour CloudWatch timer events.
 
  Failure Impact
- * Failure of this lambda will prevent daily infrastructure scans of accounts from running.
+ * Failure of this lambda will prevent daily infrastructure scans from running.
+
+## panther-source-api
+The `panther-source-api` lambda manages Cloud Security and Log Analysis sources. This includes
+ creating, testing, updating, listing, and deleting sources.
+
+ Failure Impact
+ * Failure of this lambda will prevent sources from being manageable, and will interrupt daily scans.
 
 ## panther-source-integrations
 This table does hold the configured accounts and log sources for monitoring.

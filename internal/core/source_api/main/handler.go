@@ -1,13 +1,5 @@
 package main
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-)
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -26,6 +18,32 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-func TestRouter(t *testing.T) {
-	assert.Nil(t, router.VerifyHandlers(&models.LambdaInput{}))
+import (
+	"context"
+
+	"github.com/aws/aws-lambda-go/lambda"
+
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/api"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
+)
+
+var router *genericapi.Router
+
+func init() {
+	validator, err := models.Validator()
+	if err != nil {
+		panic(err)
+	}
+	router = genericapi.NewRouter("cloudsec", "snapshot", validator, api.API{})
+}
+
+func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(request)
+}
+
+func main() {
+	lambda.Start(lambdaHandler)
 }

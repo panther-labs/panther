@@ -20,6 +20,8 @@ package processor
 
 import (
 	"regexp"
+	"sort"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/tidwall/gjson"
@@ -40,19 +42,22 @@ func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 		AccountID: metadata.accountID,
 		Resource:  "function:",
 	}
-	switch metadata.eventName {
+	eventName := getLambdaBaseEventName(metadata.eventName)
+	switch eventName {
 	case "AddPermission",
-		"CreateAlias", "CreateAlias20150331",
-		"CreateEventSourceMapping", "CreateFunction",
-		"DeleteAlias", "DeleteFunction",
+		"CreateAlias",
+		"CreateEventSourceMapping",
+		"CreateFunction",
+		"DeleteAlias",
+		"DeleteFunction",
 		"DeleteFunctionConcurrency",
-		"PublishVersion", "PublishVersion20150331",
+		"PublishVersion",
 		"PutFunctionConcurrency",
 		"RemovePermission",
-		"UpdateAlias", "UpdateAlias20150331",
-		"UpdateEventSourceMapping", "UpdateEventSourceMapping20150331",
-		"UpdateFunctionCode", "UpdateFunctionCode20150331v2",
-		"UpdateFunctionConfiguration", "UpdateFunctionConfiguration20150331v2":
+		"UpdateAlias",
+		"UpdateEventSourceMapping",
+		"UpdateFunctionCode",
+		"UpdateFunctionConfiguration":
 		functionName := detail.Get("requestParameters.functionName").Str
 		// Lambda Fun! This will need to be updated once we support tracking multiple aliases.
 		// Legal formats:
@@ -64,8 +69,8 @@ func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 	case "DeleteEventSourceMapping":
 		functionName := detail.Get("responseElements.functionArn").Str
 		lambdaARN.Resource += lambdaNameRegex.FindStringSubmatch(functionName)[7]
-	case "TagResource", "TagResource20170331v2",
-		"UntagResource", "UntagResource20170331v2":
+	case "TagResource",
+		"UntagResource":
 		var err error
 		lambdaARN, err = arn.Parse(detail.Get("requestParameters.resource").Str)
 		if err != nil {
@@ -79,9 +84,32 @@ func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 
 	return []*resourceChange{{
 		AwsAccountID: metadata.accountID,
-		Delete:       metadata.eventName == "DeleteFunction",
+		Delete:       eventName == "DeleteFunction",
 		EventName:    metadata.eventName,
 		ResourceID:   lambdaARN.String(),
 		ResourceType: schemas.LambdaFunctionSchema,
 	}}
+}
+
+// lambda has a number of "sets" of versioned event names. We do not care about the specific versions so strip off.
+var lambdaVersions = []string{
+	"20170331",
+	"20170331v2",
+	"20150331",
+	"20150331v2",
+}
+
+func init() {
+	sort.Sort(sort.Reverse(sort.StringSlice(lambdaVersions))) // sort desc
+}
+
+func getLambdaBaseEventName(eventName string) string {
+	// this must be sorted desc (longest strings first, per run) to work properly!
+	for _, version := range lambdaVersions {
+		strippedEventName := strings.Replace(eventName, version, "", 1)
+		if len(strippedEventName) < len(eventName) { // we can stop on first match
+			return strippedEventName
+		}
+	}
+	return eventName
 }

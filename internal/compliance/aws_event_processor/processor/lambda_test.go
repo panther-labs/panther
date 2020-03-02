@@ -1,4 +1,4 @@
-package api
+package processor
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,14 +19,21 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"sort"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// ListIntegrations returns all enabled integrations across each organization.
-//
-// The output of this handler is used to schedule pollers.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
-
-	return db.ScanEnabledIntegrations(input)
+func TestGetLambdaBaseEventName(t *testing.T) {
+	baseName := "foo"
+	var functionNames []string
+	for _, version := range lambdaVersions {
+		functionNames = append(functionNames, baseName+version)
+	}
+	// sort _opposite_  of what is optimal to prove stripping works
+	sort.Strings(functionNames)
+	for _, functionName := range functionNames {
+		assert.Equal(t, baseName, getLambdaBaseEventName(functionName))
+	}
 }

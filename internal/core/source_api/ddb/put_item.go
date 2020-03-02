@@ -24,7 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )

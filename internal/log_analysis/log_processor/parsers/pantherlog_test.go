@@ -93,16 +93,49 @@ func TestAppendAnyStringWithEmptyString(t *testing.T) {
 	require.Equal(t, expectedAny, any)
 }
 
-func TestSetRequired(t *testing.T) {
+func TestSetCoreFields(t *testing.T) {
 	event := PantherLog{}
 	logType := "Data.Source"
 	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
+	expectedNow := timestamp.Now()
 	expectedEvent := PantherLog{
 		PantherLogType:   &logType,
 		PantherEventTime: &eventTime,
+		PantherParseTime: &expectedNow,
 	}
-	event.SetCoreFields(logType, eventTime)
+	event.SetCoreFields(logType, &eventTime)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
+
+	// PantherParseTime will be set to time.Now().UTC(), require it to be within one second of expectedNow
+	delta := (*time.Time)(event.PantherParseTime).Sub(*(*time.Time)(expectedEvent.PantherParseTime)).Nanoseconds()
+	require.Less(t, delta, 1*time.Second.Nanoseconds())
+	require.Greater(t, delta, -1*time.Second.Nanoseconds())
+	expectedEvent.PantherParseTime = event.PantherParseTime
+
+	require.Equal(t, expectedEvent, event)
+}
+
+func TestSetCoreFieldsNilEventTime(t *testing.T) {
+	event := PantherLog{}
+	logType := "Data.Source"
+	expectedNow := timestamp.Now()
+	expectedEvent := PantherLog{
+		PantherLogType:   &logType,
+		PantherEventTime: &expectedNow,
+		PantherParseTime: &expectedNow,
+	}
+	event.SetCoreFields(logType, nil)
+	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
+
+	// PantherEventTime will be set to time.Now().UTC(), require it to be within one second of expectedNow
+	delta := (*time.Time)(event.PantherEventTime).Sub(*(*time.Time)(expectedEvent.PantherEventTime)).Nanoseconds()
+	require.Less(t, delta, 1*time.Second.Nanoseconds())
+	require.Greater(t, delta, -1*time.Second.Nanoseconds())
+	// Require Panther set the EventTime to the ParseTime
+	require.Equal(t, expectedEvent.PantherEventTime, expectedEvent.PantherParseTime)
+	expectedEvent.PantherEventTime = event.PantherEventTime
+	expectedEvent.PantherParseTime = event.PantherParseTime
+
 	require.Equal(t, expectedEvent, event)
 }
 

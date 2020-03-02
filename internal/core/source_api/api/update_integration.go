@@ -19,8 +19,8 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_api/ddb"
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 )
 
 // UpdateIntegrationSettings makes an update to an integration from the UI.

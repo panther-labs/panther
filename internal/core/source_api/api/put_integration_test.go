@@ -34,11 +34,11 @@ import (
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_api/ddb"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_api/ddb/modelstest"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	awspoller "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb/modelstest"
 )
 
 // Mocks
