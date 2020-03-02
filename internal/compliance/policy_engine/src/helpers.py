@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """Utility functions provided to policies during execution."""
+import os
 from typing import Any, Dict
+
 import boto3
 
-TABLE = boto3.resource('dynamodb').Table('panther-resources')  # pylint: disable=no-member
+TABLE = boto3.resource('dynamodb', os.environ['AWS_REGION']).Table('panther-resources')  # pylint: disable=no-member
 
 
 class BadLookup(Exception):
