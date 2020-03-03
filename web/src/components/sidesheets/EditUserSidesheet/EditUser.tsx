@@ -36,11 +36,12 @@ interface ApolloMutationInput {
   input: UpdateUserInput;
 }
 
-interface EditProfileFormProps {
+interface EditUserFormProps {
   onSuccess: () => void;
   user: User;
 }
-const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) => {
+
+const EditUser: React.FC<EditUserFormProps> = ({ onSuccess, user }) => {
   const { refetchUserInfo, userInfo } = useAuth();
   const [editUser, { error: editUserError, data }] = useMutation<boolean, ApolloMutationInput>(
     EDIT_USER
@@ -97,4 +98,4 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) =>
   );
 };
 
-export default EditProfileForm;
+export default EditUser;

@@ -17,16 +17,16 @@
  */
 
 import { Box, Heading, SideSheet } from 'pouncejs';
-import EditUserForm from 'Components/forms/edit-user-form';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 import { User } from 'Generated/schema';
+import EditUser from './EditUser';
 
 export interface EditUserSidesheetProps {
   user: User;
 }
 
-const EditUserSideSheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
+const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
   const { hideSidesheet } = useSidesheet();
 
   return (
@@ -35,11 +35,11 @@ const EditUserSideSheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
         <Heading pt={1} pb={8} size="medium">
           Edit Profile
         </Heading>
-        <EditUserForm onSuccess={hideSidesheet} user={user} />
+        <EditUser onSuccess={hideSidesheet} user={user} />
       </Box>
     </SideSheet>
   );
 };
 
 // create ticket for user email verification
-export default EditUserSideSheet;
+export default EditUserSidesheet;
