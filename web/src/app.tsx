@@ -27,7 +27,7 @@ import { ModalProvider } from 'Components/utils/modal-context';
 import { SidesheetProvider } from 'Components/utils/sidesheet-context';
 import ModalManager from 'Components/utils/modal-manager';
 import SidesheetManager from 'Components/utils/sidesheet-manager';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import createApolloClient from 'Source/client';
 
 interface AppProps {

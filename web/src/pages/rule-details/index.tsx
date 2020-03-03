@@ -32,7 +32,7 @@ import RuleDetailsInfo from 'Pages/rule-details/subcomponents/rule-details-info'
 import Panel from 'Components/panel';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import columns from './columns';
 import RuleDetailsPageSkeleton from './skeleton';
 

@@ -19,7 +19,7 @@
 import React from 'react';
 import { defaultTheme } from 'pouncejs';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import DonutChart from 'Components/donut-chart';
+import DonutChart from 'Components/DonutChart';
 import map from 'lodash-es/map';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 

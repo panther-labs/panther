@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import DonutChart from 'Components/donut-chart';
+import DonutChart from 'Components/DonutChart';
 import { ScannedResources } from 'Generated/schema';
 import { countResourcesByStatus } from 'Helpers/utils';
 

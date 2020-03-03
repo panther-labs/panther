@@ -17,7 +17,7 @@
  */
 
 import { Box, Heading, Text } from 'pouncejs';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import { Field } from 'formik';
 import FormikTextInput from 'Components/fields/text-input';
 import React from 'react';

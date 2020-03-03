@@ -35,7 +35,7 @@ import {
 } from 'Helpers/utils';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash-es/isEmpty';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import ListResourcesActions from './subcomponents/list-resources-actions';
 import ListResourcesTable from './subcomponents/list-resources-table';
 import ListResourcesPageEmptyDataFallback from './empty-data-fallback';

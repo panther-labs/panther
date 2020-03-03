@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box, useSnackbar, Text, Flex } from 'pouncejs';
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/company-information-form';
 import Panel from 'Components/panel';

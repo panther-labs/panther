@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Flex, Heading, SideSheet, Text } from 'pouncejs';
-import DestinationCard from 'Components/destination-card';
+import DestinationCard from 'Components/DestinationCard';
 import useSidesheet from 'Hooks/useSidesheet';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
 import msTeamsLogo from 'Assets/ms-teams-minimal-logo.svg';

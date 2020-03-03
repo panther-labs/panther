@@ -21,7 +21,7 @@ import { PolicyDetails, PolicyUnitTest } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Heading } from 'pouncejs';
 import BaseRuleForm, { BaseRuleFormProps } from 'Components/forms/common/base-rule-form';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import PolicyFormAutoRemediationFields from './policy-form-auto-remediation-fields';
 import RuleFormCoreFields, { ruleCoreEditableFields } from '../common/rule-form-core-fields';
 import PolicyFormTestFields from '../common/rule-form-test-fields';

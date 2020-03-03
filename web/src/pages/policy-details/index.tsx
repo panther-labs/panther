@@ -40,7 +40,7 @@ import {
 import pick from 'lodash-es/pick';
 import { DEFAULT_SMALL_PAGE_SIZE, INTEGRATION_TYPES } from 'Source/constants';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import PolicyDetailsTable from './subcomponents/policy-details-table';
 import PolicyDetailsInfo from './subcomponents/policy-details-info';
 import columns from './columns';

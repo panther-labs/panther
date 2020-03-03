@@ -31,7 +31,7 @@ import {
 import TablePaginationControls from 'Components/utils/table-pagination-controls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash-es/isEmpty';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import ListRulesTable from './subcomponents/list-rules-table';
 import ListRulesActions from './subcomponents/list-rules-actions';
 import ListRulesPageSkeleton from './skeleton';

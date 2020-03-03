@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import Editor, { EditorProps } from 'Components/editor';
+import Editor, { EditorProps } from 'Components/Editor';
 import { useFormikContext, FieldConfig } from 'formik';
 import debounce from 'lodash-es/debounce';
 

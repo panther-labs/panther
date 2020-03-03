@@ -20,7 +20,7 @@ import React from 'react';
 import { Box, Button, Flex, Icon } from 'pouncejs';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import Panel from 'Components/panel';
 import LogSourceTable from './subcomponents/log-source-table';
 

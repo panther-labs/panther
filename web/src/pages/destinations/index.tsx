@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Alert, Box, Card, Flex, Table } from 'pouncejs';
-import ErrorBoundary from 'Components/error-boundary';
+import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
 import { gql, useQuery } from '@apollo/client';
 import { Destination } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
