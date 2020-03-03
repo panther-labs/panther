@@ -28,7 +28,7 @@ interface AlertEventsProps {
   fetchMore: () => void;
 }
 
-const AlertEvents: React.FC<AlertEventsProps> = ({ events, total, fetchMore }) => {
+const AlertDetailsEvents: React.FC<AlertEventsProps> = ({ events, total, fetchMore }) => {
   // because we are going to use that in PaginationControls we are starting an indexing starting
   // from 1 instead of 0. That's why we are using `eventDisplayIndex - 1` when selecting the proper event.
   // Normally the `PaginationControls` are used for displaying pages so they are built with a
@@ -58,4 +58,4 @@ const AlertEvents: React.FC<AlertEventsProps> = ({ events, total, fetchMore }) =
   );
 };
 
-export default React.memo(AlertEvents);
+export default React.memo(AlertDetailsEvents);

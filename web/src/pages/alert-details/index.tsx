@@ -21,11 +21,12 @@ import useRouter from 'Hooks/useRouter';
 import { useQuery, gql } from '@apollo/client';
 import { GetAlertInput, AlertDetails, RuleDetails, GetRuleInput } from 'Generated/schema';
 import { Alert, Box } from 'pouncejs';
-import AlertDetailsInfo from 'Pages/alert-details/subcomponent/alert-details-info';
-import AlertEvents from 'Pages/alert-details/subcomponent/alert-events';
+import AlertDetailsPageSkeleton from 'Pages/alert-details/AlertDetailsSkeleton';
+import AlertDetailsInfo from 'Pages/alert-details/AlertDetailsInfo';
+import AlertEvents from 'Pages/alert-details/AlertDetailsEvents';
 import ErrorBoundary from 'Components/error-boundary';
 import { extractErrorMessage } from 'Helpers/utils';
-import AlertDetailsPageSkeleton from 'Pages/alert-details/skeleton';
+
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 
 export const ALERT_DETAILS = gql`
