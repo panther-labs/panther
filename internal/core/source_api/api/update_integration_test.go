@@ -29,27 +29,32 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_api/ddb"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_api/ddb/modelstest"
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb/modelstest"
 )
 
 func TestUpdateIntegrationSettings(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
-	resp := &dynamodb.UpdateItemOutput{}
+	resp := &dynamodb.UpdateItemOutput{Attributes: map[string]*dynamodb.AttributeValue{
+		"ScanEnabled": {BOOL: aws.Bool(false)},
+	}}
 	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
 
-	result := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
+	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		ScanEnabled:      aws.Bool(false),
 		IntegrationID:    aws.String(testIntegrationID),
-		AWSAccountID:     aws.String(testAccountID),
 		IntegrationLabel: aws.String("NewAWSTestingAccount"),
 		ScanIntervalMins: aws.Int(1440),
 	})
 
-	assert.NoError(t, result)
+	expected := &models.SourceIntegration{
+		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{ScanEnabled: aws.Bool(false)},
+	}
+	assert.NoError(t, err)
+	assert.Equal(t, expected, result)
 	mockClient.AssertExpectations(t)
 }
 
@@ -60,12 +65,13 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	resp := &dynamodb.UpdateItemOutput{}
 	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
 
-	result := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
+	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Buckets: aws.StringSlice([]string{"test-bucket-1", "test-bucket-2/*"}),
 		KmsKeys:   aws.StringSlice([]string{"arn:aws:kms:us-west-2:415773754570:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"}),
 	})
 
-	assert.NoError(t, result)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
 	mockClient.AssertExpectations(t)
 }
 
@@ -90,13 +96,14 @@ func TestUpdateIntegrationLastScanStart(t *testing.T) {
 	lastScanEndTime, err := time.Parse(time.RFC3339, "2009-11-10T23:00:00Z")
 	require.NoError(t, err)
 
-	result := apiTest.UpdateIntegrationLastScanStart(&models.UpdateIntegrationLastScanStartInput{
+	result, err := apiTest.UpdateIntegrationLastScanStart(&models.UpdateIntegrationLastScanStartInput{
 		IntegrationID:     aws.String(testIntegrationID),
 		LastScanStartTime: &lastScanEndTime,
 		ScanStatus:        aws.String(models.StatusOK),
 	})
 
-	assert.NoError(t, result)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
 	mockClient.AssertExpectations(t)
 }
 
@@ -127,6 +134,7 @@ func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 		Key: map[string]*dynamodb.AttributeValue{
 			"integrationId": {S: aws.String(testIntegrationID)},
 		},
+		ReturnValues:     aws.String("ALL_NEW"),
 		TableName:        aws.String("test"),
 		UpdateExpression: expr.Update(),
 	}
@@ -135,13 +143,14 @@ func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 	lastScanEndTime, err := time.Parse(time.RFC3339, "2009-11-10T23:00:00Z")
 	require.NoError(t, err)
 
-	result := apiTest.UpdateIntegrationLastScanEnd(&models.UpdateIntegrationLastScanEndInput{
+	result, err := apiTest.UpdateIntegrationLastScanEnd(&models.UpdateIntegrationLastScanEndInput{
 		IntegrationID:        aws.String(testIntegrationID),
 		LastScanEndTime:      &lastScanEndTime,
 		LastScanErrorMessage: aws.String("something went wrong"),
 		ScanStatus:           aws.String(models.StatusError),
 	})
 
-	assert.NoError(t, result)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
 	mockClient.AssertExpectations(t)
 }

@@ -34,7 +34,13 @@ type mockGatewayUpdateUserClient struct {
 	updateErr bool
 }
 
-func (m *mockGatewayUpdateUserClient) UpdateUser(*gateway.UpdateUserInput) error {
+func (m *mockGatewayUpdateUserClient) GetUser(id *string) (*models.User, error) {
+	return &models.User{
+		ID: id,
+	}, nil
+}
+
+func (m *mockGatewayUpdateUserClient) UpdateUser(*models.UpdateUserInput) error {
 	if m.updateErr {
 		return &genericapi.AWSError{}
 	}
@@ -47,7 +53,9 @@ func TestUpdateUserGatewayErr(t *testing.T) {
 		GivenName: aws.String("Richie"),
 		ID:        aws.String("user123"),
 	}
-	assert.Error(t, (API{}).UpdateUser(input))
+	result, err := (API{}).UpdateUser(input)
+	assert.Error(t, err)
+	assert.Nil(t, result)
 }
 
 func TestUpdateUserHandle(t *testing.T) {
@@ -56,5 +64,7 @@ func TestUpdateUserHandle(t *testing.T) {
 		GivenName: aws.String("Richie"),
 		ID:        aws.String("user123"),
 	}
-	assert.NoError(t, (API{}).UpdateUser(input))
+	result, err := (API{}).UpdateUser(input)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
 }

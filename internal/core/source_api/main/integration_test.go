@@ -30,13 +30,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 const (
-	functionName = "panther-snapshot-api"
+	functionName = "panther-source-api"
 	tableName    = "panther-source-integrations"
 	testUserID   = "97c4db4e-61d5-40a7-82de-6dd63b199bd2"
 	testUserID2  = "1ffa65fe-54fc-49ff-aafc-3f8bd386079e"
@@ -174,17 +174,35 @@ func updateIntegrationSettings(t *testing.T) {
 	integrationToUpdate := generatedIntegrationIDs[1]
 	newLabel := "StageEnvAWS"
 	newScanInterval := 180
-	newAccountID := "098765432123"
 
 	input := &models.LambdaInput{
 		UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
-			AWSAccountID:     &newAccountID,
 			IntegrationID:    integrationToUpdate.integrationID,
 			IntegrationLabel: &newLabel,
 			ScanIntervalMins: &newScanInterval,
 		},
 	}
-	require.NoError(t, genericapi.Invoke(lambdaClient, functionName, input, nil))
+	var result models.SourceIntegration
+	require.NoError(t, genericapi.Invoke(lambdaClient, functionName, input, &result))
+	assert.NotNil(t, result.AWSAccountID)
+	assert.NotNil(t, result.CreatedAtTime)
+	expected := models.SourceIntegration{
+		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			AWSAccountID:     result.AWSAccountID,
+			CreatedAtTime:    result.CreatedAtTime,
+			CreatedBy:        result.CreatedBy,
+			IntegrationID:    integrationToUpdate.integrationID,
+			IntegrationLabel: &newLabel,
+			IntegrationType:  aws.String("aws-scan"),
+			ScanEnabled:      aws.Bool(true),
+			ScanIntervalMins: aws.Int(180),
+			S3Buckets:        []*string{},
+			KmsKeys:          []*string{},
+		},
+		SourceIntegrationStatus:          nil,
+		SourceIntegrationScanInformation: nil,
+	}
+	assert.Equal(t, expected, result)
 
 	input = &models.LambdaInput{
 		ListIntegrations: &models.ListIntegrationsInput{IntegrationType: aws.String("aws-scan")},
@@ -203,9 +221,6 @@ func updateIntegrationSettings(t *testing.T) {
 
 		require.NotNil(t, integration.SourceIntegrationMetadata.IntegrationLabel)
 		assert.Equal(t, newLabel, *integration.SourceIntegrationMetadata.IntegrationLabel)
-
-		require.NotNil(t, integration.SourceIntegrationMetadata.AWSAccountID)
-		assert.Equal(t, newAccountID, *integration.SourceIntegrationMetadata.AWSAccountID)
 
 		// Ensure other fields still exist after update
 		assert.NotNil(t, integration.ScanEnabled)

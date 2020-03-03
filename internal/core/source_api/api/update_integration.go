@@ -19,14 +19,14 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_api/ddb"
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 )
 
 // UpdateIntegrationSettings makes an update to an integration from the UI.
 //
 // This endpoint updates attributes such as the behavior of the integration, or display information.
-func (API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettingsInput) error {
+func (API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettingsInput) (*models.SourceIntegration, error) {
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{
 		IntegrationID:    input.IntegrationID,
 		IntegrationLabel: input.IntegrationLabel,
@@ -38,7 +38,7 @@ func (API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettingsInpu
 }
 
 // UpdateIntegrationLastScanStart updates an integration when a new scan is started.
-func (API) UpdateIntegrationLastScanStart(input *models.UpdateIntegrationLastScanStartInput) error {
+func (API) UpdateIntegrationLastScanStart(input *models.UpdateIntegrationLastScanStartInput) (*models.SourceIntegration, error) {
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{
 		IntegrationID:     input.IntegrationID,
 		LastScanStartTime: input.LastScanStartTime,
@@ -47,7 +47,7 @@ func (API) UpdateIntegrationLastScanStart(input *models.UpdateIntegrationLastSca
 }
 
 // UpdateIntegrationLastScanEnd updates an integration when a scan ends.
-func (API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLastScanEndInput) error {
+func (API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLastScanEndInput) (*models.SourceIntegration, error) {
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{
 		IntegrationID:        input.IntegrationID,
 		LastScanEndTime:      input.LastScanEndTime,

@@ -35,7 +35,7 @@ type MockUserGateway struct {
 // and just record the activity, and returns what the Mock object tells it to.
 
 // CreateUser mocks CreateUser for testing
-func (m *MockUserGateway) CreateUser(input *CreateUserInput) (*string, error) {
+func (m *MockUserGateway) CreateUser(input *models.InviteUserInput) (*string, error) {
 	args := m.Called(input)
 	return args.Get(0).(*string), args.Error(1)
 }
@@ -65,7 +65,7 @@ func (m *MockUserGateway) ResetUserPassword(id *string) error {
 }
 
 // UpdateUser mocks UpdateUser for testing
-func (m *MockUserGateway) UpdateUser(input *UpdateUserInput) error {
+func (m *MockUserGateway) UpdateUser(input *models.UpdateUserInput) error {
 	args := m.Called(input)
 	return args.Error(0)
 }

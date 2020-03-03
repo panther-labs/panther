@@ -28,14 +28,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
-	cweAccountTimeout       = 15 * time.Minute
-	refreshInterval         = 2 * time.Minute
-	snapshotAPIFunctionName = "panther-snapshot-api"
+	cweAccountTimeout     = 15 * time.Minute
+	refreshInterval       = 2 * time.Minute
+	sourceAPIFunctionName = "panther-source-api"
 )
 
 var (
@@ -83,7 +83,7 @@ func refreshAccounts() error {
 		},
 	}
 	var output []*models.SourceIntegration
-	err := genericapi.Invoke(lambdaClient, snapshotAPIFunctionName, input, &output)
+	err := genericapi.Invoke(lambdaClient, sourceAPIFunctionName, input, &output)
 	if err != nil {
 		return err
 	}

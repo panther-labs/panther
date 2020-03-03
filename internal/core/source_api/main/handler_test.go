@@ -1,4 +1,12 @@
-package api
+package main
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/panther-labs/panther/api/lambda/source/models"
+)
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -18,16 +26,6 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/users/models"
-)
-
-// UpdateUser modifies user attributes and roles.
-func (API) UpdateUser(input *models.UpdateUserInput) (*models.UpdateUserOutput, error) {
-	if err := userGateway.UpdateUser(input); err != nil {
-		return nil, err
-	}
-
-	// Return updated user attributes
-	return userGateway.GetUser(input.ID)
+func TestRouter(t *testing.T) {
+	assert.Nil(t, router.VerifyHandlers(&models.LambdaInput{}))
 }
