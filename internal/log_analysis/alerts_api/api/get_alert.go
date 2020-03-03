@@ -35,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
+// The format of S3 object suffix that contains the
 const ruleSuffixFormat = "rule_id=%s/"
 
 // GetAlert retrieves details for a given alert
@@ -142,6 +143,8 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 					return false
 				}
 				if objectTime.Before(alert.CreationTime) || objectTime.After(alert.UpdateTime) {
+					// if the time in the S3 object key was before alert creation time or after last alert update time
+					// skip the object
 					continue
 				}
 				events, eventIndex, err := queryS3Object(*object.Key, alert.AlertID, 0, maxResults-len(result))
@@ -150,10 +153,7 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 					return false
 				}
 				result = append(result, events...)
-				logTypeToken.eventIndex = aws.Int(eventIndex)
-				logTypeToken.s3ObjectKey = object.Key
-				zap.L().Info("printing content3", zap.Any("token", logTypeToken))
-				zap.L().Info("printing content4", zap.Any("token", token))
+				logTypeToken = &continuationToken{eventIndex:aws.Int(eventIndex), s3ObjectKey: object.Key}
 				if len(result) == maxResults {
 					// if we have already received all the results we wanted
 					// no need to keep paginating
@@ -172,13 +172,12 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 			return nil, paginationError
 		}
 	}
-	zap.L().Info("printing content", zap.Any("token", token))
 	return result, nil
 }
 
-// extracts the
+// extracts time from the S3 object key
+// Key is expected to be in the format `/table/partitionkey=partitionvalue/.../time-uuid4.json.gz` otherwise the method will fail
 func timeFromS3ObjectKey(key string) (time.Time, error) {
-	// Key is in the format: /table/partitionkey=partitionvalue/.../time-uuid4.json.gz
 	keyParts := strings.Split(key, "/")
 	timeInString := strings.Split(keyParts[len(keyParts)-1], "-")[0]
 	return time.ParseInLocation(destinations.S3ObjectTimestampFormat, timeInString, time.UTC)
@@ -211,20 +210,23 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 	}
 
 	var result []string
-	processedResults := 0
+	currentIndex := 0
 	for genericEvent := range output.EventStream.Reader.Events() {
 		switch e := genericEvent.(type) { // to specific event
 		case *s3.RecordsEvent:
-			if processedResults == maxResults { // if we have received max results no need to get more events
-				// We still need to iterate through the contents of the EventStream
-				// to avoid memory leaks
-				continue
+			records := strings.Split(string(e.Payload), "\n")
+			for _, record := range records{
+				if len(result) == maxResults { // if we have received max results no need to get more events
+					// We still need to iterate through the contents of the EventStream
+					// to avoid memory leaks
+					continue
+				}
+				currentIndex ++
+				if currentIndex < exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
+					continue
+				}
+				result = append(result, record)
 			}
-			processedResults++
-			if processedResults < exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
-				continue
-			}
-			result = append(result, string(e.Payload))
 		case *s3.StatsEvent:
 			continue
 		}
@@ -233,5 +235,5 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 	if streamError != nil {
 		return nil, 0, streamError
 	}
-	return result, processedResults, nil
+	return result, currentIndex, nil
 }
