@@ -61,7 +61,8 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	}
 	var events []string
 	for _, logType := range alertItem.LogTypes {
-		// retrieve events from each log type. Retrieve maximum the number of events remaining
+		// Each alert can contain events from multiple log types.
+		// Retrieve results from each log type. We only need to retrieve maximum `input.EventsPageSize`
 		eventsReturned, err := getEventsForLogType(logType, token, alertItem, *input.EventsPageSize-len(events))
 		if err != nil {
 			return nil, err
@@ -72,8 +73,6 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 			break
 		}
 	}
-
-	zap.L().Info("printing content2", zap.Any("token", token))
 
 	encodedToken, err := token.encode()
 	if err != nil {
@@ -94,22 +93,22 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 }
 
 func getEventsForLogType(logType string, token *eventPaginationToken, alert *models.AlertItem, maxResults int) (result []string, err error) {
-	logTypeToken := token.logTypeToToken[logType]
+	paginationToken := token.logTypeToToken[logType]
 
-	if logTypeToken != nil {
-		events, index, err := queryS3Object(*logTypeToken.s3ObjectKey, alert.AlertID, *logTypeToken.eventIndex, maxResults)
+	if paginationToken != nil {
+		events, index, err := queryS3Object(*paginationToken.s3ObjectKey, alert.AlertID, *paginationToken.eventIndex, maxResults)
 		if err != nil {
 			return nil, err
 		}
 		result = append(result, events...)
-		// updating token with latest index
-		logTypeToken.eventIndex = aws.Int(index)
+		// updating index in token with index of last event returned
+		paginationToken.eventIndex = aws.Int(index)
 		if len(result) == maxResults {
 			return result, nil
 		}
 	} else {
-		logTypeToken = &logTypeToken{}
-		token.logTypeToToken[logType] = logTypeToken
+		paginationToken = &logTypeToken{}
+		token.logTypeToToken[logType] = paginationToken
 	}
 
 	var partitionLocations []string
@@ -128,7 +127,7 @@ func getEventsForLogType(logType string, token *eventPaginationToken, alert *mod
 		listRequest := &s3.ListObjectsV2Input{
 			Bucket:     aws.String(env.ProcessedDataBucket),
 			Prefix:     aws.String(prefix),
-			StartAfter: logTypeToken.s3ObjectKey,
+			StartAfter: paginationToken.s3ObjectKey,
 		}
 
 		var paginationError error
@@ -153,7 +152,7 @@ func getEventsForLogType(logType string, token *eventPaginationToken, alert *mod
 					return false
 				}
 				result = append(result, events...)
-				logTypeToken = &logTypeToken{eventIndex: aws.Int(eventIndex), s3ObjectKey: object.Key}
+				paginationToken = &logTypeToken{eventIndex: aws.Int(eventIndex), s3ObjectKey: object.Key}
 				if len(result) == maxResults {
 					// if we have already received all the results we wanted
 					// no need to keep paginating
