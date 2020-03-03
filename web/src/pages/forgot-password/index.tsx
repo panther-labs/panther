@@ -17,7 +17,7 @@
  */
 
 import Banner from 'Assets/sign-up-banner.jpg';
-import AuthPageContainer from 'Components/auth-page-container';
+import AuthPageContainer from 'Components/AuthPageContainer';
 import ForgotPasswordForm from 'Components/forms/forgot-password-form';
 import { Button, Flex, Text } from 'pouncejs';
 import urls from 'Source/urls';

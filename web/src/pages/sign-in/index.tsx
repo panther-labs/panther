@@ -20,7 +20,7 @@ import React from 'react';
 import { Flex, Text } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link } from 'react-router-dom';
-import AuthPageContainer from 'Components/auth-page-container';
+import AuthPageContainer from 'Components/AuthPageContainer';
 import Banner from 'Assets/sign-in-banner.jpg';
 import SetPasswordForm from 'Components/forms/set-password-form';
 import MfaForm from 'Components/forms/mfa-form';

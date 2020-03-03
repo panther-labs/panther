@@ -18,7 +18,7 @@
 
 import React from 'react';
 import Banner from 'Assets/sign-up-banner.jpg';
-import AuthPageContainer from 'Components/auth-page-container';
+import AuthPageContainer from 'Components/AuthPageContainer';
 import queryString from 'query-string';
 import ForgotPasswordConfirmForm from 'Components/forms/forgot-password-confirm-form';
 import useRouter from 'Hooks/useRouter';
