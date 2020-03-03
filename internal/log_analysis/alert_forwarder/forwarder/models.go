@@ -34,7 +34,7 @@ type AlertDedupEvent struct {
 	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
 	EventCount          int64     `dynamodbav:"eventCount,number"`
 	Severity            string    `dynamodbav:"severity,string"`
-	LogTypes            []string  `dynamodbav:"severity,stringset"`
+	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
 }
 
 // Alert contains all the fields associated to the alert stored in DDB

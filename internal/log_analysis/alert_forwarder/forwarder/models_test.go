@@ -34,10 +34,8 @@ func TestConvertAttribute(t *testing.T) {
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
 		UpdateTime:          time.Unix(1582285280, 0).UTC(),
 		Severity:            "INFO",
-		EventPerLogType: map[string]int64{
-			"LogType1": 5,
-			"LogType2": 10,
-		},
+		EventCount:          100,
+		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())
@@ -85,9 +83,9 @@ func TestMissingAlertUpdateTime(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestMissingEventsPerLogTypeLogType(t *testing.T) {
+func TestMissingLogTypes(t *testing.T) {
 	testInput := getNewTestCase()
-	delete(testInput, "eventsPerLogType")
+	delete(testInput, "logTypes")
 	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
 	require.Nil(t, alertDedupEvent)
 	require.Error(t, err)
@@ -118,10 +116,6 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"alertUpdateTime":   events.NewNumberAttribute("1582285280"),
 		"eventCount":        events.NewNumberAttribute("100"),
 		"severity":          events.NewStringAttribute("INFO"),
-		"eventsPerLogType": events.NewMapAttribute(
-			map[string]events.DynamoDBAttributeValue{
-				"LogType1": events.NewNumberAttribute("5"),
-				"LogType2": events.NewNumberAttribute("10"),
-			}),
+		"logTypes":          events.NewStringSetAttribute([]string{"Log.Type.1", "Log.Type.2"}),
 	}
 }

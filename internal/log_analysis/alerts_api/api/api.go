@@ -70,16 +70,16 @@ func Setup() {
 }
 
 type paginationToken struct {
-	logTypeToLastEvent map[string]*lastObjectProcessed
+	logTypeToToken map[string]*continuationToken
 }
 
-type lastObjectProcessed struct {
-	key       string
-	eventIndex int
+type continuationToken struct {
+	s3ObjectKey *string
+	eventIndex  *int
 }
 
 func newPaginationToken() *paginationToken {
-	return &paginationToken{logTypeToLastEvent: make(map[string]*lastObjectProcessed)}
+	return &paginationToken{logTypeToToken: make(map[string]*continuationToken)}
 }
 
 func (pt *paginationToken) encode() (string, error) {

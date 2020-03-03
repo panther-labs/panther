@@ -20,6 +20,8 @@ package api
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -56,9 +58,9 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	} else {
 		token = newPaginationToken()
 	}
-	events := []string{}
+	var events []string
 	for _, logType := range alertItem.LogTypes {
-		eventsReturned, err := getEventsForLogType(logType, token, alertItem, *input.EventsPageSize-len(events))
+		eventsReturned, err := getEventsForLogType(logType, token, alertItem, *input.EventsPageSize-len(events)) // retrieve only as many results as needed
 		if err != nil {
 			return nil, err
 		}
@@ -68,6 +70,8 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 			break
 		}
 	}
+
+	zap.L().Info("printing content2", zap.Any("token", token))
 
 	encodedToken, err := token.encode()
 	if err != nil {
@@ -87,67 +91,69 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	return result, nil
 }
 
-func minInt(value1, value2 int) int {
-	if value1 < value2 {
-		return value1
-	}
-	return value2
-}
-
 func getEventsForLogType(logType string, token *paginationToken, alert *models.AlertItem, maxResults int) (resultEvents []string, err error) {
+	logTypeToken := token.logTypeToToken[logType]
 
-	if token.logTypeToLastEvent[logType] != nil {
-		queryS3Object(token.logTypeToLastEvent[logType].key, alert.AlertID, )
+	if logTypeToken != nil {
+		events, index, err := queryS3Object(*logTypeToken.s3ObjectKey, alert.AlertID, *logTypeToken.eventIndex, maxResults)
+		if err != nil {
+			return nil, err
+		}
+		resultEvents = append(resultEvents, events...)
+		// updating token with latest index
+		logTypeToken.eventIndex = aws.Int(index)
+		if len(resultEvents) == maxResults {
+			return resultEvents, nil
+		}
+	} else {
+		logTypeToken = &continuationToken{}
+		token.logTypeToToken[logType] = logTypeToken
 	}
 
-	queryS3Object()
-
-
-	partitionLocations := []string{}
+	var partitionLocations []string
 	for nextTime := alert.CreationTime; !nextTime.After(alert.UpdateTime); nextTime = awsglue.GlueTableHourly.Next(nextTime) {
 		partitionLocation := awsglue.GeneratePartitionPrefix(logprocessormodels.RuleData, logType, awsglue.GlueTableHourly, nextTime)
 		partitionLocations = append(partitionLocations, partitionLocation)
 	}
 
-	startTimeString := alert.CreationTime.Format(destinations.S3ObjectTimestampFormat)
-	endTimeString := alert.UpdateTime.Format(destinations.S3ObjectTimestampFormat)
-
-	processedEvents := 0
 	for _, partition := range partitionLocations {
-		if processedEvents == maxResults {
+		if len(resultEvents) == maxResults {
 			// We don't need to return any results since we have already found the max requested
 			break
 		}
 		prefix := partition + fmt.Sprintf(ruleSuffixFormat, alert.RuleID)
 
-
-
-		if token.logTypeToLastEvent[logType] != nil {
-			listRequest.StartAfter = aws.String(token.logTypeToLastEvent[logType].nextToLastKey)
-		}
-
 		listRequest := &s3.ListObjectsV2Input{
-			Bucket: aws.String(env.ProcessedDataBucket),
-			Prefix: aws.String(prefix),
+			Bucket:     aws.String(env.ProcessedDataBucket),
+			Prefix:     aws.String(prefix),
+			StartAfter: logTypeToken.s3ObjectKey,
 		}
+
+		var paginationError error
+
 		err := s3Client.ListObjectsV2Pages(listRequest, func(output *s3.ListObjectsV2Output, b bool) bool {
-			for i, object := range output.Contents {
-				zap.L().Info("found data", zap.String("key", *object.Key))
-				if *object.Key < startTimeString || *object.Key > endTimeString {
-					continue
-				}
-				startIndex := 0
-				if lastObjectProcessed != nil && *object.Key == lastObjectProcessed.key {
-					startIndex = lastObjectProcessed.lastEvent
-				}
-				events, eventIndex, err := queryS3Object(*object.Key, alert.AlertID, startIndex, maxResults-processedEvents)
+			for _, object := range output.Contents {
+				objectTime, err := timeFromS3ObjectKey(*object.Key)
 				if err != nil {
+					zap.L().Error("failed to parse object time from S3 object key",
+						zap.String("key", *object.Key))
+					paginationError = err
 					return false
 				}
-				processedEvents += len(events)
+				if objectTime.Before(alert.CreationTime) || objectTime.After(alert.UpdateTime) {
+					continue
+				}
+				events, eventIndex, err := queryS3Object(*object.Key, alert.AlertID, 0, maxResults-len(resultEvents))
+				if err != nil {
+					paginationError = err
+					return false
+				}
 				resultEvents = append(resultEvents, events...)
-				lastObjectProcessedInfo.lastEvent = eventIndex
-				if processedEvents == maxResults {
+				logTypeToken.eventIndex = aws.Int(eventIndex)
+				logTypeToken.s3ObjectKey = object.Key
+				zap.L().Info("printing content3", zap.Any("token", logTypeToken))
+				zap.L().Info("printing content4", zap.Any("token", token))
+				if len(resultEvents) == maxResults {
 					// if we have already received all the results we wanted
 					// no need to keep paginating
 					return false
@@ -158,17 +164,30 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 		})
 
 		if err != nil {
-			return nil, lastObjectProcessedInfo, err
+			return nil, err
+		}
+
+		if paginationError != nil {
+			return nil, paginationError
 		}
 	}
-	return resultEvents, lastObjectProcessedInfo, nil
+	zap.L().Info("printing content", zap.Any("token", token))
+	return resultEvents, nil
+}
+
+// extracts the
+func timeFromS3ObjectKey(key string) (time.Time, error) {
+	// Key is in the format: /table/partitionkey=partitionvalue/.../time-uuid4.json.gz
+	keyParts := strings.Split(key, "/")
+	timeInString := strings.Split(keyParts[len(keyParts)-1], "-")[0]
+	return time.ParseInLocation(destinations.S3ObjectTimestampFormat, timeInString, time.UTC)
 }
 
 func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]string, int, error) {
 	query := fmt.Sprintf("select * from S3Object o WHERE o.p_alert_id='%s'", alertID)
 
 	zap.L().Debug("querying object using S3 Select",
-		zap.String("key", key),
+		zap.String("s3ObjectKey", key),
 		zap.String("query", query))
 	input := &s3.SelectObjectContentInput{
 		Bucket: aws.String(env.ProcessedDataBucket),
@@ -189,16 +208,20 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		return nil, 0, err
 	}
 
-	result := []string{}
+	var result []string
 	processedResults := 0
 	for genericEvent := range output.EventStream.Reader.Events() {
 		switch e := genericEvent.(type) { // to specific event
 		case *s3.RecordsEvent:
-			if processedResults == maxResults || // if we have received max results no need to get more events
-				processedResults <= exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
+			if processedResults == maxResults { // if we have received max results no need to get more events
+				// We still need to iterate through the contents of the EventStream
+				// to avoid memory leaks
 				continue
 			}
 			processedResults++
+			if processedResults < exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
+				continue
+			}
 			result = append(result, string(e.Payload))
 		case *s3.StatsEvent:
 			continue
