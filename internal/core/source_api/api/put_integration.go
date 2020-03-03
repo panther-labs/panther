@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -36,7 +38,7 @@ import (
 )
 
 // PutIntegration adds a set of new integrations in a batch.
-func (API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIntegrationMetadata, error) {
+func (api API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIntegrationMetadata, error) {
 	permissionsAddedForIntegrations := []*models.SourceIntegrationMetadata{}
 	var err error
 	defer func() {
@@ -52,10 +54,16 @@ func (API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIn
 			}
 		}
 	}()
-	newIntegrations := make([]*models.SourceIntegrationMetadata, len(input.Integrations))
+
+	integrations, err := api.filterExistingIntegrations(input.Integrations)
+	if err != nil {
+		return nil, err
+	}
+
+	newIntegrations := make([]*models.SourceIntegrationMetadata, len(integrations))
 
 	// Generate the new integrations
-	for i, integration := range input.Integrations {
+	for i, integration := range integrations {
 		newIntegrations[i] = generateNewIntegration(integration)
 	}
 
@@ -94,6 +102,30 @@ func (API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIn
 	return newIntegrations, err
 }
 
+func (api API) filterExistingIntegrations(inputIntegrations []*models.PutIntegrationSettings) (
+	existingIntegrations []*models.PutIntegrationSettings, err error) {
+
+	// avoid inserting if already done
+	currentIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
+	if err != nil {
+		err = errors.Wrap(err, "Error listing integrations")
+		return nil, err
+	}
+	currentIntegrationsMap := make(map[string]struct{})
+	for _, integration := range currentIntegrations {
+		currentIntegrationsMap[*integration.AWSAccountID+*integration.IntegrationType] = struct{}{}
+	}
+	for _, integration := range inputIntegrations {
+		if _, found := currentIntegrationsMap[*integration.AWSAccountID+*integration.IntegrationType]; found {
+			zap.L().Warn(fmt.Sprintf("integration exists for: %s:%s skipping PutIntegration()",
+				*integration.AWSAccountID, *integration.IntegrationType))
+		} else {
+			existingIntegrations = append(existingIntegrations, integration)
+		}
+	}
+	return existingIntegrations, nil
+}
+
 // ScanAllResources schedules scans for each Resource type for each integration.
 //
 // Each Resource type is sent within its own SQS message.
@@ -102,7 +134,7 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 
 	// For each integration, add a ScanMsg to the queue per service
 	for _, integration := range integrations {
-		if !*integration.ScanEnabled {
+		if !aws.BoolValue(integration.ScanEnabled) {
 			continue
 		}
 
