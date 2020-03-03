@@ -76,7 +76,7 @@ func TestProcess(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
-	assert.NoError(t, Process(testAlertDedupEvent))
+	assert.NoError(t, Store(testAlertDedupEvent))
 }
 
 // The handler signatures must match those in the LambdaInput struct.
@@ -85,5 +85,5 @@ func TestProcessDDBError(t *testing.T) {
 	ddbClient = ddbMock
 
 	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, errors.New("error"))
-	assert.Error(t, Process(testAlertDedupEvent))
+	assert.Error(t, Store(testAlertDedupEvent))
 }

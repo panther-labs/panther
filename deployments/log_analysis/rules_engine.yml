@@ -146,7 +146,7 @@ Resources:
       SSESpecification:
         SSEEnabled: True
       StreamSpecification:
-        StreamViewType: NEW_IMAGE
+        StreamViewType: NEW_AND_OLD_IMAGES
 
   LogGroup:
     Type: AWS::Logs::LogGroup

@@ -47,6 +47,9 @@ Parameters:
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket for storing processed logs
+  SQSKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -174,6 +177,9 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ALERTS_TABLE: !Ref LogAlertsTable
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         DynamoDBEvent:
           Type: DynamoDB
@@ -196,6 +202,24 @@ Resources:
       Timeout: 30
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
+        - Id: SQS
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts-queue
+        - Id: GetRule
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
         - Id: ManageAlerts
           Version: 2012-10-17
           Statement:

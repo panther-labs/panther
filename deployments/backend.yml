@@ -368,6 +368,7 @@ Resources:
         ProcessedDataBucket: !Ref ProcessedData
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
         AlertDedupTableStreamArn: !GetAtt RulesEngine.Outputs.AlertDedupTableStreamArn
+        SQSKeyId: !Ref QueueEncryptionKey
       TemplateURL: log_analysis/alerts.yml
 
   RulesEngine:

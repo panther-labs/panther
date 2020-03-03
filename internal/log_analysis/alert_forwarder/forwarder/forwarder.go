@@ -27,18 +27,36 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+
+	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
+	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 var (
-	alertsTable                           = os.Getenv("ALERTS_TABLE")
-	awsSession                            = session.Must(session.NewSession())
-	ddbClient   dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
+	alertsTable                                = os.Getenv("ALERTS_TABLE")
+	alertingQueueURL                           = os.Getenv("ALERTING_QUEUE_URL")
+	analysisAPIHost                            = os.Getenv("ANALYSIS_API_HOST")
+	analysisAPIPath                            = os.Getenv("ANALYSIS_API_PATH")
+	awsSession                                 = session.Must(session.NewSession())
+	ddbClient        dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
+	sqsClient        sqsiface.SQSAPI           = sqs.New(awsSession)
+
+	httpClient   = gatewayapi.GatewayClient(awsSession)
+	policyConfig = policiesclient.DefaultTransportConfig().
+			WithHost(analysisAPIHost).
+			WithBasePath(analysisAPIPath)
+	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 )
 
 const defaultTimePartition = "defaultPartition"
 
-func Process(event *AlertDedupEvent) error {
+func Store(event *AlertDedupEvent) error {
 	alert := &Alert{
 		ID:              generateAlertID(event),
 		TimePartition:   defaultTimePartition,
@@ -57,11 +75,54 @@ func Process(event *AlertDedupEvent) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to update store alert")
 	}
+	return nil
+}
 
-	//TODO Add logic that forwards messages to Alert Delivery SQS queue
+func SendAlert(event *AlertDedupEvent) error {
+	alert, err := getAlert(event)
+	if err != nil {
+		err = errors.WithStack(err)
+		return err
+	}
+	msgBody, err := jsoniter.MarshalToString(alert)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal alert notification")
+	}
+
+	input := &sqs.SendMessageInput{
+		QueueUrl:    aws.String(alertingQueueURL),
+		MessageBody: aws.String(msgBody),
+	}
+	_, err = sqsClient.SendMessage(input)
+	if err != nil {
+		return errors.Wrap(err, "failed to send notification")
+	}
 	return nil
 }
 
 func generateAlertID(event *AlertDedupEvent) string {
 	return event.RuleID + ":" + event.DeduplicationString + ":" + strconv.FormatInt(event.AlertCount, 10)
+}
+
+func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
+	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
+		RuleID:     alert.RuleID,
+		HTTPClient: httpClient,
+	})
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch information for ruleID %s", alert.RuleID)
+	}
+
+	return &alertModel.Alert{
+		CreatedAt:         aws.Time(alert.CreationTime),
+		PolicyDescription: aws.String(string(rule.Payload.Description)),
+		PolicyID:          aws.String(alert.RuleID),
+		PolicyName:        aws.String(string(rule.Payload.DisplayName)),
+		Runbook:           aws.String(string(rule.Payload.Runbook)),
+		Severity:          aws.String(string(rule.Payload.Severity)),
+		Tags:              aws.StringSlice(rule.Payload.Tags),
+		Type:              aws.String(alertModel.RuleType),
+		AlertID:           aws.String(generateAlertID(alert)),
+	}, nil
 }
