@@ -60,7 +60,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) =>
 
   const initialValues = {
     id: user.id,
-    email: user.email || '',
+    email: user.email,
     familyName: user.familyName || '',
     givenName: user.givenName || '',
   };

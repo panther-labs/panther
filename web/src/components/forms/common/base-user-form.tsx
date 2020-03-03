@@ -23,11 +23,13 @@ import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/text-input';
 import * as Yup from 'yup';
 
-interface IdValue {
-  id: string;
+interface BaseUserFormValues {
+  id?: string; // optional value
+  email: string;
+  familyName: string;
+  givenName;
 }
-
-export interface BaseUserFormProps<BaseUserFormValues extends IdValue> {
+export interface BaseUserFormProps {
   /** The initial values of the form */
   initialValues: BaseUserFormValues;
 
@@ -43,12 +45,7 @@ const validationSchema = Yup.object().shape({
   givenName: Yup.string().required('First name is required'),
 });
 
-function BaseUserForm<BaseUserFormValues extends IdValue>({
-  initialValues,
-  onSubmit,
-}: React.PropsWithChildren<BaseUserFormProps<BaseUserFormValues>>): React.ReactElement<
-  BaseUserFormProps<BaseUserFormValues>
-> {
+const BaseUserForm: React.FC<BaseUserFormProps> = ({ initialValues, onSubmit }) => {
   return (
     <Formik<BaseUserFormValues>
       initialValues={initialValues}
@@ -104,6 +101,6 @@ function BaseUserForm<BaseUserFormValues extends IdValue>({
       }}
     </Formik>
   );
-}
+};
 
 export default BaseUserForm;

@@ -42,13 +42,12 @@ interface UserInvitationFormProps {
 }
 
 const initialValues = {
-  id: null,
   email: '',
   familyName: '',
   givenName: '',
 };
 
-export const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSuccess }) => {
+const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSuccess }) => {
   const [inviteUser, { error: inviteUserError, data }] = useMutation<boolean, ApolloMutationInput>(
     INVITE_USER
   );
