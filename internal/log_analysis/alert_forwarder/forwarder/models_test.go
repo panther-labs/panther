@@ -107,6 +107,14 @@ func TestInvalidInteger(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestInvalidTypeShouldntPanic(t *testing.T) {
+	testInput := getNewTestCase()
+	testInput["alertCreationTime"] = events.NewStringAttribute("string")
+	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
+	require.Nil(t, alertDedupEvent)
+	require.Error(t, err)
+}
+
 func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 	return map[string]events.DynamoDBAttributeValue{
 		"ruleId":            events.NewStringAttribute("testRuleId"),
