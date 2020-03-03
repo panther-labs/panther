@@ -60,7 +60,8 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	}
 	var events []string
 	for _, logType := range alertItem.LogTypes {
-		eventsReturned, err := getEventsForLogType(logType, token, alertItem, *input.EventsPageSize-len(events)) // retrieve only as many results as needed
+		// retrieve events from each log type. Retrieve maximum the number of events remaining
+		eventsReturned, err := getEventsForLogType(logType, token, alertItem, *input.EventsPageSize-len(events))
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +92,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	return result, nil
 }
 
-func getEventsForLogType(logType string, token *paginationToken, alert *models.AlertItem, maxResults int) (resultEvents []string, err error) {
+func getEventsForLogType(logType string, token *paginationToken, alert *models.AlertItem, maxResults int) (result []string, err error) {
 	logTypeToken := token.logTypeToToken[logType]
 
 	if logTypeToken != nil {
@@ -99,11 +100,11 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 		if err != nil {
 			return nil, err
 		}
-		resultEvents = append(resultEvents, events...)
+		result = append(result, events...)
 		// updating token with latest index
 		logTypeToken.eventIndex = aws.Int(index)
-		if len(resultEvents) == maxResults {
-			return resultEvents, nil
+		if len(result) == maxResults {
+			return result, nil
 		}
 	} else {
 		logTypeToken = &continuationToken{}
@@ -117,7 +118,7 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 	}
 
 	for _, partition := range partitionLocations {
-		if len(resultEvents) == maxResults {
+		if len(result) == maxResults {
 			// We don't need to return any results since we have already found the max requested
 			break
 		}
@@ -143,17 +144,17 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 				if objectTime.Before(alert.CreationTime) || objectTime.After(alert.UpdateTime) {
 					continue
 				}
-				events, eventIndex, err := queryS3Object(*object.Key, alert.AlertID, 0, maxResults-len(resultEvents))
+				events, eventIndex, err := queryS3Object(*object.Key, alert.AlertID, 0, maxResults-len(result))
 				if err != nil {
 					paginationError = err
 					return false
 				}
-				resultEvents = append(resultEvents, events...)
+				result = append(result, events...)
 				logTypeToken.eventIndex = aws.Int(eventIndex)
 				logTypeToken.s3ObjectKey = object.Key
 				zap.L().Info("printing content3", zap.Any("token", logTypeToken))
 				zap.L().Info("printing content4", zap.Any("token", token))
-				if len(resultEvents) == maxResults {
+				if len(result) == maxResults {
 					// if we have already received all the results we wanted
 					// no need to keep paginating
 					return false
@@ -172,7 +173,7 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 		}
 	}
 	zap.L().Info("printing content", zap.Any("token", token))
-	return resultEvents, nil
+	return result, nil
 }
 
 // extracts the
@@ -184,7 +185,8 @@ func timeFromS3ObjectKey(key string) (time.Time, error) {
 }
 
 func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]string, int, error) {
-	query := fmt.Sprintf("select * from S3Object o WHERE o.p_alert_id='%s'", alertID)
+	// nolint:gosec
+	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s'", alertID)
 
 	zap.L().Debug("querying object using S3 Select",
 		zap.String("s3ObjectKey", key),

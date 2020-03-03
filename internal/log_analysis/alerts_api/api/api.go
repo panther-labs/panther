@@ -24,8 +24,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	jsoniter "github.com/json-iterator/go"
@@ -41,7 +39,6 @@ var (
 	env        envConfig
 	awsSession *session.Session
 	alertsDB   table.API
-	glueClient glueiface.GlueAPI
 	s3Client   s3iface.S3API
 )
 
@@ -65,7 +62,6 @@ func Setup() {
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
-	glueClient = glue.New(awsSession)
 	s3Client = s3.New(awsSession)
 }
 
