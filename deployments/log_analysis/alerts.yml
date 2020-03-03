@@ -44,6 +44,9 @@ Parameters:
   AlertDedupTableStreamArn:
     Type: String
     Description: The stream arn of the alerts dedup table
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket for storing processed logs
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -70,6 +73,7 @@ Resources:
           TIME_INDEX_NAME: timePartition-creationTime-index
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
+          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       FunctionName: panther-alerts-api
       # <cfndoc>
       # Lambda for CRUD actions for the alerts API.
@@ -95,6 +99,25 @@ Resources:
               Resource:
                 - !GetAtt LogAlertsTable.Arn
                 - !Sub '${LogAlertsTable.Arn}/index/*'
+        - Id: QueryGlue
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:BatchGetPartition
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: S3Permissions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:ListBucket
+                - s3:GetObject
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
 
   ##### Dynamo table that stores alert information #####
   LogAlertsTable:

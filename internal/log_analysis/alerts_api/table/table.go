@@ -28,9 +28,9 @@ import (
 
 const (
 	RuleIDKey          = "ruleId"
-	AlertIDKey         = "alertId"
+	AlertIDKey         = "id"
 	TimePartitionKey   = "timePartition"
-	TimePartitionValue = "default"
+	TimePartitionValue = "defaultPartition"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
@@ -45,7 +45,6 @@ type AlertsTable struct {
 	AlertsTableName                    string
 	RuleIDCreationTimeIndexName        string
 	TimePartitionCreationTimeIndexName string
-	EventsTableName                    string
 	Client                             dynamodbiface.DynamoDBAPI
 }
 

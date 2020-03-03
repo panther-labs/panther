@@ -365,6 +365,7 @@ Resources:
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         TracingMode: !Ref TracingMode
 
+        ProcessedDataBucket: !Ref ProcessedData
         AnalysisApiId: !GetAtt AnalysisAPI.Outputs.GatewayId
         AlertDedupTableStreamArn: !GetAtt RulesEngine.Outputs.AlertDedupTableStreamArn
       TemplateURL: log_analysis/alerts.yml

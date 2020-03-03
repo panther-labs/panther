@@ -22,11 +22,11 @@ import "time"
 
 // AlertItem is a DDB representation of an Alert
 type AlertItem struct {
-	AlertID        string         `json:"id"`
-	RuleID         string         `json:"ruleId"`
-	CreationTime   time.Time      `json:"creationTime"`
-	UpdateTime     time.Time      `json:"updateTime"`
-	EventCount     int            `json:"eventCount"`
-	Severity       string         `json:"severity"`
-	LogTypesEvents map[string]int `json:"logTypesEvents"`
+	AlertID      string    `json:"id"`
+	RuleID       string    `json:"ruleId"`
+	CreationTime time.Time `json:"creationTime"`
+	UpdateTime   time.Time `json:"updateTime"`
+	Severity     string    `json:"severity"`
+	EventCount   int       `json:"eventCount"`
+	LogTypes     []string  `json:"logTypes"`
 }

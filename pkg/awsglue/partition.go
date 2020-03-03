@@ -1,8 +1,10 @@
 package awsglue
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -66,6 +68,24 @@ func (gp *GluePartition) GetCompression() string {
 
 func (gp *GluePartition) GetPartitionColumnsInfo() []PartitionColumnInfo {
 	return gp.partitionColumns
+}
+
+// Based on Timebin(), return an S3 prefix for objects of this table
+func getTimePartitionPrefix(timebin GlueTableTimebin, t time.Time) string {
+	switch timebin {
+	case GlueTableHourly:
+		return fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
+	case GlueTableDaily:
+		return fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
+	default:
+		return fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
+	}
+}
+
+func GeneratePartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
+	tableName := GetTableName(logType)
+	tablePrefix := getTablePrefix(datatype, tableName)
+	return tablePrefix + getTimePartitionPrefix(timebin, time)
 }
 
 func (gp *GluePartition) GetPartitionPrefix() string {

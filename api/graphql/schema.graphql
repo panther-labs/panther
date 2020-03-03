@@ -71,7 +71,7 @@ type AlertDetails {
   alertId: ID!
   ruleId: ID
   creationTime: AWSDateTime!
-  lastEventMatched: AWSDateTime!
+  updateTime: AWSDateTime!
   eventsMatched: Int!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
@@ -86,7 +86,7 @@ type AlertSummary {
   alertId: String!
   creationTime: AWSDateTime!
   eventsMatched: Int!
-  lastEventMatched: AWSDateTime!
+  updateTime: AWSDateTime!
   ruleId: String
   severity: String
 }

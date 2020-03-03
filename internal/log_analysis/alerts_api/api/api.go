@@ -26,6 +26,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
 
@@ -40,15 +42,16 @@ var (
 	awsSession *session.Session
 	alertsDB   table.API
 	glueClient glueiface.GlueAPI
+	s3Client   s3iface.S3API
 )
 
 type envConfig struct {
-	AnalysisAPIHost string `required:"true" split_words:"true"`
-	AnalysisAPIPath string `required:"true" split_words:"true"`
-	AlertsTableName string `required:"true" split_words:"true"`
-	RuleIndexName   string `required:"true" split_words:"true"`
-	TimeIndexName   string `required:"true" split_words:"true"`
-	EventsTableName string `required:"true" split_words:"true"`
+	AnalysisAPIHost     string `required:"true" split_words:"true"`
+	AnalysisAPIPath     string `required:"true" split_words:"true"`
+	AlertsTableName     string `required:"true" split_words:"true"`
+	RuleIndexName       string `required:"true" split_words:"true"`
+	TimeIndexName       string `required:"true" split_words:"true"`
+	ProcessedDataBucket string `required:"true" split_words:"true"`
 }
 
 // Setup parses the environment and builds the AWS and http clients.
@@ -59,17 +62,24 @@ func Setup() {
 	alertsDB = &table.AlertsTable{
 		AlertsTableName:                    env.AlertsTableName,
 		Client:                             dynamodb.New(awsSession),
-		EventsTableName:                    env.EventsTableName,
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
 	glueClient = glue.New(awsSession)
+	s3Client = s3.New(awsSession)
 }
 
 type paginationToken struct {
-	currentEventIndex int
-	currentLog        string
-	alreadyProcessed  map[string]int
+	logTypeToLastEvent map[string]*lastObjectProcessed
+}
+
+type lastObjectProcessed struct {
+	key       string
+	eventIndex int
+}
+
+func newPaginationToken() *paginationToken {
+	return &paginationToken{logTypeToLastEvent: make(map[string]*lastObjectProcessed)}
 }
 
 func (pt *paginationToken) encode() (string, error) {

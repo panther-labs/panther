@@ -13,13 +13,6 @@ Resource names below refer to resources in the Cloud Formation templates in Pant
 
 Each resource describes its function and failure impacts.
 
-## panther-alert-dedup
-The `panther-rules-engine` lambda manages this table and it is used to
- deduplicate of alerts. The `panther-log-alert-forwarder` read the ddb stream from this table.
-
- Failure Impact
- * Processing of rules could be slowed or stopped if there are errors/throttles.
-
 ## panther-alert-delivery
 This lambda dispatches alerts to their specified outputs (destinations).
 
@@ -28,22 +21,19 @@ This lambda dispatches alerts to their specified outputs (destinations).
  * Failed events will go into the `panther-alerts-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alerts-queue` using the Panther tool `requeue`.
 
 ## panther-alert-forwarder
-The `panther-alert-forwarder` lambda reads from the ddb stream for the table `panther-alert-forwarder`
- and sends them to the `panther-alerts-queue` sqs queue.
-
- Failure Impact
- * Failure of this lambda will stop delivery of alerts to destinations.
- * There will be no data loss until events are purged from the ddb stream (24 hours).
-
-## panther-alert-forwarder
 The `panther-alert-forwarder` ddb table is updated conditionally when new policies have a violation
  or a time limit has been exceeded.
 
  Failure Impact
  * Processing of alerts could be slowed or stopped if there are errors/throttles.
 
-## panther-alert-merger
-will be removed before v1
+## panther-alert-forwarder
+The `panther-alert-forwarder` lambda reads from the ddb stream for the table `panther-alert-forwarder`
+ and sends them to the `panther-alerts-queue` sqs queue.
+
+ Failure Impact
+ * Failure of this lambda will stop delivery of alerts to destinations.
+ * There will be no data loss until events are purged from the ddb stream (24 hours).
 
 ## panther-alert-processor
 This lambda reads events from the `panther-alert-processor-queue`
@@ -188,9 +178,6 @@ This queue contains notifications that include information of new log data.
  * Users will not be able to search the latest log data
  * Users will not be able to see new events that matched some rule.
 
-## panther-events
-will be removed before v1
-
 ## panther-graphql-api
 This is the GraphQL endpoint for the Panther UI.
 
@@ -211,29 +198,19 @@ This is the dead letter queue for the `panther-input-data-notifications-queue`.
  When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
  the Panther tool `requeue`.
 
+## panther-log-alert-dedup
+The `panther-rules-engine` lambda manages this table and it is used to
+ deduplicate of alerts. The `panther-log-alert-forwarder` read the ddb stream from this table.
+
+ Failure Impact
+ * Processing of rules could be slowed or stopped if there are errors/throttles.
+
 ## panther-log-alert-forwarder
 This lambda reads from a ddb stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alerts-info` ddb table.
 
  Failure Impact
  * Delivery of alerts could be slowed or stopped.
  * There will be no data loss until events are purged from the ddb stream (24 hours).
-
-## panther-log-alert-notifications-queue
-This sqs qeueue receives alert notifications
- to be processed by `panther-log-alert-forwarder` lambda.
-
- Failure Impact
- * Failure of this sqs queue will impact the send of alerts to destinations.
- * Failed events will go into the `panther-log-alert-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using the Panther tool `requeue`.
-
-## panther-log-alert-notifications-queue-dlq
-This is the dead letter queue for the `anther-log-alert-notifications-queue`.
- Items are in this queue due to a failure of the `panther-log-alert-forwarder` lambda.
- When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using
- the Panther tool `requeue`.
-
-## panther-log-alerts
-will be removed before v1
 
 ## panther-log-alerts-info
 This table holds the alerts history and is managed by the `panther-log-alert-forwarder` lambda.
@@ -283,9 +260,6 @@ This lambda executes the user-defined policies against infrastructure events.
  It is called directly from the `panther-resource-processor` lambda.
  Failure Impact
  * Failure of this lambda will impact evaluating policies.
-
-## panther-recent-alerts
-will be removed before v1
 
 ## panther-remediation-api
 The `panther-remediation-api` lambda triggers AWS remediations.

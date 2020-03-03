@@ -65,7 +65,7 @@ type GlueTableMetadata struct {
 func NewGlueTableMetadata(
 	datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
-	tableName := getTableName(logType)
+	tableName := GetTableName(logType)
 	tablePrefix := getTablePrefix(datatype, tableName)
 	return &GlueTableMetadata{
 		databaseName: getDatabase(datatype),
@@ -153,7 +153,7 @@ func getTablePrefix(dataType models.DataType, tableName string) string {
 	return ruleMatchS3Prefix + "/" + tableName + "/"
 }
 
-func getTableName(logType string) string {
+func GetTableName(logType string) string {
 	// clean table name to make sql friendly
 	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
 	return strings.ToLower(tableName)

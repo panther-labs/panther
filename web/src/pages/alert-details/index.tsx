@@ -35,7 +35,7 @@ export const ALERT_DETAILS = gql`
       ruleId
       creationTime
       eventsMatched
-      lastEventMatched
+      updateTime
       eventsLastEvaluatedKey
       events
     }

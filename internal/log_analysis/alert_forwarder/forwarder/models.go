@@ -27,13 +27,14 @@ import (
 
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
-	RuleID              string           `dynamodbav:"ruleId"`
-	DeduplicationString string           `dynamodbav:"dedup"`
-	AlertCount          int64            `dynamodbav:"-"` // Not storing this field in DDB
-	CreationTime        time.Time        `dynamodbav:"creationTime"`
-	UpdateTime          time.Time        `dynamodbav:"updateTime"`
-	Severity            string           `dynamodbav:"severity"`
-	EventPerLogType     map[string]int64 `dynamodbav:"eventsPerLogType"`
+	RuleID              string    `dynamodbav:"ruleId,string"`
+	DeduplicationString string    `dynamodbav:"dedup,string"`
+	AlertCount          int64     `dynamodbav:"-"` // Not storing this field in DDB
+	CreationTime        time.Time `dynamodbav:"creationTime,string"`
+	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
+	EventCount          int64     `dynamodbav:"eventCount,number"`
+	Severity            string    `dynamodbav:"severity,string"`
+	LogTypes            []string  `dynamodbav:"severity,stringset"`
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
@@ -83,21 +84,26 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		return nil, err
 	}
 
-	eventsPerLogType, err := getMapStringIntAttribute("eventsPerLogType", input)
+	eventCount, err := getIntegerAttribute("eventCount", input)
 	if err != nil {
 		return nil, err
 	}
 
-	event = &AlertDedupEvent{
+	logTypes, err := getAttribute("logTypes", input)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AlertDedupEvent{
 		RuleID:              ruleID.String(),
 		DeduplicationString: deduplicationString.String(),
 		AlertCount:          alertCount,
 		CreationTime:        time.Unix(alertCreationEpoch, 0).UTC(),
 		UpdateTime:          time.Unix(alertUpdateEpoch, 0).UTC(),
+		EventCount:          eventCount,
 		Severity:            severity.String(),
-		EventPerLogType:     eventsPerLogType,
-	}
-	return event, nil
+		LogTypes:            logTypes.StringSet(),
+	}, nil
 }
 
 func getIntegerAttribute(key string, input map[string]events.DynamoDBAttributeValue) (int64, error) {
@@ -110,24 +116,6 @@ func getIntegerAttribute(key string, input map[string]events.DynamoDBAttributeVa
 		return 0, errors.Wrapf(err, "failed to convert attribute '%s' to integer", key)
 	}
 	return integerValue, nil
-}
-
-func getMapStringIntAttribute(key string, input map[string]events.DynamoDBAttributeValue) (map[string]int64, error) {
-	value, err := getAttribute(key, input)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string]int64)
-	for key, value := range value.Map() {
-		integerValue, err := value.Integer()
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to convert value with key '%s' to integer", key)
-		}
-		result[key] = integerValue
-	}
-
-	return result, nil
 }
 
 func getAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue) (events.DynamoDBAttributeValue, error) {
