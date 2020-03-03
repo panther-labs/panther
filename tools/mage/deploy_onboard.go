@@ -23,7 +23,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/google/uuid"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 )
@@ -57,14 +56,13 @@ func registerPantherAccount(awsSession *session.Session, pantherAccountID string
 					IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
 					ScanEnabled:      aws.Bool(true),
 					ScanIntervalMins: aws.Int(1440),
-					UserID:           aws.String(uuid.New().String()), // generate a uuid4
+					UserID:           aws.String(mageUserID),
 				},
 			},
 		},
 	}
 	if err := invokeLambda(awsSession, "panther-source-api", apiInput, nil); err != nil {
-		logger.Errorf("error calling lambda to register account: %v", err)
-		return
+		logger.Fatalf("error calling lambda to register account: %v", err)
 	}
 }
 
@@ -103,8 +101,7 @@ func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string
 	}
 	_, err := cfClient.CreateStackSet(stackSetInput)
 	if err != nil && !alreadyExists(err) {
-		logger.Errorf("error creating real time stack set: %v", err)
-		return
+		logger.Fatalf("error creating real time stack set: %v", err)
 	}
 
 	stackSetInstancesInput := &cloudformation.CreateStackInstancesInput{
@@ -120,7 +117,6 @@ func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string
 	}
 	_, err = cfClient.CreateStackInstances(stackSetInstancesInput)
 	if err != nil && !alreadyExists(err) {
-		logger.Errorf("error creating real time stack instance: %v", err)
-		return
+		logger.Fatalf("error creating real time stack instance: %v", err)
 	}
 }

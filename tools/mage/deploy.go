@@ -59,6 +59,8 @@ const (
 	layerSourceDir   = "out/pip/analysis/python"
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
+
+	mageUserID = "00000000-0000-0000-0000-000000000000" // used to indicate mage made the call
 )
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
@@ -352,7 +354,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, config
 		response, err := apiClient.Operations.BulkUpload(&operations.BulkUploadParams{
 			Body: &analysismodels.BulkUpload{
 				Data:   analysismodels.Base64zipfile(encoded),
-				UserID: "00000000-0000-0000-0000-000000000000",
+				UserID: mageUserID,
 			},
 			HTTPClient: httpClient,
 		})

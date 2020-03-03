@@ -27,7 +27,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -108,8 +107,7 @@ func (api API) filterExistingIntegrations(inputIntegrations []*models.PutIntegra
 	// avoid inserting if already done
 	currentIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
 	if err != nil {
-		err = errors.Wrap(err, "Error listing integrations")
-		return nil, err
+		return nil, &genericapi.InternalError{Message: err.Error()}
 	}
 	currentIntegrationsMap := make(map[string]struct{})
 	for _, integration := range currentIntegrations {
