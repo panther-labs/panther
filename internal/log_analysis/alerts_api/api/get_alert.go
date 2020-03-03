@@ -156,7 +156,8 @@ func getEventsForLogType(
 					return false
 				}
 				result = append(result, events...)
-				paginationToken = &logTypeToken{eventIndex: aws.Int(eventIndex), s3ObjectKey: object.Key}
+				paginationToken.eventIndex = aws.Int(eventIndex)
+				paginationToken.s3ObjectKey = object.Key
 				if len(result) == maxResults {
 					// if we have already received all the results we wanted
 					// no need to keep paginating
