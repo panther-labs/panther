@@ -98,7 +98,10 @@ func checkOsQueryDifferentialLog(t *testing.T, log string, expectedEvent *Differ
 	parser := &DifferentialParser{}
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
-	event := events[0].(*Differential)
+	event := events[0].Event.(*Differential)
+
+	// UNset back ptr
+	event.Event = nil
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.

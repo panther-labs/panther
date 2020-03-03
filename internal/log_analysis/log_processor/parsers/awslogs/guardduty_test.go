@@ -183,7 +183,10 @@ func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
 	parser := &GuardDutyParser{}
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
-	event := events[0].(*GuardDuty)
+	event := events[0].Event.(*GuardDuty)
+
+	// UNset back ptr
+	event.Event = nil
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.

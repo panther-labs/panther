@@ -103,7 +103,10 @@ func checkEventInfo(t *testing.T, log string, expectedEvent *EventInfo) {
 	parser := &EventInfoParser{}
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
-	event := events[0].(*EventInfo)
+	event := events[0].Event.(*EventInfo)
+
+	// UNset back ptr
+	event.Event = nil
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.

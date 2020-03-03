@@ -29,6 +29,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -59,7 +60,7 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 	newProcessorFunc func(*common.DataStream) *Processor) error {
 
 	zap.L().Debug("processing data streams", zap.Int("numDataStreams", len(dataStreams)))
-	parsedEventChannel := make(chan *common.ParsedEvent, ParsedEventBufferSize)
+	parsedEventChannel := make(chan *parsers.PantherLog, ParsedEventBufferSize)
 	errorChannel := make(chan error)
 
 	var sendEventsWg sync.WaitGroup
@@ -104,7 +105,7 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 }
 
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
-func (p *Processor) run(outputChan chan *common.ParsedEvent) error {
+func (p *Processor) run(outputChan chan *parsers.PantherLog) error {
 	var err error
 	stream := bufio.NewReader(p.input.Reader)
 	for {
@@ -126,7 +127,7 @@ func (p *Processor) run(outputChan chan *common.ParsedEvent) error {
 	return err
 }
 
-func (p *Processor) processLogLine(line string, outputChan chan *common.ParsedEvent) {
+func (p *Processor) processLogLine(line string, outputChan chan *parsers.PantherLog) {
 	classificationResult := p.classifyLogLine(line)
 	if classificationResult.LogType == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
 		return
@@ -147,13 +148,9 @@ func (p *Processor) classifyLogLine(line string) *classification.ClassifierResul
 	return result
 }
 
-func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *common.ParsedEvent) {
-	for _, parsedEvent := range result.Events {
-		message := &common.ParsedEvent{
-			Event:   parsedEvent,
-			LogType: *result.LogType,
-		}
-		outputChan <- message
+func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.PantherLog) {
+	for _, event := range result.Events {
+		outputChan <- event
 	}
 }
 

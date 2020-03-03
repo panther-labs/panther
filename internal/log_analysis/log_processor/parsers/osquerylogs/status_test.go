@@ -66,7 +66,10 @@ func checkOsQueryStatusLog(t *testing.T, log string, expectedEvent *Status) {
 	parser := &StatusParser{}
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
-	event := events[0].(*Status)
+	event := events[0].Event.(*Status)
+
+	// UNset back ptr
+	event.Event = nil
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.

@@ -240,7 +240,10 @@ func checkALBLog(t *testing.T, log string, expectedEvent *ALB) {
 	parser := &ALBParser{}
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
-	event := events[0].(*ALB)
+	event := events[0].Event.(*ALB)
+
+	// UNset back ptr
+	event.Event = nil
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.

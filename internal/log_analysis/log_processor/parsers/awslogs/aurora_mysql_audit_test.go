@@ -67,7 +67,10 @@ func checkAuroraMysqlAuditLogLog(t *testing.T, log string, expectedEvent *Aurora
 	parser := &AuroraMySQLAuditParser{}
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
-	event := events[0].(*AuroraMySQLAudit)
+	event := events[0].Event.(*AuroraMySQLAudit)
+
+	// UNset back ptr
+	event.Event = nil
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.

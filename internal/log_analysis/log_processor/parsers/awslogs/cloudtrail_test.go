@@ -150,8 +150,12 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 
 	// panther fields
 	for i, expectedEvent := range expectedEvents {
+		event := events[i].Event.(*CloudTrail)
+
+		// set back ptr to match
+		expectedEvent.Event = event.Event
+
 		// rowid changes each time
-		event := events[i].(*CloudTrail)
 		require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
 		event.PantherRowID = expectedEvent.PantherRowID
 
@@ -161,6 +165,6 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 	}
 
 	for i := range events {
-		require.Equal(t, expectedEvents[i], events[i].(*CloudTrail))
+		require.Equal(t, expectedEvents[i], events[i].Event.(*CloudTrail))
 	}
 }

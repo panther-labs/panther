@@ -99,11 +99,12 @@ func TestSetCoreFields(t *testing.T) {
 	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
 	expectedNow := timestamp.Now()
 	expectedEvent := PantherLog{
+		Event:            nil,
 		PantherLogType:   &logType,
 		PantherEventTime: &eventTime,
 		PantherParseTime: &expectedNow,
 	}
-	event.SetCoreFields(logType, &eventTime)
+	event.SetCoreFields(logType, &eventTime, nil)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 
 	// PantherParseTime will be set to time.Now().UTC(), require it to be within one second of expectedNow
@@ -120,11 +121,12 @@ func TestSetCoreFieldsNilEventTime(t *testing.T) {
 	logType := "Data.Source"
 	expectedNow := timestamp.Now()
 	expectedEvent := PantherLog{
+		Event:            nil,
 		PantherLogType:   &logType,
 		PantherEventTime: &expectedNow,
 		PantherParseTime: &expectedNow,
 	}
-	event.SetCoreFields(logType, nil)
+	event.SetCoreFields(logType, nil, nil)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 
 	// PantherEventTime will be set to time.Now().UTC(), require it to be within one second of expectedNow

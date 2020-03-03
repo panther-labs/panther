@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -126,7 +127,7 @@ func TestVpcFlowLogNoData(t *testing.T) {
 
 func TestVpcFlowLogHeader(t *testing.T) {
 	parser := &VPCFlowParser{}
-	require.Equal(t, []interface{}{}, parser.Parse(vpcFlowDefaultHeader))
+	require.Equal(t, []*parsers.PantherLog{}, parser.Parse(vpcFlowDefaultHeader))
 }
 
 func TestVpcFlowLogType(t *testing.T) {
@@ -139,7 +140,10 @@ func checkVPCFlowLog(t *testing.T, header, log string, expectedEvent *VPCFlow) {
 	parser.Parse(header)
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
-	event := events[0].(*VPCFlow)
+	event := events[0].Event.(*VPCFlow)
+
+	// UNset back ptr
+	event.Event = nil
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
