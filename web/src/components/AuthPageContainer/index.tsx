@@ -1,3 +1,1 @@
-import AuthPageContainer from './AuthPageContainer';
-
-export default AuthPageContainer;
+export { default } from './AuthPageContainer';

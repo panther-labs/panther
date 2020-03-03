@@ -1,3 +1,1 @@
-import CirclePlaceholder from './CirclePlaceholder';
-
-export default CirclePlaceholder;
+export { default } from './CirclePlaceholder';
