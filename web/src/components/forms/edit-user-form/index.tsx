@@ -40,16 +40,8 @@ interface EditProfileFormProps {
   onSuccess: () => void;
   user: User;
 }
-
-interface EditProfileFormValues {
-  id: string;
-  givenName: string;
-  familyName: string;
-  email: string;
-}
-
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) => {
-  const { getCurrentUserInfo, userInfo } = useAuth();
+  const { refetchUserInfo, userInfo } = useAuth();
   const [editUser, { error: editUserError, data }] = useMutation<boolean, ApolloMutationInput>(
     EDIT_USER
   );
@@ -59,7 +51,9 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, user }) =>
     if (data) {
       pushSnackbar({ variant: 'success', title: `Successfully edited user` });
       // Refetch user info if editing self
-      if (user.id === userInfo.sub) getCurrentUserInfo({});
+      if (user.id === userInfo.sub) {
+        refetchUserInfo();
+      }
       onSuccess();
     }
   }, [data]);

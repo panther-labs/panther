@@ -125,7 +125,7 @@ interface ForgotPasswordParams {
   onError?: (err: AuthError) => void;
 }
 
-interface GetCurrentUserInfoParams {
+interface RefetchUserInfoParams {
   onSuccess?: () => void;
   onError?: (err: AuthError) => void;
 }
@@ -138,7 +138,7 @@ export interface AuthContextValue {
   userInfo: UserInfo | null;
   signIn: (params: SignInParams) => Promise<void>;
   confirmSignIn: (params: ConfirmSignInParams) => Promise<void>;
-  getCurrentUserInfo: (params: GetCurrentUserInfoParams) => Promise<void>;
+  refetchUserInfo: (params?: RefetchUserInfoParams) => Promise<void>;
   setNewPassword: (params: SetNewPasswordParams) => Promise<void>;
   verifyTotpSetup: (params: VerifyTotpSetupParams) => Promise<void>;
   requestTotpSecretCode: () => Promise<string>;
@@ -176,6 +176,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    */
   const userInfo = React.useMemo<UserInfo>(() => {
     // if a user is present, derive the user info from him
+    // ! Check if this is calculated
     if (authUser?.attributes) {
       return authUser.attributes;
     }
@@ -417,10 +418,10 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    * @public
    * A method to refetch user info in order to update state when a user edits self
    */
-  const getCurrentUserInfo = React.useCallback(
-    async ({ onSuccess = () => {}, onError = () => {} }: GetCurrentUserInfoParams) => {
+  const refetchUserInfo = React.useCallback(
+    async ({ onSuccess = () => {}, onError = () => {} }: RefetchUserInfoParams = {}) => {
       try {
-        const currentUserInfo = await Auth.currentUserInfo();
+        const currentUserInfo = await Auth.currentAuthenticatedUser({ bypassCache: true });
         setAuthUser(currentUserInfo);
         onSuccess();
       } catch (err) {
@@ -455,7 +456,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       currentAuthChallengeName: authUser?.challengeName || null,
       userInfo,
       updateUserInfo,
-      getCurrentUserInfo,
+      refetchUserInfo,
 
       signIn,
       confirmSignIn,
