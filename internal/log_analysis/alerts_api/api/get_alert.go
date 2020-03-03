@@ -50,7 +50,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	if err != nil {
 		return nil, err
 	}
-	var token *paginationToken
+	var token *eventPaginationToken
 	if input.EventsExclusiveStartKey != nil {
 		token, err = decodePaginationToken(*input.EventsExclusiveStartKey)
 		if err != nil {
@@ -93,7 +93,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	return result, nil
 }
 
-func getEventsForLogType(logType string, token *paginationToken, alert *models.AlertItem, maxResults int) (result []string, err error) {
+func getEventsForLogType(logType string, token *eventPaginationToken, alert *models.AlertItem, maxResults int) (result []string, err error) {
 	logTypeToken := token.logTypeToToken[logType]
 
 	if logTypeToken != nil {
@@ -108,7 +108,7 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 			return result, nil
 		}
 	} else {
-		logTypeToken = &continuationToken{}
+		logTypeToken = &logTypeToken{}
 		token.logTypeToToken[logType] = logTypeToken
 	}
 
@@ -153,7 +153,7 @@ func getEventsForLogType(logType string, token *paginationToken, alert *models.A
 					return false
 				}
 				result = append(result, events...)
-				logTypeToken = &continuationToken{eventIndex:aws.Int(eventIndex), s3ObjectKey: object.Key}
+				logTypeToken = &logTypeToken{eventIndex: aws.Int(eventIndex), s3ObjectKey: object.Key}
 				if len(result) == maxResults {
 					// if we have already received all the results we wanted
 					// no need to keep paginating

@@ -65,20 +65,22 @@ func Setup() {
 	s3Client = s3.New(awsSession)
 }
 
-type paginationToken struct {
-	logTypeToToken map[string]*continuationToken
+// Token used for paginating through the events in an alert
+type eventPaginationToken struct {
+	logTypeToToken map[string]*logTypeToken
 }
 
-type continuationToken struct {
+// Token used for paginating in the events of a specific log type
+type logTypeToken struct {
 	s3ObjectKey *string
 	eventIndex  *int
 }
 
-func newPaginationToken() *paginationToken {
-	return &paginationToken{logTypeToToken: make(map[string]*continuationToken)}
+func newPaginationToken() *eventPaginationToken {
+	return &eventPaginationToken{logTypeToToken: make(map[string]*logTypeToken)}
 }
 
-func (pt *paginationToken) encode() (string, error) {
+func (pt *eventPaginationToken) encode() (string, error) {
 	marshalled, err := jsoniter.Marshal(pt)
 	if err != nil {
 		return "", err
@@ -86,12 +88,12 @@ func (pt *paginationToken) encode() (string, error) {
 	return base64.URLEncoding.EncodeToString(marshalled), nil
 }
 
-func decodePaginationToken(token string) (*paginationToken, error) {
+func decodePaginationToken(token string) (*eventPaginationToken, error) {
 	unmarshalled, err := base64.URLEncoding.DecodeString(token)
 	if err != nil {
 		return nil, err
 	}
-	result := &paginationToken{}
+	result := &eventPaginationToken{}
 	if err = jsoniter.Unmarshal(unmarshalled, result); err != nil {
 		return nil, err
 	}

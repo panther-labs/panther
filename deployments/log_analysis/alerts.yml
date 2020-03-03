@@ -99,16 +99,6 @@ Resources:
               Resource:
                 - !GetAtt LogAlertsTable.Arn
                 - !Sub '${LogAlertsTable.Arn}/index/*'
-        - Id: QueryGlue
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - glue:BatchGetPartition
-              Resource:
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
         - Id: S3Permissions
           Version: 2012-10-17
           Statement:
