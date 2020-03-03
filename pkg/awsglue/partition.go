@@ -70,6 +70,12 @@ func (gp *GluePartition) GetPartitionColumnsInfo() []PartitionColumnInfo {
 	return gp.partitionColumns
 }
 
+func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
+	tableName := GetTableName(logType)
+	tablePrefix := getTablePrefix(datatype, tableName)
+	return tablePrefix + getTimePartitionPrefix(timebin, time)
+}
+
 // Based on Timebin(), return an S3 prefix for objects of this table
 func getTimePartitionPrefix(timebin GlueTableTimebin, t time.Time) string {
 	switch timebin {
@@ -82,13 +88,7 @@ func getTimePartitionPrefix(timebin GlueTableTimebin, t time.Time) string {
 	}
 }
 
-func GeneratePartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
-	tableName := GetTableName(logType)
-	tablePrefix := getTablePrefix(datatype, tableName)
-	return tablePrefix + getTimePartitionPrefix(timebin, time)
-}
-
-func (gp *GluePartition) GetPartitionPrefix() string {
+func (gp *GluePartition) GetPartitionLocation() string {
 	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
 	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
 	for _, partitionField := range gp.partitionColumns {
@@ -109,7 +109,7 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	for i, field := range gp.partitionColumns {
 		partitionValues[i] = aws.String(field.Value)
 	}
-	partitionPrefix := gp.GetPartitionPrefix()
+	partitionPrefix := gp.GetPartitionLocation()
 	partitionInput := &glue.PartitionInput{
 		Values:            partitionValues,
 		StorageDescriptor: getJSONPartitionDescriptor(partitionPrefix), // We only support JSON currently

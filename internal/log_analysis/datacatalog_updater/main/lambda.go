@@ -80,7 +80,7 @@ func process(event events.SQSEvent) error {
 			continue
 		}
 
-		if _, ok := partitionPrefixCache[gluePartition.GetPartitionPrefix()]; ok {
+		if _, ok := partitionPrefixCache[gluePartition.GetPartitionLocation()]; ok {
 			zap.L().Debug("partition has already been created")
 			continue
 		}
@@ -90,7 +90,7 @@ func process(event events.SQSEvent) error {
 			err = errors.Wrapf(err, "failed to create partition: %#v", notification)
 			return err
 		}
-		partitionPrefixCache[gluePartition.GetPartitionPrefix()] = struct{}{}
+		partitionPrefixCache[gluePartition.GetPartitionLocation()] = struct{}{}
 	}
 	return nil
 }

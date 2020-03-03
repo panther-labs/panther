@@ -124,17 +124,9 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 }
 
 // Based on Timebin(), return an S3 prefix for objects of this table
-func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
-	prefix = gm.Prefix()
-	switch gm.timebin {
-	case GlueTableHourly:
-		prefix += fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
-	case GlueTableDaily:
-		prefix += fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
-	case GlueTableMonthly:
-		prefix += fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
-	}
-	return
+func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
+	prefix := gm.Prefix()
+	return prefix + getTimePartitionPrefix(gm.timebin, t)
 }
 
 // Returns the prefix of the table in S3 or error if it failed to generate it

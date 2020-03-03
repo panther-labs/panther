@@ -92,7 +92,9 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	return result, nil
 }
 
-func getEventsForLogType(logType string, token *eventPaginationToken, alert *models.AlertItem, maxResults int) (result []string, err error) {
+func getEventsForLogType(
+	logType string, token *eventPaginationToken, alert *models.AlertItem, maxResults int) (result []string, err error) {
+
 	paginationToken := token.logTypeToToken[logType]
 
 	if paginationToken != nil {
@@ -113,7 +115,7 @@ func getEventsForLogType(logType string, token *eventPaginationToken, alert *mod
 
 	var partitionLocations []string
 	for nextTime := alert.CreationTime; !nextTime.After(alert.UpdateTime); nextTime = awsglue.GlueTableHourly.Next(nextTime) {
-		partitionLocation := awsglue.GeneratePartitionPrefix(logprocessormodels.RuleData, logType, awsglue.GlueTableHourly, nextTime)
+		partitionLocation := awsglue.GetPartitionPrefix(logprocessormodels.RuleData, logType, awsglue.GlueTableHourly, nextTime)
 		partitionLocations = append(partitionLocations, partitionLocation)
 	}
 
@@ -214,13 +216,13 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		switch e := genericEvent.(type) { // to specific event
 		case *s3.RecordsEvent:
 			records := strings.Split(string(e.Payload), "\n")
-			for _, record := range records{
+			for _, record := range records {
 				if len(result) == maxResults { // if we have received max results no need to get more events
 					// We still need to iterate through the contents of the EventStream
 					// to avoid memory leaks
 					continue
 				}
-				currentIndex ++
+				currentIndex++
 				if currentIndex < exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
 					continue
 				}
