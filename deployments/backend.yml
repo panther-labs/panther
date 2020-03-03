@@ -232,6 +232,7 @@ Resources:
         ResourcesApi: !Sub https://${ResourcesAPI.Outputs.GatewayId}.execute-api.${AWS::Region}.${AWS::URLSuffix}
         UserPoolId: !GetAtt Cognito.Outputs.UserPoolId
         TracingMode: !Ref TracingMode
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
       TemplateURL: core/appsync.yml
 
   ##### Nested Stacks: Compliance #####
