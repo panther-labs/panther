@@ -65,14 +65,16 @@ type PutIntegrationInput struct {
 
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
-	AWSAccountID     *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationLabel *string   `json:"integrationLabel,omitempty" validate:"omitempty,min=1"`
-	IntegrationType  *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
-	ScanEnabled      *bool     `json:"scanEnabled,omitempty"`
-	ScanIntervalMins *int      `json:"scanIntervalMins,omitempty" validate:"omitempty,oneof=60 180 360 720 1440"`
-	UserID           *string   `json:"userId" validate:"required,uuid4"`
-	S3Buckets        []*string `json:"s3Buckets"`
-	KmsKeys          []*string `json:"kmsKeys"`
+	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"omitempty,min=1"`
+	IntegrationType    *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	ScanEnabled        *bool     `json:"scanEnabled,omitempty"`
+	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
+	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
+	ScanIntervalMins   *int      `json:"scanIntervalMins,omitempty" validate:"omitempty,oneof=60 180 360 720 1440"`
+	UserID             *string   `json:"userId" validate:"required,uuid4"`
+	S3Buckets          []*string `json:"s3Buckets"`
+	KmsKeys            []*string `json:"kmsKeys"`
 }
 
 //

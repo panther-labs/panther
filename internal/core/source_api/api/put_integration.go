@@ -36,7 +36,7 @@ import (
 )
 
 // PutIntegration adds a set of new integrations in a batch.
-func (API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIntegrationMetadata, error) {
+func (r API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIntegrationMetadata, error) {
 	permissionsAddedForIntegrations := []*models.SourceIntegrationMetadata{}
 	var err error
 	defer func() {
@@ -52,9 +52,22 @@ func (API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIn
 			}
 		}
 	}()
-	newIntegrations := make([]*models.SourceIntegrationMetadata, len(input.Integrations))
+	// Validate the new integrations
+	for _, integration := range input.Integrations {
+		integrationConfig := &models.CheckIntegrationInput{
+			AWSAccountID:      integration.AWSAccountID,
+			IntegrationType:   integration.IntegrationType,
+			EnableCWESetup:    integration.CWEEnabled,
+			EnableRemediation: integration.RemediationEnabled,
+			S3Buckets:         integration.S3Buckets,
+			KmsKeys:           integration.KmsKeys,
+		}
+		status, err := r.CheckIntegration(integrationConfig)
+	}
+
 
 	// Generate the new integrations
+	newIntegrations := make([]*models.SourceIntegrationMetadata, len(input.Integrations))
 	for i, integration := range input.Integrations {
 		newIntegrations[i] = generateNewIntegration(integration)
 	}
