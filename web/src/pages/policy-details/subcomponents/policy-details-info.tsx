@@ -25,7 +25,7 @@ import Linkify from 'Components/linkify';
 import { ComplianceStatusEnum, PolicyDetails } from 'Generated/schema';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import urls from 'Source/urls';
-import JsonViewer from 'Components/json-viewer';
+import JsonViewer from 'Components/JsonViewer';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/modal-context';
 

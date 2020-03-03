@@ -28,7 +28,7 @@ import {
   ResourceDetails,
 } from 'Generated/schema';
 import Panel from 'Components/panel';
-import JsonViewer from 'Components/json-viewer';
+import JsonViewer from 'Components/JsonViewer';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import {
   convertObjArrayValuesToCsv,
