@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Card, Flex, Icon, IconProps, Label } from 'pouncejs';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 
 interface DonutChartWrapperProps {
   title: string;

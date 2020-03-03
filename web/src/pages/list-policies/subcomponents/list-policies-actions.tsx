@@ -27,7 +27,7 @@ import FormikMultiCombobox from 'Components/fields/multi-combobox';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import { Box, Button, Card, Flex, Icon } from 'pouncejs';
 import CreateButton from 'Pages/list-policies/subcomponents/create-button';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
 import pick from 'lodash-es/pick';
 

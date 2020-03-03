@@ -21,7 +21,7 @@ import { Box, Button, Flex, Icon } from 'pouncejs';
 import ListUsersTable from 'Pages/users/subcomponents/list-users-table';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/sidesheet-context';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 
 const UsersPage: React.FC = () => {
   const { showSidesheet } = useSidesheet();

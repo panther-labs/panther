@@ -23,7 +23,7 @@ import { useQuery, gql } from '@apollo/client';
 import { extractErrorMessage } from 'Helpers/utils';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import { ListAlertsInput, ListAlertsResponse } from 'Generated/schema';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 import ListAlertsTable from './subcomponents/list-alerts-table';
 import ListAlertsPageSkeleton from './skeleton';
 import ListAlertsPageEmptyDataFallback from './empty-data-fallback';

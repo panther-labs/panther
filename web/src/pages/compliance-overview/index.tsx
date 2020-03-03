@@ -28,7 +28,7 @@ import {
   OrganizationStatsResponse,
   Integration,
 } from 'Generated/schema';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import { INTEGRATION_TYPES } from 'Source/constants';
 import { topFailingPoliciesColumns, topFailingResourcesColumns } from './columns';

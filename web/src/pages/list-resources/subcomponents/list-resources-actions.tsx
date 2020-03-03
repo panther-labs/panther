@@ -27,7 +27,7 @@ import { capitalize } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/text-input';
 import FormikCombobox from 'Components/fields/combobox';
 import FormikMultiCombobox from 'Components/fields/multi-combobox';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 import pick from 'lodash-es/pick';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash-es/isEmpty';

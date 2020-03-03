@@ -44,7 +44,7 @@ import urls from 'Source/urls';
 import GuardedRoute from 'Components/GuardedRoute/GuardedRoute';
 import ForgotPasswordPage from 'Pages/forgot-password';
 import ForgotPasswordConfirmPage from 'Pages/forgot-password-confirm';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 import Page404 from 'Pages/404';
 import APIErrorFallback from 'Components/utils/api-error-fallback';
 import LogAnalysisOverview from 'Pages/log-analysis-overview';

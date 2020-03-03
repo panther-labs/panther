@@ -29,7 +29,7 @@ import {
 } from 'Generated/schema';
 import TablePaginationControls from 'Components/utils/table-pagination-controls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
 import ListPoliciesTable from './subcomponents/list-policies-table';
 import ListPoliciesActions from './subcomponents/list-policies-actions';

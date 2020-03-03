@@ -24,7 +24,7 @@ import { Alert, Box } from 'pouncejs';
 import AlertDetailsPageSkeleton from 'Pages/alert-details/AlertDetailsSkeleton';
 import AlertDetailsInfo from 'Pages/alert-details/AlertDetailsInfo';
 import AlertEvents from 'Pages/alert-details/AlertDetailsEvents';
-import ErrorBoundary from 'Components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
