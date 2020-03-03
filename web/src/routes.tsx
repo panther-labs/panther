@@ -41,7 +41,7 @@ import CreateLogSourcePage from 'Pages/create-log-source';
 import ListComplianceSourcesPagee from 'Pages/list-compliance-sources';
 import ListLogSourcesPage from 'Pages/list-log-sources';
 import urls from 'Source/urls';
-import GuardedRoute from 'Components/GuardedRoute/GuardedRoute';
+import GuardedRoute from 'Components/GuardedRoute';
 import ForgotPasswordPage from 'Pages/forgot-password';
 import ForgotPasswordConfirmPage from 'Pages/forgot-password-confirm';
 import ErrorBoundary from 'Components/ErrorBoundary';
