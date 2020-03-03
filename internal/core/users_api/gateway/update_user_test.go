@@ -26,6 +26,8 @@ import (
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	providerI "github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/panther-labs/panther/api/lambda/users/models"
 )
 
 type mockUpdateUserClient struct {
@@ -44,7 +46,7 @@ func (m *mockUpdateUserClient) AdminUpdateUserAttributes(
 
 func TestUpdateUserGivenName(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{}}
-	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
+	assert.NoError(t, gw.UpdateUser(&models.UpdateUserInput{
 		GivenName: aws.String("Richie"),
 		ID:        aws.String("user123"),
 	}))
@@ -52,7 +54,7 @@ func TestUpdateUserGivenName(t *testing.T) {
 
 func TestUpdateUserFamilyName(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{}}
-	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
+	assert.NoError(t, gw.UpdateUser(&models.UpdateUserInput{
 		FamilyName: aws.String("Homie"),
 		ID:         aws.String("user123"),
 	}))
@@ -60,7 +62,7 @@ func TestUpdateUserFamilyName(t *testing.T) {
 
 func TestUpdateUserEmail(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{}}
-	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
+	assert.NoError(t, gw.UpdateUser(&models.UpdateUserInput{
 		Email: aws.String("rich@homie.com"),
 		ID:    aws.String("user123"),
 	}))
@@ -68,7 +70,7 @@ func TestUpdateUserEmail(t *testing.T) {
 
 func TestUpdateMultipleAttributes(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{}}
-	assert.NoError(t, gw.UpdateUser(&UpdateUserInput{
+	assert.NoError(t, gw.UpdateUser(&models.UpdateUserInput{
 		GivenName:  aws.String("Richie"),
 		FamilyName: aws.String("Homie"),
 		Email:      aws.String("rich@homie.com"),
@@ -78,7 +80,7 @@ func TestUpdateMultipleAttributes(t *testing.T) {
 
 func TestUpdateUserFailed(t *testing.T) {
 	gw := &UsersGateway{userPoolClient: &mockUpdateUserClient{serviceErr: true}}
-	assert.Error(t, gw.UpdateUser(&UpdateUserInput{
+	assert.Error(t, gw.UpdateUser(&models.UpdateUserInput{
 		ID:        aws.String("user123"),
 		GivenName: aws.String("Richie"),
 	}))
