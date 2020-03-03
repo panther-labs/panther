@@ -92,6 +92,8 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	return result, nil
 }
 
+// This method returns events from a specific log type that are associated to a given alert.
+// It will only return up to `maxResults` events
 func getEventsForLogType(
 	logType string, token *eventPaginationToken, alert *models.AlertItem, maxResults int) (result []string, err error) {
 
@@ -184,6 +186,8 @@ func timeFromS3ObjectKey(key string) (time.Time, error) {
 	return time.ParseInLocation(destinations.S3ObjectTimestampFormat, timeInString, time.UTC)
 }
 
+// Queries a specific S3 object events associated to `alertID`.
+// It will return maximum `maxResults` items
 func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]string, int, error) {
 	// nolint:gosec
 	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s'", alertID)
