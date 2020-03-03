@@ -302,7 +302,8 @@ func (t Test) Integration() {
 		logger.Fatalf("failed to get caller identity: %v", err)
 	}
 
-	logger.Warnf("INTEGRATION TESTS WILL ERASE ALL PANTHER DATA IN AWS ACCOUNT %s", *identity.Account)
+	logger.Warnf("INTEGRATION TESTS WILL ERASE ALL PANTHER DATA IN AWS ACCOUNT %s (%s)",
+		*identity.Account, *awsSession.Config.Region)
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("permission denied: integration tests canceled")
