@@ -22,20 +22,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 
+	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// UpdateUserInput is input for UpdateUser request
-type UpdateUserInput struct {
-	ID         *string `json:"id"`
-	GivenName  *string `json:"givenName"`
-	FamilyName *string `json:"familyName"`
-	Email      *string `json:"email"`
-}
-
 // Create a AdminUpdateUserAttributesInput from the UpdateUserInput.
 func (g *UsersGateway) updateInputMapping(
-	input *UpdateUserInput) *provider.AdminUpdateUserAttributesInput {
+	input *models.UpdateUserInput) *provider.AdminUpdateUserAttributesInput {
 
 	var userAttrs []*provider.AttributeType
 
@@ -71,8 +64,8 @@ func (g *UsersGateway) updateInputMapping(
 	}
 }
 
-// UpdateUser calls cognito api and update a user with specified attributes
-func (g *UsersGateway) UpdateUser(input *UpdateUserInput) error {
+// UpdateUser calls cognito to update a user with the specified attributes.
+func (g *UsersGateway) UpdateUser(input *models.UpdateUserInput) error {
 	cognitoInput := g.updateInputMapping(input)
 	if _, err := g.userPoolClient.AdminUpdateUserAttributes(cognitoInput); err != nil {
 		return &genericapi.AWSError{Method: "cognito.AdminUpdateUserAttributes", Err: err}

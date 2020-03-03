@@ -102,7 +102,7 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 
 	// For each integration, add a ScanMsg to the queue per service
 	for _, integration := range integrations {
-		if !*integration.ScanEnabled {
+		if !aws.BoolValue(integration.ScanEnabled) {
 			continue
 		}
 

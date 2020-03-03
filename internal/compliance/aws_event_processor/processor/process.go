@@ -262,7 +262,7 @@ type CloudTrailMetadata struct {
 
 // preprocessCloudTrailLog extracts some meta data that is used repeatedly for a CloudTrail log
 //
-// Returning an error means that we were unable to extract the information we need, although it should be present.
+// Returning nil, error means that we were unable to extract the information we need, although it should be present.
 // Returning nil, nil means that we were unable to extract the information we need, but that it was not a failure on
 // our part the information is simply not present.
 func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {

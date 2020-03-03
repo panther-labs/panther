@@ -32,12 +32,12 @@ var userPoolID = os.Getenv("USER_POOL_ID")
 
 // API defines the interface for the user gateway which can be used for mocking.
 type API interface {
-	CreateUser(input *CreateUserInput) (*string, error)
+	CreateUser(input *models.InviteUserInput) (*string, error)
 	DeleteUser(id *string) error
 	GetUser(id *string) (*models.User, error)
 	ListUsers() ([]*models.User, error)
 	ResetUserPassword(id *string) error
-	UpdateUser(input *UpdateUserInput) error
+	UpdateUser(input *models.UpdateUserInput) error
 }
 
 // UsersGateway encapsulates a service to Cognito Client.
