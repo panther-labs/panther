@@ -1,2 +1,2 @@
-export { default, EditUserSidesheetProps } from './EditUserSidesheet';
-// export { EditUserSidesheetProps} from './EditUserSidesheet';
+export { default } from './EditUserSidesheet';
+export * from './EditUserSidesheet';
