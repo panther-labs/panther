@@ -20,7 +20,7 @@ import React from 'react';
 import { Box, Grid, Flex } from 'pouncejs';
 import Panel from 'Components/panel';
 import TablePlaceholder from 'Components/table-placeholder';
-import CirclePlaceholder from 'Components/circle-placeholder';
+import CirclePlaceholder from 'Components/CirclePlaceholder';
 import DonutChartWrapper from 'Pages/compliance-overview/subcomponents/donut-chart-wrapper';
 
 const ChartPlaceholder: React.FC = () => (
