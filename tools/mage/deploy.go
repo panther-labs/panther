@@ -107,7 +107,7 @@ func Deploy() {
 	bucket := bucketOutputs["SourceBucketName"]
 
 	// Deploy main application stack
-	params := getBackendDeployParams(awsSession, &config, bucket)
+	params := getBackendDeployParams(awsSession, &config, bucket, bucketOutputs["LogBucketName"])
 	backendOutputs := deployTemplate(awsSession, backendTemplate, bucket, backendStack, params)
 	if err := postDeploySetup(awsSession, backendOutputs, &config); err != nil {
 		logger.Fatal(err)
@@ -149,21 +149,25 @@ func deployPrecheck(awsRegion string) {
 //
 // This will create a Python layer, pass down the name of the log database,
 // pass down user supplied alarm SNS topic and a self-signed cert if necessary.
-func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) map[string]string {
+func getBackendDeployParams(
+	awsSession *session.Session, config *PantherConfig, sourceBucket string, logBucket string) map[string]string {
+
 	v := config.BackendParameterValues
 	result := map[string]string{
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
 		"Debug":                        strconv.FormatBool(v.Debug),
 		"LayerVersionArns":             v.LayerVersionArns,
 		"PythonLayerVersionArn":        v.PythonLayerVersionArn,
-		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
+		"S3BucketAccessLogs":           logBucket,
+		"S3BucketSource":               sourceBucket,
 		"TracingMode":                  v.TracingMode,
+		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
 	}
 
 	// If no custom Python layer is defined, then we need to build the default one.
 	if result["PythonLayerVersionArn"] == "" {
 		result["PythonLayerKey"] = layerS3ObjectKey
-		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, config.PipLayer, bucket, layerS3ObjectKey)
+		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, config.PipLayer, sourceBucket, layerS3ObjectKey)
 	}
 
 	// If no pre-existing cert is provided, then create one if necessary.

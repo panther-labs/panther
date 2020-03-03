@@ -19,7 +19,9 @@ package mage
  */
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -32,18 +34,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 
-	"github.com/panther-labs/panther/pkg/testutils"
+	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
 )
 
 const (
 	ecrRepoName    = "panther-web"
 	ecsClusterName = "panther-web-cluster"
 	ecsServiceName = "panther-web"
-)
 
-var (
-	// All stacks except the prerequisite buckets stack can be deleted in parallel.
-	deleteStacksParallel = []string{monitoringStack, frontendStack, databasesStack, backendStack}
+	// Upper bound on the number of s3 object versions we'll delete manually.
+	s3MaxDeletes = 10000
 )
 
 type deleteStackResult struct {
@@ -64,11 +64,15 @@ func Teardown() {
 	awsSession := teardownConfirmation()
 
 	// Some resources must be destroyed directly before deleting their parent CFN stacks.
-	destroyPantherBuckets(awsSession)
 	destroyEcrRepo(awsSession)
-	destroyEcsCluster(awsSession)
+	stopEcsService(awsSession)
 
+	// Delete all CloudFormation stacks in parallel.
 	destroyCfnStacks(awsSession)
+
+	// All S3 buckets have "DeletionPolicy: Retain" so as to not block CFN stack deletion.
+	// In other words, CloudFormation will not delete S3 buckets - we do so here.
+	destroyPantherBuckets(awsSession)
 
 	// Remove self-signed certs that may have been uploaded if they are no longer in use.
 	destroyAcmCerts(awsSession)
@@ -76,7 +80,7 @@ func Teardown() {
 	// It's possible to have buffered Lambda logs written shortly after the stacks were deleted.
 	destroyLogGroups(awsSession)
 
-	logger.Info("successfully removed all Panther infrastructure")
+	logger.Info("successfully removed Panther infrastructure")
 }
 
 func teardownConfirmation() *session.Session {
@@ -90,14 +94,92 @@ func teardownConfirmation() *session.Session {
 		logger.Fatalf("failed to get caller identity: %v", err)
 	}
 
-	logger.Warnf("THIS WILL DESTROY ALL PANTHER INFRASTRUCTURE IN AWS ACCOUNT %s (%s)",
+	logger.Warnf("Teardown will destroy all Panther infrastructure in account %s (%s)",
 		*identity.Account, *awsSession.Config.Region)
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		logger.Fatal("permission denied: teardown canceled")
+		logger.Fatal("teardown aborted")
 	}
 
 	return awsSession
+}
+
+// Remove the ECR repo and all of its images
+func destroyEcrRepo(awsSession *session.Session) {
+	logger.Infof("removing ECR repository %s", ecrRepoName)
+	client := ecr.New(awsSession)
+	_, err := client.DeleteRepository(&ecr.DeleteRepositoryInput{
+		Force:          aws.Bool(true), // remove images as well
+		RepositoryName: aws.String(ecrRepoName),
+	})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "RepositoryNotFoundException" {
+			// repo doesn't exist - that's fine, nothing to do here
+			return
+		}
+		logger.Fatalf("failed to delete ECR repository: %v", err)
+	}
+}
+
+// Stop the web ECS service so CloudFormation can delete the ECS cluster
+func stopEcsService(awsSession *session.Session) {
+	client := ecs.New(awsSession)
+
+	logger.Infof("stopping ECS service %s in cluster %s", ecsServiceName, ecsClusterName)
+	_, err := client.DeleteService(&ecs.DeleteServiceInput{
+		Cluster: aws.String(ecsClusterName),
+		Force:   aws.Bool(true), // stop running tasks as well
+		Service: aws.String(ecsServiceName),
+	})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ClusterNotFoundException" {
+			return // cluster does not exist
+		}
+		logger.Fatalf("failed to delete ECS service: %v", err)
+	}
+
+	waitInput := &ecs.DescribeServicesInput{
+		Cluster:  aws.String(ecsClusterName),
+		Services: []*string{aws.String(ecsServiceName)},
+	}
+	if err = client.WaitUntilServicesInactive(waitInput); err != nil {
+		logger.Fatalf("ECS service %s did not stop successfully: %v", ecsServiceName, err)
+	}
+}
+
+// Destroy CloudFormation stacks in parallel
+func destroyCfnStacks(awsSession *session.Session) {
+	results := make(chan deleteStackResult)
+	client := cloudformation.New(awsSession)
+	stacks := []string{backendStack, bucketStack, monitoringStack, frontendStack, databasesStack}
+
+	// Trigger the deletion of each stack
+	logger.Infof("deleting CloudFormation stacks: %s", strings.Join(stacks, ", "))
+	for _, stack := range stacks {
+		go deleteStack(client, aws.String(stack), results)
+	}
+
+	// Wait for all of the stacks to finish
+	for range stacks {
+		(<-results).log()
+	}
+}
+
+// Delete a single CFN stack and wait for it to finish
+func deleteStack(client *cloudformation.CloudFormation, stack *string, results chan deleteStackResult) {
+	if _, err := client.DeleteStack(&cloudformation.DeleteStackInput{StackName: stack}); err != nil {
+		results <- deleteStackResult{stackName: *stack, err: err}
+		return
+	}
+
+	if err := client.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{StackName: stack}); err != nil {
+		// The stack reached DELETE_FAILED instead of DELETE_COMPLETE status, the 'err' variable is not helpful.
+		// TODO - describe the stack and its resources to find the reason(s) for the failure
+		results <- deleteStackResult{stackName: *stack, err: fmt.Errorf("stack %s failed to delete", *stack)}
+		return
+	}
+
+	results <- deleteStackResult{stackName: *stack}
 }
 
 // Delete all objects in an S3 bucket and then remove it.
@@ -129,7 +211,7 @@ func destroyPantherBuckets(awsSession *session.Session) {
 		foundTag := false
 		for _, tag := range tagging.TagSet {
 			if aws.StringValue(tag.Key) == "Application" && aws.StringValue(tag.Value) == "Panther" {
-				removeBucket(awsSession, client, bucket.Name)
+				removeBucket(client, bucket.Name)
 				foundTag = true
 				break
 			}
@@ -141,103 +223,78 @@ func destroyPantherBuckets(awsSession *session.Session) {
 	}
 }
 
-// Empty, then delete the given S3 bucket
-func removeBucket(awsSession *session.Session, client *s3.S3, bucketName *string) {
-	logger.Infof("removing s3://%s", *bucketName)
-	if err := testutils.ClearS3Bucket(awsSession, *bucketName); err != nil {
-		logger.Fatalf("failed to empty bucket %s: %v", *bucketName, err)
+// Empty, then delete the given S3 bucket.
+//
+// Or, if there are too many objects to delete directly, set an expiration lifecycle policy instead.
+func removeBucket(client *s3.S3, bucketName *string) {
+	input := &s3.ListObjectVersionsInput{Bucket: bucketName}
+	var objectVersions []*s3.ObjectIdentifier
+
+	// List all object versions (including delete markers)
+	err := client.ListObjectVersionsPages(input, func(page *s3.ListObjectVersionsOutput, lastPage bool) bool {
+		for _, marker := range page.DeleteMarkers {
+			objectVersions = append(objectVersions, &s3.ObjectIdentifier{
+				Key: marker.Key, VersionId: marker.VersionId})
+		}
+
+		for _, version := range page.Versions {
+			objectVersions = append(objectVersions, &s3.ObjectIdentifier{
+				Key: version.Key, VersionId: version.VersionId})
+		}
+
+		// Keep paging as long as we don't have too many items yet
+		return len(objectVersions) < s3MaxDeletes
+	})
+	if err != nil {
+		logger.Fatalf("failed to list object versions for %s: %v", *bucketName, err)
 	}
 
-	if _, err := client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
+	if len(objectVersions) >= s3MaxDeletes {
+		logger.Warnf("s3://%s has too many items to delete directly, setting an expiration policy instead", *bucketName)
+		_, err = client.PutBucketLifecycleConfiguration(&s3.PutBucketLifecycleConfigurationInput{
+			Bucket: bucketName,
+			LifecycleConfiguration: &s3.BucketLifecycleConfiguration{
+				Rules: []*s3.LifecycleRule{
+					{
+						AbortIncompleteMultipartUpload: &s3.AbortIncompleteMultipartUpload{
+							DaysAfterInitiation: aws.Int64(1),
+						},
+						Expiration: &s3.LifecycleExpiration{
+							Days: aws.Int64(1),
+						},
+						Filter: &s3.LifecycleRuleFilter{
+							Prefix: aws.String(""), // empty prefix required to apply rule to all objects
+						},
+						ID: aws.String("panther-expire-everything"),
+						NoncurrentVersionExpiration: &s3.NoncurrentVersionExpiration{
+							NoncurrentDays: aws.Int64(1),
+						},
+						Status: aws.String("Enabled"),
+					},
+				},
+			},
+		})
+		if err != nil {
+			logger.Fatalf("failed to set expiration policy for %s: %v", *bucketName, err)
+		}
+		return
+	}
+
+	// Here there aren't too many objects, we can delete them in a handful of BatchDelete calls.
+	logger.Infof("deleting s3://%s", *bucketName)
+	err = s3batch.DeleteObjects(client, 2*time.Minute, &s3.DeleteObjectsInput{
+		Bucket: bucketName,
+		Delete: &s3.Delete{Objects: objectVersions},
+	})
+	if err != nil {
+		logger.Fatalf("failed to batch delete objects: %v", err)
+	}
+
+	// Delete the bucket now (instead of with CloudFormation) to prevent objects from being written
+	// to it before the stacks finish deleting. For example, S3 access logs are continually being written.
+	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
 		logger.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
 	}
-}
-
-// Remove the ECR repo and all of its images
-func destroyEcrRepo(awsSession *session.Session) {
-	logger.Infof("removing ECR repository %s", ecrRepoName)
-	client := ecr.New(awsSession)
-	_, err := client.DeleteRepository(&ecr.DeleteRepositoryInput{
-		Force:          aws.Bool(true), // remove images as well
-		RepositoryName: aws.String(ecrRepoName),
-	})
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "RepositoryNotFoundException" {
-			// repo doesn't exist - that's fine, nothing to do here
-			return
-		}
-		logger.Fatalf("failed to delete ECR repository: %v", err)
-	}
-}
-
-// Teardown the web ECS cluster
-func destroyEcsCluster(awsSession *session.Session) {
-	client := ecs.New(awsSession)
-
-	logger.Infof("stopping ECS service %s in cluster %s", ecsServiceName, ecsClusterName)
-	_, err := client.DeleteService(&ecs.DeleteServiceInput{
-		Cluster: aws.String(ecsClusterName),
-		Force:   aws.Bool(true), // stop running tasks as well
-		Service: aws.String(ecsServiceName),
-	})
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ClusterNotFoundException" {
-			return // cluster does not exist
-		}
-		logger.Fatalf("failed to delete ECS service: %v", err)
-	}
-
-	waitInput := &ecs.DescribeServicesInput{
-		Cluster: aws.String(ecsClusterName),
-		Services: []*string{aws.String(ecsServiceName)},
-	}
-	if err = client.WaitUntilServicesInactive(waitInput); err != nil {
-		logger.Fatalf("ECS service %s did not stop successfully: %v", ecsServiceName, err)
-	}
-
-	// Now the cluster itself can be deleted
-	logger.Infof("deleting ECS cluster %s", ecsClusterName)
-	if _, err = client.DeleteCluster(&ecs.DeleteClusterInput{Cluster: aws.String(ecsClusterName)}); err != nil {
-		logger.Fatalf("failed to delete ECS cluster %s: %v", ecsClusterName, err)
-	}
-}
-
-// Destroy CloudFormation stacks
-func destroyCfnStacks(awsSession *session.Session) {
-	results := make(chan deleteStackResult)
-	client := cloudformation.New(awsSession)
-
-	// Trigger the deletion of each stack
-	logger.Infof("deleting CloudFormation stacks: %s", strings.Join(deleteStacksParallel, ", "))
-	for _, stack := range deleteStacksParallel {
-		go deleteStack(client, aws.String(stack), results)
-	}
-
-	// Wait for all of the deletions to finish
-	for range deleteStacksParallel {
-		(<-results).log()
-	}
-
-	// Delete the final panther-buckets stack
-	logger.Infof("deleting CloudFormation stack: %s", bucketStack)
-	go deleteStack(client, aws.String(bucketStack), results)
-	(<-results).log()
-}
-
-// Delete a single CFN stack and wait for it to finish
-func deleteStack(client *cloudformation.CloudFormation, stack *string, results chan deleteStackResult) {
-	_, err := client.DeleteStack(&cloudformation.DeleteStackInput{StackName: stack})
-	if err != nil {
-		results <- deleteStackResult{stackName: *stack, err: err}
-		return
-	}
-
-	if err = client.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{StackName: stack}); err != nil {
-		results <- deleteStackResult{stackName: *stack, err: err}
-		return
-	}
-
-	results <- deleteStackResult{stackName: *stack}
 }
 
 // Destroy self-signed Panther ACM certificates.

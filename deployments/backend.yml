@@ -43,6 +43,12 @@ Parameters:
     Default: ''
 
   # Set automatically by "mage deploy"
+  S3BucketAccessLogs:
+    Type: String
+    Description: The name of the S3 bucket which stores access logs
+  S3BucketSource:
+    Type: String
+    Description: The name of the S3 bucket storing deployment artifacts
   PantherLogProcessingDatabase:
     Type: String
     Description: The name of the database for the output of log processing
@@ -133,7 +139,7 @@ Resources:
         - python3.6
         - python3.7
       Content:
-        S3Bucket: !ImportValue Panther-SourceBucket
+        S3Bucket: !Ref S3BucketSource
         S3Key: !Ref PythonLayerKey
         S3ObjectVersion: !Ref PythonLayerObjectVersion
       Description: Pip libraries available to the Python analysis/remediation functions
@@ -186,7 +192,7 @@ Resources:
         TracingMode: !Ref TracingMode
 
         ComplianceApiId: !GetAtt ComplianceAPI.Outputs.GatewayId
-        S3BucketAccessLogs: !ImportValue Panther-LogBucket
+        S3BucketAccessLogs: !Ref S3BucketAccessLogs
         SQSKeyId: !Ref QueueEncryptionKey
       TemplateURL: ../out/deployments/core/embedded.analysis_api.yml
 
@@ -326,9 +332,11 @@ Resources:
 
   ProcessedData:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LoggingConfiguration:
-        DestinationBucketName: !ImportValue Panther-LogBucket
+        DestinationBucketName: !Ref S3BucketAccessLogs
         LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -388,13 +396,15 @@ Resources:
 
   AthenaResults:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays: 30
             Status: Enabled
       LoggingConfiguration:
-        DestinationBucketName: !ImportValue Panther-LogBucket
+        DestinationBucketName: !Ref S3BucketAccessLogs
         LogFilePrefix: !Sub panther-athena-results-${AWS::AccountId}-${AWS::Region}/
       BucketEncryption:
         ServerSideEncryptionConfiguration:
