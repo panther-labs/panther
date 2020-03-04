@@ -92,13 +92,13 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 	return nil
 }
 
-// PantherLog returns pointer to self, used when composed
-func (pl *PantherLog) GetPantherLog() *PantherLog {
+// Log returns pointer to self, used when composed
+func (pl *PantherLog) Log() *PantherLog {
 	return pl
 }
 
-// PantherLogs returns a slice with pointer to self, used when composed
-func (pl *PantherLog) GetPantherLogs() []*PantherLog {
+// Logs returns a slice with pointer to self, used when composed
+func (pl *PantherLog) Logs() []*PantherLog {
 	return []*PantherLog{pl}
 }
 

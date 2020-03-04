@@ -67,7 +67,7 @@ func (p *SnapshotParser) Parse(log string) []*parsers.PantherLog {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
 	}
-	return event.GetPantherLogs()
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser

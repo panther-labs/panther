@@ -116,7 +116,7 @@ func (p *AccessParser) Parse(log string) []*parsers.PantherLog {
 		return nil
 	}
 
-	return event.GetPantherLogs()
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
