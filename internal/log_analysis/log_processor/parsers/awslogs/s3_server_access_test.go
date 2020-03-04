@@ -208,7 +208,7 @@ func checkS3AccessLog(t *testing.T, log string, expectedEvent *S3ServerAccess) {
 	event := events[0].Event.(*S3ServerAccess)
 
 	// set back ptr to match
-	expectedEvent.Event = event.Event
+	expectedEvent.Event = event
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
