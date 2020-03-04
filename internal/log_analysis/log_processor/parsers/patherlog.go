@@ -92,6 +92,16 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 	return nil
 }
 
+// PantherLog returns pointer to self, used when composed
+func (pl *PantherLog) GetPantherLog() *PantherLog {
+	return pl
+}
+
+// PantherLogs returns a slice with pointer to self, used when composed
+func (pl *PantherLog) GetPantherLogs() []*PantherLog {
+	return []*PantherLog{pl}
+}
+
 func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339, event interface{}) {
 	parseTime := timestamp.Now()
 

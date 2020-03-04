@@ -103,7 +103,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			continue
 		}
 		if !canAdd {
-			if err = destination.sendData(*event.PantherLogType, buffer); err != nil {
+			if err = destination.sendData(buffer); err != nil {
 				failed = true
 				errChan <- err
 				continue
@@ -140,7 +140,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 	// If the channel has been closed
 	// send the buffered messages before terminating
 	_ = bufferSet.apply(func(logType string, buffer *s3EventBuffer) error {
-		if err := destination.sendData(logType, buffer); err != nil {
+		if err := destination.sendData(buffer); err != nil {
 			errChan <- err
 		}
 		return nil
@@ -152,7 +152,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 func (destination *S3Destination) sendExpiredData(bufferSet s3EventBufferSet) error {
 	return bufferSet.apply(func(logType string, buffer *s3EventBuffer) error {
 		if time.Since(buffer.createTime) > maxDuration {
-			err := destination.sendData(logType, buffer)
+			err := destination.sendData(buffer)
 			if err != nil {
 				return err
 			}
@@ -167,10 +167,10 @@ func (destination *S3Destination) sendExpiredData(bufferSet s3EventBufferSet) er
 }
 
 // sendData puts data in S3 and sends notification to SNS
-func (destination *S3Destination) sendData(logType string, buffer *s3EventBuffer) (err error) {
+func (destination *S3Destination) sendData(buffer *s3EventBuffer) (err error) {
 	var contentLength int64 = 0
 
-	key := getS3ObjectKey(logType, buffer.hour)
+	key := getS3ObjectKey(buffer.logType, buffer.hour)
 
 	operation := common.OpLogManager.Start("sendData", common.OpLogS3ServiceDim)
 	defer func() {
@@ -207,12 +207,12 @@ func (destination *S3Destination) sendData(logType string, buffer *s3EventBuffer
 		return err
 	}
 
-	err = destination.sendSNSNotification(key, logType, buffer) // if send fails we fail whole operation
+	err = destination.sendSNSNotification(key, buffer) // if send fails we fail whole operation
 
 	return err
 }
 
-func (destination *S3Destination) sendSNSNotification(key, logType string, buffer *s3EventBuffer) error {
+func (destination *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) error {
 	var err error
 	operation := common.OpLogManager.Start("sendSNSNotification", common.OpLogSNSServiceDim)
 	defer func() {
@@ -227,7 +227,7 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 		Events:      aws.Int(buffer.events),
 		Bytes:       aws.Int(buffer.bytes),
 		Type:        aws.String(models.LogData.String()),
-		ID:          aws.String(logType),
+		ID:          aws.String(buffer.logType),
 	}
 
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)
@@ -245,7 +245,7 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 				DataType:    aws.String(messageAttributeDataType),
 			},
 			logTypeAttributeName: {
-				StringValue: aws.String(logType),
+				StringValue: aws.String(buffer.logType),
 				DataType:    aws.String(messageAttributeDataType),
 			},
 		},
@@ -286,6 +286,7 @@ func (bs s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
 		buffer = &s3EventBuffer{
+			logType:    logType,
 			hour:       hour,
 			createTime: time.Now(),
 		}
@@ -310,6 +311,7 @@ func (bs s3EventBufferSet) apply(f func(logType string, buffer *s3EventBuffer) e
 // s3EventBuffer is a group of events of the same type
 // that will be stored in the same S3 object
 type s3EventBuffer struct {
+	logType    string
 	buffer     *bytes.Buffer
 	writer     *gzip.Writer
 	bytes      int

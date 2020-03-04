@@ -141,8 +141,8 @@ func (p *CloudTrailParser) Parse(log string) []*parsers.PantherLog {
 		return nil
 	}
 	result := make([]*parsers.PantherLog, len(cloudTrailRecords.Records))
-	for i, record := range cloudTrailRecords.Records {
-		result[i] = &record.PantherLog
+	for i, event := range cloudTrailRecords.Records {
+		result[i] = event.GetPantherLog()
 	}
 	return result
 }

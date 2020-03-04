@@ -138,7 +138,7 @@ func (p *EventInfoParser) Parse(log string) []*parsers.PantherLog {
 		return nil
 	}
 
-	return []*parsers.PantherLog{&eventInfo.PantherLog}
+	return eventInfo.GetPantherLogs()
 }
 
 // LogType returns the log type supported by this parser

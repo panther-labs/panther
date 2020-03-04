@@ -69,7 +69,8 @@ func (p *BatchParser) Parse(log string) []*parsers.PantherLog {
 	if err := parsers.Validator.Struct(event); err != nil {
 		return nil
 	}
-	return []*parsers.PantherLog{&event.PantherLog}
+
+	return event.GetPantherLogs()
 }
 
 // LogType returns the log type supported by this parser
