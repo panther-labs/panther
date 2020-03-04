@@ -81,8 +81,7 @@ func Store(event *AlertDedupEvent) error {
 func SendAlert(event *AlertDedupEvent) error {
 	alert, err := getAlert(event)
 	if err != nil {
-		err = errors.WithStack(err)
-		return err
+		return errors.Wrap(err, "failed to get alert information")
 	}
 	msgBody, err := jsoniter.MarshalToString(alert)
 	if err != nil {
@@ -120,7 +119,7 @@ func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
 		PolicyID:          aws.String(alert.RuleID),
 		PolicyName:        aws.String(string(rule.Payload.DisplayName)),
 		Runbook:           aws.String(string(rule.Payload.Runbook)),
-		Severity:          aws.String(string(rule.Payload.Severity)),
+		Severity:          aws.String(alert.Severity),
 		Tags:              aws.StringSlice(rule.Payload.Tags),
 		Type:              aws.String(alertModel.RuleType),
 		AlertID:           aws.String(generateAlertID(alert)),

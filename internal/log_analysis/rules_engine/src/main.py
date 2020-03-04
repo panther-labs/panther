@@ -54,10 +54,7 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
     raw_rule = event['rules'][0]
     # It is possible that during direct analysis the rule doesn't include a severity
     # in this case, we set it to a default value
-    severity = raw_rule.get('severity')
-    if not severity:
-        severity = 'INFO'
-    test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'], rule_severity=severity)
+    test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'], rule_severity=raw_rule.get('severity', 'INFO'))
     results: Dict[str, Any] = {'events': []}
     for single_event in event['events']:
         result = {
