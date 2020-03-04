@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { WizardRenderStepParams } from 'Components/wizard';
+import { WizardRenderStepParams } from 'Components/Wizard/Wizard';
 import { Box, Button, Flex } from 'pouncejs';
 
 interface WizardPanelWrapperProps {

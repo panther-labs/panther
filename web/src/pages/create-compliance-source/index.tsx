@@ -20,7 +20,6 @@
 import React from 'react';
 import { Card, Flex, Alert, Box } from 'pouncejs';
 import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
-import Wizard from 'Components/wizard';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useMutation, gql } from '@apollo/client';
@@ -29,7 +28,7 @@ import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { AddIntegrationInput, Integration } from 'Generated/schema';
-import WizardPanelWrapper from 'Components/wizard-panel-wrapper';
+import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import RemediationPanel from './subcomponents/remediation-panel';
 import RealTimeEventPanel from './subcomponents/real-time-event-panel';
 import ResourceScanningPanel from './subcomponents/resource-scanning-panel';
