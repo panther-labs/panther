@@ -21,7 +21,7 @@ import { Field, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Alert, Box, useSnackbar } from 'pouncejs';
 import SubmitButton from 'Components/SubmitButton';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import useRouter from 'Hooks/useRouter';
 import useAuth from 'Hooks/useAuth';
 import urls from 'Source/urls';

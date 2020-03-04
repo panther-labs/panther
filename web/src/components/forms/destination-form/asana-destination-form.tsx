@@ -19,14 +19,14 @@
 import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/common/base-destination-form';
 import { isNumber } from 'Helpers/utils';
-import FormikMultiCombobox from 'Components/Fields/multi-combobox';
+import FormikMultiCombobox from 'Components/Fields/MultiComboBox';
 import { Text } from 'pouncejs';
 
 type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;

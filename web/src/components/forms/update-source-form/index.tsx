@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Field, Formik } from 'formik';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import SubmitButton from 'Components/SubmitButton';
 import * as Yup from 'yup';
 

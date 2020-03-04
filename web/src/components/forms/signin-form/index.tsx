@@ -20,7 +20,7 @@ import * as Yup from 'yup';
 import { Field, Formik } from 'formik';
 import React from 'react';
 import { Box } from 'pouncejs';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import SubmitButton from 'Components/SubmitButton';
 import useAuth from 'Hooks/useAuth';
 

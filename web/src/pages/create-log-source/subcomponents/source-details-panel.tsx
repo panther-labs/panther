@@ -20,8 +20,8 @@ import React from 'react';
 import { Box, Heading, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field } from 'formik';
-import FormikTextInput from 'Components/Fields/text-input';
-import FormikMultiCombobox from 'Components/Fields/multi-combobox';
+import FormikTextInput from 'Components/Fields/TextInput';
+import FormikMultiCombobox from 'Components/Fields/MultiComboBox';
 import { getArnRegexForService } from 'Helpers/utils';
 
 const SourceDetailsPanel: React.FC = () => {

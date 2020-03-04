@@ -23,7 +23,7 @@ import * as React from 'react';
 import * as Yup from 'yup';
 import { formatSecretCode } from 'Helpers/utils';
 import SubmitButton from 'Components/SubmitButton';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import useAuth from 'Hooks/useAuth';
 
 interface TotpFormValues {

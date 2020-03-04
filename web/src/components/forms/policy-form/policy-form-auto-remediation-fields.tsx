@@ -19,10 +19,10 @@
 import React from 'react';
 import { Alert, Box, Combobox, Grid, InputElementLabel, Spinner } from 'pouncejs';
 import { Field, useFormikContext } from 'formik';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
 import { useQuery, gql } from '@apollo/client';
-import FormikEditor from 'Components/Fields/editor';
+import FormikEditor from 'Components/Fields/Editor';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { PolicyFormValues } from './index';
 

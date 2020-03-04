@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,

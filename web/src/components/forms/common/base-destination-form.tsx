@@ -20,7 +20,7 @@ import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
 import { Badge, Box, Flex, InputElementLabel, Text } from 'pouncejs';
 import { Field, Formik } from 'formik';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import SubmitButton from 'Components/SubmitButton';
 import React from 'react';

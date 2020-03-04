@@ -19,7 +19,7 @@
 import * as React from 'react';
 import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
 import { Field, Formik } from 'formik';
-import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextInput from 'Components/Fields/TextInput';
 import SubmitButton from 'Components/SubmitButton';
 import useAuth from 'Hooks/useAuth';
 
