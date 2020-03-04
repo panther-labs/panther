@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Flex } from 'pouncejs';
-import Navigation from 'Components/navigation';
+import Navigation from 'Components/Navigation';
 import Header from 'Components/Header';
 
 const Layout: React.FC = ({ children }) => {
