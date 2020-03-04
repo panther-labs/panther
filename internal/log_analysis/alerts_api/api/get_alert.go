@@ -30,6 +30,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -106,7 +107,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 func getEventsForLogType(
 	logType string,
 	token *LogTypeToken,
-	alert *models.AlertItem,
+	alert *table.AlertItem,
 	maxResults int) (result []string, resultToken *LogTypeToken, err error) {
 
 	resultToken = &LogTypeToken{}

@@ -20,6 +20,7 @@ package api
 
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
@@ -33,7 +34,7 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 	}()
 
 	result = &models.ListAlertsOutput{}
-	var alertItems []*models.AlertItem
+	var alertItems []*table.AlertItem
 	if input.RuleID != nil { // list per specific ruleId
 		alertItems, result.LastEvaluatedKey, err = alertsDB.ListByRule(*input.RuleID, input.ExclusiveStartKey, input.PageSize)
 	} else { // list all alerts time desc order
@@ -50,7 +51,7 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 }
 
 // alertItemsToAlertSummary converts a DDB Alert Item to an Alert Summary that will be returned by the API
-func alertItemsToAlertSummary(items []*models.AlertItem) []*models.AlertSummary {
+func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
 	result := make([]*models.AlertSummary, len(items))
 
 	for i, item := range items {
