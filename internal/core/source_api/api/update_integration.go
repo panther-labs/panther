@@ -52,16 +52,18 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		return nil, err
 	}
 	if !passing {
-		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass health check", *integration.IntegrationLabel)}
+		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass health check", *integration.AWSAccountID)}
 	}
 
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{
-		IntegrationID:    input.IntegrationID,
-		IntegrationLabel: input.IntegrationLabel,
-		ScanIntervalMins: input.ScanIntervalMins,
-		ScanEnabled:      input.ScanEnabled,
-		S3Buckets:        input.S3Buckets,
-		KmsKeys:          input.KmsKeys,
+		IntegrationID:      input.IntegrationID,
+		IntegrationLabel:   input.IntegrationLabel,
+		ScanIntervalMins:   input.ScanIntervalMins,
+		ScanEnabled:        input.ScanEnabled,
+		CWEEnabled:         input.CWEEnabled,
+		RemediationEnabled: input.RemediationEnabled,
+		S3Buckets:          input.S3Buckets,
+		KmsKeys:            input.KmsKeys,
 	})
 }
 

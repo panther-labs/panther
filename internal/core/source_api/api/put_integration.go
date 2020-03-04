@@ -198,14 +198,16 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 
 func generateNewIntegration(input *models.PutIntegrationSettings) *models.SourceIntegrationMetadata {
 	return &models.SourceIntegrationMetadata{
-		AWSAccountID:     input.AWSAccountID,
-		CreatedAtTime:    aws.Time(time.Now()),
-		CreatedBy:        input.UserID,
-		IntegrationID:    aws.String(uuid.New().String()),
-		IntegrationLabel: input.IntegrationLabel,
-		IntegrationType:  input.IntegrationType,
-		ScanEnabled:      input.ScanEnabled,
-		ScanIntervalMins: input.ScanIntervalMins,
+		AWSAccountID:       input.AWSAccountID,
+		CreatedAtTime:      aws.Time(time.Now()),
+		CreatedBy:          input.UserID,
+		IntegrationID:      aws.String(uuid.New().String()),
+		IntegrationLabel:   input.IntegrationLabel,
+		IntegrationType:    input.IntegrationType,
+		ScanEnabled:        input.ScanEnabled,
+		CWEEnabled:         input.CWEEnabled,
+		RemediationEnabled: input.RemediationEnabled,
+		ScanIntervalMins:   input.ScanIntervalMins,
 		// For log analysis integrations
 		S3Buckets: input.S3Buckets,
 		KmsKeys:   input.KmsKeys,
