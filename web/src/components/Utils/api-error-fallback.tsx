@@ -18,7 +18,7 @@
 
 import React from 'react';
 import useModal from 'Hooks/useModal';
-import { MODALS } from 'Components/utils/modal-context';
+import { MODALS } from 'Components/Utils/modal-context';
 import useRouter from 'Hooks/useRouter';
 import Page404 from 'Pages/404';
 import Page403 from 'Pages/403';

@@ -27,7 +27,7 @@ import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import urls from 'Source/urls';
 import JsonViewer from 'Components/JsonViewer';
 import useModal from 'Hooks/useModal';
-import { MODALS } from 'Components/utils/modal-context';
+import { MODALS } from 'Components/Utils/modal-context';
 
 interface ResourceDetailsInfoProps {
   policy?: PolicyDetails;

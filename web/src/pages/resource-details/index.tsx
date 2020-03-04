@@ -37,8 +37,8 @@ import {
   extractErrorMessage,
 } from 'Helpers/utils';
 import { Alert, Box } from 'pouncejs';
-import TablePaginationControls from 'Components/utils/table-pagination-controls';
-import TableComplianceFilterControl from 'Components/utils/table-compliance-filter-control';
+import TablePaginationControls from 'Components/Utils/table-pagination-controls';
+import TableComplianceFilterControl from 'Components/Utils/table-compliance-filter-control';
 import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { DEFAULT_SMALL_PAGE_SIZE, INTEGRATION_TYPES } from 'Source/constants';

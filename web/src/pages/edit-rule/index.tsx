@@ -25,7 +25,7 @@ import useModal from 'Hooks/useModal';
 import { useMutation, useQuery, gql } from '@apollo/client';
 import useRouter from 'Hooks/useRouter';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { MODALS } from 'Components/utils/modal-context';
+import { MODALS } from 'Components/Utils/modal-context';
 import useEditRule from 'Hooks/useEditRule';
 import { extractErrorMessage } from 'Helpers/utils';
 

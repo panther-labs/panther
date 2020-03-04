@@ -27,7 +27,7 @@ import {
   SortDirEnum,
   ListPoliciesSortFieldsEnum,
 } from 'Generated/schema';
-import TablePaginationControls from 'Components/utils/table-pagination-controls';
+import TablePaginationControls from 'Components/Utils/table-pagination-controls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';

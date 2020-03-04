@@ -29,8 +29,8 @@ import {
 } from 'Generated/schema';
 import { Alert, Box } from 'pouncejs';
 import Panel from 'Components/Panel';
-import TablePaginationControls from 'Components/utils/table-pagination-controls';
-import TableComplianceFilterControl from 'Components/utils/table-compliance-filter-control';
+import TablePaginationControls from 'Components/Utils/table-pagination-controls';
+import TableComplianceFilterControl from 'Components/Utils/table-compliance-filter-control';
 import {
   extendResourceWithIntegrationLabel,
   getComplianceItemsTotalCount,

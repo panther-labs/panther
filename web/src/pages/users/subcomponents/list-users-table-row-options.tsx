@@ -20,8 +20,8 @@ import React from 'react';
 import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
 import { User } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
-import { MODALS } from 'Components/utils/modal-context';
-import { SIDESHEETS } from 'Components/utils/sidesheet-context';
+import { MODALS } from 'Components/Utils/modal-context';
+import { SIDESHEETS } from 'Components/Utils/sidesheet-context';
 import useSidesheet from 'Hooks/useSidesheet';
 
 interface ListUsersTableRowOptionsProps {

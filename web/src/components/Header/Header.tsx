@@ -21,7 +21,7 @@ import Breadcrumbs from 'Components/Breadcrumbs';
 import { Button, Flex, Icon, IconButton, Text, Dropdown, MenuItem, Box } from 'pouncejs';
 import useAuth from 'Hooks/useAuth';
 import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/utils/sidesheet-context';
+import { SIDESHEETS } from 'Components/Utils/sidesheet-context';
 
 const Header = () => {
   const { userInfo, signOut } = useAuth();
