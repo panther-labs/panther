@@ -60,7 +60,7 @@ const (
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
 
-	mageUserID = "00000000-0000-0000-0000-000000000000" // used to indicate mage made the call
+	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
