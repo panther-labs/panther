@@ -25,7 +25,7 @@ import { useQuery, gql } from '@apollo/client';
 import { ComplianceStatusEnum, ListResourcesInput, Integration } from 'Generated/schema';
 import { capitalize } from 'Helpers/utils';
 import FormikTextInput from 'Components/Fields/text-input';
-import FormikCombobox from 'Components/Fields/combobox';
+import FormikCombobox from 'Components/Fields/ComboBox';
 import FormikMultiCombobox from 'Components/Fields/multi-combobox';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import pick from 'lodash-es/pick';

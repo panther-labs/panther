@@ -24,7 +24,7 @@ import { SeverityEnum } from 'Generated/schema';
 import { capitalize } from 'Helpers/utils';
 import FormikTextArea from 'Components/Fields/textarea';
 import FormikSwitch from 'Components/Fields/switch';
-import FormikCombobox from 'Components/Fields/combobox';
+import FormikCombobox from 'Components/Fields/ComboBox';
 import FormikMultiCombobox from 'Components/Fields/multi-combobox';
 import FormikEditor from 'Components/Fields/editor';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';

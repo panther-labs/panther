@@ -39,7 +39,7 @@ import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
 import FormikTextInput from 'Components/Fields/text-input';
 import FormikEditor from 'Components/Fields/editor';
-import FormikCombobox from 'Components/Fields/combobox';
+import FormikCombobox from 'Components/Fields/ComboBox';
 import FormikRadio from 'Components/Fields/radio';
 
 import { useMutation, gql } from '@apollo/client';

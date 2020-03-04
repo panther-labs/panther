@@ -24,7 +24,7 @@ import FormikTextInput from 'Components/Fields/text-input';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import SubmitButton from 'Components/SubmitButton';
 import React from 'react';
-import FormikCheckbox from 'Components/Fields/checkbox';
+import FormikCheckbox from 'Components/Fields/Checkbox';
 
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>

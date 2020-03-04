@@ -23,7 +23,7 @@ import mapValues from 'lodash-es/mapValues';
 import map from 'lodash-es/map';
 import FormikTextInput from 'Components/Fields/text-input';
 import FormikTextArea from 'Components/Fields/textarea';
-import FormikCombobox from 'Components/Fields/combobox';
+import FormikCombobox from 'Components/Fields/ComboBox';
 import FormikMultiCombobox from 'Components/Fields/multi-combobox';
 
 interface FiltersGroupData<T> {

@@ -22,7 +22,7 @@ import { ComplianceStatusEnum, SeverityEnum, ListPoliciesInput } from 'Generated
 import GenerateFiltersGroup from 'Components/utils/generate-filters-group';
 import { capitalize } from 'Helpers/utils';
 import FormikTextInput from 'Components/Fields/text-input';
-import FormikCombobox from 'Components/Fields/combobox';
+import FormikCombobox from 'Components/Fields/ComboBox';
 import FormikMultiCombobox from 'Components/Fields/multi-combobox';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import { Box, Button, Card, Flex, Icon } from 'pouncejs';

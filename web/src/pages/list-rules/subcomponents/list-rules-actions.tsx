@@ -21,7 +21,7 @@ import { SeverityEnum, ListRulesInput } from 'Generated/schema';
 import GenerateFiltersGroup from 'Components/utils/generate-filters-group';
 import { capitalize } from 'Helpers/utils';
 import { LOG_TYPES } from 'Source/constants';
-import FormikCombobox from 'Components/Fields/combobox';
+import FormikCombobox from 'Components/Fields/ComboBox';
 import FormikMultiCombobox from 'Components/Fields/multi-combobox';
 import FormikTextInput from 'Components/Fields/text-input';
 import { Box, Button, Card, Flex, Icon } from 'pouncejs';

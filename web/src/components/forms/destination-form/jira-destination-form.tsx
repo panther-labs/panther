@@ -20,7 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/Fields/text-input';
-import FormikCombobox from 'Components/Fields/combobox';
+import FormikCombobox from 'Components/Fields/ComboBox';
 import { DestinationConfigInput, JiraIssueTypesEnum } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
