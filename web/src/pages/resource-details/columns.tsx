@@ -23,8 +23,7 @@ import { Text, TableProps, Badge, Tooltip, Label } from 'pouncejs';
 import { ComplianceItem, ComplianceStatusEnum } from 'Generated/schema';
 import { capitalize } from 'Helpers/utils';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
-import RemediationButton from 'Components/table-row-remediation-button';
-import SuppressButton from 'Components/table-row-suppress-button';
+import { SuppressButton, RemediationButton } from 'Components/TableRow';
 
 // The columns that the associated table will show
 const columns = [
