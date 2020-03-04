@@ -21,7 +21,7 @@ import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
 import { Alert, Box, Text } from 'pouncejs';
-import SubmitButton from 'Components/SubmitButton/SubmitButton';
+import SubmitButton from 'Components/SubmitButton';
 import FormikTextInput from 'Components/fields/text-input';
 import useAuth from 'Hooks/useAuth';
 

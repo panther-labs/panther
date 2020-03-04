@@ -20,7 +20,7 @@ import React from 'react';
 import { Field, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Alert, Box, useSnackbar } from 'pouncejs';
-import SubmitButton from 'Components/SubmitButton/SubmitButton';
+import SubmitButton from 'Components/SubmitButton';
 import FormikTextInput from 'Components/fields/text-input';
 import useRouter from 'Hooks/useRouter';
 import useAuth from 'Hooks/useAuth';

@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Formik } from 'formik';
-import SubmitButton from 'Components/SubmitButton/SubmitButton';
+import SubmitButton from 'Components/SubmitButton';
 import * as Yup from 'yup';
 import { Flex, Button } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
