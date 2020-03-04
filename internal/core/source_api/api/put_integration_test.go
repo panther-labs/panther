@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
@@ -165,6 +166,40 @@ func TestPutIntegration(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
+}
+
+func TestPutIntegrationExists(t *testing.T) {
+	mockSQS := &mockSQSClient{}
+	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
+	SQSClient = mockSQS
+
+	db = &ddb.DDB{
+		Client: &modelstest.MockDDBClient{
+			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
+				{
+					"awsAccountId":    {S: aws.String(testAccountID)},
+					"integrationType": {S: aws.String(testIntegrationType)},
+				},
+			},
+			TestErr: false,
+		},
+		TableName: "test",
+	}
+
+	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
+		Integrations: []*models.PutIntegrationSettings{
+			{
+				AWSAccountID:     aws.String(testAccountID),
+				IntegrationLabel: aws.String(testIntegrationLabel),
+				IntegrationType:  aws.String(testIntegrationType),
+				ScanEnabled:      aws.Bool(true),
+				ScanIntervalMins: aws.Int(60),
+				UserID:           aws.String(testUserID),
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Empty(t, out) // should do nothing
 }
 
 func TestPutIntegrationValidInput(t *testing.T) {

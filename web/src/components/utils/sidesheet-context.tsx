@@ -21,6 +21,7 @@ import { UpdateSourceSidesheetProps } from 'Components/sidesheets/update-source-
 import { AddDestinationSidesheetProps } from 'Components/sidesheets/add-destination-sidesheet';
 import { UpdateDestinationSidesheetProps } from 'Components/sidesheets/update-destination-sidesheet';
 import { PolicyBulkUploadSideSheetProps } from 'Components/sidesheets/policy-bulk-upload-sidesheet';
+import { EditUserSidesheetProps } from 'Components/sidesheets/EditUserSidesheet';
 
 const SHOW_SIDESHEET = 'SHOW_SIDESHEET';
 const HIDE_SIDESHEET = 'HIDE_SIDESHEET';
@@ -33,6 +34,7 @@ export enum SIDESHEETS {
   ADD_DESTINATION = 'ADD_DESTINATION',
   UPDATE_DESTINATION = 'UPDATE_DESTINATION',
   EDIT_ACCOUNT = 'EDIT_ACCOUNT',
+  EDIT_USER = 'EDIT_USER',
   USER_INVITATION = 'USER_INVITATION',
 }
 
@@ -94,6 +96,14 @@ interface EditAccountSideSheetAction {
   };
 }
 
+interface EditUserSideSheetAction {
+  type: typeof SHOW_SIDESHEET;
+  payload: {
+    sidesheet: SIDESHEETS.EDIT_USER;
+    props: EditUserSidesheetProps;
+  };
+}
+
 interface UserInvitationSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
@@ -109,6 +119,7 @@ type SidesheetStateAction =
   | AddDestinationSideSheetAction
   | UpdateDestinationSideSheetAction
   | EditAccountSideSheetAction
+  | EditUserSideSheetAction
   | UserInvitationSideSheetAction
   | HideSidesheetAction;
 
