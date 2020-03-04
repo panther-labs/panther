@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,16 +16,5 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/users/models"
-)
-
-// UpdateUser modifies user attributes and roles.
-func (API) UpdateUser(input *models.UpdateUserInput) (*models.UpdateUserOutput, error) {
-	if err := userGateway.UpdateUser(input); err != nil {
-		return nil, err
-	}
-
-	// Return updated user attributes
-	return userGateway.GetUser(input.ID)
-}
+export { default } from './EditUserSidesheet';
+export * from './EditUserSidesheet';

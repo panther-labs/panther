@@ -25,10 +25,11 @@ import (
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-var testCreateUserInput = &CreateUserInput{
+var testCreateUserInput = &models.InviteUserInput{
 	GivenName:  aws.String("Joe"),
 	FamilyName: aws.String("Blow"),
 	Email:      aws.String("joe.blow@toe.com"),
