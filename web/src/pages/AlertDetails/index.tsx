@@ -21,9 +21,9 @@ import useRouter from 'Hooks/useRouter';
 import { useQuery, gql } from '@apollo/client';
 import { GetAlertInput, AlertDetails, RuleDetails, GetRuleInput } from 'Generated/schema';
 import { Alert, Box } from 'pouncejs';
-import AlertDetailsPageSkeleton from 'Pages/alert-details/AlertDetailsSkeleton';
-import AlertDetailsInfo from 'Pages/alert-details/AlertDetailsInfo';
-import AlertEvents from 'Pages/alert-details/AlertDetailsEvents';
+import AlertDetailsPageSkeleton from 'Pages/AlertDetails/AlertDetailsSkeleton';
+import AlertDetailsInfo from 'Pages/AlertDetails/AlertDetailsInfo';
+import AlertEvents from 'Pages/AlertDetails/AlertDetailsEvents';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 

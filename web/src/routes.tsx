@@ -31,7 +31,7 @@ import RuleDetailsPage from 'Pages/rule-details';
 import ListRulesPage from 'Pages/list-rules';
 import EditRulePage from 'Pages/edit-rule';
 import CreateRulePage from 'Pages/create-rule';
-import AlertDetailsPage from 'Pages/alert-details';
+import AlertDetailsPage from 'Pages/AlertDetails';
 import EditPolicyPage from 'Pages/edit-policy';
 import CreatePolicyPage from 'Pages/create-policy';
 import ListAlertsPage from 'Pages/list-alerts';
