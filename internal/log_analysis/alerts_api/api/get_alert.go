@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"time"
@@ -35,8 +36,12 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// The format of S3 object suffix that contains the
-const ruleSuffixFormat = "rule_id=%s/"
+const (
+	// The format of S3 object suffix that contains the
+	ruleSuffixFormat = "rule_id=%s/"
+
+	recordDelimiter = "\n"
+)
 
 // GetAlert retrieves details for a given alert
 func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput, err error) {
@@ -62,11 +67,11 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	var events []string
 	for _, logType := range alertItem.LogTypes {
 		// Each alert can contain events from multiple log types.
-		// Retrieve results from each log type. We only need to retrieve maximum `input.EventsPageSize`
-		eventsReturned, resultToken, err := getEventsForLogType(logType, token.LogTypeToToken[logType], alertItem, *input.EventsPageSize-len(events))
-		zap.L().Info("got result token", zap.Any("resultToken", resultToken))
-		zap.L().Info("got result token", zap.Any("key", resultToken.S3ObjectKey))
-		zap.L().Info("got result token", zap.Any("index", resultToken.EventIndex))
+		// Retrieve results from each log type.
+
+		// We only need to retrieve as many returns as to fit the EventsPageSize given by the user
+		eventsToReturn := *input.EventsPageSize - len(events)
+		eventsReturned, resultToken, err := getEventsForLogType(logType, token.LogTypeToToken[logType], alertItem, eventsToReturn)
 		if err != nil {
 			return nil, err
 		}
@@ -78,13 +83,6 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		}
 	}
 
-	zap.L().Info("token will be", zap.Any("token", token))
-	for key, value := range token.LogTypeToToken {
-		zap.L().Info("Token to be returned",
-			zap.String("logType", key),
-			zap.String("S3ObjectKey", value.S3ObjectKey),
-			zap.Int("EventIndex", value.EventIndex))
-	}
 	encodedToken, err := token.encode()
 	if err != nil {
 		return nil, err
@@ -106,7 +104,11 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 // This method returns events from a specific log type that are associated to a given alert.
 // It will only return up to `maxResults` events
 func getEventsForLogType(
-	logType string, token *LogTypeToken, alert *models.AlertItem, maxResults int) (result []string, resultToken *LogTypeToken, err error) {
+	logType string,
+	token *LogTypeToken,
+	alert *models.AlertItem,
+	maxResults int) (result []string, resultToken *LogTypeToken, err error) {
+
 	resultToken = &LogTypeToken{}
 
 	if token != nil {
@@ -167,12 +169,8 @@ func getEventsForLogType(
 					return false
 				}
 				result = append(result, events...)
-				zap.L().Info("tokenbefore", zap.Any("resultToken", resultToken))
 				resultToken.EventIndex = EventIndex
 				resultToken.S3ObjectKey = *object.Key
-				zap.L().Info("tokenafter", zap.Any("resultToken", resultToken))
-				zap.L().Info("tokenafter", zap.Any("key", resultToken.S3ObjectKey))
-				zap.L().Info("tokenafter", zap.Any("index", resultToken.EventIndex))
 				if len(result) == maxResults {
 					// if we have already received all the results we wanted
 					// no need to keep paginating
@@ -223,7 +221,7 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 			JSON:            &s3.JSONInput{Type: aws.String(s3.JSONTypeLines)},
 		},
 		OutputSerialization: &s3.OutputSerialization{
-			JSON: &s3.JSONOutput{},
+			JSON: &s3.JSONOutput{RecordDelimiter: aws.String(recordDelimiter)},
 		},
 		ExpressionType: aws.String(s3.ExpressionTypeSql),
 		Expression:     aws.String(query),
@@ -234,24 +232,12 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		return nil, 0, err
 	}
 
-	var result []string
-	currentIndex := 0
+	// NOTE: Payloads are NOT broken on record boundaries! It is possible for rows to span ResultsEvent's so we need a buffer
+	var payloadBuffer bytes.Buffer
 	for genericEvent := range output.EventStream.Reader.Events() {
-		switch e := genericEvent.(type) { // to specific event
+		switch e := genericEvent.(type) {
 		case *s3.RecordsEvent:
-			records := strings.Split(string(e.Payload), "\n")
-			for _, record := range records {
-				if len(result) == maxResults { // if we have received max results no need to get more events
-					// We still need to iterate through the contents of the EventStream
-					// to avoid memory leaks
-					continue
-				}
-				currentIndex++
-				if currentIndex <= exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
-					continue
-				}
-				result = append(result, record)
-			}
+			payloadBuffer.Write(e.Payload)
 		case *s3.StatsEvent:
 			continue
 		}
@@ -259,6 +245,24 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 	streamError := output.EventStream.Reader.Err()
 	if streamError != nil {
 		return nil, 0, streamError
+	}
+
+	currentIndex := 0
+	var result []string
+	if payloadBuffer.Len() > 0 { // ensure there is data
+		for _, record := range strings.Split(payloadBuffer.String(), recordDelimiter) {
+			if record == "" {
+				continue
+			}
+			if len(result) == maxResults { // if we have received max results no need to get more events
+				break
+			}
+			currentIndex++
+			if currentIndex <= exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
+				continue
+			}
+			result = append(result, record)
+		}
 	}
 	return result, currentIndex, nil
 }

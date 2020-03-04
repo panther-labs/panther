@@ -86,9 +86,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
+      MemorySize: 256
       Runtime: go1.x
-      Timeout: 180
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageAlerts

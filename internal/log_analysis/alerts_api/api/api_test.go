@@ -47,3 +47,8 @@ func TestPaginationTokenDecode(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, token, result)
 }
+
+func TestInvalidTokenDecode(t *testing.T) {
+	_, err := decodePaginationToken("notatoken")
+	require.Error(t, err)
+}
