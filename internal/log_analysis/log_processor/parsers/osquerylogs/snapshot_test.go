@@ -69,8 +69,8 @@ func checkOsQuerySnapshotLog(t *testing.T, log string, expectedEvent *Snapshot) 
 	require.Equal(t, 1, len(events))
 	event := events[0].Event.(*Snapshot)
 
-	// UNset back ptr
-	event.Event = nil
+	// set back ptr to match
+	expectedEvent.Event = event.Event
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.

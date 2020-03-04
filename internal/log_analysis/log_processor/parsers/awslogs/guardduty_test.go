@@ -185,8 +185,8 @@ func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
 	require.Equal(t, 1, len(events))
 	event := events[0].Event.(*GuardDuty)
 
-	// UNset back ptr
-	event.Event = nil
+	// set back ptr to match
+	expectedEvent.Event = event.Event
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
