@@ -290,8 +290,6 @@ func removeBucket(client *s3.S3, bucketName *string) {
 		logger.Fatalf("failed to batch delete objects: %v", err)
 	}
 
-	// Delete the bucket now (instead of with CloudFormation) to prevent objects from being written
-	// to it before the stacks finish deleting. For example, S3 access logs are continually being written.
 	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
 		logger.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
 	}
