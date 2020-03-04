@@ -1,5 +1,5 @@
 locals {
-  MasterAccountId = "123456789012"
+  MasterAccountId = "<insert accountID for account running Panther>"
 }
 
 ###############################################################
@@ -30,9 +30,6 @@ EOF
   tags = {
     Name        = "Panther Audit Role"
     Description = "The Panther master account assumes this role for read-only security scanning"
-    Owner       = "SEC"
-    terraform   = true
-    source_repo = "https://git.lo/terraform/terraform-aws-root"
     Application = "Panther"
   }
 }
@@ -42,9 +39,9 @@ resource "aws_iam_role_policy_attachment" "SecurityAudit" {
   policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
 }
 
-resource "aws_iam_policy" "PantherCloudFormationStackDriftDetection" {
+resource "aws_iam_role_policy" "PantherCloudFormationStackDriftDetection" {
   name        = "PantherCloudFormationStackDriftDetection"
-  description = "Allows PantherAudit Role to detect CloudFormation stack drift"
+  role        = aws_iam_role.PantherAudit.id
 
   policy = <<EOF
 {
@@ -64,16 +61,9 @@ EOF
 
 }
 
-resource "aws_iam_policy_attachment" "PantherCloudFormationStackDriftDetection" {
-  name       = "PantherCloudFormationStackDriftDetection"
-  roles      = ["${aws_iam_role.PantherAudit.name}"]
-  policy_arn = "${aws_iam_policy.PantherCloudFormationStackDriftDetection.arn}"
-}
-
-
-resource "aws_iam_policy" "PantherGetWAFACLs" {
+resource "aws_iam_role_policy" "PantherGetWAFACLs" {
   name        = "GetWAFACLsPolicy"
-  description = "Allows PantherAudit Role to get WAF ACLs"
+  role        = aws_iam_role.PantherAudit.id
 
   policy = <<EOF
 {
@@ -96,15 +86,9 @@ EOF
 
 }
 
-resource "aws_iam_policy_attachment" "PantherGetWAFACLs" {
-  name       = "PantherGetWAFACLs"
-  roles      = ["${aws_iam_role.PantherAudit.name}"]
-  policy_arn = "${aws_iam_policy.PantherGetWAFACLs.arn}"
-}
-
-resource "aws_iam_policy" "PantherGetTags" {
+resource "aws_iam_role_policy" "PantherGetTags" {
   name        = "PantherGetTags"
-  description = "Allows PantherAudit Role to get tags of specified resources"
+  role        = aws_iam_role.PantherAudit.id
 
   policy = <<EOF
 {
@@ -125,15 +109,9 @@ resource "aws_iam_policy" "PantherGetTags" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "PantherGetTags" {
-  name       = "PantherGetTags"
-  roles      = ["${aws_iam_role.PantherAudit.name}"]
-  policy_arn = "${aws_iam_policy.PantherGetTags.arn}"
-}
-
 
 ###############################################################
-# CloudFormation Stack Set Execution Role
+# CloudFormation StackSet Execution Role
 ###############################################################
 
 resource "aws_iam_role" "PantherCloudFormationStackSetExecution" {
@@ -155,18 +133,15 @@ resource "aws_iam_role" "PantherCloudFormationStackSetExecution" {
 EOF
 
   tags = {
-    Name        = "Panther CloudFormation Stack Set Execution Role"
+    Name        = "Panther CloudFormation StackSet Execution Role"
     Description = "CloudFormation assumes this role to execute a stack set"
-    Owner       = "SEC"
-    terraform   = true
-    source_repo = "https://git.lo/terraform/terraform-aws-root"
     Application = "Panther"
   }
 }
 
-resource "aws_iam_policy" "PantherManageCloudFormationStack" {
+iesource "aws_iam_role_policy" "PantherManageCloudFormationStack" {
   name        = "PantherManageCloudFormationStack"
-  description = "Allows PantherCloudFormationStackSetExecution Role to administer all CloudFormation resources"
+  role        = aws_iam_role.PantherCloudFormationStackSetExecution.id
 
   policy = <<EOF
 {
@@ -184,15 +159,9 @@ resource "aws_iam_policy" "PantherManageCloudFormationStack" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "PantherManageCloudFormationStack" {
-  name       = "PantherManageCloudFormationStack"
-  roles      = ["${aws_iam_role.PantherCloudFormationStackSetExecution.name}"]
-  policy_arn = "${aws_iam_policy.PantherManageCloudFormationStack.arn}"
-}
-
-resource "aws_iam_policy" "PantherSetupRealTimeEvents" {
+resource "aws_iam_role_policy" "PantherSetupRealTimeEvents" {
   name        = "PantherSetupRealTimeEvents"
-  description = "Allows PantherCloudFormationStackSetExecution Role to administer all events and SNS"
+  role        = aws_iam_role.PantherCloudFormationStackSetExecution.id
 
   policy = <<EOF
 {
@@ -209,12 +178,6 @@ resource "aws_iam_policy" "PantherSetupRealTimeEvents" {
   ]
 }
 EOF
-}
-
-resource "aws_iam_policy_attachment" "PantherSetupRealTimeEvents" {
-  name       = "PantherSetupRealTimeEvents"
-  roles      = ["${aws_iam_role.PantherCloudFormationStackSetExecution.name}"]
-  policy_arn = "${aws_iam_policy.PantherSetupRealTimeEvents.arn}"
 }
 
 
@@ -246,16 +209,13 @@ EOF
   tags = {
     Name        = "Panther Remediation Role"
     Description = "The Panther master account assumes this role for automatic remediation of policy violations"
-    Owner       = "SEC"
-    terraform   = true
-    source_repo = "https://git.lo/terraform/terraform-aws-root"
     Application = "Panther"
   }
 }
 
-resource "aws_iam_policy" "PantherAllowRemediativeActions" {
+resource "aws_iam_role_policy" "PantherAllowRemediativeActions" {
   name        = "PantherAllowRemediativeActions"
-  description = "Allows Panther Remediation Role to perform numerous actions to remediate policy violations"
+  role        = aws_iam_role.PantherRemediation.id
 
   policy = <<EOF
 {
@@ -294,12 +254,6 @@ resource "aws_iam_policy" "PantherAllowRemediativeActions" {
 }
 EOF
 
-}
-
-resource "aws_iam_policy_attachment" "PantherAllowRemediativeActions" {
-  name       = "PantherAllowRemediativeActions"
-  roles      = ["${aws_iam_role.PantherRemediation.name}"]
-  policy_arn = "${aws_iam_policy.PantherAllowRemediativeActions.arn}"
 }
 
 
