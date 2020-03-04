@@ -151,6 +151,7 @@ func TestPutIntegration(t *testing.T) {
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	SQSClient = mockSQS
 	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (bool, error) { return true, nil }
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		Integrations: []*models.PutIntegrationSettings{

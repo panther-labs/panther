@@ -59,14 +59,14 @@ type SourceIntegrationHealth struct {
 	IntegrationType *string `json:"integrationType"`
 
 	// Checks for cloudsec integrations
-	AuditRoleStatus       *SourceIntegrationItemStatus `json:"auditRoleStatus"`
-	CWERoleStatus         *SourceIntegrationItemStatus `json:"cweRoleStatus"`
-	RemediationRoleStatus *SourceIntegrationItemStatus `json:"remediationRoleStatus"`
+	AuditRoleStatus       SourceIntegrationItemStatus `json:"auditRoleStatus"`
+	CWERoleStatus         SourceIntegrationItemStatus `json:"cweRoleStatus"`
+	RemediationRoleStatus SourceIntegrationItemStatus `json:"remediationRoleStatus"`
 
 	// Checks for log analysis integrations
-	ProcessingRoleStatus *SourceIntegrationItemStatus            `json:"processingRoleStatus"`
-	S3BucketsStatus      map[string]*SourceIntegrationItemStatus `json:"s3BucketsStatus"`
-	KMSKeysStatus        map[string]*SourceIntegrationItemStatus `json:"kmsKeysStatus"`
+	ProcessingRoleStatus SourceIntegrationItemStatus            `json:"processingRoleStatus"`
+	S3BucketsStatus      map[string]SourceIntegrationItemStatus `json:"s3BucketsStatus"`
+	KMSKeysStatus        map[string]SourceIntegrationItemStatus `json:"kmsKeysStatus"`
 }
 
 type SourceIntegrationItemStatus struct {
