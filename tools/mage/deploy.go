@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -58,6 +59,8 @@ const (
 	layerSourceDir   = "out/pip/analysis/python"
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
+
+	mageUserID = "00000000-0000-0000-0000-000000000000" // used to indicate mage made the call
 )
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
@@ -113,14 +116,29 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
+	// the below can all be done in parallel to speed deployment
+	var wg sync.WaitGroup
+	runDeploy := func(deployFunc func()) {
+		wg.Add(1)
+		go func() {
+			deployFunc()
+			wg.Done()
+		}()
+	}
+
 	// Creates Glue/Athena related resources
-	deployDatabases(awsSession, bucket, backendOutputs)
+	runDeploy(func() { deployDatabases(awsSession, bucket, backendOutputs) })
 
 	// Deploy frontend stack
-	deployFrontend(awsSession, bucket, backendOutputs, &config)
+	runDeploy(func() { deployFrontend(awsSession, bucket, backendOutputs, &config) })
 
-	// Deploy monitoring (must be last due to possible references to frontend/backend resources)
-	deployMonitoring(awsSession, bucket, backendOutputs, &config)
+	// Deploy monitoring
+	runDeploy(func() { deployMonitoring(awsSession, bucket, backendOutputs, &config) })
+
+	// Onboard Panther account to Panther
+	runDeploy(func() { deployOnboard(awsSession, bucket, backendOutputs) })
+
+	wg.Wait()
 
 	// Done!
 	logger.Infof("deploy: finished successfully in %s", time.Since(start))
@@ -336,7 +354,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, config
 		response, err := apiClient.Operations.BulkUpload(&operations.BulkUploadParams{
 			Body: &analysismodels.BulkUpload{
 				Data:   analysismodels.Base64zipfile(encoded),
-				UserID: "00000000-0000-0000-0000-000000000000",
+				UserID: mageUserID,
 			},
 			HTTPClient: httpClient,
 		})

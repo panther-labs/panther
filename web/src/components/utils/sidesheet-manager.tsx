@@ -26,6 +26,7 @@ import SelectDestinationSidesheet from 'Components/sidesheets/select-destination
 import AddDestinationSidesheet from 'Components/sidesheets/add-destination-sidesheet';
 import UpdateDestinationSidesheet from 'Components/sidesheets/update-destination-sidesheet';
 import EditAccountSidesheet from 'Components/sidesheets/edit-account-sidesheet';
+import EditUserSidesheet from 'Components/sidesheets/EditUserSidesheet';
 import UserInvitationSidesheet from 'Components/sidesheets/user-invitation-sidesheet';
 
 const SidesheetManager: React.FC = () => {
@@ -53,6 +54,9 @@ const SidesheetManager: React.FC = () => {
       break;
     case SIDESHEETS.EDIT_ACCOUNT:
       Component = EditAccountSidesheet;
+      break;
+    case SIDESHEETS.EDIT_USER:
+      Component = EditUserSidesheet;
       break;
     case SIDESHEETS.USER_INVITATION:
       Component = UserInvitationSidesheet;

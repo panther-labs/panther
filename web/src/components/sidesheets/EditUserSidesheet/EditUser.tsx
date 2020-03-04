@@ -17,58 +17,63 @@
  */
 
 import * as React from 'react';
-import { useMutation, gql } from '@apollo/client';
 import { Alert, Box, useSnackbar } from 'pouncejs';
-import { InviteUserInput } from 'Generated/schema';
-import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
+import { UpdateUserInput, User } from 'Generated/schema';
+import { gql, useMutation } from '@apollo/client';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
 import { extractErrorMessage } from 'Helpers/utils';
 import BaseUserForm from 'Components/forms/common/base-user-form';
+import useAuth from 'Hooks/useAuth';
 
-const INVITE_USER = gql`
-  mutation InviteUser($input: InviteUserInput!) {
-    inviteUser(input: $input) {
-      id
-    }
+const EDIT_USER = gql`
+  mutation EditUser($input: UpdateUserInput!) {
+    updateUser(input: $input)
   }
 `;
 
 interface ApolloMutationInput {
-  input: InviteUserInput;
+  input: UpdateUserInput;
 }
 
-interface UserInvitationFormProps {
+interface EditUserFormProps {
   onSuccess: () => void;
+  user: User;
 }
 
-const initialValues = {
-  email: '',
-  familyName: '',
-  givenName: '',
-};
-
-const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSuccess }) => {
-  const [inviteUser, { error: inviteUserError, data }] = useMutation<boolean, ApolloMutationInput>(
-    INVITE_USER
+const EditUser: React.FC<EditUserFormProps> = ({ onSuccess, user }) => {
+  const { refetchUserInfo, userInfo } = useAuth();
+  const [editUser, { error: editUserError, data }] = useMutation<boolean, ApolloMutationInput>(
+    EDIT_USER
   );
   const { pushSnackbar } = useSnackbar();
 
   React.useEffect(() => {
     if (data) {
-      pushSnackbar({ variant: 'success', title: `Successfully invited user` });
+      pushSnackbar({ variant: 'success', title: `Successfully edited user` });
+      // Refetch user info if editing self
+      if (user.id === userInfo.sub) {
+        refetchUserInfo();
+      }
       onSuccess();
     }
   }, [data]);
 
+  const initialValues = {
+    id: user.id,
+    email: user.email,
+    familyName: user.familyName || '',
+    givenName: user.givenName || '',
+  };
+
   return (
     <Box>
-      {inviteUserError && (
+      {editUserError && (
         <Alert
           variant="error"
           title="Failed to invite user"
           description={
-            extractErrorMessage(inviteUserError) ||
-            'Failed to invite user due to an unforeseen error'
+            extractErrorMessage(editUserError) || 'Failed to edit user due to an unforeseen error'
           }
           mb={6}
         />
@@ -76,9 +81,10 @@ const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSuccess }) =>
       <BaseUserForm
         initialValues={initialValues}
         onSubmit={async values => {
-          await inviteUser({
+          await editUser({
             variables: {
               input: {
+                id: values.id,
                 email: values.email,
                 familyName: values.familyName,
                 givenName: values.givenName,
@@ -92,4 +98,4 @@ const UserInvitationForm: React.FC<UserInvitationFormProps> = ({ onSuccess }) =>
   );
 };
 
-export default UserInvitationForm;
+export default EditUser;
