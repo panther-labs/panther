@@ -17,14 +17,14 @@
  */
 
 import React from 'react';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 import { Alert, Button, Card, Box } from 'pouncejs';
 import PolicyForm from 'Components/forms/policy-form';
 import { GetPolicyInput, PolicyDetails } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { useMutation, useQuery, gql } from '@apollo/client';
 import useRouter from 'Hooks/useRouter';
-import TablePlaceholder from 'Components/table-placeholder';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/modal-context';
 import useEditRule from 'Hooks/useEditRule';
 import { extractErrorMessage } from 'Helpers/utils';

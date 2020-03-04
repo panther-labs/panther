@@ -21,10 +21,10 @@ import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import React from 'react';
 import { AlertDetails, RuleDetails } from 'Generated/schema';
-import Linkify from 'Components/linkify';
+import Linkify from 'Components/Linkify';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails;

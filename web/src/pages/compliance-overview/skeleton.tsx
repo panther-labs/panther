@@ -18,8 +18,8 @@
 
 import React from 'react';
 import { Box, Grid, Flex } from 'pouncejs';
-import Panel from 'Components/panel';
-import TablePlaceholder from 'Components/table-placeholder';
+import Panel from 'Components/Panel';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import CirclePlaceholder from 'Components/CirclePlaceholder';
 import DonutChartWrapper from 'Pages/compliance-overview/subcomponents/donut-chart-wrapper';
 

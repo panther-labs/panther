@@ -35,7 +35,7 @@ import AlertDetailsPage from 'Pages/alert-details';
 import EditPolicyPage from 'Pages/edit-policy';
 import CreatePolicyPage from 'Pages/create-policy';
 import ListAlertsPage from 'Pages/list-alerts';
-import Layout from 'Components/layout';
+import Layout from 'Components/Layout';
 import CreateComplianceSourcePage from 'Pages/create-compliance-source';
 import CreateLogSourcePage from 'Pages/create-log-source';
 import ListComplianceSourcesPagee from 'Pages/list-compliance-sources';

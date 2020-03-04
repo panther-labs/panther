@@ -21,7 +21,7 @@ import { Box, Button, Flex, Icon } from 'pouncejs';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 import ComplianceSourceTable from './subcomponents/compliance-source-table';
 
 const ListComplianceSources = () => {

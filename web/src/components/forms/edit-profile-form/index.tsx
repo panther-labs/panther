@@ -20,7 +20,7 @@ import * as React from 'react';
 import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
 import { Field, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/text-input';
-import SubmitButton from 'Components/submit-button';
+import SubmitButton from 'Components/SubmitButton/SubmitButton';
 import useAuth from 'Hooks/useAuth';
 
 interface EditProfileFormProps {

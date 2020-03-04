@@ -20,7 +20,7 @@ import React from 'react';
 import { useQuery, gql } from '@apollo/client';
 import { Integration } from 'Generated/schema';
 import { INTEGRATION_TYPES } from 'Source/constants';
-import TablePlaceholder from 'Components/table-placeholder';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import { Alert, Table } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import columns from '../log-source-columns';

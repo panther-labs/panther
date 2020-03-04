@@ -22,7 +22,7 @@ import { ListUsersResponse, User } from 'Generated/schema';
 import { Alert, Card, Table } from 'pouncejs';
 import columns from 'Pages/users/columns';
 
-import TablePlaceholder from 'Components/table-placeholder';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
 
 // This is done so we can benefit from React.memo

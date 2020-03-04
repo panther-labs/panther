@@ -29,7 +29,7 @@ import {
 } from 'Generated/schema';
 import { Alert, Box, Table } from 'pouncejs';
 import RuleDetailsInfo from 'Pages/rule-details/subcomponents/rule-details-info';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
 import ErrorBoundary from 'Components/ErrorBoundary';

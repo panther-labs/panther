@@ -27,7 +27,7 @@ import {
   PoliciesForResourceInput,
   ResourceDetails,
 } from 'Generated/schema';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 import JsonViewer from 'Components/JsonViewer';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import {

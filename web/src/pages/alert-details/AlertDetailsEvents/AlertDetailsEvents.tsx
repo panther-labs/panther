@@ -18,7 +18,7 @@
 
 import React from 'react';
 import JsonViewer from 'Components/JsonViewer';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 import PaginationControls from 'Components/utils/table-pagination-controls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 

@@ -23,7 +23,7 @@ import { Field, Formik } from 'formik';
 import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
 import { InviteUserInput } from 'Generated/schema';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
-import SubmitButton from 'Components/submit-button';
+import SubmitButton from 'Components/SubmitButton/SubmitButton';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import FormikTextInput from 'Components/fields/text-input';
 import { extractErrorMessage } from 'Helpers/utils';

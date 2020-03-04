@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import TablePlaceholder from 'Components/table-placeholder';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import { Card } from 'pouncejs';
 
 const ListResourcesPageSkeleton: React.FC = () => {

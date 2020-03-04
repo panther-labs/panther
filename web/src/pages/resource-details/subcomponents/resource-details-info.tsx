@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Grid, Label, Text } from 'pouncejs';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 import { capitalize, formatDatetime } from 'Helpers/utils';
 import { ComplianceStatusEnum, Integration, ResourceDetails } from 'Generated/schema';
 

@@ -21,7 +21,7 @@ import { Field, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
-import SubmitButton from 'Components/submit-button';
+import SubmitButton from 'Components/SubmitButton/SubmitButton';
 import FormikTextInput from 'Components/fields/text-input';
 import useAuth from 'Hooks/useAuth';
 

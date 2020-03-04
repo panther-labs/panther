@@ -17,9 +17,9 @@
  */
 
 import React from 'react';
-import TablePlaceholder from 'Components/table-placeholder';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import { Box, Card } from 'pouncejs';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 
 const RuleDetailsPageSkeleton: React.FC = () => {
   return (

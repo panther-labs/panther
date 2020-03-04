@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, Grid, Table, Alert } from 'pouncejs';
 import { useQuery, gql } from '@apollo/client';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 import urls from 'Source/urls';
 import useRouter from 'Hooks/useRouter';
 import {

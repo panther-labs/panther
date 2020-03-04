@@ -28,7 +28,7 @@ import {
   ListComplianceItemsResponse,
 } from 'Generated/schema';
 import { Alert, Box } from 'pouncejs';
-import Panel from 'Components/panel';
+import Panel from 'Components/Panel';
 import TablePaginationControls from 'Components/utils/table-pagination-controls';
 import TableComplianceFilterControl from 'Components/utils/table-compliance-filter-control';
 import {
