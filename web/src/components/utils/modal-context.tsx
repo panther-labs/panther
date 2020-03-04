@@ -17,17 +17,17 @@
  */
 
 import React from 'react';
-import { DeletePolicyModalProps } from 'Components/modals/delete-policy-modal';
-import { DeleteUserModalProps } from 'Components/modals/delete-user-modal';
-import { ResetUserPasswordProps } from 'Components/modals/reset-user-password-modal';
-import { DeleteSourceModalProps } from 'Components/modals/delete-source-modal';
-import { DeleteDestinationModalProps } from 'Components/modals/delete-destination-modal';
-import { DeleteRuleModalProps } from 'Components/modals/delete-rule-modal';
+import { DeletePolicyModalProps } from 'Components/Modals/delete-policy-modal';
+import { DeleteUserModalProps } from 'Components/Modals/delete-user-modal';
+import { ResetUserPasswordProps } from 'Components/Modals/reset-user-password-modal';
+import { DeleteSourceModalProps } from 'Components/Modals/delete-source-modal';
+import { DeleteDestinationModalProps } from 'Components/Modals/delete-destination-modal';
+import { DeleteRuleModalProps } from 'Components/Modals/delete-rule-modal';
 
 const SHOW_MODAL = 'SHOW_MODAL';
 const HIDE_MODAL = 'HIDE_MODAL';
 
-/* The available list of modals to dispatch */
+/* The available list of Modals to dispatch */
 export enum MODALS {
   DELETE_POLICY = 'DELETE_POLICY',
   DELETE_RULE = 'DELETE_RULE',

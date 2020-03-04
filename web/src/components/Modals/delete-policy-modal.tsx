@@ -24,7 +24,7 @@ import { useMutation, gql } from '@apollo/client';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import BaseConfirmModal from 'Components/modals/base-confirm-modal';
+import BaseConfirmModal from 'Components/Modals/base-confirm-modal';
 
 const DELETE_POLICY = gql`
   mutation DeletePolicy($input: DeletePolicyInput!) {
