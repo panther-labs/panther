@@ -21,7 +21,7 @@ import { Box, Grid, Flex } from 'pouncejs';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import CirclePlaceholder from 'Components/CirclePlaceholder';
-import DonutChartWrapper from 'Pages/compliance-overview/subcomponents/donut-chart-wrapper';
+import DonutChartWrapper from '../DonutChartWrapper';
 
 const ChartPlaceholder: React.FC = () => (
   <Flex height="100%" alignItems="center" justifyContent="center">

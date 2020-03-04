@@ -19,7 +19,7 @@
 import React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import ListPoliciesPage from 'Pages/list-policies';
-import OverviewPage from 'Pages/compliance-overview';
+import OverviewPage from 'Pages/ComplianceOverview';
 import ListResourcesPage from 'Pages/list-resources';
 import ResourceDetailsPage from 'Pages/resource-details';
 import PolicyDetailsPage from 'Pages/policy-details';

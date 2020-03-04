@@ -31,14 +31,14 @@ import {
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import { INTEGRATION_TYPES } from 'Source/constants';
-import { topFailingPoliciesColumns, topFailingResourcesColumns } from './columns';
-import PoliciesBySeverityChart from './subcomponents/policies-by-severity-chart';
-import PoliciesByStatusChart from './subcomponents/policies-by-status-chart';
-import ResourcesByPlatformChart from './subcomponents/resources-by-platform-chart';
-import ResourcesByStatusChart from './subcomponents/resources-by-status-chart';
-import DonutChartWrapper from './subcomponents/donut-chart-wrapper';
-import ComplianceOverviewPageEmptyDataFallback from './empty-data-fallback';
-import ComplianceOverviewPageSkeleton from './skeleton';
+import { topFailingPoliciesColumns, topFailingResourcesColumns } from './Columns';
+import PoliciesBySeverityChart from './PoliciesBySeverityChart';
+import PoliciesByStatusChart from './PoliciesByStatusChart';
+import ResourcesByPlatformChart from './ResourcesByPlatformChart';
+import ResourcesByStatusChart from './ResourcesByStatusChart';
+import DonutChartWrapper from './DonutChartWrapper';
+import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
+import ComplianceOverviewPageSkeleton from './Skeleton';
 
 const GET_ORGANIZATION_STATS = gql`
   query GetOrganizationStats {
