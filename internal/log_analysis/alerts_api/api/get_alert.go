@@ -250,20 +250,18 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 
 	currentIndex := 0
 	var result []string
-	if payloadBuffer.Len() > 0 { // ensure there is data
-		for _, record := range strings.Split(payloadBuffer.String(), recordDelimiter) {
-			if record == "" {
-				continue
-			}
-			if len(result) == maxResults { // if we have received max results no need to get more events
-				break
-			}
-			currentIndex++
-			if currentIndex <= exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
-				continue
-			}
-			result = append(result, record)
+	for _, record := range strings.Split(payloadBuffer.String(), recordDelimiter) {
+		if record == "" {
+			continue
 		}
+		if len(result) == maxResults { // if we have received max results no need to get more events
+			break
+		}
+		currentIndex++
+		if currentIndex <= exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
+			continue
+		}
+		result = append(result, record)
 	}
 	return result, currentIndex, nil
 }
