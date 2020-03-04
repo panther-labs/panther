@@ -21,7 +21,9 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
@@ -159,6 +161,22 @@ func TestS3GetBucketLocation(t *testing.T) {
 
 	out := getBucketLocation(mockSvc, awstest.ExampleBucketName)
 	assert.Equal(t, "us-west-2", *out)
+	assert.NotEmpty(t, out)
+}
+
+// Specifically test for buckets located in the us-east-1 region
+func TestS3GetBucketLocationVirginia(t *testing.T) {
+	mockSvc := &awstest.MockS3{}
+	mockSvc.On("GetBucketLocation", mock.Anything).
+		Return(
+			&s3.GetBucketLocationOutput{
+				LocationConstraint: nil,
+			},
+			nil,
+		)
+
+	out := getBucketLocation(mockSvc, awstest.ExampleBucketName)
+	assert.Equal(t, "us-east-1", *out)
 	assert.NotEmpty(t, out)
 }
 
