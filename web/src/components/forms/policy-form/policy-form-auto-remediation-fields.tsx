@@ -19,10 +19,10 @@
 import React from 'react';
 import { Alert, Box, Combobox, Grid, InputElementLabel, Spinner } from 'pouncejs';
 import { Field, useFormikContext } from 'formik';
-import FormikTextInput from 'Components/fields/text-input';
+import FormikTextInput from 'Components/Fields/text-input';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
 import { useQuery, gql } from '@apollo/client';
-import FormikEditor from 'Components/fields/editor';
+import FormikEditor from 'Components/Fields/editor';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { PolicyFormValues } from './index';
 
@@ -43,7 +43,7 @@ const PolicyFormAutoRemediationFields: React.FC = () => {
 
   // This state is used to track/store the value of the auto-remediation combobox. This combobox
   // doesn't belong to the form and we wouldn't wanna pollute our form with undesired information.
-  // Instead what this checkbox does, is to control the value of the actual fields in the form which
+  // Instead what this checkbox does, is to control the value of the actual Fields in the form which
   // are the ID and Params of the auto remediation.
   // Here we are parsing & reformatting for display purposes only (since the JSON that arrives as a
   // string doesn't have any formatting)

@@ -21,7 +21,7 @@ import React from 'react';
 import * as Yup from 'yup';
 import { Box } from 'pouncejs';
 import SubmitButton from 'Components/SubmitButton';
-import FormikTextInput from 'Components/fields/text-input';
+import FormikTextInput from 'Components/Fields/text-input';
 import useAuth from 'Hooks/useAuth';
 
 interface MfaFormValues {

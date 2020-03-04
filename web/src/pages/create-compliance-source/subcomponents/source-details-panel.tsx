@@ -19,7 +19,7 @@
 import { Box, Heading, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field } from 'formik';
-import FormikTextInput from 'Components/fields/text-input';
+import FormikTextInput from 'Components/Fields/text-input';
 import React from 'react';
 
 const SourceDetailsPanel: React.FC = () => {

@@ -20,11 +20,11 @@ import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
 import { Badge, Box, Flex, InputElementLabel, Text } from 'pouncejs';
 import { Field, Formik } from 'formik';
-import FormikTextInput from 'Components/fields/text-input';
+import FormikTextInput from 'Components/Fields/text-input';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import SubmitButton from 'Components/SubmitButton';
 import React from 'react';
-import FormikCheckbox from 'Components/fields/checkbox';
+import FormikCheckbox from 'Components/Fields/checkbox';
 
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>

@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
-import FormikTextInput from 'Components/fields/text-input';
+import FormikTextInput from 'Components/Fields/text-input';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -43,7 +43,7 @@ const githubFieldsValidationSchema = Yup.object().shape({
 });
 
 // @ts-ignore
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
+// We merge the two schemas together: the one deriving from the common Fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
 const mergedValidationSchema = defaultValidationSchema.concat(githubFieldsValidationSchema);

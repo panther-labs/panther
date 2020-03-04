@@ -21,10 +21,10 @@ import { Formik, Field } from 'formik';
 import { Grid, Button } from 'pouncejs';
 import mapValues from 'lodash-es/mapValues';
 import map from 'lodash-es/map';
-import FormikTextInput from 'Components/fields/text-input';
-import FormikTextArea from 'Components/fields/textarea';
-import FormikCombobox from 'Components/fields/combobox';
-import FormikMultiCombobox from 'Components/fields/multi-combobox';
+import FormikTextInput from 'Components/Fields/text-input';
+import FormikTextArea from 'Components/Fields/textarea';
+import FormikCombobox from 'Components/Fields/combobox';
+import FormikMultiCombobox from 'Components/Fields/multi-combobox';
 
 interface FiltersGroupData<T> {
   /** The component to render for this particular form entry */

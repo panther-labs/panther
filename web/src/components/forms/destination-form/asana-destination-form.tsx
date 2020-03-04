@@ -19,14 +19,14 @@
 import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
-import FormikTextInput from 'Components/fields/text-input';
+import FormikTextInput from 'Components/Fields/text-input';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/common/base-destination-form';
 import { isNumber } from 'Helpers/utils';
-import FormikMultiCombobox from 'Components/fields/multi-combobox';
+import FormikMultiCombobox from 'Components/Fields/multi-combobox';
 import { Text } from 'pouncejs';
 
 type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;
@@ -48,7 +48,7 @@ const asanaFieldsValidationSchema = Yup.object().shape({
 });
 
 // @ts-ignore
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
+// We merge the two schemas together: the one deriving from the common Fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
 const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
