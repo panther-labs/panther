@@ -20,76 +20,77 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/Fields/TextInput';
-import { Box, Text } from 'pouncejs';
+import { Text, Box } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/forms/common/base-destination-form';
+} from 'Components/Forms/common/base-destination-form';
 import JsonViewer from 'Components/JsonViewer';
+import { getArnRegexForService } from 'Helpers/utils';
 
-type SQSFieldValues = Pick<DestinationConfigInput, 'sqs'>;
-
-interface SQSDestinationFormProps {
-  initialValues: BaseDestinationFormValues<SQSFieldValues>;
-  onSubmit: (values: BaseDestinationFormValues<SQSFieldValues>) => void;
-}
-
-const sqsFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    sqs: Yup.object().shape({
-      queueUrl: Yup.string()
-        .url('Queue URL must be a valid url')
-        .required('Queue URL is required'),
-    }),
-  }),
-});
-
-const SQS_QUEUE_POLICY = {
+const SNS_TOPIC_POLICY = {
   Version: '2012-10-17',
   Statement: [
     {
       Sid: 'AllowPantherAlarming',
       Effect: 'Allow',
-      Action: 'sqs:SendMessage',
+      Action: 'sns:Publish',
       Principal: {
         AWS: process.env.AWS_ACCOUNT_ID,
       },
-      Resource: '<The ARN of the SQS Queue you are adding as output>',
+      Resource: '<The ARN of the SNS Topic you are adding as the destination>',
     },
   ],
 };
+
+type SNSFieldValues = Pick<DestinationConfigInput, 'sns'>;
+
+interface SNSDestinationFormProps {
+  initialValues: BaseDestinationFormValues<SNSFieldValues>;
+  onSubmit: (values: BaseDestinationFormValues<SNSFieldValues>) => void;
+}
+
+const snsFieldsValidationSchema = Yup.object().shape({
+  outputConfig: Yup.object().shape({
+    sns: Yup.object().shape({
+      topicArn: Yup.string()
+        .matches(getArnRegexForService('SNS'), 'Must be a valid SNS Topic')
+        .required(),
+    }),
+  }),
+});
 
 // @ts-ignore
 // We merge the two schemas together: the one deriving from the common Fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(sqsFieldsValidationSchema);
+const mergedValidationSchema = defaultValidationSchema.concat(snsFieldsValidationSchema);
 
-const SQSDestinationForm: React.FC<SQSDestinationFormProps> = ({ onSubmit, initialValues }) => {
+const SNSDestinationForm: React.FC<SNSDestinationFormProps> = ({ onSubmit, initialValues }) => {
   return (
-    <BaseDestinationForm<SQSFieldValues>
+    <BaseDestinationForm<SNSFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
-        name="outputConfig.sqs.queueUrl"
-        label="Queue URL"
-        placeholder="Where should we send the queue data to?"
+        name="outputConfig.sns.topicArn"
+        label="Topic ARN"
+        placeholder="Where should we publish a notification to?"
         mb={2}
         aria-required
       />
       <Box mb={6}>
         <Text size="small" color="grey400" mb={2}>
-          <b>Note</b>: You would need to allow Panther <b>sqs:SendMessage</b> access to send alert
-          messages to your SQS queue
+          <b>Note</b>: You would need to allow Panther <b>sns:Publish</b> access to send alert
+          messages to your SNS topic
         </Text>
-        <JsonViewer data={SQS_QUEUE_POLICY} collapsed={false} />
+        <JsonViewer data={SNS_TOPIC_POLICY} collapsed={false} />
       </Box>
     </BaseDestinationForm>
   );
 };
 
-export default SQSDestinationForm;
+export default SNSDestinationForm;

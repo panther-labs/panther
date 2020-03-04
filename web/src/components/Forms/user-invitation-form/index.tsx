@@ -23,7 +23,7 @@ import { InviteUserInput } from 'Generated/schema';
 import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
-import BaseUserForm from 'Components/forms/common/base-user-form';
+import BaseUserForm from 'Components/Forms/common/base-user-form';
 
 const INVITE_USER = gql`
   mutation InviteUser($input: InviteUserInput!) {

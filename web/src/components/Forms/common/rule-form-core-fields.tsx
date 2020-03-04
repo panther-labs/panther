@@ -28,8 +28,8 @@ import FormikCombobox from 'Components/Fields/ComboBox';
 import FormikMultiCombobox from 'Components/Fields/MultiComboBox';
 import FormikEditor from 'Components/Fields/Editor';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
-import { RuleFormValues } from 'Components/forms/rule-form';
-import { PolicyFormValues } from 'Components/forms/policy-form';
+import { RuleFormValues } from 'Components/Forms/rule-form';
+import { PolicyFormValues } from 'Components/Forms/policy-form';
 
 export const ruleCoreEditableFields = [
   'body',

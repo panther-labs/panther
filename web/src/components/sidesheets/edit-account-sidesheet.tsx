@@ -17,8 +17,8 @@
  */
 
 import { Box, Heading, SideSheet } from 'pouncejs';
-import EditProfileForm from 'Components/forms/edit-profile-form';
-import ChangePasswordForm from 'Components/forms/change-password-form';
+import EditProfileForm from 'Components/Forms/edit-profile-form';
+import ChangePasswordForm from 'Components/Forms/change-password-form';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 

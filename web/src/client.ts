@@ -23,7 +23,7 @@ import { createAuthLink, AUTH_TYPE } from 'aws-appsync-auth-link';
 import { ErrorResponse, onError } from 'apollo-link-error';
 import Auth from '@aws-amplify/auth';
 import { LocationErrorState } from 'Components/utils/api-error-fallback';
-import { LIST_REMEDIATIONS } from 'Components/forms/policy-form/policy-form-auto-remediation-fields';
+import { LIST_REMEDIATIONS } from 'Components/Forms/policy-form/policy-form-auto-remediation-fields';
 import { logError } from 'Helpers/loggers';
 import { RULE_TEASER } from 'Pages/AlertDetails';
 import Storage from 'Helpers/storage';

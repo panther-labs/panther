@@ -24,20 +24,20 @@ import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/forms/common/base-destination-form';
+} from 'Components/Forms/common/base-destination-form';
 
-type MicrosoftTeamsFieldValues = Pick<DestinationConfigInput, 'msTeams'>;
+type PagerDutyFieldValues = Pick<DestinationConfigInput, 'pagerDuty'>;
 
-interface MicrosoftTeamsDestinationFormProps {
-  initialValues: BaseDestinationFormValues<MicrosoftTeamsFieldValues>;
-  onSubmit: (values: BaseDestinationFormValues<MicrosoftTeamsFieldValues>) => void;
+interface PagerDutyDestinationFormProps {
+  initialValues: BaseDestinationFormValues<PagerDutyFieldValues>;
+  onSubmit: (values: BaseDestinationFormValues<PagerDutyFieldValues>) => void;
 }
 
-const msTeamsFieldsValidationSchema = Yup.object().shape({
+const pagerDutyFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
-    msTeams: Yup.object().shape({
-      webhookURL: Yup.string()
-        .url('Must be a valid webhook URL')
+    pagerDuty: Yup.object().shape({
+      integrationKey: Yup.string()
+        .length(32, 'Must be exactly 32 characters')
         .required(),
     }),
   }),
@@ -47,28 +47,29 @@ const msTeamsFieldsValidationSchema = Yup.object().shape({
 // We merge the two schemas together: the one deriving from the common Fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(msTeamsFieldsValidationSchema);
+const mergedValidationSchema = defaultValidationSchema.concat(pagerDutyFieldsValidationSchema);
 
-const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps> = ({
+const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
   return (
-    <BaseDestinationForm<MicrosoftTeamsFieldValues>
+    <BaseDestinationForm<PagerDutyFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
-        name="outputConfig.msTeams.webhookURL"
-        label="Microsoft Teams Webhook URL"
-        placeholder="Where should we send a push notification to?"
+        name="outputConfig.pagerDuty.integrationKey"
+        label="Integration Key"
+        placeholder="What's your PagerDuty Integration Key?"
         mb={6}
         aria-required
+        autoComplete="new-password"
       />
     </BaseDestinationForm>
   );
 };
 
-export default MicrosoftTeamsDestinationForm;
+export default PagerDutyDestinationForm;

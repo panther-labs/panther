@@ -24,24 +24,20 @@ import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/forms/common/base-destination-form';
-import { isNumber } from 'Helpers/utils';
-import FormikMultiCombobox from 'Components/Fields/MultiComboBox';
-import { Text } from 'pouncejs';
+} from 'Components/Forms/common/base-destination-form';
 
-type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;
+type MicrosoftTeamsFieldValues = Pick<DestinationConfigInput, 'msTeams'>;
 
-interface AsanaDestinationFormProps {
-  initialValues: BaseDestinationFormValues<AsanaFieldValues>;
-  onSubmit: (values: BaseDestinationFormValues<AsanaFieldValues>) => void;
+interface MicrosoftTeamsDestinationFormProps {
+  initialValues: BaseDestinationFormValues<MicrosoftTeamsFieldValues>;
+  onSubmit: (values: BaseDestinationFormValues<MicrosoftTeamsFieldValues>) => void;
 }
 
-const asanaFieldsValidationSchema = Yup.object().shape({
+const msTeamsFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
-    asana: Yup.object().shape({
-      personalAccessToken: Yup.string().required(),
-      projectGids: Yup.array()
-        .of(Yup.number())
+    msTeams: Yup.object().shape({
+      webhookURL: Yup.string()
+        .url('Must be a valid webhook URL')
         .required(),
     }),
   }),
@@ -51,41 +47,28 @@ const asanaFieldsValidationSchema = Yup.object().shape({
 // We merge the two schemas together: the one deriving from the common Fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
+const mergedValidationSchema = defaultValidationSchema.concat(msTeamsFieldsValidationSchema);
 
-const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, initialValues }) => {
+const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps> = ({
+  onSubmit,
+  initialValues,
+}) => {
   return (
-    <BaseDestinationForm<AsanaFieldValues>
+    <BaseDestinationForm<MicrosoftTeamsFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
-        name="outputConfig.asana.personalAccessToken"
-        label="Access Token"
-        placeholder="Your personal Asana access token"
+        name="outputConfig.msTeams.webhookURL"
+        label="Microsoft Teams Webhook URL"
+        placeholder="Where should we send a push notification to?"
         mb={6}
         aria-required
       />
-      <Field
-        name="outputConfig.asana.projectGids"
-        as={FormikMultiCombobox}
-        label="Project GIDs"
-        aria-required
-        allowAdditions
-        validateAddition={isNumber}
-        searchable
-        items={[]}
-        inputProps={{
-          placeholder: 'The GIDs of the projects that will receive the task',
-        }}
-      />
-      <Text size="small" color="grey200" mt={2}>
-        Add by pressing the {'<'}Enter{'>'} key
-      </Text>
     </BaseDestinationForm>
   );
 };
 
-export default AsanaDestinationForm;
+export default MicrosoftTeamsDestinationForm;

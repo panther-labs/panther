@@ -20,7 +20,7 @@ import React from 'react';
 import { Modal, Text, Box, useSnackbar, Alert } from 'pouncejs';
 import { gql, useMutation } from '@apollo/client';
 import useModal from 'Hooks/useModal';
-import AnalyticsConsentForm from 'Components/forms/analytics-consent-form';
+import AnalyticsConsentForm from 'Components/Forms/analytics-consent-form';
 import { extractErrorMessage } from 'Helpers/utils';
 import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 

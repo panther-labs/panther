@@ -20,7 +20,7 @@ import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
-import PolicyForm from 'Components/forms/policy-form';
+import PolicyForm from 'Components/Forms/policy-form';
 import { GetPolicyInput, PolicyDetails, ResourceDetails } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';

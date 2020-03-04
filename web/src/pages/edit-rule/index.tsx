@@ -19,7 +19,7 @@
 import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Button, Card, Box } from 'pouncejs';
-import RuleForm from 'Components/forms/rule-form';
+import RuleForm from 'Components/Forms/rule-form';
 import { GetRuleInput, RuleDetails } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { useMutation, useQuery, gql } from '@apollo/client';

@@ -25,7 +25,7 @@ import { DestinationConfigInput, JiraIssueTypesEnum } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/forms/common/base-destination-form';
+} from 'Components/Forms/common/base-destination-form';
 
 type JiraFieldValues = Pick<DestinationConfigInput, 'jira'>;
 

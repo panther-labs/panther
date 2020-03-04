@@ -24,7 +24,7 @@ import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/forms/common/base-destination-form';
+} from 'Components/Forms/common/base-destination-form';
 
 type SlackFieldValues = Pick<DestinationConfigInput, 'slack'>;
 
