@@ -66,34 +66,34 @@ func Setup() {
 }
 
 // Token used for paginating through the events in an alert
-type eventPaginationToken struct {
-	logTypeToToken map[string]*logTypeToken
+type EventPaginationToken struct {
+	LogTypeToToken map[string]*LogTypeToken `json:"logTypeToToken"`
 }
 
 // Token used for paginating in the events of a specific log type
-type logTypeToken struct {
-	s3ObjectKey *string
-	eventIndex  *int
+type LogTypeToken struct {
+	S3ObjectKey string `json:"s3ObjectKey"`
+	EventIndex  int    `json:"eventIndex"`
 }
 
-func newPaginationToken() *eventPaginationToken {
-	return &eventPaginationToken{logTypeToToken: make(map[string]*logTypeToken)}
+func newPaginationToken() *EventPaginationToken {
+	return &EventPaginationToken{LogTypeToToken: make(map[string]*LogTypeToken)}
 }
 
-func (pt *eventPaginationToken) encode() (string, error) {
-	marshalled, err := jsoniter.Marshal(pt)
+func (t *EventPaginationToken) encode() (string, error) {
+	marshaled, err := jsoniter.Marshal(t)
 	if err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.EncodeToString(marshalled), nil
+	return base64.URLEncoding.EncodeToString(marshaled), nil
 }
 
-func decodePaginationToken(token string) (*eventPaginationToken, error) {
+func decodePaginationToken(token string) (*EventPaginationToken, error) {
 	unmarshalled, err := base64.URLEncoding.DecodeString(token)
 	if err != nil {
 		return nil, err
 	}
-	result := &eventPaginationToken{}
+	result := &EventPaginationToken{}
 	if err = jsoniter.Unmarshal(unmarshalled, result); err != nil {
 		return nil, err
 	}
