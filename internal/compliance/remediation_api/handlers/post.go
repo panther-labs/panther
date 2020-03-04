@@ -28,6 +28,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/remediation/models"
+	"github.com/panther-labs/panther/internal/compliance/remediation_api/remediation"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -39,9 +40,12 @@ func RemediateResource(request *events.APIGatewayProxyRequest) *events.APIGatewa
 		return errorResponse
 	}
 
-	zap.L().Info("invoking remediation synchronously")
+	zap.L().Debug("invoking remediation synchronously")
 
 	if err := invoker.Remediate(remediateResource); err != nil {
+		if err == remediation.RemediationNotFound {
+			return gatewayapi.MarshalResponse(remediation.RemediationNotFound, http.StatusBadRequest)
+		}
 		if _, ok := err.(*genericapi.DoesNotExistError); ok {
 			return gatewayapi.MarshalResponse(RemediationLambdaNotFound, http.StatusNotFound)
 		}
@@ -49,7 +53,7 @@ func RemediateResource(request *events.APIGatewayProxyRequest) *events.APIGatewa
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	zap.L().Info("successfully invoked remediation",
+	zap.L().Debug("successfully invoked remediation",
 		zap.Any("policyId", remediateResource.PolicyID),
 		zap.Any("resourceId", remediateResource.ResourceID))
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
@@ -64,7 +68,7 @@ func RemediateResourceAsync(request *events.APIGatewayProxyRequest) *events.APIG
 		return errorResponse
 	}
 
-	zap.L().Info("sending SQS message to trigger asynchronous remediation")
+	zap.L().Debug("sending SQS message to trigger asynchronous remediation")
 
 	sendMessageRequest := &sqs.SendMessageInput{
 		MessageBody: aws.String(request.Body),
@@ -76,7 +80,7 @@ func RemediateResourceAsync(request *events.APIGatewayProxyRequest) *events.APIG
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	zap.L().Info("successfully triggered asynchronous remediation",
+	zap.L().Debug("successfully triggered asynchronous remediation",
 		zap.Any("policyId", remediateResource.PolicyID),
 		zap.Any("resourceId", remediateResource.ResourceID))
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
@@ -92,5 +96,6 @@ func checkRequest(request *events.APIGatewayProxyRequest) (*models.RemediateReso
 	if err := remediateResource.Validate(nil); err != nil {
 		return nil, badRequest(aws.String(err.Error()))
 	}
+
 	return &remediateResource, nil
 }
