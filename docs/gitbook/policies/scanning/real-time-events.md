@@ -62,7 +62,7 @@ Make sure you have at least one AWS Account Source configured [here](aws-complia
    1. Under `Template source` select `Amazon S3 URL` and paste: `https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml`
    2. Click `Next`
 5. Name the StackSet `panther-real-time-events`
-   1. In the `QueueArn` field, paste the following \(substituting the AWS account ID of the account running panther\):`arn:aws:sqs:<REGION>:<MASTER_ACCOUNT_ID>:panther-aws-events`
+   1. In the `QueueArn` field, paste the following \(substituting the AWS account ID of the account running panther\):`arn:aws:sqs:<REGION>:<MASTER_ACCOUNT_ID>:panther-aws-events-queue`
    2. Click `Next`
 6. Under the Permissions tab, add the following:
    1. IAM admin role name: `PantherCloudFormationStackSetAdminRole`

@@ -192,8 +192,9 @@ func getBucketLocation(s3Svc s3iface.S3API, bucketName *string) *string {
 		return nil
 	}
 
+	// The get-bucket-location API call returns null for buckets in us-east-1. This behavior is not documented by AWS.
 	if out.LocationConstraint == nil {
-		return nil
+		return aws.String("us-east-1")
 	}
 
 	return out.LocationConstraint

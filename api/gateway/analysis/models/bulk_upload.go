@@ -39,7 +39,7 @@ type BulkUpload struct {
 
 	// user Id
 	// Required: true
-	UserID UserID `json:"userId"`
+	UserID UserID `json:"userId" validate:"required,uuid4"`
 }
 
 // Validate validates this bulk upload

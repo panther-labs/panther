@@ -188,7 +188,8 @@ func TestGetRemediations(t *testing.T) {
 	assert.Equal(t, remediation, result)
 }
 
-func TestDoNotTakeActionIfNoRemediationConfigured(t *testing.T) {
+func TestRemediationNotFoundErrorIfNoRemediationConfigured(t *testing.T) {
+	mockClient := &mockLambdaClient{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
@@ -204,8 +205,10 @@ func TestDoNotTakeActionIfNoRemediationConfigured(t *testing.T) {
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
 
 	result := remediator.Remediate(input)
-	assert.NoError(t, result)
+	assert.Error(t, result)
+	assert.Equal(t, RemediationNotFound, result)
 
+	mockClient.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }
 
