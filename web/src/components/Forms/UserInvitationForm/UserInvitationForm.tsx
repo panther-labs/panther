@@ -20,7 +20,7 @@ import * as React from 'react';
 import { useMutation, gql } from '@apollo/client';
 import { Alert, Box, useSnackbar } from 'pouncejs';
 import { InviteUserInput } from 'Generated/schema';
-import { LIST_USERS } from 'Pages/users/subcomponents/list-users-table';
+import { LIST_USERS } from 'Pages/Users/ListUsersTable';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
 import BaseUserForm from 'Components/Forms/common/base-user-form';

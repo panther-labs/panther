@@ -104,7 +104,7 @@ interface DestinationMutationInput {
 }
 
 // Normally the `destination` doesn't contain the severities, but because we receive it as a prop
-// from the destinations table, we are able to access a `defaultForSeverities` key that the table
+// from the Destinations table, we are able to access a `defaultForSeverities` key that the table
 // has assigned for us. Thus the `destination` that we actually received in enhanced with this
 // property.
 export interface UpdateDestinationSidesheetProps {
@@ -140,7 +140,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
       await updateDestination({
         variables: {
           input: {
-            // static form values that are present on all destinations
+            // static form values that are present on all Destinations
             displayName,
             defaultForSeverity,
 

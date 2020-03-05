@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { LIST_POLICIES } from 'Pages/list-policies';
+import { LIST_POLICIES } from 'Pages/ListPolicies';
 import { DeletePolicyInput, PolicySummary, PolicyDetails } from 'Generated/schema';
 
 import { useMutation, gql } from '@apollo/client';

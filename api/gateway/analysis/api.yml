@@ -120,7 +120,7 @@ paths:
         500:
           description: Internal server error
 
-    # When users create a new policy, the frontend uses this endpoint.
+    # When Users create a new policy, the frontend uses this endpoint.
     #
     # This is almost identical to updating a policy, except the policyId must not already exist.
     #
@@ -488,7 +488,7 @@ paths:
           description: Internal server error
 
   /update:
-    # When users edit a policy, the frontend sends the changes to this endpoint.
+    # When Users edit a policy, the frontend sends the changes to this endpoint.
     #
     # This is almost identical to creating a policy, except the policyId must already exist.
     # NOTE: we can't use PATCH because of a limitation in AppSync.

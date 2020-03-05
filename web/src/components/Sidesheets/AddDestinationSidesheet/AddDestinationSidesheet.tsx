@@ -40,7 +40,7 @@ import {
   SNSDestinationForm,
   SQSDestinationForm,
 } from 'Components/Forms/DestinationForm';
-import { LIST_DESTINATIONS, ListDestinationsQueryData } from 'Pages/destinations';
+import { LIST_DESTINATIONS, ListDestinationsQueryData } from 'Pages/Destinations';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 
 const ADD_DESTINATION = gql`
@@ -138,7 +138,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
       await addDestination({
         variables: {
           input: {
-            // form values that are present in all destinations
+            // form values that are present in all Destinations
             displayName,
             defaultForSeverity,
 

@@ -18,8 +18,8 @@
 
 import React from 'react';
 import { Integration } from 'Generated/schema';
-import { LIST_INFRA_SOURCES } from 'Pages/list-compliance-sources/subcomponents/compliance-source-table';
-import { LIST_LOG_SOURCES } from 'Pages/list-log-sources/subcomponents/log-source-table';
+import { LIST_INFRA_SOURCES } from 'Pages/ListComplianceSources/ComplianceSourceTable/ComplianceSourceTable';
+import { LIST_LOG_SOURCES } from 'Pages/ListLogSources/LogSourceTable';
 import { useMutation, gql } from '@apollo/client';
 import { INTEGRATION_TYPES } from 'Source/constants';
 import BaseConfirmModal from 'Components/Modals/base-confirm-modal';

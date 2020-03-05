@@ -45,7 +45,7 @@ const GuardedRoute: React.FC<GuardedRouteProps> = ({ limitAccessTo, ...rest }) =
   // Ok so, the following lines are not as simple as they appear.
   let redirectData: { pathname: string; state: { referrer: Location } };
 
-  // This one simply redirects the user to the sign-in page and adds a referrer page to return
+  // This one simply redirects the user to the SignIn page and adds a referrer page to return
   // back to when the user becomes authenticated. It's as simple as it appears. User went to access
   // a protected page and the page went "buddy gimme some creds first"
   if (limitAccessTo === 'authenticated') {
@@ -55,12 +55,12 @@ const GuardedRoute: React.FC<GuardedRouteProps> = ({ limitAccessTo, ...rest }) =
     };
     // This one means that an authenticated user is trying to access an anonymous only page. What we
     // do is redirect them to a referrer page if it existed or just the base page. Now why the
-    // referrer? Because when the user signs in, he's still in the sign-in page which suddenly
+    // referrer? Because when the user signs in, he's still in the SignIn page which suddenly
     // denied access to him because the "guarded-route" said "hey buddy you are now authenticated,
-    // you can't be accessing the sign-in page". The user said though "but I literally just signed-
+    // you can't be accessing the SignIn page". The user said though "but I literally just signed-
     // in, where else could I be?!". Because both of these people are right, we redirect the user
     // to the referrer *if it exists* (a.k.a. if he just signed in) or the home page if he's just
-    // plain stupid and manually went to the sign-in page through the URL bar (in which case no
+    // plain stupid and manually went to the SignIn page through the URL bar (in which case no
     // referrer will exist)
   } else {
     redirectData = {

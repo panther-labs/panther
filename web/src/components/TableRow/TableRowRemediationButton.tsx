@@ -21,8 +21,8 @@ import { Button, ButtonProps, useSnackbar } from 'pouncejs';
 import { useMutation, gql } from '@apollo/client';
 
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import { RESOURCE_DETAILS } from 'Pages/resource-details';
-import { POLICY_DETAILS } from 'Pages/policy-details';
+import { RESOURCE_DETAILS } from 'Pages/ResourceDetails';
+import { POLICY_DETAILS } from 'Pages/PolicyDetails';
 import { ResourceDetails, RemediateResourceInput, PolicyDetails } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 

@@ -115,7 +115,7 @@ Resources:
       Type: AWS_LAMBDA
       ServiceRoleArn: !GetAtt AppsyncServiceRole.Arn
       LambdaConfig:
-        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-Users-api
 
   DestinationsAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
@@ -288,7 +288,7 @@ Resources:
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Query
-      FieldName: users
+      FieldName: Users
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
@@ -360,7 +360,7 @@ Resources:
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Query
-      FieldName: destinations
+      FieldName: Destinations
       DataSourceName: !GetAtt DestinationsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {

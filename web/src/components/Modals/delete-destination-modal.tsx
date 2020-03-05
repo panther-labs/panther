@@ -19,7 +19,7 @@
 import React from 'react';
 import { Destination } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
-import { LIST_DESTINATIONS } from 'Pages/destinations';
+import { LIST_DESTINATIONS } from 'Pages/Destinations';
 import BaseConfirmModal from 'Components/Modals/base-confirm-modal';
 
 const DELETE_DESTINATION = gql`
