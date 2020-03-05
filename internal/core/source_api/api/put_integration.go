@@ -59,7 +59,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) ([]*models.Sour
 	}
 
 	// Filter out existing integrations
-	integrations, err := api.filterExistingIntegrations(input.Integrations)
+	integrations, err := api.filterOutExistingIntegrations(input.Integrations)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) ([]*models.Sour
 	return newIntegrations, err
 }
 
-func (api API) filterExistingIntegrations(inputIntegrations []*models.PutIntegrationSettings) (
+func (api API) filterOutExistingIntegrations(inputIntegrations []*models.PutIntegrationSettings) (
 	existingIntegrations []*models.PutIntegrationSettings, err error) {
 
 	// avoid inserting if already done

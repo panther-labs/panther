@@ -164,15 +164,11 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (bo
 	passing = passing && (!aws.BoolValue(integration.EnableCWESetup) || aws.BoolValue(status.CWERoleStatus.Healthy))
 
 	// For these two, we are ok if none are set or all are passing
-	if len(integration.S3Buckets) > 0 {
-		for _, bucket := range status.S3BucketsStatus {
-			passing = passing && aws.BoolValue(bucket.Healthy)
-		}
+	for _, bucket := range status.S3BucketsStatus {
+		passing = passing && aws.BoolValue(bucket.Healthy)
 	}
-	if len(integration.KmsKeys) > 0 {
-		for _, key := range status.KMSKeysStatus {
-			passing = passing && aws.BoolValue(key.Healthy)
-		}
+	for _, key := range status.KMSKeysStatus {
+		passing = passing && aws.BoolValue(key.Healthy)
 	}
 
 	return passing, nil
