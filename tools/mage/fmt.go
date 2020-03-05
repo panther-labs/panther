@@ -58,12 +58,12 @@ func Fmt() {
 	}
 
 	// prettier (web)
-	args = []string{"--write", "{web/src/**,web/__generated__,.}/*.{ts,js,tsx,md,json,yml}"}
+	args = []string{"--write", "**/*.{ts,js,tsx,md,json,yaml,yml}"}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
 	}
 	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format {web/src/**,.}: %v", err)
+		logger.Fatalf("failed to format: %v", err)
 	}
 
 	// Generate documentation
