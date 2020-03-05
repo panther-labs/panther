@@ -53,7 +53,7 @@ type deleteStackResult struct {
 func Teardown() {
 	awsSession := teardownConfirmation()
 
-	// Find CloudFormation-managed resources we may need to modify manually
+	// Find CloudFormation-managed resources we may need to modify manually.
 	//
 	// This is safer than listing the services directly (e.g. find all "panther-" S3 buckets),
 	// because we can prove the resource is part of a Panther-deployed CloudFormation stack.
@@ -77,16 +77,15 @@ func Teardown() {
 		logger.Fatal(err)
 	}
 
-	// Some resources must be destroyed directly before deleting their parent CFN stacks.
+	// CFN can't delete non-empty ECR repos, so we just forcefully delete them here.
 	destroyEcrRepos(awsSession, ecrRepos)
-	// stopEcsServices(awsSession, ecsClusters)
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
-	// We destroy the buckets before the stacks because after the stacks are destroyed, we will lose
+	// We destroy the buckets first because after the stacks are destroyed we will lose
 	// knowledge of which buckets belong to Panther.
 	destroyPantherBuckets(awsSession, s3Buckets)
 
-	// Delete all CloudFormation stacks in parallel.
+	// Delete all CloudFormation stacks.
 	cfnErr := destroyCfnStacks(awsSession)
 
 	// We have to continue even if there was an error deleting the stacks because we read the names
@@ -104,7 +103,7 @@ func Teardown() {
 	// Remove self-signed certs that may have been uploaded.
 	//
 	// Certs can only be deleted if they aren't in use, so don't try unless the stacks deleted successfully.
-	// Certificates are not managed with CloudFormation, so we have to list them explicitly.
+	// Certificates are not managed with CloudFormation, we have to list them explicitly.
 	destroyCerts(awsSession)
 	logger.Info("successfully removed Panther infrastructure")
 }
@@ -136,7 +135,8 @@ func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
 	for _, repo := range repoNames {
 		logger.Infof("removing ECR repository %s", *repo)
 		if _, err := client.DeleteRepository(&ecr.DeleteRepositoryInput{
-			Force:          aws.Bool(true), // remove images as well
+			// Force:true to remove images as well (easier than emptying the repo explicitly)
+			Force:          aws.Bool(true),
 			RepositoryName: repo,
 		}); err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "RepositoryNotFoundException" {
@@ -148,7 +148,7 @@ func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
 	}
 }
 
-// Destroy CloudFormation stacks in parallel
+// Destroy all Panther CloudFormation stacks
 func destroyCfnStacks(awsSession *session.Session) error {
 	results := make(chan deleteStackResult)
 	client := cloudformation.New(awsSession)
@@ -348,10 +348,10 @@ func canRemoveAcmCert(client *acm.ACM, summary *acm.CertificateSummary) bool {
 		return false
 	}
 
-	arn := summary.CertificateArn
-	tags, err := client.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: arn})
+	certArn := summary.CertificateArn
+	tags, err := client.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: certArn})
 	if err != nil {
-		logger.Fatalf("failed to list tags for ACM cert %s: %v", *arn, err)
+		logger.Fatalf("failed to list tags for ACM cert %s: %v", *certArn, err)
 	}
 
 	for _, tag := range tags.Tags {
