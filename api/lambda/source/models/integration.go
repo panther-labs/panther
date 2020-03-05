@@ -77,5 +77,5 @@ type SourceIntegrationItemStatus struct {
 }
 
 type SourceIntegrationTemplate struct {
-	Body []byte `json:"body"`
+	Body *string `json:"body"`
 }

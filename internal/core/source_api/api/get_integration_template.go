@@ -64,7 +64,7 @@ type templateCacheItem struct {
 	Body      []byte
 }
 
-// CheckIntegration adds a set of new integrations in a batch.
+// GetIntegrationTemplate generates a new satellite account CloudFormation template based on the given parameters.
 func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*models.SourceIntegrationTemplate, error) {
 	zap.L().Debug("constructing source template")
 
@@ -91,7 +91,7 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 		[]byte(fmt.Sprintf(kmsKeyReplace, strings.Join(sliceStringValue(input.KmsKeys), ","))), 1)
 
 	return &models.SourceIntegrationTemplate{
-		Body: formattedTemplate,
+		Body: aws.String(string(formattedTemplate)),
 	}, nil
 }
 
@@ -111,7 +111,9 @@ func getTemplate(integrationType *string) ([]byte, error) {
 	}
 
 	// Get the template from Panther's public S3 bucket
-	s3Svc := s3.New(sess)
+	s3Svc := s3.New(sess, &aws.Config{
+		Region: aws.String("us-west-2"),
+	})
 	templateRequest := &s3.GetObjectInput{
 		Bucket: aws.String(TemplateBucket),
 	}
