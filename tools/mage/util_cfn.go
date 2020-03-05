@@ -62,7 +62,7 @@ func flattenStackOutputs(detail *cfn.DescribeStacksOutput) map[string]string {
 func walkStacks(client *cfn.CloudFormation, handler func(cfnResource)) error {
 	logger.Info("scanning Panther CloudFormation stacks")
 	for _, stack := range allStacks {
-		if err := walkStack(client, &stack, handler); err != nil {
+		if err := walkStack(client, aws.String(stack), handler); err != nil {
 			return err
 		}
 	}

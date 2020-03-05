@@ -33,9 +33,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/iam"
 )
 
@@ -68,33 +66,35 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 	}
 
 	logger.Infof("deploy: uploading load balancer certificate %s with key %s", certificateFile, privateKeyFile)
+	return uploadIAMCertificate(awsSession)
 
+	// TODO - revert
 	// Check if the ACM service is supported before tossing the private key out into the ether
-	acmClient := acm.New(awsSession)
-	if _, err := acmClient.ListCertificates(&acm.ListCertificatesInput{MaxItems: aws.Int64(1)}); err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "SubscriptionRequiredException" {
-			// ACM is not supported in this region or for this user, fall back to IAM
-			logger.Warn("deploy: ACM not supported, falling back to IAM for certificate management")
-			return uploadIAMCertificate(awsSession)
-		}
-		logger.Fatalf("failed to list certificates: %v", err)
-	}
-
-	output, err := acmClient.ImportCertificate(&acm.ImportCertificateInput{
-		Certificate: readFile(certificateFile),
-		PrivateKey:  readFile(privateKeyFile),
-		Tags: []*acm.Tag{
-			{
-				Key:   aws.String("Application"),
-				Value: aws.String("Panther"),
-			},
-		},
-	})
-	if err != nil {
-		logger.Fatalf("ACM certificate import failed: %v", err)
-	}
-
-	return *output.CertificateArn
+	//acmClient := acm.New(awsSession)
+	//if _, err := acmClient.ListCertificates(&acm.ListCertificatesInput{MaxItems: aws.Int64(1)}); err != nil {
+	//	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "SubscriptionRequiredException" {
+	//		// ACM is not supported in this region or for this user, fall back to IAM
+	//		logger.Warn("deploy: ACM not supported, falling back to IAM for certificate management")
+	//		return uploadIAMCertificate(awsSession)
+	//	}
+	//	logger.Fatalf("failed to list certificates: %v", err)
+	//}
+	//
+	//output, err := acmClient.ImportCertificate(&acm.ImportCertificateInput{
+	//	Certificate: readFile(certificateFile),
+	//	PrivateKey:  readFile(privateKeyFile),
+	//	Tags: []*acm.Tag{
+	//		{
+	//			Key:   aws.String("Application"),
+	//			Value: aws.String("Panther"),
+	//		},
+	//	},
+	//})
+	//if err != nil {
+	//	logger.Fatalf("ACM certificate import failed: %v", err)
+	//}
+	//
+	//return *output.CertificateArn
 }
 
 // getExistingCertificate checks to see if there is already an ACM/IAM certificate configured
