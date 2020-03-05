@@ -27,7 +27,7 @@ import {
   SortDirEnum,
   ListPoliciesSortFieldsEnum,
 } from 'Generated/schema';
-import TablePaginationControls from 'Components/Utils/table-pagination-controls';
+import { TableControlsPagination } from 'Components/Utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
@@ -118,7 +118,7 @@ const ListPolicies = () => {
         </Card>
       </ErrorBoundary>
       <Box my={6}>
-        <TablePaginationControls
+        <TableControlsPagination
           page={pagingData.thisPage}
           totalPages={pagingData.totalPages}
           onPageChange={updatePagingParams}

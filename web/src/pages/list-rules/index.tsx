@@ -28,7 +28,7 @@ import {
   ListRulesSortFieldsEnum,
 } from 'Generated/schema';
 
-import TablePaginationControls from 'Components/Utils/table-pagination-controls';
+import { TableControlsPagination } from 'Components/Utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash-es/isEmpty';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -122,7 +122,7 @@ const ListRules = () => {
         </Card>
       </ErrorBoundary>
       <Box my={5}>
-        <TablePaginationControls
+        <TableControlsPagination
           page={pagingData.thisPage}
           totalPages={pagingData.totalPages}
           onPageChange={updatePagingParams}

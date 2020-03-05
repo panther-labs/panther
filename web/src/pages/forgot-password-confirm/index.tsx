@@ -20,7 +20,7 @@ import React from 'react';
 import Banner from 'Assets/sign-up-banner.jpg';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import queryString from 'query-string';
-import ForgotPasswordConfirmForm from 'Components/Forms/forgot-password-confirm-form';
+import ForgotPasswordConfirmForm from 'Components/Forms/ForgotPasswordConfirmForm';
 import useRouter from 'Hooks/useRouter';
 
 const ForgotPasswordConfirmPage: React.FC = () => {

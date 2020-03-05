@@ -23,8 +23,8 @@ import { formatJSON } from 'Helpers/utils';
 import { testEditableFields } from 'Components/Forms/common/rule-form-test-fields';
 import { useSnackbar } from 'pouncejs';
 import { PolicyDetails, RuleDetails } from 'Generated/schema';
-import { policyEditableFields } from 'Components/Forms/policy-form';
-import { ruleEditableFields } from 'Components/Forms/rule-form';
+import { policyEditableFields } from 'Components/Forms/PolicyForm';
+import { ruleEditableFields } from 'Components/Forms/RuleForm';
 import { ruleCoreEditableFields } from 'Components/Forms/common/rule-form-core-fields';
 
 interface UseEditRuleProps<T> {

@@ -29,8 +29,10 @@ import {
 } from 'Generated/schema';
 import { Alert, Box } from 'pouncejs';
 import Panel from 'Components/Panel';
-import TablePaginationControls from 'Components/Utils/table-pagination-controls';
-import TableComplianceFilterControl from 'Components/Utils/table-compliance-filter-control';
+import {
+  TableControlsPagination,
+  TableControlsComplianceFilter,
+} from 'Components/Utils/TableControls';
 import {
   extendResourceWithIntegrationLabel,
   getComplianceItemsTotalCount,
@@ -178,7 +180,7 @@ const PolicyDetailsPage = () => {
           title="Resources"
           actions={
             <Box ml={6} mr="auto">
-              <TableComplianceFilterControl
+              <TableControlsComplianceFilter
                 mr={1}
                 count={getComplianceItemsTotalCount(totalCounts)}
                 text="All"
@@ -187,7 +189,7 @@ const PolicyDetailsPage = () => {
                   setRequestParamsAndResetPaging({ status: undefined, suppressed: undefined })
                 }
               />
-              <TableComplianceFilterControl
+              <TableControlsComplianceFilter
                 mr={1}
                 count={totalCounts.active.fail}
                 countColor="red300"
@@ -200,7 +202,7 @@ const PolicyDetailsPage = () => {
                   })
                 }
               />
-              <TableComplianceFilterControl
+              <TableControlsComplianceFilter
                 mr={1}
                 countColor="green300"
                 count={totalCounts.active.pass}
@@ -213,7 +215,7 @@ const PolicyDetailsPage = () => {
                   })
                 }
               />
-              <TableComplianceFilterControl
+              <TableControlsComplianceFilter
                 mr={1}
                 countColor="orange300"
                 count={
@@ -241,7 +243,7 @@ const PolicyDetailsPage = () => {
             />
           </ErrorBoundary>
           <Box my={6}>
-            <TablePaginationControls
+            <TableControlsPagination
               page={pagingData.thisPage}
               totalPages={pagingData.totalPages}
               onPageChange={updatePagingParams}

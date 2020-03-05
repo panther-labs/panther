@@ -22,7 +22,7 @@ import { useQuery, gql, useMutation } from '@apollo/client';
 import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
-import CompanyInformationForm from 'Components/Forms/company-information-form';
+import CompanyInformationForm from 'Components/Forms/CompanyInformationForm';
 import Panel from 'Components/Panel';
 import GeneralSettingsPageSkeleton from './skeleton';
 

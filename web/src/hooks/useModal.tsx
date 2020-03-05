@@ -18,7 +18,7 @@
 
 /* A hook for getting access to the context value */
 import React from 'react';
-import { ModalContext } from 'Components/Utils/modal-context';
+import { ModalContext } from 'Components/Utils/Modal';
 
 const useModal = () => React.useContext(ModalContext);
 

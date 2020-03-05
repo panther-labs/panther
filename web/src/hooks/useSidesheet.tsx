@@ -18,7 +18,7 @@
 
 /* A hook for getting access to the context value */
 import React from 'react';
-import { SidesheetContext } from 'Components/Utils/sidesheet-context';
+import { SidesheetContext } from 'Components/Utils/Sidesheet';
 
 const useSidesheet = () => React.useContext(SidesheetContext);
 

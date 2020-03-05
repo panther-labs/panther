@@ -22,7 +22,7 @@ import useRouter from 'Hooks/useRouter';
 import { RuleSummary } from 'Generated/schema';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
-import { MODALS } from 'Components/Utils/modal-context';
+import { MODALS } from 'Components/Utils/Modal';
 
 interface ListPoliciesTableRowOptionsProps {
   rule: RuleSummary;

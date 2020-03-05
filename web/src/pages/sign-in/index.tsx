@@ -22,12 +22,12 @@ import urls from 'Source/urls';
 import { Link } from 'react-router-dom';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import Banner from 'Assets/sign-in-banner.jpg';
-import SetPasswordForm from 'Components/Forms/set-password-form';
-import MfaForm from 'Components/Forms/mfa-form';
-import TotpForm from 'Components/Forms/totp-form';
-import SignInForm from 'Components/Forms/signin-form';
+import SetPasswordForm from 'Components/Forms/SetPasswordForm';
+import MfaForm from 'Components/Forms/MfaForm';
+import TotpForm from 'Components/Forms/TotpForm';
+import SignInForm from 'Components/Forms/SigninForm';
 import useAuth from 'Hooks/useAuth';
-import { CHALLENGE_NAMES } from 'Components/Utils/auth-context';
+import { CHALLENGE_NAMES } from 'Components/Utils/AuthContext';
 
 /**
  * This page is only visitable by non-auth users (since it's sitting behind a guarded route). Thus,

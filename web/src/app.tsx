@@ -22,11 +22,9 @@ import { Router } from 'react-router-dom';
 import Routes from 'Source/routes';
 import { History } from 'history';
 import { ApolloProvider } from '@apollo/client';
-import { AuthProvider } from 'Components/Utils/auth-context';
-import { ModalProvider } from 'Components/Utils/modal-context';
-import { SidesheetProvider } from 'Components/Utils/sidesheet-context';
-import ModalManager from 'Components/Utils/modal-manager';
-import SidesheetManager from 'Components/Utils/sidesheet-manager';
+import { AuthProvider } from 'Components/Utils/AuthContext';
+import { ModalProvider, ModalManager } from 'Components/Utils/Modal';
+import { SidesheetProvider, SidesheetManager } from 'Components/Utils/Sidesheet';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import createApolloClient from 'Source/client';
 

@@ -21,8 +21,8 @@ import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
 import useSidesheet from 'Hooks/useSidesheet';
 import { Integration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
-import { MODALS } from 'Components/Utils/modal-context';
-import { SIDESHEETS } from 'Components/Utils/sidesheet-context';
+import { MODALS } from 'Components/Utils/Modal';
+import { SIDESHEETS } from 'Components/Utils/Sidesheet';
 
 interface ComplianceSourceTableRowOptionsProps {
   source: Integration;

@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { SeverityEnum, ListRulesInput } from 'Generated/schema';
-import GenerateFiltersGroup from 'Components/Utils/generate-filters-group';
+import GenerateFiltersGroup from 'Components/Utils/GenerateFiltersGroup';
 import { capitalize } from 'Helpers/utils';
 import { LOG_TYPES } from 'Source/constants';
 import FormikCombobox from 'Components/Fields/ComboBox';

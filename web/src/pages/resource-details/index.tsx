@@ -37,8 +37,10 @@ import {
   extractErrorMessage,
 } from 'Helpers/utils';
 import { Alert, Box } from 'pouncejs';
-import TablePaginationControls from 'Components/Utils/table-pagination-controls';
-import TableComplianceFilterControl from 'Components/Utils/table-compliance-filter-control';
+import {
+  TableControlsPagination,
+  TableControlsComplianceFilter,
+} from 'Components/Utils/TableControls';
 import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { DEFAULT_SMALL_PAGE_SIZE, INTEGRATION_TYPES } from 'Source/constants';
@@ -175,7 +177,7 @@ const ResourceDetailsPage = () => {
           title="Policies"
           actions={
             <Box ml={6} mr="auto">
-              <TableComplianceFilterControl
+              <TableControlsComplianceFilter
                 mr={1}
                 count={getComplianceItemsTotalCount(totalCounts)}
                 text="All"
@@ -184,7 +186,7 @@ const ResourceDetailsPage = () => {
                   setRequestParamsAndResetPaging({ status: undefined, suppressed: undefined })
                 }
               />
-              <TableComplianceFilterControl
+              <TableControlsComplianceFilter
                 mr={1}
                 count={totalCounts.active.fail}
                 countColor="red300"
@@ -197,7 +199,7 @@ const ResourceDetailsPage = () => {
                   })
                 }
               />
-              <TableComplianceFilterControl
+              <TableControlsComplianceFilter
                 mr={1}
                 countColor="green300"
                 count={totalCounts.active.pass}
@@ -210,7 +212,7 @@ const ResourceDetailsPage = () => {
                   })
                 }
               />
-              <TableComplianceFilterControl
+              <TableControlsComplianceFilter
                 mr={1}
                 countColor="orange300"
                 count={
@@ -238,7 +240,7 @@ const ResourceDetailsPage = () => {
             />
           </ErrorBoundary>
           <Box my={6}>
-            <TablePaginationControls
+            <TableControlsPagination
               page={pagingData.thisPage}
               totalPages={pagingData.totalPages}
               onPageChange={updatePagingParams}
