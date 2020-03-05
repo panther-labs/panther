@@ -32,8 +32,8 @@ var allStacks = []string{backendStack, bucketStack, monitoringStack, frontendSta
 
 // Summary of a CloudFormation resource and the stack its contained in
 type cfnResource struct {
-	*cfn.StackResourceSummary
-	*cfn.Stack
+	Resource *cfn.StackResourceSummary
+	Stack    *cfn.Stack
 }
 
 // Get CloudFormation stack outputs as a map.
@@ -58,25 +58,20 @@ func flattenStackOutputs(detail *cfn.DescribeStacksOutput) map[string]string {
 	return result
 }
 
-// Return all Panther CloudFormation resources (across all stacks) which match the given filter (optional).
-func findStackResources(client *cfn.CloudFormation, filter func(*cfn.StackResourceSummary) bool) ([]cfnResource, error) {
-	var result []cfnResource
-
+// List all Panther CFN resources (across all stacks) and apply the given handler
+func findStackResources(client *cfn.CloudFormation, handler func(cfnResource)) error {
 	for _, stack := range allStacks {
-		resources, err := stackResources(client, &stack, filter)
-		if err != nil {
-			return nil, err
+		if err := stackResources(client, &stack, handler); err != nil {
+			return err
 		}
-		result = append(result, resources...)
 	}
-
-	return result, nil
+	return nil
 }
 
 // Recursively list resources for a single stack.
 //
-// The stackID can be a name or the full unique arn
-func stackResources(client *cfn.CloudFormation, stackID *string, filter func(*cfn.StackResourceSummary) bool) ([]cfnResource, error) {
+// The stackID can be the stack name or arn.
+func stackResources(client *cfn.CloudFormation, stackID *string, handler func(cfnResource)) error {
 	logger.Debugf("enumerating stack %s", *stackID)
 	detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: stackID})
 	if err != nil {
@@ -84,10 +79,10 @@ func stackResources(client *cfn.CloudFormation, stackID *string, filter func(*cf
 			strings.TrimSpace(awsErr.Message()) == fmt.Sprintf("Stack with id %s does not exist", *stackID) {
 
 			logger.Debugf("stack %s does not exist", *stackID)
-			return nil, nil
+			return nil
 		}
 
-		return nil, fmt.Errorf("failed to describe stack %s: %v", *stackID, err)
+		return fmt.Errorf("failed to describe stack %s: %v", *stackID, err)
 	}
 
 	// Double-check the stack is tagged with Application:Panther
@@ -102,40 +97,33 @@ func stackResources(client *cfn.CloudFormation, stackID *string, filter func(*cf
 
 	if !foundTag {
 		logger.Warnf("skipping stack %s: no 'Application=Panther' tag found", *stackID)
-		return nil, nil
+		return nil
 	}
 
-	// List matching resources
-	var result []cfnResource
+	// List stack resources
 	input := &cfn.ListStackResourcesInput{StackName: stackID}
 	var nestedErr error
 	err = client.ListStackResourcesPages(input, func(page *cfn.ListStackResourcesOutput, isLast bool) bool {
 		for _, summary := range page.StackResourceSummaries {
-			if filter != nil && filter(summary) {
-				result = append(result, cfnResource{StackResourceSummary: summary, Stack: stack})
-			}
-
+			handler(cfnResource{Resource: summary, Stack: stack})
 			if aws.StringValue(summary.ResourceType) == "AWS::CloudFormation::Stack" &&
 				aws.StringValue(summary.ResourceStatus) != "DELETE_COMPLETE" {
 
 				// Recurse into nested stack
-				nested, err := stackResources(client, summary.PhysicalResourceId, filter)
-				if err != nil {
-					nestedErr = err
+				if nestedErr = stackResources(client, summary.PhysicalResourceId, handler); nestedErr != nil {
 					return false // stop paging, handle error outside closure
 				}
-				result = append(result, nested...)
 			}
 		}
 		return true // keep paging
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to list stack resources for %s: %v", *stackID, err)
+		return fmt.Errorf("failed to list stack resources for %s: %v", *stackID, err)
 	}
 	if nestedErr != nil {
-		return nil, nestedErr
+		return nestedErr
 	}
 
-	return result, nil
+	return nil
 }
