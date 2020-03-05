@@ -1,4 +1,6 @@
 # General
+.git/
+.idea
 .setup
 keys
 
