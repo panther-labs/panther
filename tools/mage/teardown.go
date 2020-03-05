@@ -18,11 +18,6 @@ package mage
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO - try deleting frontend cluster first (without waiting for ECS to stop)
-//      - if we keep it, rename `stopEcsService` to `deleteEcsService`
-// TODO - test IAM cert deletion
-// TODO - test failed stack deletion output logging
-
 import (
 	"errors"
 	"fmt"
@@ -30,6 +25,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
@@ -61,8 +57,8 @@ func Teardown() {
 	//
 	// This is safer than listing the services directly (e.g. find all "panther-" S3 buckets),
 	// because we can prove the resource is part of a Panther-deployed CloudFormation stack.
-	var ecrRepos, ecsClusters, s3Buckets []*string // will be deleted manually
-	logGroups := make(map[string]struct{})         // may need to delete again after stacks are destroyed
+	var ecrRepos, s3Buckets []*string      // will be deleted manually
+	logGroups := make(map[string]struct{}) // may need to delete again after stacks are destroyed
 	err := walkStacks(cloudformation.New(awsSession), func(summary cfnResource) {
 		if aws.StringValue(summary.Resource.ResourceStatus) == "DELETE_COMPLETE" {
 			return
@@ -71,9 +67,6 @@ func Teardown() {
 		switch aws.StringValue(summary.Resource.ResourceType) {
 		case "AWS::ECR::Repository":
 			ecrRepos = append(ecrRepos, summary.Resource.PhysicalResourceId)
-		case "AWS::ECS::Cluster":
-			// TODO - not needed if we skip the clusters
-			ecsClusters = append(ecsClusters, summary.Resource.PhysicalResourceId)
 		case "AWS::Logs::LogGroup":
 			logGroups[*summary.Resource.PhysicalResourceId] = struct{}{}
 		case "AWS::S3::Bucket":
@@ -105,7 +98,7 @@ func Teardown() {
 	destroyLogGroups(awsSession, logGroups)
 
 	if cfnErr != nil {
-		logger.Fatalf("some stacks did not finish deleting: %v", cfnErr)
+		logger.Fatal(cfnErr)
 	}
 
 	// Remove self-signed certs that may have been uploaded.
@@ -155,54 +148,6 @@ func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
 	}
 }
 
-// Stop ECS services so CloudFormation can delete the ECS clusters
-//func stopEcsServices(awsSession *session.Session, clusterNames []*string) {
-//	client := ecs.New(awsSession)
-//	// Map cluster names to list of service names we are waiting on
-//	waitInputs := make(map[string][]*string)
-//
-//	for _, cluster := range clusterNames {
-//		listInput := &ecs.ListServicesInput{Cluster: cluster}
-//		err := client.ListServicesPages(listInput, func(page *ecs.ListServicesOutput, isLast bool) bool {
-//			for _, service := range page.ServiceArns {
-//				logger.Infof("stopping ECS service %s in cluster %s", *service, *cluster)
-//				_, err := client.DeleteService(&ecs.DeleteServiceInput{
-//					Cluster: cluster,
-//					Force:   aws.Bool(true), // stop running tasks as well
-//					Service: service,
-//				})
-//				if err != nil {
-//					logger.Fatalf("failed to delete service %s: %v", *service, err)
-//				}
-//
-//				waitInputs[*cluster] = append(waitInputs[*cluster], service)
-//			}
-//			return true // keep paging
-//		})
-//
-//		if err != nil {
-//			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ClusterNotFoundException" {
-//				continue // cluster does not exist
-//			}
-//			logger.Fatalf("failed to list services in ECS cluster %s: %v", *cluster, err)
-//		}
-//	}
-//
-//	// Wait for all the services to stop
-//	if len(waitInputs) > 0 {
-//		logger.Info("waiting for all ECS services to stop")
-//	}
-//	for cluster, services := range waitInputs {
-//		err := client.WaitUntilServicesInactive(&ecs.DescribeServicesInput{
-//			Cluster:  &cluster,
-//			Services: services,
-//		})
-//		if err != nil {
-//			logger.Fatalf("services in ECS cluster %s did not stop successfully: %v", cluster, err)
-//		}
-//	}
-//}
-
 // Destroy CloudFormation stacks in parallel
 func destroyCfnStacks(awsSession *session.Session) error {
 	results := make(chan deleteStackResult)
@@ -212,15 +157,15 @@ func destroyCfnStacks(awsSession *session.Session) error {
 	var errCount int
 	handleResult := func(result deleteStackResult) {
 		if result.err == nil {
-			logger.Infof("%s successfully deleted", result.stackName)
+			logger.Infof("    √ %s successfully deleted", result.stackName)
 			return
 		}
 
-		logger.Errorf("stack %s failed to delete: %v", result.stackName, result.err)
+		logger.Errorf("    - %s failed to delete: %v", result.stackName, result.err)
 		_ = walkStack(client, &result.stackName, func(summary cfnResource) {
 			r := summary.Resource
 			if aws.StringValue(r.ResourceStatus) == "DELETE_FAILED" {
-				logger.Errorf("  %s DELETE_FAILED: %s %s: %s",
+				logger.Errorf("        %s DELETE_FAILED: %s %s: %s",
 					aws.StringValue(r.LogicalResourceId),
 					aws.StringValue(r.ResourceType),
 					aws.StringValue(r.PhysicalResourceId),
@@ -231,14 +176,14 @@ func destroyCfnStacks(awsSession *session.Session) error {
 		errCount++
 	}
 
-	// Delete frontend stack first because the ECS service needs to be stopped
-	// TODO - if this doesn't work, delete all stacks except backend at the same time
+	// Delete frontend stack first because the ECS service needs to completely stop before the
+	// ECS cluster in the backendStack can be deleted.
 	logger.Infof("deleting CloudFormation stack: %s", frontendStack)
 	go deleteStack(client, aws.String(frontendStack), results)
 	handleResult(<-results)
 
 	// Trigger the deletion of the remaining stacks in parallel
-	parallelStacks := []string{backendStack, monitoringStack, databasesStack, bucketStack}
+	parallelStacks := []string{backendStack, monitoringStack, databasesStack, bucketStack, onboardStack}
 	logger.Infof("deleting CloudFormation stacks: %s", strings.Join(parallelStacks, ", "))
 	for _, stack := range parallelStacks {
 		go deleteStack(client, aws.String(stack), results)
@@ -353,8 +298,8 @@ func removeBucket(client *s3.S3, bucketName *string) {
 
 // Destroy Panther ACM or IAM certificates.
 //
-// In ACM, only certs for "example.com" tagged with "Application:Panther" will be deleted.
-// In IAM, only certs in the "/panther/" path whose names start with "PantherCertificate-" will be deleted.
+// In ACM, delete certs for "example.com" tagged with "Application:Panther"
+// In IAM, delete certs in "/panther/" path and the same region whose names start with "PantherCertificate-"
 func destroyCerts(awsSession *session.Session) {
 	logger.Debug("checking for ACM certificates")
 	acmClient := acm.New(awsSession)
@@ -363,10 +308,10 @@ func destroyCerts(awsSession *session.Session) {
 		func(page *acm.ListCertificatesOutput, isLast bool) bool {
 			for _, summary := range page.CertificateSummaryList {
 				if canRemoveAcmCert(acmClient, summary) {
-					arn := summary.CertificateArn
-					logger.Infof("deleting ACM cert %s", *arn)
-					if _, err := acmClient.DeleteCertificate(&acm.DeleteCertificateInput{CertificateArn: arn}); err != nil {
-						logger.Fatalf("failed to delete cert %s: %v", *arn, err)
+					logger.Infof("deleting ACM cert %s", *summary.CertificateArn)
+					input := &acm.DeleteCertificateInput{CertificateArn: summary.CertificateArn}
+					if _, err := acmClient.DeleteCertificate(input); err != nil {
+						logger.Fatalf("failed to delete cert %s: %v", *summary.CertificateArn, err)
 					}
 				}
 			}
@@ -382,7 +327,7 @@ func destroyCerts(awsSession *session.Session) {
 	input := &iam.ListServerCertificatesInput{PathPrefix: aws.String("/panther/")}
 	err = iamClient.ListServerCertificatesPages(input, func(page *iam.ListServerCertificatesOutput, isLast bool) bool {
 		for _, cert := range page.ServerCertificateMetadataList {
-			if strings.HasPrefix(aws.StringValue(cert.ServerCertificateName), "PantherCertificate-") {
+			if canRemoveIamCert(awsSession, cert) {
 				if _, err := iamClient.DeleteServerCertificate(&iam.DeleteServerCertificateInput{
 					ServerCertificateName: cert.ServerCertificateName,
 				}); err != nil {
@@ -415,6 +360,20 @@ func canRemoveAcmCert(client *acm.ACM, summary *acm.CertificateSummary) bool {
 		}
 	}
 	return false
+}
+
+// Returns true if the IAM cert starts with "PantherCertificate-" and is in the same region
+func canRemoveIamCert(awsSession *session.Session, meta *iam.ServerCertificateMetadata) bool {
+	if !strings.HasPrefix(aws.StringValue(meta.ServerCertificateName), "PantherCertificate-") {
+		return false
+	}
+
+	certArn, err := arn.Parse(*meta.Arn)
+	if err != nil {
+		logger.Fatalf("failed to parse IAM cert arn %s: %v", *meta.Arn, err)
+	}
+
+	return certArn.Region == aws.StringValue(awsSession.Config.Region)
 }
 
 // Destroy any leftover "/aws/lambda/panther-" log groups
