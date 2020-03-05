@@ -75,6 +75,7 @@ func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, err
 var (
 	testAlertDedupEvent = &AlertDedupEvent{
 		RuleID:              "ruleId",
+		RuleVersion:         "ruleVersion",
 		DeduplicationString: "dedupString",
 		AlertCount:          10,
 		CreationTime:        time.Now().UTC(),
@@ -144,6 +145,7 @@ func TestSendAlert(t *testing.T) {
 		CreatedAt:         aws.Time(testAlertDedupEvent.CreationTime),
 		PolicyDescription: aws.String("Description"),
 		PolicyID:          aws.String(testAlertDedupEvent.RuleID),
+		PolicyVersionID:   aws.String(testAlertDedupEvent.RuleVersion),
 		PolicyName:        aws.String("DisplayName"),
 		Runbook:           aws.String("Runbook"),
 		Severity:          aws.String(testAlertDedupEvent.Severity),

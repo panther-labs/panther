@@ -52,9 +52,10 @@ def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
         raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
 
     raw_rule = event['rules'][0]
+    rule_severity = raw_rule.get('severity', 'INFO')
     # It is possible that during direct analysis the rule doesn't include a severity
     # in this case, we set it to a default value
-    test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'], rule_severity=raw_rule.get('severity', 'INFO'))
+    test_rule = Rule(rule_id=raw_rule['id'], rule_version='default', rule_body=raw_rule['body'], rule_severity=rule_severity)
     results: Dict[str, Any] = {'events': []}
     for single_event in event['events']:
         result = {

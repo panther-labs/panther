@@ -42,7 +42,7 @@ class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_severity: Optional[str], rule_version: Optional[str] = None):
+    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_severity: Optional[str], rule_version: Optional[str]):
         """Create new rule.
 
         Args:
@@ -51,8 +51,8 @@ class Rule:
             rule_severity: The severity of the rule
             rule_version: The version of the rule
         """
-        if not rule_id or not rule_body or not rule_severity:
-            raise AssertionError('id, body and severity are required fields')
+        if not rule_id or not rule_body or not rule_severity or not rule_version:
+            raise AssertionError('id, body, severity and version are required fields')
         self.rule_id = rule_id
         self.rule_body = rule_body
         self.rule_severity = rule_severity

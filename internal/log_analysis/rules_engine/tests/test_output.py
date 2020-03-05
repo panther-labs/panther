@@ -49,7 +49,7 @@ class TestMatchedEventsBuffer(TestCase):
         buffer.flush()
 
         DDB_MOCK.update_item.assert_called_once_with(
-            ConditionExpression='(#9 < :9) OR (attribute_not_exists(#10))',
+            ConditionExpression='(#10 < :10) OR (attribute_not_exists(#11))',
             ExpressionAttributeNames={
                 '#1': 'ruleId',
                 '#2': 'dedup',
@@ -58,9 +58,10 @@ class TestMatchedEventsBuffer(TestCase):
                 '#5': 'eventCount',
                 '#6': 'severity',
                 '#7': 'logTypes',
-                '#8': 'alertCount',
-                '#9': 'alertCreationTime',
-                '#10': 'partitionKey'
+                '#8': 'ruleVersion',
+                '#9': 'alertCount',
+                '#10': 'alertCreationTime',
+                '#11': 'partitionKey'
             },
             ExpressionAttributeValues={
                 ':1': {
@@ -85,9 +86,12 @@ class TestMatchedEventsBuffer(TestCase):
                     'SS': ['log_type']
                 },
                 ':8': {
-                    'N': '1'
+                    'S': 'rule_version'
                 },
                 ':9': {
+                    'N': '1'
+                },
+                ':10': {
                     'N': mock.ANY
                 }
             },
@@ -96,7 +100,7 @@ class TestMatchedEventsBuffer(TestCase):
             }},
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6, #7=:7\nADD #8 :8'
+            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6, #7=:7, #8=:8\nADD #9 :9'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)

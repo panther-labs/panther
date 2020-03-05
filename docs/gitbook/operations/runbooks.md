@@ -206,11 +206,14 @@ The `panther-rules-engine` lambda manages this table and it is used to
  * Processing of rules could be slowed or stopped if there are errors/throttles.
 
 ## panther-log-alert-forwarder
-This lambda reads from a ddb stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alerts-info` ddb table.
+This lambda reads from a DDB stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alerts-info` ddb table.
+ It also forwards alerts to `panther-alerts-queue` SQS queue where the appropriate Lambda picks them up for delivery.
 
  Failure Impact
  * Delivery of alerts could be slowed or stopped.
  * There will be no data loss until events are purged from the ddb stream (24 hours).
+ * This Lambda processes alerts in batches. In case a batch partially fails, the whole batch will be retried which might lead
+ to duplicate notifications for some alerts.
 
 ## panther-log-alerts-info
 This table holds the alerts history and is managed by the `panther-log-alert-forwarder` lambda.

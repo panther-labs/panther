@@ -28,6 +28,7 @@ import (
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
 	RuleID              string    `dynamodbav:"ruleId,string"`
+	RuleVersion         string    `dynamodbav:"ruleVersion,string"`
 	DeduplicationString string    `dynamodbav:"dedup,string"`
 	AlertCount          int64     `dynamodbav:"-"` // Not storing this field in DDB
 	CreationTime        time.Time `dynamodbav:"creationTime,string"`
@@ -55,6 +56,11 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		}
 	}()
 	ruleID, err := getAttribute("ruleId", input)
+	if err != nil {
+		return nil, err
+	}
+
+	ruleVersion, err := getAttribute("ruleVersion", input)
 	if err != nil {
 		return nil, err
 	}
@@ -96,6 +102,7 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 
 	return &AlertDedupEvent{
 		RuleID:              ruleID.String(),
+		RuleVersion:         ruleVersion.String(),
 		DeduplicationString: deduplicationString.String(),
 		AlertCount:          alertCount,
 		CreationTime:        time.Unix(alertCreationEpoch, 0).UTC(),

@@ -27,6 +27,7 @@ _DDB_CLIENT = boto3.client('dynamodb')
 # DDB Table attributes and keys
 _PARTITION_KEY_NAME = 'partitionKey'
 _RULE_ID_ATTR_NAME = 'ruleId'
+_RULE_VERSION_ATTR_NAME = "ruleVersion"
 _DEDUP_STR_ATTR_NAME = 'dedup'
 _ALERT_CREATION_TIME_ATTR_NAME = 'alertCreationTime'
 _ALERT_UPDATE_TIME_ATTR_NAME = 'alertUpdateTime'
@@ -48,19 +49,19 @@ def _generate_alert_id(rule_id: str, dedup: str, count: str) -> str:
     return rule_id + ':' + dedup + ':' + count
 
 
-def update_get_alert_info(match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str) -> AlertInfo:
+def update_get_alert_info(match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str, version: str) -> AlertInfo:
     """Updates the alert information and returns the result.
 
     The method will update the alertCreationTime, eventCount of an alert. If a new alert will have to be created,
     it will also create a new alertId with the appropriate alertCreationTime. """
     try:
-        return _update_get_alert_info_conditional(match_time, num_matches, key, severity)
+        return _update_get_conditional(match_time, num_matches, key, severity, version)
     except _DDB_CLIENT.exceptions.ConditionalCheckFailedException:
         # If conditional update failed on Condition, the event needs to be merged
-        return _update_get_alert_info(match_time, num_matches, key)
+        return _update_get(match_time, num_matches, key)
 
 
-def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str) -> AlertInfo:
+def _update_get_conditional(match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str, version: str) -> AlertInfo:
     """Performs a conditional update to DDB to verify whether we need to create a new alert.
     The condition will succeed only if:
     1. It is the first time this rule with this dedup string fires
@@ -72,8 +73,8 @@ def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, k
             'S': _generate_dedup_key(key.rule_id, key.dedup)
         }},
         # Setting proper values for alertCreationTime, alertUpdateTime,
-        UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6, #7=:7\nADD #8 :8',
-        ConditionExpression='(#9 < :9) OR (attribute_not_exists(#10))',
+        UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6, #7=:7, #8=:8\nADD #9 :9',
+        ConditionExpression='(#10 < :10) OR (attribute_not_exists(#11))',
         ExpressionAttributeNames={
             '#1': _RULE_ID_ATTR_NAME,
             '#2': _DEDUP_STR_ATTR_NAME,
@@ -82,9 +83,10 @@ def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, k
             '#5': _ALERT_EVENT_COUNT,
             '#6': _ALERT_SEVERITY_ATTR_NAME,
             '#7': _ALERT_LOG_TYPES,
-            '#8': _ALERT_COUNT_ATTR_NAME,
-            '#9': _ALERT_CREATION_TIME_ATTR_NAME,
-            '#10': _PARTITION_KEY_NAME,
+            '#8': _RULE_VERSION_ATTR_NAME,
+            '#9': _ALERT_COUNT_ATTR_NAME,
+            '#10': _ALERT_CREATION_TIME_ATTR_NAME,
+            '#11': _PARTITION_KEY_NAME,
         },
         ExpressionAttributeValues={
             ':1': {
@@ -109,9 +111,12 @@ def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, k
                 'SS': [key.log_type]
             },
             ':8': {
-                'N': '1'
+                'S': version
             },
             ':9': {
+                'N': '1'
+            },
+            ':10': {
                 'N': '{}'.format(int(match_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)
             }
         },
@@ -122,7 +127,7 @@ def _update_get_alert_info_conditional(match_time: datetime, num_matches: int, k
     return AlertInfo(alert_id=alert_id, alert_creation_time=match_time, alert_update_time=match_time)
 
 
-def _update_get_alert_info(match_time: datetime, num_matches: int, key: OutputGroupingKey) -> AlertInfo:
+def _update_get(match_time: datetime, num_matches: int, key: OutputGroupingKey) -> AlertInfo:
     """Updates the following attributes in DDB:
     1. Alert event account - it adds the new events to existing
     2. Alert Update Time - it sets it to given time

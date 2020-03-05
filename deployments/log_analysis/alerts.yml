@@ -116,7 +116,7 @@ Resources:
   LogAlertsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: panther-log-alerts-info
+      TableName: panther-log-alert-info
       # <cfndoc>
       # This table holds the alerts history and is managed by the `panther-log-alert-forwarder` lambda.
       #
@@ -189,7 +189,7 @@ Resources:
             BatchSize: 10
       FunctionName: panther-log-alert-forwarder
       # <cfndoc>
-      # This lambda reads from a DDB stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alerts-info` ddb table.
+      # This lambda reads from a DDB stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alert-info` ddb table.
       # It also forwards alerts to `panther-alerts-queue` SQS queue where the appropriate Lambda picks them up for delivery.
       #
       # Failure Impact

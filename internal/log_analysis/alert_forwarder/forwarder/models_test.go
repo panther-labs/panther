@@ -29,6 +29,7 @@ import (
 func TestConvertAttribute(t *testing.T) {
 	expectedAlertDedup := &AlertDedupEvent{
 		RuleID:              "testRuleId",
+		RuleVersion:         "testRuleVersion",
 		DeduplicationString: "testDedup",
 		AlertCount:          10,
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
@@ -46,6 +47,14 @@ func TestConvertAttribute(t *testing.T) {
 func TestMissingRuleId(t *testing.T) {
 	testInput := getNewTestCase()
 	delete(testInput, "ruleId")
+	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
+	require.Nil(t, alertDedupEvent)
+	require.Error(t, err)
+}
+
+func TestMissingRuleVersion(t *testing.T) {
+	testInput := getNewTestCase()
+	delete(testInput, "ruleVersion")
 	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
 	require.Nil(t, alertDedupEvent)
 	require.Error(t, err)
@@ -118,6 +127,7 @@ func TestInvalidTypeShouldntPanic(t *testing.T) {
 func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 	return map[string]events.DynamoDBAttributeValue{
 		"ruleId":            events.NewStringAttribute("testRuleId"),
+		"ruleVersion":       events.NewStringAttribute("testRuleVersion"),
 		"dedup":             events.NewStringAttribute("testDedup"),
 		"alertCount":        events.NewNumberAttribute("10"),
 		"alertCreationTime": events.NewNumberAttribute("1582285279"),

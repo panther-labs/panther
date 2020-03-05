@@ -95,6 +95,7 @@ func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
 		CreatedAt:         aws.Time(alert.CreationTime),
 		PolicyDescription: aws.String(string(rule.Payload.Description)),
 		PolicyID:          aws.String(alert.RuleID),
+		PolicyVersionID:   aws.String(alert.RuleVersion),
 		PolicyName:        aws.String(string(rule.Payload.DisplayName)),
 		Runbook:           aws.String(string(rule.Payload.Runbook)),
 		Severity:          aws.String(alert.Severity),
