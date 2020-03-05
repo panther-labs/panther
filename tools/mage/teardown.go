@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -31,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 
@@ -38,10 +40,6 @@ import (
 )
 
 const (
-	ecrRepoName    = "panther-web"
-	ecsClusterName = "panther-web-cluster"
-	ecsServiceName = "panther-web"
-
 	// Upper bound on the number of s3 object versions we'll delete manually.
 	s3MaxDeletes = 10000
 )
@@ -51,34 +49,63 @@ type deleteStackResult struct {
 	err       error
 }
 
-// Log the results of a delete stack request
-func (r deleteStackResult) log() {
-	if r.err != nil {
-		logger.Fatalf("stack %s failed to delete: %v", r.stackName, r.err)
-	}
-	logger.Infof("%s successfully deleted", r.stackName)
-}
-
 // Teardown Destroy all Panther infrastructure
 func Teardown() {
 	awsSession := teardownConfirmation()
 
+	// Find CloudFormation-managed resources we may need to modify manually
+	//
+	// This is safer than listing the services directly (e.g. find all "panther-" S3 buckets),
+	// because we can prove the resource is part of a Panther-deployed CloudFormation stack.
+	var ecrRepos, ecsClusters, s3Buckets []*string // will be deleted manually
+	logGroups := make(map[string]struct{})         // may need to delete again after stacks are destroyed
+	err := walkStacks(cloudformation.New(awsSession), func(summary cfnResource) {
+		if aws.StringValue(summary.Resource.ResourceStatus) == "DELETE_COMPLETE" {
+			return
+		}
+
+		switch aws.StringValue(summary.Resource.ResourceType) {
+		case "AWS::ECR::Repository":
+			ecrRepos = append(ecrRepos, summary.Resource.PhysicalResourceId)
+		case "AWS::ECS::Cluster":
+			ecsClusters = append(ecsClusters, summary.Resource.PhysicalResourceId)
+		case "AWS::Logs::LogGroup":
+			logGroups[*summary.Resource.PhysicalResourceId] = struct{}{}
+		case "AWS::S3::Bucket":
+			s3Buckets = append(s3Buckets, summary.Resource.PhysicalResourceId)
+		}
+	})
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	// Some resources must be destroyed directly before deleting their parent CFN stacks.
-	destroyEcrRepo(awsSession)
-	stopEcsService(awsSession)
+	destroyEcrRepos(awsSession, ecrRepos)
+	stopEcsServices(awsSession, ecsClusters)
 
 	// Delete all CloudFormation stacks in parallel.
-	destroyCfnStacks(awsSession)
+	cfnErr := destroyCfnStacks(awsSession)
 
-	// All S3 buckets have "DeletionPolicy: Retain" so as to not block CFN stack deletion.
-	// In other words, CloudFormation will not delete S3 buckets - we do so here.
-	destroyPantherBuckets(awsSession)
+	// We have to continue even if there was an error deleting the stacks because we read the names
+	// of the buckets and log groups from the CloudFormation stacks, which may now be partially deleted.
+	// If we stop here, a subsequent teardown might miss these resources.
 
 	// Remove self-signed certs that may have been uploaded if they are no longer in use.
-	destroyAcmCerts(awsSession)
+	//
+	// Certs can only be deleted if they aren't in use, so don't try unless the stacks deleted successfully.
+	// Certificates are not managed with CloudFormation, so we have to list them explicitly.
+	if cfnErr != nil {
+		destroyCerts(awsSession)
+	}
 
-	// It's possible to have buffered Lambda logs written shortly after the stacks were deleted.
-	destroyLogGroups(awsSession)
+	// All S3 buckets have "DeletionPolicy: Retain" so as to not block CFN stack deletion.
+	// In other words, CloudFormation will not delete any Panther S3 buckets - we do so here.
+	// TODO - better error handling here - we need to try deleting all buckets
+	destroyPantherBuckets(awsSession, s3Buckets)
+
+	// Usually, all log groups have been deleted by CloudFormation by now.
+	// However, it's possible to have buffered Lambda logs written shortly after the stacks were deleted.
+	destroyLogGroups(awsSession, logGroups)
 
 	logger.Info("successfully removed Panther infrastructure")
 }
@@ -104,65 +131,110 @@ func teardownConfirmation() *session.Session {
 	return awsSession
 }
 
-// Remove the ECR repo and all of its images
-func destroyEcrRepo(awsSession *session.Session) {
-	logger.Infof("removing ECR repository %s", ecrRepoName)
+// Remove ECR repos and all of their images
+func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
 	client := ecr.New(awsSession)
-	_, err := client.DeleteRepository(&ecr.DeleteRepositoryInput{
-		Force:          aws.Bool(true), // remove images as well
-		RepositoryName: aws.String(ecrRepoName),
-	})
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "RepositoryNotFoundException" {
-			// repo doesn't exist - that's fine, nothing to do here
-			return
+	for _, repo := range repoNames {
+		logger.Infof("removing ECR repository %s", *repo)
+		_, err := client.DeleteRepository(&ecr.DeleteRepositoryInput{
+			Force:          aws.Bool(true), // remove images as well
+			RepositoryName: repo,
+		})
+		if err != nil {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "RepositoryNotFoundException" {
+				// repo doesn't exist - that's fine, nothing to do here
+				continue
+			}
+			logger.Fatalf("failed to delete ECR repository: %v", err)
 		}
-		logger.Fatalf("failed to delete ECR repository: %v", err)
 	}
 }
 
-// Stop the web ECS service so CloudFormation can delete the ECS cluster
-func stopEcsService(awsSession *session.Session) {
+// Stop ECS services so CloudFormation can delete the ECS clusters
+func stopEcsServices(awsSession *session.Session, clusterNames []*string) {
 	client := ecs.New(awsSession)
+	// Map cluster names to list of service names we are waiting on
+	waitInputs := make(map[string][]*string)
 
-	logger.Infof("stopping ECS service %s in cluster %s", ecsServiceName, ecsClusterName)
-	_, err := client.DeleteService(&ecs.DeleteServiceInput{
-		Cluster: aws.String(ecsClusterName),
-		Force:   aws.Bool(true), // stop running tasks as well
-		Service: aws.String(ecsServiceName),
-	})
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ClusterNotFoundException" {
-			return // cluster does not exist
+	for _, cluster := range clusterNames {
+		listInput := &ecs.ListServicesInput{Cluster: cluster}
+		err := client.ListServicesPages(listInput, func(page *ecs.ListServicesOutput, isLast bool) bool {
+			for _, service := range page.ServiceArns {
+				logger.Infof("stopping ECS service %s in cluster %s", *service, *cluster)
+				_, err := client.DeleteService(&ecs.DeleteServiceInput{
+					Cluster: cluster,
+					Force:   aws.Bool(true), // stop running tasks as well
+					Service: service,
+				})
+				if err != nil {
+					logger.Fatalf("failed to delete service %s: %v", *service, err)
+				}
+
+				waitInputs[*cluster] = append(waitInputs[*cluster], service)
+			}
+			return true // keep paging
+		})
+
+		if err != nil {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ClusterNotFoundException" {
+				continue // cluster does not exist
+			}
+			logger.Fatalf("failed to list services in ECS cluster %s: %v", *cluster, err)
 		}
-		logger.Fatalf("failed to delete ECS service: %v", err)
 	}
 
-	waitInput := &ecs.DescribeServicesInput{
-		Cluster:  aws.String(ecsClusterName),
-		Services: []*string{aws.String(ecsServiceName)},
+	// Wait for all the services to stop
+	if len(waitInputs) > 0 {
+		logger.Info("waiting for all ECS services to stop")
 	}
-	if err = client.WaitUntilServicesInactive(waitInput); err != nil {
-		logger.Fatalf("ECS service %s did not stop successfully: %v", ecsServiceName, err)
+	for cluster, services := range waitInputs {
+		err := client.WaitUntilServicesInactive(&ecs.DescribeServicesInput{
+			Cluster:  &cluster,
+			Services: services,
+		})
+		if err != nil {
+			logger.Fatalf("services in ECS cluster %s did not stop successfully: %v", cluster, err)
+		}
 	}
 }
 
 // Destroy CloudFormation stacks in parallel
-func destroyCfnStacks(awsSession *session.Session) {
+func destroyCfnStacks(awsSession *session.Session) error {
 	results := make(chan deleteStackResult)
 	client := cloudformation.New(awsSession)
-	stacks := []string{backendStack, bucketStack, monitoringStack, frontendStack, databasesStack}
 
 	// Trigger the deletion of each stack
-	logger.Infof("deleting CloudFormation stacks: %s", strings.Join(stacks, ", "))
-	for _, stack := range stacks {
+	logger.Infof("deleting CloudFormation stacks: %s", strings.Join(allStacks, ", "))
+	for _, stack := range allStacks {
 		go deleteStack(client, aws.String(stack), results)
 	}
 
 	// Wait for all of the stacks to finish
-	for range stacks {
-		(<-results).log()
+	var errCount int
+	for range allStacks {
+		result := <-results
+		if result.err != nil {
+			logger.Errorf("stack %s failed to delete: %v", result.stackName, result.err)
+			_ = walkStack(client, &result.stackName, func(summary cfnResource) {
+				r := summary.Resource
+				if aws.StringValue(r.ResourceStatus) == "DELETE_FAILED" {
+					logger.Errorf("  DELETE_FAILED: %s %s (logicalId: %s): %s",
+						aws.StringValue(r.ResourceType),
+						aws.StringValue(r.PhysicalResourceId),
+						aws.StringValue(r.LogicalResourceId),
+						aws.StringValue(r.ResourceStatusReason),
+					)
+				}
+			})
+			errCount += 1
+		}
+		logger.Infof("%s successfully deleted", result.stackName)
 	}
+
+	if errCount > 0 {
+		return fmt.Errorf("%d stacks failed to delete", errCount)
+	}
+	return nil
 }
 
 // Delete a single CFN stack and wait for it to finish
@@ -173,53 +245,19 @@ func deleteStack(client *cloudformation.CloudFormation, stack *string, results c
 	}
 
 	if err := client.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{StackName: stack}); err != nil {
-		// The stack reached DELETE_FAILED instead of DELETE_COMPLETE status, the 'err' variable is not helpful.
-		// TODO - describe the stack and its resources to find the reason(s) for the failure
-		results <- deleteStackResult{stackName: *stack, err: fmt.Errorf("stack %s failed to delete", *stack)}
+		// The stack never reached DELETE_COMPLETE status, the caller will find out why
+		results <- deleteStackResult{stackName: *stack, err: errors.New("status != DELETE_COMPLETE")}
 		return
 	}
 
 	results <- deleteStackResult{stackName: *stack}
 }
 
-// Delete all objects in an S3 bucket and then remove it.
-//
-// Only buckets prefixed with "panther-" AND tagged with "Application:Panther" will be removed.
-func destroyPantherBuckets(awsSession *session.Session) {
+// Delete all objects in the given S3 buckets and then remove them.
+func destroyPantherBuckets(awsSession *session.Session, bucketNames []*string) {
 	client := s3.New(awsSession)
-	logger.Debug("checking for panther s3 buckets")
-	list, err := client.ListBuckets(&s3.ListBucketsInput{})
-	if err != nil {
-		logger.Fatalf("failed to list s3 buckets: %v", err)
-	}
-
-	for _, bucket := range list.Buckets {
-		if !strings.HasPrefix(*bucket.Name, "panther-") {
-			continue
-		}
-
-		// To be extra safe, verify the tags as well.
-		tagging, err := client.GetBucketTagging(&s3.GetBucketTaggingInput{Bucket: bucket.Name})
-		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && (awsErr.Code() == "BucketRegionError" || awsErr.Code() == "NoSuchBucket") {
-				// this bucket does not exist in the same region as our client: skip it
-				continue
-			}
-			logger.Fatalf("failed to get tags for s3://%s: %v", *bucket.Name, err)
-		}
-
-		foundTag := false
-		for _, tag := range tagging.TagSet {
-			if aws.StringValue(tag.Key) == "Application" && aws.StringValue(tag.Value) == "Panther" {
-				removeBucket(client, bucket.Name)
-				foundTag = true
-				break
-			}
-		}
-
-		if !foundTag {
-			logger.Warnf("skipping s3 bucket %s: no 'Application=Panther' tag found", *bucket.Name)
-		}
+	for _, bucket := range bucketNames {
+		removeBucket(client, bucket)
 	}
 }
 
@@ -295,28 +333,52 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	}
 }
 
-// Destroy self-signed Panther ACM certificates.
+// Destroy Panther ACM or IAM certificates.
 //
-// Only certs for "example.com" tagged with "Application:Panther" and not currently in use will be deleted.
-func destroyAcmCerts(awsSession *session.Session) {
+// In ACM, only certs for "example.com" tagged with "Application:Panther" and not currently in use will be deleted.
+// In IAM, only certificates in the "/panther/" path whose names start with "PantherCertificate-2" will be deleted.
+func destroyCerts(awsSession *session.Session) error {
 	logger.Debug("checking for ACM certificates")
-	client := acm.New(awsSession)
-
-	err := client.ListCertificatesPages(&acm.ListCertificatesInput{}, func(page *acm.ListCertificatesOutput, lastPage bool) bool {
+	acmClient := acm.New(awsSession)
+	// TODO - errors here need to be returned, not log fatal
+	err := acmClient.ListCertificatesPages(&acm.ListCertificatesInput{}, func(page *acm.ListCertificatesOutput, isLast bool) bool {
 		for _, summary := range page.CertificateSummaryList {
 			if aws.StringValue(summary.DomainName) == "example.com" {
-				safeRemoveCert(client, summary.CertificateArn)
+				removeAcmCertIfPanther(acmClient, summary.CertificateArn)
 			}
 		}
 		return true
 	})
 	if err != nil {
-		logger.Fatalf("failed to list ACM certificates: %v", err)
+		return fmt.Errorf("failed to list ACM certificates: %v", err)
 	}
+
+	logger.Debug("checking for IAM server certificates")
+	iamClient := iam.New(awsSession)
+	input := &iam.ListServerCertificatesInput{PathPrefix: aws.String("/panther/")}
+	var innerErr error
+	err = iamClient.ListServerCertificatesPages(input, func(page *iam.ListServerCertificatesOutput, isLast bool) bool {
+		for _, cert := range page.ServerCertificateMetadataList {
+			if strings.HasPrefix(aws.StringValue(cert.ServerCertificateName), "PantherCertificate-2") {
+				if _, err := iamClient.DeleteServerCertificate(&iam.DeleteServerCertificateInput{
+					ServerCertificateName: cert.ServerCertificateName,
+				}); err != nil {
+					innerErr = fmt.Errorf("failed to delete IAM cert %s: %v", *cert.ServerCertificateName, err)
+					return false // stop paging
+				}
+			}
+		}
+		return true // keep paging
+	})
+
+	if innerErr != nil {
+		return innerErr
+	}
+	return err
 }
 
 // Remove an ACM cert if it's tagged with Panther and not in use.
-func safeRemoveCert(client *acm.ACM, arn *string) {
+func removeAcmCertIfPanther(client *acm.ACM, arn *string) {
 	tags, err := client.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: arn})
 	if err != nil {
 		logger.Fatalf("failed to list tags for ACM cert %s: %v", *arn, err)
@@ -345,14 +407,24 @@ func safeRemoveCert(client *acm.ACM, arn *string) {
 	// This cert is not tagged with Panther, ignore it
 }
 
-// Destroy any leftover /aws/lambda/panther- log groups
-func destroyLogGroups(awsSession *session.Session) {
+// Destroy any leftover "/aws/lambda/panther-" log groups
+//
+// Only groups which match one of the entries from the now-deleted CloudFormation stacks will be removed
+func destroyLogGroups(awsSession *session.Session, groups map[string]struct{}) {
 	logger.Debug("checking for leftover Panther log groups")
 	client := cloudwatchlogs.New(awsSession)
 	input := &cloudwatchlogs.DescribeLogGroupsInput{LogGroupNamePrefix: aws.String("/aws/lambda/panther-")}
 
-	err := client.DescribeLogGroupsPages(input, func(page *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
+	err := client.DescribeLogGroupsPages(input, func(page *cloudwatchlogs.DescribeLogGroupsOutput, isLast bool) bool {
 		for _, group := range page.LogGroups {
+			if _, ok := groups[*group.LogGroupName]; !ok {
+				logger.Warnf(
+					"skipping log group %s because it was not defined in a Panther CloudFormation stack",
+					*group.LogGroupName,
+				)
+				continue
+			}
+
 			logger.Infof("deleting CloudWatch log group %s", *group.LogGroupName)
 			_, err := client.DeleteLogGroup(&cloudwatchlogs.DeleteLogGroupInput{LogGroupName: group.LogGroupName})
 			if err != nil {

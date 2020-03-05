@@ -58,10 +58,11 @@ func flattenStackOutputs(detail *cfn.DescribeStacksOutput) map[string]string {
 	return result
 }
 
-// List all Panther CFN resources (across all stacks) and apply the given handler
-func findStackResources(client *cfn.CloudFormation, handler func(cfnResource)) error {
+// Traverse all Panther CFN resources (across all stacks) and apply the given handler.
+func walkStacks(client *cfn.CloudFormation, handler func(cfnResource)) error {
+	logger.Info("scanning Panther CloudFormation stacks")
 	for _, stack := range allStacks {
-		if err := stackResources(client, &stack, handler); err != nil {
+		if err := walkStack(client, &stack, handler); err != nil {
 			return err
 		}
 	}
@@ -71,7 +72,7 @@ func findStackResources(client *cfn.CloudFormation, handler func(cfnResource)) e
 // Recursively list resources for a single stack.
 //
 // The stackID can be the stack name or arn.
-func stackResources(client *cfn.CloudFormation, stackID *string, handler func(cfnResource)) error {
+func walkStack(client *cfn.CloudFormation, stackID *string, handler func(cfnResource)) error {
 	logger.Debugf("enumerating stack %s", *stackID)
 	detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: stackID})
 	if err != nil {
@@ -110,7 +111,7 @@ func stackResources(client *cfn.CloudFormation, stackID *string, handler func(cf
 				aws.StringValue(summary.ResourceStatus) != "DELETE_COMPLETE" {
 
 				// Recurse into nested stack
-				if nestedErr = stackResources(client, summary.PhysicalResourceId, handler); nestedErr != nil {
+				if nestedErr = walkStack(client, summary.PhysicalResourceId, handler); nestedErr != nil {
 					return false // stop paging, handle error outside closure
 				}
 			}
