@@ -255,7 +255,7 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		if record == "" {
 			continue
 		}
-		if len(result) == maxResults { // if we have received max results no need to get more events
+		if len(result) >= maxResults { // if we have received max results no need to get more events
 			break
 		}
 		currentIndex++
