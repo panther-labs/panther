@@ -26,6 +26,8 @@ import "time"
 // creation based ones (CreatedAtTime and CreatedBy).
 type UpdateIntegrationItem struct {
 	ScanEnabled          *bool      `json:"scanEnabled"`
+	RemediationEnabled   *bool      `json:"remediationEnabled"`
+	CWEEnabled           *bool      `json:"cweEnabled"`
 	IntegrationID        *string    `json:"integrationId"`
 	IntegrationLabel     *string    `json:"integrationLabel"`
 	IntegrationType      *string    `json:"integrationType"`

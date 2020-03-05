@@ -38,8 +38,40 @@ import (
 
 // PutIntegration adds a set of new integrations in a batch.
 func (api API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIntegrationMetadata, error) {
+	// Validate the new integrations
+	for _, integration := range input.Integrations {
+		passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
+			AWSAccountID:      integration.AWSAccountID,
+			IntegrationType:   integration.IntegrationType,
+			EnableCWESetup:    integration.CWEEnabled,
+			EnableRemediation: integration.RemediationEnabled,
+			S3Buckets:         integration.S3Buckets,
+			KmsKeys:           integration.KmsKeys,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if !passing {
+			return nil, &genericapi.InvalidInputError{
+				Message: fmt.Sprintf("integration %s did not pass health check", *integration.AWSAccountID),
+			}
+		}
+	}
+
+	// Filter out existing integrations
+	integrations, err := api.filterOutExistingIntegrations(input.Integrations)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate the new integrations
+	newIntegrations := make([]*models.SourceIntegrationMetadata, len(integrations))
+	for i, integration := range integrations {
+		newIntegrations[i] = generateNewIntegration(integration)
+	}
+
+	// Get ready to add appropriate permissions to the SQS queue
 	permissionsAddedForIntegrations := []*models.SourceIntegrationMetadata{}
-	var err error
 	defer func() {
 		if err != nil {
 			// In case there has been any error, try to undo granting of permissions to SQS queue.
@@ -54,24 +86,13 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) ([]*models.Sour
 		}
 	}()
 
-	integrations, err := api.filterExistingIntegrations(input.Integrations)
-	if err != nil {
-		return nil, err
-	}
-
-	newIntegrations := make([]*models.SourceIntegrationMetadata, len(integrations))
-
-	// Generate the new integrations
-	for i, integration := range integrations {
-		newIntegrations[i] = generateNewIntegration(integration)
-	}
-
+	// Add appropriate permissions to the SQS queue
 	for _, integration := range newIntegrations {
 		if *integration.IntegrationType != models.IntegrationTypeAWS3 {
 			continue
 		}
 		err = AddPermissionToLogProcessorQueue(*integration.AWSAccountID)
-		if err != nil { // logging handled in function
+		if err != nil { // logging handled in called function
 			return nil, err
 		}
 		permissionsAddedForIntegrations = append(permissionsAddedForIntegrations, integration)
@@ -101,7 +122,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) ([]*models.Sour
 	return newIntegrations, err
 }
 
-func (api API) filterExistingIntegrations(inputIntegrations []*models.PutIntegrationSettings) (
+func (api API) filterOutExistingIntegrations(inputIntegrations []*models.PutIntegrationSettings) (
 	existingIntegrations []*models.PutIntegrationSettings, err error) {
 
 	// avoid inserting if already done
@@ -177,14 +198,16 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 
 func generateNewIntegration(input *models.PutIntegrationSettings) *models.SourceIntegrationMetadata {
 	return &models.SourceIntegrationMetadata{
-		AWSAccountID:     input.AWSAccountID,
-		CreatedAtTime:    aws.Time(time.Now()),
-		CreatedBy:        input.UserID,
-		IntegrationID:    aws.String(uuid.New().String()),
-		IntegrationLabel: input.IntegrationLabel,
-		IntegrationType:  input.IntegrationType,
-		ScanEnabled:      input.ScanEnabled,
-		ScanIntervalMins: input.ScanIntervalMins,
+		AWSAccountID:       input.AWSAccountID,
+		CreatedAtTime:      aws.Time(time.Now()),
+		CreatedBy:          input.UserID,
+		IntegrationID:      aws.String(uuid.New().String()),
+		IntegrationLabel:   input.IntegrationLabel,
+		IntegrationType:    input.IntegrationType,
+		ScanEnabled:        input.ScanEnabled,
+		CWEEnabled:         input.CWEEnabled,
+		RemediationEnabled: input.RemediationEnabled,
+		ScanIntervalMins:   input.ScanIntervalMins,
 		// For log analysis integrations
 		S3Buckets: input.S3Buckets,
 		KmsKeys:   input.KmsKeys,
