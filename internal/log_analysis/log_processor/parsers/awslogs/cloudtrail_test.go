@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -148,23 +149,9 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 
 	require.Equal(t, len(expectedEvents), len(events))
 
-	// panther fields
 	for i, expectedEvent := range expectedEvents {
 		event := events[i].Event.(*CloudTrail)
-
-		// set back ptr to match
-		expectedEvent.Event = event
-
-		// rowid changes each time
-		require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-		event.PantherRowID = expectedEvent.PantherRowID
-
-		// PantherParseTime is set to time.Now().UTC(). Require not nil
-		require.NotNil(t, event.PantherParseTime)
-		expectedEvent.PantherParseTime = event.PantherParseTime
-	}
-
-	for i := range events {
-		require.Equal(t, expectedEvents[i], events[i].Event.(*CloudTrail))
+		expectedEvent.Event = expectedEvent // set back ptr
+		testutil.EqualPantherLog(t, expectedEvent.Log(), event.Log())
 	}
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -67,18 +68,6 @@ func checkAuroraMysqlAuditLogLog(t *testing.T, log string, expectedEvent *Aurora
 	parser := &AuroraMySQLAuditParser{}
 	events := parser.Parse(log)
 	require.Equal(t, 1, len(events))
-	event := events[0].Event.(*AuroraMySQLAudit)
-
-	// set back ptr to match
-	expectedEvent.Event = event
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	// PantherParseTime is set to time.Now().UTC(). Require not nil
-	require.NotNil(t, event.PantherParseTime)
-	expectedEvent.PantherParseTime = event.PantherParseTime
-
-	require.Equal(t, expectedEvent, event)
+	expectedEvent.Event = expectedEvent // set back ptr
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events[0])
 }
