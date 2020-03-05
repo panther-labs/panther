@@ -19,26 +19,56 @@ package api
  */
 
 import (
+	"fmt"
+
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // UpdateIntegrationSettings makes an update to an integration from the UI.
 //
 // This endpoint updates attributes such as the behavior of the integration, or display information.
-func (API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettingsInput) error {
+func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettingsInput) (*models.SourceIntegration, error) {
+	// First get the current integration settings so that we can properly evaluate it
+	integration, err := db.GetIntegration(input.IntegrationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate the updated integration settings
+	passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
+		// From existing integration
+		AWSAccountID:    integration.AWSAccountID,
+		IntegrationType: integration.IntegrationType,
+
+		// From update integration request
+		EnableCWESetup:    input.CWEEnabled,
+		EnableRemediation: input.RemediationEnabled,
+		S3Buckets:         input.S3Buckets,
+		KmsKeys:           input.KmsKeys,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !passing {
+		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass health check", *integration.AWSAccountID)}
+	}
+
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{
-		IntegrationID:    input.IntegrationID,
-		IntegrationLabel: input.IntegrationLabel,
-		ScanIntervalMins: input.ScanIntervalMins,
-		ScanEnabled:      input.ScanEnabled,
-		S3Buckets:        input.S3Buckets,
-		KmsKeys:          input.KmsKeys,
+		IntegrationID:      input.IntegrationID,
+		IntegrationLabel:   input.IntegrationLabel,
+		ScanIntervalMins:   input.ScanIntervalMins,
+		ScanEnabled:        input.ScanEnabled,
+		CWEEnabled:         input.CWEEnabled,
+		RemediationEnabled: input.RemediationEnabled,
+		S3Buckets:          input.S3Buckets,
+		KmsKeys:            input.KmsKeys,
 	})
 }
 
 // UpdateIntegrationLastScanStart updates an integration when a new scan is started.
-func (API) UpdateIntegrationLastScanStart(input *models.UpdateIntegrationLastScanStartInput) error {
+func (API) UpdateIntegrationLastScanStart(input *models.UpdateIntegrationLastScanStartInput) (*models.SourceIntegration, error) {
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{
 		IntegrationID:     input.IntegrationID,
 		LastScanStartTime: input.LastScanStartTime,
@@ -47,7 +77,7 @@ func (API) UpdateIntegrationLastScanStart(input *models.UpdateIntegrationLastSca
 }
 
 // UpdateIntegrationLastScanEnd updates an integration when a scan ends.
-func (API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLastScanEndInput) error {
+func (API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLastScanEndInput) (*models.SourceIntegration, error) {
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{
 		IntegrationID:        input.IntegrationID,
 		LastScanEndTime:      input.LastScanEndTime,

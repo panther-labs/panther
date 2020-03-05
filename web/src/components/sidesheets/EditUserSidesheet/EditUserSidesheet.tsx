@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,16 +16,30 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/users/models"
-)
+import { Box, Heading, SideSheet } from 'pouncejs';
+import React from 'react';
+import useSidesheet from 'Hooks/useSidesheet';
+import { User } from 'Generated/schema';
+import EditUser from './EditUser';
 
-// UpdateUser modifies user attributes and roles.
-func (API) UpdateUser(input *models.UpdateUserInput) (*models.UpdateUserOutput, error) {
-	if err := userGateway.UpdateUser(input); err != nil {
-		return nil, err
-	}
-
-	// Return updated user attributes
-	return userGateway.GetUser(input.ID)
+export interface EditUserSidesheetProps {
+  user: User;
 }
+
+const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
+  const { hideSidesheet } = useSidesheet();
+
+  return (
+    <SideSheet open onClose={hideSidesheet}>
+      <Box width={425} m="auto">
+        <Heading pt={1} pb={8} size="medium">
+          Edit Profile
+        </Heading>
+        <EditUser onSuccess={hideSidesheet} user={user} />
+      </Box>
+    </SideSheet>
+  );
+};
+
+// create ticket for user email verification
+export default EditUserSidesheet;

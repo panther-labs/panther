@@ -128,6 +128,29 @@ func (b Build) Lambda() {
 	}
 }
 
+// Opstools Compile Go ops tools from source
+func (b Build) Opstools() {
+	const (
+		binDir    = "out/bin/opstools"
+		sourceDir = "cmd/opstools"
+	)
+
+	if err := os.MkdirAll(binDir, 0755); err != nil {
+		logger.Fatalf("failed to create %s directory: %v", binDir, err)
+	}
+
+	walk(sourceDir, func(path string, info os.FileInfo) {
+		if !info.IsDir() && strings.HasSuffix(path, "main.go") {
+			app := filepath.Dir(path)
+			logger.Infof("build:opstools: compiling %s", app)
+			// NOTE: passing nil in as env to get native compilation
+			if err := sh.RunWith(nil, "go", "build", "-ldflags", "-s -w", "-o", binDir, "./"+app); err != nil {
+				logger.Fatalf("go build %s failed: %v", path, err)
+			}
+		}
+	})
+}
+
 func buildPackage(pkg string) error {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")

@@ -23,16 +23,18 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // UpdateItem updates existing attributes in an item in the table.
 //
 // It inspects the input struct to identify non-nil fields, and then only updates them.
-func (ddb *DDB) UpdateItem(input *UpdateIntegrationItem) error {
+func (ddb *DDB) UpdateItem(input *UpdateIntegrationItem) (*models.SourceIntegration, error) {
 	var update expression.UpdateBuilder
 	val := reflect.ValueOf(input).Elem()
 	st := reflect.TypeOf(input).Elem()
@@ -71,7 +73,7 @@ func (ddb *DDB) UpdateItem(input *UpdateIntegrationItem) error {
 	builder := expression.NewBuilder().WithUpdate(update)
 	expr, err := builder.Build()
 	if err != nil {
-		return &genericapi.InternalError{Message: err.Error()}
+		return nil, &genericapi.InternalError{Message: err.Error()}
 	}
 
 	zap.L().Debug(
@@ -81,18 +83,24 @@ func (ddb *DDB) UpdateItem(input *UpdateIntegrationItem) error {
 		zap.Any("expressionAttributeValues", expr.Values()),
 	)
 
-	_, err = ddb.Client.UpdateItem(&dynamodb.UpdateItemInput{
+	response, err := ddb.Client.UpdateItem(&dynamodb.UpdateItemInput{
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		Key: map[string]*dynamodb.AttributeValue{
 			hashKey: {S: input.IntegrationID},
 		},
+		ReturnValues:     aws.String("ALL_NEW"),
 		TableName:        aws.String(ddb.TableName),
 		UpdateExpression: expr.Update(),
 	})
 	if err != nil {
-		return &genericapi.AWSError{Err: err, Method: "Dynamodb.UpdateItem"}
+		return nil, &genericapi.AWSError{Err: err, Method: "Dynamodb.UpdateItem"}
 	}
 
-	return nil
+	var result models.SourceIntegration
+	if err = dynamodbattribute.UnmarshalMap(response.Attributes, &result); err != nil {
+		return nil, &genericapi.InternalError{Message: "update unmarshal failed: " + err.Error()}
+	}
+
+	return &result, nil
 }
