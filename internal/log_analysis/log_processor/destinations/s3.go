@@ -139,7 +139,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 	zap.L().Debug("output channel closed, sending last events")
 	// If the channel has been closed
 	// send the buffered messages before terminating
-	_ = bufferSet.apply(func(logType string, buffer *s3EventBuffer) error {
+	_ = bufferSet.apply(func(buffer *s3EventBuffer) error {
 		if err := destination.sendData(buffer); err != nil {
 			errChan <- err
 		}
@@ -150,7 +150,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 }
 
 func (destination *S3Destination) sendExpiredData(bufferSet s3EventBufferSet) error {
-	return bufferSet.apply(func(logType string, buffer *s3EventBuffer) error {
+	return bufferSet.apply(func(buffer *s3EventBuffer) error {
 		if time.Since(buffer.createTime) > maxDuration {
 			err := destination.sendData(buffer)
 			if err != nil {
@@ -296,10 +296,10 @@ func (bs s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
 	return buffer
 }
 
-func (bs s3EventBufferSet) apply(f func(logType string, buffer *s3EventBuffer) error) error {
+func (bs s3EventBufferSet) apply(f func(buffer *s3EventBuffer) error) error {
 	for _, logTypeToBuffer := range bs {
-		for logType, buffer := range logTypeToBuffer {
-			err := f(logType, buffer)
+		for _, buffer := range logTypeToBuffer {
+			err := f(buffer)
 			if err != nil {
 				return err
 			}
