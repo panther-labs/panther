@@ -19,39 +19,17 @@ package forwarder
  */
 
 import (
-	"os"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
-)
-
-var (
-	alertsTable                                = os.Getenv("ALERTS_TABLE")
-	alertingQueueURL                           = os.Getenv("ALERTING_QUEUE_URL")
-	analysisAPIHost                            = os.Getenv("ANALYSIS_API_HOST")
-	analysisAPIPath                            = os.Getenv("ANALYSIS_API_PATH")
-	awsSession                                 = session.Must(session.NewSession())
-	ddbClient        dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
-	sqsClient        sqsiface.SQSAPI           = sqs.New(awsSession)
-
-	httpClient   = gatewayapi.GatewayClient(awsSession)
-	policyConfig = policiesclient.DefaultTransportConfig().
-			WithHost(analysisAPIHost).
-			WithBasePath(analysisAPIPath)
-	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 )
 
 const defaultTimePartition = "defaultPartition"
@@ -69,7 +47,7 @@ func Store(event *AlertDedupEvent) error {
 	}
 	putItemRequest := &dynamodb.PutItemInput{
 		Item:      marshaledAlert,
-		TableName: aws.String(alertsTable),
+		TableName: aws.String(env.AlertsTable),
 	}
 	_, err = ddbClient.PutItem(putItemRequest)
 	if err != nil {
@@ -89,7 +67,7 @@ func SendAlert(event *AlertDedupEvent) error {
 	}
 
 	input := &sqs.SendMessageInput{
-		QueueUrl:    aws.String(alertingQueueURL),
+		QueueUrl:    aws.String(env.AlertingQueueURL),
 		MessageBody: aws.String(msgBody),
 	}
 	_, err = sqsClient.SendMessage(input)

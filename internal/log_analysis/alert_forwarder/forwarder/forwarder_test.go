@@ -37,6 +37,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
@@ -92,11 +93,10 @@ var (
 )
 
 func init() {
-	alertsTable = "alertsTable"
-	alertingQueueURL = "queueUrl"
+	env.AlertsTable = "alertsTable"
+	env.AlertingQueueURL = "queueUrl"
 }
 
-// The handler signatures must match those in the LambdaInput struct.
 func TestStore(t *testing.T) {
 	ddbMock := &mockDynamoDB{}
 	ddbClient = ddbMock
@@ -135,6 +135,10 @@ func TestSendAlert(t *testing.T) {
 
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
+	policyConfig = policiesclient.DefaultTransportConfig().
+		WithHost("host").
+		WithBasePath("path")
+	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
 	expectedAlert := &alertModel.Alert{
 		CreatedAt:         aws.Time(testAlertDedupEvent.CreationTime),
@@ -151,7 +155,7 @@ func TestSendAlert(t *testing.T) {
 	require.NoError(t, err)
 	expectedSendMessageInput := &sqs.SendMessageInput{
 		MessageBody: aws.String(expectedMarshaledEvent),
-		QueueUrl:    aws.String(alertingQueueURL),
+		QueueUrl:    aws.String("queueUrl"),
 	}
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()

@@ -57,14 +57,15 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		return nil, err
 	}
 	var token *EventPaginationToken
-	if input.EventsExclusiveStartKey != nil {
+	if input.EventsExclusiveStartKey == nil {
+		token = newPaginationToken()
+	} else {
 		token, err = decodePaginationToken(*input.EventsExclusiveStartKey)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		token = newPaginationToken()
 	}
+
 	var events []string
 	for _, logType := range alertItem.LogTypes {
 		// Each alert can contain events from multiple log types.
@@ -78,7 +79,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		}
 		token.LogTypeToToken[logType] = resultToken
 		events = append(events, eventsReturned...)
-		if len(events) == *input.EventsPageSize {
+		if len(events) >= *input.EventsPageSize {
 			// if we reached max result size, stop
 			break
 		}
@@ -121,7 +122,7 @@ func getEventsForLogType(
 		// updating index in token with index of last event returned
 		resultToken.S3ObjectKey = token.S3ObjectKey
 		resultToken.EventIndex = index
-		if len(result) == maxResults {
+		if len(result) >= maxResults {
 			return result, resultToken, nil
 		}
 	}
@@ -133,7 +134,7 @@ func getEventsForLogType(
 	}
 
 	for _, partition := range partitionLocations {
-		if len(result) == maxResults {
+		if len(result) >= maxResults {
 			// We don't need to return any results since we have already found the max requested
 			break
 		}
@@ -172,7 +173,7 @@ func getEventsForLogType(
 				result = append(result, events...)
 				resultToken.EventIndex = EventIndex
 				resultToken.S3ObjectKey = *object.Key
-				if len(result) == maxResults {
+				if len(result) >= maxResults {
 					// if we have already received all the results we wanted
 					// no need to keep paginating
 					return false

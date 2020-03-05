@@ -32,6 +32,11 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+func init() {
+	// Required only once per Lambda container
+	forwarder.Setup()
+}
+
 func main() {
 	lambda.Start(handle)
 }

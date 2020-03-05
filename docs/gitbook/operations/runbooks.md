@@ -200,7 +200,7 @@ This is the dead letter queue for the `panther-input-data-notifications-queue`.
 
 ## panther-log-alert-dedup
 The `panther-rules-engine` lambda manages this table and it is used to
- deduplicate of alerts. The `panther-log-alert-forwarder` read the ddb stream from this table.
+ deduplicate of alerts. The `panther-log-alert-forwarder` reads the ddb stream from this table.
 
  Failure Impact
  * Processing of rules could be slowed or stopped if there are errors/throttles.

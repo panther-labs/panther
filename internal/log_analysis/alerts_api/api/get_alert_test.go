@@ -93,7 +93,7 @@ func TestGetAlert(t *testing.T) {
 	s3Client = s3Mock
 	// The S3 object keys returned by S3 List objects command
 	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{
-		Contents: []*s3.Object{{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101010100-uuid4.json.gz")}},
+		Contents: []*s3.Object{{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010100Z-uuid4.json.gz")}},
 	}
 
 	input := &models.GetAlertInput{
@@ -118,7 +118,7 @@ func TestGetAlert(t *testing.T) {
 
 	expectedSelectObjectInput := &s3.SelectObjectContentInput{
 		Bucket: aws.String("bucket"),
-		Key:    aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101010100-uuid4.json.gz"),
+		Key:    aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010100Z-uuid4.json.gz"),
 		InputSerialization: &s3.InputSerialization{
 			CompressionType: aws.String(s3.CompressionTypeGzip),
 			JSON:            &s3.JSONInput{Type: aws.String(s3.JSONTypeLines)},
@@ -155,7 +155,7 @@ func TestGetAlert(t *testing.T) {
 		Events:        aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
-		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvMjAyMDAxMDEwMTAxMDAtdXVpZDQuanNvbi5neiIsImV2ZW50SW5kZXgiOjF9fX0="),
+		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
 	}, result)
 }
 
@@ -170,12 +170,12 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		Contents: []*s3.Object{
 			// The object was created at year=2020, month=01, day=01, hour=01, minute=02, second=00, which is before the alert was created
 			// We should skip this object
-			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101010200-uuid4.json.gz")},
+			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010200Z-uuid4.json.gz")},
 			// The object was created at year=2020, month=01, day=01, hour=01, minute=05, second=00
-			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101010500-uuid4.json.gz")},
+			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010500Z-uuid4.json.gz")},
 			// The object was created at year=2020, month=01, day=01, hour=01, minute=10, second=00, which is after the alert was update
 			// We should skip this object
-			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101010200-uuid4.json.gz")},
+			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010200Z-uuid4.json.gz")},
 		},
 	}
 
@@ -219,7 +219,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		Events:        aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
-		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvMjAyMDAxMDEwMTA1MDAtdXVpZDQuanNvbi5neiIsImV2ZW50SW5kZXgiOjF9fX0="),
+		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvMjAyMDAxMDFUMDEwNTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
 	}, result)
 }
 

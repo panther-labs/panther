@@ -33,7 +33,7 @@ from .logging import get_logger
 _KEY_FORMAT = 'rules/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
 # Maximum number of events in an S3 object
 _MAX_BYTES_IN_MEMORY = 100000000
-_S3_KEY_DATE_FORMAT = '%Y%m%d%H%M%S'
+_S3_KEY_DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 _DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f000'
 _S3_BUCKET = os.environ['S3_BUCKET']
 _SNS_TOPIC_ARN = os.environ['NOTIFICATIONS_TOPIC']

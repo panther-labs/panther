@@ -45,8 +45,8 @@ const (
 	// 1. The key prefix 2. Timestamp in format `s3ObjectTimestampFormat` 3. UUID4
 	s3ObjectKeyFormat = "%s%s-%s.json.gz"
 
-	// The timestamp format in the S3 objects
-	S3ObjectTimestampFormat = "20060102150405"
+	// The timestamp format in the S3 objects with second precision: yyyyMMddTHHmmssZ
+	S3ObjectTimestampFormat = "20060102T150405Z"
 
 	logDataTypeAttributeName = "type"
 	logTypeAttributeName     = "id"
