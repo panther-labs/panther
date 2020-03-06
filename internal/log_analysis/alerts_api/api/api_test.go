@@ -1,4 +1,4 @@
-package table
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,24 +19,36 @@ package table
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/pkg/errors"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-// GetEvent retrieves an event from DDB
-func (table *AlertsTable) GetEvent(eventHash []byte) (*string, error) {
-	input := &dynamodb.GetItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			EventHashKey: {B: eventHash},
+var (
+	token = &EventPaginationToken{LogTypeToToken: map[string]*LogTypeToken{
+		"logtype": {
+			EventIndex:  1,
+			S3ObjectKey: "s3Key",
 		},
-		TableName: aws.String(table.EventsTableName),
+	},
 	}
+	// nolint:gosec
+	tokenEncoded = "eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoiczNLZXkiLCJldmVudEluZGV4IjoxfX19"
+)
 
-	ddbResult, err := table.Client.GetItem(input)
-	if err != nil {
-		return nil, errors.Wrap(err, "GetItem() failed for: "+string(eventHash))
-	}
+func TestPaginationTokenEncode(t *testing.T) {
+	result, err := token.encode()
+	require.NoError(t, err)
+	require.Equal(t, tokenEncoded, result)
+}
 
-	return ddbResult.Item[EventKey].S, nil
+func TestPaginationTokenDecode(t *testing.T) {
+	result, err := decodePaginationToken(tokenEncoded)
+	require.NoError(t, err)
+	require.Equal(t, token, result)
+}
+
+func TestInvalidTokenDecode(t *testing.T) {
+	_, err := decodePaginationToken("notatoken")
+	require.Error(t, err)
 }

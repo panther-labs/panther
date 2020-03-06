@@ -3,8 +3,8 @@ module github.com/panther-labs/panther
 go 1.14
 
 require (
-	github.com/aws/aws-lambda-go v1.14.1
-	github.com/aws/aws-sdk-go v1.29.16
+	github.com/aws/aws-lambda-go v1.15.0
+	github.com/aws/aws-sdk-go v1.29.18
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/fatih/color v1.9.0
 	github.com/go-openapi/errors v0.19.3
@@ -16,6 +16,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/golang-lru v0.5.4
+	github.com/influxdata/go-syslog/v3 v3.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.9
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -34,7 +35,7 @@ require (
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
 	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 // indirect
-	golang.org/x/tools v0.0.0-20200303202040-658b03bcd3d8 // indirect
+	golang.org/x/tools v0.0.0-20200305224536-de023d59a5d1 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.2.8

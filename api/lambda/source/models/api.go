@@ -28,6 +28,8 @@ type LambdaInput struct {
 
 	ListIntegrations *ListIntegrationsInput `json:"getEnabledIntegrations"`
 
+	GetIntegrationTemplate *GetIntegrationTemplateInput `json:"getIntegrationTemplate"`
+
 	UpdateIntegrationLastScanEnd   *UpdateIntegrationLastScanEndInput   `json:"updateIntegrationLastScanEnd"`
 	UpdateIntegrationLastScanStart *UpdateIntegrationLastScanStartInput `json:"updateIntegrationLastScanStart"`
 	UpdateIntegrationSettings      *UpdateIntegrationSettingsInput      `json:"updateIntegrationSettings"`
@@ -85,6 +87,20 @@ type PutIntegrationSettings struct {
 type ListIntegrationsInput struct {
 	ScanEnabled     *bool   `json:"scanEnabled"`
 	IntegrationType *string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+}
+
+//
+// GetIntegrationTemplate: Used by the frontend to provide templates for users
+//
+
+// GetIntegrationTemplateInput allows specification of what resources should be enabled/disabled in the template
+type GetIntegrationTemplateInput struct {
+	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType    *string   `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+	RemediationEnabled *bool     `json:"remediationEnabled"`
+	CWEEnabled         *bool     `json:"cweEnabled"`
+	S3Buckets          []*string `json:"s3Buckets"`
+	KmsKeys            []*string `json:"kmsKeys"`
 }
 
 //

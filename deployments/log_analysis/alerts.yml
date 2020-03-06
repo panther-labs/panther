@@ -41,134 +41,21 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
-  SQSKeyId:
-    Type: String
-    Description: KMS key ID for SQS encryption
   AlertDedupTableStreamArn:
     Type: String
     Description: The stream arn of the alerts dedup table
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket for storing processed logs
+  SQSKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
-  Queue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: panther-log-alert-notifications-queue
-      # <cfndoc>
-      # This sqs qeueue receives alert notifications
-      # to be processed by `panther-log-alert-forwarder` lambda.
-      #
-      # Failure Impact
-      # * Failure of this sqs queue will impact the send of alerts to destinations.
-      # * Failed events will go into the `panther-log-alert-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using the Panther tool `requeue`.
-      # </cfndoc>
-      KmsMasterKeyId: !Ref SQSKeyId
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
-      VisibilityTimeout: 180 # Should match lambda
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
-        maxReceiveCount: 10
-
-  DeadLetterQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: panther-log-alert-notifications-queue-dlq
-      # <cfndoc>
-      # This is the dead letter queue for the `anther-log-alert-notifications-queue`.
-      # Items are in this queue due to a failure of the `panther-log-alert-forwarder` lambda.
-      # When the system has recovered they should be re-queued to the `panther-log-alert-notifications-queue` using
-      # the Panther tool `requeue`.
-      # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
-
-  ##### Dynamo alerts table #####
-  AlertsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: panther-log-alerts
-      # <cfndoc>
-      # will be removed before v1
-      # </cfndoc>
-      AttributeDefinitions:
-        - AttributeName: alertId
-          AttributeType: S
-        - AttributeName: creationTime
-          AttributeType: S
-        - AttributeName: ruleId
-          AttributeType: S
-        - AttributeName: timePartition
-          AttributeType: S
-      BillingMode: PAY_PER_REQUEST
-      GlobalSecondaryIndexes:
-        - # Add an index ruleId to efficiently list alerts for a specific rule
-          KeySchema:
-            - AttributeName: ruleId
-              KeyType: HASH
-            - AttributeName: creationTime
-              KeyType: RANGE
-          IndexName: ruleId-creationTime-index
-          Projection:
-            ProjectionType: ALL
-        - # Add an index using dummy timePartition to efficiently list alerts by creationTime
-          KeySchema:
-            - AttributeName: timePartition
-              KeyType: HASH
-            - AttributeName: creationTime
-              KeyType: RANGE
-          IndexName: timePartition-creationTime-index
-          Projection:
-            ProjectionType: ALL
-      KeySchema:
-        - AttributeName: alertId
-          KeyType: HASH
-      PointInTimeRecoverySpecification: # Create periodic table backups
-        PointInTimeRecoveryEnabled: True
-      SSESpecification: # Enable server-side encryption
-        SSEEnabled: True
-
-  ##### Dynamo recent alerts table #####
-  RecentAlertsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: panther-recent-alerts
-      # <cfndoc>
-      # will be removed before v1
-      # </cfndoc>
-      AttributeDefinitions:
-        - AttributeName: ruleId
-          AttributeType: S
-      BillingMode: PAY_PER_REQUEST
-      KeySchema:
-        - AttributeName: ruleId
-          KeyType: HASH
-      PointInTimeRecoverySpecification: # Create periodic table backups
-        PointInTimeRecoveryEnabled: True
-      SSESpecification: # Enable server-side encryption
-        SSEEnabled: True
-
-  ##### Dynamo events table #####
-  EventsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: panther-events
-      # <cfndoc>
-      # will be removed before v1
-      # </cfndoc>
-      AttributeDefinitions:
-        - AttributeName: eventHash
-          AttributeType: B
-      BillingMode: PAY_PER_REQUEST
-      KeySchema:
-        - AttributeName: eventHash
-          KeyType: HASH
-      PointInTimeRecoverySpecification: # Create periodic table backups
-        PointInTimeRecoveryEnabled: True
-      SSESpecification: # Enable server-side encryption
-        SSEEnabled: True
-
   ###### Lambda API function #####
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -184,12 +71,12 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          ALERTS_TABLE_NAME: !Ref AlertsTable
-          EVENTS_TABLE_NAME: !Ref EventsTable
+          ALERTS_TABLE_NAME: !Ref LogAlertsTable
           RULE_INDEX_NAME: ruleId-creationTime-index
           TIME_INDEX_NAME: timePartition-creationTime-index
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
+          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       FunctionName: panther-alerts-api
       # <cfndoc>
       # Lambda for CRUD actions for the alerts API.
@@ -199,9 +86,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
+      MemorySize: 256
       Runtime: go1.x
-      Timeout: 180
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageAlerts
@@ -213,105 +100,23 @@ Resources:
                 - dynamodb:Query
                 - dynamodb:Scan
               Resource:
-                - !GetAtt AlertsTable.Arn
-                - !Sub '${AlertsTable.Arn}/index/*'
-        - Id: InvokeGatewayApi
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
-        - Id: ReadEvents
+                - !GetAtt LogAlertsTable.Arn
+                - !Sub '${LogAlertsTable.Arn}/index/*'
+        - Id: S3Permissions
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
-                - dynamodb:BatchGetItem
-                - dynamodb:GetItem
-              Resource: !GetAtt EventsTable.Arn
-
-  ##### Alert merger Lambda
-
-  AlertMergerLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/panther-alert-merger
-      RetentionInDays: !Ref CloudWatchLogRetentionDays
-
-  AlertsMergerFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ../../out/bin/internal/log_analysis/alert_merger/main
-      Description: Lambda for alert merging
-      Environment:
-        Variables:
-          DEBUG: !Ref Debug
-          RECENT_ALERTS_TABLE: !Ref RecentAlertsTable
-          EVENTS_TABLE: !Ref EventsTable
-          ALERTS_TABLE: !Ref AlertsTable
-          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          ANALYSIS_API_PATH: v1
-          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
-      Events:
-        Queue:
-          Type: SQS
-          Properties:
-            Queue: !GetAtt Queue.Arn
-            BatchSize: 10
-      FunctionName: panther-alert-merger
-      # <cfndoc>
-      # will be removed before v1
-      # </cfndoc>
-      Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
-      Runtime: go1.x
-      Timeout: 180
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
-      Policies:
-        - Id: InvokeGatewayApi
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
-        - Id: SQS
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - sqs:ReceiveMessage
-                - sqs:DeleteMessage
-                - sqs:GetQueueAttributes
-              Resource: !GetAtt Queue.Arn
-            - Effect: Allow
-              Action:
-                - kms:Decrypt
-                - kms:GenerateDataKey
-              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-            - Effect: Allow
-              Action:
-                - sqs:SendMessage
-                - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts-queue
-        - Id: ManageAlerts
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:GetItem
-                - dynamodb:PutItem
-                - dynamodb:UpdateItem
+                - s3:ListBucket
+                - s3:GetObject
               Resource:
-                - !GetAtt AlertsTable.Arn
-                - !GetAtt EventsTable.Arn
-                - !GetAtt RecentAlertsTable.Arn
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
 
   ##### Dynamo table that stores alert information #####
   LogAlertsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: panther-log-alerts-info
+      TableName: panther-log-alert-info
       # <cfndoc>
       # This table holds the alerts history and is managed by the `panther-log-alert-forwarder` lambda.
       #
@@ -372,6 +177,9 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ALERTS_TABLE: !Ref LogAlertsTable
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         DynamoDBEvent:
           Type: DynamoDB
@@ -381,11 +189,14 @@ Resources:
             BatchSize: 10
       FunctionName: panther-log-alert-forwarder
       # <cfndoc>
-      # This lambda reads from a ddb stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alerts-info` ddb table.
+      # This lambda reads from a DDB stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alert-info` ddb table.
+      # It also forwards alerts to `panther-alerts-queue` SQS queue where the appropriate Lambda picks them up for delivery.
       #
       # Failure Impact
       # * Delivery of alerts could be slowed or stopped.
       # * There will be no data loss until events are purged from the ddb stream (24 hours).
+      # * This Lambda processes alerts in batches. In case a batch partially fails, the whole batch will be retried which might lead
+      # to duplicate notifications for some alerts.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -394,6 +205,24 @@ Resources:
       Timeout: 30
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
+        - Id: SQS
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts-queue
+        - Id: GetRule
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
         - Id: ManageAlerts
           Version: 2012-10-17
           Statement:

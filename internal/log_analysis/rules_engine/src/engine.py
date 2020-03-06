@@ -56,7 +56,8 @@ class Engine:
                     rule_version=rule.rule_version,
                     log_type=log_type,
                     dedup=result.dedup_string,  # type: ignore
-                    event=event
+                    event=event,
+                    severity=rule.rule_severity
                 )
                 matched.append(match)
 
@@ -79,7 +80,12 @@ class Engine:
         for raw_rule in rules:
             if raw_rule.get('id') == COMMON_MODULE_RULE_ID:
                 try:
-                    Rule(rule_id=raw_rule.get('id'), rule_body=raw_rule.get('body'), rule_version=raw_rule.get('versionId'))
+                    Rule(
+                        rule_id=raw_rule.get('id'),
+                        rule_body=raw_rule.get('body'),
+                        rule_severity=raw_rule.get('severity'),
+                        rule_version=raw_rule.get('versionId')
+                    )
                 except Exception as err:  # pylint: disable=broad-except
                     self.logger.error('Failed to import rule %s', err)
                 rules.remove(raw_rule)
@@ -87,7 +93,12 @@ class Engine:
 
         for raw_rule in rules:
             try:
-                rule = Rule(rule_id=raw_rule.get('id'), rule_body=raw_rule.get('body'), rule_version=raw_rule.get('versionId'))
+                rule = Rule(
+                    rule_id=raw_rule.get('id'),
+                    rule_body=raw_rule.get('body'),
+                    rule_severity=raw_rule.get('severity'),
+                    rule_version=raw_rule.get('versionId')
+                )
             except Exception as err:  # pylint: disable=broad-except
                 self.logger.error('Failed to import rule %s', err)
                 continue

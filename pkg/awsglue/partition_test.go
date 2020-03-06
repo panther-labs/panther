@@ -57,7 +57,7 @@ func TestCreatePartitionFromS3Rule(t *testing.T) {
 	assert.Equal(t, "bucket", partition.GetS3Bucket())
 	assert.Equal(t, "json", partition.GetDataFormat())
 	assert.Equal(t, "gzip", partition.GetCompression())
-	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionPrefix())
+	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionLocation())
 	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
@@ -90,7 +90,7 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 	assert.Equal(t, "bucket", partition.GetS3Bucket())
 	assert.Equal(t, "json", partition.GetDataFormat())
 	assert.Equal(t, "gzip", partition.GetCompression())
-	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionPrefix())
+	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionLocation())
 	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
