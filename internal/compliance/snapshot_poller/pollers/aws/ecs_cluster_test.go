@@ -21,7 +21,9 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
@@ -48,6 +50,21 @@ func TestEcsClusterDescribe(t *testing.T) {
 	out, err := describeCluster(mockSvc, awstest.ExampleClusterArn)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
+}
+
+func TestEcsClusterDescribeDoesNotExist(t *testing.T) {
+	mockSvc := &awstest.MockEcs{}
+	mockSvc.On("DescribeClusters", mock.Anything).
+		Return(
+			&ecs.DescribeClustersOutput{
+				Clusters: nil,
+			},
+			nil,
+		)
+
+	out, err := describeCluster(mockSvc, awstest.ExampleClusterArn)
+	require.NoError(t, err)
+	assert.Nil(t, out)
 }
 
 func TestEcsClusterDescribeError(t *testing.T) {
