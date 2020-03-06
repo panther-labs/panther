@@ -1,3 +1,1 @@
-import AlertDetailsSkeleton from './AlertDetailsSkeleton';
-
-export default AlertDetailsSkeleton;
+export { default } from './AlertDetailsSkeleton';

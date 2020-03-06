@@ -1,3 +1,1 @@
-import AlertDetailsInfo from './AlertDetailsInfo';
-
-export default AlertDetailsInfo;
+export { default } from './AlertDetailsInfo';

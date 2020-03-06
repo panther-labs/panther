@@ -1,3 +1,1 @@
-import AlertDetailsEvents from './AlertDetailsEvents';
-
-export default AlertDetailsEvents;
+export { default } from './AlertDetailsEvents';
