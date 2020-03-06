@@ -108,7 +108,7 @@ func (p *RFC3164Parser) LogType() string {
 }
 
 func (event *RFC3164) updatePantherFields(p *RFC3164Parser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp)
+	event.SetCoreFields(p.LogType(), event.Timestamp)
 
 	if event.Hostname != nil {
 		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
