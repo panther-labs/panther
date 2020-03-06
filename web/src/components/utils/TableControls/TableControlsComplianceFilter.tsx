@@ -19,14 +19,14 @@
 import React from 'react';
 import { Text, TextProps, defaultTheme } from 'pouncejs';
 
-interface TableComplianceFilterControlProps extends Omit<TextProps, 'size'> {
+interface TableControlsComplianceFilterProps extends Omit<TextProps, 'size'> {
   text: string;
   isActive: boolean;
   count?: number;
   countColor?: keyof typeof defaultTheme.colors;
 }
 
-const TableControlsComplianceFilter: React.FC<TableComplianceFilterControlProps> = ({
+const TableControlsComplianceFilter: React.FC<TableControlsComplianceFilterProps> = ({
   text,
   count,
   countColor,
