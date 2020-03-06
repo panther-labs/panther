@@ -22,7 +22,7 @@ import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import Panel from 'Components/Panel';
-import ComplianceSourceTable from './ComplianceSourceTable/ComplianceSourceTable';
+import ComplianceSourceTable from './ComplianceSourceTable';
 
 const ListComplianceSources = () => {
   return (

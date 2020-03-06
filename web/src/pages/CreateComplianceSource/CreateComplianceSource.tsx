@@ -23,7 +23,7 @@ import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useMutation, gql } from '@apollo/client';
-import { LIST_INFRA_SOURCES } from 'Pages/ListComplianceSources/ComplianceSourceTable/ComplianceSourceTable';
+import { LIST_INFRA_SOURCES } from 'Pages/ListComplianceSources';
 import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';

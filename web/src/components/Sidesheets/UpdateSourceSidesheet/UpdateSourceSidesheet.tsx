@@ -19,8 +19,8 @@
 import { Heading, SideSheet, useSnackbar } from 'pouncejs';
 import React from 'react';
 import { useMutation, gql } from '@apollo/client';
-import { LIST_INFRA_SOURCES } from 'Pages/ListComplianceSources/ComplianceSourceTable/ComplianceSourceTable';
-import { LIST_LOG_SOURCES } from 'Pages/ListLogSources/LogSourceTable';
+import { LIST_INFRA_SOURCES } from 'Pages/ListComplianceSources';
+import { LIST_LOG_SOURCES } from 'Pages/ListLogSources';
 import useSidesheet from 'Hooks/useSidesheet';
 import { Integration, UpdateIntegrationInput } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
