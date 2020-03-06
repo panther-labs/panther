@@ -20,7 +20,7 @@ import React from 'react';
 import { Box, Button, Flex, Icon } from 'pouncejs';
 import ListUsersTable from 'Pages/Users/ListUsersTable';
 import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/Utils/Sidesheet';
+import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import ErrorBoundary from 'Components/ErrorBoundary';
 
 const UsersPage: React.FC = () => {

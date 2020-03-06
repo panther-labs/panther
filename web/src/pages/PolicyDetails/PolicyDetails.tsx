@@ -32,7 +32,7 @@ import Panel from 'Components/Panel';
 import {
   TableControlsPagination,
   TableControlsComplianceFilter,
-} from 'Components/Utils/TableControls';
+} from 'Components/utils/TableControls';
 import {
   extendResourceWithIntegrationLabel,
   getComplianceItemsTotalCount,

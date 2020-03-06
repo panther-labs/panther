@@ -21,7 +21,7 @@ import urls from 'Source/urls';
 import { Button, Dropdown, Flex, Icon, MenuItem } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/Utils/Sidesheet';
+import { SIDESHEETS } from 'Components/utils/Sidesheet';
 
 const CreateButton: React.FC = () => {
   const { history } = useRouter();

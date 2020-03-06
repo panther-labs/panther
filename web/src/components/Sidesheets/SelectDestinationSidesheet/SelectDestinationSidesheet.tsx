@@ -30,7 +30,7 @@ import snsLogo from 'Assets/aws-sns-minimal-logo.svg';
 import sqsLogo from 'Assets/aws-sqs-minimal-logo.svg';
 import asanaLogo from 'Assets/asana-minimal-logo.svg';
 
-import { SIDESHEETS } from 'Components/Utils/Sidesheet';
+import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import { DestinationTypeEnum } from 'Generated/schema';
 
 const destinationConfigs = [

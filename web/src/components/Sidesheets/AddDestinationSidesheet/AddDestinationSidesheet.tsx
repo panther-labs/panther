@@ -21,7 +21,7 @@ import React from 'react';
 import { gql, useMutation } from '@apollo/client';
 
 import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/Utils/Sidesheet';
+import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import {
   Destination,
   DestinationConfigInput,

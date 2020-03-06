@@ -40,7 +40,7 @@ import { Alert, Box } from 'pouncejs';
 import {
   TableControlsPagination,
   TableControlsComplianceFilter,
-} from 'Components/Utils/TableControls';
+} from 'Components/utils/TableControls';
 import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { DEFAULT_SMALL_PAGE_SIZE, INTEGRATION_TYPES } from 'Source/constants';

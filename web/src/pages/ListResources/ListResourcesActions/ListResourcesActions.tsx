@@ -19,7 +19,7 @@
 import React from 'react';
 import { Alert, Button, Card, Flex, Icon } from 'pouncejs';
 import { INTEGRATION_TYPES, RESOURCE_TYPES } from 'Source/constants';
-import GenerateFiltersGroup from 'Components/Utils/GenerateFiltersGroup';
+import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 
 import { useQuery, gql } from '@apollo/client';
 import { ComplianceStatusEnum, ListResourcesInput, Integration } from 'Generated/schema';

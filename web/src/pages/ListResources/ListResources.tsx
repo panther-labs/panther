@@ -26,7 +26,7 @@ import {
   ListResourcesSortFieldsEnum,
   SortDirEnum,
 } from 'Generated/schema';
-import { TableControlsPagination } from 'Components/Utils/TableControls';
+import { TableControlsPagination } from 'Components/utils/TableControls';
 import { useQuery, gql } from '@apollo/client';
 import {
   convertObjArrayValuesToCsv,

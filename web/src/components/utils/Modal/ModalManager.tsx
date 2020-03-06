@@ -19,7 +19,7 @@
 /* The component responsible for rendering the actual Modals */
 import React from 'react';
 import useModal from 'Hooks/useModal';
-import { MODALS } from 'Components/Utils/Modal';
+import { MODALS } from 'Components/utils/Modal';
 import DeletePolicyModal from 'Components/Modals/delete-policy-modal';
 import DeleteUserModal from 'Components/Modals/delete-user-modal';
 import ResetUserPasswordModal from 'Components/Modals/reset-user-password-modal';

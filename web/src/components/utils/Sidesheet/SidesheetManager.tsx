@@ -19,7 +19,7 @@
 /* The component responsible for rendering the actual Sidesheets */
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/Utils/Sidesheet';
+import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import UpdateAwsSourcesSidesheet from 'Components/Sidesheets/UpdateSourceSidesheet';
 import PolicyBulkUploadSidesheet from 'Components/Sidesheets/PolicyBulkUploadSidesheet';
 import SelectDestinationSidesheet from 'Components/Sidesheets/SelectDestinationSidesheet';

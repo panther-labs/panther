@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { SIDESHEETS } from 'Components/Utils/Sidesheet';
+import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import { Button, Flex, Icon } from 'pouncejs';
 import useSidesheet from 'Hooks/useSidesheet';
 

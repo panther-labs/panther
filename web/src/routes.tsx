@@ -46,9 +46,9 @@ import ForgotPasswordPage from 'Pages/ForgotPassword';
 import ForgotPasswordConfirmPage from 'Pages/ForgotPasswordConfirm';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import Page404 from 'Pages/404';
-import APIErrorFallback from 'Components/Utils/ApiErrorFallback';
+import APIErrorFallback from 'Components/utils/ApiErrorFallback';
 import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
-import PromptController from 'Components/Utils/PromptController';
+import PromptController from 'Components/utils/PromptController';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {

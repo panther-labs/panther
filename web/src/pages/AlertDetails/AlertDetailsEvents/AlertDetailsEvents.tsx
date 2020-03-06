@@ -19,7 +19,7 @@
 import React from 'react';
 import JsonViewer from 'Components/JsonViewer';
 import Panel from 'Components/Panel';
-import { TableControlsPagination as PaginationControls } from 'Components/Utils/TableControls';
+import { TableControlsPagination as PaginationControls } from 'Components/utils/TableControls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 
 interface AlertEventsProps {

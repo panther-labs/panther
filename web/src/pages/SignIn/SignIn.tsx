@@ -27,7 +27,7 @@ import MfaForm from 'Components/Forms/MfaForm';
 import TotpForm from 'Components/Forms/TotpForm';
 import SignInForm from 'Components/Forms/SigninForm';
 import useAuth from 'Hooks/useAuth';
-import { CHALLENGE_NAMES } from 'Components/Utils/AuthContext';
+import { CHALLENGE_NAMES } from 'Components/utils/AuthContext';
 
 /**
  * This page is only visitable by non-auth Users (since it's sitting behind a guarded route). Thus,

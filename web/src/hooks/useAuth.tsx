@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { AuthContext } from 'Components/Utils/AuthContext';
+import { AuthContext } from 'Components/utils/AuthContext';
 
 const useAuth = () => React.useContext(AuthContext);
 

@@ -26,7 +26,7 @@ import { RuleDetails } from 'Generated/schema';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
-import { MODALS } from 'Components/Utils/Modal';
+import { MODALS } from 'Components/utils/Modal';
 
 interface ResourceDetailsInfoProps {
   rule?: RuleDetails;

@@ -19,7 +19,7 @@
 import React from 'react';
 import { RESOURCE_TYPES } from 'Source/constants';
 import { ComplianceStatusEnum, SeverityEnum, ListPoliciesInput } from 'Generated/schema';
-import GenerateFiltersGroup from 'Components/Utils/GenerateFiltersGroup';
+import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize } from 'Helpers/utils';
 import FormikTextInput from 'Components/Fields/TextInput';
 import FormikCombobox from 'Components/Fields/ComboBox';
