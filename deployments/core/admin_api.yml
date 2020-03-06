@@ -54,7 +54,7 @@ Resources:
   UsersAPILogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/lambda/panther-Users-api
+      LogGroupName: /aws/lambda/panther-users-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
   UsersAPIFunction:
@@ -66,7 +66,7 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           USER_POOL_ID: !Ref UserPoolId
-      FunctionName: panther-Users-api
+      FunctionName: panther-users-api
       # <cfndoc>
       # This lambda implements user api.
       #

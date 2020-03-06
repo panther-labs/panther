@@ -100,11 +100,11 @@ Resources:
         SSEEnabled: True
       TableName: panther-outputs
       # <cfndoc>
-      # This table describes the user configured Destinations for alerts.
+      # This table describes the user configured destinations for alerts.
       #
       # Failure Impact
       # * Processing of alerts could be slowed or stopped if there are errors/throttles.
-      # * The Panther user interface for managing Destinations may be impacted.
+      # * The Panther user interface for managing destinations may be impacted.
       # </cfndoc>
 
   EncryptionKeyAlias:
@@ -139,10 +139,10 @@ Resources:
           OUTPUTS_DISPLAY_NAME_INDEX_NAME: displayName-index
       FunctionName: panther-outputs-api
       # <cfndoc>
-      # This lambda implements CRUD actions for alert outputs (Destinations).
+      # This lambda implements CRUD actions for alert outputs (destinations).
       #
       # Failure Impact
-      # * Failure of this lambda will impact the Panther user interface for managing Destinations.
+      # * Failure of this lambda will impact the Panther user interface for managing destinations.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -187,10 +187,10 @@ Resources:
     Properties:
       QueueName: panther-alerts-queue
       # <cfndoc>
-      # This sqs q does hold alerts to be delivery to user configured Destinations.
+      # This sqs q does hold alerts to be delivery to user configured destinations.
       #
       # Failure Impact
-      # * Failure of this sqs q will impact delivery of alerts to output Destinations.
+      # * Failure of this sqs q will impact delivery of alerts to output destinations.
       # * Failed events will go into the `panther-alerts-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alerts-queue` using the Panther tool `requeue`.
       # </cfndoc>
       MessageRetentionPeriod: !Ref AlertSqsRetentionSec
@@ -237,7 +237,7 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       FunctionName: panther-alert-delivery
       # <cfndoc>
-      # This lambda dispatches alerts to their specified outputs (Destinations).
+      # This lambda dispatches alerts to their specified outputs (destinations).
       #
       # Failure Impact
       # * Failure of this lambda will impact delivery of alerts.

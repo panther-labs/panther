@@ -71,7 +71,7 @@ Resources:
           Name: family_name
       UsernameAttributes:
         - email
-      UserPoolName: panther-Users
+      UserPoolName: panther-users
 
   AppClient:
     Type: AWS::Cognito::UserPoolClient
