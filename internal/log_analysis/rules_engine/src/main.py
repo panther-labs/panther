@@ -57,10 +57,9 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     # in this case, we set it to a default value
     rule_exception: Optional[Exception] = None
     try:
-        test_rule = Rule(rule_id=raw_rule.get('id'), rule_version='default', rule_body=raw_rule.get('body'),
-                         rule_severity=rule_severity)
-    except Exception as e:
-        rule_exception = e
+        test_rule = Rule(rule_id=raw_rule.get('id'), rule_version='default', rule_body=raw_rule.get('body'), rule_severity=rule_severity)
+    except Exception as err:  # pylint: disable=broad-except
+        rule_exception = err
 
     response: Dict[str, Any] = {'events': []}
     for event in request['events']:

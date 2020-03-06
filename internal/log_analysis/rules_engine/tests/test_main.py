@@ -25,13 +25,14 @@ from . import mock_to_return
 _RESPONSE_MOCK = mock.MagicMock()
 _RESPONSE_MOCK.json.return_value = {'policies': []}
 
-with mock.patch.dict(os.environ, {
+_ENV_VARIABLES_MOCK = {
     'ALERTS_DEDUP_TABLE': 'table_name',
     'ANALYSIS_API_FQDN': 'analysis_fqdn',
-    'S3_BUCKET': 'bucket',
-    'NOTIFICATIONS_TOPIC': 'topic',
+    'S3_BUCKET': 's3_bucket',
+    'NOTIFICATIONS_TOPIC': 'sns_topic',
     'ANALYSIS_API_PATH': 'path'
-}):
+}
+with mock.patch.dict(os.environ, _ENV_VARIABLES_MOCK):
     with mock.patch.object(boto3, 'client', side_effect=mock_to_return):
         with mock.patch.object(SigV4Auth, 'add_auth'):
             with mock.patch.object(requests, 'get', return_value=_RESPONSE_MOCK):
@@ -41,115 +42,55 @@ with mock.patch.dict(os.environ, {
 class TestMain(TestCase):
 
     def test_direct_analysis_event_matching(self) -> None:
-        payload = {
-            'rules': [
-                {
-                    'id': 'rule_id',
-                    'body': 'def rule(event):\n\treturn True'
-                }
-            ],
-            'events': [
-                {
-                    'id': 'event_id',
-                    'data': 'data'
-                }
-            ]
-        }
-        expected_response = {
-            'events': [
-                {
-                    'id': 'event_id',
-                    'matched': ['rule_id'],
-                    'notMatched': [],
-                    'errored': []
-                }
-            ]
-        }
+        rule_body = 'def rule(event):\n\treturn True'
+        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': 'data'}]}
+        expected_response = {'events': [{'id': 'event_id', 'matched': ['rule_id'], 'notMatched': [], 'errored': []}]}
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_direct_analysis_event_not_matching(self) -> None:
-        payload = {
-            'rules': [
-                {
-                    'id': 'rule_id',
-                    'body': 'def rule(event):\n\treturn False'
-                }
-            ],
-            'events': [
-                {
-                    'id': 'event_id',
-                    'data': 'data'
-                }
-            ]
-        }
-        expected_response = {
-            'events': [
-                {
-                    'id': 'event_id',
-                    'matched': [],
-                    'notMatched': ['rule_id'],
-                    'errored': []
-                }
-            ]
-        }
+        rule_body = 'def rule(event):\n\treturn False'
+        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': 'data'}]}
+        expected_response = {'events': [{'id': 'event_id', 'matched': [], 'notMatched': ['rule_id'], 'errored': []}]}
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_direct_analysis_rule_throwing_exception(self) -> None:
         payload = {
-            'rules': [
-                {
-                    'id': 'rule_id',
-                    'body': 'def rule(event):\n\traise Exception("Failure message")'
-                }
-            ],
-            'events': [
-                {
-                    'id': 'event_id',
-                    'data': 'data'
-                }
-            ]
+            'rules': [{
+                'id': 'rule_id',
+                'body': 'def rule(event):\n\traise Exception("Failure message")'
+            }],
+            'events': [{
+                'id': 'event_id',
+                'data': 'data'
+            }]
         }
         expected_response = {
-            'events': [
-                {
-                    'id': 'event_id',
-                    'matched': [],
-                    'notMatched': [],
-                    'errored': [{
-                        'id': 'rule_id',
-                        'message': 'Failure message'
-                    }]
-                }
-            ]
+            'events': [{
+                'id': 'event_id',
+                'matched': [],
+                'notMatched': [],
+                'errored': [{
+                    'id': 'rule_id',
+                    'message': 'Failure message'
+                }]
+            }]
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_direct_analysis_rule_invalid(self) -> None:
-        payload = {
-            'rules': [
-                {
-                    'id': 'rule_id',
-                    'body': 'import stuff'
-                }
-            ],
-            'events': [
-                {
-                    'id': 'event_id',
-                    'data': 'data'
-                }
-            ]
-        }
+        payload = {'rules': [{'id': 'rule_id', 'body': 'import stuff'}], 'events': [{'id': 'event_id', 'data': 'data'}]}
         expected_response = {
-            'events': [
-                {
-                    'id': 'event_id',
-                    'matched': [],
-                    'notMatched': [],
-                    'errored': [{
-                        'id': 'rule_id',
-                        'message': 'No module named \'stuff\''
-                    }]
-                }
-            ]
+            'events':
+                [
+                    {
+                        'id': 'event_id',
+                        'matched': [],
+                        'notMatched': [],
+                        'errored': [{
+                            'id': 'rule_id',
+                            'message': 'No module named \'stuff\''
+                        }]
+                    }
+                ]
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
