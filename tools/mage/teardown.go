@@ -19,7 +19,6 @@ package mage
  */
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -56,10 +55,9 @@ func Teardown() {
 	//
 	// This is safer than listing the services directly (e.g. find all "panther-" S3 buckets),
 	// because we can prove the resource is part of a Panther-deployed CloudFormation stack.
-	var ecrRepos, s3Buckets []*string      // will be deleted manually
-	logGroups := make(map[string]struct{}) // may need to delete again after stacks are destroyed
-	err := walkStacks(cloudformation.New(awsSession), func(summary cfnResource) {
-		if aws.StringValue(summary.Resource.ResourceStatus) == "DELETE_COMPLETE" {
+	var ecrRepos, s3Buckets, logGroups []*string
+	err := walkPantherStacks(cloudformation.New(awsSession), func(summary cfnResource) {
+		if aws.StringValue(summary.Resource.ResourceStatus) == cloudformation.ResourceStatusDeleteComplete {
 			return
 		}
 
@@ -67,7 +65,7 @@ func Teardown() {
 		case "AWS::ECR::Repository":
 			ecrRepos = append(ecrRepos, summary.Resource.PhysicalResourceId)
 		case "AWS::Logs::LogGroup":
-			logGroups[*summary.Resource.PhysicalResourceId] = struct{}{}
+			logGroups = append(logGroups, summary.Resource.PhysicalResourceId)
 		case "AWS::S3::Bucket":
 			s3Buckets = append(s3Buckets, summary.Resource.PhysicalResourceId)
 		}
@@ -138,7 +136,7 @@ func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
 			Force:          aws.Bool(true),
 			RepositoryName: repo,
 		}); err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "RepositoryNotFoundException" {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
 				// repo doesn't exist - that's fine, nothing to do here
 				continue
 			}
@@ -161,7 +159,7 @@ func destroyCfnStacks(awsSession *session.Session) error {
 		}
 
 		logger.Errorf("    - %s failed to delete: %v", result.stackName, result.err)
-		_ = walkStack(client, &result.stackName, func(summary cfnResource) {
+		_ = walkPantherStack(client, &result.stackName, func(summary cfnResource) {
 			r := summary.Resource
 			if aws.StringValue(r.ResourceStatus) == "DELETE_FAILED" {
 				logger.Errorf("        %s DELETE_FAILED: %s %s: %s",
@@ -208,7 +206,10 @@ func deleteStack(client *cloudformation.CloudFormation, stack *string, results c
 
 	if err := client.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{StackName: stack}); err != nil {
 		// The stack never reached DELETE_COMPLETE status, the caller will find out why
-		results <- deleteStackResult{stackName: *stack, err: errors.New("status != DELETE_COMPLETE")}
+		results <- deleteStackResult{
+			stackName: *stack,
+			err:       fmt.Errorf("status != %s", cloudformation.ResourceStatusDeleteComplete),
+		}
 		return
 	}
 
@@ -364,33 +365,25 @@ func canRemoveAcmCert(client *acm.ACM, summary *acm.CertificateSummary) bool {
 	return false
 }
 
-// Destroy any leftover "/aws/lambda/panther-" log groups
-//
-// Only groups which match one of the entries from the now-deleted CloudFormation stacks will be removed
-func destroyLogGroups(awsSession *session.Session, groups map[string]struct{}) {
+// Destroy any leftover CloudWatch log groups
+func destroyLogGroups(awsSession *session.Session, groupNames []*string) {
 	logger.Debug("checking for leftover Panther log groups")
 	client := cloudwatchlogs.New(awsSession)
-	input := &cloudwatchlogs.DescribeLogGroupsInput{LogGroupNamePrefix: aws.String("/aws/lambda/panther-")}
 
-	err := client.DescribeLogGroupsPages(input, func(page *cloudwatchlogs.DescribeLogGroupsOutput, isLast bool) bool {
-		for _, group := range page.LogGroups {
-			if _, ok := groups[*group.LogGroupName]; !ok {
-				logger.Warnf(
-					"skipping log group %s because it was not defined in a Panther CloudFormation stack",
-					*group.LogGroupName,
-				)
-				continue
+	errCount := 0
+	for _, name := range groupNames {
+		input := &cloudwatchlogs.DeleteLogGroupInput{LogGroupName: name}
+		if _, err := client.DeleteLogGroup(input); err != nil {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
+				continue // this log group has already been deleted successfully
 			}
-
-			logger.Infof("deleting CloudWatch log group %s", *group.LogGroupName)
-			_, err := client.DeleteLogGroup(&cloudwatchlogs.DeleteLogGroupInput{LogGroupName: group.LogGroupName})
-			if err != nil {
-				logger.Fatalf("failed to delete log group %s: %v", *group.LogGroupName, err)
-			}
+			logger.Errorf("failed to delete log group %s: %v", *name, err)
+			errCount++
 		}
-		return true // keep paging
-	})
-	if err != nil {
-		logger.Fatalf("failed to list log groups: %v", err)
+		logger.Infof("deleted log group %s", *name)
+	}
+
+	if errCount > 0 {
+		logger.Fatalf("%d log groups failed to delete", errCount)
 	}
 }
