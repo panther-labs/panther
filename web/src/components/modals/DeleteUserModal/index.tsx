@@ -22,36 +22,43 @@ import { User } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
 import { LIST_USERS } from 'Pages/Users/ListUsersTable';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import BaseConfirmModal from 'Components/Modals/BaseConfirmModal';
+import useAuth from 'Hooks/useAuth';
+import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 
-const RESET_USER_PASS = gql`
-  mutation ResetUserPassword($id: ID!) {
-    resetUserPassword(id: $id)
+const DELETE_USER = gql`
+  mutation DeleteUser($id: ID!) {
+    deleteUser(id: $id)
   }
 `;
 
-export interface ResetUserPasswordProps {
+export interface DeleteUserModalProps {
   user: User;
 }
 
-const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
+const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
+  const { signOut, userInfo } = useAuth();
+  // Checking if user deleted is the same as the user signed in
+  const onSuccess = () => userInfo.sub === user.id && signOut();
+
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
-  const mutation = useMutation<boolean, { id: string }>(RESET_USER_PASS, {
+  const mutation = useMutation<boolean, { id: string }>(DELETE_USER, {
     variables: {
       id: user.id,
     },
     awaitRefetchQueries: true,
     refetchQueries: [getOperationName(LIST_USERS)],
   });
+
   return (
     <BaseConfirmModal
       mutation={mutation}
-      title={`Force a password change for ${userDisplayName}`}
-      subtitle={`Are you sure you want to reset password for ${userDisplayName}?`}
-      onSuccessMsg={`Successfully forced a password change for ${userDisplayName}`}
-      onErrorMsg={`Failed to reset password for ${userDisplayName}`}
+      title={`Delete ${userDisplayName}`}
+      subtitle={`Are you sure you want to delete ${userDisplayName}?`}
+      onSuccessMsg={`Successfully deleted ${userDisplayName}`}
+      onErrorMsg={`Failed to delete ${userDisplayName}`}
+      onSuccess={onSuccess}
     />
   );
 };
 
-export default ResetUserPasswordModal;
+export default DeleteUserModal;

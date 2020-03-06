@@ -23,7 +23,7 @@ import { useMutation, gql } from '@apollo/client';
 import { LIST_USERS } from 'Pages/Users/ListUsersTable';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import useAuth from 'Hooks/useAuth';
-import BaseConfirmModal from 'Components/Modals/BaseConfirmModal';
+import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 
 const DELETE_USER = gql`
   mutation DeleteUser($id: ID!) {

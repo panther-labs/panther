@@ -20,14 +20,14 @@
 import React from 'react';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import DeletePolicyModal from 'Components/Modals/DeletePolicyModal';
-import DeleteUserModal from 'Components/Modals/DeleteUserModal';
-import ResetUserPasswordModal from 'Components/Modals/ResetUserPasswordModal';
-import DeleteSourceModal from 'Components/Modals/DeleteSourceModal';
-import DeleteDestinationModal from 'Components/Modals/DeleteDestinationModal';
-import DeleteRuleModal from 'Components/Modals/DeleteRuleModal';
-import NetworkErrorModal from 'Components/Modals/NetworkErrorModal';
-import AnalyticsConsentModal from 'Components/Modals/AnalyticsConsentModal';
+import DeletePolicyModal from 'Components/modals/DeletePolicyModal';
+import DeleteUserModal from 'Components/modals/DeleteUserModal';
+import ResetUserPasswordModal from 'Components/modals/ResetUserPasswordModal';
+import DeleteSourceModal from 'Components/modals/DeleteSourceModal';
+import DeleteDestinationModal from 'Components/modals/DeleteDestinationModal';
+import DeleteRuleModal from 'Components/modals/DeleteRuleModal';
+import NetworkErrorModal from 'Components/modals/NetworkErrorModal';
+import AnalyticsConsentModal from 'Components/modals/AnalyticsConsentModal';
 
 const ModalManager: React.FC = () => {
   const { state: modalState } = useModal();
