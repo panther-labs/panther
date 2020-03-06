@@ -16,18 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* The component responsible for rendering the actual Modals */
+/* The component responsible for rendering the actual modals */
 import React from 'react';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import DeletePolicyModal from 'Components/Modals/delete-policy-modal';
-import DeleteUserModal from 'Components/Modals/delete-user-modal';
-import ResetUserPasswordModal from 'Components/Modals/reset-user-password-modal';
-import DeleteSourceModal from 'Components/Modals/delete-source-modal';
-import DeleteDestinationModal from 'Components/Modals/delete-destination-modal';
-import DeleteRuleModal from 'Components/Modals/delete-rule-modal';
-import NetworkErrorModal from 'Components/Modals/network-error-modal';
-import AnalyticsConsentModal from 'Components/Modals/analytics-consent-modal';
+import DeletePolicyModal from 'Components/modals/delete-policy-modal';
+import DeleteUserModal from 'Components/modals/delete-user-modal';
+import ResetUserPasswordModal from 'Components/modals/reset-user-password-modal';
+import DeleteSourceModal from 'Components/modals/delete-source-modal';
+import DeleteDestinationModal from 'Components/modals/delete-destination-modal';
+import DeleteRuleModal from 'Components/modals/delete-rule-modal';
+import NetworkErrorModal from 'Components/modals/network-error-modal';
+import AnalyticsConsentModal from 'Components/modals/analytics-consent-modal';
 
 const ModalManager: React.FC = () => {
   const { state: modalState } = useModal();

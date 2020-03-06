@@ -17,37 +17,36 @@
  */
 
 import React from 'react';
-import { DeletePolicyInput, RuleSummary, RuleDetails } from 'Generated/schema';
+import { LIST_POLICIES } from 'Pages/ListPolicies';
+import { DeletePolicyInput, PolicySummary, PolicyDetails } from 'Generated/schema';
 
 import { useMutation, gql } from '@apollo/client';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import { LIST_RULES } from 'Pages/ListRules';
-import BaseConfirmModal from 'Components/Modals/base-confirm-modal';
+import BaseConfirmModal from 'Components/modals/base-confirm-modal';
 
-// Delete Rule and Delete Policy uses the same endpoint
-const DELETE_RULE = gql`
+const DELETE_POLICY = gql`
   mutation DeletePolicy($input: DeletePolicyInput!) {
     deletePolicy(input: $input)
   }
 `;
 
-export interface DeleteRuleModalProps {
-  rule: RuleDetails | RuleSummary;
+export interface DeletePolicyModalProps {
+  policy: PolicyDetails | PolicySummary;
 }
 
-const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
+const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
   const { location, history } = useRouter<{ id?: string }>();
-  const ruleDisplayName = rule.displayName || rule.id;
-  const mutation = useMutation<boolean, { input: DeletePolicyInput }>(DELETE_RULE, {
+  const policyDisplayName = policy.displayName || policy.id;
+  const mutation = useMutation<boolean, { input: DeletePolicyInput }>(DELETE_POLICY, {
     awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(LIST_RULES)],
+    refetchQueries: [getOperationName(LIST_POLICIES)],
     variables: {
       input: {
         policies: [
           {
-            id: rule.id,
+            id: policy.id,
           },
         ],
       },
@@ -57,18 +56,18 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   return (
     <BaseConfirmModal
       mutation={mutation}
-      title={`Delete ${ruleDisplayName}`}
-      subtitle={`Are you sure you want to delete ${ruleDisplayName}?`}
-      onSuccessMsg={`Successfully deleted ${ruleDisplayName}`}
-      onErrorMsg={`Failed to delete ${ruleDisplayName}`}
+      title={`Delete ${policyDisplayName}`}
+      subtitle={`Are you sure you want to delete ${policyDisplayName}?`}
+      onSuccessMsg={`Successfully deleted ${policyDisplayName}`}
+      onErrorMsg={`Failed to delete ${policyDisplayName}`}
       onSuccess={() => {
-        if (location.pathname.includes(rule.id)) {
-          // if we were on the particular rule's details page or edit page --> redirect on delete
-          history.push(urls.logAnalysis.rules.list());
+        if (location.pathname.includes(policy.id)) {
+          // if we were on the particular policy's details page or edit page --> redirect on delete
+          history.push(urls.compliance.policies.list());
         }
       }}
     />
   );
 };
 
-export default DeleteRuleModal;
+export default DeletePolicyModal;

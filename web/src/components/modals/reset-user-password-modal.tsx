@@ -22,7 +22,7 @@ import { User } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
 import { LIST_USERS } from 'Pages/Users/ListUsersTable';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import BaseConfirmModal from 'Components/Modals/base-confirm-modal';
+import BaseConfirmModal from 'Components/modals/base-confirm-modal';
 
 const RESET_USER_PASS = gql`
   mutation ResetUserPassword($id: ID!) {
