@@ -29,16 +29,18 @@ type SourceIntegration struct {
 
 // SourceIntegrationMetadata is general settings and metadata for an integration.
 type SourceIntegrationMetadata struct {
-	AWSAccountID     *string    `json:"awsAccountId"`
-	CreatedAtTime    *time.Time `json:"createdAtTime"`
-	CreatedBy        *string    `json:"createdBy"`
-	IntegrationID    *string    `json:"integrationId"`
-	IntegrationLabel *string    `json:"integrationLabel"`
-	IntegrationType  *string    `json:"integrationType"`
-	ScanEnabled      *bool      `json:"scanEnabled"`
-	ScanIntervalMins *int       `json:"scanIntervalMins"`
-	S3Buckets        []*string  `json:"s3Buckets"`
-	KmsKeys          []*string  `json:"kmsKeys"`
+	AWSAccountID       *string    `json:"awsAccountId"`
+	CreatedAtTime      *time.Time `json:"createdAtTime"`
+	CreatedBy          *string    `json:"createdBy"`
+	IntegrationID      *string    `json:"integrationId"`
+	IntegrationLabel   *string    `json:"integrationLabel"`
+	IntegrationType    *string    `json:"integrationType"`
+	ScanEnabled        *bool      `json:"scanEnabled"`
+	RemediationEnabled *bool      `json:"remediationEnabled"`
+	CWEEnabled         *bool      `json:"cweEnabled"`
+	ScanIntervalMins   *int       `json:"scanIntervalMins"`
+	S3Buckets          []*string  `json:"s3Buckets"`
+	KmsKeys            []*string  `json:"kmsKeys"`
 }
 
 // SourceIntegrationStatus provides context that the full scan works and that events are being received.
@@ -59,14 +61,14 @@ type SourceIntegrationHealth struct {
 	IntegrationType *string `json:"integrationType"`
 
 	// Checks for cloudsec integrations
-	AuditRoleStatus       *SourceIntegrationItemStatus `json:"auditRoleStatus"`
-	CWERoleStatus         *SourceIntegrationItemStatus `json:"cweRoleStatus"`
-	RemediationRoleStatus *SourceIntegrationItemStatus `json:"remediationRoleStatus"`
+	AuditRoleStatus       SourceIntegrationItemStatus `json:"auditRoleStatus"`
+	CWERoleStatus         SourceIntegrationItemStatus `json:"cweRoleStatus"`
+	RemediationRoleStatus SourceIntegrationItemStatus `json:"remediationRoleStatus"`
 
 	// Checks for log analysis integrations
-	ProcessingRoleStatus *SourceIntegrationItemStatus            `json:"processingRoleStatus"`
-	S3BucketsStatus      map[string]*SourceIntegrationItemStatus `json:"s3BucketsStatus"`
-	KMSKeysStatus        map[string]*SourceIntegrationItemStatus `json:"kmsKeysStatus"`
+	ProcessingRoleStatus SourceIntegrationItemStatus            `json:"processingRoleStatus"`
+	S3BucketsStatus      map[string]SourceIntegrationItemStatus `json:"s3BucketsStatus"`
+	KMSKeysStatus        map[string]SourceIntegrationItemStatus `json:"kmsKeysStatus"`
 }
 
 type SourceIntegrationItemStatus struct {

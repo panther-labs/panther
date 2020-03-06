@@ -141,4 +141,3 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-source-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
-

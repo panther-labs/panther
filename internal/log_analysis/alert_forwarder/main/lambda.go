@@ -32,6 +32,11 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+func init() {
+	// Required only once per Lambda container
+	forwarder.Setup()
+}
+
 func main() {
 	lambda.Start(handle)
 }
@@ -48,15 +53,32 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 	}()
 
 	for _, record := range event.Records {
-		event, err := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
+		newAlertItem, err := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
 		if err != nil {
 			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
 			// continuing since there is nothing we can do here
 			continue
 		}
 		// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
-		if err = forwarder.Process(event); err != nil {
-			return errors.Wrap(err, "encountered issue while handling event")
+		if err = forwarder.Store(newAlertItem); err != nil {
+			return errors.Wrap(err, "encountered issue while storing alert")
+		}
+
+		var oldAlertEvent *forwarder.AlertDedupEvent
+		if record.Change.OldImage != nil {
+			oldAlertEvent, err = forwarder.FromDynamodDBAttribute(record.Change.OldImage)
+			if err != nil {
+				operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
+				// continuing since there is nothing we can do here
+				continue
+			}
+		}
+
+		if oldAlertEvent == nil || oldAlertEvent.AlertCount != newAlertItem.AlertCount {
+			// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
+			if err = forwarder.SendAlert(newAlertItem); err != nil {
+				return errors.Wrap(err, "encountered issue while sending alert")
+			}
 		}
 	}
 	return nil

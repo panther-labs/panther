@@ -26,14 +26,14 @@ from typing import Dict, List, Optional
 
 import boto3
 
-from . import AlertInfo, EventMatch, OutputNotification
+from . import AlertInfo, EventMatch, OutputGroupingKey, OutputNotification
 from .alert_merger import update_get_alert_info
 from .logging import get_logger
 
 _KEY_FORMAT = 'rules/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
 # Maximum number of events in an S3 object
 _MAX_BYTES_IN_MEMORY = 100000000
-_S3_KEY_DATE_FORMAT = '%Y%m%d%H%M%S'
+_S3_KEY_DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 _DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f000'
 _S3_BUCKET = os.environ['S3_BUCKET']
 _SNS_TOPIC_ARN = os.environ['NOTIFICATIONS_TOPIC']
@@ -54,18 +54,6 @@ class EventCommonFields:
     p_alert_update_time: str
 
 
-@dataclass(frozen=True, eq=True)
-class BufferKey:
-    """Class representing the key for internal buffer"""
-    rule_id: str
-    log_type: str
-    dedup: str
-
-    def table_name(self) -> str:
-        """ Output the name of the Glue table name for this log type"""
-        return self.log_type.lower().replace('.', '_')
-
-
 @dataclass
 class BufferValue:
     """Class representing the value of the internal buffer"""
@@ -77,14 +65,14 @@ class MatchedEventsBuffer:
     """Buffer containing the matched events"""
 
     def __init__(self) -> None:
-        self.data: Dict[BufferKey, BufferValue] = collections.defaultdict()
+        self.data: Dict[OutputGroupingKey, BufferValue] = collections.defaultdict()
         self.bytes_in_memory = 0
         self.max_bytes = _MAX_BYTES_IN_MEMORY
         self.total_events = 0
 
     def add_event(self, match: EventMatch) -> None:
         """Adds a matched event to the buffer"""
-        key = BufferKey(match.rule_id, match.log_type, match.dedup)
+        key = OutputGroupingKey(match.rule_id, match.log_type, match.dedup)
         # Getting estimation of struct size in memory
         size = sys.getsizeof(match)
 
@@ -102,7 +90,7 @@ class MatchedEventsBuffer:
         if self.bytes_in_memory > self.max_bytes:
             _LOGGER.debug('data reached size threshold')
             max_size = 0
-            key_to_remove: Optional[BufferKey]
+            key_to_remove: Optional[OutputGroupingKey]
             for key, value in self.data.items():
                 if value.size_in_bytes > max_size:
                     max_size = value.size_in_bytes
@@ -125,8 +113,11 @@ class MatchedEventsBuffer:
         self.total_events = 0
 
 
-def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> None:
-    alert_info = update_get_alert_info(time, len(events), key.rule_id, key.dedup)
+def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch]) -> None:
+    rule_version = events[0].rule_version  # severity and version of a rule might differ if the rule was modified
+    # while the rules engine was running. We pick the first encountered severity and version.
+    rule_severity = events[0].severity
+    alert_info = update_get_alert_info(time, len(events), key, rule_severity, rule_version)
     data_stream = BytesIO()
     writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
     for event in events:

@@ -1,8 +1,10 @@
 package awsglue
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -68,7 +70,25 @@ func (gp *GluePartition) GetPartitionColumnsInfo() []PartitionColumnInfo {
 	return gp.partitionColumns
 }
 
-func (gp *GluePartition) GetPartitionPrefix() string {
+func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
+	tableName := GetTableName(logType)
+	tablePrefix := getTablePrefix(datatype, tableName)
+	return tablePrefix + getTimePartitionPrefix(timebin, time)
+}
+
+// Based on Timebin(), return an S3 prefix for objects of this table
+func getTimePartitionPrefix(timebin GlueTableTimebin, t time.Time) string {
+	switch timebin {
+	case GlueTableHourly:
+		return fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
+	case GlueTableDaily:
+		return fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
+	default:
+		return fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
+	}
+}
+
+func (gp *GluePartition) GetPartitionLocation() string {
 	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
 	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
 	for _, partitionField := range gp.partitionColumns {
@@ -89,7 +109,7 @@ func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
 	for i, field := range gp.partitionColumns {
 		partitionValues[i] = aws.String(field.Value)
 	}
-	partitionPrefix := gp.GetPartitionPrefix()
+	partitionPrefix := gp.GetPartitionLocation()
 	partitionInput := &glue.PartitionInput{
 		Values:            partitionValues,
 		StorageDescriptor: getJSONPartitionDescriptor(partitionPrefix), // We only support JSON currently
