@@ -20,7 +20,7 @@ import React from 'react';
 import { Field, Formik } from 'formik';
 import SubmitButton from 'Components/SubmitButton';
 import { Flex } from 'pouncejs';
-import FormikTextInput from 'Components/Fields/TextInput';
+import FormikTextInput from 'Components/fields/TextInput';
 import * as Yup from 'yup';
 
 interface BaseUserFormValues {

@@ -144,7 +144,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
             displayName,
             defaultForSeverity,
 
-            // needed Fields from the server in order to update the selected destination
+            // needed fields from the server in order to update the selected destination
             outputId: destination.outputId,
             outputType: destination.outputType,
 
@@ -160,7 +160,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   // Normally we would want to perform a single `pick` operation per switch-case and not extend the
   // commonInitialValues that are defined here. Unfortunately, if you do deep picking (i.e. x.w.y)
   // on  lodash's pick, it messes typings and TS fails cause it thinks it doesn't have all the
-  // Fields it needs. We use `commonInitialValues` to satisfy this exact constraint that was set by
+  // fields it needs. We use `commonInitialValues` to satisfy this exact constraint that was set by
   // the `initialValues` prop of each form.
   const commonInitialValues = pick(destination, ['displayName', 'defaultForSeverity']);
 

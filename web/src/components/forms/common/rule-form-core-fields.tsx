@@ -18,15 +18,15 @@
 
 import React from 'react';
 import { Field, useFormikContext } from 'formik';
-import FormikTextInput from 'Components/Fields/TextInput';
+import FormikTextInput from 'Components/fields/TextInput';
 import { InputElementLabel, Grid, Flex, Box, InputElementErrorLabel, Text } from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
 import { capitalize } from 'Helpers/utils';
-import FormikTextArea from 'Components/Fields/TextArea';
-import FormikSwitch from 'Components/Fields/Switch';
-import FormikCombobox from 'Components/Fields/ComboBox';
-import FormikMultiCombobox from 'Components/Fields/MultiComboBox';
-import FormikEditor from 'Components/Fields/Editor';
+import FormikTextArea from 'Components/fields/TextArea';
+import FormikSwitch from 'Components/fields/Switch';
+import FormikCombobox from 'Components/fields/ComboBox';
+import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import FormikEditor from 'Components/fields/Editor';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { RuleFormValues } from 'Components/forms/RuleForm';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';

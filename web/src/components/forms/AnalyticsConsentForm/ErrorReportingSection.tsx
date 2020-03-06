@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Field } from 'formik';
-import FormikCheckbox from 'Components/Fields/Checkbox';
+import FormikCheckbox from 'Components/fields/Checkbox';
 import { Box, Flex, InputElementLabel, Text } from 'pouncejs';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 

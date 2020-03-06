@@ -22,7 +22,7 @@ import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
 import { Alert, Box, Text } from 'pouncejs';
 import SubmitButton from 'Components/SubmitButton';
-import FormikTextInput from 'Components/Fields/TextInput';
+import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
 
 interface SetPasswordFormValues {

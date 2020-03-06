@@ -37,10 +37,10 @@ import {
 } from 'pouncejs';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
-import FormikTextInput from 'Components/Fields/TextInput';
-import FormikEditor from 'Components/Fields/Editor';
-import FormikCombobox from 'Components/Fields/ComboBox';
-import FormikRadio from 'Components/Fields/Radio';
+import FormikTextInput from 'Components/fields/TextInput';
+import FormikEditor from 'Components/fields/Editor';
+import FormikCombobox from 'Components/fields/ComboBox';
+import FormikRadio from 'Components/fields/Radio';
 
 import { useMutation, gql } from '@apollo/client';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';

@@ -22,7 +22,7 @@ import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
 import SubmitButton from 'Components/SubmitButton';
-import FormikTextInput from 'Components/Fields/TextInput';
+import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
 
 interface ChangePasswordFormValues {

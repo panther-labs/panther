@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
-import FormikTextInput from 'Components/Fields/TextInput';
+import FormikTextInput from 'Components/fields/TextInput';
 import { Box, Text } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
@@ -61,7 +61,7 @@ const SQS_QUEUE_POLICY = {
 };
 
 // @ts-ignore
-// We merge the two schemas together: the one deriving from the common Fields, plus the custom
+// We merge the two schemas together: the one deriving from the common fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
 const mergedValidationSchema = defaultValidationSchema.concat(sqsFieldsValidationSchema);
