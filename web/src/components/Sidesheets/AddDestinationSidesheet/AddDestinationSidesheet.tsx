@@ -29,17 +29,17 @@ import {
   DestinationTypeEnum,
 } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/common/BaseDestinationForm';
-import {
-  AsanaDestinationForm,
-  GithubDestinationForm,
-  JiraDestinationForm,
-  MicrosoftTeamsDestinationForm,
-  OpsgenieDestinationForm,
-  PagerDutyDestinationForm,
-  SlackDestinationForm,
-  SNSDestinationForm,
-  SQSDestinationForm,
-} from 'Components/forms/DestinationForm';
+
+import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
+import SQSDestinationForm from 'Components/forms/SqsDestinationForm';
+import SlackDestinationForm from 'Components/forms/SlackDestinationForm';
+import PagerDutyDestinationForm from 'Components/forms/PagerdutyDestinationForm';
+import OpsgenieDestinationForm from 'Components/forms/OpsgenieDestinationForm';
+import MicrosoftTeamsDestinationForm from 'Components/forms/MicrosoftTeamsDestinationForm';
+import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
+import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
+import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
+
 import { LIST_DESTINATIONS, ListDestinationsQueryData } from 'Pages/Destinations';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 
