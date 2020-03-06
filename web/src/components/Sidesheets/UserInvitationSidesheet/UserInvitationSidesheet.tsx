@@ -17,7 +17,7 @@
  */
 
 import { Box, Heading, Text, SideSheet } from 'pouncejs';
-import InviteUserForm from 'Components/Forms/UserInvitationForm';
+import InviteUserForm from 'Components/forms/UserInvitationForm';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 

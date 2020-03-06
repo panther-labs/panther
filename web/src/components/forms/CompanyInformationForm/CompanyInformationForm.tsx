@@ -22,7 +22,7 @@ import { Box, Heading } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/SubmitButton';
 import FormikTextInput from 'Components/Fields/TextInput';
-import { ErrorReportingSection } from 'Components/Forms/AnalyticsConsentForm';
+import { ErrorReportingSection } from 'Components/forms/AnalyticsConsentForm';
 
 interface CompanyInformationFormValues {
   displayName: string;

@@ -29,7 +29,7 @@ import {
   DestinationTypeEnum,
 } from 'Generated/schema';
 
-import { BaseDestinationFormValues } from 'Components/Forms/common/base-destination-form';
+import { BaseDestinationFormValues } from 'Components/forms/common/base-destination-form';
 import {
   AsanaDestinationForm,
   GithubDestinationForm,
@@ -40,7 +40,7 @@ import {
   SlackDestinationForm,
   SNSDestinationForm,
   SQSDestinationForm,
-} from 'Components/Forms/DestinationForm';
+} from 'Components/forms/DestinationForm';
 import { extractErrorMessage } from 'Helpers/utils';
 
 const UPDATE_DESTINATION = gql`

@@ -20,12 +20,12 @@ import React from 'react';
 import { MutationTuple } from '@apollo/client';
 import pick from 'lodash-es/pick';
 import { formatJSON } from 'Helpers/utils';
-import { testEditableFields } from 'Components/Forms/common/rule-form-test-fields';
+import { testEditableFields } from 'Components/forms/common/rule-form-test-fields';
 import { useSnackbar } from 'pouncejs';
 import { PolicyDetails, RuleDetails } from 'Generated/schema';
-import { policyEditableFields } from 'Components/Forms/PolicyForm';
-import { ruleEditableFields } from 'Components/Forms/RuleForm';
-import { ruleCoreEditableFields } from 'Components/Forms/common/rule-form-core-fields';
+import { policyEditableFields } from 'Components/forms/PolicyForm';
+import { ruleEditableFields } from 'Components/forms/RuleForm';
+import { ruleCoreEditableFields } from 'Components/forms/common/rule-form-core-fields';
 
 interface UseEditRuleProps<T> {
   rule: RuleDetails | PolicyDetails;

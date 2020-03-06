@@ -18,7 +18,7 @@
 
 import Banner from 'Assets/sign-up-banner.jpg';
 import AuthPageContainer from 'Components/AuthPageContainer';
-import ForgotPasswordForm from 'Components/Forms/ForgotPasswordForm';
+import ForgotPasswordForm from 'Components/forms/ForgotPasswordForm';
 import { Button, Flex, Text } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link } from 'react-router-dom';

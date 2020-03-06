@@ -25,7 +25,7 @@ import useSidesheet from 'Hooks/useSidesheet';
 import { Integration, UpdateIntegrationInput } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import { INTEGRATION_TYPES } from 'Source/constants';
-import UpdateSourceForm, { UpdateSourceFormValues } from 'Components/Forms/UpdateSourceForm';
+import UpdateSourceForm, { UpdateSourceFormValues } from 'Components/forms/UpdateSourceForm';
 
 const UPDATE_SOURCE = gql`
   mutation UpdateSource($input: UpdateIntegrationInput!) {

@@ -17,24 +17,29 @@
  */
 
 import React from 'react';
-import { RuleDetails, PolicyUnitTest } from 'Generated/schema';
+import { PolicyDetails, PolicyUnitTest } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box } from 'pouncejs';
+import { Box, Heading } from 'pouncejs';
+import BaseRuleForm, { BaseRuleFormProps } from 'Components/forms/common/base-rule-form';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import BaseRuleForm, { BaseRuleFormProps } from 'Components/Forms/common/base-rule-form';
+import PolicyFormAutoRemediationFields from './PolicyFormAutoRemediationFields';
 import RuleFormCoreFields, { ruleCoreEditableFields } from '../common/rule-form-core-fields';
-import RuleFormTestFields from '../common/rule-form-test-fields';
+import PolicyFormTestFields from '../common/rule-form-test-fields';
 
-export const ruleEditableFields = [...ruleCoreEditableFields, 'logTypes', 'tests'] as const;
+export const policyEditableFields = [
+  ...ruleCoreEditableFields,
+  'autoRemediationId',
+  'autoRemediationParameters',
+  'suppressions',
+  'resourceTypes',
+  'tests',
+] as const;
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
   id: Yup.string().required(),
   body: Yup.string().required(),
   severity: Yup.string().required(),
-  logTypes: Yup.array()
-    .of(Yup.string())
-    .required(),
   tests: Yup.array<PolicyUnitTest>()
     .of(
       Yup.object().shape({
@@ -44,26 +49,39 @@ const validationSchema = Yup.object().shape({
     .unique('Test names must be unique', 'name'),
 });
 
-export type RuleFormValues = Pick<RuleDetails, typeof ruleEditableFields[number]>;
-export type RuleFormProps = Pick<BaseRuleFormProps<RuleFormValues>, 'initialValues' | 'onSubmit'>;
+export type PolicyFormValues = Pick<PolicyDetails, typeof policyEditableFields[number]>;
+export type PolicyFormProps = Pick<
+  BaseRuleFormProps<PolicyFormValues>,
+  'initialValues' | 'onSubmit'
+>;
 
-const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
+const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
   return (
-    <BaseRuleForm<RuleFormValues>
+    <BaseRuleForm<PolicyFormValues>
       initialValues={initialValues}
       onSubmit={onSubmit}
       validationSchema={validationSchema}
     >
       <Box is="article">
         <ErrorBoundary>
-          <RuleFormCoreFields type="rule" />
+          <RuleFormCoreFields type="policy" />
         </ErrorBoundary>
         <ErrorBoundary>
-          <RuleFormTestFields />
+          <PolicyFormTestFields />
         </ErrorBoundary>
+      </Box>
+      <Box is="article" mt={10}>
+        <Heading size="medium" pb={8} borderBottom="1px solid" borderColor="grey100">
+          Auto Remediation Settings
+        </Heading>
+        <Box mt={8}>
+          <ErrorBoundary>
+            <PolicyFormAutoRemediationFields />
+          </ErrorBoundary>
+        </Box>
       </Box>
     </BaseRuleForm>
   );
 };
 
-export default RuleForm;
+export default PolicyForm;

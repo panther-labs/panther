@@ -43,8 +43,8 @@ import FormikCombobox from 'Components/Fields/ComboBox';
 import FormikRadio from 'Components/Fields/Radio';
 
 import { useMutation, gql } from '@apollo/client';
-import { PolicyFormValues } from 'Components/Forms/PolicyForm';
-import { RuleFormValues } from 'Components/Forms/RuleForm';
+import { PolicyFormValues } from 'Components/forms/PolicyForm';
+import { RuleFormValues } from 'Components/forms/RuleForm';
 import PolicyFormTestResultList from './rule-form-test-result-list';
 
 export const testEditableFields = ['expectedResult', 'name', 'resource', 'resourceType'] as const;

@@ -22,10 +22,10 @@ import urls from 'Source/urls';
 import { Link } from 'react-router-dom';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import Banner from 'Assets/sign-in-banner.jpg';
-import SetPasswordForm from 'Components/Forms/SetPasswordForm';
-import MfaForm from 'Components/Forms/MfaForm';
-import TotpForm from 'Components/Forms/TotpForm';
-import SignInForm from 'Components/Forms/SigninForm';
+import SetPasswordForm from 'Components/forms/SetPasswordForm';
+import MfaForm from 'Components/forms/MfaForm';
+import TotpForm from 'Components/forms/TotpForm';
+import SignInForm from 'Components/forms/SigninForm';
 import useAuth from 'Hooks/useAuth';
 import { CHALLENGE_NAMES } from 'Components/utils/AuthContext';
 

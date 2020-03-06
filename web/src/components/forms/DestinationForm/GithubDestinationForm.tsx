@@ -24,19 +24,20 @@ import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/Forms/common/base-destination-form';
+} from 'Components/forms/common/base-destination-form';
 
-type OpsgenieFieldValues = Pick<DestinationConfigInput, 'opsgenie'>;
+type GithubFieldValues = Pick<DestinationConfigInput, 'github'>;
 
-interface OpsgenieDestinationFormProps {
-  initialValues: BaseDestinationFormValues<OpsgenieFieldValues>;
-  onSubmit: (values: BaseDestinationFormValues<OpsgenieFieldValues>) => void;
+interface GithubDestinationFormProps {
+  initialValues: BaseDestinationFormValues<GithubFieldValues>;
+  onSubmit: (values: BaseDestinationFormValues<GithubFieldValues>) => void;
 }
 
-const opsgenieFieldsValidationSchema = Yup.object().shape({
+const githubFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
-    opsgenie: Yup.object().shape({
-      apiKey: Yup.string().required(),
+    github: Yup.object().shape({
+      repoName: Yup.string().required(),
+      token: Yup.string().required(),
     }),
   }),
 });
@@ -45,23 +46,31 @@ const opsgenieFieldsValidationSchema = Yup.object().shape({
 // We merge the two schemas together: the one deriving from the common Fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(opsgenieFieldsValidationSchema);
+const mergedValidationSchema = defaultValidationSchema.concat(githubFieldsValidationSchema);
 
-const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
+const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
   return (
-    <BaseDestinationForm<OpsgenieFieldValues>
+    <BaseDestinationForm<GithubFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
-        name="outputConfig.opsgenie.apiKey"
-        label="Opsgenie API key"
-        placeholder="What's your organization's Opsgenie API key?"
+        name="outputConfig.github.repoName"
+        label="Repository name"
+        placeholder="What's the name of your Github repository?"
+        mb={6}
+        aria-required
+      />
+      <Field
+        as={FormikTextInput}
+        name="outputConfig.github.token"
+        label="Token"
+        placeholder="What's your Github API token?"
         mb={6}
         aria-required
         autoComplete="new-password"
@@ -70,4 +79,4 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
   );
 };
 
-export default OpsgenieDestinationForm;
+export default GithubDestinationForm;

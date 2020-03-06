@@ -24,25 +24,19 @@ import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/Forms/common/base-destination-form';
-import { isNumber } from 'Helpers/utils';
-import FormikMultiCombobox from 'Components/Fields/MultiComboBox';
-import { Text } from 'pouncejs';
+} from 'Components/forms/common/base-destination-form';
 
-type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;
+type OpsgenieFieldValues = Pick<DestinationConfigInput, 'opsgenie'>;
 
-interface AsanaDestinationFormProps {
-  initialValues: BaseDestinationFormValues<AsanaFieldValues>;
-  onSubmit: (values: BaseDestinationFormValues<AsanaFieldValues>) => void;
+interface OpsgenieDestinationFormProps {
+  initialValues: BaseDestinationFormValues<OpsgenieFieldValues>;
+  onSubmit: (values: BaseDestinationFormValues<OpsgenieFieldValues>) => void;
 }
 
-const asanaFieldsValidationSchema = Yup.object().shape({
+const opsgenieFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
-    asana: Yup.object().shape({
-      personalAccessToken: Yup.string().required(),
-      projectGids: Yup.array()
-        .of(Yup.number())
-        .required(),
+    opsgenie: Yup.object().shape({
+      apiKey: Yup.string().required(),
     }),
   }),
 });
@@ -51,41 +45,29 @@ const asanaFieldsValidationSchema = Yup.object().shape({
 // We merge the two schemas together: the one deriving from the common Fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
+const mergedValidationSchema = defaultValidationSchema.concat(opsgenieFieldsValidationSchema);
 
-const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, initialValues }) => {
+const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
+  onSubmit,
+  initialValues,
+}) => {
   return (
-    <BaseDestinationForm<AsanaFieldValues>
+    <BaseDestinationForm<OpsgenieFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
-        name="outputConfig.asana.personalAccessToken"
-        label="Access Token"
-        placeholder="Your personal Asana access token"
+        name="outputConfig.opsgenie.apiKey"
+        label="Opsgenie API key"
+        placeholder="What's your organization's Opsgenie API key?"
         mb={6}
         aria-required
+        autoComplete="new-password"
       />
-      <Field
-        name="outputConfig.asana.projectGids"
-        as={FormikMultiCombobox}
-        label="Project GIDs"
-        aria-required
-        allowAdditions
-        validateAddition={isNumber}
-        searchable
-        items={[]}
-        inputProps={{
-          placeholder: 'The GIDs of the projects that will receive the task',
-        }}
-      />
-      <Text size="small" color="grey200" mt={2}>
-        Add by pressing the {'<'}Enter{'>'} key
-      </Text>
     </BaseDestinationForm>
   );
 };
 
-export default AsanaDestinationForm;
+export default OpsgenieDestinationForm;

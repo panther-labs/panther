@@ -24,20 +24,21 @@ import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/Forms/common/base-destination-form';
+} from 'Components/forms/common/base-destination-form';
 
-type GithubFieldValues = Pick<DestinationConfigInput, 'github'>;
+type PagerDutyFieldValues = Pick<DestinationConfigInput, 'pagerDuty'>;
 
-interface GithubDestinationFormProps {
-  initialValues: BaseDestinationFormValues<GithubFieldValues>;
-  onSubmit: (values: BaseDestinationFormValues<GithubFieldValues>) => void;
+interface PagerDutyDestinationFormProps {
+  initialValues: BaseDestinationFormValues<PagerDutyFieldValues>;
+  onSubmit: (values: BaseDestinationFormValues<PagerDutyFieldValues>) => void;
 }
 
-const githubFieldsValidationSchema = Yup.object().shape({
+const pagerDutyFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
-    github: Yup.object().shape({
-      repoName: Yup.string().required(),
-      token: Yup.string().required(),
+    pagerDuty: Yup.object().shape({
+      integrationKey: Yup.string()
+        .length(32, 'Must be exactly 32 characters')
+        .required(),
     }),
   }),
 });
@@ -46,31 +47,23 @@ const githubFieldsValidationSchema = Yup.object().shape({
 // We merge the two schemas together: the one deriving from the common Fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(githubFieldsValidationSchema);
+const mergedValidationSchema = defaultValidationSchema.concat(pagerDutyFieldsValidationSchema);
 
-const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
+const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
   return (
-    <BaseDestinationForm<GithubFieldValues>
+    <BaseDestinationForm<PagerDutyFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
-        name="outputConfig.github.repoName"
-        label="Repository name"
-        placeholder="What's the name of your Github repository?"
-        mb={6}
-        aria-required
-      />
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.github.token"
-        label="Token"
-        placeholder="What's your Github API token?"
+        name="outputConfig.pagerDuty.integrationKey"
+        label="Integration Key"
+        placeholder="What's your PagerDuty Integration Key?"
         mb={6}
         aria-required
         autoComplete="new-password"
@@ -79,4 +72,4 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
   );
 };
 
-export default GithubDestinationForm;
+export default PagerDutyDestinationForm;
