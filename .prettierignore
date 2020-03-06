@@ -19,5 +19,4 @@ docs/gitbook
 
 
 # Direct file content assertion
-tools/cfngen/cloudwatchcf/testdata
-tools/cfngen/gluecf/testdata
+tools/**/testdata
