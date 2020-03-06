@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, Label } from 'pouncejs';
 import { ComplianceStatusEnum, TestPolicyResponse } from 'Generated/schema';
-import PolicyFormTestResult, { mapTestStatusToColor } from './RuleFormTestResult';
+import PolicyFormTestResult, { mapTestStatusToColor } from '../RuleFormTestResult';
 
 interface PolicyFormTestResultsProps {
   results: TestPolicyResponse;
