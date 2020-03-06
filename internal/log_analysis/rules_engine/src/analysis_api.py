@@ -45,5 +45,4 @@ class AnalysisAPIClient:
 
         response = requests.get(prepped_request.url, headers=prepped_request.headers)
         response.raise_for_status()
-        parsed_response = json.loads(response.text)
-        return parsed_response['policies']
+        return response.json()['policies']

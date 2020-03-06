@@ -24,6 +24,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -41,6 +43,7 @@ var (
 	dynamoClient dynamodbiface.DynamoDBAPI
 	s3Client     s3iface.S3API
 	sqsClient    sqsiface.SQSAPI
+	lambdaClient lambdaiface.LambdaAPI
 
 	httpClient       *http.Client
 	complianceClient *complianceapi.PantherCompliance
@@ -65,6 +68,7 @@ func Setup() {
 	dynamoClient = dynamodb.New(awsSession)
 	s3Client = s3.New(awsSession)
 	sqsClient = sqs.New(awsSession)
+	lambdaClient = lambda.New(awsSession)
 
 	httpClient = gatewayapi.GatewayClient(awsSession)
 	complianceClient = complianceapi.NewHTTPClientWithConfig(
