@@ -50,12 +50,14 @@ const (
 	logTypeAttributeName     = "id"
 
 	messageAttributeDataType = "String"
+
+	maxFileSize = 100 * 1000 * 1000 // 100MB uncompressed file size, should result in ~10MB output file size
+	// it should always be greater than the maximum expected event (log line) size
+
+	maxDuration = 1 * time.Minute //hHolding events for maximum 1 minute in memory
 )
 
 var (
-	maxFileSize = 100 * 1000 * 1000 // 100MB uncompressed file size, should result in ~10MB output file size
-	// It should always be greater than the maximum expected event (log line) size
-	maxDuration      = 1 * time.Minute // Holding events for maximum 1 minute in memory
 	newLineDelimiter = []byte("\n")
 
 	parserRegistry registry.Interface = registry.AvailableParsers() // initialize
@@ -70,6 +72,8 @@ type S3Destination struct {
 	// snsTopic is the SNS Topic ARN where we will send the notification
 	// when we store new data in S3
 	snsTopicArn string
+	maxFileSize int
+	maxDuration time.Duration
 }
 
 // SendEvents stores events in S3.
@@ -94,7 +98,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			continue
 		}
 
-		buffer := bufferSet.getBuffer(event)
+		buffer := bufferSet.getBuffer(destination, event)
 
 		canAdd, err := buffer.addEvent(data)
 		if err != nil {
@@ -118,7 +122,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			if !canAdd {
 				failed = true
 				// happens if a single marshalled event is greater than maxFileSize, something that shouldn't happen normally
-				errChan <- errors.WithMessagef(err, "event doesn't fit in single s3 object, cannot write to %s",
+				errChan <- errors.Errorf("event doesn't fit in single s3 object, cannot write to %s",
 					destination.s3Bucket)
 				continue
 			}
@@ -137,8 +141,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 	}
 
 	zap.L().Debug("output channel closed, sending last events")
-	// If the channel has been closed
-	// send the buffered messages before terminating
+	// If the channel has been closed send the buffered messages before terminating
 	_ = bufferSet.apply(func(buffer *s3EventBuffer) error {
 		if err := destination.sendData(buffer); err != nil {
 			errChan <- err
@@ -150,14 +153,10 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 }
 
 func (destination *S3Destination) sendExpiredData(bufferSet s3EventBufferSet) error {
+	now := time.Now()
 	return bufferSet.apply(func(buffer *s3EventBuffer) error {
-		if time.Since(buffer.createTime) > maxDuration {
+		if now.Sub(buffer.createTime) > destination.maxDuration {
 			err := destination.sendData(buffer)
-			if err != nil {
-				return err
-			}
-			// purge after sending the data
-			err = buffer.reset()
 			if err != nil {
 				return err
 			}
@@ -168,19 +167,18 @@ func (destination *S3Destination) sendExpiredData(bufferSet s3EventBufferSet) er
 
 // sendData puts data in S3 and sends notification to SNS
 func (destination *S3Destination) sendData(buffer *s3EventBuffer) (err error) {
+	if buffer.events == 0 { // skip empty buffers
+		return nil
+	}
 	var contentLength int64 = 0
 
 	key := getS3ObjectKey(buffer.logType, buffer.hour)
 
 	operation := common.OpLogManager.Start("sendData", common.OpLogS3ServiceDim)
 	defer func() {
-		// if no error reset buffer
-		if err == nil {
-			if err = buffer.reset(); err != nil {
-				err = errors.Wrap(err, "failed to reset buffer")
-			}
+		if resetErr := buffer.reset(); resetErr != nil {
+			operation.LogError(err)
 		}
-
 		operation.Stop()
 		operation.Log(err,
 			// s3 dim info
@@ -189,9 +187,8 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer) (err error) {
 			zap.String("key", key))
 	}()
 
-	payload, err := buffer.getBytes()
+	payload, err := buffer.read()
 	if err != nil {
-		err = errors.Wrap(err, "failed to read buffer")
 		return err
 	}
 
@@ -272,7 +269,7 @@ func newS3EventBufferSet() s3EventBufferSet {
 	return make(map[time.Time]map[string]*s3EventBuffer)
 }
 
-func (bs s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
+func (bs s3EventBufferSet) getBuffer(destination *S3Destination, event *parsers.PantherLog) *s3EventBuffer {
 	// bin by hour (this is our partition size)
 	hour := (time.Time)(*event.PantherEventTime).Truncate(time.Hour)
 
@@ -286,10 +283,12 @@ func (bs s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
 		buffer = &s3EventBuffer{
-			logType:    logType,
-			hour:       hour,
-			createTime: time.Now(),
+			destination: destination,
+			logType:     logType,
+			hour:        hour,
+			createTime:  time.Now(),
 		}
+		_ = buffer.reset() // no need to check error
 		logTypeToBuffer[logType] = buffer
 	}
 
@@ -311,27 +310,23 @@ func (bs s3EventBufferSet) apply(f func(buffer *s3EventBuffer) error) error {
 // s3EventBuffer is a group of events of the same type
 // that will be stored in the same S3 object
 type s3EventBuffer struct {
-	logType    string
-	buffer     *bytes.Buffer
-	writer     *gzip.Writer
-	bytes      int
-	events     int
-	hour       time.Time // the event time bin
-	createTime time.Time
+	destination *S3Destination
+	logType     string
+	buffer      *bytes.Buffer
+	writer      *gzip.Writer
+	bytes       int
+	events      int
+	hour        time.Time // the event time bin
+	createTime  time.Time
 }
 
 // addEvent adds new data to the s3EventBuffer
 // If it returns true, the record was added successfully.
 // If it returns false, the record couldn't be added because the group has exceeded file size limit
 func (b *s3EventBuffer) addEvent(event []byte) (bool, error) {
-	if b.buffer == nil {
-		b.buffer = &bytes.Buffer{}
-		b.writer = gzip.NewWriter(b.buffer)
-	}
-
 	// The size of the batch in bytes if the event is added
 	projectedFileSize := b.bytes + len(event) + len(newLineDelimiter)
-	if projectedFileSize > maxFileSize {
+	if projectedFileSize > b.destination.maxFileSize {
 		return false, nil
 	}
 
@@ -352,10 +347,11 @@ func (b *s3EventBuffer) addEvent(event []byte) (bool, error) {
 	return true, nil
 }
 
-// getBytes returns all bytes in the buffer
-func (b *s3EventBuffer) getBytes() ([]byte, error) {
-	if err := b.writer.Close(); err != nil {
-		return nil, err
+func (b *s3EventBuffer) read() ([]byte, error) {
+	if b.writer != nil {
+		if err := b.writer.Close(); err != nil {
+			return nil, errors.Wrap(err, "close failed in buffer read()")
+		}
 	}
 	return b.buffer.Bytes(), nil
 }
@@ -369,7 +365,7 @@ func (b *s3EventBuffer) reset() error {
 			return errors.Wrap(err, "close failed in buffer reset()")
 		}
 	}
-	b.writer = nil
-	b.buffer = nil
+	b.buffer = &bytes.Buffer{}
+	b.writer = gzip.NewWriter(b.buffer)
 	return nil
 }

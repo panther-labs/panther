@@ -61,5 +61,7 @@ func createS3Destination(s3BucketName string) Destination {
 		snsClient:   sns.New(common.Session),
 		s3Bucket:    s3BucketName,
 		snsTopicArn: os.Getenv("SNS_TOPIC_ARN"),
+		maxFileSize: maxFileSize,
+		maxDuration: maxDuration,
 	}
 }
