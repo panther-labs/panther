@@ -78,11 +78,11 @@ for the get rule operation typically these are written to a http.Request
 */
 type GetRuleParams struct {
 
-	/*ID
-	  User-specified unique rule/policy ID
+	/*RuleID
+	  Unique ASCII rule identifier
 
 	*/
-	ID string
+	RuleID string
 	/*VersionID
 	  The version of the analysis to retrieve
 
@@ -127,15 +127,15 @@ func (o *GetRuleParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithID adds the id to the get rule params
-func (o *GetRuleParams) WithID(id string) *GetRuleParams {
-	o.SetID(id)
+// WithRuleID adds the ruleID to the get rule params
+func (o *GetRuleParams) WithRuleID(ruleID string) *GetRuleParams {
+	o.SetRuleID(ruleID)
 	return o
 }
 
-// SetID adds the id to the get rule params
-func (o *GetRuleParams) SetID(id string) {
-	o.ID = id
+// SetRuleID adds the ruleId to the get rule params
+func (o *GetRuleParams) SetRuleID(ruleID string) {
+	o.RuleID = ruleID
 }
 
 // WithVersionID adds the versionID to the get rule params
@@ -157,11 +157,11 @@ func (o *GetRuleParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Regis
 	}
 	var res []error
 
-	// query param id
-	qrID := o.ID
-	qID := qrID
-	if qID != "" {
-		if err := r.SetQueryParam("id", qID); err != nil {
+	// query param ruleId
+	qrRuleID := o.RuleID
+	qRuleID := qrRuleID
+	if qRuleID != "" {
+		if err := r.SetQueryParam("ruleId", qRuleID); err != nil {
 			return err
 		}
 	}

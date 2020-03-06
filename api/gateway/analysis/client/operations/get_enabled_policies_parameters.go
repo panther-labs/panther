@@ -82,7 +82,7 @@ type GetEnabledPoliciesParams struct {
 	  Type of analysis logic to retrieve
 
 	*/
-	Type *string
+	Type string
 
 	timeout    time.Duration
 	Context    context.Context
@@ -123,13 +123,13 @@ func (o *GetEnabledPoliciesParams) SetHTTPClient(client *http.Client) {
 }
 
 // WithType adds the typeVar to the get enabled policies params
-func (o *GetEnabledPoliciesParams) WithType(typeVar *string) *GetEnabledPoliciesParams {
+func (o *GetEnabledPoliciesParams) WithType(typeVar string) *GetEnabledPoliciesParams {
 	o.SetType(typeVar)
 	return o
 }
 
 // SetType adds the type to the get enabled policies params
-func (o *GetEnabledPoliciesParams) SetType(typeVar *string) {
+func (o *GetEnabledPoliciesParams) SetType(typeVar string) {
 	o.Type = typeVar
 }
 
@@ -141,20 +141,13 @@ func (o *GetEnabledPoliciesParams) WriteToRequest(r runtime.ClientRequest, reg s
 	}
 	var res []error
 
-	if o.Type != nil {
-
-		// query param type
-		var qrType string
-		if o.Type != nil {
-			qrType = *o.Type
+	// query param type
+	qrType := o.Type
+	qType := qrType
+	if qType != "" {
+		if err := r.SetQueryParam("type", qType); err != nil {
+			return err
 		}
-		qType := qrType
-		if qType != "" {
-			if err := r.SetQueryParam("type", qType); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	if len(res) > 0 {

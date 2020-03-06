@@ -126,7 +126,7 @@ func (remediator *Invoker) GetRemediations() (*remediationmodels.Remediations, e
 
 func getPolicy(policyID string) (*analysismodels.Policy, error) {
 	policy, err := policiesClient.Operations.GetPolicy(&analysisoperations.GetPolicyParams{
-		ID:         policyID,
+		PolicyID:   policyID,
 		HTTPClient: httpClient,
 	})
 

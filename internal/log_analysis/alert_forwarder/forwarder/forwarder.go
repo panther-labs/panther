@@ -83,7 +83,7 @@ func generateAlertID(event *AlertDedupEvent) string {
 
 func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
 	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
-		ID:         alert.RuleID,
+		RuleID:     alert.RuleID,
 		HTTPClient: httpClient,
 	})
 

@@ -35,11 +35,19 @@ produces:
 x-panther-lambda-cfn-resource: HandlerFunction
 
 parameters: # Parameters shared across multiple methods
-  id:
-    name: id
-    required: true
+  policyId:
+    name: policyId
     in: query
-    description: User-specified unique rule/policy ID
+    description: Unique ASCII policy identifier
+    required: true
+    type: string
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
+  ruleId:
+    name: ruleId
+    in: query
+    description: Unique ASCII rule identifier
+    required: true
     type: string
     pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
@@ -47,6 +55,7 @@ parameters: # Parameters shared across multiple methods
     name: type
     in: query
     description: Type of analysis logic to retrieve
+    required: true
     type: string
     enum:
       - POLICY
@@ -100,7 +109,7 @@ paths:
       operationId: GetPolicy
       summary: Get policy details
       parameters:
-        - $ref: '#/parameters/id'
+        - $ref: '#/parameters/policyId'
         - $ref: '#/parameters/versionId'
 
       responses:
@@ -151,7 +160,7 @@ paths:
       operationId: GetRule
       summary: Get rule details
       parameters:
-        - $ref: '#/parameters/id'
+        - $ref: '#/parameters/ruleId'
         - $ref: '#/parameters/versionId'
       responses:
         200:
@@ -1146,7 +1155,7 @@ definitions:
   id:
     description: User-specified unique rule/policy ID
     type: string
-    pattern: '[a-zA-Z0-9\-\.: ]{1,200}'
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
   modifyTime:
     description: Policy modification timestamp

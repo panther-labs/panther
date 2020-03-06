@@ -548,7 +548,7 @@ func createRuleSuccess(t *testing.T) {
 func getNotFound(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         "does-not-exist",
+		PolicyID:   "does-not-exist",
 		HTTPClient: httpClient,
 	})
 	assert.Nil(t, result)
@@ -560,7 +560,7 @@ func getNotFound(t *testing.T) {
 func getLatest(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         string(policy.ID),
+		PolicyID:   string(policy.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -572,7 +572,7 @@ func getLatest(t *testing.T) {
 func getVersion(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         string(policy.ID),
+		PolicyID:   string(policy.ID),
 		VersionID:  aws.String(string(policy.VersionID)),
 		HTTPClient: httpClient,
 	})
@@ -585,7 +585,7 @@ func getVersion(t *testing.T) {
 func getRule(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetRule(&operations.GetRuleParams{
-		ID:         string(rule.ID),
+		RuleID:     string(rule.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -597,7 +597,7 @@ func getRule(t *testing.T) {
 func getRuleWrongType(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetRule(&operations.GetRuleParams{
-		ID:         string(policy.ID),
+		RuleID:     string(policy.ID),
 		HTTPClient: httpClient,
 	})
 	assert.Nil(t, result)
@@ -727,7 +727,7 @@ func suppressSuccess(t *testing.T) {
 
 	// Verify suppressions were added correctly
 	getResult, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         string(policy.ID),
+		PolicyID:   string(policy.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -778,7 +778,7 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify the existing policy was updated - the created fields were unchanged
 	getResult, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         string(policy.ID),
+		PolicyID:   string(policy.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -797,7 +797,7 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify newly created policy #1
 	getResult, err = apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         string(policyFromBulk.ID),
+		PolicyID:   string(policyFromBulk.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -824,7 +824,7 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify newly created policy #2
 	getResult, err = apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         string(policyFromBulkJSON.ID),
+		PolicyID:   string(policyFromBulkJSON.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -1146,7 +1146,7 @@ func getEnabledSuccess(t *testing.T) {
 func getEnabledRules(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
-		Type:       aws.String(string(models.AnalysisTypeRULE)),
+		Type:       string(models.AnalysisTypeRULE),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -1222,7 +1222,7 @@ func deleteSuccess(t *testing.T) {
 
 	// Trying to retrieve the deleted policy should now return 404
 	_, err = apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         string(policy.ID),
+		PolicyID:   string(policy.ID),
 		HTTPClient: httpClient,
 	})
 	require.Error(t, err)
@@ -1230,7 +1230,7 @@ func deleteSuccess(t *testing.T) {
 
 	// But retrieving an older version will still work
 	getResult, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		ID:         string(policy.ID),
+		PolicyID:   string(policy.ID),
 		VersionID:  aws.String(string(policy.VersionID)),
 		HTTPClient: httpClient,
 	})
