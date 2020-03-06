@@ -28,7 +28,7 @@ import {
   DestinationInput,
   DestinationTypeEnum,
 } from 'Generated/schema';
-import { BaseDestinationFormValues } from 'Components/forms/common/base-destination-form';
+import { BaseDestinationFormValues } from 'Components/forms/common/BaseDestinationForm';
 import {
   AsanaDestinationForm,
   GithubDestinationForm,

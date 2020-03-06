@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as SNSDestinationForm } from './SnsDestinationForm';
-export { default as SQSDestinationForm } from './SqsDestinationForm';
-export { default as SlackDestinationForm } from './SlackDestinationForm';
-export { default as MicrosoftTeamsDestinationForm } from './MicrosoftTeamsDestinationForm';
-export { default as JiraDestinationForm } from './JiraDestinationForm';
-export { default as OpsgenieDestinationForm } from './OpsgenieDestinationForm';
-export { default as GithubDestinationForm } from './GithubDestinationForm';
-export { default as PagerDutyDestinationForm } from './PagerdutyDestinationForm';
-export { default as AsanaDestinationForm } from './AsanaDestinationForm';
+export { default as SNSDestinationForm } from '../SnsDestinationForm';
+export { default as SQSDestinationForm } from '../SqsDestinationForm';
+export { default as SlackDestinationForm } from '../SlackDestinationForm';
+export { default as MicrosoftTeamsDestinationForm } from '../MicrosoftTeamsDestinationForm';
+export { default as JiraDestinationForm } from '../JiraDestinationForm';
+export { default as OpsgenieDestinationForm } from '../OpsgenieDestinationForm';
+export { default as GithubDestinationForm } from '../GithubDestinationForm';
+export { default as PagerDutyDestinationForm } from '../PagerdutyDestinationForm';
+export { default as AsanaDestinationForm } from '../AsanaDestinationForm';

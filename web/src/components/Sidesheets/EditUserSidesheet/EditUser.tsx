@@ -23,7 +23,7 @@ import { gql, useMutation } from '@apollo/client';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { LIST_USERS } from 'Pages/Users/ListUsersTable';
 import { extractErrorMessage } from 'Helpers/utils';
-import BaseUserForm from 'Components/forms/common/base-user-form';
+import BaseUserForm from 'Components/forms/common/BaseUserForm';
 import useAuth from 'Hooks/useAuth';
 
 const EDIT_USER = gql`
