@@ -22,7 +22,7 @@ import { LIST_INFRA_SOURCES } from 'Pages/ListComplianceSources/ComplianceSource
 import { LIST_LOG_SOURCES } from 'Pages/ListLogSources/LogSourceTable';
 import { useMutation, gql } from '@apollo/client';
 import { INTEGRATION_TYPES } from 'Source/constants';
-import BaseConfirmModal from 'Components/modals/base-confirm-modal';
+import BaseConfirmModal from 'Components/Modals/BaseConfirmModal';
 
 const DELETE_SOURCE = gql`
   mutation DeleteSource($id: ID!) {

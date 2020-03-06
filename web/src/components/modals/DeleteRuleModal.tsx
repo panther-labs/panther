@@ -24,7 +24,7 @@ import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { LIST_RULES } from 'Pages/ListRules';
-import BaseConfirmModal from 'Components/modals/base-confirm-modal';
+import BaseConfirmModal from 'Components/Modals/BaseConfirmModal';
 
 // Delete Rule and Delete Policy uses the same endpoint
 const DELETE_RULE = gql`

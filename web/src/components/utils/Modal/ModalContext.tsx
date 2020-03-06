@@ -17,12 +17,12 @@
  */
 
 import React from 'react';
-import { DeletePolicyModalProps } from 'Components/modals/delete-policy-modal';
-import { DeleteUserModalProps } from 'Components/modals/delete-user-modal';
-import { ResetUserPasswordProps } from 'Components/modals/reset-user-password-modal';
-import { DeleteSourceModalProps } from 'Components/modals/delete-source-modal';
-import { DeleteDestinationModalProps } from 'Components/modals/delete-destination-modal';
-import { DeleteRuleModalProps } from 'Components/modals/delete-rule-modal';
+import { DeletePolicyModalProps } from 'Components/Modals/DeletePolicyModal';
+import { DeleteUserModalProps } from 'Components/Modals/DeleteUserModal';
+import { ResetUserPasswordProps } from 'Components/Modals/ResetUserPasswordModal';
+import { DeleteSourceModalProps } from 'Components/Modals/DeleteSourceModal';
+import { DeleteDestinationModalProps } from 'Components/Modals/DeleteDestinationModal';
+import { DeleteRuleModalProps } from 'Components/Modals/DeleteRuleModal';
 
 const SHOW_MODAL = 'SHOW_MODAL';
 const HIDE_MODAL = 'HIDE_MODAL';
