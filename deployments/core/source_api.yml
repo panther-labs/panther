@@ -40,10 +40,6 @@ Parameters:
   SQSKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
-  TemplateSourceBucket:
-    Type: String
-    Description: S3 bucket where CloudFormation templates are stored
-    Default: arn:aws:s3:::panther-public-cloudformation-templates
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -144,7 +140,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: s3:GetObject
-              Resource: !Sub ${TemplateSourceBucket}/*
+              Resource: arn:aws:s3:::panther-public-cloudformation-templates/*
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
