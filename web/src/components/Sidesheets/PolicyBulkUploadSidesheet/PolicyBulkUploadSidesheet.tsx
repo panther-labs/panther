@@ -54,7 +54,7 @@ export interface PolicyBulkUploadSideSheetProps {
   type: 'policy' | 'rule';
 }
 
-const Index: React.FC<PolicyBulkUploadSideSheetProps> = ({ type }) => {
+const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ type }) => {
   // We don't want to expose a file-input to the user, thus we are gonna create a hidden one and
   // map the clicks of a button to the hidden input (as if the user had clicked the hidden input).
   // To do that we need a reference to it
@@ -176,4 +176,4 @@ const Index: React.FC<PolicyBulkUploadSideSheetProps> = ({ type }) => {
   );
 };
 
-export default Index;
+export default PolicyBulkUploadSideSheet;
