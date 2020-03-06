@@ -223,7 +223,7 @@ func triggerRemediation(event *models.ComplianceNotification) error {
 
 func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Alert, error) {
 	policy, err := policyClient.Operations.GetPolicy(&analysisoperations.GetPolicyParams{
-		PolicyID:   *event.PolicyID,
+		ID:         *event.PolicyID,
 		HTTPClient: httpClient,
 	})
 

@@ -76,8 +76,8 @@ Resources:
                 - WithKmsPermissions
                 - Effect: Allow
                   Action:
-                   - kms:Decrypt
-                   - kms:DescribeKey
+                    - kms:Decrypt
+                    - kms:DescribeKey
                   Resource: !Ref EncryptionKeys
                 - !Ref AWS::NoValue
       Tags:

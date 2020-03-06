@@ -35,19 +35,11 @@ produces:
 x-panther-lambda-cfn-resource: HandlerFunction
 
 parameters: # Parameters shared across multiple methods
-  policyId:
-    name: policyId
-    in: query
-    description: Unique ASCII policy identifier
+  id:
+    name: id
     required: true
-    type: string
-    pattern: '[a-zA-Z0-9\-\.: ]{1,200}'
-
-  ruleId:
-    name: ruleId
     in: query
-    description: Unique ASCII rule identifier
-    required: true
+    description: User-specified unique rule/policy ID
     type: string
     pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
@@ -55,9 +47,17 @@ parameters: # Parameters shared across multiple methods
     name: type
     in: query
     description: Type of analysis logic to retrieve
-    default: policy
     type: string
-    enum: [policy, rule]
+    enum:
+      - POLICY
+      - RULE
+
+  versionId:
+    name: versionId
+    in: query
+    description: The version of the analysis to retrieve
+    type: string
+    pattern: '[a-zA-Z\._0-9]{32}'
 
 paths:
   /policy:
@@ -100,12 +100,9 @@ paths:
       operationId: GetPolicy
       summary: Get policy details
       parameters:
-        - $ref: '#/parameters/policyId'
-        - name: versionId
-          in: query
-          description: Optional version ID to retrieve (for older versions)
-          type: string
-          pattern: '[a-zA-Z\._0-9]{32}'
+        - $ref: '#/parameters/id'
+        - $ref: '#/parameters/versionId'
+
       responses:
         200:
           description: OK
@@ -154,12 +151,8 @@ paths:
       operationId: GetRule
       summary: Get rule details
       parameters:
-        - $ref: '#/parameters/ruleId'
-        - name: versionId
-          in: query
-          description: Optional version ID to retrieve (for older versions)
-          type: string
-          pattern: '[a-zA-Z\._0-9]{32}'
+        - $ref: '#/parameters/id'
+        - $ref: '#/parameters/versionId'
       responses:
         200:
           description: OK

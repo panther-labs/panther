@@ -50,7 +50,7 @@ func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 
 	var results *enginemodels.PolicyEngineOutput
 	// Build the policy engine request
-	if input.AnalysisType == "RULE" {
+	if input.AnalysisType == models.AnalysisTypeRULE {
 		ruleResults, errResponse := getRuleResults(input)
 		if errResponse != nil {
 			return errResponse

@@ -78,13 +78,13 @@ for the get policy operation typically these are written to a http.Request
 */
 type GetPolicyParams struct {
 
-	/*PolicyID
-	  Unique ASCII policy identifier
+	/*ID
+	  User-specified unique rule/policy ID
 
 	*/
-	PolicyID string
+	ID string
 	/*VersionID
-	  Optional version ID to retrieve (for older versions)
+	  The version of the analysis to retrieve
 
 	*/
 	VersionID *string
@@ -127,15 +127,15 @@ func (o *GetPolicyParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithPolicyID adds the policyID to the get policy params
-func (o *GetPolicyParams) WithPolicyID(policyID string) *GetPolicyParams {
-	o.SetPolicyID(policyID)
+// WithID adds the id to the get policy params
+func (o *GetPolicyParams) WithID(id string) *GetPolicyParams {
+	o.SetID(id)
 	return o
 }
 
-// SetPolicyID adds the policyId to the get policy params
-func (o *GetPolicyParams) SetPolicyID(policyID string) {
-	o.PolicyID = policyID
+// SetID adds the id to the get policy params
+func (o *GetPolicyParams) SetID(id string) {
+	o.ID = id
 }
 
 // WithVersionID adds the versionID to the get policy params
@@ -157,11 +157,11 @@ func (o *GetPolicyParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 	}
 	var res []error
 
-	// query param policyId
-	qrPolicyID := o.PolicyID
-	qPolicyID := qrPolicyID
-	if qPolicyID != "" {
-		if err := r.SetQueryParam("policyId", qPolicyID); err != nil {
+	// query param id
+	qrID := o.ID
+	qID := qrID
+	if qID != "" {
+		if err := r.SetQueryParam("id", qID); err != nil {
 			return err
 		}
 	}

@@ -37,11 +37,8 @@ import (
 // NewGetEnabledPoliciesParams creates a new GetEnabledPoliciesParams object
 // with the default values initialized.
 func NewGetEnabledPoliciesParams() *GetEnabledPoliciesParams {
-	var (
-		typeVarDefault = string("policy")
-	)
+	var ()
 	return &GetEnabledPoliciesParams{
-		Type: &typeVarDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -50,11 +47,8 @@ func NewGetEnabledPoliciesParams() *GetEnabledPoliciesParams {
 // NewGetEnabledPoliciesParamsWithTimeout creates a new GetEnabledPoliciesParams object
 // with the default values initialized, and the ability to set a timeout on a request
 func NewGetEnabledPoliciesParamsWithTimeout(timeout time.Duration) *GetEnabledPoliciesParams {
-	var (
-		typeVarDefault = string("policy")
-	)
+	var ()
 	return &GetEnabledPoliciesParams{
-		Type: &typeVarDefault,
 
 		timeout: timeout,
 	}
@@ -63,11 +57,8 @@ func NewGetEnabledPoliciesParamsWithTimeout(timeout time.Duration) *GetEnabledPo
 // NewGetEnabledPoliciesParamsWithContext creates a new GetEnabledPoliciesParams object
 // with the default values initialized, and the ability to set a context for a request
 func NewGetEnabledPoliciesParamsWithContext(ctx context.Context) *GetEnabledPoliciesParams {
-	var (
-		typeDefault = string("policy")
-	)
+	var ()
 	return &GetEnabledPoliciesParams{
-		Type: &typeDefault,
 
 		Context: ctx,
 	}
@@ -76,11 +67,8 @@ func NewGetEnabledPoliciesParamsWithContext(ctx context.Context) *GetEnabledPoli
 // NewGetEnabledPoliciesParamsWithHTTPClient creates a new GetEnabledPoliciesParams object
 // with the default values initialized, and the ability to set a custom HTTPClient for a request
 func NewGetEnabledPoliciesParamsWithHTTPClient(client *http.Client) *GetEnabledPoliciesParams {
-	var (
-		typeDefault = string("policy")
-	)
+	var ()
 	return &GetEnabledPoliciesParams{
-		Type:       &typeDefault,
 		HTTPClient: client,
 	}
 }
