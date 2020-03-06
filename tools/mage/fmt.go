@@ -47,23 +47,14 @@ func Fmt() {
 		logger.Fatalf("failed to format python: %v", err)
 	}
 
-	// prettier (cloudformation)
+	// prettier
 	logger.Info("fmt: prettier")
-	args = []string{"--write", "deployments/**.yml"}
-	if !mg.Verbose() {
-		args = append(args, "--loglevel", "error")
-	}
-	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format deployments/**.yml: %v", err)
-	}
-
-	// prettier (web)
 	args = []string{"--write", "**/*.{ts,js,tsx,md,json,yaml,yml}"}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
 	}
 	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format: %v", err)
+		logger.Fatalf("failed to format with prettier: %v", err)
 	}
 
 	// Generate documentation
