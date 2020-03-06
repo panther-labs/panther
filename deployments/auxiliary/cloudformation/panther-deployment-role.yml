@@ -50,7 +50,7 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Action: # permissions which can't be restricted to specific resources
+            Action:  # permissions which can't be restricted to specific resources
               - acm:*
               - apigateway:*
               - appsync:*
