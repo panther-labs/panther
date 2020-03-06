@@ -22,13 +22,13 @@ import Panel from 'Components/Panel';
 import { TableControlsPagination as PaginationControls } from 'Components/utils/TableControls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 
-interface AlertEventsProps {
+interface AlertDetailsEventsProps {
   events: string[];
   total: number;
   fetchMore: () => void;
 }
 
-const AlertDetailsEvents: React.FC<AlertEventsProps> = ({ events, total, fetchMore }) => {
+const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ events, total, fetchMore }) => {
   // because we are going to use that in PaginationControls we are starting an indexing starting
   // from 1 instead of 0. That's why we are using `eventDisplayIndex - 1` when selecting the proper event.
   // Normally the `PaginationControls` are used for displaying pages so they are built with a
