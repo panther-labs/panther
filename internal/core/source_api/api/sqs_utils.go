@@ -92,16 +92,16 @@ func RemovePermissionFromLogProcessorQueue(accountID string) error {
 		return err
 	}
 	if existingPolicy == nil {
-		return errors.New("policy doesn't exist")
+		zap.L().Warn("policy does not exist")
+		return nil
 	}
 
 	statementToRemoveIndex := findStatementIndex(existingPolicy, accountID)
 	if statementToRemoveIndex < 0 {
-		err := errors.New("didn't find expected statement in queue policy")
-		zap.L().Error("didn't find expected statement in queue policy",
+		zap.L().Warn("didn't find expected statement in queue policy",
 			zap.String("accountId", accountID),
-			zap.Error(errors.Wrap(err, "didn't find expected statement in queue policy")))
-		return err
+		)
+		return nil
 	}
 	// Remove statement
 	existingPolicy.Statements[statementToRemoveIndex] = existingPolicy.Statements[len(existingPolicy.Statements)-1]
