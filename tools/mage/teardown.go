@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
@@ -299,7 +298,7 @@ func removeBucket(client *s3.S3, bucketName *string) {
 // Destroy Panther ACM or IAM certificates.
 //
 // In ACM, delete certs for "example.com" tagged with "Application:Panther"
-// In IAM, delete certs in "/panther/" path and the same region whose names start with "PantherCertificate-"
+// In IAM, delete certs in "/panther/(region)/" path whose names start with "PantherCertificate-"
 func destroyCerts(awsSession *session.Session) {
 	logger.Debug("checking for ACM certificates")
 	acmClient := acm.New(awsSession)
@@ -324,14 +323,17 @@ func destroyCerts(awsSession *session.Session) {
 
 	logger.Debug("checking for IAM server certificates")
 	iamClient := iam.New(awsSession)
-	input := &iam.ListServerCertificatesInput{PathPrefix: aws.String("/panther/")}
+	path := "/panther/" + *awsSession.Config.Region + "/"
+	input := &iam.ListServerCertificatesInput{PathPrefix: &path}
 	err = iamClient.ListServerCertificatesPages(input, func(page *iam.ListServerCertificatesOutput, isLast bool) bool {
 		for _, cert := range page.ServerCertificateMetadataList {
-			if canRemoveIamCert(awsSession, cert) {
+			name := cert.ServerCertificateName
+			if strings.HasPrefix(*name, "PantherCertificate-") {
+				logger.Infof("deleting IAM cert %s", *name)
 				if _, err := iamClient.DeleteServerCertificate(&iam.DeleteServerCertificateInput{
-					ServerCertificateName: cert.ServerCertificateName,
+					ServerCertificateName: name,
 				}); err != nil {
-					logger.Fatalf("failed to delete IAM cert %s: %v", *cert.ServerCertificateName, err)
+					logger.Fatalf("failed to delete IAM cert %s: %v", *name, err)
 				}
 			}
 		}
@@ -360,20 +362,6 @@ func canRemoveAcmCert(client *acm.ACM, summary *acm.CertificateSummary) bool {
 		}
 	}
 	return false
-}
-
-// Returns true if the IAM cert starts with "PantherCertificate-" and is in the same region
-func canRemoveIamCert(awsSession *session.Session, meta *iam.ServerCertificateMetadata) bool {
-	if !strings.HasPrefix(aws.StringValue(meta.ServerCertificateName), "PantherCertificate-") {
-		return false
-	}
-
-	certArn, err := arn.Parse(*meta.Arn)
-	if err != nil {
-		logger.Fatalf("failed to parse IAM cert arn %s: %v", *meta.Arn, err)
-	}
-
-	return certArn.Region == aws.StringValue(awsSession.Config.Region)
 }
 
 // Destroy any leftover "/aws/lambda/panther-" log groups

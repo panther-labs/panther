@@ -176,7 +176,7 @@ func uploadIAMCertificate(awsSession *session.Session) string {
 	certName := "PantherCertificate-" + time.Now().Format("2006-01-02T15-04-05")
 	input := &iam.UploadServerCertificateInput{
 		CertificateBody:       aws.String(string(readFile(certificateFile))),
-		Path:                  aws.String("/panther/"),
+		Path:                  aws.String("/panther/" + *awsSession.Config.Region + "/"),
 		PrivateKey:            aws.String(string(readFile(privateKeyFile))),
 		ServerCertificateName: aws.String(certName),
 	}
