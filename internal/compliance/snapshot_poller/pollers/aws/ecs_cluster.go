@@ -93,11 +93,6 @@ func describeCluster(ecsSvc ecsiface.ECSAPI, arn *string) (*ecs.Cluster, error) 
 		return nil, nil
 	}
 
-	if len(out.Clusters) != 1 {
-		zap.L().Error("ecs.DescribeClusters did not return exactly one result", zap.Int("number of results", len(out.Clusters)))
-		return nil, nil
-	}
-
 	return out.Clusters[0], nil
 }
 
