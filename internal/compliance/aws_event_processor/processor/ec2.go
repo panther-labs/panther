@@ -407,7 +407,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			break
 		}
 		if id := detail.Get("*.vpcId").Str; id != "" {
-			ec2Type = aws.Ec2VolumeSchema
+			ec2Type = aws.Ec2VpcSchema
 			ec2ARN.Resource = "vpc/" + id
 			break
 		}
