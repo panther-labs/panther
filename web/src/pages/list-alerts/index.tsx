@@ -35,7 +35,7 @@ export const LIST_ALERTS = gql`
         alertId
         creationTime
         eventsMatched
-        lastEventMatched
+        updateTime
         ruleId
         severity
       }

@@ -65,7 +65,7 @@ type GlueTableMetadata struct {
 func NewGlueTableMetadata(
 	datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
-	tableName := getTableName(logType)
+	tableName := GetTableName(logType)
 	tablePrefix := getTablePrefix(datatype, tableName)
 	return &GlueTableMetadata{
 		databaseName: getDatabase(datatype),
@@ -124,17 +124,9 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 }
 
 // Based on Timebin(), return an S3 prefix for objects of this table
-func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) (prefix string) {
-	prefix = gm.Prefix()
-	switch gm.timebin {
-	case GlueTableHourly:
-		prefix += fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
-	case GlueTableDaily:
-		prefix += fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
-	case GlueTableMonthly:
-		prefix += fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
-	}
-	return
+func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
+	prefix := gm.Prefix()
+	return prefix + getTimePartitionPrefix(gm.timebin, t)
 }
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
@@ -153,7 +145,7 @@ func getTablePrefix(dataType models.DataType, tableName string) string {
 	return ruleMatchS3Prefix + "/" + tableName + "/"
 }
 
-func getTableName(logType string) string {
+func GetTableName(logType string) string {
 	// clean table name to make sql friendly
 	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
 	return strings.ToLower(tableName)

@@ -26,25 +26,23 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-
-	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
 func (table *AlertsTable) ListByRule(ruleID string, exclusiveStartKey *string, pageSize *int) (
-	summaries []*models.AlertItem, lastEvaluatedKey *string, err error) {
+	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
 	return table.list(RuleIDKey, ruleID, exclusiveStartKey, pageSize)
 }
 
 func (table *AlertsTable) ListAll(exclusiveStartKey *string, pageSize *int) (
-	summaries []*models.AlertItem, lastEvaluatedKey *string, err error) {
+	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
-	return table.list(TimePartitionKey, TimePartitionKey, exclusiveStartKey, pageSize)
+	return table.list(TimePartitionKey, TimePartitionValue, exclusiveStartKey, pageSize)
 }
 
 // list returns a page of alerts ordered by creationTime, last evaluated key, any error
 func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *string, pageSize *int) (
-	summaries []*models.AlertItem, lastEvaluatedKey *string, err error) {
+	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
 	// pick index
 	var index string

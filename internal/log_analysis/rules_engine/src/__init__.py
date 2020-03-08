@@ -25,6 +25,7 @@ class EventMatch:
     rule_version: str
     log_type: str
     dedup: str
+    severity: str
     event: Dict[str, Any]
 
 
@@ -34,6 +35,18 @@ class AlertInfo:
     alert_id: str
     alert_creation_time: datetime
     alert_update_time: datetime
+
+
+@dataclass(frozen=True, eq=True)
+class OutputGroupingKey:
+    """Class representing the keys used for grouping output events to files"""
+    rule_id: str
+    log_type: str
+    dedup: str
+
+    def table_name(self) -> str:
+        """ Output the name of the Glue table name for this log type"""
+        return self.log_type.lower().replace('.', '_')
 
 
 # pylint: disable=invalid-name

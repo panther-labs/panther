@@ -40,19 +40,21 @@ Targets:
   build:lambda        Compile Go Lambda function source
   clean               Remove auto-generated build artifacts
   deploy              Deploy application infrastructure
+  doc:cfn             Cfn will generate user documentation from deployment CloudFormation
   fmt                 Format source files
   glue:sync           Sync glue table partitions after schema change
   setup:all           Install all development dependencies
   setup:go            Install goimports, go-swagger, and golangci-lint
   setup:python        Install the Python virtual env
   setup:web           Npm install
+  teardown            Destroy all Panther infrastructure
   test:cfn            Lint CloudFormation templates
   test:ci             Run all required checks
   test:cover          Run Go unit tests and view test coverage in HTML
   test:go             Test Go source
   test:integration    Run integration tests (integration_test.go,integration.py)
   test:python         Test Python source
-  test:web            Lint web source
+  test:web            Test web source
 ```
 
 You can easily chain `mage` commands together, for example: `mage fmt test:ci deploy`
