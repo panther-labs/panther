@@ -382,7 +382,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			ResourceType: aws.Ec2VpcSchema,
 		}}
 	default:
-		zap.L().Info("ec2: unknown API call, making a guess...")
+		zap.L().Debug("ec2: unknown API call, making a guess...")
 		// Give it the old college try, grabbing a bad resource ID here is a minor overhead for the
 		// poller and should impose no risk. We can review the correct guesses in the logs and add
 		// them to the right place as appropriate.
