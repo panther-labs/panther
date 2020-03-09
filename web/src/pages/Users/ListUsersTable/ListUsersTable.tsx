@@ -20,7 +20,7 @@ import React from 'react';
 import { useQuery, gql } from '@apollo/client';
 import { ListUsersResponse, User } from 'Generated/schema';
 import { Alert, Card, Table } from 'pouncejs';
-import columns from 'Pages/Users/Columns';
+import columns from 'Pages/Users/columns';
 
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';

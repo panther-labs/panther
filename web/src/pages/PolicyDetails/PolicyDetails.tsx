@@ -45,7 +45,7 @@ import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination
 import ErrorBoundary from 'Components/ErrorBoundary';
 import PolicyDetailsTable from './PolicyDetailsTable';
 import PolicyDetailsInfo from './PolicyDetailsInfo';
-import columns from './Columns';
+import columns from './columns';
 import PolicyDetailsPageSkeleton from './Skeleton';
 
 export const POLICY_DETAILS = gql`

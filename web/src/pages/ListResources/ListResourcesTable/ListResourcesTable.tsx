@@ -28,7 +28,7 @@ import { generateEnumerationColumn } from 'Helpers/utils';
 import { Table } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import columns from '../Columns';
+import columns from '../columns';
 
 interface ListResourcesTableProps {
   items?: ResourceSummary[];

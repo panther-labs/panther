@@ -33,7 +33,7 @@ import Panel from 'Components/Panel';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import columns from './Columns';
+import columns from './columns';
 import RuleDetailsPageSkeleton from './Skeleton';
 
 export const RULE_DETAILS = gql`

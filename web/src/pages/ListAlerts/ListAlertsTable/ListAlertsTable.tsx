@@ -20,7 +20,7 @@ import React from 'react';
 import { AlertSummary } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import { Table } from 'pouncejs';
-import columns from 'Pages/ListAlerts/Columns';
+import columns from 'Pages/ListAlerts/columns';
 
 interface ListAlertsTableProps {
   items?: AlertSummary[];

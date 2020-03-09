@@ -46,7 +46,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { DEFAULT_SMALL_PAGE_SIZE, INTEGRATION_TYPES } from 'Source/constants';
 import ResourceDetailsTable from './ResourceDetailsTable';
 import ResourceDetailsInfo from './ResourceDetailsInfo';
-import columns from './Columns';
+import columns from './columns';
 import ResourceDetailsPageSkeleton from './Skeleton';
 
 export const RESOURCE_DETAILS = gql`

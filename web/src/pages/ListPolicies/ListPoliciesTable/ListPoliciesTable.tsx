@@ -25,7 +25,7 @@ import {
 } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import { Table } from 'pouncejs';
-import columns from 'Pages/ListPolicies/Columns';
+import columns from 'Pages/ListPolicies/columns';
 import urls from 'Source/urls';
 import useRouter from 'Hooks/useRouter';
 

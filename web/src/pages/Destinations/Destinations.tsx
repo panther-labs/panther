@@ -22,7 +22,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { gql, useQuery } from '@apollo/client';
 import { Destination } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
-import columns from './Columns';
+import columns from './columns';
 import DestinationsPageSkeleton from './Skeleton';
 import DestinationsPageEmptyDataFallback from './EmptyDataFallback';
 import DestinationCreateButton from './CreateButton';

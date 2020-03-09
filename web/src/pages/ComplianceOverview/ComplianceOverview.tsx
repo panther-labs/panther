@@ -31,7 +31,7 @@ import {
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import { INTEGRATION_TYPES } from 'Source/constants';
-import { topFailingPoliciesColumns, topFailingResourcesColumns } from './Columns';
+import { topFailingPoliciesColumns, topFailingResourcesColumns } from './columns';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
 import ResourcesByPlatformChart from './ResourcesByPlatformChart';
