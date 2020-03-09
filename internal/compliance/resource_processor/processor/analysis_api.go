@@ -45,14 +45,14 @@ func getPolicies() (policyMap, error) {
 		return policyCache.Policies, nil
 	}
 
-	// Load from policy-api
+	// Load from analysis-api
 	result, err := analysisClient.Operations.GetEnabledPolicies(
 		&operations.GetEnabledPoliciesParams{HTTPClient: httpClient, Type: string(models.AnalysisTypePOLICY)})
 	if err != nil {
-		zap.L().Error("failed to load policies from policy-api", zap.Error(err))
+		zap.L().Error("failed to load policies from analysis-api", zap.Error(err))
 		return nil, err
 	}
-	zap.L().Info("successfully loaded enabled policies from policy-api",
+	zap.L().Info("successfully loaded enabled policies from analysis-api",
 		zap.Int("policyCount", len(result.Payload.Policies)))
 
 	// Convert list of policies into a map by ID
