@@ -78,9 +78,7 @@ const columns = [
     sortable: true,
     header: 'Last Matched At',
     flex: '0 0 200px',
-    renderCell: ({ lastEventMatched }) => (
-      <Text size="medium">{formatDatetime(lastEventMatched)}</Text>
-    ),
+    renderCell: ({ updateTime }) => <Text size="medium">{formatDatetime(updateTime)}</Text>,
   },
 ] as TableProps<AlertSummary>['columns'];
 

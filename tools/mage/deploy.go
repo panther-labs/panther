@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -58,6 +59,8 @@ const (
 	layerSourceDir   = "out/pip/analysis/python"
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
+
+	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
@@ -107,20 +110,35 @@ func Deploy() {
 	bucket := bucketOutputs["SourceBucketName"]
 
 	// Deploy main application stack
-	params := getBackendDeployParams(awsSession, &config, bucket)
+	params := getBackendDeployParams(awsSession, &config, bucket, bucketOutputs["LogBucketName"])
 	backendOutputs := deployTemplate(awsSession, backendTemplate, bucket, backendStack, params)
 	if err := postDeploySetup(awsSession, backendOutputs, &config); err != nil {
 		logger.Fatal(err)
 	}
 
+	// the below can all be done in parallel to speed deployment
+	var wg sync.WaitGroup
+	runDeploy := func(deployFunc func()) {
+		wg.Add(1)
+		go func() {
+			deployFunc()
+			wg.Done()
+		}()
+	}
+
 	// Creates Glue/Athena related resources
-	deployDatabases(awsSession, bucket, backendOutputs)
+	runDeploy(func() { deployDatabases(awsSession, bucket, backendOutputs) })
 
 	// Deploy frontend stack
-	deployFrontend(awsSession, bucket, backendOutputs, &config)
+	runDeploy(func() { deployFrontend(awsSession, bucket, backendOutputs, &config) })
 
-	// Deploy monitoring (must be last due to possible references to frontend/backend resources)
-	deployMonitoring(awsSession, bucket, backendOutputs, &config)
+	// Deploy monitoring
+	runDeploy(func() { deployMonitoring(awsSession, bucket, backendOutputs, &config) })
+
+	// Onboard Panther account to Panther
+	runDeploy(func() { deployOnboard(awsSession, bucket, backendOutputs) })
+
+	wg.Wait()
 
 	// Done!
 	logger.Infof("deploy: finished successfully in %s", time.Since(start))
@@ -149,21 +167,25 @@ func deployPrecheck(awsRegion string) {
 //
 // This will create a Python layer, pass down the name of the log database,
 // pass down user supplied alarm SNS topic and a self-signed cert if necessary.
-func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) map[string]string {
+func getBackendDeployParams(
+	awsSession *session.Session, config *PantherConfig, sourceBucket string, logBucket string) map[string]string {
+
 	v := config.BackendParameterValues
 	result := map[string]string{
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
 		"Debug":                        strconv.FormatBool(v.Debug),
 		"LayerVersionArns":             v.LayerVersionArns,
 		"PythonLayerVersionArn":        v.PythonLayerVersionArn,
-		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
+		"S3BucketAccessLogs":           logBucket,
+		"S3BucketSource":               sourceBucket,
 		"TracingMode":                  v.TracingMode,
+		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
 	}
 
 	// If no custom Python layer is defined, then we need to build the default one.
 	if result["PythonLayerVersionArn"] == "" {
 		result["PythonLayerKey"] = layerS3ObjectKey
-		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, config.PipLayer, bucket, layerS3ObjectKey)
+		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, config.PipLayer, sourceBucket, layerS3ObjectKey)
 	}
 
 	// If no pre-existing cert is provided, then create one if necessary.
@@ -336,7 +358,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, config
 		response, err := apiClient.Operations.BulkUpload(&operations.BulkUploadParams{
 			Body: &analysismodels.BulkUpload{
 				Data:   analysismodels.Base64zipfile(encoded),
-				UserID: "00000000-0000-0000-0000-000000000000",
+				UserID: mageUserID,
 			},
 			HTTPClient: httpClient,
 		})

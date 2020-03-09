@@ -40,7 +40,7 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_and_flush_event_generate_new_alert(self) -> None:
         buffer = MatchedEventsBuffer()
-        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', {'data_key': 'data_value'})
+        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', 'INFO', {'data_key': 'data_value'})
         buffer.add_event(event_match)
 
         self.assertEqual(len(buffer.data), 1)
@@ -49,16 +49,19 @@ class TestMatchedEventsBuffer(TestCase):
         buffer.flush()
 
         DDB_MOCK.update_item.assert_called_once_with(
-            ConditionExpression='(#7 < :7) OR (attribute_not_exists(#8))',
+            ConditionExpression='(#10 < :10) OR (attribute_not_exists(#11))',
             ExpressionAttributeNames={
                 '#1': 'ruleId',
                 '#2': 'dedup',
                 '#3': 'alertCreationTime',
                 '#4': 'alertUpdateTime',
                 '#5': 'eventCount',
-                '#6': 'alertCount',
-                '#7': 'alertCreationTime',
-                '#8': 'partitionKey'
+                '#6': 'severity',
+                '#7': 'logTypes',
+                '#8': 'ruleVersion',
+                '#9': 'alertCount',
+                '#10': 'alertCreationTime',
+                '#11': 'partitionKey'
             },
             ExpressionAttributeValues={
                 ':1': {
@@ -77,9 +80,18 @@ class TestMatchedEventsBuffer(TestCase):
                     'N': '1'
                 },
                 ':6': {
-                    'N': '1'
+                    'S': 'INFO'
                 },
                 ':7': {
+                    'SS': ['log_type']
+                },
+                ':8': {
+                    'S': 'rule_version'
+                },
+                ':9': {
+                    'N': '1'
+                },
+                ':10': {
                     'N': mock.ANY
                 }
             },
@@ -88,7 +100,7 @@ class TestMatchedEventsBuffer(TestCase):
             }},
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5\nADD #6 :6'
+            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6, #7=:7, #8=:8\nADD #9 :9'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)
@@ -103,7 +115,7 @@ class TestMatchedEventsBuffer(TestCase):
         content = json.loads(data.read().decode('utf-8'))
         # Verify extra fields
         self.assertEqual(content['p_rule_id'], 'rule_id')
-        self.assertEqual(content['p_alert_id'], 'rule_id-1')
+        self.assertEqual(content['p_alert_id'], 'rule_id:dedup:1')
         # Verify fields are valid dates
         self.assertIsNotNone(datetime.strptime(content['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(content['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
@@ -131,8 +143,8 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_same_rule_different_log(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id', 'version', 'log1', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id', 'version', 'log2', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(EventMatch('id', 'version', 'log1', 'dedup', 'INFO', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id', 'version', 'log2', 'dedup', 'INFO', {'key2': 'value2'}))
 
         self.assertEqual(len(buffer.data), 2)
 
@@ -157,13 +169,13 @@ class TestMatchedEventsBuffer(TestCase):
                 self.assertEqual(content['key1'], 'value1')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id')
-                self.assertEqual(content['p_alert_id'], 'id-1')
+                self.assertEqual(content['p_alert_id'], 'id:dedup:1')
             elif 'key2' in content:
                 # Verify actual event
                 self.assertEqual(content['key2'], 'value2')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id')
-                self.assertEqual(content['p_alert_id'], 'id-1')
+                self.assertEqual(content['p_alert_id'], 'id:dedup:1')
             else:
                 self.fail('unexpected content')
 
@@ -173,8 +185,8 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_same_log_different_rules(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id1', 'version', 'log', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id2', 'version', 'log', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(EventMatch('id1', 'version', 'log', 'dedup', 'INFO', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id2', 'version', 'log', 'dedup', 'INFO', {'key2': 'value2'}))
 
         self.assertEqual(len(buffer.data), 2)
 
@@ -199,13 +211,13 @@ class TestMatchedEventsBuffer(TestCase):
                 self.assertEqual(content['key1'], 'value1')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id1')
-                self.assertEqual(content['p_alert_id'], 'id1-1')
+                self.assertEqual(content['p_alert_id'], 'id1:dedup:1')
             elif 'key2' in content:
                 # Verify actual event
                 self.assertEqual(content['key2'], 'value2')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id2')
-                self.assertEqual(content['p_alert_id'], 'id2-1')
+                self.assertEqual(content['p_alert_id'], 'id2:dedup:1')
             else:
                 self.fail('unexpected content')
 
@@ -215,8 +227,8 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_group_events_together(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', 'INFO', {'key1': 'value1'}))
+        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', 'INFO', {'key2': 'value2'}))
 
         self.assertEqual(len(buffer.data), 1)
 
@@ -235,7 +247,7 @@ class TestMatchedEventsBuffer(TestCase):
         self.assertIsNotNone(datetime.strptime(event1['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(event1['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertEqual(event1['p_rule_id'], 'id')
-        self.assertEqual(event1['p_alert_id'], 'id-1')
+        self.assertEqual(event1['p_alert_id'], 'id:dedup:1')
         self.assertEqual(event1['key1'], 'value1')
 
         # Verify first event
@@ -243,7 +255,7 @@ class TestMatchedEventsBuffer(TestCase):
         self.assertIsNotNone(datetime.strptime(event2['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(event2['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertEqual(event2['p_rule_id'], 'id')
-        self.assertEqual(event2['p_alert_id'], 'id-1')
+        self.assertEqual(event2['p_alert_id'], 'id:dedup:1')
         self.assertEqual(event2['key2'], 'value2')
 
         # Assert that the buffer has been cleared
@@ -254,7 +266,7 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         # Reducing max_bytes so that it will cause the overflow condition to trigger earlier
         buffer.max_bytes = 50
-        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', {'data_key': 'data_value'})
+        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', 'INFO', {'data_key': 'data_value'})
 
         DDB_MOCK.update_item.return_value = {'Attributes': {'alertCount': {'N': '1'}}}
 

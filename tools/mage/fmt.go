@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	goTargets = []string{"api", "internal", "pkg", "tools", "magefile.go"}
+	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
 	pyTargets = []string{
 		"internal/compliance/remediation_aws",
 		"internal/compliance/policy_engine",
@@ -47,23 +47,14 @@ func Fmt() {
 		logger.Fatalf("failed to format python: %v", err)
 	}
 
-	// prettier (cloudformation)
+	// prettier
 	logger.Info("fmt: prettier")
-	args = []string{"--write", "deployments/**.yml"}
+	args = []string{"--write", "**/*.{ts,js,tsx,md,json,yaml,yml}"}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
 	}
 	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format deployments/**.yml: %v", err)
-	}
-
-	// prettier (web)
-	args = []string{"--write", "{web/src/**,web/__generated__,.}/*.{ts,js,tsx,md,json,yml}"}
-	if !mg.Verbose() {
-		args = append(args, "--loglevel", "error")
-	}
-	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format {web/src/**,.}: %v", err)
+		logger.Fatalf("failed to format with prettier: %v", err)
 	}
 
 	// Generate documentation

@@ -23,14 +23,9 @@ module.exports = {
    */
 
   /*
-   * Run prettier on:
-   * 1. All JSON/YAML inside the /web dir
-   * 2. All JSON/YAML found in the root project dir
-   * 3. All TS, JS and Markdown files found anywhere in the project
+   * Run prettier TS, JS, JSON, YAML and Markdown files found anywhere in the project
    */
-  'web/**/*.{json,yml}': ['prettier --write', 'git add'],
-  './*.{json,yml}': ['prettier --write', 'git add'],
-  '*.{ts,tsx,js,md}': ['prettier --write', 'git add'],
+  '*.{ts,tsx,js,md,yaml,yml,json}': ['prettier --write', 'git add'],
 
   /*
    * Run ESLint checks for all TS & JS files found anywhere in hte project
@@ -40,5 +35,5 @@ module.exports = {
   /*
    * only run the TS compiler when there are changes inTS files
    */
-  '**/*.ts?(x)': () => 'tsc -p .',
+  '*.ts?(x)': () => 'tsc -p .',
 };
