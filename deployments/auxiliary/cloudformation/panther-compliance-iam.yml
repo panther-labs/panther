@@ -25,7 +25,6 @@ Parameters:
   MasterAccountId:
     Type: String
     Description: AWS account ID of the account running the Panther backend
-    Default: '' # MasterAccountId
 
   # Deployment toggles
   DeployCloudWatchEventSetup:
