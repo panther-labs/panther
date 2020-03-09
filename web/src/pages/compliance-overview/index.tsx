@@ -128,13 +128,6 @@ const ComplianceOverview: React.FC = () => {
 
   return (
     <Box is="article" mb={6}>
-      <Alert
-        variant="info"
-        title="Only active data is shown"
-        description="Charts only include enabled policies which scanned at least one (1) resource & policies with a least one (1) policy attached to them"
-        discardable
-        mb={6}
-      />
       <Grid
         gridTemplateColumns="repeat(4, 1fr)"
         gridRowGap={3}
