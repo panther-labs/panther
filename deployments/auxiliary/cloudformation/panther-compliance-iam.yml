@@ -25,6 +25,8 @@ Parameters:
   MasterAccountId:
     Type: String
     Description: AWS account ID of the account running the Panther backend
+    Default: '' # DO NOT REMOTE. We need an empty value here (even though the parameter is required). The empty string will be
+    # replaced with appropriate value by Golang application.
 
   # Deployment toggles
   DeployCloudWatchEventSetup:
