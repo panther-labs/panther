@@ -135,6 +135,12 @@ Resources:
                 - !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole
                 - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole
                 - !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole
+        - Id: GetPublicTemplates
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: arn:aws:s3:::panther-public-cloudformation-templates/*
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
