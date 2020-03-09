@@ -203,6 +203,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		UpdateTime:   time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC),
 		Severity:     "INFO",
 		EventCount:   5,
+		DedupString:  "dedupString",
 		LogTypes:     []string{"logtype"},
 	}
 
@@ -228,6 +229,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		CreationTime:  aws.Time(time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC)),
 		UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC)),
 		EventsMatched: aws.Int(5),
+		DedupString:   aws.String("dedupString"),
 		Events:        aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
