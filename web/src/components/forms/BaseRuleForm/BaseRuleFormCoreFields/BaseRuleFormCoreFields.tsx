@@ -66,7 +66,7 @@ const logTypesInputProps = {
   placeholder: 'Filter affected log types',
 };
 
-const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
+const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
   // Read the values from the "parent" form. We expect a formik to be declared in the upper scope
   // since this is a "partial" form. If no Formik context is found this will error out intentionally
   const { values, errors, touched, initialValues } = useFormikContext<FormValues>();
@@ -198,4 +198,4 @@ const BaseRuleCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
   );
 };
 
-export default BaseRuleCoreFields;
+export default BaseRuleFormCoreFields;

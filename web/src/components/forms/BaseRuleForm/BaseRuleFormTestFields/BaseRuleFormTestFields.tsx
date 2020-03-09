@@ -45,7 +45,7 @@ import FormikRadio from 'Components/fields/Radio';
 import { useMutation, gql } from '@apollo/client';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import { RuleFormValues } from 'Components/forms/RuleForm';
-import PolicyFormTestResultList from '../RuleFormTestResultList';
+import PolicyFormTestResultList from '../BaseRuleFormTestResultList';
 
 export const testEditableFields = ['expectedResult', 'name', 'resource', 'resourceType'] as const;
 
@@ -76,7 +76,7 @@ type FormFields = MandatoryFormFields &
   Pick<RuleFormValues, 'logTypes'> &
   Pick<PolicyFormValues, 'resourceTypes'>;
 
-const RuleFormTestFields: React.FC = () => {
+const BaseRuleFormTestFields: React.FC = () => {
   // Read the values from the "parent" form. We expect a formik to be declared in the upper scope
   // since this is a "partial" form. If no Formik context is found this will error out intentionally
   const {
@@ -335,4 +335,4 @@ const RuleFormTestFields: React.FC = () => {
   );
 };
 
-export default RuleFormTestFields;
+export default BaseRuleFormTestFields;

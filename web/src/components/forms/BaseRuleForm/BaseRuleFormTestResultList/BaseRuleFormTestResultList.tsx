@@ -19,14 +19,14 @@
 import React from 'react';
 import { Box, Label } from 'pouncejs';
 import { ComplianceStatusEnum, TestPolicyResponse } from 'Generated/schema';
-import PolicyFormTestResult, { mapTestStatusToColor } from '../RuleFormTestResult';
+import PolicyFormTestResult, { mapTestStatusToColor } from '../BaseRuleFormTestResult';
 
 interface PolicyFormTestResultsProps {
   results: TestPolicyResponse;
   running: boolean;
 }
 
-const RuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ running, results }) => {
+const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ running, results }) => {
   return (
     <Box bg="#FEF5ED" p={5}>
       {running && (
@@ -60,4 +60,4 @@ const RuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ running,
   );
 };
 
-export default React.memo(RuleFormTestResultList);
+export default React.memo(BaseRuleFormTestResultList);

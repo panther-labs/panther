@@ -30,7 +30,7 @@ export const mapTestStatusToColor: {
   [ComplianceStatusEnum.Error]: 'orange300',
 };
 
-interface TestResultProps {
+interface BaseRuleFormTestResultProps {
   /** The name of the test */
   testName: string;
 
@@ -38,7 +38,7 @@ interface TestResultProps {
   status: ComplianceStatusEnum;
 }
 
-const TestResult: React.FC<TestResultProps> = ({ testName, status }) => (
+const BaseRuleFormTestResult: React.FC<BaseRuleFormTestResultProps> = ({ testName, status }) => (
   <Flex alignItems="center">
     <Card bg={mapTestStatusToColor[status]} mr={2} width={50} py={1}>
       <Label size="small" color="white" mx="auto" is="div" textAlign="center">
@@ -51,4 +51,4 @@ const TestResult: React.FC<TestResultProps> = ({ testName, status }) => (
   </Flex>
 );
 
-export default TestResult;
+export default BaseRuleFormTestResult;

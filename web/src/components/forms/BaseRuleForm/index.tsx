@@ -1,6 +1,6 @@
 export { default } from './BaseRuleForm';
 export * from './BaseRuleForm';
-export { default as RuleFormCoreFields } from './RuleFormCoreFields';
-export { ruleCoreEditableFields } from './RuleFormCoreFields';
-export { default as RuleFormTestFields } from './RuleFormTestFields';
-export { testEditableFields } from './RuleFormTestFields';
+export { default as BaseRuleFormCoreFields } from './BaseRuleFormCoreFields';
+export { ruleCoreEditableFields } from './BaseRuleFormCoreFields';
+export { default as BaseRuleFormTestFields } from './BaseRuleFormTestFields';
+export { testEditableFields } from './BaseRuleFormTestFields';

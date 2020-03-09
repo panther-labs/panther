@@ -24,8 +24,8 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import BaseRuleForm, {
   BaseRuleFormProps,
   ruleCoreEditableFields,
-  RuleFormCoreFields,
-  RuleFormTestFields,
+  BaseRuleFormCoreFields,
+  BaseRuleFormTestFields,
 } from 'Components/forms/BaseRuleForm';
 
 export const ruleEditableFields = [...ruleCoreEditableFields, 'logTypes', 'tests'] as const;
@@ -59,10 +59,10 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
     >
       <Box is="article">
         <ErrorBoundary>
-          <RuleFormCoreFields type="rule" />
+          <BaseRuleFormCoreFields type="rule" />
         </ErrorBoundary>
         <ErrorBoundary>
-          <RuleFormTestFields />
+          <BaseRuleFormTestFields />
         </ErrorBoundary>
       </Box>
     </BaseRuleForm>

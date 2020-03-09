@@ -22,8 +22,8 @@ import * as Yup from 'yup';
 import { Box, Heading } from 'pouncejs';
 import BaseRuleForm, {
   BaseRuleFormProps,
-  RuleFormTestFields as PolicyFormTestFields,
-  RuleFormCoreFields,
+  BaseRuleFormTestFields as PolicyFormTestFields,
+  BaseRuleFormCoreFields,
   ruleCoreEditableFields,
 } from 'Components/forms/BaseRuleForm';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -67,7 +67,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
     >
       <Box is="article">
         <ErrorBoundary>
-          <RuleFormCoreFields type="policy" />
+          <BaseRuleFormCoreFields type="policy" />
         </ErrorBoundary>
         <ErrorBoundary>
           <PolicyFormTestFields />
