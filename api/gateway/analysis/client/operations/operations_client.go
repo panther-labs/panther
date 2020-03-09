@@ -27,11 +27,11 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new operations API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -43,8 +43,39 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientService is the interface for Client methods
+type ClientService interface {
+	BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error)
+
+	CreatePolicy(params *CreatePolicyParams) (*CreatePolicyCreated, error)
+
+	CreateRule(params *CreateRuleParams) (*CreateRuleCreated, error)
+
+	DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK, error)
+
+	GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabledPoliciesOK, error)
+
+	GetPolicy(params *GetPolicyParams) (*GetPolicyOK, error)
+
+	GetRule(params *GetRuleParams) (*GetRuleOK, error)
+
+	ListPolicies(params *ListPoliciesParams) (*ListPoliciesOK, error)
+
+	ListRules(params *ListRulesParams) (*ListRulesOK, error)
+
+	ModifyPolicy(params *ModifyPolicyParams) (*ModifyPolicyOK, error)
+
+	ModifyRule(params *ModifyRuleParams) (*ModifyRuleOK, error)
+
+	Suppress(params *SuppressParams) (*SuppressOK, error)
+
+	TestPolicy(params *TestPolicyParams) (*TestPolicyOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-BulkUpload uploads a zipfile containing a bundle of policies
+  BulkUpload uploads a zipfile containing a bundle of policies
 */
 func (a *Client) BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error) {
 	// TODO: Validate the params before sending
@@ -78,7 +109,7 @@ func (a *Client) BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error) {
 }
 
 /*
-CreatePolicy creates a new compliance policy
+  CreatePolicy creates a new compliance policy
 */
 func (a *Client) CreatePolicy(params *CreatePolicyParams) (*CreatePolicyCreated, error) {
 	// TODO: Validate the params before sending
@@ -112,7 +143,7 @@ func (a *Client) CreatePolicy(params *CreatePolicyParams) (*CreatePolicyCreated,
 }
 
 /*
-CreateRule creates a new log analysis rule
+  CreateRule creates a new log analysis rule
 */
 func (a *Client) CreateRule(params *CreateRuleParams) (*CreateRuleCreated, error) {
 	// TODO: Validate the params before sending
@@ -146,7 +177,7 @@ func (a *Client) CreateRule(params *CreateRuleParams) (*CreateRuleCreated, error
 }
 
 /*
-DeletePolicies deletes one or more policies rules
+  DeletePolicies deletes one or more policies rules
 */
 func (a *Client) DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK, error) {
 	// TODO: Validate the params before sending
@@ -180,7 +211,7 @@ func (a *Client) DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK
 }
 
 /*
-GetEnabledPolicies lists all enabled rules policies for a customer account for backend processing
+  GetEnabledPolicies lists all enabled rules policies for a customer account for backend processing
 */
 func (a *Client) GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabledPoliciesOK, error) {
 	// TODO: Validate the params before sending
@@ -214,7 +245,7 @@ func (a *Client) GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabl
 }
 
 /*
-GetPolicy gets policy details
+  GetPolicy gets policy details
 */
 func (a *Client) GetPolicy(params *GetPolicyParams) (*GetPolicyOK, error) {
 	// TODO: Validate the params before sending
@@ -248,7 +279,7 @@ func (a *Client) GetPolicy(params *GetPolicyParams) (*GetPolicyOK, error) {
 }
 
 /*
-GetRule gets rule details
+  GetRule gets rule details
 */
 func (a *Client) GetRule(params *GetRuleParams) (*GetRuleOK, error) {
 	// TODO: Validate the params before sending
@@ -282,7 +313,7 @@ func (a *Client) GetRule(params *GetRuleParams) (*GetRuleOK, error) {
 }
 
 /*
-ListPolicies pages through policies in a customer s account
+  ListPolicies pages through policies in a customer s account
 */
 func (a *Client) ListPolicies(params *ListPoliciesParams) (*ListPoliciesOK, error) {
 	// TODO: Validate the params before sending
@@ -316,7 +347,7 @@ func (a *Client) ListPolicies(params *ListPoliciesParams) (*ListPoliciesOK, erro
 }
 
 /*
-ListRules pages through rules in a customer s account
+  ListRules pages through rules in a customer s account
 */
 func (a *Client) ListRules(params *ListRulesParams) (*ListRulesOK, error) {
 	// TODO: Validate the params before sending
@@ -350,7 +381,7 @@ func (a *Client) ListRules(params *ListRulesParams) (*ListRulesOK, error) {
 }
 
 /*
-ModifyPolicy modifies an existing policy
+  ModifyPolicy modifies an existing policy
 */
 func (a *Client) ModifyPolicy(params *ModifyPolicyParams) (*ModifyPolicyOK, error) {
 	// TODO: Validate the params before sending
@@ -384,7 +415,7 @@ func (a *Client) ModifyPolicy(params *ModifyPolicyParams) (*ModifyPolicyOK, erro
 }
 
 /*
-ModifyRule modifies an existing rule
+  ModifyRule modifies an existing rule
 */
 func (a *Client) ModifyRule(params *ModifyRuleParams) (*ModifyRuleOK, error) {
 	// TODO: Validate the params before sending
@@ -418,7 +449,7 @@ func (a *Client) ModifyRule(params *ModifyRuleParams) (*ModifyRuleOK, error) {
 }
 
 /*
-Suppress suppresses resource patterns across one or more policies
+  Suppress suppresses resource patterns across one or more policies
 */
 func (a *Client) Suppress(params *SuppressParams) (*SuppressOK, error) {
 	// TODO: Validate the params before sending
@@ -452,7 +483,7 @@ func (a *Client) Suppress(params *SuppressParams) (*SuppressOK, error) {
 }
 
 /*
-TestPolicy tests a policy against a set of unit tests
+  TestPolicy tests a policy against a set of unit tests
 */
 func (a *Client) TestPolicy(params *TestPolicyParams) (*TestPolicyOK, error) {
 	// TODO: Validate the params before sending
