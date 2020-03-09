@@ -84,8 +84,12 @@ func describeCluster(ecsSvc ecsiface.ECSAPI, arn *string) (*ecs.Cluster, error) 
 		return nil, err
 	}
 
-	if len(out.Clusters) != 1 {
-		zap.L().Error("ecs.DescribeClusters did not return exactly one result", zap.Int("number of results", len(out.Clusters)))
+	if len(out.Clusters) == 0 {
+		zap.L().Warn(
+			"tried to scan non-existent resource",
+			zap.String("resourceType", awsmodels.EcsClusterSchema),
+			zap.String("resourceId", *arn),
+		)
 		return nil, nil
 	}
 
@@ -254,7 +258,7 @@ func buildEcsClusterSnapshot(ecsSvc ecsiface.ECSAPI, clusterArn *string) *awsmod
 	}
 
 	details, err := describeCluster(ecsSvc, clusterArn)
-	if err != nil {
+	if err != nil || details == nil {
 		return nil
 	}
 
