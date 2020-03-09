@@ -186,6 +186,9 @@ func inferMap(t reflect.Type, customMappingsTable map[string]string) (jsonType s
 	if mapOfType.Kind() == reflect.Struct {
 		jsonType = fmt.Sprintf("map<%s,struct<%s>>", t.Key(), inferStruct(mapOfType, customMappingsTable))
 		return
+	} else if mapOfType.Kind() == reflect.Map {
+		jsonType = fmt.Sprintf("map<%s,%s>", t.Key(), inferMap(mapOfType, customMappingsTable))
+		return
 	}
 	jsonType = fmt.Sprintf("map<%s,%s>", t.Key(), toJSONType(mapOfType))
 	return
@@ -200,7 +203,7 @@ func toJSONType(t reflect.Type) (jsonType string) {
 		jsonType = "string"
 	case "int8":
 		jsonType = "tinyint"
-	case "uint8", "int16":
+	case "int16":
 		jsonType = "smallint"
 	case "int":
 		// int is problematic due to definition (at least 32bits ...)
@@ -222,6 +225,12 @@ func toJSONType(t reflect.Type) (jsonType string) {
 		jsonType = "double"
 	case "interface {}":
 		jsonType = "string" // best we can do in this case
+	case "uint8":
+		jsonType = "smallint" // Athena doesn't have an unsigned integer type
+	case "uint16":
+		jsonType = "int" // Athena doesn't have an unsigned integer type
+	case "uint32":
+		jsonType = "bigint" // Athena doesn't have an unsigned integer type
 	default:
 		panic("Cannot map " + t.String())
 	}
