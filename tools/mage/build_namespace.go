@@ -23,6 +23,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -120,7 +121,8 @@ func (b Build) Lambda() {
 		}
 	})
 
-	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main)", len(packages))
+	logger.Infof("build:lambda: compiling %d Go Lambda functions using %s (internal/.../main)",
+		len(packages), runtime.Version())
 	for _, pkg := range packages {
 		if err := buildPackage(pkg); err != nil {
 			logger.Fatal(err)

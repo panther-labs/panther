@@ -60,6 +60,10 @@ const (
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
 
+	// CloudSec IAM Roles, DO NOT CHANGE! panther-compliance-iam.yml CF depends on these names
+	auditRole       = "PantherAuditRole"
+	remediationRole = "PantherRemediationRole"
+
 	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
 
@@ -101,6 +105,8 @@ func Deploy() {
 	deployPrecheck(aws.StringValue(awsSession.Config.Region))
 	Build.Lambda(Build{})
 	preprocessTemplates()
+
+	logger.Infof("deploy: %s", *awsSession.Config.Region)
 
 	// Deploy prerequisite bucket stack
 	bucketParams := map[string]string{
@@ -172,6 +178,8 @@ func getBackendDeployParams(
 
 	v := config.BackendParameterValues
 	result := map[string]string{
+		"AuditRoleName":                auditRole,
+		"RemediationRoleName":          remediationRole,
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
 		"Debug":                        strconv.FormatBool(v.Debug),
 		"LayerVersionArns":             v.LayerVersionArns,
