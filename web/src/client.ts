@@ -22,10 +22,10 @@ import { History } from 'history';
 import { createAuthLink, AUTH_TYPE } from 'aws-appsync-auth-link';
 import { ErrorResponse, onError } from 'apollo-link-error';
 import Auth from '@aws-amplify/auth';
-import { LocationErrorState } from 'Components/utils/api-error-fallback';
-import { LIST_REMEDIATIONS } from 'Components/forms/policy-form/policy-form-auto-remediation-fields';
+import { LocationErrorState } from 'Components/utils/ApiErrorFallback';
+import { LIST_REMEDIATIONS } from 'Components/forms/PolicyForm';
 import { logError } from 'Helpers/loggers';
-import { RULE_TEASER } from 'Pages/alert-details';
+import { RULE_TEASER } from 'Pages/AlertDetails';
 import Storage from 'Helpers/storage';
 import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
 

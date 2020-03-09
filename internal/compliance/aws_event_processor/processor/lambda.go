@@ -52,6 +52,7 @@ func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 		"DeleteFunction",
 		"DeleteFunctionConcurrency",
 		"PublishVersion",
+		"PublishLayerVersion",
 		"PutFunctionConcurrency",
 		"RemovePermission",
 		"UpdateAlias",
@@ -93,6 +94,7 @@ func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 
 // lambda has a number of "sets" of versioned event names. We do not care about the specific versions so strip off.
 var lambdaVersions = []string{
+	"20181031",
 	"20170331",
 	"20170331v2",
 	"20150331",

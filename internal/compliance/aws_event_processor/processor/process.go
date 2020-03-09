@@ -175,6 +175,7 @@ var (
 		// kms
 		"Decrypt":                         {},
 		"Encrypt":                         {},
+		"ReEncrypt":                       {},
 		"GenerateDataKey":                 {},
 		"GenerateDataKeyWithoutPlaintext": {},
 		"RetireGrant":                     {},
