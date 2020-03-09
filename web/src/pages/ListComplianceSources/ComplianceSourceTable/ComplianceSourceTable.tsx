@@ -23,7 +23,7 @@ import { INTEGRATION_TYPES } from 'Source/constants';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { Alert, Table } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
-import columns from '../complianceSourceColumns';
+import columns from '../columns';
 
 export const LIST_INFRA_SOURCES = gql`
   query ListInfraSources {

@@ -22,7 +22,7 @@ import React from 'react';
 import { TableProps, Box, Text } from 'pouncejs';
 import { Integration } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
-import LogSourceTableRowOptions from '../LogSourceTableRowOptions';
+import LogSourceTableRowOptions from './LogSourceTableRowOptions';
 
 // The columns that the associated table will show
 const columns = [
