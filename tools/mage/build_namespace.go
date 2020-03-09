@@ -21,7 +21,6 @@ package mage
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -48,17 +47,22 @@ func (b Build) API() {
 	}
 
 	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
+	cwd, err := os.Getwd()
+	if err != nil {
+		logger.Fatalf("failed to get current working directory: %v", err)
+	}
+
 	for _, spec := range specs {
-		rebuild, err := apiNeedsRebuilt(spec)
-		if err == nil && !rebuild {
-			logger.Debugf("build:api: %s is up to date", spec)
-			continue
+		// Swagger generates the wrong imports when running from the base directory, even with the
+		// "-t" flag. So we have to change to each api/gateway directory before running swagger
+		dir := filepath.Dir(spec)
+		if err = os.Chdir(dir); err != nil {
+			logger.Fatalf("failed to chdir %s: %v", dir, err)
 		}
 
-		dir := filepath.Dir(spec)
 		start := time.Now().UTC()
-		args := []string{"generate", "client", "-q", "-t", dir, "-f", spec}
-		cmd := filepath.Join(setupDirectory, "swagger")
+		args := []string{"generate", "client", "-q", "-f", filepath.Base(spec)}
+		cmd := filepath.Join(cwd, setupDirectory, "swagger")
 		if _, err = os.Stat(cmd); err != nil {
 			logger.Fatalf("%s not found (%v): run 'mage setup:all'", cmd, err)
 		}
@@ -78,37 +82,31 @@ func (b Build) API() {
 			}
 		}
 		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
-		walk(client, handler)
-		walk(models, handler)
+		walk(filepath.Base(client), handler)
+		walk(filepath.Base(models), handler)
 
 		// Add license and our formatting standard to the generated SDK.
+		if err = os.Chdir(cwd); err != nil {
+			logger.Fatalf("failed to chdir back to %s: %v", cwd, err)
+		}
 		fmtLicenseGroup(agplSource, client, models)
 		gofmt(dir, client, models)
 	}
 }
 
-// Returns true if the generated client + models are older than the given client spec
-func apiNeedsRebuilt(spec string) (bool, error) {
-	clientNeedsUpdate, err := target.Dir(path.Join(path.Dir(spec), "client"), spec)
-	if err != nil {
-		return true, err
-	}
-
-	modelsNeedUpdate, err := target.Dir(path.Join(path.Dir(spec), "models"), spec)
-	if err != nil {
-		return true, err
-	}
-
-	return clientNeedsUpdate || modelsNeedUpdate, nil
-}
-
 // Lambda Compile Go Lambda function source
 func (b Build) Lambda() {
+	if err := b.lambda(); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func (b Build) lambda() error {
 	modified, err := target.Dir("out/bin/internal", "api", "internal", "pkg")
 	if err == nil && !modified {
 		// The source folders are older than all the compiled binaries - nothing has changed
 		logger.Info("build:lambda: up to date")
-		return
+		return nil
 	}
 
 	mg.Deps(b.API)
@@ -123,9 +121,11 @@ func (b Build) Lambda() {
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main)", len(packages))
 	for _, pkg := range packages {
 		if err := buildPackage(pkg); err != nil {
-			logger.Fatal(err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 // Opstools Compile Go ops tools from source
