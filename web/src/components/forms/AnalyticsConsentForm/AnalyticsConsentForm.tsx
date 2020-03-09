@@ -19,7 +19,7 @@
 import React from 'react';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import SubmitButton from 'Components/SubmitButton';
+import { SubmitButton } from 'Components/Buttons';
 import ErrorReportingSection from './ErrorReportingSection';
 
 interface AnalyticsConsentFormValues {

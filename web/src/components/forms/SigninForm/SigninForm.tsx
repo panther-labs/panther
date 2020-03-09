@@ -21,7 +21,7 @@ import { Field, Formik } from 'formik';
 import React from 'react';
 import { Box } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
-import SubmitButton from 'Components/SubmitButton';
+import { SubmitButton } from 'Components/Buttons';
 import useAuth from 'Hooks/useAuth';
 
 interface SignInFormValues {

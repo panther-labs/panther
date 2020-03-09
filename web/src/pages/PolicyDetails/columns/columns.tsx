@@ -22,7 +22,7 @@ import React from 'react';
 import { Text, TableProps, Tooltip, Label } from 'pouncejs';
 import { ComplianceItem, ComplianceStatusEnum } from 'Generated/schema';
 import { capitalize, formatDatetime } from 'Helpers/utils';
-import { SuppressButton, RemediationButton } from 'Components/TableRow';
+import { SuppressButton, RemediationButton } from 'Components/Buttons';
 
 // The columns that the associated table will show
 const columns = [

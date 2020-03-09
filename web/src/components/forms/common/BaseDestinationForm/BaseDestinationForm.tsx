@@ -22,7 +22,7 @@ import { Badge, Box, Flex, InputElementLabel, Text } from 'pouncejs';
 import { Field, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
-import SubmitButton from 'Components/SubmitButton';
+import { SubmitButton } from 'Components/Buttons';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
 
