@@ -203,6 +203,8 @@ func toJSONType(t reflect.Type) (jsonType string) {
 		jsonType = "string"
 	case "int8":
 		jsonType = "tinyint"
+	case "int16":
+		jsonType = "smallint"
 	case "int":
 		// int is problematic due to definition (at least 32bits ...)
 		switch strconv.IntSize {
