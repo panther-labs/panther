@@ -20,11 +20,14 @@ import React from 'react';
 import { PolicyDetails, PolicyUnitTest } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Heading } from 'pouncejs';
-import BaseRuleForm, { BaseRuleFormProps } from 'Components/forms/common/BaseRuleForm';
+import BaseRuleForm, {
+  BaseRuleFormProps,
+  RuleFormTestFields as PolicyFormTestFields,
+  RuleFormCoreFields,
+  ruleCoreEditableFields,
+} from 'Components/forms/common/BaseRuleForm';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import PolicyFormAutoRemediationFields from './PolicyFormAutoRemediationFields';
-import RuleFormCoreFields, { ruleCoreEditableFields } from '../common/RuleFormCoreFields';
-import PolicyFormTestFields from '../common/RuleFormTestFields';
 
 export const policyEditableFields = [
   ...ruleCoreEditableFields,
