@@ -32,11 +32,11 @@ _ENV_VARIABLES_MOCK = {
     'NOTIFICATIONS_TOPIC': 'sns_topic',
     'ANALYSIS_API_PATH': 'path'
 }
-with mock.patch.dict(os.environ, _ENV_VARIABLES_MOCK):
-    with mock.patch.object(boto3, 'client', side_effect=mock_to_return):
-        with mock.patch.object(SigV4Auth, 'add_auth'):
-            with mock.patch.object(requests, 'get', return_value=_RESPONSE_MOCK):
-                from ..src.main import lambda_handler
+with mock.patch.dict(os.environ, _ENV_VARIABLES_MOCK),\
+     mock.patch.object(boto3, 'client', side_effect=mock_to_return), \
+     mock.patch.object(SigV4Auth, 'add_auth'), \
+     mock.patch.object(requests, 'get', return_value=_RESPONSE_MOCK):
+    from ..src.main import lambda_handler
 
 
 class TestMain(TestCase):
