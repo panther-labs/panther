@@ -30,7 +30,7 @@ import (
 	"github.com/go-openapi/runtime"
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/gateway/compliance/models"
 )
 
 // GetStatusReader is a Reader for the GetStatus structure.

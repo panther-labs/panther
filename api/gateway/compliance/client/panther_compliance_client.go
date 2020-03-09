@@ -26,7 +26,7 @@ package client
 import (
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 
 	"github.com/panther-labs/panther/api/gateway/compliance/client/operations"
 )
@@ -73,9 +73,7 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *PantherCom
 
 	cli := new(PantherCompliance)
 	cli.Transport = transport
-
 	cli.Operations = operations.New(transport, formats)
-
 	return cli
 }
 
@@ -120,7 +118,7 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // PantherCompliance is a client for panther compliance
 type PantherCompliance struct {
-	Operations *operations.Client
+	Operations operations.ClientService
 
 	Transport runtime.ClientTransport
 }
@@ -128,7 +126,5 @@ type PantherCompliance struct {
 // SetTransport changes the transport on the client and all its subresources
 func (c *PantherCompliance) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
-
 	c.Operations.SetTransport(transport)
-
 }

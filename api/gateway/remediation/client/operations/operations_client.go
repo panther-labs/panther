@@ -27,11 +27,11 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new operations API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -43,8 +43,19 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientService is the interface for Client methods
+type ClientService interface {
+	ListRemediations(params *ListRemediationsParams) (*ListRemediationsOK, error)
+
+	RemediateResource(params *RemediateResourceParams) (*RemediateResourceOK, error)
+
+	RemediateResourceAsync(params *RemediateResourceAsyncParams) (*RemediateResourceAsyncOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-ListRemediations retrieves available remediations
+  ListRemediations retrieves available remediations
 */
 func (a *Client) ListRemediations(params *ListRemediationsParams) (*ListRemediationsOK, error) {
 	// TODO: Validate the params before sending
@@ -78,7 +89,7 @@ func (a *Client) ListRemediations(params *ListRemediationsParams) (*ListRemediat
 }
 
 /*
-RemediateResource synchronouslies remediate resource for an account
+  RemediateResource synchronouslies remediate resource for an account
 */
 func (a *Client) RemediateResource(params *RemediateResourceParams) (*RemediateResourceOK, error) {
 	// TODO: Validate the params before sending
@@ -112,7 +123,7 @@ func (a *Client) RemediateResource(params *RemediateResourceParams) (*RemediateR
 }
 
 /*
-RemediateResourceAsync asynchronouslies remediate resource for an account
+  RemediateResourceAsync asynchronouslies remediate resource for an account
 */
 func (a *Client) RemediateResourceAsync(params *RemediateResourceAsyncParams) (*RemediateResourceAsyncOK, error) {
 	// TODO: Validate the params before sending
