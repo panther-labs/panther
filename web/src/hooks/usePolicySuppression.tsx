@@ -20,8 +20,8 @@ import React from 'react';
 import { PolicyDetails, SuppressPoliciesInput, ResourceDetails } from 'Generated/schema';
 import { useMutation, gql } from '@apollo/client';
 import { useSnackbar } from 'pouncejs';
-import { RESOURCE_DETAILS } from 'Pages/resource-details';
-import { POLICY_DETAILS } from 'Pages/policy-details';
+import { RESOURCE_DETAILS } from 'Pages/ResourceDetails';
+import { POLICY_DETAILS } from 'Pages/PolicyDetails';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
 

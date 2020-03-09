@@ -43,40 +43,53 @@ def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Optional[Dict[
     return None
 
 
-def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
+def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluates a single rule against a set of events, and returns the results. Currently used for testing policies directly.
     """
     # Since this is used for testing single rules, it should only ever have one rule
-    if len(event['rules']) != 1:
-        raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
+    if len(request['rules']) != 1:
+        raise RuntimeError('exactly one rule expected, found {}'.format(len(request['rules'])))
 
-    raw_rule = event['rules'][0]
+    raw_rule = request['rules'][0]
     rule_severity = raw_rule.get('severity', 'INFO')
     # It is possible that during direct analysis the rule doesn't include a severity
     # in this case, we set it to a default value
-    test_rule = Rule(rule_id=raw_rule['id'], rule_version='default', rule_body=raw_rule['body'], rule_severity=rule_severity)
-    results: Dict[str, Any] = {'events': []}
-    for single_event in event['events']:
+    rule_exception: Optional[Exception] = None
+    try:
+        test_rule = Rule(rule_id=raw_rule.get('id'), rule_version='default', rule_body=raw_rule.get('body'), rule_severity=rule_severity)
+    except Exception as err:  # pylint: disable=broad-except
+        rule_exception = err
+
+    response: Dict[str, Any] = {'events': []}
+    for event in request['events']:
         result = {
-            'id': single_event['id'],
+            'id': event['id'],
             'matched': [],
             'notMatched': [],
             'errored': [],
         }
-        rule_result = test_rule.run(single_event['data'])
-        if rule_result.exception:
+        if rule_exception:
             result['errored'] = [{
                 'id': raw_rule['id'],
-                'message': str(rule_result.exception),
+                'message': str(rule_exception),
             }]
-        elif rule_result.matched:
-            result['matched'] = [raw_rule['id']]
-        else:
-            result['notMatched'] = [raw_rule['id']]
+            # If rule was invalid, no need to try to run it
 
-        results['events'].append(result)
-    return results
+        else:
+            rule_result = test_rule.run(event['data'])
+            if rule_result.exception:
+                result['errored'] = [{
+                    'id': raw_rule['id'],
+                    'message': str(rule_result.exception),
+                }]
+            elif rule_result.matched:
+                result['matched'] = [raw_rule['id']]
+            else:
+                result['notMatched'] = [raw_rule['id']]
+
+        response['events'].append(result)
+    return response
 
 
 # pylint: disable=too-many-locals
