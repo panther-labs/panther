@@ -114,7 +114,7 @@ func TestGetAlert(t *testing.T) {
 	alertItem := &table.AlertItem{
 		AlertID:      "alertId",
 		RuleID:       "ruleId",
-		DedupString: "dedupString",
+		DedupString:  "dedupString",
 		CreationTime: time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC),
 		UpdateTime:   time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		Severity:     "INFO",
@@ -160,7 +160,7 @@ func TestGetAlert(t *testing.T) {
 	require.Equal(t, &models.GetAlertOutput{
 		AlertID:       aws.String("alertId"),
 		RuleID:        aws.String("ruleId"),
-		DedupString: aws.String("dedupString"),
+		DedupString:   aws.String("dedupString"),
 		CreationTime:  aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
 		UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 		EventsMatched: aws.Int(5),

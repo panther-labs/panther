@@ -1,5 +1,23 @@
 package api
 
+/**
+ * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import (
 	"testing"
 	"time"
@@ -15,33 +33,33 @@ import (
 var (
 	timeInTest = time.Now()
 
-	alertItems = []*table.AlertItem {
+	alertItems = []*table.AlertItem{
 		{
-			RuleID: "ruleId",
-			AlertID: "alertId",
-			UpdateTime: timeInTest,
+			RuleID:       "ruleId",
+			AlertID:      "alertId",
+			UpdateTime:   timeInTest,
 			CreationTime: timeInTest,
-			Severity: "INFO",
-			DedupString: "dedupString",
-			LogTypes: []string{"AWS.CloudTrail"},
-			EventCount: 100,
+			Severity:     "INFO",
+			DedupString:  "dedupString",
+			LogTypes:     []string{"AWS.CloudTrail"},
+			EventCount:   100,
 		},
 	}
 
-	expectedAlertSummary = []*models.AlertSummary {
+	expectedAlertSummary = []*models.AlertSummary{
 		{
-			RuleID: aws.String("ruleId"),
-			AlertID: aws.String("alertId"),
-			UpdateTime: aws.Time(timeInTest),
-			CreationTime: aws.Time(timeInTest),
-			Severity: aws.String("INFO"),
-			DedupString: aws.String("dedupString"),
+			RuleID:        aws.String("ruleId"),
+			AlertID:       aws.String("alertId"),
+			UpdateTime:    aws.Time(timeInTest),
+			CreationTime:  aws.Time(timeInTest),
+			Severity:      aws.String("INFO"),
+			DedupString:   aws.String("dedupString"),
 			EventsMatched: aws.Int(100),
 		},
 	}
 )
 
-func TestListAlertsForRule(t *testing.T)  {
+func TestListAlertsForRule(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
@@ -62,7 +80,7 @@ func TestListAlertsForRule(t *testing.T)  {
 	}, result)
 }
 
-func TestListAllAlerts(t *testing.T)  {
+func TestListAllAlerts(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
