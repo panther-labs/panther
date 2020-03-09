@@ -31,12 +31,12 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var parser parsers.LogParser
+var parserRFC5424 parsers.LogParser
 
 func TestRFC5424(t *testing.T) {
 	zap.ReplaceGlobals(zaptest.NewLogger(t))
 	syslogRFC5424 := &RFC5424Parser{}
-	parser = syslogRFC5424.New()
+	parserRFC5424 = syslogRFC5424.New()
 
 	t.Run("Version4", testRFC5424Version4)
 	t.Run("NoTimestmap", testRFC5424NoTimestmap)
@@ -247,7 +247,7 @@ func TestRFC5424Type(t *testing.T) {
 }
 
 func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
-	events := parser.Parse(log)
+	events := parserRFC5424.Parse(log)
 	require.Equal(t, 1, len(events))
 	event := events[0].(*RFC5424)
 
