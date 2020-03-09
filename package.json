@@ -117,6 +117,9 @@
   "resolutions": {
     "acorn": "^7.1.1"
   },
+  "config": {
+    "unsafe-perm": true
+  },
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
     "build": "node web/scripts/build.js",
