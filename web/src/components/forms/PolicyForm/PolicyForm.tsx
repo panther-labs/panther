@@ -25,7 +25,7 @@ import BaseRuleForm, {
   RuleFormTestFields as PolicyFormTestFields,
   RuleFormCoreFields,
   ruleCoreEditableFields,
-} from 'Components/forms/common/BaseRuleForm';
+} from 'Components/forms/BaseRuleForm';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import PolicyFormAutoRemediationFields from './PolicyFormAutoRemediationFields';
 

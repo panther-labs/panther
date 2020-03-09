@@ -26,7 +26,7 @@ import BaseRuleForm, {
   ruleCoreEditableFields,
   RuleFormCoreFields,
   RuleFormTestFields,
-} from 'Components/forms/common/BaseRuleForm';
+} from 'Components/forms/BaseRuleForm';
 
 export const ruleEditableFields = [...ruleCoreEditableFields, 'logTypes', 'tests'] as const;
 

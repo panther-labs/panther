@@ -24,7 +24,7 @@ import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/forms/common/BaseDestinationForm';
+} from 'Components/forms/BaseDestinationForm';
 import { isNumber } from 'Helpers/utils';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { Text } from 'pouncejs';

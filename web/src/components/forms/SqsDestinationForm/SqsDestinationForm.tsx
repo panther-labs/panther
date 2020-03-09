@@ -25,7 +25,7 @@ import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
-} from 'Components/forms/common/BaseDestinationForm';
+} from 'Components/forms/BaseDestinationForm';
 import JsonViewer from 'Components/JsonViewer';
 
 type SQSFieldValues = Pick<DestinationConfigInput, 'sqs'>;

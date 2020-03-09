@@ -29,7 +29,7 @@ import {
   DestinationTypeEnum,
 } from 'Generated/schema';
 
-import { BaseDestinationFormValues } from 'Components/forms/common/BaseDestinationForm';
+import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
 import SQSDestinationForm from 'Components/forms/SqsDestinationForm';

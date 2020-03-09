@@ -24,7 +24,7 @@ import { useSnackbar } from 'pouncejs';
 import { PolicyDetails, RuleDetails } from 'Generated/schema';
 import { policyEditableFields } from 'Components/forms/PolicyForm';
 import { ruleEditableFields } from 'Components/forms/RuleForm';
-import { ruleCoreEditableFields, testEditableFields } from 'Components/forms/common/BaseRuleForm';
+import { ruleCoreEditableFields, testEditableFields } from 'Components/forms/BaseRuleForm';
 
 interface UseEditRuleProps<T> {
   rule: RuleDetails | PolicyDetails;
