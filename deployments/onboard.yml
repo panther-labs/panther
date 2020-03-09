@@ -24,6 +24,6 @@ Resources:
     Properties:
       Parameters:
         MasterAccountId: !Ref AWS::AccountId
-        DeployRemediation: true
-        DeployCloudWatchEventSetup: true
+        DeployRemediation: 'true'
+        DeployCloudWatchEventSetup: 'true'
       TemplateURL: auxiliary/cloudformation/panther-compliance-iam.yml
