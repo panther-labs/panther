@@ -114,7 +114,11 @@
     "react-router-dom": "^5.1.2",
     "yup": "^0.28.1"
   },
+  "resolutions": {
+    "acorn": "^7.1.1"
+  },
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "build": "node web/scripts/build.js",
     "start": "node web/scripts/start.js",
     "serve": "node web/scripts/serve.js",
