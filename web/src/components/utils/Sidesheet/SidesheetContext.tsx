@@ -17,16 +17,16 @@
  */
 
 import React from 'react';
-import { UpdateSourceSidesheetProps } from 'Components/Sidesheets/UpdateSourceSidesheet';
-import { AddDestinationSidesheetProps } from 'Components/Sidesheets/AddDestinationSidesheet';
-import { UpdateDestinationSidesheetProps } from 'Components/Sidesheets/UpdateDestinationSidesheet';
-import { PolicyBulkUploadSideSheetProps } from 'Components/Sidesheets/PolicyBulkUploadSidesheet';
-import { EditUserSidesheetProps } from 'Components/Sidesheets/EditUserSidesheet';
+import { UpdateSourceSidesheetProps } from 'Components/sidesheets/UpdateSourceSidesheet';
+import { AddDestinationSidesheetProps } from 'Components/sidesheets/AddDestinationSidesheet';
+import { UpdateDestinationSidesheetProps } from 'Components/sidesheets/UpdateDestinationSidesheet';
+import { PolicyBulkUploadSideSheetProps } from 'Components/sidesheets/PolicyBulkUploadSidesheet';
+import { EditUserSidesheetProps } from 'Components/sidesheets/EditUserSidesheet';
 
 const SHOW_SIDESHEET = 'SHOW_SIDESHEET';
 const HIDE_SIDESHEET = 'HIDE_SIDESHEET';
 
-/* The available list of Sidesheets to dispatch */
+/* The available list of sidesheets to dispatch */
 export enum SIDESHEETS {
   UPDATE_SOURCE = 'UPDATE_SOURCE',
   POLICY_BULK_UPLOAD = 'POLICY_BULK_UPLOAD',

@@ -16,18 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* The component responsible for rendering the actual Sidesheets */
+/* The component responsible for rendering the actual sidesheets */
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import UpdateAwsSourcesSidesheet from 'Components/Sidesheets/UpdateSourceSidesheet';
-import PolicyBulkUploadSidesheet from 'Components/Sidesheets/PolicyBulkUploadSidesheet';
-import SelectDestinationSidesheet from 'Components/Sidesheets/SelectDestinationSidesheet';
-import AddDestinationSidesheet from 'Components/Sidesheets/AddDestinationSidesheet';
-import UpdateDestinationSidesheet from 'Components/Sidesheets/UpdateDestinationSidesheet';
-import EditAccountSidesheet from 'Components/Sidesheets/EditAccountSidesheet';
-import EditUserSidesheet from 'Components/Sidesheets/EditUserSidesheet';
-import UserInvitationSidesheet from 'Components/Sidesheets/UserInvitationSidesheet';
+import UpdateAwsSourcesSidesheet from 'Components/sidesheets/UpdateSourceSidesheet';
+import PolicyBulkUploadSidesheet from 'Components/sidesheets/PolicyBulkUploadSidesheet';
+import SelectDestinationSidesheet from 'Components/sidesheets/SelectDestinationSidesheet';
+import AddDestinationSidesheet from 'Components/sidesheets/AddDestinationSidesheet';
+import UpdateDestinationSidesheet from 'Components/sidesheets/UpdateDestinationSidesheet';
+import EditAccountSidesheet from 'Components/sidesheets/EditAccountSidesheet';
+import EditUserSidesheet from 'Components/sidesheets/EditUserSidesheet';
+import UserInvitationSidesheet from 'Components/sidesheets/UserInvitationSidesheet';
 
 const SidesheetManager: React.FC = () => {
   const { state: sidesheetState } = useSidesheet();
