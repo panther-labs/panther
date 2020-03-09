@@ -24,7 +24,7 @@ import { RuleSummary } from 'Generated/schema';
 import { css } from '@emotion/core';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
-import ListRulesTableRowOptions from '../ListRulesTableRowOptions';
+import ListRulesTableRowOptions from './ListRulesTableRowOptions';
 
 // The columns that the associated table will show
 const columns = [

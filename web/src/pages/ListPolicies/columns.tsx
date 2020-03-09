@@ -24,7 +24,7 @@ import { ComplianceStatusEnum, PolicySummary } from 'Generated/schema';
 import { css } from '@emotion/core';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime, capitalize } from 'Helpers/utils';
-import ListPoliciesTableRowOptions from '../ListPoliciesTableRowOptions';
+import ListPoliciesTableRowOptions from './ListPoliciesTableRowOptions';
 
 // The columns that the associated table will show
 const columns = [
