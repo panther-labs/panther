@@ -84,7 +84,7 @@ type GetPolicyParams struct {
 	*/
 	PolicyID string
 	/*VersionID
-	  Optional version ID to retrieve (for older versions)
+	  The version of the analysis to retrieve
 
 	*/
 	VersionID *string
