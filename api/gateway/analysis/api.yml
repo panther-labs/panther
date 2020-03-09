@@ -41,7 +41,7 @@ parameters: # Parameters shared across multiple methods
     description: Unique ASCII policy identifier
     required: true
     type: string
-    pattern: '[a-zA-Z0-9\-\.: ]{1,200}'
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
   ruleId:
     name: ruleId
@@ -55,9 +55,18 @@ parameters: # Parameters shared across multiple methods
     name: type
     in: query
     description: Type of analysis logic to retrieve
-    default: policy
+    required: true
     type: string
-    enum: [policy, rule]
+    enum:
+      - POLICY
+      - RULE
+
+  versionId:
+    name: versionId
+    in: query
+    description: The version of the analysis to retrieve
+    type: string
+    pattern: '[a-zA-Z\._0-9]{32}'
 
 paths:
   /policy:
@@ -101,11 +110,8 @@ paths:
       summary: Get policy details
       parameters:
         - $ref: '#/parameters/policyId'
-        - name: versionId
-          in: query
-          description: Optional version ID to retrieve (for older versions)
-          type: string
-          pattern: '[a-zA-Z\._0-9]{32}'
+        - $ref: '#/parameters/versionId'
+
       responses:
         200:
           description: OK
@@ -155,11 +161,7 @@ paths:
       summary: Get rule details
       parameters:
         - $ref: '#/parameters/ruleId'
-        - name: versionId
-          in: query
-          description: Optional version ID to retrieve (for older versions)
-          type: string
-          pattern: '[a-zA-Z\._0-9]{32}'
+        - $ref: '#/parameters/versionId'
       responses:
         200:
           description: OK
@@ -1153,7 +1155,7 @@ definitions:
   id:
     description: User-specified unique rule/policy ID
     type: string
-    pattern: '[a-zA-Z0-9\-\.: ]{1,200}'
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
   modifyTime:
     description: Policy modification timestamp

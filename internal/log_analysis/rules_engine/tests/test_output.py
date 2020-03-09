@@ -26,9 +26,9 @@ import boto3
 from . import mock_to_return, DDB_MOCK, S3_MOCK, SNS_MOCK
 from ..src import EventMatch
 
-with mock.patch.dict(os.environ, {'ALERTS_DEDUP_TABLE': 'table_name', 'S3_BUCKET': 's3_bucket', 'NOTIFICATIONS_TOPIC': 'sns_topic'}):
-    with mock.patch.object(boto3, 'client', side_effect=mock_to_return) as mock_boto:
-        from ..src.output import MatchedEventsBuffer
+with mock.patch.dict(os.environ, {'ALERTS_DEDUP_TABLE': 'table_name', 'S3_BUCKET': 's3_bucket', 'NOTIFICATIONS_TOPIC': 'sns_topic'}), \
+     mock.patch.object(boto3, 'client', side_effect=mock_to_return) as mock_boto:
+    from ..src.output import MatchedEventsBuffer
 
 
 class TestMatchedEventsBuffer(TestCase):
