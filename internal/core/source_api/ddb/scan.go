@@ -28,13 +28,13 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// ScanEnabledIntegrations returns all enabled integrations based on type.
+// ScanEnabledIntegrations returns all enabled integrations based on type (if type is specified).
 // It performs a DDB scan of the entire table with a filter expression.
 func (ddb *DDB) ScanEnabledIntegrations(input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
-	filt := expression.And(
-		expression.Name("scanEnabled").Equal(expression.Value(true)),
-		expression.Name("integrationType").Equal(expression.Value(input.IntegrationType)),
-	)
+	filt := expression.Name("scanEnabled").Equal(expression.Value(true))
+	if input.IntegrationType != nil {
+		filt = expression.And(filt, expression.Name("integrationType").Equal(expression.Value(input.IntegrationType)))
+	}
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
 		return nil, &genericapi.InternalError{Message: "failed to build dynamodb expression"}

@@ -23,7 +23,6 @@ import "time"
 // LambdaInput is the request structure for the alerts-api Lambda function.
 type LambdaInput struct {
 	GetAlert   *GetAlertInput   `json:"getAlert"`
-	GetEvent   *GetEventInput   `json:"getEvent"`
 	ListAlerts *ListAlertsInput `json:"listAlerts"`
 }
 
@@ -52,16 +51,6 @@ type GetAlertInput struct {
 //     }
 // }
 type GetAlertOutput = Alert
-
-// GetEventInput retrieves a single event
-type GetEventInput struct {
-	EventID *string `json:"eventId" validate:"required"`
-}
-
-// GetEventOutput contains the event
-type GetEventOutput struct {
-	Event *string `json:"event"`
-}
 
 // ListAlertsInput lists the alerts in reverse-chronological order (newest to oldest)
 // If "ruleId" is not set, we return all the alerts for the organization
@@ -94,12 +83,12 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID          *string    `json:"alertId"`
-	RuleID           *string    `json:"ruleId"`
-	CreationTime     *time.Time `json:"creationTime"`
-	LastEventMatched *time.Time `json:"lastEventMatched"`
-	EventsMatched    *int       `json:"eventsMatched"`
-	Severity         *string    `json:"severity"`
+	AlertID       *string    `json:"alertId"`
+	RuleID        *string    `json:"ruleId"`
+	CreationTime  *time.Time `json:"creationTime"`
+	UpdateTime    *time.Time `json:"updateTime"`
+	EventsMatched *int       `json:"eventsMatched"`
+	Severity      *string    `json:"severity"`
 }
 
 // Alert contains the details of an alert
@@ -107,7 +96,7 @@ type Alert struct {
 	AlertID                *string    `json:"alertId"`
 	RuleID                 *string    `json:"ruleId"`
 	CreationTime           *time.Time `json:"creationTime"`
-	LastEventMatched       *time.Time `json:"lastEventMatched"`
+	UpdateTime             *time.Time `json:"updateTime"`
 	EventsMatched          *int       `json:"eventsMatched"`
 	Events                 []*string  `json:"events"`
 	EventsLastEvaluatedKey *string    `json:"eventsLastEvaluatedKey,omitempty"`

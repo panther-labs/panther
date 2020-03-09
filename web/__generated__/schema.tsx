@@ -39,7 +39,7 @@ export type AlertDetails = {
   alertId: Scalars['ID'];
   ruleId?: Maybe<Scalars['ID']>;
   creationTime: Scalars['AWSDateTime'];
-  lastEventMatched: Scalars['AWSDateTime'];
+  updateTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
   events: Array<Scalars['AWSJSON']>;
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
@@ -50,7 +50,7 @@ export type AlertSummary = {
   alertId: Scalars['String'];
   creationTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
-  lastEventMatched: Scalars['AWSDateTime'];
+  updateTime: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
   severity?: Maybe<Scalars['String']>;
 };

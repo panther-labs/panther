@@ -25,32 +25,28 @@ Parameters:
   MasterAccountId:
     Type: String
     Description: AWS account ID of the account running the Panther backend
+    Default: '' # MasterAccountId
+    # DO NOT EDIT OR REMOVE the above line. Panther application relies on the exact format of the above line
+    # in order to replace the MasterAccountId default value with an appropriate one.
 
   # Deployment toggles
-  DeployAuditRole:
-    Type: String
-    Description: Creates the panther-audit-role required for compliance scanning.
-    Default: True
-    AllowedValues: [true, false]
   DeployCloudWatchEventSetup:
     Type: String
     Description: Creates a StackSet Execution Role to configure CloudWatch Events to send to Panther for compliance processing (optional).
-    Default: True
+    Default: false # DeployCloudWatchEventSetup
     AllowedValues: [true, false]
   DeployRemediation:
     Type: String
     Description: Creates an IAM Role to perform remediation on non-compliant AWS resources (optional).
-    Default: false
+    Default: false # DeployRemediation
     AllowedValues: [true, false]
 
 Conditions:
-  AuditRole: !Equals [true, !Ref DeployAuditRole]
   CloudWatchEventSetup: !Equals [true, !Ref DeployCloudWatchEventSetup]
   AutoRemediation: !Equals [true, !Ref DeployRemediation]
 
 Resources:
   AuditRole:
-    Condition: AuditRole
     Type: AWS::IAM::Role
     Properties:
       RoleName: PantherAuditRole
@@ -202,10 +198,6 @@ Resources:
           Value: Panther
 
 Outputs:
-  PantherAuditRoleArn:
-    Condition: AuditRole
-    Description: The Arn of the Panther Audit IAM Role
-    Value: !GetAtt AuditRole.Arn
   CloudFormationStackSetExecutionRoleArn:
     Condition: CloudWatchEventSetup
     Description: The Arn of the CloudFormation StackSet Execution Role for configuring Panther infra.

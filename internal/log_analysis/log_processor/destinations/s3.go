@@ -42,8 +42,11 @@ import (
 const (
 	// s3ObjectKeyFormat represents the format of the S3 object key
 	// It has 3 parts:
-	// 1. The key prefix 2. Timestamp in format `20060102T150405Z` 3. UUID4
+	// 1. The key prefix 2. Timestamp in format `s3ObjectTimestampFormat` 3. UUID4
 	s3ObjectKeyFormat = "%s%s-%s.json.gz"
+
+	// The timestamp format in the S3 objects with second precision: yyyyMMddTHHmmssZ
+	S3ObjectTimestampFormat = "20060102T150405Z"
 
 	logDataTypeAttributeName = "type"
 	logTypeAttributeName     = "id"
@@ -261,7 +264,7 @@ func (destination *S3Destination) sendSNSNotification(key, logType string, buffe
 func getS3ObjectKey(logType string, timestamp time.Time) string {
 	return fmt.Sprintf(s3ObjectKeyFormat,
 		parserRegistry.LookupParser(logType).GlueTableMetadata.GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
-		timestamp.Format("20060102T150405Z"),
+		timestamp.Format(S3ObjectTimestampFormat),
 		uuid.New().String())
 }
 

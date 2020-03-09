@@ -31,7 +31,7 @@ import (
 
 // GetRemediations returns the list of remediations available for an organization
 func GetRemediations(_ *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	zap.L().Info("getting list of remediations")
+	zap.L().Debug("getting list of remediations")
 	// TODO - differentiate between different error types
 	remediations, err := invoker.GetRemediations()
 	if err != nil {

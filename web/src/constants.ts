@@ -80,6 +80,7 @@ export const LOG_TYPES = [
   'Osquery.Snapshot',
   'Osquery.Status',
   'OSSEC.EventInfo',
+  'Syslog.RFC3164',
   'Syslog.RFC5424',
 ] as const;
 

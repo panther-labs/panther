@@ -37,11 +37,18 @@ import (
 func TestUpdateIntegrationSettings(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (bool, error) { return true, nil }
 
-	resp := &dynamodb.UpdateItemOutput{Attributes: map[string]*dynamodb.AttributeValue{
+	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
+		"AWSAccountID":  {S: aws.String("123456789012")},
+		"IntegrationID": {S: aws.String("1111111")},
+	}}
+	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
+
+	updateResponse := &dynamodb.UpdateItemOutput{Attributes: map[string]*dynamodb.AttributeValue{
 		"ScanEnabled": {BOOL: aws.Bool(false)},
 	}}
-	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
+	mockClient.On("UpdateItem", mock.Anything).Return(updateResponse, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		ScanEnabled:      aws.Bool(false),
@@ -61,6 +68,12 @@ func TestUpdateIntegrationSettings(t *testing.T) {
 func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+
+	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
+		"AWSAccountID":  {S: aws.String("123456789012")},
+		"IntegrationID": {S: aws.String("1111111")},
+	}}
+	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
 
 	resp := &dynamodb.UpdateItemOutput{}
 	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)

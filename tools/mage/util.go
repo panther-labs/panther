@@ -31,7 +31,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	jsoniter "github.com/json-iterator/go"
@@ -91,28 +90,6 @@ func getSession() (*session.Session, error) {
 		"region", awsSession.Config.Region,
 		"accessKeyId", creds.AccessKeyID)
 	return awsSession, nil
-}
-
-// Get CloudFormation stack outputs as a map.
-func getStackOutputs(awsSession *session.Session, name string) (map[string]string, error) {
-	cfnClient := cloudformation.New(awsSession)
-	input := &cloudformation.DescribeStacksInput{StackName: &name}
-	response, err := cfnClient.DescribeStacks(input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe stack %s: %v", name, err)
-	}
-
-	return flattenStackOutputs(response), nil
-}
-
-// Flatten CloudFormation stack outputs into a string map.
-func flattenStackOutputs(detail *cloudformation.DescribeStacksOutput) map[string]string {
-	outputs := detail.Stacks[0].Outputs
-	result := make(map[string]string, len(outputs))
-	for _, output := range outputs {
-		result[*output.OutputKey] = *output.OutputValue
-	}
-	return result
 }
 
 // Upload a local file to S3.

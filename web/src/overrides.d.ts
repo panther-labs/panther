@@ -31,7 +31,7 @@ declare module 'yup' {
 
 /**
  * We are utilising AppSync, whose error doesn't conform to the standardized error set by GraphQL
- * itself (what a surprise). Thus, we need to add the fields that AppSync returns to the schema of
+ * itself (what a surprise). Thus, we need to add the Fields that AppSync returns to the schema of
  * the GraphQL error
  */
 declare module 'graphql' {
