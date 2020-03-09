@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	"github.com/panther-labs/panther/api/gateway/analysis/models"
 )
 
 const cacheDuration = 30 * time.Second
@@ -35,7 +36,7 @@ type policyCacheEntry struct {
 
 var policyCache policyCacheEntry
 
-// Get enabled policies from either the memory cache or the policy-api
+// Get enabled policies from either the memory cache or the analysis-api
 func getPolicies() (policyMap, error) {
 	if policyCache.Policies != nil && policyCache.LastUpdated.Add(cacheDuration).After(time.Now()) {
 		// Cache entry exists and hasn't expired yet
@@ -46,7 +47,7 @@ func getPolicies() (policyMap, error) {
 
 	// Load from policy-api
 	result, err := analysisClient.Operations.GetEnabledPolicies(
-		&operations.GetEnabledPoliciesParams{HTTPClient: httpClient})
+		&operations.GetEnabledPoliciesParams{HTTPClient: httpClient, Type: string(models.AnalysisTypePOLICY)})
 	if err != nil {
 		zap.L().Error("failed to load policies from policy-api", zap.Error(err))
 		return nil, err
