@@ -37,7 +37,7 @@ type ID string
 func (m ID) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := validate.Pattern("", "body", string(m), `[a-zA-Z0-9\-\.: ]{1,200}`); err != nil {
+	if err := validate.Pattern("", "body", string(m), `[a-zA-Z0-9\-\. ]{1,200}`); err != nil {
 		return err
 	}
 

@@ -302,7 +302,7 @@ Resources:
       # * Failure of this lambda will impact evaluating policies.
       # </cfndoc>
       Handler: src.main.lambda_handler
-      MemorySize: 512
+      MemorySize: 128
       Layers: !If
         - AttachBaseLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
@@ -313,7 +313,7 @@ Resources:
               pip: !Ref PythonLayerArn
         - [!Ref PythonLayerArn]
       Runtime: python3.7
-      Timeout: 120
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ResourceLookup

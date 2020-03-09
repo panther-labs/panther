@@ -33,15 +33,26 @@ Parameters:
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
+
   TracingMode:
     Type: String
     Description: Enable XRay tracing on GraphQL queries & mutations
     Default: ''
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
 
 Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/appsync/apis/${GraphQLApi.ApiId}
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
   GraphQLApi:
     Type: AWS::AppSync::GraphQLApi
     Properties:

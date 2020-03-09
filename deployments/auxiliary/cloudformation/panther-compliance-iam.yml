@@ -26,6 +26,8 @@ Parameters:
     Type: String
     Description: AWS account ID of the account running the Panther backend
     Default: '' # MasterAccountId
+    # DO NOT EDIT OR REMOVE the above line. Panther application relies on the exact format of the above line
+    # in order to replace the MasterAccountId default value with an appropriate one.
 
   # Deployment toggles
   DeployCloudWatchEventSetup:
