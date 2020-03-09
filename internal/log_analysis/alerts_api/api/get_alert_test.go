@@ -79,6 +79,16 @@ func (m *tableMock) GetAlert(input *string) (*table.AlertItem, error) {
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
 
+func (m *tableMock) ListByRule(rule string, startKey *string, pageSize *int) ([]*table.AlertItem, *string, error) {
+	args := m.Called(rule, startKey, pageSize)
+	return args.Get(0).([]*table.AlertItem), args.Get(1).(*string), args.Error(2)
+}
+
+func (m *tableMock) ListAll(startKey *string, pageSize *int) ([]*table.AlertItem, *string, error) {
+	args := m.Called(startKey, pageSize)
+	return args.Get(0).([]*table.AlertItem), args.Get(1).(*string), args.Error(2)
+}
+
 func init() {
 	env = envConfig{
 		ProcessedDataBucket: "bucket",
@@ -104,6 +114,7 @@ func TestGetAlert(t *testing.T) {
 	alertItem := &table.AlertItem{
 		AlertID:      "alertId",
 		RuleID:       "ruleId",
+		DedupString: "dedupString",
 		CreationTime: time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC),
 		UpdateTime:   time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		Severity:     "INFO",
@@ -149,6 +160,7 @@ func TestGetAlert(t *testing.T) {
 	require.Equal(t, &models.GetAlertOutput{
 		AlertID:       aws.String("alertId"),
 		RuleID:        aws.String("ruleId"),
+		DedupString: aws.String("dedupString"),
 		CreationTime:  aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
 		UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 		EventsMatched: aws.Int(5),
