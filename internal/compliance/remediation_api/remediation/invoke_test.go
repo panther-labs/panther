@@ -206,7 +206,7 @@ func TestRemediationNotFoundErrorIfNoRemediationConfigured(t *testing.T) {
 
 	result := remediator.Remediate(input)
 	assert.Error(t, result)
-	assert.Equal(t, RemediationNotFound, result)
+	assert.Equal(t, ErrNotFound, result)
 
 	mockClient.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)

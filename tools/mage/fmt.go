@@ -66,7 +66,7 @@ func gofmt(root string, paths ...string) {
 	logger.Info("fmt: gofmt " + strings.Join(paths, " "))
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
-	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, goTargets...)...); err != nil {
+	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, paths...)...); err != nil {
 		logger.Fatalf("gofmt failed: %v", err)
 	}
 
@@ -78,7 +78,7 @@ func gofmt(root string, paths ...string) {
 	})
 
 	// 3) Goimports to group imports into 3 sections
-	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, goTargets...)
+	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, paths...)
 	if err := sh.Run("goimports", args...); err != nil {
 		logger.Fatalf("goimports failed: %v", err)
 	}

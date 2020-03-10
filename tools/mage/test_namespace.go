@@ -93,8 +93,6 @@ func (t Test) Go() {
 }
 
 func testGo() bool {
-	pass := true
-
 	// unit tests
 	logger.Info("test:go: unit tests")
 	args := []string{"test", "-vet", "", "-cover", "./..."}
@@ -119,7 +117,14 @@ func testGo() bool {
 
 	if err != nil {
 		logger.Errorf("go unit tests failed: %v", err)
-		pass = false
+		return false
+	}
+
+	// compile all Go Lambda functions
+	var b Build
+	if err := b.lambda(); err != nil {
+		logger.Errorf("go compilation failed: %v", err)
+		return false
 	}
 
 	// metalinting
@@ -130,10 +135,10 @@ func testGo() bool {
 	}
 	if err := sh.RunV(filepath.Join(setupDirectory, "golangci-lint"), args...); err != nil {
 		logger.Errorf("go linting failed: %v", err)
-		pass = false
+		return false
 	}
 
-	return pass
+	return true
 }
 
 // Python Test Python source

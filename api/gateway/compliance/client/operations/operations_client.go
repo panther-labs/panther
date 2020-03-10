@@ -27,11 +27,11 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new operations API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -43,8 +43,29 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientService is the interface for Client methods
+type ClientService interface {
+	DeleteStatus(params *DeleteStatusParams) (*DeleteStatusOK, error)
+
+	DescribeOrg(params *DescribeOrgParams) (*DescribeOrgOK, error)
+
+	DescribePolicy(params *DescribePolicyParams) (*DescribePolicyOK, error)
+
+	DescribeResource(params *DescribeResourceParams) (*DescribeResourceOK, error)
+
+	GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK, error)
+
+	GetStatus(params *GetStatusParams) (*GetStatusOK, error)
+
+	SetStatus(params *SetStatusParams) (*SetStatusCreated, error)
+
+	UpdateMetadata(params *UpdateMetadataParams) (*UpdateMetadataOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-DeleteStatus deletes the status associated with one or more policies or resources
+  DeleteStatus deletes the status associated with one or more policies or resources
 */
 func (a *Client) DeleteStatus(params *DeleteStatusParams) (*DeleteStatusOK, error) {
 	// TODO: Validate the params before sending
@@ -78,7 +99,7 @@ func (a *Client) DeleteStatus(params *DeleteStatusParams) (*DeleteStatusOK, erro
 }
 
 /*
-DescribeOrg lists pass fail status for every policy and resource in the org
+  DescribeOrg lists pass fail status for every policy and resource in the org
 */
 func (a *Client) DescribeOrg(params *DescribeOrgParams) (*DescribeOrgOK, error) {
 	// TODO: Validate the params before sending
@@ -112,7 +133,7 @@ func (a *Client) DescribeOrg(params *DescribeOrgParams) (*DescribeOrgOK, error) 
 }
 
 /*
-DescribePolicy pages through resources affected by a specific policy
+  DescribePolicy pages through resources affected by a specific policy
 */
 func (a *Client) DescribePolicy(params *DescribePolicyParams) (*DescribePolicyOK, error) {
 	// TODO: Validate the params before sending
@@ -146,7 +167,7 @@ func (a *Client) DescribePolicy(params *DescribePolicyParams) (*DescribePolicyOK
 }
 
 /*
-DescribeResource pages through policies which affect this resource
+  DescribeResource pages through policies which affect this resource
 */
 func (a *Client) DescribeResource(params *DescribeResourceParams) (*DescribeResourceOK, error) {
 	// TODO: Validate the params before sending
@@ -180,7 +201,7 @@ func (a *Client) DescribeResource(params *DescribeResourceParams) (*DescribeReso
 }
 
 /*
-GetOrgOverview gets account totals and top failing policies resources
+  GetOrgOverview gets account totals and top failing policies resources
 */
 func (a *Client) GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK, error) {
 	// TODO: Validate the params before sending
@@ -214,7 +235,7 @@ func (a *Client) GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK
 }
 
 /*
-GetStatus gets compliance status for a single policy resource pair
+  GetStatus gets compliance status for a single policy resource pair
 */
 func (a *Client) GetStatus(params *GetStatusParams) (*GetStatusOK, error) {
 	// TODO: Validate the params before sending
@@ -248,7 +269,7 @@ func (a *Client) GetStatus(params *GetStatusParams) (*GetStatusOK, error) {
 }
 
 /*
-SetStatus sets the compliance status for a batch of resource policy pairs
+  SetStatus sets the compliance status for a batch of resource policy pairs
 */
 func (a *Client) SetStatus(params *SetStatusParams) (*SetStatusCreated, error) {
 	// TODO: Validate the params before sending
@@ -282,7 +303,7 @@ func (a *Client) SetStatus(params *SetStatusParams) (*SetStatusCreated, error) {
 }
 
 /*
-UpdateMetadata updates
+  UpdateMetadata updates
 */
 func (a *Client) UpdateMetadata(params *UpdateMetadataParams) (*UpdateMetadataOK, error) {
 	// TODO: Validate the params before sending

@@ -60,7 +60,7 @@ var (
 			WithHost(resourcesServiceHostname)
 	resourcesClient = resourcesclient.NewHTTPClientWithConfig(nil, resourcesConfig)
 
-	RemediationNotFound = &remediationmodels.Error{Message: aws.String("Remediation not associated with policy")}
+	ErrNotFound = errors.New("Remediation not associated with policy")
 )
 
 // Remediate will invoke remediation action in an AWS account
@@ -75,7 +75,7 @@ func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateRes
 	}
 
 	if policy.AutoRemediationID == "" {
-		return RemediationNotFound
+		return ErrNotFound
 	}
 
 	resource, err := getResource(string(remediation.ResourceID))
