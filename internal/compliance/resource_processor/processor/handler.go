@@ -146,7 +146,7 @@ func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error
 
 // Analyze each org in turn and report status entries and alert notifications across the entire batch
 //
-// Policies can either be provided by the caller or else they will be fetched from policy-api.
+// Policies can either be provided by the caller or else they will be fetched from analysis-api.
 func (r *batchResults) analyze(resources resourceMap, policies policyMap) error {
 	// Fetch policies and evaluate them against the resources
 	var err error

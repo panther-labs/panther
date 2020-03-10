@@ -87,7 +87,7 @@ func TestHandleEventWithAlert(t *testing.T) {
 
 	// mock call to compliance-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(complianceResponse, http.StatusOK), nil).Once()
-	// mock call to policy-api
+	// mock call to analysis-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policyResponse, http.StatusOK), nil).Once()
 	// mock call to remediate-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse("", http.StatusOK), nil).Once()
@@ -130,7 +130,7 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 
 	// mock call to compliance-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(complianceResponse, http.StatusOK), nil).Once()
-	// mock call to policy-api
+	// mock call to analysis-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policyResponse, http.StatusOK), nil).Once()
 	// should NOT call remediation api!
 
