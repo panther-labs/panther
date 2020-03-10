@@ -43,7 +43,8 @@ type monitoringParameters struct {
 }
 
 type onboardingParameters struct {
-	OnboardSelf bool `yaml:"OnboardSelf"` // where to send alarms (optional)
+	// whether or not to on board the account running Panther as a Cloud Security source
+	OnboardSelf bool `yaml:"OnboardSelf"`
 }
 
 // PantherConfig describes the panther_config.yml file.
