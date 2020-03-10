@@ -30,7 +30,7 @@ _RULE_FOLDER = os.path.join(tempfile.gettempdir(), 'rules')
 COMMON_MODULE_RULE_ID = 'aws_globals'
 
 # Maximum size for a dedup string
-MAX_DEDUP_STRING_SIZE = 256
+MAX_DEDUP_STRING_SIZE = 1000
 
 # The default dedup string in case none was specified
 DEFAULT_DEDUP_STRING = '<nil>'
