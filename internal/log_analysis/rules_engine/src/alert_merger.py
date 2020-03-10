@@ -44,12 +44,12 @@ _ALERT_MERGE_PERIOD_SECONDS = 3600
 
 def _generate_dedup_key(rule_id: str, dedup: str) -> str:
     key = rule_id + ':' + dedup
-    return hashlib.md5(key.encode('utf-8')).hexdigest() # nosec
+    return hashlib.md5(key.encode('utf-8')).hexdigest()  # nosec
 
 
 def _generate_alert_id(rule_id: str, dedup: str, count: str) -> str:
     key = rule_id + ':' + dedup + ':' + count
-    return hashlib.md5(key.encode('utf-8')).hexdigest() # nosec
+    return hashlib.md5(key.encode('utf-8')).hexdigest()  # nosec
 
 
 def update_get_alert_info(match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str, version: str) -> AlertInfo:
