@@ -55,7 +55,7 @@ class Engine:
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
                     log_type=log_type,
-                    dedup=result.dedup_string,  # type: ignore
+                    dedup=result.dedup_string,
                     event=event,
                     severity=rule.rule_severity
                 )
