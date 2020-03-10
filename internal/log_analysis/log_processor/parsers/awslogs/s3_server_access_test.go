@@ -205,7 +205,6 @@ func TestS3ServerAccessLogType(t *testing.T) {
 func checkS3AccessLog(t *testing.T, log string, expectedEvent *S3ServerAccess) {
 	parser := &S3ServerAccessParser{}
 	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
 	expectedEvent.Event = expectedEvent // set back ptr
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events[0])
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
 }

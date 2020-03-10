@@ -152,6 +152,6 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 	for i, expectedEvent := range expectedEvents {
 		event := events[i].Event.(*CloudTrail)
 		expectedEvent.Event = expectedEvent // set back ptr
-		testutil.EqualPantherLog(t, expectedEvent.Log(), event.Log())
+		testutil.EqualPantherLog(t, expectedEvent.Log(), event.Logs())
 	}
 }

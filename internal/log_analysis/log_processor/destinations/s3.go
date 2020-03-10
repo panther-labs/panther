@@ -75,6 +75,7 @@ type S3Destination struct {
 	// snsTopic is the SNS Topic ARN where we will send the notification
 	// when we store new data in S3
 	snsTopicArn string
+	// thresholds for ejection
 	maxFileSize int
 	maxDuration time.Duration
 }
@@ -93,7 +94,6 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			continue
 		}
 
-		eventsProcessed++
 		data, err := jsoniter.Marshal(event.Event)
 		if err != nil {
 			failed = true
@@ -101,42 +101,32 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			continue
 		}
 
-		buffer := bufferSet.getBuffer(destination, event)
+		buffer := bufferSet.getBuffer(event)
 
-		canAdd, err := buffer.addEvent(data)
+		err = buffer.addEvent(data)
 		if err != nil {
 			failed = true
 			errChan <- err
 			continue
 		}
-		if !canAdd {
+
+		// Check if buffer is bigger than threshold
+		if buffer.bytes >= destination.maxFileSize {
 			if err = destination.sendData(buffer); err != nil {
 				failed = true
 				errChan <- err
 				continue
 			}
-
-			canAdd, err = buffer.addEvent(data)
-			if err != nil {
-				failed = true
-				errChan <- err
-				continue
-			}
-			if !canAdd {
-				failed = true
-				// happens if a single marshalled event is greater than maxFileSize, something that shouldn't happen normally
-				errChan <- errors.Errorf("event doesn't fit in single s3 object, cannot write to %s",
-					destination.s3Bucket)
-				continue
-			}
 		}
 
-		// Check if any buffers has data for longer than 1 minute
+		// Check if any buffer has data for longer than maxDuration
 		if err = destination.sendExpiredData(bufferSet); err != nil {
 			failed = true
 			errChan <- err
 			continue
 		}
+
+		eventsProcessed++
 	}
 
 	if failed {
@@ -272,7 +262,7 @@ func newS3EventBufferSet() s3EventBufferSet {
 	return make(map[time.Time]map[string]*s3EventBuffer)
 }
 
-func (bs s3EventBufferSet) getBuffer(destination *S3Destination, event *parsers.PantherLog) *s3EventBuffer {
+func (bs s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
 	// bin by hour (this is our partition size)
 	hour := (time.Time)(*event.PantherEventTime).Truncate(time.Hour)
 
@@ -286,10 +276,9 @@ func (bs s3EventBufferSet) getBuffer(destination *S3Destination, event *parsers.
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
 		buffer = &s3EventBuffer{
-			destination: destination,
-			logType:     logType,
-			hour:        hour,
-			createTime:  time.Now(),
+			logType:    logType,
+			hour:       hour,
+			createTime: time.Now(),
 		}
 		_ = buffer.reset() // no need to check error
 		logTypeToBuffer[logType] = buffer
@@ -313,41 +302,37 @@ func (bs s3EventBufferSet) apply(f func(buffer *s3EventBuffer) error) error {
 // s3EventBuffer is a group of events of the same type
 // that will be stored in the same S3 object
 type s3EventBuffer struct {
-	destination *S3Destination
-	logType     string
-	buffer      *bytes.Buffer
-	writer      *gzip.Writer
-	bytes       int
-	events      int
-	hour        time.Time // the event time bin
-	createTime  time.Time
+	logType    string
+	buffer     *bytes.Buffer
+	writer     *gzip.Writer
+	bytes      int
+	events     int
+	hour       time.Time // the event time bin
+	createTime time.Time
 }
 
 // addEvent adds new data to the s3EventBuffer
-// If it returns true, the record was added successfully.
-// If it returns false, the record couldn't be added because the group has exceeded file size limit
-func (b *s3EventBuffer) addEvent(event []byte) (bool, error) {
-	// The size of the batch in bytes if the event is added
-	projectedFileSize := b.bytes + len(event) + len(newLineDelimiter)
-	if projectedFileSize > b.destination.maxFileSize {
-		return false, nil
-	}
+func (b *s3EventBuffer) addEvent(event []byte) error {
+	var nbytes int
 
-	_, err := b.writer.Write(event)
+	bytesWritten, err := b.writer.Write(event)
 	if err != nil {
 		err = errors.Wrap(err, "failed to add data to buffer %s")
-		return false, err
+		return err
 	}
+	nbytes += bytesWritten
 
 	// Adding new line delimiter
-	_, err = b.writer.Write(newLineDelimiter)
+	bytesWritten, err = b.writer.Write(newLineDelimiter)
 	if err != nil {
 		err = errors.Wrap(err, "failed to add data to buffer")
-		return false, err
+		return err
 	}
-	b.bytes = projectedFileSize
+	nbytes += bytesWritten
+
+	b.bytes += nbytes
 	b.events++
-	return true, nil
+	return nil
 }
 
 func (b *s3EventBuffer) read() ([]byte, error) {

@@ -29,7 +29,9 @@ import (
 )
 
 // used by log parsers to validate records
-func EqualPantherLog(t *testing.T, expectedEvent, event *parsers.PantherLog) {
+func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*parsers.PantherLog) {
+	require.Equal(t, 1, len(events))
+	event := events[0]
 	require.NotNil(t, event)
 	require.NotNil(t, event.Event)
 	encapsulatedEvent := event.Event
@@ -43,6 +45,11 @@ func EqualPantherLog(t *testing.T, expectedEvent, event *parsers.PantherLog) {
 	// PantherParseTime is set to time.Now().UTC(). Require not nil
 	require.NotNil(t, event.PantherParseTime)
 	expectedEvent.PantherParseTime = event.PantherParseTime
+
+	// For nil event times, expect Panther to set the event time to the parse time.
+	if expectedEvent.PantherEventTime == nil {
+		expectedEvent.PantherEventTime = event.PantherParseTime
+	}
 
 	require.Equal(t, expectedEvent.Event, encapsulatedEvent)
 }

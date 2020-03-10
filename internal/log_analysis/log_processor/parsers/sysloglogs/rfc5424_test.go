@@ -28,6 +28,7 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -248,21 +249,6 @@ func TestRFC5424Type(t *testing.T) {
 
 func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
 	events := parserRFC5424.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*RFC5424)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	// PantherParseTime is set to time.Now().UTC(). Require not nil
-	require.NotNil(t, event.PantherParseTime)
-	expectedEvent.PantherParseTime = event.PantherParseTime
-
-	// For nil event times, expect Panther to set the event time to the parse time.
-	if expectedEvent.PantherEventTime == nil {
-		expectedEvent.PantherEventTime = event.PantherParseTime
-	}
-
-	require.Equal(t, expectedEvent, event)
+	expectedEvent.Event = expectedEvent // set back ptr
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
 }
