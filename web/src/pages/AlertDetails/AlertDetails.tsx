@@ -37,6 +37,7 @@ export const ALERT_DETAILS = gql`
       creationTime
       eventsMatched
       updateTime
+      dedupString
       eventsLastEvaluatedKey
       events
     }
