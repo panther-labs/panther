@@ -42,12 +42,17 @@ type monitoringParameters struct {
 	AlarmSNSTopicARN string `yaml:"AlarmSNSTopicARN"` // where to send alarms (optional)
 }
 
+type onboardingParameters struct {
+	OnboardSelf bool `yaml:"OnboardSelf"` // where to send alarms (optional)
+}
+
 // PantherConfig describes the panther_config.yml file.
 type PantherConfig struct {
 	BucketsParameterValues    bucketsParameters    `yaml:"BucketsParameterValues"`
 	BackendParameterValues    backendParameters    `yaml:"BackendParameterValues"`
 	FrontendParameterValues   frontendParameters   `yaml:"FrontendParameterValues"`
 	MonitoringParameterValues monitoringParameters `yaml:"MonitoringParameterValues"`
+	OnboardParameterValues    onboardingParameters `yaml:"OnboardingParameterValues"`
 	PipLayer                  []string             `yaml:"PipLayer"`
 	InitialAnalysisSets       []string             `yaml:"InitialAnalysisSets"`
 }

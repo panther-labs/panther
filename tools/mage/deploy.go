@@ -142,7 +142,9 @@ func Deploy() {
 	runDeploy(func() { deployMonitoring(awsSession, bucket, backendOutputs, &config) })
 
 	// Onboard Panther account to Panther
-	runDeploy(func() { deployOnboard(awsSession, bucket, backendOutputs) })
+	if config.OnboardParameterValues.OnboardSelf {
+		runDeploy(func() { deployOnboard(awsSession, bucket, backendOutputs) })
+	}
 
 	wg.Wait()
 

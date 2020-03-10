@@ -56,8 +56,12 @@ func deployCloudSecRoles(awsSession *session.Session, bucket string) {
 	if err != nil {
 		logger.Fatalf("error checking remediation role name %s: %v", remediationRole, err)
 	}
+	adminRoleExists, err := roleExists(iamClient, realTimeEventsAdministrationRoleName)
+	if err != nil {
+		logger.Fatalf("error checking admin role name %s: %v", realTimeEventsAdministrationRoleName, err)
+	}
 
-	if !auditRoleExists && !remediationRoleExists {
+	if !auditRoleExists && !remediationRoleExists && !adminRoleExists {
 		logger.Info("deploy: creating iam roles for CloudSecurity")
 		params := map[string]string{} // currently none
 		deployTemplate(awsSession, onboardTemplate, bucket, onboardStack, params)
