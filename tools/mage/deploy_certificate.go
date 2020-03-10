@@ -90,7 +90,14 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 			},
 		},
 	})
+
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "LimitExceededException" {
+				logger.Warn("deploy: ACM certificate import limit reached, falling back to IAM for certificate management")
+				return uploadIAMCertificate(awsSession)
+			}
+		}
 		logger.Fatalf("ACM certificate import failed: %v", err)
 	}
 
