@@ -184,10 +184,12 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	go deleteStack(client, aws.String(frontendStack), results)
 	handleResult(<-results)
 
+	// this one may ask user
+	go deleteOnboardStack(awsSession, results)
+	handleResult(<-results)
+
 	// Trigger the deletion of the remaining stacks in parallel
 	nStacks := 0
-	go deleteOnboardStack(awsSession, results)
-	nStacks++ // 1 stack
 	go deleteRealTimeEventStack(awsSession, identity, results)
 	nStacks += 2 // 2 stacks
 	parallelStacks := []string{backendStack, monitoringStack, databasesStack, bucketStack}
