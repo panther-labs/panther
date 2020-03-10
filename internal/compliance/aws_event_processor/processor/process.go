@@ -175,11 +175,12 @@ var (
 		"CreateInstanceProfile":          {},
 
 		// kms
+		"CreateGrant":                     {},
 		"Decrypt":                         {},
 		"Encrypt":                         {},
-		"ReEncrypt":                       {},
 		"GenerateDataKey":                 {},
 		"GenerateDataKeyWithoutPlaintext": {},
+		"ReEncrypt":                       {},
 		"RetireGrant":                     {},
 
 		// lambda
