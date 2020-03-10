@@ -89,12 +89,12 @@ func (t *EventPaginationToken) encode() (string, error) {
 }
 
 func decodePaginationToken(token string) (*EventPaginationToken, error) {
-	unmarshalled, err := base64.URLEncoding.DecodeString(token)
+	unmarshaled, err := base64.URLEncoding.DecodeString(token)
 	if err != nil {
 		return nil, err
 	}
 	result := &EventPaginationToken{}
-	if err = jsoniter.Unmarshal(unmarshalled, result); err != nil {
+	if err = jsoniter.Unmarshal(unmarshaled, result); err != nil {
 		return nil, err
 	}
 	return result, nil

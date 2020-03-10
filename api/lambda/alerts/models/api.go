@@ -85,6 +85,7 @@ type ListAlertsOutput struct {
 type AlertSummary struct {
 	AlertID       *string    `json:"alertId"`
 	RuleID        *string    `json:"ruleId"`
+	DedupString   *string    `json:"dedupString"`
 	CreationTime  *time.Time `json:"creationTime"`
 	UpdateTime    *time.Time `json:"updateTime"`
 	EventsMatched *int       `json:"eventsMatched"`
@@ -95,6 +96,7 @@ type AlertSummary struct {
 type Alert struct {
 	AlertID                *string    `json:"alertId"`
 	RuleID                 *string    `json:"ruleId"`
+	DedupString            *string    `json:"dedupString"`
 	CreationTime           *time.Time `json:"creationTime"`
 	UpdateTime             *time.Time `json:"updateTime"`
 	EventsMatched          *int       `json:"eventsMatched"`

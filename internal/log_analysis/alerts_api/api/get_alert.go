@@ -92,6 +92,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	result = &models.Alert{
 		AlertID:                &alertItem.AlertID,
 		RuleID:                 &alertItem.RuleID,
+		DedupString:            &alertItem.DedupString,
 		CreationTime:           &alertItem.CreationTime,
 		UpdateTime:             &alertItem.UpdateTime,
 		EventsMatched:          &alertItem.EventCount,

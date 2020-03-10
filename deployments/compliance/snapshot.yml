@@ -40,7 +40,6 @@ Parameters:
 
   AuditRoleName:
     Type: String
-    Default: PantherAuditRole
     Description: The name of the IAM role to assume to perform AWS account/service scans
   ResourcesApiId:
     Type: String

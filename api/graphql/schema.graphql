@@ -75,6 +75,7 @@ type AlertDetails {
   eventsMatched: Int!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
+  dedupString: String
 }
 
 type ListAlertsResponse {
@@ -89,6 +90,7 @@ type AlertSummary {
   updateTime: AWSDateTime!
   ruleId: String
   severity: String
+  dedupString: String
 }
 
 input ListRulesInput {
