@@ -93,7 +93,7 @@ def _update_get_conditional(match_time: datetime, num_matches: int, key: OutputG
                 'S': key.rule_id
             },
             ':2': {
-                'S': key.dedup if key.dedup else ''
+                'S': key.dedup
             },
             ':3': {
                 'N': match_time.strftime('%s')

@@ -89,6 +89,9 @@ class Rule:
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
+        # If users haven't specified a dedup function return a default value
+        if rule_result and not dedup_string:
+            dedup_string = "default"
         return RuleResult(matched=rule_result, dedup_string=dedup_string)
 
     def _store_rule(self) -> None:

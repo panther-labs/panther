@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 @dataclass
@@ -24,8 +24,8 @@ class EventMatch:
     rule_id: str
     rule_version: str
     log_type: str
+    dedup: str
     severity: str
-    dedup: Optional[str]
     event: Dict[str, Any]
 
 
@@ -42,7 +42,7 @@ class OutputGroupingKey:
     """Class representing the keys used for grouping output events to files"""
     rule_id: str
     log_type: str
-    dedup: Optional[str]
+    dedup: str
 
     def table_name(self) -> str:
         """ Output the name of the Glue table name for this log type"""
