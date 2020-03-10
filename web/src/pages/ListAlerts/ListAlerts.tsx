@@ -38,6 +38,7 @@ export const LIST_ALERTS = gql`
         updateTime
         ruleId
         severity
+        dedupString
       }
       lastEvaluatedKey
     }

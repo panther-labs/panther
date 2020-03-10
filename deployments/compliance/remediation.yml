@@ -41,7 +41,6 @@ Parameters:
   RemediationRoleName:
     Type: String
     Description: The name of the IAM role to assume to perform remediation actions
-    Default: PantherRemediationRole
 
   AnalysisApiId:
     Type: String

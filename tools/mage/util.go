@@ -31,9 +31,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	jsoniter "github.com/json-iterator/go"
+)
+
+const (
+	maxRetries = 20 // try very hard, avoid throttles
 )
 
 // Wrapper around filepath.Walk, logging errors as fatal.
@@ -68,7 +74,7 @@ func writeFile(path string, data []byte) {
 
 // Build the AWS session from the environment or a credentials file.
 func getSession() (*session.Session, error) {
-	awsSession, err := session.NewSession()
+	awsSession, err := session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS session: %v", err)
 	}
@@ -92,10 +98,67 @@ func getSession() (*session.Session, error) {
 	return awsSession, nil
 }
 
-// Upload a local file to S3.
-func uploadFileToS3(
-	awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
+// Return true if IAM role exists
+func roleExists(iamClient *iam.IAM, roleName string) (bool, error) {
+	input := &iam.GetRoleInput{RoleName: aws.String(roleName)}
+	_, err := iamClient.GetRole(input)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchEntity" {
+			err = nil
+		}
+		return false, err
+	}
+	return true, nil
+}
 
+// Return true if CF stack exists
+func stackExists(cfClient *cloudformation.CloudFormation, stackName string) (bool, error) {
+	input := &cloudformation.DescribeStacksInput{StackName: aws.String(stackName)}
+	_, err := cfClient.DescribeStacks(input)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ValidationError" {
+			err = nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// Return true if CF stack set exists
+func stackSetExists(cfClient *cloudformation.CloudFormation, stackSetName string) (bool, error) {
+	input := &cloudformation.DescribeStackSetInput{StackSetName: aws.String(stackSetName)}
+	_, err := cfClient.DescribeStackSet(input)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "StackSetNotFoundException" {
+			err = nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// Return true if CF stack set exists
+func stackSetInstanceExists(cfClient *cloudformation.CloudFormation, stackSetName, account, region string) (bool, error) {
+	input := &cloudformation.DescribeStackInstanceInput{
+		StackSetName:         &stackSetName,
+		StackInstanceAccount: &account,
+		StackInstanceRegion:  &region,
+	}
+	_, err := cfClient.DescribeStackInstance(input)
+	if err != nil {
+		// need to also check for "StackSetNotFoundException" if the containing stack set does not exist
+		if awsErr, ok := err.(awserr.Error); ok &&
+			(awsErr.Code() == "StackInstanceNotFoundException" || awsErr.Code() == "StackSetNotFoundException") {
+
+			err = nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// Upload a local file to S3.
+func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %v", path, err)
