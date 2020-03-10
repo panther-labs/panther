@@ -26,6 +26,8 @@ Parameters:
     Type: String
     Description: AWS account ID of the account running the Panther backend
     Default: '' # MasterAccountId
+    # DO NOT EDIT OR REMOVE the above line. Panther application relies on the exact format of the above line
+    # in order to replace the MasterAccountId default value with an appropriate one.
 
   # Deployment toggles
   DeployCloudWatchEventSetup:
@@ -47,7 +49,7 @@ Resources:
   AuditRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherAuditRole
+      RoleName: PantherAuditRole # DO NOT CHANGE! backend.yml CF depends on this name, set in mage deploy
       Description: The Panther master account assumes this role for read-only security scanning
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -148,7 +150,7 @@ Resources:
     Condition: AutoRemediation
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherRemediationRole
+      RoleName: PantherRemediationRole # DO NOT CHANGE! backend.yml CF depends on this name, set in mage deploy
       Description: The Panther master account assumes this role for automatic remediation of policy violations
       MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:

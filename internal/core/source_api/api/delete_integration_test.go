@@ -124,6 +124,39 @@ func TestDeleteIntegrationItemError(t *testing.T) {
 	assert.Error(t, result)
 	mockClient.AssertExpectations(t)
 }
+func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
+	mockClient := &mockDDBClient{}
+	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+
+	mockSqs := &mockSQSClient{}
+	SQSClient = mockSqs
+	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+
+	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
+		AttributeNames: aws.StringSlice([]string{"Policy"}),
+		QueueUrl:       aws.String(logProcessorQueueURL),
+	}
+
+	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+	mockClient.On("GetItem", mock.Anything).Return(getItem(models.IntegrationTypeAWS3), nil)
+
+	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{"111111111111"}) // Wrong accountID
+	mockSqs.On("GetQueueAttributes", expectedGetQueueAttributesInput).
+		Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil)
+	expectedAttributes := generateQueueAttributeOutput(t, []string{})
+	expectedSetAttributes := &sqs.SetQueueAttributesInput{
+		Attributes: expectedAttributes,
+		QueueUrl:   aws.String(logProcessorQueueURL),
+	}
+	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
+
+	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
+		IntegrationID: aws.String(testIntegrationID),
+	})
+
+	assert.NoError(t, result)
+	mockClient.AssertExpectations(t)
+}
 
 func TestDeleteIntegrationItemDoesNotExist(t *testing.T) {
 	mockClient := &mockDDBClient{}

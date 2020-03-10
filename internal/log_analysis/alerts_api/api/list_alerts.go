@@ -58,6 +58,7 @@ func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
 		result[i] = &models.AlertSummary{
 			AlertID:       &item.AlertID,
 			RuleID:        &item.RuleID,
+			DedupString:   &item.DedupString,
 			CreationTime:  &item.CreationTime,
 			Severity:      &item.Severity,
 			UpdateTime:    &item.UpdateTime,

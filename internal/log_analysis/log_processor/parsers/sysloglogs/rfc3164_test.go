@@ -32,12 +32,12 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var parser parsers.LogParser
+var parserRFC3164 parsers.LogParser
 
 func TestRFC3164(t *testing.T) {
 	zap.ReplaceGlobals(zaptest.NewLogger(t))
 	syslogRFC3164 := &RFC3164Parser{}
-	parser = syslogRFC3164.New()
+	parserRFC3164 = syslogRFC3164.New()
 
 	t.Run("Simple", testRFC3164Simple)
 	t.Run("WithRFC3339Timestamp", testRFC3164WithRFC3339Timestamp)
@@ -190,7 +190,7 @@ func TestRFC3164Type(t *testing.T) {
 }
 
 func checkRFC3164(t *testing.T, log string, expectedEvent *RFC3164) {
-	events := parser.Parse(log)
+	events := parserRFC3164.Parse(log)
 	require.Equal(t, 1, len(events))
 	expectedEvent.Event = expectedEvent // set back ptr
 	testutil.EqualPantherLog(t, expectedEvent.Log(), events[0])

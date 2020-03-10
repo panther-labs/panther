@@ -55,6 +55,7 @@ AWS contains a variety of critical data sources used to audit API usage, databas
 | Log Type          | Reference                                              |
 | ----------------- | ------------------------------------------------------ |
 | `Syslog.RFC3164`  | https://tools.ietf.org/html/rfc3164                    |
+| `Syslog.RFC5424`  | https://tools.ietf.org/html/rfc5424                    |
 
 
 ## Built-in Rule Packs
