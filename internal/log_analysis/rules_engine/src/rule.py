@@ -32,7 +32,7 @@ COMMON_MODULE_RULE_ID = 'aws_globals'
 # Maximum size for a dedup string
 MAX_DEDUP_STRING_SIZE = 256
 
-# The default dedup string in case
+# The default dedup string in case none was specified
 DEFAULT_DEDUP_STRING = '<nil>'
 
 
