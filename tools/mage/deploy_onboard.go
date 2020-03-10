@@ -57,7 +57,7 @@ func deployCloudSecRoles(awsSession *session.Session, bucket string) {
 		logger.Fatalf("error checking remediation role name %s: %v", remediationRole, err)
 	}
 
-	if !auditRoleExists || !remediationRoleExists {
+	if !auditRoleExists && !remediationRoleExists {
 		logger.Info("deploy: creating iam roles for CloudSecurity")
 		params := map[string]string{} // currently none
 		deployTemplate(awsSession, onboardTemplate, bucket, onboardStack, params)
@@ -67,7 +67,7 @@ func deployCloudSecRoles(awsSession *session.Session, bucket string) {
 }
 
 func registerPantherAccount(awsSession *session.Session, pantherAccountID string) {
-	logger.Info("deploy: registering account with Panther")
+	logger.Infof("deploy: registering account %s with Panther", pantherAccountID)
 	var apiInput = struct {
 		PutIntegration *models.PutIntegrationInput
 	}{

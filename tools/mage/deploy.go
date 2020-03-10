@@ -106,7 +106,7 @@ func Deploy() {
 	Build.Lambda(Build{})
 	preprocessTemplates()
 
-	logger.Infof("deploy: %s", *awsSession.Config.Region)
+	logger.Infof("deploy: deploying Panther to %s", *awsSession.Config.Region)
 
 	// Deploy prerequisite bucket stack
 	bucketParams := map[string]string{

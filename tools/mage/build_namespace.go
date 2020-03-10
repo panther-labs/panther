@@ -121,7 +121,7 @@ func (b Build) Lambda() {
 		}
 	})
 
-	logger.Infof("build:lambda: compiling %d Go Lambda functions using %s (internal/.../main)",
+	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
 	for _, pkg := range packages {
 		if err := buildPackage(pkg); err != nil {

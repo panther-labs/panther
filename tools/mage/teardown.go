@@ -155,7 +155,11 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	var errCount int
 	handleResult := func(result deleteStackResult) {
 		if result.err == nil {
-			logger.Infof("    √ %s successfully deleted", result.stackName)
+			if strings.Contains(result.stackName, "skipped") {
+				logger.Infof("    √ %s", result.stackName)
+			} else {
+				logger.Infof("    √ %s successfully deleted", result.stackName)
+			}
 			return
 		}
 
@@ -218,17 +222,17 @@ func deleteOnboardStack(awsSession *session.Session, results chan deleteStackRes
 			logger.Fatalf("error checking audit role name %s: %v", auditRole, err)
 		}
 		if auditRoleExists {
-			answer := promptUser("Do you want to delete CloudSecurity roles (this can affect deployments in other regions)? (yes|no) ",
+			answer := promptUser("\nDo you want to delete CloudSecurity roles (this can affect deployments in other regions)? (yes|no) ",
 				nonemptyValidator)
 			if strings.ToLower(answer) == "yes" {
 				logger.Infof("deleting stack %s", onboardStack)
 				go deleteStack(cfClient, aws.String(onboardStack), results) // can be done in background
 			} else {
-				results <- deleteStackResult{stackName: onboardStack, err: errors.Errorf("skipping dropping stack %s", onboardStack)}
+				results <- deleteStackResult{stackName: onboardStack + " (skipped)", err: nil}
 			}
 		}
 	} else {
-		results <- deleteStackResult{stackName: onboardStack, err: nil}
+		results <- deleteStackResult{stackName: onboardStack + " (skipped)", err: nil}
 	}
 }
 
@@ -268,7 +272,7 @@ func deleteStackSet(client *cloudformation.CloudFormation, identity *sts.GetCall
 			// need to return 2 errors
 			results <- deleteStackResult{stackName: stackSetInstanceName, err: err}
 			results <- deleteStackResult{stackName: *stackSet,
-				err: errors.Errorf("stack set instance not empty")}
+				err: fmt.Errorf("stack set instance not empty")}
 			return
 		}
 	}
@@ -281,7 +285,7 @@ func deleteStackSet(client *cloudformation.CloudFormation, identity *sts.GetCall
 			// need to return 2 errors
 			results <- deleteStackResult{stackName: stackSetInstanceName, err: err}
 			results <- deleteStackResult{stackName: *stackSet,
-				err: errors.Errorf("stack set instance not empty")}
+				err: fmt.Errorf("stack set instance not empty")}
 			return
 		}
 		if !exists { // done!
@@ -291,9 +295,9 @@ func deleteStackSet(client *cloudformation.CloudFormation, identity *sts.GetCall
 		if time.Since(startDelete) > waitTimeout {
 			// need to return 2 errors
 			results <- deleteStackResult{stackName: stackSetInstanceName,
-				err: errors.Errorf("timeout waiting for stack set instance to delete")}
+				err: fmt.Errorf("timeout waiting for stack set instance to delete")}
 			results <- deleteStackResult{stackName: *stackSet,
-				err: errors.Errorf("stack set instance not empty")}
+				err: fmt.Errorf("stack set instance not empty")}
 			return
 		}
 		time.Sleep(waitSleep)
@@ -320,7 +324,7 @@ func deleteStackSet(client *cloudformation.CloudFormation, identity *sts.GetCall
 		}
 		if time.Since(startDelete) > waitTimeout {
 			results <- deleteStackResult{stackName: *stackSet,
-				err: errors.Errorf("timeout waiting for stack set to delete")}
+				err: fmt.Errorf("timeout waiting for stack set to delete")}
 			return
 		}
 		time.Sleep(waitSleep)

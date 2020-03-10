@@ -98,7 +98,7 @@ func getSession() (*session.Session, error) {
 	return awsSession, nil
 }
 
-// Return true if IAM role exits
+// Return true if IAM role exists
 func roleExists(iamClient *iam.IAM, roleName string) (bool, error) {
 	input := &iam.GetRoleInput{RoleName: aws.String(roleName)}
 	_, err := iamClient.GetRole(input)
@@ -111,7 +111,7 @@ func roleExists(iamClient *iam.IAM, roleName string) (bool, error) {
 	return true, nil
 }
 
-// Return true if CF stack exits
+// Return true if CF stack exists
 func stackExists(cfClient *cloudformation.CloudFormation, stackName string) (bool, error) {
 	input := &cloudformation.DescribeStacksInput{StackName: aws.String(stackName)}
 	_, err := cfClient.DescribeStacks(input)
@@ -124,7 +124,7 @@ func stackExists(cfClient *cloudformation.CloudFormation, stackName string) (boo
 	return true, nil
 }
 
-// Return true if CF stack set exits
+// Return true if CF stack set exists
 func stackSetExists(cfClient *cloudformation.CloudFormation, stackSetName string) (bool, error) {
 	input := &cloudformation.DescribeStackSetInput{StackSetName: aws.String(stackSetName)}
 	_, err := cfClient.DescribeStackSet(input)
@@ -137,7 +137,7 @@ func stackSetExists(cfClient *cloudformation.CloudFormation, stackSetName string
 	return true, nil
 }
 
-// Return true if CF stack set exits
+// Return true if CF stack set exists
 func stackSetInstanceExists(cfClient *cloudformation.CloudFormation, stackSetName, account, region string) (bool, error) {
 	input := &cloudformation.DescribeStackInstanceInput{
 		StackSetName:         &stackSetName,
