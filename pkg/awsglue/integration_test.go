@@ -106,8 +106,8 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Equal(t, expectedPath, *partitionLocation)
 
-	// sync it (which does a delete and re-create)
-	err = gm.SyncPartition(glueClient, refTime)
+	// sync it (which does an update of schema)
+	err = gm.SyncPartitions(glueClient)
 	require.NoError(t, err)
 
 	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
