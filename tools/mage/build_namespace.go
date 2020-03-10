@@ -53,6 +53,15 @@ func (b Build) API() {
 	}
 
 	for _, spec := range specs {
+		// Only regenerate the swagger SDK if needed - this allows deployments from a fresh clone
+		// without needing to install Swagger and also makes subsequent deployments faster
+		// (the compiled Go binary won't change)
+		rebuild, err := apiNeedsRebuilt(spec)
+		if err == nil && !rebuild {
+			logger.Debugf("build:api: %s is up to date", spec)
+			continue
+		}
+
 		// Swagger generates the wrong imports when running from the base directory, even with the
 		// "-t" flag. So we have to change to each api/gateway directory before running swagger
 		dir := filepath.Dir(spec)
@@ -92,6 +101,21 @@ func (b Build) API() {
 		fmtLicenseGroup(agplSource, client, models)
 		gofmt(dir, client, models)
 	}
+}
+
+// Returns true if the generated client + models are older than the given client spec
+func apiNeedsRebuilt(spec string) (bool, error) {
+	clientNeedsUpdate, err := target.Dir(filepath.Join(filepath.Dir(spec), "client"), spec)
+	if err != nil {
+		return true, err
+	}
+
+	modelsNeedUpdate, err := target.Dir(filepath.Join(filepath.Dir(spec), "models"), spec)
+	if err != nil {
+		return true, err
+	}
+
+	return clientNeedsUpdate || modelsNeedUpdate, nil
 }
 
 // Lambda Compile Go Lambda function source
