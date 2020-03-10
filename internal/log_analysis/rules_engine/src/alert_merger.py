@@ -48,7 +48,7 @@ def _generate_dedup_key(rule_id: str, dedup: str) -> str:
 
 
 def _generate_alert_id(rule_id: str, dedup: str, count: str) -> str:
-    key = rule_id + ':' + dedup + ':' + count
+    key = rule_id + ':' + count + ':' + dedup
     return hashlib.md5(key.encode('utf-8')).hexdigest()  # nosec
 
 
