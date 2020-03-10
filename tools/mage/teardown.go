@@ -186,14 +186,17 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 
 	// The stackset must be deleted before the StackSetExecutionRole
 	go deleteRealTimeEventStack(awsSession, identity, results)
+	// deleteRealTimeEventStack sends two results, one for the stack set instance and one for the stack set itself.
+	// We only need to block on the deletion of the stack set instance (the first result), we can delete the stack
+	// set itself in parallel with the rest of the delete operations.
 	handleResult(<-results)
+	nStacks := 1
 
 	// This stack may ask for user input during deletion
 	go deleteOnboardStack(awsSession, results)
 	handleResult(<-results)
 
 	// Trigger the deletion of the remaining stacks in parallel
-	nStacks := 0
 	parallelStacks := []string{backendStack, monitoringStack, databasesStack, bucketStack}
 	logger.Infof("deleting CloudFormation stacks: %s", strings.Join(parallelStacks, ", "))
 	for _, stack := range parallelStacks {
