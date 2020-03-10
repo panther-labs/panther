@@ -70,7 +70,7 @@ class TestRule(TestCase):
     def test_rule_matches(self) -> None:
         rule_body = 'def rule(event):\n\treturn True'
         rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
-        expected_rule = RuleResult(matched=True, dedup_string='default')
+        expected_rule = RuleResult(matched=True, dedup_string='<nil>')
         self.assertEqual(rule.run({}), expected_rule)
 
     def test_rule_doesnt_match(self) -> None:

@@ -32,6 +32,9 @@ COMMON_MODULE_RULE_ID = 'aws_globals'
 # Maximum size for a dedup string
 MAX_DEDUP_STRING_SIZE = 256
 
+# The default dedup string in case
+DEFAULT_DEDUP_STRING = '<nil>'
+
 
 @dataclass
 class RuleResult:
@@ -84,14 +87,14 @@ class Rule:
             rule_result = _run_command(self._module.rule, event, bool)
             if rule_result and self._has_dedup:
                 dedup_string = _run_command(self._module.dedup, event, str)
-                if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
-                    dedup_string = dedup_string[:MAX_DEDUP_STRING_SIZE]
+                if len(dedup_string) > MAX_DEDUP_STRING_SIZE:  # type: ignore
+                    dedup_string = dedup_string[:MAX_DEDUP_STRING_SIZE]  # type: ignore
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
         # If users haven't specified a dedup function return a default value
         if rule_result and not dedup_string:
-            dedup_string = "default"
+            dedup_string = DEFAULT_DEDUP_STRING
         return RuleResult(matched=rule_result, dedup_string=dedup_string)
 
     def _store_rule(self) -> None:
