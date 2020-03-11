@@ -27,3 +27,8 @@ Resources:
         DeployRemediation: 'true'
         DeployCloudWatchEventSetup: 'true'
       TemplateURL: auxiliary/cloudformation/panther-compliance-iam.yml
+
+  StackSetAdminRole:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: auxiliary/cloudformation/panther-stackset-iam-admin-role.yml
