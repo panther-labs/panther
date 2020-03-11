@@ -187,8 +187,6 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	// sending event to buffered channel
 	eventChannel <- testEvent
 
-	marshaledEvent, _ := jsoniter.Marshal(testEvent.Event)
-
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Once()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
@@ -206,12 +204,15 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	assert.True(t, strings.HasPrefix(*putObjectInput.Key, expectedS3Prefix))
 
 	// Gzipping the test event
+	marshaledEvent, _ := jsoniter.Marshal(testEvent.Event())
 	var buffer bytes.Buffer
 	writer := gzip.NewWriter(&buffer)
 	writer.Write(marshaledEvent) //nolint:errcheck
 	writer.Write([]byte("\n"))   //nolint:errcheck
 	writer.Close()               //nolint:errcheck
 	expectedBytes := buffer.Bytes()
+
+	// Collect what was produced
 	bodyBytes, _ := ioutil.ReadAll(putObjectInput.Body)
 	assert.Equal(t, expectedBytes, bodyBytes)
 
@@ -280,24 +281,29 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *parsers.PantherLog, 2)
 
-	// We expect this to cause the S3Destination to create 2 objects
-	destination.maxDuration = 0
-
+	const nevents = 7
 	testEvent := newSimpleTestEvent()
+	destination.maxDuration = time.Second / 4
 
 	// wire it up
 	registerMockParser(testLogType, testEvent)
 
-	// sending 2 events to buffered channel
-	// Both should cause the S3 time limit to be exceeded
-	// so we expect two objects to be written to s3
-	eventChannel <- testEvent
-	eventChannel <- testEvent
+	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Times(nevents)
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Times(nevents)
 
-	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Twice()
-	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
+	// sending nevents to buffered channel
+	// The first n-1 should cause the S3 time limit to be exceeded
+	// so we expect two objects to be written to s3 from that,
+	// the last event is needed to trigger the flush of the second
+	go func() {
+		for i := 0; i < nevents-1; i++ {
+			eventChannel <- testEvent
+			time.Sleep(destination.maxDuration + (time.Millisecond * 10)) // give time to for timers to expire
+		}
+		eventChannel <- testEvent // last event will trigger flush of the last event above
+	}()
 
-	runSendEvents(t, destination, eventChannel, false) // this blocks
+	runSendEventsTimed(t, destination, eventChannel, false, destination.maxDuration*(nevents+1)) // this blocks
 
 	destination.mockS3.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -433,6 +439,12 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 }
 
 func runSendEvents(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLog, expectErr bool) {
+	runSendEventsTimed(t, destination, eventChannel, expectErr, 0)
+}
+
+func runSendEventsTimed(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLog,
+	expectErr bool, delay time.Duration) {
+
 	var waitErr sync.WaitGroup
 	errChan := make(chan error, 128)
 	waitErr.Add(1)
@@ -461,6 +473,7 @@ func runSendEvents(t *testing.T, destination Destination, eventChannel chan *par
 		waitSend.Done()
 	}()
 
+	time.Sleep(delay)
 	close(eventChannel) // causes SendEvents() to terminate
 	waitSend.Wait()
 

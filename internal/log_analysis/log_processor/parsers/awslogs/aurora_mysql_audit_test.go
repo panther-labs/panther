@@ -66,7 +66,5 @@ func TestAuroraMysqlAuditLogType(t *testing.T) {
 
 func checkAuroraMysqlAuditLogLog(t *testing.T, log string, expectedEvent *AuroraMySQLAudit) {
 	parser := &AuroraMySQLAuditParser{}
-	events := parser.Parse(log)
-	expectedEvent.Event = expectedEvent // set back ptr
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }

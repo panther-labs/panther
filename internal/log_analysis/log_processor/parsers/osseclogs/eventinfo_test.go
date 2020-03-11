@@ -102,7 +102,5 @@ func TestEventInfoType(t *testing.T) {
 
 func checkEventInfo(t *testing.T, log string, expectedEvent *EventInfo) {
 	parser := &EventInfoParser{}
-	events := parser.Parse(log)
-	expectedEvent.Event = expectedEvent // set back ptr
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }

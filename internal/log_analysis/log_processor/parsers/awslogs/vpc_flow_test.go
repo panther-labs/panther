@@ -139,7 +139,5 @@ func TestVpcFlowLogType(t *testing.T) {
 func checkVPCFlowLog(t *testing.T, header, log string, expectedEvent *VPCFlow) {
 	parser := &VPCFlowParser{}
 	parser.Parse(header)
-	events := parser.Parse(log)
-	expectedEvent.Event = expectedEvent // set back ptr
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }

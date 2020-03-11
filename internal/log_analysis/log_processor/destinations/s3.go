@@ -85,6 +85,7 @@ type S3Destination struct {
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
+	flushExpired := time.After(destination.maxDuration)
 	failed := false // set to true on error and loop will drain channel
 	bufferSet := newS3EventBufferSet()
 	eventsProcessed := 0
@@ -94,7 +95,27 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			continue
 		}
 
-		data, err := jsoniter.Marshal(event.Event)
+		// Check if any buffer has data for longer than maxDuration
+		select {
+		case expireTime := <-flushExpired:
+			flushExpired = time.After(destination.maxDuration) // reset
+			err := bufferSet.apply(func(b *s3EventBuffer) error {
+				if expireTime.Sub(b.createTime) >= destination.maxDuration {
+					if sendErr := destination.sendData(b); sendErr != nil {
+						return sendErr
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				failed = true
+				errChan <- err
+				continue
+			}
+		default: // makes select non-blocking
+		}
+
+		data, err := jsoniter.Marshal(event.Event())
 		if err != nil {
 			failed = true
 			errChan <- errors.Wrap(err, "failed to marshall log parser event for S3")
@@ -119,13 +140,6 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			}
 		}
 
-		// Check if any buffer has data for longer than maxDuration
-		if err = destination.sendExpiredData(bufferSet); err != nil {
-			failed = true
-			errChan <- err
-			continue
-		}
-
 		eventsProcessed++
 	}
 
@@ -145,19 +159,6 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 	zap.L().Debug("finished sending messages", zap.Int("events", eventsProcessed))
 }
 
-func (destination *S3Destination) sendExpiredData(bufferSet s3EventBufferSet) error {
-	now := time.Now()
-	return bufferSet.apply(func(buffer *s3EventBuffer) error {
-		if now.Sub(buffer.createTime) > destination.maxDuration {
-			err := destination.sendData(buffer)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
 // sendData puts data in S3 and sends notification to SNS
 func (destination *S3Destination) sendData(buffer *s3EventBuffer) (err error) {
 	if buffer.events == 0 { // skip empty buffers
@@ -170,7 +171,7 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer) (err error) {
 	operation := common.OpLogManager.Start("sendData", common.OpLogS3ServiceDim)
 	defer func() {
 		if resetErr := buffer.reset(); resetErr != nil {
-			operation.LogError(err)
+			operation.LogError(resetErr)
 		}
 		operation.Stop()
 		operation.Log(err,
@@ -275,11 +276,7 @@ func (bs s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
 	logType := *event.PantherLogType
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
-		buffer = &s3EventBuffer{
-			logType:    logType,
-			hour:       hour,
-			createTime: time.Now(),
-		}
+		buffer = newS3EventBuffer(logType, hour)
 		_ = buffer.reset() // no need to check error
 		logTypeToBuffer[logType] = buffer
 	}
@@ -308,7 +305,15 @@ type s3EventBuffer struct {
 	bytes      int
 	events     int
 	hour       time.Time // the event time bin
-	createTime time.Time
+	createTime time.Time // used to expire buffer
+}
+
+func newS3EventBuffer(logType string, hour time.Time) *s3EventBuffer {
+	return &s3EventBuffer{
+		logType:    logType,
+		hour:       hour,
+		createTime: time.Now(), // used with time.After() to check expiration ... no need for UTC()
+	}
 }
 
 // addEvent adds new data to the s3EventBuffer

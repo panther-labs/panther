@@ -33,10 +33,9 @@ func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*
 	require.Equal(t, 1, len(events))
 	event := events[0]
 	require.NotNil(t, event)
-	require.NotNil(t, event.Event)
-	encapsulatedEvent := event.Event
+	require.NotNil(t, event.Event())
 
-	event.Event = expectedEvent.Event // set pack ptr to so equal test works
+	event.SetEvent(expectedEvent.Event()) // set pack ptr to so equal test works
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
@@ -51,5 +50,5 @@ func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*
 		expectedEvent.PantherEventTime = event.PantherParseTime
 	}
 
-	require.Equal(t, expectedEvent.Event, encapsulatedEvent)
+	require.Equal(t, expectedEvent.Event(), event.Event())
 }

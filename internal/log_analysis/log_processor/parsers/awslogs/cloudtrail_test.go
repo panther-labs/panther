@@ -146,12 +146,9 @@ func TestCloudTrailLogType(t *testing.T) {
 func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) {
 	parser := &CloudTrailParser{}
 	events := parser.Parse(log)
-
 	require.Equal(t, len(expectedEvents), len(events))
-
 	for i, expectedEvent := range expectedEvents {
-		event := events[i].Event.(*CloudTrail)
-		expectedEvent.Event = expectedEvent // set back ptr
+		event := events[i].Event().(*CloudTrail)
 		testutil.EqualPantherLog(t, expectedEvent.Log(), event.Logs())
 	}
 }

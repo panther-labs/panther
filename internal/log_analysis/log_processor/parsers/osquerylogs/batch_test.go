@@ -74,7 +74,5 @@ func TestOsQueryBatchLogType(t *testing.T) {
 
 func checkOsQueryBatcLog(t *testing.T, log string, expectedEvent *Batch) {
 	parser := &BatchParser{}
-	events := parser.Parse(log)
-	expectedEvent.Event = expectedEvent // set back ptr
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }

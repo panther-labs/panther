@@ -99,7 +99,6 @@ func TestSetCoreFields(t *testing.T) {
 	eventTime := (timestamp.RFC3339)(time.Date(2020, 1, 2, 3, 0, 0, 0, time.UTC))
 	expectedNow := timestamp.Now()
 	expectedEvent := PantherLog{
-		Event:            nil,
 		PantherLogType:   &logType,
 		PantherEventTime: &eventTime,
 		PantherParseTime: &expectedNow,
@@ -121,7 +120,6 @@ func TestSetCoreFieldsNilEventTime(t *testing.T) {
 	logType := "Data.Source"
 	expectedNow := timestamp.Now()
 	expectedEvent := PantherLog{
-		Event:            nil,
 		PantherLogType:   &logType,
 		PantherEventTime: &expectedNow,
 		PantherParseTime: &expectedNow,

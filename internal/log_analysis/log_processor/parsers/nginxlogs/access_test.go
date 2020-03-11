@@ -83,7 +83,5 @@ func TestAccessLogType(t *testing.T) {
 
 func checkAccessLog(t *testing.T, log string, expectedEvent *Access) {
 	parser := &AccessParser{}
-	events := parser.Parse(log)
-	expectedEvent.Event = expectedEvent // set back ptr
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }

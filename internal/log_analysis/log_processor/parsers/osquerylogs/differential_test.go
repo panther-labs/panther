@@ -97,7 +97,5 @@ func TestOsQueryDifferentialLogType(t *testing.T) {
 
 func checkOsQueryDifferentialLog(t *testing.T, log string, expectedEvent *Differential) {
 	parser := &DifferentialParser{}
-	events := parser.Parse(log)
-	expectedEvent.Event = expectedEvent // set back ptr
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }
