@@ -209,3 +209,12 @@ func buildPackage(pkg string) error {
 
 	return nil
 }
+
+// (Beta) Cfn Generate Glue CFN templates in out/deployments folder
+func (b Build) Cfn() {
+	// TODO Eventually change it so it generates all CFN templates that will be used
+	// TODO Add a "build:all" target that just builds everything that will be deployed, but without triggering the actual deployment.
+	if err := generateGlueTables(); err != nil {
+		logger.Fatal(err)
+	}
+}

@@ -39,7 +39,9 @@
     "SerdeInfo": {
      "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
      "Parameters": {
-      "case.insensitive": "TRUE",
+      "case.insensitive": "false",
+      "mapping.c1": "c1",
+      "mapping.c2": "c2",
       "serialization.format": "1"
      }
     },
