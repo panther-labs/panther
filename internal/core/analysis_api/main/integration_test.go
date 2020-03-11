@@ -187,13 +187,13 @@ var (
 	}
 
 	rule = &models.Rule{
-		Body:        "def rule(event): return len(event) > 0\n",
-		Description: "Matches every non-empty event",
-		Enabled:     true,
-		ID:          "NonEmptyEvent",
-		LogTypes:    []string{"AWS.CloudTrail"},
-		Severity:    "HIGH",
-		Tests:       []*models.UnitTest{},
+		Body:               "def rule(event): return len(event) > 0\n",
+		Description:        "Matches every non-empty event",
+		Enabled:            true,
+		ID:                 "NonEmptyEvent",
+		LogTypes:           []string{"AWS.CloudTrail"},
+		Severity:           "HIGH",
+		Tests:              []*models.UnitTest{},
 		DedupPeriodMinutes: 1440,
 	}
 )
@@ -520,13 +520,13 @@ func createRuleSuccess(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.CreateRule(&operations.CreateRuleParams{
 		Body: &models.UpdateRule{
-			Body:        rule.Body,
-			Description: rule.Description,
-			Enabled:     rule.Enabled,
-			ID:          rule.ID,
-			LogTypes:    rule.LogTypes,
-			Severity:    rule.Severity,
-			UserID:      userID,
+			Body:               rule.Body,
+			Description:        rule.Description,
+			Enabled:            rule.Enabled,
+			ID:                 rule.ID,
+			LogTypes:           rule.LogTypes,
+			Severity:           rule.Severity,
+			UserID:             userID,
 			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 		},
 		HTTPClient: httpClient,
@@ -680,13 +680,13 @@ func modifyRule(t *testing.T) {
 
 	result, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
 		Body: &models.UpdateRule{
-			Body:        rule.Body,
-			Description: rule.Description,
-			Enabled:     rule.Enabled,
-			ID:          rule.ID,
-			LogTypes:    rule.LogTypes,
-			Severity:    rule.Severity,
-			UserID:      userID,
+			Body:               rule.Body,
+			Description:        rule.Description,
+			Enabled:            rule.Enabled,
+			ID:                 rule.ID,
+			LogTypes:           rule.LogTypes,
+			Severity:           rule.Severity,
+			UserID:             userID,
 			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 		},
 		HTTPClient: httpClient,
@@ -1105,7 +1105,7 @@ func getEnabledEmpty(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		HTTPClient: httpClient,
-		Type: string(models.AnalysisTypePOLICY),
+		Type:       string(models.AnalysisTypePOLICY),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, &models.EnabledPolicies{Policies: []*models.EnabledPolicy{}}, result.Payload)
@@ -1115,7 +1115,7 @@ func getEnabledPolicies(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		HTTPClient: httpClient,
-		Type: string(models.AnalysisTypePOLICY),
+		Type:       string(models.AnalysisTypePOLICY),
 	})
 	require.NoError(t, err)
 
