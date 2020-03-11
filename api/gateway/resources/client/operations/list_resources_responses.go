@@ -30,7 +30,7 @@ import (
 	"github.com/go-openapi/runtime"
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/panther-labs/panther/api/gateway/resources/models"
+	"github.com/panther-labs/panther/api/gateway/resources/models"
 )
 
 // ListResourcesReader is a Reader for the ListResources structure.

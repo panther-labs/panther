@@ -21,13 +21,9 @@ package mage
 import (
 	"fmt"
 	"regexp"
-	"sync"
-	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/magefile/mage/mg"
-	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
@@ -36,10 +32,6 @@ import (
 
 // targets for managing Glue tables
 type Glue mg.Namespace
-
-const (
-	gluePartitionDateFormat = "2006-01-02"
-)
 
 // Sync Sync glue table partitions after schema change
 func (t Glue) Sync() {
@@ -58,60 +50,27 @@ func (t Glue) Sync() {
 }
 
 func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
-	const concurrency = 10
-	updateChan := make(chan *gluePartitionUpdate, concurrency)
-
-	// update to current day at last hour
-	endDay := time.Now().UTC().Truncate(time.Hour * 24).Add(time.Hour * 23)
-
-	// delete and re-create concurrently cuz the Glue API is very slow
-	var wg sync.WaitGroup
-	for i := 0; i < concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			for update := range updateChan {
-				err := update.table.SyncPartition(glueClient, update.at)
-				if err != nil {
-					logger.Error(err) // best effort, let users know there are failures (this can be re-run)
-					continue
-				}
-			}
-			wg.Done()
-		}()
-	}
-
-	listPartitions := func(name string, table *awsglue.GlueTableMetadata) {
-		createTime, err := getTableCreateTime(glueClient, table)
-		if err != nil {
-			logger.Fatal(err)
-		}
-		createTime = createTime.Truncate(time.Hour * 24) // clip to beginning of day
-		logger.Infof("syncing %s from %s to %s",
-			name, createTime.Format(gluePartitionDateFormat), endDay.Format(gluePartitionDateFormat))
-		for timeBin := createTime; !timeBin.After(endDay); timeBin = table.Timebin().Next(timeBin) {
-			updateChan <- &gluePartitionUpdate{
-				table: table,
-				at:    timeBin,
-			}
-		}
-	}
-
-	// for each table, for each time partition, delete and re-create
+	// for each table, for each time partition, update schema
 	for _, table := range registry.AvailableTables() {
 		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
 		if !matchTableName.MatchString(name) {
 			continue
 		}
-		listPartitions(name, table)
+		logger.Infof("syncing %s", name)
+		err := table.SyncPartitions(glueClient)
+		if err != nil {
+			logger.Fatalf("failed syncing %s: %v", name, err)
+		}
 		// the rule match tables share the same structure as the logs
 		name = fmt.Sprintf("%s.%s", awsglue.RuleMatchDatabaseName, table.TableName())
 		ruleTable := awsglue.NewGlueTableMetadata(
 			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
-		listPartitions(name, ruleTable)
+		logger.Infof("syncing %s", name)
+		err = ruleTable.SyncPartitions(glueClient)
+		if err != nil {
+			logger.Fatalf("failed syncing %s: %v", name, err)
+		}
 	}
-
-	close(updateChan)
-	wg.Wait()
 }
 
 func regexValidator(text string) error {
@@ -119,23 +78,4 @@ func regexValidator(text string) error {
 		return fmt.Errorf("invalid regex: %v", err)
 	}
 	return nil
-}
-
-func getTableCreateTime(glueClient *glue.Glue, table *awsglue.GlueTableMetadata) (createTime time.Time, err error) {
-	// get the CreateTime for the table, start there for syncing
-	tableInput := &glue.GetTableInput{
-		DatabaseName: aws.String(table.DatabaseName()),
-		Name:         aws.String(table.TableName()),
-	}
-	tableOutput, err := glueClient.GetTable(tableInput)
-	if err != nil {
-		return createTime, errors.Wrap(err, "cannot get table CreateTime")
-	}
-	createTime = *tableOutput.Table.CreateTime
-	return createTime, nil
-}
-
-type gluePartitionUpdate struct {
-	table *awsglue.GlueTableMetadata
-	at    time.Time
 }

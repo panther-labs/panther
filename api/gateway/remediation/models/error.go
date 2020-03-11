@@ -39,10 +39,6 @@ type Error struct {
 	Message *string `json:"message"`
 }
 
-func (m *Error) Error() string {
-	return *m.Message
-}
-
 // Validate validates this error
 func (m *Error) Validate(formats strfmt.Registry) error {
 	var res []error

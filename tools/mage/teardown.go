@@ -184,23 +184,27 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	go deleteStack(client, aws.String(frontendStack), results)
 	handleResult(<-results)
 
-	// this one may ask user
+	// The stackset must be deleted before the StackSetExecutionRole and the StackSetAdminRole
+	go deleteRealTimeEventStack(awsSession, identity, results)
+	// deleteRealTimeEventStack sends two results, one for the stack set instance and one for the stack set itself.
+	// Technically we only need to block on the deletion of the stack set instance (the first result), but
+	// orchestrating that is tricky and its a short wait to just let both finish.
+	handleResult(<-results)
+	handleResult(<-results)
+
+	// This stack may ask for user input during deletion
 	go deleteOnboardStack(awsSession, results)
 	handleResult(<-results)
 
 	// Trigger the deletion of the remaining stacks in parallel
-	nStacks := 0
-	go deleteRealTimeEventStack(awsSession, identity, results)
-	nStacks += 2 // 2 stacks
 	parallelStacks := []string{backendStack, monitoringStack, databasesStack, bucketStack}
 	logger.Infof("deleting CloudFormation stacks: %s", strings.Join(parallelStacks, ", "))
 	for _, stack := range parallelStacks {
 		go deleteStack(client, aws.String(stack), results)
 	}
-	nStacks += len(parallelStacks)
 
 	// Wait for all of the stacks to finish
-	for i := 0; i < nStacks; i++ {
+	for i := 0; i < len(parallelStacks); i++ {
 		handleResult(<-results)
 	}
 

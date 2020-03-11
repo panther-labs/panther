@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -151,19 +152,81 @@ func GetTableName(logType string) string {
 	return strings.ToLower(tableName)
 }
 
-// SyncPartition deletes and re-creates a partition using the latest table schema. Used when schemas change.
-func (gm *GlueTableMetadata) SyncPartition(client glueiface.GlueAPI, t time.Time) error {
-	_, err := gm.deletePartition(client, t)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "EntityNotFoundException" {
-			return errors.Wrapf(err, "delete partition for %s.%s at %v failed", gm.DatabaseName(), gm.TableName(), t)
-		}
+// SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.
+func (gm *GlueTableMetadata) SyncPartitions(client glueiface.GlueAPI) (failed error) {
+	// inherit StorageDescriptor from table
+	tableInput := &glue.GetTableInput{
+		DatabaseName: aws.String(gm.databaseName),
+		Name:         aws.String(gm.tableName),
 	}
-	err = gm.CreateJSONPartition(client, t)
-	if err != nil {
-		return errors.Wrapf(err, "create partition for %s.%s at %v failed", gm.DatabaseName(), gm.TableName(), t)
+	tableOutput, failed := client.GetTable(tableInput)
+	if failed != nil {
+		return failed
 	}
-	return nil
+
+	columns := tableOutput.Table.StorageDescriptor.Columns
+	createTime := *tableOutput.Table.CreateTime
+	createTime = createTime.Truncate(time.Hour * 24) // clip to beginning of day
+	// update to current day at last hour
+	endDay := time.Now().UTC().Truncate(time.Hour * 24).Add(time.Hour * 23)
+
+	const concurrency = 10
+	updateChan := make(chan time.Time, concurrency)
+	// update concurrently cuz the Glue API is very slow
+	var wg sync.WaitGroup
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			for update := range updateChan {
+				if failed != nil {
+					continue // drain channel
+				}
+
+				getPartitionInput := &glue.GetPartitionInput{
+					DatabaseName:    aws.String(gm.databaseName),
+					TableName:       aws.String(gm.tableName),
+					PartitionValues: gm.partitionValues(update),
+				}
+				getPartitionOutput, err := client.GetPartition(getPartitionInput)
+				if err != nil { // skip partitions not there
+					if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != glue.ErrCodeEntityNotFoundException {
+						failed = err
+					}
+					continue
+				}
+
+				// leave _everything_ the same except the schema
+				getPartitionOutput.Partition.StorageDescriptor.Columns = columns
+				values := gm.partitionValues(update)
+				partitionInput := &glue.PartitionInput{
+					Values:            values,
+					StorageDescriptor: getPartitionOutput.Partition.StorageDescriptor,
+				}
+				updatePartitionInput := &glue.UpdatePartitionInput{
+					DatabaseName:       aws.String(gm.databaseName),
+					TableName:          aws.String(gm.tableName),
+					PartitionInput:     partitionInput,
+					PartitionValueList: values,
+				}
+				_, err = client.UpdatePartition(updatePartitionInput)
+				if err != nil {
+					failed = err
+					continue
+				}
+			}
+			wg.Done()
+		}()
+	}
+
+	// loop over each partition updating
+	for timeBin := createTime; !timeBin.After(endDay); timeBin = gm.Timebin().Next(timeBin) {
+		updateChan <- timeBin
+	}
+
+	close(updateChan)
+	wg.Wait()
+
+	return failed
 }
 
 // Deprecated - use GluePartition.CreatePartition instead
