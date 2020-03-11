@@ -189,7 +189,7 @@ func (gm *GlueTableMetadata) SyncPartitions(client glueiface.GlueAPI) (failed er
 				}
 				getPartitionOutput, err := client.GetPartition(getPartitionInput)
 				if err != nil { // skip partitions not there
-					if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "EntityNotFoundException" {
+					if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != glue.ErrCodeEntityNotFoundException {
 						failed = err
 					}
 					continue
