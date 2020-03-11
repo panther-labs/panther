@@ -1176,7 +1176,7 @@ definitions:
     type: string
 
   dedupPeriodMinutes:
-    description: The time in minutes for which we deduplicate events when generating alerts
+    description: The time in minutes for which we deduplicate events when generating alerts for log analysis
     type: integer
     minimum: 15
     maximum: 1440 # 1 day in minutes

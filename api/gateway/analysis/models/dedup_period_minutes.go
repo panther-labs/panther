@@ -29,7 +29,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// DedupPeriodMinutes The time in minutes for which we deduplicate events when generating alerts
+// DedupPeriodMinutes The time in minutes for which we deduplicate events when generating alerts for log analysis
 // swagger:model dedupPeriodMinutes
 type DedupPeriodMinutes int64
 
