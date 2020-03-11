@@ -41,9 +41,9 @@ export type AlertDetails = {
   creationTime: Scalars['AWSDateTime'];
   updateTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
-  dedupString: Scalars['String'];
   events: Array<Scalars['AWSJSON']>;
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
+  dedupString?: Maybe<Scalars['String']>;
 };
 
 export type AlertSummary = {
@@ -54,6 +54,7 @@ export type AlertSummary = {
   updateTime: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
   severity?: Maybe<Scalars['String']>;
+  dedupString?: Maybe<Scalars['String']>;
 };
 
 export enum AnalysisTypeEnum {
