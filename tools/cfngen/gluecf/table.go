@@ -127,6 +127,7 @@ func NewJSONLTable(input *NewTableInput) (db *Table) {
 		"case.insensitive":     "false", // Need to be case sensitive to deal with columns that have same name but different casing
 	}
 
+	// Adding mapping for column names. This is required when columns are case sensitive
 	for _, column := range input.Columns {
 		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(column.Name))] = column.Name
 	}
