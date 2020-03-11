@@ -372,7 +372,7 @@ func (r *batchResults) deliver() error {
 		zap.String("alertQueue", env.AlertQueueURL),
 		zap.Int("notificationCount", len(r.Alerts)))
 	batchInput := &sqs.SendMessageBatchInput{Entries: r.Alerts, QueueUrl: &env.AlertQueueURL}
-	if err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, batchInput); err != nil {
+	if _, err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, batchInput); err != nil {
 		zap.L().Error("failed to send alert notifications", zap.Error(err))
 		return err
 	}

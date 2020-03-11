@@ -92,7 +92,10 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		Entries:  sqsEntries,
 		QueueUrl: &env.ResourcesQueueURL,
 	}
-	if err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, sqsInput); err != nil {
+	if failures, err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, sqsInput); err != nil {
+		if _, ok := err.(sqsbatch.MessageTooBigError); ok {
+
+		}
 		zap.L().Error("sqsbatch.SendMessageBatch failed", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
