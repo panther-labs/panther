@@ -194,6 +194,7 @@ var (
 		LogTypes:    []string{"AWS.CloudTrail"},
 		Severity:    "HIGH",
 		Tests:       []*models.UnitTest{},
+		DedupPeriodMinutes: 1440,
 	}
 )
 
@@ -299,7 +300,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListFiltered", listFiltered)
 		t.Run("ListPaging", listPaging)
 		t.Run("ListRules", listRules)
-		t.Run("GetEnabledSuccess", getEnabledSuccess)
+		t.Run("GetEnabledSuccess", getEnabledPolicies)
 		t.Run("GetEnabledRules", getEnabledRules)
 	})
 
@@ -526,6 +527,7 @@ func createRuleSuccess(t *testing.T) {
 			LogTypes:    rule.LogTypes,
 			Severity:    rule.Severity,
 			UserID:      userID,
+			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 		},
 		HTTPClient: httpClient,
 	})
@@ -674,6 +676,7 @@ func modifySuccess(t *testing.T) {
 func modifyRule(t *testing.T) {
 	t.Parallel()
 	rule.Description = "SkyNet integration"
+	rule.DedupPeriodMinutes = 60
 
 	result, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
 		Body: &models.UpdateRule{
@@ -684,6 +687,7 @@ func modifyRule(t *testing.T) {
 			LogTypes:    rule.LogTypes,
 			Severity:    rule.Severity,
 			UserID:      userID,
+			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 		},
 		HTTPClient: httpClient,
 	})
@@ -1101,15 +1105,17 @@ func getEnabledEmpty(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		HTTPClient: httpClient,
+		Type: string(models.AnalysisTypePOLICY),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, &models.EnabledPolicies{Policies: []*models.EnabledPolicy{}}, result.Payload)
 }
 
-func getEnabledSuccess(t *testing.T) {
+func getEnabledPolicies(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		HTTPClient: httpClient,
+		Type: string(models.AnalysisTypePOLICY),
 	})
 	require.NoError(t, err)
 
