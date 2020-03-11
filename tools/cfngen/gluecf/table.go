@@ -121,7 +121,6 @@ func NewParquetTable(input *NewTableInput) (db *Table) {
 }
 
 func NewJSONLTable(input *NewTableInput) (db *Table) {
-
 	descriptorParameters := map[string]interface{}{
 		"serialization.format": "1",
 		"case.insensitive":     "false", // Need to be case sensitive to deal with columns that have same name but different casing
