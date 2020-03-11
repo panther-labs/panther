@@ -33,7 +33,7 @@ import (
 	cr "github.com/go-openapi/runtime/client"
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/gateway/compliance/models"
 )
 
 // NewUpdateMetadataParams creates a new UpdateMetadataParams object

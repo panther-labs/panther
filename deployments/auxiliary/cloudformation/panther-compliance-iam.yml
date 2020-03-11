@@ -49,7 +49,7 @@ Resources:
   AuditRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherAuditRole
+      RoleName: PantherAuditRole # DO NOT CHANGE! backend.yml CF depends on this name, set in mage deploy
       Description: The Panther master account assumes this role for read-only security scanning
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -150,7 +150,7 @@ Resources:
     Condition: AutoRemediation
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherRemediationRole
+      RoleName: PantherRemediationRole # DO NOT CHANGE! backend.yml CF depends on this name, set in mage deploy
       Description: The Panther master account assumes this role for automatic remediation of policy violations
       MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:

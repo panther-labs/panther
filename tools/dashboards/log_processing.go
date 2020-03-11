@@ -30,7 +30,7 @@ var logProcessingJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-log-processor' | SOURCE '/aws/lambda/panther-rules-engine' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc\n| limit 20",
+                "query": "SOURCE '/aws/lambda/panther-log-processor' | SOURCE '/aws/lambda/panther-rules-engine' | SOURCE '/aws/lambda/panther-datacatalog-updater' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc\n| limit 20",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Most Recent 20 Errors and Warnings",
@@ -267,11 +267,11 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 36,
+            "y": 42,
             "width": 3,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation like 'panther-log-processor' | stats max(heapSizeMB) as heap by bin(5min)\n",
+                "query": "SOURCE '/aws/lambda/panther-datacatalog-updater' | filter operation like 'panther-datacatalog-updater' | stats max(heapSizeMB) as heap by bin(5min)\n",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Heap Usage (MB)",
@@ -348,7 +348,7 @@ var logProcessingJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-rules-engine' | SOURCE '/aws/lambda/panther-log-processor' | filter @message like '[ERROR]' or level='error' or @message like '[WARN]' or level='warn'\n| fields strcontains(@message, '[ERROR']) as ruleError, strcontains(@message, '[WARN']) as ruleWarn, level \n| stats sum(ruleError) as rule_errors, sum(ruleWarn) as rule_warns, sum(strcontains(level, 'error')) as log_errors, sum(strcontains(level, 'warn')) as log_warns by bin(5m)",
+                "query": "SOURCE '/aws/lambda/panther-rules-engine' | SOURCE '/aws/lambda/panther-log-processor' | SOURCE '/aws/lambda/panther-datacatalog-updater' | filter @message like '[ERROR]' or level='error' or @message like '[WARN]' or level='warn'\n| fields strcontains(@message, '[ERROR']) as ruleError, strcontains(@message, '[WARN']) as ruleWarn, level \n| sum(strcontains(level, 'error')+ruleError) as errors, sum(strcontains(level, 'warn')+ruleWarn) as warns by bin(5m)",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Errors and Warnings",
@@ -414,20 +414,6 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 36,
-            "width": 3,
-            "height": 3,
-            "properties": {
-                "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation like 'panther-log-processor' | stats max(percentMemUsed) as used by bin(5min)\n",
-                "region": "us-east-1",
-                "title": "Memory Usage (%)",
-                "view": "timeSeries",
-                "stacked": false
-            }
-        },
-        {
-            "type": "log",
-            "x": 12,
             "y": 39,
             "width": 6,
             "height": 3,
@@ -442,11 +428,11 @@ var logProcessingJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 39,
+            "y": 42,
             "width": 3,
             "height": 3,
             "properties": {
-                "markdown": "\n### Rules Engine\n"
+                "markdown": "\n### Data Catalog Updater\n"
             }
         },
         {
@@ -487,6 +473,115 @@ var logProcessingJSON = `
             "height": 1,
             "properties": {
                 "markdown": "\n## Rules\n"
+            }
+        },
+        {
+            "type": "text",
+            "x": 0,
+            "y": 39,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "markdown": "\n### Rules Engine\n"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 3,
+            "y": 42,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-datacatalog-updater", "Resource", "panther-datacatalog-updater", { "stat": "Sum", "region": "us-east-1" } ]
+                ],
+                "region": "us-east-1",
+                "title": "Invocations",
+                "view": "timeSeries",
+                "stacked": false
+            }
+        },
+        {
+            "type": "metric",
+            "x": 6,
+            "y": 42,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-datacatalog-updater", "Resource", "panther-datacatalog-updater", { "stat": "Minimum", "region": "us-east-1" } ],
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-datacatalog-updater", "Resource", "panther-datacatalog-updater", { "stat": "Average", "region": "us-east-1" } ],
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-datacatalog-updater", "Resource", "panther-datacatalog-updater", { "stat": "Maximum", "region": "us-east-1" } ]
+                ],
+                "region": "us-east-1",
+                "view": "timeSeries",
+                "stacked": false,
+                "title": "Duration"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 9,
+            "y": 42,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Errors", "FunctionName", "panther-datacatalog-updater", "Resource", "panther-datacatalog-updater", { "id": "errors", "stat": "Sum", "color": "#d13212", "region": "us-east-1" } ],
+                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-datacatalog-updater", "Resource", "panther-datacatalog-updater", { "id": "invocations", "stat": "Sum", "visible": false, "region": "us-east-1" } ],
+                    [ { "expression": "100 - 100 * errors / MAX([errors, invocations])", "label": "Success rate (%)", "id": "availability", "yAxis": "right", "region": "us-east-1" } ]
+                ],
+                "region": "us-east-1",
+                "title": "Error count and success rate (%)",
+                "yAxis": {
+                    "right": {
+                        "max": 100
+                    }
+                },
+                "view": "timeSeries",
+                "stacked": false
+            }
+        },
+        {
+            "type": "log",
+            "x": 12,
+            "y": 36,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation like 'panther-log-processor' | stats max(percentMemUsed) as used by bin(5min)\n",
+                "region": "us-east-1",
+                "title": "Memory Usage (%)",
+                "view": "timeSeries",
+                "stacked": false
+            }
+        },
+        {
+            "type": "log",
+            "x": 15,
+            "y": 36,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation like 'panther-log-processor' | stats max(heapSizeMB) as heap by bin(5min)\n",
+                "region": "us-east-1",
+                "stacked": false,
+                "title": "Heap Usage (MB)",
+                "view": "timeSeries"
+            }
+        },
+        {
+            "type": "log",
+            "x": 12,
+            "y": 42,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-datacatalog-updater' | filter operation like 'panther-datacatalog-updater' | stats max(percentMemUsed) as used by bin(5min)\n",
+                "region": "us-east-1",
+                "title": "Memory Usage (%)",
+                "view": "timeSeries",
+                "stacked": false
             }
         }
     ]

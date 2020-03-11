@@ -33,7 +33,7 @@ import (
 	cr "github.com/go-openapi/runtime/client"
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/panther-labs/panther/api/gateway/resources/models"
+	"github.com/panther-labs/panther/api/gateway/resources/models"
 )
 
 // NewAddResourcesParams creates a new AddResourcesParams object

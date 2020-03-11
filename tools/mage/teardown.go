@@ -33,6 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
 )
@@ -49,7 +50,7 @@ type deleteStackResult struct {
 
 // Teardown Destroy all Panther infrastructure
 func Teardown() {
-	awsSession := teardownConfirmation()
+	awsSession, identity := teardownConfirmation()
 
 	// Find CloudFormation-managed resources we may need to modify manually.
 	//
@@ -83,7 +84,7 @@ func Teardown() {
 	destroyPantherBuckets(awsSession, s3Buckets)
 
 	// Delete all CloudFormation stacks.
-	cfnErr := destroyCfnStacks(awsSession)
+	cfnErr := destroyCfnStacks(awsSession, identity)
 
 	// We have to continue even if there was an error deleting the stacks because we read the names
 	// of the log groups from the CloudFormation stacks, which may now be partially deleted.
@@ -105,7 +106,7 @@ func Teardown() {
 	logger.Info("successfully removed Panther infrastructure")
 }
 
-func teardownConfirmation() *session.Session {
+func teardownConfirmation() (*session.Session, *sts.GetCallerIdentityOutput) {
 	// Check the AWS account ID
 	awsSession, err := getSession()
 	if err != nil {
@@ -123,7 +124,7 @@ func teardownConfirmation() *session.Session {
 		logger.Fatal("teardown aborted")
 	}
 
-	return awsSession
+	return awsSession, identity
 }
 
 // Remove ECR repos and all of their images
@@ -146,7 +147,7 @@ func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
 }
 
 // Destroy all Panther CloudFormation stacks
-func destroyCfnStacks(awsSession *session.Session) error {
+func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdentityOutput) error {
 	results := make(chan deleteStackResult)
 	client := cloudformation.New(awsSession)
 
@@ -154,7 +155,11 @@ func destroyCfnStacks(awsSession *session.Session) error {
 	var errCount int
 	handleResult := func(result deleteStackResult) {
 		if result.err == nil {
-			logger.Infof("    √ %s successfully deleted", result.stackName)
+			if strings.Contains(result.stackName, "skipped") {
+				logger.Infof("    √ %s", result.stackName)
+			} else {
+				logger.Infof("    √ %s successfully deleted", result.stackName)
+			}
 			return
 		}
 
@@ -179,15 +184,27 @@ func destroyCfnStacks(awsSession *session.Session) error {
 	go deleteStack(client, aws.String(frontendStack), results)
 	handleResult(<-results)
 
+	// The stackset must be deleted before the StackSetExecutionRole and the StackSetAdminRole
+	go deleteRealTimeEventStack(awsSession, identity, results)
+	// deleteRealTimeEventStack sends two results, one for the stack set instance and one for the stack set itself.
+	// Technically we only need to block on the deletion of the stack set instance (the first result), but
+	// orchestrating that is tricky and its a short wait to just let both finish.
+	handleResult(<-results)
+	handleResult(<-results)
+
+	// This stack may ask for user input during deletion
+	go deleteOnboardStack(awsSession, results)
+	handleResult(<-results)
+
 	// Trigger the deletion of the remaining stacks in parallel
-	parallelStacks := []string{backendStack, monitoringStack, databasesStack, bucketStack, onboardStack}
+	parallelStacks := []string{backendStack, monitoringStack, databasesStack, bucketStack}
 	logger.Infof("deleting CloudFormation stacks: %s", strings.Join(parallelStacks, ", "))
 	for _, stack := range parallelStacks {
 		go deleteStack(client, aws.String(stack), results)
 	}
 
 	// Wait for all of the stacks to finish
-	for range parallelStacks {
+	for i := 0; i < len(parallelStacks); i++ {
 		handleResult(<-results)
 	}
 
@@ -195,6 +212,129 @@ func destroyCfnStacks(awsSession *session.Session) error {
 		return fmt.Errorf("%d stacks failed to delete", errCount)
 	}
 	return nil
+}
+
+// The onboard stack has global IAM roles, ask user if they want to delete since this could affect other regions
+func deleteOnboardStack(awsSession *session.Session, results chan deleteStackResult) {
+	logger.Infof("deleting CloudFormation stack: %s", onboardStack)
+	cfClient := cloudformation.New(awsSession)
+	onboardStackExists, err := stackExists(cfClient, onboardStack)
+	if err != nil {
+		logger.Fatalf("error checking stack %s: %v", onboardStack, err)
+	}
+	if onboardStackExists {
+		auditRoleExists, err := roleExists(iam.New(awsSession), auditRole)
+		if err != nil {
+			logger.Fatalf("error checking audit role name %s: %v", auditRole, err)
+		}
+		if auditRoleExists {
+			answer := promptUser("\nDo you want to delete CloudSecurity roles (this can affect deployments in other regions)? (yes|no) ",
+				nonemptyValidator)
+			if strings.ToLower(answer) == "yes" {
+				logger.Infof("deleting stack %s", onboardStack)
+				go deleteStack(cfClient, aws.String(onboardStack), results) // can be done in background
+			} else {
+				results <- deleteStackResult{stackName: onboardStack + " (skipped)", err: nil}
+			}
+		}
+	} else {
+		results <- deleteStackResult{stackName: onboardStack + " (skipped)", err: nil}
+	}
+}
+
+func deleteRealTimeEventStack(awsSession *session.Session, identity *sts.GetCallerIdentityOutput, results chan deleteStackResult) {
+	logger.Infof("deleting CloudFormation stack set %s", realTimeEventsStackSet)
+	go deleteStackSet(cloudformation.New(awsSession), identity, aws.String(realTimeEventsStackSet), results) // can be done in background
+}
+
+// Delete a single CFN stack set and wait for it to finish (only deletes stack instances from current region)
+func deleteStackSet(client *cloudformation.CloudFormation, identity *sts.GetCallerIdentityOutput,
+	stackSet *string, results chan deleteStackResult) {
+
+	const (
+		waitTimeout = time.Minute * 10
+		waitSleep   = time.Second * 15
+	)
+
+	// first delete stack set instance in this reqion
+	stackSetInstanceName := *stackSet + " stack instance in " + *client.Config.Region
+
+	exists, err := stackSetInstanceExists(client, *stackSet, *identity.Account, *client.Config.Region)
+	if err != nil {
+		// need to return 2 errors
+		results <- deleteStackResult{stackName: stackSetInstanceName, err: err}
+		results <- deleteStackResult{stackName: *stackSet,
+			err: errors.Errorf("stack set instance not empty")}
+		return
+	}
+	if exists {
+		_, err := client.DeleteStackInstances(&cloudformation.DeleteStackInstancesInput{
+			StackSetName: stackSet,
+			Accounts:     []*string{identity.Account},
+			Regions:      []*string{client.Config.Region},
+			RetainStacks: aws.Bool(false),
+		})
+		if err != nil {
+			// need to return 2 errors
+			results <- deleteStackResult{stackName: stackSetInstanceName, err: err}
+			results <- deleteStackResult{stackName: *stackSet,
+				err: fmt.Errorf("stack set instance not empty")}
+			return
+		}
+	}
+
+	// wait (no waiters in sdk for stack instances, had to write one)
+	startDelete := time.Now()
+	for {
+		exists, err = stackSetInstanceExists(client, *stackSet, *identity.Account, *client.Config.Region)
+		if err != nil {
+			// need to return 2 errors
+			results <- deleteStackResult{stackName: stackSetInstanceName, err: err}
+			results <- deleteStackResult{stackName: *stackSet,
+				err: fmt.Errorf("stack set instance not empty")}
+			return
+		}
+		if !exists { // done!
+			results <- deleteStackResult{stackName: stackSetInstanceName, err: err}
+			break
+		}
+		if time.Since(startDelete) > waitTimeout {
+			// need to return 2 errors
+			results <- deleteStackResult{stackName: stackSetInstanceName,
+				err: fmt.Errorf("timeout waiting for stack set instance to delete")}
+			results <- deleteStackResult{stackName: *stackSet,
+				err: fmt.Errorf("stack set instance not empty")}
+			return
+		}
+		time.Sleep(waitSleep)
+	}
+
+	// now delete stack set
+	exists, err = stackSetExists(client, *stackSet)
+	if err != nil || !exists {
+		results <- deleteStackResult{stackName: *stackSet, err: err}
+		return
+	}
+	if _, err := client.DeleteStackSet(&cloudformation.DeleteStackSetInput{StackSetName: stackSet}); err != nil {
+		results <- deleteStackResult{stackName: *stackSet, err: err}
+		return
+	}
+
+	// wait (no waiters in sdk for stack sets, had to write one)
+	startDelete = time.Now()
+	for {
+		exists, err = stackSetExists(client, *stackSet)
+		if err != nil || !exists {
+			results <- deleteStackResult{stackName: *stackSet, err: err}
+			return
+		}
+		if time.Since(startDelete) > waitTimeout {
+			results <- deleteStackResult{stackName: *stackSet,
+				err: fmt.Errorf("timeout waiting for stack set to delete")}
+			return
+		}
+		time.Sleep(waitSleep)
+	}
 }
 
 // Delete a single CFN stack and wait for it to finish
@@ -247,6 +387,10 @@ func removeBucket(client *s3.S3, bucketName *string) {
 		return len(objectVersions) < s3MaxDeletes
 	})
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchBucket" {
+			logger.Infof("%s already deleted", *bucketName)
+			return
+		}
 		logger.Fatalf("failed to list object versions for %s: %v", *bucketName, err)
 	}
 
