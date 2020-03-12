@@ -27,6 +27,11 @@ BucketsParameterValues:
   # Use an existing S3 bucket for storing access logs. If not specified, one is created for you.
   AccessLogsBucketName: ''
 
+# CloudFormation parameters for the monitoring.yml which deploys the monitoring stack.
+OnboardingParameterValues:
+  # Whether or not the Panther deployment should automatically onboard itself as a data source.
+  OnboardSelf: true
+
 # CloudFormation parameter overrides for the backend.yml which deploys the backend stack.
 BackendParameterValues:
   # Retention period for all Panther CloudWatch log groups.
