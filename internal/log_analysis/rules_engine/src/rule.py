@@ -29,6 +29,9 @@ _RULE_FOLDER = os.path.join(tempfile.gettempdir(), 'rules')
 # Rule with ID 'aws_globals' contains common Python logic used by other rules
 COMMON_MODULE_RULE_ID = 'aws_globals'
 
+# Maximum size for a dedup string
+MAX_DEDUP_STRING_SIZE = 1000
+
 
 @dataclass
 class RuleResult:
@@ -81,12 +84,18 @@ class Rule:
             rule_result = _run_command(self._module.rule, event, bool)
             if rule_result and self._has_dedup:
                 dedup_string = _run_command(self._module.dedup, event, str)
+                if dedup_string and len(dedup_string) > MAX_DEDUP_STRING_SIZE:
+                    self.logger.warning(
+                        'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
+                        '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
+                    )
+                    dedup_string = dedup_string[:MAX_DEDUP_STRING_SIZE]
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
         # If users haven't specified a dedup function return a default value
         if rule_result and not dedup_string:
-            dedup_string = "default"
+            dedup_string = self.rule_id
         return RuleResult(matched=rule_result, dedup_string=dedup_string)
 
     def _store_rule(self) -> None:

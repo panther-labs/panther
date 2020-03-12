@@ -27,11 +27,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 // Destination defines the interface that all Destinations should follow
 type Destination interface {
-	SendEvents(parsedEventChannel chan *common.ParsedEvent, errChan chan error)
+	SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error)
 }
 
 //CreateDestination the method returns the appropriate Destination based on configuration
@@ -60,5 +61,7 @@ func createS3Destination(s3BucketName string) Destination {
 		snsClient:   sns.New(common.Session),
 		s3Bucket:    s3BucketName,
 		snsTopicArn: os.Getenv("SNS_TOPIC_ARN"),
+		maxFileSize: maxFileSize,
+		maxDuration: maxDuration,
 	}
 }

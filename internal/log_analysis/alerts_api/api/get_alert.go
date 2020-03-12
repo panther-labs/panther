@@ -210,10 +210,8 @@ func timeFromS3ObjectKey(key string) (time.Time, error) {
 // after that.
 func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]string, int, error) {
 	// nolint:gosec
-	// The query is ran using S3 Select which only allows selecting data (no modification of data is possible)
-	// The query is running on individual S3 objects that contain events that matched a specific rule. Any potential
-	// SQL injection can at most cause retrieval of events that matched same rule but with different dedup string
-	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s'", strings.ReplaceAll(alertID, "'", "/'"))
+	// The alertID is an MD5 hash. AlertsAPI is performing the appropriate validation
+	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s'", alertID)
 
 	zap.L().Debug("querying object using S3 Select",
 		zap.String("S3ObjectKey", key),

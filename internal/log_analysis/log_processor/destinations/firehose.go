@@ -28,7 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 const (
@@ -46,7 +46,7 @@ type FirehoseDestination struct {
 // It continuously reads events from outputChannel, groups them in batches per log type
 // and sends them to the appropriate Kinesis FIrehose. If the method encounters an error
 // it stops reading from the outputChannel and writes an error to the errorChannel
-func (destination *FirehoseDestination) SendEvents(parsedEventChannel chan *common.ParsedEvent, errChan chan error) {
+func (destination *FirehoseDestination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
 	logtypeToRecords := make(map[string]*recordBatch)
 	eventsProcessed := 0
 	zap.L().Info("starting to read events from channel")
@@ -62,14 +62,15 @@ func (destination *FirehoseDestination) SendEvents(parsedEventChannel chan *comm
 			Data: data,
 		}
 
-		records, ok := logtypeToRecords[event.LogType]
+		logType := *event.PantherLogType
+		records, ok := logtypeToRecords[logType]
 		if !ok {
 			records = &recordBatch{}
-			logtypeToRecords[event.LogType] = records
+			logtypeToRecords[logType] = records
 		}
 
 		if !records.addRecord(currentRecord) {
-			err := destination.sendRecords(event.LogType, records.records)
+			err := destination.sendRecords(logType, records.records)
 			if err != nil {
 				zap.L().Warn("failed to send records to firehose", zap.Error(err))
 				errChan <- err

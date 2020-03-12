@@ -57,7 +57,7 @@ func (p *BatchParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *BatchParser) Parse(log string) []interface{} {
+func (p *BatchParser) Parse(log string) []*parsers.PantherLog {
 	event := &Batch{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -69,7 +69,8 @@ func (p *BatchParser) Parse(log string) []interface{} {
 	if err := parsers.Validator.Struct(event); err != nil {
 		return nil
 	}
-	return []interface{}{event}
+
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -78,6 +79,6 @@ func (p *BatchParser) LogType() string {
 }
 
 func (event *Batch) updatePantherFields(p *BatchParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime))
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.Hostname)
 }

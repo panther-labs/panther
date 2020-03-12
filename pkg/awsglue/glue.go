@@ -27,6 +27,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -153,20 +155,22 @@ func GetTableName(logType string) string {
 }
 
 // SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.
-func (gm *GlueTableMetadata) SyncPartitions(client glueiface.GlueAPI) (failed error) {
+func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Client s3iface.S3API, startDate time.Time) (failed error) {
 	// inherit StorageDescriptor from table
 	tableInput := &glue.GetTableInput{
 		DatabaseName: aws.String(gm.databaseName),
 		Name:         aws.String(gm.tableName),
 	}
-	tableOutput, failed := client.GetTable(tableInput)
+	tableOutput, failed := glueClient.GetTable(tableInput)
 	if failed != nil {
 		return failed
 	}
 
 	columns := tableOutput.Table.StorageDescriptor.Columns
-	createTime := *tableOutput.Table.CreateTime
-	createTime = createTime.Truncate(time.Hour * 24) // clip to beginning of day
+	if startDate.IsZero() {
+		startDate = *tableOutput.Table.CreateTime
+	}
+	startDate = startDate.Truncate(time.Hour * 24) // clip to beginning of day
 	// update to current day at last hour
 	endDay := time.Now().UTC().Truncate(time.Hour * 24).Add(time.Hour * 23)
 
@@ -187,10 +191,19 @@ func (gm *GlueTableMetadata) SyncPartitions(client glueiface.GlueAPI) (failed er
 					TableName:       aws.String(gm.tableName),
 					PartitionValues: gm.partitionValues(update),
 				}
-				getPartitionOutput, err := client.GetPartition(getPartitionInput)
-				if err != nil { // skip partitions not there
+				getPartitionOutput, err := glueClient.GetPartition(getPartitionInput)
+				if err != nil {
+					// skip time period with no partition UNLESS there is data, then create
 					if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != glue.ErrCodeEntityNotFoundException {
 						failed = err
+					} else { // no partition, check if there is data in S3, if so, create
+						if hasData, err := gm.partitionHasData(s3Client, update, tableOutput); err != nil {
+							failed = err
+						} else if hasData {
+							if err = gm.createPartition(glueClient, update, tableOutput); err != nil {
+								failed = err
+							}
+						}
 					}
 					continue
 				}
@@ -208,7 +221,7 @@ func (gm *GlueTableMetadata) SyncPartitions(client glueiface.GlueAPI) (failed er
 					PartitionInput:     partitionInput,
 					PartitionValueList: values,
 				}
-				_, err = client.UpdatePartition(updatePartitionInput)
+				_, err = glueClient.UpdatePartition(updatePartitionInput)
 				if err != nil {
 					failed = err
 					continue
@@ -219,7 +232,7 @@ func (gm *GlueTableMetadata) SyncPartitions(client glueiface.GlueAPI) (failed er
 	}
 
 	// loop over each partition updating
-	for timeBin := createTime; !timeBin.After(endDay); timeBin = gm.Timebin().Next(timeBin) {
+	for timeBin := startDate; !timeBin.After(endDay); timeBin = gm.Timebin().Next(timeBin) {
 		updateChan <- timeBin
 	}
 
@@ -246,6 +259,10 @@ func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t tim
 		return errors.Errorf("not a JSON table: %#v", *tableOutput.Table.StorageDescriptor)
 	}
 
+	return gm.createPartition(client, t, tableOutput)
+}
+
+func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Time, tableOutput *glue.GetTableOutput) error {
 	location, err := url.Parse(*tableOutput.Table.StorageDescriptor.Location)
 	if err != nil {
 		return errors.Wrapf(err, "Cannot parse table %s.%s s3 path: %s",
@@ -280,6 +297,33 @@ func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Ti
 		PartitionValues: gm.partitionValues(t),
 	}
 	return client.DeletePartition(input)
+}
+
+func (gm *GlueTableMetadata) partitionHasData(client s3iface.S3API, t time.Time, tableOutput *glue.GetTableOutput) (bool, error) {
+	location, err := url.Parse(*tableOutput.Table.StorageDescriptor.Location)
+	if err != nil {
+		return false, errors.Wrapf(err, "Cannot parse table %s.%s s3 path: %s",
+			gm.DatabaseName(), gm.TableName(),
+			*tableOutput.Table.StorageDescriptor.Location)
+	}
+
+	// list files w/pagination
+	inputParams := &s3.ListObjectsV2Input{
+		Bucket:  aws.String(location.Host),
+		Prefix:  aws.String(gm.GetPartitionPrefix(t)),
+		MaxKeys: aws.Int64(1), // look for at least 1
+	}
+	var hasData bool
+	err = client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, isLast bool) bool {
+		for _, value := range page.Contents {
+			if *value.Size > 0 { // we only care about objects with size
+				hasData = true
+			}
+		}
+		return false // "To stop iterating, return false from the fn function."
+	})
+
+	return hasData, err
 }
 
 // Based on Timebin(), return an []*string values (used for Glue APIs)

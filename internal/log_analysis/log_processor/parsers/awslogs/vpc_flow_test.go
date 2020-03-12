@@ -25,6 +25,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -126,7 +128,7 @@ func TestVpcFlowLogNoData(t *testing.T) {
 
 func TestVpcFlowLogHeader(t *testing.T) {
 	parser := &VPCFlowParser{}
-	require.Equal(t, []interface{}{}, parser.Parse(vpcFlowDefaultHeader))
+	require.Equal(t, []*parsers.PantherLog{}, parser.Parse(vpcFlowDefaultHeader))
 }
 
 func TestVpcFlowLogType(t *testing.T) {
@@ -137,17 +139,5 @@ func TestVpcFlowLogType(t *testing.T) {
 func checkVPCFlowLog(t *testing.T, header, log string, expectedEvent *VPCFlow) {
 	parser := &VPCFlowParser{}
 	parser.Parse(header)
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*VPCFlow)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	// PantherParseTime is set to time.Now().UTC(). Require not nil
-	require.NotNil(t, event.PantherParseTime)
-	expectedEvent.PantherParseTime = event.PantherParseTime
-
-	require.Equal(t, expectedEvent, event)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }
