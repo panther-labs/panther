@@ -36,7 +36,7 @@ Teams can use Panther for:
 |:--------:|-------------|
 | Continuous Monitoring         | Analyze data in real-time and identify suspicious activity that could indicate a breach             |
 | Investigating Alerts         |Pivot across all security data to get the full context of an alert             |
-| Search IOCs         | Utilize standardized data fields and quickly search for matches against ip addresses, domains, usernames, and more            |
+| Searching IOCs         | Utilize standardized data fields and quickly search for matches against ip addresses, domains, usernames, and more            |
 | Securing Cloud Resources   | Achieve compliance by modeling security best practices and automatically fixing vulnerable cloud resources   |
 
 ## Analysis
