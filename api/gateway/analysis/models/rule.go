@@ -47,6 +47,9 @@ type Rule struct {
 	// Required: true
 	CreatedBy UserID `json:"createdBy"`
 
+	// dedup period minutes
+	DedupPeriodMinutes DedupPeriodMinutes `json:"dedupPeriodMinutes,omitempty"`
+
 	// description
 	// Required: true
 	Description Description `json:"description"`
@@ -114,6 +117,10 @@ func (m *Rule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCreatedBy(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDedupPeriodMinutes(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -204,6 +211,22 @@ func (m *Rule) validateCreatedBy(formats strfmt.Registry) error {
 	if err := m.CreatedBy.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("createdBy")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Rule) validateDedupPeriodMinutes(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.DedupPeriodMinutes) { // not required
+		return nil
+	}
+
+	if err := m.DedupPeriodMinutes.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("dedupPeriodMinutes")
 		}
 		return err
 	}

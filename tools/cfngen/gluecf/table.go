@@ -1,5 +1,10 @@
 package gluecf
 
+import (
+	"fmt"
+	"strings"
+)
+
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -116,15 +121,22 @@ func NewParquetTable(input *NewTableInput) (db *Table) {
 }
 
 func NewJSONLTable(input *NewTableInput) (db *Table) {
+	descriptorParameters := map[string]interface{}{
+		"serialization.format": "1",
+		"case.insensitive":     "false", // Need to be case sensitive to deal with columns that have same name but different casing
+	}
+
+	// Adding mapping for column names. This is required when columns are case sensitive
+	for _, column := range input.Columns {
+		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(column.Name))] = column.Name
+	}
+
 	sd := &StorageDescriptor{
 		InputFormat:  "org.apache.hadoop.mapred.TextInputFormat",
 		OutputFormat: "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
 		SerdeInfo: SerdeInfo{
 			SerializationLibrary: "org.openx.data.jsonserde.JsonSerDe",
-			Parameters: map[string]interface{}{
-				"serialization.format": "1",
-				"case.insensitive":     "TRUE", // treat as lower case
-			},
+			Parameters:           descriptorParameters,
 		},
 		Location: input.Location,
 		Columns:  input.Columns,

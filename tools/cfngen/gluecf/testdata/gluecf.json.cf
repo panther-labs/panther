@@ -42,7 +42,11 @@
     "SerdeInfo": {
      "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
      "Parameters": {
-      "case.insensitive": "TRUE",
+      "case.insensitive": "false",
+      "mapping.anniversary": "Anniversary",
+      "mapping.dob": "DOB",
+      "mapping.firstname": "FirstName",
+      "mapping.lastname": "LastName",
       "serialization.format": "1"
      }
     },
@@ -128,7 +132,15 @@
     "SerdeInfo": {
      "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
      "Parameters": {
-      "case.insensitive": "TRUE",
+      "case.insensitive": "false",
+      "mapping.anniversary": "Anniversary",
+      "mapping.dob": "DOB",
+      "mapping.firstname": "FirstName",
+      "mapping.lastname": "LastName",
+      "mapping.p_alert_creation_time": "p_alert_creation_time",
+      "mapping.p_alert_id": "p_alert_id",
+      "mapping.p_alert_update_time": "p_alert_update_time",
+      "mapping.p_rule_id": "p_rule_id",
       "serialization.format": "1"
      }
     },
