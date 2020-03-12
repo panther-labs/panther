@@ -22,6 +22,7 @@ import (
 	"crypto/md5" // nolint(gosec)
 	"encoding/hex"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -68,6 +69,7 @@ func SendAlert(event *AlertDedupEvent) error {
 		return errors.Wrap(err, "failed to marshal alert notification")
 	}
 
+	time.Tick()
 	input := &sqs.SendMessageInput{
 		QueueUrl:    aws.String(env.AlertingQueueURL),
 		MessageBody: aws.String(msgBody),
@@ -106,5 +108,6 @@ func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
 		Tags:              aws.StringSlice(rule.Payload.Tags),
 		Type:              aws.String(alertModel.RuleType),
 		AlertID:           aws.String(generateAlertID(alert)),
+		Title: alert.Title,
 	}, nil
 }
