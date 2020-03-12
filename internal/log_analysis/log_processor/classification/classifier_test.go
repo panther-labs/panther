@@ -38,13 +38,13 @@ func (m *mockParser) New() parsers.LogParser {
 	return m // pass through (not stateful)
 }
 
-func (m *mockParser) Parse(log string) []interface{} {
+func (m *mockParser) Parse(log string) []*parsers.PantherLog {
 	args := m.Called(log)
 	result := args.Get(0)
 	if result == nil {
 		return nil
 	}
-	return result.([]interface{})
+	return result.([]*parsers.PantherLog)
 }
 
 func (m *mockParser) LogType() string {
@@ -76,7 +76,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	failingParser1 := &mockParser{}
 	failingParser2 := &mockParser{}
 
-	succeedingParser.On("Parse", mock.Anything).Return([]interface{}{"event"})
+	succeedingParser.On("Parse", mock.Anything).Return([]*parsers.PantherLog{{}})
 	succeedingParser.On("LogType").Return("success")
 	failingParser1.On("Parse", mock.Anything).Return(nil)
 	failingParser1.On("LogType").Return("failure1")
@@ -101,7 +101,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	repetitions := 1000
 
 	expectedResult := &ClassifierResult{
-		Events:  []interface{}{"event"},
+		Events:  []*parsers.PantherLog{{}},
 		LogType: aws.String("success"),
 		LogLine: logLine,
 	}

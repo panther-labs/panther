@@ -124,7 +124,7 @@ func (p *CloudTrailParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) Parse(log string) []interface{} {
+func (p *CloudTrailParser) Parse(log string) []*parsers.PantherLog {
 	cloudTrailRecords := &CloudTrailRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailRecords)
 	if err != nil {
@@ -140,9 +140,9 @@ func (p *CloudTrailParser) Parse(log string) []interface{} {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
 	}
-	result := make([]interface{}, len(cloudTrailRecords.Records))
-	for i, record := range cloudTrailRecords.Records {
-		result[i] = record
+	result := make([]*parsers.PantherLog, len(cloudTrailRecords.Records))
+	for i, event := range cloudTrailRecords.Records {
+		result[i] = event.Log()
 	}
 	return result
 }
@@ -153,7 +153,7 @@ func (p *CloudTrailParser) LogType() string {
 }
 
 func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
-	event.SetCoreFields(p.LogType(), event.EventTime)
+	event.SetCoreFields(p.LogType(), event.EventTime, event)
 
 	// structured (parsed) fields
 	if event.SourceIPAddress != nil && !strings.HasSuffix(*event.SourceIPAddress, "amazonaws.com") {

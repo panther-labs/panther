@@ -61,7 +61,7 @@ func (p *AccessParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AccessParser) Parse(log string) []interface{} {
+func (p *AccessParser) Parse(log string) []*parsers.PantherLog {
 	reader := csv.NewReader(strings.NewReader(log))
 	// Separator between fields is the empty space
 	reader.Comma = ' '
@@ -116,7 +116,7 @@ func (p *AccessParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -125,6 +125,6 @@ func (p *AccessParser) LogType() string {
 }
 
 func (event *Access) updatePantherFields(p *AccessParser) {
-	event.SetCoreFields(p.LogType(), event.Time)
+	event.SetCoreFields(p.LogType(), event.Time, event)
 	event.AppendAnyIPAddressPtrs(event.RemoteAddress)
 }

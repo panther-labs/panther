@@ -32,12 +32,6 @@ const (
 // Session AWS Session that can be used by components of the system
 var Session = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(MaxRetries)))
 
-// ParsedEvent contains a single event that has already been processed
-type ParsedEvent struct {
-	Event   interface{} `json:"event"`
-	LogType string      `json:"logType"`
-}
-
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
 	Reader io.Reader

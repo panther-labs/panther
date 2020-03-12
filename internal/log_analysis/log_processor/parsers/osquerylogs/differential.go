@@ -56,7 +56,7 @@ func (p *DifferentialParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *DifferentialParser) Parse(log string) []interface{} {
+func (p *DifferentialParser) Parse(log string) []*parsers.PantherLog {
 	event := &Differential{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -77,7 +77,7 @@ func (p *DifferentialParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -86,6 +86,6 @@ func (p *DifferentialParser) LogType() string {
 }
 
 func (event *Differential) updatePantherFields(p *DifferentialParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime))
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

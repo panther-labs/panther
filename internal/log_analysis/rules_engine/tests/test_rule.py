@@ -16,7 +16,7 @@
 
 from unittest import TestCase
 
-from ..src.rule import Rule, RuleResult
+from ..src.rule import MAX_DEDUP_STRING_SIZE, Rule, RuleResult
 
 
 class TestRule(TestCase):
@@ -70,7 +70,7 @@ class TestRule(TestCase):
     def test_rule_matches(self) -> None:
         rule_body = 'def rule(event):\n\treturn True'
         rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
-        expected_rule = RuleResult(matched=True, dedup_string='default')
+        expected_rule = RuleResult(matched=True, dedup_string='id')
         self.assertEqual(rule.run({}), expected_rule)
 
     def test_rule_doesnt_match(self) -> None:
@@ -83,6 +83,22 @@ class TestRule(TestCase):
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "testdedup"'
         rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
         expected_rule = RuleResult(matched=True, dedup_string='testdedup')
+        self.assertEqual(rule.run({}), expected_rule)
+
+    def test_restrict_dedup_size(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "".join("a" for i in range({}))'.\
+            format(MAX_DEDUP_STRING_SIZE+1)
+        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+
+        expected_dedup_string = ''.join('a' for _ in range(MAX_DEDUP_STRING_SIZE))
+        expected_rule = RuleResult(matched=True, dedup_string=expected_dedup_string)
+        self.assertEqual(rule.run({}), expected_rule)
+
+    def test_empty_dedup_result_to_default(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn ""'
+        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+
+        expected_rule = RuleResult(matched=True, dedup_string='id')
         self.assertEqual(rule.run({}), expected_rule)
 
     def test_rule_throws_exception(self) -> None:

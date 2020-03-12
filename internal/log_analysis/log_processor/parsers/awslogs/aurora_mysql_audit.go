@@ -62,7 +62,7 @@ func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
+func (p *AuroraMySQLAuditParser) Parse(log string) []*parsers.PantherLog {
 	reader := csv.NewReader(strings.NewReader(log))
 	records, err := reader.ReadAll()
 	if len(records) == 0 || err != nil {
@@ -108,7 +108,7 @@ func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -117,7 +117,7 @@ func (p *AuroraMySQLAuditParser) LogType() string {
 }
 
 func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {
-	event.SetCoreFields(p.LogType(), event.Timestamp)
+	event.SetCoreFields(p.LogType(), event.Timestamp, event)
 	event.AppendAnyIPAddressPtrs(event.Host)
 	event.AppendAnyDomainNamePtrs(event.ServerHost)
 }

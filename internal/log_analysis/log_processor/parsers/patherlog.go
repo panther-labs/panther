@@ -39,6 +39,8 @@ var (
 //       See https://github.com/awsdocs/amazon-athena-user-guide/blob/master/doc_source/updates-and-partitions.md
 // nolint(lll)
 type PantherLog struct {
+	event interface{} // points to event that encapsulates this  as interface{} so we can serialize full event.
+
 	//  required
 	PantherLogType   *string            `json:"p_log_type,omitempty" validate:"required" description:"Panther added field with type of log"`
 	PantherRowID     *string            `json:"p_row_id,omitempty" validate:"required" description:"Panther added field with unique id (within table)"`
@@ -89,13 +91,34 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 	return nil
 }
 
-func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339) {
+// Event returns event data, used when composed
+func (pl *PantherLog) Event() interface{} {
+	return pl.event
+}
+
+// SetEvent set  event data, used for testing
+func (pl *PantherLog) SetEvent(event interface{}) {
+	pl.event = event
+}
+
+// Log returns pointer to self, used when composed
+func (pl *PantherLog) Log() *PantherLog {
+	return pl
+}
+
+// Logs returns a slice with pointer to self, used when composed
+func (pl *PantherLog) Logs() []*PantherLog {
+	return []*PantherLog{pl}
+}
+
+func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339, event interface{}) {
 	parseTime := timestamp.Now()
 
 	if eventTime == nil {
 		eventTime = &parseTime
 	}
 	rowID := rowCounter.NewRowID()
+	pl.event = event
 	pl.PantherRowID = &rowID
 	pl.PantherLogType = &logType
 	pl.PantherEventTime = eventTime

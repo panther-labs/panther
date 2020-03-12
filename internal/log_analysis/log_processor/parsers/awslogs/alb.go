@@ -80,7 +80,7 @@ func (p *ALBParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ALBParser) Parse(log string) []interface{} {
+func (p *ALBParser) Parse(log string) []*parsers.PantherLog {
 	reader := csv.NewReader(strings.NewReader(log))
 	reader.Comma = ' '
 
@@ -166,7 +166,7 @@ func (p *ALBParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -175,7 +175,7 @@ func (p *ALBParser) LogType() string {
 }
 
 func (event *ALB) updatePantherFields(p *ALBParser) {
-	event.SetCoreFields(p.LogType(), event.Timestamp)
+	event.SetCoreFields(p.LogType(), event.Timestamp, event)
 	event.AppendAnyIPAddressPtrs(event.ClientIP, event.TargetIP)
 	event.AppendAnyDomainNamePtrs(event.DomainName)
 	event.AppendAnyAWSARNPtrs(event.ChosenCertARN, event.TargetGroupARN)
