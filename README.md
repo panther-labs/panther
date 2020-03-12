@@ -89,7 +89,7 @@ We are a San Francisco based [startup](https://www.crunchbase.com/organization/p
 
 ### Why Panther?
 
-It's no longer feasible to find the needle in the security log haystack _manually_. Many teams have struggled to solve this problem using SIEMs and traditional log analytics platforms due to their high cost, overhead, and scale. Panther utilizes the elastic nature of cloud services to provide a high-scale, performant, and flexible solution at a much lower cost.
+It's no longer feasible to find the needle in the security-log-haystack *manually*. Many teams are struggling to find a solution using traditional SIEMs or log analytics platforms due to their high costs, overhead, and inability to scale. Panther was built from the ground up to leverage the elasticity of cloud services to provide a highly scalable, performant, and flexible security solution at a much lower cost.
 
 ## Contributing
 
