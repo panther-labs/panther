@@ -37,18 +37,19 @@ func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 	}
 
 	item := &tableItem{
-		Body:          input.Body,
-		Description:   input.Description,
-		DisplayName:   input.DisplayName,
-		Enabled:       input.Enabled,
-		ID:            input.ID,
-		Reference:     input.Reference,
-		ResourceTypes: input.LogTypes,
-		Runbook:       input.Runbook,
-		Severity:      input.Severity,
-		Tags:          input.Tags,
-		Tests:         input.Tests,
-		Type:          typeRule,
+		Body:               input.Body,
+		Description:        input.Description,
+		DisplayName:        input.DisplayName,
+		Enabled:            input.Enabled,
+		ID:                 input.ID,
+		Reference:          input.Reference,
+		ResourceTypes:      input.LogTypes,
+		Runbook:            input.Runbook,
+		Severity:           input.Severity,
+		Tags:               input.Tags,
+		Tests:              input.Tests,
+		Type:               typeRule,
+		DedupPeriodMinutes: input.DedupPeriodMinutes,
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {

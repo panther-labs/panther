@@ -84,7 +84,7 @@ class TestEngine(TestCase):
         result = engine.analyze('log', {})
 
         expected_event_matches = [
-            EventMatch(rule_id='rule_id_1', rule_version='version', log_type='log', severity='INFO', dedup='default', event={})
+            EventMatch(rule_id='rule_id_1', rule_version='version', log_type='log', severity='INFO', dedup='rule_id_1', event={})
         ]
         self.assertEqual(result, expected_event_matches)
 
@@ -115,8 +115,8 @@ class TestEngine(TestCase):
         result = engine.analyze('log', {})
 
         expected_event_matches = [
-            EventMatch(rule_id='rule_id_1', rule_version='version', log_type='log', severity='INFO', dedup='default', event={}),
-            EventMatch(rule_id='rule_id_3', rule_version='version', log_type='log', severity='INFO', dedup='default', event={})
+            EventMatch(rule_id='rule_id_1', rule_version='version', log_type='log', severity='INFO', dedup='rule_id_1', event={}),
+            EventMatch(rule_id='rule_id_3', rule_version='version', log_type='log', severity='INFO', dedup='rule_id_3', event={})
         ]
 
         self.assertEqual(result, expected_event_matches)

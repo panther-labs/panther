@@ -1013,6 +1013,8 @@ definitions:
         $ref: '#/definitions/TestSuite'
       versionId:
         $ref: '#/definitions/versionId'
+      dedupPeriodMinutes:
+        $ref: '#/definitions/dedupPeriodMinutes'
     required:
       - body
       - createdAt
@@ -1058,6 +1060,8 @@ definitions:
         $ref: '#/definitions/TestSuite'
       userId:
         $ref: '#/definitions/userId'
+      dedupPeriodMinutes:
+        $ref: '#/definitions/dedupPeriodMinutes'
     required:
       - body
       - enabled
@@ -1170,6 +1174,13 @@ definitions:
   runbook:
     description: Internal documenation about what to do when a policy fails
     type: string
+
+  dedupPeriodMinutes:
+    description: The time in minutes for which we deduplicate events when generating alerts for log analysis
+    type: integer
+    minimum: 15
+    maximum: 1440 # 1 day in minutes
+    default: 60
 
   suppressions:
     description: >
