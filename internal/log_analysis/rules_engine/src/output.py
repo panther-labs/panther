@@ -115,9 +115,10 @@ class MatchedEventsBuffer:
 
 def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch]) -> None:
     rule_version = events[0].rule_version  # severity and version of a rule might differ if the rule was modified
-    # while the rules engine was running. We pick the first encountered severity and version.
+    # while the rules engine was running. We pick the first encountered severity, version and title.
     rule_severity = events[0].severity
-    alert_info = update_get_alert_info(time, len(events), key, rule_severity, rule_version)
+    rule_title = events[0].title
+    alert_info = update_get_alert_info(time, len(events), key, rule_severity, rule_version, rule_title)
     data_stream = BytesIO()
     writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
     for event in events:

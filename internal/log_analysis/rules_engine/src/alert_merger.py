@@ -37,7 +37,7 @@ _ALERT_COUNT_ATTR_NAME = 'alertCount'
 _ALERT_EVENT_COUNT = 'eventCount'
 _ALERT_SEVERITY_ATTR_NAME = 'severity'
 _ALERT_LOG_TYPES = 'logTypes'
-_ALERT_DESCRIPTION = 'description'
+_ALERT_TITLE = 'title'
 
 # TODO Once rules store alert merge period, retrieve it from there
 # Currently grouping in 1hr periods
@@ -66,7 +66,7 @@ def update_get_alert_info(match_time: datetime, num_matches: int, key: OutputGro
         return _update_get(match_time, num_matches, key)
 
 
-def _update_get_conditional(time: datetime, matches: int, key: OutputGroupingKey, severity: str, version: str, description: Optional[str]) -> AlertInfo:
+def _update_get_conditional(time: datetime, matches: int, key: OutputGroupingKey, severity: str, version: str, title: Optional[str]) -> AlertInfo:
     """Performs a conditional update to DDB to verify whether we need to create a new alert.
     The condition will succeed only if:
     1. It is the first time this rule with this dedup string fires
@@ -74,6 +74,9 @@ def _update_get_conditional(time: datetime, matches: int, key: OutputGroupingKey
     """
     condition_expression = '(#1 < :1) OR (attribute_not_exists(#2))'
     update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
+
+    if title:
+        update_expression += ', #12=:12'
     expresion_attribute_names = {
         '#1': _ALERT_CREATION_TIME_ATTR_NAME,
         '#2': _PARTITION_KEY_NAME,
@@ -88,40 +91,44 @@ def _update_get_conditional(time: datetime, matches: int, key: OutputGroupingKey
         '#11': _RULE_VERSION_ATTR_NAME,
     }
 
+    if title:
+        expresion_attribute_names['#12'] = _ALERT_TITLE
+
     expression_attribute_values = {
-        ':10': {
+        ':1': {
             'N': '{}'.format(int(time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)
         },
-        ':9': {
+        ':3': {
             'N': '1'
         },
-        ':1': {
+        ':4': {
             'S': key.rule_id
         },
-        ':2': {
+        ':5': {
             'S': key.dedup
         },
-        ':3': {
-            'N': time.strftime('%s')
-        },
-        ':4': {
-            'N': time.strftime('%s')
-        },
-        ':5': {
-            'N': '{}'.format(matches)
-        },
         ':6': {
-            'S': severity
+            'N': time.strftime('%s')
         },
         ':7': {
-            'SS': [key.log_type]
+            'N': time.strftime('%s')
         },
         ':8': {
+            'N': '{}'.format(matches)
+        },
+        ':9': {
+            'S': severity
+        },
+        ':10': {
+            'SS': [key.log_type]
+        },
+        ':11': {
             'S': version
         },
-
-
     }
+
+    if title:
+        expresion_attribute_names[':12'] = {'S': title}
 
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
@@ -130,7 +137,7 @@ def _update_get_conditional(time: datetime, matches: int, key: OutputGroupingKey
         }},
         # Setting proper values for alertCreationTime, alertUpdateTime,
         UpdateExpression= update_expression,
-        ConditionExpression='(#10 < :10) OR (attribute_not_exists(#11))',
+        ConditionExpression=condition_expression,
         ExpressionAttributeNames=expresion_attribute_names,
         ExpressionAttributeValues=expression_attribute_values,
         ReturnValues='ALL_NEW'

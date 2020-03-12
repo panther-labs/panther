@@ -32,8 +32,8 @@ COMMON_MODULE_RULE_ID = 'aws_globals'
 # Maximum size for a dedup string
 MAX_DEDUP_STRING_SIZE = 1000
 
-# Maximum size for a description
-MAX_DESCRIPTION_SIZE = 1000
+# Maximum size for a title
+MAX_TITLE_SIZE = 1000
 
 
 @dataclass
@@ -42,14 +42,15 @@ class RuleResult:
     exception: Optional[Exception] = None
     matched: Optional[bool] = None
     dedup_string: Optional[str] = None
-    description: Optional[str] = None
+    title: Optional[str] = None
 
 
 class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_severity: Optional[str], rule_version: Optional[str]):
+    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_severity: Optional[str],
+                 rule_version: Optional[str]):
         """Create new rule.
 
         Args:
@@ -80,31 +81,35 @@ class Rule:
         else:
             self._has_dedup = False
 
-        if hasattr(self._module, 'description'):
-            self._has_description = True
+        if hasattr(self._module, 'title'):
+            self._has_title = True
         else:
-            self._has_description = False
+            self._has_title = False
 
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
 
-        dedup_string, description = ''
+        # Default value for dedup string is rule ID
+        dedup_string = self.rule_id
+        title: Optional[str] = None
         try:
             rule_result = _run_command(self._module.rule, event, bool)
             if rule_result:
                 if self._has_dedup:
-                    dedup_string = self._get_dedup(event)
-                else:
-                    # If users haven't specified a dedup function return a default value
-                    dedup_string = self.rule_id
-                if self._has_description:
-                    description = self._get_description(event)
-                else:
-                    description = self.rule_id
+                    dedup_result = self._get_dedup(event)
+                    # In case dedup is empty string, ignore it
+                    if dedup_result != '':
+                        dedup_string = dedup_result
+
+                if self._has_title:
+                    title_result = self._get_title(event)
+                    if title_result != '':
+                        title = title_result
+
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
-        return RuleResult(matched=rule_result, dedup_string=dedup_string, description=description)
+        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
 
     def _get_dedup(self, event: Dict[str, Any]) -> str:
         dedup_string = _run_command(self._module.dedup, event, str)
@@ -116,15 +121,15 @@ class Rule:
             return dedup_string[:MAX_DEDUP_STRING_SIZE]
         return dedup_string
 
-    def _get_description(self, event: Dict[str, Any]) -> str:
-        description = _run_command(self._module.description, event, str)
-        if description and len(description) > MAX_DESCRIPTION_SIZE:
+    def _get_title(self, event: Dict[str, Any]) -> str:
+        title = _run_command(self._module.title, event, str)
+        if title and len(title) > MAX_TITLE_SIZE:
             self.logger.warning(
-                'maximum description size is [%d] characters. Description for rule with ID '
-                '[%s] is [%d] characters. Truncating.', MAX_DESCRIPTION_SIZE, self.rule_id, len(description)
+                'maximum title size is [%d] characters. Title for rule with ID '
+                '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title)
             )
-            return description[:MAX_DESCRIPTION_SIZE]
-        return description
+            return title[:MAX_TITLE_SIZE]
+        return title
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""
