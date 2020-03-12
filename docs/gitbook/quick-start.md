@@ -9,7 +9,7 @@ Panther is a collection of serverless applications deployed within your AWS acco
 Your data is always under your control, encrypted in transit and at rest. All infrastructure is least-privilege, modeled and deployed with AWS CloudFormation.
 
 {% hint style="info" %}
-You can optionally use Panther alongside an existing logging platform such as Splunk or ElasticSearch. We recommend an architecture that tees traffic between both with tools such as Logstash or Fluentd.
+You can optionally use Panther alongside an existing logging platform such as Splunk or Elasticsearch. We recommend an architecture that tees traffic between both with tools such as Logstash or Fluentd.
 {% endhint %}
 
 ## Concepts
@@ -82,14 +82,20 @@ Tools like [aws-vault](https://github.com/99designs/aws-vault) can help with all
 
 Run Panther in 3 easy steps: clone the repo, install docker, and deploy!
 
-First, clone the latest release of the [Panther repo](https://github.com/panther-labs/panther):
+#### Step 1
+
+Clone the latest release of [Panther](https://github.com/panther-labs/panther):
 
 ```bash
 git clone https://github.com/panther-labs/panther --depth 1 --branch v0.3.0
 cd panther
 ```
 
-Next, [install Docker 17+](https://docs.docker.com/install/) and start the application. You can verify the docker daemon is running by typing `docker info` in the console or checking the status bar:
+#### Step 2
+
+[Install and run Docker 17+](https://docs.docker.com/install/)
+
+You can verify the docker daemon is running by typing `docker info` in the console or checking the status bar:
 
 ![Docker Status](.gitbook/assets/docker-status.png)
 
@@ -101,13 +107,17 @@ Your AWS credentials _must_ be exported as environment variables for the docker 
 `aws-vault exec <profile> -- ./dev.sh`
 {% endhint %}
 
-You're all set! Run `mage deploy`
+#### Step 3
+
+Run `mage deploy`
 
 - If you've made any changes to the source files or want to run tests, you may need to first install development dependencies with `mage setup:all`
 - If you use `aws-vault`, you must be authenticated with MFA. Otherwise, IAM role creation will fail with `InvalidClientTokenId`
 - The initial deployment will take 20-30 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off.
 - Near the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
-- You'll get an email from [**no-reply@verificationemail.com**](mailto:no-reply@verificationemail.com) with your temporary password. If you don't see it, be sure to check your spam folder.
+- You'll get an email from `no-reply@verificationemail.com` with your temporary password. If you don't see it, be sure to check your spam folder.
+
+#### Log In
 
 Now you can sign into Panther! The URL is linked in the welcome email and also printed at the end of the deploy command.
 
@@ -119,11 +129,11 @@ By default, Panther generates a self-signed certificate, which will cause most b
 Your connection _is_ encrypted, and it's generally safe to continue if the domain matches the output of the deploy command. However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own ACM certificate in the `deployments/panther_config.yml` file.
 {% endhint %}
 
-### Other Deployment Options
+### Deployment Options
 
 Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
 
-Or, you can deploy from an EC2 instance with Docker and git installed (in the same region you're deploying Panther to). This is typically the fastest option since it minimizes the latency when communicating with AWS services. Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](#prerequisites) to your EC2 instance profile. Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
+You can also deploy from an EC2 instance with Docker and git installed in the same region you're deploying Panther to. This is typically the fastest option since it minimizes the latency when communicating with AWS services. Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](#prerequisites) to your EC2 instance profile. Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
 
 ## Onboarding
 
@@ -140,9 +150,8 @@ Now you can follow the steps below to configure [alert outputs](destinations/ale
 - [Cloud Security Scanning Setup](policies/scanning/)
 - [Create Policies](policies/compliance-background.md) for the supported [AWS Resources](policies/resources/)
 
-## **Support**
+## Support
 
 - [Report Bugs](https://github.com/panther-labs/panther/issues)
-- [Chat with the Panther Labs team on Gitter](https://gitter.im/runpanther/community)
-- [Panther Blog](https://blog.runpanther.io/)
-- [Panther Website](https://runpanther.io/)
+- [Chat with the Panther Labs Team on Slack](https://panther-labs-oss-slackin.herokuapp.com/)
+- [Contact Sales for Enterprise Support](https://runpanther.io/request-a-demo/)
