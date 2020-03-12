@@ -23,6 +23,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"io/ioutil"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -33,13 +34,28 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+)
+
+const (
+	testLogType = "testLogType"
+)
+
+var (
+	// fixed reference time
+	refTime = (timestamp.RFC3339)(time.Date(2020, 1, 1, 0, 1, 1, 0, time.UTC))
+	// expected prefix for s3 paths based on refTime
+	expectedS3Prefix = "logs/testlogtype/year=2020/month=01/day=01/hour=00/20200101T000000Z"
+
+	// same as above plus 1 hour
+	refTimePlusHour   = (timestamp.RFC3339)((time.Time)(refTime).Add(time.Hour))
+	expectedS3Prefix2 = "logs/testlogtype/year=2020/month=01/day=01/hour=01/20200101T010000Z"
 )
 
 type mockParser struct {
@@ -47,13 +63,13 @@ type mockParser struct {
 	mock.Mock
 }
 
-func (m *mockParser) Parse(log string) []interface{} {
+func (m *mockParser) Parse(log string) []*parsers.PantherLog {
 	args := m.Called(log)
 	result := args.Get(0)
 	if result == nil {
 		return nil
 	}
-	return result.([]interface{})
+	return result.([]*parsers.PantherLog)
 }
 
 func (m *mockParser) LogType() string {
@@ -78,7 +94,20 @@ type mockSns struct {
 
 // testEvent is a test event used for the purposes of this test
 type testEvent struct {
-	data string
+	Data string
+	parsers.PantherLog
+}
+
+func newSimpleTestEvent() *parsers.PantherLog {
+	return newTestEvent(testLogType, refTime)
+}
+
+func newTestEvent(logType string, eventTime timestamp.RFC3339) *parsers.PantherLog {
+	te := &testEvent{
+		Data: "test",
+	}
+	te.SetCoreFields(logType, &eventTime, te)
+	return &te.PantherLog
 }
 
 func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
@@ -86,9 +115,9 @@ func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
 }
 
-func registerMockParser(logType string, testEvent *testEvent) (testParser *mockParser) {
+func registerMockParser(logType string, testEvent *parsers.PantherLog) (testParser *mockParser) {
 	testParser = &mockParser{}
-	testParser.On("Parse", mock.Anything).Return([]interface{}{testEvent})
+	testParser.On("Parse", mock.Anything).Return([]*parsers.PantherLog{testEvent})
 	testParser.On("LogType").Return(logType)
 	p := registry.DefaultLogParser(testParser, testEvent, "Test "+logType)
 	testRegistry.Add(p)
@@ -136,6 +165,8 @@ func newS3Destination() *testS3Destination {
 			s3Bucket:    "testbucket",
 			snsClient:   mockSns,
 			s3Client:    mockS3,
+			maxFileSize: maxFileSize,
+			maxDuration: maxDuration,
 		},
 		mockSns: mockSns,
 		mockS3:  mockS3,
@@ -146,44 +177,44 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *common.ParsedEvent, 1)
+	eventChannel := make(chan *parsers.PantherLog, 1)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newSimpleTestEvent()
 
 	// wire it up
-	logType := "testtype"
-	parsedEvent := &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType,
-	}
-	registerMockParser(logType, &testEvent)
+	registerMockParser(testLogType, testEvent)
 
 	// sending event to buffered channel
-	eventChannel <- parsedEvent
+	eventChannel <- testEvent
 
-	marshalledEvent, _ := jsoniter.Marshal(parsedEvent.Event)
-
-	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil)
-	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil)
+	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Once()
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
 	runSendEvents(t, destination, eventChannel, false)
 
-	// There is no way to know the key of the S3 object since we are generating it based on time
+	destination.mockS3.AssertExpectations(t)
+	destination.mockSns.AssertExpectations(t)
+
 	// I am fetching it from the actual request performed to S3 and:
 	//1. Verifying the S3 object key is of the correct format
 	//2. Verifying the rest of the fields are as expected
 	putObjectInput := destination.mockS3.Calls[0].Arguments.Get(0).(*s3.PutObjectInput)
+
+	assert.Equal(t, aws.String("testbucket"), putObjectInput.Bucket)
+	assert.True(t, strings.HasPrefix(*putObjectInput.Key, expectedS3Prefix))
+
 	// Gzipping the test event
+	marshaledEvent, _ := jsoniter.Marshal(testEvent.Event())
 	var buffer bytes.Buffer
 	writer := gzip.NewWriter(&buffer)
+	writer.Write(marshaledEvent) //nolint:errcheck
+	writer.Write([]byte("\n"))   //nolint:errcheck
+	writer.Close()               //nolint:errcheck
+	expectedBytes := buffer.Bytes()
 
-	writer.Write(marshalledEvent) //nolint:errcheck
-	writer.Write([]byte("\n"))    //nolint:errcheck
-	writer.Close()                //nolint:errcheck
-
+	// Collect what was produced
 	bodyBytes, _ := ioutil.ReadAll(putObjectInput.Body)
-	require.Equal(t, aws.String("testbucket"), putObjectInput.Bucket)
-	require.Equal(t, buffer.Bytes(), bodyBytes)
+	assert.Equal(t, expectedBytes, bodyBytes)
 
 	// Verifying Sns Publish payload
 	publishInput := destination.mockSns.Calls[0].Arguments.Get(0).(*sns.PublishInput)
@@ -191,13 +222,13 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 		S3Bucket:    aws.String("testbucket"),
 		S3ObjectKey: putObjectInput.Key,
 		Events:      aws.Int(1),
-		Bytes:       aws.Int(len(marshalledEvent) + len("\n")),
+		Bytes:       aws.Int(len(marshaledEvent) + len("\n")),
 		Type:        aws.String(models.LogData.String()),
-		ID:          aws.String("testtype"),
+		ID:          aws.String(testLogType),
 	}
-	marshalledExpectedS3Notification, _ := jsoniter.MarshalToString(expectedS3Notification)
+	marshaledExpectedS3Notification, _ := jsoniter.MarshalToString(expectedS3Notification)
 	expectedSnsPublishInput := &sns.PublishInput{
-		Message:  aws.String(marshalledExpectedS3Notification),
+		Message:  aws.String(marshaledExpectedS3Notification),
 		TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:test"),
 		MessageAttributes: map[string]*sns.MessageAttributeValue{
 			"type": {
@@ -205,182 +236,247 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 				DataType:    aws.String("String"),
 			},
 			"id": {
-				StringValue: aws.String("testtype"),
+				StringValue: aws.String(testLogType),
 				DataType:    aws.String("String"),
 			},
 		},
 	}
-	require.Equal(t, expectedSnsPublishInput, publishInput)
+	assert.Equal(t, expectedSnsPublishInput, publishInput)
 }
 
 func TestSendDataIfSizeLimitHasBeenReached(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *common.ParsedEvent, 2)
+	eventChannel := make(chan *parsers.PantherLog, 2)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newSimpleTestEvent()
+
+	// This is the size of a single event
+	// We expect this to cause the S3Destination to create two objects in S3
+	marshaledEvent, _ := jsoniter.Marshal(testEvent.Event)
+	destination.maxFileSize = len(marshaledEvent) + 1
 
 	// wire it up
-	logType := "testtype"
-	registerMockParser(logType, &testEvent)
+	registerMockParser(testLogType, testEvent)
 
 	// sending 2 events to buffered channel
 	// The second should already cause the S3 object size limits to be exceeded
 	// so we expect two objects to be written to s3
-	eventChannel <- &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType,
-	}
-	eventChannel <- &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType,
-	}
+	eventChannel <- testEvent
+	eventChannel <- testEvent
 
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
-	// This is the size of a single event
-	// We expect this to cause the S3Destination to create two objects in S3
-	maxFileSize = 3
-
 	runSendEvents(t, destination, eventChannel, false)
+
+	destination.mockS3.AssertExpectations(t)
+	destination.mockSns.AssertExpectations(t)
 }
 
 func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *common.ParsedEvent, 2)
+	eventChannel := make(chan *parsers.PantherLog, 2)
 
-	testEvent := testEvent{data: "test"}
+	const nevents = 7
+	testEvent := newSimpleTestEvent()
+	destination.maxDuration = time.Second / 4
 
 	// wire it up
-	logType := "testtype"
-	registerMockParser(logType, &testEvent)
+	registerMockParser(testLogType, testEvent)
 
-	// sending 2 events to buffered channel
-	// The second should already cause the S3 object size limits to be exceeded
-	// so we expect two objects to be written to s3
-	eventChannel <- &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType,
-	}
-	eventChannel <- &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType,
-	}
+	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Times(nevents)
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Times(nevents)
 
-	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Twice()
-	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
+	// sending nevents to buffered channel
+	// The first n-1 should cause the S3 time limit to be exceeded
+	// so we expect two objects to be written to s3 from that,
+	// the last event is needed to trigger the flush of the second
+	go func() {
+		for i := 0; i < nevents-1; i++ {
+			eventChannel <- testEvent
+			time.Sleep(destination.maxDuration + (time.Millisecond * 10)) // give time to for timers to expire
+		}
+		eventChannel <- testEvent // last event will trigger flush of the last event above
+	}()
 
-	// We expect this to cause the S3Destination to create two objects in S3
-	maxDuration = 1 * time.Nanosecond
+	runSendEventsTimed(t, destination, eventChannel, false, destination.maxDuration*(nevents+1)) // this blocks
 
-	runSendEvents(t, destination, eventChannel, false)
+	destination.mockS3.AssertExpectations(t)
+	destination.mockSns.AssertExpectations(t)
 }
 
 func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *common.ParsedEvent, 2)
+	eventChannel := make(chan *parsers.PantherLog, 2)
 
-	testEvent := testEvent{data: "test"}
+	logType1 := "testtype1"
+	testEvent1 := newTestEvent(logType1, refTime)
+	logType2 := "testtype2"
+	testEvent2 := newTestEvent(logType2, refTime)
 
 	// wire it up
-	logType1 := "testtype1"
-	registerMockParser(logType1, &testEvent)
-	logType2 := "testtype2"
-	registerMockParser(logType2, &testEvent)
+	registerMockParser(logType1, testEvent1)
+	registerMockParser(logType2, testEvent2)
 
-	eventChannel <- &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType1,
-	}
-	eventChannel <- &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType2,
-	}
+	eventChannel <- testEvent1
+	eventChannel <- testEvent2
 
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
 	runSendEvents(t, destination, eventChannel, false)
+
+	destination.mockS3.AssertExpectations(t)
+	destination.mockSns.AssertExpectations(t)
+}
+
+func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
+	initTest()
+
+	destination := newS3Destination()
+	eventChannel := make(chan *parsers.PantherLog, 2)
+
+	// should write 1 file
+	testEvent1 := newTestEvent(testLogType, refTime)
+	testEvent2 := newTestEvent(testLogType, refTime)
+
+	// wire it up
+	registerMockParser(testLogType, testEvent1)
+
+	eventChannel <- testEvent1
+	eventChannel <- testEvent2
+
+	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Once()
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
+
+	runSendEvents(t, destination, eventChannel, false)
+
+	destination.mockS3.AssertExpectations(t)
+	destination.mockSns.AssertExpectations(t)
+}
+
+func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
+	initTest()
+
+	destination := newS3Destination()
+	eventChannel := make(chan *parsers.PantherLog, 2)
+
+	// should write 2 files with different time partitions
+	testEvent1 := newTestEvent(testLogType, refTime)
+	testEvent2 := newTestEvent(testLogType, refTimePlusHour)
+
+	// wire it up
+	registerMockParser(testLogType, testEvent1)
+
+	eventChannel <- testEvent1
+	eventChannel <- testEvent2
+
+	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil).Twice()
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
+
+	runSendEvents(t, destination, eventChannel, false)
+
+	destination.mockS3.AssertExpectations(t)
+	destination.mockSns.AssertExpectations(t)
+
+	putObjectInput := destination.mockS3.Calls[0].Arguments.Get(0).(*s3.PutObjectInput)
+	assert.Equal(t, aws.String("testbucket"), putObjectInput.Bucket)
+	assert.True(t, strings.HasPrefix(*putObjectInput.Key, expectedS3Prefix) ||
+		strings.HasPrefix(*putObjectInput.Key, expectedS3Prefix2)) // order of results is async
+
+	putObjectInput = destination.mockS3.Calls[1].Arguments.Get(0).(*s3.PutObjectInput)
+	assert.Equal(t, aws.String("testbucket"), putObjectInput.Bucket)
+	assert.True(t, strings.HasPrefix(*putObjectInput.Key, expectedS3Prefix) ||
+		strings.HasPrefix(*putObjectInput.Key, expectedS3Prefix2)) // order of results is async
 }
 
 func TestSendDataFailsIfS3Fails(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *common.ParsedEvent, 1)
+	eventChannel := make(chan *parsers.PantherLog, 1)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newSimpleTestEvent()
 
 	// wire it up
-	logType := "testtype"
-	registerMockParser(logType, &testEvent)
+	registerMockParser(testLogType, testEvent)
 
-	eventChannel <- &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType,
-	}
+	eventChannel <- testEvent
 
-	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, errors.New("")).Twice()
+	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, errors.New("")).Once()
 
 	runSendEvents(t, destination, eventChannel, true)
+
+	destination.mockS3.AssertExpectations(t)
 }
 
 func TestSendDataFailsIfSnsFails(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *common.ParsedEvent, 1)
+	eventChannel := make(chan *parsers.PantherLog, 1)
 
-	testEvent := testEvent{data: "test"}
+	testEvent := newSimpleTestEvent()
 
 	// wire it up
-	logType := "testtype"
-	registerMockParser(logType, &testEvent)
+	registerMockParser(testLogType, testEvent)
 
-	eventChannel <- &common.ParsedEvent{
-		Event:   testEvent,
-		LogType: logType,
-	}
+	eventChannel <- testEvent
 
 	destination.mockS3.On("PutObject", mock.Anything).Return(&s3.PutObjectOutput{}, nil)
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, errors.New("test"))
 
 	runSendEvents(t, destination, eventChannel, true)
+
+	destination.mockS3.AssertExpectations(t)
+	destination.mockSns.AssertExpectations(t)
 }
 
-func runSendEvents(t *testing.T, destination Destination, eventChannel chan *common.ParsedEvent, expectErr bool) {
-	errChan := make(chan error)
+func runSendEvents(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLog, expectErr bool) {
+	runSendEventsTimed(t, destination, eventChannel, expectErr, 0)
+}
 
+func runSendEventsTimed(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLog,
+	expectErr bool, delay time.Duration) {
+
+	var waitErr sync.WaitGroup
+	errChan := make(chan error, 128)
+	waitErr.Add(1)
 	if expectErr {
 		go func() {
 			var foundErr error
 			for err := range errChan {
 				foundErr = err
 			}
-			require.Error(t, foundErr)
+			assert.Error(t, foundErr)
+			waitErr.Done()
 		}()
 	} else {
 		go func() {
-			var foundErr error
 			for err := range errChan {
-				foundErr = err
+				assert.NoError(t, err)
 			}
-			require.NoError(t, foundErr)
+			waitErr.Done()
 		}()
 	}
-	var wg sync.WaitGroup
-	wg.Add(1)
+
+	var waitSend sync.WaitGroup
+	waitSend.Add(1)
 	go func() {
 		destination.SendEvents(eventChannel, errChan)
-		wg.Done()
+		waitSend.Done()
 	}()
+
+	time.Sleep(delay)
 	close(eventChannel) // causes SendEvents() to terminate
-	wg.Wait()
-	close(errChan)
+	waitSend.Wait()
+
+	close(errChan) // causes err go routines to to terminate
+	waitErr.Wait()
 }

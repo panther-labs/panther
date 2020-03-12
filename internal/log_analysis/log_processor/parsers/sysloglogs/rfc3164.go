@@ -68,7 +68,7 @@ func (p *RFC3164Parser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC3164Parser) Parse(log string) []interface{} {
+func (p *RFC3164Parser) Parse(log string) []*parsers.PantherLog {
 	if p.parser == nil {
 		zap.L().Debug("failed to parse log", zap.Error(errors.New("parser can not be nil")))
 		return nil
@@ -99,7 +99,7 @@ func (p *RFC3164Parser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{externalRFC3164}
+	return externalRFC3164.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -108,7 +108,7 @@ func (p *RFC3164Parser) LogType() string {
 }
 
 func (event *RFC3164) updatePantherFields(p *RFC3164Parser) {
-	event.SetCoreFields(p.LogType(), event.Timestamp)
+	event.SetCoreFields(p.LogType(), event.Timestamp, event)
 
 	if event.Hostname != nil {
 		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise

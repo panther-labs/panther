@@ -127,10 +127,10 @@ var (
 )
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *VPCFlowParser) Parse(log string) []interface{} {
+func (p *VPCFlowParser) Parse(log string) []*parsers.PantherLog {
 	if p.columnMap == nil { // must be first log line in file
 		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
-			return []interface{}{}
+			return []*parsers.PantherLog{}
 		}
 		return nil
 	}
@@ -153,7 +153,7 @@ func (p *VPCFlowParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -260,7 +260,7 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 }
 
 func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
-	event.SetCoreFields(p.LogType(), event.Start)
+	event.SetCoreFields(p.LogType(), event.Start, event)
 	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
 	event.AppendAnyAWSInstanceIdPtrs(event.InstanceID)
 	event.AppendAnyIPAddressPtrs(event.SrcAddr, event.DstAddr, event.PacketSrcAddr, event.PacketDstAddr)
