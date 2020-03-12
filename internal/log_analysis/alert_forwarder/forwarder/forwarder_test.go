@@ -103,7 +103,7 @@ func TestStore(t *testing.T) {
 	ddbClient = ddbMock
 
 	expectedAlert := &Alert{
-		ID:              "ruleId:dedupString:10",
+		ID:              "8c1b7f1a597d0480354e66c3a6266ccc",
 		TimePartition:   "defaultPartition",
 		AlertDedupEvent: *testAlertDedupEvent,
 	}
@@ -151,7 +151,7 @@ func TestSendAlert(t *testing.T) {
 		Severity:          aws.String(testAlertDedupEvent.Severity),
 		Tags:              aws.StringSlice([]string{"Tag"}),
 		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("ruleId:dedupString:10"),
+		AlertID:           aws.String("8c1b7f1a597d0480354e66c3a6266ccc"),
 	}
 	expectedMarshaledEvent, err := jsoniter.MarshalToString(expectedAlert)
 	require.NoError(t, err)

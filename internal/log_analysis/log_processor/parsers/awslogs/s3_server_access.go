@@ -75,7 +75,7 @@ func (p *S3ServerAccessParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *S3ServerAccessParser) Parse(log string) []interface{} {
+func (p *S3ServerAccessParser) Parse(log string) []*parsers.PantherLog {
 	reader := csv.NewReader(strings.NewReader(log))
 	reader.LazyQuotes = true
 	reader.Comma = ' '
@@ -142,7 +142,7 @@ func (p *S3ServerAccessParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -151,7 +151,7 @@ func (p *S3ServerAccessParser) LogType() string {
 }
 
 func (event *S3ServerAccess) updatePantherFields(p *S3ServerAccessParser) {
-	event.SetCoreFields(p.LogType(), event.Time)
+	event.SetCoreFields(p.LogType(), event.Time, event)
 	event.AppendAnyIPAddressPtrs(event.RemoteIP)
 	if event.Requester != nil && strings.HasPrefix(*event.Requester, "arn:") {
 		event.AppendAnyAWSARNs(*event.Requester)

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import hashlib
 import json
 import os
 import re
@@ -95,9 +96,12 @@ class TestMatchedEventsBuffer(TestCase):
                     'N': mock.ANY
                 }
             },
-            Key={'partitionKey': {
-                'S': 'rule_id:dedup'
-            }},
+            Key={
+                'partitionKey': {
+                    'S':
+                        hashlib.md5(b'rule_id:dedup').hexdigest()  # nosec
+                }
+            },
             ReturnValues='ALL_NEW',
             TableName='table_name',
             UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6, #7=:7, #8=:8\nADD #9 :9'
@@ -115,7 +119,7 @@ class TestMatchedEventsBuffer(TestCase):
         content = json.loads(data.read().decode('utf-8'))
         # Verify extra fields
         self.assertEqual(content['p_rule_id'], 'rule_id')
-        self.assertEqual(content['p_alert_id'], 'rule_id:dedup:1')
+        self.assertEqual(content['p_alert_id'], hashlib.md5(b'rule_id:1:dedup').hexdigest())  # nosec
         # Verify fields are valid dates
         self.assertIsNotNone(datetime.strptime(content['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(content['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
@@ -169,13 +173,13 @@ class TestMatchedEventsBuffer(TestCase):
                 self.assertEqual(content['key1'], 'value1')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id')
-                self.assertEqual(content['p_alert_id'], 'id:dedup:1')
+                self.assertEqual(content['p_alert_id'], hashlib.md5(b'id:1:dedup').hexdigest())  # nosec
             elif 'key2' in content:
                 # Verify actual event
                 self.assertEqual(content['key2'], 'value2')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id')
-                self.assertEqual(content['p_alert_id'], 'id:dedup:1')
+                self.assertEqual(content['p_alert_id'], hashlib.md5(b'id:1:dedup').hexdigest())  # nosec
             else:
                 self.fail('unexpected content')
 
@@ -211,13 +215,13 @@ class TestMatchedEventsBuffer(TestCase):
                 self.assertEqual(content['key1'], 'value1')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id1')
-                self.assertEqual(content['p_alert_id'], 'id1:dedup:1')
+                self.assertEqual(content['p_alert_id'], hashlib.md5(b'id1:1:dedup').hexdigest())  # nosec
             elif 'key2' in content:
                 # Verify actual event
                 self.assertEqual(content['key2'], 'value2')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id2')
-                self.assertEqual(content['p_alert_id'], 'id2:dedup:1')
+                self.assertEqual(content['p_alert_id'], hashlib.md5(b'id2:1:dedup').hexdigest())  # nosec
             else:
                 self.fail('unexpected content')
 
@@ -247,7 +251,7 @@ class TestMatchedEventsBuffer(TestCase):
         self.assertIsNotNone(datetime.strptime(event1['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(event1['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertEqual(event1['p_rule_id'], 'id')
-        self.assertEqual(event1['p_alert_id'], 'id:dedup:1')
+        self.assertEqual(event1['p_alert_id'], hashlib.md5(b'id:1:dedup').hexdigest())  # nosec
         self.assertEqual(event1['key1'], 'value1')
 
         # Verify first event
@@ -255,7 +259,7 @@ class TestMatchedEventsBuffer(TestCase):
         self.assertIsNotNone(datetime.strptime(event2['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(event2['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertEqual(event2['p_rule_id'], 'id')
-        self.assertEqual(event2['p_alert_id'], 'id:dedup:1')
+        self.assertEqual(event2['p_alert_id'], hashlib.md5(b'id:1:dedup').hexdigest())  # nosec
         self.assertEqual(event2['key2'], 'value2')
 
         # Assert that the buffer has been cleared

@@ -46,7 +46,7 @@ type ClassifierResult struct {
 	// Events contains the parsed events
 	// If the classification process was not successful and the log is from an
 	// unsupported type, this will be nil
-	Events []interface{}
+	Events []*parsers.PantherLog
 	// LogType is the identified type of the log
 	LogType *string
 	// Line that was classified and parsed
@@ -81,7 +81,7 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []interface{}) {
+func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []*parsers.PantherLog) {
 	defer func() {
 		if r := recover(); r != nil {
 			zap.L().Error("parser panic",

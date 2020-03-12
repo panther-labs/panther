@@ -53,7 +53,7 @@ func (p *SnapshotParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *SnapshotParser) Parse(log string) []interface{} {
+func (p *SnapshotParser) Parse(log string) []*parsers.PantherLog {
 	event := &Snapshot{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -67,7 +67,7 @@ func (p *SnapshotParser) Parse(log string) []interface{} {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
 	}
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -76,6 +76,6 @@ func (p *SnapshotParser) LogType() string {
 }
 
 func (event *Snapshot) updatePantherFields(p *SnapshotParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime))
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

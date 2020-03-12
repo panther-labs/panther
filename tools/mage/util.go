@@ -26,7 +26,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -157,6 +159,20 @@ func stackSetInstanceExists(cfClient *cloudformation.CloudFormation, stackSetNam
 	return true, nil
 }
 
+func describeStack(cfClient *cloudformation.CloudFormation, stackName string) (status string, output map[string]string, err error) {
+	input := &cloudformation.DescribeStacksInput{StackName: &stackName}
+	response, err := cfClient.DescribeStacks(input)
+	if err != nil {
+		return status, output, err
+	}
+
+	status = *response.Stacks[0].StackStatus
+	if status == cloudformation.StackStatusCreateComplete || status == cloudformation.StackStatusUpdateComplete {
+		output = flattenStackOutputs(response)
+	}
+	return status, output, err
+}
+
 // Upload a local file to S3.
 func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
@@ -240,6 +256,23 @@ func emailValidator(email string) error {
 		return nil
 	}
 	return errors.New("invalid email: must be at least 4 characters and contain '@' and '.'")
+}
+
+func regexValidator(text string) error {
+	if _, err := regexp.Compile(text); err != nil {
+		return fmt.Errorf("invalid regex: %v", err)
+	}
+	return nil
+}
+
+func dateValidator(text string) error {
+	if len(text) == 0 { // allow no date
+		return nil
+	}
+	if _, err := time.Parse("2006-01-02", text); err != nil {
+		return fmt.Errorf("invalid date: %v", err)
+	}
+	return nil
 }
 
 // Download a file in memory.
