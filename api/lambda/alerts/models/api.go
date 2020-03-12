@@ -37,7 +37,7 @@ type LambdaInput struct {
 //     }
 // }
 type GetAlertInput struct {
-	AlertID                 *string `json:"alertId" validate:"required"`
+	AlertID                 *string `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
 	EventsPageSize          *int    `json:"eventsPageSize,omitempty"  validate:"omitempty,min=1,max=50"`
 	EventsExclusiveStartKey *string `json:"eventsExclusiveStartKey,omitempty"`
 }
