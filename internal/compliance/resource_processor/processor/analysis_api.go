@@ -64,3 +64,32 @@ func getPolicies() (policyMap, error) {
 	policyCache = policyCacheEntry{LastUpdated: time.Now(), Policies: policies}
 	return policies, nil
 }
+
+func getGlobalPolicy() (*models.EnabledPolicy, error) {
+	if policyCache.Policies != nil && policyCache.LastUpdated.Add(cacheDuration).After(time.Now()) {
+		// Cache entry exists and hasn't expired yet
+		if globalPolicy, ok := policyCache.Policies[globalPolicy]; ok {
+			return globalPolicy, nil
+		}
+	}
+
+	globalPolicy, err := analysisClient.Operations.GetPolicy(
+		&operations.GetPolicyParams{
+			PolicyID:   globalPolicy,
+			VersionID:  nil,
+			HTTPClient: httpClient,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	// This should be easily extendable to multiple global policies by getting all policies and returning a list here
+	return &models.EnabledPolicy{
+		Body:          globalPolicy.Payload.Body,
+		ID:            globalPolicy.Payload.ID,
+		ResourceTypes: globalPolicy.Payload.ResourceTypes,
+		Severity:      globalPolicy.Payload.Severity,
+		Suppressions:  globalPolicy.Payload.Suppressions,
+		VersionID:     globalPolicy.Payload.VersionID,
+	}, nil
+}
