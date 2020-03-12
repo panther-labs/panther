@@ -24,6 +24,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -135,7 +137,7 @@ func TestCreateJSONPartitionErrorGettingTable(t *testing.T) {
 	glueClient.AssertExpectations(t)
 }
 
-func TestCreateJSONPartitionNon(t *testing.T) {
+func TestCreateJSONPartitionNonAWSError(t *testing.T) {
 	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 	// test error in CreatePartition
 	glueClient := &mockGlue{}
@@ -148,6 +150,7 @@ func TestCreateJSONPartitionNon(t *testing.T) {
 }
 
 func TestSyncPartitions(t *testing.T) {
+	var startDate time.Time // default unset
 	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	syncGetTableOutput := *testGetTableOutput
@@ -163,7 +166,8 @@ func TestSyncPartitions(t *testing.T) {
 	glueClient.On("GetTable", mock.Anything).Return(&syncGetTableOutput, nil).Once()
 	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, nil).Times(24)
 	glueClient.On("UpdatePartition", mock.Anything).Return(testUpdatePartitionOutput, nil).Times(24)
-	err := gm.SyncPartitions(glueClient)
+	s3Client := &mockS3{}
+	err := gm.SyncPartitions(glueClient, s3Client, startDate)
 	assert.NoError(t, err)
 	glueClient.AssertExpectations(t)
 
@@ -176,39 +180,75 @@ func TestSyncPartitions(t *testing.T) {
 	}
 }
 
-func TestSyncPartitionsPartitionDoesntExist(t *testing.T) {
+func TestSyncPartitionsPartitionDoesntExistAndNoData(t *testing.T) {
+	var startDate time.Time // default unset
 	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test not exists error in GetPartition (should not fail)
 	glueClient := &mockGlue{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError) // can be called many times
-	err := gm.SyncPartitions(glueClient)
+	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Times(24)
+	s3Client := &mockS3{}
+	page := &s3.ListObjectsV2Output{
+		Contents: []*s3.Object{}, // no objects
+	}
+	s3Client.On("ListObjectsV2Pages", mock.Anything, mock.Anything).Return(page, nil).Times(24) // no data found in S3
+	// no partitions should be created
+	err := gm.SyncPartitions(glueClient, s3Client, startDate)
 	assert.NoError(t, err)
 	glueClient.AssertExpectations(t)
+	s3Client.AssertExpectations(t)
+}
+
+func TestSyncPartitionsPartitionDoesntExistAndHasData(t *testing.T) {
+	var startDate time.Time // default unset
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+
+	// test not exists error in GetPartition (should not fail)
+	glueClient := &mockGlue{}
+	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Times(24)
+	s3Client := &mockS3{}
+	page := &s3.ListObjectsV2Output{
+		Contents: []*s3.Object{
+			{
+				Size: aws.Int64(1), // 1 object of some size
+			},
+		},
+	}
+	s3Client.On("ListObjectsV2Pages", mock.Anything, mock.Anything).Return(page, nil).Times(24)      // some data found in S3
+	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Times(24) // should create partitions
+	err := gm.SyncPartitions(glueClient, s3Client, startDate)
+	assert.NoError(t, err)
+	glueClient.AssertExpectations(t)
+	s3Client.AssertExpectations(t)
 }
 
 func TestSyncPartitionsGetPartitionAWSError(t *testing.T) {
+	var startDate time.Time // default unset
 	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test GetPartition fails (should fail)
 	glueClient := &mockGlue{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, otherAWSError) // can be called many times
-	err := gm.SyncPartitions(glueClient)
+	s3Client := &mockS3{}
+	err := gm.SyncPartitions(glueClient, s3Client, startDate)
 	assert.Error(t, err)
 	assert.Equal(t, otherAWSError.Error(), errors.Cause(err).Error())
 	glueClient.AssertExpectations(t)
 }
 
 func TestSyncPartitionsGetPartitionNonAWSError(t *testing.T) {
+	var startDate time.Time // default unset
 	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test GetPartition fails (should fail)
 	glueClient := &mockGlue{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, nonAWSError) // can be called many times
-	err := gm.SyncPartitions(glueClient)
+	s3Client := &mockS3{}
+	err := gm.SyncPartitions(glueClient, s3Client, startDate)
 	assert.Error(t, err)
 	assert.Equal(t, nonAWSError.Error(), errors.Cause(err).Error())
 	glueClient.AssertExpectations(t)
@@ -237,4 +277,15 @@ func (m *mockGlue) CreatePartition(input *glue.CreatePartitionInput) (*glue.Crea
 func (m *mockGlue) UpdatePartition(input *glue.UpdatePartitionInput) (*glue.UpdatePartitionOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*glue.UpdatePartitionOutput), args.Error(1)
+}
+
+type mockS3 struct {
+	s3iface.S3API
+	mock.Mock
+}
+
+func (m *mockS3) ListObjectsV2Pages(input *s3.ListObjectsV2Input, f func(page *s3.ListObjectsV2Output, morePages bool) bool) error {
+	args := m.Called(input, f)
+	f(args.Get(0).(*s3.ListObjectsV2Output), false)
+	return args.Error(1)
 }

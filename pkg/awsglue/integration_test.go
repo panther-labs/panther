@@ -26,15 +26,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
 const (
-	testBucket = "panther_glue_test_bucket"
-	testDb     = "panther_glue_test_db"
-	testTable  = "panther_glue_test_table"
+	testBucket       = "panther-public-cloudformation-templates" // this is a public Panther bucket with CF files we can use to list
+	testBucketRegion = "us-west-2"                               // region of above bucket
+	testDb           = "panther_glue_test_db"
+	testTable        = "panther_glue_test_table"
 )
 
 type testEvent struct {
@@ -45,6 +47,7 @@ var (
 	integrationTest bool
 	awsSession      *session.Session
 	glueClient      *glue.Glue
+	s3Client        *s3.S3
 
 	columns = []*glue.Column{
 		{
@@ -76,8 +79,9 @@ var (
 func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
-		awsSession = session.Must(session.NewSession())
+		awsSession = session.Must(session.NewSession(aws.NewConfig().WithRegion(testBucketRegion)))
 		glueClient = glue.New(awsSession)
+		s3Client = s3.New(awsSession)
 	}
 	os.Exit(m.Run())
 }
@@ -107,7 +111,8 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	require.Equal(t, expectedPath, *partitionLocation)
 
 	// sync it (which does an update of schema)
-	err = gm.SyncPartitions(glueClient)
+	var startDate time.Time // default unset
+	err = gm.SyncPartitions(glueClient, s3Client, startDate)
 	require.NoError(t, err)
 
 	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})

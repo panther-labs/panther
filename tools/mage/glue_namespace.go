@@ -21,8 +21,11 @@ package mage
 import (
 	"fmt"
 	"regexp"
+	"time"
 
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/magefile/mage/mg"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -33,23 +36,48 @@ import (
 // targets for managing Glue tables
 type Glue mg.Namespace
 
+// Update Updates the panther-app-databases cloudformation template (used for schema migrations)
+func (t Glue) Update() {
+	awsSession, err := getSession()
+	if err != nil {
+		logger.Fatal(err)
+	}
+	cfClient := cloudformation.New(awsSession)
+
+	_, bucketStackOutput, err := describeStack(cfClient, bucketStack)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	status, backendStackOutput, err := describeStack(cfClient, backendStack)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	if status != "CREATE_COMPLETE" && status != "UPDATE_COMPLETE" {
+		logger.Fatalf("stack %s is not in a deployable state: %s", backendStack, status)
+	}
+
+	deployDatabases(awsSession, bucketStackOutput["SourceBucketName"], backendStackOutput)
+}
+
 // Sync Sync glue table partitions after schema change
 func (t Glue) Sync() {
-	var enteredText string
-
 	awsSession, err := getSession()
 	if err != nil {
 		logger.Fatal(err)
 	}
 	glueClient := glue.New(awsSession)
+	s3Client := s3.New(awsSession)
 
-	enteredText = promptUser("Enter regex to select a subset of tables (or <enter> for all tables): ", regexValidator)
+	enteredText := promptUser("Enter regex to select a subset of tables (or <enter> for all tables): ", regexValidator)
 	matchTableName, _ := regexp.Compile(enteredText) // no error check already validated
 
-	syncPartitions(glueClient, matchTableName)
-}
+	var startDate time.Time
+	startDateText := promptUser("Enter a day as YYYY-MM-DD to start update (or <enter> to use create date on tables): ", dateValidator)
+	if startDateText != "" {
+		startDate, _ = time.Parse("2006-01-02", startDateText) // no error check already validated
+	}
 
-func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 	// for each table, for each time partition, update schema
 	for _, table := range registry.AvailableTables() {
 		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
@@ -57,7 +85,7 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 			continue
 		}
 		logger.Infof("syncing %s", name)
-		err := table.SyncPartitions(glueClient)
+		err := table.SyncPartitions(glueClient, s3Client, startDate)
 		if err != nil {
 			logger.Fatalf("failed syncing %s: %v", name, err)
 		}
@@ -66,16 +94,9 @@ func syncPartitions(glueClient *glue.Glue, matchTableName *regexp.Regexp) {
 		ruleTable := awsglue.NewGlueTableMetadata(
 			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		logger.Infof("syncing %s", name)
-		err = ruleTable.SyncPartitions(glueClient)
+		err = ruleTable.SyncPartitions(glueClient, s3Client, startDate)
 		if err != nil {
 			logger.Fatalf("failed syncing %s: %v", name, err)
 		}
 	}
-}
-
-func regexValidator(text string) error {
-	if _, err := regexp.Compile(text); err != nil {
-		return fmt.Errorf("invalid regex: %v", err)
-	}
-	return nil
 }
