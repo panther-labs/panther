@@ -32,6 +32,9 @@ COMMON_MODULE_RULE_ID = 'aws_globals'
 # Maximum size for a dedup string
 MAX_DEDUP_STRING_SIZE = 1000
 
+# Maximum size for a description
+MAX_DESCRIPTION_SIZE = 1000
+
 
 @dataclass
 class RuleResult:
@@ -39,6 +42,7 @@ class RuleResult:
     exception: Optional[Exception] = None
     matched: Optional[bool] = None
     dedup_string: Optional[str] = None
+    description: Optional[str] = None
 
 
 class Rule:
@@ -76,27 +80,51 @@ class Rule:
         else:
             self._has_dedup = False
 
+        if hasattr(self._module, 'description'):
+            self._has_description = True
+        else:
+            self._has_description = False
+
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
 
-        dedup_string: Optional[str] = None
+        dedup_string, description = ''
         try:
             rule_result = _run_command(self._module.rule, event, bool)
-            if rule_result and self._has_dedup:
-                dedup_string = _run_command(self._module.dedup, event, str)
-                if dedup_string and len(dedup_string) > MAX_DEDUP_STRING_SIZE:
-                    self.logger.warning(
-                        'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
-                        '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
-                    )
-                    dedup_string = dedup_string[:MAX_DEDUP_STRING_SIZE]
+            if rule_result:
+                if self._has_dedup:
+                    dedup_string = self._get_dedup(event)
+                else:
+                    # If users haven't specified a dedup function return a default value
+                    dedup_string = self.rule_id
+                if self._has_description:
+                    description = self._get_description(event)
+                else:
+                    description = self.rule_id
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
-        # If users haven't specified a dedup function return a default value
-        if rule_result and not dedup_string:
-            dedup_string = self.rule_id
-        return RuleResult(matched=rule_result, dedup_string=dedup_string)
+        return RuleResult(matched=rule_result, dedup_string=dedup_string, description=description)
+
+    def _get_dedup(self, event: Dict[str, Any]) -> str:
+        dedup_string = _run_command(self._module.dedup, event, str)
+        if dedup_string and len(dedup_string) > MAX_DEDUP_STRING_SIZE:
+            self.logger.warning(
+                'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
+                '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
+            )
+            return dedup_string[:MAX_DEDUP_STRING_SIZE]
+        return dedup_string
+
+    def _get_description(self, event: Dict[str, Any]) -> str:
+        description = _run_command(self._module.description, event, str)
+        if description and len(description) > MAX_DESCRIPTION_SIZE:
+            self.logger.warning(
+                'maximum description size is [%d] characters. Description for rule with ID '
+                '[%s] is [%d] characters. Truncating.', MAX_DESCRIPTION_SIZE, self.rule_id, len(description)
+            )
+            return description[:MAX_DESCRIPTION_SIZE]
+        return description
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""

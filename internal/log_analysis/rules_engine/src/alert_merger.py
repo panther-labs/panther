@@ -17,6 +17,7 @@
 from datetime import datetime
 import hashlib
 import os
+from typing import Optional
 
 import boto3
 
@@ -35,7 +36,8 @@ _ALERT_UPDATE_TIME_ATTR_NAME = 'alertUpdateTime'
 _ALERT_COUNT_ATTR_NAME = 'alertCount'
 _ALERT_EVENT_COUNT = 'eventCount'
 _ALERT_SEVERITY_ATTR_NAME = 'severity'
-_ALERT_LOG_TYPES = "logTypes"
+_ALERT_LOG_TYPES = 'logTypes'
+_ALERT_DESCRIPTION = 'description'
 
 # TODO Once rules store alert merge period, retrieve it from there
 # Currently grouping in 1hr periods
@@ -64,70 +66,78 @@ def update_get_alert_info(match_time: datetime, num_matches: int, key: OutputGro
         return _update_get(match_time, num_matches, key)
 
 
-def _update_get_conditional(match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str, version: str) -> AlertInfo:
+def _update_get_conditional(time: datetime, matches: int, key: OutputGroupingKey, severity: str, version: str, description: Optional[str]) -> AlertInfo:
     """Performs a conditional update to DDB to verify whether we need to create a new alert.
     The condition will succeed only if:
     1. It is the first time this rule with this dedup string fires
     2. This rule with the same dedup string has fired before, but it fired more than _ALERT_MERGE_PERIOD_SECONDS earlier
     """
+    condition_expression = '(#1 < :1) OR (attribute_not_exists(#2))'
+    update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
+    expresion_attribute_names = {
+        '#1': _ALERT_CREATION_TIME_ATTR_NAME,
+        '#2': _PARTITION_KEY_NAME,
+        '#3': _ALERT_COUNT_ATTR_NAME,
+        '#4': _RULE_ID_ATTR_NAME,
+        '#5': _DEDUP_STR_ATTR_NAME,
+        '#6': _ALERT_CREATION_TIME_ATTR_NAME,
+        '#7': _ALERT_UPDATE_TIME_ATTR_NAME,
+        '#8': _ALERT_EVENT_COUNT,
+        '#9': _ALERT_SEVERITY_ATTR_NAME,
+        '#10': _ALERT_LOG_TYPES,
+        '#11': _RULE_VERSION_ATTR_NAME,
+    }
+
+    expression_attribute_values = {
+        ':10': {
+            'N': '{}'.format(int(time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)
+        },
+        ':9': {
+            'N': '1'
+        },
+        ':1': {
+            'S': key.rule_id
+        },
+        ':2': {
+            'S': key.dedup
+        },
+        ':3': {
+            'N': time.strftime('%s')
+        },
+        ':4': {
+            'N': time.strftime('%s')
+        },
+        ':5': {
+            'N': '{}'.format(matches)
+        },
+        ':6': {
+            'S': severity
+        },
+        ':7': {
+            'SS': [key.log_type]
+        },
+        ':8': {
+            'S': version
+        },
+
+
+    }
+
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
             'S': _generate_dedup_key(key.rule_id, key.dedup)
         }},
         # Setting proper values for alertCreationTime, alertUpdateTime,
-        UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6, #7=:7, #8=:8\nADD #9 :9',
+        UpdateExpression= update_expression,
         ConditionExpression='(#10 < :10) OR (attribute_not_exists(#11))',
-        ExpressionAttributeNames={
-            '#1': _RULE_ID_ATTR_NAME,
-            '#2': _DEDUP_STR_ATTR_NAME,
-            '#3': _ALERT_CREATION_TIME_ATTR_NAME,
-            '#4': _ALERT_UPDATE_TIME_ATTR_NAME,
-            '#5': _ALERT_EVENT_COUNT,
-            '#6': _ALERT_SEVERITY_ATTR_NAME,
-            '#7': _ALERT_LOG_TYPES,
-            '#8': _RULE_VERSION_ATTR_NAME,
-            '#9': _ALERT_COUNT_ATTR_NAME,
-            '#10': _ALERT_CREATION_TIME_ATTR_NAME,
-            '#11': _PARTITION_KEY_NAME,
-        },
-        ExpressionAttributeValues={
-            ':1': {
-                'S': key.rule_id
-            },
-            ':2': {
-                'S': key.dedup
-            },
-            ':3': {
-                'N': match_time.strftime('%s')
-            },
-            ':4': {
-                'N': match_time.strftime('%s')
-            },
-            ':5': {
-                'N': '{}'.format(num_matches)
-            },
-            ':6': {
-                'S': severity
-            },
-            ':7': {
-                'SS': [key.log_type]
-            },
-            ':8': {
-                'S': version
-            },
-            ':9': {
-                'N': '1'
-            },
-            ':10': {
-                'N': '{}'.format(int(match_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)
-            }
-        },
+        ExpressionAttributeNames=expresion_attribute_names,
+        ExpressionAttributeValues=expression_attribute_values,
         ReturnValues='ALL_NEW'
     )
     alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
     alert_id = _generate_alert_id(key.rule_id, key.dedup, alert_count)
-    return AlertInfo(alert_id=alert_id, alert_creation_time=match_time, alert_update_time=match_time)
+    return AlertInfo(alert_id=alert_id, alert_creation_time=time, alert_update_time=time)
 
 
 def _update_get(match_time: datetime, num_matches: int, key: OutputGroupingKey) -> AlertInfo:
