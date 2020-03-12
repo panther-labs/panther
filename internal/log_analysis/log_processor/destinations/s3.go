@@ -85,7 +85,10 @@ type S3Destination struct {
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
-	flushExpired := time.After(destination.maxDuration)
+	// used to flush expired buffers
+	flushExpired := time.NewTicker(destination.maxDuration)
+	defer flushExpired.Stop()
+
 	failed := false // set to true on error and loop will drain channel
 	bufferSet := newS3EventBufferSet()
 	eventsProcessed := 0
@@ -97,8 +100,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 
 		// Check if any buffer has data for longer than maxDuration
 		select {
-		case expireTime := <-flushExpired:
-			flushExpired = time.After(destination.maxDuration) // reset
+		case expireTime := <-flushExpired.C:
 			err := bufferSet.apply(func(b *s3EventBuffer) error {
 				if expireTime.Sub(b.createTime) >= destination.maxDuration {
 					if sendErr := destination.sendData(b); sendErr != nil {
