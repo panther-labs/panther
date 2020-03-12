@@ -28,20 +28,18 @@
 
 ## Use Cases
 
-Panther analyzes security data from your clouds, networks, applications, and endpoints and detects threats, misconfigured cloud resources, and stores data for investigations.
+Security teams can use Panther for:
 
-Teams can use Panther for:
-
-| Use Case | Description |
-|:--------:|-------------|
-| Continuous Monitoring         | Analyze data in real-time and identify suspicious activity that could indicate a breach             |
-| Investigating Alerts         |Pivot across all security data to get the full context of an alert             |
-| Searching IOCs         | Utilize standardized data fields and quickly search for matches against ip addresses, domains, usernames, and more            |
-| Securing Cloud Resources   | Achieve compliance by modeling security best practices and automatically fixing vulnerable cloud resources   |
+|         Use Case         | Description                                                                                                        |
+| :----------------------: | ------------------------------------------------------------------------------------------------------------------ |
+|  Continuous Monitoring   | Analyze logs in real-time and identify suspicious activity that could indicate a breach                            |
+|   Investigating Alerts   | Pivot across all security data to get the full context of an alert                                                 |
+|      Searching IOCs      | Utilize standardized data fields and quickly search for matches against ip addresses, domains, usernames, and more |
+| Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices                                  |
 
 ## Analysis
 
-Panther's detection logic is written in Python. Each deployment includes [100+ detection rules](https://github.com/panther-labs/panther-analysis).
+Panther's detection logic is written in Python. Each deployment includes [150+ detections](https://github.com/panther-labs/panther-analysis/tree/master/analysis).
 
 In the following example, [osquery](https://github.com/osquery/osquery) logs are analyzed to identify malware on a macOS laptop:
 
@@ -91,11 +89,11 @@ We are a San Francisco based [startup](https://www.crunchbase.com/organization/p
 
 ### Why Panther?
 
-It's no longer feasible to find the needle in the security log haystack _manually_. Many teams have struggled to solve this problem using  SIEMs and traditional log analytics platforms due to their high cost, overhead, and scale. Panther utilizes the elastic nature of cloud services to provide a high-scale, performant, and flexible solution at a much lower cost.
+It's no longer feasible to find the needle in the security log haystack _manually_. Many teams have struggled to solve this problem using SIEMs and traditional log analytics platforms due to their high cost, overhead, and scale. Panther utilizes the elastic nature of cloud services to provide a high-scale, performant, and flexible solution at a much lower cost.
 
 ## Contributing
 
-We welcome all contributions! Please read the [contributing  guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
+We welcome all contributions! Please read the [contributing guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
 
 ## License
 
