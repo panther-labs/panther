@@ -167,7 +167,7 @@ func describeStack(cfClient *cloudformation.CloudFormation, stackName string) (s
 	}
 
 	status = *response.Stacks[0].StackStatus
-	if status == "CREATE_COMPLETE" || status == "UPDATE_COMPLETE" {
+	if status == cloudformation.StackStatusCreateComplete || status == cloudformation.StackStatusUpdateComplete {
 		output = flattenStackOutputs(response)
 	}
 	return status, output, err

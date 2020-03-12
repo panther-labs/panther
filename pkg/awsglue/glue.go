@@ -314,7 +314,7 @@ func (gm *GlueTableMetadata) partitionHasData(client s3iface.S3API, t time.Time,
 		MaxKeys: aws.Int64(1), // look for at least 1
 	}
 	var hasData bool
-	err = client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
+	err = client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, isLast bool) bool {
 		for _, value := range page.Contents {
 			if *value.Size > 0 { // we only care about objects with size
 				hasData = true
