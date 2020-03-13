@@ -49,8 +49,7 @@ class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_severity: Optional[str],
-                 rule_version: Optional[str]):
+    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_severity: Optional[str], rule_version: Optional[str]):
         """Create new rule.
 
         Args:

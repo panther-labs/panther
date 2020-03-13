@@ -18,15 +18,11 @@ package awslogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-)
+import "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 
 // nolint(lll)
 type AWSPantherLog struct {
 	parsers.PantherLog
-
-
 
 	PantherAnyAWSAccountIds  *parsers.PantherAnyString `json:"p_any_aws_account_ids,omitempty" description:"Panther added field with collection of aws account ids associated with the row"`
 	PantherAnyAWSInstanceIds *parsers.PantherAnyString `json:"p_any_aws_instance_ids,omitempty" description:"Panther added field with collection of aws instance ids associated with the row"`

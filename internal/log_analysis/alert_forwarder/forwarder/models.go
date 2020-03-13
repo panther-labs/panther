@@ -37,7 +37,7 @@ type AlertDedupEvent struct {
 	EventCount          int64     `dynamodbav:"eventCount,number"`
 	Severity            string    `dynamodbav:"severity,string"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
-	Title *string `dynamodbav:"title,string,omitempty"`
+	Title               *string   `dynamodbav:"title,string,omitempty"`
 }
 
 // Alert contains all the fields associated to the alert stored in DDB

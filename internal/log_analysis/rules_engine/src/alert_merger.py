@@ -54,7 +54,9 @@ def _generate_alert_id(rule_id: str, dedup: str, count: str) -> str:
     return hashlib.md5(key.encode('utf-8')).hexdigest()  # nosec
 
 
-def update_get_alert_info(match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str, version: str, title: Optional[str]) -> AlertInfo:
+def update_get_alert_info(
+    match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str, version: str, title: Optional[str]
+) -> AlertInfo:
     """Updates the alert information and returns the result.
 
     The method will update the alertCreationTime, eventCount of an alert. If a new alert will have to be created,
@@ -66,7 +68,9 @@ def update_get_alert_info(match_time: datetime, num_matches: int, key: OutputGro
         return _update_get(match_time, num_matches, key)
 
 
-def _update_get_conditional(time: datetime, matches: int, key: OutputGroupingKey, severity: str, version: str, title: Optional[str]) -> AlertInfo:
+def _update_get_conditional(
+    time: datetime, matches: int, key: OutputGroupingKey, severity: str, version: str, title: Optional[str]
+) -> AlertInfo:
     """Performs a conditional update to DDB to verify whether we need to create a new alert.
     The condition will succeed only if:
     1. It is the first time this rule with this dedup string fires
@@ -136,7 +140,7 @@ def _update_get_conditional(time: datetime, matches: int, key: OutputGroupingKey
             'S': _generate_dedup_key(key.rule_id, key.dedup)
         }},
         # Setting proper values for alertCreationTime, alertUpdateTime,
-        UpdateExpression= update_expression,
+        UpdateExpression=update_expression,
         ConditionExpression=condition_expression,
         ExpressionAttributeNames=expresion_attribute_names,
         ExpressionAttributeValues=expression_attribute_values,
