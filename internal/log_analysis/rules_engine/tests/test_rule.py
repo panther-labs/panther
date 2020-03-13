@@ -132,3 +132,10 @@ class TestRule(TestCase):
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_string)
         self.assertIsNotNone(rule_result.exception)
+
+    def test_rule_dedup_returns_empty_string(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn ""'
+        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+
+        expected_result = RuleResult(matched=True, dedup_string='id')
+        self.assertEqual(rule.run({}), expected_result)
