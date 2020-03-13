@@ -61,7 +61,8 @@ func handle(ctx context.Context, event events.SQSEvent) (err error) {
 	defer func() {
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
 	}()
-	return process(event)
+	err = process(event)
+	return err
 }
 
 func process(event events.SQSEvent) error {
@@ -85,7 +86,9 @@ func process(event events.SQSEvent) error {
 			continue
 		}
 
-		if _, ok := partitionPrefixCache[gluePartition.GetPartitionLocation()]; ok {
+		// already done?
+		partitionLocation := gluePartition.GetPartitionLocation()
+		if _, ok := partitionPrefixCache[partitionLocation]; ok {
 			zap.L().Debug("partition has already been created")
 			continue
 		}
@@ -95,7 +98,7 @@ func process(event events.SQSEvent) error {
 			err = errors.Wrapf(err, "failed to create partition: %#v", notification)
 			return err
 		}
-		partitionPrefixCache[gluePartition.GetPartitionLocation()] = struct{}{}
+		partitionPrefixCache[partitionLocation] = struct{}{} // remember
 	}
 	return nil
 }
