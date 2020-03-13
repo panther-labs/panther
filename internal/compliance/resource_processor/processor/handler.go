@@ -40,6 +40,7 @@ import (
 	compliancemodels "github.com/panther-labs/panther/api/gateway/compliance/models"
 	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
 	alertmodels "github.com/panther-labs/panther/internal/compliance/alert_processor/models"
+	"github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/oplog"
@@ -82,6 +83,8 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 		} else if resource != nil {
 			// Resource updated - analyze with applicable policies (after grouping + deduping)
 			resources[string(resource.ID)] = resource
+		} else {
+			zap.L().Error("failed to parse msg as resource, policy, or resource lookup", zap.String("body", record.Body))
 		}
 	}
 
@@ -94,9 +97,10 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 }
 
 func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Policy) {
-	// There are 2 kinds of possible messages:
+	// There are 3 kinds of possible messages:
 	//    a) An updated resource which needs to be evaluated with all applicable policies
-	//    b) An updated policy which needs to be evaluated against applicable resources
+	//    b) Same as a, but the resource was too big to be delivered via SQS and must first be fetched from dynamo
+	//    c) An updated policy which needs to be evaluated against applicable resources
 	var resource resourcemodels.Resource
 	err := jsoniter.UnmarshalFromString(body, &resource)
 	if err == nil && resource.Attributes != nil && resource.Type != "" {
@@ -105,14 +109,28 @@ func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Polic
 		return &resource, nil
 	}
 
-	// Not a resource - it must be a policy
+	// Not a resource - could be a policy
 	var policy analysismodels.Policy
-	if err := jsoniter.UnmarshalFromString(body, &policy); err != nil || policy.Body == "" {
-		zap.L().Error("failed to parse msg as resource or as policy", zap.String("body", body))
-		return nil, nil
+	err = jsoniter.UnmarshalFromString(body, &policy)
+	if err == nil && policy.Body != "" {
+		zap.L().Info("found new/updated policy",
+			zap.String("policyId", string(policy.ID)))
+		return nil, &policy
 	}
 
-	return nil, &policy
+	// Rarest case, not a resource or policy: must be a resource lookup
+	var resourceLookup models.ResourceLookup
+	err = jsoniter.UnmarshalFromString(body, &resourceLookup)
+	if err == nil && resourceLookup.ID != nil {
+		zap.L().Info("found resource lookup",
+			zap.String("resourceId", *resourceLookup.ID))
+		resource, err := getResource(*resourceLookup.ID)
+		if err == nil {
+			return resource, nil
+		}
+	}
+
+	return nil, nil
 }
 
 // Analyze all resources related to a single policy (may require several policy-engine invocations).

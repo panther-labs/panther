@@ -1,4 +1,4 @@
-package main
+package models
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -18,22 +18,6 @@ package main
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/aws/aws-lambda-go/lambda"
-
-	"github.com/panther-labs/panther/internal/compliance/resources_api/handlers"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
-)
-
-var methodHandlers = map[string]gatewayapi.RequestHandler{
-	"POST /delete":      handlers.DeleteResources,
-	"GET /list":         handlers.ListResources,
-	"GET /org-overview": handlers.OrgOverview,
-	"GET /resource":     handlers.GetResource,
-	"POST /resource":    handlers.AddResources,
-}
-
-func main() {
-	handlers.Setup()
-	lambda.Start(gatewayapi.LambdaProxy(methodHandlers))
+type ResourceLookup struct {
+	ID *string
 }

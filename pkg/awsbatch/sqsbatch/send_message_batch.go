@@ -36,8 +36,6 @@ const (
 	maxMessageBytes = 260000
 )
 
-type MessageTooBigError error
-
 type sendMessageBatchRequest struct {
 	client       sqsiface.SQSAPI
 	input        *sqs.SendMessageBatchInput
@@ -108,11 +106,10 @@ func SendMessageBatch(
 			// over sized message to the requester so they can handle it how they see fit
 			if entrySize > maxMessageBytes {
 				bigMessages = append(bigMessages, allEntries[i])
-				i++
-				continue
+			} else {
+				input.Entries = append(input.Entries, allEntries[i])
+				currentBatchSize += entrySize
 			}
-			input.Entries = append(input.Entries, allEntries[i])
-			currentBatchSize += entrySize
 			i++
 
 			// If this is not the last entry, check the size of the next entry. If this is the last
@@ -131,6 +128,11 @@ func SendMessageBatch(
 			}
 		}
 
+		// This only happens when at the start of this iteration all remaining items are over sized (most common when
+		// only one item is being sent and it's too large)
+		if len(request.input.Entries) == 0 {
+			break
+		}
 		// This case covers when some entries failed to send because of unrecoverable issues
 		if err := backoff.Retry(request.send, config); err != nil {
 			zap.L().Error(
@@ -150,7 +152,7 @@ func SendMessageBatch(
 			zap.Duration("duration", time.Since(start)),
 			zap.Int("failures", len(bigMessages)),
 		)
-		return bigMessages, MessageTooBigError(errors.New(fmt.Sprintf("%d messages were too big to send", len(bigMessages))))
+		return bigMessages, errors.New(sqs.ErrCodeBatchRequestTooLong)
 	}
 
 	// This case covers when all entries sent successfully
