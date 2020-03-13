@@ -210,7 +210,7 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 
 				// leave _everything_ the same except the schema, and the serde info
 				getPartitionOutput.Partition.StorageDescriptor.Columns = columns
-				getPartitionOutput.Partition.StorageDescriptor.SerdeInfo =  tableOutput.Table.StorageDescriptor.SerdeInfo
+				getPartitionOutput.Partition.StorageDescriptor.SerdeInfo = tableOutput.Table.StorageDescriptor.SerdeInfo
 				values := gm.partitionValues(update)
 				partitionInput := &glue.PartitionInput{
 					Values:            values,
