@@ -27,7 +27,7 @@ from typing import Dict, List, Optional
 import boto3
 
 from . import AlertInfo, EventMatch, OutputGroupingKey, OutputNotification
-from .alert_merger import update_get_alert_info
+from .alert_merger import MatchingGroupInfo, update_get_alert_info
 from .logging import get_logger
 
 _KEY_FORMAT = 'rules/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
@@ -114,11 +114,19 @@ class MatchedEventsBuffer:
 
 
 def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch]) -> None:
-    rule_version = events[0].rule_version  # severity and version of a rule might differ if the rule was modified
-    # while the rules engine was running. We pick the first encountered severity, version and title.
-    rule_severity = events[0].severity
-    rule_title = events[0].title
-    alert_info = update_get_alert_info(time, len(events), key, rule_severity, rule_version, rule_title)
+    # severity and version of a rule might differ if the rule was modified while the rules engine was running.
+    # We pick the first encountered severity, version and title.
+    group_info = MatchingGroupInfo(
+        rule_id=key.rule_id,
+        rule_version=events[0].rule_version,
+        log_type=key.log_type,
+        dedup=key.dedup,
+        severity=events[0].severity,
+        num_matches=len(events),
+        title=events[0].title,
+        processing_time=time
+    )
+    alert_info = update_get_alert_info(group_info)
     data_stream = BytesIO()
     writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
     for event in events:

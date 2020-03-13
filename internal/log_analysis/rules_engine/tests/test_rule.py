@@ -71,7 +71,7 @@ class TestRule(TestCase):
         rule_body = 'def rule(event):\n\treturn True'
         rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
         expected_rule = RuleResult(matched=True, dedup_string='id')
-        self.assertEqual(rule.run({}), expected_rule)
+        self.assertEqual(expected_rule, rule.run({}))
 
     def test_rule_doesnt_match(self) -> None:
         rule_body = 'def rule(event):\n\treturn False'
@@ -135,6 +135,40 @@ class TestRule(TestCase):
 
     def test_rule_dedup_returns_empty_string(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn ""'
+        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+
+        expected_result = RuleResult(matched=True, dedup_string='id')
+        self.assertEqual(rule.run({}), expected_result)
+
+    def test_rule_matches_with_title(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn "title"'
+        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+
+        expected_result = RuleResult(matched=True, dedup_string='id', title='title')
+        self.assertEqual(rule.run({}), expected_result)
+
+    def test_rule_title_throws_exception(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\traise Exception("test")'
+        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+
+        rule_result = rule.run({})
+        self.assertIsNone(rule_result.matched)
+        self.assertIsNone(rule_result.title)
+        self.assertIsNone(rule_result.dedup_string)
+        self.assertIsNotNone(rule_result.exception)
+
+    def test_rule_invalid_title_return(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn {}'
+        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+
+        rule_result = rule.run({})
+        self.assertIsNone(rule_result.matched)
+        self.assertIsNone(rule_result.title)
+        self.assertIsNone(rule_result.dedup_string)
+        self.assertIsNotNone(rule_result.exception)
+
+    def test_rule_title_returns_empty_string(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn ""'
         rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
 
         expected_result = RuleResult(matched=True, dedup_string='id')

@@ -13,15 +13,15 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-from datetime import datetime
 import hashlib
 import os
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
 import boto3
 
-from . import AlertInfo, OutputGroupingKey
+from . import AlertInfo
 
 _DDB_TABLE_NAME = os.environ['ALERTS_DEDUP_TABLE']
 _DDB_CLIENT = boto3.client('dynamodb')
@@ -44,6 +44,20 @@ _ALERT_TITLE = 'title'
 _ALERT_MERGE_PERIOD_SECONDS = 3600
 
 
+# pylint: disable=too-many-instance-attributes
+@dataclass
+class MatchingGroupInfo:
+    """Represents information for a batch of matched events"""
+    rule_id: str
+    rule_version: str
+    log_type: str
+    dedup: str
+    severity: str
+    num_matches: int
+    title: Optional[str]
+    processing_time: datetime
+
+
 def _generate_dedup_key(rule_id: str, dedup: str) -> str:
     key = rule_id + ':' + dedup
     return hashlib.md5(key.encode('utf-8')).hexdigest()  # nosec
@@ -54,32 +68,29 @@ def _generate_alert_id(rule_id: str, dedup: str, count: str) -> str:
     return hashlib.md5(key.encode('utf-8')).hexdigest()  # nosec
 
 
-def update_get_alert_info(
-    match_time: datetime, num_matches: int, key: OutputGroupingKey, severity: str, version: str, title: Optional[str]
-) -> AlertInfo:
+def update_get_alert_info(info: MatchingGroupInfo) -> AlertInfo:
     """Updates the alert information and returns the result.
 
     The method will update the alertCreationTime, eventCount of an alert. If a new alert will have to be created,
     it will also create a new alertId with the appropriate alertCreationTime. """
     try:
-        return _update_get_conditional(match_time, num_matches, key, severity, version, title)
+        return _update_get_conditional(info)
     except _DDB_CLIENT.exceptions.ConditionalCheckFailedException:
         # If conditional update failed on Condition, the event needs to be merged
-        return _update_get(match_time, num_matches, key)
+        return _update_get(info)
 
 
-def _update_get_conditional(
-    time: datetime, matches: int, key: OutputGroupingKey, severity: str, version: str, title: Optional[str]
-) -> AlertInfo:
+def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     """Performs a conditional update to DDB to verify whether we need to create a new alert.
     The condition will succeed only if:
     1. It is the first time this rule with this dedup string fires
     2. This rule with the same dedup string has fired before, but it fired more than _ALERT_MERGE_PERIOD_SECONDS earlier
     """
+
     condition_expression = '(#1 < :1) OR (attribute_not_exists(#2))'
     update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
 
-    if title:
+    if group_info.title:
         update_expression += ', #12=:12'
     expresion_attribute_names = {
         '#1': _ALERT_CREATION_TIME_ATTR_NAME,
@@ -95,49 +106,49 @@ def _update_get_conditional(
         '#11': _RULE_VERSION_ATTR_NAME,
     }
 
-    if title:
+    if group_info.title:
         expresion_attribute_names['#12'] = _ALERT_TITLE
 
     expression_attribute_values = {
         ':1': {
-            'N': '{}'.format(int(time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)
+            'N': '{}'.format(int(group_info.processing_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)
         },
         ':3': {
             'N': '1'
         },
         ':4': {
-            'S': key.rule_id
+            'S': group_info.rule_id
         },
         ':5': {
-            'S': key.dedup
+            'S': group_info.dedup
         },
         ':6': {
-            'N': time.strftime('%s')
+            'N': group_info.processing_time.strftime('%s')
         },
         ':7': {
-            'N': time.strftime('%s')
+            'N': group_info.processing_time.strftime('%s')
         },
         ':8': {
-            'N': '{}'.format(matches)
+            'N': '{}'.format(group_info.num_matches)
         },
         ':9': {
-            'S': severity
+            'S': group_info.severity
         },
         ':10': {
-            'SS': [key.log_type]
+            'SS': [group_info.log_type]
         },
         ':11': {
-            'S': version
+            'S': group_info.rule_version
         },
     }
 
-    if title:
-        expression_attribute_values[':12'] = {'S': title}
+    if group_info.title:
+        expression_attribute_values[':12'] = {'S': group_info.title}
 
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
-            'S': _generate_dedup_key(key.rule_id, key.dedup)
+            'S': _generate_dedup_key(group_info.rule_id, group_info.dedup)
         }},
         # Setting proper values for alertCreationTime, alertUpdateTime,
         UpdateExpression=update_expression,
@@ -147,19 +158,20 @@ def _update_get_conditional(
         ReturnValues='ALL_NEW'
     )
     alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
-    alert_id = _generate_alert_id(key.rule_id, key.dedup, alert_count)
-    return AlertInfo(alert_id=alert_id, alert_creation_time=time, alert_update_time=time)
+    alert_id = _generate_alert_id(group_info.rule_id, group_info.dedup, alert_count)
+    return AlertInfo(alert_id=alert_id, alert_creation_time=group_info.processing_time, alert_update_time=group_info.processing_time)
 
 
-def _update_get(match_time: datetime, num_matches: int, key: OutputGroupingKey) -> AlertInfo:
+def _update_get(group_info: MatchingGroupInfo) -> AlertInfo:
     """Updates the following attributes in DDB:
     1. Alert event account - it adds the new events to existing
     2. Alert Update Time - it sets it to given time
     """
+
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
-            'S': _generate_dedup_key(key.rule_id, key.dedup)
+            'S': _generate_dedup_key(group_info.rule_id, group_info.dedup)
         }},
         # Setting proper value to alertUpdateTime. Increase event count
         UpdateExpression='SET #1=:1\nADD #2 :2, #3 :3',
@@ -170,13 +182,13 @@ def _update_get(match_time: datetime, num_matches: int, key: OutputGroupingKey) 
         },
         ExpressionAttributeValues={
             ':1': {
-                'N': match_time.strftime('%s')
+                'N': group_info.processing_time.strftime('%s')
             },
             ':2': {
-                'N': '{}'.format(num_matches)
+                'N': '{}'.format(group_info.num_matches)
             },
             ':3': {
-                'SS': [key.log_type]
+                'SS': [group_info.log_type]
             },
         },
         ReturnValues='ALL_NEW'
@@ -184,7 +196,7 @@ def _update_get(match_time: datetime, num_matches: int, key: OutputGroupingKey) 
     alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
     alert_creation_time = response['Attributes'][_ALERT_CREATION_TIME_ATTR_NAME]['N']
     return AlertInfo(
-        alert_id=_generate_alert_id(key.rule_id, key.dedup, alert_count),
+        alert_id=_generate_alert_id(group_info.rule_id, group_info.dedup, alert_count),
         alert_creation_time=datetime.utcfromtimestamp(int(alert_creation_time)),
-        alert_update_time=match_time
+        alert_update_time=group_info.processing_time
     )

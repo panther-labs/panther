@@ -27,7 +27,7 @@ class EventMatch:
     dedup: str
     severity: str
     event: Dict[str, Any]
-    title: Optional[str]
+    title: Optional[str] = None
 
 
 @dataclass

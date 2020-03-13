@@ -93,44 +93,46 @@ class Rule:
         try:
             rule_result = _run_command(self._module.rule, event, bool)
             if rule_result:
-                if self._has_dedup:
-                    dedup_string = self._get_dedup(event)
-
-                if self._has_title:
-                    title = self._get_title(event)
-
+                dedup_string = self._get_dedup(event)
+                title = self._get_title(event)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
         return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
 
     def _get_dedup(self, event: Dict[str, Any]) -> str:
+        if not self._has_dedup:
+            # If no dedup function defined, return rule id
+            return self.rule_id
         dedup_string = _run_command(self._module.dedup, event, str)
         if dedup_string and dedup_string != '':
             if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
+                # If dedup_string exceeds max size, truncate it
                 self.logger.warning(
                     'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
                     '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
                 )
                 return dedup_string[:MAX_DEDUP_STRING_SIZE]
-            else:
-                return dedup_string
-        else:
-            return self.rule_id
+            return dedup_string
+        # If dedup string was the empty string, put the default value (rule_id)
+        return self.rule_id
 
     def _get_title(self, event: Dict[str, Any]) -> Optional[str]:
+        if not self._has_title:
+            return None
+
         title_string = _run_command(self._module.title, event, str)
         if title_string and title_string != '':
             if len(title_string) > MAX_TITLE_SIZE:
+                # If title exceeds max size, truncate it
                 self.logger.warning(
                     'maximum title string size is [%d] characters. Title for rule with ID '
                     '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
                 )
                 return title_string[:MAX_TITLE_SIZE]
-            else:
-                return title_string
-        else:
-            return None
+            return title_string
+        # If title is empty string, return None
+        return None
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""
