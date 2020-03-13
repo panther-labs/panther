@@ -208,8 +208,9 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 					continue
 				}
 
-				// leave _everything_ the same except the schema
+				// leave _everything_ the same except the schema, and the serde info
 				getPartitionOutput.Partition.StorageDescriptor.Columns = columns
+				getPartitionOutput.Partition.StorageDescriptor.SerdeInfo =  tableOutput.Table.StorageDescriptor.SerdeInfo
 				values := gm.partitionValues(update)
 				partitionInput := &glue.PartitionInput{
 					Values:            values,
@@ -242,7 +243,6 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 	return failed
 }
 
-// Deprecated - use GluePartition.CreatePartition instead
 func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) error {
 	// inherit StorageDescriptor from table
 	tableInput := &glue.GetTableInput{
