@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -37,10 +38,10 @@ func TestStatusLog(t *testing.T) {
 	expectedEvent := &Status{
 		HostIdentifier: aws.String("jacks-mbp.lan"),
 		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
-		UnixTime:       aws.Int(1535731040),
-		Severity:       aws.Int(0),
+		UnixTime:       (*numerics.Integer)(aws.Int(1535731040)),
+		Severity:       (*numerics.Integer)(aws.Int(0)),
 		Filename:       aws.String("scheduler.cpp"),
-		Line:           aws.Int(83),
+		Line:           (*numerics.Integer)(aws.Int(83)),
 		Message:        aws.String("Executing scheduled query pack_incident-response_arp_cache: select * from arp_cache;"),
 		Version:        aws.String("3.2.6"),
 		LogType:        aws.String("status"),
@@ -66,10 +67,10 @@ func TestStatusLogNoLogType(t *testing.T) {
 	expectedEvent := &Status{
 		HostIdentifier: aws.String("jaguar.local"),
 		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
-		UnixTime:       aws.Int(1535731040),
-		Severity:       aws.Int(0),
+		UnixTime:       (*numerics.Integer)(aws.Int(1535731040)),
+		Severity:       (*numerics.Integer)(aws.Int(0)),
 		Filename:       aws.String("tls.cpp"),
-		Line:           aws.Int(253),
+		Line:           (*numerics.Integer)(aws.Int(253)),
 		Message:        aws.String("TLS/HTTPS POST request to URI: https://fleet.runpanther.tools:443/api/v1/osquery/log"),
 		Version:        aws.String("4.1.2"),
 		Decorations: map[string]string{

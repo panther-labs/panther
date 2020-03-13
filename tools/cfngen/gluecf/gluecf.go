@@ -27,6 +27,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/tools/cfngen"
@@ -59,6 +60,10 @@ var (
 		{
 			From: reflect.TypeOf(jsoniter.RawMessage{}),
 			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(numerics.Integer)),
+			To:   "bigint",
 		},
 	}
 
