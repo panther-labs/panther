@@ -34,6 +34,7 @@
     "@emotion/babel-preset-css-prop": "^10.0.27",
     "@graphql-codegen/cli": "^1.12.1",
     "@graphql-codegen/typescript": "^1.12.1",
+    "@graphql-codegen/typescript-resolvers": "^1.13.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.1.3",
     "@sentry/cli": "^1.49.0",
     "@types/echarts": "^4.4.2",
