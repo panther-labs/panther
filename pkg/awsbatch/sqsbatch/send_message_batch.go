@@ -129,7 +129,7 @@ func SendMessageBatch(
 		}
 
 		// This only happens when at the start of this iteration all remaining items are over sized (most common when
-		// only one item is being sent and it's too large)
+		// only one item is being sent and it's over sized)
 		if len(request.input.Entries) == 0 {
 			break
 		}

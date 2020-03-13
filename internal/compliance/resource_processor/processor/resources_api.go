@@ -71,7 +71,7 @@ func getResource(resourceID string) (*resourcemodels.Resource, error) {
 		HTTPClient: httpClient,
 	})
 	if err != nil {
-		zap.L().Error("failed to get resource", zap.Error(err))
+		zap.L().Error("failed to get resource", zap.Error(err), zap.String("resourceID", resourceID))
 		return nil, err
 	}
 
