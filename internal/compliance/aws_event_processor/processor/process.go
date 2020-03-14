@@ -95,6 +95,9 @@ var (
 		"CreateLogStream":      {},
 		"FilterLogEvents":      {},
 
+		// cognitio
+		"ConfirmForgotPassword": {},
+
 		// config
 		"PutAggregationAuthorization":     {},
 		"PutConfigurationAggregator":      {},
@@ -270,22 +273,24 @@ type CloudTrailMetadata struct {
 // Returning nil, nil means that we were unable to extract the information we need, but that it was not a failure on
 // our part the information is simply not present.
 func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
-	eventSource := detail.Get("eventSource")
-	if !eventSource.Exists() {
-		return nil, errors.New("unable to extract CloudTrail eventSource field")
-	}
-
 	eventName := detail.Get("eventName")
 	if !eventName.Exists() {
-		return nil, errors.Errorf("unable to extract CloudTrail eventName field for %s",
-			eventSource.Str)
+		return nil, errors.Errorf("unable to extract CloudTrail eventName field for eventSource '%s'",
+			detail.Get("evenSource").Str) // best effort to add context
 	}
+
 	// If this is an ignored event, immediately halt processing
 	if isIgnoredEvent(eventName.Str) {
 		zap.L().Debug("ignoring read only event",
-			zap.String("evenSource", eventSource.Str),
+			zap.String("evenSource", detail.Get("evenSource").Str), // best effort to add context
 			zap.String("eventName", eventName.Str))
 		return nil, nil
+	}
+
+	eventSource := detail.Get("eventSource")
+	if !eventSource.Exists() {
+		return nil, errors.Errorf("unable to extract CloudTrail eventSource field for eventName %s",
+			eventName.Str)
 	}
 
 	accountID := detail.Get("userIdentity.accountId")
