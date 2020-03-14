@@ -104,68 +104,49 @@ const CreateLogSource: React.FC = () => {
           validationSchema={validationSchema}
           onSubmit={submitSourceToServer}
         >
-          {({ errors, dirty, isValid, handleSubmit }) => (
-            <form onSubmit={handleSubmit}>
-              <Flex justifyContent="center" alignItems="center" width={1}>
-                <Wizard<CreateLogSourceValues>
-                  autoCompleteLastStep
-                  steps={[
-                    {
-                      title: 'Setup your sources',
-                      icon: 'search' as const,
-                      renderStep: ({ goToNextStep }) => {
-                        const shouldEnableNextButton =
-                          dirty && !errors.integrationLabel && !errors.s3Buckets && !errors.kmsKeys;
+          {({ dirty, isValid, handleSubmit }) => {
+            const shouldEnableNextButton = dirty && isValid;
 
-                        return (
-                          <WizardPanelWrapper>
-                            <WizardPanelWrapper.Content>
-                              <SourceDetailsPanel />
-                            </WizardPanelWrapper.Content>
-                            <WizardPanelWrapper.Actions
-                              goToNextStep={goToNextStep}
-                              isNextStepDisabled={!shouldEnableNextButton}
-                            />
-                          </WizardPanelWrapper>
-                        );
-                      },
-                    },
-                    {
-                      title: 'Setup IAM Roles',
-                      icon: 'upload',
-                      renderStep: ({ goToPrevStep, goToNextStep }) => {
-                        const shouldEnableNextButton = dirty && isValid;
-                        return (
-                          <WizardPanelWrapper>
-                            <WizardPanelWrapper.Content>
-                              <CfnLaunchPanel />
-                            </WizardPanelWrapper.Content>
-                            <WizardPanelWrapper.Actions
-                              goToPrevStep={goToPrevStep}
-                              goToNextStep={goToNextStep}
-                              isNextStepDisabled={!shouldEnableNextButton}
-                            />
-                          </WizardPanelWrapper>
-                        );
-                      },
-                    },
-                    {
-                      title: 'Done!',
-                      icon: 'check',
-                      renderStep: ({ goToPrevStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <SuccessPanel loading={loading} />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions goToPrevStep={goToPrevStep} />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                  ]}
-                />
-              </Flex>
-            </form>
-          )}
+            return (
+              <form onSubmit={handleSubmit}>
+                <Flex justifyContent="center" alignItems="center" width={1}>
+                  <Wizard>
+                    <Wizard.Step title="Setup your sources" icon="search">
+                      <WizardPanelWrapper>
+                        <WizardPanelWrapper.Content>
+                          <SourceDetailsPanel />
+                        </WizardPanelWrapper.Content>
+                        <WizardPanelWrapper.Actions>
+                          <WizardPanelWrapper.ActionNext disabled={!shouldEnableNextButton} />
+                        </WizardPanelWrapper.Actions>
+                      </WizardPanelWrapper>
+                    </Wizard.Step>
+                    <Wizard.Step title="Setup IAM Roles" icon="upload">
+                      <WizardPanelWrapper>
+                        <WizardPanelWrapper.Content>
+                          <CfnLaunchPanel />
+                        </WizardPanelWrapper.Content>
+                        <WizardPanelWrapper.Actions>
+                          <WizardPanelWrapper.ActionPrev />
+                          <WizardPanelWrapper.ActionNext disabled={!shouldEnableNextButton} />
+                        </WizardPanelWrapper.Actions>
+                      </WizardPanelWrapper>
+                    </Wizard.Step>
+                    <Wizard.Step title="Done!" icon="check">
+                      <WizardPanelWrapper>
+                        <WizardPanelWrapper.Content>
+                          <SuccessPanel loading={loading} />
+                        </WizardPanelWrapper.Content>
+                        <WizardPanelWrapper.Actions>
+                          <WizardPanelWrapper.ActionPrev />
+                        </WizardPanelWrapper.Actions>
+                      </WizardPanelWrapper>
+                    </Wizard.Step>
+                  </Wizard>
+                </Flex>
+              </form>
+            );
+          }}
         </Formik>
       </Card>
     </Box>

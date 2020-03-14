@@ -26,7 +26,7 @@ import { ListInfraSourcesDocument } from 'Pages/ListComplianceSources';
 import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
+import { Wizard, WizardPanelWrapper, WizardStep } from 'Components/Wizard';
 import { useAddInfraSource } from './graphql/addInfraSource.generated';
 import RemediationPanel from './RemediationPanel';
 import RealTimeEventPanel from './RealTimeEventPanel';
@@ -99,92 +99,71 @@ const CreateComplianceSource: React.FC = () => {
           validationSchema={validationSchema}
           onSubmit={submitSourceToServer}
         >
-          {({ isValid, dirty, handleSubmit }) => (
-            <form onSubmit={handleSubmit}>
-              <Flex justifyContent="center" alignItems="center" width={1}>
-                <Wizard<InfraSourceValues>
-                  autoCompleteLastStep
-                  steps={[
-                    {
-                      title: 'Account Details',
-                      icon: 'add' as const,
-                      renderStep: ({ goToNextStep }) => {
-                        const shouldEnableNextButton = dirty && isValid;
-                        return (
-                          <WizardPanelWrapper>
-                            <WizardPanelWrapper.Content>
-                              <SourceDetailsPanel />
-                            </WizardPanelWrapper.Content>
-                            <WizardPanelWrapper.Actions
-                              goToNextStep={goToNextStep}
-                              isNextStepDisabled={!shouldEnableNextButton}
-                            />
-                          </WizardPanelWrapper>
-                        );
-                      },
-                    },
-                    {
-                      title: 'Scanning',
-                      icon: 'search',
-                      renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <ResourceScanningPanel />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions
-                            goToNextStep={goToNextStep}
-                            goToPrevStep={goToPrevStep}
-                          />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                    {
-                      title: 'Real Time',
-                      icon: 'sync',
-                      renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <RealTimeEventPanel />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions
-                            goToNextStep={goToNextStep}
-                            goToPrevStep={goToPrevStep}
-                          />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                    {
-                      title: 'Remediation',
-                      icon: 'wrench',
-                      renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <RemediationPanel />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions
-                            goToNextStep={goToNextStep}
-                            goToPrevStep={goToPrevStep}
-                          />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                    {
-                      title: 'Done!',
-                      icon: 'check',
-                      renderStep: ({ goToPrevStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <SuccessPanel loading={loading} />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions goToPrevStep={goToPrevStep} />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                  ]}
-                />
-              </Flex>
-            </form>
-          )}
+          {({ isValid, dirty, handleSubmit }) => {
+            const shouldEnableNextButton = dirty && isValid;
+
+            return (
+              <form onSubmit={handleSubmit}>
+                <Flex justifyContent="center" alignItems="center" width={1}>
+                  <Wizard>
+                    <Wizard.Step title="Account Details" icon="add">
+                      <WizardPanelWrapper>
+                        <WizardPanelWrapper.Content>
+                          <SourceDetailsPanel />
+                        </WizardPanelWrapper.Content>
+                        <WizardPanelWrapper.Actions>
+                          <WizardPanelWrapper.ActionNext disabled={!shouldEnableNextButton} />
+                        </WizardPanelWrapper.Actions>
+                      </WizardPanelWrapper>
+                    </Wizard.Step>
+                    <Wizard.Step title="Scanning" icon="search">
+                      <WizardPanelWrapper>
+                        <WizardPanelWrapper.Content>
+                          <ResourceScanningPanel />
+                        </WizardPanelWrapper.Content>
+                        <WizardPanelWrapper.Actions>
+                          <WizardPanelWrapper.ActionPrev />
+                          <WizardPanelWrapper.ActionNext />
+                        </WizardPanelWrapper.Actions>
+                      </WizardPanelWrapper>
+                    </Wizard.Step>
+                    <WizardStep title="Real Time" icon="sync">
+                      <WizardPanelWrapper>
+                        <WizardPanelWrapper.Content>
+                          <RealTimeEventPanel />
+                        </WizardPanelWrapper.Content>
+                        <WizardPanelWrapper.Actions>
+                          <WizardPanelWrapper.ActionPrev />
+                          <WizardPanelWrapper.ActionNext />
+                        </WizardPanelWrapper.Actions>
+                      </WizardPanelWrapper>
+                    </WizardStep>
+                    <Wizard.Step title="Remediation" icon="wrench">
+                      <WizardPanelWrapper>
+                        <WizardPanelWrapper.Content>
+                          <RemediationPanel />
+                        </WizardPanelWrapper.Content>
+                        <WizardPanelWrapper.Actions>
+                          <WizardPanelWrapper.ActionPrev />
+                          <WizardPanelWrapper.ActionNext />
+                        </WizardPanelWrapper.Actions>
+                      </WizardPanelWrapper>
+                    </Wizard.Step>
+                    <Wizard.Step title="Done!" icon="check">
+                      <WizardPanelWrapper>
+                        <WizardPanelWrapper.Content>
+                          <SuccessPanel loading={loading} />
+                        </WizardPanelWrapper.Content>
+                        <WizardPanelWrapper.Actions>
+                          <WizardPanelWrapper.ActionPrev />
+                        </WizardPanelWrapper.Actions>
+                      </WizardPanelWrapper>
+                    </Wizard.Step>
+                  </Wizard>
+                </Flex>
+              </form>
+            );
+          }}
         </Formik>
       </Card>
     </Box>
