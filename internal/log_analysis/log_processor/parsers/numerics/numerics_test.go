@@ -56,5 +56,5 @@ func TestInteger(t *testing.T) {
 
 	err = nilInt.UnmarshalJSON(([]byte)("321"))
 	require.NoError(t, err)
-	assert.Equal(t, (Integer)(321), i)
+	assert.Equal(t, (*Integer)(nil), nilInt)
 }
