@@ -38,8 +38,7 @@ func (i *Integer) MarshalJSON() ([]byte, error) {
 }
 
 func (i *Integer) UnmarshalJSON(jsonBytes []byte) (err error) {
-	cleanBytes := strings.Replace((string)(jsonBytes), `"`, "", -1) // remove quotes
-	parsedInt, err := strconv.Atoi(cleanBytes)
+	parsedInt, err := strconv.Atoi(strings.Trim((string)(jsonBytes), `"`)) // remove quotes, to int
 	if err == nil && i != nil {
 		*i = (Integer)(parsedInt)
 	}
