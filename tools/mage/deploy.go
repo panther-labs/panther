@@ -190,6 +190,7 @@ func getBackendDeployParams(
 		"S3BucketSource":               sourceBucket,
 		"TracingMode":                  v.TracingMode,
 		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
+		"CustomDomain":                 v.CustomDomain,
 	}
 
 	// If no custom Python layer is defined, then we need to build the default one.
