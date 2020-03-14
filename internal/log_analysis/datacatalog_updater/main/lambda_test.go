@@ -34,10 +34,41 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
+var (
+
+	// dummy data for columns
+	testColumns = []*glue.Column{
+		{
+			Name: aws.String("col"),
+			Type: aws.String("int"),
+		},
+	}
+
+	// the important thing here is that this of type JSON
+	testStorageDescriptor = &glue.StorageDescriptor{
+		Columns:  testColumns,
+		Location: aws.String("s3://testbucket/logs/table"),
+		SerdeInfo: &glue.SerDeInfo{
+			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+			Parameters: map[string]*string{
+				"serialization.format": aws.String("1"),
+				"case.insensitive":     aws.String("TRUE"),
+			},
+		},
+	}
+
+	testGetTableOutput = &glue.GetTableOutput{
+		Table: &glue.TableData{
+			StorageDescriptor: testStorageDescriptor,
+		},
+	}
+)
+
 func TestProcessSuccess(t *testing.T) {
 	mockClient := initTest()
 
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil)
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 	assert.NoError(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockClient.AssertExpectations(t)
 }
@@ -46,6 +77,7 @@ func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
 	mockClient := initTest()
 
 	// We should attempt to create the partition only once. We shouldn't try to re-create it a second time
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
 	// First object should invoke Glue API
@@ -59,8 +91,10 @@ func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
 	mockClient := initTest()
 
 	// First glue operation fails
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("err")).Once()
 	// Second glue operation succeeds
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
 	// First invocation fails
@@ -73,7 +107,8 @@ func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
 func TestProcessGlueFailure(t *testing.T) {
 	mockClient := initTest()
 
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error"))
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error")).Once()
 	assert.Error(t, process(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockClient.AssertExpectations(t)
 }
@@ -112,6 +147,11 @@ func getEvent(t *testing.T, s3Keys ...string) events.SQSEvent {
 type mockGlue struct {
 	glueiface.GlueAPI
 	mock.Mock
+}
+
+func (m *mockGlue) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetTableOutput), args.Error(1)
 }
 
 func (m *mockGlue) CreatePartition(input *glue.CreatePartitionInput) (*glue.CreatePartitionOutput, error) {
