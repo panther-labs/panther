@@ -18,18 +18,11 @@
 
 import React from 'react';
 import { User } from 'Generated/schema';
-
-import { useMutation, gql } from '@apollo/client';
-import { LIST_USERS } from 'Pages/Users/ListUsersTable';
+import { ListUsersDocument } from 'Pages/Users';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import useAuth from 'Hooks/useAuth';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-
-const DELETE_USER = gql`
-  mutation DeleteUser($id: ID!) {
-    deleteUser(id: $id)
-  }
-`;
+import { useDeleteUser } from './graphql/deleteUser.generated';
 
 export interface DeleteUserModalProps {
   user: User;
@@ -41,12 +34,12 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
   const onSuccess = () => userInfo.sub === user.id && signOut();
 
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
-  const mutation = useMutation<boolean, { id: string }>(DELETE_USER, {
+  const mutation = useDeleteUser({
     variables: {
       id: user.id,
     },
     awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(LIST_USERS)],
+    refetchQueries: [getOperationName(ListUsersDocument)],
   });
 
   return (

@@ -1,0 +1,23 @@
+query PolicyDetails($input: GetPolicyInput!) {
+    policy(input: $input) {
+        autoRemediationId
+        autoRemediationParameters
+        description
+        displayName
+        enabled
+        suppressions
+        id
+        reference
+        resourceTypes
+        runbook
+        severity
+        tags
+        body
+        tests {
+            expectedResult
+            name
+            resource
+            resourceType
+        }
+    }
+}

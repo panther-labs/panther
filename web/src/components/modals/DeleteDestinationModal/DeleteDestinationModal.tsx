@@ -18,31 +18,21 @@
 
 import React from 'react';
 import { Destination } from 'Generated/schema';
-import { useMutation, gql } from '@apollo/client';
-import { LIST_DESTINATIONS } from 'Pages/Destinations';
+import { ListDestinationsAndDefaultsDocument } from 'Pages/Destinations';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-
-const DELETE_DESTINATION = gql`
-  mutation DeleteOutput($id: ID!) {
-    deleteDestination(id: $id)
-  }
-`;
+import { useDeleteOutput } from './graphql/deleteOutput.generated';
 
 export interface DeleteDestinationModalProps {
   destination: Destination;
 }
 
-export interface ApolloMutationInput {
-  id: string;
-}
-
 const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destination }) => {
   const destinationDisplayName = destination.displayName || destination.outputId;
-  const mutation = useMutation<boolean, ApolloMutationInput>(DELETE_DESTINATION, {
+  const mutation = useDeleteOutput({
     variables: {
       id: destination.outputId,
     },
-    refetchQueries: [{ query: LIST_DESTINATIONS }],
+    refetchQueries: [{ query: ListDestinationsAndDefaultsDocument }],
   });
 
   return (

@@ -1,0 +1,3 @@
+mutation DeleteOutput($id: ID!) {
+    deleteDestination(id: $id)
+}

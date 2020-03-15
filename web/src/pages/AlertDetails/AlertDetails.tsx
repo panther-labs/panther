@@ -18,61 +18,15 @@
 
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
-import { useQuery, gql } from '@apollo/client';
-import { GetAlertInput, AlertDetails, RuleDetails, GetRuleInput } from 'Generated/schema';
 import { Alert, Box } from 'pouncejs';
 import AlertDetailsPageSkeleton from 'Pages/AlertDetails/AlertDetailsSkeleton';
 import AlertDetailsInfo from 'Pages/AlertDetails/AlertDetailsInfo';
 import AlertEvents from 'Pages/AlertDetails/AlertDetailsEvents';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
-
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-
-export const ALERT_DETAILS = gql`
-  query AlertDetails($input: GetAlertInput!) {
-    alert(input: $input) {
-      alertId
-      ruleId
-      creationTime
-      eventsMatched
-      updateTime
-      dedupString
-      eventsLastEvaluatedKey
-      events
-    }
-  }
-`;
-
-export const RULE_TEASER = gql`
-  query RuleTeaser($input: GetRuleInput!) {
-    rule(input: $input) {
-      description
-      displayName
-      id
-      logTypes
-      runbook
-      severity
-      tags
-    }
-  }
-`;
-
-interface ApolloAlertQueryData {
-  alert: AlertDetails;
-}
-
-interface ApolloAlertQueryInput {
-  input: GetAlertInput;
-}
-
-interface ApolloRuleQueryData {
-  rule: Partial<RuleDetails>;
-}
-
-interface ApolloRuleQueryInput {
-  input: GetRuleInput;
-}
+import { useAlertDetails } from './graphql/alertDetails.generated';
+import { useRuleTeaser } from './graphql/ruleTeaser.generated';
 
 const AlertDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
@@ -83,7 +37,7 @@ const AlertDetailsPage = () => {
     error: alertError,
     fetchMore,
     variables,
-  } = useQuery<ApolloAlertQueryData, ApolloAlertQueryInput>(ALERT_DETAILS, {
+  } = useAlertDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
@@ -93,10 +47,7 @@ const AlertDetailsPage = () => {
     },
   });
 
-  const { data: ruleData, loading: ruleLoading } = useQuery<
-    ApolloRuleQueryData,
-    ApolloRuleQueryInput
-  >(RULE_TEASER, {
+  const { data: ruleData, loading: ruleLoading } = useRuleTeaser({
     skip: !alertData,
     variables: {
       input: {
@@ -138,7 +89,7 @@ const AlertDetailsPage = () => {
         title="Couldn't load alert"
         description={
           extractErrorMessage(alertError) ||
-          "An unknown error occured and we couldn't load the alert details from the server"
+          "An unknown error occurred and we couldn't load the alert details from the server"
         }
         mb={6}
       />

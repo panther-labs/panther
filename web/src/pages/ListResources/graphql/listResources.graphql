@@ -1,0 +1,20 @@
+query ListResources($input: ListResourcesInput) {
+    resources(input: $input) {
+        resources {
+            lastModified
+            type
+            integrationId
+            complianceStatus
+            id
+        }
+        paging {
+            totalPages
+            thisPage
+            totalItems
+        }
+    }
+    integrations(input: { integrationType: "aws-scan" }) {
+        integrationLabel
+        integrationId
+    }
+}

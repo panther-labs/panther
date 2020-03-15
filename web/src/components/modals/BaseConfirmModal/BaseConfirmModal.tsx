@@ -23,7 +23,7 @@ import { SubmitButton } from 'Components/Buttons';
 import useModal from 'Hooks/useModal';
 
 export interface BaseConfirmModalProps {
-  mutation: MutationTuple<boolean, { [key: string]: any }>;
+  mutation: MutationTuple<any, { [key: string]: any }>;
   title: string;
   subtitle: string;
   onSuccessMsg: string;
