@@ -26,9 +26,11 @@ export type ActiveSuppressCount = {
 };
 
 export type AddIntegrationAttributes = {
-  awsAccountId?: Maybe<Scalars['String']>;
+  awsAccountId: Scalars['String'];
   integrationLabel: Scalars['String'];
   integrationType: Scalars['String'];
+  remediationEnabled?: Maybe<Scalars['Boolean']>;
+  cweEnabled?: Maybe<Scalars['Boolean']>;
   s3Buckets?: Maybe<Array<Maybe<Scalars['String']>>>;
   kmsKeys?: Maybe<Array<Maybe<Scalars['String']>>>;
 };

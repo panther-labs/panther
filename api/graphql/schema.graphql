@@ -306,9 +306,11 @@ input AddIntegrationInput {
 }
 
 input AddIntegrationAttributes {
-  awsAccountId: String
+  awsAccountId: String!
   integrationLabel: String!
   integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
+  remediationEnabled: Boolean
+  cweEnabled: Boolean
   s3Buckets: [String]
   kmsKeys: [String]
 }

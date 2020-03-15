@@ -22,7 +22,11 @@ import { SubmitButton } from 'Components/Buttons';
 import { useFormikContext } from 'formik';
 import { CreateInfraSourceValues } from '../CreateComplianceSource';
 
-const SuccessPanel: React.FC = () => {
+interface SuccessPanelProps {
+  errorMessage?: string;
+}
+
+const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
   const { isSubmitting } = useFormikContext<CreateInfraSourceValues>();
   return (
     <Flex
@@ -42,6 +46,9 @@ const SuccessPanel: React.FC = () => {
       <SubmitButton width={350} disabled={isSubmitting} submitting={isSubmitting}>
         Add New Source
       </SubmitButton>
+      <Text size="large" mt={6} color="red300">
+        {errorMessage}
+      </Text>
     </Flex>
   );
 };

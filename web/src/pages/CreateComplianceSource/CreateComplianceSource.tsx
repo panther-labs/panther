@@ -18,7 +18,7 @@
 
 /* eslint-disable react/display-name */
 import React from 'react';
-import { Card, Flex, Alert, Box } from 'pouncejs';
+import { Card, Flex } from 'pouncejs';
 import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -70,8 +70,10 @@ const CreateComplianceSource: React.FC = () => {
           input: {
             integrations: [
               {
-                awsAccountId: values.awsAccountId,
                 integrationLabel: values.integrationLabel,
+                awsAccountId: values.awsAccountId,
+                cweEnabled: values.cweEnabled,
+                remediationEnabled: values.remediationEnabled,
                 integrationType: INTEGRATION_TYPES.AWS_INFRA,
               },
             ],
@@ -82,70 +84,58 @@ const CreateComplianceSource: React.FC = () => {
   );
 
   return (
-    <Box>
-      {error && (
-        <Alert
-          variant="error"
-          title="An error has occurred"
-          description={
-            extractErrorMessage(error) || "We couldn't store your account due to an internal error"
-          }
-          mb={6}
-        />
-      )}
-      <Card p={9}>
-        <Formik<CreateInfraSourceValues>
-          initialValues={initialValues}
-          initialStatus={{ cfnTemplateDownloaded: false }}
-          validationSchema={validationSchema}
-          onSubmit={submitSourceToServer}
-        >
-          {({ isValid, dirty, handleSubmit, status }) => {
-            const shouldEnableNextButton = dirty && isValid;
+    <Card p={9}>
+      <Formik<CreateInfraSourceValues>
+        initialValues={initialValues}
+        initialStatus={{ cfnTemplateDownloaded: false }}
+        validationSchema={validationSchema}
+        onSubmit={submitSourceToServer}
+      >
+        {({ isValid, dirty, handleSubmit, status }) => {
+          const shouldEnableNextButton = dirty && isValid;
 
-            return (
-              <form onSubmit={handleSubmit}>
-                <Flex justifyContent="center" alignItems="center" width={1}>
-                  <Wizard>
-                    <Wizard.Step title="Configure Sourcee" icon="settings">
-                      <WizardPanelWrapper>
-                        <WizardPanelWrapper.Content>
-                          <SourceConfigurationPanel />
-                        </WizardPanelWrapper.Content>
-                        <WizardPanelWrapper.Actions>
-                          <WizardPanelWrapper.ActionNext disabled={!shouldEnableNextButton} />
-                        </WizardPanelWrapper.Actions>
-                      </WizardPanelWrapper>
-                    </Wizard.Step>
-                    <Wizard.Step title="Deploy Stack" icon="upload">
-                      <WizardPanelWrapper>
-                        <WizardPanelWrapper.Content>
-                          <StackDeploymentPanel />
-                        </WizardPanelWrapper.Content>
-                        <WizardPanelWrapper.Actions>
-                          <WizardPanelWrapper.ActionPrev />
-                          <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
-                        </WizardPanelWrapper.Actions>
-                      </WizardPanelWrapper>
-                    </Wizard.Step>
-                    <Wizard.Step title="Done!" icon="check">
-                      <WizardPanelWrapper>
-                        <WizardPanelWrapper.Content>
-                          <SuccessPanel />
-                        </WizardPanelWrapper.Content>
-                        <WizardPanelWrapper.Actions>
-                          <WizardPanelWrapper.ActionPrev />
-                        </WizardPanelWrapper.Actions>
-                      </WizardPanelWrapper>
-                    </Wizard.Step>
-                  </Wizard>
-                </Flex>
-              </form>
-            );
-          }}
-        </Formik>
-      </Card>
-    </Box>
+          return (
+            <form onSubmit={handleSubmit}>
+              <Flex justifyContent="center" alignItems="center" width={1}>
+                <Wizard>
+                  <Wizard.Step title="Configure Sourcee" icon="settings">
+                    <WizardPanelWrapper>
+                      <WizardPanelWrapper.Content>
+                        <SourceConfigurationPanel />
+                      </WizardPanelWrapper.Content>
+                      <WizardPanelWrapper.Actions>
+                        <WizardPanelWrapper.ActionNext disabled={!shouldEnableNextButton} />
+                      </WizardPanelWrapper.Actions>
+                    </WizardPanelWrapper>
+                  </Wizard.Step>
+                  <Wizard.Step title="Deploy Stack" icon="upload">
+                    <WizardPanelWrapper>
+                      <WizardPanelWrapper.Content>
+                        <StackDeploymentPanel />
+                      </WizardPanelWrapper.Content>
+                      <WizardPanelWrapper.Actions>
+                        <WizardPanelWrapper.ActionPrev />
+                        <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
+                      </WizardPanelWrapper.Actions>
+                    </WizardPanelWrapper>
+                  </Wizard.Step>
+                  <Wizard.Step title="Done!" icon="check">
+                    <WizardPanelWrapper>
+                      <WizardPanelWrapper.Content>
+                        <SuccessPanel errorMessage={error && extractErrorMessage(error)} />
+                      </WizardPanelWrapper.Content>
+                      <WizardPanelWrapper.Actions>
+                        <WizardPanelWrapper.ActionPrev />
+                      </WizardPanelWrapper.Actions>
+                    </WizardPanelWrapper>
+                  </Wizard.Step>
+                </Wizard>
+              </Flex>
+            </form>
+          );
+        }}
+      </Formik>
+    </Card>
   );
 };
 
