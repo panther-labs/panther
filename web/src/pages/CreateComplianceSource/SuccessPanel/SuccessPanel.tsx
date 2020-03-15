@@ -19,12 +19,11 @@
 import React from 'react';
 import { Flex, Heading, Text } from 'pouncejs';
 import { SubmitButton } from 'Components/Buttons';
+import { useFormikContext } from 'formik';
+import { CreateInfraSourceValues } from '../CreateComplianceSource';
 
-interface SuccessPanelProps {
-  loading: boolean;
-}
-
-const SuccessPanel: React.FC<SuccessPanelProps> = ({ loading }) => {
+const SuccessPanel: React.FC = () => {
+  const { isSubmitting } = useFormikContext<CreateInfraSourceValues>();
   return (
     <Flex
       justifyContent="center"
@@ -40,7 +39,7 @@ const SuccessPanel: React.FC<SuccessPanelProps> = ({ loading }) => {
       <Text size="large" color="grey300" mb={10}>
         Click the button below to complete the setup!
       </Text>
-      <SubmitButton width={350} disabled={loading} submitting={loading}>
+      <SubmitButton width={350} disabled={isSubmitting} submitting={isSubmitting}>
         Add New Source
       </SubmitButton>
     </Flex>

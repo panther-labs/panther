@@ -59,12 +59,15 @@ const validationSchema = Yup.object().shape({
 
 const CreateLogSource: React.FC = () => {
   const { history } = useRouter();
-  const [addLogSource, { data, loading, error }] = useAddLogSource();
+  const [addLogSource, { error }] = useAddLogSource({
+    refetchQueries: [{ query: ListLogSourcesDocument }],
+    awaitRefetchQueries: true,
+    onCompleted: () => history.push(urls.logAnalysis.sources.list()),
+  });
 
   const submitSourceToServer = React.useCallback(
     (values: CreateLogSourceValues) =>
       addLogSource({
-        awaitRefetchQueries: true,
         variables: {
           input: {
             integrations: [
@@ -75,16 +78,9 @@ const CreateLogSource: React.FC = () => {
             ],
           },
         },
-        refetchQueries: [{ query: ListLogSourcesDocument }],
       }),
     []
   );
-
-  React.useEffect(() => {
-    if (data) {
-      history.push(urls.logAnalysis.sources.list());
-    }
-  });
 
   return (
     <Box>
@@ -135,7 +131,7 @@ const CreateLogSource: React.FC = () => {
                     <Wizard.Step title="Done!" icon="check">
                       <WizardPanelWrapper>
                         <WizardPanelWrapper.Content>
-                          <SuccessPanel loading={loading} />
+                          <SuccessPanel />
                         </WizardPanelWrapper.Content>
                         <WizardPanelWrapper.Actions>
                           <WizardPanelWrapper.ActionPrev />

@@ -34,31 +34,40 @@ import ResourceScanningPanel from './ResourceScanningPanel';
 import SuccessPanel from './SuccessPanel';
 import SourceDetailsPanel from './SourceDetailsPanel';
 
-export interface InfraSourceValues {
+export interface CreateInfraSourceValues {
   awsAccountId: string;
   integrationLabel: string;
+  cweEnabled: boolean;
+  remediationEnabled: boolean;
 }
 
-const validationSchema = Yup.object().shape({
+const validationSchema = Yup.object().shape<CreateInfraSourceValues>({
+  integrationLabel: Yup.string().required(),
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
-  integrationLabel: Yup.string().required(),
+  cweEnabled: Yup.boolean().required(),
+  remediationEnabled: Yup.boolean().required(),
 });
 
 const initialValues = {
   awsAccountId: '',
   integrationLabel: '',
+  cweEnabled: true,
+  remediationEnabled: true,
 };
 
 const CreateComplianceSource: React.FC = () => {
   const { history } = useRouter();
-  const [addInfraSource, { data, loading, error }] = useAddInfraSource();
+  const [addInfraSource, { error }] = useAddInfraSource({
+    onCompleted: () => history.push(urls.compliance.sources.list()),
+    refetchQueries: [{ query: ListInfraSourcesDocument }],
+    awaitRefetchQueries: true,
+  });
 
   const submitSourceToServer = React.useCallback(
-    (values: InfraSourceValues) =>
+    (values: CreateInfraSourceValues) =>
       addInfraSource({
-        awaitRefetchQueries: true,
         variables: {
           input: {
             integrations: [
@@ -70,16 +79,9 @@ const CreateComplianceSource: React.FC = () => {
             ],
           },
         },
-        refetchQueries: [{ query: ListInfraSourcesDocument }],
       }),
     []
   );
-
-  React.useEffect(() => {
-    if (data) {
-      history.push(urls.compliance.sources.list());
-    }
-  });
 
   return (
     <Box>
@@ -94,7 +96,7 @@ const CreateComplianceSource: React.FC = () => {
         />
       )}
       <Card p={9}>
-        <Formik<InfraSourceValues>
+        <Formik<CreateInfraSourceValues>
           initialValues={initialValues}
           validationSchema={validationSchema}
           onSubmit={submitSourceToServer}
@@ -152,7 +154,7 @@ const CreateComplianceSource: React.FC = () => {
                     <Wizard.Step title="Done!" icon="check">
                       <WizardPanelWrapper>
                         <WizardPanelWrapper.Content>
-                          <SuccessPanel loading={loading} />
+                          <SuccessPanel />
                         </WizardPanelWrapper.Content>
                         <WizardPanelWrapper.Actions>
                           <WizardPanelWrapper.ActionPrev />
