@@ -23,8 +23,6 @@ import useRouter from 'Hooks/useRouter';
 import Page404 from 'Pages/404';
 import Page403 from 'Pages/403';
 import Page500 from 'Pages/500';
-import urls from 'Source/urls';
-import { Redirect } from 'react-router-dom';
 import useAuth from 'Hooks/useAuth';
 
 export interface LocationErrorState {
