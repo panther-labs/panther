@@ -25,6 +25,7 @@ import Page403 from 'Pages/403';
 import Page500 from 'Pages/500';
 import urls from 'Source/urls';
 import { Redirect } from 'react-router-dom';
+import useAuth from 'Hooks/useAuth';
 
 export interface LocationErrorState {
   errorType?: string;
@@ -33,6 +34,9 @@ export interface LocationErrorState {
 const ApiErrorFallback: React.FC = ({ children }) => {
   const { location } = useRouter<{}, LocationErrorState>();
   const { showModal, hideModal } = useModal();
+  const { isAuthenticated, signOut } = useAuth();
+
+  const errorCode = location.state?.errorType;
 
   const showNetworkErroModal = React.useCallback(() => {
     showModal({ modal: MODALS.NETWORK_ERROR });
@@ -52,9 +56,15 @@ const ApiErrorFallback: React.FC = ({ children }) => {
     };
   }, []);
 
-  switch (location.state?.errorType) {
-    case '401':
-      return <Redirect to={urls.account.auth.signIn()} />;
+  // Protect against case where the token has expired during the time the user was navigating
+  // and a page refresh hasn't occured
+  React.useEffect(() => {
+    if ((errorCode === '401' || errorCode === 'UnauthorizedException') && isAuthenticated) {
+      signOut();
+    }
+  }, [errorCode]);
+
+  switch (errorCode) {
     case '404':
       return <Page404 />;
     case '403':
