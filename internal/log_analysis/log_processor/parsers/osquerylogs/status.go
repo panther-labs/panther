@@ -36,7 +36,7 @@ type Status struct { // FIXME: field descriptions need updating!
 	Filename          *string                `json:"filename,omitempty" validate:"required" description:"Filename"`
 	HostIdentifier    *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
 	Line              *int                   `json:"line,omitempty,string" validate:"required" description:"Line"`
-	LogType           *string                `json:"logType,omitempty" validate:"required,eq=status" description:"LogType"`
+	LogType           *string                `json:"logType,omitempty"  description:"LogType"`
 	LogUnderscoreType *string                `json:"log_type,omitempty" description:"LogUnderScoreType"`
 	Message           *string                `json:"message,omitempty" description:"Message"`
 	Severity          *int                   `json:"severity,omitempty,string" validate:"required" description:"Severity"`

@@ -58,6 +58,34 @@ func TestStatusLog(t *testing.T) {
 	checkOsQueryStatusLog(t, log, expectedEvent)
 }
 
+func TestStatusLogNoLogType(t *testing.T) {
+	//nolint:lll
+	log := `{"hostIdentifier":"jaguar.local","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","unixTime":"1535731040","severity":"0","filename":"tls.cpp","line":"253","message":"TLS/HTTPS POST request to URI: https://fleet.runpanther.tools:443/api/v1/osquery/log","version":"4.1.2","decorations":{"host_uuid":"97D8254F-7D98-56AE-91DB-924545EFXXXX","hostname":"jaguar.local"}}`
+
+	expectedTime := time.Unix(1541398106, 0).UTC()
+	expectedEvent := &Status{
+		HostIdentifier: aws.String("jaguar.local"),
+		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
+		UnixTime:       aws.Int(1535731040),
+		Severity:       aws.Int(0),
+		Filename:       aws.String("tls.cpp"),
+		Line:           aws.Int(253),
+		Message:        aws.String("TLS/HTTPS POST request to URI: https://fleet.runpanther.tools:443/api/v1/osquery/log"),
+		Version:        aws.String("4.1.2"),
+		Decorations: map[string]string{
+			"host_uuid": "97D8254F-7D98-56AE-91DB-924545EFXXXX",
+			"hostname":  "jaguar.local",
+		},
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Osquery.Status")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyDomainNames("jaguar.local")
+
+	checkOsQueryStatusLog(t, log, expectedEvent)
+}
+
 func TestOsQueryStatusLogType(t *testing.T) {
 	parser := &StatusParser{}
 	require.Equal(t, "Osquery.Status", parser.LogType())
