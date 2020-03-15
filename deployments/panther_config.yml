@@ -34,6 +34,23 @@ OnboardingParameterValues:
 
 # CloudFormation parameter overrides for the backend.yml which deploys the backend stack.
 BackendParameterValues:
+  # Log processor lambda size
+  #
+  # Lambda functions scale memory and CPU together.
+  # Those with the smallest memory are slower and cheaper.
+  # Those with the larger memory are faster and more expensive.
+  # If cost is more of a concern compared to performance, choose
+  # a small memory size, however, for extremely large log volumes
+  # the larger sizes may be required. The relative speed of each
+  # size is below (as measured during benchmarks against
+  # the smallest size we allow).
+  #
+  LogProcessorLambdaMemorySize: 512 # 1.0
+  # LogProcessorLambdaMemorySize: 1024   # 2.2 X faster
+  # LogProcessorLambdaMemorySize: 1536   # 3.5 X faster
+  # LogProcessorLambdaMemorySize: 2048   # 4.3 X faster
+  # LogProcessorLambdaMemorySize: 3008   # 6.2 X faster
+
   # Retention period for all Panther CloudWatch log groups.
   CloudWatchLogRetentionDays: 365
 

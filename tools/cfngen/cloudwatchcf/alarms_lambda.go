@@ -20,6 +20,7 @@ package cloudwatchcf
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type LambdaAlarm struct {
@@ -81,7 +82,18 @@ func generateLambdaAlarms(resource map[interface{}]interface{}, config *Config) 
 
 	// high water mark memory warning from metric filter
 	const memorySizeKey = "MemorySize"
-	lambdaMem := getResourceFloat32Property(memorySizeKey, resource)
+	var lambdaMem float32
+	// special case (ugly hack) for panther-log-processor because it uses !Ref to allow user to set size
+	const pantherLogProcessorLambda = "panther-log-processor"
+	if getResourceProperty("FunctionName", resource) == pantherLogProcessorLambda {
+		logProcessorMemory, err := strconv.ParseFloat(config.stackOutputs["LogProcessorLambdaMemorySize"], 32)
+		if err != nil {
+			panic("Cannot find MemeorySize for " + pantherLogProcessorLambda)
+		}
+		lambdaMem = (float32)(logProcessorMemory)
+	} else {
+		lambdaMem = getResourceFloat32Property(memorySizeKey, resource)
+	}
 	const highMemThreshold float32 = 0.9
 	highMemMessage := fmt.Sprintf("is using more than %d%% of available memory (%dMB)", (int)(highMemThreshold*100.0), (int)(lambdaMem))
 	// NOTE: it is important to not set units because the metric filter values have no units

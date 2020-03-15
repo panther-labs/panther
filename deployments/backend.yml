@@ -39,6 +39,10 @@ Parameters:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to every function
     Default: ''
+  LogProcessorLambdaMemorySize:
+    Type: Number
+    Description: Size of lambda for log processor
+    Default: 512
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation
@@ -367,6 +371,7 @@ Resources:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
         TracingMode: !Ref TracingMode
         SnsTopicArn: !Ref ProcessedDataNotifications
         ProcessedDataBucket: !Ref ProcessedData
@@ -451,6 +456,9 @@ Outputs:
   LoadBalancerUrl:
     Description: Panther URL (application load balancer)
     Value: !GetAtt WebApplicationLoadBalancer.Outputs.LoadBalancerUrl
+  LogProcessorLambdaMemorySize:
+    Description: Size of lambda for log processor
+    Value: !Ref LogProcessorLambdaMemorySize
   ProcessedDataBucket:
     Description: Bucket where log processing writes data
     Value: !Ref ProcessedData
