@@ -18,34 +18,22 @@
 
 import { Heading, SideSheet, useSnackbar } from 'pouncejs';
 import React from 'react';
-import { useMutation, gql } from '@apollo/client';
-import { LIST_INFRA_SOURCES } from 'Pages/ListComplianceSources';
-import { LIST_LOG_SOURCES } from 'Pages/ListLogSources';
+import { ListInfraSourcesDocument } from 'Pages/ListComplianceSources';
+import { ListLogSourcesDocument } from 'Pages/ListLogSources';
 import useSidesheet from 'Hooks/useSidesheet';
-import { Integration, UpdateIntegrationInput } from 'Generated/schema';
+import { Integration } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import { INTEGRATION_TYPES } from 'Source/constants';
 import UpdateSourceForm, { UpdateSourceFormValues } from 'Components/forms/UpdateSourceForm';
-
-const UPDATE_SOURCE = gql`
-  mutation UpdateSource($input: UpdateIntegrationInput!) {
-    updateIntegration(input: $input)
-  }
-`;
+import { useUpdateSource } from './graphql/updateSource.generated';
 
 export interface UpdateSourceSidesheetProps {
   source: Integration;
 }
 
-interface ApolloMutationInput {
-  input: UpdateIntegrationInput;
-}
-
 export const UpdateAwsSourcesSidesheet: React.FC<UpdateSourceSidesheetProps> = ({ source }) => {
   const isInfraSource = source.integrationType === INTEGRATION_TYPES.AWS_INFRA;
-  const [updateSource, { data, error }] = useMutation<Integration, ApolloMutationInput>(
-    UPDATE_SOURCE
-  );
+  const [updateSource, { data, error }] = useUpdateSource();
   const { pushSnackbar } = useSnackbar();
   const { hideSidesheet } = useSidesheet();
 
@@ -74,7 +62,9 @@ export const UpdateAwsSourcesSidesheet: React.FC<UpdateSourceSidesheetProps> = (
           integrationId: source.integrationId,
         },
       },
-      refetchQueries: [{ query: isInfraSource ? LIST_INFRA_SOURCES : LIST_LOG_SOURCES }],
+      refetchQueries: [
+        { query: isInfraSource ? ListInfraSourcesDocument : ListLogSourcesDocument },
+      ],
     });
 
   return (

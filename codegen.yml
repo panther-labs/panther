@@ -12,6 +12,23 @@ generates:
         AWSTimestamp: number
         AWSDateTime: string
         AWSJSON: string
+  web/src/:
+    documents: web/**/*.graphql
+    preset: near-operation-file
+    presetConfig:
+      baseTypesPath: ../__generated__/schema.tsx
+    plugins:
+      - typescript-operations:
+      - typescript-react-apollo:
+      - add: /* eslint-disable import/order, import/no-duplicates */
+    config:
+      apolloReactHooksImportFrom: @apollo/client
+      apolloReactCommonImportFrom: @apollo/client
+      withComponent: false
+      withHOC: false
+      withHooks: true
+      skipTypename: true
+      omitOperationSuffix: true
 hooks:
   afterAllFileWrite:
     - prettier --write

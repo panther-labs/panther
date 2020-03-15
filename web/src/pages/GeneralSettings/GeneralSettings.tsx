@@ -18,45 +18,13 @@
 
 import React from 'react';
 import { Alert, Box, useSnackbar, Text, Flex } from 'pouncejs';
-import { useQuery, gql, useMutation } from '@apollo/client';
-import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/CompanyInformationForm';
 import Panel from 'Components/Panel';
+import { useGetGeneralSettings } from './graphql/getGeneralSettings.generated';
+import { useUpdateGeneralSettings } from './graphql/updateGeneralSettings.generated';
 import GeneralSettingsPageSkeleton from './Skeleton';
-
-export const GET_GENERAL_SETTINGS = gql`
-  query GetGeneralSettings {
-    generalSettings {
-      displayName
-      email
-      errorReportingConsent
-    }
-  }
-`;
-
-const UPDATE_GENERAL_SETTINGS = gql`
-  mutation UpdateGeneralSettings($input: UpdateGeneralSettingsInput!) {
-    updateGeneralSettings(input: $input) {
-      displayName
-      email
-      errorReportingConsent
-    }
-  }
-`;
-
-interface ApolloMutationInput {
-  input: UpdateGeneralSettingsInput;
-}
-
-interface ApolloMutationData {
-  updateGeneralSettings: Pick<GeneralSettings, 'displayName' | 'email' | 'errorReportingConsent'>;
-}
-
-interface ApolloQueryData {
-  generalSettings: GeneralSettings;
-}
 
 // Parent container for the general settings section
 const GeneralSettingsContainer: React.FC = () => {
@@ -66,12 +34,12 @@ const GeneralSettingsContainer: React.FC = () => {
     loading: getGeneralSettingsLoading,
     error: getGeneralSettingsError,
     data: getGeneralSettingsData,
-  } = useQuery<ApolloQueryData>(GET_GENERAL_SETTINGS);
+  } = useGetGeneralSettings();
 
   const [
     updateGeneralSettings,
     { error: updateGeneralSettingsError, data: updateGeneralSettingsData },
-  ] = useMutation<ApolloMutationData, ApolloMutationInput>(UPDATE_GENERAL_SETTINGS);
+  ] = useUpdateGeneralSettings();
 
   React.useEffect(() => {
     if (updateGeneralSettingsData) {

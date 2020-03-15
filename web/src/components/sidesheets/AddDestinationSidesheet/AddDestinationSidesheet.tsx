@@ -18,16 +18,10 @@
 
 import { Alert, Box, Flex, Heading, Icon, IconButton, SideSheet, useSnackbar } from 'pouncejs';
 import React from 'react';
-import { gql, useMutation } from '@apollo/client';
 
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import {
-  Destination,
-  DestinationConfigInput,
-  DestinationInput,
-  DestinationTypeEnum,
-} from 'Generated/schema';
+import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
@@ -40,67 +34,12 @@ import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
 import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
 
-import { LIST_DESTINATIONS, ListDestinationsQueryData } from 'Pages/Destinations';
+import { ListDestinationsAndDefaultsDocument, ListDestinationsQueryData } from 'Pages/Destinations';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
-
-const ADD_DESTINATION = gql`
-  mutation AddDestination($input: DestinationInput!) {
-    addDestination(input: $input) {
-      createdBy
-      creationTime
-      displayName
-      lastModifiedBy
-      lastModifiedTime
-      outputId
-      outputType
-      outputConfig {
-        slack {
-          webhookURL
-        }
-        sns {
-          topicArn
-        }
-        pagerDuty {
-          integrationKey
-        }
-        github {
-          repoName
-          token
-        }
-        jira {
-          orgDomain
-          projectKey
-          userName
-          apiKey
-          assigneeId
-          issueType
-        }
-        opsgenie {
-          apiKey
-        }
-        msTeams {
-          webhookURL
-        }
-        sqs {
-          queueUrl
-        }
-        asana {
-          personalAccessToken
-          projectGids
-        }
-      }
-      verificationStatus
-      defaultForSeverity
-    }
-  }
-`;
+import { useAddDestination } from './graphql/addDestination.generated';
 
 interface DestinationMutationData {
   addDestination: Destination;
-}
-
-interface DestinationMutationInput {
-  input: DestinationInput;
 }
 
 export interface AddDestinationSidesheetProps {
@@ -112,10 +51,10 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   const { hideSidesheet, showSidesheet } = useSidesheet();
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
-  const [addDestination, { data: addDestinationData, error: addDestinationError }] = useMutation<
-    DestinationMutationData,
-    DestinationMutationInput
-  >(ADD_DESTINATION);
+  const [
+    addDestination,
+    { data: addDestinationData, error: addDestinationError },
+  ] = useAddDestination();
 
   React.useEffect(() => {
     if (addDestinationData) {
@@ -147,15 +86,15 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
             outputConfig,
           },
         },
-        update: (proxy, { data }: { data: DestinationMutationData }) => {
+        update: (proxy, { data }) => {
           // Read the data from our cache for this query.
           const existingData: ListDestinationsQueryData = proxy.readQuery({
-            query: LIST_DESTINATIONS,
+            query: ListDestinationsAndDefaultsDocument,
           });
 
           // Write our data back to the cache with the new comment in it
           proxy.writeQuery({
-            query: LIST_DESTINATIONS,
+            query: ListDestinationsAndDefaultsDocument,
             data: {
               ...existingData,
               destinations: [data.addDestination, ...existingData.destinations],

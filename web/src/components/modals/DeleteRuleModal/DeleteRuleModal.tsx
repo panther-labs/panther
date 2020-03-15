@@ -17,21 +17,14 @@
  */
 
 import React from 'react';
-import { DeletePolicyInput, RuleSummary, RuleDetails } from 'Generated/schema';
-
-import { useMutation, gql } from '@apollo/client';
+import { RuleSummary, RuleDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import { LIST_RULES } from 'Pages/ListRules';
+import { ListRulesDocument } from 'Pages/ListRules';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-
 // Delete Rule and Delete Policy uses the same endpoint
-const DELETE_RULE = gql`
-  mutation DeletePolicy($input: DeletePolicyInput!) {
-    deletePolicy(input: $input)
-  }
-`;
+import { useDeletePolicy } from '../DeletePolicyModal/graphql/deletePolicy.generated';
 
 export interface DeleteRuleModalProps {
   rule: RuleDetails | RuleSummary;
@@ -40,9 +33,9 @@ export interface DeleteRuleModalProps {
 const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const ruleDisplayName = rule.displayName || rule.id;
-  const mutation = useMutation<boolean, { input: DeletePolicyInput }>(DELETE_RULE, {
+  const mutation = useDeletePolicy({
     awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(LIST_RULES)],
+    refetchQueries: [getOperationName(ListRulesDocument)],
     variables: {
       input: {
         policies: [

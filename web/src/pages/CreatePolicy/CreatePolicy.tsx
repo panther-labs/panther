@@ -21,15 +21,15 @@ import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/PolicyForm';
-import { GetPolicyInput, PolicyDetails, ResourceDetails } from 'Generated/schema';
-import { useMutation, gql } from '@apollo/client';
+import { PolicyDetails } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
-import useCreateRule from 'Hooks/useCreateRule';
-import { LIST_POLICIES } from 'Pages/ListPolicies';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
+import { ListPoliciesDocument } from 'Pages/ListPolicies';
+import useRouter from 'Hooks/useRouter';
+import { useCreatePolicy } from './graphql/createPolicy.generated';
 
-const initialValues: PolicyDetails = {
+export const initialValues: PolicyDetails = {
   autoRemediationId: '',
   autoRemediationParameters: '{}',
   description: '',
@@ -46,49 +46,17 @@ const initialValues: PolicyDetails = {
   tests: [],
 };
 
-const CREATE_POLICY = gql`
-  mutation CreatePolicy($input: CreateOrModifyPolicyInput!) {
-    addPolicy(input: $input) {
-      autoRemediationId
-      autoRemediationParameters
-      description
-      displayName
-      enabled
-      suppressions
-      id
-      reference
-      resourceTypes
-      runbook
-      severity
-      tags
-      body
-      tests {
-        expectedResult
-        name
-        resource
-        resourceType
-      }
-    }
-  }
-`;
-
-interface ApolloMutationData {
-  addPolicy: ResourceDetails;
-}
-
-interface ApolloMutationInput {
-  input: GetPolicyInput;
-}
-
-const EditPolicyPage: React.FC = () => {
-  const mutation = useMutation<ApolloMutationData, ApolloMutationInput>(CREATE_POLICY, {
-    refetchQueries: [getOperationName(LIST_POLICIES)],
+const CreatePolicyPage: React.FC = () => {
+  const { history } = useRouter();
+  const [createPolicy, { error }] = useCreatePolicy({
+    refetchQueries: [getOperationName(ListPoliciesDocument)],
+    onCompleted: data => history.push(urls.compliance.policies.details(data.addPolicy.id)),
   });
 
-  const { handleSubmit, error } = useCreateRule<ApolloMutationData>({
-    mutation,
-    getRedirectUri: data => urls.compliance.policies.details(data.addPolicy.id),
-  });
+  const handleSubmit = React.useCallback(
+    values => createPolicy({ variables: { input: values } }),
+    []
+  );
 
   return (
     <Box mb={6}>
@@ -110,4 +78,4 @@ const EditPolicyPage: React.FC = () => {
   );
 };
 
-export default EditPolicyPage;
+export default CreatePolicyPage;

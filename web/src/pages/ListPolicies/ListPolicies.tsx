@@ -19,14 +19,8 @@
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-import { useQuery, gql } from '@apollo/client';
 import { convertObjArrayValuesToCsv, extractErrorMessage } from 'Helpers/utils';
-import {
-  ListPoliciesInput,
-  ListPoliciesResponse,
-  SortDirEnum,
-  ListPoliciesSortFieldsEnum,
-} from 'Generated/schema';
+import { ListPoliciesInput, SortDirEnum, ListPoliciesSortFieldsEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -35,34 +29,7 @@ import ListPoliciesTable from './ListPoliciesTable';
 import ListPoliciesActions from './ListPoliciesActions';
 import ListPoliciesPageSkeleton from './Skeleton';
 import ListPoliciesPageEmptyDataFallback from './EmptyDataFallback';
-
-export const LIST_POLICIES = gql`
-  query ListPolicies($input: ListPoliciesInput) {
-    policies(input: $input) {
-      policies {
-        complianceStatus
-        lastModified
-        resourceTypes
-        severity
-        id
-        displayName
-        enabled
-      }
-      paging {
-        totalPages
-        thisPage
-        totalItems
-      }
-    }
-  }
-`;
-
-interface ApolloData {
-  policies: ListPoliciesResponse;
-}
-interface ApolloVariables {
-  input: ListPoliciesInput;
-}
+import { useListPolicies } from './graphql/listPolicies.generated';
 
 const ListPolicies = () => {
   const {
@@ -71,7 +38,7 @@ const ListPolicies = () => {
     updatePagingParams,
   } = useRequestParamsWithPagination<ListPoliciesInput>();
 
-  const { loading, error, data } = useQuery<ApolloData, ApolloVariables>(LIST_POLICIES, {
+  const { loading, error, data } = useListPolicies({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: convertObjArrayValuesToCsv(requestParams),

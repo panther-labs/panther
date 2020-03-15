@@ -1,0 +1,3 @@
+mutation DeleteSource($id: ID!) {
+    deleteIntegration(id: $id)
+}

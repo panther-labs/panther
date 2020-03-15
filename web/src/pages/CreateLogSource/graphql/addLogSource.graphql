@@ -1,0 +1,5 @@
+mutation AddLogSource($input: AddIntegrationInput!) {
+    addIntegration(input: $input) {
+        integrationId
+    }
+}

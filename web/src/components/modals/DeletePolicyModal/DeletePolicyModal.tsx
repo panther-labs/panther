@@ -17,20 +17,13 @@
  */
 
 import React from 'react';
-import { LIST_POLICIES } from 'Pages/ListPolicies';
-import { DeletePolicyInput, PolicySummary, PolicyDetails } from 'Generated/schema';
-
-import { useMutation, gql } from '@apollo/client';
+import { ListPoliciesDocument } from 'Pages/ListPolicies';
+import { PolicySummary, PolicyDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-
-const DELETE_POLICY = gql`
-  mutation DeletePolicy($input: DeletePolicyInput!) {
-    deletePolicy(input: $input)
-  }
-`;
+import { useDeletePolicy } from './graphql/deletePolicy.generated';
 
 export interface DeletePolicyModalProps {
   policy: PolicyDetails | PolicySummary;
@@ -39,9 +32,9 @@ export interface DeletePolicyModalProps {
 const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const policyDisplayName = policy.displayName || policy.id;
-  const mutation = useMutation<boolean, { input: DeletePolicyInput }>(DELETE_POLICY, {
+  const mutation = useDeletePolicy({
     awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(LIST_POLICIES)],
+    refetchQueries: [getOperationName(ListPoliciesDocument)],
     variables: {
       input: {
         policies: [
