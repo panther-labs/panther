@@ -203,7 +203,7 @@ func TestS3ServerAccessLogType(t *testing.T) {
 }
 
 func checkS3AccessLog(t *testing.T, log string, expectedEvent *S3ServerAccess) {
-	parser := &S3ServerAccessParser{}
+	parser := (&S3ServerAccessParser{}).New() // important to call New() to initialize reader
 	events := parser.Parse(log)
 	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
 }

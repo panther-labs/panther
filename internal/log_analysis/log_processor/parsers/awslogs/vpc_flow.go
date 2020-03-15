@@ -19,7 +19,6 @@ package awslogs
  */
 
 import (
-	"encoding/csv"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,6 +26,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -65,11 +65,17 @@ type VPCFlow struct { // NOTE: since fields are customizable by users, the only 
 
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type VPCFlowParser struct {
+	CSVReader *csvstream.StreamingCSVReader
 	columnMap map[int]string // column position to header name
 }
 
 func (p *VPCFlowParser) New() parsers.LogParser {
-	return &VPCFlowParser{}
+	reader := csvstream.NewStreamingCSVReader()
+	// non-default settings
+	reader.CVSReader.Comma = ' '
+	return &VPCFlowParser{
+		CSVReader: reader,
+	}
 }
 
 const (
@@ -135,16 +141,13 @@ func (p *VPCFlowParser) Parse(log string) []*parsers.PantherLog {
 		return nil
 	}
 
-	reader := csv.NewReader(strings.NewReader(log))
-	reader.Comma = ' '
-
-	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
+	record, err := p.CSVReader.Parse(log)
+	if err != nil {
 		zap.L().Debug("failed to parse the log as csv")
 		return nil
 	}
 
-	event := p.populateEvent(records[0]) // parser should only receive 1 line at a time
+	event := p.populateEvent(record) // parser should only receive 1 line at a time
 
 	event.updatePantherFields(p)
 
