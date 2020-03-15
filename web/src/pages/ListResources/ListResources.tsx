@@ -18,16 +18,9 @@
 
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
-import { DEFAULT_LARGE_PAGE_SIZE, INTEGRATION_TYPES } from 'Source/constants';
-import {
-  Integration,
-  ListResourcesInput,
-  ListResourcesResponse,
-  ListResourcesSortFieldsEnum,
-  SortDirEnum,
-} from 'Generated/schema';
+import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import { ListResourcesInput, ListResourcesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
-import { useQuery, gql } from '@apollo/client';
 import {
   convertObjArrayValuesToCsv,
   extendResourceWithIntegrationLabel,
@@ -40,38 +33,7 @@ import ListResourcesActions from './ListResourcesActions';
 import ListResourcesTable from './ListResourcesTable';
 import ListResourcesPageEmptyDataFallback from './EmptyDataFallback';
 import ListResourcesPageSkeleton from './Skeleton';
-
-const LIST_RESOURCES = gql`
-    query ListResources($input: ListResourcesInput) {
-        resources(input: $input) {
-            resources {
-                lastModified
-                type
-                integrationId
-                complianceStatus
-                id
-            }
-            paging {
-                totalPages
-                thisPage
-                totalItems
-            }
-        }
-        integrations(input: { integrationType: "${INTEGRATION_TYPES.AWS_INFRA}" }) {
-            integrationLabel
-            integrationId
-        }
-    }
-`;
-
-interface ApolloData {
-  resources: ListResourcesResponse;
-  integrations: Integration[];
-}
-
-interface ApolloVariables {
-  input: ListResourcesInput;
-}
+import { useListResources } from './graphql/listResources.generated';
 
 const ListResources = () => {
   const {
@@ -80,13 +42,12 @@ const ListResources = () => {
     updatePagingParams,
   } = useRequestParamsWithPagination<ListResourcesInput>();
 
-  const { loading, error, data } = useQuery<ApolloData, ApolloVariables>(LIST_RESOURCES, {
+  const { loading, data, error } = useListResources({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: convertObjArrayValuesToCsv(requestParams),
     },
   });
-
   if (loading && !data) {
     return <ListResourcesPageSkeleton />;
   }

@@ -19,72 +19,20 @@
 import React from 'react';
 import { Alert, Box, Card, Flex, Table } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { gql, useQuery } from '@apollo/client';
 import { Destination } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
+import { useListDestinationsAndDefaults } from './graphql/listDestinationsAndDefaults.generated';
 import columns from './columns';
 import DestinationsPageSkeleton from './Skeleton';
 import DestinationsPageEmptyDataFallback from './EmptyDataFallback';
 import DestinationCreateButton from './CreateButton';
-
-export const LIST_DESTINATIONS = gql`
-  query ListDestinationsAndDefaults {
-    destinations {
-      createdBy
-      creationTime
-      displayName
-      lastModifiedBy
-      lastModifiedTime
-      outputId
-      outputType
-      outputConfig {
-        slack {
-          webhookURL
-        }
-        sns {
-          topicArn
-        }
-        pagerDuty {
-          integrationKey
-        }
-        github {
-          repoName
-          token
-        }
-        jira {
-          orgDomain
-          projectKey
-          userName
-          apiKey
-          assigneeId
-          issueType
-        }
-        opsgenie {
-          apiKey
-        }
-        msTeams {
-          webhookURL
-        }
-        sqs {
-          queueUrl
-        }
-        asana {
-          personalAccessToken
-          projectGids
-        }
-      }
-      verificationStatus
-      defaultForSeverity
-    }
-  }
-`;
 
 export interface ListDestinationsQueryData {
   destinations: Destination[];
 }
 
 const ListDestinations = () => {
-  const { loading, error, data } = useQuery<ListDestinationsQueryData>(LIST_DESTINATIONS, {
+  const { loading, error, data } = useListDestinationsAndDefaults({
     fetchPolicy: 'cache-and-network',
   });
 

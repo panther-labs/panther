@@ -18,3 +18,4 @@
 
 export { default } from './ListComplianceSources';
 export * from './ComplianceSourceTable';
+export * from './ComplianceSourceTable/graphql/listInfraSources.generated';

@@ -1,0 +1,21 @@
+query RuleDetails($ruleDetailsInput: GetRuleInput!, $alertsForRuleInput: ListAlertsInput!) {
+    rule(input: $ruleDetailsInput) {
+        createdAt
+        description
+        displayName
+        enabled
+        id
+        lastModified
+        reference
+        logTypes
+        runbook
+        severity
+        tags
+    }
+    alerts(input: $alertsForRuleInput) {
+        alertSummaries {
+            alertId
+            creationTime
+        }
+    }
+}

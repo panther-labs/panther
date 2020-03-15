@@ -1,0 +1,3 @@
+mutation SuppressPolicy($input: SuppressPoliciesInput!) {
+    suppressPolicies(input: $input)
+}
