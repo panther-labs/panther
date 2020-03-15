@@ -17,7 +17,8 @@
  */
 
 import { ApolloClient, ApolloLink, createHttpLink, InMemoryCache } from '@apollo/client';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { getOperationName, getMainDefinition } from '@apollo/client/utilities/graphql/getFromAST';
+import { OperationDefinitionNode } from 'graphql';
 import { History } from 'history';
 import { createAuthLink, AUTH_TYPE } from 'aws-appsync-auth-link';
 import { ErrorResponse, onError } from 'apollo-link-error';
@@ -28,6 +29,21 @@ import { logError } from 'Helpers/loggers';
 import { RuleTeaserDocument } from 'Pages/AlertDetails';
 import Storage from 'Helpers/storage';
 import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
+
+/**
+ * A link to strip `__typename` from mutations params. Useful when you extend the same values you
+ * received from a query, and submit them as variables to a mutation
+ * https://github.com/apollographql/apollo-client/issues/1913#issuecomment-425281027
+ */
+const cleanParamsLink = new ApolloLink((operation, forward) => {
+  const def = getMainDefinition(operation.query) as OperationDefinitionNode;
+  if (def && def.operation === 'mutation') {
+    const omitTypename = (key, value) => (key === '__typename' ? undefined : value);
+    // eslint-disable-next-line no-param-reassign
+    operation.variables = JSON.parse(JSON.stringify(operation.variables), omitTypename);
+  }
+  return forward(operation);
+});
 
 /**
  * A link to react to GraphQL and/or network errors
@@ -85,7 +101,7 @@ const authLink = (createAuthLink({
  */
 const createApolloClient = (history: History<LocationErrorState>) =>
   new ApolloClient({
-    link: ApolloLink.from([createErrorLink(history), authLink, httpLink]),
+    link: ApolloLink.from([cleanParamsLink, createErrorLink(history), authLink, httpLink]),
     cache: new InMemoryCache({
       typePolicies: {
         Destination: {

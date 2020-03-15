@@ -19,7 +19,7 @@
 import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Button, Card, Box, useSnackbar } from 'pouncejs';
-import RuleForm from 'Components/forms/RuleForm';
+import RuleForm, { ruleEditableFields } from 'Components/forms/RuleForm';
 import { PolicyDetails } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
@@ -27,7 +27,6 @@ import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/Modal';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import pick from 'lodash-es/pick';
-import { policyEditableFields } from 'Components/forms/PolicyForm';
 import { initialValues as createRuleInitialValues } from 'Pages/CreateRule';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useUpdateRule } from './graphql/updateRule.generated';
@@ -63,7 +62,7 @@ const EditRulePage: React.FC = () => {
     if (queryData) {
       const { tests, ...otherInitialValues } = pick(
         queryData.rule,
-        policyEditableFields
+        ruleEditableFields
       ) as PolicyDetails;
 
       // format any JSON returned from the server simply because we are going to display it
