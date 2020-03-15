@@ -215,6 +215,15 @@ export type GetAlertInput = {
   eventsExclusiveStartKey?: Maybe<Scalars['String']>;
 };
 
+export type GetIntegrationTemplateInput = {
+  awsAccountId: Scalars['String'];
+  integrationType: Scalars['String'];
+  remediationEnabled?: Maybe<Scalars['Boolean']>;
+  cweEnabled?: Maybe<Scalars['Boolean']>;
+  s3Buckets?: Maybe<Array<Maybe<Scalars['String']>>>;
+  kmsKeys?: Maybe<Array<Maybe<Scalars['String']>>>;
+};
+
 export type GetPolicyInput = {
   policyId: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
@@ -266,6 +275,11 @@ export type IntegrationConfig = {
 
 export type IntegrationConfigInput = {
   awsRoleArn?: Maybe<Scalars['String']>;
+};
+
+export type IntegrationTemplate = {
+  __typename?: 'IntegrationTemplate';
+  body: Scalars['String'];
 };
 
 export type InviteUserInput = {
@@ -659,6 +673,7 @@ export type Query = {
   destination?: Maybe<Destination>;
   destinations?: Maybe<Array<Maybe<Destination>>>;
   generalSettings: GeneralSettings;
+  getIntegrationTemplate: IntegrationTemplate;
   remediations?: Maybe<Scalars['AWSJSON']>;
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
@@ -683,6 +698,10 @@ export type QueryAlertsArgs = {
 
 export type QueryDestinationArgs = {
   id: Scalars['ID'];
+};
+
+export type QueryGetIntegrationTemplateArgs = {
+  input: GetIntegrationTemplateInput;
 };
 
 export type QueryResourceArgs = {
@@ -1025,6 +1044,8 @@ export type ResolversTypes = {
   SeverityEnum: SeverityEnum;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  GetIntegrationTemplateInput: GetIntegrationTemplateInput;
+  IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResolverTypeWrapper<ResourceDetails>;
   AccountTypeEnum: AccountTypeEnum;
@@ -1130,6 +1151,8 @@ export type ResolversParentTypes = {
   SeverityEnum: SeverityEnum;
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
+  GetIntegrationTemplateInput: GetIntegrationTemplateInput;
+  IntegrationTemplate: IntegrationTemplate;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResourceDetails;
   AccountTypeEnum: AccountTypeEnum;
@@ -1382,6 +1405,14 @@ export type IntegrationConfigResolvers<
   ParentType extends ResolversParentTypes['IntegrationConfig'] = ResolversParentTypes['IntegrationConfig']
 > = {
   awsRoleArn?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type IntegrationTemplateResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['IntegrationTemplate'] = ResolversParentTypes['IntegrationTemplate']
+> = {
+  body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1768,6 +1799,12 @@ export type QueryResolvers<
     ContextType
   >;
   generalSettings?: Resolver<ResolversTypes['GeneralSettings'], ParentType, ContextType>;
+  getIntegrationTemplate?: Resolver<
+    ResolversTypes['IntegrationTemplate'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetIntegrationTemplateArgs, 'input'>
+  >;
   remediations?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   resource?: Resolver<
     Maybe<ResolversTypes['ResourceDetails']>,
@@ -2015,6 +2052,7 @@ export type Resolvers<ContextType = any> = {
   GithubConfig?: GithubConfigResolvers<ContextType>;
   Integration?: IntegrationResolvers<ContextType>;
   IntegrationConfig?: IntegrationConfigResolvers<ContextType>;
+  IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
   InviteUserResponse?: InviteUserResponseResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;
   ListAlertsResponse?: ListAlertsResponseResolvers<ContextType>;

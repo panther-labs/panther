@@ -1,12 +1,11 @@
 ---
 description: >-
   In this page, you will learn how to configure real-time event feed into
-  Panther.
+  Panther, to monitor all AWS resource changes in real-time, Panther utilizes CloudWatch Events.
 ---
 
 # Real-Time Events
 
-To monitor all AWS resource changes in real-time, Panther utilizes CloudWatch Events.
 
 ## Prerequisites
 

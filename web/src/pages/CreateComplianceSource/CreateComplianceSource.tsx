@@ -26,13 +26,11 @@ import { ListInfraSourcesDocument } from 'Pages/ListComplianceSources';
 import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { Wizard, WizardPanelWrapper, WizardStep } from 'Components/Wizard';
+import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { useAddInfraSource } from './graphql/addInfraSource.generated';
-import RemediationPanel from './RemediationPanel';
-import RealTimeEventPanel from './RealTimeEventPanel';
-import ResourceScanningPanel from './ResourceScanningPanel';
+import StackDeploymentPanel from './StackDeploymentPanel';
 import SuccessPanel from './SuccessPanel';
-import SourceDetailsPanel from './SourceDetailsPanel';
+import SourceConfigurationPanel from './SourceConfigurationPanel';
 
 export interface CreateInfraSourceValues {
   awsAccountId: string;
@@ -108,42 +106,20 @@ const CreateComplianceSource: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 <Flex justifyContent="center" alignItems="center" width={1}>
                   <Wizard>
-                    <Wizard.Step title="Account Details" icon="add">
+                    <Wizard.Step title="Configure Sourcee" icon="settings">
                       <WizardPanelWrapper>
                         <WizardPanelWrapper.Content>
-                          <SourceDetailsPanel />
+                          <SourceConfigurationPanel />
                         </WizardPanelWrapper.Content>
                         <WizardPanelWrapper.Actions>
                           <WizardPanelWrapper.ActionNext disabled={!shouldEnableNextButton} />
                         </WizardPanelWrapper.Actions>
                       </WizardPanelWrapper>
                     </Wizard.Step>
-                    <Wizard.Step title="Scanning" icon="search">
+                    <Wizard.Step title="Deploy Stack" icon="upload">
                       <WizardPanelWrapper>
                         <WizardPanelWrapper.Content>
-                          <ResourceScanningPanel />
-                        </WizardPanelWrapper.Content>
-                        <WizardPanelWrapper.Actions>
-                          <WizardPanelWrapper.ActionPrev />
-                          <WizardPanelWrapper.ActionNext />
-                        </WizardPanelWrapper.Actions>
-                      </WizardPanelWrapper>
-                    </Wizard.Step>
-                    <WizardStep title="Real Time" icon="sync">
-                      <WizardPanelWrapper>
-                        <WizardPanelWrapper.Content>
-                          <RealTimeEventPanel />
-                        </WizardPanelWrapper.Content>
-                        <WizardPanelWrapper.Actions>
-                          <WizardPanelWrapper.ActionPrev />
-                          <WizardPanelWrapper.ActionNext />
-                        </WizardPanelWrapper.Actions>
-                      </WizardPanelWrapper>
-                    </WizardStep>
-                    <Wizard.Step title="Remediation" icon="wrench">
-                      <WizardPanelWrapper>
-                        <WizardPanelWrapper.Content>
-                          <RemediationPanel />
+                          <StackDeploymentPanel />
                         </WizardPanelWrapper.Content>
                         <WizardPanelWrapper.Actions>
                           <WizardPanelWrapper.ActionPrev />

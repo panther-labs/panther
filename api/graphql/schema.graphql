@@ -37,6 +37,7 @@ type Query {
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
+  getIntegrationTemplate(input: GetIntegrationTemplateInput!): IntegrationTemplate!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -49,6 +50,15 @@ type Query {
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   users(limit: Int, paginationToken: String): ListUsersResponse
+}
+
+input GetIntegrationTemplateInput {
+  awsAccountId: String!
+  integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
+  remediationEnabled: Boolean
+  cweEnabled: Boolean
+  s3Buckets: [String]
+  kmsKeys: [String]
 }
 
 input ListAlertsInput {
@@ -65,6 +75,10 @@ input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type IntegrationTemplate {
+  body: String!
 }
 
 type AlertDetails {

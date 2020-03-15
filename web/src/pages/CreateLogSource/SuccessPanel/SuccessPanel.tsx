@@ -33,7 +33,7 @@ const SuccessPanel: React.FC = () => {
       mx="auto"
       width={350}
     >
-      <Heading size="medium" m="auto" mb={5} color="grey400">
+      <Heading size="medium" m="auto" mb={2} color="grey400">
         Almost done!
       </Heading>
       <Text size="large" color="grey300" mb={10}>

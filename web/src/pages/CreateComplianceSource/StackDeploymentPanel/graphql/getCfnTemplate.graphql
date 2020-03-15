@@ -1,0 +1,5 @@
+query GetCfnTemplate($input: GetIntegrationTemplateInput!) {
+  getIntegrationTemplate(input: $input) {
+    body
+  }
+}

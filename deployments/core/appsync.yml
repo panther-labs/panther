@@ -489,6 +489,29 @@ Resources:
           $util.toJson($ctx.result)
         #end
 
+  GetIntegrationTemplateResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Query
+      FieldName: getIntegrationTemplate
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getIntegrationTemplate": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($ctx.result)
+        #end
+
   AddIntegrationResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema

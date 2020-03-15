@@ -27,7 +27,7 @@ import { getArnRegexForService } from 'Helpers/utils';
 const SourceDetailsPanel: React.FC = () => {
   return (
     <Box width={460} m="auto">
-      <Heading size="medium" m="auto" mb={5} color="grey400">
+      <Heading size="medium" m="auto" mb={2} color="grey400">
         Let{"'"}s start with the basics
       </Heading>
       <Text size="large" color="grey200" mb={5}>
