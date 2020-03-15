@@ -18,38 +18,43 @@
 
 import { Text, Box, Heading, Alert, Spinner } from 'pouncejs';
 import React from 'react';
-import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { INTEGRATION_TYPES } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
+import { useFormikContext } from 'formik';
 import { useGetCfnTemplate } from './graphql/getCfnTemplate.generated';
+import { CreateInfraSourceValues } from '../CreateComplianceSource';
 
 const StackDeployment: React.FC = () => {
+  const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
+  const { values, setStatus } = useFormikContext<CreateInfraSourceValues>();
   const { data, loading, error } = useGetCfnTemplate({
     fetchPolicy: 'no-cache',
+    variables: {
+      input: {
+        awsAccountId: values.awsAccountId,
+        remediationEnabled: values.remediationEnabled,
+        cweEnabled: values.cweEnabled,
+        integrationType: INTEGRATION_TYPES.AWS_INFRA,
+      },
+    },
   });
 
-  if (loading) {
-    return <Spinner size="medium" />;
-  }
+  React.useEffect(() => {
+    if (data) {
+      const blob = new Blob([data.getIntegrationTemplate.body], {
+        type: 'text/yaml;charset=utf-8',
+      });
 
-  if (error) {
-    return (
-      <Alert
-        variant="error"
-        title="Couldn't generate a cloudformation template"
-        description={extractErrorMessage(error)}
-      />
-    );
-  }
+      const downloadUrl = URL.createObjectURL(blob);
+      downloadAnchor.current.setAttribute('href', downloadUrl);
+    }
+  }, [downloadAnchor, data]);
 
   return (
     <Box>
-      <Heading size="medium" m="auto" mb={2} color="grey400">
+      <Heading size="medium" m="auto" mb={10} color="grey400">
         Deploy your configured stack
       </Heading>
-      <Text size="large" color="grey200" mb={10} is="p">
-        Deploy the Cloudformation stack that we created for you
-      </Text>
-      {loading && <Spinner size="medium" />}
       {error && (
         <Alert
           variant="error"
@@ -57,23 +62,27 @@ const StackDeployment: React.FC = () => {
           description={extractErrorMessage(error)}
         />
       )}
-      {data && (
-        <Text size="large" color="grey200" is="p">
-          By clicking the button below, you will be redirected to the CloudFormation console to
-          launch a stack in your account.
-          <br />
-          <br />
-          <pre>{data.getIntegrationTemplate.body}</pre>
+      <Text size="large" color="grey200" is="p" mb={6}>
+        Before we can proceed, you must deploy the auto-generated Cloudformation file to your
+        related AWS account.
+        <br />
+        <br />
+      </Text>
+      <Text size="large" color="blue300">
+        {loading ? (
+          <Spinner size="small" />
+        ) : (
           <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/scanning`}
+            href="#"
+            title="Download Cloudformation template"
+            download={`cloud-security-${values.awsAccountId}.yaml`}
+            ref={downloadAnchor}
+            onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
-            documentation
-          </a>{' '}
-          to learn more about this functionality.
-        </Text>
-      )}
+            Download Stack
+          </a>
+        )}
+      </Text>
     </Box>
   );
 };

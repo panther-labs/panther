@@ -96,10 +96,11 @@ const CreateComplianceSource: React.FC = () => {
       <Card p={9}>
         <Formik<CreateInfraSourceValues>
           initialValues={initialValues}
+          initialStatus={{ cfnTemplateDownloaded: false }}
           validationSchema={validationSchema}
           onSubmit={submitSourceToServer}
         >
-          {({ isValid, dirty, handleSubmit }) => {
+          {({ isValid, dirty, handleSubmit, status }) => {
             const shouldEnableNextButton = dirty && isValid;
 
             return (
@@ -123,7 +124,7 @@ const CreateComplianceSource: React.FC = () => {
                         </WizardPanelWrapper.Content>
                         <WizardPanelWrapper.Actions>
                           <WizardPanelWrapper.ActionPrev />
-                          <WizardPanelWrapper.ActionNext />
+                          <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
                         </WizardPanelWrapper.Actions>
                       </WizardPanelWrapper>
                     </Wizard.Step>
