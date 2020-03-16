@@ -21,7 +21,7 @@ package dashboards
 // nolint:lll
 var overviewJSON = `
 {
-    "start": "-P1D",
+    "start": "-PT1H",
     "widgets": [
         {
             "type": "log",

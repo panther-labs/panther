@@ -57,7 +57,8 @@ class Engine:
                     log_type=log_type,
                     dedup=result.dedup_string,  # type: ignore
                     event=event,
-                    severity=rule.rule_severity
+                    severity=rule.rule_severity,
+                    title=result.title
                 )
                 matched.append(match)
 

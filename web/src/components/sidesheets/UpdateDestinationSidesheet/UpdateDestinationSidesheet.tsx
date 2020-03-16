@@ -18,16 +18,10 @@
 
 import { Alert, Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
 import React from 'react';
-import { useMutation, gql } from '@apollo/client';
 
 import pick from 'lodash-es/pick';
 import useSidesheet from 'Hooks/useSidesheet';
-import {
-  Destination,
-  DestinationConfigInput,
-  DestinationInput,
-  DestinationTypeEnum,
-} from 'Generated/schema';
+import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 
@@ -42,66 +36,7 @@ import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
 
 import { extractErrorMessage } from 'Helpers/utils';
-
-const UPDATE_DESTINATION = gql`
-  mutation UpdateDestination($input: DestinationInput!) {
-    updateDestination(input: $input) {
-      createdBy
-      creationTime
-      displayName
-      lastModifiedBy
-      lastModifiedTime
-      outputId
-      outputType
-      outputConfig {
-        slack {
-          webhookURL
-        }
-        sns {
-          topicArn
-        }
-        pagerDuty {
-          integrationKey
-        }
-        github {
-          repoName
-          token
-        }
-        jira {
-          orgDomain
-          projectKey
-          userName
-          apiKey
-          assigneeId
-          issueType
-        }
-        opsgenie {
-          apiKey
-        }
-        msTeams {
-          webhookURL
-        }
-        sqs {
-          queueUrl
-        }
-        asana {
-          personalAccessToken
-          projectGids
-        }
-      }
-      verificationStatus
-      defaultForSeverity
-    }
-  }
-`;
-
-interface DestinationMutationData {
-  updateDestination: Destination;
-}
-
-interface DestinationMutationInput {
-  input: DestinationInput;
-}
+import { useUpdateDestination } from './graphql/updateDestination.generated';
 
 // Normally the `destination` doesn't contain the severities, but because we receive it as a prop
 // from the Destinations table, we are able to access a `defaultForSeverities` key that the table
@@ -121,7 +56,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   const [
     updateDestination,
     { data: updateDestinationData, error: updateDestinationError },
-  ] = useMutation<DestinationMutationData, DestinationMutationInput>(UPDATE_DESTINATION);
+  ] = useUpdateDestination();
 
   React.useEffect(() => {
     if (updateDestinationData) {

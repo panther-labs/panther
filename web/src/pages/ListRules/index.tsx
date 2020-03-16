@@ -18,3 +18,4 @@
 
 export { default } from './ListRules';
 export * from './ListRules';
+export * from './graphql/listRules.generated';

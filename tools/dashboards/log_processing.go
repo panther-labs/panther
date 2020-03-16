@@ -21,7 +21,7 @@ package dashboards
 // nolint:lll
 var logProcessingJSON = `
 {
-    "start": "-P1D",
+    "start": "-PT1H",
     "widgets": [
         {
             "type": "log",
@@ -40,7 +40,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 0,
-            "y": 23,
+            "y": 26,
             "width": 9,
             "height": 3,
             "properties": {
@@ -54,11 +54,11 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 0,
-            "y": 29,
+            "y": 32,
             "width": 9,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-log-processor' | stats sum(stats.EventCount) as events by bin(5m)",
+                "query": "SOURCE '/aws/lambda/panther-log-processor' | filter ispresent(stats.LogType) | stats sum(stats.EventCount) as events by bin(5m)",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Output Events Written to S3",
@@ -68,7 +68,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 0,
-            "y": 26,
+            "y": 29,
             "width": 9,
             "height": 3,
             "properties": {
@@ -82,7 +82,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 0,
-            "y": 17,
+            "y": 20,
             "width": 9,
             "height": 3,
             "properties": {
@@ -96,7 +96,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 9,
-            "y": 23,
+            "y": 26,
             "width": 9,
             "height": 3,
             "properties": {
@@ -110,7 +110,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 0,
-            "y": 20,
+            "y": 23,
             "width": 18,
             "height": 3,
             "properties": {
@@ -133,7 +133,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 0,
-            "y": 32,
+            "y": 35,
             "width": 18,
             "height": 3,
             "properties": {
@@ -156,7 +156,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 9,
-            "y": 26,
+            "y": 29,
             "width": 9,
             "height": 3,
             "properties": {
@@ -180,7 +180,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 9,
-            "y": 29,
+            "y": 32,
             "width": 9,
             "height": 3,
             "properties": {
@@ -194,7 +194,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 9,
-            "y": 17,
+            "y": 20,
             "width": 9,
             "height": 3,
             "properties": {
@@ -208,7 +208,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 36,
+            "y": 39,
             "width": 3,
             "height": 3,
             "properties": {
@@ -226,7 +226,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 36,
+            "y": 39,
             "width": 3,
             "height": 3,
             "properties": {
@@ -244,7 +244,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 36,
+            "y": 39,
             "width": 3,
             "height": 3,
             "properties": {
@@ -267,7 +267,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 42,
+            "y": 45,
             "width": 3,
             "height": 3,
             "properties": {
@@ -281,7 +281,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 39,
+            "y": 42,
             "width": 3,
             "height": 3,
             "properties": {
@@ -299,7 +299,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 39,
+            "y": 42,
             "width": 3,
             "height": 3,
             "properties": {
@@ -319,7 +319,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 39,
+            "y": 42,
             "width": 3,
             "height": 3,
             "properties": {
@@ -358,7 +358,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 0,
-            "y": 10,
+            "y": 13,
             "width": 9,
             "height": 3,
             "properties": {
@@ -372,7 +372,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 9,
-            "y": 10,
+            "y": 13,
             "width": 9,
             "height": 3,
             "properties": {
@@ -386,7 +386,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 0,
-            "y": 13,
+            "y": 16,
             "width": 9,
             "height": 3,
             "properties": {
@@ -400,7 +400,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 9,
-            "y": 13,
+            "y": 16,
             "width": 9,
             "height": 3,
             "properties": {
@@ -414,7 +414,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 39,
+            "y": 42,
             "width": 6,
             "height": 3,
             "properties": {
@@ -428,7 +428,7 @@ var logProcessingJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 42,
+            "y": 45,
             "width": 3,
             "height": 3,
             "properties": {
@@ -438,7 +438,7 @@ var logProcessingJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 16,
+            "y": 19,
             "width": 18,
             "height": 1,
             "properties": {
@@ -448,7 +448,7 @@ var logProcessingJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 36,
+            "y": 39,
             "width": 3,
             "height": 3,
             "properties": {
@@ -458,7 +458,7 @@ var logProcessingJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 35,
+            "y": 38,
             "width": 18,
             "height": 1,
             "properties": {
@@ -478,7 +478,7 @@ var logProcessingJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 39,
+            "y": 42,
             "width": 3,
             "height": 3,
             "properties": {
@@ -488,7 +488,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 42,
+            "y": 45,
             "width": 3,
             "height": 3,
             "properties": {
@@ -504,7 +504,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 42,
+            "y": 45,
             "width": 3,
             "height": 3,
             "properties": {
@@ -522,7 +522,7 @@ var logProcessingJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 42,
+            "y": 45,
             "width": 3,
             "height": 3,
             "properties": {
@@ -545,7 +545,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 36,
+            "y": 39,
             "width": 3,
             "height": 3,
             "properties": {
@@ -559,7 +559,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 36,
+            "y": 39,
             "width": 3,
             "height": 3,
             "properties": {
@@ -573,7 +573,7 @@ var logProcessingJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 42,
+            "y": 45,
             "width": 3,
             "height": 3,
             "properties": {
@@ -582,6 +582,28 @@ var logProcessingJSON = `
                 "title": "Memory Usage (%)",
                 "view": "timeSeries",
                 "stacked": false
+            }
+        },
+        {
+            "type": "metric",
+            "x": 0,
+            "y": 10,
+            "width": 18,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/SQS", "NumberOfMessagesSent", "QueueName", "panther-rules-engine-queue" ],
+                    [ ".", "NumberOfMessagesReceived", ".", "." ],
+                    [ ".", "ApproximateNumberOfMessagesVisible", ".", "panther-rules-engine-queue-dlq", { "yAxis": "right" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "stat": "Sum",
+                "period": 300,
+                "start": "-PT12H",
+                "end": "P0D",
+                "title": "Input SQS Queue Performance"
             }
         }
     ]

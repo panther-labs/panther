@@ -32,6 +32,11 @@ COMMON_MODULE_RULE_ID = 'aws_globals'
 # Maximum size for a dedup string
 MAX_DEDUP_STRING_SIZE = 1000
 
+# Maximum size for a title
+MAX_TITLE_SIZE = 1000
+
+TRUNCATED_STRING_SUFFIX = '... (truncated)'
+
 
 @dataclass
 class RuleResult:
@@ -39,6 +44,7 @@ class RuleResult:
     exception: Optional[Exception] = None
     matched: Optional[bool] = None
     dedup_string: Optional[str] = None
+    title: Optional[str] = None
 
 
 class Rule:
@@ -76,27 +82,61 @@ class Rule:
         else:
             self._has_dedup = False
 
+        if hasattr(self._module, 'title'):
+            self._has_title = True
+        else:
+            self._has_title = False
+
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
 
         dedup_string: Optional[str] = None
+        title: Optional[str] = None
         try:
             rule_result = _run_command(self._module.rule, event, bool)
-            if rule_result and self._has_dedup:
-                dedup_string = _run_command(self._module.dedup, event, str)
-                if dedup_string and len(dedup_string) > MAX_DEDUP_STRING_SIZE:
-                    self.logger.warning(
-                        'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
-                        '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
-                    )
-                    dedup_string = dedup_string[:MAX_DEDUP_STRING_SIZE]
+            if rule_result:
+                dedup_string = self._get_dedup(event)
+                title = self._get_title(event)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
-        # If users haven't specified a dedup function return a default value
-        if rule_result and not dedup_string:
-            dedup_string = self.rule_id
-        return RuleResult(matched=rule_result, dedup_string=dedup_string)
+        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
+
+    def _get_dedup(self, event: Dict[str, Any]) -> str:
+        if not self._has_dedup:
+            # If no dedup function defined, return rule id
+            return self.rule_id
+        dedup_string = _run_command(self._module.dedup, event, str)
+        if dedup_string:
+            if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
+                # If dedup_string exceeds max size, truncate it
+                self.logger.warning(
+                    'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
+                    '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
+                )
+                num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
+                return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+            return dedup_string
+        # If dedup string was the empty string, put the default value (rule_id)
+        return self.rule_id
+
+    def _get_title(self, event: Dict[str, Any]) -> Optional[str]:
+        if not self._has_title:
+            return None
+
+        title_string = _run_command(self._module.title, event, str)
+        if title_string:
+            if len(title_string) > MAX_TITLE_SIZE:
+                # If title exceeds max size, truncate it
+                self.logger.warning(
+                    'maximum title string size is [%d] characters. Title for rule with ID '
+                    '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
+                )
+                num_characters_to_keep = MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)
+                return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+            return title_string
+        # If title is empty string, return None
+        return None
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""

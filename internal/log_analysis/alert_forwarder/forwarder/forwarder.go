@@ -106,5 +106,6 @@ func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
 		Tags:              aws.StringSlice(rule.Payload.Tags),
 		Type:              aws.String(alertModel.RuleType),
 		AlertID:           aws.String(generateAlertID(alert)),
+		Title:             alert.Title,
 	}, nil
 }

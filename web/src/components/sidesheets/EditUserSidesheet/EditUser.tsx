@@ -18,23 +18,13 @@
 
 import * as React from 'react';
 import { Alert, Box, useSnackbar } from 'pouncejs';
-import { UpdateUserInput, User } from 'Generated/schema';
-import { gql, useMutation } from '@apollo/client';
+import { User } from 'Generated/schema';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import { LIST_USERS } from 'Pages/Users/ListUsersTable';
+import { ListUsersDocument } from 'Pages/Users';
 import { extractErrorMessage } from 'Helpers/utils';
 import BaseUserForm from 'Components/forms/BaseUserForm';
 import useAuth from 'Hooks/useAuth';
-
-const EDIT_USER = gql`
-  mutation EditUser($input: UpdateUserInput!) {
-    updateUser(input: $input)
-  }
-`;
-
-interface ApolloMutationInput {
-  input: UpdateUserInput;
-}
+import { useEditUser } from './graphql/editUser.generated';
 
 interface EditUserFormProps {
   onSuccess: () => void;
@@ -43,9 +33,7 @@ interface EditUserFormProps {
 
 const EditUser: React.FC<EditUserFormProps> = ({ onSuccess, user }) => {
   const { refetchUserInfo, userInfo } = useAuth();
-  const [editUser, { error: editUserError, data }] = useMutation<boolean, ApolloMutationInput>(
-    EDIT_USER
-  );
+  const [editUser, { error: editUserError, data }] = useEditUser();
   const { pushSnackbar } = useSnackbar();
 
   React.useEffect(() => {
@@ -90,7 +78,7 @@ const EditUser: React.FC<EditUserFormProps> = ({ onSuccess, user }) => {
                 givenName: values.givenName,
               },
             },
-            refetchQueries: [getOperationName(LIST_USERS)],
+            refetchQueries: [getOperationName(ListUsersDocument)],
           });
         }}
       />

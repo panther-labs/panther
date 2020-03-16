@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -27,6 +27,7 @@ class EventMatch:
     dedup: str
     severity: str
     event: Dict[str, Any]
+    title: Optional[str] = None
 
 
 @dataclass

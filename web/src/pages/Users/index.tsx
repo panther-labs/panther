@@ -17,3 +17,4 @@
  */
 
 export { default } from './Users';
+export * from './ListUsersTable/graphql/listUsers.generated';

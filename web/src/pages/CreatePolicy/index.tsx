@@ -17,3 +17,4 @@
  */
 
 export { default } from './CreatePolicy';
+export * from './CreatePolicy';

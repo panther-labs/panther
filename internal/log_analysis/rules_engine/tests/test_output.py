@@ -50,50 +50,50 @@ class TestMatchedEventsBuffer(TestCase):
         buffer.flush()
 
         DDB_MOCK.update_item.assert_called_once_with(
-            ConditionExpression='(#10 < :10) OR (attribute_not_exists(#11))',
+            ConditionExpression='(#1 < :1) OR (attribute_not_exists(#2))',
             ExpressionAttributeNames={
-                '#1': 'ruleId',
-                '#2': 'dedup',
-                '#3': 'alertCreationTime',
-                '#4': 'alertUpdateTime',
-                '#5': 'eventCount',
-                '#6': 'severity',
-                '#7': 'logTypes',
-                '#8': 'ruleVersion',
-                '#9': 'alertCount',
-                '#10': 'alertCreationTime',
-                '#11': 'partitionKey'
+                '#1': 'alertCreationTime',
+                '#2': 'partitionKey',
+                '#3': 'alertCount',
+                '#4': 'ruleId',
+                '#5': 'dedup',
+                '#6': 'alertCreationTime',
+                '#7': 'alertUpdateTime',
+                '#8': 'eventCount',
+                '#9': 'severity',
+                '#10': 'logTypes',
+                '#11': 'ruleVersion'
             },
             ExpressionAttributeValues={
                 ':1': {
-                    'S': 'rule_id'
-                },
-                ':2': {
-                    'S': 'dedup'
+                    'N': mock.ANY
                 },
                 ':3': {
-                    'N': mock.ANY
+                    'N': '1'
                 },
                 ':4': {
-                    'N': mock.ANY
+                    'S': 'rule_id'
                 },
                 ':5': {
-                    'N': '1'
+                    'S': 'dedup'
                 },
                 ':6': {
-                    'S': 'INFO'
+                    'N': mock.ANY
                 },
                 ':7': {
-                    'SS': ['log_type']
+                    'N': mock.ANY
                 },
                 ':8': {
-                    'S': 'rule_version'
-                },
-                ':9': {
                     'N': '1'
                 },
+                ':9': {
+                    'S': 'INFO'
+                },
                 ':10': {
-                    'N': mock.ANY
+                    'SS': ['log_type']
+                },
+                ':11': {
+                    'S': 'rule_version'
                 }
             },
             Key={
@@ -104,7 +104,7 @@ class TestMatchedEventsBuffer(TestCase):
             },
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5, #6=:6, #7=:7, #8=:8\nADD #9 :9'
+            UpdateExpression='ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)

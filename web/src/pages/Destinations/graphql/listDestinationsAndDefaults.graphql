@@ -1,0 +1,49 @@
+query ListDestinationsAndDefaults {
+    destinations {
+        createdBy
+        creationTime
+        displayName
+        lastModifiedBy
+        lastModifiedTime
+        outputId
+        outputType
+        outputConfig {
+            slack {
+                webhookURL
+            }
+            sns {
+                topicArn
+            }
+            pagerDuty {
+                integrationKey
+            }
+            github {
+                repoName
+                token
+            }
+            jira {
+                orgDomain
+                projectKey
+                userName
+                apiKey
+                assigneeId
+                issueType
+            }
+            opsgenie {
+                apiKey
+            }
+            msTeams {
+                webhookURL
+            }
+            sqs {
+                queueUrl
+            }
+            asana {
+                personalAccessToken
+                projectGids
+            }
+        }
+        verificationStatus
+        defaultForSeverity
+    }
+}

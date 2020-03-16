@@ -18,15 +18,7 @@
 
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
-import { useQuery, gql } from '@apollo/client';
-import {
-  ComplianceStatusEnum,
-  GetResourceInput,
-  Integration,
-  ListComplianceItemsResponse,
-  PoliciesForResourceInput,
-  ResourceDetails,
-} from 'Generated/schema';
+import { ComplianceStatusEnum, PoliciesForResourceInput } from 'Generated/schema';
 import Panel from 'Components/Panel';
 import JsonViewer from 'Components/JsonViewer';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
@@ -43,70 +35,12 @@ import {
 } from 'Components/utils/TableControls';
 import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { DEFAULT_SMALL_PAGE_SIZE, INTEGRATION_TYPES } from 'Source/constants';
+import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import ResourceDetailsTable from './ResourceDetailsTable';
 import ResourceDetailsInfo from './ResourceDetailsInfo';
 import columns from './columns';
 import ResourceDetailsPageSkeleton from './Skeleton';
-
-export const RESOURCE_DETAILS = gql`
-  query ResourceDetails(
-    $resourceDetailsInput: GetResourceInput!
-    $policiesForResourceInput: PoliciesForResourceInput
-  ) {
-    resource(input: $resourceDetailsInput) {
-      lastModified
-      type
-      integrationId
-      integrationType
-      complianceStatus
-      id
-      attributes
-    }
-    policiesForResource(input: $policiesForResourceInput) {
-      items {
-        errorMessage
-        policyId
-        resourceId
-        policySeverity
-        status
-        suppressed
-      }
-      paging {
-        totalItems
-        totalPages
-        thisPage
-      }
-      totals {
-        active {
-          fail
-          pass
-          error
-        }
-        suppressed {
-          fail
-          pass
-          error
-        }
-      }
-    }
-    integrations(input: { integrationType: "${INTEGRATION_TYPES.AWS_INFRA}" }) {
-        integrationLabel
-        integrationId
-    }
-  }
-`;
-
-interface ApolloQueryData {
-  resource: ResourceDetails;
-  integrations: Integration[];
-  policiesForResource: ListComplianceItemsResponse;
-}
-
-interface ApolloQueryInput {
-  resourceDetailsInput: GetResourceInput;
-  policiesForResourceInput: PoliciesForResourceInput;
-}
+import { useResourceDetails } from './graphql/resourceDetails.generated';
 
 const acceptedRequestParams = ['page', 'status', 'pageSize', 'suppressed'] as const;
 
@@ -120,7 +54,7 @@ const ResourceDetailsPage = () => {
     Pick<PoliciesForResourceInput, typeof acceptedRequestParams[number]>
   >();
 
-  const { error, data, loading } = useQuery<ApolloQueryData, ApolloQueryInput>(RESOURCE_DETAILS, {
+  const { error, data, loading } = useResourceDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       resourceDetailsInput: {

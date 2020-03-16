@@ -18,17 +18,10 @@
 
 import React from 'react';
 import { User } from 'Generated/schema';
-
-import { useMutation, gql } from '@apollo/client';
-import { LIST_USERS } from 'Pages/Users/ListUsersTable';
+import { ListUsersDocument } from 'Pages/Users';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-
-const RESET_USER_PASS = gql`
-  mutation ResetUserPassword($id: ID!) {
-    resetUserPassword(id: $id)
-  }
-`;
+import { useResetUserPassword } from './graphql/resetUserPassword.generated';
 
 export interface ResetUserPasswordProps {
   user: User;
@@ -36,12 +29,12 @@ export interface ResetUserPasswordProps {
 
 const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
-  const mutation = useMutation<boolean, { id: string }>(RESET_USER_PASS, {
+  const mutation = useResetUserPassword({
     variables: {
       id: user.id,
     },
     awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(LIST_USERS)],
+    refetchQueries: [getOperationName(ListUsersDocument)],
   });
   return (
     <BaseConfirmModal

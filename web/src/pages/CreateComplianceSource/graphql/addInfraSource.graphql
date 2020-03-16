@@ -1,0 +1,5 @@
+mutation AddInfraSource($input: AddIntegrationInput!) {
+    addIntegration(input: $input) {
+        integrationId
+    }
+}

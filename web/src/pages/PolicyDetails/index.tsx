@@ -18,3 +18,4 @@
 
 export { default } from './PolicyDetails';
 export * from './PolicyDetails';
+export * from './graphql/policyDetails.generated';

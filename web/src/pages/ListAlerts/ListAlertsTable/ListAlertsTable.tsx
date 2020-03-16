@@ -23,14 +23,14 @@ import { Table } from 'pouncejs';
 import columns from 'Pages/ListAlerts/columns';
 
 interface ListAlertsTableProps {
-  items?: AlertSummary[];
+  items?: Partial<AlertSummary>[];
   enumerationStartIndex?: number;
 }
 
 const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
   const enumeratedColumns = [generateEnumerationColumn(0), ...columns];
   return (
-    <Table<AlertSummary>
+    <Table<Partial<AlertSummary>>
       columns={enumeratedColumns}
       getItemKey={alert => alert.alertId}
       items={items}
