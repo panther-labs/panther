@@ -22,26 +22,17 @@ import { Card, Flex, Alert, Box } from 'pouncejs';
 import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useMutation, gql } from '@apollo/client';
-import { LIST_INFRA_SOURCES } from 'Pages/ListComplianceSources';
+import { ListInfraSourcesDocument } from 'Pages/ListComplianceSources';
 import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { AddIntegrationInput, Integration } from 'Generated/schema';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
+import { useAddInfraSource } from './graphql/addInfraSource.generated';
 import RemediationPanel from './RemediationPanel';
 import RealTimeEventPanel from './RealTimeEventPanel';
 import ResourceScanningPanel from './ResourceScanningPanel';
 import SuccessPanel from './SuccessPanel';
 import SourceDetailsPanel from './SourceDetailsPanel';
-
-const ADD_INFRA_SOURCE = gql`
-  mutation AddInfraSource($input: AddIntegrationInput!) {
-    addIntegration(input: $input) {
-      integrationId
-    }
-  }
-`;
 
 export interface InfraSourceValues {
   awsAccountId: string;
@@ -60,14 +51,9 @@ const initialValues = {
   integrationLabel: '',
 };
 
-interface ApolloMutationInput {
-  input: AddIntegrationInput;
-}
 const CreateComplianceSource: React.FC = () => {
   const { history } = useRouter();
-  const [addInfraSource, { data, loading, error }] = useMutation<Integration, ApolloMutationInput>(
-    ADD_INFRA_SOURCE
-  );
+  const [addInfraSource, { data, loading, error }] = useAddInfraSource();
 
   const submitSourceToServer = React.useCallback(
     (values: InfraSourceValues) =>
@@ -84,7 +70,7 @@ const CreateComplianceSource: React.FC = () => {
             ],
           },
         },
-        refetchQueries: [{ query: LIST_INFRA_SOURCES }],
+        refetchQueries: [{ query: ListInfraSourcesDocument }],
       }),
     []
   );

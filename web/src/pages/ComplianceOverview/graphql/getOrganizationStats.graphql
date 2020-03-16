@@ -1,0 +1,51 @@
+query GetOrganizationStats {
+    organizationStats {
+        scannedResources {
+            byType {
+                type
+                count {
+                    fail
+                    pass
+                    error
+                }
+            }
+        }
+        appliedPolicies {
+            info {
+                error
+                pass
+                fail
+            }
+            low {
+                error
+                pass
+                fail
+            }
+            medium {
+                error
+                pass
+                fail
+            }
+            high {
+                error
+                pass
+                fail
+            }
+            critical {
+                error
+                pass
+                fail
+            }
+        }
+        topFailingPolicies {
+            id
+            severity
+        }
+        topFailingResources {
+            id
+        }
+    }
+    integrations(input: { integrationType: "aws-scan" }) {
+        integrationId
+    }
+}

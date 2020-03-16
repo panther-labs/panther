@@ -18,3 +18,4 @@
 
 export { default } from './ResourceDetails';
 export * from './ResourceDetails';
+export * from './graphql/resourceDetails.generated';

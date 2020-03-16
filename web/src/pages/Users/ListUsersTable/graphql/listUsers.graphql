@@ -1,0 +1,13 @@
+query ListUsers($limit: Int, $paginationToken: String) {
+    users(limit: $limit, paginationToken: $paginationToken) {
+        users {
+            id
+            email
+            givenName
+            familyName
+            createdAt
+            status
+        }
+        paginationToken
+    }
+}

@@ -13,7 +13,8 @@
 <p align="center">
   <a href="https://docs.runpanther.io">Documentation</a> |
   <a href="https://docs.runpanther.io/quick-start">Quick Start</a> |
-  <a href="https://blog.runpanther.io">Blog</a>
+  <a href="https://blog.runpanther.io">Blog</a> |
+  <a href="https://panther-labs-oss-slackin.herokuapp.com/">Chat with us on Slack!</a>
 </p>
 
 <p align="center">
@@ -66,6 +67,8 @@ def rule(event):
 ## Deployment
 
 Follow our [Quick Start Guide](https://docs.runpanther.io/quick-start) to deploy Panther in your AWS account in a matter of minutes!
+
+Use our [Tutorials](https://github.com/panther-labs/tutorials) to configure logging and data ingestion.
 
 ## Screenshots
 

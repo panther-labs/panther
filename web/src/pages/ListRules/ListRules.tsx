@@ -19,15 +19,8 @@
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-import { useQuery, gql } from '@apollo/client';
 import { convertObjArrayValuesToCsv, extractErrorMessage } from 'Helpers/utils';
-import {
-  ListRulesInput,
-  ListRulesResponse,
-  SortDirEnum,
-  ListRulesSortFieldsEnum,
-} from 'Generated/schema';
-
+import { ListRulesInput, SortDirEnum, ListRulesSortFieldsEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash-es/isEmpty';
@@ -36,33 +29,7 @@ import ListRulesTable from './ListRulesTable';
 import ListRulesActions from './ListRulesActions';
 import ListRulesPageSkeleton from './Skeleton';
 import ListRulesPageEmptyDataFallback from './EmptyDataFallback';
-
-export const LIST_RULES = gql`
-  query ListRules($input: ListRulesInput) {
-    rules(input: $input) {
-      rules {
-        lastModified
-        logTypes
-        severity
-        id
-        displayName
-        enabled
-      }
-      paging {
-        totalPages
-        thisPage
-        totalItems
-      }
-    }
-  }
-`;
-
-interface ApolloData {
-  rules: ListRulesResponse;
-}
-interface ApolloVariables {
-  input: ListRulesInput;
-}
+import { useListRules } from './graphql/listRules.generated';
 
 const ListRules = () => {
   const {
@@ -71,7 +38,7 @@ const ListRules = () => {
     updatePagingParams,
   } = useRequestParamsWithPagination<ListRulesInput>();
 
-  const { loading, error, data } = useQuery<ApolloData, ApolloVariables>(LIST_RULES, {
+  const { loading, error, data } = useListRules({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: convertObjArrayValuesToCsv(requestParams),

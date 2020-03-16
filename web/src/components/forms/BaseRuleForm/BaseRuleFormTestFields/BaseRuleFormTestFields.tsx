@@ -17,12 +17,7 @@
  */
 
 import React, { MouseEvent } from 'react';
-import {
-  AnalysisTypeEnum,
-  PolicyUnitTest,
-  TestPolicyInput,
-  TestPolicyResponse,
-} from 'Generated/schema';
+import { AnalysisTypeEnum, PolicyUnitTest } from 'Generated/schema';
 import { FieldArray, FastField as Field, useFormikContext } from 'formik';
 import {
   Button,
@@ -41,35 +36,10 @@ import FormikTextInput from 'Components/fields/TextInput';
 import FormikEditor from 'Components/fields/Editor';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikRadio from 'Components/fields/Radio';
-
-import { useMutation, gql } from '@apollo/client';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import { RuleFormValues } from 'Components/forms/RuleForm';
 import PolicyFormTestResultList from '../BaseRuleFormTestResultList';
-
-export const testEditableFields = ['expectedResult', 'name', 'resource', 'resourceType'] as const;
-
-const TEST_POLICY = gql`
-  mutation TestPolicy($input: TestPolicyInput) {
-    testPolicy(input: $input) {
-      testSummary
-      testsPassed
-      testsFailed
-      testsErrored {
-        errorMessage
-        name
-      }
-    }
-  }
-`;
-
-interface ApolloMutationInput {
-  input: TestPolicyInput;
-}
-
-interface ApolloMutationData {
-  testPolicy: TestPolicyResponse;
-}
+import { useTestPolicy } from './graphql/testPolicy.generated';
 
 type MandatoryFormFields = Pick<RuleFormValues, 'body' | 'tests'>;
 type FormFields = MandatoryFormFields &
@@ -96,10 +66,7 @@ const BaseRuleFormTestFields: React.FC = () => {
   // Load the mutation that will perform the policy testing but we are not yet populating it with
   // the variables since we'll do that on "click" - time
   // prettier-ignore
-  const [testPolicy, { error, loading, data }] = useMutation<
-    ApolloMutationData,
-    ApolloMutationInput
-  >(TEST_POLICY);
+  const [testPolicy, { error, loading, data }] = useTestPolicy()
 
   // Helper function where the only thing parameterised is the array of tests to submit to the server
   // This helps us reduce the amount of code we write when the only thing changing is the number of
