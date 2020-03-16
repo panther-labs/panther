@@ -2,7 +2,7 @@
 
 ## Configuring a Custom Domain
 
-Out of the box, Panther ships with a self signed certificate generated at deployment time. While this setup is better than not having SSL/TLS enabled at all on the web server, it is still far from best practice especially for a security tool. Panther *highly* recommends you replace this self signed certificate with a proper certificate before using Panther in a production environment.
+Out of the box, Panther ships with a self-signed certificate generated at deployment time. While this setup is better than not having SSL/TLS enabled at all on the web server, it is still far from best practice especially for a security tool. Panther *strongly* recommends you replace this self-signed certificate with a proper certificate before using Panther in a production environment.
 
 Setting up a custom domain for the Panther app is fairly easy, and is takes four main steps:
 
@@ -17,10 +17,10 @@ All of these steps can be completed from within the AWS ecosystem, and the first
 
 In this guide we'll walk through registering a domain through AWS Route53, although any domain registrar should work. If you already have a domain registered, or perhaps an internal CA that manages certificates for your organization, this step can be skipped.
 
-  1. Navigate to the [Route53](https://console.aws.amazon.com/route53/home) console on AWS and select the `Registered domains` tab.
-  2. Select the `Register domain` button, and enter the name of the domain you'd like to register. Select the `Check` button, and AWS will verify the domain is available and suggest alternatives.
-  3. After verifying the domain is available, select `Add to cart` and then `Continue`. On the next form, fill your the contact information. Be sure you can receive email at the email added so that you can verify the domain in a future step. When you're done, select `Continue`.
-  4. Agree to the terms and conditions, and select `Complete order`. If you have not registered a domain through route53 before, you will receive a confirmation email.
+  1. Navigate to the [Route53](https://console.aws.amazon.com/route53/home) console on AWS and click the `Registered domains` tab.
+  2. Click the `Register domain` button, and enter the name of the domain you'd like to register. Click the `Check` button, and AWS will verify the domain is available and suggest alternatives.
+  3. After verifying the domain is available, click `Add to cart` and then `Continue`. On the next form, fill in the contact information. Be sure you can receive email at the email specified so that you can verify the domain in a future step. When you're done, click `Continue`.
+  4. Agree to the terms and conditions, and click `Complete order`. If you have not registered a domain through route53 before, you will receive a confirmation email.
   
 After that, the domain will take between ten minutes and an hour to complete registration. Fortunately, we can continue with the setup while we wait.
 
@@ -29,12 +29,12 @@ After that, the domain will take between ten minutes and an hour to complete reg
 Now that you have a domain registered, you need to get a certificate for it.
 
   1. Navigate to the [ACM](https://console.aws.amazon.com/acm/home) console on AWS. Be sure you are in the same region that Panther was deployed in.
-  2. Select either `Request a certificate` or `Import a certificate`, depending on your preferred workflow. In this example, we will be going through the `Request a certificate` workflow. If you are using a private CA, you will need to follow the `Import a certificate`  workflow.
-  3. Make sure the `Request a public certificate` option is selected and press `Request a certificate`.
-  4. Enter the name of the domain registered above, and select `Next`.
-  5. Select either `DNS Validation` or `Email validation`. In this example, we will use `Email validation`. Select the `Next` button.
-  6. Optionally add tags. Adding the tag `appliation:panther` will help group this certificate with the rest of the Panther product. When you are done adding tags, select the `Review` button.
-  7. Verify everything looks correct, then select the `Confirm and request` button.
+  2. Click either `Request a certificate` or `Import a certificate`, depending on your preferred workflow. In this example, we will be going through the `Request a certificate` workflow. If you are using a private CA, you will need to follow the `Import a certificate`  workflow.
+  3. Make sure the `Request a public certificate` option is selected and click `Request a certificate`.
+  4. Enter the name of the domain registered above, and click `Next`.
+  5. Click either `DNS Validation` or `Email validation`. In this example, we will use `Email validation`. Click the `Next` button.
+  6. Optionally add tags. Adding the tag `Application:Panther` will help group this certificate with the rest of the Panther product. When you are done adding tags, click the `Review` button.
+  7. Verify everything looks correct, then click the `Confirm and request` button.
   8. You will receive an email shortly requesting verification of the certificate, with a link to a verify button that will confirm the certificate.
   9. After verifying the certificate request, you will see the status of the certificate switch from `Pending validation` to `Issued`. Be sure to note down the ARN of the newly created certificate for the next step.
   
@@ -51,8 +51,8 @@ That's it, now simply run the `mage deploy` command (in the container if needed)
 
 Finally, you will need to create an alias or CNAME on your domain pointing to the load balancers auto generated URL. If you're not using a domain registered within route53, you should still generally be able to follow along with the steps below but through your registrars web console.
 
-  1. Navigate to the Hosted zones tab of Route53, and select the Hosted zone for your new domain
-  2. Select the `Create Record Set` button.
+  1. Navigate to the Hosted zones tab of Route53, and click the Hosted zone for your new domain
+  2. Click the `Create Record Set` button.
   3. In the popup, fill in the fields as follows: 
   
     - Leave the `name` field empty
@@ -62,6 +62,9 @@ Finally, you will need to create an alias or CNAME on your domain pointing to th
       Note: the name will automatically be prefixed with "dualstack.", leave this in place
     - Leave the `Routing Policy` field set to `Simple`
     - Leave the `Evaluate Target Health` field set to `No`
-    - Select the `Create` button
+    - Click the `Create` button
+
+
+![](../../.gitbook/assets/hosted_zone_alias.png)
     
 After this, your setup is complete. You can now navigate to your new domain and reach the Panther web application over a signed and secure HTTPS connection.
