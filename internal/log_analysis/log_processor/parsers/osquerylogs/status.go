@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -35,12 +36,12 @@ type Status struct { // FIXME: field descriptions need updating!
 	Decorations       map[string]string      `json:"decorations,omitempty" description:"Decorations"`
 	Filename          *string                `json:"filename,omitempty" validate:"required" description:"Filename"`
 	HostIdentifier    *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
-	Line              *int                   `json:"line,omitempty,string" validate:"required" description:"Line"`
+	Line              *numerics.Integer      `json:"line,omitempty" validate:"required" description:"Line"`
 	LogType           *string                `json:"logType,omitempty"  description:"LogType"`
 	LogUnderscoreType *string                `json:"log_type,omitempty" description:"LogUnderScoreType"`
 	Message           *string                `json:"message,omitempty" description:"Message"`
-	Severity          *int                   `json:"severity,omitempty,string" validate:"required" description:"Severity"`
-	UnixTime          *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
+	Severity          *numerics.Integer      `json:"severity,omitempty" validate:"required" description:"Severity"`
+	UnixTime          *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
 	Version           *string                `json:"version,omitempty" validate:"required" description:"Version"`
 
 	// NOTE: added to end of struct to allow expansion later
