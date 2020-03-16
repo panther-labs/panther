@@ -18,19 +18,16 @@
 
 import React from 'react';
 import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
-import useSidesheet from 'Hooks/useSidesheet';
-import { Integration } from 'Generated/schema';
+import { LogIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import { SIDESHEETS } from 'Components/utils/Sidesheet';
 
 interface LogSourceTableRowOptionsProps {
-  source: Integration;
+  source: LogIntegration;
 }
 
 const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ source }) => {
   const { showModal } = useModal();
-  const { showSidesheet } = useSidesheet();
 
   return (
     <Dropdown
@@ -40,20 +37,13 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
         </IconButton>
       }
     >
-      <Dropdown.Item
-        onSelect={() =>
-          showSidesheet({
-            sidesheet: SIDESHEETS.UPDATE_SOURCE,
-            props: { source },
-          })
-        }
-      >
+      <Dropdown.Item onSelect={() => {}}>
         <MenuItem variant="default">Edit</MenuItem>
       </Dropdown.Item>
       <Dropdown.Item
         onSelect={() =>
           showModal({
-            modal: MODALS.DELETE_SOURCE,
+            modal: MODALS.DELETE_LOG_SOURCE,
             props: { source },
           })
         }

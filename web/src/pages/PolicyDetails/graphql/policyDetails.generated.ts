@@ -54,7 +54,9 @@ export type PolicyDetails = {
       suppressed: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
     }>;
   }>;
-  integrations: Types.Maybe<Array<Pick<Types.Integration, 'integrationId' | 'integrationLabel'>>>;
+  listComplianceIntegrations: Array<
+    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationId' | 'integrationLabel'>>
+  >;
 };
 
 export const PolicyDetailsDocument = gql`
@@ -107,7 +109,7 @@ export const PolicyDetailsDocument = gql`
         }
       }
     }
-    integrations(input: { integrationType: "aws-scan" }) {
+    listComplianceIntegrations {
       integrationId
       integrationLabel
     }

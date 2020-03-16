@@ -21,8 +21,9 @@ import * as React from 'react';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
+  ComplianceIntegration,
   ComplianceStatusCounts,
-  Integration,
+  LogIntegration,
   OrganizationReportBySeverity,
   ScannedResources,
 } from 'Generated/schema';
@@ -31,7 +32,6 @@ import {
   INCLUDE_LOWERCASE_REGEX,
   INCLUDE_SPECIAL_CHAR_REGEX,
   INCLUDE_UPPERCASE_REGEX,
-  INTEGRATION_TYPES,
 } from 'Source/constants';
 import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
@@ -124,7 +124,8 @@ export const formatJSON = (code: { [key: string]: number | string }) =>
 
 export function extendResourceWithIntegrationLabel<T extends { integrationId?: string }>(
   resource: T,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
+  integrations: (Partial<ComplianceIntegration> &
+    Pick<ComplianceIntegration, 'integrationId' | 'integrationLabel'>)[]
 ) {
   const matchingIntegration = integrations.find(i => i.integrationId === resource.integrationId);
   return {
@@ -237,11 +238,12 @@ export const copyTextToClipboard = (text: string) => {
 
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
-export const getIntegrationStackName = (
-  source: Partial<Integration> & Pick<Integration, 'integrationType' | 'integrationLabel'>
+export const getComplianceIntegrationStackName = () => {
+  return 'panther-cloud-security';
+};
+
+export const getLogIntegrationStackName = (
+  source: Partial<LogIntegration> & Pick<LogIntegration, 'integrationLabel'>
 ) => {
-  if (source.integrationType === INTEGRATION_TYPES.AWS_INFRA) {
-    return 'panther-cloud-security';
-  }
   return `panther-log-analysis-${source.integrationLabel}`;
 };

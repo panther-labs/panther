@@ -13,7 +13,7 @@ query ListResources($input: ListResourcesInput) {
             totalItems
         }
     }
-    integrations(input: { integrationType: "aws-scan" }) {
+    listComplianceIntegrations {
         integrationLabel
         integrationId
     }

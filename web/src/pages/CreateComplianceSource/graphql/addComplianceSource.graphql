@@ -1,0 +1,5 @@
+mutation AddComplianceSource($input: AddComplianceIntegrationInput!) {
+  addComplianceIntegration(input: $input) {
+    integrationId
+  }
+}

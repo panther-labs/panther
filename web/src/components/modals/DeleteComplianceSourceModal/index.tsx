@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './UpdateSourceForm';
-export * from './UpdateSourceForm';
+export { default } from './DeleteComplianceSourceModal';
+export * from './DeleteComplianceSourceModal';

@@ -91,7 +91,10 @@ const ResourceDetailsPage = () => {
   const pagingData = data.policiesForResource.paging;
 
   // Extend the resource by adding its integrationLabel fetched from another internal API
-  const enhancedResource = extendResourceWithIntegrationLabel(data.resource, data.integrations);
+  const enhancedResource = extendResourceWithIntegrationLabel(
+    data.resource,
+    data.listComplianceIntegrations
+  );
 
   return (
     <article>

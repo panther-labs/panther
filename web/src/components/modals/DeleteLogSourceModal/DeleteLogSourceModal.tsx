@@ -18,29 +18,26 @@
 
 import React from 'react';
 import { Text } from 'pouncejs';
-import { Integration } from 'Generated/schema';
-import { ListInfraSourcesDocument } from 'Pages/ListComplianceSources';
+import { LogIntegration } from 'Generated/schema';
 import { ListLogSourcesDocument } from 'Pages/ListLogSources';
-import { INTEGRATION_TYPES } from 'Source/constants';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-import { getIntegrationStackName } from 'Helpers/utils';
-import { useDeleteSource } from './graphql/deleteSource.generated';
+import { getLogIntegrationStackName } from 'Helpers/utils';
+import { useDeleteLogSource } from './graphql/deleteLogSource.generated';
 
-export interface DeleteSourceModalProps {
-  source: Integration;
+export interface DeleteLogSourceModalProps {
+  source: LogIntegration;
 }
 
-const DeleteSourceModal: React.FC<DeleteSourceModalProps> = ({ source }) => {
-  const isInfraSource = source.integrationType === INTEGRATION_TYPES.AWS_INFRA;
-  const mutation = useDeleteSource({
+const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) => {
+  const mutation = useDeleteLogSource({
     variables: {
       id: source.integrationId,
     },
-    refetchQueries: [{ query: isInfraSource ? ListInfraSourcesDocument : ListLogSourcesDocument }],
+    refetchQueries: [{ query: ListLogSourcesDocument }],
   });
 
   const sourceDisplayName = source.integrationLabel;
-  const stackName = getIntegrationStackName(source);
+  const stackName = getLogIntegrationStackName(source);
   return (
     <BaseConfirmModal
       mutation={mutation}
@@ -60,4 +57,4 @@ const DeleteSourceModal: React.FC<DeleteSourceModalProps> = ({ source }) => {
   );
 };
 
-export default DeleteSourceModal;
+export default DeleteLogSourceModal;

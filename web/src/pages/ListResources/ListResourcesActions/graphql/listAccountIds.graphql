@@ -1,5 +1,5 @@
 query ListAccountIds {
-    integrations(input: { integrationType: "aws-scan" }) {
+    listComplianceIntegrations {
         integrationLabel
         integrationId
     }

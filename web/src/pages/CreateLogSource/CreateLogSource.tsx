@@ -19,7 +19,7 @@
 /* eslint-disable react/display-name */
 import React from 'react';
 import { Card, Flex, Alert, Box } from 'pouncejs';
-import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
 import { Formik } from 'formik';
@@ -69,14 +69,7 @@ const CreateLogSource: React.FC = () => {
     (values: CreateLogSourceValues) =>
       addLogSource({
         variables: {
-          input: {
-            integrations: [
-              {
-                ...values,
-                integrationType: INTEGRATION_TYPES.AWS_LOGS,
-              },
-            ],
-          },
+          input: values,
         },
       }),
     []

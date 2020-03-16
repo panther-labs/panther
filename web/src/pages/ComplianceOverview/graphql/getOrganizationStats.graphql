@@ -45,7 +45,7 @@ query GetOrganizationStats {
             id
         }
     }
-    integrations(input: { integrationType: "aws-scan" }) {
+    listComplianceIntegrations {
         integrationId
     }
 }

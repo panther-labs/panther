@@ -20,7 +20,7 @@
 
 import React from 'react';
 import { TableProps, Box, Text } from 'pouncejs';
-import { Integration } from 'Generated/schema';
+import { LogIntegration } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import LogSourceTableRowOptions from './LogSourceTableRowOptions';
 
@@ -62,6 +62,6 @@ const columns = [
     renderColumnHeader: () => <Box mx={5} />,
     renderCell: item => <LogSourceTableRowOptions source={item} />,
   },
-] as TableProps<Integration>['columns'];
+] as TableProps<LogIntegration>['columns'];
 
 export default columns;

@@ -19,27 +19,27 @@
 /* eslint-disable react/display-name */
 import React from 'react';
 import { Card, Flex } from 'pouncejs';
-import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
-import { ListInfraSourcesDocument } from 'Pages/ListComplianceSources';
+import { ListComplianceSourcesDocument } from 'Pages/ListComplianceSources';
 import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
-import { useAddInfraSource } from './graphql/addInfraSource.generated';
+import { useAddComplianceSource } from './graphql/addComplianceSource.generated';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import SuccessPanel from './SuccessPanel';
 import SourceConfigurationPanel from './SourceConfigurationPanel';
 
-export interface CreateInfraSourceValues {
+export interface CreateComplianceSourceValues {
   awsAccountId: string;
   integrationLabel: string;
   cweEnabled: boolean;
   remediationEnabled: boolean;
 }
 
-const validationSchema = Yup.object().shape<CreateInfraSourceValues>({
+const validationSchema = Yup.object().shape<CreateComplianceSourceValues>({
   integrationLabel: Yup.string().required(),
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
@@ -57,26 +57,21 @@ const initialValues = {
 
 const CreateComplianceSource: React.FC = () => {
   const { history } = useRouter();
-  const [addInfraSource, { error }] = useAddInfraSource({
+  const [addComplianceSource, { error }] = useAddComplianceSource({
     onCompleted: () => history.push(urls.compliance.sources.list()),
-    refetchQueries: [{ query: ListInfraSourcesDocument }],
+    refetchQueries: [{ query: ListComplianceSourcesDocument }],
     awaitRefetchQueries: true,
   });
 
   const submitSourceToServer = React.useCallback(
-    (values: CreateInfraSourceValues) =>
-      addInfraSource({
+    (values: CreateComplianceSourceValues) =>
+      addComplianceSource({
         variables: {
           input: {
-            integrations: [
-              {
-                integrationLabel: values.integrationLabel,
-                awsAccountId: values.awsAccountId,
-                cweEnabled: values.cweEnabled,
-                remediationEnabled: values.remediationEnabled,
-                integrationType: INTEGRATION_TYPES.AWS_INFRA,
-              },
-            ],
+            integrationLabel: values.integrationLabel,
+            awsAccountId: values.awsAccountId,
+            cweEnabled: values.cweEnabled,
+            remediationEnabled: values.remediationEnabled,
           },
         },
       }),
@@ -85,7 +80,7 @@ const CreateComplianceSource: React.FC = () => {
 
   return (
     <Card p={9}>
-      <Formik<CreateInfraSourceValues>
+      <Formik<CreateComplianceSourceValues>
         initialValues={initialValues}
         initialStatus={{ cfnTemplateDownloaded: false }}
         validationSchema={validationSchema}

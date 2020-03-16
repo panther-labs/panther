@@ -20,7 +20,7 @@
 
 import React from 'react';
 import { Text, TableProps, Icon, Box } from 'pouncejs';
-import { Integration } from 'Generated/schema';
+import { ComplianceIntegration } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import ComplianceSourceTableRowOptions from './ComplianceSourceTableRowOptions';
 
@@ -65,6 +65,6 @@ const columns = [
     renderColumnHeader: () => <Box mx={5} />,
     renderCell: item => <ComplianceSourceTableRowOptions source={item} />,
   },
-] as TableProps<Integration>['columns'];
+] as TableProps<ComplianceIntegration>['columns'];
 
 export default columns;

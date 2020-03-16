@@ -18,30 +18,28 @@
 
 import { Text, Box, Heading, Alert, Spinner } from 'pouncejs';
 import React from 'react';
-import { INTEGRATION_TYPES } from 'Source/constants';
-import { extractErrorMessage, getIntegrationStackName } from 'Helpers/utils';
+import { extractErrorMessage, getComplianceIntegrationStackName } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
-import { useGetCfnTemplate } from './graphql/getCfnTemplate.generated';
-import { CreateInfraSourceValues } from '../CreateComplianceSource';
+import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.generated';
+import { CreateComplianceSourceValues } from '../CreateComplianceSource';
 
 const StackDeployment: React.FC = () => {
   const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
-  const { values, setStatus } = useFormikContext<CreateInfraSourceValues>();
-  const { data, loading, error } = useGetCfnTemplate({
+  const { values, setStatus } = useFormikContext<CreateComplianceSourceValues>();
+  const { data, loading, error } = useGetComplianceCfnTemplate({
     fetchPolicy: 'no-cache',
     variables: {
       input: {
         awsAccountId: values.awsAccountId,
         remediationEnabled: values.remediationEnabled,
         cweEnabled: values.cweEnabled,
-        integrationType: INTEGRATION_TYPES.AWS_INFRA,
       },
     },
   });
 
   React.useEffect(() => {
     if (data) {
-      const blob = new Blob([data.getIntegrationTemplate.body], {
+      const blob = new Blob([data.getComplianceIntegrationTemplate.body], {
         type: 'text/yaml;charset=utf-8',
       });
 
@@ -53,10 +51,7 @@ const StackDeployment: React.FC = () => {
   const cfnConsoleLink =
     `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
     `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-compliance-iam/latest/template.yml` +
-    `&stackName=${getIntegrationStackName({
-      integrationLabel: values.integrationLabel,
-      integrationType: INTEGRATION_TYPES.AWS_INFRA,
-    })}` +
+    `&stackName=${getComplianceIntegrationStackName()}` +
     `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
     `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
     `&param_DeployRemediation=${values.remediationEnabled}`;

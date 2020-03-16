@@ -10,11 +10,13 @@ schema {
 
 type Mutation {
   addDestination(input: DestinationInput!): Destination
-  addIntegration(input: AddIntegrationInput!): Integration
+  addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
+  addLogIntegration(input: AddLogIntegrationInput!): LogIntegration!
   addPolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   addRule(input: CreateOrModifyRuleInput!): RuleDetails
   deleteDestination(id: ID!): Boolean
-  deleteIntegration(id: ID!): Boolean
+  deleteComplianceIntegration(id: ID!): Boolean
+  deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): InviteUserResponse
@@ -23,7 +25,8 @@ type Mutation {
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
   updateDestination(input: DestinationInput!): Destination
-  updateIntegration(input: UpdateIntegrationInput!): Boolean
+  updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
+  updateLogIntegration(input: UpdateLogIntegrationInput!): LogIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
@@ -37,7 +40,10 @@ type Query {
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
-  getIntegrationTemplate(input: GetIntegrationTemplateInput!): IntegrationTemplate!
+  getComplianceIntegrationTemplate(
+    input: GetComplianceIntegrationTemplateInput!
+  ): IntegrationTemplate!
+  getLogIntegrationTemplate(input: GetLogIntegrationTemplateInput!): IntegrationTemplate!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -45,18 +51,22 @@ type Query {
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
-  integrations(input: ListIntegrationsInput): [Integration!]
+  listComplianceIntegrations: [ComplianceIntegration]!
+  listLogIntegrations: [LogIntegration]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   users(limit: Int, paginationToken: String): ListUsersResponse
 }
 
-input GetIntegrationTemplateInput {
+input GetComplianceIntegrationTemplateInput {
   awsAccountId: String!
-  integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
   remediationEnabled: Boolean
   cweEnabled: Boolean
+}
+
+input GetLogIntegrationTemplateInput {
+  awsAccountId: String!
   s3Buckets: [String]
   kmsKeys: [String]
 }
@@ -65,10 +75,6 @@ input ListAlertsInput {
   ruleId: ID
   pageSize: Int
   exclusiveStartKey: String
-}
-
-input ListIntegrationsInput {
-  integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
 }
 
 input GetAlertInput {
@@ -275,52 +281,60 @@ input TestPolicyInput {
   tests: [PolicyUnitTestInput!]
 }
 
-type IntegrationConfig {
-  awsRoleArn: String
-}
-
-input IntegrationConfigInput {
-  awsRoleArn: String
-}
-
-type Integration {
+type ComplianceIntegration {
   awsAccountId: String
   createdAtTime: AWSDateTime
   createdBy: ID
   integrationId: ID
   integrationLabel: String
-  integrationType: String
-  scanEnabled: Boolean
   cweEnabled: Boolean
   remediationEnabled: Boolean
   scanIntervalMins: Int
   scanStatus: String
   eventStatus: String
-  s3Buckets: [String]
-  kmsKeys: [String]
   lastScanEndTime: AWSDateTime
   lastScanErrorMessage: String
   lastScanStartTime: AWSDateTime
 }
 
-input AddIntegrationInput {
-  integrations: [AddIntegrationAttributes]
-}
-
-input AddIntegrationAttributes {
-  awsAccountId: String!
-  integrationLabel: String!
-  integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
-  remediationEnabled: Boolean
-  cweEnabled: Boolean
+type LogIntegration {
+  awsAccountId: String
+  createdAtTime: AWSDateTime
+  createdBy: ID
+  integrationId: ID
+  integrationLabel: String
   s3Buckets: [String]
   kmsKeys: [String]
 }
 
-input UpdateIntegrationInput {
-  awsAccountId: String
-  integrationId: String!
+input AddComplianceIntegrationInput {
+  awsAccountId: String!
   integrationLabel: String!
+  remediationEnabled: Boolean
+  cweEnabled: Boolean
+}
+
+input AddLogIntegrationInput {
+  awsAccountId: String!
+  integrationLabel: String!
+  s3Buckets: [String]
+  kmsKeys: [String]
+}
+
+input UpdateComplianceIntegrationInput {
+  integrationId: String!
+  integrationLabel: String
+  awsAccountId: String
+  cweEnabled: Boolean
+  remediationEnabled: Boolean
+}
+
+input UpdateLogIntegrationInput {
+  integrationId: String!
+  integrationLabel: String
+  awsAccountId: String
+  s3Buckets: [String]
+  kmsKeys: [String]
 }
 
 type ListPoliciesResponse {
@@ -570,7 +584,6 @@ input ListResourcesInput {
   deleted: Boolean
   idContains: String
   integrationId: ID
-  integrationType: AccountTypeEnum
   types: String # comma separated string
   # Sorting
   sortBy: ListResourcesSortFieldsEnum # defaults to `id`
@@ -631,7 +644,6 @@ type ResourceSummary {
   id: ID
   integrationId: ID
   complianceStatus: ComplianceStatusEnum
-  integrationType: AccountTypeEnum
   deleted: Boolean
   lastModified: AWSDateTime
   type: String
@@ -643,7 +655,6 @@ type ResourceDetails {
   expiresAt: Int
   id: ID
   integrationId: ID
-  integrationType: AccountTypeEnum
   complianceStatus: ComplianceStatusEnum
   lastModified: AWSDateTime
   type: String

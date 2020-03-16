@@ -20,14 +20,14 @@ import React from 'react';
 import { Flex, Heading, Text } from 'pouncejs';
 import { SubmitButton } from 'Components/Buttons';
 import { useFormikContext } from 'formik';
-import { CreateInfraSourceValues } from '../CreateComplianceSource';
+import { CreateComplianceSourceValues } from '../CreateComplianceSource';
 
 interface SuccessPanelProps {
   errorMessage?: string;
 }
 
 const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
-  const { isSubmitting } = useFormikContext<CreateInfraSourceValues>();
+  const { isSubmitting } = useFormikContext<CreateComplianceSourceValues>();
   return (
     <Flex
       justifyContent="center"

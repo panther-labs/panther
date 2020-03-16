@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Button, Card, Flex, Icon } from 'pouncejs';
 import { RESOURCE_TYPES } from 'Source/constants';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
-import { ComplianceStatusEnum, ListResourcesInput, Integration } from 'Generated/schema';
+import { ComplianceStatusEnum, ListResourcesInput, ComplianceIntegration } from 'Generated/schema';
 import { capitalize } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikCombobox from 'Components/fields/ComboBox';
@@ -50,8 +50,8 @@ export const filters = {
     props: {
       label: 'Source',
       searchable: true,
-      items: [] as Integration[],
-      itemToString: (integration: Integration) => integration.integrationLabel,
+      items: [] as ComplianceIntegration[],
+      itemToString: (integration: ComplianceIntegration) => integration.integrationLabel,
       inputProps: {
         placeholder: 'Choose a source...',
       },
@@ -86,7 +86,7 @@ export type ListResourcesFiltersValues = Pick<
 // we mutate the shape of the integrationID here since we want it to have a different shape, that's
 // dependant on the response of another API
 type MutatedListResourcesFiltersValues = Omit<ListResourcesFiltersValues, 'integrationId'> & {
-  integrationId: Pick<Integration, 'integrationId' | 'integrationLabel'>;
+  integrationId: Pick<ComplianceIntegration, 'integrationId' | 'integrationLabel'>;
 };
 
 interface ListResourcesFiltersProps {
@@ -104,7 +104,7 @@ const ListResourcesActions: React.FC = () => {
   const { error, data } = useListAccountIds();
 
   if (data) {
-    filters.integrationId.props.items = data.integrations;
+    filters.integrationId.props.items = data.listComplianceIntegrations;
   }
 
   // Just because the `integrationId` field has objects as items, when a value is selected we have
@@ -122,14 +122,16 @@ const ListResourcesActions: React.FC = () => {
   );
 
   // Mutate initial values since the initial values provide an `integrationId` and we want to map
-  // that to an `Integration` object, since that is the kind of items that the MultiCombobox has
+  // that to an `ComplianceIntegration` object, since that is the kind of items that the MultiCombobox has
   const filterKeys = Object.keys(filters) as (keyof ListResourcesFiltersValues)[];
   const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
   const mutatedInitialValues = React.useMemo(
     () => ({
       ...(pick(requestParams, filterKeys) as ListResourcesFiltersValues),
       integrationId:
-        data?.integrations.find(i => i.integrationId === requestParams.integrationId) || null,
+        data?.listComplianceIntegrations.find(
+          i => i.integrationId === requestParams.integrationId
+        ) || null,
     }),
     [requestParams, data]
   );

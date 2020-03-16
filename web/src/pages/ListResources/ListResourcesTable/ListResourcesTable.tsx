@@ -22,7 +22,7 @@ import {
   ListResourcesInput,
   ResourceSummary,
   SortDirEnum,
-  Integration,
+  ComplianceIntegration,
 } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import { Table } from 'pouncejs';
@@ -61,7 +61,7 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
   const enumeratedColumns = [generateEnumerationColumn(enumerationStartIndex), ...columns];
 
   return (
-    <Table<ResourceSummary & Pick<Integration, 'integrationLabel'>>
+    <Table<ResourceSummary & Pick<ComplianceIntegration, 'integrationLabel'>>
       columns={enumeratedColumns}
       getItemKey={resource => resource.id}
       items={items}

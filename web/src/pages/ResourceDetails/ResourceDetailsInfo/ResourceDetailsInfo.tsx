@@ -20,10 +20,10 @@ import React from 'react';
 import { Box, Grid, Label, Text } from 'pouncejs';
 import Panel from 'Components/Panel';
 import { capitalize, formatDatetime } from 'Helpers/utils';
-import { ComplianceStatusEnum, Integration, ResourceDetails } from 'Generated/schema';
+import { ComplianceStatusEnum, ComplianceIntegration, ResourceDetails } from 'Generated/schema';
 
 interface ResourceDetailsInfoProps {
-  resource?: ResourceDetails & Pick<Integration, 'integrationLabel'>;
+  resource?: ResourceDetails & Pick<ComplianceIntegration, 'integrationLabel'>;
 }
 
 const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) => {

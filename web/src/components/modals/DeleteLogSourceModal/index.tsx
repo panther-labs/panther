@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './UpdateSourceSidesheet';
-export * from './UpdateSourceSidesheet';
+export { default } from './DeleteLogSourceModal';
+export * from './DeleteLogSourceModal';

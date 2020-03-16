@@ -25,18 +25,18 @@ export type ActiveSuppressCount = {
   suppressed?: Maybe<ComplianceStatusCounts>;
 };
 
-export type AddIntegrationAttributes = {
+export type AddComplianceIntegrationInput = {
   awsAccountId: Scalars['String'];
   integrationLabel: Scalars['String'];
-  integrationType: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
-  s3Buckets?: Maybe<Array<Maybe<Scalars['String']>>>;
-  kmsKeys?: Maybe<Array<Maybe<Scalars['String']>>>;
 };
 
-export type AddIntegrationInput = {
-  integrations?: Maybe<Array<Maybe<AddIntegrationAttributes>>>;
+export type AddLogIntegrationInput = {
+  awsAccountId: Scalars['String'];
+  integrationLabel: Scalars['String'];
+  s3Buckets?: Maybe<Array<Maybe<Scalars['String']>>>;
+  kmsKeys?: Maybe<Array<Maybe<Scalars['String']>>>;
 };
 
 export type AlertDetails = {
@@ -76,6 +76,23 @@ export type AsanaConfig = {
 export type AsanaConfigInput = {
   personalAccessToken: Scalars['String'];
   projectGids: Array<Scalars['String']>;
+};
+
+export type ComplianceIntegration = {
+  __typename?: 'ComplianceIntegration';
+  awsAccountId?: Maybe<Scalars['String']>;
+  createdAtTime?: Maybe<Scalars['AWSDateTime']>;
+  createdBy?: Maybe<Scalars['ID']>;
+  integrationId?: Maybe<Scalars['ID']>;
+  integrationLabel?: Maybe<Scalars['String']>;
+  cweEnabled?: Maybe<Scalars['Boolean']>;
+  remediationEnabled?: Maybe<Scalars['Boolean']>;
+  scanIntervalMins?: Maybe<Scalars['Int']>;
+  scanStatus?: Maybe<Scalars['String']>;
+  eventStatus?: Maybe<Scalars['String']>;
+  lastScanEndTime?: Maybe<Scalars['AWSDateTime']>;
+  lastScanErrorMessage?: Maybe<Scalars['String']>;
+  lastScanStartTime?: Maybe<Scalars['AWSDateTime']>;
 };
 
 export type ComplianceItem = {
@@ -217,11 +234,14 @@ export type GetAlertInput = {
   eventsExclusiveStartKey?: Maybe<Scalars['String']>;
 };
 
-export type GetIntegrationTemplateInput = {
+export type GetComplianceIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
-  integrationType: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
+};
+
+export type GetLogIntegrationTemplateInput = {
+  awsAccountId: Scalars['String'];
   s3Buckets?: Maybe<Array<Maybe<Scalars['String']>>>;
   kmsKeys?: Maybe<Array<Maybe<Scalars['String']>>>;
 };
@@ -249,36 +269,6 @@ export type GithubConfig = {
 export type GithubConfigInput = {
   repoName: Scalars['String'];
   token: Scalars['String'];
-};
-
-export type Integration = {
-  __typename?: 'Integration';
-  awsAccountId?: Maybe<Scalars['String']>;
-  createdAtTime?: Maybe<Scalars['AWSDateTime']>;
-  createdBy?: Maybe<Scalars['ID']>;
-  integrationId?: Maybe<Scalars['ID']>;
-  integrationLabel?: Maybe<Scalars['String']>;
-  integrationType?: Maybe<Scalars['String']>;
-  scanEnabled?: Maybe<Scalars['Boolean']>;
-  cweEnabled?: Maybe<Scalars['Boolean']>;
-  remediationEnabled?: Maybe<Scalars['Boolean']>;
-  scanIntervalMins?: Maybe<Scalars['Int']>;
-  scanStatus?: Maybe<Scalars['String']>;
-  eventStatus?: Maybe<Scalars['String']>;
-  s3Buckets?: Maybe<Array<Maybe<Scalars['String']>>>;
-  kmsKeys?: Maybe<Array<Maybe<Scalars['String']>>>;
-  lastScanEndTime?: Maybe<Scalars['AWSDateTime']>;
-  lastScanErrorMessage?: Maybe<Scalars['String']>;
-  lastScanStartTime?: Maybe<Scalars['AWSDateTime']>;
-};
-
-export type IntegrationConfig = {
-  __typename?: 'IntegrationConfig';
-  awsRoleArn?: Maybe<Scalars['String']>;
-};
-
-export type IntegrationConfigInput = {
-  awsRoleArn?: Maybe<Scalars['String']>;
 };
 
 export type IntegrationTemplate = {
@@ -342,10 +332,6 @@ export type ListComplianceItemsResponse = {
   totals?: Maybe<ActiveSuppressCount>;
 };
 
-export type ListIntegrationsInput = {
-  integrationType: Scalars['String'];
-};
-
 export type ListPoliciesInput = {
   complianceStatus?: Maybe<ComplianceStatusEnum>;
   nameContains?: Maybe<Scalars['String']>;
@@ -382,7 +368,6 @@ export type ListResourcesInput = {
   deleted?: Maybe<Scalars['Boolean']>;
   idContains?: Maybe<Scalars['String']>;
   integrationId?: Maybe<Scalars['ID']>;
-  integrationType?: Maybe<AccountTypeEnum>;
   types?: Maybe<Scalars['String']>;
   /** Sorting */
   sortBy?: Maybe<ListResourcesSortFieldsEnum>;
@@ -439,6 +424,17 @@ export type ListUsersResponse = {
   paginationToken?: Maybe<Scalars['String']>;
 };
 
+export type LogIntegration = {
+  __typename?: 'LogIntegration';
+  awsAccountId?: Maybe<Scalars['String']>;
+  createdAtTime?: Maybe<Scalars['AWSDateTime']>;
+  createdBy?: Maybe<Scalars['ID']>;
+  integrationId?: Maybe<Scalars['ID']>;
+  integrationLabel?: Maybe<Scalars['String']>;
+  s3Buckets?: Maybe<Array<Maybe<Scalars['String']>>>;
+  kmsKeys?: Maybe<Array<Maybe<Scalars['String']>>>;
+};
+
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
   webhookURL: Scalars['String'];
@@ -451,11 +447,13 @@ export type MsTeamsConfigInput = {
 export type Mutation = {
   __typename?: 'Mutation';
   addDestination?: Maybe<Destination>;
-  addIntegration?: Maybe<Integration>;
+  addComplianceIntegration: ComplianceIntegration;
+  addLogIntegration: LogIntegration;
   addPolicy?: Maybe<PolicyDetails>;
   addRule?: Maybe<RuleDetails>;
   deleteDestination?: Maybe<Scalars['Boolean']>;
-  deleteIntegration?: Maybe<Scalars['Boolean']>;
+  deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
+  deleteLogIntegration?: Maybe<Scalars['Boolean']>;
   deletePolicy?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser?: Maybe<InviteUserResponse>;
@@ -464,7 +462,8 @@ export type Mutation = {
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
   updateDestination?: Maybe<Destination>;
-  updateIntegration?: Maybe<Scalars['Boolean']>;
+  updateComplianceIntegration: ComplianceIntegration;
+  updateLogIntegration: LogIntegration;
   updateGeneralSettings: GeneralSettings;
   updatePolicy?: Maybe<PolicyDetails>;
   updateRule?: Maybe<RuleDetails>;
@@ -476,8 +475,12 @@ export type MutationAddDestinationArgs = {
   input: DestinationInput;
 };
 
-export type MutationAddIntegrationArgs = {
-  input: AddIntegrationInput;
+export type MutationAddComplianceIntegrationArgs = {
+  input: AddComplianceIntegrationInput;
+};
+
+export type MutationAddLogIntegrationArgs = {
+  input: AddLogIntegrationInput;
 };
 
 export type MutationAddPolicyArgs = {
@@ -492,7 +495,11 @@ export type MutationDeleteDestinationArgs = {
   id: Scalars['ID'];
 };
 
-export type MutationDeleteIntegrationArgs = {
+export type MutationDeleteComplianceIntegrationArgs = {
+  id: Scalars['ID'];
+};
+
+export type MutationDeleteLogIntegrationArgs = {
   id: Scalars['ID'];
 };
 
@@ -528,8 +535,12 @@ export type MutationUpdateDestinationArgs = {
   input: DestinationInput;
 };
 
-export type MutationUpdateIntegrationArgs = {
-  input: UpdateIntegrationInput;
+export type MutationUpdateComplianceIntegrationArgs = {
+  input: UpdateComplianceIntegrationInput;
+};
+
+export type MutationUpdateLogIntegrationArgs = {
+  input: UpdateLogIntegrationInput;
 };
 
 export type MutationUpdateGeneralSettingsArgs = {
@@ -677,7 +688,8 @@ export type Query = {
   destination?: Maybe<Destination>;
   destinations?: Maybe<Array<Maybe<Destination>>>;
   generalSettings: GeneralSettings;
-  getIntegrationTemplate: IntegrationTemplate;
+  getComplianceIntegrationTemplate: IntegrationTemplate;
+  getLogIntegrationTemplate: IntegrationTemplate;
   remediations?: Maybe<Scalars['AWSJSON']>;
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
@@ -685,7 +697,8 @@ export type Query = {
   policy?: Maybe<PolicyDetails>;
   policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
-  integrations?: Maybe<Array<Integration>>;
+  listComplianceIntegrations: Array<Maybe<ComplianceIntegration>>;
+  listLogIntegrations: Array<Maybe<LogIntegration>>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
@@ -704,8 +717,12 @@ export type QueryDestinationArgs = {
   id: Scalars['ID'];
 };
 
-export type QueryGetIntegrationTemplateArgs = {
-  input: GetIntegrationTemplateInput;
+export type QueryGetComplianceIntegrationTemplateArgs = {
+  input: GetComplianceIntegrationTemplateInput;
+};
+
+export type QueryGetLogIntegrationTemplateArgs = {
+  input: GetLogIntegrationTemplateInput;
 };
 
 export type QueryResourceArgs = {
@@ -730,10 +747,6 @@ export type QueryPoliciesArgs = {
 
 export type QueryPoliciesForResourceArgs = {
   input?: Maybe<PoliciesForResourceInput>;
-};
-
-export type QueryIntegrationsArgs = {
-  input?: Maybe<ListIntegrationsInput>;
 };
 
 export type QueryOrganizationStatsArgs = {
@@ -765,7 +778,6 @@ export type ResourceDetails = {
   expiresAt?: Maybe<Scalars['Int']>;
   id?: Maybe<Scalars['ID']>;
   integrationId?: Maybe<Scalars['ID']>;
-  integrationType?: Maybe<AccountTypeEnum>;
   complianceStatus?: Maybe<ComplianceStatusEnum>;
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   type?: Maybe<Scalars['String']>;
@@ -785,7 +797,6 @@ export type ResourceSummary = {
   id?: Maybe<Scalars['ID']>;
   integrationId?: Maybe<Scalars['ID']>;
   complianceStatus?: Maybe<ComplianceStatusEnum>;
-  integrationType?: Maybe<AccountTypeEnum>;
   deleted?: Maybe<Scalars['Boolean']>;
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   type?: Maybe<Scalars['String']>;
@@ -893,16 +904,26 @@ export type TestPolicyResponse = {
   testsErrored?: Maybe<Array<Maybe<PolicyUnitTestError>>>;
 };
 
+export type UpdateComplianceIntegrationInput = {
+  integrationId: Scalars['String'];
+  integrationLabel?: Maybe<Scalars['String']>;
+  awsAccountId?: Maybe<Scalars['String']>;
+  cweEnabled?: Maybe<Scalars['Boolean']>;
+  remediationEnabled?: Maybe<Scalars['Boolean']>;
+};
+
 export type UpdateGeneralSettingsInput = {
   displayName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   errorReportingConsent?: Maybe<Scalars['Boolean']>;
 };
 
-export type UpdateIntegrationInput = {
-  awsAccountId?: Maybe<Scalars['String']>;
+export type UpdateLogIntegrationInput = {
   integrationId: Scalars['String'];
-  integrationLabel: Scalars['String'];
+  integrationLabel?: Maybe<Scalars['String']>;
+  awsAccountId?: Maybe<Scalars['String']>;
+  s3Buckets?: Maybe<Array<Maybe<Scalars['String']>>>;
+  kmsKeys?: Maybe<Array<Maybe<Scalars['String']>>>;
 };
 
 export type UpdateUserInput = {
@@ -1048,11 +1069,11 @@ export type ResolversTypes = {
   SeverityEnum: SeverityEnum;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
-  GetIntegrationTemplateInput: GetIntegrationTemplateInput;
+  GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
+  GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResolverTypeWrapper<ResourceDetails>;
-  AccountTypeEnum: AccountTypeEnum;
   ComplianceStatusEnum: ComplianceStatusEnum;
   ListResourcesInput: ListResourcesInput;
   ListResourcesSortFieldsEnum: ListResourcesSortFieldsEnum;
@@ -1073,8 +1094,8 @@ export type ResolversTypes = {
   ListPoliciesResponse: ResolverTypeWrapper<ListPoliciesResponse>;
   PolicySummary: ResolverTypeWrapper<PolicySummary>;
   PoliciesForResourceInput: PoliciesForResourceInput;
-  ListIntegrationsInput: ListIntegrationsInput;
-  Integration: ResolverTypeWrapper<Integration>;
+  ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
+  LogIntegration: ResolverTypeWrapper<LogIntegration>;
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: ResolverTypeWrapper<OrganizationStatsResponse>;
   OrganizationReportBySeverity: ResolverTypeWrapper<OrganizationReportBySeverity>;
@@ -1102,8 +1123,8 @@ export type ResolversTypes = {
   OpsgenieConfigInput: OpsgenieConfigInput;
   MsTeamsConfigInput: MsTeamsConfigInput;
   AsanaConfigInput: AsanaConfigInput;
-  AddIntegrationInput: AddIntegrationInput;
-  AddIntegrationAttributes: AddIntegrationAttributes;
+  AddComplianceIntegrationInput: AddComplianceIntegrationInput;
+  AddLogIntegrationInput: AddLogIntegrationInput;
   CreateOrModifyPolicyInput: CreateOrModifyPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
   CreateOrModifyRuleInput: CreateOrModifyRuleInput;
@@ -1117,13 +1138,13 @@ export type ResolversTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: ResolverTypeWrapper<TestPolicyResponse>;
   PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
-  UpdateIntegrationInput: UpdateIntegrationInput;
+  UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
+  UpdateLogIntegrationInput: UpdateLogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
-  IntegrationConfig: ResolverTypeWrapper<IntegrationConfig>;
-  IntegrationConfigInput: IntegrationConfigInput;
+  AccountTypeEnum: AccountTypeEnum;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -1155,11 +1176,11 @@ export type ResolversParentTypes = {
   SeverityEnum: SeverityEnum;
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
-  GetIntegrationTemplateInput: GetIntegrationTemplateInput;
+  GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
+  GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResourceDetails;
-  AccountTypeEnum: AccountTypeEnum;
   ComplianceStatusEnum: ComplianceStatusEnum;
   ListResourcesInput: ListResourcesInput;
   ListResourcesSortFieldsEnum: ListResourcesSortFieldsEnum;
@@ -1180,8 +1201,8 @@ export type ResolversParentTypes = {
   ListPoliciesResponse: ListPoliciesResponse;
   PolicySummary: PolicySummary;
   PoliciesForResourceInput: PoliciesForResourceInput;
-  ListIntegrationsInput: ListIntegrationsInput;
-  Integration: Integration;
+  ComplianceIntegration: ComplianceIntegration;
+  LogIntegration: LogIntegration;
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: OrganizationStatsResponse;
   OrganizationReportBySeverity: OrganizationReportBySeverity;
@@ -1209,8 +1230,8 @@ export type ResolversParentTypes = {
   OpsgenieConfigInput: OpsgenieConfigInput;
   MsTeamsConfigInput: MsTeamsConfigInput;
   AsanaConfigInput: AsanaConfigInput;
-  AddIntegrationInput: AddIntegrationInput;
-  AddIntegrationAttributes: AddIntegrationAttributes;
+  AddComplianceIntegrationInput: AddComplianceIntegrationInput;
+  AddLogIntegrationInput: AddLogIntegrationInput;
   CreateOrModifyPolicyInput: CreateOrModifyPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
   CreateOrModifyRuleInput: CreateOrModifyRuleInput;
@@ -1224,13 +1245,13 @@ export type ResolversParentTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: TestPolicyResponse;
   PolicyUnitTestError: PolicyUnitTestError;
-  UpdateIntegrationInput: UpdateIntegrationInput;
+  UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
+  UpdateLogIntegrationInput: UpdateLogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
-  IntegrationConfig: IntegrationConfig;
-  IntegrationConfigInput: IntegrationConfigInput;
+  AccountTypeEnum: AccountTypeEnum;
 };
 
 export type ActiveSuppressCountResolvers<
@@ -1299,6 +1320,26 @@ export interface AwsTimestampScalarConfig
   extends GraphQLScalarTypeConfig<ResolversTypes['AWSTimestamp'], any> {
   name: 'AWSTimestamp';
 }
+
+export type ComplianceIntegrationResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ComplianceIntegration'] = ResolversParentTypes['ComplianceIntegration']
+> = {
+  awsAccountId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAtTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  createdBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  integrationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  integrationLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  cweEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  scanIntervalMins?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  scanStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  eventStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  lastScanEndTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  lastScanErrorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  lastScanStartTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
 
 export type ComplianceItemResolvers<
   ContextType = any,
@@ -1379,38 +1420,6 @@ export type GithubConfigResolvers<
 > = {
   repoName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
-};
-
-export type IntegrationResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Integration'] = ResolversParentTypes['Integration']
-> = {
-  awsAccountId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdAtTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  createdBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  integrationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  integrationLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  integrationType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  scanEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  cweEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  scanIntervalMins?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  scanStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  eventStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  s3Buckets?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  kmsKeys?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  lastScanEndTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  lastScanErrorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  lastScanStartTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
-};
-
-export type IntegrationConfigResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['IntegrationConfig'] = ResolversParentTypes['IntegrationConfig']
-> = {
-  awsRoleArn?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1507,6 +1516,20 @@ export type ListUsersResponseResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
+export type LogIntegrationResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogIntegration'] = ResolversParentTypes['LogIntegration']
+> = {
+  awsAccountId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAtTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  createdBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  integrationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  integrationLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  s3Buckets?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  kmsKeys?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
 export type MsTeamsConfigResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['MsTeamsConfig'] = ResolversParentTypes['MsTeamsConfig']
@@ -1525,11 +1548,17 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationAddDestinationArgs, 'input'>
   >;
-  addIntegration?: Resolver<
-    Maybe<ResolversTypes['Integration']>,
+  addComplianceIntegration?: Resolver<
+    ResolversTypes['ComplianceIntegration'],
     ParentType,
     ContextType,
-    RequireFields<MutationAddIntegrationArgs, 'input'>
+    RequireFields<MutationAddComplianceIntegrationArgs, 'input'>
+  >;
+  addLogIntegration?: Resolver<
+    ResolversTypes['LogIntegration'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationAddLogIntegrationArgs, 'input'>
   >;
   addPolicy?: Resolver<
     Maybe<ResolversTypes['PolicyDetails']>,
@@ -1549,11 +1578,17 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationDeleteDestinationArgs, 'id'>
   >;
-  deleteIntegration?: Resolver<
+  deleteComplianceIntegration?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
     ParentType,
     ContextType,
-    RequireFields<MutationDeleteIntegrationArgs, 'id'>
+    RequireFields<MutationDeleteComplianceIntegrationArgs, 'id'>
+  >;
+  deleteLogIntegration?: Resolver<
+    Maybe<ResolversTypes['Boolean']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteLogIntegrationArgs, 'id'>
   >;
   deletePolicy?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
@@ -1603,11 +1638,17 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUpdateDestinationArgs, 'input'>
   >;
-  updateIntegration?: Resolver<
-    Maybe<ResolversTypes['Boolean']>,
+  updateComplianceIntegration?: Resolver<
+    ResolversTypes['ComplianceIntegration'],
     ParentType,
     ContextType,
-    RequireFields<MutationUpdateIntegrationArgs, 'input'>
+    RequireFields<MutationUpdateComplianceIntegrationArgs, 'input'>
+  >;
+  updateLogIntegration?: Resolver<
+    ResolversTypes['LogIntegration'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateLogIntegrationArgs, 'input'>
   >;
   updateGeneralSettings?: Resolver<
     ResolversTypes['GeneralSettings'],
@@ -1805,11 +1846,17 @@ export type QueryResolvers<
     ContextType
   >;
   generalSettings?: Resolver<ResolversTypes['GeneralSettings'], ParentType, ContextType>;
-  getIntegrationTemplate?: Resolver<
+  getComplianceIntegrationTemplate?: Resolver<
     ResolversTypes['IntegrationTemplate'],
     ParentType,
     ContextType,
-    RequireFields<QueryGetIntegrationTemplateArgs, 'input'>
+    RequireFields<QueryGetComplianceIntegrationTemplateArgs, 'input'>
+  >;
+  getLogIntegrationTemplate?: Resolver<
+    ResolversTypes['IntegrationTemplate'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetLogIntegrationTemplateArgs, 'input'>
   >;
   remediations?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   resource?: Resolver<
@@ -1848,11 +1895,15 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryPoliciesForResourceArgs, never>
   >;
-  integrations?: Resolver<
-    Maybe<Array<ResolversTypes['Integration']>>,
+  listComplianceIntegrations?: Resolver<
+    Array<Maybe<ResolversTypes['ComplianceIntegration']>>,
     ParentType,
-    ContextType,
-    RequireFields<QueryIntegrationsArgs, never>
+    ContextType
+  >;
+  listLogIntegrations?: Resolver<
+    Array<Maybe<ResolversTypes['LogIntegration']>>,
+    ParentType,
+    ContextType
   >;
   organizationStats?: Resolver<
     Maybe<ResolversTypes['OrganizationStatsResponse']>,
@@ -1889,7 +1940,6 @@ export type ResourceDetailsResolvers<
   expiresAt?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   integrationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  integrationType?: Resolver<Maybe<ResolversTypes['AccountTypeEnum']>, ParentType, ContextType>;
   complianceStatus?: Resolver<
     Maybe<ResolversTypes['ComplianceStatusEnum']>,
     ParentType,
@@ -1911,7 +1961,6 @@ export type ResourceSummaryResolvers<
     ParentType,
     ContextType
   >;
-  integrationType?: Resolver<Maybe<ResolversTypes['AccountTypeEnum']>, ParentType, ContextType>;
   deleted?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2050,14 +2099,13 @@ export type Resolvers<ContextType = any> = {
   AWSEmail?: GraphQLScalarType;
   AWSJSON?: GraphQLScalarType;
   AWSTimestamp?: GraphQLScalarType;
+  ComplianceIntegration?: ComplianceIntegrationResolvers<ContextType>;
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
-  Integration?: IntegrationResolvers<ContextType>;
-  IntegrationConfig?: IntegrationConfigResolvers<ContextType>;
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
   InviteUserResponse?: InviteUserResponseResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;
@@ -2067,6 +2115,7 @@ export type Resolvers<ContextType = any> = {
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
   ListUsersResponse?: ListUsersResponseResolvers<ContextType>;
+  LogIntegration?: LogIntegrationResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;
