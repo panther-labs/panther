@@ -95,7 +95,7 @@ var (
 		"CreateLogStream":      {},
 		"FilterLogEvents":      {},
 
-		// cognitio
+		// cognito
 		"ConfirmForgotPassword": {},
 
 		// config
