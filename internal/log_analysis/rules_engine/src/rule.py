@@ -105,7 +105,7 @@ class Rule:
             # If no dedup function defined, return rule id
             return self.rule_id
         dedup_string = _run_command(self._module.dedup, event, str)
-        if dedup_string and dedup_string != '':
+        if dedup_string:
             if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
                 # If dedup_string exceeds max size, truncate it
                 self.logger.warning(
@@ -122,7 +122,7 @@ class Rule:
             return None
 
         title_string = _run_command(self._module.title, event, str)
-        if title_string and title_string != '':
+        if title_string:
             if len(title_string) > MAX_TITLE_SIZE:
                 # If title exceeds max size, truncate it
                 self.logger.warning(
