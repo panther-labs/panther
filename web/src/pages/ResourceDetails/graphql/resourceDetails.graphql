@@ -1,0 +1,45 @@
+query ResourceDetails(
+    $resourceDetailsInput: GetResourceInput!
+    $policiesForResourceInput: PoliciesForResourceInput
+) {
+    resource(input: $resourceDetailsInput) {
+        lastModified
+        type
+        integrationId
+        integrationType
+        complianceStatus
+        id
+        attributes
+    }
+    policiesForResource(input: $policiesForResourceInput) {
+        items {
+            errorMessage
+            policyId
+            resourceId
+            policySeverity
+            status
+            suppressed
+        }
+        paging {
+            totalItems
+            totalPages
+            thisPage
+        }
+        totals {
+            active {
+                fail
+                pass
+                error
+            }
+            suppressed {
+                fail
+                pass
+                error
+            }
+        }
+    }
+    integrations(input: { integrationType: "aws-scan" }) {
+        integrationLabel
+        integrationId
+    }
+}

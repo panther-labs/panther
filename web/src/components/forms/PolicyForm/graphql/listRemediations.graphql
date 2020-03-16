@@ -1,0 +1,3 @@
+query ListRemediations {
+    remediations
+}

@@ -18,36 +18,15 @@
 
 import React from 'react';
 import { Modal, Text, Box, useSnackbar, Alert } from 'pouncejs';
-import { gql, useMutation } from '@apollo/client';
 import useModal from 'Hooks/useModal';
 import AnalyticsConsentForm from 'Components/forms/AnalyticsConsentForm';
 import { extractErrorMessage } from 'Helpers/utils';
-import { GeneralSettings, UpdateGeneralSettingsInput } from 'Generated/schema';
-
-const UPDATE_GENERAL_SETTINGS = gql`
-  mutation UpdateGeneralSettingsConsents($input: UpdateGeneralSettingsInput!) {
-    updateGeneralSettings(input: $input) {
-      email
-      errorReportingConsent
-    }
-  }
-`;
-
-interface ApolloMutationInput {
-  input: Pick<UpdateGeneralSettingsInput, 'errorReportingConsent'>;
-}
-
-interface ApolloMutationData {
-  updateGeneralSettings: Pick<GeneralSettings, 'errorReportingConsent' | 'email'>;
-}
+import { useUpdateGeneralSettingsConsents } from './graphql/updateGeneralSettingsConsents.generated';
 
 const AnalyticsConsentModal: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { hideModal } = useModal();
-  const [saveConsentPreferences, { data, error }] = useMutation<
-    ApolloMutationData,
-    ApolloMutationInput
-  >(UPDATE_GENERAL_SETTINGS);
+  const [saveConsentPreferences, { data, error }] = useUpdateGeneralSettingsConsents();
 
   React.useEffect(() => {
     if (data) {

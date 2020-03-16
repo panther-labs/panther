@@ -18,19 +18,13 @@
 
 import React from 'react';
 import { Box, Grid, Table, Alert } from 'pouncejs';
-import { useQuery, gql } from '@apollo/client';
 import Panel from 'Components/Panel';
 import urls from 'Source/urls';
 import useRouter from 'Hooks/useRouter';
-import {
-  PolicySummary,
-  ResourceSummary,
-  OrganizationStatsResponse,
-  Integration,
-} from 'Generated/schema';
+import { PolicySummary, ResourceSummary } from 'Generated/schema';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
-import { INTEGRATION_TYPES } from 'Source/constants';
+import { useGetOrganizationStats } from './graphql/getOrganizationStats.generated';
 import { topFailingPoliciesColumns, topFailingResourcesColumns } from './columns';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
@@ -40,71 +34,12 @@ import DonutChartWrapper from './DonutChartWrapper';
 import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
 import ComplianceOverviewPageSkeleton from './Skeleton';
 
-const GET_ORGANIZATION_STATS = gql`
-    query GetOrganizationStats {
-        organizationStats {
-            scannedResources {
-                byType {
-                    type
-                    count {
-                        fail
-                        pass
-                        error
-                    }
-                }
-            }
-            appliedPolicies {
-                info {
-                    error
-                    pass
-                    fail
-                }
-                low {
-                    error
-                    pass
-                    fail
-                }
-                medium {
-                    error
-                    pass
-                    fail
-                }
-                high {
-                    error
-                    pass
-                    fail
-                }
-                critical {
-                    error
-                    pass
-                    fail
-                }
-            }
-            topFailingPolicies {
-                id
-                severity
-            }
-            topFailingResources {
-                id
-            }
-        }
-        integrations(input: { integrationType: "${INTEGRATION_TYPES.AWS_INFRA}" }) {
-            integrationId
-        }
-    }
-`;
-
 export type TopFailingPolicy = Pick<PolicySummary, 'id' | 'severity'>;
 export type TopFailingResource = Pick<ResourceSummary, 'id'>;
 
-interface ApolloQueryData {
-  organizationStats: OrganizationStatsResponse;
-  integrations: Integration[];
-}
-
 const ComplianceOverview: React.FC = () => {
   const { history } = useRouter();
-  const { data, loading, error } = useQuery<ApolloQueryData>(GET_ORGANIZATION_STATS, {
+  const { data, loading, error } = useGetOrganizationStats({
     fetchPolicy: 'cache-and-network',
   });
 

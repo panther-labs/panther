@@ -22,24 +22,15 @@ import { Card, Flex, Alert, Box } from 'pouncejs';
 import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useMutation, gql } from '@apollo/client';
-import { LIST_LOG_SOURCES } from 'Pages/ListLogSources/LogSourceTable';
-import { AddIntegrationInput, Integration } from 'Generated/schema';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import useRouter from 'Hooks/useRouter';
+import { ListLogSourcesDocument } from 'Pages/ListLogSources';
 import SourceDetailsPanel from './SourceDetailsPanel';
 import CfnLaunchPanel from './CfnLaunchPanel';
 import SuccessPanel from './SuccessPanel';
-
-const ADD_LOG_SOURCE = gql`
-  mutation AddSource($input: AddIntegrationInput!) {
-    addIntegration(input: $input) {
-      integrationId
-    }
-  }
-`;
+import { useAddLogSource } from './graphql/addLogSource.generated';
 
 export interface CreateLogSourceValues {
   integrationLabel: string;
@@ -66,15 +57,9 @@ const validationSchema = Yup.object().shape({
   kmsKeys: Yup.array().of(Yup.string()),
 });
 
-interface ApolloMutationInput {
-  input: AddIntegrationInput;
-}
-
 const CreateLogSource: React.FC = () => {
   const { history } = useRouter();
-  const [addLogSource, { data, loading, error }] = useMutation<Integration, ApolloMutationInput>(
-    ADD_LOG_SOURCE
-  );
+  const [addLogSource, { data, loading, error }] = useAddLogSource();
 
   const submitSourceToServer = React.useCallback(
     (values: CreateLogSourceValues) =>
@@ -90,7 +75,7 @@ const CreateLogSource: React.FC = () => {
             ],
           },
         },
-        refetchQueries: [{ query: LIST_LOG_SOURCES }],
+        refetchQueries: [{ query: ListLogSourcesDocument }],
       }),
     []
   );

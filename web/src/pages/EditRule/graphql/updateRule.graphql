@@ -1,0 +1,20 @@
+mutation UpdateRule($input: CreateOrModifyRuleInput!) {
+    updateRule(input: $input) {
+        description
+        displayName
+        enabled
+        id
+        reference
+        logTypes
+        runbook
+        severity
+        tags
+        body
+        tests {
+            expectedResult
+            name
+            resource
+            resourceType
+        }
+    }
+}

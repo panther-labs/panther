@@ -1,0 +1,10 @@
+query ListLogSources {
+    integrations(input: { integrationType: "aws-s3"}){
+        awsAccountId
+        createdAtTime
+        integrationId
+        integrationLabel
+        integrationType
+        s3Buckets
+    }
+}

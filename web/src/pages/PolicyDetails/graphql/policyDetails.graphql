@@ -1,0 +1,54 @@
+query PolicyDetails(
+    $policyDetailsInput: GetPolicyInput!
+    $resourcesForPolicyInput: ResourcesForPolicyInput!
+) {
+    policy(input: $policyDetailsInput) {
+        autoRemediationId
+        autoRemediationParameters
+        complianceStatus
+        createdAt
+        description
+        displayName
+        enabled
+        suppressions
+        id
+        lastModified
+        reference
+        resourceTypes
+        runbook
+        severity
+        tags
+    }
+    resourcesForPolicy(input: $resourcesForPolicyInput) {
+        items {
+            errorMessage
+            integrationId
+            lastUpdated
+            policyId
+            resourceId
+            status
+            suppressed
+        }
+        paging {
+            totalItems
+            totalPages
+            thisPage
+        }
+        totals {
+            active {
+                fail
+                pass
+                error
+            }
+            suppressed {
+                fail
+                pass
+                error
+            }
+        }
+    }
+    integrations(input: { integrationType: "aws-scan" }) {
+        integrationId
+        integrationLabel
+    }
+}

@@ -18,3 +18,4 @@
 
 export { default } from './ListPolicies';
 export * from './ListPolicies';
+export * from './graphql/listPolicies.generated';

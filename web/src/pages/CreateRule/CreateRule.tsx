@@ -21,14 +21,15 @@ import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
-import { GetRuleInput, RuleDetails } from 'Generated/schema';
-
-import { useMutation, gql } from '@apollo/client';
+import { RuleDetails } from 'Generated/schema';
 import { DEFAULT_RULE_FUNCTION } from 'Source/constants';
-import useCreateRule from 'Hooks/useCreateRule';
 import { extractErrorMessage } from 'Helpers/utils';
+import useRouter from 'Hooks/useRouter';
+import { getOperationName } from '@apollo/client/utilities';
+import { ListRulesDocument } from 'Pages/ListRules';
+import { useCreateRule } from './graphql/createRule.generated';
 
-const initialValues: RuleDetails = {
+export const initialValues: RuleDetails = {
   description: '',
   displayName: '',
   enabled: true,
@@ -42,44 +43,17 @@ const initialValues: RuleDetails = {
   tests: [],
 };
 
-const CREATE_RULE = gql`
-  mutation CreateRule($input: CreateOrModifyRuleInput!) {
-    addRule(input: $input) {
-      description
-      displayName
-      enabled
-      id
-      reference
-      logTypes
-      runbook
-      severity
-      tags
-      body
-      tests {
-        expectedResult
-        name
-        resource
-        resourceType
-      }
-    }
-  }
-`;
-
-interface ApolloMutationData {
-  addRule: RuleDetails;
-}
-
-interface ApolloMutationInput {
-  input: GetRuleInput;
-}
-
 const CreateRulePage: React.FC = () => {
-  const mutation = useMutation<ApolloMutationData, ApolloMutationInput>(CREATE_RULE);
-
-  const { handleSubmit, error } = useCreateRule<ApolloMutationData>({
-    mutation,
-    getRedirectUri: data => urls.logAnalysis.rules.details(data.addRule.id),
+  const { history } = useRouter();
+  const [createRule, { error }] = useCreateRule({
+    refetchQueries: [getOperationName(ListRulesDocument)],
+    onCompleted: data => history.push(urls.logAnalysis.rules.details(data.addRule.id)),
   });
+
+  const handleSubmit = React.useCallback(
+    values => createRule({ variables: { input: values } }),
+    []
+  );
 
   return (
     <Box mb={10}>

@@ -1,0 +1,14 @@
+query ListInfraSources {
+    integrations(input: { integrationType: "aws-scan" }) {
+        awsAccountId
+        createdAtTime
+        createdBy
+        integrationId
+        integrationLabel
+        integrationType
+        scanEnabled
+        scanIntervalMins
+        scanStatus
+        lastScanEndTime
+    }
+}

@@ -21,7 +21,7 @@ package dashboards
 // nolint:lll
 var infraJSON = `
 {
-    "start": "-P1D",
+    "start": "-PT1H",
     "widgets": [
         {
             "type": "metric",

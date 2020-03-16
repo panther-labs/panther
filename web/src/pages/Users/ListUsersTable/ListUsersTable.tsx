@@ -17,35 +17,19 @@
  */
 
 import React from 'react';
-import { useQuery, gql } from '@apollo/client';
-import { ListUsersResponse, User } from 'Generated/schema';
+import { User } from 'Generated/schema';
 import { Alert, Card, Table } from 'pouncejs';
 import columns from 'Pages/Users/columns';
 
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
+import { useListUsers } from './graphql/listUsers.generated';
 
 // This is done so we can benefit from React.memo
 const getUserItemKey = (item: User) => item.id;
 
-export const LIST_USERS = gql`
-  query ListUsers($limit: Int, $paginationToken: String) {
-    users(limit: $limit, paginationToken: $paginationToken) {
-      users {
-        id
-        email
-        givenName
-        familyName
-        createdAt
-        status
-      }
-      paginationToken
-    }
-  }
-`;
-
 const ListUsersTable = () => {
-  const { loading, error, data } = useQuery<{ users: ListUsersResponse }>(LIST_USERS, {
+  const { loading, error, data } = useListUsers({
     fetchPolicy: 'cache-and-network',
   });
 

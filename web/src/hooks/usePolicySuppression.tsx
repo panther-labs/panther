@@ -17,23 +17,13 @@
  */
 
 import React from 'react';
-import { PolicyDetails, SuppressPoliciesInput, ResourceDetails } from 'Generated/schema';
-import { useMutation, gql } from '@apollo/client';
+import { PolicyDetails, ResourceDetails } from 'Generated/schema';
 import { useSnackbar } from 'pouncejs';
-import { RESOURCE_DETAILS } from 'Pages/ResourceDetails';
-import { POLICY_DETAILS } from 'Pages/PolicyDetails';
+import { ResourceDetailsDocument } from 'Pages/ResourceDetails';
+import { PolicyDetailsDocument } from 'Pages/PolicyDetails';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
-
-const SUPPRESS_POLICIES = gql`
-  mutation SuppressPolicy($input: SuppressPoliciesInput!) {
-    suppressPolicies(input: $input)
-  }
-`;
-
-interface ApolloMutationInput {
-  input: SuppressPoliciesInput;
-}
+import { useSuppressPolicy } from './graphql/suppressPolicy.generated';
 
 interface UsePolicySuppressionProps {
   /** A list of IDs whose corresponding policies should receive the suppression */
@@ -46,16 +36,16 @@ interface UsePolicySuppressionProps {
   resourcePatterns: ResourceDetails['id'][];
 }
 const usePolicySuppression = ({ policyIds, resourcePatterns }: UsePolicySuppressionProps) => {
-  const [suppressPolicies, { data, loading, error }] = useMutation<boolean, ApolloMutationInput>(
-    SUPPRESS_POLICIES,
-    {
-      awaitRefetchQueries: true,
-      refetchQueries: [getOperationName(RESOURCE_DETAILS), getOperationName(POLICY_DETAILS)],
-      variables: {
-        input: { policyIds, resourcePatterns },
-      },
-    }
-  );
+  const [suppressPolicies, { data, loading, error }] = useSuppressPolicy({
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      getOperationName(ResourceDetailsDocument),
+      getOperationName(PolicyDetailsDocument),
+    ],
+    variables: {
+      input: { policyIds, resourcePatterns },
+    },
+  });
 
   const { pushSnackbar } = useSnackbar();
   React.useEffect(() => {

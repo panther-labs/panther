@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -37,10 +38,10 @@ func TestBatchLog(t *testing.T) {
 	expectedEvent := &Batch{
 		CalendarTime: (*timestamp.ANSICwithTZ)(&expectedTime),
 		Name:         aws.String("processes"),
-		Epoch:        aws.Int(314159265),
+		Epoch:        (*numerics.Integer)(aws.Int(314159265)),
 		Hostname:     aws.String(("hostname.local")),
-		UnixTime:     aws.Int(1412123850),
-		Counter:      aws.Int(1),
+		UnixTime:     (*numerics.Integer)(aws.Int(1412123850)),
+		Counter:      (*numerics.Integer)(aws.Int(1)),
 		DiffResults: &BatchDiffResults{
 			Added: []map[string]string{
 				{
