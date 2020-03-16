@@ -132,7 +132,7 @@ class Rule:
                     'maximum title string size is [%d] characters. Title for rule with ID '
                     '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
                 )
-                num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
+                num_characters_to_keep = MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)
                 return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
             return title_string
         # If title is empty string, return None
