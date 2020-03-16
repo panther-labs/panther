@@ -17,11 +17,13 @@
  */
 
 import React from 'react';
+import { Text } from 'pouncejs';
 import { Integration } from 'Generated/schema';
 import { ListInfraSourcesDocument } from 'Pages/ListComplianceSources';
 import { ListLogSourcesDocument } from 'Pages/ListLogSources';
 import { INTEGRATION_TYPES } from 'Source/constants';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
+import { getIntegrationStackName } from 'Helpers/utils';
 import { useDeleteSource } from './graphql/deleteSource.generated';
 
 export interface DeleteSourceModalProps {
@@ -30,7 +32,6 @@ export interface DeleteSourceModalProps {
 
 const DeleteSourceModal: React.FC<DeleteSourceModalProps> = ({ source }) => {
   const isInfraSource = source.integrationType === INTEGRATION_TYPES.AWS_INFRA;
-  const sourceDisplayName = source.integrationLabel || source.integrationId;
   const mutation = useDeleteSource({
     variables: {
       id: source.integrationId,
@@ -38,11 +39,21 @@ const DeleteSourceModal: React.FC<DeleteSourceModalProps> = ({ source }) => {
     refetchQueries: [{ query: isInfraSource ? ListInfraSourcesDocument : ListLogSourcesDocument }],
   });
 
+  const sourceDisplayName = source.integrationLabel;
+  const stackName = getIntegrationStackName(source);
   return (
     <BaseConfirmModal
       mutation={mutation}
       title={`Delete ${sourceDisplayName}`}
-      subtitle={`Are you sure you want to delete ${sourceDisplayName}?`}
+      subtitle={[
+        <Text size="large" key={0}>
+          Are you sure you want to delete <b>{sourceDisplayName}</b>?
+        </Text>,
+        <Text size="medium" color="grey300" mt={6} key={1}>
+          Deleting this source will not delete the associated Cloudformation stack. You will need to
+          manually delete the stack {stackName} from the <b>AWS Account {source.awsAccountId}</b>
+        </Text>,
+      ]}
       onSuccessMsg={`Successfully deleted ${sourceDisplayName}`}
       onErrorMsg={`Failed to delete ${sourceDisplayName}`}
     />

@@ -19,7 +19,7 @@
 import { Text, Box, Heading, Alert, Spinner } from 'pouncejs';
 import React from 'react';
 import { INTEGRATION_TYPES } from 'Source/constants';
-import { extractErrorMessage } from 'Helpers/utils';
+import { extractErrorMessage, getIntegrationStackName } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { useGetCfnTemplate } from './graphql/getCfnTemplate.generated';
 import { CreateInfraSourceValues } from '../CreateComplianceSource';
@@ -53,7 +53,10 @@ const StackDeployment: React.FC = () => {
   const cfnConsoleLink =
     `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
     `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-compliance-iam/latest/template.yml` +
-    `&stackName=panther-cloud-security` +
+    `&stackName=${getIntegrationStackName({
+      integrationLabel: values.integrationLabel,
+      integrationType: INTEGRATION_TYPES.AWS_INFRA,
+    })}` +
     `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
     `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
     `&param_DeployRemediation=${values.remediationEnabled}`;

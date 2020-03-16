@@ -31,6 +31,7 @@ import {
   INCLUDE_LOWERCASE_REGEX,
   INCLUDE_SPECIAL_CHAR_REGEX,
   INCLUDE_UPPERCASE_REGEX,
+  INTEGRATION_TYPES,
 } from 'Source/constants';
 import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
@@ -235,3 +236,12 @@ export const copyTextToClipboard = (text: string) => {
 };
 
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
+
+export const getIntegrationStackName = (
+  source: Partial<Integration> & Pick<Integration, 'integrationType' | 'integrationLabel'>
+) => {
+  if (source.integrationType === INTEGRATION_TYPES.AWS_INFRA) {
+    return 'panther-cloud-security';
+  }
+  return `panther-log-analysis-${source.integrationLabel}`;
+};
