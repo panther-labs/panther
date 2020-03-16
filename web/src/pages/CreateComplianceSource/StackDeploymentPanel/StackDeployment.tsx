@@ -50,6 +50,14 @@ const StackDeployment: React.FC = () => {
     }
   }, [downloadAnchor, data]);
 
+  const cfnConsoleLink =
+    `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
+    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-compliance-iam/latest/template.yml` +
+    `&stackName=panther-cloud-security` +
+    `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
+    `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
+    `&param_DeployRemediation=${values.remediationEnabled}`;
+
   return (
     <Box>
       <Heading size="medium" m="auto" mb={10} color="grey400">
@@ -62,11 +70,24 @@ const StackDeployment: React.FC = () => {
           description={extractErrorMessage(error)}
         />
       )}
-      <Text size="large" color="grey200" is="p" mb={6}>
-        Before we can proceed, you must deploy the auto-generated Cloudformation file to your
-        related AWS account.
-        <br />
-        <br />
+      <Text size="large" color="grey200" is="p" mb={2}>
+        To proceed, you must deploy the generated Cloudformation template to the AWS account that
+        you are onboarding. This will generate the necessary IAM Roles.
+      </Text>
+      <Text
+        size="large"
+        color="blue300"
+        is="a"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Launch Cloudformation console"
+        href={cfnConsoleLink}
+        onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+      >
+        Launch console
+      </Text>
+      <Text size="large" color="grey200" is="p" mt={10} mb={2}>
+        Alternatively, you can download it and deploy it through the AWS CLI/SDK
       </Text>
       <Text size="large" color="blue300">
         {loading ? (
@@ -79,7 +100,7 @@ const StackDeployment: React.FC = () => {
             ref={downloadAnchor}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
-            Download Stack
+            Download template
           </a>
         )}
       </Text>
