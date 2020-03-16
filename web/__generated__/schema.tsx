@@ -260,6 +260,8 @@ export type Integration = {
   integrationLabel?: Maybe<Scalars['String']>;
   integrationType?: Maybe<Scalars['String']>;
   scanEnabled?: Maybe<Scalars['Boolean']>;
+  cweEnabled?: Maybe<Scalars['Boolean']>;
+  remediationEnabled?: Maybe<Scalars['Boolean']>;
   scanIntervalMins?: Maybe<Scalars['Int']>;
   scanStatus?: Maybe<Scalars['String']>;
   eventStatus?: Maybe<Scalars['String']>;
@@ -1391,6 +1393,8 @@ export type IntegrationResolvers<
   integrationLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   integrationType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   scanEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  cweEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   scanIntervalMins?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   scanStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   eventStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

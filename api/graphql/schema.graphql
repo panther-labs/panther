@@ -291,6 +291,8 @@ type Integration {
   integrationLabel: String
   integrationType: String
   scanEnabled: Boolean
+  cweEnabled: Boolean
+  remediationEnabled: Boolean
   scanIntervalMins: Int
   scanStatus: String
   eventStatus: String
