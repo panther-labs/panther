@@ -16,7 +16,7 @@
 
 from unittest import TestCase
 
-from ..src.rule import MAX_DEDUP_STRING_SIZE, Rule, RuleResult
+from ..src.rule import MAX_DEDUP_STRING_SIZE, MAX_TITLE_SIZE, Rule, RuleResult, TRUNCATED_STRING_SUFFIX
 
 
 class TestRule(TestCase):
@@ -90,8 +90,17 @@ class TestRule(TestCase):
             format(MAX_DEDUP_STRING_SIZE+1)
         rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
 
-        expected_dedup_string = ''.join('a' for _ in range(MAX_DEDUP_STRING_SIZE))
-        expected_rule = RuleResult(matched=True, dedup_string=expected_dedup_string)
+        expected_dedup_string_prefix = ''.join('a' for _ in range(MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)))
+        expected_rule = RuleResult(matched=True, dedup_string=expected_dedup_string_prefix + TRUNCATED_STRING_SUFFIX)
+        self.assertEqual(rule.run({}), expected_rule)
+
+    def test_restrict_title_size(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn "".join("a" for i in range({}))'. \
+            format(MAX_TITLE_SIZE+1)
+        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+
+        expected_title_string_prefix = ''.join('a' for _ in range(MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)))
+        expected_rule = RuleResult(matched=True, dedup_string='id', title=expected_title_string_prefix + TRUNCATED_STRING_SUFFIX)
         self.assertEqual(rule.run({}), expected_rule)
 
     def test_empty_dedup_result_to_default(self) -> None:

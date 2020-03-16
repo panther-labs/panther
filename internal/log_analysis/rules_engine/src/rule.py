@@ -35,6 +35,8 @@ MAX_DEDUP_STRING_SIZE = 1000
 # Maximum size for a title
 MAX_TITLE_SIZE = 1000
 
+TRUNCATED_STRING_SUFFIX = '... (truncated)'
+
 
 @dataclass
 class RuleResult:
@@ -112,7 +114,8 @@ class Rule:
                     'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
                     '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
                 )
-                return dedup_string[:MAX_DEDUP_STRING_SIZE]
+                num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
+                return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
             return dedup_string
         # If dedup string was the empty string, put the default value (rule_id)
         return self.rule_id
@@ -129,7 +132,8 @@ class Rule:
                     'maximum title string size is [%d] characters. Title for rule with ID '
                     '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
                 )
-                return title_string[:MAX_TITLE_SIZE]
+                num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
+                return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
             return title_string
         # If title is empty string, return None
         return None
