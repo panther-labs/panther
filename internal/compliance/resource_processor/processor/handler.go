@@ -73,7 +73,7 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 	var results batchResults
 
 	for _, record := range batch.Records {
-		resource, policy := parseQueueMsg(record.Body)
+		resource, policy, lookup := parseQueueMsg(record.Body)
 
 		if policy != nil {
 			// Policy updated - analyze applicable resources now
@@ -82,6 +82,13 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 			}
 		} else if resource != nil {
 			// Resource updated - analyze with applicable policies (after grouping + deduping)
+			resources[string(resource.ID)] = resource
+		} else if lookup != nil {
+			resource, err = getResource(*lookup)
+			if err != nil {
+				zap.L().Error("failed to get resource", zap.String("resourceId", *lookup), zap.Error(err))
+				continue
+			}
 			resources[string(resource.ID)] = resource
 		} else {
 			zap.L().Error("failed to parse msg as resource, policy, or resource lookup", zap.String("body", record.Body))
@@ -96,7 +103,7 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 	return err
 }
 
-func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Policy) {
+func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Policy, *string) {
 	// There are 3 kinds of possible messages:
 	//    a) An updated resource which needs to be evaluated with all applicable policies
 	//    b) Same as a, but the resource was too big to be delivered via SQS and must first be fetched from dynamo
@@ -106,31 +113,28 @@ func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Polic
 	if err == nil && resource.Attributes != nil && resource.Type != "" {
 		zap.L().Info("found new/updated resource",
 			zap.String("resourceId", string(resource.ID)))
-		return &resource, nil
+		return &resource, nil, nil
 	}
 
 	// Not a resource - could be a policy
 	var policy analysismodels.Policy
 	err = jsoniter.UnmarshalFromString(body, &policy)
 	if err == nil && policy.Body != "" {
-		zap.L().Info("found new/updated policy",
+		zap.L().Debug("found new/updated policy",
 			zap.String("policyId", string(policy.ID)))
-		return nil, &policy
+		return nil, &policy, nil
 	}
 
 	// Rarest case, not a resource or policy: must be a resource lookup
 	var resourceLookup models.ResourceLookup
 	err = jsoniter.UnmarshalFromString(body, &resourceLookup)
 	if err == nil && resourceLookup.ID != nil {
-		zap.L().Info("found resource lookup",
+		zap.L().Debug("found resource lookup",
 			zap.String("resourceId", *resourceLookup.ID))
-		resource, err := getResource(*resourceLookup.ID)
-		if err == nil {
-			return resource, nil
-		}
+		return nil, nil, resourceLookup.ID
 	}
 
-	return nil, nil
+	return nil, nil, nil
 }
 
 // Analyze all resources related to a single policy (may require several policy-engine invocations).
@@ -178,6 +182,11 @@ func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error
 //
 // Policies can either be provided by the caller or else they will be fetched from analysis-api.
 func (r *batchResults) analyze(resources resourceMap, policies policyMap) error {
+	// If there are no resources to analyze, exit before looking up policies
+	if len(resources) == 0 {
+		return nil
+	}
+
 	// Fetch policies and evaluate them against the resources
 	var err error
 	if policies == nil {

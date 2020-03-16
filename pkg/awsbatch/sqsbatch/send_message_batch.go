@@ -141,13 +141,13 @@ func SendMessageBatch(
 				zap.Int("failedMessageCount", len(allEntries)-request.successCount),
 				zap.Error(err),
 			)
-			return allEntries[request.successCount:], err
+			return append(allEntries[request.successCount:], bigMessages...), err
 		}
 	}
 
 	// This case covers when some entries would have failed to send if we tried, so we didn't try
 	if len(bigMessages) > 0 {
-		zap.L().Info(
+		zap.L().Debug(
 			"SendMessageBatch partially successful",
 			zap.Duration("duration", time.Since(start)),
 			zap.Int("failures", len(bigMessages)),
