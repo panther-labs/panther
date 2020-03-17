@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Spinner, Text, Tooltip } from 'pouncejs';
+import { Box, Icon, Label, Spinner, Text, Tooltip } from 'pouncejs';
 import { ComplianceIntegrationDetails } from 'Source/graphql/fragments/ComplianceIntegrationDetails.generated';
 import { useGetComplianceSourceHealth } from './graphql/getComplianceSourceHealth.generated';
 
@@ -36,8 +36,12 @@ const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
     remediationRoleStatus,
   } = data.getComplianceIntegrationHealth;
 
+  // Some status return `null` when they shouldn't be checked. That doesn't mean the source is
+  // unhealthy. That's why we check explicitly for a "false" value
   const isHealthy =
-    auditRoleStatus.healthy && cweRoleStatus.healthy && remediationRoleStatus.healthy;
+    auditRoleStatus.healthy !== false &&
+    cweRoleStatus.healthy !== false &&
+    remediationRoleStatus.healthy !== false;
 
   const errorMessage = [
     auditRoleStatus.errorMessage,
@@ -47,14 +51,19 @@ const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
     .filter(Boolean)
     .join('. ');
 
-  return isHealthy ? (
-    <Tooltip content="All looks fine from our end!">
-      <Icon type="check" size="large" color="green300" />
-    </Tooltip>
+  const tooltipMessage = isHealthy ? 'Everything looks fine from our end!' : errorMessage;
+  const icon = isHealthy ? (
+    <Icon type="check" size="large" color="green300" />
   ) : (
-    <Tooltip content={errorMessage}>
-      <Icon type="remove" size="large" color="red300" />
-    </Tooltip>
+    <Icon type="close" size="large" color="red300" />
+  );
+
+  return (
+    <Box>
+      <Tooltip content={<Label size="medium">{tooltipMessage}</Label>} positioning="down">
+        {icon}
+      </Tooltip>
+    </Box>
   );
 };
 
