@@ -514,6 +514,39 @@ Resources:
           $util.toJson($ctx.result)
         #end
 
+  GetComplianceIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Query
+      FieldName: getComplianceIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "getEnabledIntegrations": {
+            "integrationType": "aws-scan"
+          }
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          #if($context.error)
+            $util.error($context.error.errorMessage, $context.error.errorType, {})
+          #else
+            #set ($requestedIntegration = null)
+            #foreach($item in $ctx.result)
+                #if($item.integrationId == $ctx.args.id)
+                  $util.qr($requestedIntegration = item)
+                #end
+            #end
+            $util.toJson($requestedIntegration)
+          #end
+        #end
+
   GetComplianceIntegrationTemplateResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
