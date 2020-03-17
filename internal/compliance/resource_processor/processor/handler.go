@@ -128,10 +128,10 @@ func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Polic
 	// Rarest case, not a resource or policy: must be a resource lookup
 	var resourceLookup models.ResourceLookup
 	err = jsoniter.UnmarshalFromString(body, &resourceLookup)
-	if err == nil && resourceLookup.ID != nil {
+	if err == nil && resourceLookup.ID != "" {
 		zap.L().Debug("found resource lookup",
-			zap.String("resourceId", *resourceLookup.ID))
-		return nil, nil, resourceLookup.ID
+			zap.String("resourceId", resourceLookup.ID))
+		return nil, nil, &resourceLookup.ID
 	}
 
 	return nil, nil, nil

@@ -19,5 +19,5 @@ package models
  */
 
 type ResourceLookup struct {
-	ID *string
+	ID string
 }

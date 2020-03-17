@@ -117,7 +117,7 @@ func handleBigMessages(bigMessages []*sqs.SendMessageBatchRequestEntry, input *m
 		}
 
 		// Lookup the ID of the resource based on the original input and wrap it in a struct to pass along
-		lookupRequest := proccessormodels.ResourceLookup{ID: aws.String(string(input.Resources[inputIndex].ID))}
+		lookupRequest := proccessormodels.ResourceLookup{ID: string(input.Resources[inputIndex].ID)}
 		body, err := jsoniter.MarshalToString(lookupRequest)
 		if err != nil {
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
