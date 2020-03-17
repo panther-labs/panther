@@ -15,8 +15,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-/* eslint-disable react/display-name */
 import React from 'react';
 import { Card } from 'pouncejs';
 import urls from 'Source/urls';
