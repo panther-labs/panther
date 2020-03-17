@@ -20,14 +20,14 @@ import React from 'react';
 import { Flex, Heading, Text } from 'pouncejs';
 import { SubmitButton } from 'Components/Buttons';
 import { useFormikContext } from 'formik';
-import { CreateComplianceSourceValues } from '../CreateComplianceSource';
+import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
 interface SuccessPanelProps {
   errorMessage?: string;
 }
 
 const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
-  const { isSubmitting } = useFormikContext<CreateComplianceSourceValues>();
+  const { isSubmitting, initialValues } = useFormikContext<ComplianceSourceWizardValues>();
   return (
     <Flex
       justifyContent="center"
@@ -41,10 +41,12 @@ const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
         Almost done!
       </Heading>
       <Text size="large" color="grey300" mb={10}>
-        Click the button below to complete the setup!
+        {initialValues.integrationId
+          ? 'Click the button below to validate & updated your source!'
+          : 'Click the button below to complete the setup!'}
       </Text>
       <SubmitButton width={350} disabled={isSubmitting} submitting={isSubmitting}>
-        Add New Source
+        {initialValues.integrationId ? 'Update Source' : 'Add New Source'}
       </SubmitButton>
       <Text size="large" mt={6} color="red300">
         {errorMessage}

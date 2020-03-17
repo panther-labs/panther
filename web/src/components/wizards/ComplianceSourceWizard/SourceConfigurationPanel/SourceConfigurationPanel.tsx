@@ -18,20 +18,25 @@
 
 import { Box, Flex, Heading, InputElementLabel, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { Field } from 'formik';
+import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
 
 const SourceConfigurationPanel: React.FC = () => {
+  const { initialValues } = useFormikContext<ComplianceSourceWizardValues>();
+
   return (
     <Box width={460} m="auto">
       <Heading size="medium" m="auto" mb={2} color="grey400">
-        First things first
+        {initialValues.integrationId ? 'Update source' : 'First things first'}
       </Heading>
       <Text size="large" color="grey200" mb={10} is="p">
-        Let{"'"}s configure your Cloud Security Source
+        {initialValues.integrationId
+          ? 'Feel free to make any changes to your Cloud Security source'
+          : "Let's configure your Cloud Security Source"}
       </Text>
       <ErrorBoundary>
         <Field

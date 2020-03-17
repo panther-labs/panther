@@ -1,5 +1,5 @@
 /* eslint-disable import/order, import/no-duplicates */
-import * as Types from '../../../../../__generated__/schema';
+import * as Types from '../../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';

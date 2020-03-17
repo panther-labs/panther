@@ -21,11 +21,12 @@ import React from 'react';
 import { extractErrorMessage, getComplianceIntegrationStackName } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.generated';
-import { CreateComplianceSourceValues } from '../CreateComplianceSource';
+import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
 const StackDeployment: React.FC = () => {
   const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
-  const { values, setStatus } = useFormikContext<CreateComplianceSourceValues>();
+  const { initialValues } = useFormikContext<ComplianceSourceWizardValues>();
+  const { values, setStatus } = useFormikContext<ComplianceSourceWizardValues>();
   const { data, loading, error } = useGetComplianceCfnTemplate({
     fetchPolicy: 'no-cache',
     variables: {
@@ -59,7 +60,7 @@ const StackDeployment: React.FC = () => {
   return (
     <Box>
       <Heading size="medium" m="auto" mb={10} color="grey400">
-        Deploy your configured stack
+        {initialValues.integrationId ? 'Deploy the updated stack' : 'Deploy your configured stack'}
       </Heading>
       {error && (
         <Alert
@@ -69,8 +70,9 @@ const StackDeployment: React.FC = () => {
         />
       )}
       <Text size="large" color="grey200" is="p" mb={2}>
-        To proceed, you must deploy the generated Cloudformation template to the AWS account that
-        you are onboarding. This will generate the necessary IAM Roles.
+        {initialValues.integrationId
+          ? 'To proceed, please deploy the updated Cloudformation template to your related AWS account. This will update any previous IAM Roles.'
+          : 'To proceed, you must deploy the generated Cloudformation template to the AWS account that you are onboarding. This will generate the necessary IAM Roles.'}
       </Text>
       <Text
         size="large"

@@ -18,34 +18,12 @@
 
 /* eslint-disable react/display-name */
 import React from 'react';
-import { Card, Flex } from 'pouncejs';
-import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { Card } from 'pouncejs';
 import urls from 'Source/urls';
-import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
+import { extractErrorMessage } from 'Helpers/utils';
+import ComplianceSourceWizard from 'Components/wizards/ComplianceSourceWizard';
 import { useAddComplianceSource } from './graphql/addComplianceSource.generated';
-import StackDeploymentPanel from './StackDeploymentPanel';
-import SuccessPanel from './SuccessPanel';
-import SourceConfigurationPanel from './SourceConfigurationPanel';
-
-export interface CreateComplianceSourceValues {
-  awsAccountId: string;
-  integrationLabel: string;
-  cweEnabled: boolean;
-  remediationEnabled: boolean;
-}
-
-const validationSchema = Yup.object().shape<CreateComplianceSourceValues>({
-  integrationLabel: Yup.string().required(),
-  awsAccountId: Yup.string()
-    .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
-    .required(),
-  cweEnabled: Yup.boolean().required(),
-  remediationEnabled: Yup.boolean().required(),
-});
 
 const initialValues = {
   awsAccountId: '',
@@ -67,73 +45,24 @@ const CreateComplianceSource: React.FC = () => {
     onCompleted: () => history.push(urls.compliance.sources.list()),
   });
 
-  const submitSourceToServer = React.useCallback(
-    (values: CreateComplianceSourceValues) =>
-      addComplianceSource({
-        variables: {
-          input: {
-            integrationLabel: values.integrationLabel,
-            awsAccountId: values.awsAccountId,
-            cweEnabled: values.cweEnabled,
-            remediationEnabled: values.remediationEnabled,
-          },
-        },
-      }),
-    []
-  );
-
   return (
     <Card p={9}>
-      <Formik<CreateComplianceSourceValues>
+      <ComplianceSourceWizard
         initialValues={initialValues}
-        initialStatus={{ cfnTemplateDownloaded: false }}
-        validationSchema={validationSchema}
-        onSubmit={submitSourceToServer}
-      >
-        {({ isValid, dirty, handleSubmit, status }) => {
-          const shouldEnableNextButton = dirty && isValid;
-
-          return (
-            <form onSubmit={handleSubmit}>
-              <Flex justifyContent="center" alignItems="center" width={1}>
-                <Wizard>
-                  <Wizard.Step title="Configure Sourcee" icon="settings">
-                    <WizardPanelWrapper>
-                      <WizardPanelWrapper.Content>
-                        <SourceConfigurationPanel />
-                      </WizardPanelWrapper.Content>
-                      <WizardPanelWrapper.Actions>
-                        <WizardPanelWrapper.ActionNext disabled={!shouldEnableNextButton} />
-                      </WizardPanelWrapper.Actions>
-                    </WizardPanelWrapper>
-                  </Wizard.Step>
-                  <Wizard.Step title="Deploy Stack" icon="upload">
-                    <WizardPanelWrapper>
-                      <WizardPanelWrapper.Content>
-                        <StackDeploymentPanel />
-                      </WizardPanelWrapper.Content>
-                      <WizardPanelWrapper.Actions>
-                        <WizardPanelWrapper.ActionPrev />
-                        <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
-                      </WizardPanelWrapper.Actions>
-                    </WizardPanelWrapper>
-                  </Wizard.Step>
-                  <Wizard.Step title="Done!" icon="check">
-                    <WizardPanelWrapper>
-                      <WizardPanelWrapper.Content>
-                        <SuccessPanel errorMessage={error && extractErrorMessage(error)} />
-                      </WizardPanelWrapper.Content>
-                      <WizardPanelWrapper.Actions>
-                        <WizardPanelWrapper.ActionPrev />
-                      </WizardPanelWrapper.Actions>
-                    </WizardPanelWrapper>
-                  </Wizard.Step>
-                </Wizard>
-              </Flex>
-            </form>
-          );
-        }}
-      </Formik>
+        externalErrorMessage={error && extractErrorMessage(error)}
+        onSubmit={values =>
+          addComplianceSource({
+            variables: {
+              input: {
+                integrationLabel: values.integrationLabel,
+                awsAccountId: values.awsAccountId,
+                cweEnabled: values.cweEnabled,
+                remediationEnabled: values.remediationEnabled,
+              },
+            },
+          })
+        }
+      />
     </Card>
   );
 };
