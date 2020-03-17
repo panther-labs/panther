@@ -87,7 +87,7 @@ type InviteUserOutput = User
 //     }
 // }
 type ListUsersInput struct {
-	// FILTERING
+	// FILTERING (filters are combined with logical AND)
 	// Show only users whose name or email contains this substring (case-insensitive)
 	Contains *string `json:"contains"`
 

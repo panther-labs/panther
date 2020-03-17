@@ -28,7 +28,7 @@ import (
 )
 
 // This is similar to the template in deployments/core/cognito.yml for the invite email.
-const template = `
+const passwordResetTemplate = `
 <br />Hi %s,
 <br />
 <br />A password reset has been requested for this email address. If you did not request a password reset, you can ignore this email.
@@ -69,7 +69,7 @@ func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*ev
 		return nil, errors.New("email attribute not found")
 	}
 
-	event.Response.EmailMessage = fmt.Sprintf(template,
+	event.Response.EmailMessage = fmt.Sprintf(passwordResetTemplate,
 		givenName,
 		appDomainURL,
 		event.Request.CodeParameter,
