@@ -115,7 +115,7 @@ class MatchedEventsBuffer:
 
 def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch]) -> None:
     # 'severity', 'version', 'title', 'dedup_period' of a rule might differ if the rule was modified
-    # while the rules engine was running. We pick the first encountered values.
+    # while the rules engine was running. We pick the first encountered set of values.
     group_info = MatchingGroupInfo(
         rule_id=key.rule_id,
         rule_version=events[0].rule_version,

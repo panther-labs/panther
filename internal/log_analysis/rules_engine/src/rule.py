@@ -48,7 +48,6 @@ class RuleResult:
     exception: Optional[Exception] = None
     matched: Optional[bool] = None
     dedup_string: Optional[str] = None
-    dedup_period_mins: Optional[int] = None
     title: Optional[str] = None
 
 
@@ -111,16 +110,14 @@ class Rule:
 
         dedup_string: Optional[str] = None
         title: Optional[str] = None
-        dedup_period_mins: Optional[int] = None
         try:
             rule_result = _run_command(self._module.rule, event, bool)
             if rule_result:
                 dedup_string = self._get_dedup(event)
                 title = self._get_title(event)
-                dedup_period_mins = self.rule_dedup_period_mins
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
-        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title, dedup_period_mins=dedup_period_mins)
+        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
 
     def _get_dedup(self, event: Dict[str, Any]) -> str:
         if not self._has_dedup:
