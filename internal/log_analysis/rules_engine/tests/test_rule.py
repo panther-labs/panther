@@ -16,7 +16,7 @@
 
 from unittest import TestCase
 
-from ..src.rule import MAX_DEDUP_STRING_SIZE, Rule, RuleResult
+from ..src.rule import MAX_DEDUP_STRING_SIZE, MAX_TITLE_SIZE, Rule, RuleResult, TRUNCATED_STRING_SUFFIX
 
 
 class TestRule(TestCase):
@@ -24,7 +24,7 @@ class TestRule(TestCase):
     def test_create_rule_missing_id(self) -> None:
         exception = False
         try:
-            Rule(rule_id=None, rule_body='rule', rule_severity='INFO', rule_version='version')
+            Rule({'body': 'rule', 'severity': 'INFO', 'versionId': 'version'})
         except AssertionError:
             exception = True
 
@@ -33,16 +33,7 @@ class TestRule(TestCase):
     def test_create_rule_missing_body(self) -> None:
         exception = False
         try:
-            Rule(rule_id='id', rule_body=None, rule_severity='INFO', rule_version='version')
-        except AssertionError:
-            exception = True
-
-        self.assertTrue(exception)
-
-    def test_create_rule_missing_version(self) -> None:
-        exception = False
-        try:
-            Rule(rule_id='id', rule_body='rule', rule_severity='INFO', rule_version=None)
+            Rule({'id': 'test_create_rule_missing_body', 'severity': 'INFO', 'versionId': 'version'})
         except AssertionError:
             exception = True
 
@@ -51,17 +42,23 @@ class TestRule(TestCase):
     def test_create_rule_missing_severity(self) -> None:
         exception = False
         try:
-            Rule(rule_id='id', rule_body='rule', rule_severity=None, rule_version='version')
+            Rule({'id': 'test_create_rule_missing_severity', 'body': 'body', 'versionId': 'version'})
         except AssertionError:
             exception = True
 
         self.assertTrue(exception)
 
+    def test_rule_default_dedup_time(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True'
+        rule = Rule({'id': 'test_rule_default_dedup_time', 'body': rule_body, 'severity': 'INFO'})
+
+        self.assertEqual(60, rule.rule_dedup_period_mins)
+
     def test_create_rule_missing_method(self) -> None:
         exception = False
         rule_body = 'def another_method(event):\n\treturn False'
         try:
-            Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+            Rule({'id': 'test_create_rule_missing_method', 'body': rule_body, 'severity': 'INFO'})
         except AssertionError:
             exception = True
 
@@ -69,41 +66,59 @@ class TestRule(TestCase):
 
     def test_rule_matches(self) -> None:
         rule_body = 'def rule(event):\n\treturn True'
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
-        expected_rule = RuleResult(matched=True, dedup_string='id')
-        self.assertEqual(rule.run({}), expected_rule)
+        rule = Rule({'id': 'test_rule_matches', 'body': rule_body, 'severity': 'INFO', 'dedupPeriodMinutes': 100, 'versionId': 'test'})
+
+        self.assertEqual('test_rule_matches', rule.rule_id)
+        self.assertEqual(rule_body, rule.rule_body)
+        self.assertEqual('test', rule.rule_version)
+        self.assertEqual('INFO', rule.rule_severity)
+        self.assertEqual(100, rule.rule_dedup_period_mins)
+
+        expected_rule = RuleResult(matched=True, dedup_string='test_rule_matches')
+        self.assertEqual(expected_rule, rule.run({}))
 
     def test_rule_doesnt_match(self) -> None:
         rule_body = 'def rule(event):\n\treturn False'
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+        rule = Rule({'id': 'test_rule_doesnt_match', 'body': rule_body, 'severity': 'INFO'})
         expected_rule = RuleResult(matched=False)
-        self.assertEqual(rule.run({}), expected_rule)
+        self.assertEqual(expected_rule, rule.run({}))
 
     def test_rule_with_dedup(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "testdedup"'
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+        rule = Rule({'id': 'test_rule_with_dedup', 'body': rule_body, 'severity': 'INFO'})
         expected_rule = RuleResult(matched=True, dedup_string='testdedup')
-        self.assertEqual(rule.run({}), expected_rule)
+        self.assertEqual(expected_rule, rule.run({}))
 
     def test_restrict_dedup_size(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "".join("a" for i in range({}))'.\
             format(MAX_DEDUP_STRING_SIZE+1)
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+        rule = Rule({'id': 'test_restrict_dedup_size', 'body': rule_body, 'severity': 'INFO'})
 
-        expected_dedup_string = ''.join('a' for _ in range(MAX_DEDUP_STRING_SIZE))
-        expected_rule = RuleResult(matched=True, dedup_string=expected_dedup_string)
-        self.assertEqual(rule.run({}), expected_rule)
+        expected_dedup_string_prefix = ''.join('a' for _ in range(MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)))
+        expected_rule = RuleResult(matched=True, dedup_string=expected_dedup_string_prefix + TRUNCATED_STRING_SUFFIX)
+        self.assertEqual(expected_rule, rule.run({}))
+
+    def test_restrict_title_size(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn "".join("a" for i in range({}))'. \
+            format(MAX_TITLE_SIZE+1)
+        rule = Rule({'id': 'test_restrict_title_size', 'body': rule_body, 'severity': 'INFO'})
+
+        expected_title_string_prefix = ''.join('a' for _ in range(MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)))
+        expected_rule = RuleResult(
+            matched=True, dedup_string='test_restrict_title_size', title=expected_title_string_prefix + TRUNCATED_STRING_SUFFIX
+        )
+        self.assertEqual(expected_rule, rule.run({}))
 
     def test_empty_dedup_result_to_default(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn ""'
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+        rule = Rule({'id': 'test_empty_dedup_result_to_default', 'body': rule_body, 'severity': 'INFO'})
 
-        expected_rule = RuleResult(matched=True, dedup_string='id')
-        self.assertEqual(rule.run({}), expected_rule)
+        expected_rule = RuleResult(matched=True, dedup_string='test_empty_dedup_result_to_default')
+        self.assertEqual(expected_rule, rule.run({}))
 
     def test_rule_throws_exception(self) -> None:
         rule_body = 'def rule(event):\n\traise Exception("test")'
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+        rule = Rule({'id': 'test_rule_throws_exception', 'body': rule_body, 'severity': 'INFO'})
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_string)
@@ -111,7 +126,7 @@ class TestRule(TestCase):
 
     def test_rule_invalid_rule_return(self) -> None:
         rule_body = 'def rule(event):\n\treturn "test"'
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+        rule = Rule({'id': 'test_rule_invalid_rule_return', 'body': rule_body, 'severity': 'INFO'})
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_string)
@@ -119,7 +134,7 @@ class TestRule(TestCase):
 
     def test_dedup_throws_exception(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\traise Exception("test")'
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+        rule = Rule({'id': 'test_dedup_throws_exception', 'body': rule_body, 'severity': 'INFO'})
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_string)
@@ -127,8 +142,49 @@ class TestRule(TestCase):
 
     def test_rule_invalid_dedup_return(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn {}'
-        rule = Rule(rule_id='id', rule_body=rule_body, rule_severity='INFO', rule_version='version')
+        rule = Rule({'id': 'test_rule_invalid_dedup_return', 'body': rule_body, 'severity': 'INFO'})
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_string)
         self.assertIsNotNone(rule_result.exception)
+
+    def test_rule_dedup_returns_empty_string(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn ""'
+        rule = Rule({'id': 'test_rule_dedup_returns_empty_string', 'body': rule_body, 'severity': 'INFO'})
+
+        expected_result = RuleResult(matched=True, dedup_string='test_rule_dedup_returns_empty_string')
+        self.assertEqual(rule.run({}), expected_result)
+
+    def test_rule_matches_with_title(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn "title"'
+        rule = Rule({'id': 'test_rule_matches_with_title', 'body': rule_body, 'severity': 'INFO'})
+
+        expected_result = RuleResult(matched=True, dedup_string='test_rule_matches_with_title', title='title')
+        self.assertEqual(rule.run({}), expected_result)
+
+    def test_rule_title_throws_exception(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\traise Exception("test")'
+        rule = Rule({'id': 'test_rule_title_throws_exception', 'body': rule_body, 'severity': 'INFO'})
+
+        rule_result = rule.run({})
+        self.assertIsNone(rule_result.matched)
+        self.assertIsNone(rule_result.title)
+        self.assertIsNone(rule_result.dedup_string)
+        self.assertIsNotNone(rule_result.exception)
+
+    def test_rule_invalid_title_return(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn {}'
+        rule = Rule({'id': 'test_rule_invalid_title_return', 'body': rule_body, 'severity': 'INFO'})
+
+        rule_result = rule.run({})
+        self.assertIsNone(rule_result.matched)
+        self.assertIsNone(rule_result.title)
+        self.assertIsNone(rule_result.dedup_string)
+        self.assertIsNotNone(rule_result.exception)
+
+    def test_rule_title_returns_empty_string(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn ""'
+        rule = Rule({'id': 'test_rule_title_returns_empty_string', 'body': rule_body, 'severity': 'INFO'})
+
+        expected_result = RuleResult(matched=True, dedup_string='test_rule_title_returns_empty_string')
+        self.assertEqual(rule.run({}), expected_result)

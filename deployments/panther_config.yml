@@ -70,6 +70,11 @@ BackendParameterValues:
   # PROVIDE A CERTIFICATE FOR PRODUCTION USE
   WebApplicationCertificateArn: ''
 
+  # Domain that you own and have configured to alias to the default load balancer URL
+  #
+  # If not specified, the default load balancer URL is used in all places.
+  CustomDomain: ''
+
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
 

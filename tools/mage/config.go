@@ -31,6 +31,7 @@ type backendParameters struct {
 	LayerVersionArns             string `yaml:"LayerVersionArns"`
 	PythonLayerVersionArn        string `yaml:"PythonLayerVersionArn"`
 	WebApplicationCertificateArn string `yaml:"WebApplicationCertificateArn"`
+	CustomDomain                 string `yaml:"CustomDomain"`
 	TracingMode                  string `yaml:"TracingMode"`
 }
 

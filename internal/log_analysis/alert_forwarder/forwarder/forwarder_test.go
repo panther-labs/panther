@@ -83,6 +83,7 @@ var (
 		Severity:            "INFO",
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
+		Title:               aws.String("test title"),
 	}
 
 	testRuleResponse = &models.Rule{
@@ -129,7 +130,6 @@ func TestStoreDDBError(t *testing.T) {
 	assert.Error(t, Store(testAlertDedupEvent))
 }
 
-// The handler signatures must match those in the LambdaInput struct.
 func TestSendAlert(t *testing.T) {
 	sqsMock := &mockSqs{}
 	sqsClient = sqsMock
@@ -152,6 +152,7 @@ func TestSendAlert(t *testing.T) {
 		Tags:              aws.StringSlice([]string{"Tag"}),
 		Type:              aws.String(alertModel.RuleType),
 		AlertID:           aws.String("8c1b7f1a597d0480354e66c3a6266ccc"),
+		Title:             aws.String("test title"),
 	}
 	expectedMarshaledEvent, err := jsoniter.MarshalToString(expectedAlert)
 	require.NoError(t, err)
@@ -163,6 +164,54 @@ func TestSendAlert(t *testing.T) {
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 	assert.NoError(t, SendAlert(testAlertDedupEvent))
+}
+
+func TestSendAlertWithoutTitle(t *testing.T) {
+	sqsMock := &mockSqs{}
+	sqsClient = sqsMock
+
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient = &http.Client{Transport: mockRoundTripper}
+	policyConfig = policiesclient.DefaultTransportConfig().
+		WithHost("host").
+		WithBasePath("path")
+	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+
+	testEvent := &AlertDedupEvent{
+		RuleID:              "ruleId",
+		RuleVersion:         "ruleVersion",
+		DeduplicationString: "dedupString",
+		AlertCount:          10,
+		CreationTime:        time.Now().UTC(),
+		UpdateTime:          time.Now().UTC(),
+		Severity:            "INFO",
+		EventCount:          100,
+		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
+		Title:               nil,
+	}
+
+	expectedAlert := &alertModel.Alert{
+		CreatedAt:         aws.Time(testEvent.CreationTime),
+		PolicyDescription: aws.String("Description"),
+		PolicyID:          aws.String(testEvent.RuleID),
+		PolicyVersionID:   aws.String(testEvent.RuleVersion),
+		PolicyName:        aws.String("DisplayName"),
+		Runbook:           aws.String("Runbook"),
+		Severity:          aws.String(testAlertDedupEvent.Severity),
+		Tags:              aws.StringSlice([]string{"Tag"}),
+		Type:              aws.String(alertModel.RuleType),
+		AlertID:           aws.String("8c1b7f1a597d0480354e66c3a6266ccc"),
+	}
+	expectedMarshaledEvent, err := jsoniter.MarshalToString(expectedAlert)
+	require.NoError(t, err)
+	expectedSendMessageInput := &sqs.SendMessageInput{
+		MessageBody: aws.String(expectedMarshaledEvent),
+		QueueUrl:    aws.String("queueUrl"),
+	}
+
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
+	assert.NoError(t, SendAlert(testEvent))
 }
 
 func TestSendAlertFailureToGetRule(t *testing.T) {

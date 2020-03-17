@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,9 +38,30 @@ func TestConvertAttribute(t *testing.T) {
 		Severity:            "INFO",
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
+		Title:               aws.String("test title"),
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())
+	require.NoError(t, err)
+	require.Equal(t, expectedAlertDedup, alertDedupEvent)
+}
+
+func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
+	expectedAlertDedup := &AlertDedupEvent{
+		RuleID:              "testRuleId",
+		RuleVersion:         "testRuleVersion",
+		DeduplicationString: "testDedup",
+		AlertCount:          10,
+		CreationTime:        time.Unix(1582285279, 0).UTC(),
+		UpdateTime:          time.Unix(1582285280, 0).UTC(),
+		Severity:            "INFO",
+		EventCount:          100,
+		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
+	}
+
+	ddbItem := getNewTestCase()
+	delete(ddbItem, "title")
+	alertDedupEvent, err := FromDynamodDBAttribute(ddbItem)
 	require.NoError(t, err)
 	require.Equal(t, expectedAlertDedup, alertDedupEvent)
 }
@@ -135,5 +157,6 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"eventCount":        events.NewNumberAttribute("100"),
 		"severity":          events.NewStringAttribute("INFO"),
 		"logTypes":          events.NewStringSetAttribute([]string{"Log.Type.1", "Log.Type.2"}),
+		"title":             events.NewStringAttribute("test title"),
 	}
 }

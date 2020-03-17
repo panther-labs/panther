@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 )
 
@@ -36,6 +37,7 @@ type AlertDedupEvent struct {
 	EventCount          int64     `dynamodbav:"eventCount,number"`
 	Severity            string    `dynamodbav:"severity,string"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
+	Title               *string   `dynamodbav:"title,string,omitempty"`
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
@@ -100,7 +102,7 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		return nil, err
 	}
 
-	return &AlertDedupEvent{
+	result := &AlertDedupEvent{
 		RuleID:              ruleID.String(),
 		RuleVersion:         ruleVersion.String(),
 		DeduplicationString: deduplicationString.String(),
@@ -110,7 +112,14 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		EventCount:          eventCount,
 		Severity:            severity.String(),
 		LogTypes:            logTypes.StringSet(),
-	}, nil
+	}
+
+	title := getOptionalAttribute("title", input)
+	if title != nil {
+		result.Title = aws.String(title.String())
+	}
+
+	return result, nil
 }
 
 func getIntegerAttribute(key string, input map[string]events.DynamoDBAttributeValue) (int64, error) {
@@ -131,4 +140,12 @@ func getAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue)
 		return events.DynamoDBAttributeValue{}, errors.Errorf("could not find '%s' attribute", key)
 	}
 	return attributeValue, nil
+}
+
+func getOptionalAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue) *events.DynamoDBAttributeValue {
+	attributeValue, ok := inputMap[key]
+	if !ok {
+		return nil
+	}
+	return &attributeValue
 }
