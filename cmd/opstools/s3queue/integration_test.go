@@ -1,4 +1,4 @@
-package requeue
+package s3queue
 
 import (
 	"os"
@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,42 +17,42 @@ import (
 )
 
 const (
-	queuePrefix = "panther-test-requeue"
+	fakeAccountID            = "012345678912"
+	queuePrefix              = "panther-test-s3queue"
+	s3Path                   = "s3://panther-public-cloudformation-templates/" // this is a public Panther bucket with CF files we can use
+	s3Region                 = "us-west-2"                                     // region of above bucket
+	numberOfFiles            = 10                                              // we expect at least this many
+	messageBatchSize         = 10
+	visibilityTimeoutSeconds = 10
 )
 
 var (
 	integrationTest bool
 	awsSession      *session.Session
+	s3Client        *s3.S3
 	sqsClient       *sqs.SQS
 )
 
 func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
-		awsSession = session.Must(session.NewSession())
+		awsSession = session.Must(session.NewSession(aws.NewConfig().WithRegion(s3Region)))
+		s3Client = s3.New(awsSession)
 		sqsClient = sqs.New(awsSession)
 	}
 	os.Exit(m.Run())
 }
 
-func TestIntegrationRequeue(t *testing.T) {
+func TestIntegrationS3queue(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
 	}
 
-	const numberTestBatches = 3
-	const numberTestMessages = numberTestBatches * messageBatchSize
 	var err error
 
-	// make 2 queues to move things between
-	fromq := queuePrefix + "-from"
 	toq := queuePrefix + "-toq"
 	// delete first in case these were left from previous failed test (best effort)
 	deletedQueue := false
-	err = testutils.DeleteQueue(sqsClient, fromq)
-	if err == nil {
-		deletedQueue = true
-	}
 	err = testutils.DeleteQueue(sqsClient, toq)
 	if err == nil {
 		deletedQueue = true
@@ -59,26 +61,18 @@ func TestIntegrationRequeue(t *testing.T) {
 		// you have to wait 60+ seconds to use a q that has been deleted
 		time.Sleep(time.Second * 61)
 	}
-	err = testutils.CreateQueue(sqsClient, fromq)
-	require.NoError(t, err)
 	err = testutils.CreateQueue(sqsClient, toq)
 	require.NoError(t, err)
 
-	err = testutils.AddMessagesToQueue(sqsClient, fromq, numberTestBatches, messageBatchSize)
+	stats := &Stats{}
+	err = S3Queue(awsSession, fakeAccountID, s3Path, toq, numberOfFiles, stats)
 	require.NoError(t, err)
+	assert.Equal(t, numberOfFiles, (int)(stats.NumFiles))
 
-	// move them to toq
-	err = Requeue(sqsClient, fromq, toq)
-	require.NoError(t, err)
-
-	// check
-	numberMovedMessages, err := testutils.CountMessagesInQueue(sqsClient, toq, messageBatchSize, visibilityTimeoutSeconds)
+	numberSentMessages, err := testutils.CountMessagesInQueue(sqsClient, toq, messageBatchSize, visibilityTimeoutSeconds)
 	assert.NoError(t, err)
-	assert.Equal(t, numberTestMessages, numberMovedMessages)
+	assert.Equal(t, numberOfFiles, numberSentMessages)
 
-	// clean up
-	err = testutils.DeleteQueue(sqsClient, fromq)
-	assert.NoError(t, err)
 	err = testutils.DeleteQueue(sqsClient, toq)
 	assert.NoError(t, err)
 }
