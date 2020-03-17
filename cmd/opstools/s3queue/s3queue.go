@@ -132,11 +132,10 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 					Records: []events.S3EventRecord{
 						{
 							S3: events.S3Entity{
-
-								Bucket:          events.S3Bucket{
-									Name:          bucket,
+								Bucket: events.S3Bucket{
+									Name: bucket,
 								},
-								Object:          events.S3Object{
+								Object: events.S3Object{
 									Key: *value.Key,
 								},
 							},
@@ -155,16 +154,22 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 	}
 }
 
-// post message per file as-if it was a CloudTrail notification
+// post message per file as-if it was an S3 notification
 func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
 	notifyChan chan *events.S3Event, errChan chan error) {
 
 	// we have 1 file per notification to limit blast radius in case of failure.
+	var failed bool
 	for cloudTrailNotification := range notifyChan {
+		if failed { // drain channel
+			continue
+		}
+
 		ctnJSON, err := jsoniter.MarshalToString(cloudTrailNotification)
 		if err != nil {
 			errChan <- errors.Wrapf(err, "failed to marshal %#v", cloudTrailNotification)
-			return
+			failed = true
+			continue
 		}
 
 		// make it look like an SNS notification
@@ -176,7 +181,8 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 		message, err := jsoniter.MarshalToString(snsNotification)
 		if err != nil {
 			errChan <- errors.Wrapf(err, "failed to marshal %#v", snsNotification)
-			return
+			failed = true
+			continue
 		}
 
 		sendMessageInput := &sqs.SendMessageInput{
@@ -186,7 +192,8 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 		_, err = sqsClient.SendMessage(sendMessageInput)
 		if err != nil {
 			errChan <- errors.Wrapf(err, "failed to send %#v", cloudTrailNotification)
-			return
+			failed = true
+			continue
 		}
 	}
 }
