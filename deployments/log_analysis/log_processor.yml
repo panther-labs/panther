@@ -36,7 +36,8 @@ Parameters:
     Type: Number
     Description: Size of lambda for log processor
     Default: 512
-    AllowedValues: [512, 1024, 1536, 2048, 3008]
+    MinValue: 512 # any smaller and we risk OOMs
+    MaxValue: 3008
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway

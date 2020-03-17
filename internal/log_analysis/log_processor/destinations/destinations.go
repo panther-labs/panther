@@ -20,6 +20,7 @@ package destinations
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -35,7 +36,7 @@ type Destination interface {
 	SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error)
 }
 
-//CreateDestination the method returns the appropriate Destination based on configuration
+// CreateDestination the method returns the appropriate Destination based on configuration
 func CreateDestination() Destination {
 	zap.L().Debug("creating S3 destination")
 	s3BucketName := os.Getenv("S3_BUCKET")
@@ -56,6 +57,8 @@ func createFirehoseDestination() Destination {
 }
 
 func createS3Destination(s3BucketName string) Destination {
+	lambdaSize, _ := strconv.Atoi(os.Getenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"))
+	maxFileSize := maxS3FileSize(lambdaSize) // do not need to check error above, this will panic if not set
 	return &S3Destination{
 		s3Client:    s3.New(common.Session),
 		snsClient:   sns.New(common.Session),

@@ -84,6 +84,7 @@ func generateLambdaAlarms(resource map[interface{}]interface{}, config *Config) 
 	const memorySizeKey = "MemorySize"
 	var lambdaMem float32
 	// special case (ugly hack) for panther-log-processor because it uses !Ref to allow user to set size
+	// https://github.com/panther-labs/panther/issues/435
 	const pantherLogProcessorLambda = "panther-log-processor"
 	if getResourceProperty("FunctionName", resource) == pantherLogProcessorLambda {
 		logProcessorMemory, err := strconv.ParseFloat(config.stackOutputs["LogProcessorLambdaMemorySize"], 32)
@@ -94,6 +95,7 @@ func generateLambdaAlarms(resource map[interface{}]interface{}, config *Config) 
 	} else {
 		lambdaMem = getResourceFloat32Property(memorySizeKey, resource)
 	}
+
 	const highMemThreshold float32 = 0.9
 	highMemMessage := fmt.Sprintf("is using more than %d%% of available memory (%dMB)", (int)(highMemThreshold*100.0), (int)(lambdaMem))
 	// NOTE: it is important to not set units because the metric filter values have no units

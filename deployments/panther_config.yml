@@ -41,15 +41,11 @@ BackendParameterValues:
   # Those with the larger memory are faster and more expensive.
   # If cost is more of a concern compared to performance, choose
   # a small memory size, however, for extremely large log volumes
-  # the larger sizes may be required. The relative speed of each
-  # size is below (as measured during benchmarks against
-  # the smallest size we allow).
+  # the larger sizes may be required for adequate performance.
+  # Lambda size can be allocated from 128MB to 3008MB, in 64MB increments.
+  # For the log processor lambda we set a minimum size of 512.
   #
-  LogProcessorLambdaMemorySize: 512 # 1.0
-  # LogProcessorLambdaMemorySize: 1024   # 2.2 X faster
-  # LogProcessorLambdaMemorySize: 1536   # 3.5 X faster
-  # LogProcessorLambdaMemorySize: 2048   # 4.3 X faster
-  # LogProcessorLambdaMemorySize: 3008   # 6.2 X faster
+  LogProcessorLambdaMemorySize: 512
 
   # Retention period for all Panther CloudWatch log groups.
   CloudWatchLogRetentionDays: 365

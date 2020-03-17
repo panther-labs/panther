@@ -165,7 +165,7 @@ func newS3Destination() *testS3Destination {
 			s3Bucket:    "testbucket",
 			snsClient:   mockSns,
 			s3Client:    mockS3,
-			maxFileSize: maxFileSize,
+			maxFileSize: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration: maxDuration,
 		},
 		mockSns: mockSns,

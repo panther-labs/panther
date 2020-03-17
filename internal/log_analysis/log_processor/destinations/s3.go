@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 
@@ -55,17 +56,60 @@ const (
 
 	messageAttributeDataType = "String"
 
-	maxFileSize = 100 * 1000 * 1000 // 100MB uncompressed file size, should result in ~10MB output file size
-	// it should always be greater than the maximum expected event (log line) size
-
 	maxDuration = 1 * time.Minute //hHolding events for maximum 1 minute in memory
+
+	bytesPerMB             = 1024 * 1024
+	minimumS3FileBuffers   = 4                // controls how we allocate free memory to the S3 write buffers
+	maximumS3FileSizeBytes = 100 * bytesPerMB // upper (not lower) bound on the size of the s3 files written (avoids really big files)
 )
 
 var (
 	newLineDelimiter = []byte("\n")
 
 	parserRegistry registry.Interface = registry.AvailableParsers() // initialize
+
+	heapUsedAtStartupMB int // set in init(), used to size memory buffers for S3 write
 )
+
+func init() {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	heapUsedAtStartupMB = (int)(memStats.HeapAlloc/(bytesPerMB)) + 1 // this is proxy for resident memory used by the process
+}
+
+// the largest we let compressed output buffers get before calling sendData() to write to S3 in bytes
+// NOTE: this presumes processing 1 file at a time
+func maxS3FileSize(lambdaSizeMB int) int {
+	tooSmallPanic := func() {
+		panic(fmt.Sprintf("available memory too small for log processing, increase lambda size from %dMB", lambdaSizeMB))
+	}
+	const (
+		/*
+				NOTE:
+				  "More specifically CloudTrail will collect logs for 5 mins or until the max file size of 45MB has been reached.
+				  An important thing worth noting is that these logs get compressed before being sent to S3, once the file size
+				  limit is met or the time limit has been exceeded"
+			    Because CT files are "document" JSON and all on 1 line we currently need to read ALL the uncompressed data into memory.
+				Below we set the lower bound on memory to be 45MB * 3 (because we convert all the records and parse) plus some for overhead
+		*/
+		largestAllInMemFileMB = 45
+		minimumScratchMemMB   = 5 // how much overhead is needed to process a file
+	)
+	bufferMemMB := (lambdaSizeMB - heapUsedAtStartupMB) - (largestAllInMemFileMB * 3) - minimumScratchMemMB
+	if bufferMemMB < 0 {
+		tooSmallPanic()
+	}
+
+	maxFileSizeMB := bufferMemMB / minimumS3FileBuffers
+	if maxFileSizeMB < 1 {
+		tooSmallPanic()
+	}
+	maxFileSizeBytes := maxFileSizeMB * bytesPerMB // to bytes
+	if maxFileSizeBytes > maximumS3FileSizeBytes { // clip to this size, this only will happen on large memory lambdas
+		maxFileSizeBytes = maximumS3FileSizeBytes
+	}
+	return maxFileSizeBytes
+}
 
 // S3Destination sends normalized events to S3
 type S3Destination struct {
@@ -91,7 +135,21 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 	flushExpired := time.NewTicker(destination.maxDuration)
 	defer flushExpired.Stop()
 
+	// use a fixed number of go routines for safety/back pressure when writing to s3 concurrently
 	var sendWaitGroup sync.WaitGroup
+	sendChan := make(chan *s3EventBuffer, minimumS3FileBuffers)
+	// we use minimumS3FileBuffers-1 because that is the largest number of buffers we can hold in memory,
+	// the -1 is to account for the current buffer being filled below
+	// for i := 0; i < minimumS3FileBuffers-1; i++ {
+	for i := 0; i < 1; i++ {
+		sendWaitGroup.Add(1)
+		go func() {
+			for buffer := range sendChan {
+				destination.sendData(buffer, errChan)
+			}
+			sendWaitGroup.Done()
+		}()
+	}
 
 	failed := false // set to true on error and loop will drain channel
 	bufferSet := newS3EventBufferSet()
@@ -109,11 +167,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			_ = bufferSet.apply(func(b *s3EventBuffer) error { // does not return an error
 				if now.Sub(b.createTime) >= destination.maxDuration {
 					bufferSet.unlinkBuffer(b) // bufferSet is not thread safe, do this here
-					sendWaitGroup.Add(1)
-					go func() {
-						destination.sendData(b, errChan)
-						sendWaitGroup.Done()
-					}()
+					sendChan <- b
 				}
 				return nil
 			})
@@ -139,11 +193,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 		// Check if buffer is bigger than threshold
 		if buffer.bytes >= destination.maxFileSize {
 			bufferSet.unlinkBuffer(buffer) // bufferSet is not thread safe, do this here
-			sendWaitGroup.Add(1)
-			go func() {
-				destination.sendData(buffer, errChan)
-				sendWaitGroup.Done()
-			}()
+			sendChan <- buffer
 		}
 
 		eventsProcessed++
@@ -157,14 +207,11 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 	// If the channel has been closed send the buffered messages before terminating
 	_ = bufferSet.apply(func(buffer *s3EventBuffer) error {
 		bufferSet.unlinkBuffer(buffer) // bufferSet is not thread safe, do this here
-		sendWaitGroup.Add(1)
-		go func() {
-			destination.sendData(buffer, errChan)
-			sendWaitGroup.Done()
-		}()
+		sendChan <- buffer
 		return nil
 	})
 
+	close(sendChan)
 	sendWaitGroup.Wait() // wait until all writes to s3 are done
 
 	zap.L().Debug("finished sending s3 files", zap.Int("events", eventsProcessed))
@@ -213,6 +260,8 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 	if err != nil {
 		errChan <- err
 	}
+
+	runtime.GC() // this helps when under intense memory pressure, we just wrote and discarded the buffer, so reclaim
 }
 
 func (destination *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) error {
@@ -369,5 +418,7 @@ func (b *s3EventBuffer) read() ([]byte, error) {
 			return nil, errors.Wrap(err, "close failed in buffer read()")
 		}
 	}
-	return b.buffer.Bytes(), nil
+	data := b.buffer.Bytes()
+	runtime.GC() // this helps when under intense memory pressure, we merged the buffer, so reclaim
+	return data, nil
 }
