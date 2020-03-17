@@ -184,3 +184,10 @@ class TestRule(TestCase):
 
         expected_result = RuleResult(matched=True, dedup_string='test_rule_title_returns_empty_string', dedup_period_mins=60)
         self.assertEqual(rule.run({}), expected_result)
+
+    def test_rule_title_returns_correct_time(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True'
+        rule = Rule({'id': 'test_rule_title_returns_correct_time', 'body': rule_body, 'severity': 'INFO', 'dedupPeriodMinutes': 100})
+
+        expected_result = RuleResult(matched=True, dedup_string='test_rule_title_returns_correct_time', dedup_period_mins=100)
+        self.assertEqual(rule.run({}), expected_result)
