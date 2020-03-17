@@ -21,6 +21,7 @@ package processor
 import (
 	"bufio"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -136,7 +137,7 @@ func (p *Processor) processLogLine(line string, outputChan chan *parsers.Panther
 
 func (p *Processor) classifyLogLine(line string) *classification.ClassifierResult {
 	result := p.classifier.Classify(line)
-	if result.LogType == nil && len(result.LogLine) > 0 { // only if line is not empty do we log (often we get trailing \n's)
+	if result.LogType == nil && len(strings.TrimSpace(line)) != 0 { // only if line is not empty do we log (often we get trailing \n's)
 		if p.input.Hints.S3 != nil { // make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
 			p.operation.LogWarn(errors.New("failed to classify log line"),
 				zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),

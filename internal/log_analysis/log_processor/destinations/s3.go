@@ -67,13 +67,13 @@ var (
 
 	parserRegistry registry.Interface = registry.AvailableParsers() // initialize
 
-	heapUsedAtStartupMB int // set in init(), used to size memory buffers for S3 write
+	memUsedAtStartupMB int // set in init(), used to size memory buffers for S3 write
 )
 
 func init() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	heapUsedAtStartupMB = (int)(memStats.HeapAlloc/(bytesPerMB)) + 1 // this is proxy for resident memory used by the process
+	memUsedAtStartupMB = (int)(memStats.Sys/(bytesPerMB)) + 1
 }
 
 // the largest we let compressed output buffers get before calling sendData() to write to S3 in bytes
@@ -88,18 +88,20 @@ func maxS3FileSize(lambdaSizeMB int) int {
 			    Because CT files are "document" JSON and all on 1 line we currently need to read ALL the uncompressed data into memory.
 				Below we set the lower bound on memory to be 45MB * 3 (because we convert all the records and parse) plus some for overhead
 		*/
-		largestAllInMemFileMB = 45
-		minimumScratchMemMB   = 5 // how much overhead is needed to process a file
+		largestAllInMemFileMB     = 45
+		processingExpansionFactor = 4
+		memoryFootprint           = largestAllInMemFileMB * processingExpansionFactor
+		minimumScratchMemMB       = 5 // how much overhead is needed to process a file
 	)
-	maxFileSizeMB := (lambdaSizeMB - heapUsedAtStartupMB) - (largestAllInMemFileMB * 3) - minimumScratchMemMB
-
-	if maxFileSizeMB < 1 {
+	maxFileSizeMB := lambdaSizeMB - memUsedAtStartupMB - memoryFootprint - minimumScratchMemMB
+	if maxFileSizeMB < 5 {
 		panic(fmt.Sprintf("available memory too small for log processing, increase lambda size from %dMB", lambdaSizeMB))
 	}
+
 	if maxFileSizeMB > maximumS3FileSizeMB { // clip to this size, this only will happen on large memory lambdas
 		maxFileSizeMB = maximumS3FileSizeMB
 	}
-	return maxFileSizeMB * bytesPerMB
+	return maxFileSizeMB * bytesPerMB // to bytes
 }
 
 // S3Destination sends normalized events to S3
@@ -126,9 +128,9 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 	flushExpired := time.NewTicker(destination.maxDuration)
 	defer flushExpired.Stop()
 
-	// use a fixed number of go routines for safety/back pressure when writing to s3 concurrently
+	// use a single go routine for safety/back pressure when writing to s3 concurrently with buffer accumulation
 	var sendWaitGroup sync.WaitGroup
-	sendChan := make(chan *s3EventBuffer) // unbuffered for back pressure
+	sendChan := make(chan *s3EventBuffer) // unbuffered for back pressure (we want only sendData() in flight)
 	sendWaitGroup.Add(1)
 	go func() {
 		for buffer := range sendChan {
@@ -137,6 +139,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 		sendWaitGroup.Done()
 	}()
 
+	// accumulate results gzip'd in a buffer
 	failed := false // set to true on error and loop will drain channel
 	bufferSet := newS3EventBufferSet()
 	eventsProcessed := 0
@@ -152,7 +155,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 			now := time.Now()                                  // NOTE: not the same as the tick time which can be older
 			_ = bufferSet.apply(func(b *s3EventBuffer) error { // does not return an error
 				if now.Sub(b.createTime) >= destination.maxDuration {
-					bufferSet.unlinkBuffer(b) // bufferSet is not thread safe, do this here
+					bufferSet.removeBuffer(b) // bufferSet is not thread safe, do this here
 					sendChan <- b
 				}
 				return nil
@@ -178,7 +181,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 
 		// Check if buffer is bigger than threshold
 		if buffer.bytes >= destination.maxFileSize {
-			bufferSet.unlinkBuffer(buffer) // bufferSet is not thread safe, do this here
+			bufferSet.removeBuffer(buffer) // bufferSet is not thread safe, do this here
 			sendChan <- buffer
 		}
 
@@ -192,7 +195,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 	zap.L().Debug("output channel closed, sending last events")
 	// If the channel has been closed send the buffered messages before terminating
 	_ = bufferSet.apply(func(buffer *s3EventBuffer) error {
-		bufferSet.unlinkBuffer(buffer) // bufferSet is not thread safe, do this here
+		bufferSet.removeBuffer(buffer) // bufferSet is not thread safe, do this here
 		sendChan <- buffer
 		return nil
 	})
@@ -328,7 +331,7 @@ func (bs s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
 	return buffer
 }
 
-func (bs s3EventBufferSet) unlinkBuffer(buffer *s3EventBuffer) {
+func (bs s3EventBufferSet) removeBuffer(buffer *s3EventBuffer) {
 	logTypeToBuffer, ok := bs[buffer.hour]
 	if !ok {
 		return
@@ -397,13 +400,14 @@ func (b *s3EventBuffer) addEvent(event []byte) error {
 }
 
 func (b *s3EventBuffer) read() ([]byte, error) {
+	// get last buffered data into buffer
 	if err := b.writer.Close(); err != nil {
 		return nil, errors.Wrap(err, "close failed in buffer read()")
 	}
 
 	data := b.buffer.Bytes()
 
-	// make easy for GC
+	// clear to make GC more effective
 	b.buffer.Reset()
 	b.buffer = nil
 	b.writer = nil
