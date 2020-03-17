@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,42 +19,47 @@ package gateway
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-func mapGetUserOutputToPantherUser(u *provider.AdminGetUserOutput) *models.User {
-	user := models.User{
-		CreatedAt: aws.Int64(u.UserCreateDate.Unix()),
-		ID:        u.Username,
-		Status:    u.UserStatus,
+func (g *UsersGateway) GetUser(id *string) (*models.User, error) {
+	get, err := g.userPoolClient.AdminGetUser(
+		&provider.AdminGetUserInput{Username: id, UserPoolId: g.userPoolID})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
+			return nil, &genericapi.DoesNotExistError{Message: "userID=" + *id}
+		}
+		return nil, &genericapi.AWSError{Method: "cognito.AdminGetUser", Err: err}
 	}
 
-	for _, attribute := range u.UserAttributes {
+	return toUser(get.UserCreateDate, get.Username, get.UserStatus, get.UserAttributes), nil
+}
+
+// Convert Cognito attributes to User struct
+func toUser(createdAt *time.Time, username, status *string, attrs []*provider.AttributeType) *models.User {
+	user := models.User{
+		CreatedAt: aws.Int64(createdAt.Unix()),
+		ID:        username,
+		Status:    status,
+	}
+
+	for _, attribute := range attrs {
 		switch *attribute.Name {
 		case "email":
 			user.Email = attribute.Value
-		case "given_name":
-			user.GivenName = attribute.Value
 		case "family_name":
 			user.FamilyName = attribute.Value
+		case "given_name":
+			user.GivenName = attribute.Value
 		}
 	}
 
 	return &user
-}
-
-// GetUser calls cognito api to get user info
-func (g *UsersGateway) GetUser(id *string) (*models.User, error) {
-	user, err := g.userPoolClient.AdminGetUser(&provider.AdminGetUserInput{
-		Username:   id,
-		UserPoolId: &userPoolID,
-	})
-	if err != nil {
-		return nil, &genericapi.AWSError{Method: "cognito.AdminGetUser", Err: err}
-	}
-	return mapGetUserOutputToPantherUser(user), nil
 }

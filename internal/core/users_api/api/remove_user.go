@@ -19,29 +19,24 @@ package api
  */
 
 import (
-	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // RemoveUser deletes a user from cognito.
-func (API) RemoveUser(input *models.RemoveUserInput) error {
-	users, err := userGateway.ListUsers()
+func (API) RemoveUser(input *models.RemoveUserInput) (*models.RemoveUserOutput, error) {
+	users, err := userGateway.ListUsers(&models.ListUsersInput{})
 	if err != nil {
-		zap.L().Error("error listing users", zap.Error(err))
-		return err
+		return nil, err
 	}
 
 	if len(users) == 1 {
-		return &genericapi.InUseError{Message: "can't delete the last user"}
+		return nil, &genericapi.InUseError{Message: "can't delete the last user"}
 	}
 
 	// Delete user from Cognito user pool
 	if err := userGateway.DeleteUser(input.ID); err != nil {
-		zap.L().Error("error deleting user from user pool", zap.Error(err))
-		return err
+		return nil, err
 	}
-
-	return nil
+	return &models.RemoveUserOutput{ID: input.ID}, nil
 }

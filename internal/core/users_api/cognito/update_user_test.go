@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,35 +19,32 @@ package gateway
  */
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	providerI "github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/api/lambda/users/models"
 )
 
-type mockDeleteUserClient struct {
-	providerI.CognitoIdentityProviderAPI
-	serviceErr bool
-}
+func TestUpdateUser(t *testing.T) {
+	mockCognitoClient := &mockCognitoClient{}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
-func (m *mockDeleteUserClient) AdminDeleteUser(
-	*provider.AdminDeleteUserInput) (*provider.AdminDeleteUserOutput, error) {
+	mockCognitoClient.On(
+		"AdminUpdateUserAttributes",
+		mock.Anything,
+	).Return((*provider.AdminUpdateUserAttributesOutput)(nil), nil)
 
-	if m.serviceErr {
-		return nil, errors.New("cognito does not exist")
-	}
-	return &provider.AdminDeleteUserOutput{}, nil
-}
-
-func TestDeleteUser(t *testing.T) {
-	gw := &UsersGateway{userPoolClient: &mockDeleteUserClient{}}
-	assert.NoError(t, gw.DeleteUser(aws.String("user123")))
-}
-
-func TestDeleteUserFailed(t *testing.T) {
-	gw := &UsersGateway{userPoolClient: &mockDeleteUserClient{serviceErr: true}}
-	assert.Error(t, gw.DeleteUser(aws.String("user123")))
+	require.NoError(t, gw.UpdateUser(
+		&models.UpdateUserInput{
+			ID:         mockUserID,
+			GivenName:  aws.String("Panther"),
+			FamilyName: aws.String("Labs"),
+			Email:      aws.String("panther@example.com"),
+		},
+	))
+	mockCognitoClient.AssertExpectations(t)
 }

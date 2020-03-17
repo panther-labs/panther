@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -26,5 +26,5 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	assert.NotNil(t, New(session.Must(session.NewSession())))
+	assert.NotNil(t, New(session.Must(session.NewSession()), ""))
 }

@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -35,9 +35,9 @@ type MockUserGateway struct {
 // and just record the activity, and returns what the Mock object tells it to.
 
 // CreateUser mocks CreateUser for testing
-func (m *MockUserGateway) CreateUser(input *models.InviteUserInput) (*string, error) {
+func (m *MockUserGateway) CreateUser(input *models.InviteUserInput) (*models.User, error) {
 	args := m.Called(input)
-	return args.Get(0).(*string), args.Error(1)
+	return args.Get(0).(*models.User), args.Error(1)
 }
 
 // DeleteUser mocks DeleteUser for testing
@@ -53,8 +53,8 @@ func (m *MockUserGateway) GetUser(id *string) (*models.User, error) {
 }
 
 // ListUsers mocks ListUsers for testing
-func (m *MockUserGateway) ListUsers() ([]*models.User, error) {
-	args := m.Called()
+func (m *MockUserGateway) ListUsers(input *models.ListUsersInput) ([]*models.User, error) {
+	args := m.Called(input)
 	return args.Get(0).([]*models.User), args.Error(1)
 }
 

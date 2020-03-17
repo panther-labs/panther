@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,19 +19,24 @@ package gateway
  */
 
 import (
-	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"testing"
 
-	"github.com/panther-labs/panther/pkg/genericapi"
+	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/stretchr/testify/assert"
 )
 
-// DeleteUser calls cognito api delete user from a user pool
-func (g *UsersGateway) DeleteUser(id *string) error {
-	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
-		Username:   id,
-		UserPoolId: &userPoolID,
-	}); err != nil {
-		return &genericapi.AWSError{Method: "cognito.AdminDeleteUser", Err: err}
-	}
+func TestResetUserPassword(t *testing.T) {
+	mockCognitoClient := &mockCognitoClient{}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
-	return nil
+	mockCognitoClient.On(
+		"AdminResetUserPassword",
+		&provider.AdminResetUserPasswordInput{
+			Username:   mockUserID,
+			UserPoolId: gw.userPoolID,
+		},
+	).Return((*provider.AdminResetUserPasswordOutput)(nil), nil)
+
+	assert.NoError(t, gw.ResetUserPassword(mockUserID))
+	mockCognitoClient.AssertExpectations(t)
 }

@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,8 +19,7 @@ package gateway
  */
 
 import (
-	"os"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	userPoolProvider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	userPoolProviderI "github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
@@ -28,29 +27,29 @@ import (
 	"github.com/panther-labs/panther/api/lambda/users/models"
 )
 
-var userPoolID = os.Getenv("USER_POOL_ID")
-
 // API defines the interface for the user gateway which can be used for mocking.
 type API interface {
-	CreateUser(input *models.InviteUserInput) (*string, error)
-	DeleteUser(id *string) error
-	GetUser(id *string) (*models.User, error)
-	ListUsers() ([]*models.User, error)
-	ResetUserPassword(id *string) error
-	UpdateUser(input *models.UpdateUserInput) error
+	CreateUser(*models.InviteUserInput) (*models.User, error)
+	DeleteUser(*string) error
+	GetUser(*string) (*models.User, error)
+	ListUsers(*models.ListUsersInput) ([]*models.User, error)
+	ResetUserPassword(*string) error
+	UpdateUser(*models.UpdateUserInput) error
 }
 
 // UsersGateway encapsulates a service to Cognito Client.
 type UsersGateway struct {
 	userPoolClient userPoolProviderI.CognitoIdentityProviderAPI
+	userPoolID     *string
 }
 
 // The UsersGateway must satisfy the API interface.
 var _ API = (*UsersGateway)(nil)
 
 // New creates a new CognitoIdentityProvider client which talks to the given user pool.
-func New(sess *session.Session) *UsersGateway {
+func New(sess *session.Session, userPoolID string) *UsersGateway {
 	return &UsersGateway{
 		userPoolClient: userPoolProvider.New(sess),
+		userPoolID:     aws.String(userPoolID),
 	}
 }

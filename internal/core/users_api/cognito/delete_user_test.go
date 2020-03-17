@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -22,32 +22,38 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	providerI "github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
 	"github.com/stretchr/testify/assert"
 )
 
-type mockResetUserPasswordClient struct {
-	providerI.CognitoIdentityProviderAPI
-	serviceErr bool
+func TestDeleteUser(t *testing.T) {
+	mockCognitoClient := &mockCognitoClient{}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
+
+	mockCognitoClient.On(
+		"AdminDeleteUser",
+		&provider.AdminDeleteUserInput{
+			Username:   mockUserID,
+			UserPoolId: gw.userPoolID,
+		},
+	).Return((*provider.AdminDeleteUserOutput)(nil), nil)
+
+	assert.NoError(t, gw.DeleteUser(mockUserID))
+	mockCognitoClient.AssertExpectations(t)
 }
 
-func (m *mockResetUserPasswordClient) AdminResetUserPassword(
-	*provider.AdminResetUserPasswordInput) (*provider.AdminResetUserPasswordOutput, error) {
+func TestDeleteUserFailed(t *testing.T) {
+	mockCognitoClient := &mockCognitoClient{}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
-	if m.serviceErr {
-		return nil, errors.New("cognito does not exist")
-	}
-	return &provider.AdminResetUserPasswordOutput{}, nil
-}
+	mockCognitoClient.On(
+		"AdminDeleteUser",
+		&provider.AdminDeleteUserInput{
+			Username:   mockUserID,
+			UserPoolId: gw.userPoolID,
+		},
+	).Return((*provider.AdminDeleteUserOutput)(nil), errors.New("unavailable"))
 
-func TestResetUserPassword(t *testing.T) {
-	gw := &UsersGateway{userPoolClient: &mockResetUserPasswordClient{}}
-	assert.NoError(t, gw.ResetUserPassword(aws.String("user123")))
-}
-
-func TestResetUserPasswordFailed(t *testing.T) {
-	gw := &UsersGateway{userPoolClient: &mockResetUserPasswordClient{serviceErr: true}}
-	assert.Error(t, gw.ResetUserPassword(aws.String("user123")))
+	assert.Error(t, gw.DeleteUser(mockUserID))
+	mockCognitoClient.AssertExpectations(t)
 }

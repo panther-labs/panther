@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -28,7 +28,7 @@ import (
 func (g *UsersGateway) ResetUserPassword(id *string) error {
 	if _, err := g.userPoolClient.AdminResetUserPassword(&provider.AdminResetUserPasswordInput{
 		Username:   id,
-		UserPoolId: &userPoolID,
+		UserPoolId: g.userPoolID,
 	}); err != nil {
 		return &genericapi.AWSError{Method: "cognito.AdminResetUserPassword", Err: err}
 	}

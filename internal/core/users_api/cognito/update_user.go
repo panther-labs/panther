@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,56 +19,26 @@ package gateway
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// Create a AdminUpdateUserAttributesInput from the UpdateUserInput.
-func (g *UsersGateway) updateInputMapping(
-	input *models.UpdateUserInput) *provider.AdminUpdateUserAttributesInput {
-
-	var userAttrs []*provider.AttributeType
-
-	if input.GivenName != nil {
-		userAttrs = append(userAttrs, &provider.AttributeType{
-			Name:  aws.String("given_name"),
-			Value: input.GivenName,
-		})
-	}
-
-	if input.FamilyName != nil {
-		userAttrs = append(userAttrs, &provider.AttributeType{
-			Name:  aws.String("family_name"),
-			Value: input.FamilyName,
-		})
-	}
-
-	if input.Email != nil {
-		userAttrs = append(userAttrs, &provider.AttributeType{
-			Name:  aws.String("email"),
-			Value: input.Email,
-		})
-		userAttrs = append(userAttrs, &provider.AttributeType{
-			Name:  aws.String("email_verified"),
-			Value: aws.String("true"),
-		})
-	}
-
-	return &provider.AdminUpdateUserAttributesInput{
-		UserAttributes: userAttrs,
-		Username:       input.ID,
-		UserPoolId:     &userPoolID,
-	}
-}
-
 // UpdateUser calls cognito to update a user with the specified attributes.
 func (g *UsersGateway) UpdateUser(input *models.UpdateUserInput) error {
-	cognitoInput := g.updateInputMapping(input)
+	cognitoInput := &provider.AdminUpdateUserAttributesInput{
+		UserAttributes: userAttributes(input.GivenName, input.FamilyName, input.Email),
+		UserPoolId:     g.userPoolID,
+		Username:       input.ID,
+	}
 	if _, err := g.userPoolClient.AdminUpdateUserAttributes(cognitoInput); err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
+			return &genericapi.DoesNotExistError{Message: "userID=" + *input.ID}
+		}
 		return &genericapi.AWSError{Method: "cognito.AdminUpdateUserAttributes", Err: err}
 	}
+
 	return nil
 }

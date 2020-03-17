@@ -1,4 +1,4 @@
-package models
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -18,12 +18,26 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// User is a struct describing a Panther User.
-type User struct {
-	CreatedAt  *int64  `json:"createdAt"`
-	Email      *string `json:"email"`
-	FamilyName *string `json:"familyName"`
-	GivenName  *string `json:"givenName"`
-	ID         *string `json:"id"`
-	Status     *string `json:"status"`
+import (
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/pkg/genericapi"
+)
+
+// DeleteUser calls cognito api delete user from a user pool
+func (g *UsersGateway) DeleteUser(id *string) error {
+	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
+		Username:   id,
+		UserPoolId: g.userPoolID,
+	}); err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
+			zap.L().Warn("user is already deleted", zap.String("userId", *id))
+			return nil
+		}
+		return &genericapi.AWSError{Method: "cognito.AdminDeleteUser", Err: err}
+	}
+
+	return nil
 }
