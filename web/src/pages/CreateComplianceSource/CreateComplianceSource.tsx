@@ -22,7 +22,6 @@ import { Card, Flex } from 'pouncejs';
 import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
-import { ListComplianceSourcesDocument } from 'Pages/ListComplianceSources';
 import useRouter from 'Hooks/useRouter';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -58,9 +57,14 @@ const initialValues = {
 const CreateComplianceSource: React.FC = () => {
   const { history } = useRouter();
   const [addComplianceSource, { error }] = useAddComplianceSource({
+    update: (cache, { data }) => {
+      cache.modify('ROOT_QUERY', {
+        listComplianceIntegrations: queryData => {
+          return [data.addComplianceIntegration, ...queryData];
+        },
+      });
+    },
     onCompleted: () => history.push(urls.compliance.sources.list()),
-    refetchQueries: [{ query: ListComplianceSourcesDocument }],
-    awaitRefetchQueries: true,
   });
 
   const submitSourceToServer = React.useCallback(

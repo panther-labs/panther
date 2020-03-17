@@ -19,7 +19,6 @@
 import React from 'react';
 import { Text } from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
-import { ListComplianceSourcesDocument } from 'Pages/ListComplianceSources';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { getComplianceIntegrationStackName } from 'Helpers/utils';
 import { useDeleteComplianceSource } from './graphql/deleteComplianceSource.generated';
@@ -29,11 +28,20 @@ export interface DeleteComplianceSourceModalProps {
 }
 
 const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source }) => {
+  const { integrationId, __typename } = source;
   const mutation = useDeleteComplianceSource({
     variables: {
-      id: source.integrationId,
+      id: integrationId,
     },
-    refetchQueries: [{ query: ListComplianceSourcesDocument }],
+    optimisticResponse: () => ({ deleteComplianceIntegration: true }),
+    update: cache => {
+      cache.modify('ROOT_QUERY', {
+        listComplianceIntegrations: (queryData, { toReference }) => {
+          const deletedSource = toReference({ __typename, integrationId });
+          return queryData.filter(s => s.__ref !== deletedSource.__ref);
+        },
+      });
+    },
   });
 
   const sourceDisplayName = source.integrationLabel;
