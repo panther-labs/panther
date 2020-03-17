@@ -30,11 +30,6 @@ type Stats struct {
 	NumBytes uint64
 }
 
-type cloudTrailNotification struct {
-	S3Bucket    *string   `json:"s3Bucket"`
-	S3ObjectKey []*string `json:"s3ObjectKey"`
-}
-
 func S3Queue(sess *session.Session, account, s3path, queueName string, limit uint64, stats *Stats) (err error) {
 	return s3Queue(s3.New(sess), sqs.New(sess), account, s3path, queueName, limit, stats)
 }
@@ -53,7 +48,7 @@ func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path,
 	topicARN := fmt.Sprintf(fakeTopicArnTemplate, account)
 
 	errChan := make(chan error)
-	notifyChan := make(chan *cloudTrailNotification, 1000)
+	notifyChan := make(chan *events.S3Event, 1000)
 
 	var queueWg sync.WaitGroup
 	for i := 0; i < concurrency; i++ {
@@ -88,7 +83,7 @@ func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path,
 
 // Given an s3path (e.g., s3://mybucket/myprefix) list files and send to notifyChan
 func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
-	notifyChan chan *cloudTrailNotification, errChan chan error, stats *Stats) {
+	notifyChan chan *events.S3Event, errChan chan error, stats *Stats) {
 
 	if limit == 0 {
 		limit = math.MaxUint64
@@ -133,9 +128,20 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 					log.Printf("listed %d files ...", stats.NumFiles)
 				}
 				stats.NumBytes += (uint64)(*value.Size)
-				notifyChan <- &cloudTrailNotification{
-					S3Bucket:    &bucket,
-					S3ObjectKey: []*string{value.Key},
+				notifyChan <- &events.S3Event{
+					Records: []events.S3EventRecord{
+						{
+							S3: events.S3Entity{
+
+								Bucket:          events.S3Bucket{
+									Name:          bucket,
+								},
+								Object:          events.S3Object{
+									Key: *value.Key,
+								},
+							},
+						},
+					},
 				}
 				if stats.NumFiles >= limit {
 					break
@@ -151,7 +157,7 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 
 // post message per file as-if it was a CloudTrail notification
 func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
-	notifyChan chan *cloudTrailNotification, errChan chan error) {
+	notifyChan chan *events.S3Event, errChan chan error) {
 
 	// we have 1 file per notification to limit blast radius in case of failure.
 	for cloudTrailNotification := range notifyChan {
