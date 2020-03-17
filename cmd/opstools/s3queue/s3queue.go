@@ -5,7 +5,9 @@ import (
 	"log"
 	"math"
 	"net/url"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,13 +18,18 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 
 const (
-	concurrency          = 10
 	pageSize             = 1000
 	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic" // account is added for sqs messages
 	progressNotify       = 5000                                                  // log a line every this many to show progress
+)
+
+var (
+	concurrency = 10 // var so we can set in tests
 )
 
 type Stats struct {
@@ -158,16 +165,24 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
 	notifyChan chan *events.S3Event, errChan chan error) {
 
+	sendMessageBatchInput := &sqs.SendMessageBatchInput{
+		QueueUrl: queueURL,
+	}
+
 	// we have 1 file per notification to limit blast radius in case of failure.
+	const (
+		batchTimeout = time.Minute
+		batchSize    = 10
+	)
 	var failed bool
-	for cloudTrailNotification := range notifyChan {
+	for s3Notification := range notifyChan {
 		if failed { // drain channel
 			continue
 		}
 
-		ctnJSON, err := jsoniter.MarshalToString(cloudTrailNotification)
+		ctnJSON, err := jsoniter.MarshalToString(s3Notification)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to marshal %#v", cloudTrailNotification)
+			errChan <- errors.Wrapf(err, "failed to marshal %#v", s3Notification)
 			failed = true
 			continue
 		}
@@ -185,15 +200,26 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 			continue
 		}
 
-		sendMessageInput := &sqs.SendMessageInput{
+		sendMessageBatchInput.Entries = append(sendMessageBatchInput.Entries, &sqs.SendMessageBatchRequestEntry{
+			Id:          aws.String(strconv.Itoa(len(sendMessageBatchInput.Entries))),
 			MessageBody: &message,
-			QueueUrl:    queueURL,
+		})
+		if len(sendMessageBatchInput.Entries)%batchSize == 0 {
+			err = sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
+			if err != nil {
+				errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
+				failed = true
+				continue
+			}
+			sendMessageBatchInput.Entries = make([]*sqs.SendMessageBatchRequestEntry, 0, batchSize) // reset
 		}
-		_, err = sqsClient.SendMessage(sendMessageInput)
+	}
+
+	// send remaining
+	if len(sendMessageBatchInput.Entries) > 0 {
+		err := sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to send %#v", cloudTrailNotification)
-			failed = true
-			continue
+			errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 		}
 	}
 }
