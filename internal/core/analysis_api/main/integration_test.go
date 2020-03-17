@@ -1165,6 +1165,7 @@ func getEnabledRules(t *testing.T) {
 				ResourceTypes: rule.LogTypes,
 				Severity:      rule.Severity,
 				VersionID:     rule.VersionID,
+				DedupPeriodMinutes: rule.DedupPeriodMinutes,
 			},
 		},
 	}

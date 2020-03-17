@@ -53,6 +53,7 @@ func GetEnabledPolicies(request *events.APIGatewayProxyRequest) *events.APIGatew
 			Severity:      policy.Severity,
 			Suppressions:  policy.Suppressions,
 			VersionID:     policy.VersionID,
+			DedupPeriodMinutes: policy.DedupPeriodMinutes,
 		})
 		return nil
 	})
@@ -83,6 +84,7 @@ func buildEnabledScan(ruleType string) (*dynamodb.ScanInput, error) {
 		expression.Name("severity"),
 		expression.Name("suppressions"),
 		expression.Name("versionId"),
+		expression.Name("dedupPeriodMinutes"),
 	)
 
 	expr, err := expression.NewBuilder().

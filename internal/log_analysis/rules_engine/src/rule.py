@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+import json
 import os
 import sys
 import tempfile
@@ -90,6 +90,8 @@ class Rule:
         else:
             self.rule_dedup_period_mins = config['dedupPeriodMinutes']
 
+        get_logger().info('tsa %s', json.dumps(config))
+        get_logger().info('Loaded rule %s with %d', self.rule_id, self.rule_dedup_period_mins)
         self._store_rule()
         self._module = self._import_rule_as_module()
 
@@ -120,7 +122,6 @@ class Rule:
                 dedup_period_mins = self.rule_dedup_period_mins
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
-
         return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title, dedup_period_mins=dedup_period_mins)
 
     def _get_dedup(self, event: Dict[str, Any]) -> str:
