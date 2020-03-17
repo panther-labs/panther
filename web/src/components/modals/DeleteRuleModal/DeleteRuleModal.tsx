@@ -17,13 +17,14 @@
  */
 
 import React from 'react';
-import { RuleSummary, RuleDetails } from 'Generated/schema';
+import { RuleSummary, RuleDetails, ListRulesInput } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { ListRulesDocument } from 'Pages/ListRules';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 // Delete Rule and Delete Policy uses the same endpoint
+import { convertObjArrayValuesToCsv } from 'Helpers/utils';
+import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import { useDeletePolicy } from '../DeletePolicyModal/graphql/deletePolicy.generated';
 
 export interface DeleteRuleModalProps {
@@ -33,9 +34,8 @@ export interface DeleteRuleModalProps {
 const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const ruleDisplayName = rule.displayName || rule.id;
+  const { requestParams } = useRequestParamsWithPagination<ListRulesInput>();
   const mutation = useDeletePolicy({
-    awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(ListRulesDocument)],
     variables: {
       input: {
         policies: [
@@ -45,7 +45,29 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
         ],
       },
     },
+    optimisticResponse: {
+      deletePolicy: true,
+    },
+    update: async cache => {
+      const { rules } = cache.readQuery({
+        query: ListRulesDocument,
+        variables: {
+          input: convertObjArrayValuesToCsv(requestParams),
+        },
+      });
+      const newRules = rules.rules.filter(r => r.id !== rule.id);
+      cache.writeQuery({
+        query: ListRulesDocument,
+        data: { rules: { ...rules, rules: [...newRules] } },
+        variables: {
+          input: convertObjArrayValuesToCsv(requestParams),
+        },
+      });
+      cache.gc();
+    },
   });
+
+  console.log('DELETE RULE MODAL');
 
   return (
     <BaseConfirmModal

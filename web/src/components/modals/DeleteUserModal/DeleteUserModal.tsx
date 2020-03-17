@@ -37,7 +37,9 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
     variables: {
       id: user.id,
     },
-    optimisticResponse: null,
+    optimisticResponse: {
+      deleteUser: true,
+    },
     update: async cache => {
       const { users } = cache.readQuery({ query: ListUsersDocument });
       const newUsers = users.users.filter(u => u.id !== user.id);

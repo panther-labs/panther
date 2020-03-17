@@ -18,11 +18,12 @@
 
 import React from 'react';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
-import { PolicySummary, PolicyDetails } from 'Generated/schema';
+import { PolicySummary, PolicyDetails, ListPoliciesInput } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
+import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
+import { convertObjArrayValuesToCsv } from 'Helpers/utils';
 import { useDeletePolicy } from './graphql/deletePolicy.generated';
 
 export interface DeletePolicyModalProps {
@@ -32,9 +33,8 @@ export interface DeletePolicyModalProps {
 const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const policyDisplayName = policy.displayName || policy.id;
+  const { requestParams } = useRequestParamsWithPagination<ListPoliciesInput>();
   const mutation = useDeletePolicy({
-    awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(ListPoliciesDocument)],
     variables: {
       input: {
         policies: [
@@ -43,6 +43,26 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
           },
         ],
       },
+    },
+    optimisticResponse: {
+      deletePolicy: true,
+    },
+    update: async cache => {
+      const { policies } = cache.readQuery({
+        query: ListPoliciesDocument,
+        variables: {
+          input: convertObjArrayValuesToCsv(requestParams),
+        },
+      });
+      const newPolicies = policies.policies.filter(r => r.id !== policy.id);
+      cache.writeQuery({
+        query: ListPoliciesDocument,
+        data: { policies: { ...policies, policies: [...newPolicies] } },
+        variables: {
+          input: convertObjArrayValuesToCsv(requestParams),
+        },
+      });
+      cache.gc();
     },
   });
 
