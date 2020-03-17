@@ -58,9 +58,8 @@ const (
 
 	maxDuration = 1 * time.Minute //hHolding events for maximum 1 minute in memory
 
-	bytesPerMB             = 1024 * 1024
-	minimumS3FileBuffers   = 4                // controls how we allocate free memory to the S3 write buffers
-	maximumS3FileSizeBytes = 100 * bytesPerMB // upper (not lower) bound on the size of the s3 files written (avoids really big files)
+	bytesPerMB          = 1024 * 1024
+	maximumS3FileSizeMB = 100 // upper (not lower) bound on the size of the s3 files written (avoids really big files)
 )
 
 var (
@@ -80,9 +79,6 @@ func init() {
 // the largest we let compressed output buffers get before calling sendData() to write to S3 in bytes
 // NOTE: this presumes processing 1 file at a time
 func maxS3FileSize(lambdaSizeMB int) int {
-	tooSmallPanic := func() {
-		panic(fmt.Sprintf("available memory too small for log processing, increase lambda size from %dMB", lambdaSizeMB))
-	}
 	const (
 		/*
 				NOTE:
@@ -95,20 +91,15 @@ func maxS3FileSize(lambdaSizeMB int) int {
 		largestAllInMemFileMB = 45
 		minimumScratchMemMB   = 5 // how much overhead is needed to process a file
 	)
-	bufferMemMB := (lambdaSizeMB - heapUsedAtStartupMB) - (largestAllInMemFileMB * 3) - minimumScratchMemMB
-	if bufferMemMB < 0 {
-		tooSmallPanic()
-	}
+	maxFileSizeMB := (lambdaSizeMB - heapUsedAtStartupMB) - (largestAllInMemFileMB * 3) - minimumScratchMemMB
 
-	maxFileSizeMB := bufferMemMB / minimumS3FileBuffers
 	if maxFileSizeMB < 1 {
-		tooSmallPanic()
+		panic(fmt.Sprintf("available memory too small for log processing, increase lambda size from %dMB", lambdaSizeMB))
 	}
-	maxFileSizeBytes := maxFileSizeMB * bytesPerMB // to bytes
-	if maxFileSizeBytes > maximumS3FileSizeBytes { // clip to this size, this only will happen on large memory lambdas
-		maxFileSizeBytes = maximumS3FileSizeBytes
+	if maxFileSizeMB > maximumS3FileSizeMB { // clip to this size, this only will happen on large memory lambdas
+		maxFileSizeMB = maximumS3FileSizeMB
 	}
-	return maxFileSizeBytes
+	return maxFileSizeMB * bytesPerMB
 }
 
 // S3Destination sends normalized events to S3
@@ -137,19 +128,14 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 
 	// use a fixed number of go routines for safety/back pressure when writing to s3 concurrently
 	var sendWaitGroup sync.WaitGroup
-	sendChan := make(chan *s3EventBuffer, minimumS3FileBuffers)
-	// we use minimumS3FileBuffers-1 because that is the largest number of buffers we can hold in memory,
-	// the -1 is to account for the current buffer being filled below
-	// for i := 0; i < minimumS3FileBuffers-1; i++ {
-	for i := 0; i < 1; i++ {
-		sendWaitGroup.Add(1)
-		go func() {
-			for buffer := range sendChan {
-				destination.sendData(buffer, errChan)
-			}
-			sendWaitGroup.Done()
-		}()
-	}
+	sendChan := make(chan *s3EventBuffer) // unbuffered for back pressure
+	sendWaitGroup.Add(1)
+	go func() {
+		for buffer := range sendChan {
+			destination.sendData(buffer, errChan)
+		}
+		sendWaitGroup.Done()
+	}()
 
 	failed := false // set to true on error and loop will drain channel
 	bufferSet := newS3EventBufferSet()
@@ -260,8 +246,6 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 	if err != nil {
 		errChan <- err
 	}
-
-	runtime.GC() // this helps when under intense memory pressure, we just wrote and discarded the buffer, so reclaim
 }
 
 func (destination *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) error {
@@ -413,12 +397,16 @@ func (b *s3EventBuffer) addEvent(event []byte) error {
 }
 
 func (b *s3EventBuffer) read() ([]byte, error) {
-	if b.writer != nil {
-		if err := b.writer.Close(); err != nil {
-			return nil, errors.Wrap(err, "close failed in buffer read()")
-		}
+	if err := b.writer.Close(); err != nil {
+		return nil, errors.Wrap(err, "close failed in buffer read()")
 	}
+
 	data := b.buffer.Bytes()
-	runtime.GC() // this helps when under intense memory pressure, we merged the buffer, so reclaim
+
+	// make easy for GC
+	b.buffer.Reset()
+	b.buffer = nil
+	b.writer = nil
+
 	return data, nil
 }

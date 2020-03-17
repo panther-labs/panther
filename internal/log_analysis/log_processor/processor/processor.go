@@ -21,7 +21,6 @@ package processor
 import (
 	"bufio"
 	"io"
-	"runtime"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -124,7 +123,6 @@ func (p *Processor) run(outputChan chan *parsers.PantherLog) error {
 		err = errors.Wrap(err, "failed to ReadString()")
 	}
 	p.logStats(err) // emit log line describing the processing of the file and any errors
-	runtime.GC()    // this helps when under intense memory pressure, we just read the whole file, so reclaim
 	return err
 }
 
