@@ -37,6 +37,10 @@ MAX_TITLE_SIZE = 1000
 
 TRUNCATED_STRING_SUFFIX = '... (truncated)'
 
+DEFAULT_RULE_VERSION = 'default'
+
+DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
+
 
 @dataclass
 class RuleResult:
@@ -44,6 +48,7 @@ class RuleResult:
     exception: Optional[Exception] = None
     matched: Optional[bool] = None
     dedup_string: Optional[str] = None
+    dedup_period_mins: Optional[int] = None
     title: Optional[str] = None
 
 
@@ -51,28 +56,35 @@ class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_severity: Optional[str], rule_version: Optional[str]):
+    # pylint: disable=too-many-arguments
+    def __init__(self, rule_id, body, severity, version: Optional[str], dedup_period_mins: Optional[int] = None):
         """Create new rule.
 
         Args:
             rule_id: Unique rule identifier
-            rule_body: The rule body
-            rule_severity: The severity of the rule
-            rule_version: The version of the rule
+            body: The rule body
+            severity: The severity of the rule
+            version: The version of the rule
+            dedup_period_mins: The period during which the events will be deduplicated
         """
-        if not rule_id or not rule_body or not rule_severity or not rule_version:
+        if not rule_id or not body or not severity or not version:
             raise AssertionError('id, body, severity and version are required fields')
         self.rule_id = rule_id
-        self.rule_body = rule_body
-        self.rule_severity = rule_severity
+        self.rule_body = body
+        self.rule_severity = severity
 
         self._store_rule()
         self._module = self._import_rule_as_module()
 
-        if not rule_version:
-            self.rule_version = 'default'
+        if not version:
+            self.rule_version = DEFAULT_RULE_VERSION
         else:
-            self.rule_version = rule_version
+            self.rule_version = version
+
+        if not dedup_period_mins:
+            self.rule_dedup_period_mins = DEFAULT_RULE_DEDUP_PERIOD_MINS
+        else:
+            self.rule_dedup_period_mins = dedup_period_mins
 
         if not hasattr(self._module, 'rule'):
             raise AssertionError("rule needs to have a method named 'rule'")
@@ -100,7 +112,7 @@ class Rule:
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
 
-        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
+        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title, dedup_period_mins=self.rule_dedup_period_mins)
 
     def _get_dedup(self, event: Dict[str, Any]) -> str:
         if not self._has_dedup:

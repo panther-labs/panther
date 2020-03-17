@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -36,7 +36,7 @@ class AnalysisAPIClient:
         analysis_api_path = os.environ['ANALYSIS_API_PATH']
         self.url = 'https://' + analysis_api_fqdn + '/' + analysis_api_path
 
-    def get_enabled_rules(self) -> List[Dict[str, str]]:
+    def get_enabled_rules(self) -> List[Dict[str, Any]]:
         """Gets information for all enabled rules."""
         request = AWSRequest(method='GET', url=self.url + '/enabled', params={'type': 'RULE'})
         self.signer.add_auth(request)
