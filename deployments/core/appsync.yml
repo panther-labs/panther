@@ -526,25 +526,23 @@ Resources:
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
-          "getEnabledIntegrations": {
-            "integrationType": "aws-scan"
-          }
+          "payload": $util.toJson({
+            "getEnabledIntegrations": {
+              "integrationType": "aws-scan"
+            }
+          })
         }
       ResponseMappingTemplate: |
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, {})
         #else
-          #if($context.error)
-            $util.error($context.error.errorMessage, $context.error.errorType, {})
-          #else
-            #set ($requestedIntegration = null)
-            #foreach($item in $ctx.result)
-                #if($item.integrationId == $ctx.args.id)
-                  $util.qr($requestedIntegration = item)
-                #end
+          #set ($requestedIntegration = "null")
+          #foreach($item in $ctx.result)
+            #if($item.integrationId == $ctx.args.id)
+              #set ($requestedIntegration = $item)
             #end
-            $util.toJson($requestedIntegration)
           #end
+          $util.toJson($requestedIntegration)
         #end
 
   GetComplianceIntegrationTemplateResolver:
