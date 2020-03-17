@@ -88,8 +88,6 @@ export type ComplianceIntegration = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   scanIntervalMins?: Maybe<Scalars['Int']>;
-  scanStatus?: Maybe<Scalars['String']>;
-  eventStatus?: Maybe<Scalars['String']>;
   lastScanEndTime?: Maybe<Scalars['AWSDateTime']>;
   lastScanErrorMessage?: Maybe<Scalars['String']>;
   lastScanStartTime?: Maybe<Scalars['AWSDateTime']>;
@@ -1333,8 +1331,6 @@ export type ComplianceIntegrationResolvers<
   cweEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   scanIntervalMins?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  scanStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  eventStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   lastScanEndTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   lastScanErrorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   lastScanStartTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;

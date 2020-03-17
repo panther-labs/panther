@@ -290,8 +290,6 @@ type ComplianceIntegration {
   cweEnabled: Boolean
   remediationEnabled: Boolean
   scanIntervalMins: Int
-  scanStatus: String
-  eventStatus: String
   lastScanEndTime: AWSDateTime
   lastScanErrorMessage: String
   lastScanStartTime: AWSDateTime

@@ -18,7 +18,6 @@ export type ListComplianceSources = {
         | 'integrationId'
         | 'integrationLabel'
         | 'scanIntervalMins'
-        | 'scanStatus'
         | 'lastScanEndTime'
       >
     >
@@ -34,7 +33,6 @@ export const ListComplianceSourcesDocument = gql`
       integrationId
       integrationLabel
       scanIntervalMins
-      scanStatus
       lastScanEndTime
     }
   }

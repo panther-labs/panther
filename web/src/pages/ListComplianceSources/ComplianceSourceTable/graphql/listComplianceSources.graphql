@@ -6,7 +6,6 @@ query ListComplianceSources {
     integrationId
     integrationLabel
     scanIntervalMins
-    scanStatus
     lastScanEndTime
   }
 }
