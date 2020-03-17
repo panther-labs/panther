@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest

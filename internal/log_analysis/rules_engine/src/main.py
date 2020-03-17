@@ -55,7 +55,7 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     if not 'severity' in raw_rule:
         raw_rule['severity'] = 'INFO'
     # It is possible that during direct analysis the rule doesn't include a severity
-    # Setting it to a default value
+    # in this case, we set it to a default value
     rule_exception: Optional[Exception] = None
     try:
         test_rule = Rule(raw_rule)

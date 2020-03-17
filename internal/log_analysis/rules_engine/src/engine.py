@@ -84,7 +84,7 @@ class Engine:
                 try:
                     Rule(raw_rule)
                 except Exception as err:  # pylint: disable=broad-except
-                    self.logger.error('Failed to import rule %s. Error: [%s]',raw_rule.get('id'),  err)
+                    self.logger.error('Failed to import rule %s. Error: [%s]', raw_rule.get('id'), err)
                 rules.remove(raw_rule)
                 break
 
@@ -92,7 +92,7 @@ class Engine:
             try:
                 rule = Rule(raw_rule)
             except Exception as err:  # pylint: disable=broad-except
-                self.logger.error('Failed to import rule %s. Error: [%s]',raw_rule.get('id'),  err)
+                self.logger.error('Failed to import rule %s. Error: [%s]', raw_rule.get('id'), err)
                 continue
 
             import_count = import_count + 1
