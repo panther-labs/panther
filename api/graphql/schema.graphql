@@ -41,6 +41,9 @@ type Query {
   destinations: [Destination]
   generalSettings: GeneralSettings!
   getComplianceIntegration(id: ID!): ComplianceIntegration!
+  getComplianceIntegrationHealth(
+    input: GetComplianceIntegrationHealthInput!
+  ): ComplianceIntegrationHealth!
   getComplianceIntegrationTemplate(
     input: GetComplianceIntegrationTemplateInput!
   ): IntegrationTemplate!
@@ -58,6 +61,12 @@ type Query {
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   users(limit: Int, paginationToken: String): ListUsersResponse
+}
+
+input GetComplianceIntegrationHealthInput {
+  awsAccountId: String!
+  enableCWESetup: Boolean!
+  enableRemediation: Boolean!
 }
 
 input GetComplianceIntegrationTemplateInput {
@@ -86,6 +95,17 @@ input GetAlertInput {
 
 type IntegrationTemplate {
   body: String!
+}
+
+type IntegrationItemHealthStatus {
+  healthy: Boolean!
+  errorMessage: String
+}
+
+type ComplianceIntegrationHealth {
+  auditRoleStatus: IntegrationItemHealthStatus!
+  cweRoleStatus: IntegrationItemHealthStatus!
+  remediationRoleStatus: IntegrationItemHealthStatus!
 }
 
 type AlertDetails {

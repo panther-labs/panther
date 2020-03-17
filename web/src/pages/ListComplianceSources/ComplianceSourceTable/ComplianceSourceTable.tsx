@@ -25,9 +25,7 @@ import columns from '../columns';
 import { useListComplianceSources } from './graphql/listComplianceSources.generated';
 
 const ComplianceSourceTable = () => {
-  const { loading, error, data } = useListComplianceSources({
-    fetchPolicy: 'cache-and-network',
-  });
+  const { loading, error, data } = useListComplianceSources();
 
   if (loading && !data) {
     return <TablePlaceholder />;

@@ -93,6 +93,13 @@ export type ComplianceIntegration = {
   lastScanStartTime?: Maybe<Scalars['AWSDateTime']>;
 };
 
+export type ComplianceIntegrationHealth = {
+  __typename?: 'ComplianceIntegrationHealth';
+  auditRoleStatus: IntegrationItemHealthStatus;
+  cweRoleStatus: IntegrationItemHealthStatus;
+  remediationRoleStatus: IntegrationItemHealthStatus;
+};
+
 export type ComplianceItem = {
   __typename?: 'ComplianceItem';
   errorMessage?: Maybe<Scalars['String']>;
@@ -232,6 +239,12 @@ export type GetAlertInput = {
   eventsExclusiveStartKey?: Maybe<Scalars['String']>;
 };
 
+export type GetComplianceIntegrationHealthInput = {
+  awsAccountId: Scalars['String'];
+  enableCWESetup: Scalars['Boolean'];
+  enableRemediation: Scalars['Boolean'];
+};
+
 export type GetComplianceIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
@@ -267,6 +280,12 @@ export type GithubConfig = {
 export type GithubConfigInput = {
   repoName: Scalars['String'];
   token: Scalars['String'];
+};
+
+export type IntegrationItemHealthStatus = {
+  __typename?: 'IntegrationItemHealthStatus';
+  healthy: Scalars['Boolean'];
+  errorMessage?: Maybe<Scalars['String']>;
 };
 
 export type IntegrationTemplate = {
@@ -687,6 +706,7 @@ export type Query = {
   destinations?: Maybe<Array<Maybe<Destination>>>;
   generalSettings: GeneralSettings;
   getComplianceIntegration: ComplianceIntegration;
+  getComplianceIntegrationHealth: ComplianceIntegrationHealth;
   getComplianceIntegrationTemplate: IntegrationTemplate;
   getLogIntegrationTemplate: IntegrationTemplate;
   remediations?: Maybe<Scalars['AWSJSON']>;
@@ -718,6 +738,10 @@ export type QueryDestinationArgs = {
 
 export type QueryGetComplianceIntegrationArgs = {
   id: Scalars['ID'];
+};
+
+export type QueryGetComplianceIntegrationHealthArgs = {
+  input: GetComplianceIntegrationHealthInput;
 };
 
 export type QueryGetComplianceIntegrationTemplateArgs = {
@@ -1073,6 +1097,9 @@ export type ResolversTypes = {
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
+  GetComplianceIntegrationHealthInput: GetComplianceIntegrationHealthInput;
+  ComplianceIntegrationHealth: ResolverTypeWrapper<ComplianceIntegrationHealth>;
+  IntegrationItemHealthStatus: ResolverTypeWrapper<IntegrationItemHealthStatus>;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
@@ -1180,6 +1207,9 @@ export type ResolversParentTypes = {
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
+  GetComplianceIntegrationHealthInput: GetComplianceIntegrationHealthInput;
+  ComplianceIntegrationHealth: ComplianceIntegrationHealth;
+  IntegrationItemHealthStatus: IntegrationItemHealthStatus;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
@@ -1342,6 +1372,24 @@ export type ComplianceIntegrationResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
+export type ComplianceIntegrationHealthResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ComplianceIntegrationHealth'] = ResolversParentTypes['ComplianceIntegrationHealth']
+> = {
+  auditRoleStatus?: Resolver<
+    ResolversTypes['IntegrationItemHealthStatus'],
+    ParentType,
+    ContextType
+  >;
+  cweRoleStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
+  remediationRoleStatus?: Resolver<
+    ResolversTypes['IntegrationItemHealthStatus'],
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
 export type ComplianceItemResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ComplianceItem'] = ResolversParentTypes['ComplianceItem']
@@ -1421,6 +1469,15 @@ export type GithubConfigResolvers<
 > = {
   repoName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type IntegrationItemHealthStatusResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['IntegrationItemHealthStatus'] = ResolversParentTypes['IntegrationItemHealthStatus']
+> = {
+  healthy?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1853,6 +1910,12 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryGetComplianceIntegrationArgs, 'id'>
   >;
+  getComplianceIntegrationHealth?: Resolver<
+    ResolversTypes['ComplianceIntegrationHealth'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetComplianceIntegrationHealthArgs, 'input'>
+  >;
   getComplianceIntegrationTemplate?: Resolver<
     ResolversTypes['IntegrationTemplate'],
     ParentType,
@@ -2107,12 +2170,14 @@ export type Resolvers<ContextType = any> = {
   AWSJSON?: GraphQLScalarType;
   AWSTimestamp?: GraphQLScalarType;
   ComplianceIntegration?: ComplianceIntegrationResolvers<ContextType>;
+  ComplianceIntegrationHealth?: ComplianceIntegrationHealthResolvers<ContextType>;
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
+  IntegrationItemHealthStatus?: IntegrationItemHealthStatusResolvers<ContextType>;
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
   InviteUserResponse?: InviteUserResponseResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;
