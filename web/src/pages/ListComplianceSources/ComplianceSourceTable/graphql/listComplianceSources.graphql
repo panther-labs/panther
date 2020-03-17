@@ -1,11 +1,5 @@
 query ListComplianceSources {
   listComplianceIntegrations {
-    awsAccountId
-    createdAtTime
-    createdBy
-    integrationId
-    integrationLabel
-    scanIntervalMins
-    lastScanEndTime
+    ...ComplianceIntegrationDetails
   }
 }

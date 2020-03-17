@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { Flex } from 'pouncejs';
 import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -63,6 +62,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
 }) => {
   return (
     <Formik<ComplianceSourceWizardValues>
+      enableReinitialize
       initialValues={initialValues}
       initialStatus={initialStatus}
       validationSchema={validationSchema}
@@ -70,41 +70,39 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
     >
       {({ isValid, dirty, handleSubmit, status }) => (
         <form onSubmit={handleSubmit}>
-          <Flex justifyContent="center" alignItems="center" width={1}>
-            <Wizard>
-              <Wizard.Step title="Configure Sourcee" icon="settings">
-                <WizardPanelWrapper>
-                  <WizardPanelWrapper.Content>
-                    <SourceConfigurationPanel />
-                  </WizardPanelWrapper.Content>
-                  <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionNext disabled={!dirty && isValid} />
-                  </WizardPanelWrapper.Actions>
-                </WizardPanelWrapper>
-              </Wizard.Step>
-              <Wizard.Step title="Deploy Stack" icon="upload">
-                <WizardPanelWrapper>
-                  <WizardPanelWrapper.Content>
-                    <StackDeploymentPanel />
-                  </WizardPanelWrapper.Content>
-                  <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionPrev />
-                    <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
-                  </WizardPanelWrapper.Actions>
-                </WizardPanelWrapper>
-              </Wizard.Step>
-              <Wizard.Step title="Done!" icon="check">
-                <WizardPanelWrapper>
-                  <WizardPanelWrapper.Content>
-                    <SuccessPanel errorMessage={externalErrorMessage} />
-                  </WizardPanelWrapper.Content>
-                  <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionPrev />
-                  </WizardPanelWrapper.Actions>
-                </WizardPanelWrapper>
-              </Wizard.Step>
-            </Wizard>
-          </Flex>
+          <Wizard>
+            <Wizard.Step title="Configure Source" icon="settings">
+              <WizardPanelWrapper>
+                <WizardPanelWrapper.Content>
+                  <SourceConfigurationPanel />
+                </WizardPanelWrapper.Content>
+                <WizardPanelWrapper.Actions>
+                  <WizardPanelWrapper.ActionNext disabled={!dirty && isValid} />
+                </WizardPanelWrapper.Actions>
+              </WizardPanelWrapper>
+            </Wizard.Step>
+            <Wizard.Step title="Deploy Stack" icon="upload">
+              <WizardPanelWrapper>
+                <WizardPanelWrapper.Content>
+                  <StackDeploymentPanel />
+                </WizardPanelWrapper.Content>
+                <WizardPanelWrapper.Actions>
+                  <WizardPanelWrapper.ActionPrev />
+                  <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
+                </WizardPanelWrapper.Actions>
+              </WizardPanelWrapper>
+            </Wizard.Step>
+            <Wizard.Step title="Done!" icon="check">
+              <WizardPanelWrapper>
+                <WizardPanelWrapper.Content>
+                  <SuccessPanel errorMessage={externalErrorMessage} />
+                </WizardPanelWrapper.Content>
+                <WizardPanelWrapper.Actions>
+                  <WizardPanelWrapper.ActionPrev />
+                </WizardPanelWrapper.Actions>
+              </WizardPanelWrapper>
+            </Wizard.Step>
+          </Wizard>
         </form>
       )}
     </Formik>

@@ -100,7 +100,7 @@ const StackDeployment: React.FC = () => {
             ref={downloadAnchor}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
-            Download template
+            {initialValues.integrationId ? 'Download updated template' : 'Download template'}
           </a>
         )}
       </Text>

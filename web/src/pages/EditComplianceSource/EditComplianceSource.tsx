@@ -51,10 +51,11 @@ const EditComplianceSource: React.FC = () => {
 
   const initialValues = React.useMemo(
     () => ({
+      integrationId: data?.getComplianceIntegration.integrationId,
       integrationLabel: data?.getComplianceIntegration.integrationLabel ?? 'Loading...',
       awsAccountId: data?.getComplianceIntegration.awsAccountId ?? 'Loading...',
-      cweEnabled: data?.getComplianceIntegration.cweEnabled || false,
-      remediationEnabled: data?.getComplianceIntegration.remediationEnabled || false,
+      cweEnabled: data?.getComplianceIntegration.cweEnabled ?? false,
+      remediationEnabled: data?.getComplianceIntegration.remediationEnabled ?? false,
     }),
     [data]
   );
