@@ -53,6 +53,7 @@ const SourceConfigurationPanel: React.FC = () => {
           label="AWS Account ID"
           placeholder="Your 12-digit AWS Account ID"
           aria-required
+          disabled={!!initialValues.integrationId}
           mb={6}
         />
         <Box ml={-2}>

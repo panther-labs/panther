@@ -1,0 +1,5 @@
+query GetComplianceSource($id: ID!) {
+  getComplianceIntegration(id: $id) {
+    ...ComplianceIntegrationDetails
+  }
+}

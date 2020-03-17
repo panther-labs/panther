@@ -686,6 +686,7 @@ export type Query = {
   destination?: Maybe<Destination>;
   destinations?: Maybe<Array<Maybe<Destination>>>;
   generalSettings: GeneralSettings;
+  getComplianceIntegration: ComplianceIntegration;
   getComplianceIntegrationTemplate: IntegrationTemplate;
   getLogIntegrationTemplate: IntegrationTemplate;
   remediations?: Maybe<Scalars['AWSJSON']>;
@@ -712,6 +713,10 @@ export type QueryAlertsArgs = {
 };
 
 export type QueryDestinationArgs = {
+  id: Scalars['ID'];
+};
+
+export type QueryGetComplianceIntegrationArgs = {
   id: Scalars['ID'];
 };
 
@@ -1067,6 +1072,7 @@ export type ResolversTypes = {
   SeverityEnum: SeverityEnum;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
@@ -1092,7 +1098,6 @@ export type ResolversTypes = {
   ListPoliciesResponse: ResolverTypeWrapper<ListPoliciesResponse>;
   PolicySummary: ResolverTypeWrapper<PolicySummary>;
   PoliciesForResourceInput: PoliciesForResourceInput;
-  ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
   LogIntegration: ResolverTypeWrapper<LogIntegration>;
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: ResolverTypeWrapper<OrganizationStatsResponse>;
@@ -1174,6 +1179,7 @@ export type ResolversParentTypes = {
   SeverityEnum: SeverityEnum;
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
+  ComplianceIntegration: ComplianceIntegration;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
@@ -1199,7 +1205,6 @@ export type ResolversParentTypes = {
   ListPoliciesResponse: ListPoliciesResponse;
   PolicySummary: PolicySummary;
   PoliciesForResourceInput: PoliciesForResourceInput;
-  ComplianceIntegration: ComplianceIntegration;
   LogIntegration: LogIntegration;
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: OrganizationStatsResponse;
@@ -1842,6 +1847,12 @@ export type QueryResolvers<
     ContextType
   >;
   generalSettings?: Resolver<ResolversTypes['GeneralSettings'], ParentType, ContextType>;
+  getComplianceIntegration?: Resolver<
+    ResolversTypes['ComplianceIntegration'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetComplianceIntegrationArgs, 'id'>
+  >;
   getComplianceIntegrationTemplate?: Resolver<
     ResolversTypes['IntegrationTemplate'],
     ParentType,

@@ -104,6 +104,16 @@ const createApolloClient = (history: History<LocationErrorState>) =>
     link: ApolloLink.from([cleanParamsLink, createErrorLink(history), authLink, httpLink]),
     cache: new InMemoryCache({
       typePolicies: {
+        Query: {
+          fields: {
+            getComplianceIntegration(existingData, { args, toReference }) {
+              return (
+                existingData ||
+                toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
+              );
+            },
+          },
+        },
         Destination: {
           keyFields: ['outputId'],
         },
