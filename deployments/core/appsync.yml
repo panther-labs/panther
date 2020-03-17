@@ -464,13 +464,13 @@ Resources:
           $util.toJson($context.result)
         #end
 
-  ListIntegrationsResolver:
+  ListComplianceIntegrationsResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Query
-      FieldName: integrations
+      FieldName: listComplianceIntegrations
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
@@ -478,7 +478,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "getEnabledIntegrations": {
-              "integrationType": $ctx.args.input.integrationType
+              "integrationType": "aws-scan"
             }
           })
         }
@@ -489,20 +489,22 @@ Resources:
           $util.toJson($ctx.result)
         #end
 
-  GetIntegrationTemplateResolver:
+  ListLogIntegrationsResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Query
-      FieldName: getIntegrationTemplate
+      FieldName: listLogIntegrations
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "getIntegrationTemplate": $ctx.args.input
+            "getEnabledIntegrations": {
+              "integrationType": "aws-s3"
+            }
           })
         }
       ResponseMappingTemplate: |
@@ -512,32 +514,78 @@ Resources:
           $util.toJson($ctx.result)
         #end
 
-  AddIntegrationResolver:
+  GetComplianceIntegrationTemplateResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Query
+      FieldName: getComplianceIntegrationTemplate
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("integrationType", "aws-scan"))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getIntegrationTemplate": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($ctx.result)
+        #end
+
+  GetLogIntegrationTemplateResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Query
+      FieldName: getLogIntegrationTemplate
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("integrationType", "aws-s3"))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getIntegrationTemplate": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($ctx.result)
+        #end
+
+  AddComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
-      FieldName: addIntegration
+      FieldName: addComplianceIntegration
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($sourcesInput = [])
-        #foreach($item in $ctx.args.input.integrations)
-          #set ($inputItem = {})
-          #foreach ($key in $item.keySet())
-            $util.qr($inputItem.put($key, $item.get($key)))
-          #end
-          $util.qr($inputItem.put("userId", $ctx.identity.sub))
-          $util.qr($inputItem.put("scanIntervalMins", 1440))
-          $util.qr($inputItem.put("scanEnabled", true))
-          $util.qr($sourcesInput.add($inputItem))
-        #end
+        #set ($integrationsInput = [])
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("scanIntervalMins", 1440))
+        $util.qr($input.put("integrationType", "aws-scan"))
+        $util.qr($input.put("scanEnabled", true))
+        $util.qr($integrationsInput.add($input))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
             "putIntegration": {
-              "integrations": $sourcesInput
+              "integrations": $integrationsInput
             }
           })
         }
@@ -548,18 +596,47 @@ Resources:
           $util.toJson($context.result.get(0))
         #end
 
-  UpdateIntegrationResolver:
+  AddLogIntegrationResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
-      FieldName: updateIntegration
+      FieldName: addLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($integrationsInput = [])
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("integrationType", "aws-s3"))
+        $util.qr($integrationsInput.add($input))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "putIntegration": {
+              "integrations": $integrationsInput
+            }
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result.get(0))
+        #end
+
+  UpdateComplianceIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Mutation
+      FieldName: updateComplianceIntegration
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("scanIntervalMins", 1440))
-        $util.qr($input.put("scanEnabled", true))
+        $util.qr($input.put("integrationType", "aws-scan"))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -574,13 +651,63 @@ Resources:
           $util.toJson($context.result)
         #end
 
-  DeleteIntegrationResolver:
+  UpdateLogIntegrationResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: Mutation
-      FieldName: deleteIntegration
+      FieldName: updateLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("integrationType", "aws-s3"))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateIntegrationSettings": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  DeleteComplianceIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Mutation
+      FieldName: deleteComplianceIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "deleteIntegration": {
+              "integrationId": $ctx.args.id
+            }
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  DeleteLogIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Mutation
+      FieldName: deleteLogIntegration
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
