@@ -1,6 +1,7 @@
 /* eslint-disable import/order, import/no-duplicates */
 import * as Types from '../../../../__generated__/schema';
 
+import { ComplianceIntegrationDetails } from '../../../graphql/fragments/ComplianceIntegrationDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -9,16 +10,15 @@ export type AddComplianceSourceVariables = {
   input: Types.AddComplianceIntegrationInput;
 };
 
-export type AddComplianceSource = {
-  addComplianceIntegration: Pick<Types.ComplianceIntegration, 'integrationId'>;
-};
+export type AddComplianceSource = { addComplianceIntegration: ComplianceIntegrationDetails };
 
 export const AddComplianceSourceDocument = gql`
   mutation AddComplianceSource($input: AddComplianceIntegrationInput!) {
     addComplianceIntegration(input: $input) {
-      integrationId
+      ...ComplianceIntegrationDetails
     }
   }
+  ${ComplianceIntegrationDetails}
 `;
 export type AddComplianceSourceMutationFn = ApolloReactCommon.MutationFunction<
   AddComplianceSource,

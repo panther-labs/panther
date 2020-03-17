@@ -1,0 +1,13 @@
+fragment ComplianceIntegrationDetails on ComplianceIntegration {
+  integrationId
+  integrationLabel
+  awsAccountId
+  createdAtTime
+  createdBy
+  cweEnabled
+  remediationEnabled
+  scanIntervalMins
+  lastScanEndTime
+  lastScanErrorMessage
+  lastScanStartTime
+}
