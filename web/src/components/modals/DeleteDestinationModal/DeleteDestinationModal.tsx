@@ -32,7 +32,22 @@ const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destina
     variables: {
       id: destination.outputId,
     },
-    refetchQueries: [{ query: ListDestinationsAndDefaultsDocument }],
+    optimisticResponse: {
+      deleteDestination: true,
+    },
+    update: async cache => {
+      const { destinations } = cache.readQuery({
+        query: ListDestinationsAndDefaultsDocument,
+      });
+      const newDestinations = destinations.destinations.filter(
+        d => d.outputId !== destination.outputId
+      );
+      cache.writeQuery({
+        query: ListDestinationsAndDefaultsDocument,
+        data: { destinations: { ...destinations, destinations: [...newDestinations] } },
+      });
+      cache.gc();
+    },
   });
 
   return (
