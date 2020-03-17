@@ -2,6 +2,7 @@ package s3queue
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"net/url"
 	"sync"
@@ -21,6 +22,7 @@ const (
 	concurrency          = 10
 	pageSize             = 1000
 	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic" // account is added for sqs messages
+	progressNotify       = 5000                                                  // log a line every this many to show progress
 )
 
 type Stats struct {
@@ -47,35 +49,39 @@ func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path,
 		return errors.Wrapf(err, "could not get queue url for %s", queueName)
 	}
 
-	// the account id is taken from this  arn to assume role for reading in the log processor
+	// the account id is taken from this arn to assume role for reading in the log processor
 	topicARN := fmt.Sprintf(fakeTopicArnTemplate, account)
 
 	errChan := make(chan error)
 	notifyChan := make(chan *cloudTrailNotification, 1000)
 
-	var wg sync.WaitGroup
+	var queueWg sync.WaitGroup
 	for i := 0; i < concurrency; i++ {
-		wg.Add(1)
+		queueWg.Add(1)
 		go func() {
 			queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan, errChan)
-			wg.Done()
+			queueWg.Done()
 		}()
 	}
 
-	wg.Add(1)
+	queueWg.Add(1)
 	go func() {
 		listPath(s3Client, s3path, limit, notifyChan, errChan, stats)
-		wg.Done()
+		queueWg.Done()
 	}()
 
+	var errorWg sync.WaitGroup
+	errorWg.Add(1)
 	go func() {
 		for err := range errChan { // return last error
 			failed = err
 		}
+		errorWg.Done()
 	}()
 
-	wg.Wait()
+	queueWg.Wait()
 	close(errChan)
+	errorWg.Wait()
 
 	return failed
 }
@@ -123,6 +129,9 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 		for _, value := range page.Contents {
 			if *value.Size > 0 { // we only care about objects with size
 				stats.NumFiles++
+				if stats.NumFiles%progressNotify == 0 {
+					log.Printf("listed %d files ...", stats.NumFiles)
+				}
 				stats.NumBytes += (uint64)(*value.Size)
 				notifyChan <- &cloudTrailNotification{
 					S3Bucket:    &bucket,
@@ -144,6 +153,7 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
 	notifyChan chan *cloudTrailNotification, errChan chan error) {
 
+	// we have 1 file per notification to limit blast radius in case of failure.
 	for cloudTrailNotification := range notifyChan {
 		ctnJSON, err := jsoniter.MarshalToString(cloudTrailNotification)
 		if err != nil {
@@ -154,7 +164,7 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 		// make it look like an SNS notification
 		snsNotification := events.SNSEntity{
 			Type:     "Notification",
-			TopicArn: topicARN,
+			TopicArn: topicARN, // this is needed by the log processor to get account associated with the S3 object
 			Message:  ctnJSON,
 		}
 		message, err := jsoniter.MarshalToString(snsNotification)

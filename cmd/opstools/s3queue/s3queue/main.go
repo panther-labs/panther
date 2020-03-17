@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	REGION  = flag.String("region", "", "The AWS region where the queues and bucket exist (optional, defaults to session env vars).")
-	ACCOUNT = flag.String("account", "", "The AWS account id where the bucket exists (optional, defaults to session account).")
+	REGION  = flag.String("region", "", "The AWS region (optional, defaults to session env vars) where the queues and bucket exist.")
+	ACCOUNT = flag.String("account", "", "The AWS account id (optional, defaults to session account) where the bucket exists.")
 	S3PATH  = flag.String("s3path", "", "The s3 path to list (e.g., s3://<bucket>/<prefix>).")
 	LIMIT   = flag.Uint64("limit", 0, "If non-zero, then limit the number of files to this number.")
 	TOQ     = flag.String("queue", "panther-input-data-notifications-queue", "The name of the log processor queue to send notifications.")
