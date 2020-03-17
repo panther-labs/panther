@@ -18,37 +18,15 @@
 
 import { Box, Heading, SideSheet, useSnackbar, Text, Alert } from 'pouncejs';
 import React from 'react';
-import { useMutation, gql } from '@apollo/client';
 import { SubmitButton } from 'Components/Buttons';
 
 import useSidesheet from 'Hooks/useSidesheet';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
-import { UploadPoliciesInput, UploadPoliciesResponse } from 'Generated/schema';
-import { LIST_POLICIES } from 'Pages/ListPolicies';
-import { LIST_RULES } from 'Pages/ListRules';
+import { ListPoliciesDocument } from 'Pages/ListPolicies';
+import { ListRulesDocument } from 'Pages/ListRules';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
-
-const UPLOAD_POLICIES = gql`
-  mutation UploadPolicies($input: UploadPoliciesInput!) {
-    uploadPolicies(input: $input) {
-      totalPolicies
-      modifiedPolicies
-      newPolicies
-      totalRules
-      modifiedRules
-      newRules
-    }
-  }
-`;
-
-interface ApolloMutationInput {
-  input: UploadPoliciesInput;
-}
-
-interface ApolloMutationData {
-  uploadPolicies: UploadPoliciesResponse;
-}
+import { useUploadPolicies } from './graphql/uploadPolicies.generated';
 
 export interface PolicyBulkUploadSideSheetProps {
   type: 'policy' | 'rule';
@@ -62,10 +40,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { pushSnackbar } = useSnackbar();
   const { hideSidesheet } = useSidesheet();
-  const [bulkUploadPolicies, { data, loading, error }] = useMutation<
-    ApolloMutationData,
-    ApolloMutationInput
-  >(UPLOAD_POLICIES);
+  const [bulkUploadPolicies, { data, loading, error }] = useUploadPolicies();
 
   // This is the function that gets triggered each time the user selects a new file. The event
   // is not needed since we can't read the selected file from it (we need the input reference)
@@ -89,7 +64,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
       try {
         await bulkUploadPolicies({
           awaitRefetchQueries: true,
-          refetchQueries: [getOperationName(isPolicy ? LIST_POLICIES : LIST_RULES)],
+          refetchQueries: [getOperationName(isPolicy ? ListPoliciesDocument : ListRulesDocument)],
           variables: {
             input: {
               data: (reader.result as string).split(',')[1],

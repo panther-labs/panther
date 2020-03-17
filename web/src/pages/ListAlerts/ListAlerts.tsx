@@ -19,41 +19,16 @@
 import React from 'react';
 import { Alert, Box, Card, Spinner } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-import { useQuery, gql } from '@apollo/client';
 import { extractErrorMessage } from 'Helpers/utils';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
-import { ListAlertsInput, ListAlertsResponse } from 'Generated/schema';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
 import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
-export const LIST_ALERTS = gql`
-  query ListAlerts($input: ListAlertsInput) {
-    alerts(input: $input) {
-      alertSummaries {
-        alertId
-        creationTime
-        eventsMatched
-        updateTime
-        ruleId
-        severity
-        dedupString
-      }
-      lastEvaluatedKey
-    }
-  }
-`;
-
-interface ApolloData {
-  alerts: ListAlertsResponse;
-}
-interface ApolloVariables {
-  input: ListAlertsInput;
-}
-
 const ListAlerts = () => {
-  const { loading, error, data, fetchMore } = useQuery<ApolloData, ApolloVariables>(LIST_ALERTS, {
+  const { loading, error, data, fetchMore } = useListAlerts({
     notifyOnNetworkStatusChange: true, // Adding notifyOnNetworkStatusChange will enable 'loading' to update its status during fetchMore requests as well
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -80,7 +55,7 @@ const ListAlerts = () => {
         variables: {
           input: { pageSize: DEFAULT_LARGE_PAGE_SIZE, exclusiveStartKey: lastEvaluatedKey },
         },
-        updateQuery: (previousResult, { fetchMoreResult }: { fetchMoreResult: ApolloData }) => {
+        updateQuery: (previousResult, { fetchMoreResult }) => {
           if (!fetchMoreResult) {
             return previousResult;
           }

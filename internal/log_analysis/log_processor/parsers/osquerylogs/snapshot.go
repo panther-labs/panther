@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -33,13 +34,13 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 type Snapshot struct { // FIXME: field descriptions need updating!
 	Action         *string                `json:"action,omitempty" validate:"required,eq=snapshot" description:"Action"`
 	CalendarTime   *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
-	Counter        *int                   `json:"counter,omitempty,string" validate:"required" description:"Counter"`
+	Counter        *numerics.Integer      `json:"counter,omitempty" validate:"required" description:"Counter"`
 	Decorations    map[string]string      `json:"decorations,omitempty" description:"Decorations"`
-	Epoch          *int                   `json:"epoch,omitempty,string" validate:"required" description:"Epoch"`
+	Epoch          *numerics.Integer      `json:"epoch,omitempty" validate:"required" description:"Epoch"`
 	HostIdentifier *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
 	Name           *string                `json:"name,omitempty" validate:"required" description:"Name"`
 	Snapshot       []map[string]string    `json:"snapshot,omitempty" validate:"required" description:"Snapshot"`
-	UnixTime       *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
+	UnixTime       *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog

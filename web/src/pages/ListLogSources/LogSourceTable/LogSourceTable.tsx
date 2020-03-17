@@ -17,29 +17,15 @@
  */
 
 import React from 'react';
-import { useQuery, gql } from '@apollo/client';
 import { Integration } from 'Generated/schema';
-import { INTEGRATION_TYPES } from 'Source/constants';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { Alert, Table } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
+import { useListLogSources } from './graphql/listLogSources.generated';
 import columns from '../columns';
 
-export const LIST_LOG_SOURCES = gql`
-    query ListLogSources {
-        integrations(input: { integrationType: "${INTEGRATION_TYPES.AWS_LOGS}" }) {
-            awsAccountId
-            createdAtTime
-            integrationId
-            integrationLabel
-            integrationType
-            s3Buckets
-        }
-    }
-`;
-
 const LogSourceTable = () => {
-  const { loading, error, data } = useQuery<{ integrations: Integration[] }>(LIST_LOG_SOURCES, {
+  const { loading, error, data } = useListLogSources({
     fetchPolicy: 'cache-and-network',
   });
 

@@ -1,0 +1,11 @@
+query AlertDetails($input: GetAlertInput!) {
+    alert(input: $input) {
+        alertId
+        ruleId
+        creationTime
+        eventsMatched
+        updateTime
+        eventsLastEvaluatedKey
+        events
+    }
+}

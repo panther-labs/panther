@@ -1160,11 +1160,12 @@ func getEnabledRules(t *testing.T) {
 	expected := &models.EnabledPolicies{
 		Policies: []*models.EnabledPolicy{
 			{
-				Body:          rule.Body,
-				ID:            rule.ID,
-				ResourceTypes: rule.LogTypes,
-				Severity:      rule.Severity,
-				VersionID:     rule.VersionID,
+				Body:               rule.Body,
+				ID:                 rule.ID,
+				ResourceTypes:      rule.LogTypes,
+				Severity:           rule.Severity,
+				VersionID:          rule.VersionID,
+				DedupPeriodMinutes: rule.DedupPeriodMinutes,
 			},
 		},
 	}

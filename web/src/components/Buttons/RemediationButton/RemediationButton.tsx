@@ -18,28 +18,21 @@
 
 import React from 'react';
 import { Button, ButtonProps, useSnackbar } from 'pouncejs';
-import { useMutation, gql } from '@apollo/client';
 
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import { RESOURCE_DETAILS } from 'Pages/ResourceDetails';
-import { POLICY_DETAILS } from 'Pages/PolicyDetails';
-import { ResourceDetails, RemediateResourceInput, PolicyDetails } from 'Generated/schema';
+import { ResourceDetailsDocument } from 'Pages/ResourceDetails';
+import { PolicyDetailsDocument } from 'Pages/PolicyDetails';
+import { ResourceDetails, PolicyDetails } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
+import {
+  useRemediateResource,
+  RemediateResourceDocument,
+} from './graphql/remediateResource.generated';
 
 interface RemediationButtonProps {
   buttonVariant: ButtonProps['variant'];
   resourceId: ResourceDetails['id'];
   policyId: PolicyDetails['id'];
-}
-
-const REMEDIATE_RESOURCE = gql`
-  mutation RemediateResource($input: RemediateResourceInput!) {
-    remediateResource(input: $input)
-  }
-`;
-
-interface ApolloMutationInput {
-  input: RemediateResourceInput;
 }
 
 const RemediationButton: React.FC<RemediationButtonProps> = ({
@@ -53,10 +46,13 @@ const RemediationButton: React.FC<RemediationButtonProps> = ({
   const [
     remediateResource,
     { data: remediationSuccess, error: remediationError, loading: remediationInProgress },
-  ] = useMutation<boolean, ApolloMutationInput>(REMEDIATE_RESOURCE, {
-    mutation: REMEDIATE_RESOURCE,
+  ] = useRemediateResource({
+    mutation: RemediateResourceDocument,
     awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(RESOURCE_DETAILS), getOperationName(POLICY_DETAILS)],
+    refetchQueries: [
+      getOperationName(ResourceDetailsDocument),
+      getOperationName(PolicyDetailsDocument),
+    ],
     variables: {
       input: {
         resourceId,

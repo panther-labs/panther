@@ -21,20 +21,10 @@ import { Alert, Box, Combobox, Grid, InputElementLabel, Spinner } from 'pouncejs
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
-import { useQuery, gql } from '@apollo/client';
 import FormikEditor from 'Components/fields/Editor';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { PolicyFormValues } from './PolicyForm';
-
-export const LIST_REMEDIATIONS = gql`
-  query ListRemediations {
-    remediations
-  }
-`;
-
-interface ApolloQueryData {
-  remediations: string;
-}
+import { useListRemediations } from './graphql/listRemediations.generated';
 
 const PolicyFormAutoRemediationFields: React.FC = () => {
   // Read the values from the "parent" form. We expect a formik to be declared in the upper scope
@@ -52,7 +42,7 @@ const PolicyFormAutoRemediationFields: React.FC = () => {
     values.autoRemediationParameters,
   ]);
 
-  const { data, loading, error } = useQuery<ApolloQueryData>(LIST_REMEDIATIONS);
+  const { data, loading, error } = useListRemediations();
 
   if (loading) {
     return <Spinner size="medium" />;
