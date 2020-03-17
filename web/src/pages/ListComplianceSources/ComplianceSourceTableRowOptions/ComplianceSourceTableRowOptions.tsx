@@ -21,6 +21,8 @@ import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
+import useRouter from 'Hooks/useRouter';
+import urls from 'Source/urls';
 
 interface ComplianceSourceTableRowOptionsProps {
   source: ComplianceIntegration;
@@ -30,6 +32,7 @@ const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsP
   source,
 }) => {
   const { showModal } = useModal();
+  const { history } = useRouter();
 
   return (
     <Dropdown
@@ -39,7 +42,9 @@ const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsP
         </IconButton>
       }
     >
-      <Dropdown.Item onSelect={() => {}}>
+      <Dropdown.Item
+        onSelect={() => history.push(urls.compliance.sources.edit(source.integrationId))}
+      >
         <MenuItem variant="default">Edit</MenuItem>
       </Dropdown.Item>
       <Dropdown.Item
