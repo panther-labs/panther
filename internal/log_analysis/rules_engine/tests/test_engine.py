@@ -70,7 +70,8 @@ class TestEngine(TestCase):
                 'resourceTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
                 'severity': 'INFO',
-                'versionId': 'version'
+                'versionId': 'version',
+                'dedupPeriodMinutes': 120
             },  # This rule should match the event
             {
                 'id': 'rule_id_2',
@@ -84,7 +85,15 @@ class TestEngine(TestCase):
         result = engine.analyze('log', {})
 
         expected_event_matches = [
-            EventMatch(rule_id='rule_id_1', rule_version='version', log_type='log', severity='INFO', dedup='rule_id_1', event={})
+            EventMatch(
+                rule_id='rule_id_1',
+                rule_version='version',
+                log_type='log',
+                severity='INFO',
+                dedup='rule_id_1',
+                dedup_period_mins=120,
+                event={}
+            )
         ]
         self.assertEqual(result, expected_event_matches)
 
@@ -115,8 +124,24 @@ class TestEngine(TestCase):
         result = engine.analyze('log', {})
 
         expected_event_matches = [
-            EventMatch(rule_id='rule_id_1', rule_version='version', log_type='log', severity='INFO', dedup='rule_id_1', event={}),
-            EventMatch(rule_id='rule_id_3', rule_version='version', log_type='log', severity='INFO', dedup='rule_id_3', event={})
+            EventMatch(
+                rule_id='rule_id_1',
+                rule_version='version',
+                log_type='log',
+                severity='INFO',
+                dedup='rule_id_1',
+                event={},
+                dedup_period_mins=60
+            ),
+            EventMatch(
+                rule_id='rule_id_3',
+                rule_version='version',
+                log_type='log',
+                severity='INFO',
+                dedup='rule_id_3',
+                event={},
+                dedup_period_mins=60
+            )
         ]
 
         self.assertEqual(result, expected_event_matches)

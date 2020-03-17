@@ -39,10 +39,6 @@ _ALERT_SEVERITY_ATTR_NAME = 'severity'
 _ALERT_LOG_TYPES = 'logTypes'
 _ALERT_TITLE = 'title'
 
-# TODO Once rules store alert merge period, retrieve it from there
-# Currently grouping in 1hr periods
-_ALERT_MERGE_PERIOD_SECONDS = 3600
-
 
 # pylint: disable=too-many-instance-attributes
 @dataclass
@@ -52,6 +48,7 @@ class MatchingGroupInfo:
     rule_version: str
     log_type: str
     dedup: str
+    dedup_period_mins: int
     severity: str
     num_matches: int
     title: Optional[str]
@@ -84,9 +81,8 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     """Performs a conditional update to DDB to verify whether we need to create a new alert.
     The condition will succeed only if:
     1. It is the first time this rule with this dedup string fires
-    2. This rule with the same dedup string has fired before, but it fired more than _ALERT_MERGE_PERIOD_SECONDS earlier
+    2. This rule with the same dedup string has fired before, but after the dedup period has expired
     """
-
     condition_expression = '(#1 < :1) OR (attribute_not_exists(#2))'
     update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
 
@@ -110,9 +106,11 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         expresion_attribute_names['#12'] = _ALERT_TITLE
 
     expression_attribute_values = {
-        ':1': {
-            'N': '{}'.format(int(group_info.processing_time.timestamp()) - _ALERT_MERGE_PERIOD_SECONDS)
-        },
+        ':1':
+            {
+                # Converting dedup_period_mins to seconds
+                'N': '{}'.format(int(group_info.processing_time.timestamp()) - group_info.dedup_period_mins * 60)
+            },
         ':3': {
             'N': '1'
         },
