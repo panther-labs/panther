@@ -415,12 +415,6 @@ export enum ListRulesSortFieldsEnum {
   Severity = 'severity',
 }
 
-export type ListUsersResponse = {
-  __typename?: 'ListUsersResponse';
-  users?: Maybe<Array<Maybe<User>>>;
-  paginationToken?: Maybe<Scalars['String']>;
-};
-
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
   webhookURL: Scalars['String'];
@@ -670,7 +664,7 @@ export type Query = {
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
-  users?: Maybe<ListUsersResponse>;
+  users?: Maybe<Array<Maybe<User>>>;
 };
 
 export type QueryAlertArgs = {
@@ -723,11 +717,6 @@ export type QueryRuleArgs = {
 
 export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
-};
-
-export type QueryUsersArgs = {
-  limit?: Maybe<Scalars['Int']>;
-  paginationToken?: Maybe<Scalars['String']>;
 };
 
 export type RemediateResourceInput = {
@@ -1061,7 +1050,6 @@ export type ResolversTypes = {
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   ListRulesResponse: ResolverTypeWrapper<ListRulesResponse>;
   RuleSummary: ResolverTypeWrapper<RuleSummary>;
-  ListUsersResponse: ResolverTypeWrapper<ListUsersResponse>;
   User: ResolverTypeWrapper<User>;
   AWSEmail: ResolverTypeWrapper<Scalars['AWSEmail']>;
   AWSTimestamp: ResolverTypeWrapper<Scalars['AWSTimestamp']>;
@@ -1166,7 +1154,6 @@ export type ResolversParentTypes = {
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   ListRulesResponse: ListRulesResponse;
   RuleSummary: RuleSummary;
-  ListUsersResponse: ListUsersResponse;
   User: User;
   AWSEmail: Scalars['AWSEmail'];
   AWSTimestamp: Scalars['AWSTimestamp'];
@@ -1458,15 +1445,6 @@ export type ListRulesResponseResolvers<
 > = {
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   rules?: Resolver<Maybe<Array<Maybe<ResolversTypes['RuleSummary']>>>, ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
-};
-
-export type ListUsersResponseResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['ListUsersResponse'] = ResolversParentTypes['ListUsersResponse']
-> = {
-  users?: Resolver<Maybe<Array<Maybe<ResolversTypes['User']>>>, ParentType, ContextType>;
-  paginationToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1829,12 +1807,7 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryRulesArgs, never>
   >;
-  users?: Resolver<
-    Maybe<ResolversTypes['ListUsersResponse']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryUsersArgs, never>
-  >;
+  users?: Resolver<Maybe<Array<Maybe<ResolversTypes['User']>>>, ParentType, ContextType>;
 };
 
 export type ResourceDetailsResolvers<
@@ -2022,7 +1995,6 @@ export type Resolvers<ContextType = any> = {
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
-  ListUsersResponse?: ListUsersResponseResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;

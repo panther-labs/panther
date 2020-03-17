@@ -67,8 +67,6 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
     },
   });
 
-  console.log('DELETE RULE MODAL');
-
   return (
     <BaseConfirmModal
       mutation={mutation}
