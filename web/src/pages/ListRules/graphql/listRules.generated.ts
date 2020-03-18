@@ -28,8 +28,8 @@ export type ListRulesVariables = {
 };
 
 export type ListRules = {
-  rules: Types.Maybe<{
-    rules: Types.Maybe<
+  rules?: Types.Maybe<{
+    rules?: Types.Maybe<
       Array<
         Types.Maybe<
           Pick<
@@ -39,7 +39,7 @@ export type ListRules = {
         >
       >
     >;
-    paging: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
+    paging?: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
   }>;
 };
 

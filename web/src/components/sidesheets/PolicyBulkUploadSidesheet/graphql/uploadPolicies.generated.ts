@@ -28,7 +28,7 @@ export type UploadPoliciesVariables = {
 };
 
 export type UploadPolicies = {
-  uploadPolicies: Types.Maybe<
+  uploadPolicies?: Types.Maybe<
     Pick<
       Types.UploadPoliciesResponse,
       | 'totalPolicies'

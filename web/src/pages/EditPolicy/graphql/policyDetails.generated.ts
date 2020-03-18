@@ -28,7 +28,7 @@ export type PolicyDetailsVariables = {
 };
 
 export type PolicyDetails = {
-  policy: Types.Maybe<
+  policy?: Types.Maybe<
     Pick<
       Types.PolicyDetails,
       | 'autoRemediationId'
@@ -45,7 +45,7 @@ export type PolicyDetails = {
       | 'tags'
       | 'body'
     > & {
-      tests: Types.Maybe<
+      tests?: Types.Maybe<
         Array<
           Types.Maybe<
             Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>

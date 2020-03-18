@@ -29,7 +29,7 @@ export type RuleDetailsVariables = {
 };
 
 export type RuleDetails = {
-  rule: Types.Maybe<
+  rule?: Types.Maybe<
     Pick<
       Types.RuleDetails,
       | 'createdAt'
@@ -45,7 +45,7 @@ export type RuleDetails = {
       | 'tags'
     >
   >;
-  alerts: Types.Maybe<{
+  alerts?: Types.Maybe<{
     alertSummaries: Array<Types.Maybe<Pick<Types.AlertSummary, 'alertId' | 'creationTime'>>>;
   }>;
 };

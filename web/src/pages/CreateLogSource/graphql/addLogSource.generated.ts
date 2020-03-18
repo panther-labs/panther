@@ -28,7 +28,7 @@ export type AddLogSourceVariables = {
 };
 
 export type AddLogSource = {
-  addIntegration: Types.Maybe<Pick<Types.Integration, 'integrationId'>>;
+  addIntegration?: Types.Maybe<Pick<Types.Integration, 'integrationId'>>;
 };
 
 export const AddLogSourceDocument = gql`

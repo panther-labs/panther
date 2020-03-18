@@ -28,7 +28,7 @@ export type RuleTeaserVariables = {
 };
 
 export type RuleTeaser = {
-  rule: Types.Maybe<
+  rule?: Types.Maybe<
     Pick<
       Types.RuleDetails,
       'description' | 'displayName' | 'id' | 'logTypes' | 'runbook' | 'severity' | 'tags'

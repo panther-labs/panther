@@ -26,7 +26,7 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListLogSourcesVariables = {};
 
 export type ListLogSources = {
-  integrations: Types.Maybe<
+  integrations?: Types.Maybe<
     Array<
       Pick<
         Types.Integration,
