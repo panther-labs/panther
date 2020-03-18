@@ -42,7 +42,6 @@ Parameters:
   LogProcessorLambdaMemorySize:
     Type: Number
     Description: Size of lambda for log processor
-    Default: 512
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation

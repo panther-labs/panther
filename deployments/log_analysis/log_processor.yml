@@ -35,7 +35,6 @@ Parameters:
   LogProcessorLambdaMemorySize:
     Type: Number
     Description: Size of lambda for log processor
-    Default: 1024 # this size can handle the largest possible CloudTrail file (smaller will likely not work)
     MinValue: 256 # any smaller and we risk OOMs
     MaxValue: 3008
   TracingMode:
