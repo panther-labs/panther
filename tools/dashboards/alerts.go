@@ -21,6 +21,7 @@ package dashboards
 // nolint:lll
 var alertsJSON = `
 {
+    "start": "-PT1H",
     "widgets": [
         {
             "type": "log",
