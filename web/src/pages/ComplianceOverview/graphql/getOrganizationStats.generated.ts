@@ -1,21 +1,3 @@
-/**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 /* eslint-disable import/order, import/no-duplicates */
 import * as Types from '../../../../__generated__/schema';
 
@@ -26,31 +8,31 @@ import * as ApolloReactHooks from '@apollo/client';
 export type GetOrganizationStatsVariables = {};
 
 export type GetOrganizationStats = {
-  organizationStats: Types.Maybe<{
-    scannedResources: Types.Maybe<{
-      byType: Types.Maybe<
+  organizationStats?: Types.Maybe<{
+    scannedResources?: Types.Maybe<{
+      byType?: Types.Maybe<
         Array<
           Types.Maybe<
             Pick<Types.ScannedResourceStats, 'type'> & {
-              count: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
+              count?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
             }
           >
         >
       >;
     }>;
-    appliedPolicies: Types.Maybe<{
-      info: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
-      low: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
-      medium: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
-      high: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
-      critical: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
+    appliedPolicies?: Types.Maybe<{
+      info?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
+      low?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
+      medium?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
+      high?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
+      critical?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
     }>;
-    topFailingPolicies: Types.Maybe<
+    topFailingPolicies?: Types.Maybe<
       Array<Types.Maybe<Pick<Types.PolicySummary, 'id' | 'severity'>>>
     >;
-    topFailingResources: Types.Maybe<Array<Types.Maybe<Pick<Types.ResourceSummary, 'id'>>>>;
+    topFailingResources?: Types.Maybe<Array<Types.Maybe<Pick<Types.ResourceSummary, 'id'>>>>;
   }>;
-  integrations: Types.Maybe<Array<Pick<Types.Integration, 'integrationId'>>>;
+  integrations?: Types.Maybe<Array<Pick<Types.Integration, 'integrationId'>>>;
 };
 
 export const GetOrganizationStatsDocument = gql`

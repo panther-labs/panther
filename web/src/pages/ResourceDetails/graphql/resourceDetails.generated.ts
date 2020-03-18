@@ -1,21 +1,3 @@
-/**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 /* eslint-disable import/order, import/no-duplicates */
 import * as Types from '../../../../__generated__/schema';
 
@@ -29,7 +11,7 @@ export type ResourceDetailsVariables = {
 };
 
 export type ResourceDetails = {
-  resource: Types.Maybe<
+  resource?: Types.Maybe<
     Pick<
       Types.ResourceDetails,
       | 'lastModified'
@@ -41,8 +23,8 @@ export type ResourceDetails = {
       | 'attributes'
     >
   >;
-  policiesForResource: Types.Maybe<{
-    items: Types.Maybe<
+  policiesForResource?: Types.Maybe<{
+    items?: Types.Maybe<
       Array<
         Types.Maybe<
           Pick<
@@ -52,13 +34,13 @@ export type ResourceDetails = {
         >
       >
     >;
-    paging: Types.Maybe<Pick<Types.PagingData, 'totalItems' | 'totalPages' | 'thisPage'>>;
-    totals: Types.Maybe<{
-      active: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
-      suppressed: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
+    paging?: Types.Maybe<Pick<Types.PagingData, 'totalItems' | 'totalPages' | 'thisPage'>>;
+    totals?: Types.Maybe<{
+      active?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
+      suppressed?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
     }>;
   }>;
-  integrations: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
+  integrations?: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
 };
 
 export const ResourceDetailsDocument = gql`
