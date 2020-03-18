@@ -19,7 +19,6 @@ package mage
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
@@ -29,7 +28,7 @@ const (
 )
 
 func deployMonitoring(awsSession *session.Session, bucket string, backendOutputs map[string]string, config *PantherConfig) {
-	if err := generateDashboards(aws.StringValue(awsSession.Config.Region)); err != nil {
+	if err := generateDashboards(); err != nil {
 		logger.Fatal(err)
 	}
 

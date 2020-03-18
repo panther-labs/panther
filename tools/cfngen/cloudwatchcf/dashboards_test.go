@@ -25,7 +25,6 @@ import (
 )
 
 func TestDashboards(t *testing.T) {
-	awsRegion := "eu-west-1"
 	name := "TestDashboard"
 	dashboardJSON := `
 {
@@ -37,17 +36,17 @@ func TestDashboards(t *testing.T) {
 	expectedDashboardJSON := `
 {
 "some-dashboard_parameter": "foo",
-"region": "eu-west-1",
+"region": "${AWS::Region}",
 }
 `
 	expectedDashboard := &Dashboard{
 		Type: "AWS::CloudWatch::Dashboard",
 		Properties: DashboardProperties{
-			DashboardName: name + "-" + awsRegion,
-			DashboardBody: expectedDashboardJSON,
+			DashboardName: SubString{name + "-${AWS::Region}"},
+			DashboardBody: SubString{expectedDashboardJSON},
 		},
 	}
 
-	dashboard := NewDashboard(awsRegion, name, dashboardJSON)
+	dashboard := NewDashboard(name, dashboardJSON)
 	require.Equal(t, expectedDashboard, dashboard)
 }

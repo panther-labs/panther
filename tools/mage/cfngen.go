@@ -25,7 +25,6 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
-	"github.com/panther-labs/panther/tools/cfngen"
 	"github.com/panther-labs/panther/tools/cfngen/cloudwatchcf"
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
 	"github.com/panther-labs/panther/tools/dashboards"
@@ -70,8 +69,8 @@ func generateGlueTables() error {
 }
 
 // Generate CloudWatch dashboards as CloudFormation
-func generateDashboards(awsRegion string) error {
-	outDir := filepath.Join("out", "deployments", "cloudwatch")
+func generateDashboards() error {
+	outDir := filepath.Join("out", "deployments", "monitoring")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
 	}
@@ -83,7 +82,7 @@ func generateDashboards(awsRegion string) error {
 	}
 	defer dashboardsCfFile.Close()
 
-	dashboardResources := dashboards.Dashboards(awsRegion)
+	dashboardResources := dashboards.Dashboards()
 	logger.Debugf("deploy: cfngen: loaded %d dashboards", len(dashboardResources))
 	cf, err := cloudwatchcf.GenerateDashboards(dashboardResources)
 	if err != nil {
@@ -96,21 +95,6 @@ func generateDashboards(awsRegion string) error {
 	return nil
 }
 
-// generate nested stacks to avoid 200 resource / stack CF limit
-const alarmStackTemplate = `
-AWSTemplateFormatVersion: 2010-09-09
-Description: Template to aggregate generated alarm stacks
-
-Resources:
-  ##### Nested Stacks: CloudWatch Alarms #####
-`
-const alarmStackResourceTemplate = `
- %s:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: ./%s
-`
-
 // Generate CloudWatch alarms as CloudFormation
 func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
 	var alarms []*cloudwatchcf.Alarm
@@ -120,29 +104,12 @@ func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
 		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
 	}
 
-	// write master template that refers to the alarm stack templates generated
-	masterAlarmsCfFileName := filepath.Join(outDir, "alarms.json")
-	masterAlarmsCfFile, err := os.Create(masterAlarmsCfFileName)
-	if err != nil {
-		return fmt.Errorf("failed to create file %s: %v", masterAlarmsCfFileName, err)
-	}
-	defer masterAlarmsCfFile.Close()
-	_, err = masterAlarmsCfFile.WriteString(alarmStackTemplate)
-	if err != nil {
-		return fmt.Errorf("failed to write file %s: %v", masterAlarmsCfFileName, err)
-	}
-
 	// loop over deployment CF dirs generating alarms for each
 	for _, cfDir := range cfDirs {
 		logger.Debugf("generating alarm cloudformation for %s", cfDir)
 		alarmsCfBasename := filepath.Base(cfDir) + "_alarms.json"
 		alarmsCfFilePath := filepath.Join(outDir, alarmsCfBasename) // where we will write
-		// add to master template
-		_, err = masterAlarmsCfFile.WriteString(fmt.Sprintf(alarmStackResourceTemplate,
-			cfngen.SanitizeResourceName(filepath.Base(cfDir)), alarmsCfBasename))
-		if err != nil {
-			return fmt.Errorf("failed to write file %s: %v", masterAlarmsCfFileName, err)
-		}
+
 		// generate alarms
 		fileAlarms, cf, err := cloudwatchcf.GenerateAlarms(snsTopicArn, stackOutputs, cfDir)
 		if err != nil {

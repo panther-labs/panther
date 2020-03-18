@@ -82,23 +82,11 @@ Parameters:
     Description: The FQDN that will be used by the web application
     Default: ''
 
-  # Set automatically by "mage deploy" unless specified in panther_config
-  AlarmSNSTopicArn:
-    Type: String
-    Description: The ARN of SNS topic to send alarms
-
 Conditions:
   CreatePythonLayer: !Equals [!Ref PythonLayerVersionArn, '']
-  CreateAlarmSNSTopic: !Equals [!Ref AlarmSNSTopicArn, '']
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
 
 Resources:
-  AlarmNotifications:
-    Condition: CreateAlarmSNSTopic
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: panther-alarms
-
   GatewayLoggingRole:
     Type: AWS::IAM::Role
     Properties:
@@ -452,9 +440,6 @@ Resources:
         Status: Enabled
 
 Outputs:
-  AlarmsSNSTopic:
-    Description: The SNS topic to be associated with alarms
-    Value: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmSNSTopicArn]
   AnalysisVersionsBucket:
     Description: Bucket where Python version histories are stored
     Value: !GetAtt AnalysisAPI.Outputs.BucketName
