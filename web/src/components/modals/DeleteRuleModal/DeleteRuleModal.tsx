@@ -17,14 +17,11 @@
  */
 
 import React from 'react';
-import { RuleSummary, RuleDetails, ListRulesInput } from 'Generated/schema';
+import { RuleSummary, RuleDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import { ListRulesDocument } from 'Pages/ListRules';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 // Delete Rule and Delete Policy uses the same endpoint
-import { convertObjArrayValuesToCsv } from 'Helpers/utils';
-import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import { useDeletePolicy } from '../DeletePolicyModal/graphql/deletePolicy.generated';
 
 export interface DeleteRuleModalProps {
@@ -34,7 +31,6 @@ export interface DeleteRuleModalProps {
 const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const ruleDisplayName = rule.displayName || rule.id;
-  const { requestParams } = useRequestParamsWithPagination<ListRulesInput>();
   const mutation = useDeletePolicy({
     variables: {
       input: {
@@ -49,18 +45,13 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
       deletePolicy: true,
     },
     update: async cache => {
-      const { rules } = cache.readQuery({
-        query: ListRulesDocument,
-        variables: {
-          input: convertObjArrayValuesToCsv(requestParams),
-        },
-      });
-      const newRules = rules.rules.filter(r => r.id !== rule.id);
-      cache.writeQuery({
-        query: ListRulesDocument,
-        data: { rules: { ...rules, rules: [...newRules] } },
-        variables: {
-          input: convertObjArrayValuesToCsv(requestParams),
+      cache.modify('ROOT_QUERY', {
+        rules: (data, helpers) => {
+          const { __ref: ruleRef } = helpers.toReference({
+            __typename: 'RuleSummary',
+            id: rule.id,
+          });
+          return { ...data, rules: data.rules.filter(({ __ref }) => __ref !== ruleRef) };
         },
       });
       cache.gc();

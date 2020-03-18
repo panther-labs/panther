@@ -17,13 +17,10 @@
  */
 
 import React from 'react';
-import { ListPoliciesDocument } from 'Pages/ListPolicies';
-import { PolicySummary, PolicyDetails, ListPoliciesInput } from 'Generated/schema';
+import { PolicySummary, PolicyDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import { convertObjArrayValuesToCsv } from 'Helpers/utils';
 import { useDeletePolicy } from './graphql/deletePolicy.generated';
 
 export interface DeletePolicyModalProps {
@@ -33,7 +30,6 @@ export interface DeletePolicyModalProps {
 const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const policyDisplayName = policy.displayName || policy.id;
-  const { requestParams } = useRequestParamsWithPagination<ListPoliciesInput>();
   const mutation = useDeletePolicy({
     variables: {
       input: {
@@ -48,18 +44,13 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
       deletePolicy: true,
     },
     update: async cache => {
-      const { policies } = cache.readQuery({
-        query: ListPoliciesDocument,
-        variables: {
-          input: convertObjArrayValuesToCsv(requestParams),
-        },
-      });
-      const newPolicies = policies.policies.filter(r => r.id !== policy.id);
-      cache.writeQuery({
-        query: ListPoliciesDocument,
-        data: { policies: { ...policies, policies: [...newPolicies] } },
-        variables: {
-          input: convertObjArrayValuesToCsv(requestParams),
+      cache.modify('ROOT_QUERY', {
+        policies: (data, helpers) => {
+          const { __ref: policyRef } = helpers.toReference({
+            __typename: 'PolicySummary',
+            id: policy.id,
+          });
+          return { ...data, policies: data.policies.filter(({ __ref }) => __ref !== policyRef) };
         },
       });
       cache.gc();

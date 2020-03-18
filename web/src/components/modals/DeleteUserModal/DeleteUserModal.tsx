@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { User } from 'Generated/schema';
-import { ListUsersDocument } from 'Pages/Users';
 import useAuth from 'Hooks/useAuth';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeleteUser } from './graphql/deleteUser.generated';
@@ -41,11 +40,14 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
       deleteUser: true,
     },
     update: async cache => {
-      const { users } = cache.readQuery({ query: ListUsersDocument });
-      const newUsers = users.users.filter(u => u.id !== user.id);
-      cache.writeQuery({
-        query: ListUsersDocument,
-        data: { users: { ...users, users: [...newUsers] } },
+      cache.modify('ROOT_QUERY', {
+        users: (data, helpers) => {
+          const { __ref: userRef } = helpers.toReference({
+            __typename: 'Users',
+            id: user.id,
+          });
+          return { ...data, users: data.users.filter(({ __ref }) => __ref !== userRef) };
+        },
       });
       cache.gc();
     },
