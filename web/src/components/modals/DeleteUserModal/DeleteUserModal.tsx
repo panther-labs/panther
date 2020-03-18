@@ -43,10 +43,10 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
       cache.modify('ROOT_QUERY', {
         users: (data, helpers) => {
           const { __ref: userRef } = helpers.toReference({
-            __typename: 'Users',
+            __typename: 'User',
             id: user.id,
           });
-          return { ...data, users: data.users.filter(({ __ref }) => __ref !== userRef) };
+          return data.filter(({ __ref }) => __ref !== userRef);
         },
       });
       cache.gc();
