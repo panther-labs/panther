@@ -10,12 +10,15 @@ export type AddComplianceSourceVariables = {
   input: Types.AddComplianceIntegrationInput;
 };
 
-export type AddComplianceSource = { addComplianceIntegration: ComplianceIntegrationDetails };
+export type AddComplianceSource = {
+  addComplianceIntegration: { __typename: 'ComplianceIntegration' } & ComplianceIntegrationDetails;
+};
 
 export const AddComplianceSourceDocument = gql`
   mutation AddComplianceSource($input: AddComplianceIntegrationInput!) {
     addComplianceIntegration(input: $input) {
       ...ComplianceIntegrationDetails
+      __typename
     }
   }
   ${ComplianceIntegrationDetails}

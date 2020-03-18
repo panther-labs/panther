@@ -38,7 +38,7 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source 
       cache.modify('ROOT_QUERY', {
         listComplianceIntegrations: (queryData, { toReference }) => {
           const deletedSource = toReference({ __typename, integrationId });
-          return queryData.filter(s => s.__ref !== deletedSource.__ref);
+          return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
         },
       });
     },

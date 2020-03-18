@@ -35,9 +35,12 @@ const CreateComplianceSource: React.FC = () => {
   const [addComplianceSource, { error }] = useAddComplianceSource({
     update: (cache, { data }) => {
       cache.modify('ROOT_QUERY', {
-        listComplianceIntegrations: queryData => {
-          const addedIntegrationCacheId = cache.identify(data.addComplianceIntegration);
-          return queryData ? [addedIntegrationCacheId, ...queryData] : queryData;
+        listComplianceIntegrations: (queryData, { toReference }) => {
+          const addedIntegrationCacheRef = toReference({
+            __typename: data.addComplianceIntegration.__typename,
+            integrationId: data.addComplianceIntegration.integrationId,
+          });
+          return queryData ? [addedIntegrationCacheRef, ...queryData] : queryData;
         },
       });
     },

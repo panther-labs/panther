@@ -27,7 +27,7 @@ import { useListComplianceSources } from './graphql/listComplianceSources.genera
 const ComplianceSourceTable = () => {
   const { loading, error, data } = useListComplianceSources();
 
-  if (loading && !data) {
+  if (loading) {
     return <TablePlaceholder />;
   }
 
