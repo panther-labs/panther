@@ -93,6 +93,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	if *input.IntegrationType == models.IntegrationTypeAWS3 {
 		permissionAdded, err = AddPermissionToLogProcessorQueue(*input.AWSAccountID)
 		if err != nil {
+			err = errors.Wrap(err, "Failed to add permissions to log processor queue")
 			return nil, putIntegrationInternalError
 		}
 	}
@@ -102,6 +103,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 
 	// Batch write to DynamoDB
 	if err = db.PutSourceIntegration(newIntegration); err != nil {
+		err = errors.Wrap(err, "Failed to store source integration in DDB")
 		return nil, putIntegrationInternalError
 	}
 
@@ -113,6 +115,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	if *input.IntegrationType == models.IntegrationTypeAWSScan {
 		err = ScanAllResources([]*models.SourceIntegrationMetadata{newIntegration})
 		if err != nil {
+			err = errors.Wrap(err, "failed to trigger scanning of resources")
 			return nil, putIntegrationInternalError
 		}
 	}
