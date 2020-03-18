@@ -81,7 +81,6 @@ func registerPantherAccount(awsSession *session.Session, pantherAccountID string
 					AWSAccountID:     aws.String(pantherAccountID),
 					IntegrationLabel: aws.String("Panther Account"),
 					IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-					ScanEnabled:      aws.Bool(true),
 					ScanIntervalMins: aws.Int(1440),
 					UserID:           aws.String(mageUserID),
 				},
