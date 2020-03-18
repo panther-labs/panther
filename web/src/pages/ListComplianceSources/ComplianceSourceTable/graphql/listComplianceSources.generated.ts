@@ -2,7 +2,6 @@
 import * as Types from '../../../../../__generated__/schema';
 
 import { ComplianceIntegrationDetails } from '../../../../graphql/fragments/ComplianceIntegrationDetails.generated';
-import { IntegrationItemHealthDetails } from '../../../../graphql/fragments/IntegrationItemHealthDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -10,38 +9,16 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListComplianceSourcesVariables = {};
 
 export type ListComplianceSources = {
-  listComplianceIntegrations: Array<
-    Types.Maybe<
-      {
-        health: {
-          auditRoleStatus: IntegrationItemHealthDetails;
-          cweRoleStatus: IntegrationItemHealthDetails;
-          remediationRoleStatus: IntegrationItemHealthDetails;
-        };
-      } & ComplianceIntegrationDetails
-    >
-  >;
+  listComplianceIntegrations: Array<Types.Maybe<ComplianceIntegrationDetails>>;
 };
 
 export const ListComplianceSourcesDocument = gql`
   query ListComplianceSources {
     listComplianceIntegrations {
       ...ComplianceIntegrationDetails
-      health {
-        auditRoleStatus {
-          ...IntegrationItemHealthDetails
-        }
-        cweRoleStatus {
-          ...IntegrationItemHealthDetails
-        }
-        remediationRoleStatus {
-          ...IntegrationItemHealthDetails
-        }
-      }
     }
   }
   ${ComplianceIntegrationDetails}
-  ${IntegrationItemHealthDetails}
 `;
 
 /**
