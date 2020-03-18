@@ -55,7 +55,28 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
             policies: data.policies.filter(p => p.__ref !== policyRef.__ref),
           };
         },
+        policy: (data, helpers) => {
+          const policyRef = helpers.toReference({
+            __typename: policy.__typename,
+            id: policy.id,
+          });
+          if (policyRef.__ref !== data.__ref) {
+            return data;
+          }
+          return undefined;
+        },
+        resourcesForPolicy: data => {
+          const updatedData = {
+            ...data,
+            items: data.items.filter(item => item.policyId !== policy.id),
+          };
+          if (updatedData.items.length) {
+            return updatedData;
+          }
+          return undefined;
+        },
       });
+
       cache.gc();
     },
   });
