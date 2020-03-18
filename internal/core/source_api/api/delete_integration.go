@@ -62,10 +62,9 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 	}
 
 	if *integration.IntegrationType == models.IntegrationTypeAWS3 {
-		existingIntegrations, err := db.ScanEnabledIntegrations(&models.ListIntegrationsInput{IntegrationType: aws.String(models.IntegrationTypeAWS3)})
+		existingIntegrations, err := db.ScanIntegrations(&models.ListIntegrationsInput{IntegrationType: aws.String(models.IntegrationTypeAWS3)})
 
 		if err != nil {
-			err = errors.Wrap(err, "Failed to fetch existing integrations")
 			return deleteIntegrationInternalError
 		}
 

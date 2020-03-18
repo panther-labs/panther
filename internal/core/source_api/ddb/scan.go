@@ -23,9 +23,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // ScanIntegrations returns all enabled integrations based on type (if type is specified).
@@ -34,7 +34,7 @@ func (ddb *DDB) ScanIntegrations(input *models.ListIntegrationsInput) ([]*models
 	filt := expression.Name("integrationType").Equal(expression.Value(input.IntegrationType))
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
-		return nil, &genericapi.InternalError{Message: "failed to build dynamodb expression"}
+		return nil, errors.Wrap(err, "failed to build scan expression")
 	}
 
 	scanInput := &dynamodb.ScanInput{
@@ -46,12 +46,12 @@ func (ddb *DDB) ScanIntegrations(input *models.ListIntegrationsInput) ([]*models
 
 	output, err := ddb.Client.Scan(scanInput)
 	if err != nil {
-		return nil, &genericapi.AWSError{Err: err, Method: "Dynamodb.Scan"}
+		return nil, errors.Wrap(err, "failed to scan table")
 	}
 
 	var integrations []*models.SourceIntegration
 	if err := dynamodbattribute.UnmarshalListOfMaps(output.Items, &integrations); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to unmarshal scan results")
 	}
 
 	if integrations == nil {
