@@ -27,6 +27,14 @@ commands:
 
 # The pool of jobs that that our CI will be able to run
 jobs:
+  audit_modules:
+    executor: panther-buildpack
+    steps:
+      - setup_frontend
+      - run:
+          name: Audit NPM packages
+          command: npm audit
+
   validate_frontend:
     executor: panther-buildpack
     steps:
