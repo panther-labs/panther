@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM roles for log ingestion from an S3 bucket.
 
 Metadata:
-  Version: v1.0.1
+  Version: v1.0.2
 
 Parameters:
   # Required parameters
@@ -27,25 +27,25 @@ Parameters:
     Description: AWS account ID of the account running the Panther backend
     Default: '' # MasterAccountId
   # Optional configuration parameters
-  S3Buckets:
-    Type: CommaDelimitedList
-    Description: Allow Panther master account to get location of these bucket patterns.
-      E.g. "arn:aws:s3:::my-bucket,arn:aws:s3:::another-bucket*"
-    Default: '' # S3Buckets
-  S3ObjectPrefixes:
-    Type: CommaDelimitedList
-    Description:
-      Allow Panther master account access to access S3 objects that have the following patterns.
-      E.g. "arn:aws:s3:::my-bucket/prefix*,arn:aws:s3:::my-bucket/prefix-2*"
-    Default: '' # S3ObjectPrefixes
-  EncryptionKeys:
-    Type: CommaDelimitedList
-    Description: Allow Panther master account access to decrypt these KMS keys.
-      E.g. "arn:aws:kms:us-west-2:111122223333:key/14f5c696-8198-417b-bb22-699990b400cf"
-    Default: '' # EncryptionKeys
+  S3Bucket:
+    Type: String
+    Description: Name of the bucket to onboard
+    Default: '' # S3Bucket
+  S3Prefix:
+    Type: String
+    Description: Prefix of the data to be onboarded
+    Default: '' # S3Prefix
+  KmsKey:
+    Type: String
+    Description: Allow Panther master account access to decrypt data using this KMS key.
+    Default: '' # KmsKey
+  RoleSuffix:
+    Type: String
+    Description: Suffix for the created role
+    Default: '' # RoleSuffix
 
 Conditions:
-  WithKmsPermissions: !Not [!Equals [!Join ['', !Ref EncryptionKeys], '']]
+  WithKmsPermissions: !Not [!Equals [KmsKey, '']]
 
 Resources:
   LogProcessingRole:
@@ -71,17 +71,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetBucketLocation
-                Resource: !Ref S3Buckets
+                Resource: !Sub arn:aws:s3:::${S3Bucket}
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Ref S3ObjectPrefixes
+                Resource: !Sub arn:aws:s3:::${S3Bucket}/${S3Prefix}
               - !If
                 - WithKmsPermissions
                 - Effect: Allow
                   Action:
                     - kms:Decrypt
                     - kms:DescribeKey
-                  Resource: !Ref EncryptionKeys
+                  Resource: !Ref KmsKey
                 - !Ref AWS::NoValue
       Tags:
         - Key: Application
