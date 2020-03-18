@@ -134,7 +134,6 @@ type UpdateIntegrationLastScanEndInput struct {
 type UpdateIntegrationSettingsInput struct {
 	IntegrationID      *string   `json:"integrationId" validate:"required,uuid4"`
 	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"omitempty,min=1"`
-	ScanEnabled        *bool     `json:"scanEnabled"`
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
 	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
