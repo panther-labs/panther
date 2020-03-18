@@ -59,5 +59,6 @@ workflows:
   version: 2
   pipeline:
     jobs:
+      - audit_modules
       - validate_frontend
       - validate_backend
