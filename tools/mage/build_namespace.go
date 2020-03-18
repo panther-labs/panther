@@ -31,6 +31,7 @@ import (
 	"github.com/magefile/mage/target"
 
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const swaggerGlob = "api/gateway/*/api.yml"
@@ -256,7 +257,12 @@ func (b Build) Cfn() {
 		logger.Fatal(err)
 	}
 
-	if err := generateAlarms(); err != nil {
+	settings, err := config.Settings()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	if err := generateAlarms(settings); err != nil {
 		logger.Fatal(err)
 	}
 	if err := generateDashboards(); err != nil {

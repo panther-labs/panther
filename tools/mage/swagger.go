@@ -27,6 +27,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -41,7 +43,7 @@ var swaggerPattern = regexp.MustCompile(`\n {6}DefinitionBody:[ \t]*[\w./]+\.yml
 func embedAPISpecs() {
 	var templates []string
 	walk("deployments", func(path string, info os.FileInfo) {
-		if strings.HasSuffix(path, ".yml") && path != configFile {
+		if strings.HasSuffix(path, ".yml") && path != config.Filepath {
 			templates = append(templates, path)
 		}
 	})

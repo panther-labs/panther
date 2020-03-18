@@ -25,6 +25,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/tools/cfngen"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -173,10 +174,10 @@ func AlarmName(alarmType, resourceName string) string {
 
 // GenerateAlarms will read the CF in yml files in the cfDir, and generate CF for CloudWatch alarms for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateAlarms(cfDir string) ([]*Alarm, []byte, error) {
+func GenerateAlarms(cfDir string, settings *config.PantherConfig) ([]*Alarm, []byte, error) {
 	var alarms []*Alarm
 	if err := walkYamlFiles(cfDir, func(path string) error {
-		fileAlarms, err := generateAlarms(path)
+		fileAlarms, err := generateAlarms(path, settings)
 		if err != nil {
 			return err
 		}
@@ -209,21 +210,21 @@ func GenerateAlarms(cfDir string) ([]*Alarm, []byte, error) {
 	return alarms, cf, nil
 }
 
-func generateAlarms(fileName string) (alarms []*Alarm, err error) {
+func generateAlarms(fileName string, settings *config.PantherConfig) (alarms []*Alarm, err error) {
 	yamlObj, err := readYaml(fileName)
 	if err != nil {
 		return nil, err
 	}
 
 	walkYamlMap(yamlObj, func(resourceType string, resource map[interface{}]interface{}) {
-		alarms = append(alarms, alarmDispatchOnType(resourceType, resource)...)
+		alarms = append(alarms, alarmDispatchOnType(resourceType, resource, settings)...)
 	})
 
 	return alarms, nil
 }
 
 // dispatch on "Type" to create specific alarms
-func alarmDispatchOnType(resourceType string, resource map[interface{}]interface{}) (alarms []*Alarm) {
+func alarmDispatchOnType(resourceType string, resource map[interface{}]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
 	switch resourceType { // this could be a map of key -> func if this gets long
 	case "AWS::SNS::Topic":
 		return generateSNSAlarms(resource)
@@ -238,7 +239,7 @@ func alarmDispatchOnType(resourceType string, resource map[interface{}]interface
 	case "AWS::DynamoDB::Table":
 		return generateDynamoDBAlarms(resource)
 	case "AWS::Serverless::Function":
-		return generateLambdaAlarms(resource)
+		return generateLambdaAlarms(resource, settings)
 	}
 	return alarms
 }

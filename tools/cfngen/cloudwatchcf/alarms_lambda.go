@@ -20,7 +20,8 @@ package cloudwatchcf
 
 import (
 	"fmt"
-	"strconv"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 type LambdaAlarm struct {
@@ -56,7 +57,7 @@ func NewLambdaMetricFilterAlarm(alarmType, metricName, message string, resource 
 	return alarm
 }
 
-func generateLambdaAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
+func generateLambdaAlarms(resource map[interface{}]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
 	// errors
 	alarms = append(alarms, NewLambdaAlarm("LambdaErrors", "Errors",
 		"is failing", resource).SumCountThreshold(0, 60*5))
@@ -78,15 +79,11 @@ func generateLambdaAlarms(resource map[interface{}]interface{}) (alarms []*Alarm
 	// high water mark memory warning from metric filter
 	const memorySizeKey = "MemorySize"
 	var lambdaMem float32
-	// special case (ugly hack) for panther-log-processor because it uses !Ref to allow user to set size
+	// special case for panther-log-processor because it uses !Ref to allow user to set size: read from config file
 	// https://github.com/panther-labs/panther/issues/435
 	const pantherLogProcessorLambda = "panther-log-processor"
 	if getResourceProperty("FunctionName", resource) == pantherLogProcessorLambda {
-		logProcessorMemory, err := strconv.ParseFloat(config.stackOutputs["LogProcessorLambdaMemorySize"], 32)
-		if err != nil {
-			panic("Cannot find MemeorySize for " + pantherLogProcessorLambda)
-		}
-		lambdaMem = (float32)(logProcessorMemory)
+		lambdaMem = (float32)(settings.BackendParameterValues.LogProcessorLambdaMemorySize)
 	} else {
 		lambdaMem = getResourceFloat32Property(memorySizeKey, resource)
 	}

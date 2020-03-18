@@ -20,6 +20,8 @@ package mage
 
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -28,9 +30,9 @@ const (
 )
 
 // The caller is responsible for generating the nested templates
-func deployMonitoring(awsSession *session.Session, bucket string, backendOutputs map[string]string, config *PantherConfig) {
+func deployMonitoring(awsSession *session.Session, bucket string, backendOutputs map[string]string, settings *config.PantherConfig) {
 	params := map[string]string{
-		"AlarmTopicArn":        config.MonitoringParameterValues.AlarmSNSTopicARN,
+		"AlarmTopicArn":        settings.MonitoringParameterValues.AlarmSNSTopicARN,
 		"AppsyncId":            backendOutputs["WebApplicationGraphqlApiId"],
 		"LoadBalancerFullName": backendOutputs["WebApplicationLoadBalancerFullName"],
 	}
