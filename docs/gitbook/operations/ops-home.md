@@ -30,11 +30,14 @@ To configure alarms to send to your team, follow the guides below:
 - [PagerDuty Integration](https://support.pagerduty.com/docs/aws-cloudwatch-integration-guide)
 
 ## Tools
-Panther comes with some operational tools useful for managing the Panther infrastructure. To build:
+Panther comes with some operational tools useful for managing the Panther infrastructure. These are statically compiled
+executables for linux, mac (aka darwin) and windows. They can be copied/installed onto operational support hosts. 
+To build:
 
 ```yaml
 mage build:opstools
 ```
 
 * **requeue**: a tool to copy messages from a dead letter queue back to the originating queue.
+* **s3queue**: a tool to list files under an S3 path and send to the log processor input queue for processing (useful for backfill of data)
 

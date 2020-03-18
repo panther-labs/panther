@@ -31,7 +31,6 @@ var methodHandlers = map[string]gatewayapi.RequestHandler{
 	"GET /org-overview": handlers.OrgOverview,
 	"GET /resource":     handlers.GetResource,
 	"POST /resource":    handlers.AddResources,
-	"PATCH /resource":   handlers.ModifyResource,
 }
 
 func main() {

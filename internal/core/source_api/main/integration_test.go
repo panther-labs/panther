@@ -93,23 +93,13 @@ func putIntegrations(t *testing.T) {
 			Integrations: []*models.PutIntegrationSettings{
 				{
 					AWSAccountID:     aws.String("888888888888"),
-					ScanEnabled:      aws.Bool(true),
 					IntegrationLabel: aws.String("ThisAccount"),
 					IntegrationType:  aws.String("aws-scan"),
 					ScanIntervalMins: aws.Int(60),
 					UserID:           aws.String(testUserID),
 				},
 				{
-					AWSAccountID:     aws.String("111111111111"),
-					ScanEnabled:      aws.Bool(false),
-					IntegrationLabel: aws.String("TestAWS"),
-					IntegrationType:  aws.String("aws-scan"),
-					ScanIntervalMins: aws.Int(60),
-					UserID:           aws.String(testUserID),
-				},
-				{
 					AWSAccountID:     aws.String("555555555555"),
-					ScanEnabled:      aws.Bool(true),
 					IntegrationLabel: aws.String("StageAWS"),
 					IntegrationType:  aws.String("aws-scan"),
 					ScanIntervalMins: aws.Int(1440),
@@ -198,7 +188,6 @@ func updateIntegrationSettings(t *testing.T) {
 			IntegrationID:    integrationToUpdate.integrationID,
 			IntegrationLabel: &newLabel,
 			IntegrationType:  aws.String("aws-scan"),
-			ScanEnabled:      aws.Bool(true),
 			ScanIntervalMins: aws.Int(180),
 			S3Buckets:        []*string{},
 			KmsKeys:          []*string{},
@@ -227,7 +216,6 @@ func updateIntegrationSettings(t *testing.T) {
 		assert.Equal(t, newLabel, *integration.SourceIntegrationMetadata.IntegrationLabel)
 
 		// Ensure other fields still exist after update
-		assert.NotNil(t, integration.ScanEnabled)
 		assert.NotNil(t, integration.IntegrationType)
 	}
 }

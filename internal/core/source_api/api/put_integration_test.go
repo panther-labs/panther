@@ -126,7 +126,6 @@ func TestAddToSnapshotQueue(t *testing.T) {
 			IntegrationID:    aws.String(testIntegrationID),
 			IntegrationLabel: aws.String("BobertTest"),
 			IntegrationType:  aws.String("aws-scan"),
-			ScanEnabled:      aws.Bool(true),
 			ScanIntervalMins: aws.Int(60),
 		},
 	}
@@ -159,7 +158,6 @@ func TestPutIntegration(t *testing.T) {
 				AWSAccountID:     aws.String(testAccountID),
 				IntegrationLabel: aws.String(testIntegrationLabel),
 				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 				UserID:           aws.String(testUserID),
 			},
@@ -193,7 +191,6 @@ func TestPutIntegrationExists(t *testing.T) {
 				AWSAccountID:     aws.String(testAccountID),
 				IntegrationLabel: aws.String(testIntegrationLabel),
 				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 				UserID:           aws.String(testUserID),
 			},
@@ -212,7 +209,6 @@ func TestPutIntegrationValidInput(t *testing.T) {
 				AWSAccountID:     aws.String(testAccountID),
 				IntegrationLabel: aws.String(testIntegrationLabel),
 				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 				UserID:           aws.String(testUserID),
 			},
@@ -228,7 +224,6 @@ func TestPutIntegrationInvalidInput(t *testing.T) {
 			{
 				// Long account ID
 				AWSAccountID: aws.String("11111111111111"),
-				ScanEnabled:  aws.Bool(true),
 				// Invalid integration type
 				IntegrationType: aws.String("type-that-does-not-exist"),
 			},
@@ -243,7 +238,6 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 				AWSAccountID:     aws.String(testAccountID),
 				IntegrationLabel: aws.String(testIntegrationLabel),
 				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
 				UserID:           aws.String(testUserID),
 			},
 		},
@@ -279,7 +273,6 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 				AWSAccountID:     aws.String(testAccountID),
 				IntegrationLabel: aws.String(testIntegrationLabel),
 				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
 				UserID:           aws.String(testUserID),
 			},
 		},

@@ -18,9 +18,19 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// User describes a Panther user
+type User struct {
+	CreatedAt  *int64  `json:"createdAt"`
+	Email      *string `json:"email"`
+	FamilyName *string `json:"familyName"`
+	GivenName  *string `json:"givenName"`
+	ID         *string `json:"id"`
+	Status     *string `json:"status"`
+}
+
 // LambdaInput is the invocation event expected by the Lambda function.
 //
-// Exactly one action must be specified.
+// Exactly one action must be specified, see comments below for examples.
 type LambdaInput struct {
 	GetUser           *GetUserInput           `json:"getUser"`
 	InviteUser        *InviteUserInput        `json:"inviteUser"`
@@ -31,11 +41,28 @@ type LambdaInput struct {
 }
 
 // GetUserInput retrieves a user's information based on id.
+//
+// Example:
+// {
+//     "getUser": {
+//         "id": "8304cc90-750d-4b8f-9a63-b90a4543c707"
+//     }
+// }
 type GetUserInput struct {
 	ID *string `json:"id" validate:"required,uuid4"`
 }
 
 // GetUserOutput returns the Panther user details.
+//
+// Example:
+// {
+//     "createdAt": 1583378248,
+//     "email": "panther@example.com",
+//     "familyName": "byers",
+//     "givenName": "austin",
+//     "id": "8304cc90-750d-4b8f-9a63-b90a4543c707",
+//     "status": "FORCE_CHANGE_PASSWORD"
+// }
 type GetUserOutput = User
 
 // InviteUserInput creates a new user with minimal permissions and sends them an invite.
@@ -43,29 +70,74 @@ type InviteUserInput struct {
 	GivenName  *string `json:"givenName" validate:"required,min=1"`
 	FamilyName *string `json:"familyName" validate:"required,min=1"`
 	Email      *string `json:"email" validate:"required,email"`
+
+	// RESEND or SUPPRESS the invitation message
+	MessageAction *string `json:"messageAction" validate:"omitempty,oneof=RESEND SUPPRESS"`
 }
 
-// InviteUserOutput returns the randomly generated user id.
-type InviteUserOutput struct {
-	ID *string `json:"id"`
-}
+// InviteUserOutput returns the new user details.
+type InviteUserOutput = User
 
 // ListUsersInput lists all users in Panther.
-type ListUsersInput struct{}
+//
+// Example:
+// {
+//     "listUsers": {
+//         "contains": "austin"
+//     }
+// }
+type ListUsersInput struct {
+	// FILTERING (filters are combined with logical AND)
+	// Show only users whose name or email contains this substring (case-insensitive)
+	Contains *string `json:"contains"`
 
-// ListUsersOutput returns a page of users.
+	// Show only users with this Cognito status
+	Status *string `json:"status"`
+
+	// SORTING
+	// By default, sort by email ascending
+	SortBy  *string `json:"sortBy" validate:"omitempty,oneof=email firstName lastName createdAt"`
+	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
+}
+
+// ListUsersOutput returns all matching users.
+//
+// {
+//     "users": [
+//         {
+//             "createdAt": 1583378248,
+//             "email": "austin.byers@runpanther.io",
+//             "familyName": "byers",
+//             "givenName": "austin",
+//             "id": "8304cc90-750d-4b8f-9a63-b90a4543c707",
+//             "status": "FORCE_CHANGE_PASSWORD"
+//         }
+//    ]
+// }
 type ListUsersOutput struct {
 	Users []*User `json:"users"`
 }
 
 // RemoveUserInput deletes a user.
+//
+// This will fail if the user is the only one with UserModify permissions.
 type RemoveUserInput struct {
 	ID *string `json:"id" validate:"required,uuid4"`
+}
+
+// RemoveUserOutput returns the ID of the deleted user.
+type RemoveUserOutput struct {
+	ID *string `json:"id"`
 }
 
 // ResetUserPasswordInput resets the password for a user.
 type ResetUserPasswordInput struct {
 	ID *string `json:"id" validate:"required,uuid4"`
+}
+
+// ResetUserPasswordOutput returns the ID of the reset user.
+type ResetUserPasswordOutput struct {
+	ID *string `json:"id"`
 }
 
 // UpdateUserInput updates user details.
