@@ -29,6 +29,8 @@ var (
 	LOGTYPE    = flag.String("logtype", "", "The logType.")
 	MEMORYSIZE = flag.Int("lambdaSize", 1024, "The memory size of the lambda")
 
+	VERBOSE = flag.Bool("verbose", false, "verbose logging")
+
 	CPUPROFILE = flag.String("cpuprofile", "", "write cpu profile to `file`")
 	MEMPROFILE = flag.String("memprofile", "", "write memory profile to `file`")
 )
@@ -72,7 +74,12 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	config := zap.NewProductionConfig()
+	var config zap.Config
+	if *VERBOSE {
+		config = zap.NewDevelopmentConfig()
+	} else {
+		config = zap.NewProductionConfig()
+	}
 	logger, err := config.Build()
 	if err != nil {
 		log.Fatal("failed to build zap logger: " + err.Error())
