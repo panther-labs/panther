@@ -40,9 +40,9 @@ const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
       <Heading size="medium" m="auto" mb={5} color="grey400">
         Almost done!
       </Heading>
-      <Text size="large" color="grey300" mb={10}>
+      <Text size="large" color="grey300" mb={10} textAlign="center">
         {initialValues.integrationId
-          ? 'Click the button below to validate & updated your source!'
+          ? 'Click the button below to validate your changes & update your source!'
           : 'Click the button below to complete the setup!'}
       </Text>
       <SubmitButton width={350} disabled={isSubmitting} submitting={isSubmitting}>

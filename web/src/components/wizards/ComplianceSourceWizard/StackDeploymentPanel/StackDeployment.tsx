@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Text, Box, Heading, Alert, Spinner } from 'pouncejs';
+import { Text, Box, Heading, Spinner } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage, getComplianceIntegrationStackName } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
@@ -57,55 +57,107 @@ const StackDeployment: React.FC = () => {
     `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
     `&param_DeployRemediation=${values.remediationEnabled}`;
 
+  const downloadTemplateLink = (
+    <Text size="large" color="blue300" is="span">
+      {loading ? (
+        <Spinner size="small" />
+      ) : (
+        <a
+          href="#"
+          title="Download Cloudformation template"
+          download={`cloud-security-${values.awsAccountId}.yaml`}
+          ref={downloadAnchor}
+          onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+        >
+          Download template
+        </a>
+      )}
+    </Text>
+  );
+
   return (
     <Box>
       <Heading size="medium" m="auto" mb={10} color="grey400">
-        {initialValues.integrationId ? 'Deploy the updated stack' : 'Deploy your configured stack'}
+        Deploy your configured stack
       </Heading>
       {error && (
-        <Alert
-          variant="error"
-          title="Couldn't generate a cloudformation template"
-          description={extractErrorMessage(error)}
-        />
+        <Text size="large" color="red300" mb={10}>
+          Couldn{"'"}t generate a Cloudformation template. {extractErrorMessage(error)}
+        </Text>
       )}
-      <Text size="large" color="grey200" is="p" mb={2}>
-        {initialValues.integrationId
-          ? 'To proceed, please deploy the updated Cloudformation template to your related AWS account. This will update any previous IAM Roles.'
-          : 'To proceed, you must deploy the generated Cloudformation template to the AWS account that you are onboarding. This will generate the necessary IAM Roles.'}
-      </Text>
-      <Text
-        size="large"
-        color="blue300"
-        is="a"
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Launch Cloudformation console"
-        href={cfnConsoleLink}
-        onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-      >
-        Launch console
-      </Text>
-      <Text size="large" color="grey200" is="p" mt={10} mb={2}>
-        Alternatively, you can download it and deploy it through the AWS CLI/SDK
-      </Text>
-      <Text size="large" color="blue300">
-        {loading ? (
-          <Spinner size="small" />
-        ) : (
-          <a
-            href="#"
-            title="Download Cloudformation template"
-            download={`cloud-security-${values.awsAccountId}.yaml`}
-            ref={downloadAnchor}
+      {!initialValues.integrationId ? (
+        <React.Fragment>
+          <Text size="large" color="grey200" is="p" mb={2}>
+            To proceed, you must deploy the generated Cloudformation template to the AWS account
+            that you are onboarding. This will generate the necessary IAM Roles.
+          </Text>
+          <Text
+            size="large"
+            color="blue300"
+            is="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Launch Cloudformation console"
+            href={cfnConsoleLink}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
-            {initialValues.integrationId ? 'Download updated template' : 'Download template'}
-          </a>
-        )}
-      </Text>
+            Launch console
+          </Text>
+          <Text size="large" color="grey200" is="p" mt={10} mb={2}>
+            Alternatively, you can download it and deploy it through the AWS CLI
+          </Text>
+          {downloadTemplateLink}
+        </React.Fragment>
+      ) : (
+        <React.Fragment>
+          <Text size="large" color="grey200" is="p" mb={6}>
+            To proceed, please deploy the updated Cloudformation template to your related AWS
+            account. This will update any previous IAM Roles.
+          </Text>
+          <Box is="ol">
+            <Text size="large" is="li" color="grey200" mb={3}>
+              1. {downloadTemplateLink}
+            </Text>
+            <Text size="large" is="li" color="grey200" mb={3}>
+              2. Log in to your
+              <Text
+                ml={1}
+                size="large"
+                color="blue300"
+                is="a"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Launch Cloudformation console"
+                href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
+              >
+                Cloudformation console
+              </Text>
+            </Text>
+            <Text size="large" is="li" color="grey200" mb={3}>
+              3. Find the stack <b>{getComplianceIntegrationStackName()}</b> (you may need to change
+              region)
+            </Text>
+            <Text size="large" is="li" color="grey200" mb={3}>
+              4. Press <b>Update</b>, choose <b>Use current Template</b>
+            </Text>
+            <Text size="large" is="li" color="grey200" mb={3}>
+              5. Fill in the variables with their updated values
+            </Text>
+            <Text size="large" is="li" color="grey200" mb={3}>
+              6. Press <b>Next</b> and finally click on <b>Update</b>
+            </Text>
+          </Box>
+          <Text size="large" color="grey200" is="p" mt={10} mb={2}>
+            Alternatively, you can update your stack through the AWS CLI
+          </Text>
+        </React.Fragment>
+      )}
     </Box>
   );
 };
+
+// To proceed, please deploy the updated Cloudformation template to your related AWS account. This will update any previous IAM Roles.
+
+// https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home
 
 export default StackDeployment;
