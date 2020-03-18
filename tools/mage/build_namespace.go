@@ -223,10 +223,12 @@ func (b Build) Cfn() {
 		logger.Fatal(err)
 	}
 
+	if err := generateAlarms(); err != nil {
+		logger.Fatal(err)
+	}
 	if err := generateDashboards(); err != nil {
 		logger.Fatal(err)
 	}
-
 	if err := generateMetrics(); err != nil {
 		logger.Fatal(err)
 	}

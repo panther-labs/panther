@@ -96,10 +96,10 @@ func generateDashboards() error {
 }
 
 // Generate CloudWatch alarms as CloudFormation
-func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
+func generateAlarms() error {
 	var alarms []*cloudwatchcf.Alarm
 
-	outDir := filepath.Join("out", "deployments", "cloudwatch")
+	outDir := filepath.Join("out", "deployments", "monitoring")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
 	}
@@ -111,7 +111,7 @@ func generateAlarms(snsTopicArn string, stackOutputs map[string]string) error {
 		alarmsCfFilePath := filepath.Join(outDir, alarmsCfBasename) // where we will write
 
 		// generate alarms
-		fileAlarms, cf, err := cloudwatchcf.GenerateAlarms(snsTopicArn, stackOutputs, cfDir)
+		fileAlarms, cf, err := cloudwatchcf.GenerateAlarms(cfDir)
 		if err != nil {
 			return fmt.Errorf("failed to generate alarms CloudFormation template %s: %v", alarmsCfFilePath, err)
 		}
