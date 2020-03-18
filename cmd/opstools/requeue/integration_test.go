@@ -2,17 +2,16 @@ package requeue
 
 import (
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/cmd/opstools/testutils"
 )
 
 const (
@@ -48,11 +47,11 @@ func TestIntegrationRequeue(t *testing.T) {
 	toq := queuePrefix + "-toq"
 	// delete first in case these were left from previous failed test (best effort)
 	deletedQueue := false
-	err = deleteQueue(fromq)
+	err = testutils.DeleteQueue(sqsClient, fromq)
 	if err == nil {
 		deletedQueue = true
 	}
-	err = deleteQueue(toq)
+	err = testutils.DeleteQueue(sqsClient, toq)
 	if err == nil {
 		deletedQueue = true
 	}
@@ -60,12 +59,12 @@ func TestIntegrationRequeue(t *testing.T) {
 		// you have to wait 60+ seconds to use a q that has been deleted
 		time.Sleep(time.Second * 61)
 	}
-	err = createQueue(fromq)
+	err = testutils.CreateQueue(sqsClient, fromq)
 	require.NoError(t, err)
-	err = createQueue(toq)
+	err = testutils.CreateQueue(sqsClient, toq)
 	require.NoError(t, err)
 
-	err = addMessagesToQueue(fromq, numberTestBatches)
+	err = testutils.AddMessagesToQueue(sqsClient, fromq, numberTestBatches, messageBatchSize)
 	require.NoError(t, err)
 
 	// move them to toq
@@ -73,90 +72,13 @@ func TestIntegrationRequeue(t *testing.T) {
 	require.NoError(t, err)
 
 	// check
-	numberMovedMessages, err := countMessagesInQueue(toq)
+	numberMovedMessages, err := testutils.CountMessagesInQueue(sqsClient, toq, messageBatchSize, visibilityTimeoutSeconds)
 	assert.NoError(t, err)
 	assert.Equal(t, numberTestMessages, numberMovedMessages)
 
 	// clean up
-	err = deleteQueue(fromq)
+	err = testutils.DeleteQueue(sqsClient, fromq)
 	assert.NoError(t, err)
-	err = deleteQueue(toq)
+	err = testutils.DeleteQueue(sqsClient, toq)
 	assert.NoError(t, err)
-}
-
-func deleteQueue(qname string) (err error) {
-	deleteQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &qname,
-	})
-	if err != nil {
-		return errors.Wrapf(err, "cannot get delete queue url for %s", qname)
-	}
-	_, err = sqsClient.DeleteQueue(&sqs.DeleteQueueInput{
-		QueueUrl: deleteQueueURL.QueueUrl,
-	})
-	return err
-}
-
-func createQueue(qname string) (err error) {
-	_, err = sqsClient.CreateQueue(&sqs.CreateQueueInput{
-		QueueName: &qname,
-	})
-	return err
-}
-
-func addMessagesToQueue(qname string, nBatches int) (err error) {
-	addQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &qname,
-	})
-	if err != nil {
-		return errors.Wrapf(err, "cannot get add queue url for %s", qname)
-	}
-
-	for batch := 0; batch < nBatches; batch++ {
-		var sendMessageBatchRequestEntries []*sqs.SendMessageBatchRequestEntry
-		for i := 0; i < messageBatchSize; i++ {
-			id := aws.String(strconv.Itoa(i))
-			sendMessageBatchRequestEntries = append(sendMessageBatchRequestEntries, &sqs.SendMessageBatchRequestEntry{
-				Id:          id,
-				MessageBody: id,
-			})
-		}
-
-		_, err = sqsClient.SendMessageBatch(&sqs.SendMessageBatchInput{
-			Entries:  sendMessageBatchRequestEntries,
-			QueueUrl: addQueueURL.QueueUrl,
-		})
-		if err != nil {
-			return errors.Wrap(err, "failure sending test messages")
-		}
-	}
-
-	return nil
-}
-
-func countMessagesInQueue(qname string) (totalMessages int, err error) {
-	countQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &qname,
-	})
-	if err != nil {
-		return 0, errors.Wrapf(err, "cannot get count queue url for %s", qname)
-	}
-
-	// drain the queue, counting
-	for {
-		resp, err := sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
-			MaxNumberOfMessages: aws.Int64(messageBatchSize),
-			VisibilityTimeout:   aws.Int64(visibilityTimeoutSeconds),
-			QueueUrl:            countQueueURL.QueueUrl,
-		})
-
-		if err != nil {
-			return 0, errors.Wrap(err, qname)
-		}
-
-		totalMessages += len(resp.Messages)
-		if len(resp.Messages) == 0 {
-			return totalMessages, nil
-		}
-	}
 }

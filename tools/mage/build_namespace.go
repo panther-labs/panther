@@ -161,25 +161,56 @@ func (b Build) lambda() error {
 	return nil
 }
 
-// Opstools Compile Go ops tools from source
+// Opstools Compile Go operational tools from source
 func (b Build) Opstools() {
-	const (
-		binDir    = "out/bin/opstools"
-		sourceDir = "cmd/opstools"
-	)
+	buildTools("opstools", "out/bin/opstools", "cmd/opstools")
+}
 
-	if err := os.MkdirAll(binDir, 0755); err != nil {
-		logger.Fatalf("failed to create %s directory: %v", binDir, err)
+func buildTools(tools, binDir, sourceDir string) {
+	// cross compile so tools can be copied to other machines easily
+	archs := []string{"amd64", "386", "arm"} // yes arm, AWS is now supporting arm processors and they are cheap!
+	oses := []string{"linux", "darwin", "windows"}
+	blacklist := map[string]bool{ // incompatible combinations
+		"darwin:arm": true,
+	}
+	applyBuildEnv := func(apply func(arch, opsys, binPath string)) {
+		for _, arch := range archs {
+			for _, opsys := range oses {
+				if blacklist[opsys+":"+arch] {
+					continue
+				}
+				apply(arch, opsys, filepath.Join(binDir, opsys, arch))
+			}
+		}
 	}
 
-	walk(sourceDir, func(path string, info os.FileInfo) {
-		if !info.IsDir() && strings.HasSuffix(path, "main.go") {
+	// create the dirs
+	applyBuildEnv(func(arch, opsys, binPath string) {
+		if err := os.MkdirAll(binPath, 0755); err != nil {
+			logger.Fatalf("failed to create %s directory: %v", binPath, err)
+		}
+	})
+
+	logger.Infof("build:%s using %s for %s on %s",
+		tools, runtime.Version(), strings.Join(oses, ","), strings.Join(archs, ","))
+
+	// loop over arch and os to compile
+	compile := func(path string) {
+		applyBuildEnv(func(arch, opsys, binPath string) {
 			app := filepath.Dir(path)
-			logger.Infof("build:opstools: compiling %s", app)
-			// NOTE: passing nil in as env to get native compilation
-			if err := sh.RunWith(nil, "go", "build", "-ldflags", "-s -w", "-o", binDir, "./"+app); err != nil {
+			logger.Infof("build:opstools compiling %s for %s on %s to %s",
+				filepath.Base(app), opsys, arch, binPath)
+			if err := sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
+				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
 				logger.Fatalf("go build %s failed: %v", path, err)
 			}
+		})
+	}
+
+	// compile each app
+	walk(sourceDir, func(path string, info os.FileInfo) {
+		if !info.IsDir() && strings.HasSuffix(path, "main.go") {
+			compile(path)
 		}
 	})
 }

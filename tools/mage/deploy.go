@@ -184,6 +184,7 @@ func getBackendDeployParams(
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
 		"Debug":                        strconv.FormatBool(v.Debug),
 		"LayerVersionArns":             v.LayerVersionArns,
+		"LogProcessorLambdaMemorySize": strconv.Itoa(v.LogProcessorLambdaMemorySize),
 		"PythonLayerVersionArn":        v.PythonLayerVersionArn,
 		"S3BucketAccessLogs":           logBucket,
 		"S3BucketSource":               sourceBucket,
