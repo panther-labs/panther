@@ -28,35 +28,34 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// ScanEnabledIntegrations returns all enabled integrations based on type (if type is specified).
+// ScanIntegrations returns all enabled integrations based on type (if type is specified).
 // It performs a DDB scan of the entire table with a filter expression.
-func (ddb *DDB) ScanEnabledIntegrations(input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
-	filt := expression.Name("scanEnabled").Equal(expression.Value(true))
-	if input.IntegrationType != nil {
-		filt = expression.And(filt, expression.Name("integrationType").Equal(expression.Value(input.IntegrationType)))
-	}
+func (ddb *DDB) ScanIntegrations(input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
+	filt := expression.Name("integrationType").Equal(expression.Value(input.IntegrationType))
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
 		return nil, &genericapi.InternalError{Message: "failed to build dynamodb expression"}
 	}
 
-	output, err := ddb.Client.Scan(&dynamodb.ScanInput{
+	scanInput := &dynamodb.ScanInput{
 		FilterExpression:          expr.Filter(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		TableName:                 aws.String(ddb.TableName),
-	})
+	}
+
+	output, err := ddb.Client.Scan(scanInput)
 	if err != nil {
 		return nil, &genericapi.AWSError{Err: err, Method: "Dynamodb.Scan"}
 	}
 
-	var enabledIntegrations []*models.SourceIntegration
-	if err := dynamodbattribute.UnmarshalListOfMaps(output.Items, &enabledIntegrations); err != nil {
+	var integrations []*models.SourceIntegration
+	if err := dynamodbattribute.UnmarshalListOfMaps(output.Items, &integrations); err != nil {
 		return nil, err
 	}
 
-	if enabledIntegrations == nil {
-		enabledIntegrations = make([]*models.SourceIntegration, 0)
+	if integrations == nil {
+		integrations = make([]*models.SourceIntegration, 0)
 	}
-	return enabledIntegrations, nil
+	return integrations, nil
 }

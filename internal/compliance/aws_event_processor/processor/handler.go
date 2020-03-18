@@ -284,7 +284,7 @@ func submitChanges(changes map[string]*resourceChange) error {
 			})
 		}
 
-		if err := sqsbatch.SendMessageBatch(sqsClient, maxBackoffSeconds, batchInput); err != nil {
+		if _, err := sqsbatch.SendMessageBatch(sqsClient, maxBackoffSeconds, batchInput); err != nil {
 			return err
 		}
 	}

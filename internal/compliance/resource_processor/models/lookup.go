@@ -1,4 +1,4 @@
-package api
+package models
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -18,15 +18,6 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/source/models"
-)
-
-// ListIntegrations returns all enabled integrations across each organization.
-//
-// The output of this handler is used to schedule pollers.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
-
-	return db.ScanIntegrations(input)
+type ResourceLookup struct {
+	ID string
 }
