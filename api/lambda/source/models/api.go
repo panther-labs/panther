@@ -69,7 +69,7 @@ type PutIntegrationInput struct {
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
 	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"omitempty,min=1"`
+	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel"`
 	IntegrationType    *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
@@ -98,12 +98,12 @@ type ListIntegrationsInput struct {
 type GetIntegrationTemplateInput struct {
 	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
 	IntegrationType    *string   `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
-	RemediationEnabled *bool     `json:"remediationEnabled"`
-	CWEEnabled         *bool     `json:"cweEnabled"`
+	IntegrationLabel   *string   `json:"integrationLabel" validate:"required,integrationLabel"`
+	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
+	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	S3Bucket           *string   `json:"s3Bucket,omitempty"`
 	S3Prefix           *string   `json:"s3Prefix,omitempty"`
 	KmsKey             *string   `json:"kmsKey,omitempty"`
-	LogTypes           []*string `json:"logTypes,omitempty"`
 }
 
 //
@@ -138,7 +138,7 @@ type UpdateIntegrationLastScanEndInput struct {
 // UpdateIntegrationSettingsInput is used to update integration settings.
 type UpdateIntegrationSettingsInput struct {
 	IntegrationID      *string   `json:"integrationId" validate:"required,uuid4"`
-	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"omitempty,min=1"`
+	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel"`
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
 	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
