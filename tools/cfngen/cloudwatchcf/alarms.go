@@ -20,6 +20,7 @@ package cloudwatchcf
 
 import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/tools/cfngen"
 )
@@ -27,7 +28,7 @@ import (
 const (
 	documentationURL   = "https://docs.runpanther.io/operations/runbooks" // where all alarms are documented
 	alarmPrefix        = "PantherAlarm"
-	topicParameterName = "AlarmTopicArn"
+	topicParameterName = "AlarmTopicArn" // CloudFormation parameter referenced in all generated alarms
 )
 
 type Alarm struct {
@@ -54,8 +55,28 @@ type AlarmProperties struct {
 }
 
 type MetricDimension struct {
-	Name  string
+	Name string
+
+	// Use only one of Value or ValueRef
 	Value string
+
+	valueRef *RefString
+}
+
+func (m *MetricDimension) MarshalJSON() ([]byte, error) {
+	if m.valueRef == nil {
+		// Most common case - the struct can be marshaled like normal (json ignores nil valueRef)
+		return jsoniter.Marshal(*m)  // dereference to avoid infinite recursion
+	}
+
+	// Otherwise, marshal a new struct where "Value" is actually a struct with the nested ref
+	return jsoniter.Marshal(&struct {
+		Name  string
+		Value RefString
+	}{
+		Name:  m.Name,
+		Value: *m.valueRef,
+	})
 }
 
 type RefString struct {
@@ -202,16 +223,16 @@ func alarmDispatchOnType(resourceType string, resource map[interface{}]interface
 		return generateSNSAlarms(resource)
 	case "AWS::SQS::Queue":
 		return generateSQSAlarms(resource)
-		//case "AWS::Serverless::Api":
-		//	return generateAPIGatewayAlarms(resource)
-		//case "AWS::ElasticLoadBalancingV2::LoadBalancer":
-		//	return generateApplicationELBAlarms(resource)
-		//case "AWS::AppSync::GraphQLApi":
-		//	return generateAppSyncAlarms(resource)
-		//case "AWS::DynamoDB::Table":
-		//	return generateDynamoDBAlarms(resource)
-		//case "AWS::Serverless::Function":
-		//	return generateLambdaAlarms(resource)
+	case "AWS::Serverless::Api":
+		return generateAPIGatewayAlarms(resource)
+	case "AWS::ElasticLoadBalancingV2::LoadBalancer":
+		return generateApplicationELBAlarms(resource)
+	case "AWS::AppSync::GraphQLApi":
+		return generateAppSyncAlarms(resource)
+	case "AWS::DynamoDB::Table":
+		return generateDynamoDBAlarms(resource)
+	case "AWS::Serverless::Function":
+		return generateLambdaAlarms(resource)
 	}
 	return alarms
 }
