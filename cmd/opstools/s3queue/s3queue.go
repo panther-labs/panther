@@ -205,7 +205,7 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 			MessageBody: &message,
 		})
 		if len(sendMessageBatchInput.Entries)%batchSize == 0 {
-			err = sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
+			_, err = sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
 			if err != nil {
 				errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 				failed = true
@@ -217,7 +217,7 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 
 	// send remaining
 	if len(sendMessageBatchInput.Entries) > 0 {
-		err := sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
+		_, err := sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
 		if err != nil {
 			errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 		}
