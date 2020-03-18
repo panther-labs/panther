@@ -46,19 +46,22 @@ func TestUpdateIntegrationSettings(t *testing.T) {
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
 
 	updateResponse := &dynamodb.UpdateItemOutput{Attributes: map[string]*dynamodb.AttributeValue{
-		"ScanEnabled": {BOOL: aws.Bool(false)},
+		"awsAccountId": {
+			S: aws.String("123456789012"),
+		},
 	}}
 	mockClient.On("UpdateItem", mock.Anything).Return(updateResponse, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		ScanEnabled:      aws.Bool(false),
 		IntegrationID:    aws.String(testIntegrationID),
 		IntegrationLabel: aws.String("NewAWSTestingAccount"),
 		ScanIntervalMins: aws.Int(1440),
 	})
 
 	expected := &models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{ScanEnabled: aws.Bool(false)},
+		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			AWSAccountID: aws.String("123456789012"),
+		},
 	}
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)

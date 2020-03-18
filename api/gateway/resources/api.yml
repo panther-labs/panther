@@ -104,31 +104,6 @@ paths:
         500:
           description: Internal server error
 
-    # DEPRECATED: This used to be how we tracked resource changes in real-time, but now we just
-    # re-scan every resource after it changes.
-    patch:
-      operationId: ModifyResource
-      summary: Modify some properties of an existing resource
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/ModifyResource'
-      responses:
-        200:
-          description: OK
-        400:
-          description: Malformed request
-          schema:
-            $ref: '#/definitions/Error'
-        404:
-          description: Resource does not exist
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Internal server error
-
   /delete:
     post:
       operationId: DeleteResources
@@ -359,18 +334,6 @@ definitions:
       - integrationId
       - integrationType
       - type
-
-  ##### ModifyResource #####
-  ModifyResource:
-    type: object
-    properties:
-      id:
-        $ref: '#/definitions/resourceId'
-      replaceAttributes:
-        $ref: '#/definitions/attributes'
-    required:
-      - id
-      - replaceAttributes
 
   ##### DeleteResources #####
   DeleteResources:

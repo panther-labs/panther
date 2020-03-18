@@ -35,7 +35,6 @@ type SourceIntegrationMetadata struct {
 	IntegrationID      *string    `json:"integrationId"`
 	IntegrationLabel   *string    `json:"integrationLabel"`
 	IntegrationType    *string    `json:"integrationType"`
-	ScanEnabled        *bool      `json:"scanEnabled"`
 	RemediationEnabled *bool      `json:"remediationEnabled"`
 	CWEEnabled         *bool      `json:"cweEnabled"`
 	ScanIntervalMins   *int       `json:"scanIntervalMins"`
