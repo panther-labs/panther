@@ -56,6 +56,7 @@ class Engine:
                     rule_version=rule.rule_version,
                     log_type=log_type,
                     dedup=result.dedup_string,  # type: ignore
+                    dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
                     severity=rule.rule_severity,
                     title=result.title
@@ -81,27 +82,17 @@ class Engine:
         for raw_rule in rules:
             if raw_rule.get('id') == COMMON_MODULE_RULE_ID:
                 try:
-                    Rule(
-                        rule_id=raw_rule.get('id'),
-                        rule_body=raw_rule.get('body'),
-                        rule_severity=raw_rule.get('severity'),
-                        rule_version=raw_rule.get('versionId')
-                    )
+                    Rule(raw_rule)
                 except Exception as err:  # pylint: disable=broad-except
-                    self.logger.error('Failed to import rule %s', err)
+                    self.logger.error('Failed to import rule %s. Error: [%s]', raw_rule.get('id'), err)
                 rules.remove(raw_rule)
                 break
 
         for raw_rule in rules:
             try:
-                rule = Rule(
-                    rule_id=raw_rule.get('id'),
-                    rule_body=raw_rule.get('body'),
-                    rule_severity=raw_rule.get('severity'),
-                    rule_version=raw_rule.get('versionId')
-                )
+                rule = Rule(raw_rule)
             except Exception as err:  # pylint: disable=broad-except
-                self.logger.error('Failed to import rule %s', err)
+                self.logger.error('Failed to import rule %s. Error: [%s]', raw_rule.get('id'), err)
                 continue
 
             import_count = import_count + 1
@@ -113,7 +104,7 @@ class Engine:
         self.logger.info('Imported %d rules in %d seconds', import_count, end - start)
         self._last_update = datetime.utcnow()
 
-    def _get_rules(self) -> List[Dict[str, str]]:
+    def _get_rules(self) -> List[Dict[str, Any]]:
         """Retrieves all enabled rules.
 
         Returns:

@@ -41,7 +41,15 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_and_flush_event_generate_new_alert(self) -> None:
         buffer = MatchedEventsBuffer()
-        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', 'INFO', {'data_key': 'data_value'})
+        event_match = EventMatch(
+            rule_id='rule_id',
+            rule_version='rule_version',
+            log_type='log_type',
+            dedup='dedup',
+            dedup_period_mins=100,
+            severity='INFO',
+            event={'data_key': 'data_value'}
+        )
         buffer.add_event(event_match)
 
         self.assertEqual(len(buffer.data), 1)
@@ -147,8 +155,28 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_same_rule_different_log(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id', 'version', 'log1', 'dedup', 'INFO', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id', 'version', 'log2', 'dedup', 'INFO', {'key2': 'value2'}))
+        buffer.add_event(
+            EventMatch(
+                rule_id='id',
+                rule_version='version',
+                log_type='log1',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key1': 'value1'}
+            )
+        )
+        buffer.add_event(
+            EventMatch(
+                rule_id='id',
+                rule_version='version',
+                log_type='log2',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key2': 'value2'}
+            )
+        )
 
         self.assertEqual(len(buffer.data), 2)
 
@@ -189,8 +217,28 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_same_log_different_rules(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id1', 'version', 'log', 'dedup', 'INFO', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id2', 'version', 'log', 'dedup', 'INFO', {'key2': 'value2'}))
+        buffer.add_event(
+            EventMatch(
+                rule_id='id1',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key1': 'value1'}
+            )
+        )
+        buffer.add_event(
+            EventMatch(
+                rule_id='id2',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key2': 'value2'}
+            )
+        )
 
         self.assertEqual(len(buffer.data), 2)
 
@@ -231,8 +279,28 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_group_events_together(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', 'INFO', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', 'INFO', {'key2': 'value2'}))
+        buffer.add_event(
+            EventMatch(
+                rule_id='id',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key1': 'value1'}
+            )
+        )
+        buffer.add_event(
+            EventMatch(
+                rule_id='id',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key2': 'value2'}
+            )
+        )
 
         self.assertEqual(len(buffer.data), 1)
 
@@ -270,7 +338,15 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         # Reducing max_bytes so that it will cause the overflow condition to trigger earlier
         buffer.max_bytes = 50
-        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', 'INFO', {'data_key': 'data_value'})
+        event_match = EventMatch(
+            rule_id='rule_id',
+            rule_version='rule_version',
+            log_type='log_type',
+            dedup='dedup',
+            dedup_period_mins=100,
+            severity='INFO',
+            event={'data_key': 'data_value'}
+        )
 
         DDB_MOCK.update_item.return_value = {'Attributes': {'alertCount': {'N': '1'}}}
 

@@ -18,6 +18,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class EventMatch:
     """Represents an event that matched a rule"""
@@ -25,6 +26,7 @@ class EventMatch:
     rule_version: str
     log_type: str
     dedup: str
+    dedup_period_mins: int
     severity: str
     event: Dict[str, Any]
     title: Optional[str] = None

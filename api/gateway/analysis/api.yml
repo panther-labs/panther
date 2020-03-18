@@ -816,6 +816,8 @@ definitions:
         $ref: '#/definitions/suppressions'
       versionId:
         $ref: '#/definitions/versionId'
+      dedupPeriodMinutes:
+        $ref: '#/definitions/dedupPeriodMinutes'
 
   ##### ListPolicies #####
   PolicyList:

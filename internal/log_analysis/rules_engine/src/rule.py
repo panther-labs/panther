@@ -37,6 +37,10 @@ MAX_TITLE_SIZE = 1000
 
 TRUNCATED_STRING_SUFFIX = '... (truncated)'
 
+DEFAULT_RULE_VERSION = 'default'
+
+DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
+
 
 @dataclass
 class RuleResult:
@@ -47,32 +51,46 @@ class RuleResult:
     title: Optional[str] = None
 
 
+# pylint: disable=too-many-instance-attributes
 class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_severity: Optional[str], rule_version: Optional[str]):
-        """Create new rule.
+    def __init__(self, config: Dict[str, Any]):
+        """Create new rule from a dict.
 
         Args:
-            rule_id: Unique rule identifier
-            rule_body: The rule body
-            rule_severity: The severity of the rule
-            rule_version: The version of the rule
+            config: Dictionary that we expect to have the following keys:
+                rule_id: Unique rule identifier
+                body: The rule body
+                severity: The severity of the rule
+                (Optional) version: The version of the rule
+                (Optional) dedup_period_mins: The period during which the events will be deduplicated
         """
-        if not rule_id or not rule_body or not rule_severity or not rule_version:
-            raise AssertionError('id, body, severity and version are required fields')
-        self.rule_id = rule_id
-        self.rule_body = rule_body
-        self.rule_severity = rule_severity
+        if not ('id' in config) or not isinstance(config['id'], str):
+            raise AssertionError('Field "id" of type str is required field')
+        self.rule_id = config['id']
+
+        if not ('body' in config) or not isinstance(config['body'], str):
+            raise AssertionError('Field "body" of type str is required field')
+        self.rule_body = config['body']
+
+        if not ('severity' in config) or not isinstance(config['severity'], str):
+            raise AssertionError('Field "severity" of type str is required field')
+        self.rule_severity = config['severity']
+
+        if not ('versionId' in config) or not isinstance(config['versionId'], str):
+            self.rule_version = DEFAULT_RULE_VERSION
+        else:
+            self.rule_version = config['versionId']
+
+        if not ('dedupPeriodMinutes' in config) or not isinstance(config['dedupPeriodMinutes'], int):
+            self.rule_dedup_period_mins = DEFAULT_RULE_DEDUP_PERIOD_MINS
+        else:
+            self.rule_dedup_period_mins = config['dedupPeriodMinutes']
 
         self._store_rule()
         self._module = self._import_rule_as_module()
-
-        if not rule_version:
-            self.rule_version = 'default'
-        else:
-            self.rule_version = rule_version
 
         if not hasattr(self._module, 'rule'):
             raise AssertionError("rule needs to have a method named 'rule'")
@@ -99,7 +117,6 @@ class Rule:
                 title = self._get_title(event)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
-
         return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
 
     def _get_dedup(self, event: Dict[str, Any]) -> str:

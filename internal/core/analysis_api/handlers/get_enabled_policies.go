@@ -47,12 +47,13 @@ func GetEnabledPolicies(request *events.APIGatewayProxyRequest) *events.APIGatew
 	policies := make([]*models.EnabledPolicy, 0, 100)
 	err = scanPages(scanInput, func(policy *tableItem) error {
 		policies = append(policies, &models.EnabledPolicy{
-			Body:          policy.Body,
-			ID:            policy.ID,
-			ResourceTypes: policy.ResourceTypes,
-			Severity:      policy.Severity,
-			Suppressions:  policy.Suppressions,
-			VersionID:     policy.VersionID,
+			Body:               policy.Body,
+			ID:                 policy.ID,
+			ResourceTypes:      policy.ResourceTypes,
+			Severity:           policy.Severity,
+			Suppressions:       policy.Suppressions,
+			VersionID:          policy.VersionID,
+			DedupPeriodMinutes: policy.DedupPeriodMinutes,
 		})
 		return nil
 	})
@@ -83,6 +84,7 @@ func buildEnabledScan(ruleType string) (*dynamodb.ScanInput, error) {
 		expression.Name("severity"),
 		expression.Name("suppressions"),
 		expression.Name("versionId"),
+		expression.Name("dedupPeriodMinutes"),
 	)
 
 	expr, err := expression.NewBuilder().
