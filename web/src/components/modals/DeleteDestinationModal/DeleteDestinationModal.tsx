@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { Destination } from 'Generated/schema';
-import { ListDestinationsAndDefaultsDocument } from 'Pages/Destinations';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeleteOutput } from './graphql/deleteOutput.generated';
 
@@ -37,28 +36,13 @@ const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destina
     },
     update: async cache => {
       cache.modify('ROOT_QUERY', {
-        destinations: (data, helpers) => {
+        destinations: (destinations, helpers) => {
           const { __ref: destinationRef } = helpers.toReference({
             __typename: 'Destination',
-            id: destination.outputId,
+            outputId: destination.outputId,
           });
-          return {
-            ...data,
-            destinations: data.destinations.filter(({ __ref }) => __ref !== destinationRef),
-          };
+          return destinations.filter(({ __ref }) => __ref !== destinationRef);
         },
-      });
-      cache.gc();
-
-      const { destinations } = cache.readQuery({
-        query: ListDestinationsAndDefaultsDocument,
-      });
-      const newDestinations = destinations.destinations.filter(
-        d => d.outputId !== destination.outputId
-      );
-      cache.writeQuery({
-        query: ListDestinationsAndDefaultsDocument,
-        data: { destinations: { ...destinations, destinations: [...newDestinations] } },
       });
       cache.gc();
     },
