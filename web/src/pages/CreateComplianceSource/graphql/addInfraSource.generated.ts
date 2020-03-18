@@ -28,7 +28,7 @@ export type AddInfraSourceVariables = {
 };
 
 export type AddInfraSource = {
-  addIntegration: Types.Maybe<Pick<Types.Integration, 'integrationId'>>;
+  addIntegration?: Types.Maybe<Pick<Types.Integration, 'integrationId'>>;
 };
 
 export const AddInfraSourceDocument = gql`

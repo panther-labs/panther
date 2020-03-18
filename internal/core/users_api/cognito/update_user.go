@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,18 +19,25 @@ package gateway
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 
+	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// DeleteUser calls cognito api delete user from a user pool
-func (g *UsersGateway) DeleteUser(id *string) error {
-	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
-		Username:   id,
-		UserPoolId: &userPoolID,
-	}); err != nil {
-		return &genericapi.AWSError{Method: "cognito.AdminDeleteUser", Err: err}
+// UpdateUser calls cognito to update a user with the specified attributes.
+func (g *UsersGateway) UpdateUser(input *models.UpdateUserInput) error {
+	cognitoInput := &provider.AdminUpdateUserAttributesInput{
+		UserAttributes: userAttributes(input.GivenName, input.FamilyName, input.Email),
+		UserPoolId:     g.userPoolID,
+		Username:       input.ID,
+	}
+	if _, err := g.userPoolClient.AdminUpdateUserAttributes(cognitoInput); err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
+			return &genericapi.DoesNotExistError{Message: "userID=" + *input.ID}
+		}
+		return &genericapi.AWSError{Method: "cognito.AdminUpdateUserAttributes", Err: err}
 	}
 
 	return nil

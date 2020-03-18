@@ -49,8 +49,6 @@ type ClassifierResult struct {
 	Events []*parsers.PantherLog
 	// LogType is the identified type of the log
 	LogType *string
-	// Line that was classified and parsed
-	LogLine string
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
@@ -109,7 +107,6 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 
 	// update aggregate stats
 	defer func() {
-		result.LogLine = log // set here to get "cleaned" version
 		c.stats.ClassifyTimeMicroseconds = uint64(time.Since(startClassify).Microseconds())
 		c.stats.BytesProcessedCount += uint64(len(log))
 		c.stats.LogLineCount++

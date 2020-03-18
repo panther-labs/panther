@@ -22,7 +22,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/users/models"
 )
 
-// UpdateUser modifies user attributes and roles.
+// UpdateUser modifies user attributes.
 func (API) UpdateUser(input *models.UpdateUserInput) (*models.UpdateUserOutput, error) {
 	if err := userGateway.UpdateUser(input); err != nil {
 		return nil, err

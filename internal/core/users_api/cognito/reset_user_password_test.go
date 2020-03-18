@@ -1,4 +1,4 @@
-package cloudwatchcf
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,28 +19,24 @@ package cloudwatchcf
  */
 
 import (
-	"io/ioutil"
-	"os"
+	"testing"
+
+	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/stretchr/testify/assert"
 )
 
-// Read CF
-func readTestFile(filename string) ([]byte, error) {
-	fd, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer fd.Close()
-	return ioutil.ReadAll(fd)
-}
+func TestResetUserPassword(t *testing.T) {
+	mockCognitoClient := &mockCognitoClient{}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
-// Write CF (used to easily re-create expected test files)
-//nolint:unused,deadcode
-func writeTestFile(cf []byte, filename string) error {
-	fd, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-	_, err = fd.Write(cf)
-	return err
+	mockCognitoClient.On(
+		"AdminResetUserPassword",
+		&provider.AdminResetUserPasswordInput{
+			Username:   mockUserID,
+			UserPoolId: gw.userPoolID,
+		},
+	).Return((*provider.AdminResetUserPasswordOutput)(nil), nil)
+
+	assert.NoError(t, gw.ResetUserPassword(mockUserID))
+	mockCognitoClient.AssertExpectations(t)
 }

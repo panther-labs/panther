@@ -1,4 +1,4 @@
-package gateway
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,12 +19,25 @@ package gateway
  */
 
 import (
-	"testing"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"go.uber.org/zap"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/stretchr/testify/assert"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-func TestNew(t *testing.T) {
-	assert.NotNil(t, New(session.Must(session.NewSession())))
+// DeleteUser calls cognito api delete user from a user pool
+func (g *UsersGateway) DeleteUser(id *string) error {
+	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
+		Username:   id,
+		UserPoolId: g.userPoolID,
+	}); err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
+			zap.L().Warn("user is already deleted", zap.String("userId", *id))
+			return nil
+		}
+		return &genericapi.AWSError{Method: "cognito.AdminDeleteUser", Err: err}
+	}
+
+	return nil
 }

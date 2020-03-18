@@ -22,13 +22,14 @@ import (
 	"fmt"
 )
 
+// CloudFormation parameter name referenced in generated alarm - we only have one appsync instance.
+const appsyncParameterName = "AppsyncId"
+
 type AppSyncAlarm struct {
 	Alarm
 }
 
-func NewAppSyncAlarm(graphQlID, alarmType, metricName, message string, resource map[interface{}]interface{},
-	config *Config) (alarm *AppSyncAlarm) {
-
+func NewAppSyncAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) (alarm *AppSyncAlarm) {
 	const (
 		metricDimension = "GraphQLAPIId"
 		metricNamespace = "AWS/AppSync"
@@ -37,36 +38,27 @@ func NewAppSyncAlarm(graphQlID, alarmType, metricName, message string, resource 
 	alarmName := AlarmName(alarmType, appSyncName)
 	alarm = &AppSyncAlarm{
 		Alarm: *NewAlarm(appSyncName, alarmName,
-			fmt.Sprintf("AppSync %s %s. See: %s#%s", appSyncName, message, documentationURL, appSyncName),
-			config.snsTopicArn),
+			fmt.Sprintf("AppSync %s %s. See: %s#%s", appSyncName, message, documentationURL, appSyncName)),
 	}
-	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: graphQlID}})
+	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{
+		{Name: metricDimension, valueRef: &RefString{appsyncParameterName}}})
 	return alarm
 }
 
-func generateAppSyncAlarms(resource map[interface{}]interface{}, config *Config) (alarms []*Alarm) {
-	// this one uses a dynamically generated metric name we get out of the stackOutputs, we only expect 1 in this application
-	const graphQlIDKey = "WebApplicationGraphqlApiId"
-	var graphQlID string
-	if id, found := config.stackOutputs[graphQlIDKey]; found {
-		graphQlID = id
-	} else {
-		panic(fmt.Sprintf("Missing expected %s key in %#v", graphQlIDKey, resource))
-	}
-
+func generateAppSyncAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
 	// NOTE: these metrics appear to have no units
 
 	// server errors
-	alarms = append(alarms, NewAppSyncAlarm(graphQlID, "AppSyncServerError", "5XXError",
-		"is failing", resource, config).SumNoUnitsThreshold(0, 60*5))
+	alarms = append(alarms, NewAppSyncAlarm("AppSyncServerError", "5XXError",
+		"is failing", resource).SumNoUnitsThreshold(0, 60*5))
 
 	// client errors, here we are concerned with surfacing bugs in the Panther UI as it talks to AppSync
-	alarms = append(alarms, NewAppSyncAlarm(graphQlID, "AppSyncClientError", "4XXError",
-		"has has elevated 4XX errors", resource, config).SumNoUnitsThreshold(20, 60*5) /* tolerate a few client errors */)
+	alarms = append(alarms, NewAppSyncAlarm("AppSyncClientError", "4XXError",
+		"has has elevated 4XX errors", resource).SumNoUnitsThreshold(20, 60*5) /* tolerate a few client errors */)
 
 	// latency
-	alarms = append(alarms, NewAppSyncAlarm(graphQlID, "AppSyncHighLatency", "Latency",
-		"is experience high latency", resource, config).MaxNoUnitsThreshold(1000, 60).EvaluationPeriods(5))
+	alarms = append(alarms, NewAppSyncAlarm("AppSyncHighLatency", "Latency",
+		"is experience high latency", resource).MaxNoUnitsThreshold(1000, 60).EvaluationPeriods(5))
 
 	return alarms
 }

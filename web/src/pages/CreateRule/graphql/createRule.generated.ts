@@ -28,7 +28,7 @@ export type CreateRuleVariables = {
 };
 
 export type CreateRule = {
-  addRule: Types.Maybe<
+  addRule?: Types.Maybe<
     Pick<
       Types.RuleDetails,
       | 'description'
@@ -42,7 +42,7 @@ export type CreateRule = {
       | 'tags'
       | 'body'
     > & {
-      tests: Types.Maybe<
+      tests?: Types.Maybe<
         Array<
           Types.Maybe<
             Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>

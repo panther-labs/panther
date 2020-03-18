@@ -31,6 +31,7 @@ import (
 	"github.com/magefile/mage/target"
 
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const swaggerGlob = "api/gateway/*/api.yml"
@@ -39,6 +40,13 @@ var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
 // Build contains targets for compiling source code.
 type Build mg.Namespace
+
+// Build all deployment artifacts
+func (b Build) All() {
+	b.Lambda() // implicitly does b.API()
+	b.Cfn()
+	b.Opstools()
+}
 
 // API Generate Go client/models from Swagger specs in api/
 func (b Build) API() {
@@ -246,11 +254,26 @@ func buildPackage(pkg string) error {
 	return nil
 }
 
-// (Beta) Cfn Generate Glue CFN templates in out/deployments folder
+// Generate CloudFormation templates in out/deployments folder
 func (b Build) Cfn() {
-	// TODO Eventually change it so it generates all CFN templates that will be used
-	// TODO Add a "build:all" target that just builds everything that will be deployed, but without triggering the actual deployment.
+	embedAPISpecs()
+
 	if err := generateGlueTables(); err != nil {
+		logger.Fatal(err)
+	}
+
+	settings, err := config.Settings()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	if err := generateAlarms(settings); err != nil {
+		logger.Fatal(err)
+	}
+	if err := generateDashboards(); err != nil {
+		logger.Fatal(err)
+	}
+	if err := generateMetrics(); err != nil {
 		logger.Fatal(err)
 	}
 }

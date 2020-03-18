@@ -26,7 +26,7 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListInfraSourcesVariables = {};
 
 export type ListInfraSources = {
-  integrations: Types.Maybe<
+  integrations?: Types.Maybe<
     Array<
       Pick<
         Types.Integration,

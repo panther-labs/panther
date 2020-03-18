@@ -1,4 +1,4 @@
-package models
+package cognito
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -18,21 +18,13 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// LambdaInput is the invocation event expected by the Lambda function.
-//
-// Exactly one action must be specified.
-type LambdaInput struct {
-	GetOnboardingStatus *GetOnboardingStatusInput `json:"getOnboardingStatus"`
-}
+import (
+	"testing"
 
-// GetOnboardingStatusInput gets the step function status
-type GetOnboardingStatusInput struct {
-	ExecutionArn *string `json:"executionArn" validate:"required"`
-}
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/stretchr/testify/assert"
+)
 
-// GetOnboardingStatusOutput returns the state machine status
-type GetOnboardingStatusOutput struct {
-	Status    *string `json:"status"`
-	StartDate *string `json:"startDate"`
-	StopDate  *string `json:"stopDate"`
+func TestNew(t *testing.T) {
+	assert.NotNil(t, New(session.Must(session.NewSession()), ""))
 }

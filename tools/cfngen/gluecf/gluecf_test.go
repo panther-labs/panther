@@ -19,6 +19,7 @@ package gluecf
  */
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,8 +42,6 @@ type commonFields struct {
 }
 
 func TestTablesCloudFormation(t *testing.T) {
-	expectedFile := "testdata/gluecf.json.cf"
-
 	// use simple consistent reference set of parsers
 	table := awsglue.NewGlueTableMetadata(models.LogData, "Log.Type", "dummy", awsglue.GlueTableHourly, &dummyParserEvent{})
 	tables := []*awsglue.GlueTableMetadata{table}
@@ -50,11 +49,11 @@ func TestTablesCloudFormation(t *testing.T) {
 	cf, err := GenerateTables(tables)
 	require.NoError(t, err)
 
-	// uncomment to make a new expected file
-	//writeTestFile(cf, expectedFile)
+	const expectedFile = "testdata/gluecf.json.cf"
+	// uncomment to write new expected file
+	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
 
-	expectedOutput, err := readTestFile(expectedFile)
+	expected, err := ioutil.ReadFile(expectedFile)
 	require.NoError(t, err)
-
-	assert.Equal(t, expectedOutput, cf)
+	assert.JSONEq(t, string(expected), string(cf))
 }

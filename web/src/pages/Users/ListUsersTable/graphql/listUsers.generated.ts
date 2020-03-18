@@ -29,9 +29,9 @@ export type ListUsersVariables = {
 };
 
 export type ListUsers = {
-  users: Types.Maybe<
+  users?: Types.Maybe<
     Pick<Types.ListUsersResponse, 'paginationToken'> & {
-      users: Types.Maybe<
+      users?: Types.Maybe<
         Array<
           Types.Maybe<
             Pick<Types.User, 'id' | 'email' | 'givenName' | 'familyName' | 'createdAt' | 'status'>

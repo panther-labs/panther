@@ -1,4 +1,4 @@
-package custommessage
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,17 +19,18 @@ package custommessage
  */
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 )
 
 // This is similar to the template in deployments/core/cognito.yml for the invite email.
-const template = `
-<br />Hi %s %s,
+// nolint: gosec
+const passwordResetTemplate = `
+<br />Hi %s,
 <br />
 <br />A password reset has been requested for this email address. If you did not request a password reset, you can ignore this email.
 <br />
@@ -44,18 +45,37 @@ const template = `
 <br /><small>Copyright © 2020 Panther Labs Inc. All rights reserved.</small>
 `
 
+// Instead of the standard API call, the users-api was invoked by Cognito as a custom message trigger
+func CognitoTrigger(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
+	zap.L().Info("handling cognito trigger", zap.String("source", event.TriggerSource))
+
+	switch ts := event.TriggerSource; ts {
+	case "CustomMessage_ForgotPassword":
+		return handleForgotPassword(event)
+	default:
+		return event, nil
+	}
+}
+
 func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
 	zap.L().Info("generating forget password email for:" + event.UserName)
 
-	user, err := userGateway.GetUser(&event.UserName)
-	if err != nil {
-		zap.L().Error("failed to get user "+event.UserName, zap.Error(err))
-		return nil, err
+	// Name defaults to blank if for some reason it isn't defined
+	givenName, _ := event.Request.UserAttributes["given_name"].(string)
+
+	// Email, however, is required to generate the URL
+	email, ok := event.Request.UserAttributes["email"].(string)
+	if !ok {
+		zap.L().Error("email does not exist in user attributes", zap.Any("event", event))
+		return nil, errors.New("email attribute not found")
 	}
 
-	event.Response.EmailMessage = fmt.Sprintf(template,
-		aws.StringValue(user.GivenName), aws.StringValue(user.FamilyName),
-		appDomainURL, event.Request.CodeParameter, url.QueryEscape(aws.StringValue(user.Email)))
+	event.Response.EmailMessage = fmt.Sprintf(passwordResetTemplate,
+		givenName,
+		appDomainURL,
+		event.Request.CodeParameter,
+		url.QueryEscape(email),
+	)
 	event.Response.EmailSubject = "Panther Password Reset"
 	return event, nil
 }

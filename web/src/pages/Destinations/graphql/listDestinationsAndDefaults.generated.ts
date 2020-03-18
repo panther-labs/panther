@@ -26,7 +26,7 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListDestinationsAndDefaultsVariables = {};
 
 export type ListDestinationsAndDefaults = {
-  destinations: Types.Maybe<
+  destinations?: Types.Maybe<
     Array<
       Types.Maybe<
         Pick<
@@ -42,20 +42,20 @@ export type ListDestinationsAndDefaults = {
           | 'defaultForSeverity'
         > & {
           outputConfig: {
-            slack: Types.Maybe<Pick<Types.SlackConfig, 'webhookURL'>>;
-            sns: Types.Maybe<Pick<Types.SnsConfig, 'topicArn'>>;
-            pagerDuty: Types.Maybe<Pick<Types.PagerDutyConfig, 'integrationKey'>>;
-            github: Types.Maybe<Pick<Types.GithubConfig, 'repoName' | 'token'>>;
-            jira: Types.Maybe<
+            slack?: Types.Maybe<Pick<Types.SlackConfig, 'webhookURL'>>;
+            sns?: Types.Maybe<Pick<Types.SnsConfig, 'topicArn'>>;
+            pagerDuty?: Types.Maybe<Pick<Types.PagerDutyConfig, 'integrationKey'>>;
+            github?: Types.Maybe<Pick<Types.GithubConfig, 'repoName' | 'token'>>;
+            jira?: Types.Maybe<
               Pick<
                 Types.JiraConfig,
                 'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType'
               >
             >;
-            opsgenie: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
-            msTeams: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
-            sqs: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
-            asana: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
+            opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
+            msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
+            sqs?: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
+            asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
           };
         }
       >

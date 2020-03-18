@@ -19,22 +19,28 @@ package cloudwatchcf
  */
 
 import (
+	"io/ioutil"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 func TestGenerateAlarms(t *testing.T) {
-	stackOutputs := map[string]string{
-		"WebApplicationLoadBalancerFullName": "testLoadbalancer",
-		"WebApplicationGraphqlApiId":         "testGraphqlId",
-	}
-	_, cf, err := GenerateAlarms("my-sns-topic-arn", stackOutputs, "./testdata/cf.yml")
+	_, cf, err := GenerateAlarms("./testdata/cf.yml", &config.PantherConfig{
+		BackendParameterValues: config.BackendParameters{
+			LogProcessorLambdaMemorySize: 256,
+		},
+	})
 	require.NoError(t, err)
+
 	const expectedFile = "./testdata/generated_test_alarms.json"
-	// uncomment to make a new expected file
-	// writeTestFile(cf, expectedFile)
-	expectedCf, err := readTestFile(expectedFile)
+	// uncomment to write new expected file
+	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
+
+	expected, err := ioutil.ReadFile(expectedFile)
 	require.NoError(t, err)
-	require.Equal(t, expectedCf, cf)
+	assert.JSONEq(t, string(expected), string(cf))
 }

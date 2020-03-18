@@ -28,7 +28,7 @@ export type AlertDetailsVariables = {
 };
 
 export type AlertDetails = {
-  alert: Types.Maybe<
+  alert?: Types.Maybe<
     Pick<
       Types.AlertDetails,
       | 'alertId'
