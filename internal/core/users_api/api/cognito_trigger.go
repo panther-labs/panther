@@ -28,6 +28,7 @@ import (
 )
 
 // This is similar to the template in deployments/core/cognito.yml for the invite email.
+// nolint: gosec
 const passwordResetTemplate = `
 <br />Hi %s,
 <br />
