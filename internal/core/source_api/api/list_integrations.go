@@ -28,5 +28,5 @@ import (
 func (API) ListIntegrations(
 	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
 
-	return db.ScanEnabledIntegrations(input)
+	return db.ScanIntegrations(input)
 }

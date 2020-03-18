@@ -49,6 +49,7 @@ func GetResource(request *events.APIGatewayProxyRequest) *events.APIGatewayProxy
 	}
 
 	if len(response.Item) == 0 {
+		zap.L().Debug("could not find resource", zap.String("resourceID", string(resourceID)))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
 	}
 

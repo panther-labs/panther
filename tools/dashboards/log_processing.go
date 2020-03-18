@@ -30,7 +30,7 @@ var logProcessingJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-log-processor' | SOURCE '/aws/lambda/panther-rules-engine' | SOURCE '/aws/lambda/panther-datacatalog-updater' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc\n| limit 20",
+                "query": "SOURCE '/aws/lambda/panther-log-processor' | SOURCE '/aws/lambda/panther-rules-engine' | SOURCE '/aws/lambda/panther-datacatalog-updater' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn' or @message like 'fatal error:'\n| fields @timestamp, @message\n| sort @timestamp desc\n| limit 20",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Most Recent 20 Errors and Warnings",
@@ -163,7 +163,7 @@ var logProcessingJSON = `
                 "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation='parse' | filter ispresent(stats.LogType)  | stats percentile(opTime, 50)*1000.0 as p50, percentile(opTime, 90)*1000.0 as p90, percentile(opTime, 95)*1000.0 as p95, percentile(opTime, 100)*1000.0 as p100 by bin(5m)",
                 "region": "us-east-1",
                 "stacked": false,
-                "title": "Processng Time Percentiles (msec)",
+                "title": "Processing Time Percentiles (msec)",
                 "view": "timeSeries"
             }
         },
@@ -187,7 +187,7 @@ var logProcessingJSON = `
                 "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation='sendData' | stats sum(contentLength) / 1000000 as mbbytes by bin(5m)",
                 "region": "us-east-1",
                 "stacked": false,
-                "title": "Ouptut  MBytes (Compressed) Written to S3",
+                "title": "Output MBytes (Compressed) Written to S3",
                 "view": "timeSeries"
             }
         },
@@ -348,7 +348,7 @@ var logProcessingJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-rules-engine' | SOURCE '/aws/lambda/panther-log-processor' | SOURCE '/aws/lambda/panther-datacatalog-updater' | filter @message like '[ERROR]' or level='error' or @message like '[WARN]' or level='warn'\n| fields strcontains(@message, '[ERROR']) as ruleError, strcontains(@message, '[WARN']) as ruleWarn, level \n| sum(strcontains(level, 'error')+ruleError) as errors, sum(strcontains(level, 'warn')+ruleWarn) as warns by bin(5m)",
+                "query": "SOURCE '/aws/lambda/panther-rules-engine' | SOURCE '/aws/lambda/panther-log-processor' | SOURCE '/aws/lambda/panther-datacatalog-updater' | filter @message like '[ERROR]' or level='error' or @message like '[WARN]' or level='warn' or @message like 'fatal error:'\n| sum(strcontains(@message, '\"level\":\"error\"')+strcontains(@message, '[ERROR'])+strcontains(@message, 'fatal error:')) as errors, sum(strcontains(@message, '\"level\":\"warn\"')+strcontains(@message, '[WARN]')) as warns by bin(5m)",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Errors and Warnings",

@@ -47,7 +47,7 @@ Resources:
       AutoVerifiedAttributes: # Attributes you want the user to verify (poor naming choice by AWS)
         - email
       LambdaConfig:
-        CustomMessage: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cognito-custom-message-trigger
+        CustomMessage: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
       Policies:
         PasswordPolicy:
           MinimumLength: 12
@@ -57,16 +57,13 @@ Resources:
           RequireUppercase: true
       Schema:
         - AttributeDataType: String
-          DeveloperOnlyAttribute: false
           Mutable: true
           Name: email
           Required: true
         - AttributeDataType: String
-          DeveloperOnlyAttribute: false
           Mutable: true
           Name: given_name
         - AttributeDataType: String
-          DeveloperOnlyAttribute: false
           Mutable: true
           Name: family_name
       UsernameAttributes:

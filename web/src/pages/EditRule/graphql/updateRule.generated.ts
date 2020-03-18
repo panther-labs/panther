@@ -1,21 +1,3 @@
-/**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 /* eslint-disable import/order, import/no-duplicates */
 import * as Types from '../../../../__generated__/schema';
 
@@ -27,58 +9,36 @@ export type UpdateRuleVariables = {
   input: Types.CreateOrModifyRuleInput;
 };
 
-export type UpdateRule = {
-  updateRule: Types.Maybe<
-    Pick<
-      Types.RuleDetails,
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'id'
-      | 'reference'
-      | 'logTypes'
-      | 'runbook'
-      | 'severity'
-      | 'tags'
-      | 'body'
-    > & {
-      tests: Types.Maybe<
-        Array<
-          Types.Maybe<
-            Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
-          >
-        >
-      >;
-    }
-  >;
-};
+
+export type UpdateRule = { updateRule?: Types.Maybe<(
+    Pick<Types.RuleDetails, 'description' | 'displayName' | 'enabled' | 'id' | 'reference' | 'logTypes' | 'runbook' | 'severity' | 'tags' | 'body'>
+    & { tests?: Types.Maybe<Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>>>> }
+  )> };
+
 
 export const UpdateRuleDocument = gql`
-  mutation UpdateRule($input: CreateOrModifyRuleInput!) {
-    updateRule(input: $input) {
-      description
-      displayName
-      enabled
-      id
-      reference
-      logTypes
-      runbook
-      severity
-      tags
-      body
-      tests {
-        expectedResult
-        name
-        resource
-        resourceType
-      }
+    mutation UpdateRule($input: CreateOrModifyRuleInput!) {
+  updateRule(input: $input) {
+    description
+    displayName
+    enabled
+    id
+    reference
+    logTypes
+    runbook
+    severity
+    tags
+    body
+    tests {
+      expectedResult
+      name
+      resource
+      resourceType
     }
   }
-`;
-export type UpdateRuleMutationFn = ApolloReactCommon.MutationFunction<
-  UpdateRule,
-  UpdateRuleVariables
->;
+}
+    `;
+export type UpdateRuleMutationFn = ApolloReactCommon.MutationFunction<UpdateRule, UpdateRuleVariables>;
 
 /**
  * __useUpdateRule__
@@ -97,17 +57,9 @@ export type UpdateRuleMutationFn = ApolloReactCommon.MutationFunction<
  *   },
  * });
  */
-export function useUpdateRule(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRule, UpdateRuleVariables>
-) {
-  return ApolloReactHooks.useMutation<UpdateRule, UpdateRuleVariables>(
-    UpdateRuleDocument,
-    baseOptions
-  );
-}
+export function useUpdateRule(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRule, UpdateRuleVariables>) {
+        return ApolloReactHooks.useMutation<UpdateRule, UpdateRuleVariables>(UpdateRuleDocument, baseOptions);
+      }
 export type UpdateRuleHookResult = ReturnType<typeof useUpdateRule>;
 export type UpdateRuleMutationResult = ApolloReactCommon.MutationResult<UpdateRule>;
-export type UpdateRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  UpdateRule,
-  UpdateRuleVariables
->;
+export type UpdateRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<UpdateRule, UpdateRuleVariables>;

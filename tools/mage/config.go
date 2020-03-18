@@ -25,6 +25,7 @@ type bucketsParameters struct {
 }
 
 type backendParameters struct {
+	LogProcessorLambdaMemorySize int    `yaml:"LogProcessorLambdaMemorySize"`
 	CloudWatchLogRetentionDays   int    `yaml:"CloudWatchLogRetentionDays"`
 	Debug                        bool   `yaml:"Debug"`
 	LayerVersionArns             string `yaml:"LayerVersionArns"`

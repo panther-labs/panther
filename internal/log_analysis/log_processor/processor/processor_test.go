@@ -239,12 +239,10 @@ func TestProcessClassifyFailure(t *testing.T) {
 	// first one fails
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
 		Events:  []*parsers.PantherLog{},
-		LogLine: testLogLine,
 		LogType: nil,
 	}).Once()
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
 		Events:  []*parsers.PantherLog{newTestLog()},
-		LogLine: testLogLine,
 		LogType: &testLogType,
 	})
 	mockClassifier.On("Stats", mock.Anything).Return(mockStats)
@@ -385,7 +383,6 @@ func (c *testClassifier) ParserStats() map[string]*classification.ParserStats {
 func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, pStats map[string]*classification.ParserStats) {
 	c.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
 		Events:  []*parsers.PantherLog{newTestLog()},
-		LogLine: testLogLine,
 		LogType: &testLogType,
 	}).After(parseDelay)
 	c.On("Stats", mock.Anything).Return(cStats)

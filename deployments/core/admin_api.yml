@@ -16,7 +16,7 @@
 
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: Users, Organization, and Onboarding APIs
+Description: Users and Organization APIs
 
 Parameters:
   CloudWatchLogRetentionDays:
@@ -64,6 +64,7 @@ Resources:
       Description: CRUD actions for the cognito api
       Environment:
         Variables:
+          APP_DOMAIN_URL: !Ref AppDomainURL
           DEBUG: !Ref Debug
           USER_POOL_ID: !Ref UserPoolId
       FunctionName: panther-users-api
@@ -105,51 +106,14 @@ Resources:
                 - appsync:UpdateGraphqlApi
               Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:*
 
-  ##### Custom message trigger function #####
-  CustomMessageTriggerLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/panther-cognito-custom-message-trigger
-      RetentionInDays: !Ref CloudWatchLogRetentionDays
-
-  CustomMessageTriggerFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ../../out/bin/internal/core/custom_message/main
-      Description: Custom message trigger for Cognito user events
-      Environment:
-        Variables:
-          DEBUG: !Ref Debug
-          APP_DOMAIN_URL: !Ref AppDomainURL
-          USER_POOL_ID: !Ref UserPoolId
-      FunctionName: panther-cognito-custom-message-trigger
-      # <cfndoc>
-      # This lambda implements sending password reset emails.
-      #
-      # Failure Impact
-      # * Failure of this lambda will impact sending password reset emails.
-      # </cfndoc>
-      Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
-      Runtime: go1.x
-      Timeout: 60
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
-      Policies:
-        - Id: GetCognitoUsers
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: cognito-idp:AdminGetUser
-              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
-
+  # Allow Cognito to invoke the users-api for custom triggers
   CustomMessageTriggerInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt CustomMessageTriggerFunction.Arn
+      FunctionName: !GetAtt UsersAPIFunction.Arn
       Action: lambda:InvokeFunction
       Principal: cognito-idp.amazonaws.com
-      SourceArn: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*
+      SourceArn: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
 
   ##### Organization API #####
   OrganizationTable:

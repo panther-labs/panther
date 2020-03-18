@@ -1,21 +1,3 @@
-/**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 /* eslint-disable import/order, import/no-duplicates */
 import * as Types from '../../../../../__generated__/schema';
 
@@ -27,36 +9,23 @@ export type UploadPoliciesVariables = {
   input: Types.UploadPoliciesInput;
 };
 
-export type UploadPolicies = {
-  uploadPolicies: Types.Maybe<
-    Pick<
-      Types.UploadPoliciesResponse,
-      | 'totalPolicies'
-      | 'modifiedPolicies'
-      | 'newPolicies'
-      | 'totalRules'
-      | 'modifiedRules'
-      | 'newRules'
-    >
-  >;
-};
+
+export type UploadPolicies = { uploadPolicies?: Types.Maybe<Pick<Types.UploadPoliciesResponse, 'totalPolicies' | 'modifiedPolicies' | 'newPolicies' | 'totalRules' | 'modifiedRules' | 'newRules'>> };
+
 
 export const UploadPoliciesDocument = gql`
-  mutation UploadPolicies($input: UploadPoliciesInput!) {
-    uploadPolicies(input: $input) {
-      totalPolicies
-      modifiedPolicies
-      newPolicies
-      totalRules
-      modifiedRules
-      newRules
-    }
+    mutation UploadPolicies($input: UploadPoliciesInput!) {
+  uploadPolicies(input: $input) {
+    totalPolicies
+    modifiedPolicies
+    newPolicies
+    totalRules
+    modifiedRules
+    newRules
   }
-`;
-export type UploadPoliciesMutationFn = ApolloReactCommon.MutationFunction<
-  UploadPolicies,
-  UploadPoliciesVariables
->;
+}
+    `;
+export type UploadPoliciesMutationFn = ApolloReactCommon.MutationFunction<UploadPolicies, UploadPoliciesVariables>;
 
 /**
  * __useUploadPolicies__
@@ -75,17 +44,9 @@ export type UploadPoliciesMutationFn = ApolloReactCommon.MutationFunction<
  *   },
  * });
  */
-export function useUploadPolicies(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<UploadPolicies, UploadPoliciesVariables>
-) {
-  return ApolloReactHooks.useMutation<UploadPolicies, UploadPoliciesVariables>(
-    UploadPoliciesDocument,
-    baseOptions
-  );
-}
+export function useUploadPolicies(baseOptions?: ApolloReactHooks.MutationHookOptions<UploadPolicies, UploadPoliciesVariables>) {
+        return ApolloReactHooks.useMutation<UploadPolicies, UploadPoliciesVariables>(UploadPoliciesDocument, baseOptions);
+      }
 export type UploadPoliciesHookResult = ReturnType<typeof useUploadPolicies>;
 export type UploadPoliciesMutationResult = ApolloReactCommon.MutationResult<UploadPolicies>;
-export type UploadPoliciesMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  UploadPolicies,
-  UploadPoliciesVariables
->;
+export type UploadPoliciesMutationOptions = ApolloReactCommon.BaseMutationOptions<UploadPolicies, UploadPoliciesVariables>;
