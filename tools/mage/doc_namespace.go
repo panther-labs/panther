@@ -51,7 +51,7 @@ Each resource describes its function and failure impacts.
 `
 )
 
-// Cfn Cfn will generate user documentation from deployment CloudFormation
+// Generate user documentation from deployment CloudFormation
 func (t Doc) Cfn() {
 	logger.Infof("doc: generating operational documentation from cloudformation")
 	outDir := filepath.Join("docs", "gitbook", "operations")

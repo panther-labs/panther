@@ -120,13 +120,6 @@ func testGo() bool {
 		return false
 	}
 
-	// compile all Go Lambda functions
-	var b Build
-	if err := b.lambda(); err != nil {
-		logger.Errorf("go compilation failed: %v", err)
-		return false
-	}
-
 	// metalinting
 	logger.Info("test:go: golangci-lint")
 	args = []string{"run", "--timeout", "10m"}
@@ -272,8 +265,11 @@ func (t Test) Cover() error {
 	return sh.Run("go", "tool", "cover", "-html=out/.coverage")
 }
 
-// CI Run all required checks
+// CI Run all required checks (build:all, test:cfn, test:go, test:python, test:web)
 func (t Test) CI() {
+	var b Build
+	b.All()
+
 	var failed []string
 	if !testCfn() {
 		failed = append(failed, "cfn")

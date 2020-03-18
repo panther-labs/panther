@@ -40,6 +40,13 @@ var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 // Build contains targets for compiling source code.
 type Build mg.Namespace
 
+// Build all deployment artifacts
+func (b Build) All() {
+	b.Lambda() // implicitly does b.API()
+	b.Cfn()
+	b.Opstools()
+}
+
 // API Generate Go client/models from Swagger specs in api/
 func (b Build) API() {
 	specs, err := filepath.Glob(swaggerGlob)
@@ -212,12 +219,15 @@ func buildPackage(pkg string) error {
 
 // Generate CloudFormation templates in out/deployments folder
 func (b Build) Cfn() {
-	// TODO Add a "build:all" target that just builds everything that will be deployed, but without triggering the actual deployment.
 	if err := generateGlueTables(); err != nil {
 		logger.Fatal(err)
 	}
 
 	if err := generateDashboards(); err != nil {
+		logger.Fatal(err)
+	}
+
+	if err := generateMetrics(); err != nil {
 		logger.Fatal(err)
 	}
 }
