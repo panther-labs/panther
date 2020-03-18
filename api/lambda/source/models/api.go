@@ -51,8 +51,9 @@ type CheckIntegrationInput struct {
 	EnableRemediation *bool `json:"enableRemediation"`
 
 	// Checks for log analysis integrations
-	S3Buckets []*string `json:"s3Buckets"`
-	KmsKeys   []*string `json:"kmsKeys"`
+	S3Bucket *string `json:"s3Bucket,omitempty"`
+	S3Prefix *string `json:"s3Prefix,omitempty"`
+	KmsKey   *string `json:"kmsKey,omitempty"`
 }
 
 //
@@ -61,8 +62,8 @@ type CheckIntegrationInput struct {
 
 // PutIntegrationInput is used to add one or many integrations.
 type PutIntegrationInput struct {
-	Integrations  []*PutIntegrationSettings `json:"integrations" validate:"required,dive"`
-	SkipScanQueue *bool                     `json:"skipScanQueue"`
+	PutIntegrationSettings
+	SkipScanQueue *bool `json:"skipScanQueue"`
 }
 
 // PutIntegrationSettings are all the settings for the new integration.
@@ -74,8 +75,10 @@ type PutIntegrationSettings struct {
 	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
 	ScanIntervalMins   *int      `json:"scanIntervalMins,omitempty" validate:"omitempty,oneof=60 180 360 720 1440"`
 	UserID             *string   `json:"userId" validate:"required,uuid4"`
-	S3Buckets          []*string `json:"s3Buckets"`
-	KmsKeys            []*string `json:"kmsKeys"`
+	S3Bucket           *string   `json:"s3Bucket,omitempty"`
+	S3Prefix           *string   `json:"s3Prefix,omitempty"`
+	KmsKey             *string   `json:"kmsKey,omitempty"`
+	LogTypes           []*string `json:"logTypes,omitempty"`
 }
 
 //
@@ -97,8 +100,10 @@ type GetIntegrationTemplateInput struct {
 	IntegrationType    *string   `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
 	RemediationEnabled *bool     `json:"remediationEnabled"`
 	CWEEnabled         *bool     `json:"cweEnabled"`
-	S3Buckets          []*string `json:"s3Buckets"`
-	KmsKeys            []*string `json:"kmsKeys"`
+	S3Bucket           *string   `json:"s3Bucket,omitempty"`
+	S3Prefix           *string   `json:"s3Prefix,omitempty"`
+	KmsKey             *string   `json:"kmsKey,omitempty"`
+	LogTypes           []*string `json:"logTypes,omitempty"`
 }
 
 //
@@ -137,6 +142,8 @@ type UpdateIntegrationSettingsInput struct {
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
 	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Buckets          []*string `json:"s3Buckets"`
-	KmsKeys            []*string `json:"kmsKeys"`
+	S3Bucket           *string   `json:"s3Bucket,omitempty"`
+	S3Prefix           *string   `json:"s3Prefix,omitempty"`
+	KmsKey             *string   `json:"kmsKey,omitempty"`
+	LogTypes           []*string `json:"logTypes,omitempty"`
 }

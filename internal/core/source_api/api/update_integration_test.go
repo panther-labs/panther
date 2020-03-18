@@ -82,8 +82,10 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		S3Buckets: aws.StringSlice([]string{"test-bucket-1", "test-bucket-2/*"}),
-		KmsKeys:   aws.StringSlice([]string{"arn:aws:kms:us-west-2:415773754570:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"}),
+		S3Bucket: aws.String("test-bucket-1"),
+		S3Prefix: aws.String("prefix/"),
+		KmsKey:   aws.String("arn:aws:kms:us-west-2:415773754570:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"),
+		LogTypes: aws.StringSlice([]string{"logType1", "logType2"}),
 	})
 
 	assert.NoError(t, err)

@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -36,7 +35,7 @@ const (
 	TemplateBucket           = "panther-public-cloudformation-templates"
 	CloudSecurityTemplateKey = "panther-cloudsec-iam/v1.0.0/template.yml"
 	LogProcessingTemplateKey = "panther-log-processing-iam/latest/template.yml"
-	cacheTimout              = time.Minute * 30
+	cacheTimeout             = time.Minute * 30
 )
 
 var (
@@ -53,8 +52,8 @@ var (
 	remediationReplace = "Value: %t # DeployRemediation"
 
 	// Formatting variables for Log Analysis
-	s3BucketFind    = []byte("Default: '' # S3Buckets")
-	s3BucketReplace = "Default: %s # S3Buckets"
+	s3BucketFind    = []byte("Default: '' # S3Bucket")
+	s3BucketReplace = "Default: %s # S3Bucket"
 	kmsKeyFind      = []byte("Default: '' # EncryptionKeys")
 	kmsKeyReplace   = "Default: %s # EncryptionKeys"
 )
@@ -86,26 +85,21 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 
 	// Log Analysis replacements
 	formattedTemplate = bytes.Replace(formattedTemplate, s3BucketFind,
-		[]byte(fmt.Sprintf(s3BucketReplace, strings.Join(sliceStringValue(input.S3Buckets), ","))), 1)
-	formattedTemplate = bytes.Replace(formattedTemplate, kmsKeyFind,
-		[]byte(fmt.Sprintf(kmsKeyReplace, strings.Join(sliceStringValue(input.KmsKeys), ","))), 1)
+		[]byte(fmt.Sprintf(s3BucketReplace, *input.S3Bucket)), 1)
+
+	if input.KmsKey != nil {
+		formattedTemplate = bytes.Replace(formattedTemplate, kmsKeyFind,
+			[]byte(fmt.Sprintf(kmsKeyReplace, *input.KmsKey)), 1)
+	}
 
 	return &models.SourceIntegrationTemplate{
 		Body: aws.String(string(formattedTemplate)),
 	}, nil
 }
 
-func sliceStringValue(stringPointers []*string) []string {
-	out := make([]string, 0, len(stringPointers))
-	for index, ptr := range stringPointers {
-		out[index] = aws.StringValue(ptr)
-	}
-	return out
-}
-
 func getTemplate(integrationType *string) ([]byte, error) {
 	// First check the cache
-	if item, ok := templateCache[*integrationType]; ok && time.Since(item.Timestamp) < cacheTimout {
+	if item, ok := templateCache[*integrationType]; ok && time.Since(item.Timestamp) < cacheTimeout {
 		zap.L().Debug("using cached template")
 		return item.Body, nil
 	}

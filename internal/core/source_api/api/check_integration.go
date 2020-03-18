@@ -45,8 +45,8 @@ var evaluateIntegrationFunc = evaluateIntegration
 func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
 	zap.L().Debug("beginning source health check")
 	out := &models.SourceIntegrationHealth{
-		AWSAccountID:    input.AWSAccountID,
-		IntegrationType: input.IntegrationType,
+		AWSAccountID:    aws.StringValue(input.AWSAccountID),
+		IntegrationType: aws.StringValue(input.IntegrationType),
 	}
 
 	if *input.IntegrationType == models.IntegrationTypeAWSScan {
@@ -57,71 +57,61 @@ func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.Source
 		if aws.BoolValue(input.EnableRemediation) {
 			_, out.RemediationRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(remediationRoleFormat, *input.AWSAccountID)))
 		}
-	}
-
-	if *input.IntegrationType == models.IntegrationTypeAWS3 {
+	} else {
 		var roleCreds *credentials.Credentials
 		roleCreds, out.ProcessingRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(logProcessingRoleFormat, *input.AWSAccountID)))
-		if len(input.S3Buckets) > 0 && *out.ProcessingRoleStatus.Healthy {
-			out.S3BucketsStatus = checkBuckets(roleCreds, input.S3Buckets)
-		}
-		if len(input.KmsKeys) > 0 && *out.ProcessingRoleStatus.Healthy {
-			out.KMSKeysStatus = checkKeys(roleCreds, input.KmsKeys)
+		if out.ProcessingRoleStatus.Healthy {
+			out.S3BucketStatus = checkBucket(roleCreds, input.S3Bucket)
+			out.KMSKeyStatus = checkKey(roleCreds, input.KmsKey)
 		}
 	}
 
 	return out, nil
 }
-func checkKeys(roleCredentials *credentials.Credentials, keys []*string) map[string]models.SourceIntegrationItemStatus {
+func checkKey(roleCredentials *credentials.Credentials, key *string) models.SourceIntegrationItemStatus {
+	if key == nil {
+		// KMS key is optional
+		return models.SourceIntegrationItemStatus{
+			Healthy: true,
+		}
+	}
 	kmsClient := kms.New(sess, &aws.Config{Credentials: roleCredentials})
 
-	keyStatuses := make(map[string]models.SourceIntegrationItemStatus, len(keys))
-	for _, key := range keys {
-		info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
-		if err != nil {
-			keyStatuses[*key] = models.SourceIntegrationItemStatus{
-				Healthy:      aws.Bool(false),
-				ErrorMessage: aws.String(err.Error()),
-			}
-			continue
-		}
-
-		if !*info.KeyMetadata.Enabled {
-			// If the key is disabled, we should fail as well
-			keyStatuses[*key] = models.SourceIntegrationItemStatus{
-				Healthy:      aws.Bool(false),
-				ErrorMessage: aws.String("key disabled"),
-			}
-			continue
-		}
-
-		keyStatuses[*key] = models.SourceIntegrationItemStatus{
-			Healthy: aws.Bool(true),
+	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
+	if err != nil {
+		return models.SourceIntegrationItemStatus{
+			Healthy:      false,
+			ErrorMessage: err.Error(),
 		}
 	}
 
-	return keyStatuses
+	if !*info.KeyMetadata.Enabled {
+		// If the key is disabled, we should fail as well
+		return models.SourceIntegrationItemStatus{
+			Healthy:      false,
+			ErrorMessage: "key disabled",
+		}
+	}
+
+	return models.SourceIntegrationItemStatus{
+		Healthy: true,
+	}
 }
 
-func checkBuckets(roleCredentials *credentials.Credentials, buckets []*string) map[string]models.SourceIntegrationItemStatus {
+func checkBucket(roleCredentials *credentials.Credentials, bucket *string) models.SourceIntegrationItemStatus {
 	s3Client := s3.New(sess, &aws.Config{Credentials: roleCredentials})
 
-	bucketStatuses := make(map[string]models.SourceIntegrationItemStatus, len(buckets))
-	for _, bucket := range buckets {
-		_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucket})
-		if err != nil {
-			bucketStatuses[*bucket] = models.SourceIntegrationItemStatus{
-				Healthy:      aws.Bool(false),
-				ErrorMessage: aws.String(err.Error()),
-			}
-		} else {
-			bucketStatuses[*bucket] = models.SourceIntegrationItemStatus{
-				Healthy: aws.Bool(true),
-			}
+	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucket})
+	if err != nil {
+		return models.SourceIntegrationItemStatus{
+			Healthy:      false,
+			ErrorMessage: err.Error(),
 		}
 	}
 
-	return bucketStatuses
+	return models.SourceIntegrationItemStatus{
+		Healthy: true,
+	}
 }
 
 func getCredentialsWithStatus(
@@ -140,13 +130,13 @@ func getCredentialsWithStatus(
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
-			Healthy:      aws.Bool(false),
-			ErrorMessage: aws.String(err.Error()),
+			Healthy:      false,
+			ErrorMessage: err.Error(),
 		}
 	}
 
 	return roleCredentials, models.SourceIntegrationItemStatus{
-		Healthy: aws.Bool(true),
+		Healthy: true,
 	}
 }
 
@@ -156,20 +146,13 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (bo
 		return false, err
 	}
 
+	if *integration.IntegrationType == models.IntegrationTypeAWSScan {
+		passing := status.AuditRoleStatus.Healthy
+		// For these two, we are ok if they are not enabled or if they are passing
+		passing = passing && (!aws.BoolValue(integration.EnableRemediation) || status.RemediationRoleStatus.Healthy)
+		passing = passing && (!aws.BoolValue(integration.EnableCWESetup) || status.CWERoleStatus.Healthy)
+		return passing, nil
+	}
 	// One of these will be nil, one of these will not. We only care about the value of the not nil one.
-	passing := aws.BoolValue(status.AuditRoleStatus.Healthy) || aws.BoolValue(status.ProcessingRoleStatus.Healthy)
-
-	// For these two, we are ok if they are not enabled or if they are passing
-	passing = passing && (!aws.BoolValue(integration.EnableRemediation) || aws.BoolValue(status.RemediationRoleStatus.Healthy))
-	passing = passing && (!aws.BoolValue(integration.EnableCWESetup) || aws.BoolValue(status.CWERoleStatus.Healthy))
-
-	// For these two, we are ok if none are set or all are passing
-	for _, bucket := range status.S3BucketsStatus {
-		passing = passing && aws.BoolValue(bucket.Healthy)
-	}
-	for _, key := range status.KMSKeysStatus {
-		passing = passing && aws.BoolValue(key.Healthy)
-	}
-
-	return passing, nil
+	return status.ProcessingRoleStatus.Healthy && status.S3BucketStatus.Healthy && status.KMSKeyStatus.Healthy, nil
 }

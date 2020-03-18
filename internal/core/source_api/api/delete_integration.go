@@ -33,7 +33,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		if err != nil && integrationForDeletePermissions != nil {
 			// In case we have already removed the Permissions from SQS but some other operation failed
 			// re-add the permissions
-			if undoErr := AddPermissionToLogProcessorQueue(*integrationForDeletePermissions.AWSAccountID); undoErr != nil {
+			if _, undoErr := AddPermissionToLogProcessorQueue(*integrationForDeletePermissions.AWSAccountID); undoErr != nil {
 				zap.L().Error("failed to re-add SQS permission for integration. SQS is missing permissions that have to be added manually",
 					zap.String("integrationId", *integrationForDeletePermissions.IntegrationID),
 					zap.Error(undoErr),

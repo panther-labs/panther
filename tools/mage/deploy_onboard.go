@@ -72,18 +72,14 @@ func deployCloudSecRoles(awsSession *session.Session, bucket string) {
 
 func registerPantherAccount(awsSession *session.Session, pantherAccountID string) {
 	logger.Infof("deploy: registering account %s with Panther", pantherAccountID)
-	var apiInput = struct {
-		PutIntegration *models.PutIntegrationInput
-	}{
-		&models.PutIntegrationInput{
-			Integrations: []*models.PutIntegrationSettings{
-				{
-					AWSAccountID:     aws.String(pantherAccountID),
-					IntegrationLabel: aws.String("Panther Account"),
-					IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-					ScanIntervalMins: aws.Int(1440),
-					UserID:           aws.String(mageUserID),
-				},
+	apiInput := &models.LambdaInput{
+		PutIntegration: &models.PutIntegrationInput{
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				AWSAccountID:     aws.String(pantherAccountID),
+				IntegrationLabel: aws.String("Panther Account"),
+				IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+				ScanIntervalMins: aws.Int(1440),
+				UserID:           aws.String(mageUserID),
 			},
 		},
 	}

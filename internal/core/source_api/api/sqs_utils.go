@@ -26,8 +26,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 //
@@ -52,10 +50,10 @@ const (
 
 // AddPermissionToLogProcessorQueue modifies the SQS Queue policy of the Log Processor
 // to allow SNS topic from new account to subscribe to it
-func AddPermissionToLogProcessorQueue(accountID string) error {
+func AddPermissionToLogProcessorQueue(accountID string) (bool, error) {
 	existingPolicy, err := getQueuePolicy()
 	if err != nil {
-		return err
+		return false, err
 	}
 	if existingPolicy == nil {
 		existingPolicy = &SqsPolicy{
@@ -65,15 +63,8 @@ func AddPermissionToLogProcessorQueue(accountID string) error {
 	}
 
 	if findStatementIndex(existingPolicy, accountID) >= 0 {
-		errMsg := "account: " + accountID + " has already been configured"
-		err = errors.WithStack(&genericapi.AlreadyExistsError{Message: errMsg})
-		zap.L().Error(errMsg,
-			zap.String("sqsQueueARN", logProcessorQueueArn),
-			zap.String("awsAccountId", accountID),
-			zap.Error(err))
-
-		// // Returning user friendly message
-		return err
+		// if it already exists, no need to do anything
+		return false, nil
 	}
 
 	existingPolicy.Statements = append(existingPolicy.Statements, getStatementForAccount(accountID))
@@ -81,7 +72,7 @@ func AddPermissionToLogProcessorQueue(accountID string) error {
 	if err != nil {
 		zap.L().Error("failed to set policy", zap.Error(errors.Wrap(err, "failed to set policy")))
 	}
-	return setQueuePolicy(existingPolicy)
+	return true, setQueuePolicy(existingPolicy)
 }
 
 // RemovePermissionFromLogProcessorQueue modifies the SQS Queue policy of the Log Processor

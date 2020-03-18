@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -36,49 +37,51 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
+var (
+	putIntegrationInternalError = &genericapi.InternalError{Message: "Failed to add source. Please try again later"}
+)
+
 // PutIntegration adds a set of new integrations in a batch.
-func (api API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIntegrationMetadata, error) {
-	// Validate the new integrations
-	for _, integration := range input.Integrations {
-		passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
-			AWSAccountID:      integration.AWSAccountID,
-			IntegrationType:   integration.IntegrationType,
-			EnableCWESetup:    integration.CWEEnabled,
-			EnableRemediation: integration.RemediationEnabled,
-			S3Buckets:         integration.S3Buckets,
-			KmsKeys:           integration.KmsKeys,
-		})
-		if err != nil {
-			return nil, err
-		}
-		if !passing {
-			return nil, &genericapi.InvalidInputError{
-				Message: fmt.Sprintf("integration %s did not pass health check", *integration.AWSAccountID),
-			}
+func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.SourceIntegrationMetadata, error) {
+	// Validate the new integration
+	passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
+		AWSAccountID:      input.AWSAccountID,
+		IntegrationType:   input.IntegrationType,
+		EnableCWESetup:    input.CWEEnabled,
+		EnableRemediation: input.RemediationEnabled,
+		S3Bucket:          input.S3Bucket,
+		S3Prefix:          input.S3Prefix,
+		KmsKey:            input.KmsKey,
+	})
+	if err != nil {
+		return nil, putIntegrationInternalError
+	}
+	if !passing {
+		return nil, &genericapi.InvalidInputError{
+			Message: fmt.Sprintf("source %s did not pass health check", *input.AWSAccountID),
 		}
 	}
 
 	// Filter out existing integrations
-	integrations, err := api.filterOutExistingIntegrations(input.Integrations)
+	alreadyExists, err := api.integrationWithSameLabelExists(input)
 	if err != nil {
-		return nil, err
+		return nil, putIntegrationInternalError
 	}
 
-	// Generate the new integrations
-	newIntegrations := make([]*models.SourceIntegrationMetadata, len(integrations))
-	for i, integration := range integrations {
-		newIntegrations[i] = generateNewIntegration(integration)
+	if alreadyExists {
+		return nil, &genericapi.InvalidInputError{
+			Message: fmt.Sprintf("source with same label already exists for account %s", *input.AWSAccountID),
+		}
 	}
 
 	// Get ready to add appropriate permissions to the SQS queue
-	permissionsAddedForIntegrations := []*models.SourceIntegrationMetadata{}
+	permissionAdded := false
 	defer func() {
 		if err != nil {
 			// In case there has been any error, try to undo granting of permissions to SQS queue.
-			for _, integration := range permissionsAddedForIntegrations {
-				if undoErr := RemovePermissionFromLogProcessorQueue(*integration.AWSAccountID); undoErr != nil {
+			if permissionAdded {
+				if undoErr := RemovePermissionFromLogProcessorQueue(*input.AWSAccountID); undoErr != nil {
 					zap.L().Error("failed to remove SQS permission for integration. SQS queue has additional permissions that have to be removed manually",
-						zap.String("sqsPermissionLabel", *integration.IntegrationID),
 						zap.Error(undoErr),
 						zap.Error(err))
 				}
@@ -87,62 +90,54 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) ([]*models.Sour
 	}()
 
 	// Add appropriate permissions to the SQS queue
-	for _, integration := range newIntegrations {
-		if *integration.IntegrationType != models.IntegrationTypeAWS3 {
-			continue
+	if *input.IntegrationType == models.IntegrationTypeAWS3 {
+		permissionAdded, err = AddPermissionToLogProcessorQueue(*input.AWSAccountID)
+		if err != nil {
+			return nil, putIntegrationInternalError
 		}
-		err = AddPermissionToLogProcessorQueue(*integration.AWSAccountID)
-		if err != nil { // logging handled in called function
-			return nil, err
-		}
-		permissionsAddedForIntegrations = append(permissionsAddedForIntegrations, integration)
 	}
 
+	// Generate the new integration
+	newIntegration := generateNewIntegration(input)
+
 	// Batch write to DynamoDB
-	if err = db.BatchPutSourceIntegrations(newIntegrations); err != nil {
-		return nil, err
+	if err = db.PutSourceIntegration(newIntegration); err != nil {
+		return nil, putIntegrationInternalError
 	}
 
 	// Return early to skip sending to the snapshot queue
 	if aws.BoolValue(input.SkipScanQueue) {
-		return newIntegrations, nil
+		return newIntegration, nil
 	}
 
-	var integrationsToScan []*models.SourceIntegrationMetadata
-	for _, integration := range newIntegrations {
-		//We don't want to trigger scanning for aws-s3 type integrations
-		if aws.StringValue(integration.IntegrationType) == models.IntegrationTypeAWS3 {
-			continue
+	if *input.IntegrationType == models.IntegrationTypeAWSScan {
+		err = ScanAllResources([]*models.SourceIntegrationMetadata{newIntegration})
+		if err != nil {
+			return nil, putIntegrationInternalError
 		}
-		integrationsToScan = append(integrationsToScan, integration)
 	}
-
-	// Add to the Snapshot queue
-	err = ScanAllResources(integrationsToScan)
-	return newIntegrations, err
+	return newIntegration, nil
 }
 
-func (api API) filterOutExistingIntegrations(inputIntegrations []*models.PutIntegrationSettings) (
-	existingIntegrations []*models.PutIntegrationSettings, err error) {
-
+func (api API) integrationWithSameLabelExists(input *models.PutIntegrationInput) (bool, error) {
 	// avoid inserting if already done
-	currentIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
+	existingIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
 	if err != nil {
-		return nil, &genericapi.InternalError{Message: err.Error()}
+		err = errors.Wrap(err, "failed to fetch integration")
+		zap.L().Error("failed to fetch integrations", zap.Error(err))
+		return false, err
 	}
-	currentIntegrationsMap := make(map[string]struct{})
-	for _, integration := range currentIntegrations {
-		currentIntegrationsMap[*integration.AWSAccountID+*integration.IntegrationType] = struct{}{}
-	}
-	for _, integration := range inputIntegrations {
-		if _, found := currentIntegrationsMap[*integration.AWSAccountID+*integration.IntegrationType]; found {
-			zap.L().Warn(fmt.Sprintf("integration exists for: %s:%s skipping PutIntegration()",
-				*integration.AWSAccountID, *integration.IntegrationType))
-		} else {
-			existingIntegrations = append(existingIntegrations, integration)
+
+	for _, existingIntegration := range existingIntegrations {
+		if *existingIntegration.IntegrationType == *input.IntegrationType &&
+			*existingIntegration.IntegrationLabel == *input.IntegrationLabel &&
+			*existingIntegration.AWSAccountID == *input.AWSAccountID {
+
+			return true, nil
 		}
 	}
-	return existingIntegrations, nil
+
+	return false, nil
 }
 
 // ScanAllResources schedules scans for each Resource type for each integration.
@@ -193,7 +188,7 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 	return err
 }
 
-func generateNewIntegration(input *models.PutIntegrationSettings) *models.SourceIntegrationMetadata {
+func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceIntegrationMetadata {
 	return &models.SourceIntegrationMetadata{
 		AWSAccountID:       input.AWSAccountID,
 		CreatedAtTime:      aws.Time(time.Now()),
@@ -205,7 +200,9 @@ func generateNewIntegration(input *models.PutIntegrationSettings) *models.Source
 		RemediationEnabled: input.RemediationEnabled,
 		ScanIntervalMins:   input.ScanIntervalMins,
 		// For log analysis integrations
-		S3Buckets: input.S3Buckets,
-		KmsKeys:   input.KmsKeys,
+		S3Bucket: input.S3Bucket,
+		S3Prefix: input.S3Prefix,
+		KmsKey:   input.KmsKey,
+		LogTypes: input.LogTypes,
 	}
 }
