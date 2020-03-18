@@ -65,7 +65,7 @@ func retry(alerts []*models.Alert) {
 		}
 	}
 
-	if err := sqsbatch.SendMessageBatch(getSQSClient(), maxSQSBackoff, input); err != nil {
+	if _, err := sqsbatch.SendMessageBatch(getSQSClient(), maxSQSBackoff, input); err != nil {
 		zap.L().Error("unable to retry failed alerts", zap.Error(err))
 	}
 }

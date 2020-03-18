@@ -52,7 +52,6 @@ func TestListIntegrations(t *testing.T) {
 					"lastScanEndTime":      {S: aws.String(lastScanEndTime.Format(time.RFC3339))},
 					"lastScanErrorMessage": {S: aws.String("")},
 					"lastScanStartTime":    {S: aws.String(lastScanStartTime.Format(time.RFC3339))},
-					"scanEnabled":          {BOOL: aws.Bool(true)},
 					"scanIntervalMins":     {N: aws.String(strconv.Itoa(1440))},
 					"scanStatus":           {S: aws.String(models.StatusOK)},
 				},
@@ -68,7 +67,6 @@ func TestListIntegrations(t *testing.T) {
 			IntegrationID:    aws.String(testIntegrationID),
 			IntegrationLabel: aws.String(testIntegrationLabel),
 			IntegrationType:  aws.String(testIntegrationType),
-			ScanEnabled:      aws.Bool(true),
 			ScanIntervalMins: aws.Int(1440),
 		},
 		SourceIntegrationStatus: &models.SourceIntegrationStatus{
