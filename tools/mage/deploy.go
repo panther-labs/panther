@@ -203,9 +203,6 @@ func getBackendDeployParams(
 		result["WebApplicationCertificateArn"] = uploadLocalCertificate(awsSession)
 	}
 
-	// set alarm sns topic if configured
-	result["AlarmSNSTopicArn"] = config.MonitoringParameterValues.AlarmSNSTopicARN
-
 	result["PantherLogProcessingDatabase"] = awsglue.LogProcessingDatabaseName
 
 	return result
