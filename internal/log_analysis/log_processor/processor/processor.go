@@ -21,6 +21,7 @@ package processor
 import (
 	"bufio"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -63,6 +64,7 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 	parsedEventChannel := make(chan *parsers.PantherLog, ParsedEventBufferSize)
 	errorChannel := make(chan error)
 
+	// go routine aggregates data written to s3
 	var sendEventsWg sync.WaitGroup
 	sendEventsWg.Add(1)
 	go func() {
@@ -70,37 +72,35 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 		sendEventsWg.Done()
 	}()
 
-	var streamProcessingWg sync.WaitGroup
-	for _, dataStream := range dataStreams {
-		processor := newProcessorFunc(dataStream)
-		streamProcessingWg.Add(1)
-		go func(p *Processor) {
-			err := p.run(parsedEventChannel)
-			if err != nil {
-				errorChannel <- err
-			}
-			streamProcessingWg.Done()
-		}(processor)
-	}
-
+	// listen for errors, set to var below which will be returned
+	var errorsWg sync.WaitGroup
+	errorsWg.Add(1)
+	var err error
 	go func() {
-		zap.L().Debug("waiting for goroutines to stop reading data")
-		// Close the channel after all goroutines have finished writing to it.
-		// The Destination that is reading the channel will terminate
-		// after consuming all the buffered messages
-		streamProcessingWg.Wait()
-		close(parsedEventChannel) // will cause SendEvent() go routine to finish and exit
-		sendEventsWg.Wait()       // wait until all files and errors are written
-		close(errorChannel)       // this will allow process() to exit loop below
-		zap.L().Debug("data processing goroutines finished")
+		for err = range errorChannel {
+		} // to ensure there are not writes to a closed channel, loop to drain
+		errorsWg.Done()
 	}()
 
-	// Blocking until the processing has finished.
-	// If the processing has finished successfully err will be nil
-	// otherwise it will it will be set to an error and will cause Lambda invocation to fail.
-	var err error
-	for err = range errorChannel {
-	} // to ensure there are not writes to a closed channel, loop to drain
+	// it is important to process the streams serially to manage memory!
+	for _, dataStream := range dataStreams {
+		processor := newProcessorFunc(dataStream)
+		err := processor.run(parsedEventChannel)
+		if err != nil {
+			errorChannel <- err
+			break
+		}
+	}
+
+	// Close the channel after all goroutines have finished writing to it.
+	// The Destination that is reading the channel will terminate
+	// after consuming all the buffered messages
+	close(parsedEventChannel) // this will cause SendEvent() go routine to finish and exit
+	sendEventsWg.Wait()       // wait until all files and errors are written
+	close(errorChannel)       // this will allow err chan loop to finish
+	errorsWg.Wait()           // wait for err chan loop to finish
+	zap.L().Debug("data processing goroutines finished")
+
 	return err
 }
 
@@ -137,7 +137,7 @@ func (p *Processor) processLogLine(line string, outputChan chan *parsers.Panther
 
 func (p *Processor) classifyLogLine(line string) *classification.ClassifierResult {
 	result := p.classifier.Classify(line)
-	if result.LogType == nil && len(result.LogLine) > 0 { // only if line is not empty do we log (often we get trailing \n's)
+	if result.LogType == nil && len(strings.TrimSpace(line)) != 0 { // only if line is not empty do we log (often we get trailing \n's)
 		if p.input.Hints.S3 != nil { // make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
 			p.operation.LogWarn(errors.New("failed to classify log line"),
 				zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),

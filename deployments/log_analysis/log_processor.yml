@@ -32,6 +32,11 @@ Parameters:
     Type: CommaDelimitedList
     Description: List of base LayerVersion ARNs to attach to every Lambda function
     Default: ''
+  LogProcessorLambdaMemorySize:
+    Type: Number
+    Description: Size of lambda for log processor
+    MinValue: 256 # any smaller and we risk OOMs
+    MaxValue: 3008
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
@@ -73,7 +78,7 @@ Resources:
       KmsMasterKeyId: !Ref SQSKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: 180 # Should match lambda
+      VisibilityTimeout: 360 # Should match lambda
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 10
@@ -121,9 +126,9 @@ Resources:
       CodeUri: ../../out/bin/internal/log_analysis/log_processor/main
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
+      MemorySize: !Ref LogProcessorLambdaMemorySize
       Runtime: go1.x
-      Timeout: 180
+      Timeout: 360
       Environment:
         Variables:
           DEBUG: !Ref Debug
@@ -228,7 +233,7 @@ Resources:
       # * Users will not be able to see new events that matched some rule.
       # </cfndoc>
       KmsMasterKeyId: !Ref SQSKeyId
-      VisibilityTimeout: 30 # Should match lambda
+      VisibilityTimeout: 120 # Should match lambda
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt UpdaterDeadLetterQueue.Arn
         maxReceiveCount: 10
@@ -270,7 +275,7 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: 128
       Runtime: go1.x
-      Timeout: 30
+      Timeout: 120
       Environment:
         Variables:
           DEBUG: !Ref Debug
