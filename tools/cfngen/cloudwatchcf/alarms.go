@@ -19,6 +19,8 @@ package cloudwatchcf
  */
 
 import (
+	"path/filepath"
+
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	jsoniter "github.com/json-iterator/go"
 
@@ -66,7 +68,7 @@ type MetricDimension struct {
 func (m *MetricDimension) MarshalJSON() ([]byte, error) {
 	if m.valueRef == nil {
 		// Most common case - the struct can be marshaled like normal (json ignores nil valueRef)
-		return jsoniter.Marshal(*m)  // dereference to avoid infinite recursion
+		return jsoniter.Marshal(*m) // dereference to avoid infinite recursion
 	}
 
 	// Otherwise, marshal a new struct where "Value" is actually a struct with the nested ref
@@ -171,18 +173,17 @@ func AlarmName(alarmType, resourceName string) string {
 
 // GenerateAlarms will read the CF in yml files in the cfDir, and generate CF for CloudWatch alarms for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateAlarms(cfDirs ...string) (alarms []*Alarm, cf []byte, err error) {
-	for _, cfDir := range cfDirs {
-		err := walkYamlFiles(cfDir, func(path string) (err error) {
-			fileAlarms, err := generateAlarms(path)
-			if err == nil {
-				alarms = append(alarms, fileAlarms...)
-			}
-			return err
-		})
+func GenerateAlarms(cfDir string) ([]*Alarm, []byte, error) {
+	var alarms []*Alarm
+	if err := walkYamlFiles(cfDir, func(path string) error {
+		fileAlarms, err := generateAlarms(path)
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
+		alarms = append(alarms, fileAlarms...)
+		return nil
+	}); err != nil {
+		return nil, nil, err
 	}
 
 	resources := make(map[string]interface{})
@@ -192,11 +193,16 @@ func GenerateAlarms(cfDirs ...string) (alarms []*Alarm, cf []byte, err error) {
 
 	// generate CF using cfngen
 	parameters := map[string]interface{}{
-		topicParameterName: cfngen.Parameter{
-			Type: "String",
-		},
+		topicParameterName: cfngen.Parameter{Type: "String"},
 	}
-	cf, err = cfngen.NewTemplate("Panther Alarms", parameters, resources, nil).CloudFormation()
+	switch filepath.Base(cfDir) {
+	case "core":
+		parameters[appsyncParameterName] = cfngen.Parameter{Type: "String"}
+	case "web":
+		parameters[elbParameterName] = cfngen.Parameter{Type: "String"}
+	}
+
+	cf, err := cfngen.NewTemplate("Panther Alarms", parameters, resources, nil).CloudFormation()
 	if err != nil {
 		return nil, nil, err
 	}

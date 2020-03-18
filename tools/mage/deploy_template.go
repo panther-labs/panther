@@ -37,14 +37,6 @@ const (
 	pollTimeout  = time.Hour       // Give up if CreateChangeSet or ExecuteChangeSet takes longer than this
 )
 
-// CloudFormation pre-processing which runs once at the beginning of the deploy process.
-//
-// Generated files are written to out/deployments:
-//     1) Embed swagger APIs directly
-func preprocessTemplates() {
-	embedAPISpecs()
-}
-
 // Deploy a CloudFormation template.
 //
 // 1) Package: Upload large assets (GraphQL schema, Lambda source, nested templates) to S3 with aws cli

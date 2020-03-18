@@ -27,7 +27,6 @@ type SNSAlarm struct {
 }
 
 func NewSNSAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) *SNSAlarm {
-
 	const (
 		metricDimension = "TopicName"
 		metricNamespace = "AWS/SNS"

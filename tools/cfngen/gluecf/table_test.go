@@ -19,8 +19,10 @@ package gluecf
  */
 
 import (
+	"io/ioutil"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -92,12 +94,13 @@ func TestTables(t *testing.T) {
 
 	cf, err := cfTemplate.CloudFormation()
 	require.NoError(t, err)
+	var result map[string]interface{}
+	require.NoError(t, jsoniter.Unmarshal(cf, &result))
 
-	// uncomment to make a new expected file
-	// writeTestFile(cf, expectedFile)
-
-	expectedOutput, err := readTestFile(expectedFile)
+	expectedOutput, err := ioutil.ReadFile(expectedFile)
 	require.NoError(t, err)
+	var expected map[string]interface{}
+	require.NoError(t, jsoniter.Unmarshal(expectedOutput, &expected))
 
-	assert.Equal(t, expectedOutput, cf)
+	assert.Equal(t, expected, result)
 }

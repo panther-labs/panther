@@ -219,6 +219,8 @@ func buildPackage(pkg string) error {
 
 // Generate CloudFormation templates in out/deployments folder
 func (b Build) Cfn() {
+	embedAPISpecs()
+
 	if err := generateGlueTables(); err != nil {
 		logger.Fatal(err)
 	}

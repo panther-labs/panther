@@ -45,8 +45,8 @@ type Sub struct {
 // Represents CF Parameter
 type Parameter struct {
 	Type          string
-	Default       interface{} `json:",omitempty"`
-	Description   string
+	Default       interface{}   `json:",omitempty"`
+	Description   string        `json:",omitempty"`
 	AllowedValues []interface{} `json:",omitempty"`
 	MinValue      interface{}   `json:",omitempty"`
 	MaxValue      interface{}   `json:",omitempty"`

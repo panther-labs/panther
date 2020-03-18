@@ -103,8 +103,7 @@ func Deploy() {
 	}
 
 	deployPrecheck(aws.StringValue(awsSession.Config.Region))
-	Build.Lambda(Build{})
-	preprocessTemplates()
+	Build.All(Build{})
 
 	logger.Infof("deploy: deploying Panther to %s", *awsSession.Config.Region)
 

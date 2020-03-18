@@ -28,7 +28,6 @@ type SQSAlarm struct {
 }
 
 func NewSQSAlarm(queueName, alarmType, metricName, message string) *SQSAlarm {
-
 	const (
 		metricDimension = "QueueName"
 		metricNamespace = "AWS/SQS"

@@ -19,8 +19,10 @@ package gluecf
  */
 
 import (
+	"io/ioutil"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -28,28 +30,22 @@ import (
 )
 
 func TestDatabase(t *testing.T) {
-	expectedFile := "testdata/db.template.json"
-
-	catalogID := "12345"
 	dbName := "db1"
-	description := "Test db"
-
-	db := NewDatabase(catalogID, dbName, description)
-
-	resources := make(map[string]interface{})
-
-	resources[dbName] = db
+	resources := map[string]interface{}{
+		dbName: NewDatabase("12345", dbName, "Test db"),
+	}
 
 	cfTemplate := cfngen.NewTemplate("Test template", nil, resources, nil)
 
 	cf, err := cfTemplate.CloudFormation()
 	require.NoError(t, err)
+	var result map[string]interface{}
+	require.NoError(t, jsoniter.Unmarshal(cf, &result))
 
-	// uncomment to make a new expected file
-	// writeTestFile(cf, expectedFile)
-
-	expectedOutput, err := readTestFile(expectedFile)
+	expectedOutput, err := ioutil.ReadFile("testdata/db.template.json")
 	require.NoError(t, err)
+	var expected map[string]interface{}
+	require.NoError(t, jsoniter.Unmarshal(expectedOutput, &expected))
 
-	assert.Equal(t, expectedOutput, cf)
+	assert.Equal(t, expected, result)
 }

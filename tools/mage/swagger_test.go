@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestSwaggerPattern(t *testing.T) {
@@ -56,8 +57,13 @@ func TestEmbedAPIs(t *testing.T) {
 
 	transformed, err := embedAPIs(data)
 	require.NoError(t, err)
+	var result map[string]interface{}
+	require.NoError(t, yaml.Unmarshal(transformed, &result))
 
-	expected, err := ioutil.ReadFile("testdata/valid-api-expected-output.yml")
+	expectedBytes, err := ioutil.ReadFile("testdata/valid-api-expected-output.yml")
 	require.NoError(t, err)
-	assert.Equal(t, string(expected), string(transformed))
+	var expected map[string]interface{}
+	require.NoError(t, yaml.Unmarshal(expectedBytes, &expected))
+
+	assert.Equal(t, expected, result)
 }

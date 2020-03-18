@@ -23,7 +23,7 @@ import (
 )
 
 // CloudFormation parameter name referenced in generated alarm - we only have one load balancer.
-const elbParameterName = "LoadBalancer"
+const elbParameterName = "LoadBalancerFullName"
 
 type ApplicationELB struct {
 	Alarm
@@ -35,7 +35,7 @@ func NewApplicationELBAlarm(alarmType, metricName, message string, resource map[
 		metricNamespace = "AWS/ApplicationELB"
 	)
 	loadBalancerName := getResourceProperty("Name", resource)
-	alarmName := AlarmName(alarmType, "web")
+	alarmName := AlarmName(alarmType, "Web")
 	alarm := &ApplicationELB{
 		Alarm: *NewAlarm(loadBalancerName, alarmName,
 			fmt.Sprintf("ALB %s. See: %s#%s", message, documentationURL, loadBalancerName)),

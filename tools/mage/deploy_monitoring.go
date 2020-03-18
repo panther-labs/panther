@@ -27,25 +27,12 @@ const (
 	monitoringTemplate = "deployments/monitoring.yml"
 )
 
+// The caller is responsible for generating the nested templates
 func deployMonitoring(awsSession *session.Session, bucket string, backendOutputs map[string]string, config *PantherConfig) {
-	if err := generateDashboards(); err != nil {
-		logger.Fatal(err)
+	params := map[string]string{
+		"AlarmTopicArn":        config.MonitoringParameterValues.AlarmSNSTopicARN,
+		"AppsyncId":            backendOutputs["WebApplicationGraphqlApiId"],
+		"LoadBalancerFullName": backendOutputs["WebApplicationLoadBalancerFullName"],
 	}
-
-	if err := generateMetrics(); err != nil {
-		logger.Fatal(err)
-	}
-
-	// get user specified SNS topic
-	// TODO - remove
-	//alarmsSNSTopicARN := config.MonitoringParameterValues.AlarmSNSTopicARN
-	//if alarmsSNSTopicARN == "" { // if not set, default to Panther created topic
-	//	alarmsSNSTopicARN = backendOutputs["AlarmsSNSTopic"]
-	//}
-	if err := generateAlarms(); err != nil {
-		logger.Fatal(err)
-	}
-
-	params := map[string]string{} // currently none
 	deployTemplate(awsSession, monitoringTemplate, bucket, monitoringStack, params)
 }

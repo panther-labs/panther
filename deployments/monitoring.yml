@@ -18,6 +18,13 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Template for Panther monitoring related resources (e.g., metrics, alarms and dashboards)
 
 Parameters:
+  AppsyncId:
+    Type: String
+    Description: Appsync GraphQL ID
+  LoadBalancerFullName:
+    Type: String
+    Description: Full name of the application load balancer
+
   AlarmTopicArn:
     Type: String
     Description: An existing SNS topic for CloudWatch alarms. If not specified, one is created for you.
@@ -57,6 +64,7 @@ Resources:
     Properties:
       Parameters:
         AlarmTopicArn: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
+        AppsyncId: !Ref AppsyncId
       TemplateURL: ../out/deployments/monitoring/core_alarms.json
 
   LogAnalysisAlarms:
@@ -71,4 +79,5 @@ Resources:
     Properties:
       Parameters:
         AlarmTopicArn: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
+        LoadBalancerFullName: !Ref LoadBalancerFullName
       TemplateURL: ../out/deployments/monitoring/web_alarms.json

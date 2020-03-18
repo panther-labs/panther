@@ -19,18 +19,24 @@ package cloudwatchcf
  */
 
 import (
+	"io/ioutil"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGenerateMetrics(t *testing.T) {
 	cf, err := GenerateMetrics("./testdata/cf.yml")
 	require.NoError(t, err)
-	const expectedFile = "./testdata/generated_test_metrics.json"
-	// uncomment to make a new expected file
-	// writeTestFile(cf, expectedFile)
-	expectedCf, err := readTestFile(expectedFile)
+
+	var result map[string]interface{}
+	require.NoError(t, jsoniter.Unmarshal(cf, &result))
+
+	expectedCf, err := ioutil.ReadFile("./testdata/generated_test_metrics.json")
 	require.NoError(t, err)
-	require.Equal(t, expectedCf, cf)
+	var expected map[string]interface{}
+	require.NoError(t, jsoniter.Unmarshal(expectedCf, &expected))
+
+	require.Equal(t, expected, result)
 }
