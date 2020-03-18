@@ -25,7 +25,6 @@ import "time"
 // It's used for attributes that can change, which is almost all of them except for the
 // creation based ones (CreatedAtTime and CreatedBy).
 type UpdateIntegrationItem struct {
-	ScanEnabled          *bool      `json:"scanEnabled"`
 	RemediationEnabled   *bool      `json:"remediationEnabled"`
 	CWEEnabled           *bool      `json:"cweEnabled"`
 	IntegrationID        *string    `json:"integrationId"`

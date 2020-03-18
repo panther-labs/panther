@@ -153,10 +153,6 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 
 	// For each integration, add a ScanMsg to the queue per service
 	for _, integration := range integrations {
-		if !aws.BoolValue(integration.ScanEnabled) {
-			continue
-		}
-
 		for resourceType := range awspoller.ServicePollers {
 			scanMsg := &pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
@@ -204,7 +200,6 @@ func generateNewIntegration(input *models.PutIntegrationSettings) *models.Source
 		IntegrationID:      aws.String(uuid.New().String()),
 		IntegrationLabel:   input.IntegrationLabel,
 		IntegrationType:    input.IntegrationType,
-		ScanEnabled:        input.ScanEnabled,
 		CWEEnabled:         input.CWEEnabled,
 		RemediationEnabled: input.RemediationEnabled,
 		ScanIntervalMins:   input.ScanIntervalMins,
