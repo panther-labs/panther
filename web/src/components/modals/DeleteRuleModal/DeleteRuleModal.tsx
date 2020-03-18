@@ -47,11 +47,11 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
     update: async cache => {
       cache.modify('ROOT_QUERY', {
         rules: (data, helpers) => {
-          const { __ref: ruleRef } = helpers.toReference({
-            __typename: 'RuleSummary',
+          const ruleRef = helpers.toReference({
+            __typename: rule.__typename,
             id: rule.id,
           });
-          return { ...data, rules: data.rules.filter(({ __ref }) => __ref !== ruleRef) };
+          return { ...data, rules: data.rules.filter(r => r.__ref !== ruleRef.__ref) };
         },
       });
       cache.gc();

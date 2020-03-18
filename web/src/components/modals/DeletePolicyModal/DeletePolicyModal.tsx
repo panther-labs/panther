@@ -46,11 +46,14 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
     update: async cache => {
       cache.modify('ROOT_QUERY', {
         policies: (data, helpers) => {
-          const { __ref: policyRef } = helpers.toReference({
-            __typename: 'PolicySummary',
+          const policyRef = helpers.toReference({
+            __typename: policy.__typename,
             id: policy.id,
           });
-          return { ...data, policies: data.policies.filter(({ __ref }) => __ref !== policyRef) };
+          return {
+            ...data,
+            policies: data.policies.filter(p => p.__ref !== policyRef.__ref),
+          };
         },
       });
       cache.gc();
