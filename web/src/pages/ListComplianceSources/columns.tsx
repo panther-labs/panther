@@ -47,7 +47,7 @@ const columns = [
     key: 'cweEnabled',
     header: 'Real-Time Updates',
     flex: '1 0 125px',
-    renderCell: ({ cweEnabled }) => <Text size="large">{cweEnabled ? 'Enabled' : 'No'}</Text>,
+    renderCell: ({ cweEnabled }) => <Text size="large">{cweEnabled ? 'Enabled' : 'Disabled'}</Text>,
   },
 
   {
@@ -55,7 +55,7 @@ const columns = [
     header: 'Auto-Remediations',
     flex: '1 0 125px',
     renderCell: ({ remediationEnabled }) => (
-      <Text size="large">{remediationEnabled ? 'Automatic' : 'No'}</Text>
+      <Text size="large">{remediationEnabled ? 'Enabled' : 'Disabled'}</Text>
     ),
   },
 
