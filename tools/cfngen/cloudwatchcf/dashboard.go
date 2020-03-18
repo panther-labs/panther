@@ -21,7 +21,6 @@ package cloudwatchcf
 import (
 	"bytes"
 	"regexp"
-	"strings"
 
 	"github.com/panther-labs/panther/tools/cfngen"
 )
@@ -64,7 +63,7 @@ func NewDashboard(name, body string) *Dashboard {
 func GenerateDashboards(dashboards []*Dashboard) (cf []byte, err error) {
 	resources := make(map[string]interface{})
 	for _, dashboard := range dashboards {
-		resources[strings.TrimSuffix(dashboard.Properties.DashboardName.Sub, "-${AWS::Region}")] = dashboard
+		resources[cfngen.SanitizeResourceName(dashboard.Properties.DashboardName.Sub)] = dashboard
 	}
 
 	// generate CF using cfngen

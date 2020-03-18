@@ -22,7 +22,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,13 +30,12 @@ func TestGenerateMetrics(t *testing.T) {
 	cf, err := GenerateMetrics("./testdata/cf.yml")
 	require.NoError(t, err)
 
-	var result map[string]interface{}
-	require.NoError(t, jsoniter.Unmarshal(cf, &result))
+	const expectedFile = "./testdata/generated_test_metrics.json"
+	// uncomment to write new expected file
+	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
 
-	expectedCf, err := ioutil.ReadFile("./testdata/generated_test_metrics.json")
+	expected, err := ioutil.ReadFile(expectedFile)
 	require.NoError(t, err)
-	var expected map[string]interface{}
-	require.NoError(t, jsoniter.Unmarshal(expectedCf, &expected))
 
-	require.Equal(t, expected, result)
+	assert.JSONEq(t, string(expected), string(cf))
 }
