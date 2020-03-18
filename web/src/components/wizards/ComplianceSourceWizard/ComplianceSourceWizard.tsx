@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { AWS_ACCOUNT_ID_REGEX, SOURCE_LABEL_REGEX } from 'Source/constants';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
@@ -40,7 +40,9 @@ export interface ComplianceSourceWizardValues {
 }
 
 const validationSchema = Yup.object().shape<ComplianceSourceWizardValues>({
-  integrationLabel: Yup.string().required(),
+  integrationLabel: Yup.string()
+    .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
+    .required(),
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),

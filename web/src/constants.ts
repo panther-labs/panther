@@ -25,6 +25,8 @@ export const INCLUDE_DIGITS_REGEX = new RegExp('(?=.*[0-9])');
 
 export const INCLUDE_LOWERCASE_REGEX = new RegExp('(?=.*[a-z])');
 
+export const SOURCE_LABEL_REGEX = new RegExp('^[a-zA-Z0-9- ]+$');
+
 export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
 export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('(?=.*[!@#\\$%\\^&\\*;:,.<>?/])');
