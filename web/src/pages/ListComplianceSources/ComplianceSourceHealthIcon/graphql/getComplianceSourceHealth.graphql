@@ -1,0 +1,15 @@
+query GetComplianceSourceHealth($id: ID!, $input: GetComplianceIntegrationHealthInput!) {
+  getComplianceIntegration(id: $id) {
+    health(input: $input) {
+      auditRoleStatus {
+        ...IntegrationItemHealthDetails
+      }
+      cweRoleStatus {
+        ...IntegrationItemHealthDetails
+      }
+      remediationRoleStatus {
+        ...IntegrationItemHealthDetails
+      }
+    }
+  }
+}
