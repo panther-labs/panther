@@ -1,40 +1,15 @@
 import React from 'react';
-import { Box, Icon, Label, Spinner, Text, Tooltip } from 'pouncejs';
-import { ComplianceIntegrationDetails } from 'Source/graphql/fragments/ComplianceIntegrationDetails.generated';
-import { useGetComplianceSourceHealth } from './graphql/getComplianceSourceHealth.generated';
+import { Box, Icon, Label, Tooltip } from 'pouncejs';
+import { ComplianceIntegration } from 'Generated/schema';
 
 interface ComplianceSourceHealthIconProps {
-  source: ComplianceIntegrationDetails;
+  complianceSourceHealth: ComplianceIntegration['health'];
 }
 
-const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({ source }) => {
-  const { data, loading, error } = useGetComplianceSourceHealth({
-    variables: {
-      input: {
-        awsAccountId: source.awsAccountId,
-        enableCWESetup: source.cweEnabled ?? false,
-        enableRemediation: source.remediationEnabled ?? false,
-      },
-    },
-  });
-
-  if (loading) {
-    return <Spinner size="small" />;
-  }
-
-  if (error) {
-    return (
-      <Text size="large" color="grey200">
-        N/A
-      </Text>
-    );
-  }
-
-  const {
-    auditRoleStatus,
-    cweRoleStatus,
-    remediationRoleStatus,
-  } = data.getComplianceIntegrationHealth;
+const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
+  complianceSourceHealth,
+}) => {
+  const { auditRoleStatus, cweRoleStatus, remediationRoleStatus } = complianceSourceHealth;
 
   // Some status return `null` when they shouldn't be checked. That doesn't mean the source is
   // unhealthy. That's why we check explicitly for a "false" value

@@ -50,7 +50,7 @@ export const filters = {
     props: {
       label: 'Source',
       searchable: true,
-      items: [] as ComplianceIntegration[],
+      items: [] as Array<Pick<ComplianceIntegration, 'integrationId' | 'integrationLabel'>>,
       itemToString: (integration: ComplianceIntegration) => integration.integrationLabel,
       inputProps: {
         placeholder: 'Choose a source...',

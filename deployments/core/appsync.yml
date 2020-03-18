@@ -514,17 +514,24 @@ Resources:
           $util.toJson($ctx.result)
         #end
 
-  GetComplianceIntegrationHealthResolver:
+  ComplianceIntegrationHealthFieldResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
-      TypeName: Query
-      FieldName: getComplianceIntegrationHealth
+      TypeName: ComplianceIntegration
+      FieldName: health
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        #set ($input = {})
         $util.qr($input.put("integrationType", "aws-scan"))
+        $util.qr($input.put("awsAccountId", $ctx.source.awsAccountId))
+        #if($ctx.source.cweEnabled)
+          $util.qr($input.put("enableCWESetup", true))
+        #end
+        #if($context.remediationEnabled)
+          $util.qr($input.put("enableRemediation", true))
+        #end
         {
           "version" : "2017-02-28",
           "operation": "Invoke",

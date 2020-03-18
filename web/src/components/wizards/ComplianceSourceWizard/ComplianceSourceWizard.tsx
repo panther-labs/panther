@@ -21,18 +21,13 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
-import { Mutation } from 'Generated/schema';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import SuccessPanel from './SuccessPanel';
 import SourceConfigurationPanel from './SourceConfigurationPanel';
 
 interface ComplianceSourceWizardProps {
   initialValues: ComplianceSourceWizardValues;
-  onSubmit: (
-    values: ComplianceSourceWizardValues
-  ) => Promise<
-    FetchResult<Partial<Pick<Mutation, 'addComplianceIntegration' | 'updateComplianceIntegration'>>>
-  >;
+  onSubmit: (values: ComplianceSourceWizardValues) => Promise<FetchResult<any>>;
   externalErrorMessage?: string;
 }
 

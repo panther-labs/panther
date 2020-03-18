@@ -44,14 +44,14 @@ const columns = [
   },
 
   {
-    key: 'awsAccountId',
+    key: 'cweEnabled',
     header: 'Real-Time Updates',
     flex: '1 0 125px',
     renderCell: ({ cweEnabled }) => <Text size="large">{cweEnabled ? 'Enabled' : 'No'}</Text>,
   },
 
   {
-    key: 'awsAccountId',
+    key: 'remediationEnabled',
     header: 'Auto-Remediations',
     flex: '1 0 125px',
     renderCell: ({ remediationEnabled }) => (
@@ -65,7 +65,7 @@ const columns = [
     header: 'Healthy',
     flex: '1 0 125px',
     renderCell: source => {
-      return <ComplianceSourceHealthIcon source={source} />;
+      return <ComplianceSourceHealthIcon complianceSourceHealth={source.health} />;
     },
   },
   {

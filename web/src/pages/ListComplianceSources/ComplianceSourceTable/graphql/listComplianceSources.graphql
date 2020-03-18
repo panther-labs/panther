@@ -1,5 +1,16 @@
 query ListComplianceSources {
   listComplianceIntegrations {
     ...ComplianceIntegrationDetails
+    health {
+      auditRoleStatus {
+        ...IntegrationItemHealthDetails
+      }
+      cweRoleStatus {
+        ...IntegrationItemHealthDetails
+      }
+      remediationRoleStatus {
+        ...IntegrationItemHealthDetails
+      }
+    }
   }
 }

@@ -12,10 +12,6 @@ export type ComplianceIntegrationDetails = Pick<
   | 'createdBy'
   | 'cweEnabled'
   | 'remediationEnabled'
-  | 'scanIntervalMins'
-  | 'lastScanEndTime'
-  | 'lastScanErrorMessage'
-  | 'lastScanStartTime'
 >;
 
 export const ComplianceIntegrationDetails = gql`
@@ -27,9 +23,5 @@ export const ComplianceIntegrationDetails = gql`
     createdBy
     cweEnabled
     remediationEnabled
-    scanIntervalMins
-    lastScanEndTime
-    lastScanErrorMessage
-    lastScanStartTime
   }
 `;

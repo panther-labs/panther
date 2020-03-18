@@ -41,9 +41,6 @@ type Query {
   destinations: [Destination]
   generalSettings: GeneralSettings!
   getComplianceIntegration(id: ID!): ComplianceIntegration!
-  getComplianceIntegrationHealth(
-    input: GetComplianceIntegrationHealthInput!
-  ): ComplianceIntegrationHealth!
   getComplianceIntegrationTemplate(
     input: GetComplianceIntegrationTemplateInput!
   ): IntegrationTemplate!
@@ -61,12 +58,6 @@ type Query {
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   users(limit: Int, paginationToken: String): ListUsersResponse
-}
-
-input GetComplianceIntegrationHealthInput {
-  awsAccountId: String!
-  enableCWESetup: Boolean!
-  enableRemediation: Boolean!
 }
 
 input GetComplianceIntegrationTemplateInput {
@@ -98,7 +89,7 @@ type IntegrationTemplate {
 }
 
 type IntegrationItemHealthStatus {
-  healthy: Boolean!
+  healthy: Boolean
   errorMessage: String
 }
 
@@ -303,17 +294,14 @@ input TestPolicyInput {
 }
 
 type ComplianceIntegration {
-  awsAccountId: String
-  createdAtTime: AWSDateTime
-  createdBy: ID
-  integrationId: ID
-  integrationLabel: String
+  awsAccountId: String!
+  createdAtTime: AWSDateTime!
+  createdBy: ID!
+  integrationId: ID!
+  integrationLabel: String!
   cweEnabled: Boolean
   remediationEnabled: Boolean
-  scanIntervalMins: Int
-  lastScanEndTime: AWSDateTime
-  lastScanErrorMessage: String
-  lastScanStartTime: AWSDateTime
+  health: ComplianceIntegrationHealth!
 }
 
 type LogIntegration {

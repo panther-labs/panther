@@ -31,7 +31,7 @@ import urls from 'Source/urls';
 import columns from '../columns';
 
 interface ListResourcesTableProps {
-  items?: ResourceSummary[];
+  items?: Array<ResourceSummary & Pick<ComplianceIntegration, 'integrationLabel'>>;
   sortBy: ListResourcesSortFieldsEnum;
   sortDir: SortDirEnum;
   onSort: (params: Partial<ListResourcesInput>) => void;

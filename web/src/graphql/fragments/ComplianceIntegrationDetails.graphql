@@ -6,8 +6,4 @@ fragment ComplianceIntegrationDetails on ComplianceIntegration {
   createdBy
   cweEnabled
   remediationEnabled
-  scanIntervalMins
-  lastScanEndTime
-  lastScanErrorMessage
-  lastScanStartTime
 }

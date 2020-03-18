@@ -80,17 +80,14 @@ export type AsanaConfigInput = {
 
 export type ComplianceIntegration = {
   __typename?: 'ComplianceIntegration';
-  awsAccountId?: Maybe<Scalars['String']>;
-  createdAtTime?: Maybe<Scalars['AWSDateTime']>;
-  createdBy?: Maybe<Scalars['ID']>;
-  integrationId?: Maybe<Scalars['ID']>;
-  integrationLabel?: Maybe<Scalars['String']>;
+  awsAccountId: Scalars['String'];
+  createdAtTime: Scalars['AWSDateTime'];
+  createdBy: Scalars['ID'];
+  integrationId: Scalars['ID'];
+  integrationLabel: Scalars['String'];
   cweEnabled?: Maybe<Scalars['Boolean']>;
   remediationEnabled?: Maybe<Scalars['Boolean']>;
-  scanIntervalMins?: Maybe<Scalars['Int']>;
-  lastScanEndTime?: Maybe<Scalars['AWSDateTime']>;
-  lastScanErrorMessage?: Maybe<Scalars['String']>;
-  lastScanStartTime?: Maybe<Scalars['AWSDateTime']>;
+  health: ComplianceIntegrationHealth;
 };
 
 export type ComplianceIntegrationHealth = {
@@ -239,12 +236,6 @@ export type GetAlertInput = {
   eventsExclusiveStartKey?: Maybe<Scalars['String']>;
 };
 
-export type GetComplianceIntegrationHealthInput = {
-  awsAccountId: Scalars['String'];
-  enableCWESetup: Scalars['Boolean'];
-  enableRemediation: Scalars['Boolean'];
-};
-
 export type GetComplianceIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
@@ -284,7 +275,7 @@ export type GithubConfigInput = {
 
 export type IntegrationItemHealthStatus = {
   __typename?: 'IntegrationItemHealthStatus';
-  healthy: Scalars['Boolean'];
+  healthy?: Maybe<Scalars['Boolean']>;
   errorMessage?: Maybe<Scalars['String']>;
 };
 
@@ -706,7 +697,6 @@ export type Query = {
   destinations?: Maybe<Array<Maybe<Destination>>>;
   generalSettings: GeneralSettings;
   getComplianceIntegration: ComplianceIntegration;
-  getComplianceIntegrationHealth: ComplianceIntegrationHealth;
   getComplianceIntegrationTemplate: IntegrationTemplate;
   getLogIntegrationTemplate: IntegrationTemplate;
   remediations?: Maybe<Scalars['AWSJSON']>;
@@ -738,10 +728,6 @@ export type QueryDestinationArgs = {
 
 export type QueryGetComplianceIntegrationArgs = {
   id: Scalars['ID'];
-};
-
-export type QueryGetComplianceIntegrationHealthArgs = {
-  input: GetComplianceIntegrationHealthInput;
 };
 
 export type QueryGetComplianceIntegrationTemplateArgs = {
@@ -1097,7 +1083,6 @@ export type ResolversTypes = {
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
-  GetComplianceIntegrationHealthInput: GetComplianceIntegrationHealthInput;
   ComplianceIntegrationHealth: ResolverTypeWrapper<ComplianceIntegrationHealth>;
   IntegrationItemHealthStatus: ResolverTypeWrapper<IntegrationItemHealthStatus>;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
@@ -1207,7 +1192,6 @@ export type ResolversParentTypes = {
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
-  GetComplianceIntegrationHealthInput: GetComplianceIntegrationHealthInput;
   ComplianceIntegrationHealth: ComplianceIntegrationHealth;
   IntegrationItemHealthStatus: IntegrationItemHealthStatus;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
@@ -1358,17 +1342,14 @@ export type ComplianceIntegrationResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ComplianceIntegration'] = ResolversParentTypes['ComplianceIntegration']
 > = {
-  awsAccountId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdAtTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  createdBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  integrationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  integrationLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  awsAccountId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAtTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  createdBy?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  integrationId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  integrationLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   cweEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  scanIntervalMins?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  lastScanEndTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  lastScanErrorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  lastScanStartTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  health?: Resolver<ResolversTypes['ComplianceIntegrationHealth'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1476,7 +1457,7 @@ export type IntegrationItemHealthStatusResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['IntegrationItemHealthStatus'] = ResolversParentTypes['IntegrationItemHealthStatus']
 > = {
-  healthy?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  healthy?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
@@ -1909,12 +1890,6 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryGetComplianceIntegrationArgs, 'id'>
-  >;
-  getComplianceIntegrationHealth?: Resolver<
-    ResolversTypes['ComplianceIntegrationHealth'],
-    ParentType,
-    ContextType,
-    RequireFields<QueryGetComplianceIntegrationHealthArgs, 'input'>
   >;
   getComplianceIntegrationTemplate?: Resolver<
     ResolversTypes['IntegrationTemplate'],
