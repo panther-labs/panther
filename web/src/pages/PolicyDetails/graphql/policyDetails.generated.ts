@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -29,7 +30,7 @@ export type PolicyDetailsVariables = {
 };
 
 export type PolicyDetails = {
-  policy: Types.Maybe<
+  policy?: Types.Maybe<
     Pick<
       Types.PolicyDetails,
       | 'autoRemediationId'
@@ -49,8 +50,8 @@ export type PolicyDetails = {
       | 'tags'
     >
   >;
-  resourcesForPolicy: Types.Maybe<{
-    items: Types.Maybe<
+  resourcesForPolicy?: Types.Maybe<{
+    items?: Types.Maybe<
       Array<
         Types.Maybe<
           Pick<
@@ -66,10 +67,10 @@ export type PolicyDetails = {
         >
       >
     >;
-    paging: Types.Maybe<Pick<Types.PagingData, 'totalItems' | 'totalPages' | 'thisPage'>>;
-    totals: Types.Maybe<{
-      active: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
-      suppressed: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
+    paging?: Types.Maybe<Pick<Types.PagingData, 'totalItems' | 'totalPages' | 'thisPage'>>;
+    totals?: Types.Maybe<{
+      active?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
+      suppressed?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
     }>;
   }>;
   listComplianceIntegrations: Array<

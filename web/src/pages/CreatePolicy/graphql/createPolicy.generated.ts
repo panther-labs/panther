@@ -1,4 +1,23 @@
+/**
+ * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -9,39 +28,64 @@ export type CreatePolicyVariables = {
   input: Types.CreateOrModifyPolicyInput;
 };
 
-
-export type CreatePolicy = { addPolicy?: Types.Maybe<(
-    Pick<Types.PolicyDetails, 'autoRemediationId' | 'autoRemediationParameters' | 'description' | 'displayName' | 'enabled' | 'suppressions' | 'id' | 'reference' | 'resourceTypes' | 'runbook' | 'severity' | 'tags' | 'body'>
-    & { tests?: Types.Maybe<Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>>>> }
-  )> };
-
+export type CreatePolicy = {
+  addPolicy?: Types.Maybe<
+    Pick<
+      Types.PolicyDetails,
+      | 'autoRemediationId'
+      | 'autoRemediationParameters'
+      | 'description'
+      | 'displayName'
+      | 'enabled'
+      | 'suppressions'
+      | 'id'
+      | 'reference'
+      | 'resourceTypes'
+      | 'runbook'
+      | 'severity'
+      | 'tags'
+      | 'body'
+    > & {
+      tests?: Types.Maybe<
+        Array<
+          Types.Maybe<
+            Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
+          >
+        >
+      >;
+    }
+  >;
+};
 
 export const CreatePolicyDocument = gql`
-    mutation CreatePolicy($input: CreateOrModifyPolicyInput!) {
-  addPolicy(input: $input) {
-    autoRemediationId
-    autoRemediationParameters
-    description
-    displayName
-    enabled
-    suppressions
-    id
-    reference
-    resourceTypes
-    runbook
-    severity
-    tags
-    body
-    tests {
-      expectedResult
-      name
-      resource
-      resourceType
+  mutation CreatePolicy($input: CreateOrModifyPolicyInput!) {
+    addPolicy(input: $input) {
+      autoRemediationId
+      autoRemediationParameters
+      description
+      displayName
+      enabled
+      suppressions
+      id
+      reference
+      resourceTypes
+      runbook
+      severity
+      tags
+      body
+      tests {
+        expectedResult
+        name
+        resource
+        resourceType
+      }
     }
   }
-}
-    `;
-export type CreatePolicyMutationFn = ApolloReactCommon.MutationFunction<CreatePolicy, CreatePolicyVariables>;
+`;
+export type CreatePolicyMutationFn = ApolloReactCommon.MutationFunction<
+  CreatePolicy,
+  CreatePolicyVariables
+>;
 
 /**
  * __useCreatePolicy__
@@ -60,9 +104,17 @@ export type CreatePolicyMutationFn = ApolloReactCommon.MutationFunction<CreatePo
  *   },
  * });
  */
-export function useCreatePolicy(baseOptions?: ApolloReactHooks.MutationHookOptions<CreatePolicy, CreatePolicyVariables>) {
-        return ApolloReactHooks.useMutation<CreatePolicy, CreatePolicyVariables>(CreatePolicyDocument, baseOptions);
-      }
+export function useCreatePolicy(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<CreatePolicy, CreatePolicyVariables>
+) {
+  return ApolloReactHooks.useMutation<CreatePolicy, CreatePolicyVariables>(
+    CreatePolicyDocument,
+    baseOptions
+  );
+}
 export type CreatePolicyHookResult = ReturnType<typeof useCreatePolicy>;
 export type CreatePolicyMutationResult = ApolloReactCommon.MutationResult<CreatePolicy>;
-export type CreatePolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<CreatePolicy, CreatePolicyVariables>;
+export type CreatePolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  CreatePolicy,
+  CreatePolicyVariables
+>;
