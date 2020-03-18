@@ -159,6 +159,11 @@ func (b Build) Opstools() {
 	buildTools("opstools", "out/bin/opstools", "cmd/opstools")
 }
 
+// Devtools Compile developer tools from source
+func (b Build) Devtools() {
+	buildTools("devtools", "out/bin/devtools", "cmd/devtools")
+}
+
 func buildTools(tools, binDir, sourceDir string) {
 	// cross compile so tools can be copied to other machines easily
 	archs := []string{"amd64", "386", "arm"} // yes arm, AWS is now supporting arm processors and they are cheap!
@@ -191,8 +196,8 @@ func buildTools(tools, binDir, sourceDir string) {
 	compile := func(path string) {
 		applyBuildEnv(func(arch, opsys, binPath string) {
 			app := filepath.Dir(path)
-			logger.Infof("build:opstools compiling %s for %s on %s to %s",
-				filepath.Base(app), opsys, arch, binPath)
+			logger.Infof("build:%s compiling %s for %s on %s to %s",
+				tools, filepath.Base(app), opsys, arch, binPath)
 			if err := sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
 				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
 				logger.Fatalf("go build %s failed: %v", path, err)
