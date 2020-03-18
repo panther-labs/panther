@@ -24,11 +24,5 @@ import (
 
 // InviteUser adds a new user to the Cognito user pool.
 func (API) InviteUser(input *models.InviteUserInput) (*models.InviteUserOutput, error) {
-	// Create user in Cognito
-	id, err := userGateway.CreateUser(input)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.InviteUserOutput{ID: id}, nil
+	return userGateway.CreateUser(input)
 }

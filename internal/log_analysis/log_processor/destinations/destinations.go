@@ -20,9 +20,10 @@ package destinations
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/service/firehose"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"go.uber.org/zap"
 
@@ -35,7 +36,7 @@ type Destination interface {
 	SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error)
 }
 
-//CreateDestination the method returns the appropriate Destination based on configuration
+// CreateDestination the method returns the appropriate Destination based on configuration
 func CreateDestination() Destination {
 	zap.L().Debug("creating S3 destination")
 	s3BucketName := os.Getenv("S3_BUCKET")
@@ -56,12 +57,14 @@ func createFirehoseDestination() Destination {
 }
 
 func createS3Destination(s3BucketName string) Destination {
+	// do not need to check error below, maxS3BufferMemUsageBytes() will panic if not set
+	lambdaSize, _ := strconv.Atoi(os.Getenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"))
 	return &S3Destination{
-		s3Client:    s3.New(common.Session),
-		snsClient:   sns.New(common.Session),
-		s3Bucket:    s3BucketName,
-		snsTopicArn: os.Getenv("SNS_TOPIC_ARN"),
-		maxFileSize: maxFileSize,
-		maxDuration: maxDuration,
+		s3Uploader:          s3manager.NewUploader(common.Session),
+		snsClient:           sns.New(common.Session),
+		s3Bucket:            s3BucketName,
+		snsTopicArn:         os.Getenv("SNS_TOPIC_ARN"),
+		maxBufferedMemBytes: maxS3BufferMemUsageBytes(lambdaSize),
+		maxDuration:         maxDuration,
 	}
 }

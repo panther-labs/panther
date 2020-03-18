@@ -19,12 +19,12 @@ package awslogs
  */
 
 import (
-	"encoding/csv"
 	"strings"
 
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -68,26 +68,28 @@ type S3ServerAccess struct {
 }
 
 // S3ServerAccessParser parses AWS S3 Server Access logs
-type S3ServerAccessParser struct{}
+type S3ServerAccessParser struct {
+	CSVReader *csvstream.StreamingCSVReader
+}
 
 func (p *S3ServerAccessParser) New() parsers.LogParser {
-	return &S3ServerAccessParser{}
+	reader := csvstream.NewStreamingCSVReader()
+	// non-default settings
+	reader.CVSReader.Comma = ' '
+	reader.CVSReader.LazyQuotes = true
+	return &S3ServerAccessParser{
+		CSVReader: reader,
+	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *S3ServerAccessParser) Parse(log string) []*parsers.PantherLog {
-	reader := csv.NewReader(strings.NewReader(log))
-	reader.LazyQuotes = true
-	reader.Comma = ' '
-
-	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
+	record, err := p.CSVReader.Parse(log)
+	if err != nil {
 		zap.L().Debug("failed to parse the log as csv")
 		return nil
 	}
 
-	// parser should only receive 1 line at a time
-	record := records[0]
 	if len(record) < s3ServerAccessMinNumberOfColumns {
 		zap.L().Debug("failed to parse the log as csv (wrong number of columns)")
 		return nil

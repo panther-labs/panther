@@ -149,8 +149,11 @@ func (o *Operation) standardFields(status string) (fields []zap.Field) {
 			o.EndMemStats.NumGC-o.StartMemStats.NumGC))
 	}
 	if o.AvailableMemMB > 0 && o.EndMemStats != nil {
-		fields = append(fields, zap.Int("percentMemUsed",
-			int(((float32)(o.EndMemStats.Sys/(1024*1024)))/(float32)(o.AvailableMemMB)*100.0))) // for all time until now
+		percentMemUsed := int(((float32)(o.EndMemStats.Sys / (1024 * 1024))) / (float32)(o.AvailableMemMB) * 100.0)
+		if percentMemUsed > 100 { // this can happen because Stats.Sys includes virtual mappings, makes graphs look silly
+			percentMemUsed = 100
+		}
+		fields = append(fields, zap.Int("percentMemUsed", percentMemUsed)) // for all time until now
 	}
 	return fields
 }

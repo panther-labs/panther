@@ -59,7 +59,6 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		IntegrationID:      input.IntegrationID,
 		IntegrationLabel:   input.IntegrationLabel,
 		ScanIntervalMins:   input.ScanIntervalMins,
-		ScanEnabled:        input.ScanEnabled,
 		CWEEnabled:         input.CWEEnabled,
 		RemediationEnabled: input.RemediationEnabled,
 		S3Buckets:          input.S3Buckets,

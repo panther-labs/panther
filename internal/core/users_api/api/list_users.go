@@ -21,8 +21,8 @@ package api
 import "github.com/panther-labs/panther/api/lambda/users/models"
 
 // ListUsers lists details for each user in Panther.
-func (API) ListUsers(*models.ListUsersInput) (*models.ListUsersOutput, error) {
-	users, err := userGateway.ListUsers()
+func (API) ListUsers(input *models.ListUsersInput) (*models.ListUsersOutput, error) {
+	users, err := userGateway.ListUsers(input)
 	if err != nil {
 		return nil, err
 	}
