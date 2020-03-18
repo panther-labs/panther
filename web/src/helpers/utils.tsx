@@ -245,5 +245,5 @@ export const getComplianceIntegrationStackName = () => {
 export const getLogIntegrationStackName = (
   source: Partial<LogIntegration> & Pick<LogIntegration, 'integrationLabel'>
 ) => {
-  return `panther-log-analysis-${source.integrationLabel.replace(/ /g, '-')}`;
+  return `panther-log-analysis-${source.integrationLabel.replace(/ /g, '-').toLowerCase()}`;
 };
