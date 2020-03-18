@@ -6,4 +6,15 @@ fragment ComplianceIntegrationDetails on ComplianceIntegration {
   createdBy
   cweEnabled
   remediationEnabled
+  health {
+    auditRoleStatus {
+      ...IntegrationItemHealthDetails
+    }
+    cweRoleStatus {
+      ...IntegrationItemHealthDetails
+    }
+    remediationRoleStatus {
+      ...IntegrationItemHealthDetails
+    }
+  }
 }
