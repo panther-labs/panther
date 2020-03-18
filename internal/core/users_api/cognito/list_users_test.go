@@ -127,3 +127,60 @@ func TestListUsersFilterByName(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, result, 1)
 }
+
+func TestListUsersFilterByNameAndStatus(t *testing.T) {
+	mockCognitoClient := &mockCognitoClient{}
+	gw := &UsersGateway{userPoolClient: mockCognitoClient}
+
+	input := &provider.ListUsersInput{UserPoolId: gw.userPoolID}
+	now := time.Now()
+	output := &provider.ListUsersOutput{
+		Users: []*provider.UserType{
+			{
+				Attributes: []*provider.AttributeType{
+					{
+						Name:  aws.String("given_name"),
+						Value: aws.String("Panther"),
+					},
+					{
+						Name:  aws.String("family_name"),
+						Value: aws.String("Labs"),
+					},
+					{
+						Name:  aws.String("email"),
+						Value: aws.String("runpanther@example.com"),
+					},
+				},
+				UserCreateDate:       &now,
+				UserLastModifiedDate: &now,
+				Username:             mockUserID,
+				UserStatus:           aws.String("CONFIRMED"),
+			},
+			{
+				Attributes:           mockUserAttrs,
+				UserCreateDate:       &now,
+				UserLastModifiedDate: &now,
+				Username:             mockUserID,
+				UserStatus:           aws.String("CONFIRMED"),
+			},
+		},
+	}
+
+	mockCognitoClient.On("ListUsersPages", input, mock.Anything).Return(output, nil)
+
+	// match both on name and status - on
+	result, err := gw.ListUsers(&models.ListUsersInput{
+		Contains: aws.String("panther"),   // only 1 with this string
+		Status:   aws.String("CONFIRMED"), // 2 confirmed users
+	})
+	require.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "Panther", *result[0].GivenName)
+
+	result, err = gw.ListUsers(&models.ListUsersInput{
+		Contains: aws.String("panther"),               // 1 match
+		Status:   aws.String("FORCE_CHANGE_PASSWORD"), // no match
+	})
+	require.NoError(t, err)
+	assert.Len(t, result, 0)
+}
