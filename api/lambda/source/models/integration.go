@@ -73,8 +73,8 @@ type SourceIntegrationHealth struct {
 }
 
 type SourceIntegrationItemStatus struct {
-	Healthy      bool   `json:"healthy"`
-	ErrorMessage string `json:"errorMessage"`
+	Healthy      *bool   `json:"healthy"`
+	ErrorMessage *string `json:"errorMessage"`
 }
 
 type SourceIntegrationTemplate struct {

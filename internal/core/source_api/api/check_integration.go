@@ -61,7 +61,7 @@ func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.Source
 	} else {
 		var roleCreds *credentials.Credentials
 		roleCreds, out.ProcessingRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(logProcessingRoleFormat, *input.AWSAccountID)))
-		if out.ProcessingRoleStatus.Healthy {
+		if aws.BoolValue(out.ProcessingRoleStatus.Healthy) {
 			out.S3BucketStatus = checkBucket(roleCreds, input.S3Bucket)
 			out.KMSKeyStatus = checkKey(roleCreds, input.KmsKey)
 		}
@@ -73,7 +73,7 @@ func checkKey(roleCredentials *credentials.Credentials, key *string) models.Sour
 	if key == nil {
 		// KMS key is optional
 		return models.SourceIntegrationItemStatus{
-			Healthy: true,
+			Healthy: aws.Bool(true),
 		}
 	}
 	kmsClient := kms.New(sess, &aws.Config{Credentials: roleCredentials})
@@ -81,21 +81,19 @@ func checkKey(roleCredentials *credentials.Credentials, key *string) models.Sour
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			ErrorMessage: err.Error(),
+			ErrorMessage: aws.String(err.Error()),
 		}
 	}
 
 	if !*info.KeyMetadata.Enabled {
 		// If the key is disabled, we should fail as well
 		return models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			ErrorMessage: "key disabled",
+			ErrorMessage: aws.String("key disabled"),
 		}
 	}
 
 	return models.SourceIntegrationItemStatus{
-		Healthy: true,
+		Healthy: aws.Bool(true),
 	}
 }
 
@@ -105,13 +103,12 @@ func checkBucket(roleCredentials *credentials.Credentials, bucket *string) model
 	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucket})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			ErrorMessage: err.Error(),
+			ErrorMessage: aws.String(err.Error()),
 		}
 	}
 
 	return models.SourceIntegrationItemStatus{
-		Healthy: true,
+		Healthy: aws.Bool(true),
 	}
 }
 
@@ -131,13 +128,12 @@ func getCredentialsWithStatus(
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			ErrorMessage: err.Error(),
+			ErrorMessage: aws.String(err.Error()),
 		}
 	}
 
 	return roleCredentials, models.SourceIntegrationItemStatus{
-		Healthy: true,
+		Healthy: aws.Bool(true),
 	}
 }
 
@@ -149,31 +145,31 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (bo
 
 	switch aws.StringValue(integration.IntegrationType) {
 	case models.IntegrationTypeAWSScan:
-		if !status.AuditRoleStatus.Healthy {
+		if !aws.BoolValue(status.AuditRoleStatus.Healthy) {
 			// If audit role is not healthy return false
 			return false, nil
 		}
 
-		if aws.BoolValue(integration.EnableRemediation) && !status.RemediationRoleStatus.Healthy {
+		if aws.BoolValue(integration.EnableRemediation) && !aws.BoolValue(status.RemediationRoleStatus.Healthy) {
 			// If remediation is enabled but remediation role is not healthy return false
 			return false, nil
 		}
 
-		if aws.BoolValue(integration.EnableCWESetup) && !status.CWERoleStatus.Healthy {
+		if aws.BoolValue(integration.EnableCWESetup) && !aws.BoolValue(status.CWERoleStatus.Healthy) {
 			// If CWE are enbled but CWEEvents role is not healthy return false
 			return false, nil
 		}
 		return true, nil
 
 	case models.IntegrationTypeAWS3:
-		if !status.ProcessingRoleStatus.Healthy || !status.S3BucketStatus.Healthy {
+		if !aws.BoolValue(status.ProcessingRoleStatus.Healthy) || !aws.BoolValue(status.S3BucketStatus.Healthy) {
 			// If Log processing role is not healthy or S3 bucket status is not healthy return false
 			return false, nil
 		}
 
 		if integration.KmsKey != nil {
 			// If the integration has a KMS key and the keys is not healthy return false
-			return status.KMSKeyStatus.Healthy, nil
+			return aws.BoolValue(status.KMSKeyStatus.Healthy), nil
 		}
 		return true, nil
 	default:
