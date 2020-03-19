@@ -57,7 +57,7 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
         },
         policy: (data, helpers) => {
           const policyRef = helpers.toReference({
-            __typename: policy.__typename,
+            __typename: 'PolicyDetails',
             id: policy.id,
           });
           if (policyRef.__ref !== data.__ref) {
