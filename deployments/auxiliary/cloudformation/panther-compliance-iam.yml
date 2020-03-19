@@ -21,6 +21,8 @@ Metadata:
   Version: v1.0.2
 
 Mappings:
+  # DO NOT EDIT PantherParameters section. Panther application relies on the exact format (including comments)
+  # in order to replace the default values with an appropriate ones.
   PantherParameters:
     MasterAccountId:
       Value: '' # MasterAccountId
@@ -33,17 +35,17 @@ Parameters:
   # Required parameters
   MasterAccountId:
     Type: String
-    Description: AWS account ID of the account running the Panther backend
+    Description: DO NOT EDIT!
     Default: ''
 
   # Deployment toggles
   DeployCloudWatchEventSetup:
     Type: String
-    Description: Creates a StackSet Execution Role to configure CloudWatch Events to send to Panther for compliance processing (optional).
+    Description: DO NOT EDIT!
     Default: ''
   DeployRemediation:
     Type: String
-    Description: Creates an IAM Role to perform remediation on non-compliant AWS resources (optional).
+    Description: DO NOT EDIT!
     Default: ''
 
 Conditions:

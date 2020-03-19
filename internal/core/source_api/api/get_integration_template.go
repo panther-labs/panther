@@ -34,7 +34,7 @@ import (
 
 const (
 	TemplateBucket           = "panther-public-cloudformation-templates"
-	CloudSecurityTemplateKey = "panther-compliance-iam/latest/template.yml"
+	CloudSecurityTemplateKey = "panther-compliance-iam/v1.0.2/template.yml"
 	LogProcessingTemplateKey = "panther-log-processing-iam/latest/template.yml"
 	cacheTimout              = time.Minute * 30
 )
