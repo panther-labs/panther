@@ -166,9 +166,8 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (bo
 		return true, nil
 
 	case models.IntegrationTypeAWS3:
-		// S3
 		if !status.ProcessingRoleStatus.Healthy || !status.S3BucketStatus.Healthy {
-			// if Log processing role is not healthy or S3 bucket status is not healthy return false
+			// If Log processing role is not healthy or S3 bucket status is not healthy return false
 			return false, nil
 		}
 
