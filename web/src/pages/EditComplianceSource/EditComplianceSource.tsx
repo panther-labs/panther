@@ -40,12 +40,6 @@ const EditComplianceSource: React.FC = () => {
   });
 
   const [updateRole, { error: updateError }] = useUpdateComplianceSource({
-    onError: error => {
-      pushSnackbar({
-        title: extractErrorMessage(error) || 'An unknown error occured',
-        variant: 'error',
-      });
-    },
     onCompleted: () => history.push(urls.compliance.sources.list()),
   });
 
