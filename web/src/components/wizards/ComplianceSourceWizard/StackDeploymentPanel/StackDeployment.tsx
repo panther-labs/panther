@@ -51,7 +51,7 @@ const StackDeployment: React.FC = () => {
 
   const cfnConsoleLink =
     `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
-    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-compliance-iam/latest/template.yml` +
+    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudsec-iam/v1.0.0/template.yml` +
     `&stackName=${getComplianceIntegrationStackName()}` +
     `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
     `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
