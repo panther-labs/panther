@@ -26,7 +26,7 @@ type LambdaInput struct {
 
 	PutIntegration *PutIntegrationInput `json:"putIntegration"`
 
-	ListIntegrations *ListIntegrationsInput `json:"getEnabledIntegrations"`
+	ListIntegrations *ListIntegrationsInput `json:"listIntegrations"`
 
 	GetIntegrationTemplate *GetIntegrationTemplateInput `json:"getIntegrationTemplate"`
 
