@@ -32,7 +32,7 @@ var (
 
 func init() {
 	var err error
-	integrationLabelValidatorRegex, err = regexp.Compile("^[a-zA-Z- ]+$")
+	integrationLabelValidatorRegex, err = regexp.Compile("^[0-9a-zA-Z- ]+$")
 	if err != nil {
 		panic("failed to compile regex")
 	}

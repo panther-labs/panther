@@ -30,7 +30,7 @@ func TestValidateIntegrationLabelSucceeds(t *testing.T) {
 	require.NoError(t, err)
 	err = validator.Struct(&GetIntegrationTemplateInput{
 		AWSAccountID:     aws.String("123456789012"),
-		IntegrationLabel: aws.String("Test- "),
+		IntegrationLabel: aws.String("Test12- "),
 		IntegrationType:  aws.String(IntegrationTypeAWS3),
 	})
 	require.NoError(t, err)
