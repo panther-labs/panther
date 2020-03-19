@@ -34,7 +34,7 @@ import (
 
 const (
 	TemplateBucket           = "panther-public-cloudformation-templates"
-	CloudSecurityTemplateKey = "panther-compliance-iam/latest/template.yml"
+	CloudSecurityTemplateKey = "panther-cloudsec-iam/v1.0.0/template.yml"
 	LogProcessingTemplateKey = "panther-log-processing-iam/latest/template.yml"
 	cacheTimout              = time.Minute * 30
 )
@@ -43,14 +43,14 @@ var (
 	templateCache = make(map[string]templateCacheItem, 2)
 
 	// Formatting variables used for re-writing the default templates
-	accountIDFind    = []byte("Default: '' # MasterAccountId")
-	accountIDReplace = "Default: %s # MasterAccountId"
+	accountIDFind    = []byte("Value: '' # MasterAccountId")
+	accountIDReplace = "Value: %s # MasterAccountId"
 
 	// Formatting variables for Cloud Security
-	cweFind            = []byte("Default: false # DeployCloudWatchEventSetup")
-	cweReplace         = "Default: %t # DeployCloudWatchEventSetup"
-	remediationFind    = []byte("Default: false # DeployRemediation")
-	remediationReplace = "Default: %t # DeployRemediation"
+	cweFind            = []byte("Value: '' # DeployCloudWatchEventSetup")
+	cweReplace         = "Value: %t # DeployCloudWatchEventSetup"
+	remediationFind    = []byte("Value: '' # DeployRemediation")
+	remediationReplace = "Value: %t # DeployRemediation"
 
 	// Formatting variables for Log Analysis
 	s3BucketFind    = []byte("Default: '' # S3Buckets")
