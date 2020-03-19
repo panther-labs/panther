@@ -290,7 +290,7 @@ Resources:
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
-          $util.toJson($context.result)
+          true
         #end
 
   ListUsersResolver:
