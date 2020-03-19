@@ -111,7 +111,7 @@ func getQueuePolicy() (*SqsPolicy, error) {
 		return nil, errors.Wrap(err, "failed to get queue attributes")
 	}
 	policyAttribute := attributes.Attributes[policyAttributeName]
-	if policyAttribute == nil {
+	if len(aws.StringValue(policyAttribute)) == 0 {
 		return nil, nil
 	}
 	var policy SqsPolicy
@@ -133,19 +133,24 @@ func findStatementIndex(policy *SqsPolicy, accountID string) int {
 }
 
 func setQueuePolicy(policy *SqsPolicy) error {
-	serializedPolicy, err := jsoniter.MarshalToString(policy)
-	if err != nil {
-		zap.L().Error("failed to serialize policy", zap.Error(errors.WithStack(err)))
-		return errors.WithStack(err)
+	policyAttribute := aws.String("")
+	if len(policy.Statements) > 0 {
+		marshaledPolicy, err := jsoniter.MarshalToString(policy)
+		if err != nil {
+			zap.L().Error("failed to serialize policy", zap.Error(errors.WithStack(err)))
+			return errors.WithStack(err)
+		}
+		policyAttribute = aws.String(marshaledPolicy)
 	}
 
 	setAttributesInput := &sqs.SetQueueAttributesInput{
-		Attributes: map[string]*string{
-			policyAttributeName: aws.String(serializedPolicy),
-		},
 		QueueUrl: aws.String(logProcessorQueueURL),
+		Attributes: map[string]*string{
+			policyAttributeName: policyAttribute,
+		},
 	}
-	_, err = SQSClient.SetQueueAttributes(setAttributesInput)
+
+	_, err := SQSClient.SetQueueAttributes(setAttributesInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to set queue attributes")
 	}

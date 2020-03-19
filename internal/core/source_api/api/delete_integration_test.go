@@ -311,29 +311,34 @@ func generateDDBAttributes(integrationType string) map[string]*dynamodb.Attribut
 }
 
 func generateQueueAttributeOutput(t *testing.T, accountIDs []string) map[string]*string {
-	statements := make([]SqsPolicyStatement, len(accountIDs))
-	for i, accountID := range accountIDs {
-		statements[i] = SqsPolicyStatement{
-			SID:       fmt.Sprintf("PantherSubscriptionSID-%s", accountID),
-			Effect:    "Allow",
-			Principal: map[string]string{"AWS": "*"},
-			Action:    "sqs:SendMessage",
-			Resource:  logProcessorQueueArn,
-			Condition: map[string]interface{}{
-				"ArnLike": map[string]string{
-					"aws:SourceArn": fmt.Sprintf("arn:aws:sns:*:%s:*", accountID),
+	policyAttribute := aws.String("")
+	if len(accountIDs) > 0 {
+		statements := make([]SqsPolicyStatement, len(accountIDs))
+		for i, accountID := range accountIDs {
+			statements[i] = SqsPolicyStatement{
+				SID:       fmt.Sprintf("PantherSubscriptionSID-%s", accountID),
+				Effect:    "Allow",
+				Principal: map[string]string{"AWS": "*"},
+				Action:    "sqs:SendMessage",
+				Resource:  logProcessorQueueArn,
+				Condition: map[string]interface{}{
+					"ArnLike": map[string]string{
+						"aws:SourceArn": fmt.Sprintf("arn:aws:sns:*:%s:*", accountID),
+					},
 				},
-			},
+			}
 		}
-	}
-	policy := SqsPolicy{
-		Version:    "2008-10-17",
-		Statements: statements,
+		policy := SqsPolicy{
+			Version:    "2008-10-17",
+			Statements: statements,
+		}
+
+		marshaledPolicy, err := jsoniter.MarshalToString(policy)
+		require.NoError(t, err)
+		policyAttribute = aws.String(marshaledPolicy)
 	}
 
-	marshalledPolicy, err := jsoniter.MarshalToString(policy)
-	require.NoError(t, err)
 	return map[string]*string{
-		"Policy": aws.String(marshalledPolicy),
+		"Policy": policyAttribute,
 	}
 }
