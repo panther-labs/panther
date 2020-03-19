@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -146,13 +147,37 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (bo
 		return false, err
 	}
 
-	if *integration.IntegrationType == models.IntegrationTypeAWSScan {
-		passing := status.AuditRoleStatus.Healthy
-		// For these two, we are ok if they are not enabled or if they are passing
-		passing = passing && (!aws.BoolValue(integration.EnableRemediation) || status.RemediationRoleStatus.Healthy)
-		passing = passing && (!aws.BoolValue(integration.EnableCWESetup) || status.CWERoleStatus.Healthy)
-		return passing, nil
+	switch aws.StringValue(integration.IntegrationType) {
+	case models.IntegrationTypeAWSScan:
+		if !status.AuditRoleStatus.Healthy {
+			// If audit role is not healthy return false
+			return false, nil
+		}
+
+		if aws.BoolValue(integration.EnableRemediation) && !status.RemediationRoleStatus.Healthy {
+			// If remediation is enabled but remediation role is not healthy return false
+			return false, nil
+		}
+
+		if aws.BoolValue(integration.EnableCWESetup) && !status.CWERoleStatus.Healthy {
+			// If CWE are enbled but CWEEvents role is not healthy return false
+			return false, nil
+		}
+		return true, nil
+
+	case models.IntegrationTypeAWS3:
+		// S3
+		if !status.ProcessingRoleStatus.Healthy || !status.S3BucketStatus.Healthy {
+			// if Log processing role is not healthy or S3 bucket status is not healthy return false
+			return false, nil
+		}
+
+		if integration.KmsKey != nil {
+			// If the integratio has a KMS key and the keys is not healthy return false
+			return status.KMSKeyStatus.Healthy, nil
+		}
+		return true, nil
+	default:
+		return false, errors.New("invalid integration type")
 	}
-	// One of these will be nil, one of these will not. We only care about the value of the not nil one.
-	return status.ProcessingRoleStatus.Healthy && status.S3BucketStatus.Healthy && status.KMSKeyStatus.Healthy, nil
 }

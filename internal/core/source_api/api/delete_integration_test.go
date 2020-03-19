@@ -66,7 +66,7 @@ func TestDeleteIntegrationItem(t *testing.T) {
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOtput(models.IntegrationTypeAWSScan), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: aws.String(testIntegrationID),
@@ -96,7 +96,7 @@ func TestDeleteLogIntegration(t *testing.T) {
 	}
 
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOtput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
 	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
@@ -141,7 +141,7 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 	}
 
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOtput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
 	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
@@ -163,7 +163,7 @@ func TestDeleteIntegrationItemError(t *testing.T) {
 		"An error occurred on the server side.",
 		errors.New("fake error"),
 	)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOtput(models.IntegrationTypeAWSScan), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, mockErr)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
@@ -192,7 +192,7 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 		},
 	}
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOtput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
 	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{"111111111111"}) // Wrong accountID
@@ -243,7 +243,7 @@ func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
 	}
 
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, errors.New("error"))
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOtput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
 	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
@@ -276,7 +276,7 @@ func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
 		},
 	}
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, errors.New("error"))
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOtput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
 	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
@@ -296,7 +296,7 @@ func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-func generateGetItemOtput(integrationType string) *dynamodb.GetItemOutput {
+func generateGetItemOutput(integrationType string) *dynamodb.GetItemOutput {
 	return &dynamodb.GetItemOutput{
 		Item: generateDDBAttributes(integrationType),
 	}
