@@ -18,32 +18,47 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM roles for an account being scanned by Panther.
 
 Metadata:
-  Version: v1.0.1
+  Version: v1.0.2
+
+Mappings:
+  PantherParameters:
+    MasterAccountId:
+      Value: '' # MasterAccountId
+    DeployCloudWatchEventSetup:
+      Value: '' # DeployCloudWatchEventSetup
+    DeployRemediation:
+      Value: '' # DeployRemediation
 
 Parameters:
   # Required parameters
   MasterAccountId:
     Type: String
     Description: AWS account ID of the account running the Panther backend
-    Default: '' # MasterAccountId
-    # DO NOT EDIT OR REMOVE the above line. Panther application relies on the exact format of the above line
-    # in order to replace the MasterAccountId default value with an appropriate one.
+    Default: ''
 
   # Deployment toggles
   DeployCloudWatchEventSetup:
     Type: String
     Description: Creates a StackSet Execution Role to configure CloudWatch Events to send to Panther for compliance processing (optional).
-    Default: false # DeployCloudWatchEventSetup
-    AllowedValues: [true, false]
+    Default: ''
   DeployRemediation:
     Type: String
     Description: Creates an IAM Role to perform remediation on non-compliant AWS resources (optional).
-    Default: false # DeployRemediation
-    AllowedValues: [true, false]
+    Default: ''
 
 Conditions:
-  CloudWatchEventSetup: !Equals [true, !Ref DeployCloudWatchEventSetup]
-  AutoRemediation: !Equals [true, !Ref DeployRemediation]
+  CloudWatchEventSetup: !Equals
+    - true
+    - !Sub
+      - '${Default}${Mapping}'
+      - Default: !Ref DeployCloudWatchEventSetup
+        Mapping: !FindInMap [PantherParameters, DeployCloudWatchEventSetup, Value]
+  AutoRemediation: !Equals
+    - true
+    - !Sub
+      - '${Default}${Mapping}'
+      - Default: !Ref DeployRemediation
+        Mapping: !FindInMap [PantherParameters, DeployRemediation, Value]
 
 Resources:
   AuditRole:
@@ -56,7 +71,11 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
+              AWS: !Sub
+                - 'arn:${Partition}:iam::${Default}${Mapping}:root'
+                - Partition: !Ref AWS::Partition
+                  Default: !Ref MasterAccountId
+                  Mapping: !FindInMap [PantherParameters, MasterAccountId, Value]
             Action: sts:AssumeRole
             Condition:
               Bool:
@@ -123,7 +142,11 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
+              AWS: !Sub
+                - 'arn:${Partition}:iam::${Default}${Mapping}:root'
+                - Partition: !Ref AWS::Partition
+                  Default: !Ref MasterAccountId
+                  Mapping: !FindInMap [PantherParameters, MasterAccountId, Value]
             Action: sts:AssumeRole
       Policies:
         - PolicyName: ManageCloudFormationStack
@@ -150,7 +173,7 @@ Resources:
     Condition: AutoRemediation
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherRemediationRole # DO NOT CHANGE! backend.yml CF depends on this name, set in mage deploy
+      RoleName: PantherRemediationRole
       Description: The Panther master account assumes this role for automatic remediation of policy violations
       MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:
@@ -158,7 +181,11 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
+              AWS: !Sub
+                - 'arn:${Partition}:iam::${Default}${Mapping}:root'
+                - Partition: !Ref AWS::Partition
+                  Default: !Ref MasterAccountId
+                  Mapping: !FindInMap [PantherParameters, MasterAccountId, Value]
             Action: sts:AssumeRole
             Condition:
               Bool:
