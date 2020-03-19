@@ -17,43 +17,30 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type ListUsersVariables = {
-  limit?: Types.Maybe<Types.Scalars['Int']>;
-  paginationToken?: Types.Maybe<Types.Scalars['String']>;
-};
+export type ListUsersVariables = {};
 
 export type ListUsers = {
-  users?: Types.Maybe<
-    Pick<Types.ListUsersResponse, 'paginationToken'> & {
-      users?: Types.Maybe<
-        Array<
-          Types.Maybe<
-            Pick<Types.User, 'id' | 'email' | 'givenName' | 'familyName' | 'createdAt' | 'status'>
-          >
-        >
-      >;
-    }
+  users: Array<
+    Pick<Types.User, 'id' | 'email' | 'givenName' | 'familyName' | 'createdAt' | 'status'>
   >;
 };
 
 export const ListUsersDocument = gql`
-  query ListUsers($limit: Int, $paginationToken: String) {
-    users(limit: $limit, paginationToken: $paginationToken) {
-      users {
-        id
-        email
-        givenName
-        familyName
-        createdAt
-        status
-      }
-      paginationToken
+  query ListUsers {
+    users {
+      id
+      email
+      givenName
+      familyName
+      createdAt
+      status
     }
   }
 `;
@@ -70,8 +57,6 @@ export const ListUsersDocument = gql`
  * @example
  * const { data, loading, error } = useListUsers({
  *   variables: {
- *      limit: // value for 'limit'
- *      paginationToken: // value for 'paginationToken'
  *   },
  * });
  */

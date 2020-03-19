@@ -48,7 +48,7 @@ type Query {
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
-  users(limit: Int, paginationToken: String): ListUsersResponse
+  users: [User!]!
 }
 
 input ListAlertsInput {
@@ -648,11 +648,6 @@ input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
-}
-
-type ListUsersResponse {
-  users: [User]
-  paginationToken: String
 }
 
 enum ComplianceStatusEnum {
