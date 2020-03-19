@@ -87,36 +87,33 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	}
 
 	// Format the template with the user's input
-	formattedTemplate := strings.Replace(template, accountIDFind,
-		fmt.Sprintf(accountIDReplace, *input.AWSAccountID), 1)
+	formattedTemplate := strings.ReplaceAll(template, accountIDFind,
+		fmt.Sprintf(accountIDReplace, *input.AWSAccountID))
 
 	// Cloud Security replacements
 	if *input.IntegrationType == models.IntegrationTypeAWSScan {
-		formattedTemplate = strings.Replace(formattedTemplate, cweFind,
-			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)), 1)
-		formattedTemplate = strings.Replace(formattedTemplate, remediationFind,
-			fmt.Sprintf(remediationReplace, aws.BoolValue(input.RemediationEnabled)), 1)
+		formattedTemplate = strings.ReplaceAll(formattedTemplate, cweFind,
+			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)))
+		formattedTemplate = strings.ReplaceAll(formattedTemplate, remediationFind,
+			fmt.Sprintf(remediationReplace, aws.BoolValue(input.RemediationEnabled)))
 	} else {
 		// Log Analysis replacements
-		formattedTemplate = strings.Replace(formattedTemplate, roleSuffixIDFind,
-			fmt.Sprintf(roleSuffixReplace, generateSuffix(input)), 1)
+		formattedTemplate = strings.ReplaceAll(formattedTemplate, roleSuffixIDFind,
+			fmt.Sprintf(roleSuffixReplace, generateSuffix(input)))
 
-		formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
-			fmt.Sprintf(s3BucketReplace, *input.S3Bucket), 1)
+		formattedTemplate = strings.ReplaceAll(formattedTemplate, s3BucketFind,
+			fmt.Sprintf(s3BucketReplace, *input.S3Bucket))
 
 		if input.S3Prefix != nil {
-			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
-				fmt.Sprintf(s3PrefixReplace, *input.S3Prefix), 1)
+			formattedTemplate = strings.ReplaceAll(formattedTemplate, s3PrefixFind,
+				fmt.Sprintf(s3PrefixReplace, *input.S3Prefix))
 		}
 
 		if input.KmsKey != nil {
-			formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,
-				fmt.Sprintf(kmsKeyReplace, *input.KmsKey), 1)
+			formattedTemplate = strings.ReplaceAll(formattedTemplate, kmsKeyFind,
+				fmt.Sprintf(kmsKeyReplace, *input.KmsKey))
 		}
 	}
-
-
-
 
 	return &models.SourceIntegrationTemplate{
 		Body: aws.String(formattedTemplate),

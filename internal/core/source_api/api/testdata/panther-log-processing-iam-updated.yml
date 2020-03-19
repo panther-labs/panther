@@ -1,0 +1,88 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM roles for log ingestion from an S3 bucket.
+
+Metadata:
+  Version: v1.0.2
+
+Parameters:
+  # Required parameters
+  MasterAccountId:
+    Type: String
+    Description: AWS account ID of the account running the Panther backend
+    Default: 123456789012 # MasterAccountId
+  RoleSuffix:
+    Type: String
+    Description: Suffix for the created role
+    Default: testlabel- # RoleSuffix
+  S3Bucket:
+    Type: String
+    Description: Name of the bucket to onboard
+    Default: test-bucket # S3Bucket
+  # Optional configuration parameters
+  S3Prefix:
+    Type: String
+    Description: Prefix of the data to be onboarded
+    Default: prefix # S3Prefix
+  KmsKey:
+    Type: String
+    Description: Allow Panther master account access to decrypt data using this KMS key.
+    Default: key-arn # KmsKey
+
+Conditions:
+  WithKmsPermissions: !Not [!Equals [KmsKey, '']]
+
+Resources:
+  LogProcessingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub PantherLogProcessingRole-${RoleSuffix}
+      Description: The Panther master account assumes this role to read log data
+      MaxSessionDuration: 3600 # 1 hour
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:SecureTransport: true
+      Policies:
+        - PolicyName: ReadData
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:GetBucketLocation
+                Resource: !Sub arn:aws:s3:::${S3Bucket}
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${S3Bucket}/${S3Prefix}
+              - !If
+                - WithKmsPermissions
+                - Effect: Allow
+                  Action:
+                    - kms:Decrypt
+                    - kms:DescribeKey
+                  Resource: !Ref KmsKey
+                - !Ref AWS::NoValue
+      Tags:
+        - Key: Application
+          Value: Panther

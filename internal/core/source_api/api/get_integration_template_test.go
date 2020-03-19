@@ -19,22 +19,22 @@ func TestLogAnalysisTemplate(t *testing.T) {
 	s3Client = s3Mock
 	input := &models.GetIntegrationTemplateInput{
 		AWSAccountID:       aws.String("123456789012"),
-		IntegrationType:    aws.String(models.IntegrationTypeAWSScan),
+		IntegrationType:    aws.String(models.IntegrationTypeAWS3),
 		IntegrationLabel:   aws.String("TestLabel-"),
-		RemediationEnabled: nil,
-		CWEEnabled:         nil,
 		S3Bucket:           aws.String("test-bucket"),
 		S3Prefix:           aws.String("prefix"),
 		KmsKey:             aws.String("key-arn"),
 	}
 
-	template, err := ioutil.ReadFile("../../../..//deployments/auxiliary/cloudformation/panther-log-processing-iam.yml")
+	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-log-processing-iam.yml")
 	require.NoError(t, err)
-
 	s3Mock.On("GetObject", mock.Anything).Return(&s3.GetObjectOutput{Body:ioutil.NopCloser(bytes.NewReader(template))}, nil)
 
 
 	result, err := API{}.GetIntegrationTemplate(input)
+
 	require.NoError(t, err)
-	require.NotNil(t, result)
+	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-log-processing-iam-updated.yml")
+	require.NoError(t, err)
+	require.Equal(t, string(expectedTemplate), *result.Body)
 }
