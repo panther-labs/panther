@@ -66,9 +66,6 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	if err := api.integrationAlreadyExists(input); err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, putIntegrationInternalError
-	}
 
 	// Get ready to add appropriate permissions to the SQS queue
 	permissionAdded := false
@@ -128,7 +125,7 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 
 	for _, existingIntegration := range existingIntegrations {
 		if *existingIntegration.IntegrationType == *input.IntegrationType &&
-			*existingIntegration.IntegrationLabel == *input.IntegrationLabel {
+			*existingIntegration.AWSAccountID == *input.AWSAccountID {
 
 			if *input.IntegrationType == models.IntegrationTypeAWSScan {
 				// We can only have one cloudsec integration for each account
@@ -136,7 +133,7 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 					Message: fmt.Sprintf("Source account %s already onboarded", *input.AWSAccountID),
 				}
 			}
-			if *existingIntegration.IntegrationLabel == models.IntegrationTypeAWS3 {
+			if *existingIntegration.IntegrationLabel == *input.IntegrationLabel {
 				// Log sources for same account need to have different labels
 				return &genericapi.InvalidInputError{
 					Message: fmt.Sprintf("Log source for account %s with label %s already exists",

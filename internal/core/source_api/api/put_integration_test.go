@@ -195,7 +195,6 @@ func TestPutLogIntegrationExists(t *testing.T) {
 
 func TestPutCloudSecIntegrationExists(t *testing.T) {
 	mockSQS := &mockSQSClient{}
-	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	SQSClient = mockSQS
 
 	db = &ddb.DDB{
@@ -223,6 +222,7 @@ func TestPutCloudSecIntegrationExists(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Empty(t, out) // should do nothing
+	mockSQS.AssertExpectations(t)
 }
 
 func TestPutIntegrationValidInput(t *testing.T) {
