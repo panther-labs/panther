@@ -23,7 +23,7 @@ import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
 import * as Yup from 'yup';
 
-interface UserFormValues {
+export interface UserFormValues {
   id?: string; // optional value
   email: string;
   familyName: string;

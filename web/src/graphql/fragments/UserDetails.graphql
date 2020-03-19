@@ -1,0 +1,8 @@
+fragment UserDetails on User {
+  id
+  givenName
+  familyName
+  email
+  createdAt
+  status
+}

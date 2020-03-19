@@ -439,7 +439,7 @@ export type Mutation = {
   updateGeneralSettings: GeneralSettings;
   updatePolicy?: Maybe<PolicyDetails>;
   updateRule?: Maybe<RuleDetails>;
-  updateUser?: Maybe<Scalars['Boolean']>;
+  updateUser: User;
   uploadPolicies?: Maybe<UploadPoliciesResponse>;
 };
 
@@ -892,9 +892,9 @@ export type User = {
   givenName?: Maybe<Scalars['String']>;
   familyName?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  email?: Maybe<Scalars['AWSEmail']>;
-  createdAt?: Maybe<Scalars['AWSTimestamp']>;
-  status?: Maybe<Scalars['String']>;
+  email: Scalars['AWSEmail'];
+  createdAt: Scalars['AWSTimestamp'];
+  status: Scalars['String'];
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -1554,7 +1554,7 @@ export type MutationResolvers<
     RequireFields<MutationUpdateRuleArgs, 'input'>
   >;
   updateUser?: Resolver<
-    Maybe<ResolversTypes['Boolean']>,
+    ResolversTypes['User'],
     ParentType,
     ContextType,
     RequireFields<MutationUpdateUserArgs, 'input'>
@@ -1950,9 +1950,9 @@ export type UserResolvers<
   givenName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   familyName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  email?: Resolver<Maybe<ResolversTypes['AWSEmail']>, ParentType, ContextType>;
-  createdAt?: Resolver<Maybe<ResolversTypes['AWSTimestamp']>, ParentType, ContextType>;
-  status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  email?: Resolver<ResolversTypes['AWSEmail'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['AWSTimestamp'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 

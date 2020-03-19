@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates */
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { UserDetails } from '../../../../graphql/fragments/UserDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,15 +29,15 @@ export type InviteUserVariables = {
   input: Types.InviteUserInput;
 };
 
-export type InviteUser = { inviteUser: Pick<Types.User, 'id' | 'email'> };
+export type InviteUser = { inviteUser: UserDetails };
 
 export const InviteUserDocument = gql`
   mutation InviteUser($input: InviteUserInput!) {
     inviteUser(input: $input) {
-      id
-      email
+      ...UserDetails
     }
   }
+  ${UserDetails}
 `;
 export type InviteUserMutationFn = ApolloReactCommon.MutationFunction<
   InviteUser,

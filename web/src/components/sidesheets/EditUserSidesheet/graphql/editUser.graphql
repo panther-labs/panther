@@ -1,3 +1,5 @@
 mutation EditUser($input: UpdateUserInput!) {
-    updateUser(input: $input)
+  updateUser(input: $input) {
+    ...UserDetails
+  }
 }
