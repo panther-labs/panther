@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -28,7 +29,7 @@ export type RuleTeaserVariables = {
 };
 
 export type RuleTeaser = {
-  rule: Types.Maybe<
+  rule?: Types.Maybe<
     Pick<
       Types.RuleDetails,
       'description' | 'displayName' | 'id' | 'logTypes' | 'runbook' | 'severity' | 'tags'

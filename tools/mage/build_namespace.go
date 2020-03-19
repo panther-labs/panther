@@ -31,6 +31,7 @@ import (
 	"github.com/magefile/mage/target"
 
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const swaggerGlob = "api/gateway/*/api.yml"
@@ -39,6 +40,13 @@ var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
 // Build contains targets for compiling source code.
 type Build mg.Namespace
+
+// Build all deployment artifacts
+func (b Build) All() {
+	b.Lambda() // implicitly does b.API()
+	b.Cfn()
+	b.Opstools()
+}
 
 // API Generate Go client/models from Swagger specs in api/
 func (b Build) API() {
@@ -154,25 +162,61 @@ func (b Build) lambda() error {
 	return nil
 }
 
-// Opstools Compile Go ops tools from source
+// Opstools Compile Go operational tools from source
 func (b Build) Opstools() {
-	const (
-		binDir    = "out/bin/opstools"
-		sourceDir = "cmd/opstools"
-	)
+	buildTools("opstools", "out/bin/opstools", "cmd/opstools")
+}
 
-	if err := os.MkdirAll(binDir, 0755); err != nil {
-		logger.Fatalf("failed to create %s directory: %v", binDir, err)
+// Devtools Compile developer tools from source
+func (b Build) Devtools() {
+	buildTools("devtools", "out/bin/devtools", "cmd/devtools")
+}
+
+func buildTools(tools, binDir, sourceDir string) {
+	// cross compile so tools can be copied to other machines easily
+	archs := []string{"amd64", "386", "arm"} // yes arm, AWS is now supporting arm processors and they are cheap!
+	oses := []string{"linux", "darwin", "windows"}
+	blacklist := map[string]bool{ // incompatible combinations
+		"darwin:arm": true,
+	}
+	applyBuildEnv := func(apply func(arch, opsys, binPath string)) {
+		for _, arch := range archs {
+			for _, opsys := range oses {
+				if blacklist[opsys+":"+arch] {
+					continue
+				}
+				apply(arch, opsys, filepath.Join(binDir, opsys, arch))
+			}
+		}
 	}
 
-	walk(sourceDir, func(path string, info os.FileInfo) {
-		if !info.IsDir() && strings.HasSuffix(path, "main.go") {
+	// create the dirs
+	applyBuildEnv(func(arch, opsys, binPath string) {
+		if err := os.MkdirAll(binPath, 0755); err != nil {
+			logger.Fatalf("failed to create %s directory: %v", binPath, err)
+		}
+	})
+
+	logger.Infof("build:%s using %s for %s on %s",
+		tools, runtime.Version(), strings.Join(oses, ","), strings.Join(archs, ","))
+
+	// loop over arch and os to compile
+	compile := func(path string) {
+		applyBuildEnv(func(arch, opsys, binPath string) {
 			app := filepath.Dir(path)
-			logger.Infof("build:opstools: compiling %s", app)
-			// NOTE: passing nil in as env to get native compilation
-			if err := sh.RunWith(nil, "go", "build", "-ldflags", "-s -w", "-o", binDir, "./"+app); err != nil {
+			logger.Infof("build:%s compiling %s for %s on %s to %s",
+				tools, filepath.Base(app), opsys, arch, binPath)
+			if err := sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
+				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
 				logger.Fatalf("go build %s failed: %v", path, err)
 			}
+		})
+	}
+
+	// compile each app
+	walk(sourceDir, func(path string, info os.FileInfo) {
+		if !info.IsDir() && strings.HasSuffix(path, "main.go") {
+			compile(path)
 		}
 	})
 }
@@ -210,11 +254,26 @@ func buildPackage(pkg string) error {
 	return nil
 }
 
-// (Beta) Cfn Generate Glue CFN templates in out/deployments folder
+// Generate CloudFormation templates in out/deployments folder
 func (b Build) Cfn() {
-	// TODO Eventually change it so it generates all CFN templates that will be used
-	// TODO Add a "build:all" target that just builds everything that will be deployed, but without triggering the actual deployment.
+	embedAPISpecs()
+
 	if err := generateGlueTables(); err != nil {
+		logger.Fatal(err)
+	}
+
+	settings, err := config.Settings()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	if err := generateAlarms(settings); err != nil {
+		logger.Fatal(err)
+	}
+	if err := generateDashboards(); err != nil {
+		logger.Fatal(err)
+	}
+	if err := generateMetrics(); err != nil {
 		logger.Fatal(err)
 	}
 }

@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -28,7 +29,7 @@ export type UploadPoliciesVariables = {
 };
 
 export type UploadPolicies = {
-  uploadPolicies: Types.Maybe<
+  uploadPolicies?: Types.Maybe<
     Pick<
       Types.UploadPoliciesResponse,
       | 'totalPolicies'

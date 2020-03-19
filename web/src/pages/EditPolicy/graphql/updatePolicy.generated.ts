@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -28,7 +29,7 @@ export type UpdatePolicyVariables = {
 };
 
 export type UpdatePolicy = {
-  updatePolicy: Types.Maybe<
+  updatePolicy?: Types.Maybe<
     Pick<
       Types.PolicyDetails,
       | 'autoRemediationId'
@@ -45,7 +46,7 @@ export type UpdatePolicy = {
       | 'tags'
       | 'body'
     > & {
-      tests: Types.Maybe<
+      tests?: Types.Maybe<
         Array<
           Types.Maybe<
             Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>

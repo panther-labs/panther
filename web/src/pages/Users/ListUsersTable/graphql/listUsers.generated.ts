@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -26,12 +27,8 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListUsersVariables = {};
 
 export type ListUsers = {
-  users: Types.Maybe<
-    Array<
-      Types.Maybe<
-        Pick<Types.User, 'id' | 'email' | 'givenName' | 'familyName' | 'createdAt' | 'status'>
-      >
-    >
+  users: Array<
+    Pick<Types.User, 'id' | 'email' | 'givenName' | 'familyName' | 'createdAt' | 'status'>
   >;
 };
 

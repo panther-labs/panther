@@ -1,10 +1,10 @@
 query ListUsers {
-  users {
-    id
-    email
-    givenName
-    familyName
-    createdAt
-    status
-  }
+    users {
+        id
+        email
+        givenName
+        familyName
+        createdAt
+        status
+    }
 }

@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -28,8 +29,8 @@ export type ListPoliciesVariables = {
 };
 
 export type ListPolicies = {
-  policies: Types.Maybe<{
-    policies: Types.Maybe<
+  policies?: Types.Maybe<{
+    policies?: Types.Maybe<
       Array<
         Types.Maybe<
           Pick<
@@ -45,7 +46,7 @@ export type ListPolicies = {
         >
       >
     >;
-    paging: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
+    paging?: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
   }>;
 };
 

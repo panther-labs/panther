@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -28,7 +29,7 @@ export type AddLogSourceVariables = {
 };
 
 export type AddLogSource = {
-  addIntegration: Types.Maybe<Pick<Types.Integration, 'integrationId'>>;
+  addIntegration?: Types.Maybe<Pick<Types.Integration, 'integrationId'>>;
 };
 
 export const AddLogSourceDocument = gql`

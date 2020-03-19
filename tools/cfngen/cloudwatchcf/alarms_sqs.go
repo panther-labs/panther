@@ -27,24 +27,21 @@ type SQSAlarm struct {
 	Alarm
 }
 
-func NewSQSAlarm(queueName, alarmType, metricName, message string, resource map[interface{}]interface{},
-	config *Config) (alarm *SQSAlarm) {
-
+func NewSQSAlarm(queueName, alarmType, metricName, message string) *SQSAlarm {
 	const (
 		metricDimension = "QueueName"
 		metricNamespace = "AWS/SQS"
 	)
 	alarmName := AlarmName(alarmType, queueName)
-	alarm = &SQSAlarm{
+	alarm := &SQSAlarm{
 		Alarm: *NewAlarm(queueName, alarmName,
-			fmt.Sprintf("SQS queue %s %s. See: %s#%s", queueName, message, documentationURL, queueName),
-			config.snsTopicArn),
+			fmt.Sprintf("SQS queue %s %s. See: %s#%s", queueName, message, documentationURL, queueName)),
 	}
 	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: queueName}})
 	return alarm
 }
 
-func generateSQSAlarms(resource map[interface{}]interface{}, config *Config) (alarms []*Alarm) {
+func generateSQSAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
 	queueName := getResourceProperty("QueueName", resource)
 
 	// DLQ qs are special, we alarm on ANY data in q
@@ -52,12 +49,12 @@ func generateSQSAlarms(resource map[interface{}]interface{}, config *Config) (al
 		referenceQueue := strings.Replace(queueName, "-dlq", "", -1)
 		// NOTE: this metric appears to have no units
 		alarms = append(alarms, NewSQSAlarm(queueName, "SQSDeadLetters", "ApproximateNumberOfMessagesVisible",
-			"has failed items from"+referenceQueue, resource, config).SumCountThreshold(0, 60*5))
+			"has failed items from "+referenceQueue).SumCountThreshold(0, 60*5))
 	} else { // regular q's
 		// nothing in our queues should be older than 5min
 		const tooOldSec float32 = 60.0 * 5.0
 		alarms = append(alarms, NewSQSAlarm(queueName, "SQSTooOld", "ApproximateAgeOfOldestMessage",
-			"has items not being processed at the expected rate", resource, config).MaxSecondsThreshold(tooOldSec, 60*5))
+			"has items not being processed at the expected rate").MaxSecondsThreshold(tooOldSec, 60*5))
 	}
 
 	return alarms

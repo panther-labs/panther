@@ -42,7 +42,7 @@ func (m *mockSQS) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendM
 		return nil, m.err
 	}
 
-	if len(input.GoString()) > maxBytes {
+	if len(input.GoString()) > maxMessageBytes {
 		return nil, errors.New(sqs.ErrCodeBatchRequestTooLong)
 	}
 
@@ -72,21 +72,27 @@ func testInput() *sqs.SendMessageBatchInput {
 
 func TestSendMessageBatch(t *testing.T) {
 	client := &mockSQS{}
-	assert.NoError(t, SendMessageBatch(client, 5*time.Second, testInput()))
+	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
+	assert.NoError(t, err)
+	assert.Empty(t, failures)
 	assert.Equal(t, 1, client.callCount)
 }
 
 // Unprocessed items are retried
 func TestSendMessageBatchBackoff(t *testing.T) {
 	client := &mockSQS{unprocessedItems: true}
-	assert.NoError(t, SendMessageBatch(client, 5*time.Second, testInput()))
+	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
+	assert.NoError(t, err)
+	assert.Empty(t, failures)
 	assert.Equal(t, 2, client.callCount)
 }
 
 // Client errors are not retried
 func TestSendMessageBatchPermanentError(t *testing.T) {
 	client := &mockSQS{err: errors.New("permanent")}
-	assert.Error(t, SendMessageBatch(client, 5*time.Second, testInput()))
+	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
+	assert.Error(t, err)
+	assert.Len(t, failures, 2)
 	assert.Equal(t, 1, client.callCount)
 }
 
@@ -115,7 +121,9 @@ func TestSendMessageBatchLargePagination(t *testing.T) {
 		QueueUrl: aws.String("test-queue-url"),
 	}
 
-	assert.NoError(t, SendMessageBatch(client, 5*time.Second, input))
+	failures, err := SendMessageBatch(client, 5*time.Second, input)
+	assert.NoError(t, err)
+	assert.Empty(t, failures)
 	assert.Equal(t, 2, client.callCount)
 }
 
@@ -137,7 +145,10 @@ func TestSendMessageBatchLargePaginationError(t *testing.T) {
 		QueueUrl: aws.String("test-queue-url"),
 	}
 
-	assert.Error(t, SendMessageBatch(client, 5*time.Second, input))
+	failures, err := SendMessageBatch(client, 5*time.Second, input)
+	assert.Error(t, err)
+	assert.Equal(t, sqs.ErrCodeBatchRequestTooLong, err.Error())
+	assert.Len(t, failures, 1)
 	assert.Equal(t, 2, client.callCount)
 }
 
@@ -150,6 +161,8 @@ func TestSendMessageBatchPagination(t *testing.T) {
 	}
 	input := &sqs.SendMessageBatchInput{Entries: entries}
 
-	assert.NoError(t, SendMessageBatch(client, 5*time.Second, input))
+	failures, err := SendMessageBatch(client, 5*time.Second, input)
+	assert.NoError(t, err)
+	assert.Empty(t, failures)
 	assert.Equal(t, 3, client.callCount)
 }

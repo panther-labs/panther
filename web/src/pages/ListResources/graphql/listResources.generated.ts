@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -28,8 +29,8 @@ export type ListResourcesVariables = {
 };
 
 export type ListResources = {
-  resources: Types.Maybe<{
-    resources: Types.Maybe<
+  resources?: Types.Maybe<{
+    resources?: Types.Maybe<
       Array<
         Types.Maybe<
           Pick<
@@ -39,9 +40,9 @@ export type ListResources = {
         >
       >
     >;
-    paging: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
+    paging?: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
   }>;
-  integrations: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
+  integrations?: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
 };
 
 export const ListResourcesDocument = gql`

@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -28,7 +29,7 @@ export type UpdateRuleVariables = {
 };
 
 export type UpdateRule = {
-  updateRule: Types.Maybe<
+  updateRule?: Types.Maybe<
     Pick<
       Types.RuleDetails,
       | 'description'
@@ -42,7 +43,7 @@ export type UpdateRule = {
       | 'tags'
       | 'body'
     > & {
-      tests: Types.Maybe<
+      tests?: Types.Maybe<
         Array<
           Types.Maybe<
             Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>

@@ -19,13 +19,13 @@ package awslogs
  */
 
 import (
-	"encoding/csv"
 	"strings"
 	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -73,25 +73,26 @@ type ALB struct {
 }
 
 // ALBParser parses AWS Application Load Balancer logs
-type ALBParser struct{}
+type ALBParser struct {
+	CSVReader *csvstream.StreamingCSVReader
+}
 
 func (p *ALBParser) New() parsers.LogParser {
-	return &ALBParser{}
+	reader := csvstream.NewStreamingCSVReader()
+	// non-default settings
+	reader.CVSReader.Comma = ' '
+	return &ALBParser{
+		CSVReader: reader,
+	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *ALBParser) Parse(log string) []*parsers.PantherLog {
-	reader := csv.NewReader(strings.NewReader(log))
-	reader.Comma = ' '
-
-	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
+	record, err := p.CSVReader.Parse(log)
+	if err != nil {
 		zap.L().Debug("failed to parse the log as csv")
 		return nil
 	}
-
-	// parser should only receive 1 line at a time
-	record := records[0]
 
 	if len(record) < albMinNumberOfColumns {
 		zap.L().Debug("failed to parse the log as csv (wrong number of columns)")

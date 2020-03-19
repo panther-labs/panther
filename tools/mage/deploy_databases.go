@@ -38,10 +38,6 @@ func deployDatabases(awsSession *session.Session, bucket string, backendOutputs 
 		logger.Fatal("AthenaResultsBucket is not set in stack output")
 	}
 
-	if err := generateGlueTables(); err != nil {
-		logger.Fatal(err)
-	}
-
 	params := map[string]string{
 		"ProcessedDataBucket": backendOutputs["ProcessedDataBucket"],
 	}

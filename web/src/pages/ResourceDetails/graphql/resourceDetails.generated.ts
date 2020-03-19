@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -29,7 +30,7 @@ export type ResourceDetailsVariables = {
 };
 
 export type ResourceDetails = {
-  resource: Types.Maybe<
+  resource?: Types.Maybe<
     Pick<
       Types.ResourceDetails,
       | 'lastModified'
@@ -41,8 +42,8 @@ export type ResourceDetails = {
       | 'attributes'
     >
   >;
-  policiesForResource: Types.Maybe<{
-    items: Types.Maybe<
+  policiesForResource?: Types.Maybe<{
+    items?: Types.Maybe<
       Array<
         Types.Maybe<
           Pick<
@@ -52,13 +53,13 @@ export type ResourceDetails = {
         >
       >
     >;
-    paging: Types.Maybe<Pick<Types.PagingData, 'totalItems' | 'totalPages' | 'thisPage'>>;
-    totals: Types.Maybe<{
-      active: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
-      suppressed: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
+    paging?: Types.Maybe<Pick<Types.PagingData, 'totalItems' | 'totalPages' | 'thisPage'>>;
+    totals?: Types.Maybe<{
+      active?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
+      suppressed?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
     }>;
   }>;
-  integrations: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
+  integrations?: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
 };
 
 export const ResourceDetailsDocument = gql`

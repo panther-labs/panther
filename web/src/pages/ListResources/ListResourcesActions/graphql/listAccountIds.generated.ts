@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable import/order, import/no-duplicates */
+
 import * as Types from '../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -26,7 +27,7 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListAccountIdsVariables = {};
 
 export type ListAccountIds = {
-  integrations: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
+  integrations?: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
 };
 
 export const ListAccountIdsDocument = gql`
