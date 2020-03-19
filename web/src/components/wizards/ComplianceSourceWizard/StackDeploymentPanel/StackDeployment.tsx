@@ -138,13 +138,10 @@ const StackDeployment: React.FC = () => {
               region)
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
-              4. Press <b>Update</b>, choose <b>Use current Template</b>
+              4. Press <b>Update</b>, choose <b>Replace current template</b>
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
-              5. Fill in the variables with their updated values
-            </Text>
-            <Text size="large" is="li" color="grey200" mb={3}>
-              6. Press <b>Next</b> and finally click on <b>Update</b>
+              5. Press <b>Next</b> and finally click on <b>Update</b>
             </Text>
           </Box>
           <Text size="large" color="grey200" is="p" mt={10} mb={2}>
@@ -155,9 +152,5 @@ const StackDeployment: React.FC = () => {
     </Box>
   );
 };
-
-// To proceed, please deploy the updated Cloudformation template to your related AWS account. This will update any previous IAM Roles.
-
-// https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home
 
 export default StackDeployment;
