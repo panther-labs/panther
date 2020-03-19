@@ -19,7 +19,7 @@ type Mutation {
   deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteUser(id: ID!): Boolean
-  inviteUser(input: InviteUserInput): InviteUserResponse
+  inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
   resetUserPassword(id: ID!): Boolean
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
@@ -30,7 +30,7 @@ type Mutation {
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
-  updateUser(input: UpdateUserInput!): Boolean
+  updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
 }
 
@@ -57,7 +57,7 @@ type Query {
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
-  users(limit: Int, paginationToken: String): ListUsersResponse
+  users: [User!]!
 }
 
 input GetComplianceIntegrationTemplateInput {
@@ -671,24 +671,15 @@ type User {
   givenName: String
   familyName: String
   id: ID!
-  email: AWSEmail
-  createdAt: AWSTimestamp
-  status: String
-}
-
-type InviteUserResponse {
-  id: ID!
+  email: AWSEmail!
+  createdAt: AWSTimestamp!
+  status: String!
 }
 
 input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
-}
-
-type ListUsersResponse {
-  users: [User]
-  paginationToken: String
 }
 
 enum ComplianceStatusEnum {

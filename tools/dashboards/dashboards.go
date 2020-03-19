@@ -37,11 +37,11 @@ The methodology for adding dashboards is to:
 */
 
 // Dashboards returns all the declared dashboards
-func Dashboards(awsRegion string) (dashboards []*cloudwatchcf.Dashboard) {
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherOverview", overviewJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherCloudSecurity", infraJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherAlertProcessing", alertsJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherRemediation", remediationJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherLogAnalysis", logProcessingJSON))
+func Dashboards() (dashboards []*cloudwatchcf.Dashboard) {
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherOverview", overviewJSON))
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherCloudSecurity", infraJSON))
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherAlertProcessing", alertsJSON))
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherRemediation", remediationJSON))
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherLogAnalysis", logProcessingJSON))
 	return dashboards
 }

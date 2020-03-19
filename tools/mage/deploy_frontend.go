@@ -29,6 +29,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/joho/godotenv"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -37,7 +39,7 @@ const (
 	frontendTemplate = "deployments/frontend.yml"
 )
 
-func deployFrontend(awsSession *session.Session, bucket string, backendOutputs map[string]string, config *PantherConfig) {
+func deployFrontend(awsSession *session.Session, bucket string, backendOutputs map[string]string, settings *config.PantherConfig) {
 	if err := generateDotEnvFromCfnOutputs(awsSession, backendOutputs); err != nil {
 		logger.Fatalf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
@@ -48,8 +50,8 @@ func deployFrontend(awsSession *session.Session, bucket string, backendOutputs m
 	}
 
 	params := map[string]string{
-		"WebApplicationFargateTaskCPU":              strconv.Itoa(config.FrontendParameterValues.WebApplicationFargateTaskCPU),
-		"WebApplicationFargateTaskMemory":           strconv.Itoa(config.FrontendParameterValues.WebApplicationFargateTaskMemory),
+		"WebApplicationFargateTaskCPU":              strconv.Itoa(settings.FrontendParameterValues.WebApplicationFargateTaskCPU),
+		"WebApplicationFargateTaskMemory":           strconv.Itoa(settings.FrontendParameterValues.WebApplicationFargateTaskMemory),
 		"WebApplicationImage":                       dockerImage,
 		"WebApplicationClusterName":                 backendOutputs["WebApplicationClusterName"],
 		"WebApplicationVpcId":                       backendOutputs["WebApplicationVpcId"],

@@ -1,5 +1,3 @@
-package cloudwatchcf
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,29 +16,24 @@ package cloudwatchcf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"io/ioutil"
-	"os"
-)
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
-// Read CF
-func readTestFile(filename string) ([]byte, error) {
-	fd, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer fd.Close()
-	return ioutil.ReadAll(fd)
-}
+import * as Types from '../../../__generated__/schema';
 
-// Write CF (used to easily re-create expected test files)
-//nolint:unused,deadcode
-func writeTestFile(cf []byte, filename string) error {
-	fd, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-	_, err = fd.Write(cf)
-	return err
-}
+import gql from 'graphql-tag';
+
+export type UserDetails = Pick<
+  Types.User,
+  'id' | 'givenName' | 'familyName' | 'email' | 'createdAt' | 'status'
+>;
+
+export const UserDetails = gql`
+  fragment UserDetails on User {
+    id
+    givenName
+    familyName
+    email
+    createdAt
+    status
+  }
+`;

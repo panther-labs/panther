@@ -56,7 +56,7 @@ const ListUsersTable = () => {
 
   return (
     <Card>
-      <Table<User> columns={columns} getItemKey={getUserItemKey} items={data.users.users} />
+      <Table<User> columns={columns} getItemKey={getUserItemKey} items={data.users} />
     </Card>
   );
 };

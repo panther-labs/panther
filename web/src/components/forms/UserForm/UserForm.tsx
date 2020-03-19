@@ -23,18 +23,18 @@ import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
 import * as Yup from 'yup';
 
-interface BaseUserFormValues {
+export interface UserFormValues {
   id?: string; // optional value
   email: string;
   familyName: string;
   givenName;
 }
-export interface BaseUserFormProps {
+export interface UserFormProps {
   /** The initial values of the form */
-  initialValues: BaseUserFormValues;
+  initialValues: UserFormValues;
 
   /** callback for the submission of the form */
-  onSubmit: (values: BaseUserFormValues) => void;
+  onSubmit: (values: UserFormValues) => void;
 }
 
 const validationSchema = Yup.object().shape({
@@ -45,9 +45,9 @@ const validationSchema = Yup.object().shape({
   givenName: Yup.string().required('First name is required'),
 });
 
-const BaseUserForm: React.FC<BaseUserFormProps> = ({ initialValues, onSubmit }) => {
+const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
   return (
-    <Formik<BaseUserFormValues>
+    <Formik<UserFormValues>
       initialValues={initialValues}
       onSubmit={onSubmit}
       enableReinitialize
@@ -87,14 +87,13 @@ const BaseUserForm: React.FC<BaseUserFormProps> = ({ initialValues, onSubmit }) 
               mt={10}
               justifyContent="flex-end"
             >
-              <Flex>
-                <SubmitButton
-                  submitting={isSubmitting}
-                  disabled={!dirty || !isValid || isSubmitting}
-                >
-                  {initialValues.id ? 'Update' : 'Invite'}
-                </SubmitButton>
-              </Flex>
+              <SubmitButton
+                submitting={isSubmitting}
+                disabled={!dirty || !isValid || isSubmitting}
+                width={1}
+              >
+                {initialValues.id ? 'Update' : 'Invite'}
+              </SubmitButton>
             </Flex>
           </form>
         );
@@ -103,4 +102,4 @@ const BaseUserForm: React.FC<BaseUserFormProps> = ({ initialValues, onSubmit }) 
   );
 };
 
-export default BaseUserForm;
+export default UserForm;

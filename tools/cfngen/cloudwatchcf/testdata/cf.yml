@@ -21,7 +21,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: Test CF for generating alarms
 
 Resources:
-
   # ALB
   PublicLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -168,4 +167,3 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
-

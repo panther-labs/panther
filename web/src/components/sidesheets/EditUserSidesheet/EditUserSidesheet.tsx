@@ -16,18 +16,62 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet } from 'pouncejs';
-import React from 'react';
-import useSidesheet from 'Hooks/useSidesheet';
+import * as React from 'react';
+import { Box, Heading, SideSheet, useSnackbar } from 'pouncejs';
 import { User } from 'Generated/schema';
-import EditUser from './EditUser';
+import { extractErrorMessage } from 'Helpers/utils';
+import UserForm, { UserFormValues } from 'Components/forms/UserForm';
+import useAuth from 'Hooks/useAuth';
+import useSidesheet from 'Hooks/useSidesheet';
+import { useEditUser } from './graphql/editUser.generated';
 
 export interface EditUserSidesheetProps {
   user: User;
 }
 
 const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
+  const { pushSnackbar } = useSnackbar();
   const { hideSidesheet } = useSidesheet();
+  const { refetchUserInfo, userInfo } = useAuth();
+  const [editUser] = useEditUser({
+    onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
+    onCompleted: () => {
+      // Refetch user info if editing self
+      if (user.id === userInfo.sub) {
+        refetchUserInfo();
+      }
+    },
+  });
+
+  const initialValues = {
+    id: user.id,
+    email: user.email,
+    familyName: user.familyName || '',
+    givenName: user.givenName || '',
+  };
+
+  const submitToServer = async (values: UserFormValues) => {
+    // optimistically hide the sidesheet
+    hideSidesheet();
+
+    await editUser({
+      optimisticResponse: () => ({
+        updateUser: {
+          __typename: 'User',
+          ...user,
+          ...values,
+        },
+      }),
+      variables: {
+        input: {
+          id: values.id,
+          email: values.email,
+          familyName: values.familyName,
+          givenName: values.givenName,
+        },
+      },
+    });
+  };
 
   return (
     <SideSheet open onClose={hideSidesheet}>
@@ -35,11 +79,10 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
         <Heading pt={1} pb={8} size="medium">
           Edit Profile
         </Heading>
-        <EditUser onSuccess={hideSidesheet} user={user} />
+        <UserForm initialValues={initialValues} onSubmit={submitToServer} />
       </Box>
     </SideSheet>
   );
 };
 
-// create ticket for user email verification
 export default EditUserSidesheet;

@@ -59,5 +59,6 @@ func TestEmbedAPIs(t *testing.T) {
 
 	expected, err := ioutil.ReadFile("testdata/valid-api-expected-output.yml")
 	require.NoError(t, err)
-	assert.Equal(t, string(expected), string(transformed))
+
+	assert.YAMLEq(t, string(expected), string(transformed))
 }

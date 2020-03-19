@@ -1,4 +1,10 @@
-package mage
+package config
+
+import (
+	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
+)
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -18,13 +24,25 @@ package mage
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const configFile = "deployments/panther_config.yml"
+// Filepath is the config settings file
+const Filepath = "deployments/panther_config.yml"
 
-type bucketsParameters struct {
+// PantherConfig describes the panther_config.yml file.
+type PantherConfig struct {
+	BucketsParameterValues    BucketsParameters    `yaml:"BucketsParameterValues"`
+	BackendParameterValues    BackendParameters    `yaml:"BackendParameterValues"`
+	FrontendParameterValues   FrontendParameters   `yaml:"FrontendParameterValues"`
+	MonitoringParameterValues MonitoringParameters `yaml:"MonitoringParameterValues"`
+	OnboardParameterValues    OnboardingParameters `yaml:"OnboardingParameterValues"`
+	PipLayer                  []string             `yaml:"PipLayer"`
+	InitialAnalysisSets       []string             `yaml:"InitialAnalysisSets"`
+}
+
+type BucketsParameters struct {
 	AccessLogsBucketName string `yaml:"AccessLogsBucketName"`
 }
 
-type backendParameters struct {
+type BackendParameters struct {
 	LogProcessorLambdaMemorySize int    `yaml:"LogProcessorLambdaMemorySize"`
 	CloudWatchLogRetentionDays   int    `yaml:"CloudWatchLogRetentionDays"`
 	Debug                        bool   `yaml:"Debug"`
@@ -35,27 +53,31 @@ type backendParameters struct {
 	TracingMode                  string `yaml:"TracingMode"`
 }
 
-type frontendParameters struct {
+type FrontendParameters struct {
 	WebApplicationFargateTaskCPU    int `yaml:"WebApplicationFargateTaskCPU"`
 	WebApplicationFargateTaskMemory int `yaml:"WebApplicationFargateTaskMemory"`
 }
 
-type monitoringParameters struct {
+type MonitoringParameters struct {
 	AlarmSNSTopicARN string `yaml:"AlarmSNSTopicARN"` // where to send alarms (optional)
 }
 
-type onboardingParameters struct {
+type OnboardingParameters struct {
 	// whether or not to on board the account running Panther as a Cloud Security source
 	OnboardSelf bool `yaml:"OnboardSelf"`
 }
 
-// PantherConfig describes the panther_config.yml file.
-type PantherConfig struct {
-	BucketsParameterValues    bucketsParameters    `yaml:"BucketsParameterValues"`
-	BackendParameterValues    backendParameters    `yaml:"BackendParameterValues"`
-	FrontendParameterValues   frontendParameters   `yaml:"FrontendParameterValues"`
-	MonitoringParameterValues monitoringParameters `yaml:"MonitoringParameterValues"`
-	OnboardParameterValues    onboardingParameters `yaml:"OnboardingParameterValues"`
-	PipLayer                  []string             `yaml:"PipLayer"`
-	InitialAnalysisSets       []string             `yaml:"InitialAnalysisSets"`
+// Read settings from the config file
+func Settings() (*PantherConfig, error) {
+	bytes, err := ioutil.ReadFile(Filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	var settings PantherConfig
+	if err := yaml.Unmarshal(bytes, &settings); err != nil {
+		return nil, err
+	}
+
+	return &settings, nil
 }

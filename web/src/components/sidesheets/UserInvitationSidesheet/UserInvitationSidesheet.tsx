@@ -16,13 +16,56 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, Text, SideSheet } from 'pouncejs';
-import InviteUserForm from 'Components/forms/UserInvitationForm';
+import { Box, Heading, Text, SideSheet, useSnackbar } from 'pouncejs';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
+import { extractErrorMessage } from 'Helpers/utils';
+import UserForm, { UserFormValues } from 'Components/forms/UserForm';
+import { useInviteUser } from './graphql/inviteUser.generated';
+
+const initialValues = {
+  email: '',
+  familyName: '',
+  givenName: '',
+};
 
 const UserInvitationSidesheet: React.FC = () => {
   const { hideSidesheet } = useSidesheet();
+  const { pushSnackbar } = useSnackbar();
+  const [inviteUser] = useInviteUser({
+    update: (cache, { data: { inviteUser: newUser } }) => {
+      cache.modify('ROOT_QUERY', {
+        users(existingData, { toReference }) {
+          return [toReference(newUser), ...existingData];
+        },
+      });
+    },
+    onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
+  });
+
+  const submitToServer = async (values: UserFormValues) => {
+    hideSidesheet();
+
+    await inviteUser({
+      // optimistically hide the sidesheet
+      optimisticResponse: () => ({
+        inviteUser: {
+          id: '',
+          createdAt: new Date().getTime() / 1000,
+          status: 'FORCE_CHANGE_PASSWORD',
+          __typename: 'User',
+          ...values,
+        },
+      }),
+      variables: {
+        input: {
+          email: values.email,
+          familyName: values.familyName,
+          givenName: values.givenName,
+        },
+      },
+    });
+  };
 
   return (
     <SideSheet open onClose={hideSidesheet}>
@@ -34,8 +77,7 @@ const UserInvitationSidesheet: React.FC = () => {
           By inviting users to join your organization, they will receive an email with temporary
           credentials that they can use to sign in to the platform
         </Text>
-
-        <InviteUserForm onSuccess={hideSidesheet} />
+        <UserForm initialValues={initialValues} onSubmit={submitToServer} />
         <Text size="small" color="grey300" textAlign="center" mt={6}>
           All users in the Open-Source version of Panther are admins in the system.
           <br />

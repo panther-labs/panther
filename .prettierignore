@@ -16,7 +16,3 @@ web/dist
 
 # Docs
 docs/gitbook
-
-
-# Direct file content assertion
-tools/**/testdata

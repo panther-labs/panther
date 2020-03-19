@@ -23,6 +23,6 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       # preceding comment
-      DefinitionBody: testdata/api/first.yml  # line comment
+      DefinitionBody: testdata/api/first.yml # line comment
       # trailing comment
       Name: first-api
