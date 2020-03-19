@@ -42,9 +42,9 @@ const (
 
 	// Formatting variables used for re-writing the default templates
 	accountIDFind     = "Value: '' # MasterAccountId"
-	accountIDReplace  = "Value: %s # MasterAccountId"
+	accountIDReplace  = "Value: '%s' # MasterAccountId"
 	roleSuffixIDFind  = "Value: '' # RoleSuffix"
-	roleSuffixReplace = "Value: %s # RoleSuffix"
+	roleSuffixReplace = "Value: '%s' # RoleSuffix"
 
 	// Formatting variables for Cloud Security
 	cweFind            = "Value: '' # DeployCloudWatchEventSetup"
@@ -54,11 +54,11 @@ const (
 
 	// Formatting variables for Log Analysis
 	s3BucketFind    = "Value: '' # S3Bucket"
-	s3BucketReplace = "Value: %s # S3Bucket"
-	s3PrefixFind    = "Value: '*' # S3Prefix"
-	s3PrefixReplace = "Value: %s # S3Prefix"
+	s3BucketReplace = "Value: '%s' # S3Bucket"
+	s3PrefixFind    = "Value: '' # S3Prefix"
+	s3PrefixReplace = "Value: '%s' # S3Prefix"
 	kmsKeyFind      = "Value: '' # KmsKey"
-	kmsKeyReplace   = "Value: %s # KmsKey"
+	kmsKeyReplace   = "Value: '%s' # KmsKey"
 )
 
 var (

@@ -44,7 +44,7 @@ func TestLogAnalysisTemplate(t *testing.T) {
 		KmsKey:           aws.String("key-arn"),
 	}
 
-	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-log-analysis-infra.yml")
+	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-log-analysis-iam.yml")
 	require.NoError(t, err)
 	s3Mock.On("GetObject", mock.Anything).Return(&s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(template))}, nil)
 
