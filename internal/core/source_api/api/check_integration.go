@@ -172,7 +172,7 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (bo
 		}
 
 		if integration.KmsKey != nil {
-			// If the integratio has a KMS key and the keys is not healthy return false
+			// If the integration has a KMS key and the keys is not healthy return false
 			return status.KMSKeyStatus.Healthy, nil
 		}
 		return true, nil

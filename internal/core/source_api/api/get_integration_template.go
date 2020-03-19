@@ -86,35 +86,35 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	}
 
 	// Format the template with the user's input
-	formattedTemplate := strings.ReplaceAll(template, accountIDFind,
-		fmt.Sprintf(accountIDReplace, *input.AWSAccountID))
+	formattedTemplate := strings.Replace(template, accountIDFind,
+		fmt.Sprintf(accountIDReplace, *input.AWSAccountID), 1)
 
 	// Cloud Security replacements
 	if *input.IntegrationType == models.IntegrationTypeAWSScan {
-		formattedTemplate = strings.ReplaceAll(formattedTemplate, cweFind,
-			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)))
-		formattedTemplate = strings.ReplaceAll(formattedTemplate, remediationFind,
-			fmt.Sprintf(remediationReplace, aws.BoolValue(input.RemediationEnabled)))
+		formattedTemplate = strings.Replace(formattedTemplate, cweFind,
+			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)), 1)
+		formattedTemplate = strings.Replace(formattedTemplate, remediationFind,
+			fmt.Sprintf(remediationReplace, aws.BoolValue(input.RemediationEnabled)), 1)
 	} else {
 		// Log Analysis replacements
-		formattedTemplate = strings.ReplaceAll(formattedTemplate, roleSuffixIDFind,
-			fmt.Sprintf(roleSuffixReplace, generateSuffix(input)))
+		formattedTemplate = strings.Replace(formattedTemplate, roleSuffixIDFind,
+			fmt.Sprintf(roleSuffixReplace, generateSuffix(input)), 1)
 
-		formattedTemplate = strings.ReplaceAll(formattedTemplate, s3BucketFind,
-			fmt.Sprintf(s3BucketReplace, *input.S3Bucket))
+		formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
+			fmt.Sprintf(s3BucketReplace, *input.S3Bucket), 1)
 
 		if input.S3Prefix != nil {
-			formattedTemplate = strings.ReplaceAll(formattedTemplate, s3PrefixFind,
-				fmt.Sprintf(s3PrefixReplace, *input.S3Prefix))
+			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
+				fmt.Sprintf(s3PrefixReplace, *input.S3Prefix), 1)
 		} else {
 			// If no S3Prefix is specified, add as default '*'
-			formattedTemplate = strings.ReplaceAll(formattedTemplate, s3PrefixFind,
-				fmt.Sprintf(s3PrefixReplace, "*"))
+			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
+				fmt.Sprintf(s3PrefixReplace, "*"), 1)
 		}
 
 		if input.KmsKey != nil {
-			formattedTemplate = strings.ReplaceAll(formattedTemplate, kmsKeyFind,
-				fmt.Sprintf(kmsKeyReplace, *input.KmsKey))
+			formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,
+				fmt.Sprintf(kmsKeyReplace, *input.KmsKey), 1)
 		}
 	}
 
@@ -149,14 +149,15 @@ func getTemplate(integrationType *string) (string, error) {
 		return "", err
 	}
 
+	templateBodyString := string(templateBody)
 	// Update the cache
 	templateCache[*integrationType] = templateCacheItem{
 		Timestamp: time.Now(),
-		Body:      string(templateBody),
+		Body:      templateBodyString,
 	}
 
 	// Return the s3Object
-	return string(templateBody), nil
+	return templateBodyString, nil
 }
 
 func generateSuffix(input *models.GetIntegrationTemplateInput) string {

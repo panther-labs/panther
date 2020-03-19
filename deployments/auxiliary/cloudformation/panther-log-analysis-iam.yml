@@ -107,7 +107,7 @@ Resources:
               - Effect: Allow
                 Action: s3:GetObject
                 Resource: !Sub
-                  - 'arn:aws:s3:::${DefaultS3Bucket}${MappingS3Bucket}/${DefaultS3Bucket}${MappingS3Bucket}'
+                  - 'arn:aws:s3:::${DefaultS3Bucket}${MappingS3Bucket}/${DefaultS3Prefix}${MappingS3Prefix}'
                   - DefaultS3Bucket: !Ref S3Bucket
                     MappingS3Bucket: !FindInMap [PantherParameters, S3Bucket, Value]
                     DefaultS3Prefix: !Ref S3Prefix
