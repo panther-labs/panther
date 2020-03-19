@@ -152,7 +152,7 @@ func TestPutIntegration(t *testing.T) {
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     aws.String(testAccountID),
 			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(testIntegrationType),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
 			ScanIntervalMins: aws.Int(60),
 			UserID:           aws.String(testUserID),
 		},
@@ -161,7 +161,7 @@ func TestPutIntegration(t *testing.T) {
 	require.NotEmpty(t, out)
 }
 
-func TestPutIntegrationExists(t *testing.T) {
+func TestPutLogIntegrationExists(t *testing.T) {
 	mockSQS := &mockSQSClient{}
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	SQSClient = mockSQS
@@ -171,7 +171,7 @@ func TestPutIntegrationExists(t *testing.T) {
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
 					"awsAccountId":     {S: aws.String(testAccountID)},
-					"integrationType":  {S: aws.String(testIntegrationType)},
+					"integrationType":  {S: aws.String(models.IntegrationTypeAWS3)},
 					"integrationlabel": {S: aws.String(testIntegrationLabel)},
 				},
 			},
@@ -184,7 +184,39 @@ func TestPutIntegrationExists(t *testing.T) {
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     aws.String(testAccountID),
 			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(testIntegrationType),
+			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
+			ScanIntervalMins: aws.Int(60),
+			UserID:           aws.String(testUserID),
+		},
+	})
+	require.Error(t, err)
+	require.Empty(t, out) // should do nothing
+}
+
+func TestPutCloudSecIntegrationExists(t *testing.T) {
+	mockSQS := &mockSQSClient{}
+	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
+	SQSClient = mockSQS
+
+	db = &ddb.DDB{
+		Client: &modelstest.MockDDBClient{
+			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
+				{
+					"awsAccountId":     {S: aws.String(testAccountID)},
+					"integrationType":  {S: aws.String(models.IntegrationTypeAWSScan)},
+					"integrationlabel": {S: aws.String("test label")},
+				},
+			},
+			TestErr: false,
+		},
+		TableName: "test",
+	}
+
+	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
 			ScanIntervalMins: aws.Int(60),
 			UserID:           aws.String(testUserID),
 		},
@@ -200,7 +232,7 @@ func TestPutIntegrationValidInput(t *testing.T) {
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     aws.String(testAccountID),
 			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(testIntegrationType),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
 			ScanIntervalMins: aws.Int(60),
 			UserID:           aws.String(testUserID),
 		},
@@ -226,7 +258,7 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     aws.String(testAccountID),
 			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(testIntegrationType),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
 			UserID:           aws.String(testUserID),
 		},
 	}
@@ -258,7 +290,7 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     aws.String(testAccountID),
 			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(testIntegrationType),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
 			ScanIntervalMins: aws.Int(60),
 			UserID:           aws.String(testUserID),
 		},

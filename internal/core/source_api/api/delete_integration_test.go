@@ -117,6 +117,43 @@ func TestDeleteLogIntegration(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
+func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
+	// This scenario tests the case where we delete a source
+	// but another source for that account exists. In that case we
+	// should remove the SQS permissions for that account
+	mockClient := &mockDDBClient{}
+	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+
+	mockSqs := &mockSQSClient{}
+	SQSClient = mockSqs
+	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+
+	additionLogSourceEntry := generateDDBAttributes(models.IntegrationTypeAWS3)
+	additionLogSourceEntry["integrationId"] = &dynamodb.AttributeValue{
+		// modify entry to have different ID
+		S: aws.String(testIntegrationID + "-2"),
+	}
+	scanResult := &dynamodb.ScanOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			generateDDBAttributes(models.IntegrationTypeAWS3),
+			additionLogSourceEntry,
+		},
+	}
+
+	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOtput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
+
+	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
+		IntegrationID: aws.String(testIntegrationID),
+	})
+
+	assert.NoError(t, result)
+	mockClient.AssertExpectations(t)
+	// We should have no interactions with SQS
+	mockSqs.AssertExpectations(t)
+}
+
 func TestDeleteIntegrationItemError(t *testing.T) {
 	mockClient := &mockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}

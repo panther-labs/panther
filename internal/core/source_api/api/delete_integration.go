@@ -73,7 +73,8 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 			if *existingIntegration.AWSAccountID == *integration.AWSAccountID &&
 				*existingIntegration.IntegrationID != *integration.IntegrationID {
 				// if another integration exists for the same account
-				// don't remove queue permissions
+				// don't remove queue permissions. Allow the account to keep sending
+				// us SQS notifications
 				shouldRemovePermissions = false
 				break
 			}
