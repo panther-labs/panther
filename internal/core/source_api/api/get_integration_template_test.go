@@ -44,14 +44,14 @@ func TestLogAnalysisTemplate(t *testing.T) {
 		KmsKey:           aws.String("key-arn"),
 	}
 
-	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-log-processing-iam.yml")
+	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-log-analysis-infra.yml")
 	require.NoError(t, err)
 	s3Mock.On("GetObject", mock.Anything).Return(&s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(template))}, nil)
 
 	result, err := API{}.GetIntegrationTemplate(input)
 
 	require.NoError(t, err)
-	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-log-processing-iam-updated.yml")
+	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-log-analysis-iam-updated.yml")
 	require.NoError(t, err)
 	require.Equal(t, string(expectedTemplate), *result.Body)
 }

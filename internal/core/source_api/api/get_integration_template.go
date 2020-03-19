@@ -37,14 +37,14 @@ const (
 	TemplateBucket           = "panther-public-cloudformation-templates"
 	TemplateBucketRegion     = endpoints.UsWest2RegionID
 	CloudSecurityTemplateKey = "panther-cloudsec-iam/v1.0.0/template.yml"
-	LogProcessingTemplateKey = "panther-log-processing-iam/latest/template.yml"
+	LogProcessingTemplateKey = "panther-log-analysis-iam/v1.0.0/template.yml"
 	cacheTimeout             = time.Minute * 30
 
 	// Formatting variables used for re-writing the default templates
 	accountIDFind     = "Value: '' # MasterAccountId"
 	accountIDReplace  = "Value: %s # MasterAccountId"
-	roleSuffixIDFind  = "Default: '' # RoleSuffix"
-	roleSuffixReplace = "Default: %s # RoleSuffix"
+	roleSuffixIDFind  = "Value: '' # RoleSuffix"
+	roleSuffixReplace = "Value: %s # RoleSuffix"
 
 	// Formatting variables for Cloud Security
 	cweFind            = "Value: '' # DeployCloudWatchEventSetup"
@@ -53,12 +53,12 @@ const (
 	remediationReplace = "Value: %t # DeployRemediation"
 
 	// Formatting variables for Log Analysis
-	s3BucketFind    = "Default: '' # S3Bucket"
-	s3BucketReplace = "Default: %s # S3Bucket"
-	s3PrefixFind    = "Default: '*' # S3Prefix"
-	s3PrefixReplace = "Default: %s # S3Prefix"
-	kmsKeyFind      = "Default: '' # KmsKey"
-	kmsKeyReplace   = "Default: %s # KmsKey"
+	s3BucketFind    = "Value: '' # S3Bucket"
+	s3BucketReplace = "Value: %s # S3Bucket"
+	s3PrefixFind    = "Value: '*' # S3Prefix"
+	s3PrefixReplace = "Value: %s # S3Prefix"
+	kmsKeyFind      = "Value: '' # KmsKey"
+	kmsKeyReplace   = "Value: %s # KmsKey"
 )
 
 var (
@@ -106,6 +106,10 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 		if input.S3Prefix != nil {
 			formattedTemplate = strings.ReplaceAll(formattedTemplate, s3PrefixFind,
 				fmt.Sprintf(s3PrefixReplace, *input.S3Prefix))
+		} else {
+			// If no S3Prefix is specified, add as default '*'
+			formattedTemplate = strings.ReplaceAll(formattedTemplate, s3PrefixFind,
+				fmt.Sprintf(s3PrefixReplace, "*"))
 		}
 
 		if input.KmsKey != nil {

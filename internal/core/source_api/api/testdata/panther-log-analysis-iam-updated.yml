@@ -18,40 +18,65 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM roles for log ingestion from an S3 bucket.
 
 Metadata:
-  Version: v1.0.2
+  Version: v1.0.0
+
+Mappings:
+  # DO NOT EDIT PantherParameters section. Panther application relies on the exact format (including comments)
+  # in order to replace the default values with an appropriate ones.
+  PantherParameters:
+    MasterAccountId:
+      Value: '123456789012' # MasterAccountId
+    RoleSuffix:
+      Value: 'testlabel-' # RoleSuffix
+    S3Bucket:
+      Value: 'test-bucket' # S3Bucket
+    S3Prefix:
+      Value: 'prefix' # S3Prefix
+    KmsKey:
+      Value: 'key-arn' # KmsKey
 
 Parameters:
   # Required parameters
   MasterAccountId:
     Type: String
-    Description: AWS account ID of the account running the Panther backend
-    Default: '' # MasterAccountId
+    Description: DO NOT EDIT MANUALLY!
+    Default: ''
   RoleSuffix:
     Type: String
-    Description: Suffix for the created role
-    Default: '' # RoleSuffix
+    Description: DO NOT EDIT MANUALLY!
+    Default: ''
   S3Bucket:
     Type: String
-    Description: Name of the bucket to onboard
-    Default: '' # S3Bucket
+    Description: DO NOT EDIT MANUALLY!
+    Default: ''
+
   # Optional configuration parameters
   S3Prefix:
     Type: String
-    Description: Prefix of the data to be onboarded
-    Default: '*' # S3Prefix
+    Description: DO NOT EDIT MANUALLY!
+    Default: ''
   KmsKey:
     Type: String
-    Description: Allow Panther master account access to decrypt data using this KMS key.
-    Default: '' # KmsKey
+    Description: DO NOT EDIT MANUALLY!
+    Default: ''
 
 Conditions:
-  WithKmsPermissions: !Not [!Equals [KmsKey, '']]
+  WithKmsPermissions: !Not
+    - !Equals
+      - ''
+      - !Sub
+        - '${Default}${Mapping}'
+        - Default: !Ref KmsKey
+          Mapping: !FindInMap [PantherParameters, KmsKey, Value]
 
 Resources:
   LogProcessingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub PantherLogProcessingRole-${RoleSuffix}
+      RoleName: !Sub
+        - 'PantherLogProcessingRole-${Default}${Mapping}'
+        - Default: !Ref RoleSuffix
+          Mapping: !FindInMap [PantherParameters, RoleSuffix, Value]
       Description: The Panther master account assumes this role to read log data
       MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:
@@ -59,7 +84,11 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
+              AWS: !Sub
+                - 'arn:${Partition}:iam::${Default}${Mapping}:root'
+                - Partition: !Ref AWS::Partition
+                  Default: !Ref MasterAccountId
+                  Mapping: !FindInMap [PantherParameters, MasterAccountId, Value]
             Action: sts:AssumeRole
             Condition:
               Bool:
@@ -71,10 +100,18 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetBucketLocation
-                Resource: !Sub arn:aws:s3:::${S3Bucket}
+                Resource: !Sub
+                  - 'arn:aws:s3:::${Default}${Mapping}'
+                  - Default: !Ref S3Bucket
+                    Mapping: !FindInMap [PantherParameters, S3Bucket, Value]
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub arn:aws:s3:::${S3Bucket}/${S3Prefix}
+                Resource: !Sub
+                  - 'arn:aws:s3:::${DefaultS3Bucket}${MappingS3Bucket}/${DefaultS3Bucket}${MappingS3Bucket}'
+                  - DefaultS3Bucket: !Ref S3Bucket
+                    MappingS3Bucket: !FindInMap [PantherParameters, S3Bucket, Value]
+                    DefaultS3Prefix: !Ref S3Prefix
+                    MappingS3Prefix: !FindInMap [PantherParameters, S3Prefix, Value]
               - !If
                 - WithKmsPermissions
                 - Effect: Allow
