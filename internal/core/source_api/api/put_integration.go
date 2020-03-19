@@ -63,15 +63,11 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	}
 
 	// Filter out existing integrations
-	alreadyExists, err := api.integrationWithSameLabelExists(input)
+	if err := api.integrationAlreadyExists(input); err != nil {
+		return nil, err
+	}
 	if err != nil {
 		return nil, putIntegrationInternalError
-	}
-
-	if alreadyExists {
-		return nil, &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("source with same label already exists for account %s", *input.AWSAccountID),
-		}
 	}
 
 	// Get ready to add appropriate permissions to the SQS queue
@@ -122,25 +118,36 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	return newIntegration, nil
 }
 
-func (api API) integrationWithSameLabelExists(input *models.PutIntegrationInput) (bool, error) {
+func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error {
 	// avoid inserting if already done
 	existingIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
 	if err != nil {
-		err = errors.Wrap(err, "failed to fetch integration")
-		zap.L().Error("failed to fetch integrations", zap.Error(err))
-		return false, err
+		zap.L().Error("failed to fetch integrations", zap.Error(errors.WithStack(err)))
+		return putIntegrationInternalError
 	}
 
 	for _, existingIntegration := range existingIntegrations {
 		if *existingIntegration.IntegrationType == *input.IntegrationType &&
-			*existingIntegration.IntegrationLabel == *input.IntegrationLabel &&
-			*existingIntegration.AWSAccountID == *input.AWSAccountID {
+			*existingIntegration.IntegrationLabel == *input.IntegrationLabel {
 
-			return true, nil
+			if *input.IntegrationType == models.IntegrationTypeAWSScan {
+				// We can only have one cloudsec integration for each account
+				return &genericapi.InvalidInputError{
+					Message: fmt.Sprintf("Source account %s already onboarded", *input.AWSAccountID),
+				}
+			}
+			if *existingIntegration.IntegrationLabel == models.IntegrationTypeAWS3 {
+				// Log sources for same account need to have different labels
+				return &genericapi.InvalidInputError{
+					Message: fmt.Sprintf("Log source for account %s with label %s already exists",
+						*input.AWSAccountID,
+						*input.IntegrationLabel),
+				}
+			}
 		}
 	}
 
-	return false, nil
+	return nil
 }
 
 // ScanAllResources schedules scans for each Resource type for each integration.

@@ -40,7 +40,6 @@ const (
 	LogProcessingTemplateKey = "panther-log-processing-iam/latest/template.yml"
 	cacheTimeout             = time.Minute * 30
 
-
 	// Formatting variables used for re-writing the default templates
 	accountIDFind     = "Value: '' # MasterAccountId"
 	accountIDReplace  = "Value: %s # MasterAccountId"

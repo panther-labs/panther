@@ -96,14 +96,14 @@ type ListIntegrationsInput struct {
 
 // GetIntegrationTemplateInput allows specification of what resources should be enabled/disabled in the template
 type GetIntegrationTemplateInput struct {
-	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationType    *string   `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
-	IntegrationLabel   *string   `json:"integrationLabel" validate:"required,integrationLabel"`
-	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
-	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
-	S3Bucket           *string   `json:"s3Bucket,omitempty"`
-	S3Prefix           *string   `json:"s3Prefix,omitempty"`
-	KmsKey             *string   `json:"kmsKey,omitempty"`
+	AWSAccountID       *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType    *string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+	IntegrationLabel   *string `json:"integrationLabel" validate:"required,integrationLabel"`
+	RemediationEnabled *bool   `json:"remediationEnabled,omitempty"`
+	CWEEnabled         *bool   `json:"cweEnabled,omitempty"`
+	S3Bucket           *string `json:"s3Bucket,omitempty"`
+	S3Prefix           *string `json:"s3Prefix,omitempty"`
+	KmsKey             *string `json:"kmsKey,omitempty"`
 }
 
 //
