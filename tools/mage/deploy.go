@@ -60,7 +60,7 @@ const (
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
 
-	// CloudSec IAM Roles, DO NOT CHANGE! panther-compliance-iam.yml CF depends on these names
+	// CloudSec IAM Roles, DO NOT CHANGE! panther-clousec-iam.yml CF depends on these names
 	auditRole       = "PantherAuditRole"
 	remediationRole = "PantherRemediationRole"
 
