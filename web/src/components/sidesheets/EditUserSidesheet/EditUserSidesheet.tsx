@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Box, Heading, SideSheet, Text, useSnackbar } from 'pouncejs';
+import { Box, Heading, SideSheet, useSnackbar } from 'pouncejs';
 import { User } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import UserForm, { UserFormValues } from 'Components/forms/UserForm';
@@ -30,12 +30,12 @@ export interface EditUserSidesheetProps {
 }
 
 const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
-  const { hideSidesheet } = useSidesheet();
   const { pushSnackbar } = useSnackbar();
+  const { hideSidesheet } = useSidesheet();
   const { refetchUserInfo, userInfo } = useAuth();
-  const [editUser, { error }] = useEditUser({
+  const [editUser] = useEditUser({
+    onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
     onCompleted: () => {
-      pushSnackbar({ variant: 'success', title: `Successfully updated user` });
       // Refetch user info if editing self
       if (user.id === userInfo.sub) {
         refetchUserInfo();
@@ -57,6 +57,7 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
     await editUser({
       optimisticResponse: () => ({
         updateUser: {
+          __typename: 'User',
           ...user,
           ...values,
         },
@@ -79,11 +80,6 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
           Edit Profile
         </Heading>
         <UserForm initialValues={initialValues} onSubmit={submitToServer} />
-        {error && (
-          <Text size="large" mt={6} color="red300">
-            {extractErrorMessage(error)}
-          </Text>
-        )}
       </Box>
     </SideSheet>
   );

@@ -32,7 +32,7 @@ const initialValues = {
 const UserInvitationSidesheet: React.FC = () => {
   const { hideSidesheet } = useSidesheet();
   const { pushSnackbar } = useSnackbar();
-  const [inviteUser, { error }] = useInviteUser({
+  const [inviteUser] = useInviteUser({
     update: (cache, { data: { inviteUser: newUser } }) => {
       cache.modify('ROOT_QUERY', {
         users(existingData, { toReference }) {
@@ -40,9 +40,7 @@ const UserInvitationSidesheet: React.FC = () => {
         },
       });
     },
-    onCompleted: data => {
-      pushSnackbar({ variant: 'success', title: `Successfully invited ${data.inviteUser.email}` });
-    },
+    onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
   });
 
   const submitToServer = async (values: UserFormValues) => {
@@ -55,6 +53,7 @@ const UserInvitationSidesheet: React.FC = () => {
           id: '',
           createdAt: new Date().getTime() / 1000,
           status: 'FORCE_CHANGE_PASSWORD',
+          __typename: 'User',
           ...values,
         },
       }),
@@ -84,11 +83,6 @@ const UserInvitationSidesheet: React.FC = () => {
           <br />
           Role-based access is a feature available in the Enterprise version.
         </Text>
-        {error && (
-          <Text size="large" mt={6} color="red300">
-            {extractErrorMessage(error)}
-          </Text>
-        )}
       </Box>
     </SideSheet>
   );
