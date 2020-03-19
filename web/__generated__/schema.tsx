@@ -274,11 +274,6 @@ export type InviteUserInput = {
   email?: Maybe<Scalars['AWSEmail']>;
 };
 
-export type InviteUserResponse = {
-  __typename?: 'InviteUserResponse';
-  id: Scalars['ID'];
-};
-
 export type JiraConfig = {
   __typename?: 'JiraConfig';
   orgDomain: Scalars['String'];
@@ -434,7 +429,7 @@ export type Mutation = {
   deleteIntegration?: Maybe<Scalars['Boolean']>;
   deletePolicy?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
-  inviteUser?: Maybe<InviteUserResponse>;
+  inviteUser: User;
   remediateResource?: Maybe<Scalars['Boolean']>;
   resetUserPassword?: Maybe<Scalars['Boolean']>;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
@@ -1073,7 +1068,6 @@ export type ResolversTypes = {
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   InviteUserInput: InviteUserInput;
-  InviteUserResponse: ResolverTypeWrapper<InviteUserResponse>;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
@@ -1177,7 +1171,6 @@ export type ResolversParentTypes = {
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   InviteUserInput: InviteUserInput;
-  InviteUserResponse: InviteUserResponse;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
@@ -1372,14 +1365,6 @@ export type IntegrationConfigResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
-export type InviteUserResponseResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['InviteUserResponse'] = ResolversParentTypes['InviteUserResponse']
-> = {
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
-};
-
 export type JiraConfigResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['JiraConfig'] = ResolversParentTypes['JiraConfig']
@@ -1509,7 +1494,7 @@ export type MutationResolvers<
     RequireFields<MutationDeleteUserArgs, 'id'>
   >;
   inviteUser?: Resolver<
-    Maybe<ResolversTypes['InviteUserResponse']>,
+    ResolversTypes['User'],
     ParentType,
     ContextType,
     RequireFields<MutationInviteUserArgs, never>
@@ -1988,7 +1973,6 @@ export type Resolvers<ContextType = any> = {
   GithubConfig?: GithubConfigResolvers<ContextType>;
   Integration?: IntegrationResolvers<ContextType>;
   IntegrationConfig?: IntegrationConfigResolvers<ContextType>;
-  InviteUserResponse?: InviteUserResponseResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;
   ListAlertsResponse?: ListAlertsResponseResolvers<ContextType>;
   ListComplianceItemsResponse?: ListComplianceItemsResponseResolvers<ContextType>;

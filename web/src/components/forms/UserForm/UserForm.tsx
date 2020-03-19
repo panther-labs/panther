@@ -1,19 +1,10 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * Panther Enterprise is licensed under the terms of a commercial license available from
+ * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+ * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+ * falls under the Panther Commercial License to the extent it is permitted.
  */
 
 import React from 'react';
@@ -23,18 +14,18 @@ import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
 import * as Yup from 'yup';
 
-interface BaseUserFormValues {
+interface UserFormValues {
   id?: string; // optional value
   email: string;
   familyName: string;
   givenName;
 }
-export interface BaseUserFormProps {
+export interface UserFormProps {
   /** The initial values of the form */
-  initialValues: BaseUserFormValues;
+  initialValues: UserFormValues;
 
   /** callback for the submission of the form */
-  onSubmit: (values: BaseUserFormValues) => void;
+  onSubmit: (values: UserFormValues) => void;
 }
 
 const validationSchema = Yup.object().shape({
@@ -45,9 +36,9 @@ const validationSchema = Yup.object().shape({
   givenName: Yup.string().required('First name is required'),
 });
 
-const BaseUserForm: React.FC<BaseUserFormProps> = ({ initialValues, onSubmit }) => {
+const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
   return (
-    <Formik<BaseUserFormValues>
+    <Formik<UserFormValues>
       initialValues={initialValues}
       onSubmit={onSubmit}
       enableReinitialize
@@ -103,4 +94,4 @@ const BaseUserForm: React.FC<BaseUserFormProps> = ({ initialValues, onSubmit }) 
   );
 };
 
-export default BaseUserForm;
+export default UserForm;

@@ -16,11 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet } from 'pouncejs';
-import React from 'react';
-import useSidesheet from 'Hooks/useSidesheet';
+import * as React from 'react';
+import { Box, Heading, SideSheet, Text, useSnackbar } from 'pouncejs';
 import { User } from 'Generated/schema';
-import EditUser from './EditUser';
+import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { ListUsersDocument } from 'Pages/Users';
+import { extractErrorMessage } from 'Helpers/utils';
+import UserForm from 'Components/forms/UserForm';
+import useAuth from 'Hooks/useAuth';
+import useSidesheet from 'Hooks/useSidesheet';
+import { useEditUser } from './graphql/editUser.generated';
 
 export interface EditUserSidesheetProps {
   user: User;
@@ -28,6 +33,26 @@ export interface EditUserSidesheetProps {
 
 const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
   const { hideSidesheet } = useSidesheet();
+  const { pushSnackbar } = useSnackbar();
+  const { refetchUserInfo, userInfo } = useAuth();
+  const [editUser, { error }] = useEditUser({
+    refetchQueries: [getOperationName(ListUsersDocument)],
+    onCompleted: () => {
+      hideSidesheet();
+      pushSnackbar({ variant: 'success', title: `Successfully edited user` });
+      // Refetch user info if editing self
+      if (user.id === userInfo.sub) {
+        refetchUserInfo();
+      }
+    },
+  });
+
+  const initialValues = {
+    id: user.id,
+    email: user.email,
+    familyName: user.familyName || '',
+    givenName: user.givenName || '',
+  };
 
   return (
     <SideSheet open onClose={hideSidesheet}>
@@ -35,11 +60,29 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
         <Heading pt={1} pb={8} size="medium">
           Edit Profile
         </Heading>
-        <EditUser onSuccess={hideSidesheet} user={user} />
+        <UserForm
+          initialValues={initialValues}
+          onSubmit={async values => {
+            await editUser({
+              variables: {
+                input: {
+                  id: values.id,
+                  email: values.email,
+                  familyName: values.familyName,
+                  givenName: values.givenName,
+                },
+              },
+            });
+          }}
+        />
+        {error && (
+          <Text size="large" mt={6} color="red300">
+            {extractErrorMessage(error)}
+          </Text>
+        )}
       </Box>
     </SideSheet>
   );
 };
 
-// create ticket for user email verification
 export default EditUserSidesheet;

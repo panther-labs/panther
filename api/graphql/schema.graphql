@@ -17,7 +17,7 @@ type Mutation {
   deleteIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteUser(id: ID!): Boolean
-  inviteUser(input: InviteUserInput): InviteUserResponse
+  inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
   resetUserPassword(id: ID!): Boolean
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
@@ -638,10 +638,6 @@ type User {
   email: AWSEmail
   createdAt: AWSTimestamp
   status: String
-}
-
-type InviteUserResponse {
-  id: ID!
 }
 
 input InviteUserInput {
