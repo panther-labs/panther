@@ -37,10 +37,7 @@ const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destina
     update: async cache => {
       cache.modify('ROOT_QUERY', {
         destinations: (destinations, helpers) => {
-          const destinationRef = helpers.toReference({
-            __typename: destination.__typename,
-            outputId: destination.outputId,
-          });
+          const destinationRef = helpers.toReference(destination);
           return destinations.filter(dest => dest.__ref !== destinationRef.__ref);
         },
       });
