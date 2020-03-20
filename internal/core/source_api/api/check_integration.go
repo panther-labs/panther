@@ -34,12 +34,6 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-const (
-	auditRoleFormat       = "arn:aws:iam::%s:role/PantherAuditRole"
-	cweRoleFormat         = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole"
-	remediationRoleFormat = "arn:aws:iam::%s:role/PantherRemediationRole"
-)
-
 var (
 	evaluateIntegrationFunc       = evaluateIntegration
 	checkIntegrationInternalError = &genericapi.InternalError{Message: "Failed to validate source. Please try again later"}

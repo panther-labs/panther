@@ -103,7 +103,7 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 	}
 	for _, s3Object := range s3Objects {
 		var dataStream *common.DataStream
-		dataStream, err = readS3Object(s3Object, notification.TopicArn)
+		dataStream, err = readS3Object(s3Object)
 		if err != nil {
 			return
 		}
@@ -112,7 +112,7 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 	return result, err
 }
 
-func readS3Object(s3Object *S3ObjectInfo, topicArn string) (dataStream *common.DataStream, err error) {
+func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {
 	operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
 	defer func() {
 		operation.Stop()

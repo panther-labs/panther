@@ -60,8 +60,11 @@ const (
 	kmsKeyFind      = "Value: '' # KmsKey"
 	kmsKeyReplace   = "Value: '%s' # KmsKey"
 
-	// The format of log procesing role
+	// The format of log processing role
 	logProcessingRoleFormat = "arn:aws:iam::%s:role/PantherLogProcessingRole-%s"
+	auditRoleFormat       = "arn:aws:iam::%s:role/PantherAuditRole"
+	cweRoleFormat         = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole"
+	remediationRoleFormat = "arn:aws:iam::%s:role/PantherRemediationRole"
 )
 
 var (
