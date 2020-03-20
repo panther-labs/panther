@@ -171,7 +171,7 @@ func deployPrecheck(awsRegion string) {
 	}
 
 	// Ensure swagger is available
-	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger")); err != nil {
+	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
 		logger.Fatalf("swagger is not available (%v): try 'mage setup:swagger'", err)
 	}
 
