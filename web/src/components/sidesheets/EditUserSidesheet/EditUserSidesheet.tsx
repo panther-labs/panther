@@ -17,12 +17,10 @@
  */
 
 import * as React from 'react';
-import { Box, Heading, SideSheet, Text, useSnackbar } from 'pouncejs';
+import { Box, Heading, SideSheet, useSnackbar } from 'pouncejs';
 import { User } from 'Generated/schema';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import { ListUsersDocument } from 'Pages/Users';
 import { extractErrorMessage } from 'Helpers/utils';
-import UserForm from 'Components/forms/UserForm';
+import UserForm, { UserFormValues } from 'Components/forms/UserForm';
 import useAuth from 'Hooks/useAuth';
 import useSidesheet from 'Hooks/useSidesheet';
 import { useEditUser } from './graphql/editUser.generated';
@@ -32,14 +30,12 @@ export interface EditUserSidesheetProps {
 }
 
 const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
-  const { hideSidesheet } = useSidesheet();
   const { pushSnackbar } = useSnackbar();
+  const { hideSidesheet } = useSidesheet();
   const { refetchUserInfo, userInfo } = useAuth();
-  const [editUser, { error }] = useEditUser({
-    refetchQueries: [getOperationName(ListUsersDocument)],
+  const [editUser] = useEditUser({
+    onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
     onCompleted: () => {
-      hideSidesheet();
-      pushSnackbar({ variant: 'success', title: `Successfully edited user` });
       // Refetch user info if editing self
       if (user.id === userInfo.sub) {
         refetchUserInfo();
@@ -54,32 +50,36 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
     givenName: user.givenName || '',
   };
 
+  const submitToServer = async (values: UserFormValues) => {
+    // optimistically hide the sidesheet
+    hideSidesheet();
+
+    await editUser({
+      optimisticResponse: () => ({
+        updateUser: {
+          __typename: 'User',
+          ...user,
+          ...values,
+        },
+      }),
+      variables: {
+        input: {
+          id: values.id,
+          email: values.email,
+          familyName: values.familyName,
+          givenName: values.givenName,
+        },
+      },
+    });
+  };
+
   return (
     <SideSheet open onClose={hideSidesheet}>
       <Box width={425} m="auto">
         <Heading pt={1} pb={8} size="medium">
           Edit Profile
         </Heading>
-        <UserForm
-          initialValues={initialValues}
-          onSubmit={async values => {
-            await editUser({
-              variables: {
-                input: {
-                  id: values.id,
-                  email: values.email,
-                  familyName: values.familyName,
-                  givenName: values.givenName,
-                },
-              },
-            });
-          }}
-        />
-        {error && (
-          <Text size="large" mt={6} color="red300">
-            {extractErrorMessage(error)}
-          </Text>
-        )}
+        <UserForm initialValues={initialValues} onSubmit={submitToServer} />
       </Box>
     </SideSheet>
   );

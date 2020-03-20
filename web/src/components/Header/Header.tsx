@@ -42,7 +42,9 @@ const Header = () => {
             />
             {userInfo && (
               <Text size="medium">
-                {userInfo.given_name} {userInfo.family_name[0]}.
+                {userInfo.given_name && userInfo.family_name
+                  ? `${userInfo.given_name} ${userInfo.family_name[0]}.`
+                  : userInfo.email.split('@')[0]}
               </Text>
             )}
           </Flex>

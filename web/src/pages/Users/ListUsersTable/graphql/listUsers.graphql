@@ -1,10 +1,5 @@
 query ListUsers {
     users {
-        id
-        email
-        givenName
-        familyName
-        createdAt
-        status
+        ...UserDetails
     }
 }

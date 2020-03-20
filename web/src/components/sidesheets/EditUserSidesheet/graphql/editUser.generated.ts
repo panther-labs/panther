@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates */
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { UserDetails } from '../../../../graphql/fragments/UserDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,12 +29,15 @@ export type EditUserVariables = {
   input: Types.UpdateUserInput;
 };
 
-export type EditUser = Pick<Types.Mutation, 'updateUser'>;
+export type EditUser = { updateUser: UserDetails };
 
 export const EditUserDocument = gql`
   mutation EditUser($input: UpdateUserInput!) {
-    updateUser(input: $input)
+    updateUser(input: $input) {
+      ...UserDetails
+    }
   }
+  ${UserDetails}
 `;
 export type EditUserMutationFn = ApolloReactCommon.MutationFunction<EditUser, EditUserVariables>;
 

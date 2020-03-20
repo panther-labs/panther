@@ -16,33 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates */
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { UserDetails } from '../../../../graphql/fragments/UserDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type ListUsersVariables = {};
 
-export type ListUsers = {
-  users: Array<
-    Pick<Types.User, 'id' | 'email' | 'givenName' | 'familyName' | 'createdAt' | 'status'>
-  >;
-};
+export type ListUsers = { users: Array<UserDetails> };
 
 export const ListUsersDocument = gql`
   query ListUsers {
     users {
-      id
-      email
-      givenName
-      familyName
-      createdAt
-      status
+      ...UserDetails
     }
   }
+  ${UserDetails}
 `;
 
 /**

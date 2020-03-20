@@ -23,7 +23,7 @@ import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
 import * as Yup from 'yup';
 
-interface UserFormValues {
+export interface UserFormValues {
   id?: string; // optional value
   email: string;
   familyName: string;
@@ -87,14 +87,13 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
               mt={10}
               justifyContent="flex-end"
             >
-              <Flex>
-                <SubmitButton
-                  submitting={isSubmitting}
-                  disabled={!dirty || !isValid || isSubmitting}
-                >
-                  {initialValues.id ? 'Update' : 'Invite'}
-                </SubmitButton>
-              </Flex>
+              <SubmitButton
+                submitting={isSubmitting}
+                disabled={!dirty || !isValid || isSubmitting}
+                width={1}
+              >
+                {initialValues.id ? 'Update' : 'Invite'}
+              </SubmitButton>
             </Flex>
           </form>
         );

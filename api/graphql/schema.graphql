@@ -27,7 +27,7 @@ type Mutation {
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
-  updateUser(input: UpdateUserInput!): Boolean
+  updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
 }
 
@@ -635,9 +635,9 @@ type User {
   givenName: String
   familyName: String
   id: ID!
-  email: AWSEmail
-  createdAt: AWSTimestamp
-  status: String
+  email: AWSEmail!
+  createdAt: AWSTimestamp!
+  status: String!
 }
 
 input InviteUserInput {
