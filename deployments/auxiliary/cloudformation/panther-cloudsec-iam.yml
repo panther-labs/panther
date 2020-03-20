@@ -35,17 +35,17 @@ Parameters:
   # Required parameters
   MasterAccountId:
     Type: String
-    Description: DO NOT EDIT MANUALLY! Parameter already has the appropriate value.
+    Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
     Default: ''
 
   # Deployment toggles
   DeployCloudWatchEventSetup:
     Type: String
-    Description: DO NOT EDIT MANUALLY! Parameter already has the appropriate value.
+    Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
     Default: ''
   DeployRemediation:
     Type: String
-    Description: DO NOT EDIT MANUALLY! Parameter already has the appropriate value.
+    Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
     Default: ''
 
 Conditions:
