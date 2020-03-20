@@ -53,5 +53,5 @@ func TestLogAnalysisTemplate(t *testing.T) {
 	require.NoError(t, err)
 	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-log-analysis-iam-updated.yml")
 	require.NoError(t, err)
-	require.Equal(t, string(expectedTemplate), *result.Body)
+	require.YAMLEq(t, string(expectedTemplate), *result.Body)
 }
