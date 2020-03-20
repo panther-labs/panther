@@ -526,6 +526,7 @@ Resources:
         #set ($input = {})
         $util.qr($input.put("integrationType", "aws-scan"))
         $util.qr($input.put("awsAccountId", $ctx.source.awsAccountId))
+        $util.qr($input.put("integrationLabel", $ctx.source.integrationLabel))
         #if($ctx.source.cweEnabled)
           $util.qr($input.put("enableCWESetup", true))
         #end
