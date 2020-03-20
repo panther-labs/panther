@@ -43,10 +43,12 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		IntegrationType: integration.IntegrationType,
 
 		// From update integration request
+		IntegrationLabel:  input.IntegrationLabel,
 		EnableCWESetup:    input.CWEEnabled,
 		EnableRemediation: input.RemediationEnabled,
-		S3Buckets:         input.S3Buckets,
-		KmsKeys:           input.KmsKeys,
+		S3Bucket:          input.S3Bucket,
+		S3Prefix:          input.S3Prefix,
+		KmsKey:            input.KmsKey,
 	})
 	if err != nil {
 		return nil, err
@@ -61,8 +63,10 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		ScanIntervalMins:   input.ScanIntervalMins,
 		CWEEnabled:         input.CWEEnabled,
 		RemediationEnabled: input.RemediationEnabled,
-		S3Buckets:          input.S3Buckets,
-		KmsKeys:            input.KmsKeys,
+		S3Bucket:           input.S3Bucket,
+		S3Prefix:           input.S3Prefix,
+		KmsKey:             input.KmsKey,
+		LogTypes:           input.LogTypes,
 	})
 }
 

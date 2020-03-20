@@ -47,6 +47,8 @@ Mappings:
   PantherParameters:
     MasterAccountId:
       Value: '' # MasterAccountId
+    MasterAccountRegion:
+      Value: '' # MasterAccountRegion
     DeployCloudWatchEventSetup:
       Value: '' # DeployCloudWatchEventSetup
     DeployRemediation:

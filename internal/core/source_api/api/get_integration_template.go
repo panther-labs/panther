@@ -28,24 +28,28 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
-var (
+const (
 	// Formatting variables used for re-writing the default templates
-	accountIDFind    = "Default: '' # MasterAccountId"
-	accountIDReplace = "Default: %s # MasterAccountId"
-	regionFind       = "Default: '' # MasterAccountRegion"
-	regionReplace    = "Default: %s # MasterAccountRegion"
+	accountIDFind    = "Value: '' # MasterAccountId"
+	accountIDReplace = "Value: '%s' # MasterAccountId"
 
 	// Formatting variables for Cloud Security
-	cweFind            = "Default: false # DeployCloudWatchEventSetup"
-	cweReplace         = "Default: %t # DeployCloudWatchEventSetup"
-	remediationFind    = "Default: false # DeployRemediation"
-	remediationReplace = "Default: %t # DeployRemediation"
+	regionFind         = "Value: '' # MasterAccountRegion"
+	regionReplace      = "Value: '%s' # MasterAccountRegion"
+	cweFind            = "Value: '' # DeployCloudWatchEventSetup"
+	cweReplace         = "Value: '%t' # DeployCloudWatchEventSetup"
+	remediationFind    = "Value: '' # DeployRemediation"
+	remediationReplace = "Value: '%t' # DeployRemediation"
 
 	// Formatting variables for Log Analysis
-	s3BucketFind    = "Default: '' # S3Buckets"
-	s3BucketReplace = "Default: %s # S3Buckets"
-	kmsKeyFind      = "Default: '' # EncryptionKeys"
-	kmsKeyReplace   = "Default: %s # EncryptionKeys"
+	roleSuffixIDFind  = "Value: '' # RoleSuffix"
+	roleSuffixReplace = "Value: '%s' # RoleSuffix"
+	s3BucketFind      = "Value: '' # S3Bucket"
+	s3BucketReplace   = "Value: '%s' # S3Bucket"
+	s3PrefixFind      = "Value: '' # S3Prefix"
+	s3PrefixReplace   = "Value: '%s' # S3Prefix"
+	kmsKeyFind        = "Value: '' # KmsKey"
+	kmsKeyReplace     = "Value: '%s' # KmsKey"
 )
 
 // GetIntegrationTemplate generates a new satellite account CloudFormation template based on the given parameters.
@@ -55,32 +59,41 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	// Format the template with the user's input
 	formattedTemplate := strings.Replace(getTemplate(input.IntegrationType), accountIDFind,
 		fmt.Sprintf(accountIDReplace, *input.AWSAccountID), 1)
-	formattedTemplate = strings.Replace(formattedTemplate, regionFind,
-		fmt.Sprintf(regionReplace, *sess.Config.Region), 1)
 
 	// Cloud Security replacements
-	formattedTemplate = strings.Replace(formattedTemplate, cweFind,
-		fmt.Sprintf(cweReplace, *input.CWEEnabled), 1)
-	formattedTemplate = strings.Replace(formattedTemplate, remediationFind,
-		fmt.Sprintf(remediationReplace, *input.RemediationEnabled), 1)
+	if *input.IntegrationType == models.IntegrationTypeAWSScan {
+		formattedTemplate = strings.Replace(formattedTemplate, regionFind,
+			fmt.Sprintf(regionReplace, *sess.Config.Region), 1)
+		formattedTemplate = strings.Replace(formattedTemplate, cweFind,
+			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)), 1)
+		formattedTemplate = strings.Replace(formattedTemplate, remediationFind,
+			fmt.Sprintf(remediationReplace, aws.BoolValue(input.RemediationEnabled)), 1)
+	} else {
+		// Log Analysis replacements
+		formattedTemplate = strings.Replace(formattedTemplate, roleSuffixIDFind,
+			fmt.Sprintf(roleSuffixReplace, generateRoleSuffix(*input.IntegrationLabel)), 1)
 
-	// Log Analysis replacements
-	formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
-		fmt.Sprintf(s3BucketReplace, strings.Join(sliceStringValue(input.S3Buckets), ",")), 1)
-	formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,
-		fmt.Sprintf(kmsKeyReplace, strings.Join(sliceStringValue(input.KmsKeys), ",")), 1)
+		formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
+			fmt.Sprintf(s3BucketReplace, *input.S3Bucket), 1)
+
+		if input.S3Prefix != nil {
+			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
+				fmt.Sprintf(s3PrefixReplace, *input.S3Prefix), 1)
+		} else {
+			// If no S3Prefix is specified, add as default '*'
+			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
+				fmt.Sprintf(s3PrefixReplace, "*"), 1)
+		}
+
+		if input.KmsKey != nil {
+			formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,
+				fmt.Sprintf(kmsKeyReplace, *input.KmsKey), 1)
+		}
+	}
 
 	return &models.SourceIntegrationTemplate{
 		Body: aws.String(formattedTemplate),
 	}, nil
-}
-
-func sliceStringValue(stringPointers []*string) []string {
-	out := make([]string, 0, len(stringPointers))
-	for index, ptr := range stringPointers {
-		out[index] = aws.StringValue(ptr)
-	}
-	return out
 }
 
 func getTemplate(integrationType *string) string {
@@ -88,8 +101,18 @@ func getTemplate(integrationType *string) string {
 	case models.IntegrationTypeAWSScan:
 		return cloudsecTemplate
 	case models.IntegrationTypeAWS3:
-		return logProcessingTemplate
+		return logAnalysisTemplate
 	default:
 		panic("unknown integration type: " + *integrationType)
 	}
+}
+
+// Generates the ARN of the log processing role
+func generateLogProcessingRoleArn(awsAccountID string, label string) string {
+	return fmt.Sprintf(logProcessingRoleFormat, awsAccountID, generateRoleSuffix(label))
+}
+
+func generateRoleSuffix(label string) string {
+	sanitized := strings.ReplaceAll(label, " ", "-")
+	return strings.ToLower(sanitized)
 }

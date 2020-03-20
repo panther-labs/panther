@@ -25,13 +25,13 @@ Mappings:
   # in order to replace the default values with an appropriate ones.
   PantherParameters:
     MasterAccountId:
-      Value: '' # MasterAccountId
+      Value: '123456789012' # MasterAccountId
     MasterAccountRegion:
-      Value: '' # MasterAccountRegion
+      Value: 'us-east-1' # MasterAccountRegion
     DeployCloudWatchEventSetup:
-      Value: '' # DeployCloudWatchEventSetup
+      Value: 'true' # DeployCloudWatchEventSetup
     DeployRemediation:
-      Value: '' # DeployRemediation
+      Value: 'true' # DeployRemediation
 
 Parameters:
   # Required parameters

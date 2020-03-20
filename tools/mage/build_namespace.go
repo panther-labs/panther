@@ -191,8 +191,8 @@ func (b Build) sourceAPITemplates() {
 	}
 	genTemplate("./deployments/auxiliary/cloudformation/panther-cloudsec-iam.yml",
 		"cloudsecTemplate", "internal/core/source_api/api/cloudsec_tmpl.go")
-	genTemplate("./deployments/auxiliary/cloudformation/panther-log-processing-iam.yml",
-		"logProcessingTemplate", "internal/core/source_api/api/logprocessing_tmpl.go")
+	genTemplate("./deployments/auxiliary/cloudformation/panther-log-analysis-iam.yml",
+		"logAnalysisTemplate", "internal/core/source_api/api/loganalysis_tmpl.go")
 }
 
 // Opstools Compile Go operational tools from source

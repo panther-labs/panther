@@ -34,6 +34,9 @@ import (
 )
 
 const (
+	cloudSecLabel      = "PantherCloudSecurity"
+	logProcessingLabel = "PantherLogProcessing"
+
 	onboardStack    = "panther-app-onboard"
 	onboardTemplate = "deployments/onboard.yml"
 
@@ -51,7 +54,7 @@ const (
 // onboard Panther to monitor Panther account
 func deployOnboard(awsSession *session.Session, settings *config.PantherConfig, bucketOutputs, backendOutputs map[string]string) {
 	deployOnboardTemplate(awsSession, settings, bucketOutputs)
-	registerPantherAccount(awsSession, backendOutputs["AWSAccountId"]) // this MUST follow the CloudSec roles being deployed
+	registerPantherAccount(awsSession, bucketOutputs, backendOutputs) // this MUST follow the CloudSec roles being deployed
 	deployRealTimeStackSet(awsSession, backendOutputs["AWSAccountId"])
 }
 
@@ -63,7 +66,6 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 		logger.Info("deploy: enabling Guard Duty in Panther account (see panther_config.yml)")
 	}
 
-
 	// GD is account wide, not regional. Test if some other region has already enabled GD.
 	if guardDutyEnabledOutsidePanther(awsSession, settings) {
 		logger.Info("deploy: Guard Duty is already enabled for this account (not by Panther)")
@@ -71,41 +73,52 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 	}
 
 	params := map[string]string{
-		"AuditLogsBucket":  bucketOutputs["AuditLogsBucket"],
-		"EnableCloudTrail": strconv.FormatBool(settings.OnboardParameterValues.EnableCloudTrail),
-		"EnableGuardDuty":  strconv.FormatBool(settings.OnboardParameterValues.EnableGuardDuty),
+		"AuditLogsBucket":        bucketOutputs["AuditLogsBucket"],
+		"EnableCloudTrail":       strconv.FormatBool(settings.OnboardParameterValues.EnableCloudTrail),
+		"EnableGuardDuty":        strconv.FormatBool(settings.OnboardParameterValues.EnableGuardDuty),
+		"LogProcessingRoleLabel": logProcessingLabel,
 	}
 	onboardOutputs := deployTemplate(awsSession, onboardTemplate, bucketOutputs["SourceBucketName"], onboardStack, params)
 	configureLogProcessingUsingAPIs(awsSession, settings, bucketOutputs, onboardOutputs)
 }
 
-func registerPantherAccount(awsSession *session.Session, pantherAccountID string) {
-	logger.Infof("deploy: registering account %s with Panther for monitoring", pantherAccountID)
+func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendOutputs map[string]string) {
+	logger.Infof("deploy: registering account %s with Panther for monitoring", backendOutputs["AWSAccountId"])
 
 	// cloud sec
-	var apiInput = struct {
+	var cloudSecInput = struct {
 		PutIntegration *models.PutIntegrationInput
 	}{
 		&models.PutIntegrationInput{
-			Integrations: []*models.PutIntegrationSettings{
-				{
-					AWSAccountID:     aws.String(pantherAccountID),
-					IntegrationLabel: aws.String("Panther Cloud Security"),
-					IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-					ScanIntervalMins: aws.Int(1440),
-					UserID:           aws.String(mageUserID),
-				},
-				{
-					AWSAccountID:     aws.String(pantherAccountID),
-					IntegrationLabel: aws.String("Panther Log Processing"),
-					IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-					UserID:           aws.String(mageUserID),
-				},
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
+				IntegrationLabel: aws.String(cloudSecLabel),
+				IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+				ScanIntervalMins: aws.Int(1440),
+				UserID:           aws.String(mageUserID),
 			},
 		},
 	}
-	if err := invokeLambda(awsSession, "panther-source-api", apiInput, nil); err != nil {
-		logger.Fatalf("error calling lambda to register account: %v", err)
+	if err := invokeLambda(awsSession, "panther-source-api", cloudSecInput, nil); err != nil {
+		logger.Fatalf("error calling lambda to register account for cloud security: %v", err)
+	}
+
+	// log processing
+	var logProcessingInput = struct {
+		PutIntegration *models.PutIntegrationInput
+	}{
+		&models.PutIntegrationInput{
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
+				IntegrationLabel: aws.String(logProcessingLabel),
+				IntegrationType:  aws.String(models.IntegrationTypeAWS3),
+				UserID:           aws.String(mageUserID),
+				S3Bucket:         aws.String(bucketOutputs["AuditLogsBucket"]),
+			},
+		},
+	}
+	if err := invokeLambda(awsSession, "panther-source-api", logProcessingInput, nil); err != nil {
+		logger.Fatalf("error calling lambda to register account for log processing: %v", err)
 	}
 }
 
@@ -206,7 +219,7 @@ func guardDutyEnabledOutsidePanther(awsSession *session.Session, settings *confi
 		logger.Fatalf("deploy: unable to check guard duty: %v", err)
 	}
 	if len(output.DetectorIds) != 1 {
-		return false  // we only make 1
+		return false // we only make 1
 	}
 	// we need to check that it is THIS region's stack the enabled it
 	_, onboardOutput, err := describeStack(cloudformation.New(awsSession), onboardStack)

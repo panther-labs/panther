@@ -56,12 +56,17 @@ func (client *mockDDBClient) DeleteItem(input *dynamodb.DeleteItemInput) (*dynam
 	return args.Get(0).(*dynamodb.DeleteItemOutput), args.Error(1)
 }
 
+func (client *mockDDBClient) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error) {
+	args := client.Called(input)
+	return args.Get(0).(*dynamodb.ScanOutput), args.Error(1)
+}
+
 func TestDeleteIntegrationItem(t *testing.T) {
 	mockClient := &mockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(getItem(models.IntegrationTypeAWSScan), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: aws.String(testIntegrationID),
@@ -71,7 +76,7 @@ func TestDeleteIntegrationItem(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-func TestDeleteIntegrationItemLogAnalysis(t *testing.T) {
+func TestDeleteLogIntegration(t *testing.T) {
 	mockClient := &mockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
@@ -84,8 +89,15 @@ func TestDeleteIntegrationItemLogAnalysis(t *testing.T) {
 		QueueUrl:       aws.String(logProcessorQueueURL),
 	}
 
+	scanResult := &dynamodb.ScanOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			generateDDBAttributes(models.IntegrationTypeAWS3),
+		},
+	}
+
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(getItem(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
 	mockSqs.On("GetQueueAttributes", expectedGetQueueAttributesInput).
@@ -105,6 +117,43 @@ func TestDeleteIntegrationItemLogAnalysis(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
+func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
+	// This scenario tests the case where we delete a source
+	// but another source for that account exists. In that case we
+	// should remove the SQS permissions for that account
+	mockClient := &mockDDBClient{}
+	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+
+	mockSqs := &mockSQSClient{}
+	SQSClient = mockSqs
+	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+
+	additionLogSourceEntry := generateDDBAttributes(models.IntegrationTypeAWS3)
+	additionLogSourceEntry["integrationId"] = &dynamodb.AttributeValue{
+		// modify entry to have different ID
+		S: aws.String(testIntegrationID + "-2"),
+	}
+	scanResult := &dynamodb.ScanOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			generateDDBAttributes(models.IntegrationTypeAWS3),
+			additionLogSourceEntry,
+		},
+	}
+
+	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
+
+	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
+		IntegrationID: aws.String(testIntegrationID),
+	})
+
+	assert.NoError(t, result)
+	mockClient.AssertExpectations(t)
+	// We should have no interactions with SQS
+	mockSqs.AssertExpectations(t)
+}
+
 func TestDeleteIntegrationItemError(t *testing.T) {
 	mockClient := &mockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
@@ -114,7 +163,7 @@ func TestDeleteIntegrationItemError(t *testing.T) {
 		"An error occurred on the server side.",
 		errors.New("fake error"),
 	)
-	mockClient.On("GetItem", mock.Anything).Return(getItem(models.IntegrationTypeAWSScan), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, mockErr)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
@@ -137,8 +186,14 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 		QueueUrl:       aws.String(logProcessorQueueURL),
 	}
 
+	scanResult := &dynamodb.ScanOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			generateDDBAttributes(models.IntegrationTypeAWS3),
+		},
+	}
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(getItem(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{"111111111111"}) // Wrong accountID
 	mockSqs.On("GetQueueAttributes", expectedGetQueueAttributesInput).
@@ -181,8 +236,15 @@ func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
 	SQSClient = mockSqs
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
+	scanResult := &dynamodb.ScanOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			generateDDBAttributes(models.IntegrationTypeAWS3),
+		},
+	}
+
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, errors.New("error"))
-	mockClient.On("GetItem", mock.Anything).Return(getItem(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
 	mockSqs.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil).Twice()
@@ -208,8 +270,15 @@ func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
 	SQSClient = mockSqs
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
+	scanResult := &dynamodb.ScanOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			generateDDBAttributes(models.IntegrationTypeAWS3),
+		},
+	}
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, errors.New("error"))
-	mockClient.On("GetItem", mock.Anything).Return(getItem(models.IntegrationTypeAWS3), nil)
+	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
+
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
 	mockSqs.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil).Twice()
 	mockSqs.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{}, nil).Once()
@@ -227,40 +296,49 @@ func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-func getItem(integrationType string) *dynamodb.GetItemOutput {
+func generateGetItemOutput(integrationType string) *dynamodb.GetItemOutput {
 	return &dynamodb.GetItemOutput{
-		Item: map[string]*dynamodb.AttributeValue{
-			"integrationId":   {S: aws.String(testIntegrationID)},
-			"integrationType": {S: aws.String(integrationType)},
-			"awsAccountId":    {S: aws.String(testAccountID)},
-		},
+		Item: generateDDBAttributes(integrationType),
+	}
+}
+
+func generateDDBAttributes(integrationType string) map[string]*dynamodb.AttributeValue {
+	return map[string]*dynamodb.AttributeValue{
+		"integrationId":   {S: aws.String(testIntegrationID)},
+		"integrationType": {S: aws.String(integrationType)},
+		"awsAccountId":    {S: aws.String(testAccountID)},
 	}
 }
 
 func generateQueueAttributeOutput(t *testing.T, accountIDs []string) map[string]*string {
-	statements := make([]SqsPolicyStatement, len(accountIDs))
-	for i, accountID := range accountIDs {
-		statements[i] = SqsPolicyStatement{
-			SID:       fmt.Sprintf("PantherSubscriptionSID-%s", accountID),
-			Effect:    "Allow",
-			Principal: map[string]string{"AWS": "*"},
-			Action:    "sqs:SendMessage",
-			Resource:  logProcessorQueueArn,
-			Condition: map[string]interface{}{
-				"ArnLike": map[string]string{
-					"aws:SourceArn": fmt.Sprintf("arn:aws:sns:*:%s:*", accountID),
+	policyAttribute := aws.String("")
+	if len(accountIDs) > 0 {
+		statements := make([]SqsPolicyStatement, len(accountIDs))
+		for i, accountID := range accountIDs {
+			statements[i] = SqsPolicyStatement{
+				SID:       fmt.Sprintf("PantherSubscriptionSID-%s", accountID),
+				Effect:    "Allow",
+				Principal: map[string]string{"AWS": "*"},
+				Action:    "sqs:SendMessage",
+				Resource:  logProcessorQueueArn,
+				Condition: map[string]interface{}{
+					"ArnLike": map[string]string{
+						"aws:SourceArn": fmt.Sprintf("arn:aws:sns:*:%s:*", accountID),
+					},
 				},
-			},
+			}
 		}
-	}
-	policy := SqsPolicy{
-		Version:    "2008-10-17",
-		Statements: statements,
+		policy := SqsPolicy{
+			Version:    "2008-10-17",
+			Statements: statements,
+		}
+
+		marshaledPolicy, err := jsoniter.MarshalToString(policy)
+		require.NoError(t, err)
+		policyAttribute = aws.String(marshaledPolicy)
 	}
 
-	marshalledPolicy, err := jsoniter.MarshalToString(policy)
-	require.NoError(t, err)
 	return map[string]*string{
-		"Policy": aws.String(marshalledPolicy),
+		"Policy": policyAttribute,
 	}
 }

@@ -29,6 +29,9 @@ Parameters:
     Type: String
     Description: If true, create a Panther GuardDuty in this account configured for log processing
     AllowedValues: [true, false]
+  LogProcessingRoleLabel:
+    Type: String
+    Description: The suffix for the log processing role
 
 Conditions:
   EnableCloudTrail: !Equals [!Ref EnableCloudTrail, true]
@@ -100,7 +103,7 @@ Resources:
   LogProcessingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub PantherLogProcessingRole-${AWS::Region} # note we add regoion to the end!
+      RoleName: !Sub PantherLogProcessingRole-${LogProcessingRoleLabel}
       Description: The Panther master account assumes this role to read log data
       MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:
