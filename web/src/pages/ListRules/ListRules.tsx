@@ -70,8 +70,6 @@ const ListRules = () => {
   if (!ruleItems.length && isEmpty(requestParams)) {
     return <ListRulesPageEmptyDataFallback />;
   }
-
-  // console.log('RuleItems', ruleItems);
   //  Check how many active filters exist by checking how many columns keys exist in the URL
   return (
     <React.Fragment>

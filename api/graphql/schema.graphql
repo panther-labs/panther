@@ -98,6 +98,7 @@ input ListRulesInput {
   enabled: Boolean
   logTypes: String # Comma-separated string
   severity: SeverityEnum
+  dedupPeriodMinutes: Int
   tags: String # Comma-separated string
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
