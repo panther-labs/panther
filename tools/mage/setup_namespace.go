@@ -90,6 +90,17 @@ func (Setup) Python() {
 	}
 }
 
+// Install go-swagger for SDK generation
+func (Setup) Swagger() {
+	env, err := sh.Output("uname")
+	if err != nil {
+		logger.Fatalf("couldn't determine environment: %v", err)
+	}
+	if err = installSwagger(env); err != nil {
+		logger.Fatal(err)
+	}
+}
+
 // Web Npm install
 func (Setup) Web() {
 	if err := sh.RunV("npm", "i"); err != nil {

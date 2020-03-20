@@ -155,6 +155,11 @@ func Deploy() {
 
 // Fail the deploy early if there is a known issue with the user's environment.
 func deployPrecheck(awsRegion string) {
+	// Ensure the AWS region is supported
+	if !supportedRegions[awsRegion] {
+		logger.Fatalf("panther is not supported in %s region", awsRegion)
+	}
+
 	// Check the Go version (1.12 fails with a build error)
 	if version := runtime.Version(); version <= "go1.12" {
 		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
@@ -165,9 +170,19 @@ func deployPrecheck(awsRegion string) {
 		logger.Fatalf("docker is not available: %v", err)
 	}
 
-	// Ensure the AWS region is supported
-	if !supportedRegions[awsRegion] {
-		logger.Fatalf("panther is not supported in %s region", awsRegion)
+	// Ensure swagger is available
+	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
+		logger.Fatalf("swagger is not available (%v): try 'mage setup:swagger'", err)
+	}
+
+	// Warn if not deploying a tagged release
+	output, err := sh.Output("git", "describe", "--tags")
+	if err != nil {
+		logger.Fatalf("git describe failed: %v", err)
+	}
+	// The output is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
+	if strings.Contains(output, "-") {
+		logger.Warnf("%s is not a tagged release, proceed at your own risk", output)
 	}
 }
 
