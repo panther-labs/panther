@@ -63,6 +63,7 @@ type Query {
 
 input GetComplianceIntegrationTemplateInput {
   awsAccountId: String!
+  integrationLabel: String!
   remediationEnabled: Boolean
   cweEnabled: Boolean
 }

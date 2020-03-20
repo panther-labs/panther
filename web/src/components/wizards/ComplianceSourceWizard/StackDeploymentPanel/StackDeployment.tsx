@@ -31,6 +31,7 @@ const StackDeployment: React.FC = () => {
     variables: {
       input: {
         awsAccountId: values.awsAccountId,
+        integrationLabel: values.integrationLabel,
         remediationEnabled: values.remediationEnabled,
         cweEnabled: values.cweEnabled,
       },

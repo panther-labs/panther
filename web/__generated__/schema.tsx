@@ -240,6 +240,7 @@ export type GetAlertInput = {
 
 export type GetComplianceIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
+  integrationLabel: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
