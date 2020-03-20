@@ -246,6 +246,7 @@ export type GetComplianceIntegrationTemplateInput = {
 
 export type GetLogIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
+  integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
   s3Prefix: Scalars['String'];
   kmsKey?: Maybe<Scalars['String']>;

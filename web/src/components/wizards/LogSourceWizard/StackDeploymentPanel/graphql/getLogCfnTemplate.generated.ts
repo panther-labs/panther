@@ -24,16 +24,16 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type GetComplianceCfnTemplateVariables = {
+export type GetLogCfnTemplateVariables = {
   input: Types.GetLogIntegrationTemplateInput;
 };
 
-export type GetComplianceCfnTemplate = {
+export type GetLogCfnTemplate = {
   getLogIntegrationTemplate: Pick<Types.IntegrationTemplate, 'body'>;
 };
 
-export const GetComplianceCfnTemplateDocument = gql`
-  query GetComplianceCfnTemplate($input: GetLogIntegrationTemplateInput!) {
+export const GetLogCfnTemplateDocument = gql`
+  query GetLogCfnTemplate($input: GetLogIntegrationTemplateInput!) {
     getLogIntegrationTemplate(input: $input) {
       body
     }
@@ -41,48 +41,40 @@ export const GetComplianceCfnTemplateDocument = gql`
 `;
 
 /**
- * __useGetComplianceCfnTemplate__
+ * __useGetLogCfnTemplate__
  *
- * To run a query within a React component, call `useGetComplianceCfnTemplate` and pass it any options that fit your needs.
- * When your component renders, `useGetComplianceCfnTemplate` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetLogCfnTemplate` and pass it any options that fit your needs.
+ * When your component renders, `useGetLogCfnTemplate` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetComplianceCfnTemplate({
+ * const { data, loading, error } = useGetLogCfnTemplate({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useGetComplianceCfnTemplate(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<
-    GetComplianceCfnTemplate,
-    GetComplianceCfnTemplateVariables
-  >
+export function useGetLogCfnTemplate(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetLogCfnTemplate, GetLogCfnTemplateVariables>
 ) {
-  return ApolloReactHooks.useQuery<GetComplianceCfnTemplate, GetComplianceCfnTemplateVariables>(
-    GetComplianceCfnTemplateDocument,
+  return ApolloReactHooks.useQuery<GetLogCfnTemplate, GetLogCfnTemplateVariables>(
+    GetLogCfnTemplateDocument,
     baseOptions
   );
 }
-export function useGetComplianceCfnTemplateLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    GetComplianceCfnTemplate,
-    GetComplianceCfnTemplateVariables
-  >
+export function useGetLogCfnTemplateLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetLogCfnTemplate, GetLogCfnTemplateVariables>
 ) {
-  return ApolloReactHooks.useLazyQuery<GetComplianceCfnTemplate, GetComplianceCfnTemplateVariables>(
-    GetComplianceCfnTemplateDocument,
+  return ApolloReactHooks.useLazyQuery<GetLogCfnTemplate, GetLogCfnTemplateVariables>(
+    GetLogCfnTemplateDocument,
     baseOptions
   );
 }
-export type GetComplianceCfnTemplateHookResult = ReturnType<typeof useGetComplianceCfnTemplate>;
-export type GetComplianceCfnTemplateLazyQueryHookResult = ReturnType<
-  typeof useGetComplianceCfnTemplateLazyQuery
->;
-export type GetComplianceCfnTemplateQueryResult = ApolloReactCommon.QueryResult<
-  GetComplianceCfnTemplate,
-  GetComplianceCfnTemplateVariables
+export type GetLogCfnTemplateHookResult = ReturnType<typeof useGetLogCfnTemplate>;
+export type GetLogCfnTemplateLazyQueryHookResult = ReturnType<typeof useGetLogCfnTemplateLazyQuery>;
+export type GetLogCfnTemplateQueryResult = ApolloReactCommon.QueryResult<
+  GetLogCfnTemplate,
+  GetLogCfnTemplateVariables
 >;

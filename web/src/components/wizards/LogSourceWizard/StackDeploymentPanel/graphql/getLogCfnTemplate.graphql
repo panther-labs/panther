@@ -1,4 +1,4 @@
-query GetComplianceCfnTemplate($input: GetLogIntegrationTemplateInput!) {
+query GetLogCfnTemplate($input: GetLogIntegrationTemplateInput!) {
   getLogIntegrationTemplate(input: $input) {
     body
   }

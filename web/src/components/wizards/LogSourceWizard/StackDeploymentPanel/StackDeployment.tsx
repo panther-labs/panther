@@ -21,17 +21,18 @@ import React from 'react';
 import { extractErrorMessage, getLogIntegrationStackName } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { LogIntegration } from 'Generated/schema';
-import { useGetComplianceCfnTemplate } from './graphql/getLogCfnTemplate.generated';
+import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { LogSourceWizardValues } from '../LogSourceWizard';
 
 const StackDeployment: React.FC = () => {
   const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
   const { initialValues, values, setStatus } = useFormikContext<LogSourceWizardValues>();
-  const { data, loading, error } = useGetComplianceCfnTemplate({
+  const { data, loading, error } = useGetLogCfnTemplate({
     fetchPolicy: 'no-cache',
     variables: {
       input: {
         awsAccountId: values.awsAccountId,
+        integrationLabel: values.integrationLabel,
         s3Bucket: values.s3Bucket,
         s3Prefix: values.s3Prefix,
         kmsKey: values.kmsKey,

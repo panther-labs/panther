@@ -69,6 +69,7 @@ input GetComplianceIntegrationTemplateInput {
 
 input GetLogIntegrationTemplateInput {
   awsAccountId: String!
+  integrationLabel: String!
   s3Bucket: String!
   s3Prefix: String!
   kmsKey: String
