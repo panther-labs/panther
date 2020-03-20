@@ -19,7 +19,6 @@
 import React from 'react';
 import { Text } from 'pouncejs';
 import { LogIntegration } from 'Generated/schema';
-import { ListLogSourcesDocument } from 'Pages/ListLogSources';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { getLogIntegrationStackName } from 'Helpers/utils';
 import { useDeleteLogSource } from './graphql/deleteLogSource.generated';
@@ -33,7 +32,15 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) =
     variables: {
       id: source.integrationId,
     },
-    refetchQueries: [{ query: ListLogSourcesDocument }],
+    optimisticResponse: () => ({ deleteLogIntegration: true }),
+    update: cache => {
+      cache.modify('ROOT_QUERY', {
+        listComplianceIntegrations: (queryData, { toReference }) => {
+          const deletedSource = toReference(source);
+          return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
+        },
+      });
+    },
   });
 
   const sourceDisplayName = source.integrationLabel;

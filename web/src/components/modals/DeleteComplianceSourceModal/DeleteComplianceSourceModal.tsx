@@ -28,16 +28,15 @@ export interface DeleteComplianceSourceModalProps {
 }
 
 const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source }) => {
-  const { integrationId, __typename } = source;
   const mutation = useDeleteComplianceSource({
     variables: {
-      id: integrationId,
+      id: source.integrationId,
     },
     optimisticResponse: () => ({ deleteComplianceIntegration: true }),
     update: cache => {
       cache.modify('ROOT_QUERY', {
         listComplianceIntegrations: (queryData, { toReference }) => {
-          const deletedSource = toReference({ __typename, integrationId });
+          const deletedSource = toReference(source);
           return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
         },
       });
