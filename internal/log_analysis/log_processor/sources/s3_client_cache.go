@@ -44,7 +44,7 @@ const (
 	sessionDurationSeconds = 3600
 	sourceAPIFunctionName  = "panther-source-api"
 	// How frequently to query the sources_api for new integrations
-	sourceCacheDuration = 10 * time.Minute
+	sourceCacheDuration = 5 * time.Minute
 )
 
 type s3ClientCacheKey struct {
