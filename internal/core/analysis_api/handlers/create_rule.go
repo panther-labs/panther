@@ -53,10 +53,7 @@ func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		Tags:               input.Tags,
 		Tests:              input.Tests,
 		Type:               typeRule,
-	}
-	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
-	if input.DedupPeriodMinutes == 0 {
-		item.DedupPeriodMinutes = defaultDedupPeriodMinutes
+		DedupPeriodMinutes: input.DedupPeriodMinutes,
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
@@ -74,6 +71,11 @@ func parseUpdateRule(request *events.APIGatewayProxyRequest) (*models.UpdateRule
 	var result models.UpdateRule
 	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
 		return nil, err
+	}
+
+	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
+	if result.DedupPeriodMinutes == 0 {
+		result.DedupPeriodMinutes = defaultDedupPeriodMinutes
 	}
 
 	if err := result.Validate(nil); err != nil {
