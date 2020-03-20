@@ -45,6 +45,9 @@ const (
 	sourceAPIFunctionName  = "panther-source-api"
 	// How frequently to query the sources_api for new integrations
 	sourceCacheDuration = 5 * time.Minute
+
+	s3BucketLocationCacheSize = 1000
+	s3ClientCacheSize = 1000
 )
 
 type s3ClientCacheKey struct {
@@ -77,12 +80,12 @@ var (
 
 func init() {
 	var err error
-	s3ClientCache, err = lru.NewARC(1000)
+	s3ClientCache, err = lru.NewARC(s3ClientCacheSize)
 	if err != nil {
 		panic("Failed to create client cache")
 	}
 
-	bucketCache, err = lru.NewARC(1000)
+	bucketCache, err = lru.NewARC(s3BucketLocationCacheSize)
 	if err != nil {
 		panic("Failed to create bucket cache")
 	}
