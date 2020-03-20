@@ -28,13 +28,19 @@ import BaseRuleForm, {
   BaseRuleFormTestFields,
 } from 'Components/forms/BaseRuleForm';
 
-export const ruleEditableFields = [...ruleCoreEditableFields, 'logTypes', 'tests'] as const;
+export const ruleEditableFields = [
+  ...ruleCoreEditableFields,
+  'dedupPeriodMinutes',
+  'logTypes',
+  'tests',
+] as const;
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
   id: Yup.string().required(),
   body: Yup.string().required(),
   severity: Yup.string().required(),
+  dedupPeriodMinutes: Yup.number().integer(),
   logTypes: Yup.array()
     .of(Yup.string())
     .required(),
