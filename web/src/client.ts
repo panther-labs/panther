@@ -112,6 +112,12 @@ const createApolloClient = (history: History<LocationErrorState>) =>
                 toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
               );
             },
+            getLogIntegration(existingData, { args, toReference }) {
+              return (
+                existingData ||
+                toReference({ __typename: 'LogIntegration', integrationId: args.id })
+              );
+            },
           },
         },
         Destination: {
