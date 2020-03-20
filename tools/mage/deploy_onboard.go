@@ -34,16 +34,15 @@ import (
 )
 
 const (
-	cloudSecLabel      = "PantherCloudSecurity"
-	logProcessingLabel = "PantherLogProcessing"
+	cloudSecLabel      = "panther-cloud-security"
+	logProcessingLabel = "panther-log-processing" // this must be lowercase, no spaces to work correctly
 
 	onboardStack    = "panther-app-onboard"
 	onboardTemplate = "deployments/onboard.yml"
 
-	// CloudSec IAM Roles, DO NOT CHANGE! panther-compliance-iam.yml CF depends on these names
-	auditRole       = "PantherAuditRole"
-	remediationRole = "PantherRemediationRole"
-
+	// CloudSec IAM Roles, DO NOT CHANGE! panther-cloudsec-iam.yml CF depends on these names
+	auditRole                            = "PantherAuditRole"
+	remediationRole                      = "PantherRemediationRole"
 	realTimeEventStackSetURL             = "https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml" // nolint:lll
 	realTimeEventsStackSet               = "panther-real-time-events"
 	realTimeEventsExecutionRoleName      = "PantherCloudFormationStackSetExecutionRole"
@@ -99,7 +98,9 @@ func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendO
 			},
 		},
 	}
-	if err := invokeLambda(awsSession, "panther-source-api", cloudSecInput, nil); err != nil {
+	if err := invokeLambda(awsSession, "panther-source-api", cloudSecInput, nil); err != nil &&
+		!strings.Contains(err.Error(), "already onboarded") {
+
 		logger.Fatalf("error calling lambda to register account for cloud security: %v", err)
 	}
 
@@ -117,7 +118,9 @@ func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendO
 			},
 		},
 	}
-	if err := invokeLambda(awsSession, "panther-source-api", logProcessingInput, nil); err != nil {
+	if err := invokeLambda(awsSession, "panther-source-api", logProcessingInput, nil); err != nil &&
+		!strings.Contains(err.Error(), "already onboarded") {
+
 		logger.Fatalf("error calling lambda to register account for log processing: %v", err)
 	}
 }

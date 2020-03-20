@@ -151,45 +151,40 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	}
 }
 
-func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (bool, error) {
+func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (string, bool, error) {
 	status, err := api.CheckIntegration(integration)
 	if err != nil {
 		zap.L().Error("integration failed health check",
 			zap.Error(err),
 			zap.Any("integration", integration),
 			zap.Any("status", status))
-		return false, err
+		return "", false, err
 	}
 
 	switch aws.StringValue(integration.IntegrationType) {
 	case models.IntegrationTypeAWSScan:
 		if !aws.BoolValue(status.AuditRoleStatus.Healthy) {
-			// If audit role is not healthy return false
-			return false, nil
+			return "unhealthy audit role", false, nil
 		}
 
 		if aws.BoolValue(integration.EnableRemediation) && !aws.BoolValue(status.RemediationRoleStatus.Healthy) {
-			// If remediation is enabled but remediation role is not healthy return false
-			return false, nil
+			return "unhealthy remediation role", false, nil
 		}
 
 		if aws.BoolValue(integration.EnableCWESetup) && !aws.BoolValue(status.CWERoleStatus.Healthy) {
-			// If CWE are enbled but CWEEvents role is not healthy return false
-			return false, nil
+			return "unhealthy cwe role", false, nil
 		}
-		return true, nil
+		return "", true, nil
 	case models.IntegrationTypeAWS3:
 		if !aws.BoolValue(status.ProcessingRoleStatus.Healthy) || !aws.BoolValue(status.S3BucketStatus.Healthy) {
-			// If Log processing role is not healthy or S3 bucket status is not healthy return false
-			return false, nil
+			return "unhealthy log processing role", false, nil
 		}
 
 		if integration.KmsKey != nil {
-			// If the integration has a KMS key and the keys is not healthy return false
-			return aws.BoolValue(status.KMSKeyStatus.Healthy), nil
+			return "unhealthy kms key", aws.BoolValue(status.KMSKeyStatus.Healthy), nil
 		}
-		return true, nil
+		return "", true, nil
 	default:
-		return false, errors.New("invalid integration type")
+		return "", false, errors.New("invalid integration type")
 	}
 }

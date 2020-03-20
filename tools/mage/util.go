@@ -99,21 +99,6 @@ func getSession() (*session.Session, error) {
 	return awsSession, nil
 }
 
-/* NOT USED but might be later
-// Return true if IAM role exists
-func roleExists(iamClient *iam.IAM, roleName string) (bool, error) {
-	input := &iam.GetRoleInput{RoleName: aws.String(roleName)}
-	_, err := iamClient.GetRole(input)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchEntity" {
-			err = nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-*/
-
 // Return true if CF stack exists
 func stackExists(cfClient *cloudformation.CloudFormation, stackName string) (bool, error) {
 	input := &cloudformation.DescribeStacksInput{StackName: aws.String(stackName)}

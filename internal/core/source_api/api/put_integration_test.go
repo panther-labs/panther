@@ -146,7 +146,7 @@ func TestPutIntegration(t *testing.T) {
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	SQSClient = mockSQS
 	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
-	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (bool, error) { return true, nil }
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -323,7 +323,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	mockSQS := &mockSQSClient{}
 	SQSClient = mockSQS
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
-	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (bool, error) { return true, nil }
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),

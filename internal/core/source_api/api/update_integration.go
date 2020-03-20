@@ -21,6 +21,8 @@ package api
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -37,7 +39,7 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 	}
 
 	// Validate the updated integration settings
-	passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
+	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		// From existing integration
 		AWSAccountID:    integration.AWSAccountID,
 		IntegrationType: integration.IntegrationType,
@@ -54,6 +56,10 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		return nil, err
 	}
 	if !passing {
+		zap.L().Warn("UpdateIntegration: resource is not healthy",
+			zap.Error(err),
+			zap.String("reason", reason),
+			zap.Any("input", input))
 		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass health check", *integration.AWSAccountID)}
 	}
 

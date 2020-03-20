@@ -37,7 +37,7 @@ import (
 func TestUpdateIntegrationSettings(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
-	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (bool, error) { return true, nil }
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
 		"AWSAccountID":  {S: aws.String("123456789012")},

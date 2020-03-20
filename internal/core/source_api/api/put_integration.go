@@ -44,7 +44,7 @@ var (
 // PutIntegration adds a set of new integrations in a batch.
 func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.SourceIntegrationMetadata, error) {
 	// Validate the new integration
-	passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
+	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		AWSAccountID:      input.AWSAccountID,
 		IntegrationType:   input.IntegrationType,
 		IntegrationLabel:  input.IntegrationLabel,
@@ -58,6 +58,10 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 		return nil, putIntegrationInternalError
 	}
 	if !passing {
+		zap.L().Warn("PutIntegration: resource is not healthy",
+			zap.Error(err),
+			zap.String("reason", reason),
+			zap.Any("input", input))
 		return nil, &genericapi.InvalidInputError{
 			Message: fmt.Sprintf("source %s did not pass health check", *input.AWSAccountID),
 		}
@@ -137,7 +141,7 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 			if *existingIntegration.IntegrationLabel == *input.IntegrationLabel {
 				// Log sources for same account need to have different labels
 				return &genericapi.InvalidInputError{
-					Message: fmt.Sprintf("Log source for account %s with label %s already exists",
+					Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
 						*input.AWSAccountID,
 						*input.IntegrationLabel),
 				}
