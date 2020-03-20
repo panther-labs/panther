@@ -169,7 +169,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
-              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole-*
               Condition:
                 Bool:
                   aws:SecureTransport: true
