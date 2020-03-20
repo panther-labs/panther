@@ -32,7 +32,7 @@ import (
 const passwordResetTemplate = `
 <br />Hi %s,
 <br />
-<br />A password reset has been requested for this email address. If you did not request a password reset, you can ignore this email.
+<br />A password reset has been triggered for this email address.
 <br />
 <br />To set a new password for your Panther account, please click here:
 <br />https://%s/password-reset?token=%s&email=%s

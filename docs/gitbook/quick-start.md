@@ -109,12 +109,11 @@ Your AWS credentials _must_ be exported as environment variables for the docker 
 
 #### Step 3
 
-Run `mage deploy`
+Run `mage setup:swagger deploy`
 
-- If you've made any changes to the source files or want to run tests, you may need to first install development dependencies with `mage setup:all`
 - If you use `aws-vault`, you must be authenticated with MFA. Otherwise, IAM role creation will fail with `InvalidClientTokenId`
-- The initial deployment will take 20-30 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off.
-- Near the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
+- The initial deployment will take ~10 minutes with a fast internet connection. If your credentials timeout, you can safely redeploy to pick up where you left off.
+- At the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
 - You'll get an email from `no-reply@verificationemail.com` with your temporary password. If you don't see it, be sure to check your spam folder.
 
 #### Log In
