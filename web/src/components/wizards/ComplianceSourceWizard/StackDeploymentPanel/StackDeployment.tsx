@@ -49,47 +49,53 @@ const StackDeployment: React.FC = () => {
     }
   }, [downloadAnchor, data]);
 
+  const stackName = getComplianceIntegrationStackName();
   const cfnConsoleLink =
     `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
     `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudsec-iam/v1.0.0/template.yml` +
-    `&stackName=${getComplianceIntegrationStackName()}` +
+    `&stackName=${stackName}` +
     `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
     `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
     `&param_DeployRemediation=${values.remediationEnabled}`;
 
-  const downloadTemplateLink = (
-    <Text size="large" color="blue300" is="span">
-      {loading ? (
-        <Spinner size="small" />
-      ) : (
-        <a
-          href="#"
-          title="Download Cloudformation template"
-          download={`cloud-security-${values.awsAccountId}.yaml`}
-          ref={downloadAnchor}
-          onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-        >
-          Download template
-        </a>
-      )}
-    </Text>
-  );
+  const renderDownloadTemplateLink = () => {
+    if (error) {
+      return (
+        <Text size="large" color="red300">
+          Couldn{"'"}t generate a Cloudformation template. {extractErrorMessage(error)}
+        </Text>
+      );
+    }
+
+    return (
+      <Text size="large" color="blue300" is="span">
+        {loading ? (
+          <Spinner size="small" />
+        ) : (
+          <a
+            href="#"
+            title="Download Cloudformation template"
+            download={`cloud-security-${values.awsAccountId}.yaml`}
+            ref={downloadAnchor}
+            onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+          >
+            Download template
+          </a>
+        )}
+      </Text>
+    );
+  };
 
   return (
     <Box>
       <Heading size="medium" m="auto" mb={10} color="grey400">
         Deploy your configured stack
       </Heading>
-      {error && (
-        <Text size="large" color="red300" mb={10}>
-          Couldn{"'"}t generate a Cloudformation template. {extractErrorMessage(error)}
-        </Text>
-      )}
       {!initialValues.integrationId ? (
         <React.Fragment>
           <Text size="large" color="grey200" is="p" mb={2}>
-            To proceed, you must deploy the generated Cloudformation template to the AWS account
-            that you are onboarding. This will generate the necessary IAM Roles.
+            To proceed, you must deploy the generated Cloudformation template to the account{' '}
+            <b>{values.awsAccountId}</b>. This will generate the necessary IAM Roles.
           </Text>
           <Text
             size="large"
@@ -104,9 +110,10 @@ const StackDeployment: React.FC = () => {
             Launch console
           </Text>
           <Text size="large" color="grey200" is="p" mt={10} mb={2}>
-            Alternatively, you can download it and deploy it through the AWS CLI
+            Alternatively, you can download it and deploy it through the AWS CLI with the stack name{' '}
+            <b>{stackName}</b>
           </Text>
-          {downloadTemplateLink}
+          {renderDownloadTemplateLink()}
         </React.Fragment>
       ) : (
         <React.Fragment>
@@ -116,10 +123,10 @@ const StackDeployment: React.FC = () => {
           </Text>
           <Box is="ol">
             <Text size="large" is="li" color="grey200" mb={3}>
-              1. {downloadTemplateLink}
+              1. {renderDownloadTemplateLink()}
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
-              2. Log in to your
+              2. Log into your
               <Text
                 ml={1}
                 size="large"
@@ -131,11 +138,11 @@ const StackDeployment: React.FC = () => {
                 href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
               >
                 Cloudformation console
-              </Text>
+              </Text>{' '}
+              of the account <b>{values.awsAccountId}</b>
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
-              3. Find the stack <b>{getComplianceIntegrationStackName()}</b> (you may need to change
-              region)
+              3. Find the stack <b>{stackName}</b> (you may need to change regions)
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
               4. Press <b>Update</b>, choose <b>Replace current template</b>

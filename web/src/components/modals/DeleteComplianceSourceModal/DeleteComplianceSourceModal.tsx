@@ -55,7 +55,7 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source 
         </Text>,
         <Text size="medium" color="grey300" mt={6} key={1}>
           Deleting this source will not delete the associated Cloudformation stack. You will need to
-          manually delete the stack {stackName} from the <b>AWS Account {source.awsAccountId}</b>
+          manually delete the stack <b>{stackName}</b> from the account <b>{source.awsAccountId}</b>
         </Text>,
       ]}
       onSuccessMsg={`Successfully deleted ${sourceDisplayName}`}
