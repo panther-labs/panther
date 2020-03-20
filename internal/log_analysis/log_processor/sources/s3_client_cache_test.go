@@ -71,10 +71,6 @@ func TestGetS3Client(t *testing.T) {
 	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
-	newCredentialsFunc = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-		return &credentials.Credentials{}
-	}
-
 	s3Object := &S3ObjectInfo{
 		S3Bucket:    "test-bucket",
 		S3ObjectKey: "prefix/key",
@@ -111,9 +107,10 @@ func TestGetS3ClientUnknownBucket(t *testing.T) {
 
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
 
-	newCredentialsFunc = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-		return &credentials.Credentials{}
-	}
+	newCredentialsFunc =
+		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
+			return &credentials.Credentials{}
+		}
 
 	s3Object := &S3ObjectInfo{
 		S3Bucket:    "test-bucket-unknown",
@@ -154,12 +151,11 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 	}
 
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
-	s3Mock.On("GetBucketLocation", mock.Anything).Return(
-		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
-	newCredentialsFunc = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-		return &credentials.Credentials{}
-	}
+	newCredentialsFunc =
+		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
+			return &credentials.Credentials{}
+		}
 
 	s3Object := &S3ObjectInfo{
 		S3Bucket:    "test-bucket",
