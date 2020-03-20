@@ -40,6 +40,7 @@ export type UpdateRule = {
       | 'logTypes'
       | 'runbook'
       | 'severity'
+      | 'dedupPeriodMinutes'
       | 'tags'
       | 'body'
     > & {
@@ -65,6 +66,7 @@ export const UpdateRuleDocument = gql`
       logTypes
       runbook
       severity
+      dedupPeriodMinutes
       tags
       body
       tests {
