@@ -133,6 +133,7 @@ type RuleSummary {
   lastModified: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
+  dedupPeriodMinutes: Int
   tags: [String]
 }
 
@@ -155,6 +156,7 @@ type RuleDetails {
   reference: String
   runbook: String
   severity: SeverityEnum
+  dedupPeriodMinutes: Int
   tags: [String]
   tests: [PolicyUnitTest] # Policy and Rule have the same tests structure so we reuse the struct here
   versionId: ID
