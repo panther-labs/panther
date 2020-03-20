@@ -27,18 +27,23 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
 	// sessionDurationSeconds is the duration in seconds of the STS session the S3 client uses
 	sessionDurationSeconds  = 3600
 	logProcessingRoleFormat = "arn:aws:iam::%s:role/PantherLogProcessingRole"
+	sourceAPIFunctionName = "panther-source-api"
 )
 
 var (
@@ -47,6 +52,8 @@ var (
 
 	// region -> S3 client
 	s3ClientCache *lru.ARCCache
+
+	lambdaClient lambdaiface.LambdaAPI = lambda.New(common.Session)
 )
 
 type s3ClientCacheKey struct {
@@ -56,7 +63,7 @@ type s3ClientCacheKey struct {
 
 func init() {
 	var err error
-	s3ClientCache, err = lru.NewARC(100)
+	s3ClientCache, err = lru.NewARC(1000)
 	if err != nil {
 		panic("Failed to create client cache")
 	}
@@ -69,7 +76,7 @@ func init() {
 
 // getS3Client Fetches S3 client with permissions to read data from the account
 // that owns the SNS Topic
-func getS3Client(s3Bucket string, topicArn string) (*s3.S3, error) {
+func getS3Client(s3Object S3ObjectInfo) (*s3.S3, error) {
 	parsedTopicArn, err := arn.Parse(topicArn)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Cannot parse topic arn: %s", topicArn)
@@ -136,4 +143,20 @@ func getAwsCredentials(awsAccountID string) *credentials.Credentials {
 	return stscreds.NewCredentials(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
 		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
 	})
+}
+
+func getIntegrationInfo(s3Object S3ObjectInfo) []*models.SourceIntegration {
+
+	input := &models.LambdaInput{
+		ListIntegrations: &models.ListIntegrationsInput{
+			IntegrationType: aws.String(models.IntegrationTypeAWS3),
+		},
+	}
+	var output []*models.SourceIntegration
+	err := genericapi.Invoke(lambdaClient, sourceAPIFunctionName, input, &output)
+	if err != nil {
+		return err
+	}
+
+	genericapi.Invoke()
 }
