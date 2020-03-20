@@ -20,8 +20,6 @@ import React from 'react';
 import { RuleSummary, RuleDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import { ListRulesDocument } from 'Pages/ListRules';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 // Delete Rule and Delete Policy uses the same endpoint
 import { useDeletePolicy } from '../DeletePolicyModal/graphql/deletePolicy.generated';
@@ -34,8 +32,6 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const ruleDisplayName = rule.displayName || rule.id;
   const mutation = useDeletePolicy({
-    awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(ListRulesDocument)],
     variables: {
       input: {
         policies: [
@@ -44,6 +40,31 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
           },
         ],
       },
+    },
+    optimisticResponse: {
+      deletePolicy: true,
+    },
+    update: async cache => {
+      cache.modify('ROOT_QUERY', {
+        rules: (data, helpers) => {
+          const ruleRef = helpers.toReference({
+            __typename: 'RuleSummary',
+            id: rule.id,
+          });
+          return { ...data, rules: data.rules.filter(r => r.__ref !== ruleRef.__ref) };
+        },
+        rule: (data, helpers) => {
+          const ruleRef = helpers.toReference({
+            __typename: 'RuleDetails',
+            id: rule.id,
+          });
+          if (ruleRef.__ref !== data.__ref) {
+            return data;
+          }
+          return helpers.DELETE;
+        },
+      });
+      cache.gc();
     },
   });
 
