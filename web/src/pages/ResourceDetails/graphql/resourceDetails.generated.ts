@@ -33,13 +33,7 @@ export type ResourceDetails = {
   resource?: Types.Maybe<
     Pick<
       Types.ResourceDetails,
-      | 'lastModified'
-      | 'type'
-      | 'integrationId'
-      | 'integrationType'
-      | 'complianceStatus'
-      | 'id'
-      | 'attributes'
+      'lastModified' | 'type' | 'integrationId' | 'complianceStatus' | 'id' | 'attributes'
     >
   >;
   policiesForResource?: Types.Maybe<{
@@ -59,7 +53,9 @@ export type ResourceDetails = {
       suppressed?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
     }>;
   }>;
-  integrations?: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
+  listComplianceIntegrations: Array<
+    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationLabel' | 'integrationId'>>
+  >;
 };
 
 export const ResourceDetailsDocument = gql`
@@ -71,7 +67,6 @@ export const ResourceDetailsDocument = gql`
       lastModified
       type
       integrationId
-      integrationType
       complianceStatus
       id
       attributes
@@ -103,7 +98,7 @@ export const ResourceDetailsDocument = gql`
         }
       }
     }
-    integrations(input: { integrationType: "aws-scan" }) {
+    listComplianceIntegrations {
       integrationLabel
       integrationId
     }

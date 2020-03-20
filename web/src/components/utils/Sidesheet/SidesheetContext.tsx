@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { UpdateSourceSidesheetProps } from 'Components/sidesheets/UpdateSourceSidesheet';
 import { AddDestinationSidesheetProps } from 'Components/sidesheets/AddDestinationSidesheet';
 import { UpdateDestinationSidesheetProps } from 'Components/sidesheets/UpdateDestinationSidesheet';
 import { PolicyBulkUploadSideSheetProps } from 'Components/sidesheets/PolicyBulkUploadSidesheet';
@@ -28,7 +27,6 @@ const HIDE_SIDESHEET = 'HIDE_SIDESHEET';
 
 /* The available list of sidesheets to dispatch */
 export enum SIDESHEETS {
-  UPDATE_SOURCE = 'UPDATE_SOURCE',
   POLICY_BULK_UPLOAD = 'POLICY_BULK_UPLOAD',
   SELECT_DESTINATION = 'SELECT_DESTINATION',
   ADD_DESTINATION = 'ADD_DESTINATION',
@@ -42,15 +40,6 @@ export enum SIDESHEETS {
 interface SidesheetStateShape {
   sidesheet: keyof typeof SIDESHEETS | null;
   props?: { [key: string]: any };
-}
-
-/* 1st action */
-interface UpdateSourceSideSheetAction {
-  type: typeof SHOW_SIDESHEET;
-  payload: {
-    sidesheet: SIDESHEETS.UPDATE_SOURCE;
-    props: UpdateSourceSidesheetProps;
-  };
 }
 
 interface SelectDestinationSideSheetAction {
@@ -113,7 +102,6 @@ interface UserInvitationSideSheetAction {
 
 /* The available actions that can be dispatched */
 type SidesheetStateAction =
-  | UpdateSourceSideSheetAction
   | PolicyBulkUploadSideSheetAction
   | SelectDestinationSideSheetAction
   | AddDestinationSideSheetAction

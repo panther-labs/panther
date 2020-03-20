@@ -28,7 +28,7 @@ const ListComplianceSources = () => {
   return (
     <Box mb={6}>
       <Panel
-        title="AWS Account Sources"
+        title="Connected Accounts"
         size="large"
         actions={
           <Button size="large" variant="primary" is={Link} to={urls.compliance.sources.create()}>

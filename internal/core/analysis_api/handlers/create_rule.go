@@ -29,6 +29,10 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
+const (
+	defaultDedupPeriodMinutes = 60
+)
+
 // CreateRule adds a new rule to the Dynamo table.
 func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	input, err := parseUpdateRule(request)
@@ -67,6 +71,11 @@ func parseUpdateRule(request *events.APIGatewayProxyRequest) (*models.UpdateRule
 	var result models.UpdateRule
 	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
 		return nil, err
+	}
+
+	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
+	if result.DedupPeriodMinutes == 0 {
+		result.DedupPeriodMinutes = defaultDedupPeriodMinutes
 	}
 
 	if err := result.Validate(nil); err != nil {

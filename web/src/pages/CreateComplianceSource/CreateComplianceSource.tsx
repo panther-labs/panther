@@ -15,179 +15,57 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-/* eslint-disable react/display-name */
 import React from 'react';
-import { Card, Flex, Alert, Box } from 'pouncejs';
-import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { Card } from 'pouncejs';
 import urls from 'Source/urls';
-import { extractErrorMessage } from 'Helpers/utils';
-import { ListInfraSourcesDocument } from 'Pages/ListComplianceSources';
 import useRouter from 'Hooks/useRouter';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
-import { useAddInfraSource } from './graphql/addInfraSource.generated';
-import RemediationPanel from './RemediationPanel';
-import RealTimeEventPanel from './RealTimeEventPanel';
-import ResourceScanningPanel from './ResourceScanningPanel';
-import SuccessPanel from './SuccessPanel';
-import SourceDetailsPanel from './SourceDetailsPanel';
-
-export interface InfraSourceValues {
-  awsAccountId: string;
-  integrationLabel: string;
-}
-
-const validationSchema = Yup.object().shape({
-  awsAccountId: Yup.string()
-    .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
-    .required(),
-  integrationLabel: Yup.string().required(),
-});
+import { extractErrorMessage } from 'Helpers/utils';
+import ComplianceSourceWizard from 'Components/wizards/ComplianceSourceWizard';
+import { useAddComplianceSource } from './graphql/addComplianceSource.generated';
 
 const initialValues = {
   awsAccountId: '',
   integrationLabel: '',
+  cweEnabled: true,
+  remediationEnabled: true,
 };
 
 const CreateComplianceSource: React.FC = () => {
   const { history } = useRouter();
-  const [addInfraSource, { data, loading, error }] = useAddInfraSource();
-
-  const submitSourceToServer = React.useCallback(
-    (values: InfraSourceValues) =>
-      addInfraSource({
-        awaitRefetchQueries: true,
-        variables: {
-          input: {
-            integrations: [
-              {
-                awsAccountId: values.awsAccountId,
-                integrationLabel: values.integrationLabel,
-                integrationType: INTEGRATION_TYPES.AWS_INFRA,
-              },
-            ],
-          },
+  const [addComplianceSource, { error }] = useAddComplianceSource({
+    update: (cache, { data }) => {
+      cache.modify('ROOT_QUERY', {
+        listComplianceIntegrations: (queryData, { toReference }) => {
+          const addedIntegrationCacheRef = toReference({
+            __typename: data.addComplianceIntegration.__typename,
+            integrationId: data.addComplianceIntegration.integrationId,
+          });
+          return queryData ? [addedIntegrationCacheRef, ...queryData] : queryData;
         },
-        refetchQueries: [{ query: ListInfraSourcesDocument }],
-      }),
-    []
-  );
-
-  React.useEffect(() => {
-    if (data) {
-      history.push(urls.compliance.sources.list());
-    }
+      });
+    },
+    onCompleted: () => history.push(urls.compliance.sources.list()),
   });
 
   return (
-    <Box>
-      {error && (
-        <Alert
-          variant="error"
-          title="An error has occurred"
-          description={
-            extractErrorMessage(error) || "We couldn't store your account due to an internal error"
-          }
-          mb={6}
-        />
-      )}
-      <Card p={9}>
-        <Formik<InfraSourceValues>
-          initialValues={initialValues}
-          validationSchema={validationSchema}
-          onSubmit={submitSourceToServer}
-        >
-          {({ isValid, dirty, handleSubmit }) => (
-            <form onSubmit={handleSubmit}>
-              <Flex justifyContent="center" alignItems="center" width={1}>
-                <Wizard<InfraSourceValues>
-                  autoCompleteLastStep
-                  steps={[
-                    {
-                      title: 'Account Details',
-                      icon: 'add' as const,
-                      renderStep: ({ goToNextStep }) => {
-                        const shouldEnableNextButton = dirty && isValid;
-                        return (
-                          <WizardPanelWrapper>
-                            <WizardPanelWrapper.Content>
-                              <SourceDetailsPanel />
-                            </WizardPanelWrapper.Content>
-                            <WizardPanelWrapper.Actions
-                              goToNextStep={goToNextStep}
-                              isNextStepDisabled={!shouldEnableNextButton}
-                            />
-                          </WizardPanelWrapper>
-                        );
-                      },
-                    },
-                    {
-                      title: 'Scanning',
-                      icon: 'search',
-                      renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <ResourceScanningPanel />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions
-                            goToNextStep={goToNextStep}
-                            goToPrevStep={goToPrevStep}
-                          />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                    {
-                      title: 'Real Time',
-                      icon: 'sync',
-                      renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <RealTimeEventPanel />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions
-                            goToNextStep={goToNextStep}
-                            goToPrevStep={goToPrevStep}
-                          />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                    {
-                      title: 'Remediation',
-                      icon: 'wrench',
-                      renderStep: ({ goToPrevStep, goToNextStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <RemediationPanel />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions
-                            goToNextStep={goToNextStep}
-                            goToPrevStep={goToPrevStep}
-                          />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                    {
-                      title: 'Done!',
-                      icon: 'check',
-                      renderStep: ({ goToPrevStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <SuccessPanel loading={loading} />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions goToPrevStep={goToPrevStep} />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                  ]}
-                />
-              </Flex>
-            </form>
-          )}
-        </Formik>
-      </Card>
-    </Box>
+    <Card p={9}>
+      <ComplianceSourceWizard
+        initialValues={initialValues}
+        externalErrorMessage={error && extractErrorMessage(error)}
+        onSubmit={values =>
+          addComplianceSource({
+            variables: {
+              input: {
+                integrationLabel: values.integrationLabel,
+                awsAccountId: values.awsAccountId,
+                cweEnabled: values.cweEnabled,
+                remediationEnabled: values.remediationEnabled,
+              },
+            },
+          })
+        }
+      />
+    </Card>
   );
 };
 

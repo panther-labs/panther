@@ -67,7 +67,7 @@ const ListResources = () => {
   }
 
   const resourceItems = data.resources.resources;
-  const integrationItems = data.integrations;
+  const integrationItems = data.listComplianceIntegrations;
   const pagingData = data.resources.paging;
 
   if (!resourceItems.length && isEmpty(requestParams)) {

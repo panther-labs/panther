@@ -57,7 +57,7 @@ const ComplianceOverview: React.FC = () => {
     );
   }
 
-  if (!data.integrations.length) {
+  if (!data.listComplianceIntegrations.length) {
     return <ComplianceOverviewPageEmptyDataFallback />;
   }
 

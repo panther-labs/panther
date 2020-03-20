@@ -27,12 +27,14 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListAccountIdsVariables = {};
 
 export type ListAccountIds = {
-  integrations?: Types.Maybe<Array<Pick<Types.Integration, 'integrationLabel' | 'integrationId'>>>;
+  listComplianceIntegrations: Array<
+    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationLabel' | 'integrationId'>>
+  >;
 };
 
 export const ListAccountIdsDocument = gql`
   query ListAccountIds {
-    integrations(input: { integrationType: "aws-scan" }) {
+    listComplianceIntegrations {
       integrationLabel
       integrationId
     }

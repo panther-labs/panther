@@ -19,44 +19,53 @@
 /* eslint-disable react/display-name */
 
 import React from 'react';
-import { Text, TableProps, Icon, Box } from 'pouncejs';
-import { Integration } from 'Generated/schema';
+import { Text, TableProps, Box } from 'pouncejs';
+import { ComplianceIntegration } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
+import ComplianceSourceHealthIcon from './ComplianceSourceHealthIcon';
 import ComplianceSourceTableRowOptions from './ComplianceSourceTableRowOptions';
 
 // The columns that the associated table will show
 const columns = [
   generateEnumerationColumn(0),
 
-  // The account is the `id` number of the aws account
-  {
-    key: 'awsAccountId',
-    header: 'Account',
-    flex: '1 0 150px',
-  },
-
   // The source label that user defined
   {
     key: 'integrationLabel',
     header: 'Label',
-    flex: '1 0 275px',
+    flex: '1 0 150px',
+  },
+
+  // The account is the `id` number of the aws account
+  {
+    key: 'awsAccountId',
+    header: 'Account ID',
+    flex: '1 0 125px',
+  },
+
+  {
+    key: 'cweEnabled',
+    header: 'Real-Time Updates',
+    flex: '1 0 125px',
+    renderCell: ({ cweEnabled }) => <Text size="large">{cweEnabled ? 'Enabled' : 'Disabled'}</Text>,
+  },
+
+  {
+    key: 'remediationEnabled',
+    header: 'Auto-Remediations',
+    flex: '1 0 125px',
+    renderCell: ({ remediationEnabled }) => (
+      <Text size="large">{remediationEnabled ? 'Enabled' : 'Disabled'}</Text>
+    ),
   },
 
   // Status displays the error message
   {
-    key: 'lastScanErrorMessage',
-    header: 'Status',
-    flex: '1 0 150px',
-    renderCell: item => {
-      const isFailing = Boolean(item.lastScanErrorMessage);
-      if (!isFailing) {
-        return <Icon color="green300" size="small" type="check" />;
-      }
-      return (
-        <Text size="medium" color="red300">
-          {item.lastScanErrorMessage}
-        </Text>
-      );
+    key: 'health',
+    header: 'Healthy',
+    flex: '1 0 125px',
+    renderCell: source => {
+      return <ComplianceSourceHealthIcon complianceSourceHealth={source.health} />;
     },
   },
   {
@@ -65,6 +74,6 @@ const columns = [
     renderColumnHeader: () => <Box mx={5} />,
     renderCell: item => <ComplianceSourceTableRowOptions source={item} />,
   },
-] as TableProps<Integration>['columns'];
+] as TableProps<ComplianceIntegration>['columns'];
 
 export default columns;

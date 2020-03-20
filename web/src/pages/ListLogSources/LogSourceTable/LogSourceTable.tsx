@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Integration } from 'Generated/schema';
+import { LogIntegration } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { Alert, Table } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -47,8 +47,8 @@ const LogSourceTable = () => {
   }
 
   return (
-    <Table<Integration>
-      items={data.integrations}
+    <Table<LogIntegration>
+      items={data.listLogIntegrations}
       getItemKey={item => item.integrationId}
       columns={columns}
     />

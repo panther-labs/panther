@@ -1,51 +1,31 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * Panther Enterprise is licensed under the terms of a commercial license available from
+ * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+ * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+ * falls under the Panther Commercial License to the extent it is permitted.
  */
 
 import React from 'react';
 import { Box, Flex, IconProps, Icon, Label, Grid, ProgressBar } from 'pouncejs';
+import { WizardContext } from './WizardContext';
 
-export interface WizardRenderStepParams<T> {
-  index: number;
-  goToPrevStep: () => void;
-  goToNextStep: () => void;
-  wizardData: T;
-  updateWizardData: (data: T) => void;
-}
-
-export interface WizardStep<T> {
+export interface WizardStepProps {
   title?: string;
   icon: IconProps['type'];
-  renderStep: (wizardParams: WizardRenderStepParams<T>) => React.ReactElement | null;
 }
 
-export interface WizardProps<T> {
-  steps: WizardStep<T>[];
-  initialData?: T;
-  autoCompleteLastStep?: boolean;
+interface WizardComposition {
+  Step: React.FC<WizardStepProps>;
 }
 
-function Wizard<T extends { [key: string]: any }>({
-  steps,
-  initialData = {} as T,
-  autoCompleteLastStep = false,
-}: WizardProps<T>): React.ReactElement {
-  const [wizardData, setWizardData] = React.useState<T>(initialData);
+const Wizard: React.FC & WizardComposition = ({ children }) => {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
+
+  const steps = React.useMemo(() => React.Children.toArray(children) as React.ReactElement[], [
+    children,
+  ]);
 
   /**
    * Goes to the previous wizard step
@@ -65,17 +45,15 @@ function Wizard<T extends { [key: string]: any }>({
     }
   }, [currentStepIndex]);
 
-  /**
-   * Adds data to the the total wizard data
+  /*
+   * Exposes handlers to any components below
    */
-  const updateWizardData = React.useCallback(
-    (newData: { [key: string]: any }) => {
-      setWizardData({
-        ...wizardData,
-        ...newData,
-      });
-    },
-    [wizardData]
+  const contextValue = React.useMemo(
+    () => ({
+      goToPrevStep,
+      goToNextStep,
+    }),
+    [goToPrevStep, goToNextStep]
   );
 
   return (
@@ -91,9 +69,7 @@ function Wizard<T extends { [key: string]: any }>({
         </Box>
         <Grid is="ul" gridTemplateColumns={`repeat(${steps.length}, 1fr)`} width={1} zIndex={2}>
           {steps.map((step, index) => {
-            const isComplete =
-              currentStepIndex > index ||
-              (autoCompleteLastStep && currentStepIndex === steps.length - 1);
+            const isComplete = currentStepIndex > index || currentStepIndex === steps.length - 1;
 
             let labelColor = 'grey100';
             if (currentStepIndex === index) {
@@ -109,11 +85,11 @@ function Wizard<T extends { [key: string]: any }>({
                 justifyContent="center"
                 alignItems="center"
                 flexDirection="column"
-                key={step.title}
+                key={step.props.title}
                 zIndex={2}
               >
                 <Label is="h3" size="large" color={labelColor} mb={2}>
-                  {index + 1}. {step.title}
+                  {index + 1}. {step.props.title}
                 </Label>
                 <Flex
                   borderRadius="circle"
@@ -124,7 +100,7 @@ function Wizard<T extends { [key: string]: any }>({
                   backgroundColor={isComplete ? 'green200' : 'grey50'}
                 >
                   <Icon
-                    type={isComplete ? 'check' : step.icon}
+                    type={isComplete ? 'check' : step.props.icon}
                     size="small"
                     color={isComplete ? 'white' : 'grey200'}
                   />
@@ -135,16 +111,17 @@ function Wizard<T extends { [key: string]: any }>({
         </Grid>
       </Box>
       <Box>
-        {steps[currentStepIndex].renderStep({
-          wizardData,
-          index: currentStepIndex,
-          goToPrevStep,
-          goToNextStep,
-          updateWizardData,
-        })}
+        <WizardContext.Provider value={contextValue}>
+          {steps[currentStepIndex]}
+        </WizardContext.Provider>
       </Box>
     </Box>
   );
-}
+};
+
+export const WizardStep: React.FC<WizardStepProps> = ({ children }) =>
+  children as React.ReactElement;
+
+Wizard.Step = React.memo(WizardStep);
 
 export default Wizard;

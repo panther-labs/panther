@@ -91,7 +91,7 @@ const PolicyDetailsPage = () => {
 
   // add an `integrationLabel` field to each resource based on its matching integrationId
   const enhancedResources = resources.map(r =>
-    extendResourceWithIntegrationLabel(r, data.integrations)
+    extendResourceWithIntegrationLabel(r, data.listComplianceIntegrations)
   );
 
   return (

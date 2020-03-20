@@ -20,7 +20,8 @@ import React from 'react';
 import { DeletePolicyModalProps } from 'Components/modals/DeletePolicyModal';
 import { DeleteUserModalProps } from 'Components/modals/DeleteUserModal';
 import { ResetUserPasswordProps } from 'Components/modals/ResetUserPasswordModal';
-import { DeleteSourceModalProps } from 'Components/modals/DeleteSourceModal';
+import { DeleteComplianceSourceModalProps } from 'Components/modals/DeleteComplianceSourceModal';
+import { DeleteLogSourceModalProps } from 'Components/modals/DeleteLogSourceModal';
 import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestinationModal';
 import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
 
@@ -33,7 +34,8 @@ export enum MODALS {
   DELETE_RULE = 'DELETE_RULE',
   DELETE_USER = 'DELETE_USER',
   RESET_USER_PASS = 'RESET_USER_PASS',
-  DELETE_SOURCE = 'DELETE_SOURCE',
+  DELETE_COMPLIANCE_SOURCE = 'DELETE_COMPLIANCE_SOURCE',
+  DELETE_LOG_SOURCE = 'DELETE_LOG_SOURCE',
   DELETE_DESTINATION = 'DELETE_DESTINATION',
   NETWORK_ERROR = 'NETWORK_ERROR',
   ANALYTICS_CONSENT = 'ANALYTICS_CONSENT',
@@ -77,12 +79,21 @@ interface ShowResetUserPasswordModalAction {
   };
 }
 
-/* Delete Source action */
-interface ShowDeleteSourceModalAction {
+/* Delete Compliance Source action */
+interface ShowDeleteComplianceSourceModalAction {
   type: typeof SHOW_MODAL;
   payload: {
-    modal: MODALS.DELETE_SOURCE;
-    props: DeleteSourceModalProps;
+    modal: MODALS.DELETE_COMPLIANCE_SOURCE;
+    props: DeleteComplianceSourceModalProps;
+  };
+}
+
+/* Delete Log Source action */
+interface ShowDeleteLogSourceModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.DELETE_LOG_SOURCE;
+    props: DeleteLogSourceModalProps;
   };
 }
 
@@ -122,7 +133,8 @@ interface ShowAnalyticsConsentModalAction {
 
 /* The available actions that can be dispatched */
 type ModalStateAction =
-  | ShowDeleteSourceModalAction
+  | ShowDeleteComplianceSourceModalAction
+  | ShowDeleteLogSourceModalAction
   | ShowDeleteUserModalAction
   | ShowResetUserPasswordModalAction
   | ShowPolicyModalAction

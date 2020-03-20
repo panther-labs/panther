@@ -18,21 +18,21 @@
 
 import React from 'react';
 import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
-import useSidesheet from 'Hooks/useSidesheet';
-import { Integration } from 'Generated/schema';
+import { ComplianceIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import { SIDESHEETS } from 'Components/utils/Sidesheet';
+import useRouter from 'Hooks/useRouter';
+import urls from 'Source/urls';
 
 interface ComplianceSourceTableRowOptionsProps {
-  source: Integration;
+  source: ComplianceIntegration;
 }
 
 const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsProps> = ({
   source,
 }) => {
   const { showModal } = useModal();
-  const { showSidesheet } = useSidesheet();
+  const { history } = useRouter();
 
   return (
     <Dropdown
@@ -43,19 +43,14 @@ const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsP
       }
     >
       <Dropdown.Item
-        onSelect={() =>
-          showSidesheet({
-            sidesheet: SIDESHEETS.UPDATE_SOURCE,
-            props: { source },
-          })
-        }
+        onSelect={() => history.push(urls.compliance.sources.edit(source.integrationId))}
       >
         <MenuItem variant="default">Edit</MenuItem>
       </Dropdown.Item>
       <Dropdown.Item
         onSelect={() =>
           showModal({
-            modal: MODALS.DELETE_SOURCE,
+            modal: MODALS.DELETE_COMPLIANCE_SOURCE,
             props: { source },
           })
         }

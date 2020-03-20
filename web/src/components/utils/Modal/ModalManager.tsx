@@ -23,7 +23,8 @@ import { MODALS } from 'Components/utils/Modal';
 import DeletePolicyModal from 'Components/modals/DeletePolicyModal';
 import DeleteUserModal from 'Components/modals/DeleteUserModal';
 import ResetUserPasswordModal from 'Components/modals/ResetUserPasswordModal';
-import DeleteSourceModal from 'Components/modals/DeleteSourceModal';
+import DeleteComplianceSourceModal from 'Components/modals/DeleteComplianceSourceModal';
+import DeleteLogSourceModal from 'Components/modals/DeleteLogSourceModal';
 import DeleteDestinationModal from 'Components/modals/DeleteDestinationModal';
 import DeleteRuleModal from 'Components/modals/DeleteRuleModal';
 import NetworkErrorModal from 'Components/modals/NetworkErrorModal';
@@ -36,8 +37,11 @@ const ModalManager: React.FC = () => {
   }
   let Component;
   switch (modalState.modal) {
-    case MODALS.DELETE_SOURCE:
-      Component = DeleteSourceModal;
+    case MODALS.DELETE_COMPLIANCE_SOURCE:
+      Component = DeleteComplianceSourceModal;
+      break;
+    case MODALS.DELETE_LOG_SOURCE:
+      Component = DeleteLogSourceModal;
       break;
     case MODALS.DELETE_USER:
       Component = DeleteUserModal;

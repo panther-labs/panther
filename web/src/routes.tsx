@@ -38,7 +38,7 @@ import ListAlertsPage from 'Pages/ListAlerts';
 import Layout from 'Components/Layout';
 import CreateComplianceSourcePage from 'Pages/CreateComplianceSource';
 import CreateLogSourcePage from 'Pages/CreateLogSource';
-import ListComplianceSourcesPagee from 'Pages/ListComplianceSources';
+import ListComplianceSourcesPage from 'Pages/ListComplianceSources';
 import ListLogSourcesPage from 'Pages/ListLogSources';
 import urls from 'Source/urls';
 import GuardedRoute from 'Components/GuardedRoute';
@@ -48,6 +48,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import Page404 from 'Pages/404';
 import APIErrorFallback from 'Components/utils/ApiErrorFallback';
 import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
+import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import PromptController from 'Components/utils/PromptController';
 
 // Main page container for the web application, Navigation bar and Content body goes here
@@ -110,12 +111,17 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Route
                   exact
                   path={urls.compliance.sources.list()}
-                  component={ListComplianceSourcesPagee}
+                  component={ListComplianceSourcesPage}
                 />
                 <Route
                   exact
                   path={urls.compliance.sources.create()}
                   component={CreateComplianceSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.compliance.sources.edit(':id')}
+                  component={EditComplianceSourcePage}
                 />
                 /******************** LOG ANALYSIS ******************************/
                 <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />

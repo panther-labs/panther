@@ -51,7 +51,9 @@ export type GetOrganizationStats = {
     >;
     topFailingResources?: Types.Maybe<Array<Types.Maybe<Pick<Types.ResourceSummary, 'id'>>>>;
   }>;
-  integrations?: Types.Maybe<Array<Pick<Types.Integration, 'integrationId'>>>;
+  listComplianceIntegrations: Array<
+    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationId'>>
+  >;
 };
 
 export const GetOrganizationStatsDocument = gql`
@@ -102,7 +104,7 @@ export const GetOrganizationStatsDocument = gql`
         id
       }
     }
-    integrations(input: { integrationType: "aws-scan" }) {
+    listComplianceIntegrations {
       integrationId
     }
   }
