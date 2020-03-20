@@ -47,6 +47,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		AWSAccountID:      input.AWSAccountID,
 		IntegrationType:   input.IntegrationType,
+		IntegrationLabel:  input.IntegrationLabel,
 		EnableCWESetup:    input.CWEEnabled,
 		EnableRemediation: input.RemediationEnabled,
 		S3Bucket:          input.S3Bucket,
@@ -196,6 +197,11 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 }
 
 func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceIntegrationMetadata {
+	var logProcessingRole *string
+	if *input.IntegrationType == models.IntegrationTypeAWS3 {
+		logProcessingRole = aws.String(generateLogProcessingRoleArn(*input.AWSAccountID, *input.IntegrationLabel))
+	}
+
 	return &models.SourceIntegrationMetadata{
 		AWSAccountID:       input.AWSAccountID,
 		CreatedAtTime:      aws.Time(time.Now()),
@@ -207,9 +213,10 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		RemediationEnabled: input.RemediationEnabled,
 		ScanIntervalMins:   input.ScanIntervalMins,
 		// For log analysis integrations
-		S3Bucket: input.S3Bucket,
-		S3Prefix: input.S3Prefix,
-		KmsKey:   input.KmsKey,
-		LogTypes: input.LogTypes,
+		S3Bucket:          input.S3Bucket,
+		S3Prefix:          input.S3Prefix,
+		KmsKey:            input.KmsKey,
+		LogTypes:          input.LogTypes,
+		LogProcessingRole: logProcessingRole,
 	}
 }

@@ -43,8 +43,9 @@ type LambdaInput struct {
 
 // CheckIntegrationInput is used to check the health of a potential configuration.
 type CheckIntegrationInput struct {
-	AWSAccountID    *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationType *string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	AWSAccountID     *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType  *string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	IntegrationLabel *string `json:"integrationLabel" validate:"required,integrationLabel"`
 
 	// Checks for cloudsec integrations
 	EnableCWESetup    *bool `json:"enableCWESetup"`

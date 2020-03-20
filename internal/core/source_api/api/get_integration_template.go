@@ -59,6 +59,12 @@ const (
 	s3PrefixReplace = "Value: '%s' # S3Prefix"
 	kmsKeyFind      = "Value: '' # KmsKey"
 	kmsKeyReplace   = "Value: '%s' # KmsKey"
+
+	// The format of log processing role
+	logProcessingRoleFormat = "arn:aws:iam::%s:role/PantherLogProcessingRole-%s"
+	auditRoleFormat         = "arn:aws:iam::%s:role/PantherAuditRole"
+	cweRoleFormat           = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole"
+	remediationRoleFormat   = "arn:aws:iam::%s:role/PantherRemediationRole"
 )
 
 var (
@@ -98,7 +104,7 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	} else {
 		// Log Analysis replacements
 		formattedTemplate = strings.Replace(formattedTemplate, roleSuffixIDFind,
-			fmt.Sprintf(roleSuffixReplace, generateSuffix(input)), 1)
+			fmt.Sprintf(roleSuffixReplace, generateRoleSuffix(*input.IntegrationLabel)), 1)
 
 		formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
 			fmt.Sprintf(s3BucketReplace, *input.S3Bucket), 1)
@@ -160,7 +166,12 @@ func getTemplate(integrationType *string) (string, error) {
 	return templateBodyString, nil
 }
 
-func generateSuffix(input *models.GetIntegrationTemplateInput) string {
-	sanitized := strings.ReplaceAll(*input.IntegrationLabel, " ", "-")
+// Generates the ARN of the log processing role
+func generateLogProcessingRoleArn(awsAccountID string, label string) string {
+	return fmt.Sprintf(logProcessingRoleFormat, awsAccountID, generateRoleSuffix(label))
+}
+
+func generateRoleSuffix(label string) string {
+	sanitized := strings.ReplaceAll(label, " ", "-")
 	return strings.ToLower(sanitized)
 }
