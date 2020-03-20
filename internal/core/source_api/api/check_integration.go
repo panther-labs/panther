@@ -81,7 +81,7 @@ func checkKey(roleCredentials *credentials.Credentials, key *string) models.Sour
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy: aws.Bool(false),
+			Healthy:      aws.Bool(false),
 			ErrorMessage: aws.String(err.Error()),
 		}
 	}
@@ -89,7 +89,7 @@ func checkKey(roleCredentials *credentials.Credentials, key *string) models.Sour
 	if !*info.KeyMetadata.Enabled {
 		// If the key is disabled, we should fail as well
 		return models.SourceIntegrationItemStatus{
-			Healthy: aws.Bool(false),
+			Healthy:      aws.Bool(false),
 			ErrorMessage: aws.String("key disabled"),
 		}
 	}
@@ -105,7 +105,7 @@ func checkBucket(roleCredentials *credentials.Credentials, bucket *string) model
 	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucket})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy: aws.Bool(false),
+			Healthy:      aws.Bool(false),
 			ErrorMessage: aws.String(err.Error()),
 		}
 	}
@@ -131,7 +131,7 @@ func getCredentialsWithStatus(
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
-			Healthy: aws.Bool(false),
+			Healthy:      aws.Bool(false),
 			ErrorMessage: aws.String(err.Error()),
 		}
 	}
