@@ -89,7 +89,7 @@ func init() {
 }
 
 // getS3Client Fetches S3 client with permissions to read data from the account
-// that owns the SNS Topic
+// that conatins the event
 func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, error) {
 	roleArn, err := getRoleArn(s3Object)
 	if err != nil {
