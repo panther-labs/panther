@@ -33,13 +33,10 @@ const initialValues = {
 const CreateComplianceSource: React.FC = () => {
   const { history } = useRouter();
   const [addComplianceSource, { error }] = useAddComplianceSource({
-    update: (cache, { data }) => {
+    update: (cache, { data: { addComplianceIntegration } }) => {
       cache.modify('ROOT_QUERY', {
         listComplianceIntegrations: (queryData, { toReference }) => {
-          const addedIntegrationCacheRef = toReference({
-            __typename: data.addComplianceIntegration.__typename,
-            integrationId: data.addComplianceIntegration.integrationId,
-          });
+          const addedIntegrationCacheRef = toReference(addComplianceIntegration);
           return queryData ? [addedIntegrationCacheRef, ...queryData] : queryData;
         },
       });

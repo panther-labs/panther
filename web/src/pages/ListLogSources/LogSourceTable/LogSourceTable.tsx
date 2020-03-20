@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { LogIntegration } from 'Generated/schema';
+import { LogIntegrationDetails } from 'Source/graphql/fragments/LogIntegrationDetails.generated';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { Alert, Table } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -47,7 +47,7 @@ const LogSourceTable = () => {
   }
 
   return (
-    <Table<LogIntegration>
+    <Table<LogIntegrationDetails>
       items={data.listLogIntegrations}
       getItemKey={item => item.integrationId}
       columns={columns}

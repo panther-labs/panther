@@ -577,6 +577,37 @@ Resources:
           $util.toJson($requestedIntegration)
         #end
 
+  GetLogIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: Query
+      FieldName: getLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listIntegrations": {
+              "integrationType": "aws-s3"
+            }
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          #set ($requestedIntegration = "null")
+          #foreach($item in $ctx.result)
+            #if($item.integrationId == $ctx.args.id)
+              #set ($requestedIntegration = $item)
+            #end
+          #end
+          $util.toJson($requestedIntegration)
+        #end
+
   GetComplianceIntegrationTemplateResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema

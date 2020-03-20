@@ -1,0 +1,5 @@
+query GetComplianceCfnTemplate($input: GetLogIntegrationTemplateInput!) {
+  getLogIntegrationTemplate(input: $input) {
+    body
+  }
+}

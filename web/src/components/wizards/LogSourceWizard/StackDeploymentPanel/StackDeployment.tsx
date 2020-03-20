@@ -18,28 +18,31 @@
 
 import { Text, Box, Heading, Spinner } from 'pouncejs';
 import React from 'react';
-import { extractErrorMessage, getComplianceIntegrationStackName } from 'Helpers/utils';
+import { extractErrorMessage, getLogIntegrationStackName } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
-import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.generated';
-import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
+import { LogIntegration } from 'Generated/schema';
+import { useGetComplianceCfnTemplate } from './graphql/getLogCfnTemplate.generated';
+import { LogSourceWizardValues } from '../LogSourceWizard';
 
 const StackDeployment: React.FC = () => {
   const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
-  const { initialValues, values, setStatus } = useFormikContext<ComplianceSourceWizardValues>();
+  const { initialValues, values, setStatus } = useFormikContext<LogSourceWizardValues>();
   const { data, loading, error } = useGetComplianceCfnTemplate({
     fetchPolicy: 'no-cache',
     variables: {
       input: {
         awsAccountId: values.awsAccountId,
-        remediationEnabled: values.remediationEnabled,
-        cweEnabled: values.cweEnabled,
+        s3Bucket: values.s3Bucket,
+        s3Prefix: values.s3Prefix,
+        kmsKey: values.kmsKey,
+        logTypes: values.logTypes,
       },
     },
   });
 
   React.useEffect(() => {
     if (data) {
-      const blob = new Blob([data.getComplianceIntegrationTemplate.body], {
+      const blob = new Blob([data.getLogIntegrationTemplate.body], {
         type: 'text/yaml;charset=utf-8',
       });
 
@@ -48,14 +51,16 @@ const StackDeployment: React.FC = () => {
     }
   }, [downloadAnchor, data]);
 
-  const stackName = getComplianceIntegrationStackName();
+  const stackName = getLogIntegrationStackName(values as LogIntegration);
   const cfnConsoleLink =
     `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
-    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudsec-iam/v1.0.0/template.yml` +
+    '?templateURL=https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-analysis-iam/v1.0.0/template.yml' +
     `&stackName=${stackName}` +
     `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
-    `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
-    `&param_DeployRemediation=${values.remediationEnabled}`;
+    `&param_RoleSuffix=${stackName}` +
+    `&param_S3Bucket=${values.s3Bucket}` +
+    `&param_S3Prefix=${values.s3Prefix}` +
+    `&param_KmsKey=${values.kmsKey}`;
 
   const renderDownloadTemplateLink = () => {
     if (error) {
@@ -94,7 +99,7 @@ const StackDeployment: React.FC = () => {
         <React.Fragment>
           <Text size="large" color="grey200" is="p" mb={2}>
             To proceed, you must deploy the generated Cloudformation template to the account{' '}
-            <b>{values.awsAccountId}</b>. This will generate the necessary IAM Roles.
+            <b>{values.awsAccountId}</b>. This will create a ReadOnly IAM Role to access the logs
           </Text>
           <Text
             size="large"
@@ -118,7 +123,7 @@ const StackDeployment: React.FC = () => {
         <React.Fragment>
           <Text size="large" color="grey200" is="p" mb={6}>
             To proceed, please deploy the updated Cloudformation template to your related AWS
-            account. This will update any previous IAM Roles.
+            account. This will update your previous IAM Role.
           </Text>
           <Box is="ol">
             <Text size="large" is="li" color="grey200" mb={3}>

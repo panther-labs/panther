@@ -16,22 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
 import { Box, Heading, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { Field } from 'formik';
+import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
+import React from 'react';
+import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import { getArnRegexForService } from 'Helpers/utils';
+import { LOG_TYPES } from 'Source/constants';
 
-const SourceDetailsPanel: React.FC = () => {
+const SourceConfigurationPanel: React.FC = () => {
+  const { initialValues } = useFormikContext<ComplianceSourceWizardValues>();
+
   return (
     <Box width={460} m="auto">
       <Heading size="medium" m="auto" mb={2} color="grey400">
-        Let{"'"}s start with the basics
+        {initialValues.integrationId ? 'Update source' : "Let's start with the basics"}
       </Heading>
-      <Text size="large" color="grey200" mb={5}>
-        We need to know where to get your logs from
+      <Text size="large" color="grey200" mb={10} is="p">
+        {initialValues.integrationId
+          ? 'Feel free to make any changes to your log source'
+          : 'We need to know where to get your logs from'}
       </Text>
       <ErrorBoundary>
         <Field
@@ -48,43 +53,43 @@ const SourceDetailsPanel: React.FC = () => {
           label="Related Account ID"
           placeholder="The AWS Account ID that the S3 log buckets live in"
           aria-required
-          items={[]}
           mb={6}
         />
         <Field
-          name="s3Buckets"
-          as={FormikMultiCombobox}
-          label="S3 Buckets"
+          name="s3Bucket"
+          as={FormikTextInput}
+          label="S3 bucket name"
           aria-required
-          allowAdditions
-          searchable
-          items={[]}
-          inputProps={{
-            placeholder: 'The S3 bucket names that the logs are stored in',
-          }}
+          placeholder="The name of the S3 bucket that the logs are stored in"
+          mb={6}
         />
-        <Text size="small" color="grey200" mt={2} mb={6}>
-          Add by pressing the {'<'}Enter{'>'} key
-        </Text>
         <Field
-          name="kmsKeys"
           as={FormikMultiCombobox}
-          label="KMS Keys (Optional)"
-          aria-required
-          allowAdditions
-          validateAddition={str => getArnRegexForService('KMS').test(str)}
           searchable
-          items={[]}
-          inputProps={{
-            placeholder: 'For encrypted logs, add the KMS ARNs for decryption',
-          }}
+          label="Log Types"
+          name="logTypes"
+          items={LOG_TYPES}
+          inputProps={{ placeholder: 'The types of logs that the S3 bucket collects' }}
+          aria-required
+          mb={6}
         />
-        <Text size="small" color="grey200" mt={2}>
-          Add by pressing the {'<'}Enter{'>'} key
-        </Text>
+        <Field
+          name="s3Prefix"
+          as={FormikTextInput}
+          label="Prefix (Optional)"
+          aria-required
+          placeholder="Optional prefix to limit the logs to objects that starts with this value"
+        />
+        <Field
+          name="kmsKey"
+          as={FormikTextInput}
+          label="KMS Key (Optional)"
+          aria-required
+          placeholder="For encrypted logs, add the KMS ARN for decryption"
+        />
       </ErrorBoundary>
     </Box>
   );
 };
 
-export default SourceDetailsPanel;
+export default SourceConfigurationPanel;

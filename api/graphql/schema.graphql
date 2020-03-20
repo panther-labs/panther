@@ -44,6 +44,7 @@ type Query {
   getComplianceIntegrationTemplate(
     input: GetComplianceIntegrationTemplateInput!
   ): IntegrationTemplate!
+  getLogIntegration(id: ID!): LogIntegration!
   getLogIntegrationTemplate(input: GetLogIntegrationTemplateInput!): IntegrationTemplate!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
@@ -69,7 +70,7 @@ input GetComplianceIntegrationTemplateInput {
 input GetLogIntegrationTemplateInput {
   awsAccountId: String!
   s3Bucket: String!
-  s3Path: String!
+  s3Prefix: String!
   kmsKey: String
   logTypes: [String!]!
 }
@@ -313,7 +314,7 @@ type LogIntegration {
   integrationId: ID!
   integrationLabel: String!
   s3Bucket: String!
-  s3Path: String!
+  s3Prefix: String!
   kmsKey: String
   logTypes: [String!]!
 }
@@ -330,14 +331,13 @@ input AddLogIntegrationInput {
   integrationLabel: String!
   s3Bucket: String!
   kmsKey: String
-  s3Path: String!
+  s3Prefix: String!
   logTypes: [String!]!
 }
 
 input UpdateComplianceIntegrationInput {
   integrationId: String!
   integrationLabel: String
-  awsAccountId: String
   cweEnabled: Boolean
   remediationEnabled: Boolean
 }
@@ -345,9 +345,10 @@ input UpdateComplianceIntegrationInput {
 input UpdateLogIntegrationInput {
   integrationId: String!
   integrationLabel: String
-  awsAccountId: String
-  s3Buckets: [String]
-  kmsKeys: [String]
+  s3Bucket: String
+  kmsKey: String
+  s3Prefix: String
+  logTypes: [String!]
 }
 
 type ListPoliciesResponse {

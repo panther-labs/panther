@@ -28,7 +28,7 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListComplianceSourcesVariables = {};
 
 export type ListComplianceSources = {
-  listComplianceIntegrations: Array<Types.Maybe<ComplianceIntegrationDetails>>;
+  listComplianceIntegrations: Array<ComplianceIntegrationDetails>;
 };
 
 export const ListComplianceSourcesDocument = gql`

@@ -16,4 +16,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './CfnLaunchPanel';
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
+
+import * as Types from '../../../__generated__/schema';
+
+import gql from 'graphql-tag';
+
+export type LogIntegrationDetails = Pick<
+  Types.LogIntegration,
+  | 'integrationId'
+  | 'integrationLabel'
+  | 'awsAccountId'
+  | 'createdAtTime'
+  | 'createdBy'
+  | 'kmsKey'
+  | 's3Bucket'
+  | 's3Prefix'
+  | 'logTypes'
+>;
+
+export const LogIntegrationDetails = gql`
+  fragment LogIntegrationDetails on LogIntegration {
+    integrationId
+    integrationLabel
+    awsAccountId
+    createdAtTime
+    createdBy
+    kmsKey
+    s3Bucket
+    s3Prefix
+    logTypes
+  }
+`;

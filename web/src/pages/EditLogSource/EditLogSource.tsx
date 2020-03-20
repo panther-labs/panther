@@ -22,14 +22,14 @@ import urls from 'Source/urls';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
 import { extractErrorMessage } from 'Helpers/utils';
-import ComplianceSourceWizard from 'Components/wizards/ComplianceSourceWizard';
-import { useGetComplianceSource } from './graphql/getComplianceSource.generated';
-import { useUpdateComplianceSource } from './graphql/updateComplianceSource.generated';
+import LogSourceWizard from 'Components/wizards/LogSourceWizard';
+import { useGetLogSource } from './graphql/getLogSource.generated';
+import { useUpdateLogSource } from './graphql/updateLogSource.generated';
 
-const EditComplianceSource: React.FC = () => {
+const EditLogSource: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { match, history } = useRouter<{ id: string }>();
-  const { data, error: getError } = useGetComplianceSource({
+  const { data, error: getError } = useGetLogSource({
     variables: { id: match.params.id },
     onError: error => {
       pushSnackbar({
@@ -39,17 +39,19 @@ const EditComplianceSource: React.FC = () => {
     },
   });
 
-  const [updateComplianceSource, { error: updateError }] = useUpdateComplianceSource({
-    onCompleted: () => history.push(urls.compliance.sources.list()),
+  const [updateLogSource, { error: updateError }] = useUpdateLogSource({
+    onCompleted: () => history.push(urls.logAnalysis.sources.list()),
   });
 
   const initialValues = React.useMemo(
     () => ({
-      integrationId: data?.getComplianceIntegration.integrationId,
-      integrationLabel: data?.getComplianceIntegration.integrationLabel ?? 'Loading...',
-      awsAccountId: data?.getComplianceIntegration.awsAccountId ?? 'Loading...',
-      cweEnabled: data?.getComplianceIntegration.cweEnabled ?? false,
-      remediationEnabled: data?.getComplianceIntegration.remediationEnabled ?? false,
+      integrationId: data?.getLogIntegration.integrationId,
+      awsAccountId: data?.getLogIntegration.awsAccountId ?? 'Loading...',
+      integrationLabel: data?.getLogIntegration.integrationLabel ?? 'Loading...',
+      s3Bucket: data?.getLogIntegration.s3Bucket ?? 'Loading...',
+      s3Prefix: data?.getLogIntegration.s3Prefix ?? 'Loading...',
+      kmsKey: data?.getLogIntegration.kmsKey ?? 'Loading...',
+      logTypes: data?.getLogIntegration.logTypes ?? [],
     }),
     [data]
   );
@@ -61,17 +63,19 @@ const EditComplianceSource: React.FC = () => {
 
   return (
     <Card p={9}>
-      <ComplianceSourceWizard
+      <LogSourceWizard
         initialValues={initialValues}
         externalErrorMessage={updateError && extractErrorMessage(updateError)}
         onSubmit={values =>
-          updateComplianceSource({
+          updateLogSource({
             variables: {
               input: {
-                integrationId: match.params.id,
+                integrationId: values.integrationId,
                 integrationLabel: values.integrationLabel,
-                cweEnabled: values.cweEnabled,
-                remediationEnabled: values.remediationEnabled,
+                s3Bucket: values.s3Bucket,
+                s3Prefix: values.s3Prefix,
+                kmsKey: values.kmsKey,
+                logTypes: values.logTypes,
               },
             },
           })
@@ -81,4 +85,4 @@ const EditComplianceSource: React.FC = () => {
   );
 };
 
-export default EditComplianceSource;
+export default EditLogSource;

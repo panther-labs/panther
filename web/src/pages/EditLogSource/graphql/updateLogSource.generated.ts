@@ -25,53 +25,53 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type AddLogSourceVariables = {
-  input: Types.AddLogIntegrationInput;
+export type UpdateLogSourceVariables = {
+  input: Types.UpdateLogIntegrationInput;
 };
 
-export type AddLogSource = { addLogIntegration: LogIntegrationDetails };
+export type UpdateLogSource = { updateLogIntegration: LogIntegrationDetails };
 
-export const AddLogSourceDocument = gql`
-  mutation AddLogSource($input: AddLogIntegrationInput!) {
-    addLogIntegration(input: $input) {
+export const UpdateLogSourceDocument = gql`
+  mutation UpdateLogSource($input: UpdateLogIntegrationInput!) {
+    updateLogIntegration(input: $input) {
       ...LogIntegrationDetails
     }
   }
   ${LogIntegrationDetails}
 `;
-export type AddLogSourceMutationFn = ApolloReactCommon.MutationFunction<
-  AddLogSource,
-  AddLogSourceVariables
+export type UpdateLogSourceMutationFn = ApolloReactCommon.MutationFunction<
+  UpdateLogSource,
+  UpdateLogSourceVariables
 >;
 
 /**
- * __useAddLogSource__
+ * __useUpdateLogSource__
  *
- * To run a mutation, you first call `useAddLogSource` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddLogSource` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateLogSource` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateLogSource` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [addLogSource, { data, loading, error }] = useAddLogSource({
+ * const [updateLogSource, { data, loading, error }] = useUpdateLogSource({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useAddLogSource(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<AddLogSource, AddLogSourceVariables>
+export function useUpdateLogSource(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateLogSource, UpdateLogSourceVariables>
 ) {
-  return ApolloReactHooks.useMutation<AddLogSource, AddLogSourceVariables>(
-    AddLogSourceDocument,
+  return ApolloReactHooks.useMutation<UpdateLogSource, UpdateLogSourceVariables>(
+    UpdateLogSourceDocument,
     baseOptions
   );
 }
-export type AddLogSourceHookResult = ReturnType<typeof useAddLogSource>;
-export type AddLogSourceMutationResult = ApolloReactCommon.MutationResult<AddLogSource>;
-export type AddLogSourceMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  AddLogSource,
-  AddLogSourceVariables
+export type UpdateLogSourceHookResult = ReturnType<typeof useUpdateLogSource>;
+export type UpdateLogSourceMutationResult = ApolloReactCommon.MutationResult<UpdateLogSource>;
+export type UpdateLogSourceMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  UpdateLogSource,
+  UpdateLogSourceVariables
 >;

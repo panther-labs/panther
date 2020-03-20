@@ -20,33 +20,22 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { LogIntegrationDetails } from '../../../../graphql/fragments/LogIntegrationDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type ListLogSourcesVariables = {};
 
-export type ListLogSources = {
-  listLogIntegrations: Array<
-    Types.Maybe<
-      Pick<
-        Types.LogIntegration,
-        'awsAccountId' | 'createdAtTime' | 'integrationId' | 'integrationLabel' | 's3Buckets'
-      >
-    >
-  >;
-};
+export type ListLogSources = { listLogIntegrations: Array<LogIntegrationDetails> };
 
 export const ListLogSourcesDocument = gql`
   query ListLogSources {
     listLogIntegrations {
-      awsAccountId
-      createdAtTime
-      integrationId
-      integrationLabel
-      s3Buckets
+      ...LogIntegrationDetails
     }
   }
+  ${LogIntegrationDetails}
 `;
 
 /**

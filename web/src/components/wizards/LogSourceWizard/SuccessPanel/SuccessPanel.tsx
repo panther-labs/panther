@@ -16,14 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import React from 'react';
 import { Flex, Heading, Text } from 'pouncejs';
 import { SubmitButton } from 'Components/Buttons';
-import React from 'react';
 import { useFormikContext } from 'formik';
-import { CreateLogSourceValues } from '../CreateLogSource';
+import { LogSourceWizardValues } from '../LogSourceWizard';
 
-const SuccessPanel: React.FC = () => {
-  const { isSubmitting } = useFormikContext<CreateLogSourceValues>();
+interface SuccessPanelProps {
+  errorMessage?: string;
+}
+
+const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
+  const { isSubmitting, initialValues } = useFormikContext<LogSourceWizardValues>();
   return (
     <Flex
       justifyContent="center"
@@ -33,15 +37,20 @@ const SuccessPanel: React.FC = () => {
       mx="auto"
       width={350}
     >
-      <Heading size="medium" m="auto" mb={2} color="grey400">
+      <Heading size="medium" m="auto" mb={5} color="grey400">
         Almost done!
       </Heading>
-      <Text size="large" color="grey300" mb={10}>
-        Click the button below to complete the setup!
+      <Text size="large" color="grey300" mb={10} textAlign="center">
+        {initialValues.integrationId
+          ? 'Click the button below to validate your changes & update your source!'
+          : 'After deploying your Cloudformation stack, click on the button below to complete the setup!'}
       </Text>
       <SubmitButton width={350} disabled={isSubmitting} submitting={isSubmitting}>
-        Add New Log Source
+        {initialValues.integrationId ? 'Update Source' : 'Add New Source'}
       </SubmitButton>
+      <Text size="large" mt={6} color="red300">
+        {errorMessage}
+      </Text>
     </Flex>
   );
 };

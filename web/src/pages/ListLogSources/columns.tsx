@@ -19,9 +19,9 @@
 /* eslint-disable react/display-name */
 
 import React from 'react';
-import { TableProps, Box, Text } from 'pouncejs';
-import { LogIntegration } from 'Generated/schema';
+import { TableProps, Box } from 'pouncejs';
 import { generateEnumerationColumn } from 'Helpers/utils';
+import { LogIntegrationDetails } from 'Source/graphql/fragments/LogIntegrationDetails.generated';
 import LogSourceTableRowOptions from './LogSourceTableRowOptions';
 
 // The columns that the associated table will show
@@ -42,18 +42,21 @@ const columns = [
   },
 
   {
-    key: 's3Buckets',
-    header: 'S3 Buckets',
-    flex: '1 0 300px',
-    renderCell: ({ s3Buckets }) => (
-      <React.Fragment>
-        {s3Buckets.map(s3Arn => (
-          <Text size="medium" key={s3Arn} mb={1}>
-            {s3Arn}
-          </Text>
-        ))}
-      </React.Fragment>
-    ),
+    key: 's3Bucket',
+    header: 'S3 Bucket',
+    flex: '1 0 100px',
+  },
+
+  {
+    key: 's3Prefix',
+    header: 'S3 Objects Prefix',
+    flex: '1 0 100px',
+  },
+
+  {
+    key: 'logTypes',
+    header: 'Log Types',
+    flex: '1 0 100px',
   },
 
   {
@@ -62,6 +65,6 @@ const columns = [
     renderColumnHeader: () => <Box mx={5} />,
     renderCell: item => <LogSourceTableRowOptions source={item} />,
   },
-] as TableProps<LogIntegration>['columns'];
+] as TableProps<LogIntegrationDetails>['columns'];
 
 export default columns;
