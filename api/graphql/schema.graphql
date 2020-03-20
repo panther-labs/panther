@@ -117,6 +117,7 @@ input CreateOrModifyRuleInput {
   logTypes: [String]
   runbook: String
   severity: SeverityEnum!
+  dedupPeriodMinutes: Int!
   tags: [String]
   tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
 }

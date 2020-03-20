@@ -131,6 +131,7 @@ export type CreateOrModifyRuleInput = {
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
   severity: SeverityEnum;
+  dedupPeriodMinutes: Scalars['Int'];
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
   tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
 };
