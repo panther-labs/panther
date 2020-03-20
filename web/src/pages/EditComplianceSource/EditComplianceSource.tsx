@@ -60,7 +60,7 @@ const EditComplianceSource: React.FC = () => {
   }
 
   return (
-    <Card p={9}>
+    <Card p={9} mb={6}>
       <ComplianceSourceWizard
         initialValues={initialValues}
         externalErrorMessage={updateError && extractErrorMessage(updateError)}

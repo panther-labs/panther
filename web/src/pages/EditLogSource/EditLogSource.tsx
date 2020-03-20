@@ -62,7 +62,7 @@ const EditLogSource: React.FC = () => {
   }
 
   return (
-    <Card p={9}>
+    <Card p={9} mb={6}>
       <LogSourceWizard
         initialValues={initialValues}
         externalErrorMessage={updateError && extractErrorMessage(updateError)}

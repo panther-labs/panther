@@ -46,7 +46,7 @@ const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
           : 'After deploying your Cloudformation stack, click on the button below to complete the setup!'}
       </Text>
       <SubmitButton width={350} disabled={isSubmitting} submitting={isSubmitting}>
-        {initialValues.integrationId ? 'Update Source' : 'Add New Source'}
+        {initialValues.integrationId ? 'Update Source' : 'Save Source'}
       </SubmitButton>
       <Text size="large" mt={6} color="red300">
         {errorMessage}

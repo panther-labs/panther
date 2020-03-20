@@ -47,7 +47,7 @@ const CreateLogSource: React.FC = () => {
   });
 
   return (
-    <Card p={9}>
+    <Card p={9} mb={6}>
       <LogSourceWizard
         initialValues={initialValues}
         externalErrorMessage={error && extractErrorMessage(error)}
