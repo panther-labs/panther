@@ -19,7 +19,7 @@
 import React from 'react';
 import { LogIntegrationDetails } from 'Source/graphql/fragments/LogIntegrationDetails.generated';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Flex, Icon, Table } from 'pouncejs';
+import { Alert, Box, Button, Card, Flex, Icon, Table } from 'pouncejs';
 import Panel from 'Components/Panel';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
@@ -35,7 +35,11 @@ const ListLogSources = () => {
   });
 
   if (loading && !data) {
-    return <TablePlaceholder />;
+    return (
+      <Card p={9}>
+        <TablePlaceholder />
+      </Card>
+    );
   }
 
   if (error) {

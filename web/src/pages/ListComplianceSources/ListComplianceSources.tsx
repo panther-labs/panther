@@ -19,7 +19,7 @@
 import React from 'react';
 import { ComplianceIntegration } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Flex, Icon, Table } from 'pouncejs';
+import { Alert, Box, Button, Card, Flex, Icon, Table } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import { Link } from 'react-router-dom';
@@ -33,7 +33,11 @@ const ListComplianceSources = () => {
   const { loading, error, data } = useListComplianceSources();
 
   if (loading) {
-    return <TablePlaceholder />;
+    return (
+      <Card p={9}>
+        <TablePlaceholder />
+      </Card>
+    );
   }
 
   if (error) {
