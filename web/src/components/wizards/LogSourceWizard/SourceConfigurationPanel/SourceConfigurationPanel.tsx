@@ -21,12 +21,12 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
-import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { LOG_TYPES } from 'Source/constants';
+import { LogSourceWizardValues } from '../LogSourceWizard';
 
 const SourceConfigurationPanel: React.FC = () => {
-  const { initialValues } = useFormikContext<ComplianceSourceWizardValues>();
+  const { initialValues } = useFormikContext<LogSourceWizardValues>();
 
   return (
     <Box width={460} m="auto">
@@ -78,7 +78,8 @@ const SourceConfigurationPanel: React.FC = () => {
           as={FormikTextInput}
           label="Prefix (Optional)"
           aria-required
-          placeholder="Optional prefix to limit the logs to objects that starts with this value"
+          placeholder="Limit logs to objects that starts with matching characters"
+          my={6}
         />
         <Field
           name="kmsKey"

@@ -16,5 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './ComplianceSourceTable';
-export * from './ComplianceSourceTable';
+export { default } from './EmptyDataFallback';

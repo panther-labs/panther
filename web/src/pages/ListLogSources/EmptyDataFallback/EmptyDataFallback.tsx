@@ -22,7 +22,7 @@ import EmptyDataImg from 'Assets/illustrations/empty-box.svg';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 
-const ComplianceEmptyDataFallback: React.FC = () => (
+const EmptyDataFallback: React.FC = () => (
   <Flex
     height="100%"
     width="100%"
@@ -37,13 +37,12 @@ const ComplianceEmptyDataFallback: React.FC = () => (
       It{"'"}s empty in here
     </Heading>
     <Text size="large" color="grey200" textAlign="center" mb={10}>
-      You don{"'"}t seem to have any Cloud Security sources connected to our system. <br />
-      When you do, a high level overview of your system{"'"}s health will appear here.
+      You don{"'"}t seem to have any Log sources connected to our system. <br />
     </Text>
-    <Button size="large" variant="primary" is={Link} to={urls.compliance.sources.create()}>
-      Add your first source
+    <Button size="large" variant="primary" is={Link} to={urls.logAnalysis.sources.create()}>
+      Onboard your logs
     </Button>
   </Flex>
 );
 
-export default ComplianceEmptyDataFallback;
+export default EmptyDataFallback;

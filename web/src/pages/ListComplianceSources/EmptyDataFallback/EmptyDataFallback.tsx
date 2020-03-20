@@ -22,7 +22,7 @@ import EmptyDataImg from 'Assets/illustrations/empty-box.svg';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 
-const ComplianceEmptyDataFallback: React.FC = () => (
+const EmptyDataFallback: React.FC = () => (
   <Flex
     height="100%"
     width="100%"
@@ -38,12 +38,11 @@ const ComplianceEmptyDataFallback: React.FC = () => (
     </Heading>
     <Text size="large" color="grey200" textAlign="center" mb={10}>
       You don{"'"}t seem to have any Cloud Security sources connected to our system. <br />
-      When you do, a high level overview of your system{"'"}s health will appear here.
     </Text>
     <Button size="large" variant="primary" is={Link} to={urls.compliance.sources.create()}>
-      Add your first source
+      Connect an account
     </Button>
   </Flex>
 );
 
-export default ComplianceEmptyDataFallback;
+export default EmptyDataFallback;

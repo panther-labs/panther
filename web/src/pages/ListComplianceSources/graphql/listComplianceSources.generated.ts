@@ -18,9 +18,9 @@
 
 /* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
-import * as Types from '../../../../../__generated__/schema';
+import * as Types from '../../../../__generated__/schema';
 
-import { ComplianceIntegrationDetails } from '../../../../graphql/fragments/ComplianceIntegrationDetails.generated';
+import { ComplianceIntegrationDetails } from '../../../graphql/fragments/ComplianceIntegrationDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';

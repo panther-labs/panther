@@ -17,14 +17,44 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Icon } from 'pouncejs';
+import { LogIntegrationDetails } from 'Source/graphql/fragments/LogIntegrationDetails.generated';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import { Alert, Box, Button, Flex, Icon, Table } from 'pouncejs';
+import Panel from 'Components/Panel';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import Panel from 'Components/Panel';
-import LogSourceTable from './LogSourceTable';
+import { extractErrorMessage } from 'Helpers/utils';
+import { useListLogSources } from './graphql/listLogSources.generated';
+import columns from './columns';
+import EmptyDataFallback from './EmptyDataFallback';
 
-const ListLogAnalysisSources = () => {
+const ListLogSources = () => {
+  const { loading, error, data } = useListLogSources({
+    fetchPolicy: 'cache-and-network',
+  });
+
+  if (loading && !data) {
+    return <TablePlaceholder />;
+  }
+
+  if (error) {
+    return (
+      <Alert
+        variant="error"
+        title="Couldn't load your sources"
+        description={
+          extractErrorMessage(error) ||
+          'There was an error when performing your request, please contact support@runpanther.io'
+        }
+      />
+    );
+  }
+
+  if (!data.listLogIntegrations.length) {
+    return <EmptyDataFallback />;
+  }
+
   return (
     <Box mb={6}>
       <Panel
@@ -40,11 +70,15 @@ const ListLogAnalysisSources = () => {
         }
       >
         <ErrorBoundary>
-          <LogSourceTable />
+          <Table<LogIntegrationDetails>
+            items={data.listLogIntegrations}
+            getItemKey={item => item.integrationId}
+            columns={columns}
+          />
         </ErrorBoundary>
       </Panel>
     </Box>
   );
 };
 
-export default ListLogAnalysisSources;
+export default ListLogSources;
