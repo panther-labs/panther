@@ -47,7 +47,7 @@ const (
 	sourceCacheDuration = 5 * time.Minute
 
 	s3BucketLocationCacheSize = 1000
-	s3ClientCacheSize = 1000
+	s3ClientCacheSize         = 1000
 )
 
 type s3ClientCacheKey struct {
