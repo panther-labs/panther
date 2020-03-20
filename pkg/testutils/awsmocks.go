@@ -17,6 +17,8 @@ package testutils
  */
 
 import (
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/stretchr/testify/mock"
@@ -30,4 +32,19 @@ type S3Mock struct {
 func (m *S3Mock) GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*s3.GetObjectOutput), args.Error(1)
+}
+
+func (m *S3Mock) GetBucketLocation(input *s3.GetBucketLocationInput) (*s3.GetBucketLocationOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*s3.GetBucketLocationOutput), args.Error(1)
+}
+
+type LambdaMock struct {
+	lambdaiface.LambdaAPI
+	mock.Mock
+}
+
+func (m *LambdaMock) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
 }

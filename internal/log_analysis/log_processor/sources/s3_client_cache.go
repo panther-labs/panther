@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -40,13 +41,20 @@ import (
 
 const (
 	// sessionDurationSeconds is the duration in seconds of the STS session the S3 client uses
-	sessionDurationSeconds  = 3600
-	sourceAPIFunctionName = "panther-source-api"
+	sessionDurationSeconds = 3600
+	sourceAPIFunctionName  = "panther-source-api"
+	// How frequently to query the sources_api for new integrations
+	sourceCacheDuration = 5 * time.Minute
 )
 
 type s3ClientCacheKey struct {
 	roleArn   string
 	awsRegion string
+}
+
+type sourceCacheStruct struct {
+	cacheUpdateTime time.Time
+	sources         []*models.SourceIntegration
 }
 
 var (
@@ -56,10 +64,16 @@ var (
 	// s3ClientCacheKey -> S3 client
 	s3ClientCache *lru.ARCCache
 
+	sourceCache = &sourceCacheStruct{
+		cacheUpdateTime: time.Unix(0, 0),
+	}
+
 	lambdaClient lambdaiface.LambdaAPI = lambda.New(common.Session)
+
+	//used to simplify mocking during testing
+	newCredentialsFunc = stscreds.NewCredentials
+	newS3ClientFunc    = getNewS3Client
 )
-
-
 
 func init() {
 	var err error
@@ -76,7 +90,7 @@ func init() {
 
 // getS3Client Fetches S3 client with permissions to read data from the account
 // that owns the SNS Topic
-func getS3Client(s3Object *S3ObjectInfo) (*s3.S3, error) {
+func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, error) {
 	roleArn, err := getRoleArn(s3Object)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch the appropriate role arn to retrieve S3 object %#v", s3Object)
@@ -88,7 +102,7 @@ func getS3Client(s3Object *S3ObjectInfo) (*s3.S3, error) {
 
 	awsCreds := getAwsCredentials(*roleArn)
 	if awsCreds == nil {
-		return nil, errors.Errorf("failed to fetch credentials for assumed role to read %#v",s3Object)
+		return nil, errors.Errorf("failed to fetch credentials for assumed role to read %#v", s3Object)
 	}
 
 	bucketRegion, ok := bucketCache.Get(s3Object.S3Bucket)
@@ -103,27 +117,26 @@ func getS3Client(s3Object *S3ObjectInfo) (*s3.S3, error) {
 
 	zap.L().Debug("found bucket region", zap.Any("region", bucketRegion))
 
+	bucketRegionString := bucketRegion.(string)
 	cacheKey := s3ClientCacheKey{
 		roleArn:   *roleArn,
-		awsRegion: bucketRegion.(string),
+		awsRegion: bucketRegionString,
 	}
 
 	var client interface{}
 	client, ok = s3ClientCache.Get(cacheKey)
 	if !ok {
 		zap.L().Debug("s3 client was not cached, creating it")
-		client = s3.New(common.Session, aws.NewConfig().
-			WithRegion(bucketRegion.(string)).
-			WithCredentials(awsCreds))
+		client = newS3ClientFunc(aws.String(bucketRegionString), awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
-	return client.(*s3.S3), nil
+	return client.(s3iface.S3API), nil
 }
 
 func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string, error) {
 	zap.L().Debug("searching bucket region", zap.String("bucket", s3Bucket))
 
-	locationDiscoveryClient := s3.New(common.Session, &aws.Config{Credentials: awsCreds})
+	locationDiscoveryClient := newS3ClientFunc(nil, awsCreds)
 	input := &s3.GetBucketLocationInput{Bucket: aws.String(s3Bucket)}
 	location, err := locationDiscoveryClient.GetBucketLocation(input)
 	if err != nil {
@@ -141,7 +154,7 @@ func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string
 // getAwsCredentials fetches the AWS Credentials from STS for by assuming a role in the given account
 func getAwsCredentials(roleArn string) *credentials.Credentials {
 	zap.L().Debug("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
-	return stscreds.NewCredentials(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
+	return newCredentialsFunc(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
 		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
 	})
 }
@@ -150,23 +163,37 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 // It will return error if it encountered an issue retrieving the role.
 // It will return nil result if role for such object doesn't exist.
 func getRoleArn(s3Object *S3ObjectInfo) (*string, error) {
-	input := &models.LambdaInput{
-		ListIntegrations: &models.ListIntegrationsInput{
-			IntegrationType: aws.String(models.IntegrationTypeAWS3),
-		},
-	}
-	var output []*models.SourceIntegration
-	err := genericapi.Invoke(lambdaClient, sourceAPIFunctionName, input, &output)
-	if err != nil {
-		return nil, err
+	now := time.Now() // No need to be UTC. We care about relative time
+	if sourceCache.cacheUpdateTime.Add(sourceCacheDuration).Before(now) {
+		// we need to update the cache
+		input := &models.LambdaInput{
+			ListIntegrations: &models.ListIntegrationsInput{
+				IntegrationType: aws.String(models.IntegrationTypeAWS3),
+			},
+		}
+		var output []*models.SourceIntegration
+		err := genericapi.Invoke(lambdaClient, sourceAPIFunctionName, input, &output)
+		if err != nil {
+			return nil, err
+		}
+		sourceCache.cacheUpdateTime = now
+		sourceCache.sources = output
 	}
 
-	for _, integration := range output{
-		if aws.StringValue(integration.S3Bucket) == s3Object.S3Bucket{
+	for _, integration := range sourceCache.sources {
+		if aws.StringValue(integration.S3Bucket) == s3Object.S3Bucket {
 			if strings.HasPrefix(s3Object.S3ObjectKey, aws.StringValue(integration.S3Prefix)) {
 				return integration.LogProcessingRole, nil
 			}
 		}
 	}
 	return nil, nil
+}
+
+func getNewS3Client(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+	config := aws.NewConfig().WithCredentials(creds)
+	if region != nil {
+		config.WithCredentials(creds)
+	}
+	return s3.New(common.Session, config)
 }

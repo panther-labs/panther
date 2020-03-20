@@ -35,13 +35,13 @@ import (
 )
 
 const (
-	auditRoleFormat         = "arn:aws:iam::%s:role/PantherAuditRole"
-	cweRoleFormat           = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole"
-	remediationRoleFormat   = "arn:aws:iam::%s:role/PantherRemediationRole"
+	auditRoleFormat       = "arn:aws:iam::%s:role/PantherAuditRole"
+	cweRoleFormat         = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole"
+	remediationRoleFormat = "arn:aws:iam::%s:role/PantherRemediationRole"
 )
 
 var (
-	evaluateIntegrationFunc = evaluateIntegration
+	evaluateIntegrationFunc       = evaluateIntegration
 	checkIntegrationInternalError = &genericapi.InternalError{Message: "Failed to validate source. Please try again later"}
 )
 
@@ -53,7 +53,7 @@ func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.Source
 		IntegrationType: aws.StringValue(input.IntegrationType),
 	}
 
-	switch aws.StringValue(input.IntegrationType)  {
+	switch aws.StringValue(input.IntegrationType) {
 	case models.IntegrationTypeAWSScan:
 		_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat, *input.AWSAccountID))
 		if aws.BoolValue(input.EnableCWESetup) {

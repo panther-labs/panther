@@ -1,0 +1,175 @@
+package sources
+
+/**
+ * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import (
+	"testing"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/pkg/testutils"
+)
+
+var (
+	integration = &models.SourceIntegration{
+		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			AWSAccountID:      aws.String("1234567890123"),
+			S3Bucket:          aws.String("test-bucket"),
+			S3Prefix:          aws.String("prefix"),
+			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
+		},
+	}
+)
+
+func TestGetS3Client(t *testing.T) {
+	// resetting cache
+	sourceCache.cacheUpdateTime = time.Unix(0, 0)
+	lambdaMock := &testutils.LambdaMock{}
+	lambdaClient = lambdaMock
+
+	s3Mock := &testutils.S3Mock{}
+	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+		return s3Mock
+	}
+
+	marshaledResult, err := jsoniter.Marshal([]*models.SourceIntegration{integration})
+	require.NoError(t, err)
+	lambdaOutput := &lambda.InvokeOutput{
+		Payload: marshaledResult,
+	}
+
+	expectedGetBucketLocationInput := &s3.GetBucketLocationInput{Bucket: aws.String("test-bucket")}
+
+	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
+	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
+		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
+
+	newCredentialsFunc = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
+		return &credentials.Credentials{}
+	}
+
+	s3Object := &S3ObjectInfo{
+		S3Bucket:    "test-bucket",
+		S3ObjectKey: "prefix/key",
+	}
+	result, err := getS3Client(s3Object)
+	require.NoError(t, err)
+	require.Equal(t, s3Mock, result)
+
+	// Subsequent calls should use cache
+	result, err = getS3Client(s3Object)
+	require.NoError(t, err)
+	require.Equal(t, s3Mock, result)
+
+	s3Mock.AssertExpectations(t)
+	lambdaMock.AssertExpectations(t)
+}
+
+func TestGetS3ClientUnknownBucket(t *testing.T) {
+	// resetting cache
+	sourceCache.cacheUpdateTime = time.Unix(0, 0)
+	lambdaMock := &testutils.LambdaMock{}
+	lambdaClient = lambdaMock
+
+	s3Mock := &testutils.S3Mock{}
+	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+		return s3Mock
+	}
+
+	marshaledResult, err := jsoniter.Marshal([]*models.SourceIntegration{integration})
+	require.NoError(t, err)
+	lambdaOutput := &lambda.InvokeOutput{
+		Payload: marshaledResult,
+	}
+
+	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
+
+	newCredentialsFunc = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
+		return &credentials.Credentials{}
+	}
+
+	s3Object := &S3ObjectInfo{
+		S3Bucket:    "test-bucket-unknown",
+		S3ObjectKey: "prefix/key",
+	}
+
+	result, err := getS3Client(s3Object)
+	require.Error(t, err)
+	require.Nil(t, result)
+
+	s3Mock.AssertExpectations(t)
+	lambdaMock.AssertExpectations(t)
+}
+
+func TestGetS3ClientSourceNoPrefix(t *testing.T) {
+	// resetting cache
+	sourceCache.cacheUpdateTime = time.Unix(0, 0)
+	lambdaMock := &testutils.LambdaMock{}
+	lambdaClient = lambdaMock
+
+	s3Mock := &testutils.S3Mock{}
+	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+		return s3Mock
+	}
+
+	integration = &models.SourceIntegration{
+		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			AWSAccountID:      aws.String("1234567890123"),
+			S3Bucket:          aws.String("test-bucket"),
+			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
+		},
+	}
+
+	marshaledResult, err := jsoniter.Marshal([]*models.SourceIntegration{integration})
+	require.NoError(t, err)
+	lambdaOutput := &lambda.InvokeOutput{
+		Payload: marshaledResult,
+	}
+
+	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
+	s3Mock.On("GetBucketLocation", mock.Anything).Return(
+		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
+
+	newCredentialsFunc = func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
+		return &credentials.Credentials{}
+	}
+
+	s3Object := &S3ObjectInfo{
+		S3Bucket:    "test-bucket",
+		S3ObjectKey: "test",
+	}
+
+	result, err := getS3Client(s3Object)
+	require.NoError(t, err)
+	require.Equal(t, s3Mock, result)
+
+	s3Mock.AssertExpectations(t)
+	lambdaMock.AssertExpectations(t)
+}

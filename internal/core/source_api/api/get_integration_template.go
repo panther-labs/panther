@@ -164,7 +164,7 @@ func getTemplate(integrationType *string) (string, error) {
 }
 
 // Generates the ARN of the log processing role
-func generateLogProcessingRoleArn(awsAccountID string, label string, ) string {
+func generateLogProcessingRoleArn(awsAccountID string, label string) string {
 	return fmt.Sprintf(logProcessingRoleFormat, awsAccountID, generateRoleSuffix(label))
 }
 

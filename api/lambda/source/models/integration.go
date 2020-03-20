@@ -42,7 +42,7 @@ type SourceIntegrationMetadata struct {
 	S3Prefix           *string    `json:"s3Prefix,omitempty"`
 	KmsKey             *string    `json:"kmsKey,omitempty"`
 	LogTypes           []*string  `json:"logTypes,omitempty"`
-	LogProcessingRole *string `json:"logProcessingRole,omitempty"`
+	LogProcessingRole  *string    `json:"logProcessingRole,omitempty"`
 }
 
 // SourceIntegrationStatus provides context that the full scan works and that events are being received.
