@@ -68,8 +68,10 @@ input GetComplianceIntegrationTemplateInput {
 
 input GetLogIntegrationTemplateInput {
   awsAccountId: String!
-  s3Buckets: [String]
-  kmsKeys: [String]
+  s3Bucket: String!
+  s3Path: String!
+  kmsKey: String
+  logTypes: [String!]!
 }
 
 input ListAlertsInput {
@@ -305,13 +307,15 @@ type ComplianceIntegration {
 }
 
 type LogIntegration {
-  awsAccountId: String
-  createdAtTime: AWSDateTime
-  createdBy: ID
-  integrationId: ID
-  integrationLabel: String
-  s3Buckets: [String]
-  kmsKeys: [String]
+  awsAccountId: String!
+  createdAtTime: AWSDateTime!
+  createdBy: ID!
+  integrationId: ID!
+  integrationLabel: String!
+  s3Bucket: String!
+  s3Path: String!
+  kmsKey: String
+  logTypes: [String!]!
 }
 
 input AddComplianceIntegrationInput {
@@ -324,8 +328,10 @@ input AddComplianceIntegrationInput {
 input AddLogIntegrationInput {
   awsAccountId: String!
   integrationLabel: String!
-  s3Buckets: [String]
-  kmsKeys: [String]
+  s3Bucket: String!
+  kmsKey: String
+  s3Path: String!
+  logTypes: [String!]!
 }
 
 input UpdateComplianceIntegrationInput {
