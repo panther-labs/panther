@@ -60,7 +60,8 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 			zap.Error(err),
 			zap.String("reason", reason),
 			zap.Any("input", input))
-		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass health check", *integration.AWSAccountID)}
+		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass health check because of %s",
+			*integration.AWSAccountID, reason)}
 	}
 
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{

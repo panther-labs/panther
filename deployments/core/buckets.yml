@@ -92,7 +92,7 @@ Resources:
               StringEquals:
                 's3:x-amz-acl': 'bucket-owner-full-control'
           - Sid: 'ALBWrite'
-            Effect: Allow # https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
+            Effect: Allow # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-logging-bucket-permissions
             Principal:
               AWS: !FindInMap [ELBAccounts, !Ref 'AWS::Region', ARN]
             Action: s3:PutObject
@@ -146,7 +146,7 @@ Outputs:
 
 Mappings:
   # OMG, I can't believe they make people do this ...
-  ELBAccounts: # https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
+  ELBAccounts: # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-logging-bucket-permissions
     us-east-1:
       ARN: arn:aws:iam::127311923021:root
     us-east-2:

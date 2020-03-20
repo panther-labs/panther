@@ -63,7 +63,8 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 			zap.String("reason", reason),
 			zap.Any("input", input))
 		return nil, &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("source %s did not pass health check", *input.AWSAccountID),
+			Message: fmt.Sprintf("source %s did not pass health check because of %s",
+				*input.AWSAccountID, reason),
 		}
 	}
 

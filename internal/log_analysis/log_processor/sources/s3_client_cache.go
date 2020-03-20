@@ -155,7 +155,6 @@ func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string
 }
 
 // getAwsCredentials fetches the AWS Credentials from STS for by assuming a role in the given account
-
 func getAwsCredentials(roleArn string) *credentials.Credentials {
 	zap.L().Debug("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
 	return newCredentialsFunc(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {

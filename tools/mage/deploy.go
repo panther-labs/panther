@@ -104,8 +104,6 @@ func Deploy() {
 
 	logger.Infof("deploy: deploying Panther to %s", *awsSession.Config.Region)
 
-	// registerPantherAccount(awsSession, "050603629990")
-
 	// Deploy prerequisite sourceBucket stack
 	bucketParams := map[string]string{
 		"S3AccessLogsBucket": settings.BucketsParameterValues.S3AccessLogsBucket, // optional user override
