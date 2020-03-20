@@ -45,6 +45,7 @@ type LambdaInput struct {
 type CheckIntegrationInput struct {
 	AWSAccountID    *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
 	IntegrationType *string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	IntegrationLabel *string `json:"integrationLabel" validate:"required,integrationLabel"`
 
 	// Checks for cloudsec integrations
 	EnableCWESetup    *bool `json:"enableCWESetup"`

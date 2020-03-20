@@ -31,16 +31,19 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
 	auditRoleFormat         = "arn:aws:iam::%s:role/PantherAuditRole"
-	logProcessingRoleFormat = "arn:aws:iam::%s:role/PantherLogProcessingRole"
 	cweRoleFormat           = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole"
 	remediationRoleFormat   = "arn:aws:iam::%s:role/PantherRemediationRole"
 )
 
-var evaluateIntegrationFunc = evaluateIntegration
+var (
+	evaluateIntegrationFunc = evaluateIntegration
+	checkIntegrationInternalError = &genericapi.InternalError{Message: "Failed to validate source. Please try again later"}
+)
 
 // CheckIntegration adds a set of new integrations in a batch.
 func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
@@ -50,21 +53,26 @@ func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.Source
 		IntegrationType: aws.StringValue(input.IntegrationType),
 	}
 
-	if *input.IntegrationType == models.IntegrationTypeAWSScan {
-		_, out.AuditRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(auditRoleFormat, *input.AWSAccountID)))
+	switch aws.StringValue(input.IntegrationType)  {
+	case models.IntegrationTypeAWSScan:
+		_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat, *input.AWSAccountID))
 		if aws.BoolValue(input.EnableCWESetup) {
-			_, out.CWERoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(cweRoleFormat, *input.AWSAccountID)))
+			_, out.CWERoleStatus = getCredentialsWithStatus(fmt.Sprintf(cweRoleFormat, *input.AWSAccountID))
 		}
 		if aws.BoolValue(input.EnableRemediation) {
-			_, out.RemediationRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(remediationRoleFormat, *input.AWSAccountID)))
+			_, out.RemediationRoleStatus = getCredentialsWithStatus(fmt.Sprintf(remediationRoleFormat, *input.AWSAccountID))
 		}
-	} else {
+
+	case models.IntegrationTypeAWS3:
 		var roleCreds *credentials.Credentials
-		roleCreds, out.ProcessingRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(logProcessingRoleFormat, *input.AWSAccountID)))
+		logProcessingRole := generateLogProcessingRoleArn(*input.AWSAccountID, *input.IntegrationLabel)
+		roleCreds, out.ProcessingRoleStatus = getCredentialsWithStatus(logProcessingRole)
 		if aws.BoolValue(out.ProcessingRoleStatus.Healthy) {
 			out.S3BucketStatus = checkBucket(roleCreds, input.S3Bucket)
 			out.KMSKeyStatus = checkKey(roleCreds, input.KmsKey)
 		}
+	default:
+		return nil, checkIntegrationInternalError
 	}
 
 	return out, nil
@@ -115,15 +123,12 @@ func checkBucket(roleCredentials *credentials.Credentials, bucket *string) model
 	}
 }
 
-func getCredentialsWithStatus(
-	roleARN *string,
-) (*credentials.Credentials, models.SourceIntegrationItemStatus) {
-
-	zap.L().Debug("checking role", zap.String("roleArn", *roleARN))
+func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.SourceIntegrationItemStatus) {
+	zap.L().Debug("checking role", zap.String("roleArn", roleARN))
 	// Setup new credentials with the role
 	roleCredentials := stscreds.NewCredentials(
 		sess,
-		*roleARN,
+		roleARN,
 	)
 
 	// Use the role to make sure it's good

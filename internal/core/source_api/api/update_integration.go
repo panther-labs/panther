@@ -43,6 +43,7 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		IntegrationType: integration.IntegrationType,
 
 		// From update integration request
+		IntegrationLabel: input.IntegrationLabel,
 		EnableCWESetup:    input.CWEEnabled,
 		EnableRemediation: input.RemediationEnabled,
 		S3Bucket:          input.S3Bucket,
