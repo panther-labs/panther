@@ -126,7 +126,7 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	)
 
 	// Use the role to make sure it's good
-	stsClient := sts.New(sess, &aws.Config{Credentials: roleCredentials})
+	stsClient := sts.New(sess, aws.NewConfig().WithCredentials(roleCredentials))
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
