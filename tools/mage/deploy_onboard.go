@@ -35,7 +35,7 @@ import (
 
 const (
 	cloudSecLabel      = "panther-cloud-security"
-	logProcessingLabel = "panther-log-processing" // this must be lowercase, no spaces to work correctly
+	logProcessingLabel = "panther-log-processing" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
 
 	onboardStack    = "panther-app-onboard"
 	onboardTemplate = "deployments/onboard.yml"
@@ -49,6 +49,11 @@ const (
 	realTimeEventsAdministrationRoleName = "PantherCloudFormationStackSetAdminRole"
 	realTimeEventsQueueName              = "panther-aws-events-queue" // needs to match what is in aws_events_processor.yml
 )
+
+// make label regionally unique
+func genLogProcessingLabel(awsSession *session.Session) string {
+	return logProcessingLabel + "-" + *awsSession.Config.Region
+}
 
 // onboard Panther to monitor Panther account
 func deployOnboard(awsSession *session.Session, settings *config.PantherConfig, bucketOutputs, backendOutputs map[string]string) {
@@ -75,7 +80,7 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 		"AuditLogsBucket":        bucketOutputs["AuditLogsBucket"],
 		"EnableCloudTrail":       strconv.FormatBool(settings.OnboardParameterValues.EnableCloudTrail),
 		"EnableGuardDuty":        strconv.FormatBool(settings.OnboardParameterValues.EnableGuardDuty),
-		"LogProcessingRoleLabel": logProcessingLabel,
+		"LogProcessingRoleLabel": genLogProcessingLabel(awsSession),
 	}
 	onboardOutputs := deployTemplate(awsSession, onboardTemplate, bucketOutputs["SourceBucketName"], onboardStack, params)
 	configureLogProcessingUsingAPIs(awsSession, settings, bucketOutputs, onboardOutputs)
@@ -111,7 +116,7 @@ func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendO
 		&models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
 				AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
-				IntegrationLabel: aws.String(logProcessingLabel),
+				IntegrationLabel: aws.String(genLogProcessingLabel(awsSession)),
 				IntegrationType:  aws.String(models.IntegrationTypeAWS3),
 				UserID:           aws.String(mageUserID),
 				S3Bucket:         aws.String(bucketOutputs["AuditLogsBucket"]),

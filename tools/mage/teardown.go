@@ -353,6 +353,12 @@ func destroyPantherBuckets(awsSession *session.Session, bucketNames []*string) {
 //
 // Or, if there are too many objects to delete directly, set a 1-day expiration lifecycle policy instead.
 func removeBucket(client *s3.S3, bucketName *string) {
+	// remove any notifications (best effort)
+	notificationInput := &s3.PutBucketNotificationConfigurationInput{
+		Bucket: bucketName,
+	}
+	_, _ = client.PutBucketNotificationConfiguration(notificationInput)
+
 	input := &s3.ListObjectVersionsInput{Bucket: bucketName}
 	var objectVersions []*s3.ObjectIdentifier
 
