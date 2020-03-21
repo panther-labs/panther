@@ -199,7 +199,7 @@ func getRoleArn(s3Object *S3ObjectInfo) (*string, error) {
 func getNewS3Client(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
 	config := aws.NewConfig().WithCredentials(creds)
 	if region != nil {
-		config.WithCredentials(creds)
+		config.WithRegion(*region)
 	}
 	return s3.New(common.Session, config)
 }
