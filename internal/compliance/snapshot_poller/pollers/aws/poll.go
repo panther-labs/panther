@@ -229,8 +229,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	if len(auditRoleName) == 0 {
 		return nil, errors.New("no audit role configured")
 	}
-	auditRoleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s-%s",
-		*scanRequest.AWSAccountID, auditRoleName, *sess.Config.Region)
+	auditRoleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s",
+		*scanRequest.AWSAccountID, auditRoleName) // the auditRole name is for form: PantherAuditRole-($REGION)
 
 	zap.L().Debug("constructed audit role", zap.String("role", auditRoleARN))
 
@@ -274,7 +274,10 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	var creds *credentials.Credentials
 	creds, err = AssumeRoleFunc(pollerResourceInput, sess)
 	if err != nil {
-		zap.L().Error("unable to assume role to make DescribeRegions call")
+		zap.L().Error("unable to assume role to make DescribeRegions call",
+			zap.Error(err),
+			zap.String("auditRoleARN", auditRoleARN),
+			zap.Any("parsedAuditRoleARN", roleArn))
 		return
 	}
 
