@@ -683,7 +683,7 @@ Resources:
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
-          $util.toJson($context.result.get(0))
+          $util.toJson($context.result)
         #end
 
   AddLogIntegrationResolver:
@@ -709,7 +709,7 @@ Resources:
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
-          $util.toJson($context.result.get(0))
+          $util.toJson($context.result)
         #end
 
   UpdateComplianceIntegrationResolver:
