@@ -6,6 +6,17 @@ When a policy fails on a resource or a rule triggers on an event, an alert is ge
 
 Alerts are routed based on severity. For example, if a Rule is configured with a `Critical`, it will dispatch alerts to the default destinations configured to handle `Critical` alerts. A single alert may also dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
 
+Supported destinations:
+
+- [Amazon Simple Notification Service (Email)](https://aws.amazon.com/sns/)
+- [Amazon Simple Queue Service](https://aws.amazon.com/sqs/)
+- [Github](https://github.com/)
+- [Jira](https://www.atlassian.com/software/jira)
+- [Microsoft Teams](https://products.office.com/en-us/microsoft-teams/group-chat-software)
+- [OpsGenie](https://www.atlassian.com/software/opsgenie/what-is-opsgenie)
+- [PagerDuty](https://www.pagerduty.com/)
+- [Slack](https://slack.com/)
+
 ## Creating a New Destination
 
 Navigate to Settings > Destinations and select `ADD DESTINATION`.
