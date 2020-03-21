@@ -1,11 +1,22 @@
 fragment LogIntegrationDetails on LogIntegration {
-    integrationId
-    integrationLabel
-    awsAccountId
-    createdAtTime
-    createdBy
-    kmsKey
-    s3Bucket
-    s3Prefix
-    logTypes
+  integrationId
+  integrationLabel
+  awsAccountId
+  createdAtTime
+  createdBy
+  kmsKey
+  s3Bucket
+  s3Prefix
+  logTypes
+  health {
+    processingRoleStatus {
+      ...IntegrationItemHealthDetails
+    }
+    s3BucketStatus {
+      ...IntegrationItemHealthDetails
+    }
+    kmsKeyStatus {
+      ...IntegrationItemHealthDetails
+    }
+  }
 }

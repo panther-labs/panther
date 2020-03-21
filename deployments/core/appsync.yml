@@ -530,7 +530,7 @@ Resources:
         #if($ctx.source.cweEnabled)
           $util.qr($input.put("enableCWESetup", true))
         #end
-        #if($context.remediationEnabled)
+        #if($ctx.source.remediationEnabled)
           $util.qr($input.put("enableRemediation", true))
         #end
         {
@@ -607,6 +607,40 @@ Resources:
             #end
           #end
           $util.toJson($requestedIntegration)
+        #end
+
+  LogIntegrationHealthFieldResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: LogIntegration
+      FieldName: health
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = {})
+        $util.qr($input.put("integrationType", "aws-s3"))
+        $util.qr($input.put("awsAccountId", $ctx.source.awsAccountId))
+        $util.qr($input.put("integrationLabel", $ctx.source.integrationLabel))
+        $util.qr($input.put("s3Bucket", true))
+        #if($ctx.source.s3Prefix)
+          $util.qr($input.put("s3Prefix", true))
+        #end
+        #if($ctx.source.kmsKey)
+          $util.qr($input.put("kmsKey", true))
+        #end
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "integrationHealthCheck": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($ctx.result)
         #end
 
   GetComplianceIntegrationTemplateResolver:

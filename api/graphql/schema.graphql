@@ -104,6 +104,12 @@ type ComplianceIntegrationHealth {
   remediationRoleStatus: IntegrationItemHealthStatus!
 }
 
+type LogIntegrationHealth {
+  processingRoleStatus: IntegrationItemHealthStatus!
+  s3BucketStatus: IntegrationItemHealthStatus!
+  kmsKeyStatus: IntegrationItemHealthStatus!
+}
+
 type AlertDetails {
   alertId: ID!
   ruleId: ID
@@ -319,6 +325,7 @@ type LogIntegration {
   s3Prefix: String!
   kmsKey: String
   logTypes: [String!]!
+  health: LogIntegrationHealth!
 }
 
 input AddComplianceIntegrationInput {
