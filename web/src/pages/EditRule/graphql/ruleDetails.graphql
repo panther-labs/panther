@@ -1,20 +1,21 @@
 query RuleDetails($input: GetRuleInput!) {
-    rule(input: $input) {
-        description
-        displayName
-        enabled
-        id
-        reference
-        logTypes
-        runbook
-        severity
-        tags
-        body
-        tests {
-            expectedResult
-            name
-            resource
-            resourceType
-        }
+  rule(input: $input) {
+    description
+    displayName
+    enabled
+    id
+    reference
+    logTypes
+    runbook
+    severity
+    dedupPeriodMinutes
+    tags
+    body
+    tests {
+      expectedResult
+      name
+      resource
+      resourceType
     }
+  }
 }

@@ -38,6 +38,7 @@ export type RuleDetails = {
       | 'displayName'
       | 'enabled'
       | 'id'
+      | 'dedupPeriodMinutes'
       | 'lastModified'
       | 'reference'
       | 'logTypes'
@@ -59,6 +60,7 @@ export const RuleDetailsDocument = gql`
       displayName
       enabled
       id
+      dedupPeriodMinutes
       lastModified
       reference
       logTypes
