@@ -88,7 +88,7 @@ type PutIntegrationSettings struct {
 
 // ListIntegrationsInput allows filtering by the IntegrationType or Enabled fields
 type ListIntegrationsInput struct {
-	IntegrationType *string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+	IntegrationType *string `json:"integrationType" validate:"omitempty,oneof=aws-scan aws-s3"`
 }
 
 //
