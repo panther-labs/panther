@@ -1,6 +1,6 @@
 # Background
 
-To detect misconfigured cloud resources, Panther can scan AWS accounts, model the **Resources** within them, and then use **Policies** to evaluate their desired secure state.
+To detect misconfigured cloud resources Panther scans AWS accounts, models the **Resources** within them, and uses **Policies** to evaluate their desired secure state.
 
 For example, Panther can be used to detect the following common security issues:
 

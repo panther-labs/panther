@@ -88,7 +88,7 @@ Congratulations! You are now ready to use Panther. Follow the steps below to get
 2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
 3. Write custom [detection rules](log-analysis/rules/)
 4. Onboard accounts for [cloud security scans](policies/scanning/)
-5. Write [policies](policies/compliance-background.md) for supported [AWS resources](policies/resources/)
+5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
 6. Query collected logs with [historical search](historical-search/historical-search)
 
 #### Concepts

@@ -44,7 +44,7 @@
 
 ## Cloud Security <a id="policies"></a>
 
-* [Background](policies/compliance-background.md)
+* [Background](policies/cloud-security-overview.md)
 * [Scanning](policies/scanning/README.md)
   * [Account Setup](policies/scanning/aws-compliance-setup.md)
   * [Real-Time Events](policies/scanning/real-time-events.md)
@@ -169,28 +169,24 @@
     * [AWS VPC Flow Logging Enabled](policies/policies/aws/aws-vpc-flow-logging-enabled.md)
     * [AWS WAF Has Correct Rule Ordering](policies/policies/aws/aws-waf-has-correct-rule-ordering.md)
     * [AWS CloudTrail Logs Encrypted Using KMS CMK](policies/policies/aws/aws-cloudtrail-logs-encrypted-using-kms-cmk.md)
-
-## Automatic Remediation
-
-* [Background](automatic-remediation/automatic-remediation.md)
-* [Remediations](automatic-remediation/auto-remediations/README.md)
-  * [AWS](automatic-remediation/auto-remediations/aws/README.md)
-    * [AWS Create CloudTrail](automatic-remediation/auto-remediations/aws/aws.cloudtrail.createtrail.md)
-    * [AWS Enable CloudTrail log validation](automatic-remediation/auto-remediations/aws/aws-enable-cloudtrail-log-validation.md)
-    * [AWS Enable DynamoDB Table Encryption](automatic-remediation/auto-remediations/aws/aws-enable-dynamodb-table-encryption.md)
-    * [AWS Publish VPC Flow Logs to S3](automatic-remediation/auto-remediations/aws/aws-enable-vpc-flow-logs-to-s3.md)
-    * [AWS Terminate EC2 Instance](automatic-remediation/auto-remediations/aws/aws-terminate-ec2-instance.md)
-    * [AWS Stop EC2 Instance](automatic-remediation/auto-remediations/aws/aws-stop-ec2-instance.md)
-    * [AWS Create GuardDuty Detector](automatic-remediation/auto-remediations/aws/aws-create-guardduty-detector.md)
-    * [AWS Update Account Password Policy](automatic-remediation/auto-remediations/aws/aws-update-account-password-policy.md)
-    * [AWS Enable KMS Key Rotation](automatic-remediation/auto-remediations/aws/aws-enable-kms-key-rotation.md)
-    * [AWS Disable RDS Instance Public Access](automatic-remediation/auto-remediations/aws/aws-disable-rds-instance-public-access.md)
-    * [AWS Enable RDS Instance Auto Minor Version Upgrade](automatic-remediation/auto-remediations/aws/aws-enable-rds-instance-auto-minor-version-upgrade.md)
-    * [AWS Block Public Access for S3 Bucket](automatic-remediation/auto-remediations/aws/aws-block-public-access-for-s3-bucket.md)
-    * [AWS Block S3 Bucket Public ACL](automatic-remediation/auto-remediations/aws/aws-block-s3-bucket-public-acl.md)
-    * [AWS Enable S3 Bucket Encryption](automatic-remediation/auto-remediations/aws/aws-enable-s3-bucket-encryption.md)
-    * [AWS Enable S3 Bucket Access Logging](automatic-remediation/auto-remediations/aws/aws-enable-s3-bucket-access-logging.md)
-    * [AWS Enable S3 Bucket Versioning](automatic-remediation/auto-remediations/aws/aws-enable-s3-bucket-versioning.md)
+* [Automatic Remediation](policies/automatic-remediation/README.md)
+  * [AWS](policies/automatic-remediation/aws/README.md)
+    * [AWS Create CloudTrail](policies/automatic-remediation/aws/aws.cloudtrail.createtrail.md)
+    * [AWS Enable CloudTrail log validation](policies/automatic-remediation/aws/aws-enable-cloudtrail-log-validation.md)
+    * [AWS Enable DynamoDB Table Encryption](policies/automatic-remediation/aws/aws-enable-dynamodb-table-encryption.md)
+    * [AWS Publish VPC Flow Logs to S3](policies/automatic-remediation/aws/aws-enable-vpc-flow-logs-to-s3.md)
+    * [AWS Terminate EC2 Instance](policies/automatic-remediation/aws/aws-terminate-ec2-instance.md)
+    * [AWS Stop EC2 Instance](policies/automatic-remediation/aws/aws-stop-ec2-instance.md)
+    * [AWS Create GuardDuty Detector](policies/automatic-remediation/aws/aws-create-guardduty-detector.md)
+    * [AWS Update Account Password Policy](policies/automatic-remediation/aws/aws-update-account-password-policy.md)
+    * [AWS Enable KMS Key Rotation](policies/automatic-remediation/aws/aws-enable-kms-key-rotation.md)
+    * [AWS Disable RDS Instance Public Access](policies/automatic-remediation/aws/aws-disable-rds-instance-public-access.md)
+    * [AWS Enable RDS Instance Auto Minor Version Upgrade](policies/automatic-remediation/aws/aws-enable-rds-instance-auto-minor-version-upgrade.md)
+    * [AWS Block Public Access for S3 Bucket](policies/automatic-remediation/aws/aws-block-public-access-for-s3-bucket.md)
+    * [AWS Block S3 Bucket Public ACL](policies/automatic-remediation/aws/aws-block-s3-bucket-public-acl.md)
+    * [AWS Enable S3 Bucket Encryption](policies/automatic-remediation/aws/aws-enable-s3-bucket-encryption.md)
+    * [AWS Enable S3 Bucket Access Logging](policies/automatic-remediation/aws/aws-enable-s3-bucket-access-logging.md)
+    * [AWS Enable S3 Bucket Versioning](policies/automatic-remediation/aws/aws-enable-s3-bucket-versioning.md)
 
 ## Destinations <a id="destinations"></a>
 
