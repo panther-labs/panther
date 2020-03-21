@@ -30,9 +30,7 @@ import columns from './columns';
 import EmptyDataFallback from './EmptyDataFallback';
 
 const ListLogSources = () => {
-  const { loading, error, data } = useListLogSources({
-    fetchPolicy: 'cache-and-network',
-  });
+  const { loading, error, data } = useListLogSources();
 
   if (loading && !data) {
     return (

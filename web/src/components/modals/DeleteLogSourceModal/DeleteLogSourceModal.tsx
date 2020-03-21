@@ -35,7 +35,7 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) =
     optimisticResponse: () => ({ deleteLogIntegration: true }),
     update: cache => {
       cache.modify('ROOT_QUERY', {
-        listComplianceIntegrations: (queryData, { toReference }) => {
+        listLogIntegrations: (queryData, { toReference }) => {
           const deletedSource = toReference(source);
           return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
         },
@@ -55,7 +55,8 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) =
         </Text>,
         <Text size="medium" color="grey300" mt={6} key={1}>
           Deleting this source will not delete the associated Cloudformation stack. You will need to
-          manually delete the stack {stackName} from the <b>AWS Account {source.awsAccountId}</b>
+          manually delete the stack <b>{stackName}</b> from the{' '}
+          <b>AWS Account {source.awsAccountId}</b>
         </Text>,
       ]}
       onSuccessMsg={`Successfully deleted ${sourceDisplayName}`}

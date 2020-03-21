@@ -27,7 +27,6 @@ const StackDeployment: React.FC = () => {
   const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
   const { initialValues, values, setStatus } = useFormikContext<ComplianceSourceWizardValues>();
   const { data, loading, error } = useGetComplianceCfnTemplate({
-    fetchPolicy: 'no-cache',
     variables: {
       input: {
         awsAccountId: values.awsAccountId,

@@ -29,7 +29,6 @@ const StackDeployment: React.FC = () => {
   const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
   const { initialValues, values, setStatus } = useFormikContext<LogSourceWizardValues>();
   const { data, loading, error } = useGetLogCfnTemplate({
-    fetchPolicy: 'no-cache',
     variables: {
       input: {
         awsAccountId: values.awsAccountId,
