@@ -41,8 +41,6 @@ const (
 	onboardTemplate = "deployments/onboard.yml"
 
 	// CloudSec IAM Roles, DO NOT CHANGE! panther-cloudsec-iam.yml CF depends on these names
-	auditRole                            = "PantherAuditRole"
-	remediationRole                      = "PantherRemediationRole"
 	realTimeEventStackSetURL             = "https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml" // nolint:lll
 	realTimeEventsStackSet               = "panther-real-time-events"
 	realTimeEventsExecutionRoleName      = "PantherCloudFormationStackSetExecutionRole"
@@ -89,44 +87,79 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendOutputs map[string]string) {
 	logger.Infof("deploy: registering account %s with Panther for monitoring", backendOutputs["AWSAccountId"])
 
-	// cloud sec
-	var cloudSecInput = struct {
-		PutIntegration *models.PutIntegrationInput
+	// avoid alarms/errors and check first if the integrations exist
+	var listOutput []*models.SourceIntegration
+	var listInput = struct {
+		ListIntegrations *models.ListIntegrationsInput
 	}{
-		&models.PutIntegrationInput{
-			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
-				IntegrationLabel: aws.String(cloudSecLabel),
-				IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-				ScanIntervalMins: aws.Int(1440),
-				UserID:           aws.String(mageUserID),
+		&models.ListIntegrationsInput{},
+	}
+	if err := invokeLambda(awsSession, "panther-source-api", listInput, &listOutput); err != nil {
+		logger.Fatalf("error calling lambda to register account: %v", err)
+	}
+
+	registerCloudSec, registerLogProcessing := true, true
+	for _, integration := range listOutput {
+		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
+			*integration.IntegrationType == models.IntegrationTypeAWSScan &&
+			*integration.IntegrationLabel == cloudSecLabel {
+			logger.Infof("deploy: account %s is already registered for cloud security",
+				backendOutputs["AWSAccountId"])
+			registerCloudSec = false
+		}
+		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
+			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
+			*integration.IntegrationLabel == genLogProcessingLabel(awsSession) {
+			logger.Infof("deploy: account %s is already registered for log processing",
+				backendOutputs["AWSAccountId"])
+			registerLogProcessing = false
+		}
+	}
+
+	if registerCloudSec {
+		var cloudSecInput = struct {
+			PutIntegration *models.PutIntegrationInput
+		}{
+			&models.PutIntegrationInput{
+				PutIntegrationSettings: models.PutIntegrationSettings{
+					AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
+					IntegrationLabel: aws.String(cloudSecLabel),
+					IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+					ScanIntervalMins: aws.Int(1440),
+					UserID:           aws.String(mageUserID),
+				},
 			},
-		},
-	}
-	if err := invokeLambda(awsSession, "panther-source-api", cloudSecInput, nil); err != nil &&
-		!strings.Contains(err.Error(), "already onboarded") {
+		}
+		if err := invokeLambda(awsSession, "panther-source-api", cloudSecInput, nil); err != nil &&
+			!strings.Contains(err.Error(), "already onboarded") {
 
-		logger.Fatalf("error calling lambda to register account for cloud security: %v", err)
+			logger.Fatalf("error calling lambda to register account for cloud security: %v", err)
+		}
+		logger.Infof("deploy: account %s registered for cloud security",
+			backendOutputs["AWSAccountId"])
 	}
 
-	// log processing
-	var logProcessingInput = struct {
-		PutIntegration *models.PutIntegrationInput
-	}{
-		&models.PutIntegrationInput{
-			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
-				IntegrationLabel: aws.String(genLogProcessingLabel(awsSession)),
-				IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-				UserID:           aws.String(mageUserID),
-				S3Bucket:         aws.String(bucketOutputs["AuditLogsBucket"]),
+	if registerLogProcessing {
+		var logProcessingInput = struct {
+			PutIntegration *models.PutIntegrationInput
+		}{
+			&models.PutIntegrationInput{
+				PutIntegrationSettings: models.PutIntegrationSettings{
+					AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
+					IntegrationLabel: aws.String(genLogProcessingLabel(awsSession)),
+					IntegrationType:  aws.String(models.IntegrationTypeAWS3),
+					UserID:           aws.String(mageUserID),
+					S3Bucket:         aws.String(bucketOutputs["AuditLogsBucket"]),
+				},
 			},
-		},
-	}
-	if err := invokeLambda(awsSession, "panther-source-api", logProcessingInput, nil); err != nil &&
-		!strings.Contains(err.Error(), "already onboarded") {
+		}
+		if err := invokeLambda(awsSession, "panther-source-api", logProcessingInput, nil); err != nil &&
+			!strings.Contains(err.Error(), "already onboarded") {
 
-		logger.Fatalf("error calling lambda to register account for log processing: %v", err)
+			logger.Fatalf("error calling lambda to register account for log processing: %v", err)
+		}
+		logger.Infof("deploy: account %s registered for log processing",
+			backendOutputs["AWSAccountId"])
 	}
 }
 

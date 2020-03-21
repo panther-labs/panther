@@ -18,13 +18,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Master Panther template for the back-end resources
 
 Parameters:
-  AuditRoleName:
-    Type: String
-    Description: The name of the IAM role to assume to perform AWS account/service scans
-  RemediationRoleName:
-    Type: String
-    Description: The name of the IAM role to assume to perform remediation actions
-
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -316,7 +309,6 @@ Resources:
         TracingMode: !Ref TracingMode
         ResourcesApiId: !GetAtt ResourcesAPI.Outputs.GatewayId
         SQSKeyId: !Ref QueueEncryptionKey
-        AuditRoleName: !Ref AuditRoleName
       TemplateURL: compliance/snapshot.yml
 
   AlertProcessing:
@@ -347,7 +339,6 @@ Resources:
         PythonLayerArn: !If [CreatePythonLayer, !Ref PythonLayer, !Ref PythonLayerVersionArn]
         ResourcesApiId: !GetAtt ResourcesAPI.Outputs.GatewayId
         SQSKeyId: !Ref QueueEncryptionKey
-        RemediationRoleName: !Ref RemediationRoleName
       TemplateURL: ../out/deployments/compliance/embedded.remediation.yml
 
   ##### Nested Stacks: Log Analysis #####

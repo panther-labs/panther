@@ -182,8 +182,6 @@ func getBackendDeployParams(
 	v := settings.BackendParameterValues
 	result := map[string]string{
 		"AuditLogsBucket":              bucketOutputs["AuditLogsBucket"],
-		"AuditRoleName":                auditRole + "-" + *awsSession.Config.Region,
-		"RemediationRoleName":          remediationRole + "-" + *awsSession.Config.Region,
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
 		"CustomDomain":                 v.CustomDomain,
 		"Debug":                        strconv.FormatBool(v.Debug),

@@ -41,7 +41,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sts:AssumeRole
-                Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole
+                Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${AWS::Region}
 
 Outputs:
   CloudFormationStackSetAdminRoleArn:
