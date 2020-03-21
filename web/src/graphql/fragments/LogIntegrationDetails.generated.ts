@@ -20,6 +20,7 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { IntegrationItemHealthDetails } from './IntegrationItemHealthDetails.generated';
 import gql from 'graphql-tag';
 
 export type LogIntegrationDetails = Pick<
@@ -33,7 +34,13 @@ export type LogIntegrationDetails = Pick<
   | 's3Bucket'
   | 's3Prefix'
   | 'logTypes'
->;
+> & {
+  health: {
+    processingRoleStatus: IntegrationItemHealthDetails;
+    s3BucketStatus: IntegrationItemHealthDetails;
+    kmsKeyStatus: IntegrationItemHealthDetails;
+  };
+};
 
 export const LogIntegrationDetails = gql`
   fragment LogIntegrationDetails on LogIntegration {
@@ -46,5 +53,17 @@ export const LogIntegrationDetails = gql`
     s3Bucket
     s3Prefix
     logTypes
+    health {
+      processingRoleStatus {
+        ...IntegrationItemHealthDetails
+      }
+      s3BucketStatus {
+        ...IntegrationItemHealthDetails
+      }
+      kmsKeyStatus {
+        ...IntegrationItemHealthDetails
+      }
+    }
   }
+  ${IntegrationItemHealthDetails}
 `;
