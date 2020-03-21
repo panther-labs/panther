@@ -453,7 +453,7 @@ var infraJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-source-api' | SOURCE '/aws/lambda/panther-snapshot-pollers' | SOURCE '/aws/lambda/panther-snapshot-scheduler' | SOURCE '/aws/lambda/panther-aws-event-processor' | SOURCE '/aws/lambda/panther-resources-api' | SOURCE '/aws/lambda/panther-resource-processor' | SOURCE '/aws/lambda/panther-policy-engine' | filter  @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc",
+                "query": "SOURCE '/aws/lambda/panther-source-api' | SOURCE '/aws/lambda/panther-snapshot-pollers' | SOURCE '/aws/lambda/panther-snapshot-scheduler' | SOURCE '/aws/lambda/panther-aws-event-processor' | SOURCE '/aws/lambda/panther-resources-api' | SOURCE '/aws/lambda/panther-resource-processor' | SOURCE '/aws/lambda/panther-policy-engine' | filter  @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Most Recent 20 Errors and Warnings",
