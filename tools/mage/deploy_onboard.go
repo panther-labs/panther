@@ -103,15 +103,15 @@ func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendO
 		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
 			*integration.IntegrationType == models.IntegrationTypeAWSScan &&
 			*integration.IntegrationLabel == cloudSecLabel {
-			logger.Infof("deploy: account %s is already registered for cloud security",
-				backendOutputs["AWSAccountId"])
+
+			logger.Infof("deploy: account %s is already registered for cloud security", backendOutputs["AWSAccountId"])
 			registerCloudSec = false
 		}
 		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
 			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
 			*integration.IntegrationLabel == genLogProcessingLabel(awsSession) {
-			logger.Infof("deploy: account %s is already registered for log processing",
-				backendOutputs["AWSAccountId"])
+			
+			logger.Infof("deploy: account %s is already registered for log processing", backendOutputs["AWSAccountId"])
 			registerLogProcessing = false
 		}
 	}
