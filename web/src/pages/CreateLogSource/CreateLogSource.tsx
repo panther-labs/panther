@@ -43,7 +43,7 @@ const CreateLogSource: React.FC = () => {
         },
       });
     },
-    onCompleted: () => history.push(urls.compliance.sources.list()),
+    onCompleted: () => history.push(urls.logAnalysis.sources.list()),
   });
 
   return (
