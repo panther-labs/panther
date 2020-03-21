@@ -190,24 +190,18 @@
 
 ## Destinations <a id="destinations"></a>
 
-* [Background](destinations/background.md)
-* [Setup](destinations/alert-setup/README.md)
-  * [Asana](destinations/alert-setup/asana.md)
-  * [Email](destinations/alert-setup/email.md)
-  * [GitHub](destinations/alert-setup/github.md)
-  * [JIRA](destinations/alert-setup/jira.md)
-  * [Microsoft Teams](destinations/alert-setup/microsoft-teams.md)
-  * [OpsGenie](destinations/alert-setup/opsgenie.md)
-  * [PagerDuty](destinations/alert-setup/pagerduty.md)
-  * [Slack](destinations/alert-setup/slack.md)
-  * [SNS](destinations/alert-setup/sns.md)
-  * [SQS](destinations/alert-setup/sqs.md)
+* [Setup](destinations/setup/README.md)
+  * [Asana](destinations/setup/asana.md)
+  * [GitHub](destinations/setup/github.md)
+  * [Jira](destinations/setup/jira.md)
+  * [Microsoft Teams](destinations/setup/microsoft-teams.md)
+  * [OpsGenie](destinations/setup/opsgenie.md)
+  * [PagerDuty](destinations/setup/pagerduty.md)
+  * [Slack](destinations/setup/slack.md)
+  * [SNS](destinations/setup/sns.md)
+  * [SQS](destinations/setup/sqs.md)
 
 ## Operations
 
 * [Background](operations/ops-home.md)
 * [Run-books](operations/runbooks.md)
-
-## Privacy
-
-* [Error Reporting](privacy/error-reporting.md)
