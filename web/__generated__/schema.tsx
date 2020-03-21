@@ -37,7 +37,7 @@ export type AddLogIntegrationInput = {
   integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
   kmsKey?: Maybe<Scalars['String']>;
-  s3Prefix: Scalars['String'];
+  s3Prefix?: Maybe<Scalars['String']>;
   logTypes: Array<Scalars['String']>;
 };
 
@@ -249,7 +249,7 @@ export type GetLogIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
   integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
-  s3Prefix: Scalars['String'];
+  s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
   logTypes: Array<Scalars['String']>;
 };
@@ -435,9 +435,17 @@ export type LogIntegration = {
   integrationId: Scalars['ID'];
   integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
-  s3Prefix: Scalars['String'];
+  s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
   logTypes: Array<Scalars['String']>;
+  health: LogIntegrationHealth;
+};
+
+export type LogIntegrationHealth = {
+  __typename?: 'LogIntegrationHealth';
+  processingRoleStatus: IntegrationItemHealthStatus;
+  s3BucketStatus: IntegrationItemHealthStatus;
+  kmsKeyStatus: IntegrationItemHealthStatus;
 };
 
 export type MsTeamsConfig = {
@@ -1085,6 +1093,7 @@ export type ResolversTypes = {
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
   LogIntegration: ResolverTypeWrapper<LogIntegration>;
+  LogIntegrationHealth: ResolverTypeWrapper<LogIntegrationHealth>;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResolverTypeWrapper<ResourceDetails>;
@@ -1192,6 +1201,7 @@ export type ResolversParentTypes = {
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
   LogIntegration: LogIntegration;
+  LogIntegrationHealth: LogIntegrationHealth;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResourceDetails;
@@ -1541,9 +1551,24 @@ export type LogIntegrationResolvers<
   integrationId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   integrationLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   s3Bucket?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  s3Prefix?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  health?: Resolver<ResolversTypes['LogIntegrationHealth'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type LogIntegrationHealthResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogIntegrationHealth'] = ResolversParentTypes['LogIntegrationHealth']
+> = {
+  processingRoleStatus?: Resolver<
+    ResolversTypes['IntegrationItemHealthStatus'],
+    ParentType,
+    ContextType
+  >;
+  s3BucketStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
+  kmsKeyStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -2136,6 +2161,7 @@ export type Resolvers<ContextType = any> = {
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
   LogIntegration?: LogIntegrationResolvers<ContextType>;
+  LogIntegrationHealth?: LogIntegrationHealthResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;

@@ -58,9 +58,9 @@ const CreateLogSource: React.FC = () => {
                 integrationLabel: values.integrationLabel,
                 awsAccountId: values.awsAccountId,
                 s3Bucket: values.s3Bucket,
-                s3Prefix: values.s3Prefix,
-                kmsKey: values.kmsKey,
                 logTypes: values.logTypes,
+                s3Prefix: values.s3Prefix || null,
+                kmsKey: values.kmsKey || null,
               },
             },
           })

@@ -72,7 +72,7 @@ input GetLogIntegrationTemplateInput {
   awsAccountId: String!
   integrationLabel: String!
   s3Bucket: String!
-  s3Prefix: String!
+  s3Prefix: String
   kmsKey: String
   logTypes: [String!]!
 }
@@ -322,7 +322,7 @@ type LogIntegration {
   integrationId: ID!
   integrationLabel: String!
   s3Bucket: String!
-  s3Prefix: String!
+  s3Prefix: String
   kmsKey: String
   logTypes: [String!]!
   health: LogIntegrationHealth!
@@ -340,7 +340,7 @@ input AddLogIntegrationInput {
   integrationLabel: String!
   s3Bucket: String!
   kmsKey: String
-  s3Prefix: String!
+  s3Prefix: String
   logTypes: [String!]!
 }
 
