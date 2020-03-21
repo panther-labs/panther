@@ -7,19 +7,22 @@ description: Get started with Panther in 20 minutes
 ## Prerequisites
 
 What you'll need:
-1. AWS Account to deploy Panther into
-2. IAM user/role with permissions to create and manage the necessary resources
 
-The code samples below can be used to create the deployment roles:
+1. An AWS Account to deploy Panther into
+2. An IAM user or role with permissions to create and manage the necessary resources
 
-- AWS CloudFormation [Template](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml) and [S3 URL](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
+Use the code samples below to create the deployment roles:
+
+- [AWS CloudFormation Template](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml) and [S3 URL](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
 - [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf)
 
 {% hint style="info" %}
-We recommend deploying Panther into its own AWS account with [AWS Organizations](https://aws.amazon.com/blogs/security/how-to-use-aws-organizations-to-automate-end-to-end-account-creation/). This ensures that detection infrastructure is contained within a single place.
+We recommend deploying Panther into a dedicated AWS account via [AWS Organizations](https://aws.amazon.com/blogs/security/how-to-use-aws-organizations-to-automate-end-to-end-account-creation/). This ensures that detection infrastructure is contained within a single place.
 {% endhint %}
 
 ## Deployment
+
+Get started with 3 quick steps!
 
 #### Step 1
 
@@ -30,23 +33,21 @@ git clone https://github.com/panther-labs/panther --depth 1 --branch v0.3.0
 cd panther
 ```
 
-[Install and run Docker 17+](https://docs.docker.com/install/) and verify the service is up:
+[Install and run Docker 17+](https://docs.docker.com/install/), then verify the service is up:
 
  ```bash
  docker info
  ```
 
- Or check in the status bar (macOS):
+ The status bar will also display the Docker Icon (on macOS):
 
 ![Docker Status](.gitbook/assets/docker-status.png)
 
-For additional deployment options, [click here](quick-start.md#deployment-options).
+For customized deployment options, [click here](quick-start.md#deployment-options).
 
 #### Step 2
 
-{% hint style="info" %}
-Your AWS credentials _must_ be exported as environment variables before running the next command.
-{% endhint %}
+Note: Your AWS credentials _must_ be exported as environment variables before running the next command.
 
 Start the development environment:
 
@@ -69,7 +70,7 @@ mage setup:swagger deploy
 
 #### First Login
 
-Now you can sign into Panther! The URL is sent with the welcome email and also printed in the terminal at the end of the deploy command.
+Now you can sign into Panther! The URL is sent in the welcome email and also printed in the terminal at the end of the deploy command.
 
 {% hint style="warning" %}
 By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page:
@@ -83,15 +84,15 @@ Your connection _is_ encrypted, and it's generally safe to continue if the domai
 
 Congratulations! You are now ready to use Panther. Follow the steps below to get started.
 
-1. Invite your team.
-1. Configure [alert destinations](destinations/alert-setup/) for notifications
+1. Invite your team in Settings > Users > Invite User
+1. Configure [destinations](destinations/alert-setup/) to receive generated alerts
 2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
-3. Write custom [detection rules](log-analysis/rules/)
+3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
 4. Onboard accounts for [cloud security scans](policies/scanning/)
 5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
 6. Query collected logs with [historical search](historical-search/historical-search)
 
-#### Concepts
+## Concepts
 
 - **Event**: A normalized log line from a sources such as CloudTrail, Osquery, or Suricata
 - **Rule**: A Python function to detect suspicious activity
@@ -101,7 +102,7 @@ Congratulations! You are now ready to use Panther. Follow the steps below to get
 
 ## Support
 
-Having trouble getting started? Reach out to us:
+Having trouble? Reach out to us:
 
 - [Report Bugs on GitHub](https://github.com/panther-labs/panther/issues)
 - [Chat with us on Slack](https://panther-labs-oss-slackin.herokuapp.com/)
@@ -109,7 +110,18 @@ Having trouble getting started? Reach out to us:
 
 ## Security
 
-Your data is always under your control, encrypted in transit and at rest. All infrastructure is least-privilege, modeled and deployed with AWS CloudFormation.
+Your data is always under your control and encrypted both in transit and at rest. All created AWS infrastructure is least-privilege and deployed with AWS CloudFormation.
+
+### Privacy
+
+If you opt in to error reporting, the following information will be sent to the Panther team when there is a web application exception or crash:
+
+- The version of your Browser, OS & Panther installation
+  > This helps us understand how to replicate the issue.
+- The type of error, its related stack trace and the URL of the page in which it occurred.
+  > This helps us identify the code associated with the issue and gaining insight on the preceding function calls. **All sensitive parameters or variables are excluded**.
+
+The Panther team greatly benefits from understanding runtime issues that occur in installations and can enable us to resolve them quickly. You can always change your error reporting preferences through the **General Settings** page.
 
 ## Deployment Options
 

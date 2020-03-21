@@ -1,11 +1,6 @@
----
-description: >-
-  Panther is a cloud-native SIEM built for modern security teams.
----
-
 # Home
 
-## What is Panther
+## Overview
 
 Panther is a cloud-native platform for detecting threats with log data, improving cloud security posture, and conducting investigations.
 
@@ -18,24 +13,24 @@ Security teams can use Panther for:
 |      Searching IOCs      | Quickly search for matches against IOCs using standardized data fields                    |
 | Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices in code |
 
-The following diagram offers a high-level overview of Panther:
+The diagram below provides a high-level architecture of Panther:
 
 ![Architecture](.gitbook/assets/high-level-diagram.png)
 
-Panther has three main components:
+The three main components are:
 
-* **Log Analysis** to analyze log data and detect threats
-* **Historical Search** for analytics on collected log data and generated alerts
-* **Cloud Security** to improve cloud security posture
+* **Log Analysis** to centralize, parse, and analyze log data with Python
+* **Historical Search** for storage and analytics on collected log data and generated alerts
+* **Cloud Security** to scan AWS accounts, detect misconfigurations, and improve cloud security posture
 
-Benefits:
+The benefits of Panther include:
 
-- Built on scalable serverless technologies for cost and operational efficiency
-- Near real-time analysis, alerting, and remediation
 - Flexible Python-based detections
-- Quickly deploy with infrastructure as code
-- Secure, least-privilege, and encrypted infrastructure deployed within your AWS Cloud
+- Built on serverless technologies for high scale at low cost
+- Near real-time analysis for quick alerting and remediation
+- Simple deployments using infrastructure as code
+- Secure, least-privilege, and encrypted infrastructure deployed within your AWS account
 
-## Getting Started
+## Get Started!
 
-To get set up with Panther, continue with the [Quick Start](quick-start.md) on the next page.
+To get set up with Panther, continue to the [Quick Start](quick-start.md) on the next page.
