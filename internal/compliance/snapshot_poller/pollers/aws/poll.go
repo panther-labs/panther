@@ -19,6 +19,7 @@ package aws
  */
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -220,12 +221,16 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		return nil, errors.New("no valid AWS AccountID provided")
 	}
 
+	// Get the list of active regions to scan
+	sess := session.Must(session.NewSession(&aws.Config{}))
+
 	// Build the audit role manually
 	// 	Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole-($REGION)
 	if len(auditRoleName) == 0 {
 		return nil, errors.New("no audit role configured")
 	}
-	auditRoleARN := "arn:aws:iam::" + *scanRequest.AWSAccountID + ":role/" + auditRoleName
+	auditRoleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s-%s",
+		*scanRequest.AWSAccountID, auditRoleName, *sess.Config.Region)
 
 	zap.L().Debug("constructed audit role", zap.String("role", auditRoleARN))
 
@@ -265,9 +270,6 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			return nil, errors.Errorf("invalid single region resource type '%s' scan requested", *scanRequest.ResourceType)
 		}
 	}
-
-	// Get the list of active regions to scan
-	sess := session.Must(session.NewSession(&aws.Config{}))
 
 	var creds *credentials.Credentials
 	creds, err = AssumeRoleFunc(pollerResourceInput, sess)
