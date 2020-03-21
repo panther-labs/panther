@@ -6,17 +6,17 @@ The SNS Destination requires a `Topic ARN`. When an alert is forwarded to an SNS
 
 ![](../../.gitbook/assets/screen-shot-2019-10-31-at-5.21.18-pm.png)
 
-1. From the AWS [SNS console](https://us-west-2.console.aws.amazon.com/sns/v3/home#/topics), create a new Topic or navigate to the topic you wish to add as a destination. Copy the ARN out and into the Panther Destinations configuration, then select the topic. We will be editing its permissions so Panther can publish messages to it:
+From the AWS [SNS console](https://us-west-2.console.aws.amazon.com/sns/v3/home#/topics), create a new Topic or navigate to the topic you wish to add as a destination. Copy the ARN out and into the Panther Destinations configuration, then select the topic. We will be editing its permissions so Panther can publish messages to it:
 
 ![](../../.gitbook/assets/screen-shot-2019-11-01-at-1.05.55-pm.png)
 
-2. After selecting the SNS topic, select the `Edit` button then scroll down and expand the `Access policy` section:
+After selecting the SNS topic, select the `Edit` button then scroll down and expand the `Access policy` section:
 
 ![](../../.gitbook/assets/screen-shot-2019-11-01-at-1.09.53-pm.png)
 
-3. After expanding the `Access policy` section, add the following statement to the `Statement` block:
+After expanding the `Access policy` section, add the following statement to the `Statement` block:
 
-```text
+```json
     {
       "Sid": "AllowPantherAlarming",
       "Effect": "Allow",
