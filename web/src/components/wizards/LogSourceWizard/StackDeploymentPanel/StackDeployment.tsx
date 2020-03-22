@@ -42,7 +42,7 @@ const StackDeployment: React.FC = () => {
   });
 
   React.useEffect(() => {
-    if (data) {
+    if (data && downloadAnchor.current) {
       const blob = new Blob([data.getLogIntegrationTemplate.body], {
         type: 'text/yaml;charset=utf-8',
       });
