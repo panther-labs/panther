@@ -26,7 +26,6 @@ import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { LogSourceWizardValues } from '../LogSourceWizard';
 
 const StackDeployment: React.FC = () => {
-  const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
   const { initialValues, values, setStatus } = useFormikContext<LogSourceWizardValues>();
   const { data, loading, error } = useGetLogCfnTemplate({
     variables: {
@@ -41,16 +40,19 @@ const StackDeployment: React.FC = () => {
     },
   });
 
-  React.useEffect(() => {
-    if (data && downloadAnchor.current) {
-      const blob = new Blob([data.getLogIntegrationTemplate.body], {
-        type: 'text/yaml;charset=utf-8',
-      });
+  const downloadRef = React.useCallback(
+    node => {
+      if (data && node) {
+        const blob = new Blob([data.getLogIntegrationTemplate.body], {
+          type: 'text/yaml;charset=utf-8',
+        });
 
-      const downloadUrl = URL.createObjectURL(blob);
-      downloadAnchor.current.setAttribute('href', downloadUrl);
-    }
-  }, [downloadAnchor, data]);
+        const downloadUrl = URL.createObjectURL(blob);
+        node.setAttribute('href', downloadUrl);
+      }
+    },
+    [data]
+  );
 
   const stackName = getLogIntegrationStackName(values as LogIntegration);
   const cfnConsoleLink =
@@ -81,7 +83,7 @@ const StackDeployment: React.FC = () => {
             href="#"
             title="Download Cloudformation template"
             download={`${stackName}.yaml`}
-            ref={downloadAnchor}
+            ref={downloadRef}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
             Download template
@@ -150,7 +152,7 @@ const StackDeployment: React.FC = () => {
               of the account <b>{values.awsAccountId}</b>
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
-              3. Find the stack <b>{stackName}</b> (you may need to change regions)
+              3. Find the stack <b>{stackName}</b>
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
               4. Press <b>Update</b>, choose <b>Replace current template</b>

@@ -24,7 +24,6 @@ import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
 const StackDeployment: React.FC = () => {
-  const downloadAnchor = React.useRef<HTMLAnchorElement>(null);
   const { initialValues, values, setStatus } = useFormikContext<ComplianceSourceWizardValues>();
   const { data, loading, error } = useGetComplianceCfnTemplate({
     variables: {
@@ -37,16 +36,19 @@ const StackDeployment: React.FC = () => {
     },
   });
 
-  React.useEffect(() => {
-    if (data && downloadAnchor.current) {
-      const blob = new Blob([data.getComplianceIntegrationTemplate.body], {
-        type: 'text/yaml;charset=utf-8',
-      });
+  const downloadRef = React.useCallback(
+    node => {
+      if (data && node) {
+        const blob = new Blob([data.getComplianceIntegrationTemplate.body], {
+          type: 'text/yaml;charset=utf-8',
+        });
 
-      const downloadUrl = URL.createObjectURL(blob);
-      downloadAnchor.current.setAttribute('href', downloadUrl);
-    }
-  }, [downloadAnchor, data]);
+        const downloadUrl = URL.createObjectURL(blob);
+        node.setAttribute('href', downloadUrl);
+      }
+    },
+    [data]
+  );
 
   const stackName = getComplianceIntegrationStackName();
   const cfnConsoleLink =
@@ -75,7 +77,7 @@ const StackDeployment: React.FC = () => {
             href="#"
             title="Download Cloudformation template"
             download={`${stackName}.yaml`}
-            ref={downloadAnchor}
+            ref={downloadRef}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
             Download template
