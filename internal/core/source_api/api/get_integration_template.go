@@ -20,15 +20,26 @@ package api
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
 const (
+	TemplateBucket           = "panther-public-cloudformation-templates"
+	TemplateBucketRegion     = endpoints.UsWest2RegionID
+	CloudSecurityTemplateKey = "panther-cloudsec-iam/v1.0.0/template.yml"
+	LogProcessingTemplateKey = "panther-log-analysis-iam/v1.0.0/template.yml"
+	cacheTimeout             = time.Minute * 30
+
 	// Formatting variables used for re-writing the default templates
 	accountIDFind    = "Value: '' # MasterAccountId"
 	accountIDReplace = "Value: '%s' # MasterAccountId"
@@ -52,12 +63,32 @@ const (
 	kmsKeyReplace     = "Value: '%s' # KmsKey"
 )
 
+var (
+	templateCache = make(map[string]templateCacheItem, 2)
+
+	// Get the template from Panther's public S3 bucket
+	s3Client s3iface.S3API = s3.New(sess, &aws.Config{
+		Region: aws.String(TemplateBucketRegion),
+	})
+)
+
+type templateCacheItem struct {
+	Timestamp time.Time
+	Body      string
+}
+
 // GetIntegrationTemplate generates a new satellite account CloudFormation template based on the given parameters.
 func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*models.SourceIntegrationTemplate, error) {
 	zap.L().Debug("constructing source template")
 
+	// Get the template
+	template, err := getTemplate(input.IntegrationType)
+	if err != nil {
+		return nil, err
+	}
+
 	// Format the template with the user's input
-	formattedTemplate := strings.Replace(getTemplate(input.IntegrationType), accountIDFind,
+	formattedTemplate := strings.Replace(template, accountIDFind,
 		fmt.Sprintf(accountIDReplace, *input.AWSAccountID), 1)
 
 	// Cloud Security replacements
@@ -96,15 +127,41 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	}, nil
 }
 
-func getTemplate(integrationType *string) string {
-	switch *integrationType {
-	case models.IntegrationTypeAWSScan:
-		return cloudsecTemplate
-	case models.IntegrationTypeAWS3:
-		return logAnalysisTemplate
-	default:
-		panic("unknown integration type: " + *integrationType)
+func getTemplate(integrationType *string) (string, error) {
+	// First check the cache		switch *integrationType {
+	if item, ok := templateCache[*integrationType]; ok && time.Since(item.Timestamp) < cacheTimeout {
+		zap.L().Debug("using cached s3Object")
+		return item.Body, nil
 	}
+
+	templateRequest := &s3.GetObjectInput{
+		Bucket: aws.String(TemplateBucket),
+	}
+	if *integrationType == models.IntegrationTypeAWSScan {
+		templateRequest.Key = aws.String(CloudSecurityTemplateKey)
+	} else {
+		templateRequest.Key = aws.String(LogProcessingTemplateKey)
+	}
+	s3Object, err := s3Client.GetObject(templateRequest)
+	if err != nil {
+		return "", err
+	}
+
+	// Load the s3Object into memory. They're only ~8Kb in size.
+	templateBody, err := ioutil.ReadAll(s3Object.Body)
+	if err != nil {
+		return "", err
+	}
+
+	templateBodyString := string(templateBody)
+	// Update the cache
+	templateCache[*integrationType] = templateCacheItem{
+		Timestamp: time.Now(),
+		Body:      templateBodyString,
+	}
+
+	// Return the s3Object
+	return templateBodyString, nil
 }
 
 // Generates the ARN of the log processing role
