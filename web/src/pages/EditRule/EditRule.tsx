@@ -20,7 +20,7 @@ import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Button, Card, Box, useSnackbar } from 'pouncejs';
 import RuleForm, { ruleEditableFields } from 'Components/forms/RuleForm';
-import { PolicyDetails } from 'Generated/schema';
+import { RuleDetails } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
 import TablePlaceholder from 'Components/TablePlaceholder';
@@ -60,17 +60,17 @@ const EditRulePage: React.FC = () => {
 
   const initialValues = React.useMemo(() => {
     if (queryData) {
-      const { tests, ...otherInitialValues } = pick(
+      const { tests, dedupPeriodMinutes, ...otherInitialValues } = pick(
         queryData.rule,
         ruleEditableFields
-      ) as PolicyDetails;
-
+      ) as RuleDetails;
       // format any JSON returned from the server simply because we are going to display it
       // within an online web editor. To do that we parse the JSON and re-stringify it using proper
       // spacings that make it pretty (The server of course doesn't store these spacings when
       // it stores JSON, that's why we are making those here in the front-end)
       return {
         ...otherInitialValues,
+        dedupPeriodMinutes: dedupPeriodMinutes || 60,
         tests: tests.map(({ resource, ...restTestData }) => ({
           ...restTestData,
           resource: formatJSON(JSON.parse(resource)),

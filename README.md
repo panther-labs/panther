@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>Detect Threats with Log Data and Improve Cloud Security Posture</b>
+  <b>A Cloud-Native SIEM for the Modern Security Team</b>
 </p>
 
 <p align="center">
@@ -27,34 +27,40 @@
 
 ---
 
+Panther is a cloud-native platform for detecting threats with log data, improving cloud security posture, and conducting investigations.
+
 ## Use Cases
 
 Security teams can use Panther for:
 
-|         Use Case         | Description                                                                                                        |
-| :----------------------: | ------------------------------------------------------------------------------------------------------------------ |
-|  Continuous Monitoring   | Analyze logs in real-time and identify suspicious activity that could indicate a breach                            |
-|   Investigating Alerts   | Pivot across all security data to get the full context of an alert                                                 |
-|      Searching IOCs      | Utilize standardized data fields and quickly search for matches against ip addresses, domains, usernames, and more |
-| Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices                                  |
+|         Use Case         | Description                                                                               |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+|  Continuous Monitoring   | Analyze logs in real-time and identify suspicious activity that could indicate a breach   |
+|       Alert Triage       | Pivot across all of your security data to understand the full context of an alert         |
+|      Searching IOCs      | Quickly search for matches against IOCs using standardized data fields                    |
+| Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices in code |
+
+## Deployment
+
+Follow our [Quick Start Guide](https://docs.runpanther.io/quick-start) to deploy Panther in your AWS account in a matter of minutes!
+
+Use our [Tutorials](https://github.com/panther-labs/tutorials) to learn about security logging and data ingestion.
 
 ## Analysis
 
-Panther's detection logic is written in Python. Each deployment includes [150+ detections](https://github.com/panther-labs/panther-analysis/tree/master/analysis).
+Panther uses Python for analysis, and each deployment is pre-installed with [150+ open source detections](https://github.com/panther-labs/panther-analysis/tree/master/analysis).
 
 In the following example, [osquery](https://github.com/osquery/osquery) logs are analyzed to identify malware on a macOS laptop:
 
 ```python
 from fnmatch import fnmatch
 
-APPROVED_PATHS = {
-  '/System/*', '/usr/*', '/bin/*', '/sbin/*', '/var/*'
-}
+APPROVED_PATHS = {'/System/*', '/usr/*', '/bin/*', '/sbin/*', '/var/*'}
 
 
 def rule(event):
-    if not event.get('name', '').startswith('pack_osx-attacks_'):
-        return False
+    if 'osx-attacks' not in event.get('name'):
+      return False
 
     if event.get('action') != 'added':
         return False
@@ -64,11 +70,31 @@ def rule(event):
     return not any([fnmatch(process_path, p) for p in APPROVED_PATHS])
 ```
 
-## Deployment
+When this rule returns `True`, an alert will send to your team based on the defined severity.
 
-Follow our [Quick Start Guide](https://docs.runpanther.io/quick-start) to deploy Panther in your AWS account in a matter of minutes!
+The other analysis type is called a policy, and can be used to model security best practices on cloud resources:
 
-Use our [Tutorials](https://github.com/panther-labs/tutorials) to configure logging and data ingestion.
+```python
+REGIONS_REQUIRED = {'us-east-1'}
+
+
+def policy(resource):
+    regions_enabled = [detector.split(':')[1] for detector in resource['Detectors']]
+    for region in REGIONS_REQUIRED:
+        if region not in regions_enabled:
+            return False
+
+    return True
+```
+
+Returning `True` implies a resource is compliant, and returning `False` will `Fail` the policy and trigger an alert.
+
+For more information on the concepts above, check out our docs:
+
+- [Rules](https://docs.runpanther.io/log-analysis/rules)
+- [Supported Logs](https://docs.runpanther.io/log-analysis/supported-logs)
+- [Policies](https://docs.runpanther.io/policies/policies)
+- [Resource Types](https://docs.runpanther.io/policies/resources)
 
 ## Screenshots
 
@@ -92,7 +118,7 @@ We are a San Francisco based [startup](https://www.crunchbase.com/organization/p
 
 ### Why Panther?
 
-It's no longer feasible to find the needle in the security-log-haystack _manually_. Many teams are struggling to find a solution using traditional SIEMs or log analytics platforms due to their high costs, overhead, and inability to scale. Panther was built from the ground up to leverage the elasticity of cloud services to provide a highly scalable, performant, and flexible security solution at a much lower cost.
+It's no longer feasible to find the needle in the security-log-haystack _manually_. Many teams struggle to use traditional SIEMs due to their high costs, overhead, and inability to scale. Panther was built from the ground up to leverage the elasticity of cloud services and provide a highly scalable, performant, and flexible security solution at a much lower cost.
 
 ## Contributing
 

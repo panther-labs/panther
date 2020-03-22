@@ -38,6 +38,7 @@ export const initialValues: RuleDetails = {
   logTypes: [],
   runbook: '',
   severity: null,
+  dedupPeriodMinutes: 60,
   tags: [],
   body: DEFAULT_RULE_FUNCTION,
   tests: [],
