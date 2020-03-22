@@ -82,7 +82,7 @@ Your connection _is_ encrypted, and it's generally safe to continue if the domai
 
 ## Onboarding
 
-Congratulations! You are now ready to use Panther. Follow the steps below to get started.
+Congratulations! You are now ready to use Panther. Follow the steps below to configure your analysis and alerting:
 
 1. Invite your team in Settings > Users > Invite User
 1. Configure [destinations](destinations/alert-setup/) to receive generated alerts

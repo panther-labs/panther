@@ -4,7 +4,7 @@ Destinations are used to notify your team about suspicious activity or vulnerabl
 
 When a policy fails on a resource or a rule triggers on an event, an alert is generated and sent to the configured destination.
 
-Alerts are routed based on severity. For example, if a Rule is configured with a `Critical`, it will dispatch alerts to the default destinations configured to handle `Critical` alerts. A single alert may also dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
+Alerts are routed based on severity. For example, if a Rule is configured with a `Critical` severity, it will dispatch alerts to the  destinations configured to handle `Critical` alerts. A single alert will dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
 
 Supported destinations:
 
