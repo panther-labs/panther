@@ -19,10 +19,11 @@
 /* eslint-disable react/display-name */
 
 import React from 'react';
-import { TableProps, Box } from 'pouncejs';
+import { TableProps, Box, Text } from 'pouncejs';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import { LogIntegrationDetails } from 'Source/graphql/fragments/LogIntegrationDetails.generated';
 import LogSourceTableRowOptions from './LogSourceTableRowOptions';
+import LogSourceHealthIcon from './LogSourceHealthIcon';
 
 // The columns that the associated table will show
 const columns = [
@@ -32,31 +33,50 @@ const columns = [
   {
     key: 'integrationLabel',
     header: 'Label',
-    flex: '1 0 200px',
+    flex: '1 0 150px',
   },
 
   {
     key: 'awsAccountId',
     header: 'AWS Account ID',
-    flex: '1 0 200px',
+    flex: '1 0 125px',
+  },
+
+  {
+    key: 'logTypes',
+    header: 'Log Types',
+    flex: '1 0 125px',
+    renderCell: ({ logTypes }) => (
+      <Box>
+        {logTypes.map(logType => (
+          <Text size="medium" key={logType}>
+            {logType}
+          </Text>
+        ))}
+      </Box>
+    ),
   },
 
   {
     key: 's3Bucket',
     header: 'S3 Bucket',
-    flex: '1 0 100px',
+    flex: '1 0 200px',
   },
 
   {
     key: 's3Prefix',
     header: 'S3 Objects Prefix',
     flex: '1 0 100px',
+    renderCell: ({ s3Prefix }) => <Text size="medium">{s3Prefix || 'None'}</Text>,
   },
 
   {
-    key: 'logTypes',
-    header: 'Log Types',
-    flex: '1 0 100px',
+    key: 'health',
+    header: 'Healthy',
+    flex: '1 0 125px',
+    renderCell: source => {
+      return <LogSourceHealthIcon logSourceHealth={source.health} />;
+    },
   },
 
   {
