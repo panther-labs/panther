@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 )
 
 /**
@@ -30,7 +31,7 @@ const (
 )
 
 func init() {
-	sess.Config.Region = aws.String("us-east-1")
+	sess.Config.Region = aws.String(endpoints.UsEast1RegionID)
 }
 
 var apiTest = API{}
