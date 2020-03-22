@@ -34,8 +34,8 @@ import (
 )
 
 const (
-	cloudSecLabel      = "panther-cloud-security"
-	logProcessingLabel = "panther-log-processing" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
+	cloudSecLabel      = "panther-account-cloud-security"
+	logProcessingLabel = "panther-account-log-processing" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
 
 	onboardStack    = "panther-app-onboard"
 	onboardTemplate = "deployments/onboard.yml"
@@ -98,6 +98,8 @@ func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendO
 		logger.Fatalf("error calling lambda to register account: %v", err)
 	}
 
+	// Check if registered. Technically this is not needed (PutIntegration will just fail) BUT when PutIntegration
+	// fails this generates alarms. We don't want that so we check first and give a nice message.
 	registerCloudSec, registerLogProcessing := true, true
 	for _, integration := range listOutput {
 		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
