@@ -84,7 +84,7 @@ const columns = [
   {
     key: 'severity',
     sortable: true,
-    flex: '0 0 100px',
+    flex: '0 0 110px',
     header: 'Severity',
     renderCell: item => <Badge color={SEVERITY_COLOR_MAP[item.severity]}>{item.severity}</Badge>,
   },

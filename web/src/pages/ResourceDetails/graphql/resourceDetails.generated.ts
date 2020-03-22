@@ -54,7 +54,7 @@ export type ResourceDetails = {
     }>;
   }>;
   listComplianceIntegrations: Array<
-    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationLabel' | 'integrationId'>>
+    Pick<Types.ComplianceIntegration, 'integrationLabel' | 'integrationId'>
   >;
 };
 

@@ -64,6 +64,7 @@ func AddPermissionToLogProcessorQueue(accountID string) (bool, error) {
 
 	// queue has already been configured
 	if findStatementIndex(existingPolicy, accountID) >= 0 {
+		// if it already exists, no need to do anything
 		return false, nil
 	}
 

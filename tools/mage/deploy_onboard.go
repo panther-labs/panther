@@ -34,8 +34,8 @@ import (
 )
 
 const (
-	cloudSecLabel      = "panther-account-cloud-security"
-	logProcessingLabel = "panther-account-log-processing" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
+	cloudSecLabel      = "panther-account"
+	logProcessingLabel = "panther-account" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
 
 	onboardStack    = "panther-app-onboard"
 	onboardTemplate = "deployments/onboard.yml"

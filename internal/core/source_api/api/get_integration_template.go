@@ -128,7 +128,7 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 }
 
 func getTemplate(integrationType *string) (string, error) {
-	// First check the cache		switch *integrationType {
+	// First check the cache
 	if item, ok := templateCache[*integrationType]; ok && time.Since(item.Timestamp) < cacheTimeout {
 		zap.L().Debug("using cached s3Object")
 		return item.Body, nil

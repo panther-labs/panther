@@ -39,7 +39,7 @@ const ErrorReportingSection: React.FC = () => {
             color="grey300"
             size="medium"
             is="a"
-            href={`${PANTHER_SCHEMA_DOCS_LINK}/privacy/error-reporting`}
+            href={`${PANTHER_SCHEMA_DOCS_LINK}/quick-start#privacy`}
             rel="noopener noreferrer"
           >
             Read more
