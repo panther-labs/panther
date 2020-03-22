@@ -31,7 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
 )
 
-// ShowSchemas returns a JSON representation each suppoted log type
+// ShowSchemas returns a JSON representation each supported log type
 func ShowSchemas() {
 	schemas := []interface{}{
 		&awslogs.ALB{},
