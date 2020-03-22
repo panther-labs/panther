@@ -62,10 +62,8 @@ func AddPermissionToLogProcessorQueue(accountID string) (bool, error) {
 		}
 	}
 
+	// queue has already been configured
 	if findStatementIndex(existingPolicy, accountID) >= 0 {
-		zap.L().Warn("queue has already been configured",
-			zap.String("sqsQueueARN", logProcessorQueueArn),
-			zap.String("awsAccountId", accountID))
 		return false, nil
 	}
 
