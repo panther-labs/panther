@@ -22,12 +22,17 @@ import { SubmitButton } from 'Components/Buttons';
 import { useFormikContext } from 'formik';
 import { LogSourceWizardValues } from '../LogSourceWizard';
 
-interface SuccessPanelProps {
-  errorMessage?: string;
-}
+const SuccessPanel: React.FC = () => {
+  const { isSubmitting, initialValues, setStatus, status } = useFormikContext<
+    LogSourceWizardValues
+  >();
 
-const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
-  const { isSubmitting, initialValues } = useFormikContext<LogSourceWizardValues>();
+  // Reset error when the users navigate away from this stpe (so that when they come back, the
+  // previous error isn't presented at them)
+  React.useEffect(() => {
+    return () => setStatus({ ...status, errorMessage: null });
+  }, []);
+
   return (
     <Flex
       justifyContent="center"
@@ -49,7 +54,7 @@ const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
         {initialValues.integrationId ? 'Update Source' : 'Save Source'}
       </SubmitButton>
       <Text size="large" mt={6} color="red300">
-        {errorMessage}
+        {status.errorMessage}
       </Text>
     </Flex>
   );

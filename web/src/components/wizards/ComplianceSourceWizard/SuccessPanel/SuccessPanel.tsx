@@ -27,7 +27,16 @@ interface SuccessPanelProps {
 }
 
 const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
-  const { isSubmitting, initialValues } = useFormikContext<ComplianceSourceWizardValues>();
+  const { isSubmitting, initialValues, status, setStatus } = useFormikContext<
+    ComplianceSourceWizardValues
+  >();
+
+  // Reset error when the users navigate away from this stpe (so that when they come back, the
+  // previous error isn't presented at them)
+  React.useEffect(() => {
+    return () => setStatus({ ...status, errorMessage: null });
+  }, []);
+
   return (
     <Flex
       justifyContent="center"

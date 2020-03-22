@@ -72,43 +72,51 @@ const LogSourceWizard: React.FC<LogSourceWizardProps> = ({
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ isValid, dirty, handleSubmit, status }) => (
-        <form onSubmit={handleSubmit}>
-          <Wizard>
-            <Wizard.Step title="Configure Logs Source" icon="settings">
-              <WizardPanelWrapper>
-                <WizardPanelWrapper.Content>
-                  <SourceConfigurationPanel />
-                </WizardPanelWrapper.Content>
-                <WizardPanelWrapper.Actions>
-                  <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
-                </WizardPanelWrapper.Actions>
-              </WizardPanelWrapper>
-            </Wizard.Step>
-            <Wizard.Step title="Deploy Stack" icon="upload">
-              <WizardPanelWrapper>
-                <WizardPanelWrapper.Content>
-                  <StackDeploymentPanel />
-                </WizardPanelWrapper.Content>
-                <WizardPanelWrapper.Actions>
-                  <WizardPanelWrapper.ActionPrev />
-                  <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
-                </WizardPanelWrapper.Actions>
-              </WizardPanelWrapper>
-            </Wizard.Step>
-            <Wizard.Step title="Done!" icon="check">
-              <WizardPanelWrapper>
-                <WizardPanelWrapper.Content>
-                  <SuccessPanel errorMessage={externalErrorMessage} />
-                </WizardPanelWrapper.Content>
-                <WizardPanelWrapper.Actions>
-                  <WizardPanelWrapper.ActionPrev />
-                </WizardPanelWrapper.Actions>
-              </WizardPanelWrapper>
-            </Wizard.Step>
-          </Wizard>
-        </form>
-      )}
+      {({ isValid, dirty, handleSubmit, status, setStatus }) => {
+        // We want to reset the error message whenever the user goes back to a previous screen.
+        // That's why we handle it through status in order to manipulate it internally
+        React.useEffect(() => {
+          setStatus({ ...status, errorMessage: externalErrorMessage });
+        }, [externalErrorMessage]);
+
+        return (
+          <form onSubmit={handleSubmit}>
+            <Wizard>
+              <Wizard.Step title="Configure Logs Source" icon="settings">
+                <WizardPanelWrapper>
+                  <WizardPanelWrapper.Content>
+                    <SourceConfigurationPanel />
+                  </WizardPanelWrapper.Content>
+                  <WizardPanelWrapper.Actions>
+                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
+                  </WizardPanelWrapper.Actions>
+                </WizardPanelWrapper>
+              </Wizard.Step>
+              <Wizard.Step title="Deploy Stack" icon="upload">
+                <WizardPanelWrapper>
+                  <WizardPanelWrapper.Content>
+                    <StackDeploymentPanel />
+                  </WizardPanelWrapper.Content>
+                  <WizardPanelWrapper.Actions>
+                    <WizardPanelWrapper.ActionPrev />
+                    <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
+                  </WizardPanelWrapper.Actions>
+                </WizardPanelWrapper>
+              </Wizard.Step>
+              <Wizard.Step title="Done!" icon="check">
+                <WizardPanelWrapper>
+                  <WizardPanelWrapper.Content>
+                    <SuccessPanel />
+                  </WizardPanelWrapper.Content>
+                  <WizardPanelWrapper.Actions>
+                    <WizardPanelWrapper.ActionPrev />
+                  </WizardPanelWrapper.Actions>
+                </WizardPanelWrapper>
+              </Wizard.Step>
+            </Wizard>
+          </form>
+        );
+      }}
     </Formik>
   );
 };
