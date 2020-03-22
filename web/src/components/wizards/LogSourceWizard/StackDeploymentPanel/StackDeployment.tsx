@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Text, Box, Heading, Spinner } from 'pouncejs';
+import { Text, Box, Heading, Spinner, Flex } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage, getLogIntegrationStackName } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
@@ -127,9 +127,12 @@ const StackDeployment: React.FC = () => {
             account. This will update your previous IAM Role.
           </Text>
           <Box is="ol">
-            <Text size="large" is="li" color="grey200" mb={3}>
-              1. {renderDownloadTemplateLink()}
-            </Text>
+            <Flex is="li" alignItems="center" mb={3}>
+              <Text size="large" color="grey200" mr={1}>
+                1.
+              </Text>
+              {renderDownloadTemplateLink()}
+            </Flex>
             <Text size="large" is="li" color="grey200" mb={3}>
               2. Log into your
               <Text
