@@ -74,7 +74,7 @@ func generateLambdaAlarms(resource map[interface{}]interface{}, settings *config
 	// warns from metric filter (application logs)
 	// NOTE: it is important to not set units because the metric filter values have no units
 	alarms = append(alarms, NewLambdaMetricFilterAlarm("LambdaApplicationWarns", lambdaWarnsMetricFilterName,
-		"is warning", resource).SumNoUnitsThreshold(5, 60*5) /* tolerate a few warnings before alarming */)
+		"is warning", resource).SumNoUnitsThreshold(25, 60*5) /* tolerate a few warnings before alarming */)
 
 	// high water mark memory warning from metric filter
 	const memorySizeKey = "MemorySize"
