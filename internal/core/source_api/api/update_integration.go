@@ -56,11 +56,11 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		return nil, err
 	}
 	if !passing {
-		zap.L().Warn("UpdateIntegration: resource is not healthy",
+		zap.L().Warn("UpdateIntegration: resource has a misconfiguration",
 			zap.Error(err),
 			zap.String("reason", reason),
 			zap.Any("input", input))
-		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass health check because of %s",
+		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass configuration check because of %s",
 			*integration.AWSAccountID, reason)}
 	}
 

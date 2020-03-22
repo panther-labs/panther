@@ -58,12 +58,12 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 		return nil, putIntegrationInternalError
 	}
 	if !passing {
-		zap.L().Warn("PutIntegration: resource is not healthy",
+		zap.L().Warn("PutIntegration: resource has a misconfiguration",
 			zap.Error(err),
 			zap.String("reason", reason),
 			zap.Any("input", input))
 		return nil, &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("source %s did not pass health check because of %s",
+			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
 				*input.AWSAccountID, reason),
 		}
 	}
