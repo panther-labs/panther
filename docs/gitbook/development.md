@@ -1,8 +1,6 @@
----
-description: Working with the Panther repo
----
-
 # Development
+
+Panther is a collection of serverless applications deployed within your AWS account. The frontend is a React application which runs in a Docker container \(via ECS\), and the backend is a collection of compute \(Lambda\), storage \(DynamoDB / S3\), and other supporting services.
 
 ## Environment
 
