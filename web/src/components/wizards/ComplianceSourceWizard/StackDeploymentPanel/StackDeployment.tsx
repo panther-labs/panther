@@ -74,7 +74,7 @@ const StackDeployment: React.FC = () => {
           <a
             href="#"
             title="Download Cloudformation template"
-            download={`cloud-security-${values.awsAccountId}.yaml`}
+            download={`${stackName}.yaml`}
             ref={downloadAnchor}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
@@ -141,7 +141,7 @@ const StackDeployment: React.FC = () => {
               of the account <b>{values.awsAccountId}</b>
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
-              3. Find the stack <b>{stackName}</b> (you may need to change regions)
+              3. Find the stack <b>{stackName}</b>
             </Text>
             <Text size="large" is="li" color="grey200" mb={3}>
               4. Press <b>Update</b>, choose <b>Replace current template</b>

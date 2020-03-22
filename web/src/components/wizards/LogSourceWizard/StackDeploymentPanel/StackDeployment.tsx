@@ -80,7 +80,7 @@ const StackDeployment: React.FC = () => {
           <a
             href="#"
             title="Download Cloudformation template"
-            download={`cloud-security-${values.awsAccountId}.yaml`}
+            download={`${stackName}.yaml`}
             ref={downloadAnchor}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
