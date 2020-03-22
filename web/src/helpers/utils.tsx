@@ -19,6 +19,7 @@
 import dayjs from 'dayjs';
 import * as React from 'react';
 import * as Yup from 'yup';
+import kebabCase from 'lodash-es/kebabCase';
 import {
   ActiveSuppressCount,
   ComplianceIntegration,
@@ -250,5 +251,5 @@ export const getComplianceIntegrationStackName = () => {
 export const getLogIntegrationStackName = (
   source: Partial<LogIntegration> & Pick<LogIntegration, 'integrationLabel'>
 ) => {
-  return `panther-log-analysis-${source.integrationLabel.replace(/ /g, '-').toLowerCase()}`;
+  return `panther-log-analysis-${kebabCase(source.integrationLabel)}`;
 };

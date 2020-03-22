@@ -21,6 +21,8 @@ package api
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -37,22 +39,29 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 	}
 
 	// Validate the updated integration settings
-	passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
+	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		// From existing integration
 		AWSAccountID:    integration.AWSAccountID,
 		IntegrationType: integration.IntegrationType,
 
 		// From update integration request
+		IntegrationLabel:  input.IntegrationLabel,
 		EnableCWESetup:    input.CWEEnabled,
 		EnableRemediation: input.RemediationEnabled,
-		S3Buckets:         input.S3Buckets,
-		KmsKeys:           input.KmsKeys,
+		S3Bucket:          input.S3Bucket,
+		S3Prefix:          input.S3Prefix,
+		KmsKey:            input.KmsKey,
 	})
 	if err != nil {
 		return nil, err
 	}
 	if !passing {
-		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass health check", *integration.AWSAccountID)}
+		zap.L().Warn("UpdateIntegration: resource has a misconfiguration",
+			zap.Error(err),
+			zap.String("reason", reason),
+			zap.Any("input", input))
+		return nil, &genericapi.InvalidInputError{Message: fmt.Sprintf("integration %s did not pass configuration check because of %s",
+			*integration.AWSAccountID, reason)}
 	}
 
 	return db.UpdateItem(&ddb.UpdateIntegrationItem{
@@ -61,8 +70,10 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		ScanIntervalMins:   input.ScanIntervalMins,
 		CWEEnabled:         input.CWEEnabled,
 		RemediationEnabled: input.RemediationEnabled,
-		S3Buckets:          input.S3Buckets,
-		KmsKeys:            input.KmsKeys,
+		S3Bucket:           input.S3Bucket,
+		S3Prefix:           input.S3Prefix,
+		KmsKey:             input.KmsKey,
+		LogTypes:           input.LogTypes,
 	})
 }
 

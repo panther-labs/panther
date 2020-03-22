@@ -42,8 +42,15 @@ func classifyGuardDuty(_ gjson.Result, metadata *CloudTrailMetadata) []*resource
 			}, ":"),
 			ResourceType: schemas.GuardDutySchema,
 		}}
-	case "AcceptInvitation", "CreateDetector", "CreateMembers", "DeleteMembers", "DisassociateFromMasterAccount",
-		"DisassociateMembers", "StartMonitoringMembers", "StopMonitoringMembers":
+	case "AcceptInvitation",
+		"CreateDetector",
+		"CreateMembers",
+		"CreatePublishingDestination",
+		"DeleteMembers",
+		"DisassociateFromMasterAccount",
+		"DisassociateMembers",
+		"StartMonitoringMembers",
+		"StopMonitoringMembers":
 		// Full account scan
 		return []*resourceChange{{
 			AwsAccountID: metadata.accountID,

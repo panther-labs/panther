@@ -19,14 +19,15 @@ package api
  */
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -34,34 +35,46 @@ import (
 
 const (
 	TemplateBucket           = "panther-public-cloudformation-templates"
+	TemplateBucketRegion     = endpoints.UsWest2RegionID
 	CloudSecurityTemplateKey = "panther-cloudsec-iam/v1.0.0/template.yml"
-	LogProcessingTemplateKey = "panther-log-processing-iam/latest/template.yml"
-	cacheTimout              = time.Minute * 30
+	LogProcessingTemplateKey = "panther-log-analysis-iam/v1.0.0/template.yml"
+	cacheTimeout             = time.Minute * 30
+
+	// Formatting variables used for re-writing the default templates
+	accountIDFind    = "Value: '' # MasterAccountId"
+	accountIDReplace = "Value: '%s' # MasterAccountId"
+
+	// Formatting variables for Cloud Security
+	regionFind         = "Value: '' # MasterAccountRegion"
+	regionReplace      = "Value: '%s' # MasterAccountRegion"
+	cweFind            = "Value: '' # DeployCloudWatchEventSetup"
+	cweReplace         = "Value: '%t' # DeployCloudWatchEventSetup"
+	remediationFind    = "Value: '' # DeployRemediation"
+	remediationReplace = "Value: '%t' # DeployRemediation"
+
+	// Formatting variables for Log Analysis
+	roleSuffixIDFind  = "Value: '' # RoleSuffix"
+	roleSuffixReplace = "Value: '%s' # RoleSuffix"
+	s3BucketFind      = "Value: '' # S3Bucket"
+	s3BucketReplace   = "Value: '%s' # S3Bucket"
+	s3PrefixFind      = "Value: '' # S3Prefix"
+	s3PrefixReplace   = "Value: '%s' # S3Prefix"
+	kmsKeyFind        = "Value: '' # KmsKey"
+	kmsKeyReplace     = "Value: '%s' # KmsKey"
 )
 
 var (
 	templateCache = make(map[string]templateCacheItem, 2)
 
-	// Formatting variables used for re-writing the default templates
-	accountIDFind    = []byte("Value: '' # MasterAccountId")
-	accountIDReplace = "Value: %s # MasterAccountId"
-
-	// Formatting variables for Cloud Security
-	cweFind            = []byte("Value: '' # DeployCloudWatchEventSetup")
-	cweReplace         = "Value: %t # DeployCloudWatchEventSetup"
-	remediationFind    = []byte("Value: '' # DeployRemediation")
-	remediationReplace = "Value: %t # DeployRemediation"
-
-	// Formatting variables for Log Analysis
-	s3BucketFind    = []byte("Default: '' # S3Buckets")
-	s3BucketReplace = "Default: %s # S3Buckets"
-	kmsKeyFind      = []byte("Default: '' # EncryptionKeys")
-	kmsKeyReplace   = "Default: %s # EncryptionKeys"
+	// Get the template from Panther's public S3 bucket
+	s3Client s3iface.S3API = s3.New(sess, &aws.Config{
+		Region: aws.String(TemplateBucketRegion),
+	})
 )
 
 type templateCacheItem struct {
 	Timestamp time.Time
-	Body      []byte
+	Body      string
 }
 
 // GetIntegrationTemplate generates a new satellite account CloudFormation template based on the given parameters.
@@ -75,45 +88,52 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	}
 
 	// Format the template with the user's input
-	formattedTemplate := bytes.Replace(template, accountIDFind,
-		[]byte(fmt.Sprintf(accountIDReplace, *input.AWSAccountID)), 1)
+	formattedTemplate := strings.Replace(template, accountIDFind,
+		fmt.Sprintf(accountIDReplace, *input.AWSAccountID), 1)
 
 	// Cloud Security replacements
-	formattedTemplate = bytes.Replace(formattedTemplate, cweFind,
-		[]byte(fmt.Sprintf(cweReplace, *input.CWEEnabled)), 1)
-	formattedTemplate = bytes.Replace(formattedTemplate, remediationFind,
-		[]byte(fmt.Sprintf(remediationReplace, *input.RemediationEnabled)), 1)
+	if *input.IntegrationType == models.IntegrationTypeAWSScan {
+		formattedTemplate = strings.Replace(formattedTemplate, regionFind,
+			fmt.Sprintf(regionReplace, *sess.Config.Region), 1)
+		formattedTemplate = strings.Replace(formattedTemplate, cweFind,
+			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)), 1)
+		formattedTemplate = strings.Replace(formattedTemplate, remediationFind,
+			fmt.Sprintf(remediationReplace, aws.BoolValue(input.RemediationEnabled)), 1)
+	} else {
+		// Log Analysis replacements
+		formattedTemplate = strings.Replace(formattedTemplate, roleSuffixIDFind,
+			fmt.Sprintf(roleSuffixReplace, generateRoleSuffix(*input.IntegrationLabel)), 1)
 
-	// Log Analysis replacements
-	formattedTemplate = bytes.Replace(formattedTemplate, s3BucketFind,
-		[]byte(fmt.Sprintf(s3BucketReplace, strings.Join(sliceStringValue(input.S3Buckets), ","))), 1)
-	formattedTemplate = bytes.Replace(formattedTemplate, kmsKeyFind,
-		[]byte(fmt.Sprintf(kmsKeyReplace, strings.Join(sliceStringValue(input.KmsKeys), ","))), 1)
+		formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
+			fmt.Sprintf(s3BucketReplace, *input.S3Bucket), 1)
+
+		if input.S3Prefix != nil {
+			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
+				fmt.Sprintf(s3PrefixReplace, *input.S3Prefix), 1)
+		} else {
+			// If no S3Prefix is specified, add as default '*'
+			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
+				fmt.Sprintf(s3PrefixReplace, "*"), 1)
+		}
+
+		if input.KmsKey != nil {
+			formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,
+				fmt.Sprintf(kmsKeyReplace, *input.KmsKey), 1)
+		}
+	}
 
 	return &models.SourceIntegrationTemplate{
-		Body: aws.String(string(formattedTemplate)),
+		Body: aws.String(formattedTemplate),
 	}, nil
 }
 
-func sliceStringValue(stringPointers []*string) []string {
-	out := make([]string, 0, len(stringPointers))
-	for index, ptr := range stringPointers {
-		out[index] = aws.StringValue(ptr)
-	}
-	return out
-}
-
-func getTemplate(integrationType *string) ([]byte, error) {
+func getTemplate(integrationType *string) (string, error) {
 	// First check the cache
-	if item, ok := templateCache[*integrationType]; ok && time.Since(item.Timestamp) < cacheTimout {
-		zap.L().Debug("using cached template")
+	if item, ok := templateCache[*integrationType]; ok && time.Since(item.Timestamp) < cacheTimeout {
+		zap.L().Debug("using cached s3Object")
 		return item.Body, nil
 	}
 
-	// Get the template from Panther's public S3 bucket
-	s3Svc := s3.New(sess, &aws.Config{
-		Region: aws.String("us-west-2"),
-	})
 	templateRequest := &s3.GetObjectInput{
 		Bucket: aws.String(TemplateBucket),
 	}
@@ -122,23 +142,34 @@ func getTemplate(integrationType *string) ([]byte, error) {
 	} else {
 		templateRequest.Key = aws.String(LogProcessingTemplateKey)
 	}
-	template, err := s3Svc.GetObject(templateRequest)
+	s3Object, err := s3Client.GetObject(templateRequest)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Load the template into memory. They're only ~8Kb in size.
-	templateBody, err := ioutil.ReadAll(template.Body)
+	// Load the s3Object into memory. They're only ~8Kb in size.
+	templateBody, err := ioutil.ReadAll(s3Object.Body)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
+	templateBodyString := string(templateBody)
 	// Update the cache
 	templateCache[*integrationType] = templateCacheItem{
 		Timestamp: time.Now(),
-		Body:      templateBody,
+		Body:      templateBodyString,
 	}
 
-	// Return the template
-	return templateBody, nil
+	// Return the s3Object
+	return templateBodyString, nil
+}
+
+// Generates the ARN of the log processing role
+func generateLogProcessingRoleArn(awsAccountID string, label string) string {
+	return fmt.Sprintf(logProcessingRoleFormat, awsAccountID, generateRoleSuffix(label))
+}
+
+func generateRoleSuffix(label string) string {
+	sanitized := strings.ReplaceAll(label, " ", "-")
+	return strings.ToLower(sanitized)
 }

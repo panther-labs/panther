@@ -39,7 +39,7 @@ type PantherConfig struct {
 }
 
 type BucketsParameters struct {
-	AccessLogsBucketName string `yaml:"AccessLogsBucketName"`
+	S3AccessLogsBucket string `yaml:"S3AccessLogsBucket"`
 }
 
 type BackendParameters struct {
@@ -65,6 +65,10 @@ type MonitoringParameters struct {
 type OnboardingParameters struct {
 	// whether or not to on board the account running Panther as a Cloud Security source
 	OnboardSelf bool `yaml:"OnboardSelf"`
+	// whether or not to enable CloudTrail in the account
+	EnableCloudTrail bool `yaml:"EnableCloudTrail"`
+	// whether or not to enable GuardDuty in the account
+	EnableGuardDuty bool `yaml:"EnableGuardDuty"`
 }
 
 // Read settings from the config file

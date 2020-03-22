@@ -17,6 +17,26 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Template for onboarding the Panther account into Panther itself
 
+Parameters:
+  AuditLogsBucket:
+    Type: String
+    Description: The name of the S3 bucket which stores Panther audit logs
+  EnableCloudTrail:
+    Type: String
+    Description: If true, create a Panther CloudTrail in this account configured for log processing
+    AllowedValues: [true, false]
+  EnableGuardDuty:
+    Type: String
+    Description: If true, create a Panther GuardDuty in this account configured for log processing
+    AllowedValues: [true, false]
+  LogProcessingRoleLabel:
+    Type: String
+    Description: The suffix for the log processing role
+
+Conditions:
+  EnableCloudTrail: !Equals [!Ref EnableCloudTrail, true]
+  EnableGuardDuty: !Equals [!Ref EnableGuardDuty, true]
+
 Resources:
   # Permissions for CloudSecurity to scan this Account
   ComplianceRoles:
@@ -24,11 +44,157 @@ Resources:
     Properties:
       Parameters:
         MasterAccountId: !Ref AWS::AccountId
+        MasterAccountRegion: !Ref AWS::Region
         DeployRemediation: 'true'
         DeployCloudWatchEventSetup: 'true'
       TemplateURL: auxiliary/cloudformation/panther-cloudsec-iam.yml
-
   StackSetAdminRole:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: auxiliary/cloudformation/panther-stackset-iam-admin-role.yml
+
+  # CloudTrail monitoring in the Panther account
+  CloudTrail:
+    Condition: EnableCloudTrail
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      EnableLogFileValidation: false # we do not want Digest files being written, log processor does not understand these
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: false
+      S3BucketName: !Ref AuditLogsBucket
+      TrailName: !Sub panther-cloudtrail-${AWS::Region}
+
+  # Guard Duty monitoring in the Panther account
+  GuardDutyEncryptionKey:
+    Condition: EnableGuardDuty
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Encryption key for panther GuardDuty S3 writes
+      EnableKeyRotation: true
+      KeyPolicy:
+        # Allow account root user to administer key (required)
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+          - Effect: Allow
+            Principal:
+              Service: guardduty.amazonaws.com
+            Action:
+              - kms:GenerateDataKey
+            Resource: '*'
+  GuardDutyEncryptionKeyAlias:
+    Condition: EnableGuardDuty
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/panther-guardduty
+      TargetKeyId: !Ref GuardDutyEncryptionKey
+  GuardDutyDetector:
+    Condition: EnableGuardDuty
+    Type: AWS::GuardDuty::Detector
+    Properties:
+      Enable: true
+      FindingPublishingFrequency: FIFTEEN_MINUTES
+
+  # Configure the Log processing role and access to AuditLogsBucket
+  LogProcessingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub PantherLogProcessingRole-${LogProcessingRoleLabel}
+      Description: The Panther master account assumes this role to read log data
+      MaxSessionDuration: 3600 # 1 hour
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:SecureTransport: true
+      Policies:
+        - PolicyName: ReadData
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:GetBucketLocation
+                Resource: !Sub arn:aws:s3:::${AuditLogsBucket}
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${AuditLogsBucket}/*
+              - !If
+                - EnableGuardDuty
+                - Effect: Allow
+                  Action:
+                    - kms:Decrypt
+                    - kms:DescribeKey
+                  Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${GuardDutyEncryptionKey}
+                - !Ref AWS::NoValue
+
+  # Configure SNS Topic to receive bucket notifications
+  # This topic is used to notify the log processor queue whenever new data is written to the auditing bucket.
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: panther-auditlog-processing
+      # <cfndoc>
+      # The panther-auditlog-processing topic is used to send s3 notifications to log processing
+      # for log sources internal to the Panther account.
+      #</cfndoc>
+
+  # This policy is used to allow S3 to publish to the topic when new data is written to S3
+  TopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          # Reference: https://amzn.to/2ouFmhK
+          - Sid: AllowS3EventNotifications
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref Topic
+          - Sid: AllowCloudTrailNotification
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref Topic
+          - Sid: AllowSubscriptionToPanther
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: sns:Subscribe
+            Resource: !Ref Topic
+      Topics:
+        - !Ref Topic
+
+  # SNS Topic subscription to Panther
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
+      Protocol: sqs
+      RawMessageDelivery: false
+      TopicArn: !Ref Topic
+
+Outputs:
+  LogProcessingTopicArn:
+    Description: The ARN of the SNS Topic that will be notifying Panther of new data
+    Value: !Ref Topic
+  GuardDutyDetectorId:
+    Description: The id of the GuardDuty configuration
+    Value: !If [EnableGuardDuty, !Ref GuardDutyDetector, '']
+  GuardDutyKmsKeyArn:
+    Description: The ARN of the kms key for the GuardDuty configuration
+    Value: !If
+      - EnableGuardDuty
+      - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${GuardDutyEncryptionKey}
+      - ''

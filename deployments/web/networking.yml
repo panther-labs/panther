@@ -17,6 +17,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: The networking resources that can be used by load balancer & ECS related services
 
+Parameters:
+  AuditLogsBucket:
+    Type: String
+    Description: The name of the S3 bucket which stores Pather audit logs
+
 Mappings:
   SubnetConfig:
     VPC:
@@ -94,6 +99,16 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetTwo
       RouteTableId: !Ref PublicRouteTable
+
+  # Panther monitors itself, the AuditLogsBucket is processed by the log processor
+  FlowLogs:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      LogDestination: !Sub arn:aws:s3:::${AuditLogsBucket}
+      LogDestinationType: s3
+      ResourceId: !Ref VPC
+      ResourceType: VPC
+      TrafficType: ALL
 
 Outputs:
   VpcId:

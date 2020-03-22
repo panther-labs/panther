@@ -39,7 +39,7 @@ const EditComplianceSource: React.FC = () => {
     },
   });
 
-  const [updateRole, { error: updateError }] = useUpdateComplianceSource({
+  const [updateComplianceSource, { error: updateError }] = useUpdateComplianceSource({
     onCompleted: () => history.push(urls.compliance.sources.list()),
   });
 
@@ -60,12 +60,12 @@ const EditComplianceSource: React.FC = () => {
   }
 
   return (
-    <Card p={9}>
+    <Card p={9} mb={6}>
       <ComplianceSourceWizard
         initialValues={initialValues}
         externalErrorMessage={updateError && extractErrorMessage(updateError)}
         onSubmit={values =>
-          updateRole({
+          updateComplianceSource({
             variables: {
               input: {
                 integrationId: match.params.id,

@@ -25,12 +25,18 @@ MonitoringParameterValues:
 # CloudFormation parameter overrides for the core/buckets.yml prerequisite stack.
 BucketsParameterValues:
   # Use an existing S3 bucket for storing access logs. If not specified, one is created for you.
-  AccessLogsBucketName: ''
+  S3AccessLogsBucket: ''
 
-# CloudFormation parameters for the monitoring.yml which deploys the monitoring stack.
+# CloudFormation parameters for controlling how Panther monitors this account (itself)
 OnboardingParameterValues:
   # Whether or not the Panther deployment should automatically onboard itself as a data source.
   OnboardSelf: true
+  # Whether or not to create a CloudTrail in the Panther account and monitor.
+  # You may want this off if you have org-level CT configured for Panther to avoid ingesting the same data twice.
+  EnableCloudTrail: true
+  # Whether or not to enable GuardDuty in the Panther account and monitor.
+  # You may want this off if you have org-level GD configured for Panther.
+  EnableGuardDuty: true
 
 # CloudFormation parameter overrides for the backend.yml which deploys the backend stack.
 BackendParameterValues:

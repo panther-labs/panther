@@ -19,19 +19,28 @@ package mage
  */
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/guardduty"
+	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
+	cloudSecLabel      = "panther-account"
+	logProcessingLabel = "panther-account" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
+
 	onboardStack    = "panther-app-onboard"
 	onboardTemplate = "deployments/onboard.yml"
 
+	// CloudSec IAM Roles, DO NOT CHANGE! panther-cloudsec-iam.yml CF depends on these names
 	realTimeEventStackSetURL             = "https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml" // nolint:lll
 	realTimeEventsStackSet               = "panther-real-time-events"
 	realTimeEventsExecutionRoleName      = "PantherCloudFormationStackSetExecutionRole"
@@ -39,56 +48,120 @@ const (
 	realTimeEventsQueueName              = "panther-aws-events-queue" // needs to match what is in aws_events_processor.yml
 )
 
+// make label regionally unique
+func genLogProcessingLabel(awsSession *session.Session) string {
+	return logProcessingLabel + "-" + *awsSession.Config.Region
+}
+
 // onboard Panther to monitor Panther account
-func deployOnboard(awsSession *session.Session, bucket string, backendOutputs map[string]string) {
-	deployCloudSecRoles(awsSession, bucket)
-	registerPantherAccount(awsSession, backendOutputs["AWSAccountId"]) // this MUST follow the CloudSec roles being deployed
+func deployOnboard(awsSession *session.Session, settings *config.PantherConfig, bucketOutputs, backendOutputs map[string]string) {
+	deployOnboardTemplate(awsSession, settings, bucketOutputs)
+	registerPantherAccount(awsSession, bucketOutputs, backendOutputs) // this MUST follow the CloudSec roles being deployed
 	deployRealTimeStackSet(awsSession, backendOutputs["AWSAccountId"])
 }
 
-func deployCloudSecRoles(awsSession *session.Session, bucket string) {
-	iamClient := iam.New(awsSession)
-	auditRoleExists, err := roleExists(iamClient, auditRole)
-	if err != nil {
-		logger.Fatalf("error checking audit role name %s: %v", auditRole, err)
+func deployOnboardTemplate(awsSession *session.Session, settings *config.PantherConfig, bucketOutputs map[string]string) {
+	if settings.OnboardParameterValues.EnableCloudTrail {
+		logger.Info("deploy: enabling CloudTrail in Panther account (see panther_config.yml)")
 	}
-	remediationRoleExists, err := roleExists(iamClient, remediationRole)
-	if err != nil {
-		logger.Fatalf("error checking remediation role name %s: %v", remediationRole, err)
-	}
-	adminRoleExists, err := roleExists(iamClient, realTimeEventsAdministrationRoleName)
-	if err != nil {
-		logger.Fatalf("error checking admin role name %s: %v", realTimeEventsAdministrationRoleName, err)
+	if settings.OnboardParameterValues.EnableGuardDuty {
+		logger.Info("deploy: enabling Guard Duty in Panther account (see panther_config.yml)")
 	}
 
-	if !auditRoleExists && !remediationRoleExists && !adminRoleExists {
-		logger.Info("deploy: creating iam roles for CloudSecurity")
-		params := map[string]string{} // currently none
-		deployTemplate(awsSession, onboardTemplate, bucket, onboardStack, params)
-	} else {
-		logger.Info("deploy: iam roles for CloudSecurity exist (not creating)")
+	// GD is account wide, not regional. Test if some other region has already enabled GD.
+	if guardDutyEnabledOutsidePanther(awsSession, settings) {
+		logger.Info("deploy: Guard Duty is already enabled for this account (not by Panther)")
+		settings.OnboardParameterValues.EnableGuardDuty = false
 	}
+
+	params := map[string]string{
+		"AuditLogsBucket":        bucketOutputs["AuditLogsBucket"],
+		"EnableCloudTrail":       strconv.FormatBool(settings.OnboardParameterValues.EnableCloudTrail),
+		"EnableGuardDuty":        strconv.FormatBool(settings.OnboardParameterValues.EnableGuardDuty),
+		"LogProcessingRoleLabel": genLogProcessingLabel(awsSession),
+	}
+	onboardOutputs := deployTemplate(awsSession, onboardTemplate, bucketOutputs["SourceBucketName"], onboardStack, params)
+	configureLogProcessingUsingAPIs(awsSession, settings, bucketOutputs, onboardOutputs)
 }
 
-func registerPantherAccount(awsSession *session.Session, pantherAccountID string) {
-	logger.Infof("deploy: registering account %s with Panther", pantherAccountID)
-	var apiInput = struct {
-		PutIntegration *models.PutIntegrationInput
+func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendOutputs map[string]string) {
+	logger.Infof("deploy: registering account %s with Panther for monitoring", backendOutputs["AWSAccountId"])
+
+	// avoid alarms/errors and check first if the integrations exist
+	var listOutput []*models.SourceIntegration
+	var listInput = struct {
+		ListIntegrations *models.ListIntegrationsInput
 	}{
-		&models.PutIntegrationInput{
-			Integrations: []*models.PutIntegrationSettings{
-				{
-					AWSAccountID:     aws.String(pantherAccountID),
-					IntegrationLabel: aws.String("Panther Account"),
+		&models.ListIntegrationsInput{},
+	}
+	if err := invokeLambda(awsSession, "panther-source-api", listInput, &listOutput); err != nil {
+		logger.Fatalf("error calling lambda to register account: %v", err)
+	}
+
+	// Check if registered. Technically this is not needed (PutIntegration will just fail) BUT when PutIntegration
+	// fails this generates alarms. We don't want that so we check first and give a nice message.
+	registerCloudSec, registerLogProcessing := true, true
+	for _, integration := range listOutput {
+		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
+			*integration.IntegrationType == models.IntegrationTypeAWSScan &&
+			*integration.IntegrationLabel == cloudSecLabel {
+
+			logger.Infof("deploy: account %s is already registered for cloud security", backendOutputs["AWSAccountId"])
+			registerCloudSec = false
+		}
+		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
+			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
+			*integration.IntegrationLabel == genLogProcessingLabel(awsSession) {
+
+			logger.Infof("deploy: account %s is already registered for log processing", backendOutputs["AWSAccountId"])
+			registerLogProcessing = false
+		}
+	}
+
+	if registerCloudSec {
+		var cloudSecInput = struct {
+			PutIntegration *models.PutIntegrationInput
+		}{
+			&models.PutIntegrationInput{
+				PutIntegrationSettings: models.PutIntegrationSettings{
+					AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
+					IntegrationLabel: aws.String(cloudSecLabel),
 					IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
 					ScanIntervalMins: aws.Int(1440),
 					UserID:           aws.String(mageUserID),
 				},
 			},
-		},
+		}
+		if err := invokeLambda(awsSession, "panther-source-api", cloudSecInput, nil); err != nil &&
+			!strings.Contains(err.Error(), "already onboarded") {
+
+			logger.Fatalf("error calling lambda to register account for cloud security: %v", err)
+		}
+		logger.Infof("deploy: account %s registered for cloud security",
+			backendOutputs["AWSAccountId"])
 	}
-	if err := invokeLambda(awsSession, "panther-source-api", apiInput, nil); err != nil {
-		logger.Fatalf("error calling lambda to register account: %v", err)
+
+	if registerLogProcessing {
+		var logProcessingInput = struct {
+			PutIntegration *models.PutIntegrationInput
+		}{
+			&models.PutIntegrationInput{
+				PutIntegrationSettings: models.PutIntegrationSettings{
+					AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
+					IntegrationLabel: aws.String(genLogProcessingLabel(awsSession)),
+					IntegrationType:  aws.String(models.IntegrationTypeAWS3),
+					UserID:           aws.String(mageUserID),
+					S3Bucket:         aws.String(bucketOutputs["AuditLogsBucket"]),
+				},
+			},
+		}
+		if err := invokeLambda(awsSession, "panther-source-api", logProcessingInput, nil); err != nil &&
+			!strings.Contains(err.Error(), "already onboarded") {
+
+			logger.Fatalf("error calling lambda to register account for log processing: %v", err)
+		}
+		logger.Infof("deploy: account %s registered for log processing",
+			backendOutputs["AWSAccountId"])
 	}
 }
 
@@ -112,9 +185,10 @@ func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string
 				Value: aws.String("Panther"),
 			},
 		},
-		TemplateURL:           aws.String(realTimeEventStackSetURL),
-		ExecutionRoleName:     aws.String(realTimeEventsExecutionRoleName),
-		AdministrationRoleARN: aws.String("arn:aws:iam::" + pantherAccountID + ":role/" + realTimeEventsAdministrationRoleName),
+		TemplateURL:       aws.String(realTimeEventStackSetURL),
+		ExecutionRoleName: aws.String(realTimeEventsExecutionRoleName + "-" + *awsSession.Config.Region),
+		AdministrationRoleARN: aws.String("arn:aws:iam::" + pantherAccountID + ":role/" +
+			realTimeEventsAdministrationRoleName + "-" + *awsSession.Config.Region),
 		Parameters: []*cloudformation.Parameter{
 			{
 				ParameterKey:   aws.String("MasterAccountId"),
@@ -145,5 +219,82 @@ func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string
 	_, err = cfClient.CreateStackInstances(stackSetInstancesInput)
 	if err != nil && !alreadyExists(err) {
 		logger.Fatalf("error creating real time stack instance: %v", err)
+	}
+}
+
+func configureLogProcessingUsingAPIs(awsSession *session.Session, settings *config.PantherConfig,
+	bucketOutputs, onboardOutputs map[string]string) {
+
+	// currently GuardDuty does not support this in CF
+	configureLogProcessingGuardDuty(awsSession, settings, bucketOutputs, onboardOutputs)
+
+	// configure notifications on the audit bucket, cannot be done via CF
+	topicArn := onboardOutputs["LogProcessingTopicArn"]
+	logBucket := bucketOutputs["AuditLogsBucket"]
+	s3Client := s3.New(awsSession)
+	input := &s3.PutBucketNotificationConfigurationInput{
+		Bucket: aws.String(logBucket),
+		NotificationConfiguration: &s3.NotificationConfiguration{
+			TopicConfigurations: []*s3.TopicConfiguration{
+				{
+					Events: []*string{
+						aws.String(s3.EventS3ObjectCreated),
+					},
+					TopicArn: &topicArn,
+				},
+			},
+		},
+	}
+	_, err := s3Client.PutBucketNotificationConfiguration(input)
+	if err != nil {
+		logger.Fatalf("failed to add s3 notifications to %s from %s: %v", logBucket, topicArn, err)
+	}
+}
+
+func guardDutyEnabledOutsidePanther(awsSession *session.Session, settings *config.PantherConfig) bool {
+	if !settings.OnboardParameterValues.EnableGuardDuty {
+		return false
+	}
+	gdClient := guardduty.New(awsSession)
+	input := &guardduty.ListDetectorsInput{}
+	output, err := gdClient.ListDetectors(input)
+	if err != nil {
+		logger.Fatalf("deploy: unable to check guard duty: %v", err)
+	}
+	if len(output.DetectorIds) != 1 {
+		return false // we only make 1
+	}
+	// we need to check that it is THIS region's stack the enabled it
+	_, onboardOutput, err := describeStack(cloudformation.New(awsSession), onboardStack)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudformation.ErrCodeStackSetNotFoundException {
+			return true // not deployed anything yet in this region BUT it is enabled, must be another deployment
+		}
+		logger.Fatalf("deploy: cannot check stack %s: %v", onboardStack, err)
+	}
+	// if my stack has no reference, then it must have been enabled by another deployment
+	return len(onboardOutput) == 0 || onboardOutput["GuardDutyDetectorId"] == ""
+}
+
+func configureLogProcessingGuardDuty(awsSession *session.Session, settings *config.PantherConfig,
+	bucketOutputs, onboardOutputs map[string]string) {
+
+	if !settings.OnboardParameterValues.EnableGuardDuty {
+		return
+	}
+	gdClient := guardduty.New(awsSession)
+	publishInput := &guardduty.CreatePublishingDestinationInput{
+		DetectorId:      aws.String(onboardOutputs["GuardDutyDetectorId"]),
+		DestinationType: aws.String("S3"),
+		DestinationProperties: &guardduty.DestinationProperties{
+			DestinationArn: aws.String("arn:aws:s3:::" + bucketOutputs["AuditLogsBucket"]),
+			KmsKeyArn:      aws.String(onboardOutputs["GuardDutyKmsKeyArn"]),
+		},
+	}
+	_, err := gdClient.CreatePublishingDestination(publishInput)
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
+		logger.Fatalf("failed to configure Guard Duty detector %s to use bucket %s with kms key %s: %v",
+			onboardOutputs["GuardDutyDetectorId"], bucketOutputs["AuditLogsBucket"],
+			onboardOutputs["GuardDutyKmsKeyArn"], err)
 	}
 }

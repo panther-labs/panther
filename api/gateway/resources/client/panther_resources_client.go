@@ -26,7 +26,7 @@ package client
 import (
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
+	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
 )
@@ -73,7 +73,9 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *PantherRes
 
 	cli := new(PantherResources)
 	cli.Transport = transport
+
 	cli.Operations = operations.New(transport, formats)
+
 	return cli
 }
 
@@ -118,7 +120,7 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // PantherResources is a client for panther resources
 type PantherResources struct {
-	Operations operations.ClientService
+	Operations *operations.Client
 
 	Transport runtime.ClientTransport
 }
@@ -126,5 +128,7 @@ type PantherResources struct {
 // SetTransport changes the transport on the client and all its subresources
 func (c *PantherResources) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
+
 	c.Operations.SetTransport(transport)
+
 }

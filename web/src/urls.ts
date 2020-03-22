@@ -19,6 +19,7 @@
 import {
   AlertDetails,
   ComplianceIntegration,
+  LogIntegration,
   PolicyDetails,
   ResourceDetails,
   RuleDetails,
@@ -66,6 +67,8 @@ const urls = {
     sources: {
       list: () => `${urls.logAnalysis.home()}sources/`,
       create: () => `${urls.logAnalysis.sources.list()}new/`,
+      edit: (id: LogIntegration['integrationId']) =>
+        `${urls.logAnalysis.sources.list()}${id}/edit/`,
     },
   },
   settings: {

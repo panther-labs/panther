@@ -26,6 +26,8 @@ Mappings:
   PantherParameters:
     MasterAccountId:
       Value: '' # MasterAccountId
+    MasterAccountRegion:
+      Value: '' # MasterAccountRegion
     DeployCloudWatchEventSetup:
       Value: '' # DeployCloudWatchEventSetup
     DeployRemediation:
@@ -34,6 +36,10 @@ Mappings:
 Parameters:
   # Required parameters
   MasterAccountId:
+    Type: String
+    Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
+    Default: ''
+  MasterAccountRegion:
     Type: String
     Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
     Default: ''
@@ -76,7 +82,7 @@ Resources:
   AuditRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherAuditRole # DO NOT CHANGE! backend.yml CF depends on this name, set in mage deploy
+      RoleName: !Sub PantherAuditRole-${MasterAccountRegion} # DO NOT CHANGE! backend.yml CF depends on this name
       Description: The Panther master account assumes this role for read-only security scanning
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -149,7 +155,7 @@ Resources:
     Condition: EnableCloudWatchEvent
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherCloudFormationStackSetExecutionRole
+      RoleName: !Sub PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion} # DO NOT CHANGE!
       Description: CloudFormation assumes this role to execute a stack set
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -189,7 +195,7 @@ Resources:
     Condition: EnableAutoRemediation
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherRemediationRole
+      RoleName: !Sub PantherRemediationRole-${MasterAccountRegion} # DO NOT CHANGE! backend.yml CF depends on this name
       Description: The Panther master account assumes this role for automatic remediation of policy violations
       MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:
