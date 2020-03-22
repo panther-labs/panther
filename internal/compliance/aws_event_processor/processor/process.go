@@ -99,6 +99,8 @@ var (
 		"ConfirmForgotPassword": {},
 
 		// config
+		"BatchGetResourceConfig":          {},
+		"SelectResourceConfig":            {},
 		"PutAggregationAuthorization":     {},
 		"PutConfigurationAggregator":      {},
 		"PutDeliveryChannel":              {},
