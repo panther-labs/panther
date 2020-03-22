@@ -154,7 +154,7 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (string, bool, error) {
 	status, err := api.CheckIntegration(integration)
 	if err != nil {
-		zap.L().Error("integration failed health check",
+		zap.L().Error("integration failed configuration check",
 			zap.Error(err),
 			zap.Any("integration", integration),
 			zap.Any("status", status))
@@ -164,24 +164,24 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 	switch aws.StringValue(integration.IntegrationType) {
 	case models.IntegrationTypeAWSScan:
 		if !aws.BoolValue(status.AuditRoleStatus.Healthy) {
-			return "unhealthy audit role", false, nil
+			return "audit role has a misconfiguration", false, nil
 		}
 
 		if aws.BoolValue(integration.EnableRemediation) && !aws.BoolValue(status.RemediationRoleStatus.Healthy) {
-			return "unhealthy remediation role", false, nil
+			return "remediation role has a misconfiguration", false, nil
 		}
 
 		if aws.BoolValue(integration.EnableCWESetup) && !aws.BoolValue(status.CWERoleStatus.Healthy) {
-			return "unhealthy cwe role", false, nil
+			return "cwe role has a misconfiguration", false, nil
 		}
 		return "", true, nil
 	case models.IntegrationTypeAWS3:
 		if !aws.BoolValue(status.ProcessingRoleStatus.Healthy) || !aws.BoolValue(status.S3BucketStatus.Healthy) {
-			return "unhealthy log processing role", false, nil
+			return "log processing role has a misconfiguration", false, nil
 		}
 
 		if integration.KmsKey != nil {
-			return "unhealthy kms key", aws.BoolValue(status.KMSKeyStatus.Healthy), nil
+			return "kms key has a misconfiguration", aws.BoolValue(status.KMSKeyStatus.Healthy), nil
 		}
 		return "", true, nil
 	default:
