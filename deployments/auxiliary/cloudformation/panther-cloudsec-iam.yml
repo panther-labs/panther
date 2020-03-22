@@ -38,11 +38,11 @@ Parameters:
   MasterAccountId:
     Type: String
     Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
-    Default: '' # MasterAccountId
+    Default: ''
   MasterAccountRegion:
     Type: String
     Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
-    Default: '' # MasterAccountRegion
+    Default: ''
 
   # Deployment toggles
   DeployCloudWatchEventSetup:
