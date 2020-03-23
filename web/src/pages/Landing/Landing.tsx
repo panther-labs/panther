@@ -31,7 +31,7 @@ const LandingPage: React.FC = () => {
                 Create multiple users and get your team onboarded to Panther
               </Text>
               <Text color="blue300" p={4} is={Link} to={urls.settings.users()} size="large">
-                Create your Team
+                Manage Users
               </Text>
             </Flex>
             <Flex flexDirection="column" justifyContent="center" alignItems="center" px={10} py={5}>
@@ -67,7 +67,7 @@ const LandingPage: React.FC = () => {
                 to={urls.logAnalysis.sources.create()}
                 size="large"
               >
-                Connect log bucket
+                Connect S3 Buckets
               </Text>
             </Flex>
           </Grid>
