@@ -223,5 +223,6 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		KmsKey:            input.KmsKey,
 		LogTypes:          input.LogTypes,
 		LogProcessingRole: logProcessingRole,
+		StackName:         aws.String(getStackName(*input.IntegrationType, *input.IntegrationLabel)),
 	}
 }

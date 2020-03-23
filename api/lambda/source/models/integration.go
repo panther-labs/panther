@@ -43,6 +43,7 @@ type SourceIntegrationMetadata struct {
 	KmsKey             *string    `json:"kmsKey,omitempty"`
 	LogTypes           []*string  `json:"logTypes,omitempty"`
 	LogProcessingRole  *string    `json:"logProcessingRole,omitempty"`
+	StackName          *string    `json:"stackName,omitempty"`
 }
 
 // SourceIntegrationStatus provides context that the full scan works and that events are being received.
@@ -79,5 +80,6 @@ type SourceIntegrationItemStatus struct {
 }
 
 type SourceIntegrationTemplate struct {
-	Body *string `json:"body"`
+	Body      *string `json:"body"`
+	StackName *string `json:"stackName"`
 }
