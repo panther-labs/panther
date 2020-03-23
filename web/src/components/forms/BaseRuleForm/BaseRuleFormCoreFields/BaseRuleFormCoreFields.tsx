@@ -170,7 +170,7 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
           inputProps={tagsInputProps}
         />
         {type === 'rule' && (
-          <>
+          <React.Fragment>
             <Field
               as={FormikMultiCombobox}
               searchable
@@ -186,7 +186,7 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
               items={dedupPeriodMinutesOptions}
               itemToString={minutesToString}
             />
-          </>
+          </React.Fragment>
         )}
       </Grid>
       <Box my={6}>
