@@ -43,6 +43,18 @@
         "bug",
         "infra"
       ]
+    },
+    {
+      "login": "kostaspap",
+      "name": "Kostas Papageorgiou",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/2652630?v=4",
+      "profile": "https://github.com/kostaspap",
+      "contributions": [
+        "code",
+        "security",
+        "bug",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
