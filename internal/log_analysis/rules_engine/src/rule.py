@@ -123,7 +123,12 @@ class Rule:
         if not self._has_dedup:
             # If no dedup function defined, return rule id
             return self.rule_id
-        dedup_string = _run_command(self._module.dedup, event, str)
+        try:
+            dedup_string = _run_command(self._module.dedup, event, str)
+        except Exception as err:  # pylint: disable=broad-except
+            self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
+            return self.rule_id
+
         if dedup_string:
             if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
                 # If dedup_string exceeds max size, truncate it
@@ -140,8 +145,12 @@ class Rule:
     def _get_title(self, event: Dict[str, Any]) -> Optional[str]:
         if not self._has_title:
             return None
+        try:
+            title_string = _run_command(self._module.title, event, str)
+        except Exception as err:  # pylint: disable=broad-except
+            self.logger.warning('title method raised exception. Using default. Exception: %s', err)
+            return None
 
-        title_string = _run_command(self._module.title, event, str)
         if title_string:
             if len(title_string) > MAX_TITLE_SIZE:
                 # If title exceeds max size, truncate it

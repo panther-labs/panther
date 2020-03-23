@@ -37,8 +37,12 @@ const (
 	TemplateBucket           = "panther-public-cloudformation-templates"
 	TemplateBucketRegion     = endpoints.UsWest2RegionID
 	CloudSecurityTemplateKey = "panther-cloudsec-iam/v1.0.0/template.yml"
-	LogProcessingTemplateKey = "panther-log-analysis-iam/v1.0.0/template.yml"
-	cacheTimeout             = time.Minute * 30
+	LogAnalysisTemplateKey   = "panther-log-analysis-iam/v1.0.0/template.yml"
+
+	LogAnalysisStackNameTemplate = "panther-log-analysis-setup-%s"
+	CloudSecStackName            = "panther-cloudsec-setup"
+
+	cacheTimeout = time.Minute * 30
 
 	// Formatting variables used for re-writing the default templates
 	accountIDFind    = "Value: '' # MasterAccountId"
@@ -102,7 +106,7 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	} else {
 		// Log Analysis replacements
 		formattedTemplate = strings.Replace(formattedTemplate, roleSuffixIDFind,
-			fmt.Sprintf(roleSuffixReplace, generateRoleSuffix(*input.IntegrationLabel)), 1)
+			fmt.Sprintf(roleSuffixReplace, normalizedLabel(*input.IntegrationLabel)), 1)
 
 		formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
 			fmt.Sprintf(s3BucketReplace, *input.S3Bucket), 1)
@@ -123,7 +127,8 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 	}
 
 	return &models.SourceIntegrationTemplate{
-		Body: aws.String(formattedTemplate),
+		Body:      aws.String(formattedTemplate),
+		StackName: aws.String(getStackName(*input.IntegrationType, *input.IntegrationLabel)),
 	}, nil
 }
 
@@ -140,7 +145,7 @@ func getTemplate(integrationType *string) (string, error) {
 	if *integrationType == models.IntegrationTypeAWSScan {
 		templateRequest.Key = aws.String(CloudSecurityTemplateKey)
 	} else {
-		templateRequest.Key = aws.String(LogProcessingTemplateKey)
+		templateRequest.Key = aws.String(LogAnalysisTemplateKey)
 	}
 	s3Object, err := s3Client.GetObject(templateRequest)
 	if err != nil {
@@ -164,12 +169,19 @@ func getTemplate(integrationType *string) (string, error) {
 	return templateBodyString, nil
 }
 
-// Generates the ARN of the log processing role
-func generateLogProcessingRoleArn(awsAccountID string, label string) string {
-	return fmt.Sprintf(logProcessingRoleFormat, awsAccountID, generateRoleSuffix(label))
+func getStackName(integrationType string, label string) string {
+	if integrationType == models.IntegrationTypeAWSScan {
+		return CloudSecStackName
+	}
+	return fmt.Sprintf(LogAnalysisStackNameTemplate, normalizedLabel(label))
 }
 
-func generateRoleSuffix(label string) string {
+// Generates the ARN of the log processing role
+func generateLogProcessingRoleArn(awsAccountID string, label string) string {
+	return fmt.Sprintf(logProcessingRoleFormat, awsAccountID, normalizedLabel(label))
+}
+
+func normalizedLabel(label string) string {
 	sanitized := strings.ReplaceAll(label, " ", "-")
 	return strings.ToLower(sanitized)
 }

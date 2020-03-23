@@ -21,10 +21,8 @@ package mage
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 
 	"github.com/panther-labs/panther/tools/config"
@@ -97,9 +95,7 @@ func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(
 	logger.Debugf("enumerating stack %s", *stackID)
 	detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: stackID})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ValidationError" &&
-			strings.TrimSpace(awsErr.Message()) == fmt.Sprintf("Stack with id %s does not exist", *stackID) {
-
+		if errStackDoesNotExist(err) {
 			logger.Debugf("stack %s does not exist", *stackID)
 			return nil
 		}
