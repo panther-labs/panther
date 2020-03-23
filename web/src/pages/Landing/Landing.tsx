@@ -129,7 +129,7 @@ const LandingPage: React.FC = () => {
         <Card mb={6} is="section">
           <Grid gridTemplateColumns="repeat(3, 1fr)" py={5}>
             <Flex flexDirection="column" alignItems="center" justifyContent="center" px={10} py={5}>
-              <Icon color="grey300" type="infra-analytics" mb={4} size="large" />
+              <Icon color="grey300" type="alert" mb={4} size="large" />
               <Text size="large" is="h4" color="grey500" mb={4}>
                 Triage Alerts
               </Text>
@@ -147,7 +147,7 @@ const LandingPage: React.FC = () => {
               </Text>
             </Flex>
             <Flex flexDirection="column" alignItems="center" justifyContent="center" px={10} py={5}>
-              <Icon color="grey300" type="infra-analytics" mb={4} size="large" />
+              <Icon color="grey300" type="resource" mb={4} size="large" />
               <Text size="large" is="h4" color="grey500" mb={4}>
                 Search through Resources
               </Text>
@@ -165,7 +165,7 @@ const LandingPage: React.FC = () => {
               </Text>
             </Flex>
             <Flex flexDirection="column" alignItems="center" justifyContent="center" px={10} py={5}>
-              <Icon color="grey300" type="infra-analytics" mb={4} size="large" />
+              <Icon color="grey300" type="search" mb={4} size="large" />
               <Text size="large" is="h4" color="grey500" mb={4}>
                 Query Logs with Athena
               </Text>
