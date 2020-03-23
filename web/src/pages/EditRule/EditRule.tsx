@@ -60,7 +60,7 @@ const EditRulePage: React.FC = () => {
 
   const initialValues = React.useMemo(() => {
     if (queryData) {
-      const { tests, dedupPeriodMinutes, ...otherInitialValues } = pick(
+      const { tests, ...otherInitialValues } = pick(
         queryData.rule,
         ruleEditableFields
       ) as RuleDetails;
@@ -70,7 +70,6 @@ const EditRulePage: React.FC = () => {
       // it stores JSON, that's why we are making those here in the front-end)
       return {
         ...otherInitialValues,
-        dedupPeriodMinutes: dedupPeriodMinutes || 60,
         tests: tests.map(({ resource, ...restTestData }) => ({
           ...restTestData,
           resource: formatJSON(JSON.parse(resource)),
