@@ -181,7 +181,7 @@ func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
 		ec2Svc, err := getEC2Client(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all volumes

@@ -177,7 +177,7 @@ func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "acm") {
 		acmSvc, err := getAcmClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all certificates

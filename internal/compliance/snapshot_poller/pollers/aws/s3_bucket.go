@@ -409,7 +409,7 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 	for region, buckets := range bucketsByRegion {
 		s3Svc, err := getS3Client(pollerInput, region)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		for _, bucket := range buckets {

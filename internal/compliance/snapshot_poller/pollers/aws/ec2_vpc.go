@@ -252,7 +252,7 @@ func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		zap.L().Debug("building EC2 VPC snapshots", zap.String("region", *regionID))
 		ec2Svc, err := getEC2Client(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all VPCs

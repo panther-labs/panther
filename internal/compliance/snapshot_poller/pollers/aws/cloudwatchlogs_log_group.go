@@ -166,7 +166,7 @@ func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "logs") {
 		cloudwatchLogGroupSvc, err := getCloudWatchLogsClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all log groups

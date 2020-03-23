@@ -269,12 +269,12 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "dynamodb") {
 		dynamoDBSvc, err := getDynamoDBClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		applicationAutoScalingSvc, err := getApplicationAutoScalingClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all tables

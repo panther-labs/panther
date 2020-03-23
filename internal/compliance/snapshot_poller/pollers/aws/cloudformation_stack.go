@@ -276,7 +276,7 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "cloudformation") {
 		cloudformationSvc, err := getCloudFormationClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all stacks

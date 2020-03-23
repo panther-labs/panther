@@ -248,7 +248,7 @@ func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 	for _, regionID := range regions {
 		rdsSvc, err := getRDSClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all instances

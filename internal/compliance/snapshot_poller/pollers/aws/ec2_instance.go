@@ -173,7 +173,7 @@ func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
 		ec2Svc, err := getEC2Client(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all EC2 instances

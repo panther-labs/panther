@@ -173,7 +173,7 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		zap.L().Debug("building Config snapshots", zap.String("region", *regionID))
 		configServiceSvc, err := getConfigServiceClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all recorders

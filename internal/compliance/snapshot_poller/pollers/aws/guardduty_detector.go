@@ -168,7 +168,7 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "guardduty") {
 		guardDutySvc, err := getGuardDutyClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, err // error is logged in getClient()
 		}
 
 		// Start with generating a list of all detectors
