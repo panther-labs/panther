@@ -28,6 +28,7 @@ import SignInPage from 'Pages/SignIn';
 import DestinationsPage from 'Pages/Destinations';
 import UsersPage from 'Pages/Users';
 import RuleDetailsPage from 'Pages/RuleDetails';
+import LandingPage from 'Pages/Landing';
 import ListRulesPage from 'Pages/ListRules';
 import EditRulePage from 'Pages/EditRule';
 import CreateRulePage from 'Pages/CreateRule';
@@ -79,8 +80,8 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
           <ErrorBoundary>
             <APIErrorFallback>
               <Switch>
+                <Route exact path="/" component={LandingPage} />
                 /******************** COMPLIANCE ******************************/
-                <Redirect exact from="/" to={urls.compliance.overview()} />
                 <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
                 <Route exact path={urls.compliance.overview()} component={OverviewPage} />
                 <Route exact path={urls.compliance.policies.list()} component={ListPoliciesPage} />
