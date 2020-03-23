@@ -102,7 +102,7 @@ const StackDeployment: React.FC = () => {
             <a
               href="#"
               title="Download Cloudformation template"
-              download={`${stackName}.yaml`}
+              download={`${stackName}.yml`}
               ref={downloadRef}
               onClick={() => setStatus({ cfnTemplateDownloaded: true })}
             >
@@ -124,7 +124,7 @@ const StackDeployment: React.FC = () => {
               <a
                 href="#"
                 title="Download Cloudformation template"
-                download={`${initialValues.initialStackName}.yaml`}
+                download={`${initialValues.initialStackName}.yml`}
                 ref={downloadRef}
                 onClick={() => setStatus({ cfnTemplateDownloaded: true })}
               >
