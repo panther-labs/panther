@@ -40,7 +40,7 @@ const LandingPage: React.FC = () => {
                 Setup Infrastructure Monitoring
               </Text>
               <Text size="medium" is="p" color="grey300" textAlign="center" maxWidth={250}>
-                Connect AWS accounts to monitor their compliance to your certain policies
+                Connect AWS accounts, scan resources and detect misconfigurations
               </Text>
               <Text
                 color="blue300"
@@ -58,7 +58,7 @@ const LandingPage: React.FC = () => {
                 Setup your Log Sources
               </Text>
               <Text size="medium" is="p" color="grey300" textAlign="center" maxWidth={250}>
-                Connect your log buckets in order to allow Panther to run rules against them
+                Connect your log buckets and analyze data with rules
               </Text>
               <Text
                 color="blue300"
