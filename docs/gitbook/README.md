@@ -2,9 +2,7 @@
 
 ## Overview
 
-Panther is a cloud-native platform for detecting threats with log data, improving cloud security posture, and conducting investigations.
-
-Security teams can use Panther for:
+Panther is a cloud-native platform for detecting threats, improving cloud security posture, and powering investigations. Security teams can use Panther for:
 
 |         Use Case         | Description                                                                               |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
@@ -17,11 +15,11 @@ The diagram below provides a high-level architecture of Panther:
 
 ![Architecture](.gitbook/assets/high-level-diagram.png)
 
-The three main components are:
+Its three main components are:
 
 * **Log Analysis** to centralize, parse, and analyze log data with Python
-* **Historical Search** for storage and analytics on collected log data and generated alerts
 * **Cloud Security** to scan AWS accounts, detect misconfigurations, and improve cloud security posture
+* **Historical Search** for analytics on collected log data and alerts
 
 The benefits of Panther include:
 

@@ -1,10 +1,6 @@
----
-description: Add support for custom logs
----
-
 # Writing a New Parser
 
-You can add support for a new log type by writing a new **Parser**, which controls how Panther converts a raw log string to a  to be used by the rules engine. The instructions below provide a developer's guide for writing new Parsers.
+You can add support for a new log type by writing a custom **Parser**, which controls how Panther converts a raw string into a parsed event to be used by the rules engine. The instructions below provide a developer's guide for writing new Parsers.
 
 ## Getting Started
 

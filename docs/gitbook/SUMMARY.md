@@ -8,9 +8,15 @@
 
 ## Log Analysis
 
-* [Data Source Setup](log-analysis/log-processing/README.md)
+* [Setup](log-analysis/log-processing/README.md)
   * [IAM Roles](log-analysis/log-processing/iam-setup.md)
   * [Data Notifications](log-analysis/log-processing/notifications-setup.md)
+* [Supported Logs](log-analysis/supported-logs/README.md)
+  * [AWS](log-analysis/supported-logs/aws.md)
+  * [Osquery](log-analysis/supported-logs/osquery.md)
+  * [NGINX](log-analysis/supported-logs/nginx.md)
+  * [OSSEC](log-analysis/supported-logs/ossec.md)
+  * [Syslog](log-analysis/supported-logs/syslog.md)
 * [Rules](log-analysis/rules/README.md)
   * [AWS CIS Runbooks](log-analysis/rules/aws-cis/README.md)
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)
@@ -33,12 +39,6 @@
     * [AWS Root Access Key Created](log-analysis/rules/aws-cis/aws-root-access-key-created.md)
     * [AWS Root Console Login](log-analysis/rules/aws-cis/aws-root-console-login.md)
     * [AWS Root Password Changed](log-analysis/rules/aws-cis/aws-root-password-changed.md)
-* [Supported Logs](log-analysis/supported-logs/README.md)
-  * [AWS](log-analysis/supported-logs/aws.md)
-  * [Osquery](log-analysis/supported-logs/osquery.md)
-  * [NGINX](log-analysis/supported-logs/nginx.md)
-  * [OSSEC](log-analysis/supported-logs/ossec.md)
-  * [Syslog](log-analysis/supported-logs/syslog.md)
 
 ## Historical Search
 

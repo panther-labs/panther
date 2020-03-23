@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Flex, Heading, Text } from 'pouncejs';
-import { SubmitButton } from 'Components/Buttons';
+import SubmitButton from 'Components/buttons/SubmitButton';
 import { useFormikContext } from 'formik';
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
