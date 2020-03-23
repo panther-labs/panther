@@ -178,7 +178,6 @@ type RuleSummary {
   lastModified: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
-  dedupPeriodMinutes: Int!
   tags: [String]
 }
 
