@@ -90,7 +90,7 @@ class TestEngine(TestCase):
                 rule_version='version',
                 log_type='log',
                 severity='INFO',
-                dedup='rule_id_1',
+                dedup='defaultDedupString:rule_id_1',
                 dedup_period_mins=120,
                 event={}
             )
@@ -129,7 +129,7 @@ class TestEngine(TestCase):
                 rule_version='version',
                 log_type='log',
                 severity='INFO',
-                dedup='rule_id_1',
+                dedup='defaultDedupString:rule_id_1',
                 event={},
                 dedup_period_mins=60
             ),
@@ -138,7 +138,7 @@ class TestEngine(TestCase):
                 rule_version='version',
                 log_type='log',
                 severity='INFO',
-                dedup='rule_id_3',
+                dedup='defaultDedupString:rule_id_3',
                 event={},
                 dedup_period_mins=60
             )
