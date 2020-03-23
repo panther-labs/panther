@@ -95,7 +95,7 @@ class Rule:
         if not hasattr(self._module, 'rule'):
             raise AssertionError("rule needs to have a method named 'rule'")
 
-        if hasattr(self._module, 'dedup_string'):
+        if hasattr(self._module, 'dedup'):
             self._has_dedup = True
         else:
             self._has_dedup = False
@@ -124,9 +124,9 @@ class Rule:
             # If no dedup function defined, return rule id
             return self.rule_id
         try:
-            dedup_string = _run_command(self._module.dedup_string, event, str)
-        except Exception as err:
-            self.logger.warning('dedup_string method raised exception. Defaulting to rule ID', err)
+            dedup_string = _run_command(self._module.dedup, event, str)
+        except Exception as err:  # pylint: disable=broad-except
+            self.logger.warning('dedup_string method raised exception. Defaulting to rule ID. Exception: %s', err)
             return self.rule_id
 
         if dedup_string:
@@ -147,8 +147,8 @@ class Rule:
             return None
         try:
             title_string = _run_command(self._module.title, event, str)
-        except Exception as err:
-            self.logger.warning('title method raised exception. Using default', err)
+        except Exception as err:  # pylint: disable=broad-except
+            self.logger.warning('title method raised exception. Using default. Exception: %s', err)
             return None
 
         if title_string:
