@@ -2,11 +2,13 @@
 
 Panther is a collection of serverless applications deployed within your AWS account. The frontend is a React application which runs in a Docker container \(via ECS\), and the backend is a collection of compute \(Lambda\), storage \(DynamoDB / S3\), and other supporting services.
 
+The sections below provide guidance on how to extend Panther to meet your individual needs.
+
 ## Environment
 
-You can use the Docker environment from the [quick start](quick-start.md#deployment) instructions for development as well! However, it's faster to compile and test the code if you install the development tools locally.
+You can use the Docker environment from the [quick start](quick-start.md#deployment) instructions for development. However, it's faster to compile and test the code locally.
 
-### Manual Installation
+### Local Installation
 
 Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, and [Python](https://www.python.org/downloads/) 3.7+. For MacOS w/ homebrew, this is easy: `brew install go node python3`
 
@@ -26,7 +28,7 @@ Install [Mage](https://magefile.org/#installation): `go get github.com/magefile/
 
 Finally, install the remaining development libraries with `mage setup:all`
 
-## Mage
+### Mage
 
 Panther uses [mage](https://magefile.org/), a Go tool similar to `make` , to manage the development lifecycle.
 
@@ -79,11 +81,12 @@ To update your deployment of Panther, follow the steps below:
 
 Since the majority of Panther is written in Go, the repo follows the standard [Go project layout](https://github.com/golang-standards/project-layout):
 
-- [**api**](https://github.com/panther-labs/panther/tree/master/api)**:** input/output models for communicating with Panther's backend APIs
-- [**deployments**](https://github.com/panther-labs/panther/tree/master/deployments)**:** CloudFormation templates for deploying Panther itself or integrating the accounts you want to scan
-- [**docs**](https://github.com/panther-labs/panther/tree/master/docs)**:** License headers, README images, code of conduct, etc
-- [**internal**](https://github.com/panther-labs/panther/tree/master/internal)**:** Source code for all of Panther's Lambda functions
-- [**pkg**](https://github.com/panther-labs/panther/tree/master/pkg)**:** Standalone Go libraries that could be directly imported by other projects
-  - This folder is [licensed](https://github.com/panther-labs/panther/blob/master/LICENSE) under Apache v2
-- [**tools**](https://github.com/panther-labs/panther/tree/master/tools)**:** Magefile source and other build infrastructure
-- [**web**](https://github.com/panther-labs/panther/tree/master/web)**:** Source for the Panther web application
+|         Path         | Description                                                                               |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+|  [**api**](https://github.com/panther-labs/panther/tree/master/api)   | Input/output models for communicating with Panther's backend APIs   |
+| [**deployments**](https://github.com/panther-labs/panther/tree/master/deployments)   | CloudFormation templates for deploying Panther itself or integrating the accounts you want to scan   |
+| [**docs**](https://github.com/panther-labs/panther/tree/master/docs)  | Documentation, license headers, README, images, code of conduct, etc  |
+| [**internal**](https://github.com/panther-labs/panther/tree/master/internal) | Source code for all of Panther's Lambda functions  |
+| [**pkg**](https://github.com/panther-labs/panther/tree/master/pkg)  | Standalone Go libraries that could be directly imported by other projects. This folder is [licensed](https://github.com/panther-labs/panther/blob/master/LICENSE) under Apache v2  |
+| [**tools**](https://github.com/panther-labs/panther/tree/master/tools)  | Magefile source and other build infrastructure  |
+| [**web**](https://github.com/panther-labs/panther/tree/master/web)   | Source for the Panther web application  |

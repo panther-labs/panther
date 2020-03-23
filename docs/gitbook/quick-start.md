@@ -85,7 +85,7 @@ Your connection _is_ encrypted, and it's generally safe to continue if the domai
 Congratulations! You are now ready to use Panther. Follow the steps below to configure your analysis and alerting:
 
 1. Invite your team in Settings > Users > Invite User
-1. Configure [destinations](destinations/alert-setup/) to receive generated alerts
+1. Configure [destinations](destinations/setup/) to receive generated alerts
 2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
 3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
 4. Onboard accounts for [cloud security scans](policies/scanning/)
@@ -110,7 +110,11 @@ Having trouble? Reach out to us:
 
 ## Security
 
-Your data is always under your control and encrypted both in transit and at rest. All created AWS infrastructure is least-privilege and deployed with AWS CloudFormation.
+Safety and data security is a very high priority for the Panther Labs team. If you have discovered a security vulnerability in our codebase, we would appreciate your help in disclosing it to us in a responsible manner.
+
+Security issues identified in any of the open-source codebases maintained by Panther Labs or any of our commercial offerings should be reported via email to [security@runpanther.io](mailto:security@runpanther.io). Panther Labs is committed to working together with researchers and keeping them updated throughout the patching process. Researchers who responsibly report valid security issues will be publicly credited for their efforts (if they so choose).
+
+The data passed through Panther is always under your control and encrypted both in transit and at rest. All supporting AWS infrastructure is least-privilege and deployed with AWS CloudFormation.
 
 ### Privacy
 
