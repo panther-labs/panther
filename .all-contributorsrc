@@ -104,6 +104,18 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "stoggi",
+      "name": "Jeremy Stott",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/5227285?v=4",
+      "profile": "https://github.com/stoggi",
+      "contributions": [
+        "code",
+        "security",
+        "infra",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
