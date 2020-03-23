@@ -45,6 +45,7 @@ type Monitoring struct {
 	AlarmSnsTopicArn           string `yaml:"AlarmSnsTopicArn"`
 	CloudWatchLogRetentionDays int    `yaml:"CloudWatchLogRetentionDays"`
 	Debug                      bool   `yaml:"Debug"`
+	EnableS3AccessLogs         bool   `yaml:"EnableS3AccessLogs"`
 	S3AccessLogsBucket         string `yaml:"S3AccessLogsBucket"`
 	TracingMode                string `yaml:"TracingMode"`
 }

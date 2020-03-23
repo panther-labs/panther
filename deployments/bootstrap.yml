@@ -36,9 +36,14 @@ Parameters:
     Description: The ARN of the TLS certificate that is going to be used by the ALB listener
 
   # Optional
+  EnableS3AccessLogs:
+    Type: String
+    Description: Enable S3 access logging for all Panther buckets.
+    AllowedValues: [true, false]
+    Default: true
   AccessLogsBucket:
     Type: String
-    Description: Optional bucket for storing S3 access logs. If not specified, one is created for you
+    Description: Optional external bucket for storing S3 access logs. If not specified, the Panther audit bucket is used.
     Default: ''
   CloudWatchLogRetentionDays:
     Type: Number
@@ -110,6 +115,7 @@ Mappings:
       ARN: arn:aws:iam::037604701340:root
 
 Conditions:
+  EnableAccessLogs: !Equals [!Ref EnableS3AccessLogs, true]
   ExternalAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, '']]
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
@@ -132,12 +138,14 @@ Resources:
           - ExpirationInDays: 365
             NoncurrentVersionExpirationInDays: 30
             Status: Enabled
-      LoggingConfiguration:
-        DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref 'AWS::NoValue']
-        LogFilePrefix: !If
-          - ExternalAccessLogs
-          - !Sub panther-source-${AWS::AccountId}-${AWS::Region}/
-          - self/
+      LoggingConfiguration: !If
+        - EnableAccessLogs
+        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref 'AWS::NoValue']
+          LogFilePrefix: !If
+            - ExternalAccessLogs
+            - !Sub panther-source-${AWS::AccountId}-${AWS::Region}/
+            - self/
+        - !Ref AWS::NoValue
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -216,9 +224,11 @@ Resources:
           # Once a stack is deployed, its resources in S3 can be safely removed.
           - ExpirationInDays: 90
             Status: Enabled
-      LoggingConfiguration:
-        DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
-        LogFilePrefix: !Sub panther-source-${AWS::AccountId}-${AWS::Region}/
+      LoggingConfiguration: !If
+        - EnableAccessLogs
+        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
+          LogFilePrefix: !Sub panther-source-${AWS::AccountId}-${AWS::Region}/
+        - !Ref AWS::NoValue
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -240,9 +250,11 @@ Resources:
         Rules:
           - NoncurrentVersionExpirationInDays: 365
             Status: Enabled
-      LoggingConfiguration:
-        DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
-        LogFilePrefix: !Sub panther-analysis-versions-${AWS::AccountId}-${AWS::Region}/
+      LoggingConfiguration: !If
+        - EnableAccessLogs
+        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
+          LogFilePrefix: !Sub panther-analysis-versions-${AWS::AccountId}-${AWS::Region}/
+        - !Ref AWS::NoValue
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -256,9 +268,11 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      LoggingConfiguration:
-        DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
-        LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
+      LoggingConfiguration: !If
+        - EnableAccessLogs
+        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
+          LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
+        - !Ref AWS::NoValue
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -281,9 +295,11 @@ Resources:
         Rules:
           - ExpirationInDays: 30
             Status: Enabled
-      LoggingConfiguration:
-        DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
-        LogFilePrefix: !Sub panther-athena-results-${AWS::AccountId}-${AWS::Region}/
+      LoggingConfiguration: !If
+        - EnableAccessLogs
+        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
+          LogFilePrefix: !Sub panther-athena-results-${AWS::AccountId}-${AWS::Region}/
+        - !Ref AWS::NoValue
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
