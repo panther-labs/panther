@@ -42,7 +42,7 @@ func getStackOutputs(awsSession *session.Session, name string) (map[string]strin
 	input := &cfn.DescribeStacksInput{StackName: &name}
 	response, err := cfnClient.DescribeStacks(input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to describe stack %s: %v", name, err)
+		return nil, err
 	}
 
 	return flattenStackOutputs(response), nil
