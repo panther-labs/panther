@@ -413,7 +413,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Web server
 	parallelStacks++
 	go func(result chan string) {
-		deployFrontend(awsSession, settings, accountID, sourceBucket, outputs)
+		deployFrontend(awsSession, accountID, sourceBucket, outputs)
 		result <- frontendStack
 	}(finishedStacks)
 

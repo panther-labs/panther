@@ -22,15 +22,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/joho/godotenv"
 	"github.com/magefile/mage/sh"
-
-	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -40,7 +37,6 @@ const (
 // Returns stack outputs
 func deployFrontend(
 	awsSession *session.Session,
-	settings *config.PantherConfig,
 	accountID, bucket string,
 	bootstrapOutputs map[string]string,
 ) map[string]string {
@@ -70,8 +66,6 @@ func deployFrontend(
 		"ElbTargetGroup": bootstrapOutputs["LoadBalancerTargetGroup"],
 		"SecurityGroup":  bootstrapOutputs["WebSecurityGroup"],
 		"Image":          dockerImage,
-		"CPU":            strconv.Itoa(settings.Web.FargateTaskCPU),
-		"Memory":         strconv.Itoa(settings.Web.FargateTaskMemory),
 	}
 	return deployTemplate(awsSession, frontendTemplate, bucket, frontendStack, params)
 }

@@ -58,10 +58,8 @@ type Setup struct {
 }
 
 type Web struct {
-	CertificateArn    string `yaml:"CertificateArn"`
-	CustomDomain      string `yaml:"CustomDomain"`
-	FargateTaskCPU    int    `yaml:"FargateTaskCPU"`
-	FargateTaskMemory int    `yaml:"FargateTaskMemory"`
+	CertificateArn string `yaml:"CertificateArn"`
+	CustomDomain   string `yaml:"CustomDomain"`
 }
 
 // Read settings from the config file

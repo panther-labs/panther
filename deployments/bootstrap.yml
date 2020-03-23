@@ -140,7 +140,8 @@ Resources:
             Status: Enabled
       LoggingConfiguration: !If
         - EnableAccessLogs
-        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref 'AWS::NoValue']
+        - DestinationBucketName:
+            !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref 'AWS::NoValue']
           LogFilePrefix: !If
             - ExternalAccessLogs
             - !Sub panther-source-${AWS::AccountId}-${AWS::Region}/

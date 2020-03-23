@@ -106,13 +106,3 @@ Web:
   #
   # If not specified, the default load balancer URL is used in all places.
   CustomDomain: ''
-
-  # The size of the CPU allocated to the front-end web server.
-  # Allowed values: [256, 512, 1024]
-  #
-  # For example, a value of 1024 equals to 1 vCPU, while a value of 256 equals to 0.25 vCPU
-  FargateTaskCPU: 512
-
-  # The size of memory (in MB) allocated to the front-end web server.
-  # Allowed values: [512, 1024, 2056]
-  FargateTaskMemory: 1024
