@@ -37,7 +37,11 @@ You can deploy the generated IAM role by either **launching the CloudFormation S
 
 #### CloudFormation Console
 
-If you click the **Launch Stack** button, a new tab will open in your browser and take you to the AWS CloudFormation Console. Make sure you sign in the same AWS Account that was provided in the previous step.
+When you click the **Launch console** link, a new tab will open in your browser and take you to the AWS CloudFormation Console.
+
+{% hint style="info" %}
+Make sure you sign in the same AWS Account that was provided in the previous step.
+{% endhint %}
 
 ![](../../.gitbook/assets/log-analysis-iam-4.png)
 
@@ -67,7 +71,11 @@ First, create an SNS Topic and SNS Subscription to notify Panther that new data 
 
 #### Create Notifications SNS Topic
 
-Log into the AWS Console of the account that owns the S3 bucket. Select the AWS Region where your S3 buckets are located, navigate to the **CloudFormation** console, and click on **Create Stack** (with new resources).
+Log into the AWS Console of the account that owns the S3 bucket.
+
+Select the AWS Region where your S3 buckets are located, navigate to the **CloudFormation** console, and click on **Create Stack** (with new resources).
+
+![](../../.gitbook/assets/create-sns-topic-1.png)
 
 Under the `Specify template` section, enter the following Amazon S3 URL:
 
@@ -75,28 +83,45 @@ Under the `Specify template` section, enter the following Amazon S3 URL:
 https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-processing-notifications/latest/template.yml
 ```
 
+![](../../.gitbook/assets/create-sns-topic-2.png)
+
 ##### Specify Stack Details
 
-1. `Stack name`: A name of your choice, e.g. `panther-log-processing-notifications-<bucket-label>`
-2. `MasterAccountId` : The 12 digit AWS Account ID where Panther is deployed
-3. `PantherRegion`: The region where Panther is deployed
-4. `SnsTopicName`: The name of the SNS topic receiving the notification, by default is `panther-notifications-topic`
+|         Field         | Description                                                                                |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+|  `Stack name`    | A name of your choice, e.g. `panther-log-processing-notifications-<bucket-label>` |
+| `MasterAccountId`     | The 12 digit AWS Account ID where Panther is deployed |
+| `PantherRegion`   | The region where Panther is deployed |
+| `SnsTopicName`     | The name of the SNS topic receiving the notification, by default is `panther-notifications-topic`  |
 
 ##### Create Stack
 
-Click on **Next** and again **Next**. Click on **Create Stack**. This stack has one output named `SnsTopicArn`
+Click on **Next** and again **Next**. Click on **Create Stack**. This stack has one output named `SnsTopicArn`.
 
 #### Configure Event Notifications
+
+Now with the SNS Topic created, we must enable notifications from the S3 buckets.
 
 ##### Using the Console
 
 Navigate to the AWS [S3 Console](https://s3.console.aws.amazon.com/s3/home), select the relevant bucket, and click the `Properties` tab.
 
-From there, scroll down to the `Advanced settings` section to find the `Events` card, and configure a new event to send `All object create events` to the topic created above (`panther-notifications-topic`)
+From there, find the `Events` card under the `Advanced settings` section. Click `+ Add notification` and use the following settings:
+
+|         Field         | Value                                                                                |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+| `Name`    | `PantherEventNotifications` |
+| `Events`     | `All object create events` |
+| `Send to`   | `SNS Topic` |
+| `SNS`     | `panther-notifications-topic`  |
+| `Suffix`   | (optional) limits notifications to objects with keys that end in matching characters  |
+| `Prefix`   | (optional) limits notifications to objects with keys that start with matching characters  |
+
+Click `Save`.
 
 ##### Using CloudFormation
 
-Alternatively, this can be accomplished via CloudFormation by adding the following properties to the relevant S3 bucket resources:
+This can also be accomplished using CloudFormation with the following examples:
 
 ```yaml
 Resources:
@@ -131,7 +156,7 @@ Resources:
 
 ### Existing S3 Buckets and SNS Topics
 
-Follow the steps below if you have an S3 bucket aggregating data with an SNS Topic receiving `All object create events`.
+Follow the steps below if you currently a configured S3 bucket and SNS Topic receiving `All object create events`.
 
 #### Modify SNS Access Policy
 
