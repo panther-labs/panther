@@ -126,7 +126,7 @@ class Rule:
         try:
             dedup_string = _run_command(self._module.dedup, event, str)
         except Exception as err:  # pylint: disable=broad-except
-            self.logger.warning('dedup_string method raised exception. Defaulting to rule ID. Exception: %s', err)
+            self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
             return self.rule_id
 
         if dedup_string:
