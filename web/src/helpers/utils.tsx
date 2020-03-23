@@ -39,7 +39,6 @@ import sum from 'lodash-es/sum';
 import { Box, ColumnProps, Label } from 'pouncejs';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
-import { int } from 'aws-sdk/clients/datapipeline';
 
 // Generate a new secret code that contains metadata of issuer and user email
 export const formatSecretCode = (code: string, email: string): string => {
@@ -105,7 +104,7 @@ export const formatDatetime = (datetime: string) => {
 };
 
 /** Converts minutes integer to representative string i.e. 15 -> 15min,  120 -> 2h */
-export const minutesToString = (minutes: int) =>
+export const minutesToString = (minutes: number) =>
   minutes < 60 ? `${minutes}min` : `${minutes / 60}h`;
 
 /** Converts any value of the object that is an array to a comma-separated string */
