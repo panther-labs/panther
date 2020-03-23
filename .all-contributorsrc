@@ -1,0 +1,29 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "3nvi",
+      "name": "Aggelos Arvanitakis",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/10436045?v=4",
+      "profile": "https://aggelos.dev",
+      "contributions": [
+        "code",
+        "doc",
+        "design",
+        "bug",
+        "infra"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "panther",
+  "projectOwner": "panther-labs",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+  ]
+}

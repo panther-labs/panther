@@ -20,7 +20,6 @@ import React from 'react';
 import { Text } from 'pouncejs';
 import { LogIntegration } from 'Generated/schema';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-import { getLogIntegrationStackName } from 'Helpers/utils';
 import { useDeleteLogSource } from './graphql/deleteLogSource.generated';
 
 export interface DeleteLogSourceModalProps {
@@ -44,7 +43,6 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) =
   });
 
   const sourceDisplayName = source.integrationLabel;
-  const stackName = getLogIntegrationStackName(source);
   return (
     <BaseConfirmModal
       mutation={mutation}
@@ -55,7 +53,7 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) =
         </Text>,
         <Text size="medium" color="grey300" mt={6} key={1}>
           Deleting this source will not delete the associated Cloudformation stack. You will need to
-          manually delete the stack <b>{stackName}</b> from the{' '}
+          manually delete the stack <b>{source.stackName}</b> from the{' '}
           <b>AWS Account {source.awsAccountId}</b>
         </Text>,
       ]}

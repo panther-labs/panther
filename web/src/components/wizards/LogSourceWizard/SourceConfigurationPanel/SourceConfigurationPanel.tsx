@@ -55,6 +55,7 @@ const SourceConfigurationPanel: React.FC = () => {
           as={FormikTextInput}
           label="Related Account ID"
           placeholder="The AWS Account ID that the S3 log bucket lives in"
+          disabled={!!initialValues.integrationId}
           aria-required
           mb={6}
         />

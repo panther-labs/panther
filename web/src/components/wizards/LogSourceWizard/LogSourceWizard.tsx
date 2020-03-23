@@ -33,7 +33,10 @@ interface LogSourceWizardProps {
 }
 
 export interface LogSourceWizardValues {
+  // for updates
   integrationId?: string;
+  initialStackName?: string;
+  // common for creation + updates
   awsAccountId: string;
   integrationLabel: string;
   s3Bucket: string;
@@ -45,6 +48,7 @@ export interface LogSourceWizardValues {
 const validationSchema = Yup.object().shape<LogSourceWizardValues>({
   integrationLabel: Yup.string()
     .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
+    .max(32, 'Must be at most 32 characters')
     .required(),
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')

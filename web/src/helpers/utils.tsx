@@ -19,12 +19,10 @@
 import dayjs from 'dayjs';
 import * as React from 'react';
 import * as Yup from 'yup';
-import kebabCase from 'lodash-es/kebabCase';
 import {
   ActiveSuppressCount,
   ComplianceIntegration,
   ComplianceStatusCounts,
-  LogIntegration,
   OrganizationReportBySeverity,
   ScannedResources,
 } from 'Generated/schema';
@@ -244,12 +242,4 @@ export const copyTextToClipboard = (text: string) => {
 
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
-export const getComplianceIntegrationStackName = () => {
-  return 'panther-cloud-security';
-};
-
-export const getLogIntegrationStackName = (
-  source: Partial<LogIntegration> & Pick<LogIntegration, 'integrationLabel'>
-) => {
-  return `panther-log-analysis-${kebabCase(source.integrationLabel)}`;
-};
+export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
