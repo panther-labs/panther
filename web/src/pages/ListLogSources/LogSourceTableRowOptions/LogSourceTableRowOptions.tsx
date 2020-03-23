@@ -21,6 +21,8 @@ import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
 import { LogIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
+import useRouter from 'Hooks/useRouter';
+import urls from 'Source/urls';
 
 interface LogSourceTableRowOptionsProps {
   source: LogIntegration;
@@ -28,6 +30,7 @@ interface LogSourceTableRowOptionsProps {
 
 const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ source }) => {
   const { showModal } = useModal();
+  const { history } = useRouter();
 
   return (
     <Dropdown
@@ -37,7 +40,9 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
         </IconButton>
       }
     >
-      <Dropdown.Item onSelect={() => {}}>
+      <Dropdown.Item
+        onSelect={() => history.push(urls.logAnalysis.sources.edit(source.integrationId))}
+      >
         <MenuItem variant="default">Edit</MenuItem>
       </Dropdown.Item>
       <Dropdown.Item

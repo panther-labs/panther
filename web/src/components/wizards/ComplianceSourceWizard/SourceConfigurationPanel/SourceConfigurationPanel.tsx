@@ -42,8 +42,8 @@ const SourceConfigurationPanel: React.FC = () => {
         <Field
           name="integrationLabel"
           as={FormikTextInput}
-          label="Label"
-          placeholder="A nickname for your account"
+          label="Name"
+          placeholder="A nickname for the AWS account you're onboarding"
           aria-required
           mb={6}
         />

@@ -38,10 +38,6 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  RemediationRoleName:
-    Type: String
-    Description: The name of the IAM role to assume to perform remediation actions
-
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
@@ -278,7 +274,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
-              Resource: !Sub arn:${AWS::Partition}:iam::*:role/${RemediationRoleName}
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole-${AWS::Region}
 
 Outputs:
   GatewayId:

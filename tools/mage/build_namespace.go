@@ -46,6 +46,7 @@ func (b Build) All() {
 	b.Lambda() // implicitly does b.API()
 	b.Cfn()
 	b.Opstools()
+	b.Devtools()
 }
 
 // API Generate Go client/models from Swagger specs in api/
@@ -140,6 +141,8 @@ func (b Build) lambda() error {
 		// The source folders are older than all the compiled binaries - nothing has changed
 		logger.Info("build:lambda: up to date")
 		return nil
+	} else if err != nil {
+		return err
 	}
 
 	mg.Deps(b.API)

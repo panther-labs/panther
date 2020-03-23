@@ -43,7 +43,7 @@ export type ListResources = {
     paging?: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
   }>;
   listComplianceIntegrations: Array<
-    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationLabel' | 'integrationId'>>
+    Pick<Types.ComplianceIntegration, 'integrationLabel' | 'integrationId'>
   >;
 };
 

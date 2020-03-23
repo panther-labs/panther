@@ -1,9 +1,0 @@
-query ListLogSources {
-  listLogIntegrations {
-    awsAccountId
-    createdAtTime
-    integrationId
-    integrationLabel
-    s3Buckets
-  }
-}

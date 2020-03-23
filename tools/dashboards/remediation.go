@@ -30,7 +30,7 @@ var remediationJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-remediation-processor' | SOURCE '/aws/lambda/panther-remediation-api' | SOURCE '/aws/lambda/panther-aws-remediation' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc",
+                "query": "SOURCE '/aws/lambda/panther-remediation-processor' | SOURCE '/aws/lambda/panther-remediation-api' | SOURCE '/aws/lambda/panther-aws-remediation' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Most Recent 20 Errors and Warnings",

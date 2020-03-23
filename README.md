@@ -89,7 +89,7 @@ def policy(resource):
 
 Returning `True` implies a resource is compliant, and returning `False` will `Fail` the policy and trigger an alert.
 
-More information:
+For more information on the concepts above, check out our docs:
 
 - [Rules](https://docs.runpanther.io/log-analysis/rules)
 - [Supported Logs](https://docs.runpanther.io/log-analysis/supported-logs)

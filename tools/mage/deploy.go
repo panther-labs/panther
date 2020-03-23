@@ -60,10 +60,6 @@ const (
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
 
-	// CloudSec IAM Roles, DO NOT CHANGE! panther-cloudsec-iam.yml CF depends on these names
-	auditRole       = "PantherAuditRole"
-	remediationRole = "PantherRemediationRole"
-
 	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
 
@@ -108,16 +104,16 @@ func Deploy() {
 
 	logger.Infof("deploy: deploying Panther to %s", *awsSession.Config.Region)
 
-	// Deploy prerequisite bucket stack
+	// Deploy prerequisite sourceBucket stack
 	bucketParams := map[string]string{
-		"AccessLogsBucketName": settings.BucketsParameterValues.AccessLogsBucketName,
+		"S3AccessLogsBucket": settings.BucketsParameterValues.S3AccessLogsBucket, // optional user override
 	}
 	bucketOutputs := deployTemplate(awsSession, bucketTemplate, "", bucketStack, bucketParams)
-	bucket := bucketOutputs["SourceBucketName"]
+	sourceBucket := bucketOutputs["SourceBucketName"]
 
 	// Deploy main application stack
-	params := getBackendDeployParams(awsSession, settings, bucket, bucketOutputs["LogBucketName"])
-	backendOutputs := deployTemplate(awsSession, backendTemplate, bucket, backendStack, params)
+	params := getBackendDeployParams(awsSession, settings, bucketOutputs)
+	backendOutputs := deployTemplate(awsSession, backendTemplate, sourceBucket, backendStack, params)
 	if err := postDeploySetup(awsSession, backendOutputs, settings); err != nil {
 		logger.Fatal(err)
 	}
@@ -133,17 +129,17 @@ func Deploy() {
 	}
 
 	// Creates Glue/Athena related resources
-	runDeploy(func() { deployDatabases(awsSession, bucket, backendOutputs) })
+	runDeploy(func() { deployDatabases(awsSession, sourceBucket, backendOutputs) })
 
 	// Deploy frontend stack
-	runDeploy(func() { deployFrontend(awsSession, bucket, backendOutputs, settings) })
+	runDeploy(func() { deployFrontend(awsSession, sourceBucket, backendOutputs, settings) })
 
 	// Deploy monitoring
-	runDeploy(func() { deployMonitoring(awsSession, bucket, backendOutputs, settings) })
+	runDeploy(func() { deployMonitoring(awsSession, sourceBucket, backendOutputs, settings) })
 
 	// Onboard Panther account to Panther
 	if settings.OnboardParameterValues.OnboardSelf {
-		runDeploy(func() { deployOnboard(awsSession, bucket, backendOutputs) })
+		runDeploy(func() { deployOnboard(awsSession, settings, bucketOutputs, backendOutputs) })
 	}
 
 	wg.Wait()
@@ -191,28 +187,33 @@ func deployPrecheck(awsRegion string) {
 // This will create a Python layer, pass down the name of the log database,
 // pass down user supplied alarm SNS topic and a self-signed cert if necessary.
 func getBackendDeployParams(
-	awsSession *session.Session, settings *config.PantherConfig, sourceBucket string, logBucket string) map[string]string {
+	awsSession *session.Session, settings *config.PantherConfig, bucketOutputs map[string]string) map[string]string {
+
+	s3AccessLogsBucket := settings.BucketsParameterValues.S3AccessLogsBucket
+	if s3AccessLogsBucket == "" {
+		s3AccessLogsBucket = bucketOutputs["AuditLogsBucket"]
+	}
 
 	v := settings.BackendParameterValues
 	result := map[string]string{
-		"AuditRoleName":                auditRole,
-		"RemediationRoleName":          remediationRole,
+		"AuditLogsBucket":              bucketOutputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
+		"CustomDomain":                 v.CustomDomain,
 		"Debug":                        strconv.FormatBool(v.Debug),
 		"LayerVersionArns":             v.LayerVersionArns,
 		"LogProcessorLambdaMemorySize": strconv.Itoa(v.LogProcessorLambdaMemorySize),
 		"PythonLayerVersionArn":        v.PythonLayerVersionArn,
-		"S3BucketAccessLogs":           logBucket,
-		"S3BucketSource":               sourceBucket,
+		"S3AccessLogsBucket":           s3AccessLogsBucket,
+		"S3BucketSource":               bucketOutputs["SourceBucketName"],
 		"TracingMode":                  v.TracingMode,
 		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
-		"CustomDomain":                 v.CustomDomain,
 	}
 
 	// If no custom Python layer is defined, then we need to build the default one.
 	if result["PythonLayerVersionArn"] == "" {
 		result["PythonLayerKey"] = layerS3ObjectKey
-		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, settings.PipLayer, sourceBucket, layerS3ObjectKey)
+		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, settings.PipLayer,
+			bucketOutputs["SourceBucketName"], layerS3ObjectKey)
 	}
 
 	// If no pre-existing cert is provided, then create one if necessary.

@@ -44,6 +44,7 @@ type Query {
   getComplianceIntegrationTemplate(
     input: GetComplianceIntegrationTemplateInput!
   ): IntegrationTemplate!
+  getLogIntegration(id: ID!): LogIntegration!
   getLogIntegrationTemplate(input: GetLogIntegrationTemplateInput!): IntegrationTemplate!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
@@ -52,8 +53,8 @@ type Query {
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
-  listComplianceIntegrations: [ComplianceIntegration]!
-  listLogIntegrations: [LogIntegration]!
+  listComplianceIntegrations: [ComplianceIntegration!]!
+  listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
@@ -62,14 +63,18 @@ type Query {
 
 input GetComplianceIntegrationTemplateInput {
   awsAccountId: String!
+  integrationLabel: String!
   remediationEnabled: Boolean
   cweEnabled: Boolean
 }
 
 input GetLogIntegrationTemplateInput {
   awsAccountId: String!
-  s3Buckets: [String]
-  kmsKeys: [String]
+  integrationLabel: String!
+  s3Bucket: String!
+  s3Prefix: String
+  kmsKey: String
+  logTypes: [String!]!
 }
 
 input ListAlertsInput {
@@ -97,6 +102,12 @@ type ComplianceIntegrationHealth {
   auditRoleStatus: IntegrationItemHealthStatus!
   cweRoleStatus: IntegrationItemHealthStatus!
   remediationRoleStatus: IntegrationItemHealthStatus!
+}
+
+type LogIntegrationHealth {
+  processingRoleStatus: IntegrationItemHealthStatus!
+  s3BucketStatus: IntegrationItemHealthStatus!
+  kmsKeyStatus: IntegrationItemHealthStatus!
 }
 
 type AlertDetails {
@@ -312,13 +323,16 @@ type ComplianceIntegration {
 }
 
 type LogIntegration {
-  awsAccountId: String
-  createdAtTime: AWSDateTime
-  createdBy: ID
-  integrationId: ID
-  integrationLabel: String
-  s3Buckets: [String]
-  kmsKeys: [String]
+  awsAccountId: String!
+  createdAtTime: AWSDateTime!
+  createdBy: ID!
+  integrationId: ID!
+  integrationLabel: String!
+  s3Bucket: String!
+  s3Prefix: String
+  kmsKey: String
+  logTypes: [String!]!
+  health: LogIntegrationHealth!
 }
 
 input AddComplianceIntegrationInput {
@@ -331,14 +345,15 @@ input AddComplianceIntegrationInput {
 input AddLogIntegrationInput {
   awsAccountId: String!
   integrationLabel: String!
-  s3Buckets: [String]
-  kmsKeys: [String]
+  s3Bucket: String!
+  kmsKey: String
+  s3Prefix: String
+  logTypes: [String!]!
 }
 
 input UpdateComplianceIntegrationInput {
   integrationId: String!
   integrationLabel: String
-  awsAccountId: String
   cweEnabled: Boolean
   remediationEnabled: Boolean
 }
@@ -346,9 +361,10 @@ input UpdateComplianceIntegrationInput {
 input UpdateLogIntegrationInput {
   integrationId: String!
   integrationLabel: String
-  awsAccountId: String
-  s3Buckets: [String]
-  kmsKeys: [String]
+  s3Bucket: String
+  kmsKey: String
+  s3Prefix: String
+  logTypes: [String!]
 }
 
 type ListPoliciesResponse {

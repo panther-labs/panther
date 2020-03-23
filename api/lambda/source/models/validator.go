@@ -19,20 +19,29 @@ package models
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/arn"
+	"regexp"
+	"strings"
+
 	"gopkg.in/go-playground/validator.v9"
+)
+
+var (
+	integrationLabelValidatorRegex = regexp.MustCompile("^[0-9a-zA-Z- ]+$")
 )
 
 // Validator builds a custom struct validator.
 func Validator() (*validator.Validate, error) {
 	result := validator.New()
-	if err := result.RegisterValidation("roleArn", validateRoleArn); err != nil {
+	if err := result.RegisterValidation("integrationLabel", validateIntegrationLabel); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func validateRoleArn(fl validator.FieldLevel) bool {
-	fieldArn, err := arn.Parse(fl.Field().String())
-	return err == nil && fieldArn.Service == "iam"
+func validateIntegrationLabel(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	if len(strings.TrimSpace(value)) == 0 || len(value) > 100 {
+		return false
+	}
+	return integrationLabelValidatorRegex.MatchString(value)
 }
