@@ -1,9 +1,3 @@
----
-description: >-
-  This page describes the steps needed to create an IAM role for the Panther
-  Master Account.
----
-
 # IAM Setup
 
 The first step is creating the IAM role with access to the S3 buckets containing logs:

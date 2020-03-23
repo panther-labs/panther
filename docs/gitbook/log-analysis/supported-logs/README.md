@@ -1,12 +1,12 @@
 # Supported Logs
 
-Panther analyzes different types of data generated from clouds, endpoints, network devices, or applications. All log data is parsed, analyzed, and then saved into the Panther data warehouse in your AWS account.
-
-To request support for new log types, please open a [Github issue](https://github.com/panther-labs/panther/issues) or develop your own [with our guide](writing-parsers.md)!
+Panther can analyze all types of data generated from clouds, endpoints, network devices, or applications. Parsers for each log you wish to analyze are required to enable rule processing. To request support for new log types, please open a [Github issue](https://github.com/panther-labs/panther/issues) or develop your own [with our guide](writing-parsers.md)!
 
 ## Log Categories
 
-An effective monitoring strategy is applied in layers going from most broad to most specific:
+One monitoring strategy is to collect data in layers, from most broad reaching to most specific.
+
+To understand the structure of these logs, click through to the pages below:
 
 1. Cloud
   1. [AWS](log-analysis/supported-logs/aws) (CloudTrail, S3 Access, AuroraMySQL, GuardDuty)

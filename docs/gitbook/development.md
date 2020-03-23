@@ -8,11 +8,21 @@ The sections below provide guidance on how to extend Panther to meet your indivi
 
 You can use the Docker environment from the [quick start](quick-start.md#deployment) instructions for development. However, it's faster to compile and test the code locally.
 
-### Local Installation
+### Dependencies
 
-Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, and [Python](https://www.python.org/downloads/) 3.7+. For MacOS w/ homebrew, this is easy: `brew install go node python3`
+Install [Go](https://golang.org/doc/install#install) 1.13+, [Node](https://nodejs.org/en/download/) 10+, and [Python](https://www.python.org/downloads/) 3.7+.
 
-Add go tools to your environment: `export GOPATH=$HOME/go PATH=$PATH:$GOPATH/bin`
+For MacOS w/ homebrew:
+
+```bash
+brew install go node python3
+```
+
+Add go tools to your environment:
+
+```bash
+export GOPATH=$HOME/go PATH=$PATH:$GOPATH/bin
+```
 
 Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html), which usually works best with the [bundled installer](https://docs.aws.amazon.com/cli/latest/userguide/install-bundle.html):
 
@@ -24,9 +34,17 @@ sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
 
 Install [Docker](https://docs.docker.com/install/) and make sure the daemon is running in the background.
 
-Install [Mage](https://magefile.org/#installation): `go get github.com/magefile/mage`
+Install [Mage](https://magefile.org/#installation):
 
-Finally, install the remaining development libraries with `mage setup:all`
+```bash
+go get github.com/magefile/mage
+```
+
+Finally, install the remaining development libraries:
+
+```bash
+mage setup:all
+```
 
 ### Mage
 
@@ -67,13 +85,13 @@ You can easily chain `mage` commands together, for example: `mage fmt test:ci de
    - **WARNING**: integration tests will erase all Panther data stores
    - To run tests for only one package: `PKG=./internal/compliance/compliance-api/main mage test:integration`
 
-## Updating
+## Deploying and Updating
 
 To update your deployment of Panther, follow the steps below:
 
 1. Checkout the latest release:
    1. `git fetch origin master`
-   2. `git checkout tags/v0.2.0`
+   2. `git checkout tags/v0.3.0`
 2. Clean the existing build artifacts: `mage clean`
 3. Deploy the latest application changes: `mage deploy`
 
