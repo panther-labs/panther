@@ -116,6 +116,20 @@
         "infra",
         "ideas"
       ]
+    },
+    {
+      "login": "jacknagz",
+      "name": "Jack Naglieri",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/11466941?v=4",
+      "profile": "https://www.twitter.com/jack_naglieri",
+      "contributions": [
+        "code",
+        "doc",
+        "security",
+        "content",
+        "ideas",
+        "projectManagement"
+      ]
     }
   ],
   "contributorsPerLine": 7,
