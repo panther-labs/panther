@@ -50,7 +50,7 @@ export type AlertDetails = {
   eventsMatched: Scalars['Int'];
   events: Array<Scalars['AWSJSON']>;
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
-  dedupString?: Maybe<Scalars['String']>;
+  dedupString: Scalars['String'];
 };
 
 export type AlertSummary = {
@@ -61,7 +61,7 @@ export type AlertSummary = {
   updateTime: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
   severity?: Maybe<Scalars['String']>;
-  dedupString?: Maybe<Scalars['String']>;
+  dedupString: Scalars['String'];
 };
 
 export enum AnalysisTypeEnum {
@@ -407,7 +407,6 @@ export type ListRulesInput = {
   enabled?: Maybe<Scalars['Boolean']>;
   logTypes?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
-  dedupPeriodMinutes?: Maybe<Scalars['Int']>;
   tags?: Maybe<Scalars['String']>;
   /** Sorting */
   sortBy?: Maybe<ListRulesSortFieldsEnum>;
@@ -840,7 +839,7 @@ export type RuleDetails = {
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
-  dedupPeriodMinutes?: Maybe<Scalars['Int']>;
+  dedupPeriodMinutes: Scalars['Int'];
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
   tests?: Maybe<Array<Maybe<PolicyUnitTest>>>;
   versionId?: Maybe<Scalars['ID']>;
@@ -854,7 +853,7 @@ export type RuleSummary = {
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   severity?: Maybe<SeverityEnum>;
-  dedupPeriodMinutes?: Maybe<Scalars['Int']>;
+  dedupPeriodMinutes: Scalars['Int'];
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
 };
 
@@ -1301,7 +1300,7 @@ export type AlertDetailsResolvers<
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   events?: Resolver<Array<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   eventsLastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  dedupString?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1315,7 +1314,7 @@ export type AlertSummaryResolvers<
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  dedupString?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -2039,7 +2038,7 @@ export type RuleDetailsResolvers<
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
-  dedupPeriodMinutes?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  dedupPeriodMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   tests?: Resolver<Maybe<Array<Maybe<ResolversTypes['PolicyUnitTest']>>>, ParentType, ContextType>;
   versionId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
@@ -2056,7 +2055,7 @@ export type RuleSummaryResolvers<
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
-  dedupPeriodMinutes?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  dedupPeriodMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
