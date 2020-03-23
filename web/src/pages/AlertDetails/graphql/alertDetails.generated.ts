@@ -39,6 +39,7 @@ export type AlertDetails = {
       | 'updateTime'
       | 'eventsLastEvaluatedKey'
       | 'events'
+      | 'dedupString'
     >
   >;
 };
@@ -53,6 +54,7 @@ export const AlertDetailsDocument = gql`
       updateTime
       eventsLastEvaluatedKey
       events
+      dedupString
     }
   }
 `;

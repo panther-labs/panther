@@ -35,7 +35,13 @@ export type ListAlerts = {
         Types.Maybe<
           Pick<
             Types.AlertSummary,
-            'alertId' | 'creationTime' | 'eventsMatched' | 'updateTime' | 'ruleId' | 'severity'
+            | 'alertId'
+            | 'creationTime'
+            | 'eventsMatched'
+            | 'updateTime'
+            | 'ruleId'
+            | 'severity'
+            | 'dedupString'
           >
         >
       >;
@@ -53,6 +59,7 @@ export const ListAlertsDocument = gql`
         updateTime
         ruleId
         severity
+        dedupString
       }
       lastEvaluatedKey
     }
