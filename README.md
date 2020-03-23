@@ -1,6 +1,6 @@
 <p align="center">
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-12-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github.jpg" alt="Panther Logo"/></a>
 </p>
@@ -157,6 +157,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/kartikeypan"><img src="https://avatars1.githubusercontent.com/u/58938775?v=4" width="100px;" alt=""/><br /><sub><b>Kartikey Pandey</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=kartikeypan" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/stoggi"><img src="https://avatars3.githubusercontent.com/u/5227285?v=4" width="100px;" alt=""/><br /><sub><b>Jeremy Stott</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=stoggi" title="Code">💻</a> <a href="#security-stoggi" title="Security">🛡️</a> <a href="#infra-stoggi" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#ideas-stoggi" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://www.twitter.com/jack_naglieri"><img src="https://avatars1.githubusercontent.com/u/11466941?v=4" width="100px;" alt=""/><br /><sub><b>Jack Naglieri</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=jacknagz" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=jacknagz" title="Documentation">📖</a> <a href="#security-jacknagz" title="Security">🛡️</a> <a href="#content-jacknagz" title="Content">🖋</a> <a href="#ideas-jacknagz" title="Ideas, Planning, & Feedback">🤔</a> <a href="#projectManagement-jacknagz" title="Project Management">📆</a></td>
+    <td align="center"><a href="http://www.improbable.io"><img src="https://avatars3.githubusercontent.com/u/1226100?v=4" width="100px;" alt=""/><br /><sub><b>Gavin</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=gavinelder" title="Code">💻</a> <a href="#security-gavinelder" title="Security">🛡️</a> <a href="#infra-gavinelder" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#ideas-gavinelder" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 
