@@ -1,6 +1,6 @@
 <p align="center">
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github.jpg" alt="Panther Logo"/></a>
 </p>
@@ -154,6 +154,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   </tr>
   <tr>
     <td align="center"><a href="https://github.com/sugandhalahoti"><img src="https://avatars1.githubusercontent.com/u/60883353?v=4" width="100px;" alt=""/><br /><sub><b>Sugandha</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=sugandhalahoti" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/kartikeypan"><img src="https://avatars1.githubusercontent.com/u/58938775?v=4" width="100px;" alt=""/><br /><sub><b>Kartikey Pandey</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=kartikeypan" title="Documentation">📖</a></td>
   </tr>
 </table>
 
