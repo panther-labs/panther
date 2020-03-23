@@ -18,7 +18,7 @@
 
 import { Box, Heading, SideSheet, useSnackbar, Text, Alert } from 'pouncejs';
 import React from 'react';
-import { SubmitButton } from 'Components/Buttons';
+import SubmitButton from 'Components/buttons/SubmitButton';
 
 import useSidesheet from 'Hooks/useSidesheet';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
