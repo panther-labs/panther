@@ -1,6 +1,6 @@
 <p align="center">
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github.jpg" alt="Panther Logo"/></a>
 </p>
@@ -146,6 +146,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tr>
     <td align="center"><a href="https://aggelos.dev"><img src="https://avatars1.githubusercontent.com/u/10436045?v=4" width="100px;" alt=""/><br /><sub><b>Aggelos Arvanitakis</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=3nvi" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=3nvi" title="Documentation">📖</a> <a href="#design-3nvi" title="Design">🎨</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3A3nvi" title="Bug reports">🐛</a> <a href="#infra-3nvi" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     <td align="center"><a href="https://www.linkedin.com/in/austinbyers/"><img src="https://avatars0.githubusercontent.com/u/3608925?v=4" width="100px;" alt=""/><br /><sub><b>Austin Byers</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=austinbyers" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=austinbyers" title="Documentation">📖</a> <a href="#security-austinbyers" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Aaustinbyers" title="Bug reports">🐛</a> <a href="#infra-austinbyers" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/nhakmiller"><img src="https://avatars1.githubusercontent.com/u/49166439?v=4" width="100px;" alt=""/><br /><sub><b>Nick</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=nhakmiller" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=nhakmiller" title="Documentation">📖</a> <a href="#security-nhakmiller" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Anhakmiller" title="Bug reports">🐛</a> <a href="#infra-nhakmiller" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
   </tr>
 </table>
 
