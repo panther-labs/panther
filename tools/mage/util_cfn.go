@@ -21,8 +21,10 @@ package mage
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 
 	"github.com/panther-labs/panther/tools/config"
@@ -144,4 +146,61 @@ func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(
 	}
 
 	return nil
+}
+
+// Returns true if the given error is from describing a stack that doesn't exist.
+func errStackDoesNotExist(err error) bool {
+	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ValidationError" &&
+		strings.Contains(awsErr.Message(), "does not exist") {
+
+		return true
+	}
+	return false
+}
+
+// Return true if CF stack set exists
+func stackSetExists(cfClient *cfn.CloudFormation, stackSetName string) (bool, error) {
+	input := &cfn.DescribeStackSetInput{StackSetName: aws.String(stackSetName)}
+	_, err := cfClient.DescribeStackSet(input)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "StackSetNotFoundException" {
+			err = nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// Return true if CF stack set exists
+func stackSetInstanceExists(cfClient *cfn.CloudFormation, stackSetName, account, region string) (bool, error) {
+	input := &cfn.DescribeStackInstanceInput{
+		StackSetName:         &stackSetName,
+		StackInstanceAccount: &account,
+		StackInstanceRegion:  &region,
+	}
+	_, err := cfClient.DescribeStackInstance(input)
+	if err != nil {
+		// need to also check for "StackSetNotFoundException" if the containing stack set does not exist
+		if awsErr, ok := err.(awserr.Error); ok &&
+			(awsErr.Code() == "StackInstanceNotFoundException" || awsErr.Code() == "StackSetNotFoundException") {
+
+			err = nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func describeStack(cfClient *cfn.CloudFormation, stackName string) (status string, output map[string]string, err error) {
+	input := &cfn.DescribeStacksInput{StackName: &stackName}
+	response, err := cfClient.DescribeStacks(input)
+	if err != nil {
+		return status, output, err
+	}
+
+	status = *response.Stacks[0].StackStatus
+	if status == cfn.StackStatusCreateComplete || status == cfn.StackStatusUpdateComplete {
+		output = flattenStackOutputs(response)
+	}
+	return status, output, err
 }
