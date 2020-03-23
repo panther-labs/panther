@@ -64,6 +64,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "alexmylonas",
+      "name": "Alex Mylonas",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/14179917?v=4",
+      "profile": "https://github.com/alexmylonas",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
