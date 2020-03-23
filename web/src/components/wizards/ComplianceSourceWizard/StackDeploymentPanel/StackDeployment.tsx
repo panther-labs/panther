@@ -102,7 +102,7 @@ const StackDeployment: React.FC = () => {
             href={cfnConsoleLink}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
-            Launch console
+            Launch stack
           </Text>
           <Text size="large" color="grey200" is="p" mt={10} mb={2}>
             Alternatively, you can download it and deploy it through the AWS CLI with the stack name{' '}
