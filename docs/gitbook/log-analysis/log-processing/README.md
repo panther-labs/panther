@@ -2,11 +2,20 @@
 
 ## Overview
 
-Log analysis can improve visibility into your environments by monitoring events in real time. In this section, we'll show how Panther  gives you the ability to collect and transform logs into meaningful insights.
+Log analysis can improve visibility into your environments by monitoring events in real time, such as:
+
+* Login/Logout
+* API calls
+* Network traffic
+* Running processes
+* System changes
+* Output from IDS sensors
+
+ In this section, we'll show how Panther gives you the ability to collect and transform logs into meaningful insights.
 
 ## How It Works
 
-The following illustration provides a high-level architecture of how Panther aggregates and processes event logs from different sources.
+The following illustration provides a high-level architecture:.
 
 ![](../../.gitbook/assets/logprocessingingestion-4.jpg)
 
@@ -18,14 +27,14 @@ The following illustration provides a high-level architecture of how Panther agg
 
 ## How to Setup Log Processing
 
-First, **data must send to an S3 bucket.**
+**First, data must send to an S3 bucket.**
 
-We recommend organizing incoming data by using S3 folders or separate buckets. You can onboard as many buckets as you would like from any region.
+We recommend organizing incoming data by using S3 folders or multiple buckets. You can onboard as many buckets as you would like from any region.
 
-Then, follow the pages below:
+Get started with the pages below:
 - [Log Processing IAM Setup](iam-setup.md)
 - [S3 Event Notifications and SNS Setup](notifications-setup.md)
 
 ## Viewing the Logs
 
-Once log processing is setup, your data can be searched with [Historical Search](../../historical-search/README.md)!
+After log analysis is setup, your data can be searched with [Historical Search](../../historical-search/README.md)!
