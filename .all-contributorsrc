@@ -74,6 +74,18 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "rleighton",
+      "name": "Russell Leighton",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/18419762?v=4",
+      "profile": "https://github.com/rleighton",
+      "contributions": [
+        "code",
+        "security",
+        "bug",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
