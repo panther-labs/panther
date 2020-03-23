@@ -85,7 +85,7 @@ Your connection _is_ encrypted, and it's generally safe to continue if the domai
 Congratulations! You are now ready to use Panther. Follow the steps below to configure your analysis and alerting:
 
 1. Invite your team in Settings > Users > Invite User
-1. Configure [destinations](destinations/alert-setup/) to receive generated alerts
+1. Configure [destinations](destinations/setup/) to receive generated alerts
 2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
 3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
 4. Onboard accounts for [cloud security scans](policies/scanning/)
@@ -110,7 +110,11 @@ Having trouble? Reach out to us:
 
 ## Security
 
-Your data is always under your control and encrypted both in transit and at rest. All created AWS infrastructure is least-privilege and deployed with AWS CloudFormation.
+Safety and data security is a very high priority for the Panther Labs team. If you have discovered a security vulnerability in our codebase, we would appreciate your help in disclosing it to us in a responsible manner.
+
+Security issues identified in any of the open-source codebases maintained by Panther Labs or any of our commercial offerings should be reported via email to [security@runpanther.io](mailto:security@runpanther.io). Panther Labs is committed to working together with researchers and keeping them updated throughout the patching process. Researchers who responsibly report valid security issues will be publicly credited for their efforts (if they so choose).
+
+The data passed through Panther is always under your control and encrypted both in transit and at rest. All supporting AWS infrastructure is least-privilege and deployed with AWS CloudFormation.
 
 ### Privacy
 
@@ -125,11 +129,11 @@ The Panther team greatly benefits from understanding runtime issues that occur i
 
 ## Deployment Options
 
-Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
+Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#dependencies) locally. This will take more time initially but will lead to faster deployments.
 
 You can also deploy from an EC2 instance with Docker and git installed in the same region you're deploying Panther to. This is typically the fastest option since it minimizes the latency when communicating with AWS services. Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](#prerequisites) to your EC2 instance profile. Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
 
-### Supported AWS Regions
+### Supported Regions
 
 Panther relies on dozens of AWS services, some of which are not yet available in every region. In particular, AppSync, Cognito, Athena, and Glue are newer services not available in us-gov, china, and other regions. At the time of writing, all Panther backend components are supported in the following:
 
@@ -148,7 +152,7 @@ Panther relies on dozens of AWS services, some of which are not yet available in
 
 Consult the [AWS region table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for the source of truth about service availability in each region.
 
-### Configuring AWS Credentials
+### AWS Credentials
 
 Configure your AWS credentials and deployment region:
 

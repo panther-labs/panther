@@ -91,6 +91,7 @@ export type ComplianceIntegration = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   health: ComplianceIntegrationHealth;
+  stackName: Scalars['String'];
 };
 
 export type ComplianceIntegrationHealth = {
@@ -290,6 +291,7 @@ export type IntegrationItemHealthStatus = {
 export type IntegrationTemplate = {
   __typename?: 'IntegrationTemplate';
   body: Scalars['String'];
+  stackName: Scalars['String'];
 };
 
 export type InviteUserInput = {
@@ -442,6 +444,7 @@ export type LogIntegration = {
   kmsKey?: Maybe<Scalars['String']>;
   logTypes: Array<Scalars['String']>;
   health: LogIntegrationHealth;
+  stackName: Scalars['String'];
 };
 
 export type LogIntegrationHealth = {
@@ -1359,6 +1362,7 @@ export type ComplianceIntegrationResolvers<
   cweEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   health?: Resolver<ResolversTypes['ComplianceIntegrationHealth'], ParentType, ContextType>;
+  stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1476,6 +1480,7 @@ export type IntegrationTemplateResolvers<
   ParentType extends ResolversParentTypes['IntegrationTemplate'] = ResolversParentTypes['IntegrationTemplate']
 > = {
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1561,6 +1566,7 @@ export type LogIntegrationResolvers<
   kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   health?: Resolver<ResolversTypes['LogIntegrationHealth'], ParentType, ContextType>;
+  stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 

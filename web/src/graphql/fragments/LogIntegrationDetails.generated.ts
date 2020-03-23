@@ -34,6 +34,7 @@ export type LogIntegrationDetails = Pick<
   | 's3Bucket'
   | 's3Prefix'
   | 'logTypes'
+  | 'stackName'
 > & {
   health: {
     processingRoleStatus: IntegrationItemHealthDetails;
@@ -53,6 +54,7 @@ export const LogIntegrationDetails = gql`
     s3Bucket
     s3Prefix
     logTypes
+    stackName
     health {
       processingRoleStatus {
         ...IntegrationItemHealthDetails

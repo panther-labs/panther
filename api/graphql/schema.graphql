@@ -91,6 +91,7 @@ input GetAlertInput {
 
 type IntegrationTemplate {
   body: String!
+  stackName: String!
 }
 
 type IntegrationItemHealthStatus {
@@ -318,6 +319,7 @@ type ComplianceIntegration {
   cweEnabled: Boolean
   remediationEnabled: Boolean
   health: ComplianceIntegrationHealth!
+  stackName: String!
 }
 
 type LogIntegration {
@@ -331,6 +333,7 @@ type LogIntegration {
   kmsKey: String
   logTypes: [String!]!
   health: LogIntegrationHealth!
+  stackName: String!
 }
 
 input AddComplianceIntegrationInput {

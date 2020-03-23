@@ -29,13 +29,14 @@ export type GetLogCfnTemplateVariables = {
 };
 
 export type GetLogCfnTemplate = {
-  getLogIntegrationTemplate: Pick<Types.IntegrationTemplate, 'body'>;
+  getLogIntegrationTemplate: Pick<Types.IntegrationTemplate, 'body' | 'stackName'>;
 };
 
 export const GetLogCfnTemplateDocument = gql`
   query GetLogCfnTemplate($input: GetLogIntegrationTemplateInput!) {
     getLogIntegrationTemplate(input: $input) {
       body
+      stackName
     }
   }
 `;
