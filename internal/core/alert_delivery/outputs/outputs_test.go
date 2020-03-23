@@ -48,7 +48,7 @@ func TestGenerateAlertTitleReturnGivenTitle(t *testing.T) {
 		Title: aws.String("my title"),
 	}
 
-	assert.Equal(t, "my title", generateAlertTitle(alert))
+	assert.Equal(t, "New Alert: my title", generateAlertTitle(alert))
 }
 
 func TestGenerateAlertTitleRulePolicyName(t *testing.T) {
