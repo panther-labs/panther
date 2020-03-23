@@ -32,6 +32,7 @@ export type ComplianceIntegrationDetails = Pick<
   | 'createdBy'
   | 'cweEnabled'
   | 'remediationEnabled'
+  | 'stackName'
 > & {
   health: {
     auditRoleStatus: IntegrationItemHealthDetails;
@@ -49,6 +50,7 @@ export const ComplianceIntegrationDetails = gql`
     createdBy
     cweEnabled
     remediationEnabled
+    stackName
     health {
       auditRoleStatus {
         ...IntegrationItemHealthDetails
