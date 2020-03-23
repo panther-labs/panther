@@ -180,19 +180,6 @@ module.exports = {
           },
         ],
       },
-
-      // FIXME: Disable image optimization until security vulnerability is assessed
-      // Related ticket: https://github.com/tcoopman/image-webpack-loader/issues/219
-
-      // {
-      //   test: /\.(png|svg|jpg|gif)$/,
-      //   use: ['file-loader', 'image-webpack-loader'],
-      //   enforce: 'pre',
-      // },
-      {
-        test: /\.hbs$/,
-        loader: 'handlebars-loader',
-      },
     ],
   },
   resolve: {
@@ -229,7 +216,7 @@ module.exports = {
         {
           from: path.resolve(__dirname, 'public'),
           to: path.resolve(__dirname, 'dist'),
-          ignore: ['*.hbs'],
+          ignore: ['*.ejs'],
         },
       ]),
     // Add scripts to the final HTML
@@ -238,9 +225,12 @@ module.exports = {
         {},
         {
           inject: true,
-          template: path.resolve(__dirname, 'public/index.hbs'),
+          template: path.resolve(__dirname, 'public/index.ejs'),
           filename: './index.html',
-          templateParameters: process.env,
+          templateParameters: {
+            GRAPHQL_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
+            AWS_REGION: process.env.AWS_REGION,
+          },
         },
         // If we are in production, we make sure to also minify the HTML
         isEnvProduction

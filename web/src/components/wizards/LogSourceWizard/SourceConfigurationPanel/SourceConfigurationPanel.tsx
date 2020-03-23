@@ -53,15 +53,16 @@ const SourceConfigurationPanel: React.FC = () => {
         <Field
           name="awsAccountId"
           as={FormikTextInput}
-          label="Related Account ID"
+          label="Account ID"
           placeholder="The AWS Account ID that the S3 log bucket lives in"
+          disabled={!!initialValues.integrationId}
           aria-required
           mb={6}
         />
         <Field
           name="s3Bucket"
           as={FormikTextInput}
-          label="S3 Bucket Name"
+          label="Bucket Name"
           aria-required
           placeholder="The name of the S3 bucket that holds the logs"
           mb={6}
@@ -91,7 +92,7 @@ const SourceConfigurationPanel: React.FC = () => {
             <Field
               name="s3Prefix"
               as={FormikTextInput}
-              label="S3 Object Prefix"
+              label="S3 Prefix Filter"
               aria-required
               placeholder="Limit logs to objects that start with matching characters"
               mb={6}

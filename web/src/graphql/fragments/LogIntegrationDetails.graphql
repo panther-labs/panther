@@ -8,6 +8,7 @@ fragment LogIntegrationDetails on LogIntegration {
   s3Bucket
   s3Prefix
   logTypes
+  stackName
   health {
     processingRoleStatus {
       ...IntegrationItemHealthDetails

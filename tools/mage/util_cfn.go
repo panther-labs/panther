@@ -42,7 +42,7 @@ func getStackOutputs(awsSession *session.Session, name string) (map[string]strin
 	input := &cfn.DescribeStacksInput{StackName: &name}
 	response, err := cfnClient.DescribeStacks(input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to describe stack %s: %v", name, err)
+		return nil, err
 	}
 
 	return flattenStackOutputs(response), nil
@@ -76,9 +76,7 @@ func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(
 	logger.Debugf("enumerating stack %s", *stackID)
 	detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: stackID})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ValidationError" &&
-			strings.TrimSpace(awsErr.Message()) == fmt.Sprintf("Stack with id %s does not exist", *stackID) {
-
+		if isStackNotExistsError(*stackID, err) {
 			logger.Debugf("stack %s does not exist", *stackID)
 			return nil
 		}
@@ -127,4 +125,14 @@ func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(
 	}
 
 	return nil
+}
+
+// Returns true if the error is indication that the specified CFN stack doesn't exist false otherwise.
+func isStackNotExistsError(stackID string, err error) bool {
+	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ValidationError" &&
+		strings.TrimSpace(awsErr.Message()) == fmt.Sprintf("Stack with id %s does not exist", stackID) {
+
+		return true
+	}
+	return false
 }

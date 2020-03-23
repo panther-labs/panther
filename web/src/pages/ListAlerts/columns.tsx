@@ -29,15 +29,21 @@ import { SEVERITY_COLOR_MAP } from 'Source/constants';
 // The columns that the associated table will show
 const columns = [
   {
-    key: 'id',
+    key: 'ruleId',
     sortable: true,
-    header: 'Alert ID',
-    flex: '0 0 350px',
+    header: 'Rule ID',
+    flex: '0 0 200px',
     renderCell: item => (
       <Link to={urls.logAnalysis.alerts.details(item.alertId)}>
-        <Text size="medium">{item.alertId}</Text>
+        <Text size="medium">{item.ruleId}</Text>
       </Link>
     ),
+  },
+  {
+    key: 'dedupString',
+    sortable: true,
+    header: 'Dedup String',
+    flex: '0 0 200px',
   },
   {
     key: 'eventsMatched',

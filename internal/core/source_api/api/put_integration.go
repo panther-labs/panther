@@ -64,7 +64,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 			zap.Any("input", input))
 		return nil, &genericapi.InvalidInputError{
 			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
-				*input.AWSAccountID, reason),
+				*input.IntegrationLabel, reason),
 		}
 	}
 
@@ -223,5 +223,6 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		KmsKey:            input.KmsKey,
 		LogTypes:          input.LogTypes,
 		LogProcessingRole: logProcessingRole,
+		StackName:         aws.String(getStackName(*input.IntegrationType, *input.IntegrationLabel)),
 	}
 }

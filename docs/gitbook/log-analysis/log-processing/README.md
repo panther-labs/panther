@@ -2,17 +2,22 @@
 
 ## Overview
 
-Log processing can improve visibility into your environments by monitoring log events in real time.
+Log analysis can improve visibility into your environments by monitoring events in real time, such as:
 
-In this section, we'll show how Panther's architecture gives you the ability to collect and transform raw logs into meaningful data for analysis.
+* Login/Logout
+* API calls
+* Network traffic
+* Running processes
+* System changes
+* Output from IDS sensors
 
-## **How It Works**
+ In this section, we'll show how Panther gives you the ability to collect and transform logs into meaningful insights.
 
-The following illustration provides a high-level architecture of how Panther aggregates and processes event logs from different sources.
+## How It Works
+
+The following illustration provides a high-level architecture:.
 
 ![](../../.gitbook/assets/logprocessingingestion-4.jpg)
-
-The high-level steps are:
 
 1. Logs are written into an S3 bucket
 2. The bucket sends an S3 event notification to an SNS Topic
@@ -20,14 +25,16 @@ The high-level steps are:
 4. A Lambda Function pulls messages off the Queue and assumes an IAM Role to download the new log data
 6. A Lambda Function sends the parsed log data to the Log Analysis pipeline
 
-## **How to Setup Log Processing**
+## How to Setup Log Processing
 
-First, data must send to an S3 bucket. We recommend organizing incoming data by using S3 folders or separate buckets. You can onboard as many buckets as you would like from any region.
+**First, data must send to an S3 bucket.**
 
-Follow the steps below to set this up across your AWS accounts:
+We recommend organizing incoming data by using S3 folders or multiple buckets. You can onboard as many buckets as you would like from any region.
+
+Get started with the pages below:
 - [Log Processing IAM Setup](iam-setup.md)
 - [S3 Event Notifications and SNS Setup](notifications-setup.md)
 
 ## Viewing the Logs
 
-Once log processing is setup, your data can be searched with [Historical Search](../../historical-search/README.md)!
+After log analysis is setup, your data can be searched with [Historical Search](../../historical-search/README.md)!

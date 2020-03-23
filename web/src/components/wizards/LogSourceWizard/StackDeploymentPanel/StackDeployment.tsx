@@ -18,10 +18,8 @@
 
 import { Text, Box, Heading, Spinner, Flex } from 'pouncejs';
 import React from 'react';
-import { extractErrorMessage, getLogIntegrationStackName } from 'Helpers/utils';
+import { extractErrorMessage, toStackNameFormat } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
-import kebabCase from 'lodash-es/kebabCase';
-import { LogIntegration } from 'Generated/schema';
 import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { LogSourceWizardValues } from '../LogSourceWizard';
 
@@ -33,9 +31,9 @@ const StackDeployment: React.FC = () => {
         awsAccountId: values.awsAccountId,
         integrationLabel: values.integrationLabel,
         s3Bucket: values.s3Bucket,
-        s3Prefix: values.s3Prefix,
-        kmsKey: values.kmsKey,
         logTypes: values.logTypes,
+        s3Prefix: values.s3Prefix || null,
+        kmsKey: values.kmsKey || null,
       },
     },
   });
@@ -54,18 +52,11 @@ const StackDeployment: React.FC = () => {
     [data]
   );
 
-  const stackName = getLogIntegrationStackName(values as LogIntegration);
-  const cfnConsoleLink =
-    `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
-    '?templateURL=https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-analysis-iam/v1.0.0/template.yml' +
-    `&stackName=${stackName}` +
-    `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
-    `&param_RoleSuffix=${kebabCase(values.integrationLabel)}` +
-    `&param_S3Bucket=${values.s3Bucket}` +
-    `&param_S3Prefix=${values.s3Prefix}` +
-    `&param_KmsKey=${values.kmsKey}`;
+  const renderContent = () => {
+    if (loading) {
+      return <Spinner size="small" />;
+    }
 
-  const renderDownloadTemplateLink = () => {
     if (error) {
       return (
         <Text size="large" color="red300">
@@ -74,35 +65,22 @@ const StackDeployment: React.FC = () => {
       );
     }
 
-    return (
-      <Text size="large" color="blue300" is="span">
-        {loading ? (
-          <Spinner size="small" />
-        ) : (
-          <a
-            href="#"
-            title="Download Cloudformation template"
-            download={`${stackName}.yaml`}
-            ref={downloadRef}
-            onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-          >
-            Download template
-          </a>
-        )}
-      </Text>
-    );
-  };
+    const { stackName } = data.getLogIntegrationTemplate;
+    if (!initialValues.integrationId) {
+      const cfnConsoleLink =
+        `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
+        '?templateURL=https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-analysis-iam/v1.0.0/template.yml' +
+        `&stackName=${stackName}` +
+        `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
+        `&param_RoleSuffix=${toStackNameFormat(values.integrationLabel)}` +
+        `&param_S3Bucket=${values.s3Bucket}` +
+        `&param_S3Prefix=${values.s3Prefix}` +
+        `&param_KmsKey=${values.kmsKey}`;
 
-  return (
-    <Box>
-      <Heading size="medium" m="auto" mb={10} color="grey400">
-        Deploy your configured stack
-      </Heading>
-      {!initialValues.integrationId ? (
+      return (
         <React.Fragment>
-          <Text size="large" color="grey200" is="p" mb={2}>
-            To proceed, you must deploy the generated Cloudformation template to the account{' '}
-            <b>{values.awsAccountId}</b>. This will create a ReadOnly IAM Role to access the logs
+          <Text size="large" color="grey200" is="p" mt={2} mb={2}>
+            The quickest way to do it, is through the AWS console
           </Text>
           <Text
             size="large"
@@ -114,58 +92,92 @@ const StackDeployment: React.FC = () => {
             href={cfnConsoleLink}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
-            Launch console
+            Launch stack
           </Text>
           <Text size="large" color="grey200" is="p" mt={10} mb={2}>
             Alternatively, you can download it and deploy it through the AWS CLI with the stack name{' '}
             <b>{stackName}</b>
           </Text>
-          {renderDownloadTemplateLink()}
-        </React.Fragment>
-      ) : (
-        <React.Fragment>
-          <Text size="large" color="grey200" is="p" mb={6}>
-            To proceed, please deploy the updated Cloudformation template to your related AWS
-            account. This will update your previous IAM Role.
+          <Text size="large" color="blue300" is="span">
+            <a
+              href="#"
+              title="Download Cloudformation template"
+              download={`${stackName}.yml`}
+              ref={downloadRef}
+              onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+            >
+              Download template
+            </a>
           </Text>
-          <Box is="ol">
-            <Flex is="li" alignItems="center" mb={3}>
-              <Text size="large" color="grey200" mr={1}>
-                1.
-              </Text>
-              {renderDownloadTemplateLink()}
-            </Flex>
-            <Text size="large" is="li" color="grey200" mb={3}>
-              2. Log into your
-              <Text
-                ml={1}
-                size="large"
-                color="blue300"
-                is="a"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Launch Cloudformation console"
-                href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
+        </React.Fragment>
+      );
+    }
+
+    return (
+      <React.Fragment>
+        <Box is="ol">
+          <Flex is="li" alignItems="center" mb={3}>
+            <Text size="large" color="grey200" mr={1}>
+              1.
+            </Text>
+            <Text size="large" color="blue300" is="span">
+              <a
+                href="#"
+                title="Download Cloudformation template"
+                download={`${initialValues.initialStackName}.yml`}
+                ref={downloadRef}
+                onClick={() => setStatus({ cfnTemplateDownloaded: true })}
               >
-                Cloudformation console
-              </Text>{' '}
-              of the account <b>{values.awsAccountId}</b>
+                Download template
+              </a>
             </Text>
-            <Text size="large" is="li" color="grey200" mb={3}>
-              3. Find the stack <b>{stackName}</b>
-            </Text>
-            <Text size="large" is="li" color="grey200" mb={3}>
-              4. Press <b>Update</b>, choose <b>Replace current template</b>
-            </Text>
-            <Text size="large" is="li" color="grey200" mb={3}>
-              5. Press <b>Next</b> and finally click on <b>Update</b>
-            </Text>
-          </Box>
-          <Text size="large" color="grey200" is="p" mt={10} mb={2}>
-            Alternatively, you can update your stack through the AWS CLI
+          </Flex>
+          <Text size="large" is="li" color="grey200" mb={3}>
+            2. Log into your
+            <Text
+              ml={1}
+              size="large"
+              color="blue300"
+              is="a"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Launch Cloudformation console"
+              href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
+            >
+              Cloudformation console
+            </Text>{' '}
+            of the account <b>{values.awsAccountId}</b>
           </Text>
-        </React.Fragment>
-      )}
+          <Text size="large" is="li" color="grey200" mb={3}>
+            3. Find the stack <b>{initialValues.initialStackName}</b>
+          </Text>
+          <Text size="large" is="li" color="grey200" mb={3}>
+            4. Press <b>Update</b>, choose <b>Replace current template</b>
+          </Text>
+          <Text size="large" is="li" color="grey200" mb={3}>
+            5. Press <b>Next</b> and finally click on <b>Update</b>
+          </Text>
+        </Box>
+        <Text size="large" color="grey200" is="p" mt={10} mb={2}>
+          Alternatively, you can update your stack through the AWS CLI
+        </Text>
+      </React.Fragment>
+    );
+  };
+
+  return (
+    <Box>
+      <Heading size="medium" m="auto" mb={2} color="grey400">
+        Deploy your configured stack
+      </Heading>
+      <Text size="large" color="grey200" is="p" mb={10}>
+        To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
+        <b>{values.awsAccountId}</b>.{' '}
+        {!initialValues.integrationId
+          ? 'This will create a ReadOnly IAM Role to access the logs.'
+          : 'This will update the existing ReadOnly IAM Role.'}
+      </Text>
+      {renderContent()}
     </Box>
   );
 };
