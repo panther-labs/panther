@@ -2,7 +2,6 @@ query AlertDetails($input: GetAlertInput!) {
   alert(input: $input) {
     alertId
     ruleId
-    severity
     creationTime
     eventsMatched
     updateTime
