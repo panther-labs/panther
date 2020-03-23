@@ -1,6 +1,6 @@
 <p align="center">
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github.jpg" alt="Panther Logo"/></a>
 </p>
@@ -149,6 +149,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/nhakmiller"><img src="https://avatars1.githubusercontent.com/u/49166439?v=4" width="100px;" alt=""/><br /><sub><b>Nick</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=nhakmiller" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=nhakmiller" title="Documentation">📖</a> <a href="#security-nhakmiller" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Anhakmiller" title="Bug reports">🐛</a> <a href="#infra-nhakmiller" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     <td align="center"><a href="https://github.com/kostaspap"><img src="https://avatars3.githubusercontent.com/u/2652630?v=4" width="100px;" alt=""/><br /><sub><b>Kostas Papageorgiou</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=kostaspap" title="Code">💻</a> <a href="#security-kostaspap" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Akostaspap" title="Bug reports">🐛</a> <a href="#infra-kostaspap" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     <td align="center"><a href="https://github.com/drixta"><img src="https://avatars1.githubusercontent.com/u/2681321?v=4" width="100px;" alt=""/><br /><sub><b>Quan Pham</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=drixta" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/alexmylonas"><img src="https://avatars3.githubusercontent.com/u/14179917?v=4" width="100px;" alt=""/><br /><sub><b>Alex Mylonas</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=alexmylonas" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Aalexmylonas" title="Bug reports">🐛</a></td>
   </tr>
 </table>
 
