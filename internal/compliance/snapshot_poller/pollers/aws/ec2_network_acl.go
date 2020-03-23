@@ -39,21 +39,25 @@ func PollEC2NetworkACL(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "ec2", resourceARN.Region).(ec2iface.EC2API)
+	ec2Client, err := getEC2Client(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	naclID := strings.Replace(resourceARN.Resource, "network-acl/", "", 1)
-	nacl := getNetworkACL(client, aws.String(naclID))
+	nacl := getNetworkACL(ec2Client, aws.String(naclID))
 
-	snapshot := buildEc2NetworkAclSnapshot(client, nacl)
+	snapshot := buildEc2NetworkAclSnapshot(ec2Client, nacl)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getNetworkACL returns a specific EC2 network ACL
@@ -118,7 +122,10 @@ func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	ec2NetworkACLSnapshots := make(map[string]*awsmodels.Ec2NetworkAcl)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc := getClient(pollerInput, "ec2", *regionID).(ec2iface.EC2API)
+		ec2Svc, err := getEC2Client(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all Network ACLs
 		networkACLs := describeNetworkAcls(ec2Svc)

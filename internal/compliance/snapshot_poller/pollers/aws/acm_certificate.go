@@ -41,23 +41,37 @@ func setupAcmClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return acm.New(sess, cfg)
 }
 
+func getAcmClient(pollerResourceInput *awsmodels.ResourcePollerInput,
+	region string) (acmiface.ACMAPI, error) {
+
+	client, err := getClient(pollerResourceInput, AcmClientFunc, "acm", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(acmiface.ACMAPI), nil
+}
+
 // PollACMCertificate a single ACM certificate resource
 func PollACMCertificate(
 	pollerInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerInput, "acm", resourceARN.Region).(acmiface.ACMAPI)
+	client, err := getAcmClient(pollerInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
 
 	snapshot := buildAcmCertificateSnapshot(client, scanRequest.ResourceID)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 
-	return snapshot
+	return snapshot, nil
 }
 
 // listCertificates returns all ACM certificates in the account
@@ -161,7 +175,10 @@ func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 	acmCertificateSnapshots := make(map[string]*awsmodels.AcmCertificate)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "acm") {
-		acmSvc := getClient(pollerInput, "acm", *regionID).(acmiface.ACMAPI)
+		acmSvc, err := getAcmClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all certificates
 		certificates := listCertificates(acmSvc)

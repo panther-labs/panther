@@ -39,23 +39,35 @@ func setupEcsClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return ecs.New(sess, cfg)
 }
 
+func getEcsClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (ecsiface.ECSAPI, error) {
+	client, err := getClient(pollerResourceInput, EcsClientFunc, "ecs", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(ecsiface.ECSAPI), nil
+}
+
 // PollECSCluster polls a single ECS cluster resource
 func PollECSCluster(
 	pollerInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerInput, "ecs", resourceARN.Region).(ecsiface.ECSAPI)
+	client, err := getEcsClient(pollerInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
 
 	snapshot := buildEcsClusterSnapshot(client, scanRequest.ResourceID)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 
-	return snapshot
+	return snapshot, nil
 }
 
 // listClusters returns all ECS clusters in the account
@@ -302,7 +314,10 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 	ecsClusterSnapshots := make(map[string]*awsmodels.EcsCluster)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ecs") {
-		ecsSvc := getClient(pollerInput, "ecs", *regionID).(ecsiface.ECSAPI)
+		ecsSvc, err := getEcsClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all clusters
 		clusters := listClusters(ecsSvc)

@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
 	"github.com/aws/aws-sdk-go/service/wafregional"
 	"github.com/aws/aws-sdk-go/service/wafregional/wafregionaliface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -45,25 +46,42 @@ func setupElbv2Client(sess *session.Session, cfg *aws.Config) interface{} {
 	return elbv2.New(sess, cfg)
 }
 
+func getElbv2Client(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (elbv2iface.ELBV2API, error) {
+	client, err := getClient(pollerResourceInput, Elbv2ClientFunc, "elbv2", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(elbv2iface.ELBV2API), nil
+}
+
 // PollELBV2 LoadBalancer polls a single ELBV2 Application Load Balancer resource
 func PollELBV2LoadBalancer(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	elbv2Client := getClient(pollerResourceInput, "elbv2", resourceARN.Region).(elbv2iface.ELBV2API)
-	wafClient := getClient(pollerResourceInput, "waf-regional", resourceARN.Region).(wafregionaliface.WAFRegionalAPI)
+	elbv2Client, err := getElbv2Client(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
+	wafClient, err := getWafRegionalClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	loadBalancer := getApplicationLoadBalancer(elbv2Client, scanRequest.ResourceID)
 
 	snapshot := buildElbv2ApplicationLoadBalancerSnapshot(elbv2Client, wafClient, loadBalancer)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
-	return snapshot
+	return snapshot, nil
 }
 
 // getApplicationLoadBalancer returns a specifc ELBV2 application load balancer
@@ -87,14 +105,14 @@ func getApplicationLoadBalancer(svc elbv2iface.ELBV2API, loadBalancerARN *string
 }
 
 // describeLoadBalancers returns a list of all Load Balancers in the account in the current region
-func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API) (loadBalancers []*elbv2.LoadBalancer) {
-	err := elbv2Svc.DescribeLoadBalancersPages(&elbv2.DescribeLoadBalancersInput{},
+func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API) (loadBalancers []*elbv2.LoadBalancer, err error) {
+	err = elbv2Svc.DescribeLoadBalancersPages(&elbv2.DescribeLoadBalancersInput{},
 		func(page *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
 			loadBalancers = append(loadBalancers, page.LoadBalancers...)
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("ELBV2.DescribeLoadBalancersPages", err)
+		return nil, errors.Wrap(err, "ELBV2.DescribeLoadBalancersPages")
 	}
 	return
 }
@@ -241,11 +259,21 @@ func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInpu
 	elbv2LoadBalancerSnapshots := make(map[string]*awsmodels.Elbv2ApplicationLoadBalancer)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "elasticloadbalancing") {
-		elbv2Svc := getClient(pollerInput, "elbv2", *regionID).(elbv2iface.ELBV2API)
-		wafRegionalSvc := getClient(pollerInput, "waf-regional", *regionID).(wafregionaliface.WAFRegionalAPI)
+		elbv2Svc, err := getElbv2Client(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
+
+		wafRegionalSvc, err := getWafRegionalClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all load balancers
-		loadBalancers := describeLoadBalancers(elbv2Svc)
+		loadBalancers, err := describeLoadBalancers(elbv2Svc)
+		if err != nil {
+			return nil, errors.Wrapf(err, "PollElbv2ApplicationLoadBalancers(%#v) in region %s", *pollerInput, *regionID)
+		}
 		if len(loadBalancers) == 0 {
 			zap.L().Debug(
 				"No application load balancers found.",

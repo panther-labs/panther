@@ -49,6 +49,7 @@ import Page404 from 'Pages/404';
 import APIErrorFallback from 'Components/utils/ApiErrorFallback';
 import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
 import EditComplianceSourcePage from 'Pages/EditComplianceSource';
+import EditLogSourcePage from 'Pages/EditLogSource';
 import PromptController from 'Components/utils/PromptController';
 
 // Main page container for the web application, Navigation bar and Content body goes here
@@ -149,6 +150,11 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.logAnalysis.sources.create()}
                   component={CreateLogSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.sources.edit(':id')}
+                  component={EditLogSourcePage}
                 />
                 /******************** SETTINGS ******************************/
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />

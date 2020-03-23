@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/applicationautoscaling/applicationautoscalingiface"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -49,8 +50,30 @@ func setupDynamoDBClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return dynamodb.New(sess, cfg)
 }
 
+func getDynamoDBClient(pollerResourceInput *awsmodels.ResourcePollerInput,
+	region string) (dynamodbiface.DynamoDBAPI, error) {
+
+	client, err := getClient(pollerResourceInput, DynamoDBClientFunc, "dynamodb", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(dynamodbiface.DynamoDBAPI), nil
+}
+
 func setupApplicationAutoScalingClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return applicationautoscaling.New(sess, cfg)
+}
+
+func getApplicationAutoScalingClient(pollerResourceInput *awsmodels.ResourcePollerInput,
+	region string) (applicationautoscalingiface.ApplicationAutoScalingAPI, error) {
+
+	client, err := getClient(pollerResourceInput, ApplicationAutoScalingClientFunc, "applicationautoscaling", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(applicationautoscalingiface.ApplicationAutoScalingAPI), nil
 }
 
 // PollDynamoDBTable polls a single DynamoDB Table resource
@@ -58,31 +81,38 @@ func PollDynamoDBTable(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	_ *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	dynamoClient := getClient(pollerResourceInput, "dynamodb", resourceARN.Region).(dynamodbiface.DynamoDBAPI)
-	autoscalingClient := getClient(
-		pollerResourceInput, "applicationautoscaling", resourceARN.Region).(applicationautoscalingiface.ApplicationAutoScalingAPI)
+	dynamoClient, err := getDynamoDBClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
+	autoscalingClient, err := getApplicationAutoScalingClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	table := strings.Replace(resourceARN.Resource, "table/", "", 1)
 
 	snapshot := buildDynamoDBTableSnapshot(dynamoClient, autoscalingClient, aws.String(table))
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
-	return snapshot
+	return snapshot, nil
 }
 
 // listTables returns a list of all Dynamo DB tables in the account
-func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI) (tables []*string) {
-	err := dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{},
+func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI) (tables []*string, err error) {
+	err = dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{},
 		func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
 			tables = append(tables, page.TableNames...)
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("DynamoDB.ListTablesPages", err)
+		return nil, errors.Wrap(err, "DynamoDB.ListTablesPages")
 	}
 	return
 }
@@ -237,12 +267,21 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	dynamoDBTableSnapshots := make(map[string]*awsmodels.DynamoDBTable)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "dynamodb") {
-		dynamoDBSvc := getClient(pollerInput, "dynamodb", *regionID).(dynamodbiface.DynamoDBAPI)
-		applicationAutoScalingSvc := getClient(
-			pollerInput, "applicationautoscaling", *regionID).(applicationautoscalingiface.ApplicationAutoScalingAPI)
+		dynamoDBSvc, err := getDynamoDBClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
+
+		applicationAutoScalingSvc, err := getApplicationAutoScalingClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all tables
-		tables := listTables(dynamoDBSvc)
+		tables, err := listTables(dynamoDBSvc)
+		if err != nil {
+			return nil, errors.Wrapf(err, "PollDynamoDBTables(%#v) in region %s", *pollerInput, *regionID)
+		}
 		if len(tables) == 0 {
 			zap.L().Debug("no DynamoDB tables found.", zap.String("region", *regionID))
 			continue

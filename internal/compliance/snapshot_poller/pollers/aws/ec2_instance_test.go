@@ -32,14 +32,16 @@ import (
 func TestEC2DescribeInstances(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeInstancesPages"})
 
-	out := describeInstances(mockSvc)
+	out, err := describeInstances(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestEC2DescribeInstancesError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeInstancesPages"})
 
-	out := describeInstances(mockSvc)
+	out, err := describeInstances(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -86,6 +88,6 @@ func TestEC2PollInstancesError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Empty(t, resources)
 }

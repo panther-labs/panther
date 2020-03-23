@@ -31,14 +31,16 @@ import (
 func TestElbv2DescribeLoadBalancers(t *testing.T) {
 	mockSvc := awstest.BuildMockElbv2Svc([]string{"DescribeLoadBalancersPages"})
 
-	out := describeLoadBalancers(mockSvc)
+	out, err := describeLoadBalancers(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestElbv2DescribeLoadBalancersError(t *testing.T) {
 	mockSvc := awstest.BuildMockElbv2SvcError([]string{"DescribeLoadBalancersPages"})
 
-	out := describeLoadBalancers(mockSvc)
+	out, err := describeLoadBalancers(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -166,7 +168,7 @@ func TestElbv2ApplicationLoadBalancersPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

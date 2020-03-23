@@ -49,14 +49,27 @@ func setupKmsClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return kms.New(sess, cfg)
 }
 
+func getKMSClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (kmsiface.KMSAPI, error) {
+	client, err := getClient(pollerResourceInput, KmsClientFunc, "kms", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(kmsiface.KMSAPI), nil
+}
+
 // PollKMSKey polls a single KMS Key resource
 func PollKMSKey(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "kms", resourceARN.Region).(kmsiface.KMSAPI)
+	client, err := getKMSClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	keyID := strings.Replace(resourceARN.Resource, "key/", "", 1)
 	key := &kms.KeyListEntry{
 		KeyId:  aws.String(keyID),
@@ -65,11 +78,11 @@ func PollKMSKey(
 
 	snapshot := buildKmsKeySnapshot(client, key)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
-	return snapshot
+	return snapshot, nil
 }
 
 // listKeys returns a list of all keys in the account
@@ -211,7 +224,10 @@ func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 	kmsKeySnapshots := make(map[string]*awsmodels.KmsKey)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "kms") {
-		kmsSvc := getClient(pollerInput, "kms", *regionID).(kmsiface.KMSAPI)
+		kmsSvc, err := getKMSClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all keys
 		keys := listKeys(kmsSvc)

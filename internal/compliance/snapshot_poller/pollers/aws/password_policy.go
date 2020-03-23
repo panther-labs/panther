@@ -41,18 +41,27 @@ func setupIAMClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return iam.New(sess, cfg)
 }
 
+func getIAMClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (iamiface.IAMAPI, error) {
+	client, err := getClient(pollerResourceInput, IAMClientFunc, "iam", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(iamiface.IAMAPI), nil
+}
+
 // PollPasswordPolicyResource polls a password policy and returns it as a resource
 func PollPasswordPolicyResource(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	_ *utils.ParsedResourceID,
 	_ *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
 	snapshot, err := PollPasswordPolicy(pollerResourceInput)
 	if err != nil || snapshot == nil {
-		return nil
+		return nil, err
 	}
-	return snapshot[0].Attributes
+	return snapshot[0].Attributes, nil
 }
 
 // getPasswordPolicy returns the password policy for the account
@@ -68,7 +77,10 @@ func getPasswordPolicy(svc iamiface.IAMAPI) (*iam.PasswordPolicy, error) {
 // PollPasswordPolicy gathers information on all PasswordPolicy in an AWS account.
 func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
 	zap.L().Debug("starting Password Policy resource poller")
-	iamSvc := getClient(pollerInput, "iam", defaultRegion).(iamiface.IAMAPI)
+	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
+	if err != nil {
+		return nil, err
+	}
 
 	anyExist := true
 	passwordPolicy, getErr := getPasswordPolicy(iamSvc)

@@ -19,11 +19,11 @@ package aws
  */
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -39,10 +39,6 @@ type resourcePoller struct {
 	resourcePoller awsmodels.ResourcePoller
 }
 
-const (
-	pantherAuditRoleID = "PantherAuditRole"
-)
-
 var (
 	// Default region to use when building clients for the individual resource poller
 	defaultRegion = endpoints.UsWest2RegionID
@@ -52,7 +48,7 @@ var (
 	// IndividualARNResourcePollers maps resource types to their corresponding individual polling
 	// functions for resources whose ID is their ARN.
 	IndividualARNResourcePollers = map[string]func(
-		input *awsmodels.ResourcePollerInput, arn arn.ARN, entry *pollermodels.ScanEntry) interface{}{
+		input *awsmodels.ResourcePollerInput, arn arn.ARN, entry *pollermodels.ScanEntry) (interface{}, error){
 		awsmodels.AcmCertificateSchema:      PollACMCertificate,
 		awsmodels.CloudFormationStackSchema: PollCloudFormationStack,
 		awsmodels.CloudTrailSchema:          PollCloudTrailTrail,
@@ -83,7 +79,7 @@ var (
 	// IndividualResourcePollers maps resource types to their corresponding individual polling
 	// functions for resources whose ID is not their ARN.
 	IndividualResourcePollers = map[string]func(
-		input *awsmodels.ResourcePollerInput, id *utils.ParsedResourceID, entry *pollermodels.ScanEntry) interface{}{
+		input *awsmodels.ResourcePollerInput, id *utils.ParsedResourceID, entry *pollermodels.ScanEntry) (interface{}, error){
 		awsmodels.ConfigServiceSchema:  PollConfigService,
 		awsmodels.GuardDutySchema:      PollGuardDutyDetector,
 		awsmodels.PasswordPolicySchema: PollPasswordPolicyResource,
@@ -131,14 +127,13 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// Build the audit role manually
-	// 	Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole
-	var auditRoleARN string
+	// 	Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole-($REGION)
 	if len(auditRoleName) == 0 {
-		// Default value
-		auditRoleARN = "arn:aws:iam::" + *scanRequest.AWSAccountID + ":role/" + pantherAuditRoleID
-	} else {
-		auditRoleARN = "arn:aws:iam::" + *scanRequest.AWSAccountID + ":role/" + auditRoleName
+		return nil, errors.New("no audit role configured")
 	}
+	auditRoleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s",
+		*scanRequest.AWSAccountID, auditRoleName) // the auditRole name is for form: PantherAuditRole-($REGION)
+
 	zap.L().Debug("constructed audit role", zap.String("role", auditRoleARN))
 
 	// Extract the role ARN to construct various ResourceIDs.
@@ -178,10 +173,15 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		}
 	}
 
-	regions := utils.GetRegions(getClient(pollerResourceInput, "ec2", defaultRegion).(ec2iface.EC2API))
+	ec2Client, err := getEC2Client(pollerResourceInput, defaultRegion)
+	if err != nil {
+		return nil, err // getClient() logs error
+	}
+
+	regions := utils.GetRegions(ec2Client)
 	if regions == nil {
 		zap.L().Info("no valid regions to scan")
-		return
+		return nil, nil
 	}
 	pollerResourceInput.Regions = regions
 
@@ -250,7 +250,10 @@ func singleResourceScan(
 	if pollFunction, ok := IndividualResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is not an ARN
 		parsedResourceID := utils.ParseResourceID(*scanRequest.ResourceID)
-		resource = pollFunction(pollerInput, parsedResourceID, scanRequest)
+		resource, err = pollFunction(pollerInput, parsedResourceID, scanRequest)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
+		}
 	} else if pollFunction, ok := IndividualARNResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is an ARN
 		resourceARN, err := arn.Parse(*scanRequest.ResourceID)
@@ -260,7 +263,10 @@ func singleResourceScan(
 			)
 			return nil, err
 		}
-		resource = pollFunction(pollerInput, resourceARN, scanRequest)
+		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
+		}
 	}
 
 	if resource == nil {

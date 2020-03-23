@@ -34,7 +34,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	jsoniter "github.com/json-iterator/go"
@@ -98,19 +97,6 @@ func getSession() (*session.Session, error) {
 		"region", awsSession.Config.Region,
 		"accessKeyId", creds.AccessKeyID)
 	return awsSession, nil
-}
-
-// Return true if IAM role exists
-func roleExists(iamClient *iam.IAM, roleName string) (bool, error) {
-	input := &iam.GetRoleInput{RoleName: aws.String(roleName)}
-	_, err := iamClient.GetRole(input)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchEntity" {
-			err = nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 // Return true if CF stack exists

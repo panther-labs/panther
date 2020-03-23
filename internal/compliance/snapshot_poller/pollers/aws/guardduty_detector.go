@@ -40,24 +40,37 @@ func setupGuardDutyClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return guardduty.New(sess, cfg)
 }
 
+func getGuardDutyClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (guarddutyiface.GuardDutyAPI, error) {
+	client, err := getClient(pollerResourceInput, GuardDutyClientFunc, "guardduty", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(guarddutyiface.GuardDutyAPI), nil
+}
+
 // PollGuardDutyDetector polls a single AWS Config resource
 func PollGuardDutyDetector(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	parsedResourceID *utils.ParsedResourceID,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "guardduty", parsedResourceID.Region).(guarddutyiface.GuardDutyAPI)
-	detector := getGuardDutyDetector(client)
+	gdClient, err := getGuardDutyClient(pollerResourceInput, parsedResourceID.Region)
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildGuardDutyDetectorSnapshot(client, detector)
+	detector := getGuardDutyDetector(gdClient)
+
+	snapshot := buildGuardDutyDetectorSnapshot(gdClient, detector)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(parsedResourceID.AccountID)
 	snapshot.Region = aws.String(parsedResourceID.Region)
-	return snapshot
+	return snapshot, nil
 }
 
 // getGuardDutyDetector returns the detector ID for the guard duty detector in the current region
@@ -153,7 +166,10 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 
 	// Get detectors in each region
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "guardduty") {
-		guardDutySvc := getClient(pollerInput, "guardduty", *regionID).(guarddutyiface.GuardDutyAPI)
+		guardDutySvc, err := getGuardDutyClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all detectors
 		detectors := listDetectors(guardDutySvc)

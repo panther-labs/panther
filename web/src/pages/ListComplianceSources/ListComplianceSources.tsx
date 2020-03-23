@@ -17,14 +17,46 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Icon } from 'pouncejs';
+import { ComplianceIntegration } from 'Generated/schema';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import { Alert, Box, Button, Card, Flex, Icon, Table } from 'pouncejs';
+import { extractErrorMessage } from 'Helpers/utils';
+import Panel from 'Components/Panel';
 import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import Panel from 'Components/Panel';
-import ComplianceSourceTable from './ComplianceSourceTable';
+import columns from './columns';
+import { useListComplianceSources } from './graphql/listComplianceSources.generated';
+import EmptyDataFallback from './EmptyDataFallback';
 
 const ListComplianceSources = () => {
+  const { loading, error, data } = useListComplianceSources();
+
+  if (loading) {
+    return (
+      <Card p={9}>
+        <TablePlaceholder />
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert
+        variant="error"
+        title="Couldn't load your sources"
+        description={
+          extractErrorMessage(error) ||
+          'There was an error when performing your request, please contact support@runpanther.io'
+        }
+      />
+    );
+  }
+
+  if (!data.listComplianceIntegrations.length) {
+    return <EmptyDataFallback />;
+  }
+
   return (
     <Box mb={6}>
       <Panel
@@ -40,7 +72,11 @@ const ListComplianceSources = () => {
         }
       >
         <ErrorBoundary>
-          <ComplianceSourceTable />
+          <Table<ComplianceIntegration>
+            items={data.listComplianceIntegrations}
+            getItemKey={item => item.integrationId}
+            columns={columns}
+          />
         </ErrorBoundary>
       </Panel>
     </Box>

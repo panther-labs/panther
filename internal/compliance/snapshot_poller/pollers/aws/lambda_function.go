@@ -42,23 +42,36 @@ func setupLambdaClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return lambda.New(sess, cfg)
 }
 
+func getLambdaClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (lambdaiface.LambdaAPI, error) {
+	client, err := getClient(pollerResourceInput, LambdaClientFunc, "lambda", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(lambdaiface.LambdaAPI), nil
+}
+
 // PollLambdaFunction polls a single Lambda Function resource
 func PollLambdaFunction(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "lambda", resourceARN.Region).(lambdaiface.LambdaAPI)
-	lambdaFunction := getLambda(client, scanRequest.ResourceID)
+	lambdaClient, err := getLambdaClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildLambdaFunctionSnapshot(client, lambdaFunction)
+	lambdaFunction := getLambda(lambdaClient, scanRequest.ResourceID)
+
+	snapshot := buildLambdaFunctionSnapshot(lambdaClient, lambdaFunction)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
-	return snapshot
+	return snapshot, nil
 }
 
 // getLambda returns a specific Lambda function configuration
@@ -177,7 +190,10 @@ func PollLambdaFunctions(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 	lambdaFunctionSnapshots := make(map[string]*awsmodels.LambdaFunction)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "lambda") {
-		lambdaSvc := getClient(pollerInput, "lambda", *regionID).(lambdaiface.LambdaAPI)
+		lambdaSvc, err := getLambdaClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all functions
 		functions := listFunctions(lambdaSvc)

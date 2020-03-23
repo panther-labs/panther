@@ -39,21 +39,25 @@ func PollEC2SecurityGroup(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "ec2", resourceARN.Region).(ec2iface.EC2API)
+	ec2Client, err := getEC2Client(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	sgID := strings.Replace(resourceARN.Resource, "security-group/", "", 1)
-	securityGroup := getSecurityGroup(client, aws.String(sgID))
+	securityGroup := getSecurityGroup(ec2Client, aws.String(sgID))
 
-	snapshot := buildEc2SecurityGroupSnapshot(client, securityGroup)
+	snapshot := buildEc2SecurityGroupSnapshot(ec2Client, securityGroup)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getSecurityGroup returns a specific EC2 security group
@@ -120,7 +124,10 @@ func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimo
 	ec2SecurityGroupSnapshots := make(map[string]*awsmodels.Ec2SecurityGroup)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc := getClient(pollerInput, "ec2", *regionID).(ec2iface.EC2API)
+		ec2Svc, err := getEC2Client(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all Security Groups
 		securityGroups := describeSecurityGroups(ec2Svc)

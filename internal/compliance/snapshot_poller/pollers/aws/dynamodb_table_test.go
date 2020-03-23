@@ -32,14 +32,16 @@ import (
 func TestDynamoDBList(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvc([]string{"ListTablesPages"})
 
-	out := listTables(mockSvc)
+	out, err := listTables(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestDynamoDBListError(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvcError([]string{"ListTablesPages"})
 
-	out := listTables(mockSvc)
+	out, err := listTables(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -159,7 +161,7 @@ func TestDynamoDBPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

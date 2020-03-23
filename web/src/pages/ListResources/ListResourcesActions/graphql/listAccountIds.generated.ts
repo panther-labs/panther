@@ -28,7 +28,7 @@ export type ListAccountIdsVariables = {};
 
 export type ListAccountIds = {
   listComplianceIntegrations: Array<
-    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationLabel' | 'integrationId'>>
+    Pick<Types.ComplianceIntegration, 'integrationLabel' | 'integrationId'>
   >;
 };
 

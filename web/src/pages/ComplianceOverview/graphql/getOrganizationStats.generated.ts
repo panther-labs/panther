@@ -51,9 +51,7 @@ export type GetOrganizationStats = {
     >;
     topFailingResources?: Types.Maybe<Array<Types.Maybe<Pick<Types.ResourceSummary, 'id'>>>>;
   }>;
-  listComplianceIntegrations: Array<
-    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationId'>>
-  >;
+  listComplianceIntegrations: Array<Pick<Types.ComplianceIntegration, 'integrationId'>>;
 };
 
 export const GetOrganizationStatsDocument = gql`

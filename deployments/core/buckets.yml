@@ -18,17 +18,16 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Prerequisite S3 buckets which must exist before the Panther stack can be deployed
 
 Parameters:
-  AccessLogsBucketName:
+  S3AccessLogsBucket:
     Type: String
-    Description: Optional bucket for storing S3 access logs. If not specified, one is created for you
-    Default: ''
+    Description: The name of the S3 bucket which stores S3 Access log (if not set AuditLogBucket will be used)
 
 Conditions:
-  CreateLogBucket: !Equals [!Ref AccessLogsBucketName, '']
+  NoS3AccessLogsBucket: !Equals [!Ref S3AccessLogsBucket, '']
 
 Resources:
+  # @austin please change resource name to AuditLogsBucket so bucket name is more generic when you refactor
   AccessLogs:
-    Condition: CreateLogBucket
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -45,7 +44,8 @@ Resources:
             NoncurrentVersionExpirationInDays: 30
             Status: Enabled
       LoggingConfiguration:
-        LogFilePrefix: self/
+        DestinationBucketName: !Ref AWS::NoValue # !If [NoS3AccessLogsBucket, !Ref AWS::NoValue, !Ref S3AccessLogsBucket]
+        LogFilePrefix: self/ # !If [NoS3AccessLogsBucket, 'self/', !Ref AWS::NoValue]
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -53,6 +53,62 @@ Resources:
         RestrictPublicBuckets: true
       VersioningConfiguration:
         Status: Enabled
+
+  AuditLogsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AccessLogs
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: 'VPCFlowAclCheck'
+            Effect: 'Allow'
+            Principal:
+              Service: 'delivery.logs.amazonaws.com'
+            Action: 's3:GetBucketAcl'
+            Resource: !Sub arn:aws:s3:::${AccessLogs}
+          - Sid: 'VPCFlowWrite'
+            Effect: 'Allow'
+            Principal:
+              Service: 'delivery.logs.amazonaws.com'
+            Action: 's3:PutObject'
+            Resource: !Sub arn:aws:s3:::${AccessLogs}/AWSLogs/${AWS::AccountId}/*
+            Condition:
+              StringEquals:
+                's3:x-amz-acl': 'bucket-owner-full-control'
+          - Sid: 'CloudTrailAclCheck'
+            Effect: 'Allow'
+            Principal:
+              Service: 'cloudtrail.amazonaws.com'
+            Action: 's3:GetBucketAcl'
+            Resource: !Sub arn:aws:s3:::${AccessLogs}
+          - Sid: 'CloudTrailWrite'
+            Effect: 'Allow'
+            Principal:
+              Service: 'cloudtrail.amazonaws.com'
+            Action: 's3:PutObject'
+            Resource: !Sub arn:aws:s3:::${AccessLogs}/AWSLogs/${AWS::AccountId}/*
+            Condition:
+              StringEquals:
+                's3:x-amz-acl': 'bucket-owner-full-control'
+          - Sid: 'ALBWrite'
+            Effect: Allow # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-logging-bucket-permissions
+            Principal:
+              AWS: !FindInMap [ELBAccounts, !Ref 'AWS::Region', ARN]
+            Action: s3:PutObject
+            Resource: !Sub arn:aws:s3:::${AccessLogs}/AWSLogs/${AWS::AccountId}/*
+          - Sid: 'GuardDutyBucketLocation'
+            Effect: Allow
+            Principal:
+              Service: guardduty.amazonaws.com
+            Action: 's3:GetBucketLocation'
+            Resource: !Sub arn:aws:s3:::${AccessLogs}
+          - Sid: 'GuardDutyWrite'
+            Effect: Allow
+            Principal:
+              Service: guardduty.amazonaws.com
+            Action: 's3:PutObject'
+            Resource: !Sub arn:aws:s3:::${AccessLogs}/*
 
   # S3 bucket for CloudFormation to upload templates, Lambda source, etc
   Source:
@@ -70,7 +126,7 @@ Resources:
           - ExpirationInDays: 90
             Status: Enabled
       LoggingConfiguration:
-        DestinationBucketName: !If [CreateLogBucket, !Ref AccessLogs, !Ref AccessLogsBucketName]
+        DestinationBucketName: !If [NoS3AccessLogsBucket, !Ref AccessLogs, !Ref S3AccessLogsBucket]
         LogFilePrefix: !Sub panther-source-${AWS::AccountId}-${AWS::Region}/
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
@@ -81,9 +137,57 @@ Resources:
         Status: Enabled
 
 Outputs:
-  LogBucketName:
-    Description: S3 bucket name for Panther S3 access logs
-    Value: !If [CreateLogBucket, !Ref AccessLogs, !Ref AccessLogsBucketName]
+  AuditLogsBucket:
+    Description: S3 bucket name for Panther audit logs (include s3 access, alb, vpc)
+    Value: !Ref AccessLogs
   SourceBucketName:
     Description: S3 bucket name for Panther CloudFormation packaging
     Value: !Ref Source
+
+Mappings:
+  # OMG, I can't believe they make people do this ...
+  ELBAccounts: # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-logging-bucket-permissions
+    us-east-1:
+      ARN: arn:aws:iam::127311923021:root
+    us-east-2:
+      ARN: arn:aws:iam::033677994240:root
+    us-west-1:
+      ARN: arn:aws:iam::027434742980:root
+    us-west-2:
+      ARN: arn:aws:iam::797873946194:root
+    ca-central-1:
+      ARN: arn:aws:iam::985666609251:root
+    eu-central-1:
+      ARN: arn:aws:iam::054676820928:root
+    eu-west-1:
+      ARN: arn:aws:iam::156460612806:root
+    eu-west-2:
+      ARN: arn:aws:iam::652711504416:root
+    eu-west-3:
+      ARN: arn:aws:iam::009996457667:root
+    eu-north-1:
+      ARN: arn:aws:iam::897822967062:root
+    ap-east-1:
+      ARN: arn:aws:iam::754344448648:root
+    ap-northeast-1:
+      ARN: arn:aws:iam::582318560864:root
+    ap-northeast-2:
+      ARN: arn:aws:iam::600734575887:root
+    ap-southeast-1:
+      ARN: arn:aws:iam::383597477331:root
+    ap-southeast-2:
+      ARN: arn:aws:iam::114774131450:root
+    ap-south-1:
+      ARN: arn:aws:iam::718504428378:root
+    me-south-1:
+      ARN: arn:aws:iam::076674570225:root
+    sa-east-1:
+      ARN: arn:aws:iam::507241528517:root
+    us-gov-west-1:
+      ARN: arn:aws:iam::048591011584:root
+    us-gov-east-1:
+      ARN: arn:aws:iam::190560391635:root
+    cn-north-1:
+      ARN: arn:aws:iam::638102146993:root
+    cn-northwest-1:
+      ARN: arn:aws:iam::037604701340:root

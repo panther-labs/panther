@@ -41,21 +41,36 @@ func setupConfigServiceClient(sess *session.Session, cfg *aws.Config) interface{
 	return configservice.New(sess, cfg)
 }
 
+func getConfigServiceClient(pollerResourceInput *awsmodels.ResourcePollerInput,
+	region string) (configserviceiface.ConfigServiceAPI, error) {
+
+	client, err := getClient(pollerResourceInput, ConfigServiceClientFunc, "configservice", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(configserviceiface.ConfigServiceAPI), nil
+}
+
 // PollConfigService polls a single AWS Config resource
 func PollConfigService(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	parsedResourceID *utils.ParsedResourceID,
-	scanRequest *pollermodels.ScanEntry) interface{} {
+	scanRequest *pollermodels.ScanEntry) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "configservice", parsedResourceID.Region).(configserviceiface.ConfigServiceAPI)
-	recorder := getConfigRecorder(client)
-	snapshot := buildConfigServiceSnapshot(client, recorder, parsedResourceID.Region)
+	configClient, err := getConfigServiceClient(pollerResourceInput, parsedResourceID.Region)
+	if err != nil {
+		return nil, err
+	}
+
+	recorder := getConfigRecorder(configClient)
+	snapshot := buildConfigServiceSnapshot(configClient, recorder, parsedResourceID.Region)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(pollerResourceInput.AuthSourceParsedARN.AccountID)
-	return snapshot
+	return snapshot, nil
 }
 
 // getConfigRecorder returns a specific config recorder
@@ -156,7 +171,10 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "config") {
 		zap.L().Debug("building Config snapshots", zap.String("region", *regionID))
-		configServiceSvc := getClient(pollerInput, "configservice", *regionID).(configserviceiface.ConfigServiceAPI)
+		configServiceSvc, err := getConfigServiceClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all recorders
 		recorders, describeErr := describeConfigurationRecorders(configServiceSvc)

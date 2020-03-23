@@ -26,8 +26,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 //
@@ -52,10 +50,10 @@ const (
 
 // AddPermissionToLogProcessorQueue modifies the SQS Queue policy of the Log Processor
 // to allow SNS topic from new account to subscribe to it
-func AddPermissionToLogProcessorQueue(accountID string) error {
+func AddPermissionToLogProcessorQueue(accountID string) (bool, error) {
 	existingPolicy, err := getQueuePolicy()
 	if err != nil {
-		return err
+		return false, err
 	}
 	if existingPolicy == nil {
 		existingPolicy = &SqsPolicy{
@@ -64,16 +62,10 @@ func AddPermissionToLogProcessorQueue(accountID string) error {
 		}
 	}
 
+	// queue has already been configured
 	if findStatementIndex(existingPolicy, accountID) >= 0 {
-		errMsg := "account: " + accountID + " has already been configured"
-		err = errors.WithStack(&genericapi.AlreadyExistsError{Message: errMsg})
-		zap.L().Error(errMsg,
-			zap.String("sqsQueueARN", logProcessorQueueArn),
-			zap.String("awsAccountId", accountID),
-			zap.Error(err))
-
-		// // Returning user friendly message
-		return err
+		// if it already exists, no need to do anything
+		return false, nil
 	}
 
 	existingPolicy.Statements = append(existingPolicy.Statements, getStatementForAccount(accountID))
@@ -81,7 +73,7 @@ func AddPermissionToLogProcessorQueue(accountID string) error {
 	if err != nil {
 		zap.L().Error("failed to set policy", zap.Error(errors.Wrap(err, "failed to set policy")))
 	}
-	return setQueuePolicy(existingPolicy)
+	return true, setQueuePolicy(existingPolicy)
 }
 
 // RemovePermissionFromLogProcessorQueue modifies the SQS Queue policy of the Log Processor
@@ -120,7 +112,7 @@ func getQueuePolicy() (*SqsPolicy, error) {
 		return nil, errors.Wrap(err, "failed to get queue attributes")
 	}
 	policyAttribute := attributes.Attributes[policyAttributeName]
-	if policyAttribute == nil {
+	if len(aws.StringValue(policyAttribute)) == 0 {
 		return nil, nil
 	}
 	var policy SqsPolicy
@@ -142,19 +134,24 @@ func findStatementIndex(policy *SqsPolicy, accountID string) int {
 }
 
 func setQueuePolicy(policy *SqsPolicy) error {
-	serializedPolicy, err := jsoniter.MarshalToString(policy)
-	if err != nil {
-		zap.L().Error("failed to serialize policy", zap.Error(errors.WithStack(err)))
-		return errors.WithStack(err)
+	policyAttribute := aws.String("")
+	if len(policy.Statements) > 0 {
+		marshaledPolicy, err := jsoniter.MarshalToString(policy)
+		if err != nil {
+			zap.L().Error("failed to serialize policy", zap.Error(errors.WithStack(err)))
+			return errors.WithStack(err)
+		}
+		policyAttribute = aws.String(marshaledPolicy)
 	}
 
 	setAttributesInput := &sqs.SetQueueAttributesInput{
-		Attributes: map[string]*string{
-			policyAttributeName: aws.String(serializedPolicy),
-		},
 		QueueUrl: aws.String(logProcessorQueueURL),
+		Attributes: map[string]*string{
+			policyAttributeName: policyAttribute,
+		},
 	}
-	_, err = SQSClient.SetQueueAttributes(setAttributesInput)
+
+	_, err := SQSClient.SetQueueAttributes(setAttributesInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to set queue attributes")
 	}

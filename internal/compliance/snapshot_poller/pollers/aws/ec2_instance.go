@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -43,21 +44,25 @@ func PollEC2Instance(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "ec2", resourceARN.Region).(ec2iface.EC2API)
+	ec2Client, err := getEC2Client(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	instanceID := strings.Replace(resourceARN.Resource, "instance/", "", 1)
-	instance := getInstance(client, aws.String(instanceID))
+	instance := getInstance(ec2Client, aws.String(instanceID))
 
-	snapshot := buildEc2InstanceSnapshot(client, instance)
+	snapshot := buildEc2InstanceSnapshot(ec2Client, instance)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getInstance returns a specific EC2 instance
@@ -82,8 +87,8 @@ func getInstance(svc ec2iface.EC2API, instanceID *string) *ec2.Instance {
 }
 
 // describeInstances returns all EC2 instances in the current region
-func describeInstances(ec2Svc ec2iface.EC2API) (instances []*ec2.Instance) {
-	err := ec2Svc.DescribeInstancesPages(&ec2.DescribeInstancesInput{},
+func describeInstances(ec2Svc ec2iface.EC2API) (instances []*ec2.Instance, err error) {
+	err = ec2Svc.DescribeInstancesPages(&ec2.DescribeInstancesInput{},
 		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 			for _, reservation := range page.Reservations {
 				instances = append(instances, reservation.Instances...)
@@ -91,7 +96,7 @@ func describeInstances(ec2Svc ec2iface.EC2API) (instances []*ec2.Instance) {
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeInstances", err)
+		return nil, errors.Wrap(err, "EC2.DescribeInstances")
 	}
 	return
 }
@@ -166,10 +171,16 @@ func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 	ec2Amis = make(map[string][]*string)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc := getClient(pollerInput, "ec2", *regionID).(ec2iface.EC2API)
+		ec2Svc, err := getEC2Client(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all EC2 instances
-		instances := describeInstances(ec2Svc)
+		instances, err := describeInstances(ec2Svc)
+		if err != nil {
+			return nil, errors.Wrapf(err, "PollEc2Instances(%#v) in region %s", *pollerInput, *regionID)
+		}
 
 		// For each instance, build out a full snapshot
 		zap.L().Debug("building EC2 Instance snapshots", zap.String("region", *regionID))

@@ -48,8 +48,26 @@ func setupWafRegionalClient(sess *session.Session, cfg *aws.Config) interface{} 
 	return wafregional.New(sess, cfg)
 }
 
+func getWafRegionalClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (wafregionaliface.WAFRegionalAPI, error) {
+	client, err := getClient(pollerResourceInput, WafRegionalClientFunc, "waf-regional", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(wafregionaliface.WAFRegionalAPI), nil
+}
+
 func setupWafClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return waf.New(sess, cfg)
+}
+
+func getWafClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (wafiface.WAFAPI, error) {
+	client, err := getClient(pollerResourceInput, WafClientFunc, "waf", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(wafiface.WAFAPI), nil
 }
 
 // PollWAFWebACL polls a single WAF WebACL resource
@@ -57,19 +75,22 @@ func PollWAFWebACL(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	_ *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "waf", defaultRegion).(wafiface.WAFAPI)
+	client, err := getWafClient(pollerResourceInput, defaultRegion)
+	if err != nil {
+		return nil, err
+	}
 	webACLID := strings.Replace(resourceARN.Resource, "webacl/", "", 1)
 
 	snapshot := buildWafWebACLSnapshot(client, aws.String(webACLID))
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(awsmodels.GlobalRegion)
 	snapshot.ResourceType = aws.String(awsmodels.WafWebAclSchema)
-	return snapshot
+	return snapshot, nil
 }
 
 // PollWAFRegionalWebACL polls a single WAF Regional WebACL resource
@@ -77,19 +98,22 @@ func PollWAFRegionalWebACL(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	_ *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "waf-regional", resourceARN.Region).(wafregionaliface.WAFRegionalAPI)
+	client, err := getWafRegionalClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
 	webACLID := strings.Replace(resourceARN.Resource, "webacl/", "", 1)
 
 	snapshot := buildWafWebACLSnapshot(client, aws.String(webACLID))
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.ResourceType = aws.String(awsmodels.WafRegionalWebAclSchema)
-	return snapshot
+	return snapshot, nil
 }
 
 // listWebAclsRecursive is a helper function for listWebAcls, used to enumerate the web ACLs in an account
@@ -243,7 +267,10 @@ func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 	// Get regional ACLs for Application Load balancers and API gateways using WAF Regional API
 	var resources []*apimodels.AddResourceEntry
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "waf-regional") {
-		wafRegionalSvc := getClient(pollerInput, "waf-regional", *regionID).(wafregionaliface.WAFRegionalAPI)
+		wafRegionalSvc, err := getWafRegionalClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all regional web acls
 		regionalWebACLsSummaries := listWebAcls(wafRegionalSvc)
@@ -279,7 +306,10 @@ func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 	zap.L().Debug("starting global WAF Web Acl resource poller")
 
 	// Get global ACLs for CloudFront distribution using WAF API
-	wafSvc := getClient(pollerInput, "waf", defaultRegion).(wafiface.WAFAPI)
+	wafSvc, err := getWafClient(pollerInput, defaultRegion)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
 
 	// Start with generating a list of all global web acls
 	globalWebAclsSummaries := listWebAcls(wafSvc)

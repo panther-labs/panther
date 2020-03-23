@@ -31,14 +31,16 @@ import (
 func TestCloudWatchLogsLogGroupsDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvc([]string{"DescribeLogGroupsPages"})
 
-	out := describeLogGroups(mockSvc)
+	out, err := describeLogGroups(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestCloudWatchLogsLogGroupsDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvcError([]string{"DescribeLogGroupsPages"})
 
-	out := describeLogGroups(mockSvc)
+	out, err := describeLogGroups(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -99,7 +101,7 @@ func TestCloudWatchLogsLogGroupPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

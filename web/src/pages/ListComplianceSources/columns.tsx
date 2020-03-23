@@ -59,7 +59,6 @@ const columns = [
     ),
   },
 
-  // Status displays the error message
   {
     key: 'health',
     header: 'Healthy',

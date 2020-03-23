@@ -74,7 +74,7 @@ export type PolicyDetails = {
     }>;
   }>;
   listComplianceIntegrations: Array<
-    Types.Maybe<Pick<Types.ComplianceIntegration, 'integrationId' | 'integrationLabel'>>
+    Pick<Types.ComplianceIntegration, 'integrationId' | 'integrationLabel'>
   >;
 };
 

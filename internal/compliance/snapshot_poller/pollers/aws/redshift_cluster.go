@@ -44,26 +44,39 @@ func setupRedshiftClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return redshift.New(sess, cfg)
 }
 
+func getRedshiftClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (redshiftiface.RedshiftAPI, error) {
+	client, err := getClient(pollerResourceInput, RedshiftClientFunc, "redshift", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(redshiftiface.RedshiftAPI), nil
+}
+
 // PollRedshiftCluster polls a single Redshift Cluster resource
 func PollRedshiftCluster(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "redshift", resourceARN.Region).(redshiftiface.RedshiftAPI)
+	client, err := getRedshiftClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	clusterID := strings.Replace(resourceARN.Resource, "cluster:", "", 1)
 	redshiftCluster := getRedshiftCluster(client, aws.String(clusterID))
 
 	snapshot := buildRedshiftClusterSnapshot(client, redshiftCluster)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getRedshiftCluster returns a specific redshift cluster
@@ -182,7 +195,10 @@ func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimod
 	redshiftClusterSnapshots := make(map[string]*awsmodels.RedshiftCluster)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "redshift") {
-		redshiftSvc := getClient(pollerInput, "redshift", *regionID).(redshiftiface.RedshiftAPI)
+		redshiftSvc, err := getRedshiftClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all clusters
 		clusters := describeClusters(redshiftSvc)

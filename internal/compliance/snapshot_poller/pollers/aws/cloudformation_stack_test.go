@@ -31,14 +31,16 @@ import (
 func TestCloudFormationStackDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvc([]string{"DescribeStacksPages"})
 
-	out := describeStacks(mockSvc)
+	out, err := describeStacks(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestCloudFormationStackDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcError([]string{"DescribeStacksPages"})
 
-	out := describeStacks(mockSvc)
+	out, err := describeStacks(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -127,7 +129,7 @@ func TestCloudFormationStackPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

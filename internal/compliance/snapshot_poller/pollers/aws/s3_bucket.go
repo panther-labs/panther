@@ -50,30 +50,48 @@ func setupS3Client(sess *session.Session, cfg *aws.Config) interface{} {
 	return s3.New(sess, cfg)
 }
 
+func getS3Client(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (s3iface.S3API, error) {
+	client, err := getClient(pollerResourceInput, S3ClientFunc, "s3", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(s3iface.S3API), nil
+}
+
 // PollS3Bucket polls a single S3 Bucket resource
 func PollS3Bucket(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "s3", defaultRegion).(s3iface.S3API)
-	region := getBucketLocation(client, aws.String(resourceARN.Resource))
-	if region == nil {
-		return nil
+	locationClient, err := getS3Client(pollerResourceInput, defaultRegion)
+	if err != nil {
+		return nil, err
 	}
-	client = getClient(pollerResourceInput, "s3", *region).(s3iface.S3API)
-	bucket := getBucket(client, resourceARN.Resource)
 
-	snapshot := buildS3BucketSnapshot(client, bucket)
+	region := getBucketLocation(locationClient, aws.String(resourceARN.Resource))
+	if region == nil {
+		return nil, nil
+	}
+
+	regionalClient, err := getS3Client(pollerResourceInput, *region)
+	if err != nil {
+		return nil, err
+	}
+
+	bucket := getBucket(regionalClient, resourceARN.Resource)
+
+	snapshot := buildS3BucketSnapshot(regionalClient, bucket)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(pollerResourceInput.AuthSourceParsedARN.AccountID)
 	snapshot.Region = region
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getBucket returns a specific S3 bucket
@@ -351,7 +369,10 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 	// Clear the previously collected S3 Bucket Snapshots
 	setupS3BucketSnapshots()
 
-	s3Svc := getClient(pollerInput, "s3", defaultRegion).(s3iface.S3API)
+	s3Svc, err := getS3Client(pollerInput, defaultRegion)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
 
 	// Start with generating a list of all buckets
 	allBuckets := listBuckets(s3Svc)
@@ -386,7 +407,10 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 
 	var resources []*apimodels.AddResourceEntry
 	for region, buckets := range bucketsByRegion {
-		s3Svc := getClient(pollerInput, "s3", region).(s3iface.S3API)
+		s3Svc, err := getS3Client(pollerInput, region)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		for _, bucket := range buckets {
 			s3BucketSnapshot := buildS3BucketSnapshot(s3Svc, bucket)

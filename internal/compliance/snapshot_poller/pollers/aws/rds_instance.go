@@ -41,23 +41,36 @@ func setupRDSClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return rds.New(sess, cfg)
 }
 
+func getRDSClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (rdsiface.RDSAPI, error) {
+	client, err := getClient(pollerResourceInput, RDSClientFunc, "rds", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(rdsiface.RDSAPI), nil
+}
+
 // PollRDSInstance polls a single RDS DB Instance resource
 func PollRDSInstance(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "rds", resourceARN.Region).(rdsiface.RDSAPI)
-	rdsInstance := getRDSInstance(client, scanRequest.ResourceID)
+	rdsClient, err := getRDSClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildRDSInstanceSnapshot(client, rdsInstance)
+	rdsInstance := getRDSInstance(rdsClient, scanRequest.ResourceID)
+
+	snapshot := buildRDSInstanceSnapshot(rdsClient, rdsInstance)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
-	return snapshot
+	return snapshot, nil
 }
 
 // getRDSInstance returns a specific RDS instance
@@ -233,7 +246,10 @@ func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 
 	regions := utils.GetServiceRegions(pollerInput.Regions, "rds")
 	for _, regionID := range regions {
-		rdsSvc := getClient(pollerInput, "rds", *regionID).(rdsiface.RDSAPI)
+		rdsSvc, err := getRDSClient(pollerInput, *regionID)
+		if err != nil {
+			continue // error is logged in getClient()
+		}
 
 		// Start with generating a list of all instances
 		instances := describeDBInstances(rdsSvc)
