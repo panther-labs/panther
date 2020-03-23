@@ -122,7 +122,7 @@ class Rule:
     def _get_dedup(self, event: Dict[str, Any]) -> str:
         if not self._has_dedup:
             # If no dedup function defined, return rule id
-            return self.rule_id
+            return 'defaultDedupString:' + self.rule_id
         try:
             dedup_string = _run_command(self._module.dedup, event, str)
         except Exception as err:  # pylint: disable=broad-except
@@ -140,7 +140,7 @@ class Rule:
                 return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
             return dedup_string
         # If dedup string was the empty string, put the default value (rule_id)
-        return self.rule_id
+        return 'defaultDedupString:' + self.rule_id
 
     def _get_title(self, event: Dict[str, Any]) -> Optional[str]:
         if not self._has_title:
