@@ -29,13 +29,14 @@ export type GetComplianceCfnTemplateVariables = {
 };
 
 export type GetComplianceCfnTemplate = {
-  getComplianceIntegrationTemplate: Pick<Types.IntegrationTemplate, 'body'>;
+  getComplianceIntegrationTemplate: Pick<Types.IntegrationTemplate, 'body' | 'stackName'>;
 };
 
 export const GetComplianceCfnTemplateDocument = gql`
   query GetComplianceCfnTemplate($input: GetComplianceIntegrationTemplateInput!) {
     getComplianceIntegrationTemplate(input: $input) {
       body
+      stackName
     }
   }
 `;

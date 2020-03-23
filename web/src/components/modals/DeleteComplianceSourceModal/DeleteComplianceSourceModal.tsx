@@ -20,7 +20,6 @@ import React from 'react';
 import { Text } from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-import { getComplianceIntegrationStackName } from 'Helpers/utils';
 import { useDeleteComplianceSource } from './graphql/deleteComplianceSource.generated';
 
 export interface DeleteComplianceSourceModalProps {
@@ -44,7 +43,6 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source 
   });
 
   const sourceDisplayName = source.integrationLabel;
-  const stackName = getComplianceIntegrationStackName();
   return (
     <BaseConfirmModal
       mutation={mutation}
@@ -55,7 +53,8 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source 
         </Text>,
         <Text size="medium" color="grey300" mt={6} key={1}>
           Deleting this source will not delete the associated Cloudformation stack. You will need to
-          manually delete the stack <b>{stackName}</b> from the account <b>{source.awsAccountId}</b>
+          manually delete the stack <b>{source.stackName}</b> from the account{' '}
+          <b>{source.awsAccountId}</b>
         </Text>,
       ]}
       onSuccessMsg={`Successfully deleted ${sourceDisplayName}`}

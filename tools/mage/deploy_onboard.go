@@ -56,7 +56,7 @@ func genLogProcessingLabel(awsSession *session.Session) string {
 // onboard Panther to monitor Panther account
 func deployOnboard(awsSession *session.Session, settings *config.PantherConfig, bucketOutputs, backendOutputs map[string]string) {
 	deployOnboardTemplate(awsSession, settings, bucketOutputs)
-	registerPantherAccount(awsSession, bucketOutputs, backendOutputs) // this MUST follow the CloudSec roles being deployed
+	registerPantherAccount(awsSession, settings, bucketOutputs, backendOutputs) // this MUST follow the CloudSec roles being deployed
 	deployRealTimeStackSet(awsSession, backendOutputs["AWSAccountId"])
 }
 
@@ -84,7 +84,7 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 	configureLogProcessingUsingAPIs(awsSession, settings, bucketOutputs, onboardOutputs)
 }
 
-func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendOutputs map[string]string) {
+func registerPantherAccount(awsSession *session.Session, settings *config.PantherConfig, bucketOutputs, backendOutputs map[string]string) {
 	logger.Infof("deploy: registering account %s with Panther for monitoring", backendOutputs["AWSAccountId"])
 
 	// avoid alarms/errors and check first if the integrations exist
@@ -119,20 +119,20 @@ func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendO
 	}
 
 	if registerCloudSec {
-		var cloudSecInput = struct {
-			PutIntegration *models.PutIntegrationInput
-		}{
-			&models.PutIntegrationInput{
+		input := &models.LambdaInput{
+			PutIntegration: &models.PutIntegrationInput{
 				PutIntegrationSettings: models.PutIntegrationSettings{
-					AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
-					IntegrationLabel: aws.String(cloudSecLabel),
-					IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-					ScanIntervalMins: aws.Int(1440),
-					UserID:           aws.String(mageUserID),
+					AWSAccountID:       aws.String(backendOutputs["AWSAccountId"]),
+					IntegrationLabel:   aws.String(cloudSecLabel),
+					IntegrationType:    aws.String(models.IntegrationTypeAWSScan),
+					ScanIntervalMins:   aws.Int(1440),
+					UserID:             aws.String(mageUserID),
+					CWEEnabled:         aws.Bool(true),
+					RemediationEnabled: aws.Bool(true),
 				},
 			},
 		}
-		if err := invokeLambda(awsSession, "panther-source-api", cloudSecInput, nil); err != nil &&
+		if err := invokeLambda(awsSession, "panther-source-api", input, nil); err != nil &&
 			!strings.Contains(err.Error(), "already onboarded") {
 
 			logger.Fatalf("error calling lambda to register account for cloud security: %v", err)
@@ -142,20 +142,28 @@ func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendO
 	}
 
 	if registerLogProcessing {
-		var logProcessingInput = struct {
-			PutIntegration *models.PutIntegrationInput
-		}{
-			&models.PutIntegrationInput{
+		logTypes := []string{"AWS.S3ServerAccess", "AWS.VPCFlow", "AWS.ALB"}
+		if settings.OnboardParameterValues.EnableCloudTrail {
+			logTypes = append(logTypes, "AWS.CloudTrail")
+		}
+		if settings.OnboardParameterValues.EnableGuardDuty {
+			logTypes = append(logTypes, "AWS.GuardDuty")
+		}
+
+		input := &models.LambdaInput{
+			PutIntegration: &models.PutIntegrationInput{
 				PutIntegrationSettings: models.PutIntegrationSettings{
 					AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
 					IntegrationLabel: aws.String(genLogProcessingLabel(awsSession)),
 					IntegrationType:  aws.String(models.IntegrationTypeAWS3),
 					UserID:           aws.String(mageUserID),
 					S3Bucket:         aws.String(bucketOutputs["AuditLogsBucket"]),
+					LogTypes:         aws.StringSlice(logTypes),
 				},
 			},
 		}
-		if err := invokeLambda(awsSession, "panther-source-api", logProcessingInput, nil); err != nil &&
+
+		if err := invokeLambda(awsSession, "panther-source-api", input, nil); err != nil &&
 			!strings.Contains(err.Error(), "already onboarded") {
 
 			logger.Fatalf("error calling lambda to register account for log processing: %v", err)
@@ -267,7 +275,7 @@ func guardDutyEnabledOutsidePanther(awsSession *session.Session, settings *confi
 	// we need to check that it is THIS region's stack the enabled it
 	_, onboardOutput, err := describeStack(cloudformation.New(awsSession), onboardStack)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudformation.ErrCodeStackSetNotFoundException {
+		if isStackNotExistsError(onboardStack, err) {
 			return true // not deployed anything yet in this region BUT it is enabled, must be another deployment
 		}
 		logger.Fatalf("deploy: cannot check stack %s: %v", onboardStack, err)
