@@ -19,13 +19,13 @@ package awslogs
  */
 
 import (
-	"encoding/csv"
 	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -55,23 +55,24 @@ type AuroraMySQLAudit struct {
 }
 
 // AuroraMySQLAuditParser parses AWS Aurora MySQL Audit logs
-type AuroraMySQLAuditParser struct{}
+type AuroraMySQLAuditParser struct {
+	CSVReader *csvstream.StreamingCSVReader
+}
 
 func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
-	return &AuroraMySQLAuditParser{}
+	return &AuroraMySQLAuditParser{
+		CSVReader: csvstream.NewStreamingCSVReader(),
+	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
-	reader := csv.NewReader(strings.NewReader(log))
-	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
+func (p *AuroraMySQLAuditParser) Parse(log string) []*parsers.PantherLog {
+	record, err := p.CSVReader.Parse(log)
+	if err != nil {
 		zap.L().Debug("failed to parse the log as csv")
 		return nil
 	}
 
-	// parser should only receive 1 line at a time
-	record := records[0]
 	if len(record) < auroraMySQLAuditMinNumberOfColumns {
 		zap.L().Debug("failed to parse the log as csv (wrong number of columns)")
 		return nil
@@ -108,7 +109,7 @@ func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -117,7 +118,7 @@ func (p *AuroraMySQLAuditParser) LogType() string {
 }
 
 func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {
-	event.SetCoreFields(p.LogType(), event.Timestamp)
+	event.SetCoreFields(p.LogType(), event.Timestamp, event)
 	event.AppendAnyIPAddressPtrs(event.Host)
 	event.AppendAnyDomainNamePtrs(event.ServerHost)
 }

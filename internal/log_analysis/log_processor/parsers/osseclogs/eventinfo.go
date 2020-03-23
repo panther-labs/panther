@@ -122,7 +122,7 @@ func (p *EventInfoParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *EventInfoParser) Parse(log string) []interface{} {
+func (p *EventInfoParser) Parse(log string) []*parsers.PantherLog {
 	eventInfo := &EventInfo{}
 
 	err := jsoniter.UnmarshalFromString(log, eventInfo)
@@ -138,7 +138,7 @@ func (p *EventInfoParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{eventInfo}
+	return eventInfo.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -147,7 +147,7 @@ func (p *EventInfoParser) LogType() string {
 }
 
 func (event *EventInfo) updatePantherFields(p *EventInfoParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp))
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp), event)
 	event.AppendAnyIPAddressPtrs(event.SrcIP, event.DstIP)
 	if event.SyscheckFile != nil {
 		event.AppendAnyMD5HashPtrs(event.SyscheckFile.MD5Before, event.SyscheckFile.MD5After)

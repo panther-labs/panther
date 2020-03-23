@@ -25,6 +25,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -36,10 +38,10 @@ func TestStatusLog(t *testing.T) {
 	expectedEvent := &Status{
 		HostIdentifier: aws.String("jacks-mbp.lan"),
 		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
-		UnixTime:       aws.Int(1535731040),
-		Severity:       aws.Int(0),
+		UnixTime:       (*numerics.Integer)(aws.Int(1535731040)),
+		Severity:       (*numerics.Integer)(aws.Int(0)),
 		Filename:       aws.String("scheduler.cpp"),
-		Line:           aws.Int(83),
+		Line:           (*numerics.Integer)(aws.Int(83)),
 		Message:        aws.String("Executing scheduled query pack_incident-response_arp_cache: select * from arp_cache;"),
 		Version:        aws.String("3.2.6"),
 		LogType:        aws.String("status"),
@@ -57,6 +59,34 @@ func TestStatusLog(t *testing.T) {
 	checkOsQueryStatusLog(t, log, expectedEvent)
 }
 
+func TestStatusLogNoLogType(t *testing.T) {
+	//nolint:lll
+	log := `{"hostIdentifier":"jaguar.local","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","unixTime":"1535731040","severity":"0","filename":"tls.cpp","line":"253","message":"TLS/HTTPS POST request to URI: https://fleet.runpanther.tools:443/api/v1/osquery/log","version":"4.1.2","decorations":{"host_uuid":"97D8254F-7D98-56AE-91DB-924545EFXXXX","hostname":"jaguar.local"}}`
+
+	expectedTime := time.Unix(1541398106, 0).UTC()
+	expectedEvent := &Status{
+		HostIdentifier: aws.String("jaguar.local"),
+		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
+		UnixTime:       (*numerics.Integer)(aws.Int(1535731040)),
+		Severity:       (*numerics.Integer)(aws.Int(0)),
+		Filename:       aws.String("tls.cpp"),
+		Line:           (*numerics.Integer)(aws.Int(253)),
+		Message:        aws.String("TLS/HTTPS POST request to URI: https://fleet.runpanther.tools:443/api/v1/osquery/log"),
+		Version:        aws.String("4.1.2"),
+		Decorations: map[string]string{
+			"host_uuid": "97D8254F-7D98-56AE-91DB-924545EFXXXX",
+			"hostname":  "jaguar.local",
+		},
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Osquery.Status")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyDomainNames("jaguar.local")
+
+	checkOsQueryStatusLog(t, log, expectedEvent)
+}
+
 func TestOsQueryStatusLogType(t *testing.T) {
 	parser := &StatusParser{}
 	require.Equal(t, "Osquery.Status", parser.LogType())
@@ -64,17 +94,5 @@ func TestOsQueryStatusLogType(t *testing.T) {
 
 func checkOsQueryStatusLog(t *testing.T, log string, expectedEvent *Status) {
 	parser := &StatusParser{}
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*Status)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	// PantherParseTime is set to time.Now().UTC(). Require not nil
-	require.NotNil(t, event.PantherParseTime)
-	expectedEvent.PantherParseTime = event.PantherParseTime
-
-	require.Equal(t, expectedEvent, event)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }

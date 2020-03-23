@@ -10,24 +10,27 @@ schema {
 
 type Mutation {
   addDestination(input: DestinationInput!): Destination
-  addIntegration(input: AddIntegrationInput!): Integration
+  addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
+  addLogIntegration(input: AddLogIntegrationInput!): LogIntegration!
   addPolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   addRule(input: CreateOrModifyRuleInput!): RuleDetails
   deleteDestination(id: ID!): Boolean
-  deleteIntegration(id: ID!): Boolean
+  deleteComplianceIntegration(id: ID!): Boolean
+  deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteUser(id: ID!): Boolean
-  inviteUser(input: InviteUserInput): InviteUserResponse
+  inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
   resetUserPassword(id: ID!): Boolean
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
   updateDestination(input: DestinationInput!): Destination
-  updateIntegration(input: UpdateIntegrationInput!): Boolean
+  updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
+  updateLogIntegration(input: UpdateLogIntegrationInput!): LogIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
-  updateUser(input: UpdateUserInput!): Boolean
+  updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
 }
 
@@ -37,6 +40,12 @@ type Query {
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
+  getComplianceIntegration(id: ID!): ComplianceIntegration!
+  getComplianceIntegrationTemplate(
+    input: GetComplianceIntegrationTemplateInput!
+  ): IntegrationTemplate!
+  getLogIntegration(id: ID!): LogIntegration!
+  getLogIntegrationTemplate(input: GetLogIntegrationTemplateInput!): IntegrationTemplate!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -44,11 +53,28 @@ type Query {
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
-  integrations(input: ListIntegrationsInput): [Integration!]
+  listComplianceIntegrations: [ComplianceIntegration!]!
+  listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
-  users(limit: Int, paginationToken: String): ListUsersResponse
+  users: [User!]!
+}
+
+input GetComplianceIntegrationTemplateInput {
+  awsAccountId: String!
+  integrationLabel: String!
+  remediationEnabled: Boolean
+  cweEnabled: Boolean
+}
+
+input GetLogIntegrationTemplateInput {
+  awsAccountId: String!
+  integrationLabel: String!
+  s3Bucket: String!
+  s3Prefix: String
+  kmsKey: String
+  logTypes: [String!]!
 }
 
 input ListAlertsInput {
@@ -57,24 +83,43 @@ input ListAlertsInput {
   exclusiveStartKey: String
 }
 
-input ListIntegrationsInput {
-  integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
-}
-
 input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
 }
 
+type IntegrationTemplate {
+  body: String!
+  stackName: String!
+}
+
+type IntegrationItemHealthStatus {
+  healthy: Boolean
+  errorMessage: String
+}
+
+type ComplianceIntegrationHealth {
+  auditRoleStatus: IntegrationItemHealthStatus!
+  cweRoleStatus: IntegrationItemHealthStatus!
+  remediationRoleStatus: IntegrationItemHealthStatus!
+}
+
+type LogIntegrationHealth {
+  processingRoleStatus: IntegrationItemHealthStatus!
+  s3BucketStatus: IntegrationItemHealthStatus!
+  kmsKeyStatus: IntegrationItemHealthStatus!
+}
+
 type AlertDetails {
   alertId: ID!
   ruleId: ID
   creationTime: AWSDateTime!
-  lastEventMatched: AWSDateTime!
+  updateTime: AWSDateTime!
   eventsMatched: Int!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
+  dedupString: String
 }
 
 type ListAlertsResponse {
@@ -86,9 +131,10 @@ type AlertSummary {
   alertId: String!
   creationTime: AWSDateTime!
   eventsMatched: Int!
-  lastEventMatched: AWSDateTime!
+  updateTime: AWSDateTime!
   ruleId: String
   severity: String
+  dedupString: String
 }
 
 input ListRulesInput {
@@ -96,6 +142,7 @@ input ListRulesInput {
   enabled: Boolean
   logTypes: String # Comma-separated string
   severity: SeverityEnum
+  dedupPeriodMinutes: Int
   tags: String # Comma-separated string
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
@@ -115,6 +162,7 @@ input CreateOrModifyRuleInput {
   logTypes: [String]
   runbook: String
   severity: SeverityEnum!
+  dedupPeriodMinutes: Int!
   tags: [String]
   tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
 }
@@ -131,6 +179,7 @@ type RuleSummary {
   lastModified: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
+  dedupPeriodMinutes: Int
   tags: [String]
 }
 
@@ -153,6 +202,7 @@ type RuleDetails {
   reference: String
   runbook: String
   severity: SeverityEnum
+  dedupPeriodMinutes: Int
   tags: [String]
   tests: [PolicyUnitTest] # Policy and Rule have the same tests structure so we reuse the struct here
   versionId: ID
@@ -259,48 +309,62 @@ input TestPolicyInput {
   tests: [PolicyUnitTestInput!]
 }
 
-type IntegrationConfig {
-  awsRoleArn: String
-}
-
-input IntegrationConfigInput {
-  awsRoleArn: String
-}
-
-type Integration {
-  awsAccountId: String
-  createdAtTime: AWSDateTime
-  createdBy: ID
-  integrationId: ID
-  integrationLabel: String
-  integrationType: String
-  scanEnabled: Boolean
-  scanIntervalMins: Int
-  scanStatus: String
-  eventStatus: String
-  s3Buckets: [String]
-  kmsKeys: [String]
-  lastScanEndTime: AWSDateTime
-  lastScanErrorMessage: String
-  lastScanStartTime: AWSDateTime
-}
-
-input AddIntegrationInput {
-  integrations: [AddIntegrationAttributes]
-}
-
-input AddIntegrationAttributes {
-  awsAccountId: String
+type ComplianceIntegration {
+  awsAccountId: String!
+  createdAtTime: AWSDateTime!
+  createdBy: ID!
+  integrationId: ID!
   integrationLabel: String!
-  integrationType: String! # either `aws-s3` for log sources or `aws-scan` for infra sources
-  s3Buckets: [String]
-  kmsKeys: [String]
+  cweEnabled: Boolean
+  remediationEnabled: Boolean
+  health: ComplianceIntegrationHealth!
+  stackName: String!
 }
 
-input UpdateIntegrationInput {
-  awsAccountId: String
+type LogIntegration {
+  awsAccountId: String!
+  createdAtTime: AWSDateTime!
+  createdBy: ID!
+  integrationId: ID!
+  integrationLabel: String!
+  s3Bucket: String!
+  s3Prefix: String
+  kmsKey: String
+  logTypes: [String!]!
+  health: LogIntegrationHealth!
+  stackName: String!
+}
+
+input AddComplianceIntegrationInput {
+  awsAccountId: String!
+  integrationLabel: String!
+  remediationEnabled: Boolean
+  cweEnabled: Boolean
+}
+
+input AddLogIntegrationInput {
+  awsAccountId: String!
+  integrationLabel: String!
+  s3Bucket: String!
+  kmsKey: String
+  s3Prefix: String
+  logTypes: [String!]!
+}
+
+input UpdateComplianceIntegrationInput {
   integrationId: String!
-  integrationLabel: String!
+  integrationLabel: String
+  cweEnabled: Boolean
+  remediationEnabled: Boolean
+}
+
+input UpdateLogIntegrationInput {
+  integrationId: String!
+  integrationLabel: String
+  s3Bucket: String
+  kmsKey: String
+  s3Prefix: String
+  logTypes: [String!]
 }
 
 type ListPoliciesResponse {
@@ -550,7 +614,6 @@ input ListResourcesInput {
   deleted: Boolean
   idContains: String
   integrationId: ID
-  integrationType: AccountTypeEnum
   types: String # comma separated string
   # Sorting
   sortBy: ListResourcesSortFieldsEnum # defaults to `id`
@@ -611,7 +674,6 @@ type ResourceSummary {
   id: ID
   integrationId: ID
   complianceStatus: ComplianceStatusEnum
-  integrationType: AccountTypeEnum
   deleted: Boolean
   lastModified: AWSDateTime
   type: String
@@ -623,7 +685,6 @@ type ResourceDetails {
   expiresAt: Int
   id: ID
   integrationId: ID
-  integrationType: AccountTypeEnum
   complianceStatus: ComplianceStatusEnum
   lastModified: AWSDateTime
   type: String
@@ -633,24 +694,15 @@ type User {
   givenName: String
   familyName: String
   id: ID!
-  email: AWSEmail
-  createdAt: AWSTimestamp
-  status: String
-}
-
-type InviteUserResponse {
-  id: ID!
+  email: AWSEmail!
+  createdAt: AWSTimestamp!
+  status: String!
 }
 
 input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
-}
-
-type ListUsersResponse {
-  users: [User]
-  paginationToken: String
 }
 
 enum ComplianceStatusEnum {

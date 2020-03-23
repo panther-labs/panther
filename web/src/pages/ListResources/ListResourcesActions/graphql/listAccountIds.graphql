@@ -1,0 +1,6 @@
+query ListAccountIds {
+    listComplianceIntegrations {
+        integrationLabel
+        integrationId
+    }
+}

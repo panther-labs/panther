@@ -16,7 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AlertDetails, PolicyDetails, ResourceDetails, RuleDetails } from 'Generated/schema';
+import {
+  AlertDetails,
+  ComplianceIntegration,
+  LogIntegration,
+  PolicyDetails,
+  ResourceDetails,
+  RuleDetails,
+} from 'Generated/schema';
 
 // Typical URL encoding, allowing colons (:) to be present in the URL. Colons are safe.
 // https://stackoverflow.com/questions/14872629/uriencode-and-colon
@@ -40,6 +47,8 @@ const urls = {
     sources: {
       list: () => `${urls.compliance.home()}sources/`,
       create: () => `${urls.compliance.sources.list()}new/`,
+      edit: (id: ComplianceIntegration['integrationId']) =>
+        `${urls.compliance.sources.list()}${id}/edit/`,
     },
   },
   logAnalysis: {
@@ -58,6 +67,8 @@ const urls = {
     sources: {
       list: () => `${urls.logAnalysis.home()}sources/`,
       create: () => `${urls.logAnalysis.sources.list()}new/`,
+      edit: (id: LogIntegration['integrationId']) =>
+        `${urls.logAnalysis.sources.list()}${id}/edit/`,
     },
   },
   settings: {

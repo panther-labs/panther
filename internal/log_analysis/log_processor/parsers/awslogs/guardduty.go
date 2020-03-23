@@ -72,7 +72,7 @@ func (p *GuardDutyParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *GuardDutyParser) Parse(log string) []interface{} {
+func (p *GuardDutyParser) Parse(log string) []*parsers.PantherLog {
 	event := &GuardDuty{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -86,7 +86,7 @@ func (p *GuardDutyParser) Parse(log string) []interface{} {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
 	}
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -95,7 +95,7 @@ func (p *GuardDutyParser) LogType() string {
 }
 
 func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
-	event.SetCoreFields(p.LogType(), event.UpdatedAt)
+	event.SetCoreFields(p.LogType(), event.UpdatedAt, event)
 
 	// structured (parsed) fields
 	event.AppendAnyAWSARNPtrs(event.Arn)

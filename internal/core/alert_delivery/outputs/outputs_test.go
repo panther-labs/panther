@@ -18,7 +18,15 @@ package outputs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/stretchr/testify/mock"
+import (
+	"testing"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+)
 
 func init() {
 	policyURLPrefix = "https://panther.io/policies/"
@@ -33,4 +41,44 @@ type mockHTTPWrapper struct {
 func (m *mockHTTPWrapper) post(postInput *PostInput) *AlertDeliveryError {
 	args := m.Called(postInput)
 	return args.Get(0).(*AlertDeliveryError)
+}
+
+func TestGenerateAlertTitleReturnGivenTitle(t *testing.T) {
+	alert := &alertModel.Alert{
+		Title: aws.String("my title"),
+	}
+
+	assert.Equal(t, "New Alert: my title", generateAlertTitle(alert))
+}
+
+func TestGenerateAlertTitleRulePolicyName(t *testing.T) {
+	alert := &alertModel.Alert{
+		Type:       aws.String(alertModel.RuleType),
+		PolicyName: aws.String("rule name"),
+	}
+	assert.Equal(t, "New Alert: rule name", generateAlertTitle(alert))
+}
+
+func TestGenerateAlertTitleRulePolicyId(t *testing.T) {
+	alert := &alertModel.Alert{
+		Type:       aws.String(alertModel.RuleType),
+		PolicyName: aws.String("rule.id"),
+	}
+	assert.Equal(t, "New Alert: rule.id", generateAlertTitle(alert))
+}
+
+func TestGenerateAlertTitlePolicyName(t *testing.T) {
+	alert := &alertModel.Alert{
+		Type:       aws.String(alertModel.PolicyType),
+		PolicyName: aws.String("policy name"),
+	}
+	assert.Equal(t, "Policy Failure: policy name", generateAlertTitle(alert))
+}
+
+func TestGenerateAlertTitlePolicyId(t *testing.T) {
+	alert := &alertModel.Alert{
+		Type:       aws.String(alertModel.PolicyType),
+		PolicyName: aws.String("policy.id"),
+	}
+	assert.Equal(t, "Policy Failure: policy.id", generateAlertTitle(alert))
 }

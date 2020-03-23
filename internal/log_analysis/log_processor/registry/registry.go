@@ -25,6 +25,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
@@ -61,6 +62,10 @@ var (
 			&osquerylogs.Snapshot{}, osquerylogs.SnapshotDesc),
 		(&osseclogs.EventInfoParser{}).LogType(): DefaultLogParser(&osseclogs.EventInfoParser{},
 			&osseclogs.EventInfo{}, osseclogs.EventInfoDesc),
+		(&sysloglogs.RFC3164Parser{}).LogType(): DefaultLogParser(&sysloglogs.RFC3164Parser{},
+			&sysloglogs.RFC3164{}, sysloglogs.RFC3164Desc),
+		(&sysloglogs.RFC5424Parser{}).LogType(): DefaultLogParser(&sysloglogs.RFC5424Parser{},
+			&sysloglogs.RFC5424{}, sysloglogs.RFC5424Desc),
 	}
 )
 

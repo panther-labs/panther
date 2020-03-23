@@ -25,6 +25,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -36,10 +38,10 @@ func TestBatchLog(t *testing.T) {
 	expectedEvent := &Batch{
 		CalendarTime: (*timestamp.ANSICwithTZ)(&expectedTime),
 		Name:         aws.String("processes"),
-		Epoch:        aws.Int(314159265),
+		Epoch:        (*numerics.Integer)(aws.Int(314159265)),
 		Hostname:     aws.String(("hostname.local")),
-		UnixTime:     aws.Int(1412123850),
-		Counter:      aws.Int(1),
+		UnixTime:     (*numerics.Integer)(aws.Int(1412123850)),
+		Counter:      (*numerics.Integer)(aws.Int(1)),
 		DiffResults: &BatchDiffResults{
 			Added: []map[string]string{
 				{
@@ -73,17 +75,5 @@ func TestOsQueryBatchLogType(t *testing.T) {
 
 func checkOsQueryBatcLog(t *testing.T, log string, expectedEvent *Batch) {
 	parser := &BatchParser{}
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*Batch)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	// PantherParseTime is set to time.Now().UTC(). Require not nil
-	require.NotNil(t, event.PantherParseTime)
-	expectedEvent.PantherParseTime = event.PantherParseTime
-
-	require.Equal(t, expectedEvent, event)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }

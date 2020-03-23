@@ -131,14 +131,19 @@ Resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Resource:
-                - !Sub arn:${AWS::Partition}:iam::*:role/PantherAuditRole
-                - !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole
-                - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole
-                - !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherAuditRole-${AWS::Region}
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole-${AWS::Region}
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${AWS::Region}
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole-*
+        - Id: GetPublicTemplates
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: arn:aws:s3:::panther-public-cloudformation-templates/*
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-source-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
-

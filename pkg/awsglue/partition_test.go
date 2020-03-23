@@ -20,7 +20,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/stretchr/testify/assert"
@@ -57,7 +56,7 @@ func TestCreatePartitionFromS3Rule(t *testing.T) {
 	assert.Equal(t, "bucket", partition.GetS3Bucket())
 	assert.Equal(t, "json", partition.GetDataFormat())
 	assert.Equal(t, "gzip", partition.GetCompression())
-	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionPrefix())
+	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionLocation())
 	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
@@ -90,40 +89,8 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 	assert.Equal(t, "bucket", partition.GetS3Bucket())
 	assert.Equal(t, "json", partition.GetDataFormat())
 	assert.Equal(t, "gzip", partition.GetCompression())
-	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionPrefix())
+	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionLocation())
 	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
-}
-
-func TestCreatePartition(t *testing.T) {
-	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
-	require.NoError(t, err)
-
-	expectedCreatePartitionInput := &glue.CreatePartitionInput{
-		DatabaseName: aws.String(RuleMatchDatabaseName),
-		TableName:    aws.String("table"),
-		PartitionInput: &glue.PartitionInput{
-			StorageDescriptor: &glue.StorageDescriptor{
-				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
-				OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
-				SerdeInfo: &glue.SerDeInfo{
-					SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
-					Parameters: map[string]*string{
-						"serialization.format": aws.String("1"),
-						"case.insensitive":     aws.String("TRUE"), // treat as lower case
-					},
-				},
-				Location: aws.String("s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/"),
-			},
-			Values: aws.StringSlice([]string{"2020", "02", "26", "15"}),
-		},
-	}
-
-	mockClient := &mockGlue{}
-	mockClient.On("CreatePartition", expectedCreatePartitionInput).Return(&glue.CreatePartitionOutput{}, nil)
-
-	assert.NoError(t, partition.CreatePartition(mockClient))
-	mockClient.AssertExpectations(t)
 }
 
 func TestCreatePartitionUnknownPrefix(t *testing.T) {
@@ -150,14 +117,41 @@ func TestCreatePartitionUknownFormat(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestCreatePartitionLog(t *testing.T) {
+	s3ObjectKey := "logs/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.NoError(t, err)
+
+	mockClient := &mockGlue{}
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
+
+	assert.NoError(t, partition.CreatePartition(mockClient))
+	mockClient.AssertExpectations(t)
+}
+
+func TestCreatePartitionRule(t *testing.T) {
+	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
+	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	require.NoError(t, err)
+
+	mockClient := &mockGlue{}
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
+
+	assert.NoError(t, partition.CreatePartition(mockClient))
+	mockClient.AssertExpectations(t)
+}
+
 func TestCreatePartitionPartitionAlreadExists(t *testing.T) {
 	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	mockClient := &mockGlue{}
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).
-		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeAlreadyExistsException, "error", nil))
+		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeAlreadyExistsException, "error", nil)).Once()
 
 	assert.NoError(t, partition.CreatePartition(mockClient))
 	mockClient.AssertExpectations(t)
@@ -169,8 +163,9 @@ func TestCreatePartitionAwsError(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := &mockGlue{}
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).
-		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeInternalServiceException, "error", nil))
+		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeInternalServiceException, "error", nil)).Once()
 
 	assert.Error(t, partition.CreatePartition(mockClient))
 	mockClient.AssertExpectations(t)
@@ -182,7 +177,8 @@ func TestCreatePartitionGeneralError(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := &mockGlue{}
-	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error"))
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error")).Once()
 
 	assert.Error(t, partition.CreatePartition(mockClient))
 	mockClient.AssertExpectations(t)

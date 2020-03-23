@@ -19,8 +19,9 @@ package mage
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -28,24 +29,12 @@ const (
 	monitoringTemplate = "deployments/monitoring.yml"
 )
 
-func deployMonitoring(awsSession *session.Session, bucket string, backendOutputs map[string]string, config *PantherConfig) {
-	if err := generateDashboards(aws.StringValue(awsSession.Config.Region)); err != nil {
-		logger.Fatal(err)
+// The caller is responsible for generating the nested templates
+func deployMonitoring(awsSession *session.Session, bucket string, backendOutputs map[string]string, settings *config.PantherConfig) {
+	params := map[string]string{
+		"AlarmTopicArn":        settings.MonitoringParameterValues.AlarmSNSTopicARN,
+		"AppsyncId":            backendOutputs["WebApplicationGraphqlApiId"],
+		"LoadBalancerFullName": backendOutputs["WebApplicationLoadBalancerFullName"],
 	}
-
-	if err := generateMetrics(); err != nil {
-		logger.Fatal(err)
-	}
-
-	// get user specified SNS topic
-	alarmsSNSTopicARN := config.MonitoringParameterValues.AlarmSNSTopicARN
-	if alarmsSNSTopicARN == "" { // if not set, default to Panther created topic
-		alarmsSNSTopicARN = backendOutputs["AlarmsSNSTopic"]
-	}
-	if err := generateAlarms(alarmsSNSTopicARN, backendOutputs); err != nil {
-		logger.Fatal(err)
-	}
-
-	params := map[string]string{} // currently none
 	deployTemplate(awsSession, monitoringTemplate, bucket, monitoringStack, params)
 }

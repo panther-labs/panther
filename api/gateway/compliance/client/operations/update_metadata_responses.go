@@ -30,7 +30,7 @@ import (
 	"github.com/go-openapi/runtime"
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/gateway/compliance/models"
 )
 
 // UpdateMetadataReader is a Reader for the UpdateMetadata structure.

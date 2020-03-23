@@ -29,6 +29,10 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
+const (
+	defaultDedupPeriodMinutes = 60
+)
+
 // CreateRule adds a new rule to the Dynamo table.
 func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	input, err := parseUpdateRule(request)
@@ -37,18 +41,19 @@ func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 	}
 
 	item := &tableItem{
-		Body:          input.Body,
-		Description:   input.Description,
-		DisplayName:   input.DisplayName,
-		Enabled:       input.Enabled,
-		ID:            input.ID,
-		Reference:     input.Reference,
-		ResourceTypes: input.LogTypes,
-		Runbook:       input.Runbook,
-		Severity:      input.Severity,
-		Tags:          input.Tags,
-		Tests:         input.Tests,
-		Type:          typeRule,
+		Body:               input.Body,
+		Description:        input.Description,
+		DisplayName:        input.DisplayName,
+		Enabled:            input.Enabled,
+		ID:                 input.ID,
+		Reference:          input.Reference,
+		ResourceTypes:      input.LogTypes,
+		Runbook:            input.Runbook,
+		Severity:           input.Severity,
+		Tags:               input.Tags,
+		Tests:              input.Tests,
+		Type:               typeRule,
+		DedupPeriodMinutes: input.DedupPeriodMinutes,
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
@@ -66,6 +71,11 @@ func parseUpdateRule(request *events.APIGatewayProxyRequest) (*models.UpdateRule
 	var result models.UpdateRule
 	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
 		return nil, err
+	}
+
+	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
+	if result.DedupPeriodMinutes == 0 {
+		result.DedupPeriodMinutes = defaultDedupPeriodMinutes
 	}
 
 	if err := result.Validate(nil); err != nil {

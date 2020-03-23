@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
@@ -64,7 +65,7 @@ func (client *mockSQSClient) GetQueueAttributes(input *sqs.GetQueueAttributesInp
 	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
 }
 
-func generateMockSQSBatchInputOutput(integrations []*models.SourceIntegrationMetadata) (
+func generateMockSQSBatchInputOutput(integration *models.SourceIntegrationMetadata) (
 	*sqs.SendMessageBatchInput, *sqs.SendMessageBatchOutput, error) {
 
 	// Setup input/output
@@ -76,37 +77,35 @@ func generateMockSQSBatchInputOutput(integrations []*models.SourceIntegrationMet
 	out := &sqs.SendMessageBatchOutput{
 		Successful: []*sqs.SendMessageBatchResultEntry{
 			{
-				Id:               integrations[0].IntegrationID,
-				MessageId:        integrations[0].IntegrationID,
+				Id:               integration.IntegrationID,
+				MessageId:        integration.IntegrationID,
 				MD5OfMessageBody: aws.String("f6255bb01c648fe967714d52a89e8e9c"),
 			},
 		},
 	}
 
 	// Generate all messages for scans
-	for _, integration := range integrations {
-		for resourceType := range awspoller.ServicePollers {
-			scanMsg := &pollermodels.ScanMsg{
-				Entries: []*pollermodels.ScanEntry{
-					{
-						AWSAccountID:  integration.AWSAccountID,
-						IntegrationID: integration.IntegrationID,
-						ResourceType:  aws.String(resourceType),
-					},
+	for resourceType := range awspoller.ServicePollers {
+		scanMsg := &pollermodels.ScanMsg{
+			Entries: []*pollermodels.ScanEntry{
+				{
+					AWSAccountID:  integration.AWSAccountID,
+					IntegrationID: integration.IntegrationID,
+					ResourceType:  aws.String(resourceType),
 				},
-			}
-
-			var messageBodyBytes []byte
-			messageBodyBytes, err = jsoniter.Marshal(scanMsg)
-			if err != nil {
-				break
-			}
-
-			sqsEntries = append(sqsEntries, &sqs.SendMessageBatchRequestEntry{
-				Id:          integration.IntegrationID,
-				MessageBody: aws.String(string(messageBodyBytes)),
-			})
+			},
 		}
+
+		var messageBodyBytes []byte
+		messageBodyBytes, err = jsoniter.Marshal(scanMsg)
+		if err != nil {
+			break
+		}
+
+		sqsEntries = append(sqsEntries, &sqs.SendMessageBatchRequestEntry{
+			Id:          integration.IntegrationID,
+			MessageBody: aws.String(string(messageBodyBytes)),
+		})
 	}
 
 	in.Entries = sqsEntries
@@ -117,20 +116,17 @@ func generateMockSQSBatchInputOutput(integrations []*models.SourceIntegrationMet
 
 func TestAddToSnapshotQueue(t *testing.T) {
 	snapshotPollersQueueURL = "test-url"
-	testIntegrations := []*models.SourceIntegrationMetadata{
-		{
-			AWSAccountID:     aws.String(testAccountID),
-			CreatedAtTime:    aws.Time(time.Time{}),
-			CreatedBy:        aws.String("Bobert"),
-			IntegrationID:    aws.String(testIntegrationID),
-			IntegrationLabel: aws.String("BobertTest"),
-			IntegrationType:  aws.String("aws-scan"),
-			ScanEnabled:      aws.Bool(true),
-			ScanIntervalMins: aws.Int(60),
-		},
+	testIntegration := &models.SourceIntegrationMetadata{
+		AWSAccountID:     aws.String(testAccountID),
+		CreatedAtTime:    aws.Time(time.Time{}),
+		CreatedBy:        aws.String("Bobert"),
+		IntegrationID:    aws.String(testIntegrationID),
+		IntegrationLabel: aws.String("BobertTest"),
+		IntegrationType:  aws.String("aws-scan"),
+		ScanIntervalMins: aws.Int(60),
 	}
 
-	sqsIn, sqsOut, err := generateMockSQSBatchInputOutput(testIntegrations)
+	sqsIn, sqsOut, err := generateMockSQSBatchInputOutput(testIntegration)
 	require.NoError(t, err)
 
 	mockSQS := &mockSQSClient{}
@@ -138,7 +134,7 @@ func TestAddToSnapshotQueue(t *testing.T) {
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(sqsOut, nil)
 	SQSClient = mockSQS
 
-	err = ScanAllResources(testIntegrations)
+	err = ScanAllResources([]*models.SourceIntegrationMetadata{testIntegration})
 
 	require.NoError(t, err)
 	// Check that there is one message per service
@@ -150,36 +146,95 @@ func TestPutIntegration(t *testing.T) {
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	SQSClient = mockSQS
 	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
-		Integrations: []*models.PutIntegrationSettings{
-			{
-				AWSAccountID:     aws.String(testAccountID),
-				IntegrationLabel: aws.String(testIntegrationLabel),
-				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
-				ScanIntervalMins: aws.Int(60),
-				UserID:           aws.String(testUserID),
-			},
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+			ScanIntervalMins: aws.Int(60),
+			UserID:           aws.String(testUserID),
 		},
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
 }
 
+func TestPutLogIntegrationExists(t *testing.T) {
+	mockSQS := &mockSQSClient{}
+	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
+	SQSClient = mockSQS
+
+	db = &ddb.DDB{
+		Client: &modelstest.MockDDBClient{
+			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
+				{
+					"awsAccountId":     {S: aws.String(testAccountID)},
+					"integrationType":  {S: aws.String(models.IntegrationTypeAWS3)},
+					"integrationlabel": {S: aws.String(testIntegrationLabel)},
+				},
+			},
+			TestErr: false,
+		},
+		TableName: "test",
+	}
+
+	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
+			ScanIntervalMins: aws.Int(60),
+			UserID:           aws.String(testUserID),
+		},
+	})
+	require.Error(t, err)
+	require.Empty(t, out) // should do nothing
+}
+
+func TestPutCloudSecIntegrationExists(t *testing.T) {
+	mockSQS := &mockSQSClient{}
+	SQSClient = mockSQS
+
+	db = &ddb.DDB{
+		Client: &modelstest.MockDDBClient{
+			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
+				{
+					"awsAccountId":     {S: aws.String(testAccountID)},
+					"integrationType":  {S: aws.String(models.IntegrationTypeAWSScan)},
+					"integrationlabel": {S: aws.String("test label")},
+				},
+			},
+			TestErr: false,
+		},
+		TableName: "test",
+	}
+
+	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+			ScanIntervalMins: aws.Int(60),
+			UserID:           aws.String(testUserID),
+		},
+	})
+	require.Error(t, err)
+	require.Empty(t, out) // should do nothing
+	mockSQS.AssertExpectations(t)
+}
+
 func TestPutIntegrationValidInput(t *testing.T) {
 	validator, err := models.Validator()
 	require.NoError(t, err)
 	assert.NoError(t, validator.Struct(&models.PutIntegrationInput{
-		Integrations: []*models.PutIntegrationSettings{
-			{
-				AWSAccountID:     aws.String(testAccountID),
-				IntegrationLabel: aws.String(testIntegrationLabel),
-				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
-				ScanIntervalMins: aws.Int(60),
-				UserID:           aws.String(testUserID),
-			},
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+			ScanIntervalMins: aws.Int(60),
+			UserID:           aws.String(testUserID),
 		},
 	}))
 }
@@ -188,31 +243,25 @@ func TestPutIntegrationInvalidInput(t *testing.T) {
 	validator, err := models.Validator()
 	require.NoError(t, err)
 	assert.Error(t, validator.Struct(&models.PutIntegrationInput{
-		Integrations: []*models.PutIntegrationSettings{
-			{
-				// Long account ID
-				AWSAccountID: aws.String("11111111111111"),
-				ScanEnabled:  aws.Bool(true),
-				// Invalid integration type
-				IntegrationType: aws.String("type-that-does-not-exist"),
-			},
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String("type doesn't exist"),
+			ScanIntervalMins: aws.Int(60),
+			UserID:           aws.String(testUserID),
 		},
 	}))
 }
 
 func TestPutIntegrationDatabaseError(t *testing.T) {
 	in := &models.PutIntegrationInput{
-		Integrations: []*models.PutIntegrationSettings{
-			{
-				AWSAccountID:     aws.String(testAccountID),
-				IntegrationLabel: aws.String(testIntegrationLabel),
-				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
-				UserID:           aws.String(testUserID),
-			},
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+			UserID:           aws.String(testUserID),
 		},
 	}
-
 	db = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			TestErr: true,
@@ -238,17 +287,14 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 	zap.ReplaceGlobals(zap.New(core))
 
 	in := &models.PutIntegrationInput{
-		Integrations: []*models.PutIntegrationSettings{
-			{
-				AWSAccountID:     aws.String(testAccountID),
-				IntegrationLabel: aws.String(testIntegrationLabel),
-				IntegrationType:  aws.String(testIntegrationType),
-				ScanEnabled:      aws.Bool(true),
-				UserID:           aws.String(testUserID),
-			},
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+			ScanIntervalMins: aws.Int(60),
+			UserID:           aws.String(testUserID),
 		},
 	}
-
 	db = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			TestErr: true,
@@ -277,6 +323,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	mockSQS := &mockSQSClient{}
 	SQSClient = mockSQS
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
@@ -291,16 +338,14 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 		QueueUrl:   aws.String(logProcessorQueueURL),
 	}
 	mockSQS.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
-
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
-		Integrations: []*models.PutIntegrationSettings{
-			{
-				AWSAccountID:    aws.String(testAccountID),
-				IntegrationType: aws.String(models.IntegrationTypeAWS3),
-				UserID:          aws.String(testUserID),
-				S3Buckets:       aws.StringSlice([]string{"bucket"}),
-				KmsKeys:         aws.StringSlice([]string{"keyarns"}),
-			},
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
+			UserID:           aws.String(testUserID),
+			S3Bucket:         aws.String("bucket"),
+			KmsKey:           aws.String("keyarns"),
 		},
 	})
 
@@ -317,14 +362,13 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{}, errors.New("error"))
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
-		Integrations: []*models.PutIntegrationSettings{
-			{
-				AWSAccountID:    aws.String(testAccountID),
-				IntegrationType: aws.String(models.IntegrationTypeAWS3),
-				UserID:          aws.String(testUserID),
-				S3Buckets:       aws.StringSlice([]string{"bucket"}),
-				KmsKeys:         aws.StringSlice([]string{"keyarns"}),
-			},
+		PutIntegrationSettings: models.PutIntegrationSettings{
+			AWSAccountID:     aws.String(testAccountID),
+			IntegrationLabel: aws.String(testIntegrationLabel),
+			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
+			UserID:           aws.String(testUserID),
+			S3Bucket:         aws.String("bucket"),
+			KmsKey:           aws.String("keyarns"),
 		},
 	})
 	require.Error(t, err)

@@ -103,7 +103,7 @@ func TestSetCoreFields(t *testing.T) {
 		PantherEventTime: &eventTime,
 		PantherParseTime: &expectedNow,
 	}
-	event.SetCoreFields(logType, &eventTime)
+	event.SetCoreFields(logType, &eventTime, nil)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 
 	// PantherParseTime will be set to time.Now().UTC(), require it to be within one second of expectedNow
@@ -124,7 +124,7 @@ func TestSetCoreFieldsNilEventTime(t *testing.T) {
 		PantherEventTime: &expectedNow,
 		PantherParseTime: &expectedNow,
 	}
-	event.SetCoreFields(logType, nil)
+	event.SetCoreFields(logType, nil, nil)
 	expectedEvent.PantherRowID = event.PantherRowID // set because it is random
 
 	// PantherEventTime will be set to time.Now().UTC(), require it to be within one second of expectedNow

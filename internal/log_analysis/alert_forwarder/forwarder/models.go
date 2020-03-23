@@ -22,17 +22,22 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 )
 
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
 	RuleID              string    `dynamodbav:"ruleId,string"`
+	RuleVersion         string    `dynamodbav:"ruleVersion,string"`
 	DeduplicationString string    `dynamodbav:"dedup,string"`
 	AlertCount          int64     `dynamodbav:"-"` // Not storing this field in DDB
 	CreationTime        time.Time `dynamodbav:"creationTime,string"`
 	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
 	EventCount          int64     `dynamodbav:"eventCount,number"`
+	Severity            string    `dynamodbav:"severity,string"`
+	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
+	Title               *string   `dynamodbav:"title,string,omitempty"`
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
@@ -42,13 +47,32 @@ type Alert struct {
 	AlertDedupEvent
 }
 
-func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*AlertDedupEvent, error) {
+func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (event *AlertDedupEvent, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = errors.Wrap(err, "panicked while getting alert dedup event")
+			}
+		}
+	}()
 	ruleID, err := getAttribute("ruleId", input)
 	if err != nil {
 		return nil, err
 	}
 
+	ruleVersion, err := getAttribute("ruleVersion", input)
+	if err != nil {
+		return nil, err
+	}
+
 	deduplicationString, err := getAttribute("dedup", input)
+	if err != nil {
+		return nil, err
+	}
+
+	severity, err := getAttribute("severity", input)
 	if err != nil {
 		return nil, err
 	}
@@ -73,14 +97,29 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*Al
 		return nil, err
 	}
 
-	return &AlertDedupEvent{
+	logTypes, err := getAttribute("logTypes", input)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &AlertDedupEvent{
 		RuleID:              ruleID.String(),
+		RuleVersion:         ruleVersion.String(),
 		DeduplicationString: deduplicationString.String(),
 		AlertCount:          alertCount,
 		CreationTime:        time.Unix(alertCreationEpoch, 0).UTC(),
 		UpdateTime:          time.Unix(alertUpdateEpoch, 0).UTC(),
 		EventCount:          eventCount,
-	}, nil
+		Severity:            severity.String(),
+		LogTypes:            logTypes.StringSet(),
+	}
+
+	title := getOptionalAttribute("title", input)
+	if title != nil {
+		result.Title = aws.String(title.String())
+	}
+
+	return result, nil
 }
 
 func getIntegerAttribute(key string, input map[string]events.DynamoDBAttributeValue) (int64, error) {
@@ -101,4 +140,12 @@ func getAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue)
 		return events.DynamoDBAttributeValue{}, errors.Errorf("could not find '%s' attribute", key)
 	}
 	return attributeValue, nil
+}
+
+func getOptionalAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue) *events.DynamoDBAttributeValue {
+	attributeValue, ok := inputMap[key]
+	if !ok {
+		return nil
+	}
+	return &attributeValue
 }

@@ -25,6 +25,8 @@ export const INCLUDE_DIGITS_REGEX = new RegExp('(?=.*[0-9])');
 
 export const INCLUDE_LOWERCASE_REGEX = new RegExp('(?=.*[a-z])');
 
+export const SOURCE_LABEL_REGEX = new RegExp('^[a-zA-Z0-9- ]+$');
+
 export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
 export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('(?=.*[!@#\\$%\\^&\\*;:,.<>?/])');
@@ -80,6 +82,8 @@ export const LOG_TYPES = [
   'Osquery.Snapshot',
   'Osquery.Status',
   'OSSEC.EventInfo',
+  'Syslog.RFC3164',
+  'Syslog.RFC5424',
 ] as const;
 
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
@@ -98,8 +102,3 @@ export const DEFAULT_LARGE_PAGE_SIZE = 25;
 // The key under which User-related data will be stored in the storage
 export const USER_INFO_STORAGE_KEY = 'panther.user.info';
 export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.errorReportingConsent';
-
-export enum INTEGRATION_TYPES {
-  AWS_LOGS = 'aws-s3',
-  AWS_INFRA = 'aws-scan',
-}

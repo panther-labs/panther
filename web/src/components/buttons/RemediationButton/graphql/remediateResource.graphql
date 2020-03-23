@@ -1,0 +1,3 @@
+mutation RemediateResource($input: RemediateResourceInput!) {
+    remediateResource(input: $input)
+}

@@ -1,0 +1,18 @@
+query ListPolicies($input: ListPoliciesInput) {
+    policies(input: $input) {
+        policies {
+            complianceStatus
+            lastModified
+            resourceTypes
+            severity
+            id
+            displayName
+            enabled
+        }
+        paging {
+            totalPages
+            thisPage
+            totalItems
+        }
+    }
+}

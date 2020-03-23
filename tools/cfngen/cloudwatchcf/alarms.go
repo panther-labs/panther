@@ -19,14 +19,19 @@ package cloudwatchcf
  */
 
 import (
+	"path/filepath"
+
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/tools/cfngen"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
-	documentationURL = "https://docs.runpanther.io/operations/runbooks" // where all alarms are documented
-	alarmPrefix      = "PantherAlarm"
+	documentationURL   = "https://docs.runpanther.io/operations/runbooks" // where all alarms are documented
+	alarmPrefix        = "PantherAlarm"
+	topicParameterName = "AlarmTopicArn" // CloudFormation parameter referenced in all generated alarms
 )
 
 type Alarm struct {
@@ -38,10 +43,10 @@ type Alarm struct {
 // see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cw-alarm.html
 type AlarmProperties struct {
 	AlarmName          string
-	AlarmDescription   string   `json:",omitempty"`
-	AlarmActions       []string `json:",omitempty"`
-	TreatMissingData   string   `json:",omitempty"`
-	Namespace          string   `json:",omitempty"`
+	AlarmDescription   string      `json:",omitempty"`
+	AlarmActions       []RefString `json:",omitempty"`
+	TreatMissingData   string      `json:",omitempty"`
+	Namespace          string      `json:",omitempty"`
 	MetricName         string
 	Dimensions         []MetricDimension `json:",omitempty"`
 	ComparisonOperator string
@@ -53,29 +58,45 @@ type AlarmProperties struct {
 }
 
 type MetricDimension struct {
-	Name  string
+	Name string
+
+	// Use only one of Value or ValueRef
 	Value string
+
+	valueRef *RefString
 }
 
-type Config struct {
-	snsTopicArn  string            // where to send alarms
-	stackOutputs map[string]string // used to lookup dynamically configured references created previously
+func (m *MetricDimension) MarshalJSON() ([]byte, error) {
+	if m.valueRef == nil {
+		// Most common case - the struct can be marshaled like normal (json ignores nil valueRef)
+		return jsoniter.Marshal(*m) // dereference to avoid infinite recursion
+	}
+
+	// Otherwise, marshal a new struct where "Value" is actually a struct with the nested ref
+	return jsoniter.Marshal(&struct {
+		Name  string
+		Value RefString
+	}{
+		Name:  m.Name,
+		Value: *m.valueRef,
+	})
 }
 
-func NewAlarm(resource, name, description, snsTopicArn string) (alarm *Alarm) {
-	alarm = &Alarm{
+type RefString struct {
+	Ref string
+}
+
+func NewAlarm(resource, name, description string) *Alarm {
+	return &Alarm{
 		Resource: resource,
 		Type:     "AWS::CloudWatch::Alarm",
 		Properties: AlarmProperties{
+			AlarmActions:      []RefString{{topicParameterName}},
 			AlarmName:         name,
 			AlarmDescription:  description,
 			EvaluationPeriods: 1, // default to 1
 		},
 	}
-	if snsTopicArn != "" {
-		alarm.Properties.AlarmActions = []string{snsTopicArn}
-	}
-	return alarm
 }
 
 // Metric configures alarm for basic metric
@@ -153,23 +174,17 @@ func AlarmName(alarmType, resourceName string) string {
 
 // GenerateAlarms will read the CF in yml files in the cfDir, and generate CF for CloudWatch alarms for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateAlarms(snsTopicArn string, stackOutputs map[string]string, cfDirs ...string) (alarms []*Alarm, cf []byte, err error) {
-	config := &Config{
-		snsTopicArn:  snsTopicArn,
-		stackOutputs: stackOutputs,
-	}
-
-	for _, cfDir := range cfDirs {
-		err := walkYamlFiles(cfDir, func(path string) (err error) {
-			fileAlarms, err := generateAlarms(path, config)
-			if err == nil {
-				alarms = append(alarms, fileAlarms...)
-			}
-			return err
-		})
+func GenerateAlarms(cfDir string, settings *config.PantherConfig) ([]*Alarm, []byte, error) {
+	var alarms []*Alarm
+	if err := walkYamlFiles(cfDir, func(path string) error {
+		fileAlarms, err := generateAlarms(path, settings)
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
+		alarms = append(alarms, fileAlarms...)
+		return nil
+	}); err != nil {
+		return nil, nil, err
 	}
 
 	resources := make(map[string]interface{})
@@ -178,43 +193,53 @@ func GenerateAlarms(snsTopicArn string, stackOutputs map[string]string, cfDirs .
 	}
 
 	// generate CF using cfngen
-	cf, err = cfngen.NewTemplate("Panther Alarms", nil, resources, nil).CloudFormation()
+	parameters := map[string]interface{}{
+		topicParameterName: cfngen.Parameter{Type: "String"},
+	}
+	switch filepath.Base(cfDir) {
+	case "core":
+		parameters[appsyncParameterName] = cfngen.Parameter{Type: "String"}
+	case "web":
+		parameters[elbParameterName] = cfngen.Parameter{Type: "String"}
+	}
+
+	cf, err := cfngen.NewTemplate("Panther Alarms", parameters, resources, nil).CloudFormation()
 	if err != nil {
 		return nil, nil, err
 	}
 	return alarms, cf, nil
 }
 
-func generateAlarms(fileName string, config *Config) (alarms []*Alarm, err error) {
+func generateAlarms(fileName string, settings *config.PantherConfig) (alarms []*Alarm, err error) {
 	yamlObj, err := readYaml(fileName)
 	if err != nil {
 		return nil, err
 	}
 
 	walkYamlMap(yamlObj, func(resourceType string, resource map[interface{}]interface{}) {
-		alarms = append(alarms, alarmDispatchOnType(resourceType, resource, config)...)
+		alarms = append(alarms, alarmDispatchOnType(resourceType, resource, settings)...)
 	})
 
 	return alarms, nil
 }
 
 // dispatch on "Type" to create specific alarms
-func alarmDispatchOnType(resourceType string, resource map[interface{}]interface{}, config *Config) (alarms []*Alarm) {
+func alarmDispatchOnType(resourceType string, resource map[interface{}]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
 	switch resourceType { // this could be a map of key -> func if this gets long
 	case "AWS::SNS::Topic":
-		return generateSNSAlarms(resource, config)
+		return generateSNSAlarms(resource)
 	case "AWS::SQS::Queue":
-		return generateSQSAlarms(resource, config)
+		return generateSQSAlarms(resource)
 	case "AWS::Serverless::Api":
-		return generateAPIGatewayAlarms(resource, config)
+		return generateAPIGatewayAlarms(resource)
 	case "AWS::ElasticLoadBalancingV2::LoadBalancer":
-		return generateApplicationELBAlarms(resource, config)
+		return generateApplicationELBAlarms(resource)
 	case "AWS::AppSync::GraphQLApi":
-		return generateAppSyncAlarms(resource, config)
+		return generateAppSyncAlarms(resource)
 	case "AWS::DynamoDB::Table":
-		return generateDynamoDBAlarms(resource, config)
+		return generateDynamoDBAlarms(resource)
 	case "AWS::Serverless::Function":
-		return generateLambdaAlarms(resource, config)
+		return generateLambdaAlarms(resource, settings)
 	}
 	return alarms
 }

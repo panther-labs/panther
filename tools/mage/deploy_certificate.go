@@ -29,7 +29,6 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -90,7 +89,14 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 			},
 		},
 	})
+
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "LimitExceededException" {
+				logger.Warn("deploy: ACM certificate import limit reached, falling back to IAM for certificate management")
+				return uploadIAMCertificate(awsSession)
+			}
+		}
 		logger.Fatalf("ACM certificate import failed: %v", err)
 	}
 
@@ -101,7 +107,7 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 func getExistingCertificate(awsSession *session.Session) *string {
 	outputs, err := getStackOutputs(awsSession, backendStack)
 	if err != nil {
-		if strings.Contains(err.Error(), "Stack with id "+backendStack+" does not exist") {
+		if isStackNotExistsError(backendStack, err) {
 			return nil
 		}
 		logger.Fatal(err)
@@ -176,6 +182,7 @@ func uploadIAMCertificate(awsSession *session.Session) string {
 	certName := "PantherCertificate-" + time.Now().Format("2006-01-02T15-04-05")
 	input := &iam.UploadServerCertificateInput{
 		CertificateBody:       aws.String(string(readFile(certificateFile))),
+		Path:                  aws.String("/panther/" + *awsSession.Config.Region + "/"),
 		PrivateKey:            aws.String(string(readFile(privateKeyFile))),
 		ServerCertificateName: aws.String(certName),
 	}

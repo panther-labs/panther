@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -30,120 +31,160 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
-	auditRoleFormat         = "arn:aws:iam::%s:role/PantherAuditRole"
-	logProcessingRoleFormat = "arn:aws:iam::%s:role/PantherLogProcessingRole"
-	cweRoleFormat           = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole"
-	remediationRoleFormat   = "arn:aws:iam::%s:role/PantherRemediationRole"
+	auditRoleFormat         = "arn:aws:iam::%s:role/PantherAuditRole-%s"
+	logProcessingRoleFormat = "arn:aws:iam::%s:role/PantherLogProcessingRole-%s"
+	cweRoleFormat           = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole-%s"
+	remediationRoleFormat   = "arn:aws:iam::%s:role/PantherRemediationRole-%s"
+)
+
+var (
+	evaluateIntegrationFunc       = evaluateIntegration
+	checkIntegrationInternalError = &genericapi.InternalError{Message: "Failed to validate source. Please try again later"}
 )
 
 // CheckIntegration adds a set of new integrations in a batch.
 func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
 	zap.L().Debug("beginning source health check")
 	out := &models.SourceIntegrationHealth{
-		AWSAccountID:    input.AWSAccountID,
-		IntegrationType: input.IntegrationType,
+		AWSAccountID:    aws.StringValue(input.AWSAccountID),
+		IntegrationType: aws.StringValue(input.IntegrationType),
 	}
 
-	if *input.IntegrationType == models.IntegrationTypeAWSScan {
-		_, out.AuditRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(auditRoleFormat, *input.AWSAccountID)))
+	switch aws.StringValue(input.IntegrationType) {
+	case models.IntegrationTypeAWSScan:
+		_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
+			*input.AWSAccountID, *sess.Config.Region))
 		if aws.BoolValue(input.EnableCWESetup) {
-			_, out.CWERoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(cweRoleFormat, *input.AWSAccountID)))
+			_, out.CWERoleStatus = getCredentialsWithStatus(fmt.Sprintf(cweRoleFormat,
+				*input.AWSAccountID, *sess.Config.Region))
 		}
 		if aws.BoolValue(input.EnableRemediation) {
-			_, out.RemediationRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(remediationRoleFormat, *input.AWSAccountID)))
+			_, out.RemediationRoleStatus = getCredentialsWithStatus(fmt.Sprintf(remediationRoleFormat,
+				*input.AWSAccountID, *sess.Config.Region))
 		}
-	}
 
-	if *input.IntegrationType == models.IntegrationTypeAWS3 {
+	case models.IntegrationTypeAWS3:
 		var roleCreds *credentials.Credentials
-		roleCreds, out.ProcessingRoleStatus = getCredentialsWithStatus(aws.String(fmt.Sprintf(logProcessingRoleFormat, *input.AWSAccountID)))
-		if len(input.S3Buckets) > 0 && *out.ProcessingRoleStatus.Healthy {
-			out.S3BucketsStatus = checkBuckets(roleCreds, input.S3Buckets)
+		logProcessingRole := generateLogProcessingRoleArn(*input.AWSAccountID, *input.IntegrationLabel)
+		roleCreds, out.ProcessingRoleStatus = getCredentialsWithStatus(logProcessingRole)
+		if aws.BoolValue(out.ProcessingRoleStatus.Healthy) {
+			out.S3BucketStatus = checkBucket(roleCreds, input.S3Bucket)
+			out.KMSKeyStatus = checkKey(roleCreds, input.KmsKey)
 		}
-		if len(input.KmsKeys) > 0 && *out.ProcessingRoleStatus.Healthy {
-			out.KMSKeysStatus = checkKeys(roleCreds, input.KmsKeys)
-		}
+	default:
+		return nil, checkIntegrationInternalError
 	}
 
 	return out, nil
 }
-func checkKeys(roleCredentials *credentials.Credentials, keys []*string) map[string]*models.SourceIntegrationItemStatus {
-	kmsClient := kms.New(sess, &aws.Config{Credentials: roleCredentials})
 
-	keyStatuses := make(map[string]*models.SourceIntegrationItemStatus, len(keys))
-	for _, key := range keys {
-		info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
-		if err != nil {
-			keyStatuses[*key] = &models.SourceIntegrationItemStatus{
-				Healthy:      aws.Bool(false),
-				ErrorMessage: aws.String(err.Error()),
-			}
-			continue
-		}
-
-		if !*info.KeyMetadata.Enabled {
-			// If the key is disabled, we should fail as well
-			keyStatuses[*key] = &models.SourceIntegrationItemStatus{
-				Healthy:      aws.Bool(false),
-				ErrorMessage: aws.String("key disabled"),
-			}
-			continue
-		}
-
-		keyStatuses[*key] = &models.SourceIntegrationItemStatus{
+func checkKey(roleCredentials *credentials.Credentials, key *string) models.SourceIntegrationItemStatus {
+	if key == nil {
+		// KMS key is optional
+		return models.SourceIntegrationItemStatus{
 			Healthy: aws.Bool(true),
 		}
 	}
+	kmsClient := kms.New(sess, &aws.Config{Credentials: roleCredentials})
 
-	return keyStatuses
-}
-
-func checkBuckets(roleCredentials *credentials.Credentials, buckets []*string) map[string]*models.SourceIntegrationItemStatus {
-	s3Client := s3.New(sess, &aws.Config{Credentials: roleCredentials})
-
-	bucketStatuses := make(map[string]*models.SourceIntegrationItemStatus, len(buckets))
-	for _, bucket := range buckets {
-		_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucket})
-		if err != nil {
-			bucketStatuses[*bucket] = &models.SourceIntegrationItemStatus{
-				Healthy:      aws.Bool(false),
-				ErrorMessage: aws.String(err.Error()),
-			}
-		} else {
-			bucketStatuses[*bucket] = &models.SourceIntegrationItemStatus{
-				Healthy: aws.Bool(true),
-			}
-		}
-	}
-
-	return bucketStatuses
-}
-
-func getCredentialsWithStatus(
-	roleARN *string,
-) (*credentials.Credentials, *models.SourceIntegrationItemStatus) {
-
-	zap.L().Debug("checking role", zap.String("roleArn", *roleARN))
-	// Setup new credentials with the role
-	roleCredentials := stscreds.NewCredentials(
-		sess,
-		*roleARN,
-	)
-
-	// Use the role to make sure it's good
-	stsClient := sts.New(sess, &aws.Config{Credentials: roleCredentials})
-	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
 	if err != nil {
-		return roleCredentials, &models.SourceIntegrationItemStatus{
+		return models.SourceIntegrationItemStatus{
 			Healthy:      aws.Bool(false),
 			ErrorMessage: aws.String(err.Error()),
 		}
 	}
 
-	return roleCredentials, &models.SourceIntegrationItemStatus{
+	if !*info.KeyMetadata.Enabled {
+		// If the key is disabled, we should fail as well
+		return models.SourceIntegrationItemStatus{
+			Healthy:      aws.Bool(false),
+			ErrorMessage: aws.String("key disabled"),
+		}
+	}
+
+	return models.SourceIntegrationItemStatus{
 		Healthy: aws.Bool(true),
+	}
+}
+
+func checkBucket(roleCredentials *credentials.Credentials, bucket *string) models.SourceIntegrationItemStatus {
+	s3Client := s3.New(sess, &aws.Config{Credentials: roleCredentials})
+
+	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucket})
+	if err != nil {
+		return models.SourceIntegrationItemStatus{
+			Healthy:      aws.Bool(false),
+			ErrorMessage: aws.String(err.Error()),
+		}
+	}
+
+	return models.SourceIntegrationItemStatus{
+		Healthy: aws.Bool(true),
+	}
+}
+
+func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.SourceIntegrationItemStatus) {
+	zap.L().Debug("checking role", zap.String("roleArn", roleARN))
+	// Setup new credentials with the role
+	roleCredentials := stscreds.NewCredentials(
+		sess,
+		roleARN,
+	)
+
+	// Use the role to make sure it's good
+	stsClient := sts.New(sess, aws.NewConfig().WithCredentials(roleCredentials))
+	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	if err != nil {
+		return roleCredentials, models.SourceIntegrationItemStatus{
+			Healthy:      aws.Bool(false),
+			ErrorMessage: aws.String(err.Error()),
+		}
+	}
+
+	return roleCredentials, models.SourceIntegrationItemStatus{
+		Healthy: aws.Bool(true),
+	}
+}
+
+func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (string, bool, error) {
+	status, err := api.CheckIntegration(integration)
+	if err != nil {
+		zap.L().Error("integration failed configuration check",
+			zap.Error(err),
+			zap.Any("integration", integration),
+			zap.Any("status", status))
+		return "", false, err
+	}
+
+	switch aws.StringValue(integration.IntegrationType) {
+	case models.IntegrationTypeAWSScan:
+		if !aws.BoolValue(status.AuditRoleStatus.Healthy) {
+			return "audit role has a misconfiguration", false, nil
+		}
+
+		if aws.BoolValue(integration.EnableRemediation) && !aws.BoolValue(status.RemediationRoleStatus.Healthy) {
+			return "remediation role has a misconfiguration", false, nil
+		}
+
+		if aws.BoolValue(integration.EnableCWESetup) && !aws.BoolValue(status.CWERoleStatus.Healthy) {
+			return "cwe role has a misconfiguration", false, nil
+		}
+		return "", true, nil
+	case models.IntegrationTypeAWS3:
+		if !aws.BoolValue(status.ProcessingRoleStatus.Healthy) || !aws.BoolValue(status.S3BucketStatus.Healthy) {
+			return "log processing role has a misconfiguration", false, nil
+		}
+
+		if integration.KmsKey != nil {
+			return "kms key has a misconfiguration", aws.BoolValue(status.KMSKeyStatus.Healthy), nil
+		}
+		return "", true, nil
+	default:
+		return "", false, errors.New("invalid integration type")
 	}
 }

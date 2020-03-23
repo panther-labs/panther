@@ -1,0 +1,4 @@
+fragment IntegrationItemHealthDetails on IntegrationItemHealthStatus {
+  healthy
+  errorMessage
+}

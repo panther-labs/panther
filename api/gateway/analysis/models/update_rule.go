@@ -37,6 +37,9 @@ type UpdateRule struct {
 	// Required: true
 	Body Body `json:"body"`
 
+	// dedup period minutes
+	DedupPeriodMinutes DedupPeriodMinutes `json:"dedupPeriodMinutes,omitempty"`
+
 	// description
 	Description Description `json:"description,omitempty"`
 
@@ -80,6 +83,10 @@ func (m *UpdateRule) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateBody(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDedupPeriodMinutes(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -138,6 +145,22 @@ func (m *UpdateRule) validateBody(formats strfmt.Registry) error {
 	if err := m.Body.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("body")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *UpdateRule) validateDedupPeriodMinutes(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.DedupPeriodMinutes) { // not required
+		return nil
+	}
+
+	if err := m.DedupPeriodMinutes.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("dedupPeriodMinutes")
 		}
 		return err
 	}

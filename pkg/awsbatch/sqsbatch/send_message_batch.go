@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/cenkalti/backoff"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -31,8 +32,8 @@ import (
 // Setting max bytes below the AWS max because I'm not 100% sure how much overhead the rest of the
 // headers AWS adds is, or if it matters or is constant
 const (
-	maxMessages = 10
-	maxBytes    = 260000
+	maxMessages     = 10
+	maxMessageBytes = 260000
 )
 
 type sendMessageBatchRequest struct {
@@ -83,7 +84,7 @@ func SendMessageBatch(
 	client sqsiface.SQSAPI,
 	maxElapsedTime time.Duration,
 	input *sqs.SendMessageBatchInput,
-) error {
+) ([]*sqs.SendMessageBatchRequestEntry, error) {
 
 	zap.L().Info("starting sqsbatch.SendMessageBatch", zap.Int("totalEntries", len(input.Entries)))
 	start := time.Now()
@@ -92,14 +93,23 @@ func SendMessageBatch(
 	config.MaxElapsedTime = maxElapsedTime
 	allEntries := input.Entries
 	request := &sendMessageBatchRequest{client: client, input: input}
+	// Messages that would be too big to send if we tried to send them
+	bigMessages := make([]*sqs.SendMessageBatchRequestEntry, 0)
 
 	// Break records into multiple requests as necessary
 	for i := 0; i < len(allEntries); {
 		input.Entries = make([]*sqs.SendMessageBatchRequestEntry, 0, maxMessages)
 		currentBatchSize := 0
 		for {
-			input.Entries = append(input.Entries, allEntries[i])
-			currentBatchSize += len(aws.StringValue(allEntries[i].MessageBody))
+			entrySize := len(aws.StringValue(allEntries[i].MessageBody))
+			// Sometimes a single entry can be too big to send. In this case, don't even try and just return the
+			// over sized message to the requester so they can handle it how they see fit
+			if entrySize > maxMessageBytes {
+				bigMessages = append(bigMessages, allEntries[i])
+			} else {
+				input.Entries = append(input.Entries, allEntries[i])
+				currentBatchSize += entrySize
+			}
 			i++
 
 			// If this is not the last entry, check the size of the next entry. If this is the last
@@ -113,11 +123,17 @@ func SendMessageBatch(
 
 			// Check if the next entry would push us over the max message count, or the next
 			// entry would push us over the max message byte size
-			if len(input.Entries) == maxMessages || currentBatchSize+nextItemSize >= maxBytes {
+			if len(input.Entries) == maxMessages || currentBatchSize+nextItemSize >= maxMessageBytes {
 				break
 			}
 		}
 
+		// This only happens when at the start of this iteration all remaining items are over sized (most common when
+		// only one item is being sent and it's over sized)
+		if len(request.input.Entries) == 0 {
+			break
+		}
+		// This case covers when some entries failed to send because of unrecoverable issues
 		if err := backoff.Retry(request.send, config); err != nil {
 			zap.L().Error(
 				"SendMessageBatch permanently failed",
@@ -125,10 +141,21 @@ func SendMessageBatch(
 				zap.Int("failedMessageCount", len(allEntries)-request.successCount),
 				zap.Error(err),
 			)
-			return err
+			return append(allEntries[request.successCount:], bigMessages...), err
 		}
 	}
 
+	// This case covers when some entries would have failed to send if we tried, so we didn't try
+	if len(bigMessages) > 0 {
+		zap.L().Debug(
+			"SendMessageBatch partially successful",
+			zap.Duration("duration", time.Since(start)),
+			zap.Int("failures", len(bigMessages)),
+		)
+		return bigMessages, errors.New(sqs.ErrCodeBatchRequestTooLong)
+	}
+
+	// This case covers when all entries sent successfully
 	zap.L().Info("SendMessageBatch successful", zap.Duration("duration", time.Since(start)))
-	return nil
+	return nil, nil
 }

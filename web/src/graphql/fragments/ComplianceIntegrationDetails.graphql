@@ -1,0 +1,21 @@
+fragment ComplianceIntegrationDetails on ComplianceIntegration {
+  integrationId
+  integrationLabel
+  awsAccountId
+  createdAtTime
+  createdBy
+  cweEnabled
+  remediationEnabled
+  stackName
+  health {
+    auditRoleStatus {
+      ...IntegrationItemHealthDetails
+    }
+    cweRoleStatus {
+      ...IntegrationItemHealthDetails
+    }
+    remediationRoleStatus {
+      ...IntegrationItemHealthDetails
+    }
+  }
+}

@@ -19,6 +19,7 @@ package aws
  */
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -45,10 +46,6 @@ type resourcePoller struct {
 	description    string
 	resourcePoller awsmodels.ResourcePoller
 }
-
-const (
-	pantherAuditRoleID = "PantherAuditRole"
-)
 
 var (
 	// AssumeRoleFunc is the function to return valid AWS credentials.
@@ -201,7 +198,7 @@ func AssumeRole(
 		}
 	}
 
-	zap.L().Info("assuming role", zap.String("roleArn", *pollerInput.AuthSource))
+	zap.L().Debug("assuming role", zap.String("roleArn", *pollerInput.AuthSource))
 	creds = stscreds.NewCredentials(
 		sess,
 		*pollerInput.AuthSource,
@@ -209,7 +206,7 @@ func AssumeRole(
 	)
 	err := verifyAssumedCreds(creds)
 	if err != nil {
-		return nil, errors.New("AWS IAM Role could not be assumed")
+		return nil, errors.Errorf("AWS IAM Role '%s' could not be assumed", *pollerInput.AuthSource)
 	}
 
 	CredentialCache[*pollerInput.AuthSource] = creds
@@ -224,15 +221,17 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		return nil, errors.New("no valid AWS AccountID provided")
 	}
 
+	// Get the list of active regions to scan
+	sess := session.Must(session.NewSession(&aws.Config{}))
+
 	// Build the audit role manually
-	// 	Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole
-	var auditRoleARN string
+	// 	Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole-($REGION)
 	if len(auditRoleName) == 0 {
-		// Default value
-		auditRoleARN = "arn:aws:iam::" + *scanRequest.AWSAccountID + ":role/" + pantherAuditRoleID
-	} else {
-		auditRoleARN = "arn:aws:iam::" + *scanRequest.AWSAccountID + ":role/" + auditRoleName
+		return nil, errors.New("no audit role configured")
 	}
+	auditRoleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s",
+		*scanRequest.AWSAccountID, auditRoleName) // the auditRole name is for form: PantherAuditRole-($REGION)
+
 	zap.L().Debug("constructed audit role", zap.String("role", auditRoleARN))
 
 	// Extract the role ARN to construct various ResourceIDs.
@@ -272,13 +271,13 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		}
 	}
 
-	// Get the list of active regions to scan
-	sess := session.Must(session.NewSession(&aws.Config{}))
-
 	var creds *credentials.Credentials
 	creds, err = AssumeRoleFunc(pollerResourceInput, sess)
 	if err != nil {
-		zap.L().Error("unable to assume role to make DescribeRegions call")
+		zap.L().Error("unable to assume role to make DescribeRegions call",
+			zap.Error(err),
+			zap.String("auditRoleARN", auditRoleARN),
+			zap.Any("parsedAuditRoleARN", roleArn))
 		return
 	}
 

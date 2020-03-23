@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -33,9 +34,12 @@ import (
 
 // GetEnabledPolicies fetches all enabled policies from an organization for backend processing.
 func GetEnabledPolicies(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	ruleType := parseGetEnabled(request)
+	analysisType, err := parseAnalysisType(request)
+	if err != nil {
+		return badRequest(err)
+	}
 
-	scanInput, err := buildEnabledScan(ruleType)
+	scanInput, err := buildEnabledScan(analysisType)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
@@ -43,12 +47,13 @@ func GetEnabledPolicies(request *events.APIGatewayProxyRequest) *events.APIGatew
 	policies := make([]*models.EnabledPolicy, 0, 100)
 	err = scanPages(scanInput, func(policy *tableItem) error {
 		policies = append(policies, &models.EnabledPolicy{
-			Body:          policy.Body,
-			ID:            policy.ID,
-			ResourceTypes: policy.ResourceTypes,
-			Severity:      policy.Severity,
-			Suppressions:  policy.Suppressions,
-			VersionID:     policy.VersionID,
+			Body:               policy.Body,
+			ID:                 policy.ID,
+			ResourceTypes:      policy.ResourceTypes,
+			Severity:           policy.Severity,
+			Suppressions:       policy.Suppressions,
+			VersionID:          policy.VersionID,
+			DedupPeriodMinutes: policy.DedupPeriodMinutes,
 		})
 		return nil
 	})
@@ -59,13 +64,13 @@ func GetEnabledPolicies(request *events.APIGatewayProxyRequest) *events.APIGatew
 	return gatewayapi.MarshalResponse(&models.EnabledPolicies{Policies: policies}, http.StatusOK)
 }
 
-func parseGetEnabled(request *events.APIGatewayProxyRequest) string {
-	ruleType := strings.ToUpper(request.QueryStringParameters["type"])
-	if ruleType == "" {
-		ruleType = typePolicy // default to loading policies
+func parseAnalysisType(request *events.APIGatewayProxyRequest) (string, error) {
+	analysisType := strings.ToUpper(request.QueryStringParameters["type"])
+	if analysisType == "" {
+		return "", errors.New("'type' is a required parameter")
 	}
 
-	return ruleType
+	return analysisType, nil
 }
 
 func buildEnabledScan(ruleType string) (*dynamodb.ScanInput, error) {
@@ -79,6 +84,7 @@ func buildEnabledScan(ruleType string) (*dynamodb.ScanInput, error) {
 		expression.Name("severity"),
 		expression.Name("suppressions"),
 		expression.Name("versionId"),
+		expression.Name("dedupPeriodMinutes"),
 	)
 
 	expr, err := expression.NewBuilder().

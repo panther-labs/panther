@@ -25,10 +25,34 @@ MonitoringParameterValues:
 # CloudFormation parameter overrides for the core/buckets.yml prerequisite stack.
 BucketsParameterValues:
   # Use an existing S3 bucket for storing access logs. If not specified, one is created for you.
-  AccessLogsBucketName: ''
+  S3AccessLogsBucket: ''
+
+# CloudFormation parameters for controlling how Panther monitors this account (itself)
+OnboardingParameterValues:
+  # Whether or not the Panther deployment should automatically onboard itself as a data source.
+  OnboardSelf: true
+  # Whether or not to create a CloudTrail in the Panther account and monitor.
+  # You may want this off if you have org-level CT configured for Panther to avoid ingesting the same data twice.
+  EnableCloudTrail: true
+  # Whether or not to enable GuardDuty in the Panther account and monitor.
+  # You may want this off if you have org-level GD configured for Panther.
+  EnableGuardDuty: true
 
 # CloudFormation parameter overrides for the backend.yml which deploys the backend stack.
 BackendParameterValues:
+  # Log processor lambda size
+  #
+  # Lambda functions scale memory and CPU together.
+  # Those with the smallest memory are slower and cheaper.
+  # Those with the larger memory are faster and more expensive.
+  # If cost is more of a concern compared to performance, choose
+  # a small memory size, however, for extremely large log volumes
+  # the larger sizes may be required for adequate performance or large files.
+  # Lambda size can be allocated from 128MB to 3008MB, in 64MB increments.
+  # For the log processor lambda we set a minimum size of 256.
+  #
+  LogProcessorLambdaMemorySize: 1024
+
   # Retention period for all Panther CloudWatch log groups.
   CloudWatchLogRetentionDays: 365
 
@@ -51,6 +75,11 @@ BackendParameterValues:
   # WARNING: SELF SIGNED CERTIFICATES ARE NOT SAFE TO USE IN PRODUCTION, PLEASE
   # PROVIDE A CERTIFICATE FOR PRODUCTION USE
   WebApplicationCertificateArn: ''
+
+  # Domain that you own and have configured to alias to the default load balancer URL
+  #
+  # If not specified, the default load balancer URL is used in all places.
+  CustomDomain: ''
 
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''

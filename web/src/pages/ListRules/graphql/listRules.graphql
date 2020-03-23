@@ -1,0 +1,18 @@
+query ListRules($input: ListRulesInput) {
+  rules(input: $input) {
+    rules {
+      lastModified
+      logTypes
+      severity
+      id
+      displayName
+      enabled
+      dedupPeriodMinutes
+    }
+    paging {
+      totalPages
+      thisPage
+      totalItems
+    }
+  }
+}

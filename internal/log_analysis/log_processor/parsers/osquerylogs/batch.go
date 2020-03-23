@@ -22,6 +22,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -31,13 +32,13 @@ Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/`
 // nolint:lll
 type Batch struct { // FIXME: field descriptions need updating!
 	CalendarTime *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
-	Counter      *int                   `json:"counter,omitempty,string"  validate:"required" description:"Counter"`
+	Counter      *numerics.Integer      `json:"counter,omitempty"  validate:"required" description:"Counter"`
 	Decorations  map[string]string      `json:"decorations,omitempty" description:"Decorations"`
 	DiffResults  *BatchDiffResults      `json:"diffResults,omitempty" validate:"required" description:"Computed differences."`
-	Epoch        *int                   `json:"epoch,omitempty,string"  validate:"required" description:"Epoch"`
+	Epoch        *numerics.Integer      `json:"epoch,omitempty"  validate:"required" description:"Epoch"`
 	Hostname     *string                `json:"hostname,omitempty"  validate:"required" description:"Hostname"`
 	Name         *string                `json:"name,omitempty"  validate:"required" description:"Name"`
-	UnixTime     *int                   `json:"unixTime,omitempty,string"  validate:"required" description:"Unix epoch"`
+	UnixTime     *numerics.Integer      `json:"unixTime,omitempty"  validate:"required" description:"Unix epoch"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
@@ -57,7 +58,7 @@ func (p *BatchParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *BatchParser) Parse(log string) []interface{} {
+func (p *BatchParser) Parse(log string) []*parsers.PantherLog {
 	event := &Batch{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -69,7 +70,8 @@ func (p *BatchParser) Parse(log string) []interface{} {
 	if err := parsers.Validator.Struct(event); err != nil {
 		return nil
 	}
-	return []interface{}{event}
+
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -78,6 +80,6 @@ func (p *BatchParser) LogType() string {
 }
 
 func (event *Batch) updatePantherFields(p *BatchParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime))
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.Hostname)
 }

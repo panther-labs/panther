@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,7 +36,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fatih/color"
 	"github.com/magefile/mage/sh"
-	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
@@ -45,6 +45,7 @@ import (
 	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -58,6 +59,8 @@ const (
 	layerSourceDir   = "out/pip/analysis/python"
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
+
+	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
@@ -85,9 +88,10 @@ var supportedRegions = map[string]bool{
 // Deploy Deploy application infrastructure
 func Deploy() {
 	start := time.Now()
-	var config PantherConfig
-	if err := yaml.Unmarshal(readFile(configFile), &config); err != nil {
-		logger.Fatalf("failed to parse config file %s: %v", configFile, err)
+
+	settings, err := config.Settings()
+	if err != nil {
+		logger.Fatalf("failed to read config file %s: %v", config.Filepath, err)
 	}
 
 	awsSession, err := getSession()
@@ -96,31 +100,49 @@ func Deploy() {
 	}
 
 	deployPrecheck(aws.StringValue(awsSession.Config.Region))
-	Build.Lambda(Build{})
-	preprocessTemplates()
+	Build.All(Build{})
 
-	// Deploy prerequisite bucket stack
+	logger.Infof("deploy: deploying Panther to %s", *awsSession.Config.Region)
+
+	// Deploy prerequisite sourceBucket stack
 	bucketParams := map[string]string{
-		"AccessLogsBucketName": config.BucketsParameterValues.AccessLogsBucketName,
+		"S3AccessLogsBucket": settings.BucketsParameterValues.S3AccessLogsBucket, // optional user override
 	}
 	bucketOutputs := deployTemplate(awsSession, bucketTemplate, "", bucketStack, bucketParams)
-	bucket := bucketOutputs["SourceBucketName"]
+	sourceBucket := bucketOutputs["SourceBucketName"]
 
 	// Deploy main application stack
-	params := getBackendDeployParams(awsSession, &config, bucket)
-	backendOutputs := deployTemplate(awsSession, backendTemplate, bucket, backendStack, params)
-	if err := postDeploySetup(awsSession, backendOutputs, &config); err != nil {
+	params := getBackendDeployParams(awsSession, settings, bucketOutputs)
+	backendOutputs := deployTemplate(awsSession, backendTemplate, sourceBucket, backendStack, params)
+	if err := postDeploySetup(awsSession, backendOutputs, settings); err != nil {
 		logger.Fatal(err)
 	}
 
+	// the below can all be done in parallel to speed deployment
+	var wg sync.WaitGroup
+	runDeploy := func(deployFunc func()) {
+		wg.Add(1)
+		go func() {
+			deployFunc()
+			wg.Done()
+		}()
+	}
+
 	// Creates Glue/Athena related resources
-	deployDatabases(awsSession, bucket, backendOutputs)
+	runDeploy(func() { deployDatabases(awsSession, sourceBucket, backendOutputs) })
 
 	// Deploy frontend stack
-	deployFrontend(awsSession, bucket, backendOutputs, &config)
+	runDeploy(func() { deployFrontend(awsSession, sourceBucket, backendOutputs, settings) })
 
-	// Deploy monitoring (must be last due to possible references to frontend/backend resources)
-	deployMonitoring(awsSession, bucket, backendOutputs, &config)
+	// Deploy monitoring
+	runDeploy(func() { deployMonitoring(awsSession, sourceBucket, backendOutputs, settings) })
+
+	// Onboard Panther account to Panther
+	if settings.OnboardParameterValues.OnboardSelf {
+		runDeploy(func() { deployOnboard(awsSession, settings, bucketOutputs, backendOutputs) })
+	}
+
+	wg.Wait()
 
 	// Done!
 	logger.Infof("deploy: finished successfully in %s", time.Since(start))
@@ -129,6 +151,11 @@ func Deploy() {
 
 // Fail the deploy early if there is a known issue with the user's environment.
 func deployPrecheck(awsRegion string) {
+	// Ensure the AWS region is supported
+	if !supportedRegions[awsRegion] {
+		logger.Fatalf("panther is not supported in %s region", awsRegion)
+	}
+
 	// Check the Go version (1.12 fails with a build error)
 	if version := runtime.Version(); version <= "go1.12" {
 		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
@@ -139,9 +166,19 @@ func deployPrecheck(awsRegion string) {
 		logger.Fatalf("docker is not available: %v", err)
 	}
 
-	// Ensure the AWS region is supported
-	if !supportedRegions[awsRegion] {
-		logger.Fatalf("panther is not supported in %s region", awsRegion)
+	// Ensure swagger is available
+	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
+		logger.Fatalf("swagger is not available (%v): try 'mage setup:swagger'", err)
+	}
+
+	// Warn if not deploying a tagged release
+	output, err := sh.Output("git", "describe", "--tags")
+	if err != nil {
+		logger.Fatalf("git describe failed: %v", err)
+	}
+	// The output is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
+	if strings.Contains(output, "-") {
+		logger.Warnf("%s is not a tagged release, proceed at your own risk", output)
 	}
 }
 
@@ -149,30 +186,40 @@ func deployPrecheck(awsRegion string) {
 //
 // This will create a Python layer, pass down the name of the log database,
 // pass down user supplied alarm SNS topic and a self-signed cert if necessary.
-func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) map[string]string {
-	v := config.BackendParameterValues
+func getBackendDeployParams(
+	awsSession *session.Session, settings *config.PantherConfig, bucketOutputs map[string]string) map[string]string {
+
+	s3AccessLogsBucket := settings.BucketsParameterValues.S3AccessLogsBucket
+	if s3AccessLogsBucket == "" {
+		s3AccessLogsBucket = bucketOutputs["AuditLogsBucket"]
+	}
+
+	v := settings.BackendParameterValues
 	result := map[string]string{
+		"AuditLogsBucket":              bucketOutputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
+		"CustomDomain":                 v.CustomDomain,
 		"Debug":                        strconv.FormatBool(v.Debug),
 		"LayerVersionArns":             v.LayerVersionArns,
+		"LogProcessorLambdaMemorySize": strconv.Itoa(v.LogProcessorLambdaMemorySize),
 		"PythonLayerVersionArn":        v.PythonLayerVersionArn,
-		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
+		"S3AccessLogsBucket":           s3AccessLogsBucket,
+		"S3BucketSource":               bucketOutputs["SourceBucketName"],
 		"TracingMode":                  v.TracingMode,
+		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
 	}
 
 	// If no custom Python layer is defined, then we need to build the default one.
 	if result["PythonLayerVersionArn"] == "" {
 		result["PythonLayerKey"] = layerS3ObjectKey
-		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, config.PipLayer, bucket, layerS3ObjectKey)
+		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, settings.PipLayer,
+			bucketOutputs["SourceBucketName"], layerS3ObjectKey)
 	}
 
 	// If no pre-existing cert is provided, then create one if necessary.
 	if result["WebApplicationCertificateArn"] == "" {
 		result["WebApplicationCertificateArn"] = uploadLocalCertificate(awsSession)
 	}
-
-	// set alarm sns topic if configured
-	result["AlarmSNSTopicArn"] = config.MonitoringParameterValues.AlarmSNSTopicARN
 
 	result["PantherLogProcessingDatabase"] = awsglue.LogProcessingDatabaseName
 
@@ -224,7 +271,7 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 }
 
 // After the main stack is deployed, we need to make several manual API calls
-func postDeploySetup(awsSession *session.Session, backendOutputs map[string]string, config *PantherConfig) error {
+func postDeploySetup(awsSession *session.Session, backendOutputs map[string]string, settings *config.PantherConfig) error {
 	// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
 	userPoolID := backendOutputs["WebApplicationUserPoolId"]
 	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
@@ -243,7 +290,7 @@ func postDeploySetup(awsSession *session.Session, backendOutputs map[string]stri
 		return err
 	}
 
-	return initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], config)
+	return initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], settings)
 }
 
 // If the users list is empty (e.g. on the initial deploy), create the first user.
@@ -292,7 +339,7 @@ func inviteFirstUser(awsSession *session.Session) error {
 }
 
 // Install Python rules/policies if they don't already exist.
-func initializeAnalysisSets(awsSession *session.Session, endpoint string, config *PantherConfig) error {
+func initializeAnalysisSets(awsSession *session.Session, endpoint string, settings *config.PantherConfig) error {
 	httpClient := gatewayapi.GatewayClient(awsSession)
 	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
 		WithBasePath("/v1").WithHost(endpoint))
@@ -319,7 +366,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, config
 	}
 
 	var newRules, newPolicies int64
-	for _, path := range config.InitialAnalysisSets {
+	for _, path := range settings.InitialAnalysisSets {
 		logger.Info("deploy: uploading initial analysis pack " + path)
 		var contents []byte
 		if strings.HasPrefix(path, "file://") {
@@ -336,7 +383,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, config
 		response, err := apiClient.Operations.BulkUpload(&operations.BulkUploadParams{
 			Body: &analysismodels.BulkUpload{
 				Data:   analysismodels.Base64zipfile(encoded),
-				UserID: "00000000-0000-0000-0000-000000000000",
+				UserID: mageUserID,
 			},
 			HTTPClient: httpClient,
 		})

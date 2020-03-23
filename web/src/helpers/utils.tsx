@@ -21,12 +21,9 @@ import * as React from 'react';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
-  ComplianceItem,
+  ComplianceIntegration,
   ComplianceStatusCounts,
-  Integration,
   OrganizationReportBySeverity,
-  ResourceDetails,
-  ResourceSummary,
   ScannedResources,
 } from 'Generated/schema';
 import {
@@ -40,6 +37,7 @@ import sum from 'lodash-es/sum';
 import { Box, ColumnProps, Label } from 'pouncejs';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
+import { int } from 'aws-sdk/clients/datapipeline';
 
 // Generate a new secret code that contains metadata of issuer and user email
 export const formatSecretCode = (code: string, email: string): string => {
@@ -104,6 +102,10 @@ export const formatDatetime = (datetime: string) => {
   );
 };
 
+/** Converts minutes integer to representative string i.e. 15 -> 15min,  120 -> 2h */
+export const minutesToString = (minutes: int) =>
+  minutes < 60 ? `${minutes}min` : `${minutes / 60}h`;
+
 /** Converts any value of the object that is an array to a comma-separated string */
 export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
   mapValues(obj, v => (Array.isArray(v) ? v.join(',') : v));
@@ -120,28 +122,14 @@ export const formatJSON = (code: { [key: string]: number | string }) =>
 /**
  * Extends the resource by adding an `integrationLabel` field. We define two overloads for this
  * function
- * @param resource A resource
+ * @param resource A resource that can be of type ResourceDetails, ResourceSummary or ComplianceItem
  * @param integrations A list of integrations with at least (integrationId & integrationType)
  */
 
-function extendResourceWithIntLabel(
-  resource: ResourceSummary,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
-): ResourceSummary & Pick<Integration, 'integrationLabel'>;
-
-function extendResourceWithIntLabel(
-  resource: ResourceDetails,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
-): ResourceDetails & Pick<Integration, 'integrationLabel'>;
-
-function extendResourceWithIntLabel(
-  resource: ComplianceItem,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
-): ComplianceItem & Pick<Integration, 'integrationLabel'>;
-
-function extendResourceWithIntLabel(
-  resource: any,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
+export function extendResourceWithIntegrationLabel<T extends { integrationId?: string }>(
+  resource: T,
+  integrations: (Partial<ComplianceIntegration> &
+    Pick<ComplianceIntegration, 'integrationId' | 'integrationLabel'>)[]
 ) {
   const matchingIntegration = integrations.find(i => i.integrationId === resource.integrationId);
   return {
@@ -149,8 +137,6 @@ function extendResourceWithIntLabel(
     integrationLabel: matchingIntegration?.integrationLabel || 'Cannot find account',
   };
 }
-
-export const extendResourceWithIntegrationLabel = extendResourceWithIntLabel;
 
 /**
  * sums up the total number of items based on the active/suppresed count breakdown that the API
@@ -255,3 +241,5 @@ export const copyTextToClipboard = (text: string) => {
 };
 
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
+
+export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();

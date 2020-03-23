@@ -40,12 +40,16 @@ import (
 	compliancemodels "github.com/panther-labs/panther/api/gateway/compliance/models"
 	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
 	alertmodels "github.com/panther-labs/panther/internal/compliance/alert_processor/models"
+	"github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
-const defaultDelaySeconds = 30
+const (
+	defaultDelaySeconds = 30
+	globalPolicy        = "aws_globals"
+)
 
 // Map policy/resource ID to the instance of the object
 type policyMap map[string]*analysismodels.EnabledPolicy
@@ -69,7 +73,7 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 	var results batchResults
 
 	for _, record := range batch.Records {
-		resource, policy := parseQueueMsg(record.Body)
+		resource, policy, lookup := parseQueueMsg(record.Body)
 
 		if policy != nil {
 			// Policy updated - analyze applicable resources now
@@ -79,6 +83,15 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 		} else if resource != nil {
 			// Resource updated - analyze with applicable policies (after grouping + deduping)
 			resources[string(resource.ID)] = resource
+		} else if lookup != nil {
+			resource, err = getResource(*lookup)
+			if err != nil {
+				zap.L().Error("failed to get resource", zap.String("resourceId", *lookup), zap.Error(err))
+				continue
+			}
+			resources[string(resource.ID)] = resource
+		} else {
+			zap.L().Error("failed to parse msg as resource, policy, or resource lookup", zap.String("body", record.Body))
 		}
 	}
 
@@ -90,26 +103,38 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 	return err
 }
 
-func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Policy) {
-	// There are 2 kinds of possible messages:
+func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Policy, *string) {
+	// There are 3 kinds of possible messages:
 	//    a) An updated resource which needs to be evaluated with all applicable policies
-	//    b) An updated policy which needs to be evaluated against applicable resources
+	//    b) Same as a, but the resource was too big to be delivered via SQS and must first be fetched from dynamo
+	//    c) An updated policy which needs to be evaluated against applicable resources
 	var resource resourcemodels.Resource
 	err := jsoniter.UnmarshalFromString(body, &resource)
 	if err == nil && resource.Attributes != nil && resource.Type != "" {
 		zap.L().Info("found new/updated resource",
 			zap.String("resourceId", string(resource.ID)))
-		return &resource, nil
+		return &resource, nil, nil
 	}
 
-	// Not a resource - it must be a policy
+	// Not a resource - could be a policy
 	var policy analysismodels.Policy
-	if err := jsoniter.UnmarshalFromString(body, &policy); err != nil || policy.Body == "" {
-		zap.L().Error("failed to parse msg as resource or as policy", zap.String("body", body))
-		return nil, nil
+	err = jsoniter.UnmarshalFromString(body, &policy)
+	if err == nil && policy.Body != "" {
+		zap.L().Debug("found new/updated policy",
+			zap.String("policyId", string(policy.ID)))
+		return nil, &policy, nil
 	}
 
-	return nil, &policy
+	// Rarest case, not a resource or policy: must be a resource lookup
+	var resourceLookup models.ResourceLookup
+	err = jsoniter.UnmarshalFromString(body, &resourceLookup)
+	if err == nil && resourceLookup.ID != "" {
+		zap.L().Debug("found resource lookup",
+			zap.String("resourceId", resourceLookup.ID))
+		return nil, nil, &resourceLookup.ID
+	}
+
+	return nil, nil, nil
 }
 
 // Analyze all resources related to a single policy (may require several policy-engine invocations).
@@ -124,6 +149,15 @@ func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error
 			Suppressions:  policy.Suppressions,
 			VersionID:     policy.VersionID,
 		},
+	}
+
+	// lookup the global file in case this policy needs it
+	globalFile, err := getGlobalPolicy()
+	if err != nil {
+		return err
+	}
+	if globalFile != nil {
+		policies[globalPolicy] = globalFile
 	}
 
 	// Analyze each page of resources
@@ -146,8 +180,13 @@ func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error
 
 // Analyze each org in turn and report status entries and alert notifications across the entire batch
 //
-// Policies can either be provided by the caller or else they will be fetched from policy-api.
+// Policies can either be provided by the caller or else they will be fetched from analysis-api.
 func (r *batchResults) analyze(resources resourceMap, policies policyMap) error {
+	// If there are no resources to analyze, exit before looking up policies
+	if len(resources) == 0 {
+		return nil
+	}
+
 	// Fetch policies and evaluate them against the resources
 	var err error
 	if policies == nil {
@@ -372,7 +411,7 @@ func (r *batchResults) deliver() error {
 		zap.String("alertQueue", env.AlertQueueURL),
 		zap.Int("notificationCount", len(r.Alerts)))
 	batchInput := &sqs.SendMessageBatchInput{Entries: r.Alerts, QueueUrl: &env.AlertQueueURL}
-	if err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, batchInput); err != nil {
+	if _, err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, batchInput); err != nil {
 		zap.L().Error("failed to send alert notifications", zap.Error(err))
 		return err
 	}

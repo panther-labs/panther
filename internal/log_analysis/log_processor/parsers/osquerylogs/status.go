@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -35,12 +36,12 @@ type Status struct { // FIXME: field descriptions need updating!
 	Decorations       map[string]string      `json:"decorations,omitempty" description:"Decorations"`
 	Filename          *string                `json:"filename,omitempty" validate:"required" description:"Filename"`
 	HostIdentifier    *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
-	Line              *int                   `json:"line,omitempty,string" validate:"required" description:"Line"`
-	LogType           *string                `json:"logType,omitempty" validate:"required,eq=status" description:"LogType"`
+	Line              *numerics.Integer      `json:"line,omitempty" validate:"required" description:"Line"`
+	LogType           *string                `json:"logType,omitempty"  description:"LogType"`
 	LogUnderscoreType *string                `json:"log_type,omitempty" description:"LogUnderScoreType"`
 	Message           *string                `json:"message,omitempty" description:"Message"`
-	Severity          *int                   `json:"severity,omitempty,string" validate:"required" description:"Severity"`
-	UnixTime          *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
+	Severity          *numerics.Integer      `json:"severity,omitempty" validate:"required" description:"Severity"`
+	UnixTime          *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
 	Version           *string                `json:"version,omitempty" validate:"required" description:"Version"`
 
 	// NOTE: added to end of struct to allow expansion later
@@ -55,7 +56,7 @@ func (p *StatusParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *StatusParser) Parse(log string) []interface{} {
+func (p *StatusParser) Parse(log string) []*parsers.PantherLog {
 	event := &Status{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -75,7 +76,7 @@ func (p *StatusParser) Parse(log string) []interface{} {
 		zap.L().Debug("failed to validate log", zap.Error(err))
 		return nil
 	}
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -84,6 +85,6 @@ func (p *StatusParser) LogType() string {
 }
 
 func (event *Status) updatePantherFields(p *StatusParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime))
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	goTargets = []string{"api", "internal", "pkg", "tools", "magefile.go"}
+	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
 	pyTargets = []string{
 		"internal/compliance/remediation_aws",
 		"internal/compliance/policy_engine",
@@ -47,23 +47,14 @@ func Fmt() {
 		logger.Fatalf("failed to format python: %v", err)
 	}
 
-	// prettier (cloudformation)
+	// prettier
 	logger.Info("fmt: prettier")
-	args = []string{"--write", "deployments/**.yml"}
+	args = []string{"--write", "**/*.{ts,js,tsx,md,json,yaml,yml}"}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
 	}
 	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format deployments/**.yml: %v", err)
-	}
-
-	// prettier (web)
-	args = []string{"--write", "{web/src/**,web/__generated__,.}/*.{ts,js,tsx,md,json,yml}"}
-	if !mg.Verbose() {
-		args = append(args, "--loglevel", "error")
-	}
-	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format {web/src/**,.}: %v", err)
+		logger.Fatalf("failed to format with prettier: %v", err)
 	}
 
 	// Generate documentation
@@ -75,7 +66,7 @@ func gofmt(root string, paths ...string) {
 	logger.Info("fmt: gofmt " + strings.Join(paths, " "))
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
-	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, goTargets...)...); err != nil {
+	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, paths...)...); err != nil {
 		logger.Fatalf("gofmt failed: %v", err)
 	}
 
@@ -87,7 +78,7 @@ func gofmt(root string, paths ...string) {
 	})
 
 	// 3) Goimports to group imports into 3 sections
-	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, goTargets...)
+	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, paths...)
 	if err := sh.Run("goimports", args...); err != nil {
 		logger.Fatalf("goimports failed: %v", err)
 	}

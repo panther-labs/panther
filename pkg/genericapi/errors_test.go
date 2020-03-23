@@ -26,32 +26,32 @@ import (
 
 func TestAlreadyExistsError(t *testing.T) {
 	err := &AlreadyExistsError{Route: "Do", Message: "name=panther"}
-	assert.Equal(t, "Do failed: already exists: name=panther", err.Error())
+	assert.Equal(t, "name=panther", err.Error())
 }
 
 func TestAWSError(t *testing.T) {
 	err := &AWSError{Route: "Do", Method: "dynamodb.PutItem", Err: errors.New("not authorized")}
-	assert.Equal(t, "Do failed: AWS dynamodb.PutItem error: not authorized", err.Error())
+	assert.Equal(t, "not authorized", err.Error())
 }
 
 func TestDoesNotExistError(t *testing.T) {
 	err := &DoesNotExistError{Route: "Do", Message: "name=panther"}
-	assert.Equal(t, "Do failed: does not exist: name=panther", err.Error())
+	assert.Equal(t, "name=panther", err.Error())
 }
 
 func TestInternalError(t *testing.T) {
 	err := &InternalError{Route: "Do", Message: "can't marshal to JSON"}
-	assert.Equal(t, "Do failed: internal error: can't marshal to JSON", err.Error())
+	assert.Equal(t, "can't marshal to JSON", err.Error())
 }
 
 func TestInUseError(t *testing.T) {
 	err := &InUseError{Route: "Do", Message: "name=panther"}
-	assert.Equal(t, "Do failed: still in use: name=panther", err.Error())
+	assert.Equal(t, "name=panther", err.Error())
 }
 
 func TestInvalidInputError(t *testing.T) {
 	err := &InvalidInputError{Route: "Do", Message: "you forgot something"}
-	assert.Equal(t, "Do failed: invalid input: you forgot something", err.Error())
+	assert.Equal(t, "you forgot something", err.Error())
 }
 
 func TestLambdaErrorEmpty(t *testing.T) {

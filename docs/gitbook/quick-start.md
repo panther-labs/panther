@@ -4,17 +4,95 @@ description: Get started with Panther in 20 minutes
 
 # Quick Start
 
-Panther is a collection of serverless applications deployed within your AWS account. The frontend is a React application which runs in a Docker container \(via ECS\), and the backend is a collection of compute \(Lambda\), storage \(DynamoDB / S3\), and other supporting services.
+## Prerequisites
 
-Your data is always under your control, encrypted in transit and at rest. All infrastructure is least-privilege, modeled and deployed with AWS CloudFormation.
+What you'll need:
+
+1. An AWS Account to deploy Panther into
+2. An IAM user or role with permissions to create and manage the necessary resources
+
+Use the code samples below to create the deployment roles:
+
+- [AWS CloudFormation Template](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml) and [S3 URL](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
+- [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf)
 
 {% hint style="info" %}
-You can optionally use Panther alongside an existing logging platform such as Splunk or ElasticSearch. We recommend an architecture that tees traffic between both with tools such as Logstash or Fluentd.
+We recommend deploying Panther into a dedicated AWS account via [AWS Organizations](https://aws.amazon.com/blogs/security/how-to-use-aws-organizations-to-automate-end-to-end-account-creation/). This ensures that detection infrastructure is contained within a single place.
 {% endhint %}
 
-## Concepts
+## Deployment
 
-Before we cover deployment, let's establish the terminology:
+Get started with 3 quick steps!
+
+#### Step 1
+
+Clone the latest release of [Panther](https://github.com/panther-labs/panther):
+
+```bash
+git clone https://github.com/panther-labs/panther --depth 1 --branch v0.3.0
+cd panther
+```
+
+[Install and run Docker 17+](https://docs.docker.com/install/), then verify the service is up:
+
+ ```bash
+ docker info
+ ```
+
+ The status bar will also display the Docker Icon (on macOS):
+
+![Docker Status](.gitbook/assets/docker-status.png)
+
+For customized deployment options, [click here](quick-start.md#deployment-options).
+
+#### Step 2
+
+Note: Your AWS credentials _must_ be exported as environment variables before running the next command.
+
+Start the development environment:
+
+```bash
+./dev.sh
+```
+
+#### Step 3
+
+Run the following command to deploy Panther:
+
+```bash
+mage setup:swagger deploy
+```
+
+- The initial deployment will take ~10 minutes with a fast internet connection. If your credentials timeout, you can safely redeploy to pick up where you left off.
+- At the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
+- You'll get an email from `no-reply@verificationemail.com` with your temporary password. If you don't see it, be sure to check your spam folder.
+- If you use `aws-vault`, you must be authenticated with MFA. Otherwise, IAM role creation will fail with `InvalidClientTokenId`
+
+#### First Login
+
+Now you can sign into Panther! The URL is sent in the welcome email and also printed in the terminal at the end of the deploy command.
+
+{% hint style="warning" %}
+By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page:
+
+![Self-Signed Certificate Warning](.gitbook/assets/self-signed-cert-warning.png)
+
+Your connection _is_ encrypted, and it's generally safe to continue if the domain matches the output of the deploy command. However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own ACM certificate in the `deployments/panther_config.yml` file.
+{% endhint %}
+
+## Onboarding
+
+Congratulations! You are now ready to use Panther. Follow the steps below to configure your analysis and alerting:
+
+1. Invite your team in Settings > Users > Invite User
+1. Configure [destinations](destinations/setup/) to receive generated alerts
+2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
+3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
+4. Onboard accounts for [cloud security scans](policies/scanning/)
+5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
+6. Query collected logs with [historical search](historical-search/historical-search)
+
+## Concepts
 
 - **Event**: A normalized log line from a sources such as CloudTrail, Osquery, or Suricata
 - **Rule**: A Python function to detect suspicious activity
@@ -22,16 +100,40 @@ Before we cover deployment, let's establish the terminology:
 - **Policy:** A Python function representing the desired secure state of a resource
 - **Alert**: A notification to the team when a policy has failed or a rule has triggered
 
-## Prerequisites
+## Support
 
-You need an AWS account and an IAM user or role with permission to create and manage the necessary AWS resources. We provide an IAM role you can use for Panther deployment:
+Having trouble? Reach out to us:
 
-- CloudFormation ([source](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml)): [https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
-- Terraform ([source](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf))
+- [Report Bugs on GitHub](https://github.com/panther-labs/panther/issues)
+- [Chat with us on Slack](https://panther-labs-oss-slackin.herokuapp.com/)
+- [Contact Sales for Enterprise Support](https://runpanther.io/request-a-demo/)
 
-_We recommend deploying Panther into its own AWS account via_ [_AWS Organizations_](https://aws.amazon.com/blogs/security/how-to-use-aws-organizations-to-automate-end-to-end-account-creation/)_. This ensures that detection infrastructure is contained within a single place._
+## Security
 
-### Supported AWS Regions
+Safety and data security is a very high priority for the Panther Labs team. If you have discovered a security vulnerability in our codebase, we would appreciate your help in disclosing it to us in a responsible manner.
+
+Security issues identified in any of the open-source codebases maintained by Panther Labs or any of our commercial offerings should be reported via email to [security@runpanther.io](mailto:security@runpanther.io). Panther Labs is committed to working together with researchers and keeping them updated throughout the patching process. Researchers who responsibly report valid security issues will be publicly credited for their efforts (if they so choose).
+
+The data passed through Panther is always under your control and encrypted both in transit and at rest. All supporting AWS infrastructure is least-privilege and deployed with AWS CloudFormation.
+
+### Privacy
+
+If you opt in to error reporting, the following information will be sent to the Panther team when there is a web application exception or crash:
+
+- The version of your Browser, OS & Panther installation
+  > This helps us understand how to replicate the issue.
+- The type of error, its related stack trace and the URL of the page in which it occurred.
+  > This helps us identify the code associated with the issue and gaining insight on the preceding function calls. **All sensitive parameters or variables are excluded**.
+
+The Panther team greatly benefits from understanding runtime issues that occur in installations and can enable us to resolve them quickly. You can always change your error reporting preferences through the **General Settings** page.
+
+## Deployment Options
+
+Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#dependencies) locally. This will take more time initially but will lead to faster deployments.
+
+You can also deploy from an EC2 instance with Docker and git installed in the same region you're deploying Panther to. This is typically the fastest option since it minimizes the latency when communicating with AWS services. Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](#prerequisites) to your EC2 instance profile. Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
+
+### Supported Regions
 
 Panther relies on dozens of AWS services, some of which are not yet available in every region. In particular, AppSync, Cognito, Athena, and Glue are newer services not available in us-gov, china, and other regions. At the time of writing, all Panther backend components are supported in the following:
 
@@ -50,7 +152,7 @@ Panther relies on dozens of AWS services, some of which are not yet available in
 
 Consult the [AWS region table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for the source of truth about service availability in each region.
 
-### Configure AWS Credentials
+### AWS Credentials
 
 Configure your AWS credentials and deployment region:
 
@@ -77,72 +179,3 @@ Remember to follow best security practices when handling access keys:
 
 Tools like [aws-vault](https://github.com/99designs/aws-vault) can help with all of the above, check out our [blog post](https://blog.runpanther.io/secure-multi-account-aws-access/) to learn more!
 {% endhint %}
-
-## Deployment
-
-Run Panther in 3 easy steps: clone the repo, install docker, and deploy!
-
-First, clone the latest release of the [Panther repo](https://github.com/panther-labs/panther):
-
-```bash
-git clone https://github.com/panther-labs/panther --depth 1 --branch v0.3.0
-cd panther
-```
-
-Next, [install Docker 17+](https://docs.docker.com/install/) and start the application. You can verify the docker daemon is running by typing `docker info` in the console or checking the status bar:
-
-![Docker Status](.gitbook/assets/docker-status.png)
-
-From the repo root, start the development environment: `./dev.sh`
-
-{% hint style="info" %}
-Your AWS credentials _must_ be exported as environment variables for the docker image running locally on your machine to find them. This also makes it easy to use temporary credential managers like [aws-vault](https://github.com/99designs/aws-vault):
-
-`aws-vault exec <profile> -- ./dev.sh`
-{% endhint %}
-
-You're all set! Run `mage deploy`
-
-- If you've made any changes to the source files or want to run tests, you may need to first install development dependencies with `mage setup:all`
-- If you use `aws-vault`, you must be authenticated with MFA. Otherwise, IAM role creation will fail with `InvalidClientTokenId`
-- The initial deployment will take 20-30 minutes. If your credentials timeout, you can safely redeploy to pick up where you left off.
-- Near the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
-- You'll get an email from [**no-reply@verificationemail.com**](mailto:no-reply@verificationemail.com) with your temporary password. If you don't see it, be sure to check your spam folder.
-
-Now you can sign into Panther! The URL is linked in the welcome email and also printed at the end of the deploy command.
-
-{% hint style="warning" %}
-By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page:
-
-![Self-Signed Certificate Warning](.gitbook/assets/self-signed-cert-warning.png)
-
-Your connection _is_ encrypted, and it's generally safe to continue if the domain matches the output of the deploy command. However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own ACM certificate in the `deployments/panther_config.yml` file.
-{% endhint %}
-
-### Other Deployment Options
-
-Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#manual-installation) locally. This will take more time initially but will lead to faster deployments.
-
-Or, you can deploy from an EC2 instance with Docker and git installed (in the same region you're deploying Panther to). This is typically the fastest option since it minimizes the latency when communicating with AWS services. Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](#prerequisites) to your EC2 instance profile. Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
-
-## Onboarding
-
-Now you can follow the steps below to configure [alert outputs](destinations/alert-setup/), [cloud security scans](policies/scanning/), and [real-time log analysis](log-analysis/log-processing/)!
-
-#### Log Analysis
-
-- [Log Analysis Setup](log-analysis/log-processing/)
-- [Create Rules for supported Log Types](log-analysis/rules/)
-
-#### Cloud Security
-
-- [Background](policies/compliance-background.md)
-- [Cloud Security Scanning Setup](policies/scanning/)
-- [Create Policies](policies/compliance-background.md) for the supported [AWS Resources](policies/resources/)
-
-## **Support**
-
-- [Report Bugs](https://github.com/panther-labs/panther/issues)
-- [Chat with the Panther Labs team on Gitter](https://gitter.im/runpanther/community)
-- [Panther Blog](https://blog.runpanther.io/)
-- [Panther Website](https://runpanther.io/)

@@ -21,7 +21,7 @@ package dashboards
 // nolint:lll
 var overviewJSON = `
 {
-    "start": "-P1D",
+    "start": "-PT1H",
     "widgets": [
         {
             "type": "log",
@@ -125,7 +125,7 @@ var overviewJSON = `
             "width": 12,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-source-api' | SOURCE '/aws/lambda/panther-snapshot-pollers' | SOURCE '/aws/lambda/panther-snapshot-scheduler' | SOURCE '/aws/lambda/panther-aws-event-processor' | SOURCE '/aws/lambda/panther-resources-api' | SOURCE '/aws/lambda/panther-resource-processor' | SOURCE '/aws/lambda/panther-policy-engine' | filter  @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc",
+                "query": "SOURCE '/aws/lambda/panther-source-api' | SOURCE '/aws/lambda/panther-snapshot-pollers' | SOURCE '/aws/lambda/panther-snapshot-scheduler' | SOURCE '/aws/lambda/panther-aws-event-processor' | SOURCE '/aws/lambda/panther-resources-api' | SOURCE '/aws/lambda/panther-resource-processor' | SOURCE '/aws/lambda/panther-policy-engine' | filter  @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-east-1",
                 "title": "Infrastructure Monitoring Recent 20 Errors and Warnings",
                 "view": "table"
@@ -162,7 +162,7 @@ var overviewJSON = `
             "width": 12,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | filter level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc",
+                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | filter level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-east-1",
                 "title": "Alert Processing Recent 20 Errors and Warnings",
                 "view": "table"
@@ -189,7 +189,7 @@ var overviewJSON = `
             "width": 12,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-remediation-processor' | SOURCE '/aws/lambda/panther-remediation-api' | SOURCE '/aws/lambda/panther-aws-remediation' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc",
+                "query": "SOURCE '/aws/lambda/panther-remediation-processor' | SOURCE '/aws/lambda/panther-remediation-api' | SOURCE '/aws/lambda/panther-aws-remediation' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-east-1",
                 "title": "Remediation Recent 20 Errors and Warnings",
                 "view": "table"
