@@ -36,7 +36,6 @@ export type ListAlerts = {
           Pick<
             Types.AlertSummary,
             | 'alertId'
-            | 'title'
             | 'creationTime'
             | 'eventsMatched'
             | 'updateTime'
@@ -55,7 +54,6 @@ export const ListAlertsDocument = gql`
     alerts(input: $input) {
       alertSummaries {
         alertId
-        title
         creationTime
         eventsMatched
         updateTime

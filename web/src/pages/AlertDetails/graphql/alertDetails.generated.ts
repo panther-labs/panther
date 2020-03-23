@@ -34,7 +34,6 @@ export type AlertDetails = {
       Types.AlertDetails,
       | 'alertId'
       | 'ruleId'
-      | 'title'
       | 'severity'
       | 'creationTime'
       | 'eventsMatched'
@@ -51,7 +50,6 @@ export const AlertDetailsDocument = gql`
     alert(input: $input) {
       alertId
       ruleId
-      title
       severity
       creationTime
       eventsMatched
