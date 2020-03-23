@@ -1,6 +1,6 @@
 <p align="center">
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github.jpg" alt="Panther Logo"/></a>
 </p>
@@ -151,6 +151,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/drixta"><img src="https://avatars1.githubusercontent.com/u/2681321?v=4" width="100px;" alt=""/><br /><sub><b>Quan Pham</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=drixta" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/alexmylonas"><img src="https://avatars3.githubusercontent.com/u/14179917?v=4" width="100px;" alt=""/><br /><sub><b>Alex Mylonas</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=alexmylonas" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Aalexmylonas" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/rleighton"><img src="https://avatars3.githubusercontent.com/u/18419762?v=4" width="100px;" alt=""/><br /><sub><b>Russell Leighton</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=rleighton" title="Code">💻</a> <a href="#security-rleighton" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Arleighton" title="Bug reports">🐛</a> <a href="#infra-rleighton" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/sugandhalahoti"><img src="https://avatars1.githubusercontent.com/u/60883353?v=4" width="100px;" alt=""/><br /><sub><b>Sugandha</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=sugandhalahoti" title="Documentation">📖</a></td>
   </tr>
 </table>
 
