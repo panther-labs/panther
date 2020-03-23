@@ -104,7 +104,6 @@ func TestBuildLambdaFunctionSnapshotErrors(t *testing.T) {
 func TestLambdaFunctionPoller(t *testing.T) {
 	awstest.MockLambdaForSetup = awstest.BuildMockLambdaSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	LambdaClientFunc = awstest.SetupMockLambda
 
 	resources, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
@@ -122,7 +121,6 @@ func TestLambdaFunctionPoller(t *testing.T) {
 func TestLambdaFunctionPollerError(t *testing.T) {
 	awstest.MockLambdaForSetup = awstest.BuildMockLambdaSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	LambdaClientFunc = awstest.SetupMockLambda
 
 	resources, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{

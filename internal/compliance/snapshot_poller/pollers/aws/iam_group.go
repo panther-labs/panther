@@ -25,7 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 	"go.uber.org/zap"
@@ -41,23 +40,27 @@ func PollIAMGroup(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "iam", defaultRegion).(iamiface.IAMAPI)
-	// See PollIAMRole for an explanation of this behavior
-	resourceSplit := strings.Split(resourceARN.Resource, "/")
-	group := getGroup(client, aws.String(resourceSplit[len(resourceSplit)-1]))
-	if group == nil {
-		return nil
+	iamClient, err := getIAMClient(pollerResourceInput, defaultRegion)
+	if err != nil {
+		return nil, err
 	}
 
-	snapshot := buildIamGroupSnapshot(client, group.Group)
+	// See PollIAMRole for an explanation of this behavior
+	resourceSplit := strings.Split(resourceARN.Resource, "/")
+	group := getGroup(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
+	if group == nil {
+		return nil, nil
+	}
+
+	snapshot := buildIamGroupSnapshot(iamClient, group.Group)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	scanRequest.ResourceID = snapshot.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // listGroups returns a list of all IAM groups in the account
@@ -191,13 +194,10 @@ func buildIamGroupSnapshot(iamSvc iamiface.IAMAPI, group *iam.Group) *awsmodels.
 // PollIamGroups gathers information on each IAM Group for an AWS account.
 func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
 	zap.L().Debug("starting IAM Group resource poller")
-	sess := session.Must(session.NewSession(&aws.Config{}))
-	creds, err := AssumeRoleFunc(pollerInput, sess)
+	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err
+		return nil, err // error is logged in getClient()
 	}
-
-	iamSvc := IAMClientFunc(sess, &aws.Config{Credentials: creds}).(iamiface.IAMAPI)
 
 	// Start with generating a list of all keys
 	groups := listGroups(iamSvc)

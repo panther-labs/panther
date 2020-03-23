@@ -30,7 +30,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 	"github.com/cenkalti/backoff"
@@ -60,21 +59,24 @@ func PollIAMUser(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "iam", defaultRegion).(iamiface.IAMAPI)
+	iamClient, err := getIAMClient(pollerResourceInput, defaultRegion)
+	if err != nil {
+		return nil, err
+	}
+
 	// See PollIAMRole for an explanation of this behavior
 	resourceSplit := strings.Split(resourceARN.Resource, "/")
-	user := getUser(client, aws.String(resourceSplit[len(resourceSplit)-1]))
+	user := getUser(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
 
 	// Refresh the caches as needed
-	var err error
-	mfaDeviceMapping, err = listVirtualMFADevices(client)
+	mfaDeviceMapping, err = listVirtualMFADevices(iamClient)
 	if err != nil {
 		utils.LogAWSError("IAM.ListVirtualMFADevices", err)
-		return nil
+		return nil, err
 	}
-	userCredentialReports, err = buildCredentialReport(client)
+	userCredentialReports, err = buildCredentialReport(iamClient)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
@@ -84,15 +86,15 @@ func PollIAMUser(
 					Entries: []*pollermodels.ScanEntry{scanRequest},
 				}, credentialReportRequeueDelaySeconds)
 			}
-			return nil
+			return nil, err
 		}
 		zap.L().Error("failed to build credential report", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	snapshot := buildIAMUserSnapshot(client, user)
+	snapshot := buildIAMUserSnapshot(iamClient, user)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 
 	// If the user does not have a credential report, then continue on with the snapshot but
@@ -109,7 +111,7 @@ func PollIAMUser(
 
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	scanRequest.ResourceID = snapshot.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // PollIAMUser polls a single IAM User resource
@@ -117,20 +119,23 @@ func PollIAMRootUser(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	_ arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "iam", defaultRegion).(iamiface.IAMAPI)
+	iamClient, err := getIAMClient(pollerResourceInput, defaultRegion)
+	if err != nil {
+		return nil, err
+	}
+
 	// Refresh the caches as needed
-	var err error
-	mfaDeviceMapping, err = listVirtualMFADevices(client)
+	mfaDeviceMapping, err = listVirtualMFADevices(iamClient)
 	if err != nil {
 		utils.LogAWSError("IAM.ListVirtualMFADevices", err)
-		return nil
+		return nil, err
 	}
-	userCredentialReports, err = buildCredentialReport(client)
+	userCredentialReports, err = buildCredentialReport(iamClient)
 	if err != nil {
 		zap.L().Error("failed to build credential report", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	snapshot := buildIAMRootUserSnapshot()
@@ -142,12 +147,12 @@ func PollIAMRootUser(
 				scanRequest,
 			},
 		}, utils.MaxRequeueDelaySeconds)
-		return nil
+		return nil, err
 	}
 
 	// Over ride this as it may be set incorrectly
 	scanRequest.ResourceID = snapshot.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getUser returns an individual IAM user
@@ -517,13 +522,10 @@ func buildIAMRootUserSnapshot() *awsmodels.IAMRootUser {
 // This function returns a slice of Events.
 func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
 	zap.L().Debug("starting IAM User resource poller")
-	sess := session.Must(session.NewSession(&aws.Config{}))
-	creds, err := AssumeRoleFunc(pollerInput, sess)
+	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err
+		return nil, err // error is logged in getClient()
 	}
-
-	iamSvc := IAMClientFunc(sess, &aws.Config{Credentials: creds}).(iamiface.IAMAPI)
 
 	// List all IAM Users in the account
 	users := listUsers(iamSvc)

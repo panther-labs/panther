@@ -86,7 +86,6 @@ func TestBuildConfigServiceSnapshotError(t *testing.T) {
 func TestPollConfigServices(t *testing.T) {
 	awstest.MockConfigServiceForSetup = awstest.BuildMockConfigServiceSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	ConfigServiceClientFunc = awstest.SetupMockConfigService
 
 	resources, err := PollConfigServices(&awsmodels.ResourcePollerInput{
@@ -112,7 +111,6 @@ func TestPollConfigServices(t *testing.T) {
 func TestPollConfigServicesError(t *testing.T) {
 	awstest.MockConfigServiceForSetup = awstest.BuildMockConfigServiceSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	ConfigServiceClientFunc = awstest.SetupMockConfigService
 
 	resources, err := PollConfigServices(&awsmodels.ResourcePollerInput{

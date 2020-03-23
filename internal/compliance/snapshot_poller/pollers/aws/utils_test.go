@@ -19,12 +19,19 @@ package aws
  */
 
 import (
-	"testing"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
 )
 
-// Unit tests
-func TestAssumeRoleMissingParams(t *testing.T) {
-	assert.Panics(t, func() { _ = assumeRole(nil, nil, "") })
+func init() {
+	// sets an empty session for tests
+	snapshotPollerSession = &session.Session{}
+
+	// mocks the assume role
+	assumeRoleFunc = awstest.AssumeRoleMock
+	verifyAssumedCredsFunc = func(creds *credentials.Credentials, region string) error {
+		return nil
+	}
 }

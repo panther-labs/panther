@@ -89,7 +89,6 @@ func TestBuildEc2VolumeSnapshot(t *testing.T) {
 func TestEc2VolumePoller(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Volumes(&awsmodels.ResourcePollerInput{
@@ -107,7 +106,6 @@ func TestEc2VolumePoller(t *testing.T) {
 func TestEc2VolumePollerError(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Volumes(&awsmodels.ResourcePollerInput{
