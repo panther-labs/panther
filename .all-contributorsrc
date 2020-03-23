@@ -30,6 +30,19 @@
         "bug",
         "infra"
       ]
+    },
+    {
+      "login": "nhakmiller",
+      "name": "Nick",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/49166439?v=4",
+      "profile": "https://github.com/nhakmiller",
+      "contributions": [
+        "code",
+        "doc",
+        "security",
+        "bug",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
