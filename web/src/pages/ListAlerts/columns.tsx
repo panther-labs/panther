@@ -49,7 +49,7 @@ const columns = [
     key: 'eventsMatched',
     sortable: true,
     header: 'Events Count',
-    flex: '0 0 120px',
+    flex: '1 0 50px',
   },
 
   // Render badges to showcase severity
