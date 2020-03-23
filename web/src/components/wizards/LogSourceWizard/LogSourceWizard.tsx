@@ -33,7 +33,10 @@ interface LogSourceWizardProps {
 }
 
 export interface LogSourceWizardValues {
+  // for updates
   integrationId?: string;
+  initialStackName?: string;
+  // common for creation + updates
   awsAccountId: string;
   integrationLabel: string;
   s3Bucket: string;

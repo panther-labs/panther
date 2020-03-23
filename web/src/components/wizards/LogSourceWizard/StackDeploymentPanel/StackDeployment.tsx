@@ -66,20 +66,6 @@ const StackDeployment: React.FC = () => {
     }
 
     const { stackName } = data.getLogIntegrationTemplate;
-    const downloadTemplateLink = (
-      <Text size="large" color="blue300" is="span">
-        <a
-          href="#"
-          title="Download Cloudformation template"
-          download={`${stackName}.yaml`}
-          ref={downloadRef}
-          onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-        >
-          Download template
-        </a>
-      </Text>
-    );
-
     if (!initialValues.integrationId) {
       const cfnConsoleLink =
         `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
@@ -112,7 +98,17 @@ const StackDeployment: React.FC = () => {
             Alternatively, you can download it and deploy it through the AWS CLI with the stack name{' '}
             <b>{stackName}</b>
           </Text>
-          {downloadTemplateLink}
+          <Text size="large" color="blue300" is="span">
+            <a
+              href="#"
+              title="Download Cloudformation template"
+              download={`${stackName}.yaml`}
+              ref={downloadRef}
+              onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+            >
+              Download template
+            </a>
+          </Text>
         </React.Fragment>
       );
     }
@@ -124,7 +120,17 @@ const StackDeployment: React.FC = () => {
             <Text size="large" color="grey200" mr={1}>
               1.
             </Text>
-            {downloadTemplateLink}
+            <Text size="large" color="blue300" is="span">
+              <a
+                href="#"
+                title="Download Cloudformation template"
+                download={`${initialValues.initialStackName}.yaml`}
+                ref={downloadRef}
+                onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+              >
+                Download template
+              </a>
+            </Text>
           </Flex>
           <Text size="large" is="li" color="grey200" mb={3}>
             2. Log into your
@@ -143,7 +149,7 @@ const StackDeployment: React.FC = () => {
             of the account <b>{values.awsAccountId}</b>
           </Text>
           <Text size="large" is="li" color="grey200" mb={3}>
-            3. Find the stack <b>{stackName}</b>
+            3. Find the stack <b>{initialValues.initialStackName}</b>
           </Text>
           <Text size="large" is="li" color="grey200" mb={3}>
             4. Press <b>Update</b>, choose <b>Replace current template</b>
