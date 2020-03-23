@@ -29,6 +29,16 @@ The benefits of Panther include:
 - Simple deployments using infrastructure as code
 - Secure, least-privilege, and encrypted infrastructure deployed within your AWS account
 
+## Concepts
+
+|         Term         | Meaning                                                                               |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+|  Event   | A normalized log line from a sources such as CloudTrail, Osquery, or Suricata   |
+|       Rule       | A Python function to detect suspicious activity         |
+|      Resource      | A cloud entity, such as an IAM user, virtual machine, or data bucket                    |
+| Policy | A Python function representing the desired secure state of a resource |
+| Alert   | A notification to the team when a policy has failed or a rule has triggered  |
+
 ## Get Started!
 
 To get set up with Panther, continue to the [Quick Start](quick-start.md) on the next page.

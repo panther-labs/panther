@@ -1,16 +1,29 @@
 # Table of contents
 
 * [Home](README.md)
+  * [Cost](cost.md)
+  * [Support](support.md)
+  * [Security and Privacy](security-privacy.md)
 * [Quick Start](quick-start.md)
+* [Destinations](destinations/setup/README.md)
+  * [Asana](destinations/setup/asana.md)
+  * [GitHub](destinations/setup/github.md)
+  * [Jira](destinations/setup/jira.md)
+  * [Microsoft Teams](destinations/setup/microsoft-teams.md)
+  * [OpsGenie](destinations/setup/opsgenie.md)
+  * [PagerDuty](destinations/setup/pagerduty.md)
+  * [Slack](destinations/setup/slack.md)
+  * [SNS](destinations/setup/sns.md)
+  * [SQS](destinations/setup/sqs.md)
 * [Development](development.md)
-  * [Parsers](writing-parsers.md)
-* [Cost](cost.md)
+  * [Parsers](log-analysis/writing-parsers.md)
+* [Operations](operations/ops-home.md)
+  * [Run-books](operations/runbooks.md)
 
 ## Log Analysis
 
-* [Setup](log-analysis/log-processing/README.md)
-  * [IAM Roles](log-analysis/log-processing/iam-setup.md)
-  * [Data Notifications](log-analysis/log-processing/notifications-setup.md)
+* [Overview](log-analysis/log-processing/README.md)
+  * [Setup](log-analysis/log-processing/setup.md)
 * [Supported Logs](log-analysis/supported-logs/README.md)
   * [AWS](log-analysis/supported-logs/aws.md)
   * [Osquery](log-analysis/supported-logs/osquery.md)
@@ -18,7 +31,7 @@
   * [OSSEC](log-analysis/supported-logs/ossec.md)
   * [Syslog](log-analysis/supported-logs/syslog.md)
 * [Rules](log-analysis/rules/README.md)
-  * [AWS CIS Runbooks](log-analysis/rules/aws-cis/README.md)
+  * [AWS CIS Runbooks]()
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)
     * [AWS Config Service Modified](log-analysis/rules/aws-cis/aws-config-service-modified.md)
     * [AWS Console Login Failed](log-analysis/rules/aws-cis/aws-console-login-failed.md)
@@ -191,21 +204,3 @@
     * [AWS Enable S3 Bucket Encryption](policies/automatic-remediation/aws/aws-enable-s3-bucket-encryption.md)
     * [AWS Enable S3 Bucket Access Logging](policies/automatic-remediation/aws/aws-enable-s3-bucket-access-logging.md)
     * [AWS Enable S3 Bucket Versioning](policies/automatic-remediation/aws/aws-enable-s3-bucket-versioning.md)
-
-## Destinations <a id="destinations"></a>
-
-* [Setup](destinations/setup/README.md)
-  * [Asana](destinations/setup/asana.md)
-  * [GitHub](destinations/setup/github.md)
-  * [Jira](destinations/setup/jira.md)
-  * [Microsoft Teams](destinations/setup/microsoft-teams.md)
-  * [OpsGenie](destinations/setup/opsgenie.md)
-  * [PagerDuty](destinations/setup/pagerduty.md)
-  * [Slack](destinations/setup/slack.md)
-  * [SNS](destinations/setup/sns.md)
-  * [SQS](destinations/setup/sqs.md)
-
-## Operations
-
-* [Background](operations/ops-home.md)
-* [Run-books](operations/runbooks.md)
