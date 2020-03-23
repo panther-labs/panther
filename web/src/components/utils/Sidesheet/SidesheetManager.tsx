@@ -20,7 +20,6 @@
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import UpdateAwsSourcesSidesheet from 'Components/sidesheets/UpdateSourceSidesheet';
 import PolicyBulkUploadSidesheet from 'Components/sidesheets/PolicyBulkUploadSidesheet';
 import SelectDestinationSidesheet from 'Components/sidesheets/SelectDestinationSidesheet';
 import AddDestinationSidesheet from 'Components/sidesheets/AddDestinationSidesheet';
@@ -45,9 +44,6 @@ const SidesheetManager: React.FC = () => {
       break;
     case SIDESHEETS.SELECT_DESTINATION:
       Component = SelectDestinationSidesheet;
-      break;
-    case SIDESHEETS.UPDATE_SOURCE:
-      Component = UpdateAwsSourcesSidesheet;
       break;
     case SIDESHEETS.POLICY_BULK_UPLOAD:
       Component = PolicyBulkUploadSidesheet;

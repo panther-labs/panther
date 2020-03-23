@@ -15,160 +15,58 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-/* eslint-disable react/display-name */
 import React from 'react';
-import { Card, Flex, Alert, Box } from 'pouncejs';
-import { INTEGRATION_TYPES, AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { Card } from 'pouncejs';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import useRouter from 'Hooks/useRouter';
-import { ListLogSourcesDocument } from 'Pages/ListLogSources';
-import SourceDetailsPanel from './SourceDetailsPanel';
-import CfnLaunchPanel from './CfnLaunchPanel';
-import SuccessPanel from './SuccessPanel';
+import LogSourceWizard from 'Components/wizards/LogSourceWizard';
 import { useAddLogSource } from './graphql/addLogSource.generated';
-
-export interface CreateLogSourceValues {
-  integrationLabel: string;
-  awsAccountId: string;
-  s3Buckets: string[];
-  kmsKeys: string[];
-}
 
 const initialValues = {
   integrationLabel: '',
   awsAccountId: '',
-  s3Buckets: [],
-  kmsKeys: [],
+  s3Bucket: '',
+  s3Prefix: '',
+  kmsKey: '',
+  logTypes: [],
 };
-
-const validationSchema = Yup.object().shape({
-  integrationLabel: Yup.string().required(),
-  awsAccountId: Yup.string()
-    .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
-    .required(),
-  s3Buckets: Yup.array()
-    .of(Yup.string())
-    .required(),
-  kmsKeys: Yup.array().of(Yup.string()),
-});
 
 const CreateLogSource: React.FC = () => {
   const { history } = useRouter();
-  const [addLogSource, { data, loading, error }] = useAddLogSource();
-
-  const submitSourceToServer = React.useCallback(
-    (values: CreateLogSourceValues) =>
-      addLogSource({
-        awaitRefetchQueries: true,
-        variables: {
-          input: {
-            integrations: [
-              {
-                ...values,
-                integrationType: INTEGRATION_TYPES.AWS_LOGS,
-              },
-            ],
-          },
+  const [addLogSource, { error }] = useAddLogSource({
+    update: (cache, { data: { addLogIntegration } }) => {
+      cache.modify('ROOT_QUERY', {
+        listLogIntegrations: (queryData, { toReference }) => {
+          const addedIntegrationCacheRef = toReference(addLogIntegration);
+          return queryData ? [addedIntegrationCacheRef, ...queryData] : queryData;
         },
-        refetchQueries: [{ query: ListLogSourcesDocument }],
-      }),
-    []
-  );
-
-  React.useEffect(() => {
-    if (data) {
-      history.push(urls.logAnalysis.sources.list());
-    }
+      });
+    },
+    onCompleted: () => history.push(urls.logAnalysis.sources.list()),
   });
 
   return (
-    <Box>
-      {error && (
-        <Alert
-          variant="error"
-          title="An error has occurred"
-          description={
-            extractErrorMessage(error) || "We couldn't store your source due to an internal error"
-          }
-          mb={6}
-        />
-      )}
-      <Card p={9}>
-        <Formik<CreateLogSourceValues>
-          initialValues={initialValues}
-          validationSchema={validationSchema}
-          onSubmit={submitSourceToServer}
-        >
-          {({ errors, dirty, isValid, handleSubmit }) => (
-            <form onSubmit={handleSubmit}>
-              <Flex justifyContent="center" alignItems="center" width={1}>
-                <Wizard<CreateLogSourceValues>
-                  autoCompleteLastStep
-                  steps={[
-                    {
-                      title: 'Setup your sources',
-                      icon: 'search' as const,
-                      renderStep: ({ goToNextStep }) => {
-                        const shouldEnableNextButton =
-                          dirty && !errors.integrationLabel && !errors.s3Buckets && !errors.kmsKeys;
-
-                        return (
-                          <WizardPanelWrapper>
-                            <WizardPanelWrapper.Content>
-                              <SourceDetailsPanel />
-                            </WizardPanelWrapper.Content>
-                            <WizardPanelWrapper.Actions
-                              goToNextStep={goToNextStep}
-                              isNextStepDisabled={!shouldEnableNextButton}
-                            />
-                          </WizardPanelWrapper>
-                        );
-                      },
-                    },
-                    {
-                      title: 'Setup IAM Roles',
-                      icon: 'upload',
-                      renderStep: ({ goToPrevStep, goToNextStep }) => {
-                        const shouldEnableNextButton = dirty && isValid;
-                        return (
-                          <WizardPanelWrapper>
-                            <WizardPanelWrapper.Content>
-                              <CfnLaunchPanel />
-                            </WizardPanelWrapper.Content>
-                            <WizardPanelWrapper.Actions
-                              goToPrevStep={goToPrevStep}
-                              goToNextStep={goToNextStep}
-                              isNextStepDisabled={!shouldEnableNextButton}
-                            />
-                          </WizardPanelWrapper>
-                        );
-                      },
-                    },
-                    {
-                      title: 'Done!',
-                      icon: 'check',
-                      renderStep: ({ goToPrevStep }) => (
-                        <WizardPanelWrapper>
-                          <WizardPanelWrapper.Content>
-                            <SuccessPanel loading={loading} />
-                          </WizardPanelWrapper.Content>
-                          <WizardPanelWrapper.Actions goToPrevStep={goToPrevStep} />
-                        </WizardPanelWrapper>
-                      ),
-                    },
-                  ]}
-                />
-              </Flex>
-            </form>
-          )}
-        </Formik>
-      </Card>
-    </Box>
+    <Card p={9} mb={6}>
+      <LogSourceWizard
+        initialValues={initialValues}
+        externalErrorMessage={error && extractErrorMessage(error)}
+        onSubmit={values =>
+          addLogSource({
+            variables: {
+              input: {
+                integrationLabel: values.integrationLabel,
+                awsAccountId: values.awsAccountId,
+                s3Bucket: values.s3Bucket,
+                logTypes: values.logTypes,
+                s3Prefix: values.s3Prefix || null,
+                kmsKey: values.kmsKey || null,
+              },
+            },
+          })
+        }
+      />
+    </Card>
   );
 };
 

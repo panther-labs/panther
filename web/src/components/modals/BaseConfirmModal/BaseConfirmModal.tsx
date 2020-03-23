@@ -25,7 +25,7 @@ import useModal from 'Hooks/useModal';
 export interface BaseConfirmModalProps {
   mutation: MutationTuple<any, { [key: string]: any }>;
   title: string;
-  subtitle: string;
+  subtitle: React.ReactNode;
   onSuccessMsg: string;
   onErrorMsg: string;
   onSuccess?: () => void;

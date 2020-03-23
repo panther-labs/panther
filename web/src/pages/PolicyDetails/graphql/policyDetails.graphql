@@ -47,7 +47,7 @@ query PolicyDetails(
             }
         }
     }
-    integrations(input: { integrationType: "aws-scan" }) {
+    listComplianceIntegrations {
         integrationId
         integrationLabel
     }

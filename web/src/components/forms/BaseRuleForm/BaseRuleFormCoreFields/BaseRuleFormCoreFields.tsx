@@ -21,7 +21,7 @@ import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import { InputElementLabel, Grid, Flex, Box, InputElementErrorLabel, Text } from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
-import { capitalize } from 'Helpers/utils';
+import { capitalize, minutesToString } from 'Helpers/utils';
 import FormikTextArea from 'Components/fields/TextArea';
 import FormikSwitch from 'Components/fields/Switch';
 import FormikCombobox from 'Components/fields/ComboBox';
@@ -53,6 +53,7 @@ type FormValues = Required<Pick<RuleFormValues, typeof ruleCoreEditableFields[nu
 
 const severityOptions = Object.values(SeverityEnum);
 const severityItemToString = severity => capitalize(severity.toLowerCase());
+const dedupPeriodMinutesOptions = [15, 30, 60, 180, 720, 1440];
 const suppressionInputProps = {
   placeholder: 'i.e. aws::s3::* (separate with <Enter>)',
 };
@@ -178,6 +179,13 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
             inputProps={logTypesInputProps}
           />
         )}
+        <Field
+          as={FormikCombobox}
+          label="* Deduplication Period"
+          name="dedupPeriodMinutes"
+          items={dedupPeriodMinutesOptions}
+          itemToString={minutesToString}
+        />
       </Grid>
       <Box my={6}>
         <InputElementLabel htmlFor="enabled">{`* ${capitalize(type)} Function`}</InputElementLabel>

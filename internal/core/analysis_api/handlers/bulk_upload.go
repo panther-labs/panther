@@ -192,7 +192,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 		}
 
 		// Map the Config struct fields over to the fields we need to store in Dynamo
-		policy := tableItem{
+		analysis := tableItem{
 			AutoRemediationID:         models.AutoRemediationID(config.AutoRemediationID),
 			AutoRemediationParameters: models.AutoRemediationParameters(config.AutoRemediationParameters),
 
@@ -213,13 +213,22 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Type:          strings.ToUpper(config.AnalysisType),
 		}
 
+		if analysis.Type == string(models.AnalysisTypeRULE) {
+			// If there is no value set, default to 60 minutes
+			if config.DedupPeriodMinutes == 0 {
+				analysis.DedupPeriodMinutes = defaultDedupPeriodMinutes
+			} else {
+				analysis.DedupPeriodMinutes = models.DedupPeriodMinutes(config.DedupPeriodMinutes)
+			}
+		}
+
 		for i, test := range config.Tests {
 			resource, err := jsoniter.MarshalToString(test.Resource)
 			if err != nil {
 				return nil, err
 			}
 
-			policy.Tests[i] = &models.UnitTest{
+			analysis.Tests[i] = &models.UnitTest{
 				ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
 				Name:           models.TestName(test.Name),
 				Resource:       models.TestResource(resource),
@@ -227,10 +236,10 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			}
 		}
 
-		if _, exists := result[policy.ID]; exists {
-			return nil, fmt.Errorf("multiple policy specs with ID %s", policy.ID)
+		if _, exists := result[analysis.ID]; exists {
+			return nil, fmt.Errorf("multiple analysis specs with ID %s", analysis.ID)
 		}
-		result[policy.ID] = &policy
+		result[analysis.ID] = &analysis
 	}
 
 	// Finish each policy by adding its body and then validate it

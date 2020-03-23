@@ -27,7 +27,7 @@ type AlreadyExistsError struct {
 }
 
 func (e *AlreadyExistsError) Error() string {
-	return e.Route + " failed: already exists: " + e.Message
+	return e.Message
 }
 
 // AWSError is raised if an AWS API call (e.g. to Dynamo/S3) failed.
@@ -38,7 +38,7 @@ type AWSError struct {
 }
 
 func (e *AWSError) Error() string {
-	return e.Route + " failed: AWS " + e.Method + " error: " + e.Err.Error()
+	return e.Err.Error()
 }
 
 // DoesNotExistError is raised if the item being retrieved or modified does not exist.
@@ -48,7 +48,7 @@ type DoesNotExistError struct {
 }
 
 func (e *DoesNotExistError) Error() string {
-	return e.Route + " failed: does not exist: " + e.Message
+	return e.Message
 }
 
 // InternalError is raised if there is an internal inconsistency in the code.
@@ -60,7 +60,7 @@ type InternalError struct {
 }
 
 func (e *InternalError) Error() string {
-	return e.Route + " failed: internal error: " + e.Message
+	return e.Message
 }
 
 // InUseError is raised if the item cannot be modified or deleted because it's in use.
@@ -70,7 +70,7 @@ type InUseError struct {
 }
 
 func (e *InUseError) Error() string {
-	return e.Route + " failed: still in use: " + e.Message
+	return e.Message
 }
 
 // InvalidInputError is raised if the request is invalid.
@@ -83,7 +83,7 @@ type InvalidInputError struct {
 }
 
 func (e *InvalidInputError) Error() string {
-	return e.Route + " failed: invalid input: " + e.Message
+	return e.Message
 }
 
 // LambdaError wraps the error structure returned by a Golang Lambda function.

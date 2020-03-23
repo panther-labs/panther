@@ -27,11 +27,11 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/strfmt"
+	strfmt "github.com/go-openapi/strfmt"
 )
 
 // New creates a new operations API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -43,23 +43,8 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
-// ClientService is the interface for Client methods
-type ClientService interface {
-	AddResources(params *AddResourcesParams) (*AddResourcesCreated, error)
-
-	DeleteResources(params *DeleteResourcesParams) (*DeleteResourcesOK, error)
-
-	GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK, error)
-
-	GetResource(params *GetResourceParams) (*GetResourceOK, error)
-
-	ListResources(params *ListResourcesParams) (*ListResourcesOK, error)
-
-	SetTransport(transport runtime.ClientTransport)
-}
-
 /*
-  AddResources adds or replace resources across one or more accounts
+AddResources adds or replace resources across one or more accounts
 */
 func (a *Client) AddResources(params *AddResourcesParams) (*AddResourcesCreated, error) {
 	// TODO: Validate the params before sending
@@ -93,7 +78,7 @@ func (a *Client) AddResources(params *AddResourcesParams) (*AddResourcesCreated,
 }
 
 /*
-  DeleteResources deletes resources across multiple accounts
+DeleteResources deletes resources across multiple accounts
 */
 func (a *Client) DeleteResources(params *DeleteResourcesParams) (*DeleteResourcesOK, error) {
 	// TODO: Validate the params before sending
@@ -127,7 +112,7 @@ func (a *Client) DeleteResources(params *DeleteResourcesParams) (*DeleteResource
 }
 
 /*
-  GetOrgOverview gets an overview of the resources in an organization
+GetOrgOverview gets an overview of the resources in an organization
 */
 func (a *Client) GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK, error) {
 	// TODO: Validate the params before sending
@@ -161,7 +146,7 @@ func (a *Client) GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK
 }
 
 /*
-  GetResource gets resource details
+GetResource gets resource details
 */
 func (a *Client) GetResource(params *GetResourceParams) (*GetResourceOK, error) {
 	// TODO: Validate the params before sending
@@ -195,7 +180,7 @@ func (a *Client) GetResource(params *GetResourceParams) (*GetResourceOK, error) 
 }
 
 /*
-  ListResources lists resources for a customer account
+ListResources lists resources for a customer account
 */
 func (a *Client) ListResources(params *ListResourcesParams) (*ListResourcesOK, error) {
 	// TODO: Validate the params before sending

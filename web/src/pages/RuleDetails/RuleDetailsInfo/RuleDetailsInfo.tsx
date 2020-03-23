@@ -19,7 +19,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge, Box, Button, Grid, Icon, Label, Text } from 'pouncejs';
-import { formatDatetime } from 'Helpers/utils';
+import { formatDatetime, minutesToString } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import Linkify from 'Components/Linkify';
 import { RuleDetails } from 'Generated/schema';
@@ -170,6 +170,14 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           </Label>
           <Text size="medium" color="black">
             {formatDatetime(rule.lastModified)}
+          </Text>
+        </Box>
+        <Box my={1}>
+          <Label mb={1} is="div" size="small" color="grey300">
+            DEDUPLICATION PERIOD TIME
+          </Label>
+          <Text size="medium" color={rule.displayName ? 'black' : 'grey200'}>
+            {rule.dedupPeriodMinutes ? minutesToString(rule.dedupPeriodMinutes) : '1h'}
           </Text>
         </Box>
       </Grid>

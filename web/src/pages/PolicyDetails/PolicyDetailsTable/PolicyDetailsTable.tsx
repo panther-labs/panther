@@ -17,13 +17,13 @@
  */
 
 import React from 'react';
-import { ComplianceItem, Integration } from 'Generated/schema';
+import { ComplianceItem, ComplianceIntegration } from 'Generated/schema';
 import { Table, TableProps } from 'pouncejs';
 import urls from 'Source/urls';
 import useRouter from 'Hooks/useRouter';
 import { generateEnumerationColumn } from 'Helpers/utils';
 
-type EnhancedComplianceItem = ComplianceItem & Pick<Integration, 'integrationLabel'>;
+type EnhancedComplianceItem = ComplianceItem & Pick<ComplianceIntegration, 'integrationLabel'>;
 
 interface PolicyDetailsTableProps {
   items?: EnhancedComplianceItem[];

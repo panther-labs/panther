@@ -51,8 +51,8 @@ func generateSQSAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
 		alarms = append(alarms, NewSQSAlarm(queueName, "SQSDeadLetters", "ApproximateNumberOfMessagesVisible",
 			"has failed items from "+referenceQueue).SumCountThreshold(0, 60*5))
 	} else { // regular q's
-		// nothing in our queues should be older than 5min
-		const tooOldSec float32 = 60.0 * 5.0
+		// nothing in our queues should be older than 15min
+		const tooOldSec float32 = 60.0 * 15.0
 		alarms = append(alarms, NewSQSAlarm(queueName, "SQSTooOld", "ApproximateAgeOfOldestMessage",
 			"has items not being processed at the expected rate").MaxSecondsThreshold(tooOldSec, 60*5))
 	}

@@ -131,10 +131,10 @@ Resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Resource:
-                - !Sub arn:${AWS::Partition}:iam::*:role/PantherAuditRole
-                - !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole
-                - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole
-                - !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherAuditRole-${AWS::Region}
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole-${AWS::Region}
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${AWS::Region}
+                - !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole-*
         - Id: GetPublicTemplates
           Version: 2012-10-17
           Statement:

@@ -17,19 +17,18 @@
  */
 
 import React from 'react';
-import { WizardRenderStepParams } from 'Components/Wizard/Wizard';
 import { Box, Button, Flex } from 'pouncejs';
+import { useWizardContext } from './WizardContext';
 
-interface WizardPanelWrapperProps {
-  goToPrevStep?: WizardRenderStepParams<{}>['goToPrevStep'];
-  goToNextStep?: WizardRenderStepParams<{}>['goToNextStep'];
-  isNextStepDisabled?: boolean;
-  isPrevStepDisabled?: boolean;
+interface WizardPanelWrapperAction {
+  disabled?: boolean;
 }
 
 interface WizardPanelWrapperComposition {
-  Actions: React.FC<WizardPanelWrapperProps>;
   Content: React.FC;
+  Actions: React.FC;
+  ActionNext: React.FC<WizardPanelWrapperAction>;
+  ActionPrev: React.FC<WizardPanelWrapperAction>;
 }
 
 const WizardPanelWrapper: React.FC & WizardPanelWrapperComposition = ({ children }) => {
@@ -48,35 +47,31 @@ const WizardPanelWrapperContent: React.FC = ({ children }) => {
   );
 };
 
-const WizardPanelWrapperActions: React.FC<WizardPanelWrapperProps> = ({
-  isNextStepDisabled,
-  isPrevStepDisabled,
-  goToPrevStep,
-  goToNextStep,
-}) => {
+const WizardPanelWrapperActions: React.FC = ({ children }) => {
+  return <Flex justifyContent="flex-end">{children}</Flex>;
+};
+
+const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
+  const { goToPrevStep } = useWizardContext();
   return (
-    <Flex justifyContent="flex-end">
-      {goToPrevStep && (
-        <Button
-          size="large"
-          variant="default"
-          onClick={goToPrevStep}
-          mr={3}
-          disabled={isPrevStepDisabled}
-        >
-          Back
-        </Button>
-      )}
-      {goToNextStep && (
-        <Button size="large" variant="primary" onClick={goToNextStep} disabled={isNextStepDisabled}>
-          Next
-        </Button>
-      )}
-    </Flex>
+    <Button size="large" variant="default" onClick={goToPrevStep} mr={3} disabled={disabled}>
+      Back
+    </Button>
   );
 };
 
-WizardPanelWrapper.Content = WizardPanelWrapperContent;
-WizardPanelWrapper.Actions = WizardPanelWrapperActions;
+const WizardPanelActionNext: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
+  const { goToNextStep } = useWizardContext();
+  return (
+    <Button size="large" variant="primary" onClick={goToNextStep} disabled={disabled}>
+      Next
+    </Button>
+  );
+};
+
+WizardPanelWrapper.Content = React.memo(WizardPanelWrapperContent);
+WizardPanelWrapper.Actions = React.memo(WizardPanelWrapperActions);
+WizardPanelWrapper.ActionPrev = React.memo(WizardPanelActionPrev);
+WizardPanelWrapper.ActionNext = React.memo(WizardPanelActionNext);
 
 export default WizardPanelWrapper;

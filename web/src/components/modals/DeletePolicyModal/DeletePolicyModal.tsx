@@ -17,11 +17,9 @@
  */
 
 import React from 'react';
-import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { PolicySummary, PolicyDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeletePolicy } from './graphql/deletePolicy.generated';
 
@@ -33,8 +31,6 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const policyDisplayName = policy.displayName || policy.id;
   const mutation = useDeletePolicy({
-    awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(ListPoliciesDocument)],
     variables: {
       input: {
         policies: [
@@ -43,6 +39,35 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
           },
         ],
       },
+    },
+    optimisticResponse: {
+      deletePolicy: true,
+    },
+    update: async cache => {
+      cache.modify('ROOT_QUERY', {
+        policies: (data, helpers) => {
+          const policyRef = helpers.toReference({
+            __typename: 'PolicySummary',
+            id: policy.id,
+          });
+          return {
+            ...data,
+            policies: data.policies.filter(p => p.__ref !== policyRef.__ref),
+          };
+        },
+        policy: (data, helpers) => {
+          const policyRef = helpers.toReference({
+            __typename: 'PolicyDetails',
+            id: policy.id,
+          });
+          if (policyRef.__ref !== data.__ref) {
+            return data;
+          }
+          return helpers.DELETE;
+        },
+      });
+
+      cache.gc();
     },
   });
 

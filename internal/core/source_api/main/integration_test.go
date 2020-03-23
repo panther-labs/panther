@@ -87,30 +87,47 @@ func TestIntegration(t *testing.T) {
 }
 
 func putIntegrations(t *testing.T) {
-	input := &models.LambdaInput{
-		PutIntegration: &models.PutIntegrationInput{
+	putIntegrations := []*models.PutIntegrationInput{
+		{
 			SkipScanQueue: aws.Bool(true),
-			Integrations: []*models.PutIntegrationSettings{
-				{
-					AWSAccountID:     aws.String("888888888888"),
-					IntegrationLabel: aws.String("ThisAccount"),
-					IntegrationType:  aws.String("aws-scan"),
-					ScanIntervalMins: aws.Int(60),
-					UserID:           aws.String(testUserID),
-				},
-				{
-					AWSAccountID:     aws.String("555555555555"),
-					IntegrationLabel: aws.String("StageAWS"),
-					IntegrationType:  aws.String("aws-scan"),
-					ScanIntervalMins: aws.Int(1440),
-					UserID:           aws.String(testUserID2),
-				},
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				AWSAccountID:     aws.String("888888888888"),
+				IntegrationLabel: aws.String("ThisAccount"),
+				IntegrationType:  aws.String("aws-scan"),
+				ScanIntervalMins: aws.Int(60),
+				UserID:           aws.String(testUserID),
+			},
+		},
+		{
+			SkipScanQueue: aws.Bool(true),
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				AWSAccountID:     aws.String("111111111111"),
+				IntegrationLabel: aws.String("TestAWS"),
+				IntegrationType:  aws.String("aws-scan"),
+				ScanIntervalMins: aws.Int(60),
+				UserID:           aws.String(testUserID),
+			},
+		},
+		{
+			SkipScanQueue: aws.Bool(true),
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				AWSAccountID:     aws.String("555555555555"),
+				IntegrationLabel: aws.String("StageAWS"),
+				IntegrationType:  aws.String("aws-scan"),
+				ScanIntervalMins: aws.Int(1440),
+				UserID:           aws.String(testUserID2),
 			},
 		},
 	}
-	var output []*models.SourceIntegrationMetadata
-	err := genericapi.Invoke(lambdaClient, functionName, &input, &output)
-	require.NoError(t, err)
+
+	for _, putIntegration := range putIntegrations {
+		var output []*models.SourceIntegrationMetadata
+		input := &models.LambdaInput{
+			PutIntegration: putIntegration,
+		}
+		err := genericapi.Invoke(lambdaClient, functionName, input, &output)
+		require.NoError(t, err)
+	}
 }
 
 func getEnabledIntegrations(t *testing.T) {
@@ -189,8 +206,6 @@ func updateIntegrationSettings(t *testing.T) {
 			IntegrationLabel: &newLabel,
 			IntegrationType:  aws.String("aws-scan"),
 			ScanIntervalMins: aws.Int(180),
-			S3Buckets:        []*string{},
-			KmsKeys:          []*string{},
 		},
 		SourceIntegrationStatus:          nil,
 		SourceIntegrationScanInformation: nil,

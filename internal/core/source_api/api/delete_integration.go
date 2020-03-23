@@ -19,11 +19,16 @@ package api
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
+)
+
+var (
+	deleteIntegrationInternalError = &genericapi.InternalError{Message: "Failed to delete source. Please try again later"}
 )
 
 // DeleteIntegration deletes a specific integration.
@@ -33,7 +38,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		if err != nil && integrationForDeletePermissions != nil {
 			// In case we have already removed the Permissions from SQS but some other operation failed
 			// re-add the permissions
-			if undoErr := AddPermissionToLogProcessorQueue(*integrationForDeletePermissions.AWSAccountID); undoErr != nil {
+			if _, undoErr := AddPermissionToLogProcessorQueue(*integrationForDeletePermissions.AWSAccountID); undoErr != nil {
 				zap.L().Error("failed to re-add SQS permission for integration. SQS is missing permissions that have to be added manually",
 					zap.String("integrationId", *integrationForDeletePermissions.IntegrationID),
 					zap.Error(undoErr),
@@ -49,7 +54,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		zap.L().Error(errMsg,
 			zap.String("integrationId", *input.IntegrationID),
 			zap.Error(errors.Wrap(err, errMsg)))
-		return &genericapi.InternalError{Message: errMsg}
+		return deleteIntegrationInternalError
 	}
 
 	if integration == nil {
@@ -57,14 +62,36 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 	}
 
 	if *integration.IntegrationType == models.IntegrationTypeAWS3 {
-		if err = RemovePermissionFromLogProcessorQueue(*integration.AWSAccountID); err != nil {
-			zap.L().Error("failed to remove permission from SQS queue for integration",
-				zap.String("integrationId", *input.IntegrationID),
-				zap.Error(errors.Wrap(err, "failed to remove permission from SQS queue for integration")))
-			return &genericapi.InternalError{Message: "failed to update integration"}
+		existingIntegrations, err := db.ScanIntegrations(&models.ListIntegrationsInput{IntegrationType: aws.String(models.IntegrationTypeAWS3)})
+		if err != nil {
+			return deleteIntegrationInternalError
 		}
-		integrationForDeletePermissions = integration
+
+		shouldRemovePermissions := true
+		for _, existingIntegration := range existingIntegrations {
+			if *existingIntegration.AWSAccountID == *integration.AWSAccountID &&
+				*existingIntegration.IntegrationID != *integration.IntegrationID {
+				// if another integration exists for the same account
+				// don't remove queue permissions. Allow the account to keep sending
+				// us SQS notifications
+				shouldRemovePermissions = false
+				break
+			}
+		}
+
+		if shouldRemovePermissions {
+			if err = RemovePermissionFromLogProcessorQueue(*integration.AWSAccountID); err != nil {
+				zap.L().Error("failed to remove permission from SQS queue for integration",
+					zap.String("integrationId", *input.IntegrationID),
+					zap.Error(errors.Wrap(err, "failed to remove permission from SQS queue for integration")))
+				return deleteIntegrationInternalError
+			}
+			integrationForDeletePermissions = integration
+		}
 	}
 	err = db.DeleteIntegrationItem(input)
-	return err
+	if err != nil {
+		return deleteIntegrationInternalError
+	}
+	return nil
 }

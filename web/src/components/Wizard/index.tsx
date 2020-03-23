@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as Wizard } from './Wizard';
+export { default as Wizard, WizardStep } from './Wizard';
 export { default as WizardPanelWrapper } from './WizardPanelWrapper';

@@ -18,8 +18,6 @@
 
 import React from 'react';
 import { User } from 'Generated/schema';
-import { ListUsersDocument } from 'Pages/Users';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import useAuth from 'Hooks/useAuth';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeleteUser } from './graphql/deleteUser.generated';
@@ -38,8 +36,18 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
     variables: {
       id: user.id,
     },
-    awaitRefetchQueries: true,
-    refetchQueries: [getOperationName(ListUsersDocument)],
+    optimisticResponse: {
+      deleteUser: true,
+    },
+    update: async cache => {
+      cache.modify('ROOT_QUERY', {
+        users: (data, helpers) => {
+          const userRef = helpers.toReference(user);
+          return data.filter(u => u.__ref !== userRef.__ref);
+        },
+      });
+      cache.gc();
+    },
   });
 
   return (

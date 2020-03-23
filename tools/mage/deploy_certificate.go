@@ -29,7 +29,6 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -108,7 +107,7 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 func getExistingCertificate(awsSession *session.Session) *string {
 	outputs, err := getStackOutputs(awsSession, backendStack)
 	if err != nil {
-		if strings.Contains(err.Error(), "Stack with id "+backendStack+" does not exist") {
+		if isStackNotExistsError(backendStack, err) {
 			return nil
 		}
 		logger.Fatal(err)

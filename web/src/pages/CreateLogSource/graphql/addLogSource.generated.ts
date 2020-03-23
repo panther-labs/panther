@@ -20,24 +20,24 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { LogIntegrationDetails } from '../../../graphql/fragments/LogIntegrationDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type AddLogSourceVariables = {
-  input: Types.AddIntegrationInput;
+  input: Types.AddLogIntegrationInput;
 };
 
-export type AddLogSource = {
-  addIntegration?: Types.Maybe<Pick<Types.Integration, 'integrationId'>>;
-};
+export type AddLogSource = { addLogIntegration: LogIntegrationDetails };
 
 export const AddLogSourceDocument = gql`
-  mutation AddLogSource($input: AddIntegrationInput!) {
-    addIntegration(input: $input) {
-      integrationId
+  mutation AddLogSource($input: AddLogIntegrationInput!) {
+    addLogIntegration(input: $input) {
+      ...LogIntegrationDetails
     }
   }
+  ${LogIntegrationDetails}
 `;
 export type AddLogSourceMutationFn = ApolloReactCommon.MutationFunction<
   AddLogSource,

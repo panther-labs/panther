@@ -20,7 +20,7 @@
 
 import React from 'react';
 import { Text, TableProps, Tooltip, Label } from 'pouncejs';
-import { ComplianceStatusEnum, Integration, ResourceSummary } from 'Generated/schema';
+import { ComplianceStatusEnum, ComplianceIntegration, ResourceSummary } from 'Generated/schema';
 import { capitalize, formatDatetime } from 'Helpers/utils';
 
 // The columns that the associated table will show
@@ -95,6 +95,6 @@ const columns = [
     flex: '0 1 225px',
     renderCell: ({ lastModified }) => <Text size="medium">{formatDatetime(lastModified)}</Text>,
   },
-] as TableProps<ResourceSummary & Pick<Integration, 'integrationLabel'>>['columns'];
+] as TableProps<ResourceSummary & Pick<ComplianceIntegration, 'integrationLabel'>>['columns'];
 
 export default columns;

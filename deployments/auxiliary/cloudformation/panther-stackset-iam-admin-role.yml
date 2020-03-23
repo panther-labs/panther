@@ -26,7 +26,7 @@ Resources:
   CloudFormationStackSetAdminRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherCloudFormationStackSetAdminRole
+      RoleName: !Sub PantherCloudFormationStackSetAdminRole-${AWS::Region} # DO NOT CHANGE! set in mage deploy
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -41,7 +41,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sts:AssumeRole
-                Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole
+                Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${AWS::Region}
 
 Outputs:
   CloudFormationStackSetAdminRoleArn:

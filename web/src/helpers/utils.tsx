@@ -21,8 +21,8 @@ import * as React from 'react';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
+  ComplianceIntegration,
   ComplianceStatusCounts,
-  Integration,
   OrganizationReportBySeverity,
   ScannedResources,
 } from 'Generated/schema';
@@ -37,6 +37,7 @@ import sum from 'lodash-es/sum';
 import { Box, ColumnProps, Label } from 'pouncejs';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
+import { int } from 'aws-sdk/clients/datapipeline';
 
 // Generate a new secret code that contains metadata of issuer and user email
 export const formatSecretCode = (code: string, email: string): string => {
@@ -101,6 +102,10 @@ export const formatDatetime = (datetime: string) => {
   );
 };
 
+/** Converts minutes integer to representative string i.e. 15 -> 15min,  120 -> 2h */
+export const minutesToString = (minutes: int) =>
+  minutes < 60 ? `${minutes}min` : `${minutes / 60}h`;
+
 /** Converts any value of the object that is an array to a comma-separated string */
 export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
   mapValues(obj, v => (Array.isArray(v) ? v.join(',') : v));
@@ -123,7 +128,8 @@ export const formatJSON = (code: { [key: string]: number | string }) =>
 
 export function extendResourceWithIntegrationLabel<T extends { integrationId?: string }>(
   resource: T,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
+  integrations: (Partial<ComplianceIntegration> &
+    Pick<ComplianceIntegration, 'integrationId' | 'integrationLabel'>)[]
 ) {
   const matchingIntegration = integrations.find(i => i.integrationId === resource.integrationId);
   return {
@@ -235,3 +241,5 @@ export const copyTextToClipboard = (text: string) => {
 };
 
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
+
+export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
