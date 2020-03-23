@@ -157,6 +157,18 @@ Resources:
 
   AuditLogsBucketPolicy:
     Type: AWS::S3::BucketPolicy
+
+    # This resource needs to be delayed slightly. If the bucket policy is created right after the
+    # bucket itself is created, the stack will sometimes fail with:
+    #
+    #     A conflicting conditional operation is currently in progress against this resource.
+    #
+    # This seems to be caused by the PublicAccessBlockConfiguration not fully taking effect before
+    # trying to set the bucket policy. An easy fix is to just delay this resource until some
+    # networking setup has completed, it doesn't particularly matter which resource this depends on,
+    # as long as it happens later in the stack creation.
+    DependsOn: PublicRoute
+
     Properties:
       Bucket: !Ref AuditLogs
       PolicyDocument:
@@ -477,6 +489,7 @@ Resources:
   # Panther monitors itself, the AuditLogsBucket is processed by the log processor
   FlowLogs:
     Type: AWS::EC2::FlowLog
+    DependsOn: AuditLogsBucketPolicy
     Properties:
       LogDestination: !Sub arn:aws:s3:::${AuditLogs}
       LogDestinationType: s3
