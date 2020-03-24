@@ -1,6 +1,6 @@
 # Rules
 
-Panther enables easy aggregation, normalization, analysis, and storage of security logs. **Rules** are Python functions used to identify suspicious activity and generate alerts for your team to triage.
+Panther enables easy aggregation, normalization, analysis, and storage of security logs. **Rules** are Python3 functions used to identify suspicious activity and generate alerts for your team to triage.
 
 ## Rule Components
 
@@ -117,11 +117,15 @@ def title(event):
   return 'successful logins to {}'.format(event.get('request').split(' ')[1])
 ```
 
-### Rule Attributes
-
-### Unit Tests
-
 ## Rules in the Panther UI
+
+{% hint style="info" %}
+WIP
+{% endhint %}
+
+### Set Attributes
+
+### Configure Tests
 
 ## Rules on the Command Line
 
@@ -140,6 +144,50 @@ pip3 install panther_analysis_tool
 Navigate to the repository/path for your custom detections. We recommend grouping detections based on purpose, such as `suricata_rules` or `internal_pci`. Use the open source [Panther Analysis](https://github.com/panther-labs/panther-analysis) packs as a reference.
 
 Each new rule consists of a Python file (`<my-rule>.py`) containing your rule, dedup, and title functions, and a YAML/JSON specification (`<my-rule>.yml`) with rule attributes.
+
+### Rule Body
+
+Write your rule as you would above, and save it as `folder/my_new_rule.py`.
+
+### Rule Attributes
+
+Create a second specifications file in the same path, with the same prefix: `folder/my_new_rule.yml`. You may also you JSON.
+
+This file should have the following layout:
+
+```yml
+# PolicyID and ResourceTypes will be renamed soon to better accommodate rules
+AnalysisType: rule
+Enabled: true
+Filename: my_new_rule.py
+PolicyID: Category.Behavior.MoreInfo
+ResourceTypes:
+  - Log.Type.Here
+Severity: Info|Low|Medium|High|Critical
+DisplayName: Example Rule to Check the Format of the Spec
+Tags:
+  - Tags
+  - Go
+  - Here
+Runbook: Find out who changed the spec format.
+Reference: https://www.link-to-info.io
+```
+
+### Unit Tests
+
+In our spec file, add the following key:
+
+```yml
+Tests:
+  -
+    Name: Name to describe our first test.
+    ResourceType: Log.Type.Here
+    ExpectedResult: true/false
+    Resource:
+      Key: Values
+      For: Our Log
+      Based: On the Schema
+```
 
 ### Usage
 
