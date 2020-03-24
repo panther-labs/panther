@@ -74,7 +74,7 @@ func (s *MockSTS) GetCallerIdentity(
 // This can be overridden to return errors, etc.
 var MockSTSClient = &MockSTS{}
 
-// STSAssumeRoleProviderMock is used to override the AssumeRoleProviderFunc in testing.
+// STSAssumeRoleProviderMock is used to override the assumeRoleProviderFunc in testing.
 func STSAssumeRoleProviderMock() func(p *stscreds.AssumeRoleProvider) {
 	return func(p *stscreds.AssumeRoleProvider) {
 		p.Client = MockSTSClient

@@ -58,6 +58,7 @@ const Navigation = () => {
   const isComplianceNavigationActive = secondaryNav === COMPLIANCE_NAV_KEY;
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
+  const isSecondaryNavigationActive = secondaryNav !== null;
   return (
     <Flex is="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
       <Flex flexDirection="column" width={70} height="100%" boxShadow="dark150">
@@ -120,11 +121,13 @@ const Navigation = () => {
           </Box>
         </Flex>
       </Flex>
-      <Box width={230} height="100%">
-        {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
-        {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
-        {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
-      </Box>
+      {isSecondaryNavigationActive && (
+        <Box width={230} height="100%">
+          {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
+          {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
+          {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
+        </Box>
+      )}
     </Flex>
   );
 };

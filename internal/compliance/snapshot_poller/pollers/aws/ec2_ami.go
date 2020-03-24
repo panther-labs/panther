@@ -24,9 +24,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -40,21 +40,25 @@ func PollEC2Image(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "ec2", resourceARN.Region).(ec2iface.EC2API)
+	ec2Client, err := getEC2Client(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	imageID := strings.Replace(resourceARN.Resource, "image/", "", 1)
-	ami := getAMI(client, aws.String(imageID))
+	ami := getAMI(ec2Client, aws.String(imageID))
 
-	snapshot := buildEc2AmiSnapshot(client, ami)
+	snapshot := buildEc2AmiSnapshot(ec2Client, ami)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getAMI returns a specific EC2 AMI
@@ -82,14 +86,17 @@ func getAMI(svc ec2iface.EC2API, imageID *string) *ec2.Image {
 }
 
 // buildImageList creates the ec2Ami cache if it does not exist, and populates it for a given region
-func buildImageList(svc ec2iface.EC2API, region string) {
+func buildImageList(svc ec2iface.EC2API, region string) (err error) {
 	// If ec2Amis is nil there is no cache yet at all
 	if ec2Amis == nil {
 		ec2Amis = make(map[string][]*string)
 	}
 
 	// Get all the instances in this region
-	instances := describeInstances(svc)
+	instances, err := describeInstances(svc)
+	if err != nil {
+		return err
+	}
 
 	// Populate the cache with the unique image IDs in use in this region
 	var images []*string
@@ -101,6 +108,7 @@ func buildImageList(svc ec2iface.EC2API, region string) {
 		}
 	}
 	ec2Amis[region] = images
+	return nil
 }
 
 // describeImages returns all the EC2 AMIs the account has access to
@@ -121,7 +129,10 @@ func describeImages(svc ec2iface.EC2API, region string) ([]*ec2.Image, error) {
 
 	// If imageIDs is nil there is no cache for this region from running the EC2 instance poller
 	if imageIDs == nil {
-		buildImageList(svc, region)
+		err = buildImageList(svc, region)
+		if err != nil {
+			return nil, err
+		}
 		imageIDs = ec2Amis[region]
 	}
 
@@ -185,17 +196,17 @@ func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 	ec2AmiSnapshots := make(map[string]*awsmodels.Ec2Ami)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
-		creds, err := AssumeRoleFunc(pollerInput, sess)
+		ec2Svc, err := getEC2Client(pollerInput, *regionID)
 		if err != nil {
-			return nil, err
+			return nil, err // error is logged in getClient()
 		}
 
-		ec2Svc := EC2ClientFunc(sess, &aws.Config{Credentials: creds}).(ec2iface.EC2API)
-
 		// Start with generating a list of all EC2 AMIs
-		amis, describeErr := describeImages(ec2Svc, *regionID)
-		if describeErr != nil {
+		amis, err := describeImages(ec2Svc, *regionID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "PollEc2Amis(%#v) in region %s", *pollerInput, *regionID)
+		}
+		if len(amis) == 0 {
 			zap.L().Debug("no AMIs described", zap.String("region", *regionID))
 			continue
 		}

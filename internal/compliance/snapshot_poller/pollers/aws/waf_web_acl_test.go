@@ -211,7 +211,6 @@ func TestWafWebAclsPoller(t *testing.T) {
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAll()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
@@ -232,7 +231,6 @@ func TestWafWebAclsPollerError(t *testing.T) {
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAllError()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
@@ -254,7 +252,6 @@ func TestWafRegionalWebAclsPoller(t *testing.T) {
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAll()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
@@ -275,7 +272,6 @@ func TestWafRegionalWebAclsPollerError(t *testing.T) {
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAllError()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 

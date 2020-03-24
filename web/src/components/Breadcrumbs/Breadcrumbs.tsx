@@ -55,6 +55,15 @@ const Breadcrumbs: React.FC = () => {
     // taking the existing path and removing whatever is after each pathKey (only keeping whatever
     // is before-and-including our key). The key is essentially the URL path itself just prettified
     // for displat
+    if (!pathKeys.length) {
+      return [
+        {
+          href: '/',
+          text: 'Home',
+        },
+      ];
+    }
+
     return pathKeys.map(key => ({
       href: `${pathname.substr(0, pathname.indexOf(`/${key}/`))}/${key}/`,
       text: decodeURIComponent(key)

@@ -87,7 +87,6 @@ func TestRedshiftCLusterBuildSnapshotErrors(t *testing.T) {
 func TestRedshiftClusterPoller(t *testing.T) {
 	awstest.MockRedshiftForSetup = awstest.BuildMockRedshiftSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	RedshiftClientFunc = awstest.SetupMockRedshift
 
 	resources, err := PollRedshiftClusters(&awsmodels.ResourcePollerInput{
@@ -111,7 +110,6 @@ func TestRedshiftClusterPoller(t *testing.T) {
 func TestRedshiftClusterPollerError(t *testing.T) {
 	awstest.MockRedshiftForSetup = awstest.BuildMockRedshiftSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	RedshiftClientFunc = awstest.SetupMockRedshift
 
 	resources, err := PollRDSInstances(&awsmodels.ResourcePollerInput{

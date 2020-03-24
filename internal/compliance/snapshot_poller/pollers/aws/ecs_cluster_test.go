@@ -101,7 +101,6 @@ func TestEcsClusterBuildSnapshotErrors(t *testing.T) {
 func TestEcsClusterPoller(t *testing.T) {
 	awstest.MockEcsForSetup = awstest.BuildMockEcsSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EcsClientFunc = awstest.SetupMockEcs
 
 	resources, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
@@ -120,7 +119,6 @@ func TestEcsClusterPoller(t *testing.T) {
 func TestEcsClusterPollerError(t *testing.T) {
 	awstest.MockEcsForSetup = awstest.BuildMockEcsSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EcsClientFunc = awstest.SetupMockEcs
 
 	resources, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
