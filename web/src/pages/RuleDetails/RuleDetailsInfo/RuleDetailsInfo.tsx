@@ -177,7 +177,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             DEDUPLICATION PERIOD TIME
           </Label>
           <Text size="medium" color={rule.displayName ? 'black' : 'grey200'}>
-            {rule.dedupPeriodMinutes ? minutesToString(rule.dedupPeriodMinutes) : '1h'}
+            {minutesToString(rule.dedupPeriodMinutes)}
           </Text>
         </Box>
       </Grid>
