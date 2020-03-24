@@ -286,7 +286,7 @@ module.exports = {
       async: isEnvDevelopment,
       useTypescriptIncrementalApi: true,
       checkSyntacticErrors: true,
-      tsconfig: path.resolve(__dirname, '../tsconfig.json'),
+      tsconfig: path.resolve(__dirname, './tsconfig.json'),
       reportFiles: [
         '**',
         '!**/__tests__/**',

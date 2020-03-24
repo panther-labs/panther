@@ -236,9 +236,9 @@ func testWeb() bool {
 		return false
 	}
 
-	logger.Info("test:web: npm run lint")
-	if err := sh.RunV("npm", "run", "lint"); err != nil {
-		logger.Errorf("npm lint failed: %v", err)
+	logger.Info("test:web: npm run validate")
+	if err := sh.RunV("npm", "run", "validate"); err != nil {
+		logger.Errorf("npm validate failed: %v", err)
 		pass = false
 	}
 
