@@ -53,6 +53,8 @@ Use our [Tutorials](https://github.com/panther-labs/tutorials) to learn about se
 
 Panther uses Python for analysis, and each deployment is pre-installed with [150+ open source detections](https://github.com/panther-labs/panther-analysis/tree/master/analysis).
 
+### Logs
+
 In the following example, [osquery](https://github.com/osquery/osquery) logs are analyzed to identify malware on a macOS laptop:
 
 ```python
@@ -71,11 +73,24 @@ def rule(event):
     process_path = event.get('columns', {}).get('path')
     # Alert if the process is running outside any of the approved paths
     return not any([fnmatch(process_path, p) for p in APPROVED_PATHS])
+
+
+def title(event):
+    # Show the query name that caused the alert
+    return 'Malware [{}] detected via osquery'.format(event.get('name'))
+
+
+def dedup(event):
+   if event.get('columns'):
+     # Group every similar infection in the fleet
+     return event.get('columns').get('path')
 ```
 
-When this rule returns `True`, an alert will send to your team based on the defined severity.
+If this rule returns `True`, an alert will dispatch to your team based on the defined severity.
 
-The other analysis type is called a policy, and can be used to model security best practices on cloud resources:
+### Cloud Infrastructure
+
+The second analysis type is called a policy, and can be used to model security best practices on cloud resources:
 
 ```python
 REGIONS_REQUIRED = {'us-east-1'}
@@ -90,7 +105,9 @@ def policy(resource):
     return True
 ```
 
-Returning `True` implies a resource is compliant, and returning `False` will `Fail` the policy and trigger an alert.
+Returning `True` means that a resource is compliant, and returning `False` will `Fail` the policy and trigger an alert.
+
+### Analysis Resources
 
 For more information on the concepts above, check out our docs:
 

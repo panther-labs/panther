@@ -103,14 +103,24 @@ In the `rule()` body, returning a value of `True` indicates an alert should send
 
 ### Rule Deduplication
 
-By default, alerts group multiple events together by the associated `RuleID` over the period of 1 hour. To modify this merge logic, you can use the `dedup()` function in addition to the `rule()` function:
+Alerts group together all events that matched a rule for the period configured in the rule settings. By default, this deduplication is based on `default:RuleID` over the period of 1 hour.
+
+To modify the merge logic, you can use the `dedup()` in your rule body:
 
 ```python
 def dedup(event):
   return event.get('request', '').split(' ')[1]
 ```
 
-In this example, all alerts will merge on the requested page of `/admin-panel/`
+In this example, all alerts will merge on the requested page of `/admin-panel/`.
+
+The merging period is also configurable an can be set to:
+* 15m
+* 30m
+* 1h
+* 3h
+* 12h
+* 24h
 
 ### Alert Titles
 

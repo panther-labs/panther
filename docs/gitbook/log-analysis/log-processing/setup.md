@@ -18,16 +18,12 @@ From **Log Analysis**, click **Sources**, then **Onboard Your Logs**:
 | `Account ID`   | `Yes`  | The 12-digit AWS Account ID where the S3 buckets are located |
 | `Bucket Name` | `Yes`  | The S3 Bucket ID/name to onboard |
 | `Log Types`   | `Yes`  | The list of Log Types contained in the bucket  |
-| `S3 Prefix Filter`   | `No`  | The path of the files to analyze   |
+| `S3 Prefix Filter`   | `No`  | The path of the files to analyze, which should not start with the `/` character   |
 | `KMS Key`   | `No`  | If your data is encrypted using KMS-SSE, provide the ARN of the KMS key  |
 
 ![](../../.gitbook/assets/log-analysis-iam-2.png)
 
-#### Optional Details
-
-![](../../.gitbook/assets/log-analysis-iam-2-optional.png)
-
-Once you have filled the information, click on **Next**.
+Once you have filled the required and optional advanced configurations, click **Next**.
 
 ### Step 2 - Deploy the IAM Role
 
