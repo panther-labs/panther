@@ -23,34 +23,17 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/jsonschema"
+	"github.com/magefile/mage/mg"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
-// ShowSchemas returns a JSON representation each supported log type
-func ShowSchemas() {
-	schemas := []interface{}{
-		&awslogs.ALB{},
-		&awslogs.CloudTrail{},
-		&awslogs.S3ServerAccess{},
-		&awslogs.VPCFlow{},
-		&awslogs.AuroraMySQLAudit{},
-		&awslogs.GuardDuty{},
-		&nginxlogs.Access{},
-		&osquerylogs.Differential{},
-		&osquerylogs.Batch{},
-		&osquerylogs.Status{},
-		&osquerylogs.Snapshot{},
-		&osseclogs.EventInfo{},
-		&sysloglogs.RFC3164{},
-		&sysloglogs.RFC5424{},
-	}
-	for _, schema := range schemas {
-		jsonSchema := jsonschema.Reflect(schema)
+type Show mg.Namespace
+
+// Schemas Prints to stdout a JSON representation each supported log type
+func (b Show) Schemas() {
+	for _, parser := range registry.AvailableParsers() {
+		jsonSchema := jsonschema.Reflect(parser.GlueTableMetadata.EventStruct())
 		for name, schemaType := range jsonSchema.Definitions {
 			fmt.Println(name)
 			props, err := json.MarshalIndent(schemaType.Properties, "", "    ")

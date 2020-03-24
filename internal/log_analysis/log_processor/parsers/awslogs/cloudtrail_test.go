@@ -149,6 +149,7 @@ func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) 
 	require.Equal(t, len(expectedEvents), len(events))
 	for i, expectedEvent := range expectedEvents {
 		event := events[i].Event().(*CloudTrail)
+		expectedEvent.SetEvent(expectedEvent)
 		testutil.EqualPantherLog(t, expectedEvent.Log(), event.Logs())
 	}
 }
