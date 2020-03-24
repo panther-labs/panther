@@ -33,7 +33,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	jsoniter "github.com/json-iterator/go"
@@ -97,66 +96,6 @@ func getSession() (*session.Session, error) {
 		"region", awsSession.Config.Region,
 		"accessKeyId", creds.AccessKeyID)
 	return awsSession, nil
-}
-
-// Return true if CF stack exists
-func stackExists(cfClient *cloudformation.CloudFormation, stackName string) (bool, error) {
-	input := &cloudformation.DescribeStacksInput{StackName: aws.String(stackName)}
-	_, err := cfClient.DescribeStacks(input)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ValidationError" {
-			err = nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-// Return true if CF stack set exists
-func stackSetExists(cfClient *cloudformation.CloudFormation, stackSetName string) (bool, error) {
-	input := &cloudformation.DescribeStackSetInput{StackSetName: aws.String(stackSetName)}
-	_, err := cfClient.DescribeStackSet(input)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "StackSetNotFoundException" {
-			err = nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-// Return true if CF stack set exists
-func stackSetInstanceExists(cfClient *cloudformation.CloudFormation, stackSetName, account, region string) (bool, error) {
-	input := &cloudformation.DescribeStackInstanceInput{
-		StackSetName:         &stackSetName,
-		StackInstanceAccount: &account,
-		StackInstanceRegion:  &region,
-	}
-	_, err := cfClient.DescribeStackInstance(input)
-	if err != nil {
-		// need to also check for "StackSetNotFoundException" if the containing stack set does not exist
-		if awsErr, ok := err.(awserr.Error); ok &&
-			(awsErr.Code() == "StackInstanceNotFoundException" || awsErr.Code() == "StackSetNotFoundException") {
-
-			err = nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-func describeStack(cfClient *cloudformation.CloudFormation, stackName string) (status string, output map[string]string, err error) {
-	input := &cloudformation.DescribeStacksInput{StackName: &stackName}
-	response, err := cfClient.DescribeStacks(input)
-	if err != nil {
-		return status, output, err
-	}
-
-	status = *response.Stacks[0].StackStatus
-	if status == cloudformation.StackStatusCreateComplete || status == cloudformation.StackStatusUpdateComplete {
-		output = flattenStackOutputs(response)
-	}
-	return status, output, err
 }
 
 // Upload a local file to S3.

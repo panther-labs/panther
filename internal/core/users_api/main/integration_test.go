@@ -39,8 +39,8 @@ import (
 )
 
 const (
-	backendStack         = "panther-app"
-	userPoolIDOutputName = "WebApplicationUserPoolId"
+	backendStack         = "panther-bootstrap"
+	userPoolIDOutputName = "UserPoolId"
 
 	usersAPI = "panther-users-api"
 
@@ -245,7 +245,7 @@ func testGetUserDoesNotExist(t *testing.T) {
 	err := genericapi.Invoke(lambdaClient, usersAPI, &input, nil)
 	require.Error(t, err)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("GetUser failed: does not exist: userID=" + testUserID),
+		ErrorMessage: aws.String("userID=" + testUserID + " does not exist"),
 		ErrorType:    aws.String("DoesNotExistError"),
 		FunctionName: usersAPI,
 	}
@@ -336,7 +336,7 @@ func testUpdateUserDoesNotExist(t *testing.T) {
 	err := genericapi.Invoke(lambdaClient, usersAPI, &input, nil)
 	require.Error(t, err)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("UpdateUser failed: does not exist: userID=" + testUserID),
+		ErrorMessage: aws.String("userID=" + testUserID + " does not exist"),
 		ErrorType:    aws.String("DoesNotExistError"),
 		FunctionName: usersAPI,
 	}

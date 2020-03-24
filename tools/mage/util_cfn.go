@@ -20,32 +20,36 @@ package mage
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
-var allStacks = []string{backendStack, bucketStack, monitoringStack, frontendStack, databasesStack, onboardStack}
+var allStacks = []string{
+	bootstrapStack,
+	gatewayStack,
+
+	alarmsStack,
+	appsyncStack,
+	cloudsecStack,
+	coreStack,
+	dashboardStack,
+	frontendStack,
+	glueStack,
+	logAnalysisStack,
+	metricFilterStack,
+	onboardStack,
+}
 
 // Summary of a CloudFormation resource and the stack its contained in
 type cfnResource struct {
 	Resource *cfn.StackResourceSummary
 	Stack    *cfn.Stack
-}
-
-// Get CloudFormation stack outputs as a map.
-func getStackOutputs(awsSession *session.Session, name string) (map[string]string, error) {
-	cfnClient := cfn.New(awsSession)
-	input := &cfn.DescribeStacksInput{StackName: &name}
-	response, err := cfnClient.DescribeStacks(input)
-	if err != nil {
-		return nil, err
-	}
-
-	return flattenStackOutputs(response), nil
 }
 
 // Flatten CloudFormation stack outputs into a string map.
@@ -54,6 +58,23 @@ func flattenStackOutputs(detail *cfn.DescribeStacksOutput) map[string]string {
 	result := make(map[string]string, len(outputs))
 	for _, output := range outputs {
 		result[*output.OutputKey] = *output.OutputValue
+	}
+	return result
+}
+
+// Return the list of Panther's CloudFormation files
+func cfnFiles() []string {
+	paths, err := filepath.Glob("deployments/*.yml")
+	if err != nil {
+		logger.Fatalf("failed to glob deployments: %v", err)
+	}
+
+	// Remove the config file
+	var result []string
+	for _, p := range paths {
+		if p != config.Filepath {
+			result = append(result, p)
+		}
 	}
 	return result
 }
@@ -76,7 +97,7 @@ func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(
 	logger.Debugf("enumerating stack %s", *stackID)
 	detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: stackID})
 	if err != nil {
-		if isStackNotExistsError(*stackID, err) {
+		if errStackDoesNotExist(err) {
 			logger.Debugf("stack %s does not exist", *stackID)
 			return nil
 		}
@@ -127,12 +148,59 @@ func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(
 	return nil
 }
 
-// Returns true if the error is indication that the specified CFN stack doesn't exist false otherwise.
-func isStackNotExistsError(stackID string, err error) bool {
+// Returns true if the given error is from describing a stack that doesn't exist.
+func errStackDoesNotExist(err error) bool {
 	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ValidationError" &&
-		strings.TrimSpace(awsErr.Message()) == fmt.Sprintf("Stack with id %s does not exist", stackID) {
+		strings.Contains(awsErr.Message(), "does not exist") {
 
 		return true
 	}
 	return false
+}
+
+// Return true if CF stack set exists
+func stackSetExists(cfClient *cfn.CloudFormation, stackSetName string) (bool, error) {
+	input := &cfn.DescribeStackSetInput{StackSetName: aws.String(stackSetName)}
+	_, err := cfClient.DescribeStackSet(input)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "StackSetNotFoundException" {
+			err = nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// Return true if CF stack set exists
+func stackSetInstanceExists(cfClient *cfn.CloudFormation, stackSetName, account, region string) (bool, error) {
+	input := &cfn.DescribeStackInstanceInput{
+		StackSetName:         &stackSetName,
+		StackInstanceAccount: &account,
+		StackInstanceRegion:  &region,
+	}
+	_, err := cfClient.DescribeStackInstance(input)
+	if err != nil {
+		// need to also check for "StackSetNotFoundException" if the containing stack set does not exist
+		if awsErr, ok := err.(awserr.Error); ok &&
+			(awsErr.Code() == "StackInstanceNotFoundException" || awsErr.Code() == "StackSetNotFoundException") {
+
+			err = nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func describeStack(cfClient *cfn.CloudFormation, stackName string) (status string, output map[string]string, err error) {
+	input := &cfn.DescribeStacksInput{StackName: &stackName}
+	response, err := cfClient.DescribeStacks(input)
+	if err != nil {
+		return status, output, err
+	}
+
+	status = *response.Stacks[0].StackStatus
+	if status == cfn.StackStatusCreateComplete || status == cfn.StackStatusUpdateComplete {
+		output = flattenStackOutputs(response)
+	}
+	return status, output, err
 }

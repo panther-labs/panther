@@ -49,7 +49,7 @@ func (table *OutputsTable) DeleteOutput(outputID *string) error {
 	if err != nil {
 		aerr, ok := err.(awserr.Error)
 		if ok && aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-			return &genericapi.DoesNotExistError{Message: "outputId=" + *outputID}
+			return &genericapi.DoesNotExistError{Message: "outputId=" + *outputID + " does not exist"}
 		}
 		return &genericapi.AWSError{Method: "dynamodb.DeleteItem", Err: err}
 	}

@@ -27,48 +27,39 @@ import (
 // Filepath is the config settings file
 const Filepath = "deployments/panther_config.yml"
 
-// PantherConfig describes the panther_config.yml file.
 type PantherConfig struct {
-	BucketsParameterValues    BucketsParameters    `yaml:"BucketsParameterValues"`
-	BackendParameterValues    BackendParameters    `yaml:"BackendParameterValues"`
-	FrontendParameterValues   FrontendParameters   `yaml:"FrontendParameterValues"`
-	MonitoringParameterValues MonitoringParameters `yaml:"MonitoringParameterValues"`
-	OnboardParameterValues    OnboardingParameters `yaml:"OnboardingParameterValues"`
-	PipLayer                  []string             `yaml:"PipLayer"`
-	InitialAnalysisSets       []string             `yaml:"InitialAnalysisSets"`
+	Infra      Infra      `yaml:"Infra"`
+	Monitoring Monitoring `yaml:"Monitoring"`
+	Setup      Setup      `yaml:"Setup"`
+	Web        Web        `yaml:"Web"`
 }
 
-type BucketsParameters struct {
-	S3AccessLogsBucket string `yaml:"S3AccessLogsBucket"`
+type Infra struct {
+	BaseLayerVersionArns         string   `yaml:"BaseLayerVersionArns"`
+	LogProcessorLambdaMemorySize int      `yaml:"LogProcessorLambdaMemorySize"`
+	PipLayer                     []string `yaml:"PipLayer"`
+	PythonLayerVersionArn        string   `yaml:"PythonLayerVersionArn"`
 }
 
-type BackendParameters struct {
-	LogProcessorLambdaMemorySize int    `yaml:"LogProcessorLambdaMemorySize"`
-	CloudWatchLogRetentionDays   int    `yaml:"CloudWatchLogRetentionDays"`
-	Debug                        bool   `yaml:"Debug"`
-	LayerVersionArns             string `yaml:"LayerVersionArns"`
-	PythonLayerVersionArn        string `yaml:"PythonLayerVersionArn"`
-	WebApplicationCertificateArn string `yaml:"WebApplicationCertificateArn"`
-	CustomDomain                 string `yaml:"CustomDomain"`
-	TracingMode                  string `yaml:"TracingMode"`
+type Monitoring struct {
+	AlarmSnsTopicArn           string `yaml:"AlarmSnsTopicArn"`
+	CloudWatchLogRetentionDays int    `yaml:"CloudWatchLogRetentionDays"`
+	Debug                      bool   `yaml:"Debug"`
+	EnableS3AccessLogs         bool   `yaml:"EnableS3AccessLogs"`
+	S3AccessLogsBucket         string `yaml:"S3AccessLogsBucket"`
+	TracingMode                string `yaml:"TracingMode"`
 }
 
-type FrontendParameters struct {
-	WebApplicationFargateTaskCPU    int `yaml:"WebApplicationFargateTaskCPU"`
-	WebApplicationFargateTaskMemory int `yaml:"WebApplicationFargateTaskMemory"`
+type Setup struct {
+	InitialAnalysisSets []string `yaml:"InitialAnalysisSets"`
+	OnboardSelf         bool     `yaml:"OnboardSelf"`
+	EnableCloudTrail    bool     `yaml:"EnableCloudTrail"`
+	EnableGuardDuty     bool     `yaml:"EnableGuardDuty"`
 }
 
-type MonitoringParameters struct {
-	AlarmSNSTopicARN string `yaml:"AlarmSNSTopicARN"` // where to send alarms (optional)
-}
-
-type OnboardingParameters struct {
-	// whether or not to on board the account running Panther as a Cloud Security source
-	OnboardSelf bool `yaml:"OnboardSelf"`
-	// whether or not to enable CloudTrail in the account
-	EnableCloudTrail bool `yaml:"EnableCloudTrail"`
-	// whether or not to enable GuardDuty in the account
-	EnableGuardDuty bool `yaml:"EnableGuardDuty"`
+type Web struct {
+	CertificateArn string `yaml:"CertificateArn"`
+	CustomDomain   string `yaml:"CustomDomain"`
 }
 
 // Read settings from the config file

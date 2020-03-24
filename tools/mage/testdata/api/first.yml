@@ -27,7 +27,7 @@ produces:
   - application/json
 
 # The name of the CloudFormation resource for the Lambda handler function
-x-panther-lambda-cfn-resource: TestHandlerFunction
+x-panther-lambda-handler: panther-test-api
 
 parameters: # Common parameters shared across multiple methods
   policyId:

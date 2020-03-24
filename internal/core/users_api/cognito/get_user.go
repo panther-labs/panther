@@ -34,7 +34,7 @@ func (g *UsersGateway) GetUser(id *string) (*models.User, error) {
 		&provider.AdminGetUserInput{Username: id, UserPoolId: g.userPoolID})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
-			return nil, &genericapi.DoesNotExistError{Message: "userID=" + *id}
+			return nil, &genericapi.DoesNotExistError{Message: "userID=" + *id + " does not exist"}
 		}
 		return nil, &genericapi.AWSError{Method: "cognito.AdminGetUser", Err: err}
 	}

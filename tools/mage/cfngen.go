@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
@@ -31,28 +32,16 @@ import (
 	"github.com/panther-labs/panther/tools/dashboards"
 )
 
-var (
-	// These are the CF dirs under "deployments" that we want to analyze to generate metrics and alarms
-	// NOTE: keep these up to date!
-	cfDirs = []string{
-		"deployments/compliance",
-		"deployments/core",
-		"deployments/log_analysis",
-		"deployments/web",
-	}
-)
-
 // Generate Glue tables for log processor output as CloudFormation
 func generateGlueTables() error {
-	outDir := filepath.Join("out", "deployments", "log_analysis")
+	outDir := filepath.Dir(glueTemplate)
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
 	}
-	glueCfFileName := filepath.Join(outDir, "gluetables.json")
 
-	glueCfFile, err := os.Create(glueCfFileName)
+	glueCfFile, err := os.Create(glueTemplate)
 	if err != nil {
-		return fmt.Errorf("failed to create file %s: %v", glueCfFileName, err)
+		return fmt.Errorf("failed to create file %s: %v", glueTemplate, err)
 	}
 	defer glueCfFile.Close()
 
@@ -64,7 +53,7 @@ func generateGlueTables() error {
 	}
 
 	if _, err = glueCfFile.Write(cf); err != nil {
-		return fmt.Errorf("failed to write file %s: %v", glueCfFileName, err)
+		return fmt.Errorf("failed to write file %s: %v", glueTemplate, err)
 	}
 	return nil
 }
@@ -105,20 +94,25 @@ func generateAlarms(settings *config.PantherConfig) error {
 		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
 	}
 
-	// loop over deployment CF dirs generating alarms for each
-	for _, cfDir := range cfDirs {
-		logger.Debugf("generating alarm cloudformation for %s", cfDir)
-		alarmsCfBasename := filepath.Base(cfDir) + "_alarms.json"
+	// loop over deployment CF files generating alarms for each
+	for _, cfFile := range cfnFiles() {
+		logger.Debugf("generating alarm cloudformation for %s", cfFile)
+		alarmsCfBasename := strings.TrimSuffix(filepath.Base(cfFile), ".yml") + "_alarms.json"
 		alarmsCfFilePath := filepath.Join(outDir, alarmsCfBasename) // where we will write
 
 		// generate alarms
-		fileAlarms, cf, err := cloudwatchcf.GenerateAlarms(cfDir, settings)
+		fileAlarms, cf, err := cloudwatchcf.GenerateAlarms(settings, cfFile)
 		if err != nil {
 			return fmt.Errorf("failed to generate alarms CloudFormation template %s: %v", alarmsCfFilePath, err)
 		}
+		if len(fileAlarms) == 0 {
+			logger.Debugf("no alarms for %s", cfFile)
+			continue
+		}
+
 		alarms = append(alarms, fileAlarms...) // save for validation
 
-		// write cf to file referenced in master template
+		// write cf to file
 		alarmsCfFile, err := os.Create(alarmsCfFilePath)
 		if err != nil {
 			return fmt.Errorf("failed to create file %s: %v", alarmsCfFilePath, err)
@@ -147,7 +141,7 @@ func generateAlarms(settings *config.PantherConfig) error {
 
 // return a map to look up if a resource has associated cfndoc documentation
 func resourceDocumentation() (resourceLookup map[string]struct{}) {
-	docs, err := cfndoc.ReadDirs(cfDirs...)
+	docs, err := cfndoc.ReadCfn(cfnFiles()...)
 	if err != nil {
 		logger.Fatalf("failed to generate operational documentation: %v", err)
 	}
@@ -172,9 +166,9 @@ func generateMetrics() error {
 	}
 	defer metricsCfFile.Close()
 
-	cf, err := cloudwatchcf.GenerateMetrics(cfDirs...)
+	cf, err := cloudwatchcf.GenerateMetrics(cfnFiles()...)
 	if err != nil {
-		return fmt.Errorf("failed to generate alarms CloudFormation template: %v", err)
+		return fmt.Errorf("failed to generate metrics CloudFormation template: %v", err)
 	}
 
 	if _, err = metricsCfFile.Write(cf); err != nil {
