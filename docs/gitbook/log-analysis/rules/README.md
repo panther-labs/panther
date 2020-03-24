@@ -53,16 +53,27 @@ Each Rule takes an `event` input of a given log type. For information on log for
 
 ### Rule Body
 
-Each rule must contain the following `rule` function:
+The rule body MUST:
+* Be valid Python3
+* Define a `rule()` function that accepts one argument
+* Return a `bool` from the rule function
 
 ```python
 def rule(event):
   return True
 ```
 
-Using the schemas in [supported logs](log-analysis/supported-logs) can give you an idea of what fields will exist.
+The Python body SHOULD:
+* Name the argument to the `rule()` function `event`
 
-It's recommend to always use `.get()` when accessing fields since empty values are omitted from the event.
+The Python body MAY:
+* Import standard Python3 libraries
+* Define additional helper functions as needed
+* Define variables and classes outside the scope of the rule function
+
+Using the schemas in [supported logs](log-analysis/supported-logs) provides details on all available fields in events. When accessing event fields, it's recommend to always use `.get()` since empty key/values are omitted from the event.
+
+#### Example Rule
 
 For example, let's write a rule on an [NGINX Access](log-analysis/supported-logs/nginx#nginx-access) log:
 
@@ -151,12 +162,22 @@ Write your rule as you would above, and save it as `folder/my_new_rule.py`.
 
 ### Rule Attributes
 
-Create a second specifications file in the same path, with the same prefix: `folder/my_new_rule.yml`. You may also you JSON.
+The specification file MUST:
 
-This file should have the following layout:
+* Be valid JSON/YAML
+* Define an `AnalysisType` field with the value `rule`
+* Have the same name as the Python rule.
+
+Define the additional following fields:
+* Enabled
+* FileName
+* PolicyID
+* ResourceTypes
+* Severity
+
+An example file:
 
 ```yml
-# PolicyID and ResourceTypes will be renamed soon to better accommodate rules
 AnalysisType: rule
 Enabled: true
 Filename: my_new_rule.py
