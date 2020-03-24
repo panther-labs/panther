@@ -16,6 +16,7 @@
 
 from abc import abstractmethod
 from functools import lru_cache
+import os
 from typing import Any, Dict
 
 import boto3
@@ -29,6 +30,7 @@ from ..common.exceptions import RemediationException, RemediationNotAuthorized
 
 _STS_CLIENT_MAP: Dict[str, BaseClient] = {}
 _DEFAULT_STS_REGION = 'us-east-1'
+_ROLE_FORMAT = os.getenv('ROLE_FORMAT')
 
 
 class RemediationBase:
@@ -128,7 +130,7 @@ class RemediationBase:
             """Refresh credentials by invoking STS AssumeRole operation"""
             cls.logger.info("Refreshing credentials for account %s and region %s", account_id, region)
             params = {
-                'RoleArn': 'arn:aws:iam::{}:role/PantherRemediationRole'.format(account_id),
+                'RoleArn': _ROLE_FORMAT.format(account_id),
                 'RoleSessionName': 'RemediationSession',
                 'DurationSeconds': 3600,
             }
