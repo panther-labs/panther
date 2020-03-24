@@ -23,6 +23,7 @@ package testutil
 import (
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -34,8 +35,6 @@ func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*
 	event := events[0]
 	require.NotNil(t, event)
 	require.NotNil(t, event.Event())
-
-	event.SetEvent(expectedEvent.Event()) // set pack ptr to so equal test works
 
 	// rowid changes each time
 	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
@@ -50,5 +49,11 @@ func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*
 		expectedEvent.PantherEventTime = event.PantherParseTime
 	}
 
-	require.Equal(t, expectedEvent.Event(), event.Event())
+	// serialize as JSON using back pointers to compare
+	expectedJSON, err := jsoniter.Marshal(expectedEvent.Event())
+	require.NoError(t, err)
+	eventJSON, err := jsoniter.Marshal(event.Event())
+	require.NoError(t, err)
+
+	require.JSONEq(t, (string)(expectedJSON), (string)(eventJSON))
 }

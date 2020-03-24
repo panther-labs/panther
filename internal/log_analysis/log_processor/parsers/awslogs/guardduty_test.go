@@ -181,6 +181,7 @@ func TestGuardDutyLogType(t *testing.T) {
 }
 
 func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
+	expectedEvent.SetEvent(expectedEvent)
 	parser := &GuardDutyParser{}
 	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }
