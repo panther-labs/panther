@@ -174,17 +174,19 @@ func AlarmName(alarmType, resourceName string) string {
 
 // GenerateAlarms will read the CF in yml files in the cfDir, and generate CF for CloudWatch alarms for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateAlarms(cfDir string, settings *config.PantherConfig) ([]*Alarm, []byte, error) {
+func GenerateAlarms(settings *config.PantherConfig, cfFiles ...string) ([]*Alarm, []byte, error) {
 	var alarms []*Alarm
-	if err := walkYamlFiles(cfDir, func(path string) error {
+	includesBootstrap := false
+	for _, path := range cfFiles {
 		fileAlarms, err := generateAlarms(path, settings)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 		alarms = append(alarms, fileAlarms...)
-		return nil
-	}); err != nil {
-		return nil, nil, err
+
+		if filepath.Base(path) == "bootstrap.yml" {
+			includesBootstrap = true
+		}
 	}
 
 	resources := make(map[string]interface{})
@@ -196,10 +198,10 @@ func GenerateAlarms(cfDir string, settings *config.PantherConfig) ([]*Alarm, []b
 	parameters := map[string]interface{}{
 		topicParameterName: cfngen.Parameter{Type: "String"},
 	}
-	switch filepath.Base(cfDir) {
-	case "core":
+
+	if includesBootstrap {
+		// The bootstrap stack has AppSync and the ELB
 		parameters[appsyncParameterName] = cfngen.Parameter{Type: "String"}
-	case "web":
 		parameters[elbParameterName] = cfngen.Parameter{Type: "String"}
 	}
 

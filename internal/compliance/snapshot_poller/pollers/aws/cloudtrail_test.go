@@ -157,7 +157,6 @@ func TestCloudTrailBuildError(t *testing.T) {
 func TestCloudTrailPoller(t *testing.T) {
 	awstest.MockCloudTrailForSetup = awstest.BuildMockCloudTrailSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 
 	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
@@ -211,7 +210,6 @@ func TestCloudTrailPollerPartialError(t *testing.T) {
 		)
 	awstest.MockCloudTrailForSetup = mockCloudTrailSvc
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 	S3ClientFunc = awstest.SetupMockS3
 
@@ -242,7 +240,6 @@ func TestCloudTrailPollerEmpty(t *testing.T) {
 	awstest.MockCloudTrailForSetup = mockCloudTrailSvc
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
-	AssumeRoleFunc = awstest.AssumeRoleMock
 
 	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,

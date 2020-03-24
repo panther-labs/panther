@@ -47,7 +47,7 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 
 	transformed, err := embedAPIs(data)
 	require.NoError(t, err)
-	assert.Nil(t, transformed) // no changes - nil is returned
+	assert.YAMLEq(t, string(data), string(transformed))
 }
 
 func TestEmbedAPIs(t *testing.T) {

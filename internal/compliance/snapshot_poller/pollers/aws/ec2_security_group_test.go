@@ -46,7 +46,7 @@ func TestEC2DescribeSecurityGroupsError(t *testing.T) {
 func TestEC2PollSecurityGroups(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
+	assumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2SecurityGroups(&awsmodels.ResourcePollerInput{
@@ -69,7 +69,7 @@ func TestEC2PollSecurityGroups(t *testing.T) {
 func TestEC2PollSecurityGroupsError(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
+	assumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2SecurityGroups(&awsmodels.ResourcePollerInput{

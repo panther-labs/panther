@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field, Formik } from 'formik';
 import * as Yup from 'yup';
-import { SubmitButton } from 'Components/Buttons';
+import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
 import { Card, Text } from 'pouncejs';

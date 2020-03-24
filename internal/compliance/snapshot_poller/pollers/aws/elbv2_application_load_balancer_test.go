@@ -31,14 +31,16 @@ import (
 func TestElbv2DescribeLoadBalancers(t *testing.T) {
 	mockSvc := awstest.BuildMockElbv2Svc([]string{"DescribeLoadBalancersPages"})
 
-	out := describeLoadBalancers(mockSvc)
+	out, err := describeLoadBalancers(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestElbv2DescribeLoadBalancersError(t *testing.T) {
 	mockSvc := awstest.BuildMockElbv2SvcError([]string{"DescribeLoadBalancersPages"})
 
-	out := describeLoadBalancers(mockSvc)
+	out, err := describeLoadBalancers(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -128,7 +130,6 @@ func TestElbv2ApplicationLoadBalancersPoller(t *testing.T) {
 	awstest.MockElbv2ForSetup = awstest.BuildMockElbv2SvcAll()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	Elbv2ClientFunc = awstest.SetupMockElbv2
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
@@ -156,7 +157,6 @@ func TestElbv2ApplicationLoadBalancersPollerError(t *testing.T) {
 	awstest.MockElbv2ForSetup = awstest.BuildMockElbv2SvcAllError()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	Elbv2ClientFunc = awstest.SetupMockElbv2
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
@@ -168,7 +168,7 @@ func TestElbv2ApplicationLoadBalancersPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

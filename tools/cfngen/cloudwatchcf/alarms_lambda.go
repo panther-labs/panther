@@ -83,7 +83,7 @@ func generateLambdaAlarms(resource map[interface{}]interface{}, settings *config
 	// https://github.com/panther-labs/panther/issues/435
 	const pantherLogProcessorLambda = "panther-log-processor"
 	if getResourceProperty("FunctionName", resource) == pantherLogProcessorLambda {
-		lambdaMem = (float32)(settings.BackendParameterValues.LogProcessorLambdaMemorySize)
+		lambdaMem = (float32)(settings.Infra.LogProcessorLambdaMemorySize)
 	} else {
 		lambdaMem = getResourceFloat32Property(memorySizeKey, resource)
 	}

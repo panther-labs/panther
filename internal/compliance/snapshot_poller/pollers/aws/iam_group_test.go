@@ -154,7 +154,6 @@ func TestBuildIamGroupSnapshotError(t *testing.T) {
 func TestIamGroupPoller(t *testing.T) {
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	IAMClientFunc = awstest.SetupMockIAM
 
 	resources, err := PollIamGroups(&awsmodels.ResourcePollerInput{
@@ -172,7 +171,6 @@ func TestIamGroupPoller(t *testing.T) {
 func TestIamGroupPollerError(t *testing.T) {
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	IAMClientFunc = awstest.SetupMockIAM
 
 	resources, err := PollIamGroups(&awsmodels.ResourcePollerInput{

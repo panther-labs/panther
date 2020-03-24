@@ -238,7 +238,6 @@ func TestS3GetBucketLifecycleConfigurationError(t *testing.T) {
 func TestS3BucketPoller(t *testing.T) {
 	awstest.MockS3ForSetup = awstest.BuildMockS3SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	S3ClientFunc = awstest.SetupMockS3
 
 	resources, err := PollS3Buckets(&awsmodels.ResourcePollerInput{
@@ -257,7 +256,6 @@ func TestS3BucketPoller(t *testing.T) {
 func TestS3BucketPollerError(t *testing.T) {
 	awstest.MockS3ForSetup = awstest.BuildMockS3SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	S3ClientFunc = awstest.SetupMockS3
 
 	resources, err := PollS3Buckets(&awsmodels.ResourcePollerInput{

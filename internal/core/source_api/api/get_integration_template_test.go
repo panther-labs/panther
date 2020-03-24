@@ -52,6 +52,7 @@ func TestCloudSecTemplate(t *testing.T) {
 	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-cloudsec-iam-updated.yml")
 	require.NoError(t, err)
 	require.YAMLEq(t, string(expectedTemplate), *result.Body)
+	require.Equal(t, "panther-cloudsec-setup", *result.StackName)
 }
 
 func TestLogAnalysisTemplate(t *testing.T) {
@@ -75,4 +76,5 @@ func TestLogAnalysisTemplate(t *testing.T) {
 	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-log-analysis-iam-updated.yml")
 	require.NoError(t, err)
 	require.YAMLEq(t, string(expectedTemplate), *result.Body)
+	require.Equal(t, "panther-log-analysis-setup-testlabel-", *result.StackName)
 }

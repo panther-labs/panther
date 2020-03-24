@@ -37,9 +37,6 @@ const (
 	cloudSecLabel      = "panther-account"
 	logProcessingLabel = "panther-account" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
 
-	onboardStack    = "panther-app-onboard"
-	onboardTemplate = "deployments/onboard.yml"
-
 	// CloudSec IAM Roles, DO NOT CHANGE! panther-cloudsec-iam.yml CF depends on these names
 	realTimeEventStackSetURL             = "https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml" // nolint:lll
 	realTimeEventsStackSet               = "panther-real-time-events"
@@ -54,38 +51,39 @@ func genLogProcessingLabel(awsSession *session.Session) string {
 }
 
 // onboard Panther to monitor Panther account
-func deployOnboard(awsSession *session.Session, settings *config.PantherConfig, bucketOutputs, backendOutputs map[string]string) {
-	deployOnboardTemplate(awsSession, settings, bucketOutputs)
-	registerPantherAccount(awsSession, bucketOutputs, backendOutputs) // this MUST follow the CloudSec roles being deployed
-	deployRealTimeStackSet(awsSession, backendOutputs["AWSAccountId"])
+func deployOnboard(awsSession *session.Session, settings *config.PantherConfig, accountID string, bootstrapOutputs map[string]string) {
+	deployOnboardTemplate(awsSession, settings, bootstrapOutputs)
+	// registerPantherAccount MUST follow the CloudSec roles being deployed
+	registerPantherAccount(awsSession, settings, accountID, bootstrapOutputs["AuditLogsBucket"])
+	deployRealTimeStackSet(awsSession, accountID)
 }
 
-func deployOnboardTemplate(awsSession *session.Session, settings *config.PantherConfig, bucketOutputs map[string]string) {
-	if settings.OnboardParameterValues.EnableCloudTrail {
+func deployOnboardTemplate(awsSession *session.Session, settings *config.PantherConfig, bootstrapOutputs map[string]string) {
+	if settings.Setup.EnableCloudTrail {
 		logger.Info("deploy: enabling CloudTrail in Panther account (see panther_config.yml)")
 	}
-	if settings.OnboardParameterValues.EnableGuardDuty {
+	if settings.Setup.EnableGuardDuty {
 		logger.Info("deploy: enabling Guard Duty in Panther account (see panther_config.yml)")
 	}
 
 	// GD is account wide, not regional. Test if some other region has already enabled GD.
 	if guardDutyEnabledOutsidePanther(awsSession, settings) {
 		logger.Info("deploy: Guard Duty is already enabled for this account (not by Panther)")
-		settings.OnboardParameterValues.EnableGuardDuty = false
+		settings.Setup.EnableGuardDuty = false
 	}
 
 	params := map[string]string{
-		"AuditLogsBucket":        bucketOutputs["AuditLogsBucket"],
-		"EnableCloudTrail":       strconv.FormatBool(settings.OnboardParameterValues.EnableCloudTrail),
-		"EnableGuardDuty":        strconv.FormatBool(settings.OnboardParameterValues.EnableGuardDuty),
+		"AuditLogsBucket":        bootstrapOutputs["AuditLogsBucket"],
+		"EnableCloudTrail":       strconv.FormatBool(settings.Setup.EnableCloudTrail),
+		"EnableGuardDuty":        strconv.FormatBool(settings.Setup.EnableGuardDuty),
 		"LogProcessingRoleLabel": genLogProcessingLabel(awsSession),
 	}
-	onboardOutputs := deployTemplate(awsSession, onboardTemplate, bucketOutputs["SourceBucketName"], onboardStack, params)
-	configureLogProcessingUsingAPIs(awsSession, settings, bucketOutputs, onboardOutputs)
+	onboardOutputs := deployTemplate(awsSession, onboardTemplate, bootstrapOutputs["SourceBucket"], onboardStack, params)
+	configureLogProcessingUsingAPIs(awsSession, settings, bootstrapOutputs["AuditLogsBucket"], onboardOutputs)
 }
 
-func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendOutputs map[string]string) {
-	logger.Infof("deploy: registering account %s with Panther for monitoring", backendOutputs["AWSAccountId"])
+func registerPantherAccount(awsSession *session.Session, settings *config.PantherConfig, accountID, auditLogsBucket string) {
+	logger.Infof("deploy: registering account %s with Panther for monitoring", accountID)
 
 	// avoid alarms/errors and check first if the integrations exist
 	var listOutput []*models.SourceIntegration
@@ -102,66 +100,72 @@ func registerPantherAccount(awsSession *session.Session, bucketOutputs, backendO
 	// fails this generates alarms. We don't want that so we check first and give a nice message.
 	registerCloudSec, registerLogProcessing := true, true
 	for _, integration := range listOutput {
-		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
+		if *integration.AWSAccountID == accountID &&
 			*integration.IntegrationType == models.IntegrationTypeAWSScan &&
 			*integration.IntegrationLabel == cloudSecLabel {
 
-			logger.Infof("deploy: account %s is already registered for cloud security", backendOutputs["AWSAccountId"])
+			logger.Infof("deploy: account %s is already registered for cloud security", accountID)
 			registerCloudSec = false
 		}
-		if *integration.AWSAccountID == backendOutputs["AWSAccountId"] &&
+		if *integration.AWSAccountID == accountID &&
 			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
 			*integration.IntegrationLabel == genLogProcessingLabel(awsSession) {
 
-			logger.Infof("deploy: account %s is already registered for log processing", backendOutputs["AWSAccountId"])
+			logger.Infof("deploy: account %s is already registered for log processing", accountID)
 			registerLogProcessing = false
 		}
 	}
 
 	if registerCloudSec {
-		var cloudSecInput = struct {
-			PutIntegration *models.PutIntegrationInput
-		}{
-			&models.PutIntegrationInput{
+		input := &models.LambdaInput{
+			PutIntegration: &models.PutIntegrationInput{
 				PutIntegrationSettings: models.PutIntegrationSettings{
-					AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
-					IntegrationLabel: aws.String(cloudSecLabel),
-					IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-					ScanIntervalMins: aws.Int(1440),
-					UserID:           aws.String(mageUserID),
+					AWSAccountID:       aws.String(accountID),
+					IntegrationLabel:   aws.String(cloudSecLabel),
+					IntegrationType:    aws.String(models.IntegrationTypeAWSScan),
+					ScanIntervalMins:   aws.Int(1440),
+					UserID:             aws.String(mageUserID),
+					CWEEnabled:         aws.Bool(true),
+					RemediationEnabled: aws.Bool(true),
 				},
 			},
 		}
-		if err := invokeLambda(awsSession, "panther-source-api", cloudSecInput, nil); err != nil &&
+		if err := invokeLambda(awsSession, "panther-source-api", input, nil); err != nil &&
 			!strings.Contains(err.Error(), "already onboarded") {
 
 			logger.Fatalf("error calling lambda to register account for cloud security: %v", err)
 		}
-		logger.Infof("deploy: account %s registered for cloud security",
-			backendOutputs["AWSAccountId"])
+		logger.Infof("deploy: account %s registered for cloud security", accountID)
 	}
 
 	if registerLogProcessing {
-		var logProcessingInput = struct {
-			PutIntegration *models.PutIntegrationInput
-		}{
-			&models.PutIntegrationInput{
+		logTypes := []string{"AWS.S3ServerAccess", "AWS.VPCFlow", "AWS.ALB"}
+		if settings.Setup.EnableCloudTrail {
+			logTypes = append(logTypes, "AWS.CloudTrail")
+		}
+		if settings.Setup.EnableGuardDuty {
+			logTypes = append(logTypes, "AWS.GuardDuty")
+		}
+
+		input := &models.LambdaInput{
+			PutIntegration: &models.PutIntegrationInput{
 				PutIntegrationSettings: models.PutIntegrationSettings{
-					AWSAccountID:     aws.String(backendOutputs["AWSAccountId"]),
+					AWSAccountID:     aws.String(accountID),
 					IntegrationLabel: aws.String(genLogProcessingLabel(awsSession)),
 					IntegrationType:  aws.String(models.IntegrationTypeAWS3),
 					UserID:           aws.String(mageUserID),
-					S3Bucket:         aws.String(bucketOutputs["AuditLogsBucket"]),
+					S3Bucket:         aws.String(auditLogsBucket),
+					LogTypes:         aws.StringSlice(logTypes),
 				},
 			},
 		}
-		if err := invokeLambda(awsSession, "panther-source-api", logProcessingInput, nil); err != nil &&
+
+		if err := invokeLambda(awsSession, "panther-source-api", input, nil); err != nil &&
 			!strings.Contains(err.Error(), "already onboarded") {
 
 			logger.Fatalf("error calling lambda to register account for log processing: %v", err)
 		}
-		logger.Infof("deploy: account %s registered for log processing",
-			backendOutputs["AWSAccountId"])
+		logger.Infof("deploy: account %s registered for log processing", accountID)
 	}
 }
 
@@ -222,18 +226,18 @@ func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string
 	}
 }
 
-func configureLogProcessingUsingAPIs(awsSession *session.Session, settings *config.PantherConfig,
-	bucketOutputs, onboardOutputs map[string]string) {
+func configureLogProcessingUsingAPIs(
+	awsSession *session.Session, settings *config.PantherConfig, auditLogsBucket string, onboardOutputs map[string]string) {
 
 	// currently GuardDuty does not support this in CF
-	configureLogProcessingGuardDuty(awsSession, settings, bucketOutputs, onboardOutputs)
+	configureLogProcessingGuardDuty(awsSession, settings, auditLogsBucket, onboardOutputs)
 
 	// configure notifications on the audit bucket, cannot be done via CF
 	topicArn := onboardOutputs["LogProcessingTopicArn"]
-	logBucket := bucketOutputs["AuditLogsBucket"]
+
 	s3Client := s3.New(awsSession)
 	input := &s3.PutBucketNotificationConfigurationInput{
-		Bucket: aws.String(logBucket),
+		Bucket: aws.String(auditLogsBucket),
 		NotificationConfiguration: &s3.NotificationConfiguration{
 			TopicConfigurations: []*s3.TopicConfiguration{
 				{
@@ -247,12 +251,12 @@ func configureLogProcessingUsingAPIs(awsSession *session.Session, settings *conf
 	}
 	_, err := s3Client.PutBucketNotificationConfiguration(input)
 	if err != nil {
-		logger.Fatalf("failed to add s3 notifications to %s from %s: %v", logBucket, topicArn, err)
+		logger.Fatalf("failed to add s3 notifications to %s from %s: %v", auditLogsBucket, topicArn, err)
 	}
 }
 
 func guardDutyEnabledOutsidePanther(awsSession *session.Session, settings *config.PantherConfig) bool {
-	if !settings.OnboardParameterValues.EnableGuardDuty {
+	if !settings.Setup.EnableGuardDuty {
 		return false
 	}
 	gdClient := guardduty.New(awsSession)
@@ -264,22 +268,23 @@ func guardDutyEnabledOutsidePanther(awsSession *session.Session, settings *confi
 	if len(output.DetectorIds) != 1 {
 		return false // we only make 1
 	}
+
 	// we need to check that it is THIS region's stack the enabled it
 	_, onboardOutput, err := describeStack(cloudformation.New(awsSession), onboardStack)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudformation.ErrCodeStackSetNotFoundException {
+		if errStackDoesNotExist(err) {
 			return true // not deployed anything yet in this region BUT it is enabled, must be another deployment
 		}
 		logger.Fatalf("deploy: cannot check stack %s: %v", onboardStack, err)
 	}
 	// if my stack has no reference, then it must have been enabled by another deployment
-	return len(onboardOutput) == 0 || onboardOutput["GuardDutyDetectorId"] == ""
+	return onboardOutput["GuardDutyDetectorId"] == ""
 }
 
-func configureLogProcessingGuardDuty(awsSession *session.Session, settings *config.PantherConfig,
-	bucketOutputs, onboardOutputs map[string]string) {
+func configureLogProcessingGuardDuty(
+	awsSession *session.Session, settings *config.PantherConfig, auditLogsBucket string, onboardOutputs map[string]string) {
 
-	if !settings.OnboardParameterValues.EnableGuardDuty {
+	if !settings.Setup.EnableGuardDuty {
 		return
 	}
 	gdClient := guardduty.New(awsSession)
@@ -287,14 +292,14 @@ func configureLogProcessingGuardDuty(awsSession *session.Session, settings *conf
 		DetectorId:      aws.String(onboardOutputs["GuardDutyDetectorId"]),
 		DestinationType: aws.String("S3"),
 		DestinationProperties: &guardduty.DestinationProperties{
-			DestinationArn: aws.String("arn:aws:s3:::" + bucketOutputs["AuditLogsBucket"]),
+			DestinationArn: aws.String("arn:aws:s3:::" + auditLogsBucket),
 			KmsKeyArn:      aws.String(onboardOutputs["GuardDutyKmsKeyArn"]),
 		},
 	}
 	_, err := gdClient.CreatePublishingDestination(publishInput)
 	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		logger.Fatalf("failed to configure Guard Duty detector %s to use bucket %s with kms key %s: %v",
-			onboardOutputs["GuardDutyDetectorId"], bucketOutputs["AuditLogsBucket"],
+			onboardOutputs["GuardDutyDetectorId"], auditLogsBucket,
 			onboardOutputs["GuardDutyKmsKeyArn"], err)
 	}
 }

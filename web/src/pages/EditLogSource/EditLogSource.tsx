@@ -46,6 +46,7 @@ const EditLogSource: React.FC = () => {
   const initialValues = React.useMemo(
     () => ({
       integrationId: data?.getLogIntegration.integrationId,
+      initialStackName: data?.getLogIntegration.stackName,
       awsAccountId: data?.getLogIntegration.awsAccountId ?? 'Loading...',
       integrationLabel: data?.getLogIntegration.integrationLabel ?? 'Loading...',
       s3Bucket: data?.getLogIntegration.s3Bucket ?? 'Loading...',

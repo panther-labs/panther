@@ -58,7 +58,7 @@ Resources:
                 passthroughBehavior: never
                 type: aws_proxy
                 uri:
-                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${TestHandlerFunction}/invocations
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-test-api/invocations
               x-amazon-apigateway-request-validator: validate-all
         produces:
           - application/json

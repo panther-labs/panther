@@ -35,7 +35,7 @@ func (g *UsersGateway) UpdateUser(input *models.UpdateUserInput) error {
 	}
 	if _, err := g.userPoolClient.AdminUpdateUserAttributes(cognitoInput); err != nil {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
-			return &genericapi.DoesNotExistError{Message: "userID=" + *input.ID}
+			return &genericapi.DoesNotExistError{Message: "userID=" + *input.ID + " does not exist"}
 		}
 		return &genericapi.AWSError{Method: "cognito.AdminUpdateUserAttributes", Err: err}
 	}

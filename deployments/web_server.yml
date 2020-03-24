@@ -18,105 +18,44 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: The service that defines the front-end NodeJS server that serves the Panther web application statics
 
 Parameters:
-  VpcId:
-    Type: String
-    Description: The ID of the VPC associated with the service
+  # Passed in from bootstrap.yml stack
   SubnetOneId:
     Type: String
     Description: The ID of a subnet in the VPC above
   SubnetTwoId:
     Type: String
     Description: The ID of another subnet in the VPC above
-  LoadBalancerListenerArn:
+  ElbTargetGroup:
     Type: String
-    Description: The ARN of the load balancer that accepts & forwards incoming traffic to the current ECS tasks
-  LoadBalancerSecurityGroupId:
+    Description: The ARN of the load balancer target group
+  SecurityGroup:
     Type: String
-    Description: The ID of the security group that is related with the Load Balancer that sits int front of this service
-  ClusterName:
-    Type: String
-    Description: The name of the cluster that the server should be attached to
+    Description: Web app security group ID
+
+  # Generated in deploy process
   Image:
     Type: String
     Description: The container image to use for the front-end web application server
-  ServiceName:
-    Type: String
-    Description: The name of the service that will host the tasks that serve the application
-    Default: panther-web
+
+  CPU:
+    Type: Number
+    Description: The size of the CPU allocated to the server
+    Default: 512
+  Memory:
+    Type: Number
+    Description: The MB of memory allocated to the server
+    Default: 1024
   Port:
     Type: Number
     Default: 80
     Description: The exposed port of the application, that will be used by the VPC & Container
-  CPU:
-    Type: Number
-    Description: The size of the CPU allocated to the server
-  Memory:
-    Type: Number
-    Description: The MB of memory allocated to the server
 
 Resources:
-  # A target group is connected to a network or application load balancer, so it can automatically
-  # distribute traffic across all the targets.
-  TargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      Name: !Ref ServiceName
-      HealthCheckProtocol: HTTP
-      HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 60
-      HealthCheckPath: /healthcheck
-      HealthCheckTimeoutSeconds: 6
-      HealthyThresholdCount: 2
-      UnhealthyThresholdCount: 3
-      TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds # Instantly deregister draining targets since we have 200% max capacity
-          Value: '0'
-      TargetType: ip
-      Port: !Ref Port
-      Protocol: HTTP
-      VpcId: !Ref VpcId
-
-  # Adds the networking stack to a security group and exposes the necessary TCP ports that allow
-  # our server to communicate with the outside world.
-  WebApplicationServerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: !Sub ${ServiceName}-container
-      GroupDescription: Access to the Fargate containers
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: !Ref Port
-          ToPort: !Ref Port
-          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroupId
-      VpcId: !Ref VpcId
-
-  EcsSecurityGroupIngressFromPublicALB:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Ingress from the public ALB
-      GroupId: !Ref WebApplicationServerSecurityGroup
-      IpProtocol: '-1'
-      SourceSecurityGroupId: !Ref LoadBalancerSecurityGroupId
-
-  # Create a rule on the load balancer for routing traffic to the target group
-  LoadBalancerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref TargetGroup
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - '*'
-      ListenerArn: !Ref LoadBalancerListenerArn
-      Priority: 1
-
   # The service that will instantiate a server task and restrict access through our ALB
   WebApplicationServer:
     Type: AWS::ECS::Service
     Properties:
-      Cluster: !Ref ClusterName
+      Cluster: panther-web-cluster
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 50
@@ -129,18 +68,18 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref WebApplicationServerSecurityGroup
+            - !Ref SecurityGroup
           Subnets:
             - !Ref SubnetOneId
             - !Ref SubnetTwoId
       PlatformVersion: LATEST
       SchedulingStrategy: REPLICA
-      ServiceName: !Ref ServiceName
+      ServiceName: panther-web
       TaskDefinition: !Ref WebApplicationServerDefinition
       LoadBalancers:
-        - ContainerName: !Ref ServiceName
+        - ContainerName: panther-web
           ContainerPort: !Ref Port
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref ElbTargetGroup
 
   # The role that allows the containers in the task to pull images and publish logs to CloudWatch
   WebApplicationServerExecutionRole:
@@ -152,7 +91,6 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
-      Path: /
       Policies:
         - PolicyName: CloudWatchLogsPolicy
           PolicyDocument:
@@ -179,14 +117,14 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub ${ServiceName}-logs
+      LogGroupName: panther-web-logs
 
   # The container definition for the image that runs the NodeJS server which serves our assets
   WebApplicationServerDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
-        - Name: !Ref ServiceName
+        - Name: panther-web
           Cpu: !Ref CPU
           DisableNetworking: false
           Environment:
@@ -200,9 +138,9 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub ${ServiceName}-logs
+              awslogs-group: !Ref LogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Ref ServiceName
+              awslogs-stream-prefix: panther-web
           Memory: !Ref Memory
           MemoryReservation: !Ref Memory
           PortMappings:
@@ -210,13 +148,8 @@ Resources:
           ReadonlyRootFilesystem: false
       Cpu: !Ref CPU
       ExecutionRoleArn: !GetAtt WebApplicationServerExecutionRole.Arn
-      Family: !Ref ServiceName
+      Family: panther-web
       Memory: !Ref Memory
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-
-Outputs:
-  ServiceName:
-    Description: The name of the service that the hosts the front-end server
-    Value: !GetAtt WebApplicationServer.Name

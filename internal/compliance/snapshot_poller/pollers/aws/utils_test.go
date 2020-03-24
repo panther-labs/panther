@@ -1,4 +1,4 @@
-package mage
+package aws
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -19,22 +19,19 @@ package mage
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/panther-labs/panther/tools/config"
+	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
 )
 
-const (
-	monitoringStack    = "panther-app-monitoring"
-	monitoringTemplate = "deployments/monitoring.yml"
-)
+func init() {
+	// sets an empty session for tests
+	snapshotPollerSession = &session.Session{}
 
-// The caller is responsible for generating the nested templates
-func deployMonitoring(awsSession *session.Session, bucket string, backendOutputs map[string]string, settings *config.PantherConfig) {
-	params := map[string]string{
-		"AlarmTopicArn":        settings.MonitoringParameterValues.AlarmSNSTopicARN,
-		"AppsyncId":            backendOutputs["WebApplicationGraphqlApiId"],
-		"LoadBalancerFullName": backendOutputs["WebApplicationLoadBalancerFullName"],
+	// mocks the assume role
+	assumeRoleFunc = awstest.AssumeRoleMock
+	verifyAssumedCredsFunc = func(creds *credentials.Credentials, region string) error {
+		return nil
 	}
-	deployTemplate(awsSession, monitoringTemplate, bucket, monitoringStack, params)
 }

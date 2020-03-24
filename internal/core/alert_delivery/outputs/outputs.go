@@ -117,7 +117,7 @@ func generateDetailedAlertMessage(alert *alertmodels.Alert) string {
 
 func generateAlertTitle(alert *alertmodels.Alert) string {
 	if alert.Title != nil {
-		return *alert.Title
+		return "New Alert: " + *alert.Title
 	}
 	if aws.StringValue(alert.Type) == alertmodels.RuleType {
 		return "New Alert: " + getDisplayName(alert)

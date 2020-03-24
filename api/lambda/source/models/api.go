@@ -77,9 +77,9 @@ type PutIntegrationSettings struct {
 	ScanIntervalMins   *int      `json:"scanIntervalMins,omitempty" validate:"omitempty,oneof=60 180 360 720 1440"`
 	UserID             *string   `json:"userId" validate:"required,uuid4"`
 	S3Bucket           *string   `json:"s3Bucket,omitempty"`
-	S3Prefix           *string   `json:"s3Prefix,omitempty"`
-	KmsKey             *string   `json:"kmsKey,omitempty"`
-	LogTypes           []*string `json:"logTypes,omitempty"`
+	S3Prefix           *string   `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
+	KmsKey             *string   `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
+	LogTypes           []*string `json:"logTypes,omitempty" validate:"omitempty,min=1"`
 }
 
 //
@@ -102,9 +102,9 @@ type GetIntegrationTemplateInput struct {
 	IntegrationLabel   *string `json:"integrationLabel" validate:"required,integrationLabel"`
 	RemediationEnabled *bool   `json:"remediationEnabled,omitempty"`
 	CWEEnabled         *bool   `json:"cweEnabled,omitempty"`
-	S3Bucket           *string `json:"s3Bucket,omitempty"`
-	S3Prefix           *string `json:"s3Prefix,omitempty"`
-	KmsKey             *string `json:"kmsKey,omitempty"`
+	S3Bucket           *string `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
+	S3Prefix           *string `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
+	KmsKey             *string `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
 }
 
 //
@@ -143,8 +143,8 @@ type UpdateIntegrationSettingsInput struct {
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
 	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Bucket           *string   `json:"s3Bucket,omitempty"`
-	S3Prefix           *string   `json:"s3Prefix,omitempty"`
-	KmsKey             *string   `json:"kmsKey,omitempty"`
-	LogTypes           []*string `json:"logTypes,omitempty"`
+	S3Bucket           *string   `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
+	S3Prefix           *string   `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
+	KmsKey             *string   `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
+	LogTypes           []*string `json:"logTypes,omitempty" validate:"omitempty,min=1"`
 }

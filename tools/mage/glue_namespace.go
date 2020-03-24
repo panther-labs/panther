@@ -36,7 +36,7 @@ import (
 // targets for managing Glue tables
 type Glue mg.Namespace
 
-// Update Updates the panther-app-databases cloudformation template (used for schema migrations)
+// Updates the panther-glue cloudformation template (used for schema migrations)
 func (t Glue) Update() {
 	awsSession, err := getSession()
 	if err != nil {
@@ -44,20 +44,16 @@ func (t Glue) Update() {
 	}
 	cfClient := cloudformation.New(awsSession)
 
-	_, bucketStackOutput, err := describeStack(cfClient, bucketStack)
+	status, outputs, err := describeStack(cfClient, bootstrapStack)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	status, backendStackOutput, err := describeStack(cfClient, backendStack)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	if status != "CREATE_COMPLETE" && status != "UPDATE_COMPLETE" {
-		logger.Fatalf("stack %s is not in a deployable state: %s", backendStack, status)
+	if status != cloudformation.StackStatusCreateComplete && status != cloudformation.StackStatusUpdateComplete {
+		logger.Fatalf("stack %s is not in a deployable state: %s", bootstrapStack, status)
 	}
 
-	deployDatabases(awsSession, bucketStackOutput["SourceBucketName"], backendStackOutput)
+	deployGlue(awsSession, outputs)
 }
 
 // Sync Sync glue table partitions after schema change

@@ -92,7 +92,6 @@ func TestIAMRolesGetPoliciesErrors(t *testing.T) {
 func TestIAMRolesPoller(t *testing.T) {
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	IAMClientFunc = awstest.SetupMockIAM
 
 	resources, err := PollIAMRoles(&awsmodels.ResourcePollerInput{
@@ -111,7 +110,6 @@ func TestIAMRolesPoller(t *testing.T) {
 func TestIAMRolesPollerError(t *testing.T) {
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	IAMClientFunc = awstest.SetupMockIAM
 
 	resources, err := PollIAMRoles(&awsmodels.ResourcePollerInput{

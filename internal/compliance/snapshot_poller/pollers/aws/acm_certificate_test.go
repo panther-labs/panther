@@ -100,7 +100,6 @@ func TestAcmCertificateBuildSnapshotErrors(t *testing.T) {
 func TestAcmCertificatePoller(t *testing.T) {
 	awstest.MockAcmForSetup = awstest.BuildMockAcmSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	AcmClientFunc = awstest.SetupMockAcm
 
 	resources, err := PollAcmCertificates(&awsmodels.ResourcePollerInput{
@@ -119,7 +118,6 @@ func TestAcmCertificatePoller(t *testing.T) {
 func TestAcmCertificatePollerError(t *testing.T) {
 	awstest.MockAcmForSetup = awstest.BuildMockAcmSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	AcmClientFunc = awstest.SetupMockAcm
 
 	resources, err := PollAcmCertificates(&awsmodels.ResourcePollerInput{

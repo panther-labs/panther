@@ -207,7 +207,7 @@ func buildTools(tools, binDir, sourceDir string) {
 	compile := func(path string) {
 		applyBuildEnv(func(arch, opsys, binPath string) {
 			app := filepath.Dir(path)
-			logger.Infof("build:%s compiling %s for %s on %s to %s",
+			logger.Debugf("build:%s compiling %s for %s on %s to %s",
 				tools, filepath.Base(app), opsys, arch, binPath)
 			if err := sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
 				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
@@ -259,7 +259,7 @@ func buildPackage(pkg string) error {
 
 // Generate CloudFormation templates in out/deployments folder
 func (b Build) Cfn() {
-	embedAPISpecs()
+	embedAPISpec()
 
 	if err := generateGlueTables(); err != nil {
 		logger.Fatal(err)

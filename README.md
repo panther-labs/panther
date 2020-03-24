@@ -1,4 +1,7 @@
 <p align="center">
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-13-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github.jpg" alt="Panther Logo"/></a>
 </p>
 
@@ -131,3 +134,37 @@ Panther is dual-licensed under the AGPLv3 and Apache-2.0 [licenses](https://gith
 ### FOSSA Status
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther?ref=badge_large)
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="https://aggelos.dev"><img src="https://avatars1.githubusercontent.com/u/10436045?v=4" width="100px;" alt=""/><br /><sub><b>Aggelos Arvanitakis</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=3nvi" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=3nvi" title="Documentation">📖</a> <a href="#design-3nvi" title="Design">🎨</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3A3nvi" title="Bug reports">🐛</a> <a href="#infra-3nvi" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/austinbyers/"><img src="https://avatars0.githubusercontent.com/u/3608925?v=4" width="100px;" alt=""/><br /><sub><b>Austin Byers</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=austinbyers" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=austinbyers" title="Documentation">📖</a> <a href="#security-austinbyers" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Aaustinbyers" title="Bug reports">🐛</a> <a href="#infra-austinbyers" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/nhakmiller"><img src="https://avatars1.githubusercontent.com/u/49166439?v=4" width="100px;" alt=""/><br /><sub><b>Nick</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=nhakmiller" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=nhakmiller" title="Documentation">📖</a> <a href="#security-nhakmiller" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Anhakmiller" title="Bug reports">🐛</a> <a href="#infra-nhakmiller" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/kostaspap"><img src="https://avatars3.githubusercontent.com/u/2652630?v=4" width="100px;" alt=""/><br /><sub><b>Kostas Papageorgiou</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=kostaspap" title="Code">💻</a> <a href="#security-kostaspap" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Akostaspap" title="Bug reports">🐛</a> <a href="#infra-kostaspap" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/drixta"><img src="https://avatars1.githubusercontent.com/u/2681321?v=4" width="100px;" alt=""/><br /><sub><b>Quan Pham</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=drixta" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/alexmylonas"><img src="https://avatars3.githubusercontent.com/u/14179917?v=4" width="100px;" alt=""/><br /><sub><b>Alex Mylonas</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=alexmylonas" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Aalexmylonas" title="Bug reports">🐛</a></td>
+    <td align="center"><a href="https://github.com/rleighton"><img src="https://avatars3.githubusercontent.com/u/18419762?v=4" width="100px;" alt=""/><br /><sub><b>Russell Leighton</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=rleighton" title="Code">💻</a> <a href="#security-rleighton" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Arleighton" title="Bug reports">🐛</a> <a href="#infra-rleighton" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/sugandhalahoti"><img src="https://avatars1.githubusercontent.com/u/60883353?v=4" width="100px;" alt=""/><br /><sub><b>Sugandha</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=sugandhalahoti" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/kartikeypan"><img src="https://avatars1.githubusercontent.com/u/58938775?v=4" width="100px;" alt=""/><br /><sub><b>Kartikey Pandey</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=kartikeypan" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/stoggi"><img src="https://avatars3.githubusercontent.com/u/5227285?v=4" width="100px;" alt=""/><br /><sub><b>Jeremy Stott</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=stoggi" title="Code">💻</a> <a href="#security-stoggi" title="Security">🛡️</a> <a href="#infra-stoggi" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#ideas-stoggi" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://www.twitter.com/jack_naglieri"><img src="https://avatars1.githubusercontent.com/u/11466941?v=4" width="100px;" alt=""/><br /><sub><b>Jack Naglieri</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=jacknagz" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=jacknagz" title="Documentation">📖</a> <a href="#security-jacknagz" title="Security">🛡️</a> <a href="#content-jacknagz" title="Content">🖋</a> <a href="#ideas-jacknagz" title="Ideas, Planning, & Feedback">🤔</a> <a href="#projectManagement-jacknagz" title="Project Management">📆</a></td>
+    <td align="center"><a href="http://www.improbable.io"><img src="https://avatars3.githubusercontent.com/u/1226100?v=4" width="100px;" alt=""/><br /><sub><b>Gavin</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=gavinelder" title="Code">💻</a> <a href="#security-gavinelder" title="Security">🛡️</a> <a href="#infra-gavinelder" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#ideas-gavinelder" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/Ryxias"><img src="https://avatars2.githubusercontent.com/u/13323701?v=4" width="100px;" alt=""/><br /><sub><b>Ryxias</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=Ryxias" title="Documentation">📖</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-enable -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!

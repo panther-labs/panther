@@ -6,6 +6,7 @@ fragment ComplianceIntegrationDetails on ComplianceIntegration {
   createdBy
   cweEnabled
   remediationEnabled
+  stackName
   health {
     auditRoleStatus {
       ...IntegrationItemHealthDetails

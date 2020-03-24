@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Field, Formik } from 'formik';
-import { SubmitButton } from 'Components/Buttons';
+import SubmitButton from 'Components/buttons/SubmitButton';
 import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
 import * as Yup from 'yup';
