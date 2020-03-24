@@ -11,11 +11,11 @@ Panther is a cloud-native platform for detecting threats, improving cloud securi
 |      Searching IOCs      | Quickly search for matches against IOCs using standardized data fields                    |
 | Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices in code |
 
-The diagram below provides a high-level architecture of Panther:
+The following diagram shows a high-level architecture of Panther:
 
-![Architecture](.gitbook/assets/high-level-diagram.png)
+![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
 
-Its three main components are:
+The three main components are:
 
 * **Log Analysis** to centralize, parse, and analyze log data with Python
 * **Cloud Security** to scan AWS accounts, detect misconfigurations, and improve cloud security posture
@@ -28,6 +28,16 @@ The benefits of Panther include:
 - Near real-time analysis for quick alerting and remediation
 - Simple deployments using infrastructure as code
 - Secure, least-privilege, and encrypted infrastructure deployed within your AWS account
+
+## Concepts
+
+|         Term         | Meaning                                                                               |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+| Event   | A normalized log from sources such as CloudTrail, Osquery, or Suricata   |
+| Rule       | A Python function to detect suspicious activity         |
+| Alert   | A notification to the team when a policy has failed or a rule has triggered  |
+| Policy | A Python function representing the desired secure state of a resource |
+| Resource      | A cloud entity, such as an IAM user, virtual machine, or data bucket                    |
 
 ## Get Started!
 
