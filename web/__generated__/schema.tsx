@@ -853,7 +853,6 @@ export type RuleSummary = {
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   severity?: Maybe<SeverityEnum>;
-  dedupPeriodMinutes: Scalars['Int'];
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
 };
 
@@ -2055,7 +2054,6 @@ export type RuleSummaryResolvers<
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
-  dedupPeriodMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
