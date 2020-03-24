@@ -30,7 +30,7 @@ module.exports = {
   /*
    * Run ESLint checks for all TS & JS files found anywhere in hte project
    */
-  '*.{ts,tsx,js}': ['eslint'],
+  '*.{ts,tsx,js}': ['eslint --config web/.eslintrc.js'],
 
   /*
    * only run the TS compiler when there are changes inTS files
