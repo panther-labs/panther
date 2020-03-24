@@ -191,6 +191,12 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	var wg sync.WaitGroup
 	wg.Add(1)
 
+	// We build most deployment artifacts in parallel with the bootstrap stack deployment (below).
+	// However, build:api (swagger) requires changing directories, which causes problems with the
+	// bootstrap goroutine. So we build swagger first
+	var build Build
+	build.API()
+
 	// Deploy first bootstrap stack
 	go func() {
 		params := map[string]string{
@@ -222,10 +228,8 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	}()
 
 	// While waiting for bootstrap, build deployment artifacts
-	// We don't include opstools here, takes too long and not required for deploy
-	var b Build
-	b.Cfn()
-	b.Lambda()
+	build.Cfn()
+	build.Lambda()
 	wg.Wait()
 
 	// Now that the S3 buckets are in place and swagger specs are embedded, we can deploy the second
