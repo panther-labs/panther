@@ -1,0 +1,671 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Log processing infrastructure
+
+Parameters:
+  # Passed in from bootstrap
+  AnalysisApiId:
+    Type: String
+    Description: API Gateway for analysis-api
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
+  ProcessedDataTopicArn:
+    Type: String
+    Description: The ARN of the processed data SNS topic
+  PythonLayerVersionArn:
+    Type: String
+    Description: Pip libraries for python analysis and remediation
+  SqsKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+
+  # Passed in from config file
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+    Default: ''
+  LogProcessorLambdaMemorySize:
+    Type: Number
+    Description: Log processor Lambda memory allocation
+    MinValue: 256 # any smaller and we risk OOMs
+    MaxValue: 3008
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+
+Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+
+Resources:
+  ###### Alerts API #####
+  AlertsApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-alerts-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertsApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/log_analysis/alerts_api/main
+      Description: CRUD actions for the alerts database
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          ALERTS_TABLE_NAME: !Ref LogAlertsTable
+          RULE_INDEX_NAME: ruleId-creationTime-index
+          TIME_INDEX_NAME: timePartition-creationTime-index
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
+      FunctionName: panther-alerts-api
+      # <cfndoc>
+      # Lambda for CRUD actions for the alerts API.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact the Panther user interface.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 256
+      Runtime: go1.x
+      Timeout: 60
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ManageAlerts
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt LogAlertsTable.Arn
+                - !Sub '${LogAlertsTable.Arn}/index/*'
+        - Id: S3Permissions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:ListBucket
+                - s3:GetObject
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+
+  LogAlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-log-alert-info
+      # <cfndoc>
+      # This table holds the alerts history and is managed by the `panther-log-alert-forwarder` lambda.
+      #
+      # Failure Impact
+      # * Delivery of alerts could be slowed or stopped if there are errors/throttles.
+      # * The Panther user interface may be impacted.
+      # </cfndoc>
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: creationTime
+          AttributeType: S
+        - AttributeName: ruleId
+          AttributeType: S
+        - AttributeName: timePartition
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - # Add an index ruleId to efficiently list alerts for a specific rule
+          KeySchema:
+            - AttributeName: ruleId
+              KeyType: HASH
+            - AttributeName: creationTime
+              KeyType: RANGE
+          IndexName: ruleId-creationTime-index
+          Projection:
+            ProjectionType: ALL
+        - # Add an index using timePartition to efficiently list alerts by creationTime
+          KeySchema:
+            - AttributeName: timePartition
+              KeyType: HASH
+            - AttributeName: creationTime
+              KeyType: RANGE
+          IndexName: timePartition-creationTime-index
+          Projection:
+            ProjectionType: ALL
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True
+
+  ##### Alert Forwarder #####
+  AlertForwarderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-log-alert-forwarder
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertsForwarderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/log_analysis/alert_forwarder/main
+      Description: Lambda that creates and updates alerts in alerts-info table
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          ALERTS_TABLE: !Ref LogAlertsTable
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
+      Events:
+        DynamoDBEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt AlertsDedup.StreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 10
+      FunctionName: panther-log-alert-forwarder
+      # <cfndoc>
+      # This lambda reads from a DDB stream for the `panther-alert-dedup` table and writes alerts to the `panther-log-alert-info` ddb table.
+      # It also forwards alerts to `panther-alerts-queue` SQS queue where the appropriate Lambda picks them up for delivery.
+      #
+      # Failure Impact
+      # * Delivery of alerts could be slowed or stopped.
+      # * There will be no data loss until events are purged from the ddb stream (24 hours).
+      # * This Lambda processes alerts in batches. In case a batch partially fails, the whole batch will be retried which might lead
+      # to duplicate notifications for some alerts.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 30
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: SQS
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+            - Effect: Allow
+              Action: sqs:SendMessage
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts-queue
+        - Id: GetRule
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
+        - Id: ManageAlerts
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:PutItem
+              Resource: !GetAtt LogAlertsTable.Arn
+
+  ##### Log Processor #####
+  LogProcessorQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-input-data-notifications-queue
+      # <cfndoc>
+      # This sqs queue receives S3 notifications
+      # of log files to be processed by `panther-log-processor` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact stop log analysis (log ingest and rule processing).
+      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      KmsMasterKeyId: !Ref SqsKeyId
+      # Reference on KeyReuse: https://amzn.to/2ngIsFB
+      KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
+      VisibilityTimeout: 360 # Should match lambda
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
+        maxReceiveCount: 10
+
+  LogProcessorDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-input-data-notifications-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-input-data-notifications-queue`.
+      # Items are in this queue due to a failure of the `panther-log-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+
+  LogProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-log-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  LogProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: panther-log-processor
+      # <cfndoc>
+      # The lambda function that processes S3 files from
+      # notifications posted to the `panther-input-data-notifications-queue` SQS queue.
+      #
+      # Troubleshooting
+      # * If files cannot be processed errors will be generated. Some root causes can be:
+      #   * S3 event configured against a whole bucket rather than a prefix, which causes
+      #     files other than the intended logs to be processed.
+      #   * Variations in the log format not handled by the parsers.
+      #     [Open a bug report](https://github.com/panther-labs/panther/issues).
+      #
+      # Failure Impact
+      # * Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
+      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
+      # * There is the possibility of duplicate data ingested if the failures had partial results.
+      # </cfndoc>
+      Description: Downloads security logs from S3 for Panther analysis
+      CodeUri: ../out/bin/internal/log_analysis/log_processor/main
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !Ref LogProcessorLambdaMemorySize
+      Runtime: go1.x
+      Timeout: 360
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          S3_BUCKET: !Ref ProcessedDataBucket
+          SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt LogProcessorQueue.Arn
+            BatchSize: 10
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ConfirmSubscriptions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              # This policy allows the log processor to confirm SNS->SQS subscriptions to the panther-input-data-notifications queue.
+              # Note that by default SQS queue policy blocks all accounts from subscribing to it.
+              # When a user onboards a log source, they specify an AWS Account ID they want to onboard logs from.
+              # This account will be whitelisted and SNS topic from it can subscribe to the SQS queue.
+              Action: sns:ConfirmSubscription
+              Resource: '*'
+        - Id: OutputToS3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:PutObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs*
+        - Id: NotifySns
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sns:Publish
+              Resource: !Ref ProcessedDataTopicArn
+        - Id: AssumePantherLogProcessingRole
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole-*
+              Condition:
+                Bool:
+                  aws:SecureTransport: true
+        - Id: InvokeSnapshotAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+        - Id: AccessSqsKms
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:Encrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: WriteGluePartitions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:GetPartition
+                - glue:CreatePartition
+                - glue:GetTable
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+
+  UpdaterSnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt UpdaterQueue.Arn
+      Region: !Ref AWS::Region
+      TopicArn: !Ref ProcessedDataTopicArn
+      RawMessageDelivery: true
+
+  UpdaterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref UpdaterQueue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Ref ProcessedDataTopicArn
+  UpdaterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-datacatalog-updater-queue
+      # <cfndoc>
+      # This queue contains notifications that include information of new log data.
+      #
+      # Failure Impact
+      # The tables in `panther*` Glue databases  will not be updated with new partitions. This will result in:
+      # * Users will not be able to search the latest log data
+      # * Users will not be able to see new events that matched some rule.
+      # </cfndoc>
+      KmsMasterKeyId: !Ref SqsKeyId
+      VisibilityTimeout: 120 # Should match lambda
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt UpdaterDLQ.Arn
+        maxReceiveCount: 10
+
+  UpdaterDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-datacatalog-updater-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-datacatalog-updater-queue`.
+      # Items are in this queue due to a failure of the `panther-datacatalog-updater` lambda.
+      # When the system has recovered they should be re-queued to the `panther-datacatalog-updater-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+
+  UpdaterFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-datacatalog-updater
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  UpdaterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: panther-datacatalog-updater
+      # <cfndoc>
+      # This lambda reads events from the `panther-datacatalog-updater-queue` generated by
+      # generated by the `panther-rules-engine` and `panther-log-processor` lambda.  It creates new partitions to the Glue tables in `panther*` Glue Databases.
+      #
+      # Failure Impact
+      # The tables in `panther*` Glue databases  will not be updated with new partitions. This will result in:
+      # * Users will not be able to search the latest log data
+      # * Users will not be able to see new events that matched some rule.
+      # </cfndoc>
+      Description: Updates the glue data catalog
+      CodeUri: ../out/bin/internal/log_analysis/datacatalog_updater/main
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 120
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt UpdaterQueue.Arn
+            BatchSize: 10
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: AccessSqsKms
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:Encrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: WriteGluePartitions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:GetPartition
+                - glue:CreatePartition
+                - glue:GetTable
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+
+  ##### Rules Engine #####
+  RulesEngineSnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt RulesEngineQueue.Arn
+      Region: !Ref AWS::Region
+      TopicArn: !Ref ProcessedDataTopicArn
+      RawMessageDelivery: true
+      # Receive notifications only for new log events
+      FilterPolicy:
+        type:
+          - LogData
+
+  RulesEngineQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref RulesEngineQueue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Ref ProcessedDataTopicArn
+
+  RulesEngineQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-rules-engine-queue
+      # <cfndoc>
+      # The `panther-rules-engine-queue` sqs queue receives S3 notifications
+      # of log files to be processed by `panther-rules-engine` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact executions of rules on log files.
+      # * Failed events will go into the `panther-rules-engine-queue-dlq`. When the system has recovered they should be re-queued to the `panther-rules-engine-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      KmsMasterKeyId: !Ref SqsKeyId
+      # Reference on KeyReuse: https://amzn.to/2ngIsFB
+      KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
+      VisibilityTimeout: 120 # Should match lambda
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt RulesEngineDLQ.Arn
+        maxReceiveCount: 10
+
+  RulesEngineDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-rules-engine-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-rules-engine-queue`.
+      # Items are in this queue due to a failure of the `panther-rules-engine` lambda.
+      # When the system has recovered they should be re-queued to the `panther-rules-engine-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+
+  AlertsDedup:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-log-alert-dedup
+      # <cfndoc>
+      # The `panther-rules-engine` lambda manages this table and it is used to
+      # deduplicate of alerts. The `panther-log-alert-forwarder` reads the ddb stream from this table.
+      #
+      # Failure Impact
+      # * Processing of rules could be slowed or stopped if there are errors/throttles.
+      # </cfndoc>
+      AttributeDefinitions:
+        - AttributeName: partitionKey
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: partitionKey
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: True
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  RulesEngineLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-rules-engine
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  RulesEngineFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../internal/log_analysis/rules_engine
+      Description: Python Rules Engine
+      FunctionName: panther-rules-engine
+      # <cfndoc>
+      # The `panther-rules-engine` lambda function processes S3 files from
+      # notifications posted to the `panther-rules-engine-queue` SQS queue.
+      # Matching events are written to S3.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact alerts generated for rule matches against log data.
+      # * Failed events will go into the `panther-rules-engine-dlq`. When the system has recovered they should be re-queued to the `panther-rules-engine` using the Panther tool `requeue`.
+      # </cfndoc>
+      Handler: src.main.lambda_handler
+      Environment:
+        Variables:
+          ANALYSIS_API_FQDN: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+          DEBUG: !Ref Debug
+          ALERTS_QUEUE: panther-log-alert-notifications-queue
+          S3_BUCKET: !Ref ProcessedDataBucket
+          NOTIFICATIONS_TOPIC: !Ref ProcessedDataTopicArn
+          ALERTS_DEDUP_TABLE: !Ref AlertsDedup
+      MemorySize: 512
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt RulesEngineQueue.Arn
+            BatchSize: 10
+      Layers: !If
+        - AttachLayers
+        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ','
+          - !Sub
+            - '${base},${pip}'
+            - base: !Join [',', !Ref LayerVersionArns]
+              pip: !Ref PythonLayerVersionArn
+        - [!Ref PythonLayerVersionArn]
+      Runtime: python3.7
+      Timeout: 120
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: SendToNotificationsTopic
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sns:Publish
+              Resource: !Ref ProcessedDataTopicArn
+        - Id: ReadLogs
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
+        - Id: ReadWriteRuleMatches
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:PutObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
+        - Id: DDBUpdate
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:UpdateItem
+              Resource: !GetAtt AlertsDedup.Arn
+        - Id: AccessKms
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:Encrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: InvokeGatewayApi
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled

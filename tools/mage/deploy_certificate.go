@@ -35,28 +35,56 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/iam"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
-	keysDirectory        = "keys"
-	certificateFile      = keysDirectory + "/panther-tls-public.crt"
-	privateKeyFile       = keysDirectory + "/panther-tls-private.key"
-	keyLength            = 2048
-	certFilePermissions  = 0700
-	certificateOutputKey = "WebApplicationCertificateArn"
+	keysDirectory       = "keys"
+	certificateFile     = keysDirectory + "/panther-tls-public.crt"
+	privateKeyFile      = keysDirectory + "/panther-tls-private.key"
+	keyLength           = 2048
+	certFilePermissions = 0700
 )
+
+// Returns the certificate arn for the bootstrap stack. One of:
+//
+// 1) The settings file, if it's specified
+// 2) The bootstrap stack, if it already exists
+// 3) Uploading an ACM or IAM cert
+func certificateArn(awsSession *session.Session, settings *config.PantherConfig) string {
+	if settings.Web.CertificateArn != "" {
+		// Always use the value in the settings file, if it exists
+		return settings.Web.CertificateArn
+	}
+
+	_, outputs, err := describeStack(cloudformation.New(awsSession), bootstrapStack)
+	if err == nil {
+		// The bootstrap stack already exists
+		// CFN makes us re-specify the parameter if it already had a non-default value.
+		arn := outputs["CertificateArn"]
+		if arn == "" {
+			logger.Fatalf("output CertificateArn from stack %s is blank", bootstrapStack)
+		}
+		return arn
+	}
+
+	if errStackDoesNotExist(err) {
+		// The stack doesn't exist yet - upload a new certificate
+		return uploadLocalCertificate(awsSession)
+	}
+
+	// Some other error describing the bootstrap stack
+	logger.Fatal(err)
+	return "n/a" // unreachable code
+}
 
 // Upload a local self-signed TLS certificate to ACM. Only needs to happen once per installation
 //
 // In regions/partitions where ACM is not supported, we fall back to IAM certificate management.
 func uploadLocalCertificate(awsSession *session.Session) string {
-	// Check if certificate has already been uploaded
-	if certArn := getExistingCertificate(awsSession); certArn != nil {
-		logger.Debugf("deploy: load balancer certificate %s already exists", *certArn)
-		return *certArn
-	}
-
 	// Ensure the certificate and key file exist. If not, create them.
 	_, certErr := os.Stat(certificateFile)
 	_, keyErr := os.Stat(privateKeyFile)
@@ -101,21 +129,6 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 	}
 
 	return *output.CertificateArn
-}
-
-// getExistingCertificate checks to see if there is already an ACM/IAM certificate configured
-func getExistingCertificate(awsSession *session.Session) *string {
-	outputs, err := getStackOutputs(awsSession, backendStack)
-	if err != nil {
-		if isStackNotExistsError(backendStack, err) {
-			return nil
-		}
-		logger.Fatal(err)
-	}
-	if arn, ok := outputs[certificateOutputKey]; ok {
-		return &arn
-	}
-	return nil
 }
 
 // generateKeys generates the self signed private key and certificate for HTTPS access to the web application

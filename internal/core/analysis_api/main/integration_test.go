@@ -45,7 +45,8 @@ import (
 )
 
 const (
-	stackName           = "panther-app"
+	bootstrapStack      = "panther-bootstrap"
+	gatewayStack        = "panther-bootstrap-gateway"
 	tableName           = "panther-analysis"
 	policiesRoot        = "./test_policies"
 	policiesZipLocation = "./bulk_upload.zip"
@@ -219,19 +220,32 @@ func TestIntegrationAPI(t *testing.T) {
 	require.NoError(t, err)
 	policyFromBulk.Body = models.Body(cloudtrailBody)
 
-	// Lookup CloudFormation outputs
+	// Lookup analysis bucket name
 	cfnClient := cloudformation.New(awsSession)
 	response, err := cfnClient.DescribeStacks(
-		&cloudformation.DescribeStacksInput{StackName: aws.String(stackName)})
+		&cloudformation.DescribeStacksInput{StackName: aws.String(bootstrapStack)})
 	require.NoError(t, err)
-	var endpoint, bucketName string
+	var bucketName string
+	for _, output := range response.Stacks[0].Outputs {
+		if aws.StringValue(output.OutputKey) == "AnalysisVersionsBucket" {
+			bucketName = *output.OutputValue
+			break
+		}
+	}
+	require.NotEmpty(t, bucketName)
+
+	// Lookup analysis-api endpoint
+	response, err = cfnClient.DescribeStacks(
+		&cloudformation.DescribeStacksInput{StackName: aws.String(gatewayStack)})
+	require.NoError(t, err)
+	var endpoint string
 	for _, output := range response.Stacks[0].Outputs {
 		if aws.StringValue(output.OutputKey) == "AnalysisApiEndpoint" {
 			endpoint = *output.OutputValue
-		} else if aws.StringValue(output.OutputKey) == "AnalysisVersionsBucket" {
-			bucketName = *output.OutputValue
+			break
 		}
 	}
+	require.NotEmpty(t, endpoint)
 
 	// Reset data stores: S3 bucket and Dynamo table
 	require.NoError(t, testutils.ClearS3Bucket(awsSession, bucketName))

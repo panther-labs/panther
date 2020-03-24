@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -72,25 +71,13 @@ type ResourceDoc struct {
 	Documentation string
 }
 
-func ReadDirs(dirs ...string) (docs []*ResourceDoc, err error) {
-	for _, dir := range dirs {
-		err = filepath.Walk(dir, func(path string, info os.FileInfo, fileErr error) error {
-			if fileErr != nil {
-				return errors.Wrap(fileErr, path)
-			}
-			if info.IsDir() { // skip dirs
-				return nil
-			}
-			fileDocs, err := Read(path)
-			if err != nil {
-				return err
-			}
-			docs = append(docs, fileDocs...)
-			return nil
-		})
+func ReadCfn(paths ...string) (docs []*ResourceDoc, err error) {
+	for _, path := range paths {
+		fileDocs, err := Read(path)
 		if err != nil {
 			return nil, err
 		}
+		docs = append(docs, fileDocs...)
 	}
 	sort.Sort(ByLabel(docs))
 	return docs, nil

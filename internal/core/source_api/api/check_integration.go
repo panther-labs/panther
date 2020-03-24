@@ -48,7 +48,7 @@ var (
 
 // CheckIntegration adds a set of new integrations in a batch.
 func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
-	zap.L().Debug("beginning source health check")
+	zap.L().Debug("beginning source configuration check")
 	out := &models.SourceIntegrationHealth{
 		AWSAccountID:    aws.StringValue(input.AWSAccountID),
 		IntegrationType: aws.StringValue(input.IntegrationType),
@@ -164,24 +164,28 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 	switch aws.StringValue(integration.IntegrationType) {
 	case models.IntegrationTypeAWSScan:
 		if !aws.BoolValue(status.AuditRoleStatus.Healthy) {
-			return "audit role has a misconfiguration", false, nil
+			return "cannot assume audit role", false, nil
 		}
 
 		if aws.BoolValue(integration.EnableRemediation) && !aws.BoolValue(status.RemediationRoleStatus.Healthy) {
-			return "remediation role has a misconfiguration", false, nil
+			return "cannot assume remediation role", false, nil
 		}
 
 		if aws.BoolValue(integration.EnableCWESetup) && !aws.BoolValue(status.CWERoleStatus.Healthy) {
-			return "cwe role has a misconfiguration", false, nil
+			return "cannot assume cwe role", false, nil
 		}
 		return "", true, nil
 	case models.IntegrationTypeAWS3:
-		if !aws.BoolValue(status.ProcessingRoleStatus.Healthy) || !aws.BoolValue(status.S3BucketStatus.Healthy) {
-			return "log processing role has a misconfiguration", false, nil
+		if !aws.BoolValue(status.ProcessingRoleStatus.Healthy) {
+			return "cannot assume log processing role", false, nil
+		}
+
+		if !aws.BoolValue(status.S3BucketStatus.Healthy) {
+			return "log processing role cannot access s3 bucket", false, nil
 		}
 
 		if integration.KmsKey != nil {
-			return "kms key has a misconfiguration", aws.BoolValue(status.KMSKeyStatus.Healthy), nil
+			return "log processing role cannot access kms key", aws.BoolValue(status.KMSKeyStatus.Healthy), nil
 		}
 		return "", true, nil
 	default:

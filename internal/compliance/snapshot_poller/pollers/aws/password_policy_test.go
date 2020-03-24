@@ -47,7 +47,6 @@ func TestGetPasswordPolicyError(t *testing.T) {
 func TestPasswordPolicyPoller(t *testing.T) {
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvc([]string{"GetAccountPasswordPolicy"})
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	IAMClientFunc = awstest.SetupMockIAM
 
 	resources, err := PollPasswordPolicy(&awsmodels.ResourcePollerInput{
@@ -65,7 +64,6 @@ func TestPasswordPolicyPoller(t *testing.T) {
 func TestPasswordPolicyPollerError(t *testing.T) {
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcError([]string{"GetAccountPasswordPolicy"})
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	IAMClientFunc = awstest.SetupMockIAM
 
 	resources, err := PollPasswordPolicy(&awsmodels.ResourcePollerInput{

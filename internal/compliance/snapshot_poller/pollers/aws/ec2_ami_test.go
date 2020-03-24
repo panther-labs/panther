@@ -64,7 +64,6 @@ func TestEC2BuildAmiSnapshot(t *testing.T) {
 func TestEC2PollAmis(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Amis(&awsmodels.ResourcePollerInput{
@@ -82,7 +81,6 @@ func TestEC2PollAmis(t *testing.T) {
 func TestEC2PollAmiError(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Amis(&awsmodels.ResourcePollerInput{
@@ -93,6 +91,6 @@ func TestEC2PollAmiError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Empty(t, resources)
 }

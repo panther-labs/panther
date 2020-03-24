@@ -94,20 +94,15 @@ func LambdaMetricFilterName(lambdaName, metricName string) string {
 
 // GenerateMetrics will read the CF in yml files in the cfDirs, and generate CF for CloudWatch metric filters for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateMetrics(cfDirs ...string) ([]byte, error) {
+func GenerateMetrics(cfFiles ...string) ([]byte, error) {
 	var metricFilters []*MetricFilter
 
-	for _, cfDir := range cfDirs {
-		err := walkYamlFiles(cfDir, func(path string) (err error) {
-			fileMetricFilters, err := generateMetricFilters(path)
-			if err == nil {
-				metricFilters = append(metricFilters, fileMetricFilters...)
-			}
-			return err
-		})
+	for _, path := range cfFiles {
+		fileMetricFilters, err := generateMetricFilters(path)
 		if err != nil {
 			return nil, err
 		}
+		metricFilters = append(metricFilters, fileMetricFilters...)
 	}
 
 	resources := make(map[string]interface{})

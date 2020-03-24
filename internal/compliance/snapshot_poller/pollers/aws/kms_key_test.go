@@ -135,7 +135,6 @@ func TestBuildKmsKeySnapshotErrors(t *testing.T) {
 func TestKMSKeyPoller(t *testing.T) {
 	awstest.MockKmsForSetup = awstest.BuildMockKmsSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	KmsClientFunc = awstest.SetupMockKms
 
 	resources, err := PollKmsKeys(&awsmodels.ResourcePollerInput{
@@ -153,7 +152,6 @@ func TestKMSKeyPoller(t *testing.T) {
 func TestKMSKeyPollerError(t *testing.T) {
 	awstest.MockKmsForSetup = awstest.BuildMockKmsSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	KmsClientFunc = awstest.SetupMockKms
 
 	resources, err := PollKmsKeys(&awsmodels.ResourcePollerInput{

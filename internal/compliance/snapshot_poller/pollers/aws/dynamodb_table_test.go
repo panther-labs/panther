@@ -32,14 +32,16 @@ import (
 func TestDynamoDBList(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvc([]string{"ListTablesPages"})
 
-	out := listTables(mockSvc)
+	out, err := listTables(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestDynamoDBListError(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvcError([]string{"ListTablesPages"})
 
-	out := listTables(mockSvc)
+	out, err := listTables(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -122,7 +124,6 @@ func TestDynamoDBPoller(t *testing.T) {
 	awstest.MockDynamoDBForSetup = awstest.BuildMockDynamoDBSvcAll()
 	awstest.MockApplicationAutoScalingForSetup = awstest.BuildMockApplicationAutoScalingSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	DynamoDBClientFunc = awstest.SetupMockDynamoDB
 	ApplicationAutoScalingClientFunc = awstest.SetupMockApplicationAutoScaling
 
@@ -150,7 +151,6 @@ func TestDynamoDBPollerError(t *testing.T) {
 	awstest.MockDynamoDBForSetup = awstest.BuildMockDynamoDBSvcAllError()
 	awstest.MockApplicationAutoScalingForSetup = awstest.BuildMockApplicationAutoScalingSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	DynamoDBClientFunc = awstest.SetupMockDynamoDB
 
 	resources, err := PollDynamoDBTables(&awsmodels.ResourcePollerInput{
@@ -161,7 +161,7 @@ func TestDynamoDBPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
