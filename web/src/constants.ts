@@ -38,10 +38,10 @@ export const DEFAULT_RULE_FUNCTION =
   'def rule(event):\n\t# Write your rule code here.\n\treturn False';
 
 export const DEFAULT_TITLE_FUNCTION =
-  "def title(event):\n\t# Write custom code for alert title generation here.\n\treturn ''";
+  "def title(event):\n\t# Write code here for alert title generation.\n\treturn ''";
 
 export const DEFAULT_DEDUP_FUNCTION =
-  "def dedup(event):\n\t# Write custom code for deduplication string generation here.\n\treturn ''";
+  "def dedup(event):\n\t# Write code here for generating dedup string.\n\treturn ''";
 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
