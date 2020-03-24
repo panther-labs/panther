@@ -352,12 +352,6 @@ func destroyPantherBuckets(awsSession *session.Session, bucketNames []*string) {
 //
 // Or, if there are too many objects to delete directly, set a 1-day expiration lifecycle policy instead.
 func removeBucket(client *s3.S3, bucketName *string) {
-	// remove any notifications (best effort)
-	notificationInput := &s3.PutBucketNotificationConfigurationInput{
-		Bucket: bucketName,
-	}
-	_, _ = client.PutBucketNotificationConfiguration(notificationInput)
-
 	input := &s3.ListObjectVersionsInput{Bucket: bucketName}
 	var objectVersions []*s3.ObjectIdentifier
 
@@ -412,6 +406,16 @@ func removeBucket(client *s3.S3, bucketName *string) {
 		if err != nil {
 			logger.Fatalf("failed to set expiration policy for %s: %v", *bucketName, err)
 		}
+		// remove any notifications since we are leaving the bucket (best effort)
+		notificationInput := &s3.PutBucketNotificationConfigurationInput{
+			Bucket:                    bucketName,
+			NotificationConfiguration: &s3.NotificationConfiguration{}, // posting an empty config clears (not a nil config)
+		}
+		_, err := client.PutBucketNotificationConfiguration(notificationInput)
+		if err != nil {
+			logger.Warnf("Unable to clear S3 event notifications on bucket %s (%v). Use the console to clear.",
+				bucketName, err)
+		}
 		return
 	}
 
@@ -424,7 +428,7 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	if err != nil {
 		logger.Fatalf("failed to batch delete objects: %v", err)
 	}
-
+	time.Sleep(time.Second / 4) // short pause since S3 is eventually consistent to avoid next call from failing
 	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
 		logger.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
 	}
