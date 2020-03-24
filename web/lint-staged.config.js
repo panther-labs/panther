@@ -15,21 +15,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-/* eslint-disable global-require, import/no-dynamic-require */
 
-const chalk = require('chalk');
+module.exports = {
+  /*
+   * Lint staged doesn't allow for multiple (comma separated) globs, so we have to split them
+   * in multiple lines (or use a custom function to isolate files which adds more complexity)
+   */
 
-const requiredEnv = [
-  'AWS_ACCOUNT_ID',
-  'AWS_REGION',
-  'WEB_APPLICATION_GRAPHQL_API_ENDPOINT',
-  'WEB_APPLICATION_USER_POOL_CLIENT_ID',
-  'WEB_APPLICATION_USER_POOL_ID',
-];
+  /*
+   * Run prettier TS, JS, JSON, YAML and Markdown files found anywhere in the project
+   */
+  '*.{ts,tsx,js,md,yaml,yml,json}': ['prettier --write'],
 
-const unsetVars = requiredEnv.filter(env => process.env[env] === undefined);
-if (unsetVars.length) {
-  throw new Error(chalk.red(`Couldn't find the following ENV vars: ${unsetVars.join(', ')}`));
-}
+  /*
+   * Run ESLint checks for all TS & JS files found anywhere in hte project
+   */
+  '*.{ts,tsx,js}': ['eslint --config web/.eslintrc.js'],
 
-module.exports = require('./web/webpack.config.js');
+  /*
+   * only run the TS compiler when there are changes inTS files
+   */
+  '*.ts?(x)': () => 'tsc -p web',
+};

@@ -11,14 +11,14 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "Assets/*": ["web/src/assets/*"],
-      "Components/*": ["web/src/components/*"],
-      "Generated/*": ["web/__generated__/*"],
-      "Helpers/*": ["web/src/helpers/*"],
-      "Pages/*": ["web/src/pages/*"],
-      "Hooks/*": ["web/src/hooks/*"],
-      "Hoc/*": ["web/src/hoc/*"],
-      "Source/*": ["web/src/*"]
+      "Assets/*": ["src/assets/*"],
+      "Components/*": ["src/components/*"],
+      "Generated/*": ["__generated__/*"],
+      "Helpers/*": ["src/helpers/*"],
+      "Pages/*": ["src/pages/*"],
+      "Hooks/*": ["src/hooks/*"],
+      "Hoc/*": ["src/hoc/*"],
+      "Source/*": ["src/*"]
     }
   },
   "allowJs": false

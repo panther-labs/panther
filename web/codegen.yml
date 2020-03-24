@@ -1,3 +1,5 @@
+# All paths are configured from the project root, since the node_modules folder (where the CLI that
+# accepts this config runs from) is on the top-level dir and not inside /web
 schema: api/graphql/schema.graphql
 overwrite: true
 generates:
