@@ -7,7 +7,6 @@ query ListRules($input: ListRulesInput) {
       id
       displayName
       enabled
-      dedupPeriodMinutes
     }
     paging {
       totalPages

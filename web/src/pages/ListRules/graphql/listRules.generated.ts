@@ -35,13 +35,7 @@ export type ListRules = {
         Types.Maybe<
           Pick<
             Types.RuleSummary,
-            | 'lastModified'
-            | 'logTypes'
-            | 'severity'
-            | 'id'
-            | 'displayName'
-            | 'enabled'
-            | 'dedupPeriodMinutes'
+            'lastModified' | 'logTypes' | 'severity' | 'id' | 'displayName' | 'enabled'
           >
         >
       >
@@ -60,7 +54,6 @@ export const ListRulesDocument = gql`
         id
         displayName
         enabled
-        dedupPeriodMinutes
       }
       paging {
         totalPages
