@@ -79,9 +79,8 @@ You can easily chain `mage` commands together, for example: `mage fmt test:ci de
 
 ## Testing
 
-1. Run backend test suite: `mage test:ci`
-2. Run frontend test suite: `npm run lint`
-3. Run integration tests against a live deployment: `mage test:integration`
+1. Run our test suite: `mage test:ci`
+2. Run integration tests against a live deployment: `mage test:integration`
    - **WARNING**: integration tests will erase all Panther data stores
    - To run tests for only one package: `PKG=./internal/compliance/compliance-api/main mage test:integration`
 
