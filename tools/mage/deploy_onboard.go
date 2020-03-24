@@ -38,7 +38,7 @@ const (
 	logProcessingLabel = "panther-account" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
 
 	// CloudSec IAM Roles, DO NOT CHANGE! panther-cloudsec-iam.yml CF depends on these names
-	realTimeEventStackSetURL             = "https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml" // nolint:lll
+	realTimeEventStackSetURL             = "https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/v0.1.8/template.yml" // nolint:lll
 	realTimeEventsStackSet               = "panther-real-time-events"
 	realTimeEventsExecutionRoleName      = "PantherCloudFormationStackSetExecutionRole"
 	realTimeEventsAdministrationRoleName = "PantherCloudFormationStackSetAdminRole"
