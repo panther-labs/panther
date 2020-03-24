@@ -22,7 +22,11 @@ import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
 import { RuleDetails } from 'Generated/schema';
-import { DEFAULT_RULE_FUNCTION } from 'Source/constants';
+import {
+  DEFAULT_DEDUP_FUNCTION,
+  DEFAULT_RULE_FUNCTION,
+  DEFAULT_TITLE_FUNCTION,
+} from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
 import { getOperationName } from '@apollo/client/utilities';
@@ -40,7 +44,7 @@ export const initialValues: RuleDetails = {
   severity: null,
   dedupPeriodMinutes: 60,
   tags: [],
-  body: DEFAULT_RULE_FUNCTION,
+  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}`,
   tests: [],
 };
 

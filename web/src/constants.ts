@@ -34,7 +34,14 @@ export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('(?=.*[!@#\\$%\\^&\\*;:,.<>
 export const DEFAULT_POLICY_FUNCTION =
   'def policy(resource):\n\t# Write your code here.\n\treturn True';
 
-export const DEFAULT_RULE_FUNCTION = 'def rule(event):\n\t# Write your code here.\n\treturn False';
+export const DEFAULT_RULE_FUNCTION =
+  'def rule(event):\n\t# Write your rule code here.\n\treturn False';
+
+export const DEFAULT_TITLE_FUNCTION =
+  "def title(event):\n\t# Write code here for alert title generation.\n\treturn ''";
+
+export const DEFAULT_DEDUP_FUNCTION =
+  "def dedup(event):\n\t# Write code here for generating dedup string.\n\treturn ''";
 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
