@@ -18,7 +18,6 @@
 const path = require('path');
 const resolve = require('resolve');
 const webpack = require('webpack');
-const chalk = require('chalk');
 const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
@@ -31,18 +30,6 @@ const CompressionPlugin = require('compression-webpack-plugin');
 
 const isEnvDevelopment = process.env.NODE_ENV === 'development';
 const isEnvProduction = process.env.NODE_ENV === 'production';
-const requiredEnvs = [
-  'AWS_ACCOUNT_ID',
-  'AWS_REGION',
-  'WEB_APPLICATION_GRAPHQL_API_ENDPOINT',
-  'WEB_APPLICATION_USER_POOL_CLIENT_ID',
-  'WEB_APPLICATION_USER_POOL_ID',
-];
-const unsetVars = requiredEnvs.filter(env => process.env[env] === undefined);
-if (unsetVars.length) {
-  console.error(chalk.red(`Couldn't find the following ENV vars: ${unsetVars.join(', ')}`)); // eslint-disable-line no-console
-  process.exit();
-}
 
 module.exports = {
   // webpack automatically makes optimisations depending on the environment that runs. We want to
