@@ -85,7 +85,9 @@ const Navigation = () => {
               active={isComplianceNavigationActive}
               icon="cloud-security"
               tooltipLabel="Cloud Security"
-              onClick={() => setSecondaryNav(COMPLIANCE_NAV_KEY)}
+              onClick={() =>
+                setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
+              }
             />
           </Box>
           <Box is="li" mb="auto">
@@ -93,7 +95,9 @@ const Navigation = () => {
               active={isLogAnalysisNavigationActive}
               icon="log-analysis"
               tooltipLabel="Log Analysis"
-              onClick={() => setSecondaryNav(LOG_ANALYSIS_NAV_KEY)}
+              onClick={() =>
+                setSecondaryNav(isLogAnalysisNavigationActive ? null : LOG_ANALYSIS_NAV_KEY)
+              }
             />
           </Box>
           <Box is="li" mt="auto">
@@ -112,7 +116,7 @@ const Navigation = () => {
               active={isSettingsNavigationActive}
               icon="settings"
               tooltipLabel="Settings"
-              onClick={() => setSecondaryNav(SETTINGS_NAV_KEY)}
+              onClick={() => setSecondaryNav(isSettingsNavigationActive ? null : SETTINGS_NAV_KEY)}
             />
           </Box>
         </Flex>
