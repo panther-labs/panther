@@ -2,7 +2,7 @@
 
 Panther enables easy aggregation, normalization, analysis, and storage of security logs. **Rules** are Python functions used to identify suspicious activity and generate alerts for your team to triage.
 
-Each rule includes:
+## Rule Components
 
 - A `rule` function with an `event` argument and a `return` statement - `True` if the rule should send an alert, or `False` if not
 - A `dedup` function to control how alerts are grouped together
@@ -35,6 +35,8 @@ def title(event):
 - This rule will group alerts by the bucket name
 - Alerts will have a title such as `Unauthenticated Access to S3 Bucket my-super-secret-data`
 
+## Rule Packs
+
 By default, rules are pre-installed from Panther's [open-source packs](https://github.com/panther-labs/panther-analysis) and cover baseline detections and examples across supported log types:
 
 - AWS CIS
@@ -42,6 +44,142 @@ By default, rules are pre-installed from Panther's [open-source packs](https://g
 - AWS Samples (VPC, S3, CloudTrail, and more)
 - Osquery CIS
 - Osquery Samples
+
+## Writing Rules
+
+Panther Rules can be written, tested, and deployed either with the UI or the `panther_analysis_tool` CLI utility.
+
+Each Rule takes an `event` input of a given log type. For information on log formats, see the [supported logs](log-analysis/supported-logs) page.
+
+### Rule Body
+
+Each rule must contain the following `rule` function:
+
+```python
+def rule(event):
+  return True
+```
+
+Using the schemas in [supported logs](log-analysis/supported-logs) can give you an idea of what fields will exist.
+
+It's recommend to always use `.get()` when accessing fields since empty values are omitted from the event.
+
+For example, let's write a rule on an [NGINX Access](log-analysis/supported-logs/nginx#nginx-access) log:
+
+```json
+{
+  "bodyBytesSent": 193,
+  "httpReferer": "https://domain1.com/?p=1",
+  "httpUserAgent": "Chrome/80.0.3987.132 Safari/537.36",
+  "remoteAddr": "180.76.15.143",
+  "request": "GET /admin-panel/ HTTP/1.1",
+  "status": 200,
+  "time": "2019-02-06 00:00:38 +0000 UTC"
+}
+```
+
+This example rule alerts on successful admin panel logins:
+
+```python
+def rule(event):
+  if 'admin-panel' in event.get('request') and event.get('status') == 200:
+    return True
+
+  return False
+```
+
+In the `rule()` body, returning a value of `True` indicates an alert should send. Returning a value of `False` indicates the log is not suspicious.
+
+### Rule Deduplication
+
+By default, alerts group multiple events together by the associated `RuleID` over the period of 1 hour. To modify this merge logic, you can use the `dedup()` function in addition to the `rule()` function:
+
+```python
+def dedup(event):
+  return event.get('request', '').split(' ')[1]
+```
+
+In this example, all alerts will merge on the requested page of `/admin-panel/`
+
+### Alert Titles
+
+Alert titles, sent to our destinations, are by default `New Alert: #{Rule Description}`. To override this message, use the `title()` function:
+
+```python
+def title(event):
+  return 'successful /admin-panel/ logins'
+```
+
+The title can also be interpolated by using event attributes:
+
+```python
+def title(event):
+  return 'successful logins to {}'.format(event.get('request').split(' ')[1])
+```
+
+### Rule Attributes
+
+### Unit Tests
+
+## Rules in the Panther UI
+
+## Rules on the Command Line
+
+The `panther_analysis_tool` is a Python command line interface for testing, packaging, and deploying Panther Policies and Rules. This enables detections to be stored in code and tracked via version control systems such as `git`.
+
+### Installation
+
+The `panther_analysis_tool` is available on pip! Simply install with:
+
+```bash
+pip3 install panther_analysis_tool
+```
+
+### File Organization
+
+Navigate to the repository/path for your custom detections. We recommend grouping detections based on purpose, such as `suricata_rules` or `internal_pci`. Use the open source [Panther Analysis](https://github.com/panther-labs/panther-analysis) packs as a reference.
+
+Each new rule consists of a Python file (`<my-rule>.py`) containing your rule, dedup, and title functions, and a YAML/JSON specification (`<my-rule>.yml`) with rule attributes.
+
+### Usage
+
+```bash
+panther_analysis_tool --help
+usage: panther_analysis_tool [-h] [--version] {test,zip,upload}
+Panther Analysis Tool: A command line tool for managing Panther policies and
+rules.
+positional arguments:
+  {test,zip,upload}
+    test             Validate analysis specifications and run policy and rule
+                     tests.
+    zip              Create an archive of local policies and rules for
+                     uploading to Panther.
+    upload           Upload specified policies and rules to a Panther
+                     deployment.
+optional arguments:
+  -h, --help         show this help message and exit
+  --version          show program version number and exit
+```
+
+#### Running Tests
+
+bash
+```
+panther_analysis_tool test --path <path-to-python-code>
+```
+
+#### Uploading to Panther
+
+Make sure to configure your environment with valid AWS credentials prior to running the command below.
+
+bash
+```
+panther_analysis_tool upload --path <path-to-your-rules> --out tmp
+```
+
+{% hint style="info" %}
+Rules with the same ID are overwritten. Locally deleted rules will not automatically delete in the rule database and must be removed manually.
+{% endhint %}
 
 ## Runtime Libraries
 
@@ -68,9 +206,3 @@ Alternatively, you can override the runtime libraries by attaching a Lambda laye
 BackendParameterValues:
   PythonLayerVersionArn: 'arn:aws:lambda:us-east-2:123456789012:layer:my-layer:3'
 ```
-
-## Writing Rules
-
-{% hint style="info" %}
-Coming soon!
-{% endhint %}

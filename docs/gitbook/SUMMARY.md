@@ -24,7 +24,7 @@
 
 * [Overview](log-analysis/log-processing/README.md)
   * [Setup](log-analysis/log-processing/setup.md)
-* [Supported Logs](log-analysis/supported-logs/README.md)
+* [Supported Logs]()
   * [AWS](log-analysis/supported-logs/aws.md)
   * [Osquery](log-analysis/supported-logs/osquery.md)
   * [NGINX](log-analysis/supported-logs/nginx.md)
