@@ -7,10 +7,6 @@
 </p>
 
 <p align="center">
-  <i>Panther is currently in beta</i>
-</p>
-
-<p align="center">
   <a href="https://docs.runpanther.io">Documentation</a> |
   <a href="https://docs.runpanther.io/quick-start">Quick Start</a> |
   <a href="https://blog.runpanther.io">Blog</a> |
