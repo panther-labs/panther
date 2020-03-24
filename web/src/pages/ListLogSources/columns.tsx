@@ -45,7 +45,7 @@ const columns = [
   {
     key: 'logTypes',
     header: 'Log Types',
-    flex: '1 0 125px',
+    flex: '1 0 180px',
     renderCell: ({ logTypes }) => (
       <Box>
         {logTypes.map(logType => (
