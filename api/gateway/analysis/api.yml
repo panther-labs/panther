@@ -1034,6 +1034,7 @@ definitions:
       - tags
       - tests
       - versionId
+      - dedupPeriodMinutes
 
   UpdateRule:
     type: object
