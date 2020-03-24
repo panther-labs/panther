@@ -35,7 +35,7 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
     <MenuItem
       width={1}
       variant="primary"
-      selected={location.pathname === to}
+      selected={location.pathname.startsWith(to)}
       my={2}
       is={Link}
       to={to}

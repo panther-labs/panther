@@ -112,7 +112,7 @@ func TestDifferentialLogWithoutLogType(t *testing.T) {
 			"protocol": "17",
 			"socket":   "3276877798114717479",
 		},
-		Counter: (*numerics.Integer)(aws.Int(255)),
+		Counter: (*numerics.Integer)(aws.Int(33)),
 		Decorations: map[string]string{
 			"host_uuid": "97D8254F-7D98-56AE-91DB-924545EFXXXX",
 			"hostname":  "jaguar.local",
@@ -133,6 +133,7 @@ func TestOsQueryDifferentialLogType(t *testing.T) {
 }
 
 func checkOsQueryDifferentialLog(t *testing.T, log string, expectedEvent *Differential) {
+	expectedEvent.SetEvent(expectedEvent)
 	parser := &DifferentialParser{}
 	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }

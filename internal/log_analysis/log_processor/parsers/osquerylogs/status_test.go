@@ -93,6 +93,7 @@ func TestOsQueryStatusLogType(t *testing.T) {
 }
 
 func checkOsQueryStatusLog(t *testing.T, log string, expectedEvent *Status) {
+	expectedEvent.SetEvent(expectedEvent)
 	parser := &StatusParser{}
 	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
 }
