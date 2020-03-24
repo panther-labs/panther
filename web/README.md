@@ -26,27 +26,6 @@ npm run start
 and a development server will be setup for you. Visit [localhost:8080](http://localhost:8080) in
 order to view it.
 
-Panther installs project-wide commit hooks, which do nothing by default. For front-end development,
-it's **strongly advised to enable them** by setting `ENABLE_PANTHER_WEB_GIT_HOOKS` to a truthy value:
-
-```
-# Enable it for a single session
-export ENABLE_PANTHER_WEB_GIT_HOOKS=1
-
-# or
-
-# Enable it for all sessions (if you don't use .bashrc, change it accordingly)
-echo 'export ENABLE_PANTHER_WEB_GIT_HOOKS=1 >> ~/.bashrc
-```
-
-This will alter the commit hook functionality in order to include:
-
-- Running prettier on all checked out files
-- Running TS checks on all checked out TS files
-- Running ESLint on all TS & JS files
-
-guaranteeing you that you are not committing - potentially - problematic code.
-
 ### Deployment
 
 This package shouldn't have to be deployed individually, since its deployment is part

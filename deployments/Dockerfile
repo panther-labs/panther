@@ -37,7 +37,6 @@ ADD package.json package-lock.json ./
 RUN npm i
 
 # Mount the necessary source code
-ADD .babelrc tsconfig.json webpack.config.js ./
 ADD .git .git
 ADD out/.env.aws out/.env.aws
 ADD web web
@@ -64,7 +63,7 @@ COPY --from=build-env /code/web/dist web/dist
 
 # Add the script that runs the express server
 ADD package.json .
-ADD  web/scripts web/scripts
+ADD web/scripts web/scripts
 
 # Install express
 #

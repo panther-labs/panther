@@ -1,3 +1,5 @@
+package mage
+
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,24 +18,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-module.exports = {
-  /*
-   * Lint staged doesn't allow for multiple (comma separated) globs, so we have to split them
-   * in multiple lines (or use a custom function to isolate files which adds more complexity)
-   */
+import (
+	"encoding/json"
+	"fmt"
 
-  /*
-   * Run prettier TS, JS, JSON, YAML and Markdown files found anywhere in the project
-   */
-  '*.{ts,tsx,js,md,yaml,yml,json}': ['prettier --write', 'git add'],
+	"github.com/alecthomas/jsonschema"
+	"github.com/magefile/mage/mg"
 
-  /*
-   * Run ESLint checks for all TS & JS files found anywhere in hte project
-   */
-  '*.{ts,tsx,js}': ['eslint'],
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+)
 
-  /*
-   * only run the TS compiler when there are changes inTS files
-   */
-  '*.ts?(x)': () => 'tsc -p .',
-};
+type Show mg.Namespace
+
+// Schemas Prints to stdout a JSON representation each supported log type
+func (b Show) Schemas() {
+	for _, parser := range registry.AvailableParsers() {
+		jsonSchema := jsonschema.Reflect(parser.GlueTableMetadata.EventStruct())
+		for name, schemaType := range jsonSchema.Definitions {
+			fmt.Println(name)
+			props, err := json.MarshalIndent(schemaType.Properties, "", "    ")
+			if err != nil {
+				logger.Error(err)
+			}
+			fmt.Printf("%s\n", string(props))
+		}
+	}
+}
