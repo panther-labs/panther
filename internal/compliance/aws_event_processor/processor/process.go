@@ -70,6 +70,9 @@ var (
 		"ExportCertificate":     {},
 		"ResendValidationEmail": {},
 
+		// appsync
+		"StartSchemaCreation": {},
+
 		// cloudformation
 		"DeleteChangeSet":          {},
 		"DetectStackDrift":         {},
