@@ -47,7 +47,7 @@ By default, rules are pre-installed from Panther's [open-source packs](https://g
 
 ## Writing Rules
 
-Panther Rules can be written, tested, and deployed either with the UI or the `panther_analysis_tool` CLI utility.
+Panther Rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](https://github.com/panther-labs/panther_analysis_tool) CLI utility.
 
 Each Rule takes an `event` input of a given log type. For information on log formats, see the [supported logs](log-analysis/supported-logs) page.
 

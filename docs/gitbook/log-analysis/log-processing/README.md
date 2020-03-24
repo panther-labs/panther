@@ -20,12 +20,12 @@ Log analysis can improve visibility into your environments by monitoring events 
 1. Logs are written into an S3 bucket
 2. The bucket sends an S3 event notification to an SNS Topic
 3. An SQS Queue in the Panther Master account receives the event notification
-4. A Lambda pulls messages off the Queue, assumes an IAM Role, and downloads the log data
-6. A Lambda sends the parsed log data for analysis
+4. A Lambda function pulls messages off the Queue, assumes an IAM Role, and downloads the log data
+6. A Lambda function sends the parsed log data for analysis
 
 ## How to Setup Log Processing
 
-First, data must send to an S3 bucket.
+First, the data you'd like to analyze must be sent to an S3 bucket.
 
 We recommend organizing incoming data by using S3 folders or multiple buckets.
 

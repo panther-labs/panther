@@ -89,7 +89,7 @@ https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panth
 
 |         Field         | Description                                                                                |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
-|  `Stack name`    | A name of your choice, e.g. `panther-log-processing-notifications-<bucket-label>` |
+| `Stack name`    | A name of your choice, e.g. `panther-log-processing-notifications-<bucket-label>` |
 | `MasterAccountId`     | The 12 digit AWS Account ID where Panther is deployed |
 | `PantherRegion`   | The region where Panther is deployed |
 | `SnsTopicName`     | The name of the SNS topic receiving the notification, by default is `panther-notifications-topic`  |
@@ -156,7 +156,7 @@ Resources:
 
 ### Existing S3 Buckets and SNS Topics
 
-Follow the steps below if you currently a configured S3 bucket and SNS Topic receiving `All object create events`.
+Follow the steps below if you already have an S3 bucket configured to send `All object create events` to an SNS Topic.
 
 #### Modify SNS Access Policy
 
