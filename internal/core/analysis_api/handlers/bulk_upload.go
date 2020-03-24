@@ -231,7 +231,10 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 		}
 
 		for i, test := range config.Tests {
-			// Same re-mappings as above
+			// A test can specify a resource and a resource type or a log and a log type.
+			//
+			// This code actually allows users to specify either for policies and rules, but the convention would be to
+			// use log and log type for rules and resource and resource type for policies.
 			if test.Resource == nil {
 				analysisItem.Tests[i], err = buildRuleTest(test)
 			} else {
