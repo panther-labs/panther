@@ -1,9 +1,10 @@
 # Table of contents
 
 * [Home](README.md)
-  * [Cost](cost.md)
+  * [Troubleshooting](troubleshooting.md)
   * [Support](support.md)
   * [Security and Privacy](security-privacy.md)
+  * [Cost](cost.md)
 * [Quick Start](quick-start.md)
 * [Destinations](destinations/setup/README.md)
   * [Asana](destinations/setup/asana.md)
