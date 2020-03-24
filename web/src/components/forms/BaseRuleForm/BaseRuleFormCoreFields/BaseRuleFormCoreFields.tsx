@@ -170,22 +170,24 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
           inputProps={tagsInputProps}
         />
         {type === 'rule' && (
-          <Field
-            as={FormikMultiCombobox}
-            searchable
-            label="* Log Types"
-            name="logTypes"
-            items={LOG_TYPES}
-            inputProps={logTypesInputProps}
-          />
+          <React.Fragment>
+            <Field
+              as={FormikMultiCombobox}
+              searchable
+              label="* Log Types"
+              name="logTypes"
+              items={LOG_TYPES}
+              inputProps={logTypesInputProps}
+            />
+            <Field
+              as={FormikCombobox}
+              label="* Deduplication Period"
+              name="dedupPeriodMinutes"
+              items={dedupPeriodMinutesOptions}
+              itemToString={minutesToString}
+            />
+          </React.Fragment>
         )}
-        <Field
-          as={FormikCombobox}
-          label="* Deduplication Period"
-          name="dedupPeriodMinutes"
-          items={dedupPeriodMinutesOptions}
-          itemToString={minutesToString}
-        />
       </Grid>
       <Box my={6}>
         <InputElementLabel htmlFor="enabled">{`* ${capitalize(type)} Function`}</InputElementLabel>

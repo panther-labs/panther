@@ -119,7 +119,7 @@ type AlertDetails {
   eventsMatched: Int!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
-  dedupString: String
+  dedupString: String!
 }
 
 type ListAlertsResponse {
@@ -134,7 +134,7 @@ type AlertSummary {
   updateTime: AWSDateTime!
   ruleId: String
   severity: String
-  dedupString: String
+  dedupString: String!
 }
 
 input ListRulesInput {
@@ -142,7 +142,6 @@ input ListRulesInput {
   enabled: Boolean
   logTypes: String # Comma-separated string
   severity: SeverityEnum
-  dedupPeriodMinutes: Int
   tags: String # Comma-separated string
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
@@ -179,7 +178,6 @@ type RuleSummary {
   lastModified: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
-  dedupPeriodMinutes: Int
   tags: [String]
 }
 
@@ -202,7 +200,7 @@ type RuleDetails {
   reference: String
   runbook: String
   severity: SeverityEnum
-  dedupPeriodMinutes: Int
+  dedupPeriodMinutes: Int!
   tags: [String]
   tests: [PolicyUnitTest] # Policy and Rule have the same tests structure so we reuse the struct here
   versionId: ID
