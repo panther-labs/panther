@@ -225,6 +225,17 @@ func TestSendAlertFailureToGetRule(t *testing.T) {
 	assert.Error(t, SendAlert(testAlertDedupEvent))
 }
 
+func TestSendAlertRuleDoesntExist(t *testing.T) {
+	sqsMock := &mockSqs{}
+	sqsClient = sqsMock
+
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient = &http.Client{Transport: mockRoundTripper}
+
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusNotFound), nil).Once()
+	assert.NoError(t, SendAlert(testAlertDedupEvent))
+}
+
 func TestSendAlertFailureToSendSqsMessage(t *testing.T) {
 	sqsMock := &mockSqs{}
 	sqsClient = sqsMock
