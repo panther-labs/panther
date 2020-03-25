@@ -38,8 +38,12 @@ Be sure to populate the fields.
 
 To enable the new parser, first add it to the [parser registry](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/registry/registry.go#L37).
 
-Before making a pull-request, write [unit tests](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail_test.go) for your parser.
+Before making a pull-request:
 
-Finally, deploy Panther. You should be able to see a new table with your added parser in Glue Data Catalog!
+* Write [unit tests](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail_test.go) for your parser.
+* Deploy Panther. You should be able to see a new table with your added parser in Glue Data Catalog! ![Log List from Glue Catalog](../../.gitbook/assets/glue-catalog.png)
+* Use [s3queue](../operations/ops-home.md#tools) to copy test files into the `panther-bootstrap-auditlogs-<id>` bucket to drive log processing. Query Athena to confirm your data is available.
+* Update the [documentation](./supported-logs) with your new parser.
 
-![Log List from Glue Catalog](../../.gitbook/assets/glue-catalog.png)
+
+
