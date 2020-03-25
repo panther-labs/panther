@@ -16,7 +16,6 @@
 
 from abc import abstractmethod
 from functools import lru_cache
-import os
 from typing import Any, Dict
 
 import boto3
