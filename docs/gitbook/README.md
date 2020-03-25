@@ -2,7 +2,9 @@
 
 ## Overview
 
-Panther is a cloud-native platform for detecting threats, improving cloud security posture, and powering investigations. Security teams can use Panther for:
+Panther is a cloud-native platform for detecting threats, improving cloud security posture, and powering investigations.
+
+Security teams can use Panther for:
 
 |         Use Case         | Description                                                                               |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
@@ -11,7 +13,7 @@ Panther is a cloud-native platform for detecting threats, improving cloud securi
 |      Searching IOCs      | Quickly search for matches against IOCs using standardized data fields                    |
 | Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices in code |
 
-The following diagram shows a high-level architecture of Panther:
+## Architecture
 
 ![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
 

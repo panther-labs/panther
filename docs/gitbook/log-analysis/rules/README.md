@@ -45,11 +45,11 @@ By default, rules are pre-installed from Panther's [open-source packs](https://g
 - Osquery CIS
 - Osquery Samples
 
-## Writing Rules
+## Rule Writing Workflow
 
-Panther Rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](https://github.com/panther-labs/panther_analysis_tool) CLI utility.
+Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](https://github.com/panther-labs/panther_analysis_tool) CLI utility.
 
-Each Rule takes an `event` input of a given log type. For information on log formats, see the [supported logs](log-analysis/supported-logs) page.
+Each rule takes an `event` input of a given log type from the [supported logs](log-analysis/supported-logs) page.
 
 ### Rule Body
 
@@ -138,23 +138,49 @@ def title(event):
   return 'successful logins to {}'.format(event.get('request').split(' ')[1])
 ```
 
-## Rules in the Panther UI
+## First Steps with Rules
 
-{% hint style="info" %}
-WIP
-{% endhint %}
+When starting your rule writing/editing journey, your team should decide between a UI or CLI driven workflow.
+
+Then, configure the built in rules by searching for the `Configuration Required` tag. These rules are designed to be modified by you, the security professional, based on your organization's business logic.
+
+## Writing Rules in the Panther UI
+
+Navigate to Log Analysis > Rules, and click `Create New` in the top right corner. You have the option of creating a single new rule, or uploading a zip file containing rules created with the `panther_analysis_tool`.
+
+![](../../.gitbook/assets/write-rules-ui-1.png)
 
 ### Set Attributes
 
+Keeping with the NGINX example above, set all the necessary rule attributes:
+
+![](../../.gitbook/assets/write-rules-ui-2.png)
+
+### Write Rule Body
+
+Then write our rule function with the `rule()`, `title()`, and `dedup()` functions.
+
+![](../../.gitbook/assets/write-rules-ui-3.png)
+
 ### Configure Tests
 
-## Rules on the Command Line
+Finally, configure test cases to ensure our rule works as expected:
 
-The `panther_analysis_tool` is a Python command line interface for testing, packaging, and deploying Panther Policies and Rules. This enables detections to be stored in code and tracked via version control systems such as `git`.
+![](../../.gitbook/assets/write-rules-ui-4.png)
+
+And click `Create` to save the rule.
+
+Now, when any `NGINX.Access` logs are sent to Panther this rule will automatically analyze and alert upon admin panel activity.
+
+## Writing Rules with the Panther Analysis Tool
+
+The `panther_analysis_tool` is a Python command line interface  for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
 
 ### Installation
 
-The `panther_analysis_tool` is available on pip! Simply install with:
+The `panther_analysis_tool` is available on pip!
+
+Simply install with:
 
 ```bash
 pip3 install panther_analysis_tool
@@ -179,20 +205,20 @@ The specification file MUST:
 * Have the same name as the Python rule.
 
 Define the additional following fields:
-* Enabled
-* FileName
-* PolicyID
-* ResourceTypes
-* Severity
+* `Enabled`
+* `FileName`
+* `RuleID`
+* `LogTypes`
+* `Severity`
 
-An example file:
+An example specification file:
 
 ```yml
 AnalysisType: rule
 Enabled: true
 Filename: my_new_rule.py
-PolicyID: Category.Behavior.MoreInfo
-ResourceTypes:
+RuleID: Category.Behavior.MoreInfo
+LogTypes:
   - Log.Type.Here
 Severity: Info|Low|Medium|High|Critical
 DisplayName: Example Rule to Check the Format of the Spec
@@ -212,9 +238,9 @@ In our spec file, add the following key:
 Tests:
   -
     Name: Name to describe our first test.
-    ResourceType: Log.Type.Here
+    LogType: Log.Type.Here
     ExpectedResult: true/false
-    Resource:
+    Log:
       Key: Values
       For: Our Log
       Based: On the Schema
