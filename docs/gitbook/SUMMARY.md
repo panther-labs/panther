@@ -64,8 +64,6 @@
 
 * [Background](policies/cloud-security-overview.md)
 * [Setup](policies/scanning/README.md)
-  * [Account Setup](policies/scanning/aws-compliance-setup.md)
-  * [Real-Time Events](policies/scanning/real-time-events.md)
 * [Resource Types](policies/resources/README.md)
   * [AWS]()
     * [ACM Certificate](policies/resources/aws/acm-certificate.md)

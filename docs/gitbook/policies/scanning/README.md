@@ -4,9 +4,9 @@
 
 When adding a new AWS account for infrastructure monitoring, Panther first conducts a baseline scan and models resources in your account.
 
-Resource changes are tracked in real-time and scans run daily on your account to ensure the most consistent state possible.
+Scans run daily on your account to ensure the most consistent state possible. This works by using an assumable IAM Role with ReadOnly permissions.
 
-This functionality is enabled by creating a [ReadOnly Scan IAM Role](https://docs.aws.amazon.com/general/latest/gr/aws-security-audit-guide.html) and collecting CloudTrail or [AWS CloudWatch Events](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/WhatIsCloudWatchEvents.html) for stream real-time responses.
+Resources can also be tracked in real-time using CloudTrail or [CloudWatch Events](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/WhatIsCloudWatchEvents.html).
 
 ### Diagram
 
@@ -24,7 +24,11 @@ The first step is adding a new AWS account source by going to `Cloud Security` >
 
 ![](../../.gitbook/assets/add-new-account-1.png)
 
-Enter your account `Name` and `AWS Account ID`, and then tick the boxes if you want to enable real-time scans and/or automatic remediation:
+Enter your account `Name` and `AWS Account ID`.
+
+{% hint style="info" %}
+If you want to enable real-time scans or automatic remediation, make sure to tick the boxes here!
+{% endhint %}
 
 ![](../../.gitbook/assets/add-new-account-2.png)
 
@@ -74,53 +78,90 @@ The `Administrator` account may also be the `Target` account. To run and scan a 
 
 ### Setup Administrator Account
 
-The Administrator account must have a StackSet IAM Admin Role, which grants permissions to manage stacks in multiple accounts. Log into the `Administrator` AWS account and click [here](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-stackset-iam-admin-role/latest/template.yml&stackName=panther-stackset-iam-admin-role) to launch this stack in CloudFormation.
+By default, Panther deployments create a CloudFormation StackSet "Admin" role called:
 
-Alternatively, go to the CloudFormation console to create a new stack, with the following template URL:
+```
+PantherCloudFormationStackSetAdminRole-<PantherRegion>
+```
 
-`https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-stackset-iam-admin-role/latest/template.yml`
+For example, if Panther is deployed in `us-west-2`:
 
-This Role only has permissions to assume an IAM Role called `StackSetExecutionRole`:
+```
+PantherCloudFormationStackSetAdminRole-us-west-2
+```
 
-```text
+This IAM role allows the StackSet to assume roles in target accounts to orchestrate the creation of real-time events in as many regions as you would like:
+
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
         {
             "Action": "sts:AssumeRole",
-            "Resource": "arn:aws:iam::*:role/PantherCloudFormationStackSetExecutionRole",
+            "Resource": "arn:aws:iam::*:role/PantherCloudFormationStackSetExecutionRole-<PantherRegion>",
             "Effect": "Allow"
         }
     ]
 }
 ```
 
-### Onboard Accounts
-
-Next, real-time event consumption can be enabled by following these steps:
-
-{% hint style="warning" %}
-Make sure you have at least one AWS Account Source configured [here](aws-compliance-setup.md) with the `DeployCloudWatchEventSetup`set to`true`
+{% hint style="info" %}
+This IAM Role is only assumable by the Panther Deployment account.
 {% endhint %}
 
-1. Login to the `Administrator` account AWS Console
-2. Open the [CloudFormation StackSets](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacksets) page
-3. Click the `Create StackSet` button on the top right
-4. Select `Template is ready`
-   1. Under `Template source` select `Amazon S3 URL` and paste: `https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml`
-   2. Click `Next`
-5. Name the StackSet `panther-real-time-events`
-   1. In the `QueueArn` field, paste the following \(substituting the AWS account ID of the account running panther\):`arn:aws:sqs:<MASTER_ACCOUNT_REGION>:<MASTER_ACCOUNT_ID>:panther-aws-events-queue`
-   2. Click `Next`
-6. Under the Permissions tab, add the following:
-   1. IAM admin role name: `PantherCloudFormationStackSetAdminRole-<MASTER_ACCOUNT_REGION>`
-   2. IAM execution role name: `PantherCloudFormationStackSetExecutionRole-<MASTER_ACCOUNT_REGION>`
-   3. Click `Next`
-7. Type the AWS Account IDs of the Target Accounts in the Account numbers field, separated by commas
-   1. Select `Add all regions` or a list of specific regions
-   2. Set `Maximum concurrent accounts` to 5
-   3. Click `Next`
-8. Click `Submit` at the bottom of the page to create the StackSet
+### Onboard Accounts
+
+{% hint style="warning" %}
+In order for target accounts to be onboarded, you must have checked the box during the account setup above!
+{% endhint %}
+
+Login to the `Administrator` account's AWS Console, and open the [CloudFormation StackSets](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacksets) page
+
+![](../../.gitbook/assets/stacksets-1.png)
+
+Click the `Create StackSet` button on the top right, select `Template is ready`, and enter the following `Amazon S3 URL`:
+
+```
+https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/latest/template.yml
+```
+
+Click `Next`
+
+Name the StackSet `panther-real-time-events`
+
+Enter the 12-digit AWS Account ID where Panther is deployed in the `MasterAccountId` field.
+
+In the `QueueArn` field, paste the following \(substituting the AWS account ID of the account running panther\):
+
+```
+arn:aws:sqs:<PantherRegion>:<PantherAccountID>:panther-aws-events-queue
+```
+
+Click `Next`
+
+![](../../.gitbook/assets/stacksets-2.png)
+
+Under the Permissions tab, add IAM admin role name:
+
+```
+PantherCloudFormationStackSetAdminRole-<MASTER_ACCOUNT_REGION>
+```
+
+And the IAM execution role name:
+
+```
+PantherCloudFormationStackSetExecutionRole-<MASTER_ACCOUNT_REGION>
+```
+
+Click `Next`
+
+![](../../.gitbook/assets/stacksets-3.png)
+
+Type the AWS Account IDs of the Target Accounts in the Account numbers field, separated by commas.
+
+Select `Add all regions` or a list of desired regions, set `Maximum concurrent accounts` to 5, and click `Next`.
+
+Click `Submit` at the bottom of the page to create the StackSet
 
 To check on the status of the StackSet, check the `Operations` tab:
 
@@ -130,12 +171,12 @@ To check on the status of the StackSet, check the `Operations` tab:
 Awesome! You should now have real-time CloudWatch events sending to Panther.
 {% endhint %}
 
-### Add Additional Accounts
+### Adding Additional Accounts
 
 To add more accounts to the StackSet above, use the following steps:
 
 {% hint style="warning" %}
-Make sure you have at least one AWS Account Source configured [here](aws-compliance-setup.md) with the `DeployCloudWatchEventSetup`set to`true`
+Make sure you have at least one AWS Account Source configured with the `DeployCloudWatchEventSetup`set to`true`
 {% endhint %}
 
 1. Login to the `Administrator` account's AWS Console
