@@ -701,7 +701,6 @@ Resources:
       Environment:
         Variables:
           LOGGING_LEVEL: !If [DebugEnabled, DEBUG, INFO]
-          ROLE_FORMAT: !Sub arn:${AWS::Partition}:iam::{}:role/PantherRemediationRole-${AWS::Region}
       Layers: !If
         - AttachLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
