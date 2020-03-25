@@ -138,14 +138,14 @@ class TestRule(TestCase):
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\traise Exception("test")'
         rule = Rule({'id': 'test_dedup_throws_exception', 'body': rule_body, 'severity': 'INFO'})
 
-        expected_rule = RuleResult(matched=True, dedup_string='test_dedup_throws_exception')
+        expected_rule = RuleResult(matched=True, dedup_string='defaultDedupString:test_dedup_throws_exception')
         self.assertEqual(expected_rule, rule.run({}))
 
     def test_rule_invalid_dedup_return(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn {}'
         rule = Rule({'id': 'test_rule_invalid_dedup_return', 'body': rule_body, 'severity': 'INFO'})
 
-        expected_rule = RuleResult(matched=True, dedup_string='test_rule_invalid_dedup_return')
+        expected_rule = RuleResult(matched=True, dedup_string='defaultDedupString:test_rule_invalid_dedup_return')
         self.assertEqual(expected_rule, rule.run({}))
 
     def test_rule_dedup_returns_empty_string(self) -> None:

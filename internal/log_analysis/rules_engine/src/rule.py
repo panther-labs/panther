@@ -100,6 +100,8 @@ class Rule:
         else:
             self._has_dedup = False
 
+        self._default_dedup = 'defaultDedupString:{}'.format(self.rule_id)
+
         if hasattr(self._module, 'title'):
             self._has_title = True
         else:
@@ -111,7 +113,7 @@ class Rule:
         dedup_string: Optional[str] = None
         title: Optional[str] = None
         try:
-            rule_result = _run_command(self._module.rule, event, bool)
+            rule_result = self._run_command(self._module.rule, event, bool)
             if rule_result:
                 dedup_string = self._get_dedup(event)
                 title = self._get_title(event)
@@ -122,12 +124,12 @@ class Rule:
     def _get_dedup(self, event: Dict[str, Any]) -> str:
         if not self._has_dedup:
             # If no dedup function defined, return rule id
-            return 'defaultDedupString:' + self.rule_id
+            return self._default_dedup
         try:
-            dedup_string = _run_command(self._module.dedup, event, str)
+            dedup_string = self._run_command(self._module.dedup, event, str)
         except Exception as err:  # pylint: disable=broad-except
             self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
-            return self.rule_id
+            return self._default_dedup
 
         if dedup_string:
             if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
@@ -140,13 +142,13 @@ class Rule:
                 return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
             return dedup_string
         # If dedup string was the empty string, put the default value (rule_id)
-        return 'defaultDedupString:' + self.rule_id
+        return self._default_dedup
 
     def _get_title(self, event: Dict[str, Any]) -> Optional[str]:
         if not self._has_title:
             return None
         try:
-            title_string = _run_command(self._module.title, event, str)
+            title_string = self._run_command(self._module.title, event, str)
         except Exception as err:  # pylint: disable=broad-except
             self.logger.warning('title method raised exception. Using default. Exception: %s', err)
             return None
@@ -191,15 +193,16 @@ class Rule:
             sys.modules[self.rule_id] = mod
         return mod
 
-
-def _run_command(function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:
-    result = function(event)
-    if not isinstance(result, expected_type):
-        raise Exception(
-            'rule fuction [{}] returned [{}], expected [{}]'.format(function.__name__,
-                                                                    type(result).__name__, expected_type.__name__)
-        )
-    return result
+    def _run_command(self, function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:
+        result = function(event)
+        if not isinstance(result, expected_type):
+            raise Exception(
+                'rule [{}] fuction [{}] returned [{}], expected [{}]'.format(
+                    self.rule_id, function.__name__,
+                    type(result).__name__, expected_type.__name__
+                )
+            )
+        return result
 
 
 def _rule_id_to_path(rule_id: str) -> str:

@@ -63,6 +63,9 @@ func SendAlert(event *AlertDedupEvent) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to get alert information")
 	}
+	if alert == nil {
+		return nil
+	}
 	msgBody, err := jsoniter.MarshalToString(alert)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal alert notification")
@@ -92,6 +95,10 @@ func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
 	})
 
 	if err != nil {
+		if err.Error() == (&policiesoperations.GetRuleNotFound{}).Error() {
+			return nil, nil
+		}
+
 		return nil, errors.Wrapf(err, "failed to fetch information for ruleID %s", alert.RuleID)
 	}
 
