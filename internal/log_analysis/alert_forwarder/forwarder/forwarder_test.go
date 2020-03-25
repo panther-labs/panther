@@ -212,6 +212,8 @@ func TestSendAlertWithoutTitle(t *testing.T) {
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 	assert.NoError(t, SendAlert(testEvent))
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestSendAlertFailureToGetRule(t *testing.T) {
@@ -223,6 +225,8 @@ func TestSendAlertFailureToGetRule(t *testing.T) {
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusInternalServerError), nil).Once()
 	assert.Error(t, SendAlert(testAlertDedupEvent))
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestSendAlertRuleDoesntExist(t *testing.T) {
@@ -234,6 +238,8 @@ func TestSendAlertRuleDoesntExist(t *testing.T) {
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusNotFound), nil).Once()
 	assert.NoError(t, SendAlert(testAlertDedupEvent))
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestSendAlertFailureToSendSqsMessage(t *testing.T) {
@@ -246,6 +252,8 @@ func TestSendAlertFailureToSendSqsMessage(t *testing.T) {
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, errors.New("error"))
 	assert.Error(t, SendAlert(testAlertDedupEvent))
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
 }
 
 func generateResponse(body interface{}, httpCode int) *http.Response {
