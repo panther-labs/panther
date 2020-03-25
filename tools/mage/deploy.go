@@ -200,8 +200,8 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	// Deploy first bootstrap stack
 	go func() {
 		params := map[string]string{
-			"EnableS3AccessLogs":         strconv.FormatBool(settings.Monitoring.EnableS3AccessLogs),
-			"AccessLogsBucket":           settings.Monitoring.S3AccessLogsBucket,
+			"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+			"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
 			"CertificateArn":             certificateArn(awsSession, settings),
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"CustomDomain":               settings.Web.CustomDomain,

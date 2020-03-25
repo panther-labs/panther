@@ -47,19 +47,6 @@ Infra:
   PythonLayerVersionArn: ''
 
 Monitoring:
-  # Enable S3 access logs for Panther buckets.
-  # Doing so is a strongly recommend security practice, but can come at a high cost
-  # when processing large volumes of data.
-  #
-  # Access logs are sent either to the S3AccessLogsBucket below or a the panther audit bucket created for you.
-  EnableS3AccessLogs: true
-
-  # Optionally use an existing S3 bucket for storing S3 access logs.
-  # If not specified, the generated panther audit logs bucket is used for access logs as well.
-  #
-  # Has no effect if EnableS3AccessLogs=false above.
-  S3AccessLogsBucket: ''
-
   # This is the arn for the SNS topic you want associated with Panther system alarms.
   # If this is not set alarms will be associated with the SNS topic `panther-alarms`.
   AlarmSnsTopicArn: ''
@@ -74,6 +61,19 @@ Monitoring:
   TracingMode: ''
 
 Setup:
+  # Enable S3 access logs for Panther buckets.
+  # Doing so is a strongly recommend security practice, but can come at a high cost
+  # when processing large volumes of data.
+  #
+  # Access logs are sent either to the S3AccessLogsBucket below or a the panther audit bucket created for you.
+  EnableS3AccessLogs: true
+
+  # Optionally use an existing S3 bucket for storing S3 access logs.
+  # If not specified, the generated panther audit logs bucket is used for access logs as well.
+  #
+  # Has no effect if EnableS3AccessLogs=false above.
+  S3AccessLogsBucket: ''
+
   # List of policy/rule sets to install if the existing ruleset is empty
   # (e.g. when Panther is first deployed).
   #

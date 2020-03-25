@@ -139,12 +139,15 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 	}
 
 	if registerLogProcessing {
-		logTypes := []string{"AWS.S3ServerAccess", "AWS.VPCFlow", "AWS.ALB"}
+		logTypes := []string{"AWS.VPCFlow", "AWS.ALB"}
 		if settings.Setup.EnableCloudTrail {
 			logTypes = append(logTypes, "AWS.CloudTrail")
 		}
 		if settings.Setup.EnableGuardDuty {
 			logTypes = append(logTypes, "AWS.GuardDuty")
+		}
+		if settings.Setup.EnableS3AccessLogs {
+			logTypes = append(logTypes, "AWS.S3ServerAccess")
 		}
 
 		input := &models.LambdaInput{
