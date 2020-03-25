@@ -58,6 +58,7 @@ resource "aws_iam_policy" "deployment" {
         "apigateway:*",
         "appsync:*",
         "athena:*",
+        "cloudformation:Describe*",
         "cloudformation:List*",
         "cloudwatch:*",
         "cognito-idp:*",
@@ -66,6 +67,8 @@ resource "aws_iam_policy" "deployment" {
         "ecs:*",
         "events:*",
         "glue:*",
+        "guardduty:CreatePublishingDestination",
+        "guardduty:ListDetectors",
         "kms:CreateKey",
         "kms:List*",
         "lambda:*EventSourceMapping",
@@ -81,6 +84,7 @@ resource "aws_iam_policy" "deployment" {
       "Action": "cloudformation:*",
       "Resource": [
         "arn:${var.aws_partition}:cloudformation:${var.aws_region}:${var.aws_account_id}:stack/panther-*",
+        "arn:${var.aws_partition}:cloudformation:${var.aws_region}:${var.aws_account_id}:stackset/panther-*",
         "arn:${var.aws_partition}:cloudformation:${var.aws_region}:aws:transform/Serverless-2016-10-31"
       ],
       "Effect": "Allow"
@@ -99,12 +103,14 @@ resource "aws_iam_policy" "deployment" {
         "ec2:AuthorizeSecurityGroupIngress",
         "ec2:AttachInternetGateway",
         "ec2:CreateInternetGateway",
+        "ec2:CreateFlowLogs",
         "ec2:CreateRoute",
         "ec2:CreateRouteTable",
         "ec2:CreateSecurityGroup",
         "ec2:CreateSubnet",
         "ec2:CreateTags",
         "ec2:CreateVpc",
+        "ec2:DeleteFlowLogs",
         "ec2:DeleteInternetGateway",
         "ec2:DeleteRoute",
         "ec2:DeleteRouteTable",
@@ -141,7 +147,11 @@ resource "aws_iam_policy" "deployment" {
     },
     {
       "Action": "iam:*",
-      "Resource": "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/panther-*",
+      "Resource": [
+        "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/panther-*",
+        "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/Panther*",
+        "arn:${var.aws_partition}:iam::${var.aws_account_id}:server-certificate/panther/*",
+      ],
       "Effect": "Allow"
     },
     {
