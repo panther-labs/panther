@@ -1,8 +1,12 @@
 # Background
 
-After Panther has loaded and processed log data via [Log Processing](../log-analysis/log-processing/), you can freely search it using SQL via [AWS Athena](https://aws.amazon.com/athena/). This is useful for investigations, baselining behaviors, and advanced analytics on log events that operate on the context of days, weeks, or months of data.
+After Panther has loaded and processed log data via [Log Processing](../log-analysis/log-processing/), you can freely search using SQL with [AWS Athena](https://aws.amazon.com/athena/).
 
-Panther performs initial data normalization and processing to store the log data in a standard and efficient way in S3. Additionally, any other application that can read data from S3 can also access this data either for search, business intelligence, redundancy, or anything else.
+This is helpful for investigations, baselining behaviors, and advanced analytics on log events that operate on the context of days, weeks, or months of data.
+
+Panther performs initial data normalization and processing to store the log data in a standard and efficient way in S3.
+
+Additionally, any other application that can read data from S3 can also access this data either for search, business intelligence, redundancy, or anything else.
 
 ### Accessing the data with Athena
 
