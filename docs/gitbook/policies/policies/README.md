@@ -7,17 +7,21 @@ A Policy contains:
 - A `policy` function with a `resource` argument to analyze resource attributes
 - Returning `True` if the resource is compliant or `False` if non-compliant
 
-Python provides high flexibility in defining your Policy logic, and the following libraries are supported:
+Python provides tremendous flexibility for writing compliance policies. [By default](https://github.com/panther-labs/panther/blob/master/deployments/panther_config.yml), the following libraries are available:
 
 | Package          | Version   | Description                 | License   |
 | :--------------- | :-------- | :-------------------------- | :-------- |
-| `boto3`          | `1.10.46` | AWS SDK for Python          | Apache v2 |
+| `boto3`          | `1.12.24` | AWS SDK for Python          | Apache v2 |
 | `policyuniverse` | `1.3.2.1` | Parse AWS ARNs and Policies | Apache v2 |
-| `requests`       | `2.22.0`  | Easy HTTP Requests          | Apache v2 |
+| `requests`       | `2.23.0`  | Easy HTTP Requests          | Apache v2 |
+
+You can also bring your own `pip` libraries, or install a custom [lambda layer](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html).
 
 By default, Policies are loaded from Panther's [open-source packs](https://github.com/panther-labs/panther-analysis/tree/master/analysis/policies) which cover the CIS Benchmark. You can easily write your own policies based on specific internal use cases.
 
 Each page in this section describes helpful context for the AWS policies included with Panther by default. They include guidance on how to remediate policy failures along with recommended steps and security best practices.
+
+See the [config file](https://github.com/panther-labs/panther/blob/master/deployments/panther_config.yml) for python and policy settings.
 
 ## Listing Policies
 
