@@ -22,9 +22,10 @@ import (
 	"net"
 
 	jsoniter "github.com/json-iterator/go"
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	"go.uber.org/zap"
 )
 
 var RFC5424Desc = `Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)
