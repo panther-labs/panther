@@ -57,35 +57,18 @@ func (b Build) API() {
 	}
 
 	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
-	cwd, err := os.Getwd()
-	if err != nil {
-		logger.Fatalf("failed to get current working directory: %v", err)
+
+	cmd := filepath.Join(setupDirectory, "swagger")
+	if _, err = os.Stat(cmd); err != nil {
+		logger.Fatalf("%s not found (%v): run 'mage setup:swagger'", cmd, err)
 	}
 
 	for _, spec := range specs {
-		// Only regenerate the swagger SDK if needed - this allows deployments from a fresh clone
-		// without needing to install Swagger and also makes subsequent deployments faster
-		// (the compiled Go binary won't change)
-		rebuild, err := apiNeedsRebuilt(spec)
-		if err == nil && !rebuild {
-			logger.Debugf("build:api: %s is up to date", spec)
-			continue
-		}
-
-		// Swagger generates the wrong imports when running from the base directory, even with the
-		// "-t" flag. So we have to change to each api/gateway directory before running swagger
 		dir := filepath.Dir(spec)
-		if err = os.Chdir(dir); err != nil {
-			logger.Fatalf("failed to chdir %s: %v", dir, err)
-		}
-
+		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
 		start := time.Now().UTC()
-		args := []string{"generate", "client", "-q", "-f", filepath.Base(spec)}
-		cmd := filepath.Join(cwd, setupDirectory, "swagger")
-		if _, err = os.Stat(cmd); err != nil {
-			logger.Fatalf("%s not found (%v): run 'mage setup:all'", cmd, err)
-		}
 
+		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models, "-r", agplSource}
 		if err := sh.Run(cmd, args...); err != nil {
 			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
@@ -100,32 +83,9 @@ func (b Build) API() {
 				}
 			}
 		}
-		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
-		walk(filepath.Base(client), handler)
-		walk(filepath.Base(models), handler)
-
-		// Add license and our formatting standard to the generated SDK.
-		if err = os.Chdir(cwd); err != nil {
-			logger.Fatalf("failed to chdir back to %s: %v", cwd, err)
-		}
-		fmtLicenseGroup(agplSource, client, models)
-		gofmt(dir, client, models)
+		walk(client, handler)
+		walk(models, handler)
 	}
-}
-
-// Returns true if the generated client + models are older than the given client spec
-func apiNeedsRebuilt(spec string) (bool, error) {
-	clientNeedsUpdate, err := target.Dir(filepath.Join(filepath.Dir(spec), "client"), spec)
-	if err != nil {
-		return true, err
-	}
-
-	modelsNeedUpdate, err := target.Dir(filepath.Join(filepath.Dir(spec), "models"), spec)
-	if err != nil {
-		return true, err
-	}
-
-	return clientNeedsUpdate || modelsNeedUpdate, nil
 }
 
 // Lambda Compile Go Lambda function source
