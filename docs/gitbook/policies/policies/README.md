@@ -17,9 +17,7 @@ Python provides high flexibility in defining your Policy logic, and the followin
 
 By default, Policies are loaded from Panther's [open-source packs](https://github.com/panther-labs/panther-analysis/tree/master/analysis/policies) which cover the CIS Benchmark. You can easily write your own policies based on specific internal use cases.
 
-In the next page, we'll show how to setup a scan functionality and perform periodic scans of your AWS accounts.
-
-Each page in this section describes the purpose and reasoning for the AWS related policies distributed by Panther. They also include guidance on how to remediate policy failures, along with recommended steps and security best practices.
+Each page in this section describes helpful context for the AWS policies included with Panther by default. They include guidance on how to remediate policy failures along with recommended steps and security best practices.
 
 ## Listing Policies
 
