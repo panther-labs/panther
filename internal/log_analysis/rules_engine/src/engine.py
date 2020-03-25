@@ -29,9 +29,9 @@ _RULES_CACHE_DURATION = timedelta(minutes=5)
 
 class Engine:
     """The engine that runs Python rules."""
-    logger = get_logger()
 
     def __init__(self, analysis_api: AnalysisAPIClient) -> None:
+        self.logger = get_logger()
         self._last_update = datetime.utcfromtimestamp(0)
         self.log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
         self._analysis_client = analysis_api
@@ -46,6 +46,7 @@ class Engine:
         matched: List[EventMatch] = []
 
         for rule in self.log_type_to_rules[log_type]:
+            self.logger.debug('running rule [%s]', rule.rule_id)
             result = rule.run(event)
             if result.exception:
                 self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, repr(result.exception))

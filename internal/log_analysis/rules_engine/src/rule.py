@@ -100,7 +100,7 @@ class Rule:
         else:
             self._has_dedup = False
 
-        self._default_dedup = 'defaultDedupString:{}'.format(self.rule_id)
+        self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
 
         if hasattr(self._module, 'title'):
             self._has_title = True
@@ -123,13 +123,13 @@ class Rule:
 
     def _get_dedup(self, event: Dict[str, Any]) -> str:
         if not self._has_dedup:
-            # If no dedup function defined, return rule id
-            return self._default_dedup
+            # If no dedup function defined, return default dedup string
+            return self._default_dedup_string
         try:
             dedup_string = self._run_command(self._module.dedup, event, str)
         except Exception as err:  # pylint: disable=broad-except
             self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
-            return self._default_dedup
+            return self._default_dedup_string
 
         if dedup_string:
             if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
@@ -141,8 +141,8 @@ class Rule:
                 num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
                 return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
             return dedup_string
-        # If dedup string was the empty string, put the default value (rule_id)
-        return self._default_dedup
+        # If dedup string was the empty string, return default dedup string
+        return self._default_dedup_string
 
     def _get_title(self, event: Dict[str, Any]) -> Optional[str]:
         if not self._has_title:
