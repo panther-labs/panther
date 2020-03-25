@@ -7,7 +7,7 @@ A Policy contains:
 - A `policy` function with a `resource` argument to analyze resource attributes
 - Returning `True` if the resource is compliant or `False` if non-compliant
 
-Python provides tremendous flexibility for writing compliance policies. [By default](https://github.com/panther-labs/panther/blob/master/deployments/panther_config.yml), the following libraries are available:
+Python provides tremendous flexibility for writing cloud security policies. [By default](https://github.com/panther-labs/panther/blob/master/deployments/panther_config.yml), the following libraries are available:
 
 | Package          | Version   | Description                 | License   |
 | :--------------- | :-------- | :-------------------------- | :-------- |
