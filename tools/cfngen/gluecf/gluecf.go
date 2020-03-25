@@ -54,6 +54,10 @@ var (
 			To:   GlueTimestampType,
 		},
 		{
+			From: reflect.TypeOf(timestamp.FluentdTimestamp{}),
+			To:   GlueTimestampType,
+		},
+		{
 			From: reflect.TypeOf(parsers.PantherAnyString{}),
 			To:   "array<string>",
 		},

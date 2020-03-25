@@ -34,6 +34,8 @@ const (
 	jsonMarshalLayout = `"2006-01-02 15:04:05.000000000"`
 
 	ansicWithTZUnmarshalLayout = `"Mon Jan 2 15:04:05 2006 MST"` // similar to time.ANSIC but with MST
+
+	fluentdTimestampLayout = `"2006-01-02 15:04:05 -0700"`
 )
 
 // use these functions to parse all incoming dates to ensure UTC consistency
@@ -103,4 +105,23 @@ func (ts *UnixMillisecond) UnmarshalJSON(jsonBytes []byte) (err error) {
 	t := time.Unix(0, value*time.Millisecond.Nanoseconds()).UTC()
 	*ts = (UnixMillisecond)(t)
 	return nil
+}
+
+type FluentdTimestamp time.Time
+
+func (ts *FluentdTimestamp) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func (ts *FluentdTimestamp) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
+}
+
+func (ts *FluentdTimestamp) UnmarshalJSON(jsonBytes []byte) (err error) {
+	t, err := Parse(fluentdTimestampLayout, string(jsonBytes))
+	if err != nil {
+		return
+	}
+	*ts = (FluentdTimestamp)(t)
+	return
 }

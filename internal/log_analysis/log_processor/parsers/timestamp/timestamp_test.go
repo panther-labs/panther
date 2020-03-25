@@ -34,6 +34,7 @@ var (
 	jsonUnmarshalString            = `"2019-12-15T01:01:01Z"`
 	osqueryUnmarshalString         = `"Sun Dec 15 01:01:01 2019 UTC"`
 	unixMillisecondUnmarshalString = `1576371661000`
+	fluentdUnmarshalString         = `"2019-12-15 01:01:01 +0000"`
 )
 
 func TestTimestampRFC3339_String(t *testing.T) {
@@ -91,4 +92,23 @@ func TestTimestampUnixMillisecond_Unmarshal(t *testing.T) {
 	err := jsoniter.Unmarshal([]byte(unixMillisecondUnmarshalString), &ts)
 	assert.NoError(t, err)
 	assert.Equal(t, (UnixMillisecond)(expectedTime), ts)
+}
+
+func TestFluentdTimestamp_String(t *testing.T) {
+	ts := (FluentdTimestamp)(expectedTime)
+	assert.Equal(t, expectedString, ts.String())
+}
+
+func TestFluentdTimestamp_Marshal(t *testing.T) {
+	ts := (FluentdTimestamp)(expectedTime)
+	jsonTS, err := jsoniter.Marshal(&ts)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedMarshalString, string(jsonTS))
+}
+
+func TestFluentdTimestamp_Unmarshal(t *testing.T) {
+	var ts FluentdTimestamp
+	err := jsoniter.Unmarshal([]byte(fluentdUnmarshalString), &ts)
+	assert.NoError(t, err)
+	assert.Equal(t, (FluentdTimestamp)(expectedTime), ts)
 }
