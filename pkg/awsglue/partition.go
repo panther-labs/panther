@@ -103,7 +103,7 @@ type PartitionColumnInfo struct {
 
 // Creates a new partition in Glue using the client provided.
 func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
-	return NewGlueTableMetadata(models.LogData, gp.tableName, "", GlueTableHourly, nil).CreateJSONPartition(client, gp.hour)
+	return NewGlueTableMetadata(gp.datatype, gp.tableName, "", GlueTableHourly, nil).CreateJSONPartition(client, gp.hour)
 }
 
 // Gets the partition from S3bucket and S3 object key info.
