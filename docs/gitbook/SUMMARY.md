@@ -63,11 +63,11 @@
 ## Cloud Security <a id="policies"></a>
 
 * [Background](policies/cloud-security-overview.md)
-* [Scanning](policies/scanning/README.md)
+* [Setup](policies/scanning/README.md)
   * [Account Setup](policies/scanning/aws-compliance-setup.md)
   * [Real-Time Events](policies/scanning/real-time-events.md)
 * [Resource Types](policies/resources/README.md)
-  * [AWS](policies/resources/aws/README.md)
+  * [AWS]()
     * [ACM Certificate](policies/resources/aws/acm-certificate.md)
     * [CloudFormation Stack](policies/resources/aws/cloudformation-stack.md)
     * [CloudWatch Log Group](policies/resources/aws/cloudwatch-log-group.md)

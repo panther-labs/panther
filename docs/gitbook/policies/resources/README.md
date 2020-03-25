@@ -29,3 +29,7 @@ The following Attributes are common across all resources and can be referenced i
 | `ResourceType` | The categorization of the resource, such as `AWS.EC2.Instance`                                                                                                                                                  |
 | `Tags`         | A map of key/value pair labels that may be assigned to an AWS resource, when any exist                                                                                                                          |
 | `TimeCreated`  | An [RFC3339](https://tools.ietf.org/html/rfc3339) timestamp of when the resource was created. This is not set if the information is not provided by the AWS API or if not applicable, such as in Meta resources |
+
+## Adding New Resources
+
+Panther supports scanning many AWS resources types. To request a new one, please submit a [Github Issue](https://www.github.com/panther-labs/panther/issues).

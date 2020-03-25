@@ -94,7 +94,7 @@ Follow the steps below to complete your setup:
 3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
 4. Onboard accounts for [cloud security scans](policies/scanning/)
 5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
-6. Query collected logs with [historical search](historical-search/historical-search)
+6. Query collected logs with [historical search](historical-search/README.md)
 
 ## Deployment Options
 
