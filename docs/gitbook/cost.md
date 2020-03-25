@@ -1,6 +1,6 @@
 # Cost Analysis
 
-This page breaks down the cost for each major component within Panther.
+This page breaks down the related infrastructure costs of running Panther.
 
 ## Overview
 

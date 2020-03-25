@@ -1,10 +1,6 @@
 # Table of contents
 
 * [Home](README.md)
-  * [Troubleshooting](troubleshooting.md)
-  * [Support](support.md)
-  * [Security and Privacy](security-privacy.md)
-  * [Cost](cost.md)
 * [Quick Start](quick-start.md)
 * [Destinations](destinations/setup/README.md)
   * [Asana](destinations/setup/asana.md)
@@ -16,6 +12,11 @@
   * [Slack](destinations/setup/slack.md)
   * [SNS](destinations/setup/sns.md)
   * [SQS](destinations/setup/sqs.md)
+* [Help]()
+  * [Troubleshooting](troubleshooting.md)
+  * [Support](support.md)
+  * [Security and Privacy](security-privacy.md)
+  * [Cost](cost.md)
 * [Development](development.md)
   * [Parsers](log-analysis/writing-parsers.md)
 * [Operations](operations/ops-home.md)
@@ -23,8 +24,7 @@
 
 ## Log Analysis
 
-* [Overview](log-analysis/log-processing/README.md)
-  * [Setup](log-analysis/log-processing/setup.md)
+* [Setup](log-analysis/log-processing/README.md)
 * [Supported Logs]()
   * [AWS](log-analysis/supported-logs/aws.md)
   * [Osquery](log-analysis/supported-logs/osquery.md)

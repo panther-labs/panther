@@ -4,26 +4,34 @@ Destinations are used to notify your team about suspicious activity or vulnerabl
 
 When a policy fails on a resource or a rule triggers on an event, an alert is generated and sent to the configured destination.
 
-Alerts are routed based on severity. For example, if a Rule is configured with a `Critical` severity, it will dispatch alerts to the  destinations configured to handle `Critical` alerts. A single alert will dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
+Alerts are routed based on severity.
+
+For example, if a Rule is configured with a `Critical` severity, it will dispatch alerts to the  destinations configured to handle `Critical` alerts.
+
+A single alert will also dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
 
 Supported destinations:
 
-- [Amazon Simple Notification Service (Email)](https://aws.amazon.com/sns/)
-- [Amazon Simple Queue Service](https://aws.amazon.com/sqs/)
-- [Github](https://github.com/)
-- [Jira](https://www.atlassian.com/software/jira)
-- [Microsoft Teams](https://products.office.com/en-us/microsoft-teams/group-chat-software)
-- [OpsGenie](https://www.atlassian.com/software/opsgenie/what-is-opsgenie)
-- [PagerDuty](https://www.pagerduty.com/)
-- [Slack](https://slack.com/)
+|         Name         | Homepage                                                                               |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+|  Amazon Simple Notification Service (Email)   | https://aws.amazon.com/sns/   |
+|       Amazon Simple Queue Service       | https://aws.amazon.com/sqs/         |
+|      Github      | https://github.com/                    |
+| Jira | https://www.atlassian.com/software/jira |
+| Microsoft Teams | https://products.office.com/en-us/microsoft-teams/group-chat-software |
+| OpsGenie | https://www.atlassian.com/software/opsgenie/what-is-opsgenie |
+| PagerDuty | https://www.pagerduty.com/ |
+| Slack | https://slack.com/ |
 
 ## Creating a New Destination
 
-Navigate to Settings > Destinations and select `ADD DESTINATION`.
+To create a destination, navigate to `Settings` > `Destinations` and select `Add Destination`.
 
-![](../.gitbook/assets/default-destinations-new.png)
+![](../../.gitbook/assets/default-destinations-new.png)
 
-You will then be prompted to select a destination type. Multiple destinations of the same type may be configured, such as several Slack channels or email addresses. This allows for more fine grained control of destination routing.
+You will then be prompted to select a destination type.
+
+Multiple destinations of the same type may be configured, such as several Slack channels or email addresses. This allows for fine grained control of destination routing.
 
 ![Select the destination type](../../.gitbook/assets/destination-types.png)
 
@@ -33,7 +41,7 @@ Each destination type will have specific configuration options based on the syst
 
 ![Configure the destination's settings](../../.gitbook/assets/destination-settings-example.png)
 
-Finally, click the `ADD DESTINATION` button to save the configuration. You are now ready to receive alerts!
+Finally, click the `Add Destination` button to save the configuration. You are now ready to receive alerts!
 
 ## Modifying or Deleting Destinations
 

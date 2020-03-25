@@ -47,7 +47,9 @@ For customized deployment options, [click here](quick-start.md#deployment-option
 
 #### Step 2
 
+{% hint style="warning" %}
 Note: Your AWS credentials _must_ be exported as environment variables before running the next command.
+{% endhint %}
 
 Start the development environment:
 
@@ -82,9 +84,11 @@ Your connection _is_ encrypted, and it's generally safe to continue if the domai
 
 ## Onboarding
 
-Congratulations! You are now ready to use Panther. Follow the steps below to configure your analysis and alerting:
+Congratulations! You are now ready to use Panther.
 
-1. Invite your team in Settings > Users > Invite User
+Follow the steps below to complete your setup:
+
+1. Invite your team in `Settings` > `Users` > `Invite User`
 1. Configure [destinations](destinations/setup/) to receive generated alerts
 2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
 3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
