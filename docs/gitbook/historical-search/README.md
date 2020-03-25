@@ -8,7 +8,17 @@ Panther performs initial data normalization and processing to store the log data
 
 Additionally, any other application that can read data from S3 can also access this data either for search, business intelligence, redundancy, or anything else.
 
-### Accessing the data with Athena
+## Available Databases
+
+The following databases are available to search from:
+
+|         Database         | Description                                                                               |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+|  `panther_logs`   | All data sent via Log Analysis, organized by log type   |
+|       `panther_rule_matches`       | Events for all triggered alerts, organized by log type         |
+|      `panther_views`      | Standardized fields across all logs and rule matches                   |
+
+## Accessing Data with Athena
 
 By navigating to the AWS [Athena](https://console.aws.amazon.com/athena/home) console, you can find a set of Panther pre-built tables under the database dropdown:
 
@@ -18,20 +28,22 @@ Expanding these tables will show their fields (hover your mouse over a field to 
 
 ![Athena Columns](../.gitbook/assets/AthenaTablesWithColumnDescriptions.png)
 
-If this is your first time using Athena, you will be prompted to setup a bucket to store your search results:
+{% hint style="info" %}
+If this is your first time using Athena, you will be prompted to setup a bucket to store your search results
+{% endhint %}
 
 ![Athena Settings](../.gitbook/assets/screen-shot-2020-01-22-at-2.16.28-pm.png)
 
-After this, data can be queried to answer common questions:
+Data can now be queried to answer common questions:
 
 ![Athena Query](../.gitbook/assets/screen-shot-2020-01-22-at-2.18.33-pm.png)
 
-### Accessing the data with Glue
+## Accessing Data with AWS Glue
 
 All log data is stored in AWS [Glue](https://aws.amazon.com/glue/) tables. This makes the data
 available in many tools such as Athena, Redshift, Glue Spark Jobs and SageMaker.
 
-### Coming soon
+## Coming Soon
 
 Panther Historical Search is still in it's early phases! For upcoming releases, we have planned:
 
