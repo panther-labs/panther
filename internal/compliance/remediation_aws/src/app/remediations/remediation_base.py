@@ -30,7 +30,7 @@ from ..common.exceptions import RemediationException, RemediationNotAuthorized
 
 _STS_CLIENT_MAP: Dict[str, BaseClient] = {}
 _DEFAULT_STS_REGION = 'us-east-1'
-_MASTER_REGION = os.environ('MASTER_REGION')
+_MASTER_REGION = os.environ['MASTER_REGION']
 
 
 class RemediationBase:
