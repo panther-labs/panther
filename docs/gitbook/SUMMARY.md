@@ -18,7 +18,7 @@
   * [Security and Privacy](security-privacy.md)
   * [Cost](cost.md)
 * [Development](development.md)
-  * [Parsers](log-analysis/writing-parsers.md)
+  * [Parsers](log-analysis/log-processing/writing-parsers.md)
 * [Operations](operations/ops-home.md)
   * [Run-books](operations/runbooks.md)
 
