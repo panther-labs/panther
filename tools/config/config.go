@@ -49,12 +49,12 @@ type Monitoring struct {
 }
 
 type Setup struct {
-	InitialAnalysisSets []string `yaml:"InitialAnalysisSets"`
 	OnboardSelf         bool     `yaml:"OnboardSelf"`
 	EnableS3AccessLogs  bool     `yaml:"EnableS3AccessLogs"`
-	S3AccessLogsBucket  string   `yaml:"S3AccessLogsBucket"`
 	EnableCloudTrail    bool     `yaml:"EnableCloudTrail"`
 	EnableGuardDuty     bool     `yaml:"EnableGuardDuty"`
+	S3AccessLogsBucket  string   `yaml:"S3AccessLogsBucket"`
+	InitialAnalysisSets []string `yaml:"InitialAnalysisSets"`
 }
 
 type Web struct {
