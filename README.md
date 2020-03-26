@@ -47,7 +47,7 @@ Use our [Tutorials](https://github.com/panther-labs/tutorials) to learn about se
 
 ## Analysis
 
-Panther uses Python for analysis, and each deployment is pre-installed with [150+ open source detections](https://github.com/panther-labs/panther-analysis/tree/master/analysis).
+Panther uses Python for analysis, and each deployment is pre-installed with [150+ open source detections](https://github.com/panther-labs/panther-analysis).
 
 ### Logs
 
