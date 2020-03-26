@@ -121,7 +121,7 @@ Navigate to Cloud Security > Policies, and click `Create New` in the top right c
 
 Keeping with the Password Policy example above, set all the necessary rule attributes:
 
-[picture]
+![Attributes Set](../../.gitbook/assets/policyAttributesSet.png)
 
 #### On choosing a severity
 
@@ -141,19 +141,19 @@ Feel free to use this as a reference point, or create your own standards.
 
 Then write our policy logic in the `policy()` function.
 
-[picture]
+![Body Set](../../.gitbook/assets/policyBodySet.png)
 
 ### Configure Tests
 
 Next, configure test cases to ensure our policy works as expected:
 
-[picture]
+![Tests Set](../../.gitbook/assets/policyTestsSet.png)
 
 ### Configure Automatic Remediation
 
-![automatic remediation dropdown](../../.gitbook/assets/automaticRemediationOptions.png)
+From the `Remediation` dropdown, select the remediation you wish to enable for this policy. Some remediations may support or require configurations to be set. On the following pages, you will find more detailed descriptions of each available remediation and their configuration settings. 
 
-From the `Remediation` dropdown, select the remediation you wish to enable for this policy. Some remediations may support or require configurations to be set. On the following pages, you will find more detailed descriptions of each available remediation and their configuration settings. Once you have selected and configured the appropriate remediation, click the `Update` button.
+![automatic remediation dropdown](../../.gitbook/assets/automaticRemediationOptions.png)
 
 Now, all future failures of the policy will automatically be re-mediated with the selected remediation. In order to apply the remediation to already detected failures, you can select the `Remediate` button on a failing resource when viewing the resources for the policy.
 
@@ -161,7 +161,7 @@ Now, all future failures of the policy will automatically be re-mediated with th
 
 In order to apply the remediation to all currently failing resources, simply disable the policy then re-enable the policy to re-evaluate all resources immediately with the automatic remediation in place. Panther doesn't do this automatically for safety reasons. This way you are able to enable an automatic remediation, test it out on a few resources to make sure everything is working as intended, then apply it to all failing resources (if desired) with the confidence that the exact policy and remediation configurations you intend to carry out are working as intended.
 
-Now, all existing `AWS.PasswordPolicy` resources are evaluated by this new policy immediately, and any new Password Policy resources that are discovered will be evaluated as well. 
+Once you have selected and configured the appropriate remediation, click the `Update` button. Now, all existing `AWS.PasswordPolicy` resources are evaluated by this new policy immediately, and any new Password Policy resources that are discovered will be evaluated as well. 
 
 ## Writing Policies with the Panther Analysis Tool
 
