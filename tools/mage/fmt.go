@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
+	goTargets = []string{"api/lambda", "internal", "pkg", "tools", "cmd", "magefile.go"}
 	pyTargets = []string{
 		"internal/compliance/remediation_aws",
 		"internal/compliance/policy_engine",
@@ -38,7 +38,7 @@ var (
 // Fmt Format source files
 func Fmt() {
 	fmtLicense()
-	gofmt(".", goTargets...)
+	gofmt(goTargets...)
 
 	// python
 	logger.Info("fmt: python yapf " + strings.Join(pyTargets, " "))
@@ -61,8 +61,8 @@ func Fmt() {
 	Doc()
 }
 
-// Apply full go formatting to the given paths, which share the common root.
-func gofmt(root string, paths ...string) {
+// Apply full go formatting to the given paths
+func gofmt(paths ...string) {
 	logger.Info("fmt: gofmt " + strings.Join(paths, " "))
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
@@ -71,11 +71,13 @@ func gofmt(root string, paths ...string) {
 	}
 
 	// 2) Remove empty newlines from import groups
-	walk(root, func(path string, info os.FileInfo) {
-		if !info.IsDir() && strings.HasSuffix(path, ".go") {
-			removeImportNewlines(path)
-		}
-	})
+	for _, root := range paths {
+		walk(root, func(path string, info os.FileInfo) {
+			if !info.IsDir() && strings.HasSuffix(path, ".go") {
+				removeImportNewlines(path)
+			}
+		})
+	}
 
 	// 3) Goimports to group imports into 3 sections
 	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, paths...)

@@ -31,7 +31,7 @@ const (
 
 var (
 	// Most open-source code is AGPL
-	agplPaths = []string{"api", "build", "deployments", "internal", "tools", "web/scripts", "web/src", "magefile.go"}
+	agplPaths = []string{"api/lambda", "build", "deployments", "internal", "tools", "web/scripts", "web/src", "magefile.go"}
 
 	// Standalone Go packages are Apache
 	apachePaths = []string{"pkg"}
