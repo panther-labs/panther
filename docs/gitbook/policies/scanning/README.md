@@ -1,16 +1,25 @@
-# Scanning
+# Cloud Security
+
+## Overview
+
+To analyze and detect misconfigured cloud resources, Panther scans AWS accounts, models the **Resources** within them, and uses **Policies** to evaluate their desired secure state.
+
+Panther's Cloud Security capabilities can be used to detect security issues such as:
+
+- S3 Buckets missing encryption
+- VPCs allowing inbound SSH traffic from `0.0.0.0/0`
+- Access Keys are older than 90 days
+- IAM policies are too permissive
 
 ## How It Works
+
+![Architecture Diagram](../../.gitbook/assets/snapshot-processing-v3.png)
 
 When adding a new AWS account for infrastructure monitoring, Panther first conducts a baseline scan and models resources in your account.
 
 Scans run daily on your account to ensure the most consistent state possible. This works by using an assumable IAM Role with ReadOnly permissions.
 
 Resources can also be tracked in real-time using CloudTrail or [CloudWatch Events](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/WhatIsCloudWatchEvents.html).
-
-### Diagram
-
-![Architecture Diagram](../../.gitbook/assets/snapshot-processing-v3.png)
 
 ## Setup
 
