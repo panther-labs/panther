@@ -137,19 +137,16 @@ func logDocs() {
 		docsBuffer.WriteString(fmt.Sprintf("## %s\n", category))
 
 		// use html table to get needed control
-		docsBuffer.WriteString("<table border=1>\n")
-		docsBuffer.WriteString("<tr><th align=center>Log Type</th><th align=center>Reference</th></tr>\n")
+
 		for _, logType := range logTypes {
 			table := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata
 
 			description := html.EscapeString(table.Description())
-			description = strings.Replace(description, "\n", "<br>", -1) // re-map line breaks.
 
-			// leave 2nd cell open for the schema
-			docsBuffer.WriteString(fmt.Sprintf("<tr><td valign=top>%s</td><td>%s", logType, description))
+			docsBuffer.WriteString(fmt.Sprintf("###%s\n%s", logType, description))
 
 			// add schema as html table since markdown won't let you embed tables
-			docsBuffer.WriteString(`<table style="td { word-wrap: break-word; max-width:100px; }">` + "\n")
+			docsBuffer.WriteString(`<table border=1 style="td { word-wrap: break-word; max-width:100px; }">` + "\n")
 			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>\n") // nolint
 			columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
 			for _, column := range columns {
@@ -160,9 +157,8 @@ func logDocs() {
 					html.EscapeString(column.Comment)))
 			}
 
-			docsBuffer.WriteString("</table></td></tr>\n") // close 2nd cell after the schema
+			docsBuffer.WriteString("</table>\n\n")
 		}
-		docsBuffer.WriteString("</table>\n\n") // close table for category
 	}
 	if _, err = readmeFile.Write(docsBuffer.Bytes()); err != nil {
 		logger.Fatalf("failed to write file %s: %v", readmeFileName, err)

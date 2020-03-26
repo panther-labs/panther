@@ -4,9 +4,9 @@
 # Supported logs
 
 ## AWS
-<table border=1>
-<tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>AWS.ALB</td><td>Application Load Balancer logs Layer 7 network logs for your application load balancer.<br>Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html<table style="td { word-wrap: break-word; max-width:100px; }">
+###AWS.ALB
+Application Load Balancer logs Layer 7 network logs for your application load balancer.
+Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>type</td><td>string</td><td>false</td><td>The type of request or connection.</td></tr>
 <tr><td>timestamp</td><td>timestamp</td><td>true</td><td>The time when the load balancer generated a response to the client (UTC). For WebSockets, this is the time when the connection is closed.</td></tr>
@@ -49,8 +49,11 @@
 <tr><td>p_any_aws_instance_ids</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws instance ids associated with the row</td></tr>
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>AWS.AuroraMySQLAudit</td><td>AuroraMySQLAudit is an RDS Aurora audit log which contains context around database calls.<br>Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###AWS.AuroraMySQLAudit
+AuroraMySQLAudit is an RDS Aurora audit log which contains context around database calls.
+Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>timestamp</td><td>timestamp</td><td>false</td><td>The timestamp for the logged event with microsecond precision (UTC).</td></tr>
 <tr><td>serverHost</td><td>string</td><td>false</td><td>The name of the instance that the event is logged for.</td></tr>
@@ -74,8 +77,11 @@
 <tr><td>p_any_aws_instance_ids</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws instance ids associated with the row</td></tr>
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>AWS.CloudTrail</td><td>AWSCloudTrail represents the content of a CloudTrail S3 object.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###AWS.CloudTrail
+AWSCloudTrail represents the content of a CloudTrail S3 object.
+Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>additionalEventData</td><td>string</td><td>false</td><td>Additional data about the event that was not part of the request or response.</td></tr>
 <tr><td>apiVersion</td><td>string</td><td>false</td><td>Identifies the API version associated with the AwsApiCall eventType value.</td></tr>
@@ -113,8 +119,12 @@
 <tr><td>p_any_aws_instance_ids</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws instance ids associated with the row</td></tr>
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>AWS.GuardDuty</td><td>Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity <br>and unauthorized behavior inside AWS Accounts. <br>See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###AWS.GuardDuty
+Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity 
+and unauthorized behavior inside AWS Accounts. 
+See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>schemaVersion</td><td>string</td><td>true</td><td>The schema format version of this record.</td></tr>
 <tr><td>accountId</td><td>string</td><td>false</td><td>The ID of the AWS account in which the activity took place that prompted GuardDuty to generate this finding.</td></tr>
@@ -142,8 +152,11 @@
 <tr><td>p_any_aws_instance_ids</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws instance ids associated with the row</td></tr>
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>AWS.S3ServerAccess</td><td>S3ServerAccess is an AWS S3 Access Log.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###AWS.S3ServerAccess
+S3ServerAccess is an AWS S3 Access Log.
+Log format &amp; samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>bucketowner</td><td>string</td><td>true</td><td>The canonical user ID of the owner of the source bucket. The canonical user ID is another form of the AWS account ID.</td></tr>
 <tr><td>bucket</td><td>string</td><td>false</td><td>The name of the bucket that the request was processed against. If the system receives a malformed request and cannot determine the bucket, the request will not appear in any server access log.</td></tr>
@@ -182,8 +195,11 @@
 <tr><td>p_any_aws_instance_ids</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws instance ids associated with the row</td></tr>
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>AWS.VPCFlow</td><td>VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###AWS.VPCFlow
+VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.
+Log format &amp; samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>version</td><td>bigint</td><td>false</td><td>The VPC Flow Logs version. If you use the default format, the version is 2. If you specify a custom format, the version is 3.</td></tr>
 <tr><td>account</td><td>string</td><td>false</td><td>The AWS account ID for the flow log.</td></tr>
@@ -218,13 +234,12 @@
 <tr><td>p_any_aws_instance_ids</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws instance ids associated with the row</td></tr>
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
-</table></td></tr>
 </table>
 
 ## Fluentd
-<table border=1>
-<tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>Fluentd.Syslog3164</td><td>Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)<br>Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log<table style="td { word-wrap: break-word; max-width:100px; }">
+###Fluentd.Syslog3164
+Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)
+Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>pri</td><td>smallint</td><td>false</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
 <tr><td>host</td><td>string</td><td>true</td><td>Hostname identifies the machine that originally sent the syslog message.</td></tr>
@@ -241,8 +256,11 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>Fluentd.Syslog5424</td><td>Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)<br>Reference: https://docs.fluentd.org/parser/syslog#rfc5424-log<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###Fluentd.Syslog5424
+Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)
+Reference: https://docs.fluentd.org/parser/syslog#rfc5424-log<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>pri</td><td>smallint</td><td>false</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
 <tr><td>host</td><td>string</td><td>true</td><td>Hostname identifies the machine that originally sent the syslog message.</td></tr>
@@ -261,13 +279,12 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
 </table>
 
 ## Nginx
-<table border=1>
-<tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>Nginx.Access</td><td>Access Logs for your Nginx server. We currently support Nginx &#39;combined&#39; format. <br>Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format<table style="td { word-wrap: break-word; max-width:100px; }">
+###Nginx.Access
+Access Logs for your Nginx server. We currently support Nginx &#39;combined&#39; format. 
+Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>remoteAddr</td><td>string</td><td>false</td><td>The IP address of the client (remote host) which made the request to the server.</td></tr>
 <tr><td>remoteUser</td><td>string</td><td>false</td><td>The userid of the person making the request. Usually empty unless .htaccess has requested authentication.</td></tr>
@@ -285,13 +302,12 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
 </table>
 
 ## OSSEC
-<table border=1>
-<tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>OSSEC.EventInfo</td><td>OSSEC EventInfo alert parser. Currently only JSON output is supported.<br>Reference: https://www.ossec.net/docs/docs/formats/alerts.html<table style="td { word-wrap: break-word; max-width:100px; }">
+###OSSEC.EventInfo
+OSSEC EventInfo alert parser. Currently only JSON output is supported.
+Reference: https://www.ossec.net/docs/docs/formats/alerts.html<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>id</td><td>string</td><td>true</td><td>Unique id of the event.</td></tr>
 <tr><td>rule</td><td>struct&lt;comment:string, group:string, level:bigint, sidid:bigint, CIS:array&lt;string&gt;, cve:string, firedtimes:bigint, frequency:bigint, groups:array&lt;string&gt;, info:string, PCI_DSS:array&lt;string&gt;&gt;</td><td>true</td><td>Information about the rule that created the event.</td></tr>
@@ -331,13 +347,12 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
 </table>
 
 ## Osquery
-<table border=1>
-<tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>Osquery.Batch</td><td>Batch contains all the data included in OsQuery batch logs<br>Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/<table style="td { word-wrap: break-word; max-width:100px; }">
+###Osquery.Batch
+Batch contains all the data included in OsQuery batch logs
+Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>calendarTime</td><td>timestamp</td><td>true</td><td>The time of the event (UTC).</td></tr>
 <tr><td>counter</td><td>bigint</td><td>true</td><td>Counter</td></tr>
@@ -355,8 +370,11 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>Osquery.Differential</td><td>Differential contains all the data included in OsQuery differential logs<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###Osquery.Differential
+Differential contains all the data included in OsQuery differential logs
+Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>action</td><td>string</td><td>true</td><td>Action</td></tr>
 <tr><td>calendarTime</td><td>timestamp</td><td>true</td><td>The time of the event (UTC).</td></tr>
@@ -378,8 +396,11 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>Osquery.Snapshot</td><td>Snapshot contains all the data included in OsQuery differential logs<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###Osquery.Snapshot
+Snapshot contains all the data included in OsQuery differential logs
+Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>action</td><td>string</td><td>true</td><td>Action</td></tr>
 <tr><td>calendarTime</td><td>timestamp</td><td>true</td><td>The time of the event (UTC).</td></tr>
@@ -398,8 +419,11 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>Osquery.Status</td><td>Status is a diagnostic osquery log about the daemon.<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###Osquery.Status
+Status is a diagnostic osquery log about the daemon.
+Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>calendarTime</td><td>timestamp</td><td>true</td><td>The time of the event (UTC).</td></tr>
 <tr><td>decorations</td><td>map&lt;string, string&gt;</td><td>false</td><td>Decorations</td></tr>
@@ -420,13 +444,12 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
 </table>
 
 ## Syslog
-<table border=1>
-<tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>Syslog.RFC3164</td><td>Syslog parser for the RFC3164 format (ie. BSD-syslog messages)<br>Reference: https://tools.ietf.org/html/rfc3164<table style="td { word-wrap: break-word; max-width:100px; }">
+###Syslog.RFC3164
+Syslog parser for the RFC3164 format (ie. BSD-syslog messages)
+Reference: https://tools.ietf.org/html/rfc3164<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>priority</td><td>smallint</td><td>true</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
 <tr><td>facility</td><td>smallint</td><td>true</td><td>Facility value helps determine which process created the message. Eg: 0 = kernel messages, 3 = system daemons.</td></tr>
@@ -445,8 +468,11 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
-<tr><td valign=top>Syslog.RFC5424</td><td>Syslog parser for the RFC5424 format.<br>Reference: https://tools.ietf.org/html/rfc5424<table style="td { word-wrap: break-word; max-width:100px; }">
+</table>
+
+###Syslog.RFC5424
+Syslog parser for the RFC5424 format.
+Reference: https://tools.ietf.org/html/rfc5424<table border=1 style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>priority</td><td>smallint</td><td>true</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
 <tr><td>facility</td><td>smallint</td><td>true</td><td>Facility value helps determine which process created the message. Eg: 0 = kernel messages, 3 = system daemons.</td></tr>
@@ -467,6 +493,5 @@
 <tr><td>p_any_domain_names</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-</table></td></tr>
 </table>
 
