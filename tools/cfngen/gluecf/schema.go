@@ -80,7 +80,9 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 	return cols
 }
 
-func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string]string) (fieldName, jsonType, comment string, required, skip bool) {
+func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string]string) (fieldName, jsonType, comment string,
+	required, skip bool) {
+
 	t := sf.Type
 
 	// deference pointers
