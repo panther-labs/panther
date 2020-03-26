@@ -1,22 +1,22 @@
 <p align="center">
-  <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github.jpg" alt="Panther Logo"/></a>
+  <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github-highres.png" width=75% alt="Panther Logo"/></a>
 </p>
 
 <p align="center">
-  <b>A Cloud-Native SIEM for the Modern Security Team</b>
+  <h3 align="center">A Cloud-Native SIEM for the Modern Security Team</h3>
 </p>
 
 <p align="center">
-  <a href="https://docs.runpanther.io">Documentation</a> |
   <a href="https://docs.runpanther.io/quick-start">Quick Start</a> |
+  <a href="https://docs.runpanther.io">Documentation</a> |
   <a href="https://blog.runpanther.io">Blog</a> |
   <a href="https://panther-labs-oss-slackin.herokuapp.com/">Chat with us on Slack!</a>
 </p>
 
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-<a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-15-orange.svg?style=svg" alt="All Contributors"/></a>
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
+  <a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-15-orange.svg?style=svg" alt="All Contributors"/></a>
+  <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://panther-labs-oss-slackin.herokuapp.com/"><img src="https://panther-labs-oss-slackin.herokuapp.com/badge.svg" alt="Slack"/></a>
   <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a>
   <a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther.svg?type=shield"/></a>
@@ -24,9 +24,9 @@
   <a href="https://magefile.org"><img src="https://magefile.org/badge.svg" alt="Built with Mage"/></a>
 </p>
 
----
-
-Panther is a cloud-native platform for detecting threats with log data, improving cloud security posture, and conducting investigations.
+<p align="center">
+  Panther is a platform for detecting threats with log data, improving cloud security posture, and conducting investigations.
+</p>
 
 ## Use Cases
 
@@ -45,13 +45,13 @@ Follow our [Quick Start Guide](https://docs.runpanther.io/quick-start) to deploy
 
 Use our [Tutorials](https://github.com/panther-labs/tutorials) to learn about security logging and data ingestion.
 
-## Analysis
-
 Panther uses Python for analysis, and each deployment is pre-installed with [150+ open source detections](https://github.com/panther-labs/panther-analysis).
 
-### Logs
+## Log Analysis
 
-In the following example, [osquery](https://github.com/osquery/osquery) logs are analyzed to identify malware on a macOS laptop:
+Panther uses Python3 [rules](https://docs.runpanther.io/log-analysis/rules) to analyze logs from [popular security tools](https://docs.runpanther.io/log-analysis/supported-logs) such as [osquery](https://github.com/osquery/osquery) and [OSSEC](https://github.com/ossec/ossec-hids).
+
+The example below identifies malware on macOS with the `osx-attacks` query pack:
 
 ```python
 from fnmatch import fnmatch
@@ -67,7 +67,7 @@ def rule(event):
         return False
 
     process_path = event.get('columns', {}).get('path')
-    # Alert if the process is running outside any of the approved paths
+    # Send an alert if the process is running outside of any approved paths
     return not any([fnmatch(process_path, p) for p in APPROVED_PATHS])
 
 
@@ -77,16 +77,15 @@ def title(event):
 
 
 def dedup(event):
-   if event.get('columns'):
-     # Group every similar infection in the fleet
-     return event.get('columns').get('path')
+    # Group similar infections in the fleet
+    return event.get('name')
 ```
 
 If this rule returns `True`, an alert will dispatch to your team based on the defined severity.
 
-### Cloud Infrastructure
+## Cloud Security
 
-The second analysis type is called a policy, and can be used to model security best practices on cloud resources:
+Panther also supports analyzing cloud [resources](https://docs.runpanther.io/policies/resources) with [policies](https://docs.runpanther.io/policies/policies). This can be used to detect vulnerable infrastructure along with modeling security best practices:
 
 ```python
 REGIONS_REQUIRED = {'us-east-1'}
@@ -102,15 +101,6 @@ def policy(resource):
 ```
 
 Returning `True` means that a resource is compliant, and returning `False` will `Fail` the policy and trigger an alert.
-
-### Analysis Resources
-
-For more information on the concepts above, check out our docs:
-
-- [Rules](https://docs.runpanther.io/log-analysis/rules)
-- [Supported Logs](https://docs.runpanther.io/log-analysis/supported-logs)
-- [Policies](https://docs.runpanther.io/policies/policies)
-- [Resource Types](https://docs.runpanther.io/policies/resources)
 
 ## Screenshots
 
@@ -138,7 +128,7 @@ It's no longer feasible to find the needle in the security-log-haystack _manuall
 
 ## Contributing
 
-We welcome all contributions! Please read the [contributing guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
+We welcome all contributions! Please read the contributing [guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
 
 ## License
 
