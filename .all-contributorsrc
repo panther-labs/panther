@@ -161,6 +161,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "SergeAx",
+      "name": "Sergey Aksenov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/3264530?v=4",
+      "profile": "http://sergeax.ru/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
