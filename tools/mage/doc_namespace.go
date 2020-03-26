@@ -134,8 +134,6 @@ func (d Doc) Logs() {
 	}
 	sort.Strings(sortedCategories)
 
-	// this function generates the schema for the table
-
 	// write README.md with table of log descriptions
 	var docsBuffer bytes.Buffer
 	docsBuffer.WriteString(parserReadmeHeader)
