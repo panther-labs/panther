@@ -2,6 +2,7 @@
   "files": [
     "README.md"
   ],
+  "skipCi": false,
   "badgeTemplate": "<a href=\"#contributors\"><img src=\"https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=svg\" alt=\"All Contributors\"/></a>",
   "imageSize": 100,
   "commit": false,
@@ -158,6 +159,15 @@
       "name": "Sargon Sada",
       "avatar_url": "https://avatars0.githubusercontent.com/u/53259827?v=4",
       "profile": "https://github.com/sardev08",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "SergeAx",
+      "name": "Sergey Aksenov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/3264530?v=4",
+      "profile": "http://sergeax.ru/",
       "contributions": [
         "doc"
       ]
