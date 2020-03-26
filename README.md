@@ -142,7 +142,7 @@ We welcome all contributions! Please read the [contributing guidelines](https://
 
 ## License
 
-Panther source code is licensed under AGPLv3, except the common utility `pkg/` folder, which uses the more permissive Apache v2 license.
+Panther source code is licensed under AGPLv3, except the common utility `pkg/` folder, which uses the Apache 2.0 license.
 See the [LICENSE file](https://github.com/panther-labs/panther/blob/master/LICENSE) for more information.
 
 ### FOSSA Status
