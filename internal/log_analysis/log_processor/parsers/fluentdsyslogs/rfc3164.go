@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -33,13 +34,13 @@ Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log`
 
 // nolint:lll
 type RFC3164 struct {
-	Priority  *uint8                      `json:"pri" validate:"required" description:"Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message."`
-	Hostname  *string                     `json:"host,omitempty" description:"Hostname identifies the machine that originally sent the syslog message."`
-	Ident     *string                     `json:"ident,omitempty" description:"Appname identifies the device or application that originated the syslog message."`
-	ProcID    *string                     `json:"pid,omitempty" description:"ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting."`
-	Message   *string                     `json:"message,omitempty" description:"Message contains free-form text that provides information about the event."`
-	Timestamp *timestamp.FluentdTimestamp `json:"time,omitempty" description:"Timestamp of the syslog message in UTC."`
-	Tag       *string                     `json:"tag,omitempty" description:"Tag of the syslog message"`
+	Priority  *uint8                      `json:"pri" description:"Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message."`
+	Hostname  *string                     `json:"host,omitempty" validate:"required" description:"Hostname identifies the machine that originally sent the syslog message."`
+	Ident     *string                     `json:"ident,omitempty" validate:"required" description:"Appname identifies the device or application that originated the syslog message."`
+	ProcID    *numerics.Integer           `json:"pid,omitempty" validate:"required" description:"ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting."`
+	Message   *string                     `json:"message,omitempty" validate:"required" description:"Message contains free-form text that provides information about the event."`
+	Timestamp *timestamp.FluentdTimestamp `json:"time,omitempty" validate:"required" description:"Timestamp of the syslog message in UTC."`
+	Tag       *string                     `json:"tag,omitempty" validate:"required" description:"Tag of the syslog message"`
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
 }

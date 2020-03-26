@@ -19,6 +19,8 @@ package osquerylogs
  */
 
 import (
+	"net"
+
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -89,4 +91,12 @@ func (p *DifferentialParser) LogType() string {
 func (event *Differential) updatePantherFields(p *DifferentialParser) {
 	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
+
+	if net.ParseIP(event.Columns["local_address"]) != nil {
+		event.AppendAnyIPAddresses(event.Columns["local_address"])
+	}
+
+	if net.ParseIP(event.Columns["remote_address"]) != nil {
+		event.AppendAnyIPAddresses(event.Columns["remote_address"])
+	}
 }

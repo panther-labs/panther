@@ -61,6 +61,40 @@ func TestDifferentialLog(t *testing.T) {
 	checkOsQueryDifferentialLog(t, log, expectedEvent)
 }
 
+func TestDifferentialLogWithExtraIps(t *testing.T) {
+	//nolint:lll
+	log := `{"name":"pack_incident-response_mounts","hostIdentifier":"Quans-MacBook-Pro-2.local","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","unixTime":"1572934106","epoch":"0","counter":"62","logNumericsAsNumbers":"false","decorations":{"host_uuid":"F919E9BF-0BF1-5456-8F6C-335243AEA537"},"columns":{"blocks":"61202533", "local_address":"192.168.1.1", "remote_address":"192.168.1.2"},"action":"added","log_type":"result"}`
+
+	expectedTime := time.Unix(1541398106, 0).UTC()
+	expectedEvent := &Differential{
+		Action:               aws.String("added"),
+		Name:                 aws.String("pack_incident-response_mounts"),
+		Epoch:                (*numerics.Integer)(aws.Int(0)),
+		HostIdentifier:       aws.String(("Quans-MacBook-Pro-2.local")),
+		UnixTime:             (*numerics.Integer)(aws.Int(1572934106)),
+		LogNumericsAsNumbers: aws.Bool(false),
+		LogType:              aws.String("result"),
+		CalendarTime:         (*timestamp.ANSICwithTZ)(&expectedTime),
+		Columns: map[string]string{
+			"blocks":         "61202533",
+			"local_address":  "192.168.1.1",
+			"remote_address": "192.168.1.2",
+		},
+		Counter: (*numerics.Integer)(aws.Int(62)),
+		Decorations: map[string]string{
+			"host_uuid": "F919E9BF-0BF1-5456-8F6C-335243AEA537",
+		},
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Osquery.Differential")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyDomainNames("Quans-MacBook-Pro-2.local")
+	expectedEvent.AppendAnyIPAddresses("192.168.1.1", "192.168.1.2")
+
+	checkOsQueryDifferentialLog(t, log, expectedEvent)
+}
+
 func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
 	//nolint:lll
 	log := `{"action":"added","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","columns":{"build_distro":"10.12"},"counter":"255","decorations":{"host_uuid":"37821E12-CC8A-5AA3-A90C-FAB28A5BF8F9" },"epoch":"0","hostIdentifier":"host.lan","log_type":"result","name":"pack_osquery-monitoring_osquery_info","unixTime":"1536682461"}`
