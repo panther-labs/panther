@@ -6,7 +6,7 @@
 ## AWS
 <table border=1>
 <tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>AWS.ALB</td><td>Application Load Balancer logs Layer 7 network logs for your application load balancer.<br>Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html<table>
+<tr><td valign=top>AWS.ALB</td><td>Application Load Balancer logs Layer 7 network logs for your application load balancer.<br>Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>type</td><td>string</td><td>false</td><td>The type of request or connection.</td></tr>
 <tr><td>timestamp</td><td>timestamp</td><td>true</td><td>The time when the load balancer generated a response to the client (UTC). For WebSockets, this is the time when the connection is closed.</td></tr>
@@ -50,7 +50,7 @@
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>AWS.AuroraMySQLAudit</td><td>AuroraMySQLAudit is an RDS Aurora audit log which contains context around database calls.<br>Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html<table>
+<tr><td valign=top>AWS.AuroraMySQLAudit</td><td>AuroraMySQLAudit is an RDS Aurora audit log which contains context around database calls.<br>Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>timestamp</td><td>timestamp</td><td>false</td><td>The timestamp for the logged event with microsecond precision (UTC).</td></tr>
 <tr><td>serverHost</td><td>string</td><td>false</td><td>The name of the instance that the event is logged for.</td></tr>
@@ -75,7 +75,7 @@
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>AWS.CloudTrail</td><td>AWSCloudTrail represents the content of a CloudTrail S3 object.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html<table>
+<tr><td valign=top>AWS.CloudTrail</td><td>AWSCloudTrail represents the content of a CloudTrail S3 object.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>additionalEventData</td><td>string</td><td>false</td><td>Additional data about the event that was not part of the request or response.</td></tr>
 <tr><td>apiVersion</td><td>string</td><td>false</td><td>Identifies the API version associated with the AwsApiCall eventType value.</td></tr>
@@ -93,13 +93,13 @@
 <tr><td>recipientAccountId</td><td>string</td><td>false</td><td>Represents the account ID that received this event. The recipientAccountID may be different from the CloudTrail userIdentity Element accountId. This can occur in cross-account resource access.</td></tr>
 <tr><td>requestId</td><td>string</td><td>false</td><td>The value that identifies the request. The service being called generates this value.</td></tr>
 <tr><td>requestParameters</td><td>string</td><td>false</td><td>The parameters, if any, that were sent with the request. These parameters are documented in the API reference documentation for the appropriate AWS service.</td></tr>
-<tr><td>resources</td><td>array&lt;struct&lt;arn:string,accountId:string,type:string&gt;&gt;</td><td>false</td><td>A list of resources accessed in the event.</td></tr>
+<tr><td>resources</td><td>array&lt;struct&lt;arn:string, accountId:string, type:string&gt;&gt;</td><td>false</td><td>A list of resources accessed in the event.</td></tr>
 <tr><td>responseElements</td><td>string</td><td>false</td><td>The response element for actions that make changes (create, update, or delete actions). If an action does not change state (for example, a request to get or list objects), this element is omitted. These actions are documented in the API reference docum...</td></tr>
 <tr><td>serviceEventDetails</td><td>string</td><td>false</td><td>Identifies the service event, including what triggered the event and the result.</td></tr>
 <tr><td>sharedEventId</td><td>string</td><td>false</td><td>GUID generated by CloudTrail to uniquely identify CloudTrail events from the same AWS action that is sent to different AWS accounts.</td></tr>
 <tr><td>sourceIpAddress</td><td>string</td><td>true</td><td>The IP address that the request was made from. For actions that originate from the service console, the address reported is for the underlying customer resource, not the console web server. For services in AWS, only the DNS name is displayed.</td></tr>
 <tr><td>userAgent</td><td>string</td><td>false</td><td>The agent through which the request was made, such as the AWS Management Console, an AWS service, the AWS SDKs or the AWS CLI.</td></tr>
-<tr><td>userIdentity</td><td>struct&lt;type:string,principalId:string,arn:string,accountId:string,accessKeyId:string,userName:string,sessionContext:struct&lt;attributes:struct&lt;mfaAuthenticated:string,creationDate:string&gt;,sessionIssuer:struct&lt;type:string,principalId:string,arn:string,accountId:string,userName:string&gt;,webIdFederationData:struct&lt;federatedProvider:string,attributes:string&gt;&gt;,invokedBy:string,identityProvider:string&gt;</td><td>true</td><td>Information about the user that made a request.</td></tr>
+<tr><td>userIdentity</td><td>struct&lt;type:string, principalId:string, arn:string, accountId:string, accessKeyId:string, userName:string, sessionContext:struct&lt;attributes:struct&lt;mfaAuthenticated:string, creationDate:string&gt;, sessionIssuer:struct&lt;type:string, principalId:string, arn:string, accountId:string, userName:string&gt;, webIdFederationData:struct&lt;federatedProvider:string, attributes:string&gt;&gt;, invokedBy:string, identityProvider:string&gt;</td><td>true</td><td>Information about the user that made a request.</td></tr>
 <tr><td>vpcEndpointId</td><td>string</td><td>false</td><td>Identifies the VPC endpoint in which requests were made from a VPC to another AWS service, such as Amazon S3.</td></tr>
 <tr><td>p_log_type</td><td>string</td><td>true</td><td>Panther added field with type of log</td></tr>
 <tr><td>p_row_id</td><td>string</td><td>true</td><td>Panther added field with unique id (within table)</td></tr>
@@ -114,7 +114,7 @@
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>AWS.GuardDuty</td><td>Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity <br>and unauthorized behavior inside AWS Accounts. <br>See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html<table>
+<tr><td valign=top>AWS.GuardDuty</td><td>Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity <br>and unauthorized behavior inside AWS Accounts. <br>See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>schemaVersion</td><td>string</td><td>true</td><td>The schema format version of this record.</td></tr>
 <tr><td>accountId</td><td>string</td><td>false</td><td>The ID of the AWS account in which the activity took place that prompted GuardDuty to generate this finding.</td></tr>
@@ -129,7 +129,7 @@
 <tr><td>updatedAt</td><td>timestamp</td><td>true</td><td>The last update time of the finding (UTC).</td></tr>
 <tr><td>title</td><td>string</td><td>true</td><td>A short description of the finding.</td></tr>
 <tr><td>description</td><td>string</td><td>true</td><td>A long description of the finding.</td></tr>
-<tr><td>service</td><td>struct&lt;additionalInfo:string,action:string,serviceName:string,detectorId:string,resourceRole:string,eventFirstSeen:timestamp,eventLastSeen:timestamp,archived:boolean,count:bigint&gt;</td><td>true</td><td>Additional information about the affected service.</td></tr>
+<tr><td>service</td><td>struct&lt;additionalInfo:string, action:string, serviceName:string, detectorId:string, resourceRole:string, eventFirstSeen:timestamp, eventLastSeen:timestamp, archived:boolean, count:bigint&gt;</td><td>true</td><td>Additional information about the affected service.</td></tr>
 <tr><td>p_log_type</td><td>string</td><td>true</td><td>Panther added field with type of log</td></tr>
 <tr><td>p_row_id</td><td>string</td><td>true</td><td>Panther added field with unique id (within table)</td></tr>
 <tr><td>p_event_time</td><td>timestamp</td><td>true</td><td>Panther added standardize event time (UTC)</td></tr>
@@ -143,7 +143,7 @@
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>AWS.S3ServerAccess</td><td>S3ServerAccess is an AWS S3 Access Log.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html<table>
+<tr><td valign=top>AWS.S3ServerAccess</td><td>S3ServerAccess is an AWS S3 Access Log.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>bucketowner</td><td>string</td><td>true</td><td>The canonical user ID of the owner of the source bucket. The canonical user ID is another form of the AWS account ID.</td></tr>
 <tr><td>bucket</td><td>string</td><td>false</td><td>The name of the bucket that the request was processed against. If the system receives a malformed request and cannot determine the bucket, the request will not appear in any server access log.</td></tr>
@@ -183,7 +183,7 @@
 <tr><td>p_any_aws_arns</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws arns associated with the row</td></tr>
 <tr><td>p_any_aws_tags</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of aws tags associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>AWS.VPCFlow</td><td>VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html<table>
+<tr><td valign=top>AWS.VPCFlow</td><td>VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.<br>Log format &amp; samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>version</td><td>bigint</td><td>false</td><td>The VPC Flow Logs version. If you use the default format, the version is 2. If you specify a custom format, the version is 3.</td></tr>
 <tr><td>account</td><td>string</td><td>false</td><td>The AWS account ID for the flow log.</td></tr>
@@ -224,15 +224,15 @@
 ## Fluentd
 <table border=1>
 <tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>Fluentd.Syslog3164</td><td>Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)<br>Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log<table>
+<tr><td valign=top>Fluentd.Syslog3164</td><td>Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)<br>Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
-<tr><td>pri</td><td>smallint</td><td>true</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
-<tr><td>host</td><td>string</td><td>false</td><td>Hostname identifies the machine that originally sent the syslog message.</td></tr>
-<tr><td>ident</td><td>string</td><td>false</td><td>Appname identifies the device or application that originated the syslog message.</td></tr>
-<tr><td>pid</td><td>string</td><td>false</td><td>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
-<tr><td>message</td><td>string</td><td>false</td><td>Message contains free-form text that provides information about the event.</td></tr>
-<tr><td>time</td><td>timestamp</td><td>false</td><td>Timestamp of the syslog message in UTC.</td></tr>
-<tr><td>tag</td><td>string</td><td>false</td><td>Tag of the syslog message</td></tr>
+<tr><td>pri</td><td>smallint</td><td>false</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
+<tr><td>host</td><td>string</td><td>true</td><td>Hostname identifies the machine that originally sent the syslog message.</td></tr>
+<tr><td>ident</td><td>string</td><td>true</td><td>Appname identifies the device or application that originated the syslog message.</td></tr>
+<tr><td>pid</td><td>bigint</td><td>true</td><td>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
+<tr><td>message</td><td>string</td><td>true</td><td>Message contains free-form text that provides information about the event.</td></tr>
+<tr><td>time</td><td>timestamp</td><td>true</td><td>Timestamp of the syslog message in UTC.</td></tr>
+<tr><td>tag</td><td>string</td><td>true</td><td>Tag of the syslog message</td></tr>
 <tr><td>p_log_type</td><td>string</td><td>true</td><td>Panther added field with type of log</td></tr>
 <tr><td>p_row_id</td><td>string</td><td>true</td><td>Panther added field with unique id (within table)</td></tr>
 <tr><td>p_event_time</td><td>timestamp</td><td>true</td><td>Panther added standardize event time (UTC)</td></tr>
@@ -242,17 +242,17 @@
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>Fluentd.Syslog5424</td><td>Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)<br>Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log<table>
+<tr><td valign=top>Fluentd.Syslog5424</td><td>Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)<br>Reference: https://docs.fluentd.org/parser/syslog#rfc5424-log<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
-<tr><td>pri</td><td>smallint</td><td>true</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
-<tr><td>host</td><td>string</td><td>false</td><td>Hostname identifies the machine that originally sent the syslog message.</td></tr>
-<tr><td>ident</td><td>string</td><td>false</td><td>Appname identifies the device or application that originated the syslog message.</td></tr>
-<tr><td>pid</td><td>string</td><td>false</td><td>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
-<tr><td>msgid</td><td>string</td><td>false</td><td>MsgID identifies the type of message. For example, a firewall might use the MsgID &#39;TCPIN&#39; for incoming TCP traffic.</td></tr>
-<tr><td>extradata</td><td>string</td><td>false</td><td>ExtraData contains syslog strucured data as string</td></tr>
-<tr><td>message</td><td>string</td><td>false</td><td>Message contains free-form text that provides information about the event.</td></tr>
-<tr><td>time</td><td>timestamp</td><td>false</td><td>Timestamp of the syslog message in UTC.</td></tr>
-<tr><td>tag</td><td>string</td><td>false</td><td>Tag of the syslog message</td></tr>
+<tr><td>pri</td><td>smallint</td><td>false</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
+<tr><td>host</td><td>string</td><td>true</td><td>Hostname identifies the machine that originally sent the syslog message.</td></tr>
+<tr><td>ident</td><td>string</td><td>true</td><td>Appname identifies the device or application that originated the syslog message.</td></tr>
+<tr><td>pid</td><td>bigint</td><td>true</td><td>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
+<tr><td>msgid</td><td>string</td><td>true</td><td>MsgID identifies the type of message. For example, a firewall might use the MsgID &#39;TCPIN&#39; for incoming TCP traffic.</td></tr>
+<tr><td>extradata</td><td>string</td><td>true</td><td>ExtraData contains syslog strucured data as string</td></tr>
+<tr><td>message</td><td>string</td><td>true</td><td>Message contains free-form text that provides information about the event.</td></tr>
+<tr><td>time</td><td>timestamp</td><td>true</td><td>Timestamp of the syslog message in UTC.</td></tr>
+<tr><td>tag</td><td>string</td><td>true</td><td>Tag of the syslog message</td></tr>
 <tr><td>p_log_type</td><td>string</td><td>true</td><td>Panther added field with type of log</td></tr>
 <tr><td>p_row_id</td><td>string</td><td>true</td><td>Panther added field with unique id (within table)</td></tr>
 <tr><td>p_event_time</td><td>timestamp</td><td>true</td><td>Panther added standardize event time (UTC)</td></tr>
@@ -267,7 +267,7 @@
 ## Nginx
 <table border=1>
 <tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>Nginx.Access</td><td>Access Logs for your Nginx server. We currently support Nginx &#39;combined&#39; format. <br>Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format<table>
+<tr><td valign=top>Nginx.Access</td><td>Access Logs for your Nginx server. We currently support Nginx &#39;combined&#39; format. <br>Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>remoteAddr</td><td>string</td><td>false</td><td>The IP address of the client (remote host) which made the request to the server.</td></tr>
 <tr><td>remoteUser</td><td>string</td><td>false</td><td>The userid of the person making the request. Usually empty unless .htaccess has requested authentication.</td></tr>
@@ -291,10 +291,10 @@
 ## OSSEC
 <table border=1>
 <tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>OSSEC.EventInfo</td><td>OSSEC EventInfo alert parser. Currently only JSON output is supported.<br>Reference: https://www.ossec.net/docs/docs/formats/alerts.html<table>
+<tr><td valign=top>OSSEC.EventInfo</td><td>OSSEC EventInfo alert parser. Currently only JSON output is supported.<br>Reference: https://www.ossec.net/docs/docs/formats/alerts.html<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>id</td><td>string</td><td>true</td><td>Unique id of the event.</td></tr>
-<tr><td>rule</td><td>struct&lt;comment:string,group:string,level:bigint,sidid:bigint,CIS:array&lt;string&gt;,cve:string,firedtimes:bigint,frequency:bigint,groups:array&lt;string&gt;,info:string,PCI_DSS:array&lt;string&gt;&gt;</td><td>true</td><td>Information about the rule that created the event.</td></tr>
+<tr><td>rule</td><td>struct&lt;comment:string, group:string, level:bigint, sidid:bigint, CIS:array&lt;string&gt;, cve:string, firedtimes:bigint, frequency:bigint, groups:array&lt;string&gt;, info:string, PCI_DSS:array&lt;string&gt;&gt;</td><td>true</td><td>Information about the rule that created the event.</td></tr>
 <tr><td>TimeStamp</td><td>timestamp</td><td>true</td><td>Timestamp in UTC.</td></tr>
 <tr><td>location</td><td>string</td><td>true</td><td>Source of the event (filename, command, etc).</td></tr>
 <tr><td>hostname</td><td>string</td><td>true</td><td>Hostname of the host that created the event.</td></tr>
@@ -305,7 +305,7 @@
 <tr><td>command</td><td>string</td><td>false</td><td>The command extracted by the decoder.</td></tr>
 <tr><td>data</td><td>string</td><td>false</td><td>Additional data extracted by the decoder. For example a filename.</td></tr>
 <tr><td>decoder</td><td>string</td><td>false</td><td>The name of the decoder used to parse the logs.</td></tr>
-<tr><td>decoder_desc</td><td>struct&lt;accumulate:bigint,fts:bigint,ftscomment:string,name:string,parent:string&gt;</td><td>false</td><td>Information about the decoder used to parse the logs.</td></tr>
+<tr><td>decoder_desc</td><td>struct&lt;accumulate:bigint, fts:bigint, ftscomment:string, name:string, parent:string&gt;</td><td>false</td><td>Information about the decoder used to parse the logs.</td></tr>
 <tr><td>decoder_parent</td><td>string</td><td>false</td><td>In the case of a nested decoder, the name of it&#39;s parent.</td></tr>
 <tr><td>dstgeoip</td><td>string</td><td>false</td><td>GeoIP location information about the destination IP address.</td></tr>
 <tr><td>dstip</td><td>string</td><td>false</td><td>The destination IP address.</td></tr>
@@ -320,7 +320,7 @@
 <tr><td>srcport</td><td>string</td><td>false</td><td>The source port.</td></tr>
 <tr><td>srcuser</td><td>string</td><td>false</td><td>The source username.</td></tr>
 <tr><td>status</td><td>string</td><td>false</td><td>Event status (success, failure, etc).</td></tr>
-<tr><td>SyscheckFile</td><td>struct&lt;gowner_after:string,gowner_before:string,md5_after:string,md5_before:string,owner_after:string,owner_before:string,path:string,perm_after:bigint,perm_before:bigint,sha1_after:string,sha1_before:string&gt;</td><td>false</td><td>Information about a file integrity check.</td></tr>
+<tr><td>SyscheckFile</td><td>struct&lt;gowner_after:string, gowner_before:string, md5_after:string, md5_before:string, owner_after:string, owner_before:string, path:string, perm_after:bigint, perm_before:bigint, sha1_after:string, sha1_before:string&gt;</td><td>false</td><td>Information about a file integrity check.</td></tr>
 <tr><td>systemname</td><td>string</td><td>false</td><td>The system name extracted by the decoder.</td></tr>
 <tr><td>url</td><td>string</td><td>false</td><td>URL of the event.</td></tr>
 <tr><td>p_log_type</td><td>string</td><td>true</td><td>Panther added field with type of log</td></tr>
@@ -337,12 +337,12 @@
 ## Osquery
 <table border=1>
 <tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>Osquery.Batch</td><td>Batch contains all the data included in OsQuery batch logs<br>Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/<table>
+<tr><td valign=top>Osquery.Batch</td><td>Batch contains all the data included in OsQuery batch logs<br>Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>calendarTime</td><td>timestamp</td><td>true</td><td>The time of the event (UTC).</td></tr>
 <tr><td>counter</td><td>bigint</td><td>true</td><td>Counter</td></tr>
-<tr><td>decorations</td><td>map&lt;string,string&gt;</td><td>false</td><td>Decorations</td></tr>
-<tr><td>diffResults</td><td>struct&lt;added:array&lt;map&lt;string,string&gt;&gt;,removed:array&lt;map&lt;string,string&gt;&gt;&gt;</td><td>true</td><td>Computed differences.</td></tr>
+<tr><td>decorations</td><td>map&lt;string, string&gt;</td><td>false</td><td>Decorations</td></tr>
+<tr><td>diffResults</td><td>struct&lt;added:array&lt;map&lt;string, string&gt;&gt;, removed:array&lt;map&lt;string, string&gt;&gt;&gt;</td><td>true</td><td>Computed differences.</td></tr>
 <tr><td>epoch</td><td>bigint</td><td>true</td><td>Epoch</td></tr>
 <tr><td>hostname</td><td>string</td><td>true</td><td>Hostname</td></tr>
 <tr><td>name</td><td>string</td><td>true</td><td>Name</td></tr>
@@ -356,13 +356,13 @@
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>Osquery.Differential</td><td>Differential contains all the data included in OsQuery differential logs<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table>
+<tr><td valign=top>Osquery.Differential</td><td>Differential contains all the data included in OsQuery differential logs<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>action</td><td>string</td><td>true</td><td>Action</td></tr>
 <tr><td>calendarTime</td><td>timestamp</td><td>true</td><td>The time of the event (UTC).</td></tr>
-<tr><td>columns</td><td>map&lt;string,string&gt;</td><td>true</td><td>Columns</td></tr>
+<tr><td>columns</td><td>map&lt;string, string&gt;</td><td>true</td><td>Columns</td></tr>
 <tr><td>counter</td><td>bigint</td><td>false</td><td>Counter</td></tr>
-<tr><td>decorations</td><td>map&lt;string,string&gt;</td><td>false</td><td>Decorations</td></tr>
+<tr><td>decorations</td><td>map&lt;string, string&gt;</td><td>false</td><td>Decorations</td></tr>
 <tr><td>epoch</td><td>bigint</td><td>true</td><td>Epoch</td></tr>
 <tr><td>hostIdentifier</td><td>string</td><td>true</td><td>HostIdentifier</td></tr>
 <tr><td>logType</td><td>string</td><td>false</td><td>LogType</td></tr>
@@ -379,16 +379,16 @@
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>Osquery.Snapshot</td><td>Snapshot contains all the data included in OsQuery differential logs<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table>
+<tr><td valign=top>Osquery.Snapshot</td><td>Snapshot contains all the data included in OsQuery differential logs<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>action</td><td>string</td><td>true</td><td>Action</td></tr>
 <tr><td>calendarTime</td><td>timestamp</td><td>true</td><td>The time of the event (UTC).</td></tr>
 <tr><td>counter</td><td>bigint</td><td>true</td><td>Counter</td></tr>
-<tr><td>decorations</td><td>map&lt;string,string&gt;</td><td>false</td><td>Decorations</td></tr>
+<tr><td>decorations</td><td>map&lt;string, string&gt;</td><td>false</td><td>Decorations</td></tr>
 <tr><td>epoch</td><td>bigint</td><td>true</td><td>Epoch</td></tr>
 <tr><td>hostIdentifier</td><td>string</td><td>true</td><td>HostIdentifier</td></tr>
 <tr><td>name</td><td>string</td><td>true</td><td>Name</td></tr>
-<tr><td>snapshot</td><td>array&lt;map&lt;string,string&gt;&gt;</td><td>true</td><td>Snapshot</td></tr>
+<tr><td>snapshot</td><td>array&lt;map&lt;string, string&gt;&gt;</td><td>true</td><td>Snapshot</td></tr>
 <tr><td>unixTime</td><td>bigint</td><td>true</td><td>UnixTime</td></tr>
 <tr><td>p_log_type</td><td>string</td><td>true</td><td>Panther added field with type of log</td></tr>
 <tr><td>p_row_id</td><td>string</td><td>true</td><td>Panther added field with unique id (within table)</td></tr>
@@ -399,10 +399,10 @@
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>Osquery.Status</td><td>Status is a diagnostic osquery log about the daemon.<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table>
+<tr><td valign=top>Osquery.Status</td><td>Status is a diagnostic osquery log about the daemon.<br>Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>calendarTime</td><td>timestamp</td><td>true</td><td>The time of the event (UTC).</td></tr>
-<tr><td>decorations</td><td>map&lt;string,string&gt;</td><td>false</td><td>Decorations</td></tr>
+<tr><td>decorations</td><td>map&lt;string, string&gt;</td><td>false</td><td>Decorations</td></tr>
 <tr><td>filename</td><td>string</td><td>true</td><td>Filename</td></tr>
 <tr><td>hostIdentifier</td><td>string</td><td>true</td><td>HostIdentifier</td></tr>
 <tr><td>line</td><td>bigint</td><td>true</td><td>Line</td></tr>
@@ -426,7 +426,7 @@
 ## Syslog
 <table border=1>
 <tr><th align=center>Log Type</th><th align=center>Reference</th></tr>
-<tr><td valign=top>Syslog.RFC3164</td><td>Syslog parser for the RFC3164 format (ie. BSD-syslog messages)<br>Reference: https://tools.ietf.org/html/rfc3164<table>
+<tr><td valign=top>Syslog.RFC3164</td><td>Syslog parser for the RFC3164 format (ie. BSD-syslog messages)<br>Reference: https://tools.ietf.org/html/rfc3164<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>priority</td><td>smallint</td><td>true</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
 <tr><td>facility</td><td>smallint</td><td>true</td><td>Facility value helps determine which process created the message. Eg: 0 = kernel messages, 3 = system daemons.</td></tr>
@@ -446,7 +446,7 @@
 <tr><td>p_any_sha1_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td>p_any_md5_hashes</td><td>array&lt;string&gt;</td><td>false</td><td>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table></td></tr>
-<tr><td valign=top>Syslog.RFC5424</td><td>Syslog parser for the RFC5424 format.<br>Reference: https://tools.ietf.org/html/rfc5424<table>
+<tr><td valign=top>Syslog.RFC5424</td><td>Syslog parser for the RFC5424 format.<br>Reference: https://tools.ietf.org/html/rfc5424<table style="td { word-wrap: break-word; max-width:100px; }">
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>
 <tr><td>priority</td><td>smallint</td><td>true</td><td>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
 <tr><td>facility</td><td>smallint</td><td>true</td><td>Facility value helps determine which process created the message. Eg: 0 = kernel messages, 3 = system daemons.</td></tr>
@@ -457,7 +457,7 @@
 <tr><td>appname</td><td>string</td><td>false</td><td>Appname identifies the device or application that originated the syslog message.</td></tr>
 <tr><td>procid</td><td>string</td><td>false</td><td>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
 <tr><td>msgid</td><td>string</td><td>false</td><td>MsgID identifies the type of message. For example, a firewall might use the MsgID &#39;TCPIN&#39; for incoming TCP traffic.</td></tr>
-<tr><td>structured_data</td><td>map&lt;string,map&lt;string,string&gt;&gt;</td><td>false</td><td>StructuredData provides a mechanism to express information in a well defined and easily parsable format.</td></tr>
+<tr><td>structured_data</td><td>map&lt;string, map&lt;string, string&gt;&gt;</td><td>false</td><td>StructuredData provides a mechanism to express information in a well defined and easily parsable format.</td></tr>
 <tr><td>message</td><td>string</td><td>false</td><td>Message contains free-form text that provides information about the event.</td></tr>
 <tr><td>p_log_type</td><td>string</td><td>true</td><td>Panther added field with type of log</td></tr>
 <tr><td>p_row_id</td><td>string</td><td>true</td><td>Panther added field with unique id (within table)</td></tr>

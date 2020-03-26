@@ -28,20 +28,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/magefile/mage/mg"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
 )
 
-// targets generating documentation
-type Doc mg.Namespace
-
 // Generate all documentation
-func (d Doc) All() {
-	d.Cfn()
-	d.Logs()
+func Doc() {
+	opDocs()
+	logDocs()
 }
 
 const (
@@ -63,8 +58,8 @@ Each resource describes its function and failure impacts.
 `
 )
 
-// Generate operational documentation from deployment CloudFormation
-func (d Doc) Cfn() {
+// generate operational documentation from deployment CloudFormation
+func opDocs() {
 	logger.Infof("doc: generating operational documentation from cloudformation")
 	outDir := filepath.Join("docs", "gitbook", "operations")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
@@ -102,8 +97,7 @@ const (
 `
 )
 
-// Generate log parser documentation
-func (d Doc) Logs() {
+func logDocs() {
 	logger.Infof("doc: generating documentation on supported logs")
 	outDir := filepath.Join("docs", "gitbook", "log-analysis", "log-processing", "supported-logs")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
@@ -155,12 +149,15 @@ func (d Doc) Logs() {
 			docsBuffer.WriteString(fmt.Sprintf("<tr><td valign=top>%s</td><td>%s", logType, description))
 
 			// add schema as html table since markdown won't let you embed tables
-			docsBuffer.WriteString("<table>\n")
-			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>\n")
+			docsBuffer.WriteString(`<table style="td { word-wrap: break-word; max-width:100px; }">` + "\n")
+			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>\n") // nolint
 			columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
 			for _, column := range columns {
 				docsBuffer.WriteString(fmt.Sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-					column.Name, html.EscapeString(column.Type), strconv.FormatBool(column.Required), html.EscapeString(column.Comment)))
+					column.Name,
+					html.EscapeString(strings.Replace(column.Type, "," , ", " , -1)),  // add spaces so words break
+					strconv.FormatBool(column.Required),
+					html.EscapeString(column.Comment)))
 			}
 
 			docsBuffer.WriteString("</table></td></tr>\n") // close 2nd cell after the schema
@@ -170,4 +167,45 @@ func (d Doc) Logs() {
 	if _, err = readmeFile.Write(docsBuffer.Bytes()); err != nil {
 		logger.Fatalf("failed to write file %s: %v", readmeFileName, err)
 	}
+}
+
+func prettyPrintType(t string) string {
+	if !strings.HasPrefix(t, "struct") && !strings.HasPrefix(t, "array"){
+		return t
+	}
+
+	// structs and arrays can be a bit hairy...
+	return prettyPrintComplexType(t)
+}
+
+func prettyPrintComplexType(t string) string {
+	var label string
+	if strings.HasPrefix(t, "struct") {
+		label = "struct"
+	} else if strings.HasPrefix(t, "array") {
+		label = "array"
+	} else {
+		panic("unknown prefix")
+	}
+	println(t)
+	t = strings.Replace(t, label+"<", "", 1)
+	t = t[0:len(t)-1] // remove >
+
+	println(t)
+	var prettyFields bytes.Buffer
+	if label == "struct" {
+		println("struct")
+		fields := strings.Split(t, ",")
+		for _, field := range fields {
+			println(field)
+			keyAndType := strings.Split(field, ":")
+			prettyFields.WriteString(keyAndType[0])
+			prettyFields.WriteString(":")
+			prettyFields.WriteString(prettyPrintType(keyAndType[1]) + ",<br>\n")
+		}
+	} else { // array
+			prettyFields.WriteString(prettyPrintType(t) + ",<br>\n")
+	}
+
+	return html.EscapeString(label+"<\n") + "<br>" + prettyFields.String() + html.EscapeString(">")
 }
