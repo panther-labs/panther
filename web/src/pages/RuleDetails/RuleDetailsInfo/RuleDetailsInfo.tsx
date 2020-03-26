@@ -145,10 +145,14 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           </Label>
           {rule.tags.length ? (
             rule.tags.map((tag, index) => (
-              <Text size="medium" color="black" key={tag} is="span">
-                {tag}
+              <React.Fragment key={tag}>
+                <Link key={tag} to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}>
+                  <Text size="medium" color="black" is="span">
+                    {tag}
+                  </Text>
+                </Link>
                 {index !== rule.tags.length - 1 ? ', ' : null}
-              </Text>
+              </React.Fragment>
             ))
           ) : (
             <Text size="medium" color="grey200">
