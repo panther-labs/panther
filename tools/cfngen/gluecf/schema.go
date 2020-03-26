@@ -62,7 +62,7 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 		if field.Anonymous { // if composing a struct, treat fields as part of this struct
 			cols = append(cols, inferJSONColumns(field.Type, customMappingsTable)...)
 		} else {
-			fieldName, jsonType, comment, skip := inferStructFieldType(field, customMappingsTable)
+			fieldName, jsonType, comment, required, skip := inferStructFieldType(field, customMappingsTable)
 			if skip {
 				continue
 			}
@@ -74,13 +74,13 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 			if len(comment) > maxCommentLength { // clip
 				comment = comment[:maxCommentLength-3] + "..."
 			}
-			cols = append(cols, Column{Name: fieldName, Type: jsonType, Comment: comment})
+			cols = append(cols, Column{Name: fieldName, Type: jsonType, Comment: comment, Required: required})
 		}
 	}
 	return cols
 }
 
-func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string]string) (fieldName, jsonType, comment string, skip bool) {
+func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string]string) (fieldName, jsonType, comment string, required, skip bool) {
 	t := sf.Type
 
 	// deference pointers
@@ -117,6 +117,8 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 
 	comment = sf.Tag.Get("description")
 
+	required = strings.Contains(sf.Tag.Get("validate"), "required")
+
 	if to, found := customMappingsTable[t.String()]; found {
 		jsonType = to
 		return
@@ -139,7 +141,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 		}
 
 	case reflect.Map:
-		return fieldName, inferMap(t, customMappingsTable), comment, skip
+		return fieldName, inferMap(t, customMappingsTable), comment, required, skip
 
 	case reflect.Struct:
 		if sf.Anonymous { // composed struct, fields part of enclosing struct
@@ -168,7 +170,7 @@ func inferStruct(structType reflect.Type, customMappingsTable map[string]string)
 	numFields := structType.NumField()
 	var keyPairs []string
 	for i := 0; i < numFields; i++ {
-		subFieldName, subFieldJSONType, _, subFieldSkip := inferStructFieldType(structType.Field(i), customMappingsTable)
+		subFieldName, subFieldJSONType, _, _, subFieldSkip := inferStructFieldType(structType.Field(i), customMappingsTable)
 		if subFieldSkip {
 			continue
 		}

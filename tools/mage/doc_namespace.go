@@ -25,6 +25,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/magefile/mage/mg"
@@ -155,11 +156,11 @@ func (d Doc) Logs() {
 
 			// add schema as html table since markdown won't let you embed tables
 			docsBuffer.WriteString("<table>\n")
-			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>\n")
+			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>\n")
 			columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
 			for _, column := range columns {
-				docsBuffer.WriteString(fmt.Sprintf("<tr><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-					column.Name, html.EscapeString(column.Type), html.EscapeString(column.Comment)))
+				docsBuffer.WriteString(fmt.Sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+					column.Name, html.EscapeString(column.Type), strconv.FormatBool(column.Required), html.EscapeString(column.Comment)))
 			}
 
 			docsBuffer.WriteString("</table></td></tr>\n") // close 2nd cell after the schema

@@ -30,9 +30,10 @@ import (
 // NOTE: the use of type interface{} allows strings and structs (e.g., cfngen.Ref{} and cfngen.Sub{} )
 
 type Column struct {
-	Name    string
-	Type    string
-	Comment string `json:",omitempty"`
+	Name     string
+	Type     string
+	Comment  string `json:",omitempty"`
+	Required bool   `json:"-"` // do NOT serialize!
 }
 
 type SerdeInfo struct {
