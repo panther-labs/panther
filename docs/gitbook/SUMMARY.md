@@ -31,7 +31,6 @@
   * [NGINX](log-analysis/supported-logs/nginx.md)
   * [OSSEC](log-analysis/supported-logs/ossec.md)
   * [Syslog](log-analysis/supported-logs/syslog.md)
-  * [FluentdSyslog](log-analysis/supported-logs/fluentdsyslog.md)
 * [Rules](log-analysis/rules/README.md)
   * [AWS CIS Runbooks]()
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)
