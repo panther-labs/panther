@@ -147,7 +147,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             rule.tags.map((tag, index) => (
               <React.Fragment key={tag}>
                 <Link key={tag} to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}>
-                  <Text size="medium" color="black" is="span">
+                  <Text size="medium" color="blue300" is="span">
                     {tag}
                   </Text>
                 </Link>
