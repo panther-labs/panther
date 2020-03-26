@@ -143,7 +143,7 @@ func logDocs() {
 
 			description := html.EscapeString(table.Description())
 
-			docsBuffer.WriteString(fmt.Sprintf("###%s\n%s", logType, description))
+			docsBuffer.WriteString(fmt.Sprintf("###%s\n%s\n", logType, description))
 
 			// add schema as html table since markdown won't let you embed tables
 			docsBuffer.WriteString(`<table border=1 style="td { word-wrap: break-word; max-width:100px; }">` + "\n")
