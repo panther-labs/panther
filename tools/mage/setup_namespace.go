@@ -30,7 +30,7 @@ import (
 
 const (
 	golangciVersion = "1.23.6"
-	swaggerVersion  = "0.22.0"
+	swaggerVersion  = "0.23.0"
 )
 
 var (

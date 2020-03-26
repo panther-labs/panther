@@ -191,12 +191,6 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	// We build most deployment artifacts in parallel with the bootstrap stack deployment (below).
-	// However, build:api (swagger) requires changing directories, which causes problems with the
-	// bootstrap goroutine. So we build swagger first
-	var build Build
-	build.API()
-
 	// Deploy first bootstrap stack
 	go func() {
 		params := map[string]string{
@@ -228,6 +222,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	}()
 
 	// While waiting for bootstrap, build deployment artifacts
+	var build Build
 	build.Cfn()
 	build.Lambda()
 	wg.Wait()
