@@ -155,7 +155,7 @@ func logDocs() {
 			for _, column := range columns {
 				docsBuffer.WriteString(fmt.Sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
 					column.Name,
-					html.EscapeString(strings.Replace(column.Type, "," , ", " , -1)),  // add spaces so words break
+					html.EscapeString(strings.Replace(column.Type, ",", ", ", -1)), // add spaces so words break
 					strconv.FormatBool(column.Required),
 					html.EscapeString(column.Comment)))
 			}
@@ -167,45 +167,4 @@ func logDocs() {
 	if _, err = readmeFile.Write(docsBuffer.Bytes()); err != nil {
 		logger.Fatalf("failed to write file %s: %v", readmeFileName, err)
 	}
-}
-
-func prettyPrintType(t string) string {
-	if !strings.HasPrefix(t, "struct") && !strings.HasPrefix(t, "array"){
-		return t
-	}
-
-	// structs and arrays can be a bit hairy...
-	return prettyPrintComplexType(t)
-}
-
-func prettyPrintComplexType(t string) string {
-	var label string
-	if strings.HasPrefix(t, "struct") {
-		label = "struct"
-	} else if strings.HasPrefix(t, "array") {
-		label = "array"
-	} else {
-		panic("unknown prefix")
-	}
-	println(t)
-	t = strings.Replace(t, label+"<", "", 1)
-	t = t[0:len(t)-1] // remove >
-
-	println(t)
-	var prettyFields bytes.Buffer
-	if label == "struct" {
-		println("struct")
-		fields := strings.Split(t, ",")
-		for _, field := range fields {
-			println(field)
-			keyAndType := strings.Split(field, ":")
-			prettyFields.WriteString(keyAndType[0])
-			prettyFields.WriteString(":")
-			prettyFields.WriteString(prettyPrintType(keyAndType[1]) + ",<br>\n")
-		}
-	} else { // array
-			prettyFields.WriteString(prettyPrintType(t) + ",<br>\n")
-	}
-
-	return html.EscapeString(label+"<\n") + "<br>" + prettyFields.String() + html.EscapeString(">")
 }
