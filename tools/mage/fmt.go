@@ -58,7 +58,7 @@ func Fmt() {
 	}
 
 	// Generate documentation
-	Doc.Cfn(Doc{})
+	Doc.All(Doc{})
 }
 
 // Apply full go formatting to the given paths, which share the common root.
