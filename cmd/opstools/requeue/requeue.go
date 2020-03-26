@@ -3,6 +3,7 @@ package requeue
 import (
 	"log"
 	"strconv"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -13,8 +14,10 @@ import (
 const (
 	waitTimeSeconds          = 20
 	messageBatchSize         = 10
-	visibilityTimeoutSeconds = 2 * waitTimeSeconds
+	visibilityTimeoutSeconds = 10 * waitTimeSeconds
 )
+
+var wg sync.WaitGroup
 
 func Requeue(sqsClient sqsiface.SQSAPI, fromQueueName, toQueueName string) error {
 	fromQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
@@ -32,8 +35,22 @@ func Requeue(sqsClient sqsiface.SQSAPI, fromQueueName, toQueueName string) error
 	}
 
 	log.Printf("Moving messages from %s to %s", fromQueueName, toQueueName)
-	totalMessages := 0
+	var wg sync.WaitGroup
+
+	for i:=0;i<10;i++ {
+		go doStuff(sqsClient, fromQueueName, toQueueName, fromQueueURL, toQueueURL)
+	}
+
+	wg.Wait()
+	return nil
+
+}
+
+func doStuff(sqsClient sqsiface.SQSAPI, fromQueueName, toQueueName string,  fromQueueURL *sqs.GetQueueUrlOutput, toQueueURL *sqs.GetQueueUrlOutput) error {
+	wg.Add(1)
+	defer wg.Done()
 	for {
+		totalMessages := 0
 		resp, err := sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
 			WaitTimeSeconds:     aws.Int64(waitTimeSeconds),
 			MaxNumberOfMessages: aws.Int64(messageBatchSize),

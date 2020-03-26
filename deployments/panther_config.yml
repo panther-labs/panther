@@ -52,10 +52,10 @@ Monitoring:
   AlarmSnsTopicArn: ''
 
   # Retention period for all Panther CloudWatch log groups.
-  CloudWatchLogRetentionDays: 365
+  CloudWatchLogRetentionDays: 60
 
   # Enable DEBUG logging for all Lambda functions.
-  Debug: false
+  Debug: true
 
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
@@ -88,11 +88,11 @@ Setup:
 
   # Whether or not to create a CloudTrail in the Panther account and monitor.
   # You may want this off if you have org-level CT configured for Panther to avoid ingesting the same data twice.
-  EnableCloudTrail: false
+  EnableCloudTrail: true
 
   # Whether or not to enable GuardDuty in the Panther account and monitor.
   # You may want this off if you have org-level GD configured for Panther.
-  EnableGuardDuty: false
+  EnableGuardDuty: true
 
 Web:
   # ARN of an AWS ACM certificate used on the loadbalancer presenting the panther web app
@@ -100,9 +100,9 @@ Web:
   # If not specified, a self signed certificate is created automatically.
   # WARNING: SELF SIGNED CERTIFICATES ARE NOT SAFE TO USE IN PRODUCTION, PLEASE
   # PROVIDE A CERTIFICATE FOR PRODUCTION USE
-  CertificateArn: ''
+  CertificateArn: 'arn:aws:acm:us-west-2:348372346321:certificate/0ae12528-8e35-4097-b1ab-fff5b2c02769'
 
   # Domain that you own and have configured to alias to the default load balancer URL
   #
   # If not specified, the default load balancer URL is used in all places.
-  CustomDomain: ''
+  CustomDomain: 'panther-demo.com'
