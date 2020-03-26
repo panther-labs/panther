@@ -152,7 +152,7 @@ func logDocs() {
 			for _, column := range columns {
 				docsBuffer.WriteString(fmt.Sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
 					column.Name,
-					html.EscapeString(strings.Replace(column.Type, ",", ",<br>", -1)), // add spaces so words break
+					strings.Replace(html.EscapeString(column.Type), ",", ", <br>", -1), // add spaces so words break
 					strconv.FormatBool(column.Required),
 					html.EscapeString(column.Comment)))
 			}
