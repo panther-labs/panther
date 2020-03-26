@@ -63,9 +63,8 @@
 
 ## Cloud Security <a id="policies"></a>
 
-* [Background](policies/cloud-security-overview.md)
 * [Setup](policies/scanning/README.md)
-* [Resource Types](policies/resources/README.md)
+* [Supported Resources](policies/resources/README.md)
   * [AWS]()
     * [ACM Certificate](policies/resources/aws/acm-certificate.md)
     * [CloudFormation Stack](policies/resources/aws/cloudformation-stack.md)
@@ -97,10 +96,7 @@
     * [S3 Bucket](policies/resources/aws/s3-bucket.md)
     * [WAF Web ACL](policies/resources/aws/waf-web-acl.md)
 * [Policies](policies/policies/README.md)
-  * [Writing](policies/policies/writing.md)
-  * [Testing](policies/policies/testing.md)
-  * [Uploading](policies/policies/uploading.md)
-  * [AWS](policies/policies/aws/README.md)
+  * [AWS Policies](policies/policies/aws/README.md)
     * [AWS CloudTrail Least Privilege Access Configured](policies/policies/aws/aws-cloudtrail-least-privilege-access-configured.md)
     * [AWS CloudTrail Is Enabled In All Regions](policies/policies/aws/aws-cloudtrail-enabled-in-all-regions.md)
     * [AWS CloudTrail Sending To CloudWatch Logs](policies/policies/aws/aws-cloudtrail-trails-integrated-with-cloudwatch-logs.md)
@@ -186,8 +182,7 @@
     * [AWS VPC Flow Logging Enabled](policies/policies/aws/aws-vpc-flow-logging-enabled.md)
     * [AWS WAF Has Correct Rule Ordering](policies/policies/aws/aws-waf-has-correct-rule-ordering.md)
     * [AWS CloudTrail Logs Encrypted Using KMS CMK](policies/policies/aws/aws-cloudtrail-logs-encrypted-using-kms-cmk.md)
-* [Automatic Remediation](policies/automatic-remediation/README.md)
-  * [AWS](policies/automatic-remediation/aws/README.md)
+  * [Automatic Remediation](policies/automatic-remediation/README.md)
     * [AWS Create CloudTrail](policies/automatic-remediation/aws/aws.cloudtrail.createtrail.md)
     * [AWS Enable CloudTrail log validation](policies/automatic-remediation/aws/aws-enable-cloudtrail-log-validation.md)
     * [AWS Enable DynamoDB Table Encryption](policies/automatic-remediation/aws/aws-enable-dynamodb-table-encryption.md)
