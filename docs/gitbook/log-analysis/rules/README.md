@@ -4,9 +4,9 @@ Panther enables easy aggregation, normalization, analysis, and storage of securi
 
 ## Rule Components
 
-- A `rule` function with an `event` argument and a `return` statement - `True` if the rule should send an alert, or `False` if not
-- A `dedup` function to control how alerts are grouped together
-- A `title` function for the message shown in the alert
+- A `rule` function with an `event` argument that returns `True` if the rule should send an alert, or `False` if it should not
+- Optionally, a `dedup` function to control how alerts are grouped together
+- Optionally, a `title` function to define the message shown in the alert
 - Metadata containing context for triage
 - An association with a specific Log Type
 
@@ -60,7 +60,7 @@ The rule body MUST:
 
 ```python
 def rule(event):
-  return True
+  return False
 ```
 
 The Python body SHOULD:
@@ -68,8 +68,11 @@ The Python body SHOULD:
 
 The Python body MAY:
 * Import standard Python3 libraries
+* Import from the user defined `aws_globals` file
 * Define additional helper functions as needed
 * Define variables and classes outside the scope of the rule function
+* Define a `dedup` function that accepts one argument and returns a `string`
+* Define a `title` function that accepts one argument and returns a `string`
 
 Using the schemas in [supported logs](log-analysis/supported-logs) provides details on all available fields in events. When accessing event fields, it's recommend to always use `.get()` since empty key/values are omitted from the event.
 
@@ -186,6 +189,24 @@ Simply install with:
 pip3 install panther_analysis_tool
 ```
 
+### Running Tests
+
+```bash
+panther_analysis_tool test --path <path-to-python-code>
+```
+
+### Uploading to Panther
+
+Make sure to configure your environment with valid AWS credentials prior to running the command below.
+
+```bash
+panther_analysis_tool upload --path <path-to-your-rules> --out tmp
+```
+
+{% hint style="info" %}
+Rules with the same ID are overwritten. Locally deleted rules will not automatically delete in the rule database and must be removed manually.
+{% endhint %}
+
 ### File Organization
 
 Navigate to the repository/path for your custom detections. We recommend grouping detections based on purpose, such as `suricata_rules` or `internal_pci`. Use the open source [Panther Analysis](https://github.com/panther-labs/panther-analysis) packs as a reference.
@@ -202,7 +223,6 @@ The specification file MUST:
 
 * Be valid JSON/YAML
 * Define an `AnalysisType` field with the value `rule`
-* Have the same name as the Python rule.
 
 Define the additional following fields:
 * `Enabled`
@@ -245,46 +265,6 @@ Tests:
       For: Our Log
       Based: On the Schema
 ```
-
-### Usage
-
-```bash
-panther_analysis_tool --help
-usage: panther_analysis_tool [-h] [--version] {test,zip,upload}
-Panther Analysis Tool: A command line tool for managing Panther policies and
-rules.
-positional arguments:
-  {test,zip,upload}
-    test             Validate analysis specifications and run policy and rule
-                     tests.
-    zip              Create an archive of local policies and rules for
-                     uploading to Panther.
-    upload           Upload specified policies and rules to a Panther
-                     deployment.
-optional arguments:
-  -h, --help         show this help message and exit
-  --version          show program version number and exit
-```
-
-#### Running Tests
-
-bash
-```
-panther_analysis_tool test --path <path-to-python-code>
-```
-
-#### Uploading to Panther
-
-Make sure to configure your environment with valid AWS credentials prior to running the command below.
-
-bash
-```
-panther_analysis_tool upload --path <path-to-your-rules> --out tmp
-```
-
-{% hint style="info" %}
-Rules with the same ID are overwritten. Locally deleted rules will not automatically delete in the rule database and must be removed manually.
-{% endhint %}
 
 ## Runtime Libraries
 
