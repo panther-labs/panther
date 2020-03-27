@@ -21,27 +21,27 @@ Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
 <tr><td valign=top>p_any_ip_addresses</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 

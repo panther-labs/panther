@@ -10,46 +10,46 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <tr><td valign=top>id</td><td>string</td><td valign=top>true</td><td valign=top>Unique id of the event.</td></tr>
 <tr><td valign=top>rule</td><td>{
 <br>&nbsp;&nbsp;"comment":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"group":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"level":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"integer"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"sidid":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"integer"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"CIS":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"array"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"cve":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"firedtimes":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"integer"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"frequency":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"integer"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"groups":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"array"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"info":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"PCI_DSS":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"array"
 <br>&nbsp;&nbsp;}
 <br>}<br><br></td><td valign=top>true</td><td valign=top>Information about the rule that created the event.</td></tr>
 <tr><td valign=top>TimeStamp</td><td>timestamp</td><td valign=top>true</td><td valign=top>Timestamp in UTC.</td></tr>
@@ -64,19 +64,19 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <tr><td valign=top>decoder</td><td>string</td><td valign=top>false</td><td valign=top>The name of the decoder used to parse the logs.</td></tr>
 <tr><td valign=top>decoder_desc</td><td>{
 <br>&nbsp;&nbsp;"accumulate":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"integer"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"fts":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"integer"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"ftscomment":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"name":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"parent":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;}
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Information about the decoder used to parse the logs.</td></tr>
 <tr><td valign=top>decoder_parent</td><td>string</td><td valign=top>false</td><td valign=top>In the case of a nested decoder, the name of it&#39;s parent.</td></tr>
@@ -95,37 +95,37 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <tr><td valign=top>status</td><td>string</td><td valign=top>false</td><td valign=top>Event status (success, failure, etc).</td></tr>
 <tr><td valign=top>SyscheckFile</td><td>{
 <br>&nbsp;&nbsp;"gowner_after":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"gowner_before":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"md5_after":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"md5_before":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"owner_after":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"owner_before":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"path":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"perm_after":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"integer"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"perm_before":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"integer"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"sha1_after":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"sha1_before":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;}
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Information about a file integrity check.</td></tr>
 <tr><td valign=top>systemname</td><td>string</td><td valign=top>false</td><td valign=top>The system name extracted by the decoder.</td></tr>
@@ -136,27 +136,27 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
 <tr><td valign=top>p_any_ip_addresses</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 

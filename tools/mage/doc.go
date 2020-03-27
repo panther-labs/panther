@@ -222,7 +222,7 @@ func formatType(col gluecf.Column) string {
 		// NOTE: we cannot use jsoniter package because it does not support prefix
 		var schemaProps interface{}
 		schemaProps = schemaType.Properties
-		if !isStruct { // we had to make a temp struct above, deference
+		if !isStruct { // we had to make a temp struct above, dereference
 			schemaProps, _ = schemaType.Properties.Get(col.Name)
 		}
 		jsonProps, err := json.MarshalIndent(schemaProps, "<br>", indent)
@@ -233,8 +233,8 @@ func formatType(col gluecf.Column) string {
 			if name != "" && name != col.Name {
 				jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
 			}
-			// don't allow breaks on : {
-			jsonBuffer.WriteString(strings.Replace((string)(jsonProps), ": {", ":&nbsp;{", -1))
+			// don't allow breaks on ": "
+			jsonBuffer.WriteString(strings.Replace((string)(jsonProps), ": ", ":&nbsp;", -1))
 			jsonBuffer.WriteString("<br><br>")
 		} else if name == "RFC3339" { // special case for our timestamps embedded in structs
 			jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))

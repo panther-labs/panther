@@ -22,27 +22,27 @@ Reference: https://tools.ietf.org/html/rfc3164
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
 <tr><td valign=top>p_any_ip_addresses</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
@@ -65,13 +65,13 @@ Reference: https://tools.ietf.org/html/rfc5424
 <br>&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"object"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;"type":&nbsp;"object"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>StructuredData provides a mechanism to express information in a well defined and easily parsable format.</td></tr>
 <tr><td valign=top>message</td><td>string</td><td valign=top>false</td><td valign=top>Message contains free-form text that provides information about the event.</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
@@ -80,27 +80,27 @@ Reference: https://tools.ietf.org/html/rfc5424
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
 <tr><td valign=top>p_any_ip_addresses</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 

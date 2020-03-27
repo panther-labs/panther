@@ -12,33 +12,33 @@ Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top>decorations</td><td>{
 <br>&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;"type":&nbsp;"object"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
 <tr><td valign=top>diffResults</td><td>{
 <br>&nbsp;&nbsp;"added":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"items":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"object"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"array"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"removed":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"items":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"object"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"array"
 <br>&nbsp;&nbsp;}
 <br>}<br><br></td><td valign=top>true</td><td valign=top>Computed differences.</td></tr>
 <tr><td valign=top>epoch</td><td>bigint</td><td valign=top>true</td><td valign=top>Epoch</td></tr>
@@ -51,27 +51,27 @@ Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
 <tr><td valign=top>p_any_ip_addresses</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
@@ -85,19 +85,19 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top>columns</td><td>{
 <br>&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;"type":&nbsp;"object"
 <br>}<br><br></td><td valign=top>true</td><td valign=top>Columns</td></tr>
 <tr><td valign=top>counter</td><td>bigint</td><td valign=top>false</td><td valign=top>Counter</td></tr>
 <tr><td valign=top>decorations</td><td>{
 <br>&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;"type":&nbsp;"object"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
 <tr><td valign=top>epoch</td><td>bigint</td><td valign=top>true</td><td valign=top>Epoch</td></tr>
 <tr><td valign=top>hostIdentifier</td><td>string</td><td valign=top>true</td><td valign=top>HostIdentifier</td></tr>
@@ -112,27 +112,27 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
 <tr><td valign=top>p_any_ip_addresses</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
@@ -147,10 +147,10 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top>decorations</td><td>{
 <br>&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;"type":&nbsp;"object"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
 <tr><td valign=top>epoch</td><td>bigint</td><td valign=top>true</td><td valign=top>Epoch</td></tr>
 <tr><td valign=top>hostIdentifier</td><td>string</td><td valign=top>true</td><td valign=top>HostIdentifier</td></tr>
@@ -159,12 +159,12 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;"items":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"object"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>true</td><td valign=top>Snapshot</td></tr>
 <tr><td valign=top>unixTime</td><td>bigint</td><td valign=top>true</td><td valign=top>UnixTime</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
@@ -173,27 +173,27 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
 <tr><td valign=top>p_any_ip_addresses</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
@@ -206,10 +206,10 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top>decorations</td><td>{
 <br>&nbsp;&nbsp;"patternProperties":&nbsp;{
 <br>&nbsp;&nbsp;&nbsp;&nbsp;".*":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;"type":&nbsp;"object"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
 <tr><td valign=top>filename</td><td>string</td><td valign=top>true</td><td valign=top>Filename</td></tr>
 <tr><td valign=top>hostIdentifier</td><td>string</td><td valign=top>true</td><td valign=top>HostIdentifier</td></tr>
@@ -226,27 +226,27 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
 <tr><td valign=top>p_any_ip_addresses</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td>{
 <br>&nbsp;&nbsp;"items":&nbsp;{
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type":&nbsp;"string"
 <br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;"type":&nbsp;"array"
 <br>}<br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
