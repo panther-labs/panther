@@ -199,7 +199,11 @@ func formatType(col gluecf.Column) string {
 	if colType.Kind() == reflect.Ptr {
 		colType = colType.Elem()
 	}
-	if colType.Kind() != reflect.Struct { // we need to create a struct for the parser to work
+
+	// we need to create a temp struct for the parser to work
+	isStruct := true
+	if colType.Kind() != reflect.Struct {
+		isStruct = false
 		fields := []reflect.StructField{
 			{
 				Name: col.Field.Name,
@@ -212,19 +216,24 @@ func formatType(col gluecf.Column) string {
 
 	// we need to wrap because schema package needs Name() and PkgPath()
 	colSchema := jsonschema.ReflectFromType(&docType{Type: colType, name: col.Name})
-	const indent = "&nbsp;&nbsp;&nbsp;&nbsp;"
+	const indent = "&nbsp;&nbsp;"
 	var jsonBuffer bytes.Buffer
 	for name, schemaType := range colSchema.Definitions {
 		// NOTE: we cannot use jsoniter package because it does not support prefix
-		props, err := json.MarshalIndent(schemaType.Properties, "<br>", indent)
+		var schemaProps interface{}
+		schemaProps = schemaType.Properties
+		if !isStruct { // we had to make a temp struct above, deference
+			schemaProps, _  = schemaType.Properties.Get(col.Name)
+		}
+		jsonProps, err := json.MarshalIndent(schemaProps, "<br>", indent)
 		if err != nil {
 			logger.Fatal(err)
 		}
-		if (string)(props) != "{}" { // skip empty and column name
+		if (string)(jsonProps) != "{}" { // skip empty
 			if name != "" && name != col.Name {
 				jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
 			}
-			jsonBuffer.Write(props)
+			jsonBuffer.Write(jsonProps)
 			jsonBuffer.WriteString("<br><br>")
 		} else if name == "RFC3339" { // special case for our timestamps embedded in structs
 			jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
