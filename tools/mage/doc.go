@@ -215,30 +215,38 @@ func formatType(col gluecf.Column) string {
 	}
 
 	// we need to wrap because schema package needs Name() and PkgPath()
-	colSchema := jsonschema.ReflectFromType(&docType{Type: colType, name: col.Name})
-	const indent = "&nbsp;&nbsp;"
+	reflector := &jsonschema.Reflector{ExpandedStruct: false}
+	colSchema := reflector.ReflectFromType(&docType{Type: colType, name: col.Name})
+	const prefix = ""
+	const indent = "    "
 	var jsonBuffer bytes.Buffer
 	for name, schemaType := range colSchema.Definitions {
 		// NOTE: we cannot use jsoniter package because it does not support prefix
 		var schemaProps interface{}
 		schemaProps = schemaType.Properties
 		if !isStruct { // we had to make a temp struct above, dereference
-			schemaProps, _ = schemaType.Properties.Get(col.Name)
+		   if colProps, found := schemaType.Properties.Get(col.Name); found {
+		   	schemaProps = colProps
+		   }
 		}
-		jsonProps, err := json.MarshalIndent(schemaProps, "<br>", indent)
+		jsonProps, err := json.MarshalIndent(schemaProps, prefix, indent)
 		if err != nil {
 			logger.Fatal(err)
 		}
+
 		if (string)(jsonProps) != "{}" { // skip empty
-			if name != "" && name != col.Name {
+			jsonBuffer.WriteString("<pre>")
+			if name != col.Name {
 				jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
 			}
-			// don't allow breaks on ": "
-			jsonBuffer.WriteString(strings.Replace((string)(jsonProps), ": ", ":&nbsp;", -1))
+			jsonBuffer.Write(jsonProps)
+			jsonBuffer.WriteString("</pre>")
 			jsonBuffer.WriteString("<br><br>")
 		} else if name == "RFC3339" { // special case for our timestamps embedded in structs
-			jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
-			jsonBuffer.WriteString("{<br>" + indent + `"type": "timestamp"<br>}`)
+			jsonBuffer.WriteString("<pre>")
+			jsonBuffer.WriteString(fmt.Sprintf(`"%s": `, name))
+			jsonBuffer.WriteString("{\n" + indent + `"type": "timestamp"` + "\n}")
+			jsonBuffer.WriteString("</pre>")
 			jsonBuffer.WriteString("<br><br>")
 		}
 	}
