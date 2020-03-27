@@ -217,36 +217,44 @@ func formatType(col gluecf.Column) string {
 	// we need to wrap because schema package needs Name() and PkgPath()
 	reflector := &jsonschema.Reflector{ExpandedStruct: false}
 	colSchema := reflector.ReflectFromType(&docType{Type: colType, name: col.Name})
-	const prefix = ""
-	const indent = "    "
+
+	const prefix = "<br>"
+	const indent = "&nbsp;&nbsp;"
+
+	// used to force width, since gitbook ignores style
+	const firstLine = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>" // nolint:lll
+
 	var jsonBuffer bytes.Buffer
 	for name, schemaType := range colSchema.Definitions {
 		// NOTE: we cannot use jsoniter package because it does not support prefix
 		var schemaProps interface{}
 		schemaProps = schemaType.Properties
 		if !isStruct { // we had to make a temp struct above, dereference
-		   if colProps, found := schemaType.Properties.Get(col.Name); found {
-		   	schemaProps = colProps
-		   }
+			if colProps, found := schemaType.Properties.Get(col.Name); found {
+				schemaProps = colProps
+			}
 		}
+
 		jsonProps, err := json.MarshalIndent(schemaProps, prefix, indent)
 		if err != nil {
 			logger.Fatal(err)
 		}
 
 		if (string)(jsonProps) != "{}" { // skip empty
-			jsonBuffer.WriteString("<pre>")
+			jsonBuffer.WriteString("<code>")
+			jsonBuffer.WriteString(firstLine)
 			if name != col.Name {
 				jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
 			}
 			jsonBuffer.Write(jsonProps)
-			jsonBuffer.WriteString("</pre>")
+			jsonBuffer.WriteString("</code>")
 			jsonBuffer.WriteString("<br><br>")
 		} else if name == "RFC3339" { // special case for our timestamps embedded in structs
-			jsonBuffer.WriteString("<pre>")
+			jsonBuffer.WriteString("<code>")
+			jsonBuffer.WriteString(firstLine)
 			jsonBuffer.WriteString(fmt.Sprintf(`"%s": `, name))
-			jsonBuffer.WriteString("{\n" + indent + `"type": "timestamp"` + "\n}")
-			jsonBuffer.WriteString("</pre>")
+			jsonBuffer.WriteString("{" + prefix + indent + `"type": "timestamp"` + prefix + "}")
+			jsonBuffer.WriteString("</code>")
 			jsonBuffer.WriteString("<br><br>")
 		}
 	}

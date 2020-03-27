@@ -33,66 +33,66 @@ Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/l
 <tr><td valign=top>chosenCertArn</td><td>string</td><td valign=top>false</td><td valign=top>[HTTPS listener] The ARN of the certificate presented to the client. This value is set to session-reused if the session is reused. This value is set to NULL if the listener is not an HTTPS listener.</td></tr>
 <tr><td valign=top>matchedRulePriority</td><td>bigint</td><td valign=top>false</td><td valign=top>The priority value of the rule that matched the request. If a rule matched, this is a value from 1 to 50,000. If no rule matched and the default action was taken, this value is set to 0. If an error occurs during rules evaluation, it is set to -1. For ...</td></tr>
 <tr><td valign=top>requestCreationTime</td><td>timestamp</td><td valign=top>false</td><td valign=top>The time when the load balancer received the request from the client.</td></tr>
-<tr><td valign=top>actionsExecuted</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>The actions taken when processing the request. This value is a comma-separated list that can include the values described in Actions Taken. If no action was taken, such as for a malformed request, this value is set to NULL.</td></tr>
+<tr><td valign=top>actionsExecuted</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>The actions taken when processing the request. This value is a comma-separated list that can include the values described in Actions Taken. If no action was taken, such as for a malformed request, this value is set to NULL.</td></tr>
 <tr><td valign=top>redirectUrl</td><td>string</td><td valign=top>false</td><td valign=top>The URL of the redirect target for the location header of the HTTP response. If no redirect actions were taken, this value is set to NULL.</td></tr>
 <tr><td valign=top>errorReason</td><td>string</td><td valign=top>false</td><td valign=top>The error reason code. If the request failed, this is one of the error codes described in Error Reason Codes. If the actions taken do not include an authenticate action or the target is not a Lambda function, this value is set to NULL.</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_account_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_instance_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_arns</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_tags</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_account_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_instance_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_arns</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_tags</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
 </table>
 
 ##AWS.AuroraMySQLAudit
@@ -114,54 +114,54 @@ Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMy
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_account_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_instance_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_arns</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_tags</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_account_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_instance_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_arns</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_tags</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
 </table>
 
 ##AWS.CloudTrail
@@ -185,157 +185,157 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudt
 <tr><td valign=top>recipientAccountId</td><td>string</td><td valign=top>false</td><td valign=top>Represents the account ID that received this event. The recipientAccountID may be different from the CloudTrail userIdentity Element accountId. This can occur in cross-account resource access.</td></tr>
 <tr><td valign=top>requestId</td><td>string</td><td valign=top>false</td><td valign=top>The value that identifies the request. The service being called generates this value.</td></tr>
 <tr><td valign=top>requestParameters</td><td>string</td><td valign=top>false</td><td valign=top>The parameters, if any, that were sent with the request. These parameters are documented in the API reference documentation for the appropriate AWS service.</td></tr>
-<tr><td valign=top>resources</td><td><pre>{
-    "items": {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "$ref": "#/definitions/CloudTrailResources"
-    },
-    "type": "array"
-}</pre><br><br><pre>"CloudTrailResources":{
-    "arn": {
-        "type": "string"
-    },
-    "accountId": {
-        "type": "string"
-    },
-    "type": {
-        "type": "string"
-    }
-}</pre><br><br></td><td valign=top>false</td><td valign=top>A list of resources accessed in the event.</td></tr>
+<tr><td valign=top>resources</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$schema": "http://json-schema.org/draft-04/schema#",
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "#/definitions/CloudTrailResources"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>"CloudTrailResources":{
+<br>&nbsp;&nbsp;"arn": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"accountId": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;}
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>A list of resources accessed in the event.</td></tr>
 <tr><td valign=top>responseElements</td><td>string</td><td valign=top>false</td><td valign=top>The response element for actions that make changes (create, update, or delete actions). If an action does not change state (for example, a request to get or list objects), this element is omitted. These actions are documented in the API reference docum...</td></tr>
 <tr><td valign=top>serviceEventDetails</td><td>string</td><td valign=top>false</td><td valign=top>Identifies the service event, including what triggered the event and the result.</td></tr>
 <tr><td valign=top>sharedEventId</td><td>string</td><td valign=top>false</td><td valign=top>GUID generated by CloudTrail to uniquely identify CloudTrail events from the same AWS action that is sent to different AWS accounts.</td></tr>
 <tr><td valign=top>sourceIpAddress</td><td>string</td><td valign=top>true</td><td valign=top>The IP address that the request was made from. For actions that originate from the service console, the address reported is for the underlying customer resource, not the console web server. For services in AWS, only the DNS name is displayed.</td></tr>
 <tr><td valign=top>userAgent</td><td>string</td><td valign=top>false</td><td valign=top>The agent through which the request was made, such as the AWS Management Console, an AWS service, the AWS SDKs or the AWS CLI.</td></tr>
-<tr><td valign=top>userIdentity</td><td><pre>"CloudTrailSessionContextAttributes":{
-    "mfaAuthenticated": {
-        "type": "string"
-    },
-    "creationDate": {
-        "type": "string"
-    }
-}</pre><br><br><pre>"CloudTrailSessionContextSessionIssuer":{
-    "type": {
-        "type": "string"
-    },
-    "principalId": {
-        "type": "string"
-    },
-    "arn": {
-        "type": "string"
-    },
-    "accountId": {
-        "type": "string"
-    },
-    "userName": {
-        "type": "string"
-    }
-}</pre><br><br><pre>"CloudTrailSessionContextWebIDFederationData":{
-    "federatedProvider": {
-        "type": "string"
-    },
-    "attributes": {
-        "items": {
-            "type": "integer"
-        },
-        "type": "array"
-    }
-}</pre><br><br><pre>{
-    "type": {
-        "type": "string"
-    },
-    "principalId": {
-        "type": "string"
-    },
-    "arn": {
-        "type": "string"
-    },
-    "accountId": {
-        "type": "string"
-    },
-    "accessKeyId": {
-        "type": "string"
-    },
-    "userName": {
-        "type": "string"
-    },
-    "sessionContext": {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "$ref": "#/definitions/CloudTrailSessionContext"
-    },
-    "invokedBy": {
-        "type": "string"
-    },
-    "identityProvider": {
-        "type": "string"
-    }
-}</pre><br><br><pre>"CloudTrailSessionContext":{
-    "attributes": {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "$ref": "#/definitions/CloudTrailSessionContextAttributes"
-    },
-    "sessionIssuer": {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "$ref": "#/definitions/CloudTrailSessionContextSessionIssuer"
-    },
-    "webIdFederationData": {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "$ref": "#/definitions/CloudTrailSessionContextWebIDFederationData"
-    }
-}</pre><br><br></td><td valign=top>true</td><td valign=top>Information about the user that made a request.</td></tr>
+<tr><td valign=top>userIdentity</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>"CloudTrailSessionContextWebIDFederationData":{
+<br>&nbsp;&nbsp;"federatedProvider": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"attributes": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;}
+<br>}</code><br><br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"type": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"principalId": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"arn": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"accountId": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"accessKeyId": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"userName": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"sessionContext": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$schema": "http://json-schema.org/draft-04/schema#",
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "#/definitions/CloudTrailSessionContext"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"invokedBy": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"identityProvider": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;}
+<br>}</code><br><br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>"CloudTrailSessionContext":{
+<br>&nbsp;&nbsp;"attributes": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$schema": "http://json-schema.org/draft-04/schema#",
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "#/definitions/CloudTrailSessionContextAttributes"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"sessionIssuer": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$schema": "http://json-schema.org/draft-04/schema#",
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "#/definitions/CloudTrailSessionContextSessionIssuer"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"webIdFederationData": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$schema": "http://json-schema.org/draft-04/schema#",
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "#/definitions/CloudTrailSessionContextWebIDFederationData"
+<br>&nbsp;&nbsp;}
+<br>}</code><br><br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>"CloudTrailSessionContextAttributes":{
+<br>&nbsp;&nbsp;"mfaAuthenticated": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"creationDate": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;}
+<br>}</code><br><br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>"CloudTrailSessionContextSessionIssuer":{
+<br>&nbsp;&nbsp;"type": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"principalId": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"arn": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"accountId": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"userName": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;}
+<br>}</code><br><br></td><td valign=top>true</td><td valign=top>Information about the user that made a request.</td></tr>
 <tr><td valign=top>vpcEndpointId</td><td>string</td><td valign=top>false</td><td valign=top>Identifies the VPC endpoint in which requests were made from a VPC to another AWS service, such as Amazon S3.</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_account_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_instance_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_arns</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_tags</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_account_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_instance_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_arns</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_tags</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
 </table>
 
 ##AWS.GuardDuty
@@ -357,96 +357,94 @@ See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest
 <tr><td valign=top>updatedAt</td><td>timestamp</td><td valign=top>true</td><td valign=top>The last update time of the finding (UTC).</td></tr>
 <tr><td valign=top>title</td><td>string</td><td valign=top>true</td><td valign=top>A short description of the finding.</td></tr>
 <tr><td valign=top>description</td><td>string</td><td valign=top>true</td><td valign=top>A long description of the finding.</td></tr>
-<tr><td valign=top>service</td><td><pre>{
-    "additionalInfo": {
-        "items": {
-            "type": "integer"
-        },
-        "type": "array"
-    },
-    "action": {
-        "items": {
-            "type": "integer"
-        },
-        "type": "array"
-    },
-    "serviceName": {
-        "type": "string"
-    },
-    "detectorId": {
-        "type": "string"
-    },
-    "resourceRole": {
-        "type": "string"
-    },
-    "eventFirstSeen": {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "$ref": "#/definitions/RFC3339"
-    },
-    "eventLastSeen": {
-        "$ref": "#/definitions/RFC3339"
-    },
-    "archived": {
-        "type": "boolean"
-    },
-    "count": {
-        "type": "integer"
-    }
-}</pre><br><br><pre>"RFC3339": {
-    "type": "timestamp"
-}</pre><br><br></td><td valign=top>true</td><td valign=top>Additional information about the affected service.</td></tr>
+<tr><td valign=top>service</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"additionalInfo": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"action": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"serviceName": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"detectorId": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"resourceRole": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"eventFirstSeen": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$schema": "http://json-schema.org/draft-04/schema#",
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "#/definitions/RFC3339"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"eventLastSeen": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "#/definitions/RFC3339"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"archived": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "boolean"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"count": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;}
+<br>}</code><br><br><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>"RFC3339": {<br>&nbsp;&nbsp;"type": "timestamp"<br>}</code><br><br></td><td valign=top>true</td><td valign=top>Additional information about the affected service.</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_account_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_instance_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_arns</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_tags</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_account_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_instance_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_arns</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_tags</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
 </table>
 
 ##AWS.S3ServerAccess
@@ -478,64 +476,64 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/AmazonS3/
 <tr><td valign=top>authenticationtype</td><td>string</td><td valign=top>false</td><td valign=top>The type of request authentication used, AuthHeader for authentication headers, QueryString for query string (pre-signed URL) or NULL for unauthenticated requests.</td></tr>
 <tr><td valign=top>hostheader</td><td>string</td><td valign=top>false</td><td valign=top>The endpoint used to connect to Amazon S3.</td></tr>
 <tr><td valign=top>tlsVersion</td><td>string</td><td valign=top>false</td><td valign=top>The Transport Layer Security (TLS) version negotiated by the client. The value is one of following: TLSv1, TLSv1.1, TLSv1.2; or NULL if TLS wasn&#39;t used.</td></tr>
-<tr><td valign=top>additionalFields</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>The remaining columns in the record as an array.</td></tr>
+<tr><td valign=top>additionalFields</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>The remaining columns in the record as an array.</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_account_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_instance_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_arns</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_tags</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_account_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_instance_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_arns</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_tags</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
 </table>
 
 ##AWS.VPCFlow
@@ -568,53 +566,53 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/vpc/lates
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_account_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_instance_ids</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_arns</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
-<tr><td valign=top>p_any_aws_tags</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_account_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_instance_ids</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_arns</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
+<tr><td valign=top>p_any_aws_tags</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
 </table>
 

@@ -20,30 +20,30 @@ Reference: https://tools.ietf.org/html/rfc3164
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
 ##Syslog.RFC5424
@@ -60,47 +60,47 @@ Reference: https://tools.ietf.org/html/rfc5424
 <tr><td valign=top>appname</td><td>string</td><td valign=top>false</td><td valign=top>Appname identifies the device or application that originated the syslog message.</td></tr>
 <tr><td valign=top>procid</td><td>string</td><td valign=top>false</td><td valign=top>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
 <tr><td valign=top>msgid</td><td>string</td><td valign=top>false</td><td valign=top>MsgID identifies the type of message. For example, a firewall might use the MsgID &#39;TCPIN&#39; for incoming TCP traffic.</td></tr>
-<tr><td valign=top>structured_data</td><td><pre>{
-    "patternProperties": {
-        ".*": {
-            "patternProperties": {
-                ".*": {
-                    "type": "string"
-                }
-            },
-            "type": "object"
-        }
-    },
-    "type": "object"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>StructuredData provides a mechanism to express information in a well defined and easily parsable format.</td></tr>
+<tr><td valign=top>structured_data</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"patternProperties": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;".*": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"patternProperties": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".*": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "object"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "object"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>StructuredData provides a mechanism to express information in a well defined and easily parsable format.</td></tr>
 <tr><td valign=top>message</td><td>string</td><td valign=top>false</td><td valign=top>Message contains free-form text that provides information about the event.</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 

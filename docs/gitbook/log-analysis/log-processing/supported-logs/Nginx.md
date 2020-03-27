@@ -19,29 +19,29 @@ Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top>p_event_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top>p_parse_time</td><td>timestamp</td><td valign=top>true</td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top>p_any_ip_addresses</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top>p_any_domain_names</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top>p_any_sha1_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top>p_any_md5_hashes</td><td><pre>{
-    "items": {
-        "type": "string"
-    },
-    "type": "array"
-}</pre><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_ip_addresses</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top>p_any_domain_names</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top>p_any_sha1_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top>p_any_md5_hashes</td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}</code><br><br></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
