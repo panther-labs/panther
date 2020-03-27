@@ -220,11 +220,10 @@ func formatType(col gluecf.Column) string {
 
 	const prefix = "<br>"
 	const indent = "&nbsp;&nbsp;"
+	const padLength = 32 // used to force width, since gitbook ignores style
 
-	// used to force width, since gitbook ignores style
-	const firstLine = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>" // nolint:lll
-
-	var jsonBuffer bytes.Buffer
+	var htmlBuffer bytes.Buffer
+	htmlBuffer.WriteString("<code>")
 	for name, schemaType := range colSchema.Definitions {
 		// NOTE: we cannot use jsoniter package because it does not support prefix
 		var schemaProps interface{}
@@ -241,24 +240,30 @@ func formatType(col gluecf.Column) string {
 		}
 
 		if (string)(jsonProps) != "{}" { // skip empty
-			jsonBuffer.WriteString("<code>")
-			jsonBuffer.WriteString(firstLine)
 			if name != col.Name {
-				jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
+				htmlBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
 			}
-			jsonBuffer.Write(jsonProps)
-			jsonBuffer.WriteString("</code>")
-			jsonBuffer.WriteString("<br><br>")
+			htmlBuffer.Write(jsonProps)
+			htmlBuffer.WriteString("<br><br>")
 		} else if name == "RFC3339" { // special case for our timestamps embedded in structs
-			jsonBuffer.WriteString("<code>")
-			jsonBuffer.WriteString(firstLine)
-			jsonBuffer.WriteString(fmt.Sprintf(`"%s": `, name))
-			jsonBuffer.WriteString("{" + prefix + indent + `"type": "timestamp"` + prefix + "}")
-			jsonBuffer.WriteString("</code>")
-			jsonBuffer.WriteString("<br><br>")
+			htmlBuffer.WriteString(fmt.Sprintf(`"%s": `, name))
+			htmlBuffer.WriteString("{" + prefix + indent + `"type": "timestamp"` + prefix + "}")
+			htmlBuffer.WriteString("<br><br>")
 		}
 	}
-	return jsonBuffer.String()
+	htmlBuffer.WriteString(padLine(padLength))
+	htmlBuffer.WriteString("</code>")
+	return htmlBuffer.String()
+}
+
+// used to force width, since gitbook ignores style
+func padLine(n int) string {
+	var padBuffer bytes.Buffer
+	padBuffer.WriteString("<br>")
+	for i := 0; i < n; i++ {
+		padBuffer.WriteString("&nbsp;")
+	}
+	return padBuffer.String()
 }
 
 type docType struct {
