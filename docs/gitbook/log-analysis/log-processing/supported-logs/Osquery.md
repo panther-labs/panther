@@ -16,7 +16,7 @@ Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "object"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
 <tr><td valign=top>diffResults</td><td><code>{
 <br>&nbsp;&nbsp;"added": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
@@ -40,7 +40,7 @@ Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
 <br>&nbsp;&nbsp;}
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>true</td><td valign=top>Computed differences.</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>true</td><td valign=top>Computed differences.</td></tr>
 <tr><td valign=top>epoch</td><td>bigint</td><td valign=top>true</td><td valign=top>Epoch</td></tr>
 <tr><td valign=top>hostname</td><td>string</td><td valign=top>true</td><td valign=top>Hostname</td></tr>
 <tr><td valign=top>name</td><td>string</td><td valign=top>true</td><td valign=top>Name</td></tr>
@@ -54,25 +54,25 @@ Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
 ##Osquery.Differential
@@ -89,7 +89,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "object"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>true</td><td valign=top>Columns</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>true</td><td valign=top>Columns</td></tr>
 <tr><td valign=top>counter</td><td>bigint</td><td valign=top>false</td><td valign=top>Counter</td></tr>
 <tr><td valign=top>decorations</td><td><code>{
 <br>&nbsp;&nbsp;"patternProperties": {
@@ -98,7 +98,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "object"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
 <tr><td valign=top>epoch</td><td>bigint</td><td valign=top>true</td><td valign=top>Epoch</td></tr>
 <tr><td valign=top>hostIdentifier</td><td>string</td><td valign=top>true</td><td valign=top>HostIdentifier</td></tr>
 <tr><td valign=top>logType</td><td>string</td><td valign=top>false</td><td valign=top>LogType</td></tr>
@@ -115,25 +115,25 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
 ##Osquery.Snapshot
@@ -151,7 +151,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "object"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
 <tr><td valign=top>epoch</td><td>bigint</td><td valign=top>true</td><td valign=top>Epoch</td></tr>
 <tr><td valign=top>hostIdentifier</td><td>string</td><td valign=top>true</td><td valign=top>HostIdentifier</td></tr>
 <tr><td valign=top>name</td><td>string</td><td valign=top>true</td><td valign=top>Name</td></tr>
@@ -165,7 +165,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "object"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>true</td><td valign=top>Snapshot</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>true</td><td valign=top>Snapshot</td></tr>
 <tr><td valign=top>unixTime</td><td>bigint</td><td valign=top>true</td><td valign=top>UnixTime</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
 <tr><td valign=top>p_row_id</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with unique id (within table)</td></tr>
@@ -176,25 +176,25 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
 ##Osquery.Status
@@ -210,7 +210,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;}
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "object"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Decorations</td></tr>
 <tr><td valign=top>filename</td><td>string</td><td valign=top>true</td><td valign=top>Filename</td></tr>
 <tr><td valign=top>hostIdentifier</td><td>string</td><td valign=top>true</td><td valign=top>HostIdentifier</td></tr>
 <tr><td valign=top>line</td><td>bigint</td><td valign=top>true</td><td valign=top>Line</td></tr>
@@ -229,24 +229,24 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 

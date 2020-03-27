@@ -51,7 +51,7 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <br>&nbsp;&nbsp;&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
 <br>&nbsp;&nbsp;}
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>true</td><td valign=top>Information about the rule that created the event.</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>true</td><td valign=top>Information about the rule that created the event.</td></tr>
 <tr><td valign=top>TimeStamp</td><td>timestamp</td><td valign=top>true</td><td valign=top>Timestamp in UTC.</td></tr>
 <tr><td valign=top>location</td><td>string</td><td valign=top>true</td><td valign=top>Source of the event (filename, command, etc).</td></tr>
 <tr><td valign=top>hostname</td><td>string</td><td valign=top>true</td><td valign=top>Hostname of the host that created the event.</td></tr>
@@ -78,7 +78,7 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <br>&nbsp;&nbsp;"parent": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;}
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Information about the decoder used to parse the logs.</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Information about the decoder used to parse the logs.</td></tr>
 <tr><td valign=top>decoder_parent</td><td>string</td><td valign=top>false</td><td valign=top>In the case of a nested decoder, the name of it&#39;s parent.</td></tr>
 <tr><td valign=top>dstgeoip</td><td>string</td><td valign=top>false</td><td valign=top>GeoIP location information about the destination IP address.</td></tr>
 <tr><td valign=top>dstip</td><td>string</td><td valign=top>false</td><td valign=top>The destination IP address.</td></tr>
@@ -127,7 +127,7 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <br>&nbsp;&nbsp;"sha1_before": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;}
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Information about a file integrity check.</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Information about a file integrity check.</td></tr>
 <tr><td valign=top>systemname</td><td>string</td><td valign=top>false</td><td valign=top>The system name extracted by the decoder.</td></tr>
 <tr><td valign=top>url</td><td>string</td><td valign=top>false</td><td valign=top>URL of the event.</td></tr>
 <tr><td valign=top>p_log_type</td><td>string</td><td valign=top>true</td><td valign=top>Panther added field with type of log</td></tr>
@@ -139,24 +139,24 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top>p_any_domain_names</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top>p_any_sha1_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
 <tr><td valign=top>p_any_md5_hashes</td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
-<br>}<br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>false</td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 

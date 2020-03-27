@@ -224,6 +224,7 @@ func formatType(col gluecf.Column) string {
 
 	var htmlBuffer bytes.Buffer
 	htmlBuffer.WriteString("<code>")
+	firstProp := true
 	for name, schemaType := range colSchema.Definitions {
 		// NOTE: we cannot use jsoniter package because it does not support prefix
 		var schemaProps interface{}
@@ -239,17 +240,26 @@ func formatType(col gluecf.Column) string {
 			logger.Fatal(err)
 		}
 
-		if (string)(jsonProps) != "{}" { // skip empty
+		if !firstProp {
+			htmlBuffer.WriteString("<br><br>")
+		}
+
+		jsonPropsString := (string)(jsonProps)
+		if jsonPropsString != "{}" { // skip empty
 			if name != col.Name {
 				htmlBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
 			}
-			htmlBuffer.Write(jsonProps)
-			htmlBuffer.WriteString("<br><br>")
+			// remove junk that messes up formatting
+			jsonPropsString = strings.Replace(jsonPropsString, `"#/definitions/`, `"`, -1)
+			jsonPropsString = strings.Replace(jsonPropsString, `"$schema": "http://json-schema.org/draft-04/schema#",`, ``, -1)
+
+			htmlBuffer.WriteString(jsonPropsString)
 		} else if name == "RFC3339" { // special case for our timestamps embedded in structs
 			htmlBuffer.WriteString(fmt.Sprintf(`"%s": `, name))
 			htmlBuffer.WriteString("{" + prefix + indent + `"type": "timestamp"` + prefix + "}")
-			htmlBuffer.WriteString("<br><br>")
 		}
+
+		firstProp = false // clear
 	}
 	htmlBuffer.WriteString(padLine(padLength))
 	htmlBuffer.WriteString("</code>")
@@ -259,7 +269,6 @@ func formatType(col gluecf.Column) string {
 // used to force width, since gitbook ignores style
 func padLine(n int) string {
 	var padBuffer bytes.Buffer
-	padBuffer.WriteString("<br>")
 	for i := 0; i < n; i++ {
 		padBuffer.WriteString("&nbsp;")
 	}
