@@ -241,5 +241,5 @@ func (dt *docType) Name() string {
 }
 
 func (dt *docType) PkgPath() string {
-	return "nopath"
+	return "nopath" // this can be any non-empty value for the json parser to work
 }
