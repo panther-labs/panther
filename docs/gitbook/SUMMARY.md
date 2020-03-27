@@ -25,7 +25,13 @@
 ## Log Analysis
 
 * [Setup](log-analysis/log-processing/README.md)
-* [Supported Logs](log-analysis/log-processing/supported-logs/README.md)
+* [Supported Logs]()
+  * [AWS](log-analysis/log-processing/supported-logs/AWS.md)
+  * [Fluentd](log-analysis/log-processing/supported-logs/Fluentd.md)
+  * [Nginx](log-analysis/log-processing/supported-logs/Nginx.md)
+  * [Osquery](log-analysis/log-processing/supported-logs/Osquery.md)
+  * [OSSEC](log-analysis/log-processing/supported-logs/OSSEC.md)
+  * [Syslog](log-analysis/log-processing/supported-logs/Syslog.md)
 * [Rules](log-analysis/rules/README.md)
   * [AWS CIS Runbooks]()
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)

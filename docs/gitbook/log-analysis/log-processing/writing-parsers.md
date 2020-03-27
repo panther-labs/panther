@@ -43,7 +43,8 @@ To enable the new parser, first add it to the [parser registry](https://github.c
 * Write [unit tests](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail_test.go) for your parser.
 * Ensure your code is formatted, run `mage fmt`
 * Ensure all tests pass `mage test:ci`
-* Be sure to checkin the documentation that will be automatically generated.
+* Be sure to checkin the documentation that will be automatically generated and 
+update [SUMMARY.md](https://github.com/panther-labs/panther/blob/master/docs/gitbook/SUMMARY.md) if you add a new type of log.
 * Deploy Panther. You should be able to see a new table with your added parser in Glue Data Catalog! 
 ![Log List from Glue Catalog](../../.gitbook/assets/glue-catalog.png)
 * Do an end to end test. You can use [s3queue](../operations/ops-home.md#tools) to copy test files 
