@@ -62,7 +62,7 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 		if field.Anonymous { // if composing a struct, treat fields as part of this struct
 			cols = append(cols, inferJSONColumns(field.Type, customMappingsTable)...)
 		} else {
-			fieldName, jsonType, comment, required, skip := inferStructFieldType(field, customMappingsTable)
+			fieldName, glueType, comment, required, skip := inferStructFieldType(field, customMappingsTable)
 			if skip {
 				continue
 			}
@@ -74,13 +74,19 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 			if len(comment) > maxCommentLength { // clip
 				comment = comment[:maxCommentLength-3] + "..."
 			}
-			cols = append(cols, Column{Name: fieldName, Type: jsonType, Comment: comment, Required: required})
+			cols = append(cols, Column{
+				Name:     fieldName,
+				Type:     glueType,
+				Comment:  comment,
+				Required: required,
+				Field:    field,
+			})
 		}
 	}
 	return cols
 }
 
-func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string]string) (fieldName, jsonType, comment string,
+func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string]string) (fieldName, glueType, comment string,
 	required, skip bool) {
 
 	t := sf.Type
@@ -122,7 +128,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	required = strings.Contains(sf.Tag.Get("validate"), "required")
 
 	if to, found := customMappingsTable[t.String()]; found {
-		jsonType = to
+		glueType = to
 		return
 	}
 
@@ -132,13 +138,13 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 		sliceOfType := t.Elem()
 		switch sliceOfType.Kind() {
 		case reflect.Struct:
-			jsonType = fmt.Sprintf("array<struct<%s>>", inferStruct(sliceOfType, customMappingsTable))
+			glueType = fmt.Sprintf("array<struct<%s>>", inferStruct(sliceOfType, customMappingsTable))
 			return
 		case reflect.Map:
-			jsonType = fmt.Sprintf("array<%s>", inferMap(sliceOfType, customMappingsTable))
+			glueType = fmt.Sprintf("array<%s>", inferMap(sliceOfType, customMappingsTable))
 			return
 		default:
-			jsonType = fmt.Sprintf("array<%s>", toJSONType(sliceOfType))
+			glueType = fmt.Sprintf("array<%s>", toGlueType(sliceOfType))
 			return
 		}
 
@@ -148,20 +154,20 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	case reflect.Struct:
 		if sf.Anonymous { // composed struct, fields part of enclosing struct
 			fieldName = ""
-			jsonType = inferStruct(t, customMappingsTable)
+			glueType = inferStruct(t, customMappingsTable)
 		} else {
-			jsonType = fmt.Sprintf("struct<%s>", inferStruct(t, customMappingsTable))
+			glueType = fmt.Sprintf("struct<%s>", inferStruct(t, customMappingsTable))
 		}
 		return
 
 	default:
 		if mappedType, found := customMappingsTable[t.String()]; found {
-			jsonType = mappedType
+			glueType = mappedType
 			return
 		}
 
 		// simple types
-		jsonType = toJSONType(t)
+		glueType = toGlueType(t)
 		return
 	}
 }
@@ -172,74 +178,74 @@ func inferStruct(structType reflect.Type, customMappingsTable map[string]string)
 	numFields := structType.NumField()
 	var keyPairs []string
 	for i := 0; i < numFields; i++ {
-		subFieldName, subFieldJSONType, _, _, subFieldSkip := inferStructFieldType(structType.Field(i), customMappingsTable)
+		subFieldName, subFieldGlueType, _, _, subFieldSkip := inferStructFieldType(structType.Field(i), customMappingsTable)
 		if subFieldSkip {
 			continue
 		}
 		if subFieldName != "" {
 			subFieldName += ":"
 		}
-		keyPairs = append(keyPairs, subFieldName+subFieldJSONType)
+		keyPairs = append(keyPairs, subFieldName+subFieldGlueType)
 	}
 	return strings.Join(keyPairs, ",")
 }
 
 // Recursively expand a map
-func inferMap(t reflect.Type, customMappingsTable map[string]string) (jsonType string) {
+func inferMap(t reflect.Type, customMappingsTable map[string]string) (glueType string) {
 	mapOfType := t.Elem()
 	if mapOfType.Kind() == reflect.Struct {
-		jsonType = fmt.Sprintf("map<%s,struct<%s>>", t.Key(), inferStruct(mapOfType, customMappingsTable))
+		glueType = fmt.Sprintf("map<%s,struct<%s>>", t.Key(), inferStruct(mapOfType, customMappingsTable))
 		return
 	} else if mapOfType.Kind() == reflect.Map {
-		jsonType = fmt.Sprintf("map<%s,%s>", t.Key(), inferMap(mapOfType, customMappingsTable))
+		glueType = fmt.Sprintf("map<%s,%s>", t.Key(), inferMap(mapOfType, customMappingsTable))
 		return
 	}
-	jsonType = fmt.Sprintf("map<%s,%s>", t.Key(), toJSONType(mapOfType))
+	glueType = fmt.Sprintf("map<%s,%s>", t.Key(), toGlueType(mapOfType))
 	return
 }
 
 // Primitive mappings
-func toJSONType(t reflect.Type) (jsonType string) {
+func toGlueType(t reflect.Type) (glueType string) {
 	switch t.String() {
 	case "bool":
-		jsonType = "boolean"
+		glueType = "boolean"
 	case "string":
-		jsonType = "string"
+		glueType = "string"
 	case "int8":
-		jsonType = "tinyint"
+		glueType = "tinyint"
 	case "int16":
-		jsonType = "smallint"
+		glueType = "smallint"
 	case "int":
 		// int is problematic due to definition (at least 32bits ...)
 		switch strconv.IntSize {
 		case 32:
-			jsonType = "int"
+			glueType = "int"
 		case 64:
-			jsonType = "bigint"
+			glueType = "bigint"
 		default:
 			panic(fmt.Sprintf("Size of native int unexpected: %d", strconv.IntSize))
 		}
 	case "int32":
-		jsonType = "int"
+		glueType = "int"
 	case "int64":
-		jsonType = "bigint"
+		glueType = "bigint"
 	case "float32":
-		jsonType = "float"
+		glueType = "float"
 	case "float64":
-		jsonType = "double"
+		glueType = "double"
 	case "interface {}":
-		jsonType = "string" // best we can do in this case
+		glueType = "string" // best we can do in this case
 	case "uint8":
-		jsonType = "smallint" // Athena doesn't have an unsigned integer type
+		glueType = "smallint" // Athena doesn't have an unsigned integer type
 	case "uint16":
-		jsonType = "int" // Athena doesn't have an unsigned integer type
+		glueType = "int" // Athena doesn't have an unsigned integer type
 	case "uint32":
-		jsonType = "bigint" // Athena doesn't have an unsigned integer type
+		glueType = "bigint" // Athena doesn't have an unsigned integer type
 	default:
 		panic("Cannot map " + t.String())
 	}
 
-	return jsonType
+	return glueType
 }
 
 // parseTag splits a struct field's json tag into its name and

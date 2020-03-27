@@ -2,6 +2,7 @@ package gluecf
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -31,9 +32,10 @@ import (
 
 type Column struct {
 	Name     string
-	Type     string
-	Comment  string `json:",omitempty"`
-	Required bool   `json:"-"` // do NOT serialize!
+	Type     string              // this is the Glue type
+	Comment  string              `json:",omitempty"`
+	Required bool                `json:"-"` // do NOT serialize! Not used for Glue CF (used for doc).
+	Field    reflect.StructField `json:"-"` // do NOT serialize! Not used for Glue CF (used for doc).
 }
 
 type SerdeInfo struct {

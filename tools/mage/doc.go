@@ -20,14 +20,19 @@ package mage
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/alecthomas/jsonschema"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
@@ -150,9 +155,9 @@ func logDocs() {
 			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Required</th><th align=center>Description</th></tr>\n") // nolint
 			columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
 			for _, column := range columns {
-				docsBuffer.WriteString(fmt.Sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+				docsBuffer.WriteString(fmt.Sprintf("<tr><td valign=top>%s</td><td>%s</td><td valign=top>%s</td><td valign=top>%s</td></tr>\n",
 					column.Name,
-					strings.Replace(html.EscapeString(column.Type), ",", ", <br>", -1), // add spaces so words break
+					formatType(column),
 					strconv.FormatBool(column.Required),
 					html.EscapeString(column.Comment)))
 			}
@@ -163,4 +168,78 @@ func logDocs() {
 	if _, err = readmeFile.Write(docsBuffer.Bytes()); err != nil {
 		logger.Fatalf("failed to write file %s: %v", readmeFileName, err)
 	}
+}
+
+func formatType(col gluecf.Column) string {
+	complexTypes := []string{"array", "struct", "map"}
+	complex := false
+	for _, ct := range complexTypes {
+		if strings.HasPrefix(col.Type, ct) {
+			complex = true
+			break
+		}
+	}
+
+	// if NOT a complex type we just use the Glue type
+	if !complex {
+		return col.Type
+	}
+
+	// complex Glue types are hard to read, so use JSON schema
+	colType := col.Field.Type
+	switch colType.String() { // handle special Panther types that will not work with JSON schema
+	case reflect.TypeOf(&parsers.PantherAnyString{}).String():
+		colType = reflect.TypeOf([]string{}) // slice of strings
+	}
+	// deference pointers
+	if colType.Kind() == reflect.Ptr {
+		colType = colType.Elem()
+	}
+	if colType.Kind() != reflect.Struct { // we need to create a struct for the parser to work
+		fields := []reflect.StructField{
+			{
+				Name: col.Field.Name,
+				Type: colType,
+				Tag:  col.Field.Tag,
+			},
+		}
+		colType = reflect.StructOf(fields)
+	}
+
+	// we need to wrap because schema package needs Name() and PkgPath()
+	colSchema := jsonschema.ReflectFromType(&docType{Type: colType, name: col.Name})
+	const indent = "&nbsp;&nbsp;&nbsp;&nbsp;"
+	var jsonBuffer bytes.Buffer
+	for name, schemaType := range colSchema.Definitions {
+		// NOTE: we cannot use jsoniter package because it does not support prefix
+		props, err := json.MarshalIndent(schemaType.Properties, "<br>", indent)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		if (string)(props) != "{}" { // skip empty and column name
+			if name != "" && name != col.Name {
+				jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
+			}
+			jsonBuffer.Write(props)
+			jsonBuffer.WriteString("<br><br>")
+		} else if name == "RFC3339" { // special case for our timestamps embedded in structs
+			jsonBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
+			jsonBuffer.WriteString("{<br>" + indent + `"type": "timestamp"<br>}`)
+			jsonBuffer.WriteString("<br><br>")
+		}
+	}
+	return jsonBuffer.String()
+}
+
+type docType struct {
+	reflect.Type
+	name string
+}
+
+func (dt *docType) Name() string {
+	return dt.name
+}
+
+func (dt *docType) PkgPath() string {
+	return "nopath"
 }

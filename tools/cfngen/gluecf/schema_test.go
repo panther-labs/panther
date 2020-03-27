@@ -75,7 +75,7 @@ func TestInferJsonColumns(t *testing.T) {
 	var simpleTestType TestCustomSimpleType
 
 	obj := struct { // nolint
-		BoolField bool `description:"test field"`
+		BoolField bool `description:"test field" validate:"required"` // test we can find required tag
 
 		StringField    string  `json:"stringField" description:"test field"`              // test we use json tags
 		StringPtrField *string `json:"stringPtrField,omitempty" description:"test field"` // test we use json tags
@@ -184,7 +184,7 @@ func TestInferJsonColumns(t *testing.T) {
 	}
 
 	excpectedCols := []Column{
-		{Name: "BoolField", Type: "boolean", Comment: "test field"},
+		{Name: "BoolField", Type: "boolean", Comment: "test field", Required: true}, // test finding required tag
 		{Name: "stringField", Type: "string", Comment: "test field"},
 		{Name: "stringPtrField", Type: "string", Comment: "test field"},
 		{Name: "IntField", Type: nativeIntMapping(), Comment: "test field"},
@@ -217,6 +217,8 @@ func TestInferJsonColumns(t *testing.T) {
 
 	cols := InferJSONColumns(obj, customSimpleTypeMapping, customSliceTypeMapping, customStructTypeMapping)
 
+	resetField(cols) // reset the Field, not needed for tests
+
 	// uncomment to see results
 	/*
 		for _, col := range cols {
@@ -228,6 +230,7 @@ func TestInferJsonColumns(t *testing.T) {
 	// Test using interface
 	var testInterface TestInterface = &TestStruct{}
 	cols = InferJSONColumns(testInterface)
+	resetField(cols) // reset the Field, not needed for tests
 	assert.Equal(t, []Column{
 		{Name: "Field1", Type: "string", Comment: "test field"},
 		{Name: "Field2", Type: "int", Comment: "test field"},
@@ -252,9 +255,17 @@ func TestComposeStructs(t *testing.T) {
 		Bar: "bar",
 	}
 	cols := InferJSONColumns(&composition)
+	resetField(cols) // reset the Field, not needed for tests
 	expectedColumns := []Column{
 		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
 		{Name: "Bar", Type: "string", Comment: "test field"},
 	}
 	require.Equal(t, expectedColumns, cols)
+}
+
+func resetField(cols []Column) {
+	for i := range cols {
+		var empty reflect.StructField
+		cols[i].Field = empty
+	}
 }
