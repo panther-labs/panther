@@ -49,13 +49,13 @@ const SQS_QUEUE_POLICY = {
   Version: '2012-10-17',
   Statement: [
     {
-      Sid: 'AllowPantherAlarming',
+      Sid: 'AllowPantherToSendAlerts',
       Effect: 'Allow',
       Action: 'sqs:SendMessage',
       Principal: {
-        AWS: process.env.AWS_ACCOUNT_ID,
+        AWS: `arn:aws:iam::${process.env.AWS_ACCOUNT_ID}:root`,
       },
-      Resource: '<The ARN of the SQS Queue you are adding as output>',
+      Resource: '<Destination-SQS-Queue-ARN>',
     },
   ],
 };

@@ -33,13 +33,13 @@ const SNS_TOPIC_POLICY = {
   Version: '2012-10-17',
   Statement: [
     {
-      Sid: 'AllowPantherAlarming',
+      Sid: 'AllowPantherToPublishAlerts',
       Effect: 'Allow',
       Action: 'sns:Publish',
       Principal: {
-        AWS: process.env.AWS_ACCOUNT_ID,
+        AWS: `arn:aws:iam::${process.env.AWS_ACCOUNT_ID}:root`,
       },
-      Resource: '<The ARN of the SNS Topic you are adding as the destination>',
+      Resource: '<Destination-SNS-Topic-ARN>',
     },
   ],
 };
