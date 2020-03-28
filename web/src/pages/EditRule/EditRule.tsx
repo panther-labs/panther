@@ -49,7 +49,7 @@ const EditRulePage: React.FC = () => {
     onCompleted: () =>
       pushSnackbar({
         variant: 'success',
-        title: 'Successfully updated policy!',
+        title: 'Successfully updated rule!',
       }),
   });
 
