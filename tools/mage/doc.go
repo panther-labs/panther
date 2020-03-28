@@ -135,7 +135,10 @@ func logDocs() {
 		defer readmeFile.Close()
 
 		logTypes := logCategories[category]
-		docsBuffer.WriteString(fmt.Sprintf("# %s\nRequired fields are in <b>bold</b>.\n", category))
+		docsBuffer.WriteString(fmt.Sprintf("# %s\n%sRequired fields are in <b>bold</b>.%s\n",
+			category,
+			`{% hint style="info" %}`,
+			`{% endhint %}`))
 
 		// use html table to get needed control
 		for _, logType := range logTypes {
@@ -156,7 +159,7 @@ func logDocs() {
 					colName = "<b>" + colName + "</b>" // required elements are bold
 				}
 				docsBuffer.WriteString(fmt.Sprintf("<tr><td valign=top>%s</td><td>%s</td><td valign=top>%s</td></tr>\n",
-					colName,
+					formatColumnName(colName),
 					formatType(column),
 					html.EscapeString(column.Comment)))
 			}
@@ -175,6 +178,10 @@ func logDocs() {
 	}
 }
 
+func formatColumnName(name string) string {
+	return "<code>" + name + "</code>"
+}
+
 func formatType(col gluecf.Column) string {
 	complexTypes := []string{"array", "struct", "map"}
 	complex := false
@@ -187,7 +194,7 @@ func formatType(col gluecf.Column) string {
 
 	// if NOT a complex type we just use the Glue type
 	if !complex {
-		return col.Type
+		return "<code>" + col.Type + "</code>"
 	}
 
 	// complex Glue types are hard to read, so use JSON schema
