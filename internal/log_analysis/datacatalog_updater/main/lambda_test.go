@@ -129,10 +129,19 @@ func getEvent(t *testing.T, s3Keys ...string) events.SQSEvent {
 	result := events.SQSEvent{Records: []events.SQSMessage{}}
 	for _, s3Key := range s3Keys {
 		s3Notification := &models.S3Notification{
-			S3Bucket:    aws.String("bucket"),
-			S3ObjectKey: aws.String(s3Key),
-			Type:        aws.String(models.LogData.String()),
-			ID:          aws.String("test"),
+			Records: []events.S3EventRecord{
+				{
+					S3: events.S3Entity{
+						ConfigurationID: "test",
+						Bucket: events.S3Bucket{
+							Name: "bucket",
+						},
+						Object: events.S3Object{
+							Key: s3Key,
+						},
+					},
+				},
+			},
 		}
 		serialized, err := jsoniter.MarshalToString(s3Notification)
 		require.NoError(t, err)

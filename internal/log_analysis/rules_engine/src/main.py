@@ -103,10 +103,12 @@ def log_analysis(event: Dict[str, Any]) -> None:
     log_type_to_data: Dict[str, List[TextIOWrapper]] = collections.defaultdict(list)
     for record in event['Records']:
         record_body = json.loads(record['body'])
-        bucket = record_body['s3Bucket']
-        object_key = record_body['s3ObjectKey']
-        _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
-        log_type_to_data[record_body['id']].append(_load_contents(bucket, object_key))
+        # https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+        for s3event in record_body['Records']:
+            bucket = s3event['s3']['bucket']['name']
+            object_key = s3event['s3']['object']['key']
+            _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
+            log_type_to_data[s3event['s3']['configurationId']].append(_load_contents(bucket, object_key))
 
     matches = 0
     output_buffer = MatchedEventsBuffer()

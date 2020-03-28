@@ -1,6 +1,4 @@
-package models
-
-import "github.com/aws/aws-lambda-go/events"
+package mage
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -20,22 +18,19 @@ import "github.com/aws/aws-lambda-go/events"
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// S3Notification is sent when new data is available in S3
-type S3Notification struct {
-	// https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
-	Records []events.S3EventRecord
-}
+import (
+	"strings"
 
-// The type of data that are stored in the Panther
-type DataType string
+	"github.com/aws/aws-sdk-go/aws/session"
 
-const (
-	// LogData represents log data processed by Panther
-	LogData DataType = "LogData"
-	// RuleData represents log data that have matched some rule
-	RuleData DataType = "RuleMatches"
+	"github.com/panther-labs/panther/tools/config"
 )
 
-func (d DataType) String() string {
-	return string(d)
+func deployLogSubscriptions(awsSession *session.Session, settings *config.PantherConfig, bootstrapOutputs map[string]string) {
+	params := map[string]string{
+		"ProcessedDataBucket":       bootstrapOutputs["ProcessedDataBucket"],
+		"ProcessedDataTopicArn":     bootstrapOutputs["ProcessedDataTopicArn"],
+		"LogSubscriptionPrincipals": strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
+	}
+	deployTemplate(awsSession, logSubscriptionTemplate, bootstrapOutputs["SourceBucket"], logSubscriptionStack, params)
 }

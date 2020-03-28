@@ -79,26 +79,28 @@ func process(event events.SQSEvent) error {
 			continue
 		}
 
-		gluePartition, err := awsglue.GetPartitionFromS3(*notification.S3Bucket, *notification.S3ObjectKey)
-		if err != nil {
-			zap.L().Error("failed to get partition information from notification",
-				zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
-			continue
-		}
+		for _, eventRecord := range notification.Records {
+			gluePartition, err := awsglue.GetPartitionFromS3(eventRecord.S3.Bucket.Name, eventRecord.S3.Object.Key)
+			if err != nil {
+				zap.L().Error("failed to get partition information from notification",
+					zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
+				continue
+			}
 
-		// already done?
-		partitionLocation := gluePartition.GetPartitionLocation()
-		if _, ok := partitionPrefixCache[partitionLocation]; ok {
-			zap.L().Debug("partition has already been created")
-			continue
-		}
+			// already done?
+			partitionLocation := gluePartition.GetPartitionLocation()
+			if _, ok := partitionPrefixCache[partitionLocation]; ok {
+				zap.L().Debug("partition has already been created")
+				continue
+			}
 
-		err = gluePartition.CreatePartition(glueClient)
-		if err != nil {
-			err = errors.Wrapf(err, "failed to create partition: %#v", notification)
-			return err
+			err = gluePartition.CreatePartition(glueClient)
+			if err != nil {
+				err = errors.Wrapf(err, "failed to create partition: %#v", notification)
+				return err
+			}
+			partitionPrefixCache[partitionLocation] = struct{}{} // remember
 		}
-		partitionPrefixCache[partitionLocation] = struct{}{} // remember
 	}
 	return nil
 }

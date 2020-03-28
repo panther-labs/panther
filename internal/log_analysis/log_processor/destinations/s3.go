@@ -26,6 +26,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
@@ -60,6 +61,11 @@ const (
 
 	bytesPerMB           = 1024 * 1024
 	maxS3BufferSizeBytes = 50 * bytesPerMB // the largest we let any single buffer get
+
+	// for the sns s3 events
+	eventVersion = "2.0"
+	eventSource  = "aws:s3"
+	eventName    = "ObjectCreated:Put"
 )
 
 var (
@@ -270,12 +276,23 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	}()
 
 	s3Notification := &models.S3Notification{
-		S3Bucket:    aws.String(destination.s3Bucket),
-		S3ObjectKey: aws.String(key),
-		Events:      aws.Int(buffer.events),
-		Bytes:       aws.Int(buffer.bytes),
-		Type:        aws.String(models.LogData.String()),
-		ID:          aws.String(buffer.logType),
+		Records: []events.S3EventRecord{
+			{
+				EventVersion: eventVersion,
+				EventSource:  eventSource,
+				EventName:    eventName,
+				S3: events.S3Entity{
+					ConfigurationID: buffer.logType,
+					Bucket: events.S3Bucket{
+						Name: destination.s3Bucket,
+					},
+					Object: events.S3Object{
+						Key:  key,
+						Size: int64(buffer.bytes),
+					},
+				},
+			},
+		},
 	}
 
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)

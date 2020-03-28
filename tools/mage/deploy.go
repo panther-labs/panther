@@ -58,26 +58,28 @@ const (
 	gatewayTemplate   = apiEmbeddedTemplate
 
 	// Main stacks
-	alarmsStack          = "panther-cw-alarms"
-	alarmsTemplate       = "deployments/alarms.yml"
-	appsyncStack         = "panther-appsync"
-	appsyncTemplate      = "deployments/appsync.yml"
-	cloudsecStack        = "panther-cloud-security"
-	cloudsecTemplate     = "deployments/cloud_security.yml"
-	coreStack            = "panther-core"
-	coreTemplate         = "deployments/core.yml"
-	dashboardStack       = "panther-cw-dashboards"
-	dashboardTemplate    = "out/deployments/monitoring/dashboards.json"
-	frontendStack        = "panther-web"
-	frontendTemplate     = "deployments/web_server.yml"
-	glueStack            = "panther-glue"
-	glueTemplate         = "out/deployments/gluetables.json"
-	logAnalysisStack     = "panther-log-analysis"
-	logAnalysisTemplate  = "deployments/log_analysis.yml"
-	metricFilterStack    = "panther-cw-metric-filters"
-	metricFilterTemplate = "out/deployments/monitoring/metrics.json"
-	onboardStack         = "panther-onboard"
-	onboardTemplate      = "deployments/onboard.yml"
+	alarmsStack             = "panther-cw-alarms"
+	alarmsTemplate          = "deployments/alarms.yml"
+	appsyncStack            = "panther-appsync"
+	appsyncTemplate         = "deployments/appsync.yml"
+	cloudsecStack           = "panther-cloud-security"
+	cloudsecTemplate        = "deployments/cloud_security.yml"
+	coreStack               = "panther-core"
+	coreTemplate            = "deployments/core.yml"
+	dashboardStack          = "panther-cw-dashboards"
+	dashboardTemplate       = "out/deployments/monitoring/dashboards.json"
+	frontendStack           = "panther-web"
+	frontendTemplate        = "deployments/web_server.yml"
+	glueStack               = "panther-glue"
+	glueTemplate            = "out/deployments/gluetables.json"
+	logAnalysisStack        = "panther-log-analysis"
+	logAnalysisTemplate     = "deployments/log_analysis.yml"
+	logSubscriptionStack    = "panther-log-subscription"
+	logSubscriptionTemplate = "deployments/log_subscription.yml"
+	metricFilterStack       = "panther-cw-metric-filters"
+	metricFilterTemplate    = "out/deployments/monitoring/metrics.json"
+	onboardStack            = "panther-onboard"
+	onboardTemplate         = "deployments/onboard.yml"
 
 	// Python layer
 	layerSourceDir   = "out/pip/analysis/python"
@@ -414,6 +416,13 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	go func(result chan string) {
 		deployFrontend(awsSession, accountID, sourceBucket, outputs)
 		result <- frontendStack
+	}(finishedStacks)
+
+	// Log subscriptions
+	parallelStacks++
+	go func(result chan string) {
+		deployLogSubscriptions(awsSession, settings, outputs)
+		result <- logSubscriptionStack
 	}(finishedStacks)
 
 	// Wait for stacks to finish

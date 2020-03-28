@@ -94,6 +94,14 @@ Setup:
   # You may want this off if you have org-level GD configured for Panther.
   EnableGuardDuty: false
 
+  # Grant external access to the Panther processed data.
+  LogSubscriptions:
+    # A list of ARNs of Principals that want to subscribe to log data.
+    # These ARNs will be granted read permission on the processed log bucket and
+    # SNS subscribe permission to the panther-processed-data-notifications topic.
+    PrincipalARNs:
+      -
+
 Web:
   # ARN of an AWS ACM certificate used on the loadbalancer presenting the panther web app
   #
