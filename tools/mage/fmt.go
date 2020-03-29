@@ -58,7 +58,7 @@ func Fmt() {
 	}
 
 	// Generate documentation
-	Doc.Cfn(Doc{})
+	Doc()
 }
 
 // Apply full go formatting to the given paths
