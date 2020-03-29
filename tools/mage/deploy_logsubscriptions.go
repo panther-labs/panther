@@ -27,10 +27,18 @@ import (
 )
 
 func deployLogSubscriptions(awsSession *session.Session, settings *config.PantherConfig, bootstrapOutputs map[string]string) {
+	// the example yml has an empty string to make it clear it is a list , remove empty strings
+	var sanitizedArns []string
+	for _, arn := range settings.Setup.LogSubscriptions.PrincipalARNs {
+		if arn == "" {
+			continue
+		}
+		sanitizedArns = append(sanitizedArns, arn)
+	}
 	params := map[string]string{
 		"ProcessedDataBucket":       bootstrapOutputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":     bootstrapOutputs["ProcessedDataTopicArn"],
-		"LogSubscriptionPrincipals": strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
+		"LogSubscriptionPrincipals": strings.Join(sanitizedArns, ","),
 	}
 	deployTemplate(awsSession, logSubscriptionTemplate, bootstrapOutputs["SourceBucket"], logSubscriptionStack, params)
 }

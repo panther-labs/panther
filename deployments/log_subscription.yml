@@ -31,11 +31,14 @@ Parameters:
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: The list of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
-    Default: ''
+
+Conditions:
+  ExistsPrincipals: !Not [!Equals [!Select [0, !Ref LogSubscriptionPrincipals], '']]
 
 Resources:
   # Read access on processed data bucket
   ProcessedDataBucketPolicy:
+    Condition: ExistsPrincipals
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref ProcessedDataBucket
@@ -59,6 +62,7 @@ Resources:
 
   # Allow SNS subscriptions
   ProcessedDataTopicPolicy:
+    Condition: ExistsPrincipals
     Type: AWS::SNS::TopicPolicy
     Properties:
       Topics:

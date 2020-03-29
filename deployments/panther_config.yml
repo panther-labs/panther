@@ -88,7 +88,7 @@ Setup:
 
   # Whether or not to create a CloudTrail in the Panther account and monitor.
   # You may want this off if you have org-level CT configured for Panther to avoid ingesting the same data twice.
-  EnableCloudTrail: false
+  EnableCloudTrail: true
 
   # Whether or not to enable GuardDuty in the Panther account and monitor.
   # You may want this off if you have org-level GD configured for Panther.
@@ -100,7 +100,8 @@ Setup:
     # These ARNs will be granted read permission on the processed log bucket and
     # SNS subscribe permission to the panther-processed-data-notifications topic.
     PrincipalARNs:
-      -
+      - arn:aws:iam::050603629990:role/snowflake-access
+      - arn:aws:iam::343182919852:user/k8m1-s-v2st0722
 
 Web:
   # ARN of an AWS ACM certificate used on the loadbalancer presenting the panther web app

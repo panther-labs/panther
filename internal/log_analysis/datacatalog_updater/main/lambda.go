@@ -72,6 +72,12 @@ func process(event events.SQSEvent) error {
 			continue
 		}
 
+		if len(notification.Records) == 0 { // indications of a bug someplace
+			zap.L().Warn("no s3 event notifications in message",
+				zap.String("message", record.Body))
+			continue
+		}
+
 		for _, eventRecord := range notification.Records {
 			gluePartition, err := awsglue.GetPartitionFromS3(eventRecord.S3.Bucket.Name, eventRecord.S3.Object.Key)
 			if err != nil {
