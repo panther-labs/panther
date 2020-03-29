@@ -233,7 +233,14 @@ func formatType(col gluecf.Column) string {
 	var htmlBuffer bytes.Buffer
 	htmlBuffer.WriteString("<code>")
 	firstProp := true
-	for name, schemaType := range colSchema.Definitions {
+	// sort for consistency in output
+	var names []string
+	for name := range colSchema.Definitions {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		schemaType := colSchema.Definitions[name]
 		// NOTE: we cannot use jsoniter package because it does not support prefix
 		var schemaProps interface{}
 		schemaProps = schemaType.Properties
