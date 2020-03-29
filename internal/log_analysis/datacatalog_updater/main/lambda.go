@@ -31,7 +31,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
@@ -44,7 +43,6 @@ const (
 )
 
 var (
-	validation                   = validator.New()
 	glueClient glueiface.GlueAPI = glue.New(session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))))
 	// partitionPrefixCache is a cache that stores all the prefixes of the partitions we have created
 	// The cache is used to avoid attempts to create the same partitions in Glue table
@@ -71,11 +69,6 @@ func process(event events.SQSEvent) error {
 		notification := &models.S3Notification{}
 		if err := jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
 			zap.L().Error("failed to unmarshal record", zap.Error(errors.WithStack(err)))
-			continue
-		}
-
-		if err := validation.Struct(notification); err != nil {
-			zap.L().Error("received invalid message", zap.Error(errors.WithStack(err)))
 			continue
 		}
 

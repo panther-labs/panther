@@ -38,6 +38,7 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
 	api "github.com/panther-labs/panther/api/gateway/resources/models"
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
@@ -83,17 +84,9 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 		}
 
 		// Check for a notification from the log processor that there are newly processed CloudTrail logs
-		results := gjson.GetMany(record.Body, "s3Bucket", "s3ObjectKey")
-		if results[0].Exists() && results[1].Exists() {
-			zap.L().Debug("processing s3 notification")
-			object := &sources.S3ObjectInfo{
-				S3Bucket:    results[0].Str,
-				S3ObjectKey: results[1].Str,
-			}
-			err := handleS3Download(object, changes)
-			if err != nil {
-				return err
-			}
+		if isLogProcessorCloudTrail, err := handleLogProcessorCloudTrail(record.Body, changes); err != nil {
+			return err
+		} else if isLogProcessorCloudTrail {
 			continue
 		}
 
@@ -133,6 +126,31 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 	}
 	err = submitChanges(changes)
 	return err
+}
+
+func handleLogProcessorCloudTrail(messageBody string, changes map[string]*resourceChange) (ok bool, err error) {
+	notification := &models.S3Notification{}
+	if err := jsoniter.UnmarshalFromString(messageBody, notification); err != nil {
+		return false, errors.Wrap(err, "failed to unmarshal record")
+	}
+
+	// anything?
+	if len(notification.Records) == 0 {
+		return false, nil
+	}
+
+	// process events and return true
+	for _, eventRecord := range notification.Records {
+		object := &sources.S3ObjectInfo{
+			S3Bucket:    eventRecord.S3.Bucket.Name,
+			S3ObjectKey: eventRecord.S3.Object.Key,
+		}
+		err := handleS3Download(object, changes)
+		if err != nil {
+			return false, err
+		}
+	}
+	return true, err
 }
 
 // handleCloudTrail takes a single CloudTrail log line and determines what scans if any need to be made as a result

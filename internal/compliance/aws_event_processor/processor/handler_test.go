@@ -20,6 +20,7 @@ package processor
  */
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -31,7 +32,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
@@ -129,7 +129,6 @@ var (
 
 // Invalid sqs message is dropped and logged
 func TestHandleInvalid(t *testing.T) {
-	logs := mockLogger()
 	resetAccountCache()
 
 	mockLambda := &mockLambdaClient{}
@@ -143,11 +142,9 @@ func TestHandleInvalid(t *testing.T) {
 			{Body: `{this is " not even valid JSON:`},
 		},
 	}
-	require.Nil(t, Handle(testContext, batch))
-	t.Log(logs.AllUntimed())
-	require.Equal(t, 1, len(logs.FilterField(zap.String("body", `{this is " not even valid JSON:`)).AllUntimed()))
-	assert.Equal(t, logs.FilterField(zap.String("body", `{this is " not even valid JSON:`)).AllUntimed()[0].ContextMap()["error"].(string),
-		"unexpected SNS message")
+	err := Handle(testContext, batch)
+	require.Error(t, err)
+	require.True(t, strings.HasPrefix(err.Error(), "failed to unmarshal record"))
 }
 
 // Handle sns confirmation end-to-end
