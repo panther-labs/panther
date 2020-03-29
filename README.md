@@ -10,7 +10,7 @@
   <a href="https://docs.runpanther.io/quick-start">Quick Start</a> |
   <a href="https://docs.runpanther.io">Documentation</a> |
   <a href="https://blog.runpanther.io">Blog</a> |
-  <a href="https://panther-labs-oss-slackin.herokuapp.com/">Chat with us on Slack!</a>
+  <a href="https://slack.runpanther.io/">Chat with us on Slack!</a>
 </p>
 
 <p align="center">
