@@ -123,17 +123,19 @@ def _load_event(event: Dict[str, Any]) -> Dict[str, List[TextIOWrapper]]:
     log_type_to_data: Dict[str, List[TextIOWrapper]] = collections.defaultdict(list)
     for record in event['Records']:
         record_body = json.loads(record['body'])
-        # https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+
         for bucket, object_key, configuration_id in _load_s3_notifications(record_body['Records']):
             _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
             log_type_to_data[configuration_id].append(_load_contents(bucket, object_key))
     return log_type_to_data
 
 
-# Reads S3 notifications and return tuples of (bucket, key, configitationId)
+# Reads S3 notifications and return tuples of (bucket, key, configurationId)
 def _load_s3_notifications(records: List[Dict[str, Any]]) -> List[Tuple[str, str, str]]:
+
     events: List[Tuple[str, str, str]] = []
     for s3event in records:
+        # https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
         bucket = s3event['s3']['bucket']['name']
         object_key = s3event['s3']['object']['key']
         configuration_id = s3event['s3']['configurationId']
