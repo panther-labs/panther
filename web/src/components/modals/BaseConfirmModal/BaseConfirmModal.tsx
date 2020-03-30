@@ -17,60 +17,52 @@
  */
 
 import React from 'react';
-import { Modal, Text, Flex, Button, useSnackbar } from 'pouncejs';
+import { Modal, Text, Flex, Button } from 'pouncejs';
 import { MutationTuple } from '@apollo/client';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useModal from 'Hooks/useModal';
 
 export interface BaseConfirmModalProps {
-  mutation: MutationTuple<any, { [key: string]: any }>;
+  mutation?: MutationTuple<any, { [key: string]: any }>;
   title: string;
   subtitle: React.ReactNode;
-  onSuccessMsg: string;
-  onErrorMsg: string;
+  onSuccessMsg?: string;
+  onErrorMsg?: string;
   onSuccess?: () => void;
   onError?: () => void;
+  onConfirm?: () => void;
+  loading: boolean;
 }
 
 const BaseConfirmModal: React.FC<BaseConfirmModalProps> = ({
-  mutation,
   title,
   subtitle,
-  onErrorMsg,
-  onSuccessMsg,
-  onSuccess = () => {},
-  onError = () => {},
+  onConfirm = () => {},
+  loading,
 }) => {
-  const { pushSnackbar } = useSnackbar();
-  const { hideModal } = useModal();
-  const [confirm, { loading, data, error }] = mutation;
+  const {
+    closeModal,
+    hideModal,
+    state: { hidden },
+  } = useModal();
 
-  React.useEffect(() => {
-    if (error) {
-      pushSnackbar({ variant: 'error', title: onErrorMsg });
-      onError();
-    }
-  }, [error]);
-
-  React.useEffect(() => {
-    if (data) {
-      pushSnackbar({ variant: 'success', title: onSuccessMsg });
-      hideModal();
-      onSuccess();
-    }
-  }, [data]);
+  function onClick() {
+    hideModal();
+    onConfirm();
+  }
+  if (hidden) return null;
 
   return (
-    <Modal open onClose={hideModal} title={title}>
+    <Modal open onClose={closeModal} title={title}>
       <Text size="large" color="grey500" mb={8} textAlign="center">
         {subtitle}
       </Text>
 
       <Flex justifyContent="flex-end">
-        <Button size="large" variant="default" onClick={hideModal} mr={3}>
+        <Button size="large" variant="default" onClick={closeModal} mr={3}>
           Cancel
         </Button>
-        <SubmitButton onClick={() => confirm()} submitting={loading} disabled={loading}>
+        <SubmitButton onClick={() => onClick()} submitting={loading} disabled={loading}>
           Confirm
         </SubmitButton>
       </Flex>

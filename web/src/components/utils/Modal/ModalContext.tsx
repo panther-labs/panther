@@ -27,6 +27,7 @@ import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
 
 const SHOW_MODAL = 'SHOW_MODAL';
 const HIDE_MODAL = 'HIDE_MODAL';
+const CLOSE_MODAL = 'CLOSE_MODAL';
 
 /* The available list of modals to dispatch */
 export enum MODALS {
@@ -45,6 +46,7 @@ export enum MODALS {
 interface ModalStateShape {
   modal: keyof typeof MODALS | null;
   props: { [key: string]: any };
+  hidden?: boolean;
 }
 
 /* 1st action */
@@ -59,6 +61,11 @@ interface ShowPolicyModalAction {
 /* 2nd action */
 interface HideModalAction {
   type: typeof HIDE_MODAL;
+}
+
+/* 3rd action */
+interface CloseModalAction {
+  type: typeof CLOSE_MODAL;
 }
 
 /* Delete User action */
@@ -142,12 +149,14 @@ type ModalStateAction =
   | ShowDeleteDestinationModalAction
   | ShowNetworkErrorModalAction
   | ShowAnalyticsConsentModalAction
-  | HideModalAction;
+  | HideModalAction
+  | CloseModalAction;
 
 /* initial state of the reducer */
 const initialState: ModalStateShape = {
   modal: null,
   props: {},
+  hidden: false,
 };
 
 const modalReducer = (state: ModalStateShape, action: ModalStateAction) => {
@@ -158,6 +167,8 @@ const modalReducer = (state: ModalStateShape, action: ModalStateAction) => {
         props: 'props' in action.payload ? action.payload.props : {},
       };
     case HIDE_MODAL:
+      return { modal: state.modal, props: state.props, hidden: true };
+    case CLOSE_MODAL:
       return { modal: null, props: {} };
     default:
       return state;
@@ -166,8 +177,11 @@ const modalReducer = (state: ModalStateShape, action: ModalStateAction) => {
 
 interface ModalContextValue {
   state: ModalStateShape;
-  showModal: (input: Exclude<ModalStateAction, HideModalAction>['payload']) => void;
+  showModal: (
+    input: Exclude<ModalStateAction, HideModalAction | CloseModalAction>['payload']
+  ) => void;
   hideModal: () => void;
+  closeModal: () => void;
 }
 
 /* Context that will hold the `state` and `dispatch` */
@@ -184,8 +198,9 @@ export const ModalProvider: React.FC = ({ children }) => {
   const contextValue = React.useMemo(
     () => ({
       state,
-      hideModal: () => dispatch({ type: 'HIDE_MODAL' }),
-      showModal: ({ modal, props }) => dispatch({ type: 'SHOW_MODAL', payload: { modal, props } }),
+      hideModal: () => dispatch({ type: HIDE_MODAL }),
+      closeModal: () => dispatch({ type: CLOSE_MODAL }),
+      showModal: ({ modal, props }) => dispatch({ type: SHOW_MODAL, payload: { modal, props } }),
     }),
     [state]
   );

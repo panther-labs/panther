@@ -17,6 +17,8 @@
  */
 
 import React from 'react';
+import { useSnackbar } from 'pouncejs';
+import useModal from 'Hooks/useModal';
 import { PolicySummary, PolicyDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
@@ -30,7 +32,7 @@ export interface DeletePolicyModalProps {
 const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const policyDisplayName = policy.displayName || policy.id;
-  const mutation = useDeletePolicy({
+  const [confirm, { loading, data, error }] = useDeletePolicy({
     variables: {
       input: {
         policies: [
@@ -45,23 +47,23 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
     },
     update: async cache => {
       cache.modify('ROOT_QUERY', {
-        policies: (data, helpers) => {
+        policies: (resp, helpers) => {
           const policyRef = helpers.toReference({
             __typename: 'PolicySummary',
             id: policy.id,
           });
           return {
-            ...data,
-            policies: data.policies.filter(p => p.__ref !== policyRef.__ref),
+            ...resp,
+            policies: resp.policies.filter(p => p.__ref !== policyRef.__ref),
           };
         },
-        policy: (data, helpers) => {
+        policy: (resp, helpers) => {
           const policyRef = helpers.toReference({
             __typename: 'PolicyDetails',
             id: policy.id,
           });
-          if (policyRef.__ref !== data.__ref) {
-            return data;
+          if (policyRef.__ref !== resp.__ref) {
+            return resp;
           }
           return helpers.DELETE;
         },
@@ -71,19 +73,34 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
     },
   });
 
+  const { pushSnackbar } = useSnackbar();
+  const { closeModal } = useModal();
+
+  React.useEffect(() => {
+    if (error) {
+      pushSnackbar({ variant: 'error', title: `Failed to delete ${policyDisplayName}` });
+      closeModal();
+    }
+    // closeModal();
+  }, [error]);
+
+  React.useEffect(() => {
+    if (data) {
+      pushSnackbar({ variant: 'success', title: `Successfully deleted ${policyDisplayName}` });
+      if (location.pathname.includes(policy.id)) {
+        // if we were on the particular policy's details page or edit page --> redirect on delete
+        history.push(urls.compliance.policies.list());
+      }
+      closeModal();
+    }
+  }, [data]);
+
   return (
     <BaseConfirmModal
-      mutation={mutation}
       title={`Delete ${policyDisplayName}`}
       subtitle={`Are you sure you want to delete ${policyDisplayName}?`}
-      onSuccessMsg={`Successfully deleted ${policyDisplayName}`}
-      onErrorMsg={`Failed to delete ${policyDisplayName}`}
-      onSuccess={() => {
-        if (location.pathname.includes(policy.id)) {
-          // if we were on the particular policy's details page or edit page --> redirect on delete
-          history.push(urls.compliance.policies.list());
-        }
-      }}
+      loading={loading}
+      onConfirm={confirm}
     />
   );
 };
