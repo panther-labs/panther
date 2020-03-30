@@ -223,7 +223,7 @@ Finally, create the subscription to the Panther Master Account's SQS Queue.
 From the SNS Console, select the `Create subscription` button:
 
 1. `Protocol`: `Amazon SQS`
-2. `Endpoint`: `arn:aws:sns:<PantherRegion>:<MasterAccountId>:panther-notifications-topic`
+2. `Endpoint`: `arn:aws:sns:<PantherRegion>:<MasterAccountId>:panther-input-data-notifications-queue`
 3. Select the `Create subscription` button
 
 ## Log Processing Advanced Configurations
