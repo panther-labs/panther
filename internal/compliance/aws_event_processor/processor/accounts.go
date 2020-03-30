@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -50,7 +51,7 @@ var (
 	// Setup the clients to talk to the Snapshot API
 	sess                               = session.Must(session.NewSession())
 	lambdaClient lambdaiface.LambdaAPI = lambda.New(sess)
-	s3Svc                              = s3.New(sess)
+	s3Svc        s3iface.S3API         = s3.New(sess)
 )
 
 func resetAccountCache() {

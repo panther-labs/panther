@@ -19,7 +19,7 @@ import json
 from gzip import GzipFile
 from io import TextIOWrapper
 from timeit import default_timer
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
 
@@ -98,18 +98,7 @@ def log_analysis(event: Dict[str, Any]) -> None:
     """Runs log analysis"""
 
     start = default_timer()
-
-    # Dictionary containing mapping from log type to list of TextIOWrapper's
-    log_type_to_data: Dict[str, List[TextIOWrapper]] = collections.defaultdict(list)
-    for record in event['Records']:
-        record_body = json.loads(record['body'])
-        # https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
-        for s3event in record_body['Records']:
-            bucket = s3event['s3']['bucket']['name']
-            object_key = s3event['s3']['object']['key']
-            _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
-            log_type_to_data[s3event['s3']['configurationId']].append(_load_contents(bucket, object_key))
-
+    log_type_to_data = _load_event(event)
     matches = 0
     output_buffer = MatchedEventsBuffer()
     for log_type, data_streams in log_type_to_data.items():
@@ -129,8 +118,30 @@ def log_analysis(event: Dict[str, Any]) -> None:
     _LOGGER.info("Matched %d events in %s seconds", matches, end - start)
 
 
-# Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all
-# contents of S3 object in memory
+# Reads lambda events wrapping s3 notifications, returns dictionary containing mapping from log type to list of TextIOWrapper's
+def _load_event(event: Dict[str, Any]) -> Dict[str, List[TextIOWrapper]]:
+    log_type_to_data: Dict[str, List[TextIOWrapper]] = collections.defaultdict(list)
+    for record in event['Records']:
+        record_body = json.loads(record['body'])
+        # https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+        for bucket, object_key, configuration_id in _load_s3_notifications(record_body['Records']):
+            _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
+            log_type_to_data[configuration_id].append(_load_contents(bucket, object_key))
+    return log_type_to_data
+
+
+# Reads S3 notifications and return tuples of (bucket, key, configitationId)
+def _load_s3_notifications(records: List[Dict[str, Any]]) -> List[Tuple[str, str, str]]:
+    events: List[Tuple[str, str, str]] = []
+    for s3event in records:
+        bucket = s3event['s3']['bucket']['name']
+        object_key = s3event['s3']['object']['key']
+        configuration_id = s3event['s3']['configurationId']
+        events.append((bucket, object_key, configuration_id))
+    return events
+
+
+# Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all contents of S3 object in memory
 def _load_contents(bucket: str, key: str) -> TextIOWrapper:
     response = _S3_CLIENT.get_object(Bucket=bucket, Key=key)
     gzipped = GzipFile(None, 'rb', fileobj=response['Body'])

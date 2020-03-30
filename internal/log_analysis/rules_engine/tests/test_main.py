@@ -36,10 +36,10 @@ with mock.patch.dict(os.environ, _ENV_VARIABLES_MOCK),\
      mock.patch.object(boto3, 'client', side_effect=mock_to_return), \
      mock.patch.object(SigV4Auth, 'add_auth'), \
      mock.patch.object(requests, 'get', return_value=_RESPONSE_MOCK):
-    from ..src.main import lambda_handler
+    from ..src.main import lambda_handler, _load_s3_notifications
 
 
-class TestMain(TestCase):
+class TestMainDirectAnalysis(TestCase):
 
     def test_direct_analysis_event_matching(self) -> None:
         rule_body = 'def rule(event):\n\treturn True'
@@ -94,3 +94,41 @@ class TestMain(TestCase):
                 ]
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
+
+
+class TestMainLoadS3Notifications(TestCase):
+
+    def test_load_s3_notifications(self) -> None:
+        notifications = [
+            {
+                'eventVersion': '2.0',
+                'eventSource': 'aws:s3',
+                'eventName': 'ObjectCreated:Put',
+                's3': {
+                    'configurationId': 'rule_id',
+                    'bucket': {
+                        'name': 'mybucket'
+                    },
+                    'object': {
+                        'key': 'mykey',
+                        'size': 100
+                    }
+                }
+            }, {
+                'eventVersion': '2.0',
+                'eventSource': 'aws:s3',
+                'eventName': 'ObjectCreated:Put',
+                's3': {
+                    'configurationId': 'rule_id',
+                    'bucket': {
+                        'name': 'mybucket2'
+                    },
+                    'object': {
+                        'key': 'mykey2',
+                        'size': 100
+                    }
+                }
+            }
+        ]
+        expected_response = [('mybucket', 'mykey', 'rule_id'), ('mybucket2', 'mykey2', 'rule_id')]
+        self.assertEqual(expected_response, _load_s3_notifications(notifications))

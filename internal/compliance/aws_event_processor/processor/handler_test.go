@@ -20,21 +20,27 @@ package processor
  */
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io/ioutil"
 	"strings"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 const (
@@ -121,6 +127,39 @@ const (
 	}
 }
 `
+
+	sampleS3Event = `
+{"Records":[
+ {
+  "eventVersion":"2.1",
+  "eventSource":"aws:s3",
+  "awsRegion":"us-east-1",
+  "eventTime":"2020-03-28T21:54:30.347Z",
+  "eventName":"ObjectCreated:Put",
+  "userIdentity":{"principalId":"A2HRK4T7OWXXXX"},
+  "requestParameters":{"sourceIPAddress":"10.206.12.142"},
+  "responseElements":{"x-amz-request-id":"1A03A12F25A3717F","x-amz-id-2":"zn0kRLtrF3ncFAiYyUG8azG+Cc51dyNCj73O4Fdn2Z2tm4URclji5dF2WwkXsEqY8ZFg9H4RC3ZyNXFFzsbBWRNYqJK0PTb+"},
+  "s3":{
+    "s3SchemaVersion":"1.0",
+    "configurationId":"ZTkwMzliNmEtYjJlYi00NTNlLWJmZGEtZjVjYjZkZjNkMXXX",
+    "bucket":{
+        "name":"panther-bootstrap-auditlogs-1rqggzuu3rmtk","ownerIdentity":{"principalId":"A14BN0Y4Z0XXXX"},
+        "arn":"arn:aws:s3:::panther-bootstrap-auditlogs-1rqggzuu3rmtk"
+    },
+    "object":{
+        "key":"self/2020-03-28-21-54-32-FA4C0C220A12C7C4",
+         "size":799,
+         "eTag":"4ffb0b26bd02e3fe9ac14edd9eabccda",
+         "versionId":"TuPUwLFQkR7gBNKUZ_xV_ARRuqmRTvhF",
+         "sequencer":"005E7FC7989DDE87B3"
+    }
+   }
+  }
+ ]
+}
+`
+	// needs to be 1 line
+	sampleCloudTrail = `{"Records": [{"eventVersion":"1.05","userIdentity":{"type":"AWSService","invokedBy":"cloudtrail.amazonaws.com"},"eventTime":"2018-08-26T14:17:23Z","eventSource":"kms.amazonaws.com","eventName":"GenerateDataKey","awsRegion":"us-west-2","sourceIPAddress":"cloudtrail.amazonaws.com","userAgent":"cloudtrail.amazonaws.com","requestParameters":{"keySpec":"AES_256","encryptionContext":{"aws:cloudtrail:arn":"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail","aws:s3:arn":"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"},"keyId":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"},"responseElements":null,"requestID":"3cff2472-5a91-4bd9-b6d2-8a7a1aaa9086","eventID":"7a215e16-e0ad-4f6c-82b9-33ff6bbdedd2","readOnly":true,"resources":[{"ARN":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0","accountId":"888888888888","type":"AWS::KMS::Key"}],"eventType":"AwsApiCall","recipientAccountId":"888888888888","sharedEventID":"238c190c-1a30-4756-8e08-19fc36ad1b9f"}]}`
 )
 
 var (
@@ -145,6 +184,29 @@ func TestHandleInvalid(t *testing.T) {
 	err := Handle(testContext, batch)
 	require.Error(t, err)
 	require.True(t, strings.HasPrefix(err.Error(), "failed to unmarshal record"))
+}
+
+func TestLogProcessorCloudTrail(t *testing.T) {
+	mockS3 := testutils.S3Mock{}
+	s3Svc = &mockS3
+
+	var dataBuf bytes.Buffer
+	gzipWriter := gzip.NewWriter(&dataBuf)
+	_, err := gzipWriter.Write([]byte(sampleCloudTrail))
+	require.NoError(t, err)
+	err = gzipWriter.Flush()
+	require.NoError(t, err)
+	err = gzipWriter.Close()
+	require.NoError(t, err)
+	mockS3.On("GetObject", mock.Anything).Return(&s3.GetObjectOutput{
+		Body: ioutil.NopCloser(&dataBuf),
+	}, nil).Once()
+
+	changes := make(map[string]*resourceChange)
+	ok, err := handleLogProcessorCloudTrail(sampleS3Event, changes)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	mockS3.AssertExpectations(t)
 }
 
 // Handle sns confirmation end-to-end

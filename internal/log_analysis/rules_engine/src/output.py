@@ -146,7 +146,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch
     _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
     # Send notification to SNS topic
-    notification = _s3notification(_S3_BUCKET, object_key, byte_size)
+    notification = _s3notification(_S3_BUCKET, object_key, byte_size, key.rule_id)
 
     # MessageAttributes are required so that subscribers to SNS topic
     # can filter events in the subscription
@@ -167,7 +167,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch
 
 
 # pylint: disable=invalid-name
-def _s3notification(bucket: str, key: str, byte_size: int) -> Dict[str, list]:
+def _s3notification(bucket: str, key: str, byte_size: int, rule_id: str) -> Dict[str, list]:
     """The notification that will be send to the SNS topic when we create a new object in S3.
 
     This needs have a shape of an S3 event notification:
@@ -181,6 +181,7 @@ def _s3notification(bucket: str, key: str, byte_size: int) -> Dict[str, list]:
                     'eventSource': 'aws:s3',
                     'eventName': 'ObjectCreated:Put',
                     's3': {
+                        'configurationId': rule_id,
                         'bucket': {
                             'name': bucket
                         },
