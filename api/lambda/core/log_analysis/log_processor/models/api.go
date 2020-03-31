@@ -26,6 +26,33 @@ type S3Notification struct {
 	Records []events.S3EventRecord
 }
 
+func NewS3ObjectPutNotification(bucket, key, logType string, nbytes int) *S3Notification {
+	const (
+		eventVersion = "2.0"
+		eventSource  = "aws:s3"
+		eventName    = "ObjectCreated:Put"
+	)
+	return &S3Notification{
+		Records: []events.S3EventRecord{
+			{
+				EventVersion: eventVersion,
+				EventSource:  eventSource,
+				EventName:    eventName,
+				S3: events.S3Entity{
+					ConfigurationID: logType,
+					Bucket: events.S3Bucket{
+						Name: bucket,
+					},
+					Object: events.S3Object{
+						Key:  key,
+						Size: int64(nbytes),
+					},
+				},
+			},
+		},
+	}
+}
+
 // The type of data that are stored in the Panther
 type DataType string
 

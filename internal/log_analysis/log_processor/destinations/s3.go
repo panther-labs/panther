@@ -26,7 +26,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
@@ -270,7 +269,7 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 			zap.String("topicArn", destination.snsTopicArn))
 	}()
 
-	s3Notification := destination.newSNSNotification(key, buffer)
+	s3Notification := destination.newS3Notification(key, buffer)
 
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)
 	if err != nil {
@@ -300,31 +299,8 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	return err
 }
 
-func (destination *S3Destination) newSNSNotification(key string, buffer *s3EventBuffer) *models.S3Notification {
-	const (
-		eventVersion = "2.0"
-		eventSource  = "aws:s3"
-		eventName    = "ObjectCreated:Put"
-	)
-	return &models.S3Notification{
-		Records: []events.S3EventRecord{
-			{
-				EventVersion: eventVersion,
-				EventSource:  eventSource,
-				EventName:    eventName,
-				S3: events.S3Entity{
-					ConfigurationID: buffer.logType,
-					Bucket: events.S3Bucket{
-						Name: destination.s3Bucket,
-					},
-					Object: events.S3Object{
-						Key:  key,
-						Size: int64(buffer.bytes),
-					},
-				},
-			},
-		},
-	}
+func (destination *S3Destination) newS3Notification(key string, buffer *s3EventBuffer) *models.S3Notification {
+	return models.NewS3ObjectPutNotification(destination.s3Bucket, key, buffer.logType, buffer.bytes)
 }
 
 func getS3ObjectKey(logType string, timestamp time.Time) string {
