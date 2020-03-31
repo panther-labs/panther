@@ -169,7 +169,7 @@ export type DeletePolicyInputItem = {
 };
 
 export type DeleteRuleInput = {
-  policies?: Maybe<Array<Maybe<DeleteRuleInputItem>>>;
+  rules: Array<DeleteRuleInputItem>;
 };
 
 export type DeleteRuleInputItem = {

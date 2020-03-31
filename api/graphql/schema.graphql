@@ -173,7 +173,7 @@ input GetRuleInput {
 }
 
 input DeleteRuleInput {
-  policies: [DeleteRuleInputItem]
+  rules: [DeleteRuleInputItem!]!
 }
 
 input DeleteRuleInputItem {

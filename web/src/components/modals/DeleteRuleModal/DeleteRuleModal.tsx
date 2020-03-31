@@ -35,7 +35,7 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   const mutation = useDeleteRule({
     variables: {
       input: {
-        policies: [
+        rules: [
           {
             id: rule.id,
           },
