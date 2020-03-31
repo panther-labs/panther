@@ -49,9 +49,6 @@ jobs:
     steps:
       - setup_backend
       - run:
-          name: Touch Swagger SDKs to prevent regeneration
-          command: touch api/gateway/*/{client,models}
-      - run:
           name: Lint and test the backend infrastructure
           command: mage build:api test:cfn test:go test:python
 
