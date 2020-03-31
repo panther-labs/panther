@@ -43,8 +43,7 @@ func (g *UsersGateway) ListUsers(input *models.ListUsersInput) ([]*models.User, 
 			if input.Status != nil && *input.Status != aws.StringValue(user.Status) {
 				continue // filter by status
 			}
-			if input.Contains != nil {
-				search := strings.TrimSpace(strings.ToLower(*input.Contains))
+			if search := aws.StringValue(input.Contains); search != "" {
 				if !strings.Contains(strings.ToLower(aws.StringValue(user.GivenName)), search) &&
 					!strings.Contains(strings.ToLower(aws.StringValue(user.FamilyName)), search) &&
 					!strings.Contains(strings.ToLower(aws.StringValue(user.Email)), search) {
