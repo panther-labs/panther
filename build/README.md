@@ -22,11 +22,11 @@ To update a Panther image you need to:
 - tag it
 - push the updated tags to the remote
 
-This is noot handled by any automation. This is something that needs to be done manually
+This is not handled by any automation. This is something that needs to be done manually
 
 ## Building an image
 
-To produce a local image out of a Dockerfile, make surer that Docker is running and type:
+To produce a local image out of a Dockerfile, make sure that Docker is running and type:
 
 ```
 docker build -f {PATH_TO_DOCKERFILE} -t {IMAGE_NAME}:{TAG} .
