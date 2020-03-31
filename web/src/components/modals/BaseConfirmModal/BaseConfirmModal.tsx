@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Modal, Text, Flex, Button, useSnackbar } from 'pouncejs';
+import { useSnackbar } from 'pouncejs';
 import { MutationTuple } from '@apollo/client';
-import SubmitButton from 'Components/buttons/SubmitButton';
 import useModal from 'Hooks/useModal';
+import ConfirmModal from 'Components/modals/ConfirmModal';
 
 export interface BaseConfirmModalProps {
   mutation: MutationTuple<any, { [key: string]: any }>;
@@ -61,20 +61,13 @@ const BaseConfirmModal: React.FC<BaseConfirmModalProps> = ({
   }, [data]);
 
   return (
-    <Modal open onClose={hideModal} title={title}>
-      <Text size="large" color="grey500" mb={8} textAlign="center">
-        {subtitle}
-      </Text>
-
-      <Flex justifyContent="flex-end">
-        <Button size="large" variant="default" onClick={hideModal} mr={3}>
-          Cancel
-        </Button>
-        <SubmitButton onClick={() => confirm()} submitting={loading} disabled={loading}>
-          Confirm
-        </SubmitButton>
-      </Flex>
-    </Modal>
+    <ConfirmModal
+      title={title}
+      subtitle={subtitle}
+      loading={loading}
+      onConfirm={confirm}
+      onClose={hideModal}
+    />
   );
 };
 
