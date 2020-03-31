@@ -19,10 +19,13 @@ package osquerylogs
  */
 
 import (
+	"net"
+
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -32,16 +35,16 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 // nolint:lll
 type Differential struct { // FIXME: field descriptions need updating!
 	Action               *string                `json:"action,omitempty" validate:"required" description:"Action"`
-	CalendarTime         *timestamp.ANSICwithTZ `json:"calendartime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	CalendarTime         *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
 	Columns              map[string]string      `json:"columns,omitempty" validate:"required" description:"Columns"`
-	Counter              *int                   `json:"counter,omitempty,string" description:"Counter"`
+	Counter              *numerics.Integer      `json:"counter,omitempty" description:"Counter"`
 	Decorations          map[string]string      `json:"decorations,omitempty" description:"Decorations"`
-	Epoch                *int                   `json:"epoch,omitempty,string" validate:"required" description:"Epoch"`
+	Epoch                *numerics.Integer      `json:"epoch,omitempty" validate:"required" description:"Epoch"`
 	HostIdentifier       *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
-	LogType              *string                `json:"logType,omitempty" validate:"required,eq=result" description:"LogType"`
+	LogType              *string                `json:"logType,omitempty"  description:"LogType"`
 	LogUnderscoreType    *string                `json:"log_type,omitempty" description:"LogUnderscoreType"`
 	Name                 *string                `json:"name,omitempty" validate:"required" description:"Name"`
-	UnixTime             *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
+	UnixTime             *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
 	LogNumericsAsNumbers *bool                  `json:"logNumericsAsNumbers,omitempty,string" description:"LogNumericsAsNumbers"`
 
 	// NOTE: added to end of struct to allow expansion later
@@ -56,7 +59,7 @@ func (p *DifferentialParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *DifferentialParser) Parse(log string) []interface{} {
+func (p *DifferentialParser) Parse(log string) []*parsers.PantherLog {
 	event := &Differential{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
@@ -77,7 +80,7 @@ func (p *DifferentialParser) Parse(log string) []interface{} {
 		return nil
 	}
 
-	return []interface{}{event}
+	return event.Logs()
 }
 
 // LogType returns the log type supported by this parser
@@ -86,6 +89,14 @@ func (p *DifferentialParser) LogType() string {
 }
 
 func (event *Differential) updatePantherFields(p *DifferentialParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime))
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
+
+	if net.ParseIP(event.Columns["local_address"]) != nil {
+		event.AppendAnyIPAddresses(event.Columns["local_address"])
+	}
+
+	if net.ParseIP(event.Columns["remote_address"]) != nil {
+		event.AppendAnyIPAddresses(event.Columns["remote_address"])
+	}
 }

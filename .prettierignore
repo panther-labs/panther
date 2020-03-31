@@ -1,0 +1,18 @@
+# General
+.git
+.idea
+.setup
+keys
+
+# Deps
+venv
+node_modules
+
+# Service artifacts
+out
+
+# Web artifacts
+web/dist
+
+# Docs
+docs/gitbook

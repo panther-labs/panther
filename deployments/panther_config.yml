@@ -16,73 +16,93 @@
 
 ##### Panther deployment configuration #####
 
-# CloudFormation parameters for the monitoring.yml which deploys the monitoring stack.
-MonitoringParameterValues:
+Infra:
+  # Comma-delimited list of LayerVersions to attach to every Lambda function.
+  #
+  # For example, this could be a serverless monitoring/security service.
+  BaseLayerVersionArns: ''
+
+  # Lambda functions scale memory and CPU together.
+  # Those with the smallest memory are slower and cheaper.
+  # Those with the larger memory are faster and more expensive.
+  # If cost is more of a concern compared to performance, choose
+  # a small memory size, however, for extremely large log volumes
+  # the larger sizes may be required for adequate performance or large files.
+  LogProcessorLambdaMemorySize: 1024 # 256 - 3008, in 64MB increments
+
+  # Create a Python layer with these pip library versions.
+  #
+  # This makes it easy to add your own pip libraries for analysis and remediation.
+  # Natively compiled libraries (e.g. numpy) are not currently supported: build a custom layer instead.
+  #
+  # This setting has no effect if PythonLayerVersionArn is set below.
+  PipLayer:
+    - boto3==1.12.24
+    - policyuniverse==1.3.2.1
+    - requests==2.23.0
+
+  # Custom layer attached to every Python Lambda function for analysis and remediation.
+  #
+  # If not specified, a layer is created for you based on the PipLayer setting above.
+  PythonLayerVersionArn: ''
+
+Monitoring:
   # This is the arn for the SNS topic you want associated with Panther system alarms.
   # If this is not set alarms will be associated with the SNS topic `panther-alarms`.
-  AlarmSNSTopicARN: ''
+  AlarmSnsTopicArn: ''
 
-# CloudFormation parameter overrides for the core/buckets.yml prerequisite stack.
-BucketsParameterValues:
-  # Use an existing S3 bucket for storing access logs. If not specified, one is created for you.
-  AccessLogsBucketName: ''
-
-# CloudFormation parameter overrides for the backend.yml which deploys the backend stack.
-BackendParameterValues:
   # Retention period for all Panther CloudWatch log groups.
   CloudWatchLogRetentionDays: 365
 
   # Enable DEBUG logging for all Lambda functions.
   Debug: false
 
-  # Comma-delimited list of LayerVersions to attach to every Lambda function.
-  #
-  # For example, this could be a serverless monitoring/security service.
-  LayerVersionArns: ''
+  # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
+  TracingMode: ''
 
-  # Custom layer attached to every Python Lambda function for analysis and remediation.
+Setup:
+  # List of policy/rule sets to install if the existing ruleset is empty
+  # (e.g. when Panther is first deployed).
   #
-  # If not specified, a layer is created for you based on the PipLayer setting below.
-  PythonLayerVersionArn: ''
+  # Entries can be URLs or file:// paths that point to a .zip file.
+  # If the analysis-api is non-empty, this setting is ignored and you can instead
+  # use the BulkUpload functionality from the web app to upload new or modified rule sets.
+  InitialAnalysisSets:
+    - https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
 
+  # Enable S3 access logs for Panther buckets.
+  # Doing so is a strongly recommend security practice, but can come at a high cost
+  # when processing large volumes of data.
+  #
+  # Access logs are sent either to the S3AccessLogsBucket below or a the panther audit bucket created for you.
+  EnableS3AccessLogs: true
+
+  # Optionally use an existing S3 bucket for storing S3 access logs.
+  # If not specified, the generated panther audit logs bucket is used for access logs as well.
+  #
+  # Has no effect if EnableS3AccessLogs=false above.
+  S3AccessLogsBucket: ''
+
+  # Whether or not the Panther deployment should automatically onboard itself as a data source.
+  OnboardSelf: true
+
+  # Whether or not to create a CloudTrail in the Panther account and monitor.
+  # You may want this off if you have org-level CT configured for Panther to avoid ingesting the same data twice.
+  EnableCloudTrail: false
+
+  # Whether or not to enable GuardDuty in the Panther account and monitor.
+  # You may want this off if you have org-level GD configured for Panther.
+  EnableGuardDuty: false
+
+Web:
   # ARN of an AWS ACM certificate used on the loadbalancer presenting the panther web app
   #
   # If not specified, a self signed certificate is created automatically.
   # WARNING: SELF SIGNED CERTIFICATES ARE NOT SAFE TO USE IN PRODUCTION, PLEASE
   # PROVIDE A CERTIFICATE FOR PRODUCTION USE
-  WebApplicationCertificateArn: ''
+  CertificateArn: ''
 
-  # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
-  TracingMode: ''
-
-FrontendParameterValues:
-  # The size of the CPU allocated to the front-end web server.
-  # Allowed values: [256, 512, 1024]
+  # Domain that you own and have configured to alias to the default load balancer URL
   #
-  # For example, a value of 1024 equals to 1 vCPU, while a value of 256 equals to 0.25 vCPU
-  WebApplicationFargateTaskCPU: 512
-
-  # The size of memory (in MB) allocated to the front-end web server
-  # Allowed values: [512, 1024, 2056]
-  #
-  # For example, a value of 1024 means 1GB of RAM memory
-  WebApplicationFargateTaskMemory: 1024
-
-# Create a Python layer with these pip library versions.
-#
-# This makes it easy to add your own pip libraries for analysis and remediation.
-# Natively compiled libraries (e.g. numpy) are not currently supported: build a custom layer instead.
-#
-# This setting has no effect if PythonLayerVersionArn is set above.
-PipLayer:
-  - boto3==1.11.16
-  - policyuniverse==1.3.2.1
-  - requests==2.22.0
-
-# List of policy/rule sets to install when Panther is FIRST deployed.
-#
-# Entries can be URLs or file:// paths that point to a .zip file.
-# If the analysis-api is non-empty, this setting is ignored and you can instead
-# use the BulkUpload functionality from the web app to upload new or modified rule sets.
-InitialAnalysisSets:
-  - https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
+  # If not specified, the default load balancer URL is used in all places.
+  CustomDomain: ''

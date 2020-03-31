@@ -1,0 +1,155 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: The service that defines the front-end NodeJS server that serves the Panther web application statics
+
+Parameters:
+  # Passed in from bootstrap.yml stack
+  SubnetOneId:
+    Type: String
+    Description: The ID of a subnet in the VPC above
+  SubnetTwoId:
+    Type: String
+    Description: The ID of another subnet in the VPC above
+  ElbTargetGroup:
+    Type: String
+    Description: The ARN of the load balancer target group
+  SecurityGroup:
+    Type: String
+    Description: Web app security group ID
+
+  # Generated in deploy process
+  Image:
+    Type: String
+    Description: The container image to use for the front-end web application server
+
+  CPU:
+    Type: Number
+    Description: The size of the CPU allocated to the server
+    Default: 512
+  Memory:
+    Type: Number
+    Description: The MB of memory allocated to the server
+    Default: 1024
+  Port:
+    Type: Number
+    Default: 80
+    Description: The exposed port of the application, that will be used by the VPC & Container
+
+Resources:
+  # The service that will instantiate a server task and restrict access through our ALB
+  WebApplicationServer:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: panther-web-cluster
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      DeploymentController:
+        Type: ECS
+      DesiredCount: 1
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 60
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref SecurityGroup
+          Subnets:
+            - !Ref SubnetOneId
+            - !Ref SubnetTwoId
+      PlatformVersion: LATEST
+      SchedulingStrategy: REPLICA
+      ServiceName: panther-web
+      TaskDefinition: !Ref WebApplicationServerDefinition
+      LoadBalancers:
+        - ContainerName: panther-web
+          ContainerPort: !Ref Port
+          TargetGroupArn: !Ref ElbTargetGroup
+
+  # The role that allows the containers in the task to pull images and publish logs to CloudWatch
+  WebApplicationServerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+        - PolicyName: PullECRImages
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:ListImages
+                  - ecr:ListTagsForResource
+                Resource: '*'
+
+  # A log group for storing the stdout logs from the server's task definition
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: panther-web-logs
+
+  # The container definition for the image that runs the NodeJS server which serves our assets
+  WebApplicationServerDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: panther-web
+          Cpu: !Ref CPU
+          DisableNetworking: false
+          Environment:
+            - Name: SERVER_PORT
+              Value: !Ref Port
+            - Name: NODE_ENV
+              Value: production # optimizes the configuration of the front-end NodeJS server
+          Essential: true
+          Image: !Ref Image
+          Interactive: false
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: panther-web
+          Memory: !Ref Memory
+          MemoryReservation: !Ref Memory
+          PortMappings:
+            - ContainerPort: !Ref Port
+          ReadonlyRootFilesystem: false
+      Cpu: !Ref CPU
+      ExecutionRoleArn: !GetAtt WebApplicationServerExecutionRole.Arn
+      Family: panther-web
+      Memory: !Ref Memory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE

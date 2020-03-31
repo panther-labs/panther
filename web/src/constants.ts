@@ -25,6 +25,8 @@ export const INCLUDE_DIGITS_REGEX = new RegExp('(?=.*[0-9])');
 
 export const INCLUDE_LOWERCASE_REGEX = new RegExp('(?=.*[a-z])');
 
+export const SOURCE_LABEL_REGEX = new RegExp('^[a-zA-Z0-9- ]+$');
+
 export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
 export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('(?=.*[!@#\\$%\\^&\\*;:,.<>?/])');
@@ -32,7 +34,14 @@ export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('(?=.*[!@#\\$%\\^&\\*;:,.<>
 export const DEFAULT_POLICY_FUNCTION =
   'def policy(resource):\n\t# Write your code here.\n\treturn True';
 
-export const DEFAULT_RULE_FUNCTION = 'def rule(event):\n\t# Write your code here.\n\treturn False';
+export const DEFAULT_RULE_FUNCTION =
+  'def rule(event):\n\t# Write your rule code here.\n\treturn False';
+
+export const DEFAULT_TITLE_FUNCTION =
+  "def title(event):\n\t# Write code here for alert title generation.\n\treturn ''";
+
+export const DEFAULT_DEDUP_FUNCTION =
+  "def dedup(event):\n\t# Write code here for generating dedup string.\n\treturn ''";
 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
@@ -71,6 +80,8 @@ export const LOG_TYPES = [
   'AWS.ALB',
   'AWS.AuroraMySQLAudit',
   'AWS.CloudTrail',
+  'Fluentd.Syslog3164',
+  'Fluentd.Syslog5424',
   'AWS.GuardDuty',
   'AWS.S3ServerAccess',
   'AWS.VPCFlow',
@@ -80,6 +91,8 @@ export const LOG_TYPES = [
   'Osquery.Snapshot',
   'Osquery.Status',
   'OSSEC.EventInfo',
+  'Syslog.RFC3164',
+  'Syslog.RFC5424',
 ] as const;
 
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
@@ -98,8 +111,3 @@ export const DEFAULT_LARGE_PAGE_SIZE = 25;
 // The key under which User-related data will be stored in the storage
 export const USER_INFO_STORAGE_KEY = 'panther.user.info';
 export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.errorReportingConsent';
-
-export enum INTEGRATION_TYPES {
-  AWS_LOGS = 'aws-s3',
-  AWS_INFRA = 'aws-scan',
-}

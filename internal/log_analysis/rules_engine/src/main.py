@@ -28,7 +28,6 @@ from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
 from .output import MatchedEventsBuffer
 from .rule import Rule
-from .sqs import send_to_sqs
 
 _S3_CLIENT = boto3.client('s3')
 _LOGGER = get_logger()
@@ -44,37 +43,54 @@ def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Optional[Dict[
     return None
 
 
-def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
+def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluates a single rule against a set of events, and returns the results. Currently used for testing policies directly.
     """
     # Since this is used for testing single rules, it should only ever have one rule
-    if len(event['rules']) != 1:
-        raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
+    if len(request['rules']) != 1:
+        raise RuntimeError('exactly one rule expected, found {}'.format(len(request['rules'])))
 
-    raw_rule = event['rules'][0]
-    test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'])
-    results: Dict[str, Any] = {'events': []}
-    for single_event in event['events']:
+    raw_rule = request['rules'][0]
+    if not 'severity' in raw_rule:
+        raw_rule['severity'] = 'INFO'
+    # It is possible that during direct analysis the rule doesn't include a severity
+    # in this case, we set it to a default value
+    rule_exception: Optional[Exception] = None
+    try:
+        test_rule = Rule(raw_rule)
+    except Exception as err:  # pylint: disable=broad-except
+        rule_exception = err
+
+    response: Dict[str, Any] = {'events': []}
+    for event in request['events']:
         result = {
-            'id': single_event['id'],
+            'id': event['id'],
             'matched': [],
             'notMatched': [],
             'errored': [],
         }
-        rule_result = test_rule.run(single_event['data'])
-        if rule_result.exception:
+        if rule_exception:
             result['errored'] = [{
                 'id': raw_rule['id'],
-                'message': str(rule_result.exception),
+                'message': str(rule_exception),
             }]
-        elif rule_result.matched:
-            result['matched'] = [raw_rule['id']]
-        else:
-            result['notMatched'] = [raw_rule['id']]
+            # If rule was invalid, no need to try to run it
 
-        results['events'].append(result)
-    return results
+        else:
+            rule_result = test_rule.run(event['data'])
+            if rule_result.exception:
+                result['errored'] = [{
+                    'id': raw_rule['id'],
+                    'message': str(rule_result.exception),
+                }]
+            elif rule_result.matched:
+                result['matched'] = [raw_rule['id']]
+            else:
+                result['notMatched'] = [raw_rule['id']]
+
+        response['events'].append(result)
+    return response
 
 
 # pylint: disable=too-many-locals
@@ -92,8 +108,7 @@ def log_analysis(event: Dict[str, Any]) -> None:
         _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
         log_type_to_data[record_body['id']].append(_load_contents(bucket, object_key))
 
-    # List containing tuple of (rule_id, event) for matched events
-    matched: List = []
+    matches = 0
     output_buffer = MatchedEventsBuffer()
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
@@ -105,18 +120,11 @@ def log_analysis(event: Dict[str, Any]) -> None:
                     continue
 
                 for analysis_result in _RULES_ENGINE.analyze(log_type, json_data):
+                    matches += 1
                     output_buffer.add_event(analysis_result)
-                    # Appends the events to queue of events that will be sent through SQS
-                    matched.append((analysis_result.rule_id, data))
-
-    if len(matched) > 0:
-        _LOGGER.info("sending %d matches", len(matched))
-        send_to_sqs(matched)
-    else:
-        _LOGGER.info("no matches found")
     output_buffer.flush()
     end = default_timer()
-    _LOGGER.info("Matched %d events in %s seconds", len(matched), end - start)
+    _LOGGER.info("Matched %d events in %s seconds", matches, end - start)
 
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all

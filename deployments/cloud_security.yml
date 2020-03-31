@@ -1,0 +1,1142 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Cloud security resource scanning
+
+Parameters:
+  # Passed in from bootstrap outputs
+  AnalysisApiId:
+    Type: String
+    Description: API Gateway for analysis-api
+  ComplianceApiId:
+    Type: String
+    Description: API Gateway for compliance-api
+  RemediationApiId:
+    Type: String
+    Description: API Gateway for remediation-api
+  ResourcesApiId:
+    Type: String
+    Description: API Gateway for resources-api
+  ProcessedDataTopicArn:
+    Type: String
+    Description: The ARN of the processed data SNS topic
+  ProcessedDataBucket:
+    Type: String
+    Description: Name of the S3 bucket for storing processed logs
+  PythonLayerVersionArn:
+    Type: String
+    Description: Pip libraries for python analysis and remediation
+  SqsKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+
+  # Passed in from config file
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+    Default: ''
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+
+Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  DebugEnabled: !Equals [!Ref Debug, true]
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+
+Resources:
+  ##### Alert Processor #####
+  AlertProcessorQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-alert-processor-queue
+      # <cfndoc>
+      # This sqs queue contains events that may become alerts.
+      # The `panther-alert-processor` lambda reads from this queue to
+      # determine if the event requires action or is a duplicate.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact delivery of alerts to output destinations.
+      # * Failed events will go into the `panther-alert-processor-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      KmsMasterKeyId: !Ref SqsKeyId
+      VisibilityTimeout: 60 # Should match lambda timeout
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AlertProcessorDLQ.Arn
+        maxReceiveCount: 10
+
+  AlertProcessorDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-alert-processor-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-alert-processor-queue`.
+      # Items are in this queue due to a failure of the `panther-alert-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: 60
+
+  AlertProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-alert-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/alert_processor/main
+      Description: Processes events generated from the compliance engine
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          REMEDIATION_SERVICE_HOST: !Sub '${RemediationApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          REMEDIATION_SERVICE_PATH: v1
+          COMPLIANCE_SERVICE_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          COMPLIANCE_SERVICE_PATH: v1
+          POLICY_SERVICE_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          POLICY_SERVICE_PATH: v1
+          TABLE_NAME: !Ref AlertForwarderTable
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt AlertProcessorQueue.Arn
+            BatchSize: 1
+      FunctionName: panther-alert-processor
+      # <cfndoc>
+      # This lambda reads events from the `panther-alert-processor-queue`
+      # generated by the `panther-policy-engine` lambda.  It updates the `panther-alert-forwarder` ddb table
+      # (which enables deduplication) and may trigger remediation by calling the `panther-remediation-api`.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact alerts generated policy violations.
+      # * Failed events will go into the `panther-alert-processor-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 60
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ReadFromSQS
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: !GetAtt AlertProcessorQueue.Arn
+            - Effect: Allow
+              Action: kms:Decrypt
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: UpdateTable
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:UpdateItem
+              Resource: !GetAtt AlertForwarderTable.Arn
+        - Id: InvokeGatewayApi
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RemediationApiId}/v1/POST/remediateasync
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+
+  ##### Alert Forwarder #####
+  AlertForwarderTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-alert-forwarder
+      # <cfndoc>
+      # The `panther-alert-forwarder` ddb table is updated conditionally when new policies have a violation
+      # or a time limit has been exceeded.
+      #
+      # Failure Impact
+      # * Processing of alerts could be slowed or stopped if there are errors/throttles.
+      # </cfndoc>
+      AttributeDefinitions:
+        - AttributeName: policyId
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: policyId
+          KeyType: HASH
+      PointInTimeRecoverySpecification: # Create periodic table backups
+        PointInTimeRecoveryEnabled: True
+      SSESpecification: # Enable server-side encryption
+        SSEEnabled: True
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+
+  AlertForwarderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-alert-forwarder
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertForwarderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/alert_forwarder/main
+      Description: Forwards the alerts to the alert delivery mechanism
+      Environment:
+        Variables:
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
+          DEBUG: !Ref Debug
+      Events:
+        DynamoDBEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt AlertForwarderTable.StreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 1
+      FunctionName: panther-alert-forwarder
+      # <cfndoc>
+      # The `panther-alert-forwarder` lambda reads from the ddb stream for the table `panther-alert-forwarder`
+      # and sends them to the `panther-alerts-queue` sqs queue.
+      #
+      # Failure Impact
+      # * Failure of this lambda will stop delivery of alerts to destinations.
+      # * There will be no data loss until events are purged from the ddb stream (24 hours).
+      # </cfndoc>
+      Handler: main
+      MemorySize: 128
+      Runtime: go1.x
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Timeout: 60
+      Policies:
+        - Id: ReadTableStreams
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:DescribeStream
+                - dynamodb:GetRecords
+                - dynamodb:GetShardIterator
+                - dynamodb:ListStreams
+              Resource: !Sub ${AlertForwarderTable.Arn}/stream/*
+        - Id: PublishToAlertQueue
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alerts-queue
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+
+  ##### AWS Event Processor #####
+  EventQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 86400 # 24 hours
+      QueueName: panther-aws-events-queue
+      # <cfndoc>
+      # This sqs q receives CloudTrail events delivered by CloudWatch events
+      # as well as S3 notifications from log processing.
+      # The `panther-aws-event-processor` lambda processes these events.
+      #
+      # Failure Impact
+      # * Failure of this sqs q will impact the continuous scanning accounts.
+      # * Failed events will go into the `panther-aws-events-queue-dlq`. When the system has recovered they should be re-queued to the `panther-aws-events-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      KmsMasterKeyId: !Ref SqsKeyId
+      # Reference on KeyReuse: https://amzn.to/2ngIsFB
+      KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt EventDLQ.Arn
+        maxReceiveCount: 10
+      VisibilityTimeout: 120 # Should match lambda timeout
+
+  EventDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      QueueName: panther-aws-events-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-aws-events-queue`.
+      # Items are in this queue due to a failure of the `panther-aws-event-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-aws-events-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      VisibilityTimeout: 60
+
+  SnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt EventQueue.Arn
+      Region: !Ref AWS::Region
+      TopicArn: !Ref ProcessedDataTopicArn
+      RawMessageDelivery: true
+      FilterPolicy:
+        type:
+          - LogData
+        id:
+          - AWS.CloudTrail
+
+  EventQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:${AWS::Partition}:sns:*:*:*-PantherEventsTopic-*
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: '*'
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Ref ProcessedDataTopicArn
+      Queues:
+        - !Ref EventQueue
+
+  EventProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-aws-event-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  EventProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/aws_event_processor/main
+      Description: Process real-time changes to AWS infrastructure
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          RESOURCES_API_PATH: v1
+          SNAPSHOT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-snapshot-queue
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            BatchSize: 10 # Maximum batch size
+            Queue: !GetAtt EventQueue.Arn
+      FunctionName: panther-aws-event-processor
+      # <cfndoc>
+      # This lambda reads events from the `panther-aws-events-queue` sqs queue and determines if
+      # the infrastructure referenced in the event has changed. If so, it writes events to the
+      # `panther-shapshot-queue` to be scanned for the nature of the changes.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact from continuous infrastructure monitoring.
+      # * Failed events will go into the `panther-aws-events-queue-dlq`. When the system has recovered they should be re-queued to the `panther-aws-events-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 120
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: SendAndReceiveSqsMessages
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+            - Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: !GetAtt EventQueue.Arn
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-snapshot-queue
+        - Id: ConfirmSubscription
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sns:ConfirmSubscription
+              Resource: !Sub arn:${AWS::Partition}:sns:*:*:*-PantherEventsTopic-*
+        - Id: DeleteResources
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/delete
+        - Id: InvokeSourceAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+        - Id: ReadFromS3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/*
+
+  ##### Compliance API #####
+  ComplianceApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/compliance_api/main
+      Description: Compliance API
+      Environment:
+        Variables:
+          COMPLIANCE_TABLE: !Ref ComplianceTable
+          DEBUG: !Ref Debug
+          INDEX_NAME: policy-index
+      FunctionName: panther-compliance-api
+      # <cfndoc>
+      # This lambda implements the compliance API which is responsible for tracking resource and policy pass/fail states.
+      #
+      # Failure Impact
+      # * The UI experiences errors on nearly every page for cloud security related data.
+      # * Alerts for cloud security stop.
+      # * Policy failures are no longer be recorded.
+      # </cfndoc>
+      Handler: main
+      MemorySize: 512
+      Runtime: go1.x
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Timeout: 180
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: DynamoManageItems
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:Query
+                - dynamodb:*Item
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt ComplianceTable.Arn
+                - !Sub
+                  - '${arn}/index/*'
+                  - arn: !GetAtt ComplianceTable.Arn
+
+  ComplianceApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-compliance-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ComplianceGatewayInvocation: # allow API gateway to invoke the compliance-api Lambda function
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ComplianceApiFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/*
+
+  ComplianceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-compliance
+      # <cfndoc>
+      # This ddb table holds policy violation events for associated resources in the `panther-resources` ddb table.
+      #
+      # Failure Impact
+      # * Processing of policies could be slowed or stopped if there are errors/throttles.
+      # </cfndoc>
+      AttributeDefinitions:
+        - AttributeName: policyId
+          AttributeType: S
+        - AttributeName: resourceId
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - # Add an index for policyId to efficiently search for a specific policy
+          KeySchema:
+            - AttributeName: policyId
+              KeyType: HASH
+          IndexName: policy-index
+          Projection:
+            ProjectionType: ALL
+      KeySchema:
+        - AttributeName: resourceId
+          KeyType: HASH
+        - AttributeName: policyId
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: True
+
+  ##### Remediation API #####
+  RemediationGatewayInvocation:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref RemediationApiFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RemediationApiId}/*
+
+  RemediationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-remediation-queue
+      # <cfndoc>
+      # This sqs queue has remediation request events that are
+      # processed by the `panther-remediation-processor` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact the remediation of policy violations.
+      # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      KmsMasterKeyId: !Ref SqsKeyId
+      VisibilityTimeout: 120 # Should match lambda
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt RemediationDLQ.Arn
+        maxReceiveCount: 10
+
+  RemediationDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-remediation-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-remediation-queue`.
+      # Items are in this queue due to a failure of the `panther-remediation-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-remediation-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: 60
+
+  RemediationApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/remediation_api/main
+      Description: Triggers AWS remediations
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          SQS_QUEUE_URL: !Ref RemediationQueue
+          REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
+          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          POLICIES_SERVICE_PATH: v1
+          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          RESOURCES_SERVICE_PATH: v1
+      FunctionName: panther-remediation-api
+      # <cfndoc>
+      # The `panther-remediation-api` lambda triggers AWS remediations.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 512
+      Runtime: go1.x
+      Timeout: 120
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: SendSqsMessages
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !GetAtt RemediationQueue.Arn
+        - Id: InvokeAPIs
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !GetAtt RemediationFunction.Arn
+
+  RemediationApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-remediation-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ##### Remediation Processor #####
+  RemediationProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-remediation-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  RemediationProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/remediation_processor/main
+      Description: Process queued remediations
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
+          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          POLICIES_SERVICE_PATH: v1
+          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          RESOURCES_SERVICE_PATH: v1
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt RemediationQueue.Arn
+            BatchSize: 1
+      FunctionName: panther-remediation-processor
+      # <cfndoc>
+      # The `panther-remediation-processor` lambda processes queued remediations
+      # in the `panther-remediation-queue` and calls the `panther-aws-remediation` lambda.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
+      # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 512
+      Runtime: go1.x
+      Timeout: 120
+      Policies:
+        - Id: ReceiveAndDeleteSQSMessages
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: !GetAtt RemediationQueue.Arn
+            - Effect: Allow
+              Action: kms:Decrypt
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !GetAtt RemediationFunction.Arn
+
+  ##### AWS Remediation #####
+  RemediationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-aws-remediation
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  RemediationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../internal/compliance/remediation_aws/src
+      Description: Function that remediates issues with AWS resources
+      FunctionName: panther-aws-remediation
+      # <cfndoc>
+      # The `panther-aws-remediation` lambda executes automated infrastructure remediations.
+      #
+      # Failure Impact
+      # * Failure of this lambda will mean specific remediations are failing and infrastructure will remain in violation of policy.
+      # </cfndoc>
+      Handler: app.main.lambda_handler
+      Environment:
+        Variables:
+          LOGGING_LEVEL: !If [DebugEnabled, DEBUG, INFO]
+          MASTER_REGION: !Sub ${AWS::Region}
+      Layers: !If
+        - AttachLayers
+        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ','
+          - !Sub
+            - '${base},${pip}'
+            - base: !Join [',', !Ref LayerVersionArns]
+              pip: !Ref PythonLayerVersionArn
+        - [!Ref PythonLayerVersionArn]
+      MemorySize: 128
+      Runtime: python3.7
+      Timeout: 60
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: AssumeRemediationRole
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole-${AWS::Region}
+
+  ##### Resources API #####
+  GatewayInvocationPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ResourcesApiFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/*
+
+  ResourcesApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/resources_api/main
+      Description: Resources API
+      Environment:
+        Variables:
+          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          COMPLIANCE_API_PATH: v1
+          DEBUG: !Ref Debug
+          RESOURCES_QUEUE_URL: !Ref ResourcesQueue
+          RESOURCES_TABLE: !Ref ResourcesTable
+      FunctionName: panther-resources-api
+      # <cfndoc>
+      # The `panther-resources-api` lambda implements the resources API.
+      #
+      # Failure Impact
+      # * Infrastructure scans may be impacted when updating resources.
+      # * The Panther user interface for display of resources.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 512
+      Runtime: go1.x
+      Timeout: 120
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: AccessComplianceApi
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/describe-org
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/delete
+        - Id: DynamoManageItems
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:Query
+                - dynamodb:Scan
+                - dynamodb:*Item
+              Resource: !GetAtt ResourcesTable.Arn
+        - Id: PublishToResourceQueue
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !GetAtt ResourcesQueue.Arn
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+
+  ResourcesApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-resources-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ResourcesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-resources
+      # <cfndoc>
+      # This table holds descriptions of the AWS resources in all accounts being monitored.
+      # The `panther-resources-api` lambda manages this table.
+      #
+      # Failure Impact
+      # * Processing of policies could be slowed or stopped if there are errors/throttles.
+      # * The Panther user interface could be impacted.
+      # </cfndoc>
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True
+      TimeToLiveSpecification: # Deleted resources are expired after 30 days
+        AttributeName: expiresAt
+        Enabled: true
+
+  ResourcesQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      KmsMasterKeyId: !Ref SqsKeyId
+      MessageRetentionPeriod: 86400 # 24 hours
+      QueueName: panther-resources-queue
+      # <cfndoc>
+      # This sqs queue has events from recently changed infrastructure.
+      # The lambda `panther-resource-processor` consumes these events to generate alerts.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact the delivery of alerts for recently changed infrastructure.
+      # * Failed events will go into the `panther-resources-queue-dlq`. When the system has recovered they should be re-queued to the `panther-resources-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt ResourcesDLQ.Arn
+        maxReceiveCount: 10
+      VisibilityTimeout: 180 # Should match lambda
+
+  ResourcesDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      QueueName: panther-resources-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for the `panther-resources-queue`.
+      # Items are in this queue due to a failure of the `panther-resource-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-resources-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      VisibilityTimeout: 60
+
+  ResourceProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-resource-processor
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ResourceProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/resource_processor/main
+      Description: Scans recently modified resources
+      Environment:
+        Variables:
+          ALERT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alert-processor-queue
+          DEBUG: !Ref Debug
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+          POLICY_ENGINE: panther-policy-engine
+          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          COMPLIANCE_API_PATH: v1
+          RESOURCE_API_HOST: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          RESOURCE_API_PATH: v1
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            BatchSize: 10 # Maximum batch size
+            Queue: !GetAtt ResourcesQueue.Arn
+      FunctionName: panther-resource-processor
+      # <cfndoc>
+      # This lambda reads from `panther-resources-queue` which has events concerning
+      # recently changed infrastructure. The lambda calls the `policy-engine` lambda to determine if
+      # there are any policy engine violations. Each violation is sent to
+      # the `panther-alert-processor-queue` for deduplication and delivery.
+      # Failure Impact
+      # * Failure of this lambda will impact continuous monitoring of infrastructure.
+      # * Failed events will go into the `panther-resources-queue-dlq`. When the system has recovered they should be re-queued to the `panther-resources-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 256
+      Runtime: go1.x
+      Timeout: 180
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: SendAndReceiveSqsMessages
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: !GetAtt ResourcesQueue.Arn
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-alert-processor-queue
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: InvokePantherAPIs
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/list
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/status
+
+  ##### Python Policy Engine #####
+  PolicyEngineFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../internal/compliance/policy_engine
+      Description: Python Policy Engine
+      FunctionName: panther-policy-engine
+      # <cfndoc>
+      # This lambda executes the user-defined policies against infrastructure events.
+      # It is called directly from the `panther-resource-processor` lambda.
+      # Failure Impact
+      # * Failure of this lambda will impact evaluating policies.
+      # </cfndoc>
+      Handler: src.main.lambda_handler
+      MemorySize: 128
+      Layers: !If
+        - AttachLayers
+        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ','
+          - !Sub
+            - '${base},${pip}'
+            - base: !Join [',', !Ref LayerVersionArns]
+              pip: !Ref PythonLayerVersionArn
+        - [!Ref PythonLayerVersionArn]
+      Runtime: python3.7
+      Timeout: 60
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ResourceLookup
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+              Resource: !GetAtt ResourcesTable.Arn
+
+  PolicyEngineLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-policy-engine
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ##### Snapshot Poller #####
+  SnapshotQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-snapshot-queue
+      # <cfndoc>
+      # This sqs queue has snapshot request events processed by the `panther-snapshot-pollers` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact the scanning for changes in infrastrucure.
+      # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      KmsMasterKeyId: !Ref SqsKeyId
+      VisibilityTimeout: 900 # Should match lambda
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt SnapshotDLQ.Arn
+        maxReceiveCount: 10
+
+  SnapshotDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-snapshot-queue-dlq
+      # <cfndoc>
+      # The dead letter queue for the `panther-snapshot-queue`.
+      # Items are in this queue due to a failure of the `panther-snapshot-pollers` lambda.
+      # When the system has recovered they should be re-queued to the `panther-snapshot-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: 60
+
+  PollerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/snapshot_poller/main
+      Description: Polls AWS resources and writes them to the resources-api
+      Environment:
+        Variables:
+          AUDIT_ROLE_NAME: !Sub PantherAuditRole-${AWS::Region}
+          DEBUG: !Ref Debug
+          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          RESOURCES_API_PATH: v1
+          SNAPSHOT_QUEUE_URL: !Ref SnapshotQueue
+      Events:
+        SQS:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt SnapshotQueue.Arn
+            BatchSize: 1
+      FunctionName: panther-snapshot-pollers
+      # <cfndoc>
+      # This lambda read requests from the `panther-snapshot-queue` and scans infrastructure
+      # calling the `panther-resource-api` to trigger policy evaluations.
+      #
+      # Failure Impact
+      # * Failure of this lambda will impact cloud security infrastructure editing.
+      # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 900
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ManageSQSMessages
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !GetAtt SnapshotQueue.Arn
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: InvokeResourcesAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/resource
+        - Id: AssumePantherAuditRoles
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherAuditRole-${AWS::Region}
+
+  PollerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-snapshot-pollers
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ##### Snapshot Scheduler #####
+  SnapshotSchedulerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/snapshot_scheduler/main
+      Description: Runs once daily to schedule account-wide scans
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          SNAPSHOT_POLLERS_QUEUE_URL: !Ref SnapshotQueue
+      Events:
+        ScheduleScans:
+          Type: Schedule
+          Properties:
+            Schedule: rate(24 hours)
+      FunctionName: panther-snapshot-scheduler
+      # <cfndoc>
+      # The `panther-snapshot-scheduler` lambda enumerates aws-scan sources by calling the panther-source-api
+      # and then scans those sources. Triggered by 24 hour CloudWatch timer events.
+      #
+      # Failure Impact
+      # * Failure of this lambda will prevent daily infrastructure scans from running.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 120
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: InvokeSnapshotAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+        - Id: SendSQSMessages
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !GetAtt SnapshotQueue.Arn
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+
+  SnapshotSchedulerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-snapshot-scheduler
+      RetentionInDays: !Ref CloudWatchLogRetentionDays

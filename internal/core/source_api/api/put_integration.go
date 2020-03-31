@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -35,63 +37,120 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
+var (
+	putIntegrationInternalError = &genericapi.InternalError{Message: "Failed to add source. Please try again later"}
+)
+
 // PutIntegration adds a set of new integrations in a batch.
-func (API) PutIntegration(input *models.PutIntegrationInput) ([]*models.SourceIntegrationMetadata, error) {
-	permissionsAddedForIntegrations := []*models.SourceIntegrationMetadata{}
-	var err error
+func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.SourceIntegrationMetadata, error) {
+	// Validate the new integration
+	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
+		AWSAccountID:      input.AWSAccountID,
+		IntegrationType:   input.IntegrationType,
+		IntegrationLabel:  input.IntegrationLabel,
+		EnableCWESetup:    input.CWEEnabled,
+		EnableRemediation: input.RemediationEnabled,
+		S3Bucket:          input.S3Bucket,
+		S3Prefix:          input.S3Prefix,
+		KmsKey:            input.KmsKey,
+	})
+	if err != nil {
+		return nil, putIntegrationInternalError
+	}
+	if !passing {
+		zap.L().Warn("PutIntegration: resource has a misconfiguration",
+			zap.Error(err),
+			zap.String("reason", reason),
+			zap.Any("input", input))
+		return nil, &genericapi.InvalidInputError{
+			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
+				*input.IntegrationLabel, reason),
+		}
+	}
+
+	// Filter out existing integrations
+	if err := api.integrationAlreadyExists(input); err != nil {
+		return nil, err
+	}
+
+	// Get ready to add appropriate permissions to the SQS queue
+	permissionAdded := false
 	defer func() {
 		if err != nil {
 			// In case there has been any error, try to undo granting of permissions to SQS queue.
-			for _, integration := range permissionsAddedForIntegrations {
-				if undoErr := RemovePermissionFromLogProcessorQueue(*integration.AWSAccountID); undoErr != nil {
+			if permissionAdded {
+				if undoErr := RemovePermissionFromLogProcessorQueue(*input.AWSAccountID); undoErr != nil {
 					zap.L().Error("failed to remove SQS permission for integration. SQS queue has additional permissions that have to be removed manually",
-						zap.String("sqsPermissionLabel", *integration.IntegrationID),
 						zap.Error(undoErr),
 						zap.Error(err))
 				}
 			}
 		}
 	}()
-	newIntegrations := make([]*models.SourceIntegrationMetadata, len(input.Integrations))
 
-	// Generate the new integrations
-	for i, integration := range input.Integrations {
-		newIntegrations[i] = generateNewIntegration(integration)
+	// Add appropriate permissions to the SQS queue
+	if *input.IntegrationType == models.IntegrationTypeAWS3 {
+		permissionAdded, err = AddPermissionToLogProcessorQueue(*input.AWSAccountID)
+		if err != nil {
+			err = errors.Wrap(err, "Failed to add permissions to log processor queue")
+			return nil, putIntegrationInternalError
+		}
 	}
 
-	for _, integration := range newIntegrations {
-		if *integration.IntegrationType != models.IntegrationTypeAWS3 {
-			continue
-		}
-		err = AddPermissionToLogProcessorQueue(*integration.AWSAccountID)
-		if err != nil { // logging handled in function
-			return nil, err
-		}
-		permissionsAddedForIntegrations = append(permissionsAddedForIntegrations, integration)
-	}
+	// Generate the new integration
+	newIntegration := generateNewIntegration(input)
 
 	// Batch write to DynamoDB
-	if err = db.BatchPutSourceIntegrations(newIntegrations); err != nil {
-		return nil, err
+	if err = db.PutSourceIntegration(newIntegration); err != nil {
+		err = errors.Wrap(err, "Failed to store source integration in DDB")
+		return nil, putIntegrationInternalError
 	}
 
 	// Return early to skip sending to the snapshot queue
 	if aws.BoolValue(input.SkipScanQueue) {
-		return newIntegrations, nil
+		return newIntegration, nil
 	}
 
-	var integrationsToScan []*models.SourceIntegrationMetadata
-	for _, integration := range newIntegrations {
-		//We don't want to trigger scanning for aws-s3 type integrations
-		if aws.StringValue(integration.IntegrationType) == models.IntegrationTypeAWS3 {
-			continue
+	if *input.IntegrationType == models.IntegrationTypeAWSScan {
+		err = ScanAllResources([]*models.SourceIntegrationMetadata{newIntegration})
+		if err != nil {
+			err = errors.Wrap(err, "failed to trigger scanning of resources")
+			return nil, putIntegrationInternalError
 		}
-		integrationsToScan = append(integrationsToScan, integration)
+	}
+	return newIntegration, nil
+}
+
+func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error {
+	// avoid inserting if already done
+	existingIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
+	if err != nil {
+		zap.L().Error("failed to fetch integrations", zap.Error(errors.WithStack(err)))
+		return putIntegrationInternalError
 	}
 
-	// Add to the Snapshot queue
-	err = ScanAllResources(integrationsToScan)
-	return newIntegrations, err
+	for _, existingIntegration := range existingIntegrations {
+		if *existingIntegration.IntegrationType == *input.IntegrationType &&
+			*existingIntegration.AWSAccountID == *input.AWSAccountID {
+
+			if *input.IntegrationType == models.IntegrationTypeAWSScan {
+				// We can only have one cloudsec integration for each account
+				return &genericapi.InvalidInputError{
+					Message: fmt.Sprintf("Source account %s already onboarded", *input.AWSAccountID),
+				}
+			}
+			if *existingIntegration.IntegrationLabel == *input.IntegrationLabel {
+				// Log sources for same account need to have different labels
+				return &genericapi.InvalidInputError{
+					Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
+						*input.AWSAccountID,
+						*input.IntegrationLabel),
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // ScanAllResources schedules scans for each Resource type for each integration.
@@ -102,10 +161,6 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 
 	// For each integration, add a ScanMsg to the queue per service
 	for _, integration := range integrations {
-		if !aws.BoolValue(integration.ScanEnabled) {
-			continue
-		}
-
 		for resourceType := range awspoller.ServicePollers {
 			scanMsg := &pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
@@ -139,24 +194,35 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 	)
 
 	// Batch send all the messages to SQS
-	return sqsbatch.SendMessageBatch(SQSClient, maxElapsedTime, &sqs.SendMessageBatchInput{
+	_, err := sqsbatch.SendMessageBatch(SQSClient, maxElapsedTime, &sqs.SendMessageBatchInput{
 		Entries:  sqsEntries,
 		QueueUrl: &snapshotPollersQueueURL,
 	})
+	return err
 }
 
-func generateNewIntegration(input *models.PutIntegrationSettings) *models.SourceIntegrationMetadata {
+func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceIntegrationMetadata {
+	var logProcessingRole *string
+	if *input.IntegrationType == models.IntegrationTypeAWS3 {
+		logProcessingRole = aws.String(generateLogProcessingRoleArn(*input.AWSAccountID, *input.IntegrationLabel))
+	}
+
 	return &models.SourceIntegrationMetadata{
-		AWSAccountID:     input.AWSAccountID,
-		CreatedAtTime:    aws.Time(time.Now()),
-		CreatedBy:        input.UserID,
-		IntegrationID:    aws.String(uuid.New().String()),
-		IntegrationLabel: input.IntegrationLabel,
-		IntegrationType:  input.IntegrationType,
-		ScanEnabled:      input.ScanEnabled,
-		ScanIntervalMins: input.ScanIntervalMins,
+		AWSAccountID:       input.AWSAccountID,
+		CreatedAtTime:      aws.Time(time.Now()),
+		CreatedBy:          input.UserID,
+		IntegrationID:      aws.String(uuid.New().String()),
+		IntegrationLabel:   input.IntegrationLabel,
+		IntegrationType:    input.IntegrationType,
+		CWEEnabled:         input.CWEEnabled,
+		RemediationEnabled: input.RemediationEnabled,
+		ScanIntervalMins:   input.ScanIntervalMins,
 		// For log analysis integrations
-		S3Buckets: input.S3Buckets,
-		KmsKeys:   input.KmsKeys,
+		S3Bucket:          input.S3Bucket,
+		S3Prefix:          input.S3Prefix,
+		KmsKey:            input.KmsKey,
+		LogTypes:          input.LogTypes,
+		LogProcessingRole: logProcessingRole,
+		StackName:         aws.String(getStackName(*input.IntegrationType, *input.IntegrationLabel)),
 	}
 }

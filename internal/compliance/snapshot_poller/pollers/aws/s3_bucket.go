@@ -47,8 +47,16 @@ func setupS3BucketSnapshots() {
 }
 
 func setupS3Client(sess *session.Session, cfg *aws.Config) interface{} {
-	cfg.MaxRetries = aws.Int(MaxRetries)
 	return s3.New(sess, cfg)
+}
+
+func getS3Client(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (s3iface.S3API, error) {
+	client, err := getClient(pollerResourceInput, S3ClientFunc, "s3", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(s3iface.S3API), nil
 }
 
 // PollS3Bucket polls a single S3 Bucket resource
@@ -56,25 +64,34 @@ func PollS3Bucket(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "s3", defaultRegion).(s3iface.S3API)
-	region := getBucketLocation(client, aws.String(resourceARN.Resource))
-	if region == nil {
-		return nil
+	locationClient, err := getS3Client(pollerResourceInput, defaultRegion)
+	if err != nil {
+		return nil, err
 	}
-	client = getClient(pollerResourceInput, "s3", *region).(s3iface.S3API)
-	bucket := getBucket(client, resourceARN.Resource)
 
-	snapshot := buildS3BucketSnapshot(client, bucket)
+	region := getBucketLocation(locationClient, aws.String(resourceARN.Resource))
+	if region == nil {
+		return nil, nil
+	}
+
+	regionalClient, err := getS3Client(pollerResourceInput, *region)
+	if err != nil {
+		return nil, err
+	}
+
+	bucket := getBucket(regionalClient, resourceARN.Resource)
+
+	snapshot := buildS3BucketSnapshot(regionalClient, bucket)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(pollerResourceInput.AuthSourceParsedARN.AccountID)
 	snapshot.Region = region
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getBucket returns a specific S3 bucket
@@ -192,8 +209,9 @@ func getBucketLocation(s3Svc s3iface.S3API, bucketName *string) *string {
 		return nil
 	}
 
+	// The get-bucket-location API call returns null for buckets in us-east-1. This behavior is not documented by AWS.
 	if out.LocationConstraint == nil {
-		return nil
+		return aws.String("us-east-1")
 	}
 
 	return out.LocationConstraint
@@ -351,13 +369,10 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 	// Clear the previously collected S3 Bucket Snapshots
 	setupS3BucketSnapshots()
 
-	sess := session.Must(session.NewSession(&aws.Config{}))
-	creds, err := AssumeRoleFunc(pollerInput, sess)
+	s3Svc, err := getS3Client(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err
+		return nil, err // error is logged in getClient()
 	}
-
-	s3Svc := S3ClientFunc(sess, &aws.Config{Credentials: creds}).(s3iface.S3API)
 
 	// Start with generating a list of all buckets
 	allBuckets := listBuckets(s3Svc)
@@ -392,23 +407,13 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 
 	var resources []*apimodels.AddResourceEntry
 	for region, buckets := range bucketsByRegion {
-		// Build session for this region
-		// TODO possible optimization by not building us-west-2 since it's already built
-		buildSess := session.Must(session.NewSession(&aws.Config{Region: aws.String(region)}))
-		buildCreds, err := AssumeRoleFunc(pollerInput, buildSess)
+		s3Svc, err := getS3Client(pollerInput, region)
 		if err != nil {
-			zap.L().Error(
-				"error assuming role for S3 snapshot building",
-				zap.String("region", region),
-				zap.Error(err),
-			)
-			continue
+			return nil, err // error is logged in getClient()
 		}
-		buildConfig := &aws.Config{Credentials: buildCreds}
-		buildSvc := S3ClientFunc(buildSess, buildConfig).(s3iface.S3API)
 
 		for _, bucket := range buckets {
-			s3BucketSnapshot := buildS3BucketSnapshot(buildSvc, bucket)
+			s3BucketSnapshot := buildS3BucketSnapshot(s3Svc, bucket)
 
 			resourceID := strings.Join(
 				[]string{"arn", pollerInput.AuthSourceParsedARN.Partition, "s3::", *s3BucketSnapshot.Name},

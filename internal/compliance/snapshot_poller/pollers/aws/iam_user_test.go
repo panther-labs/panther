@@ -200,7 +200,6 @@ func TestIAMUsersListVirtualMFADevicesError(t *testing.T) {
 func TestIAMUsersPoller(t *testing.T) {
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	IAMClientFunc = awstest.SetupMockIAM
 
 	resources, err := PollIAMUsers(&awsmodels.ResourcePollerInput{
@@ -300,7 +299,6 @@ func TestIAMUsersPoller(t *testing.T) {
 func TestIAMUsersPollerError(t *testing.T) {
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	IAMClientFunc = awstest.SetupMockIAM
 
 	resources, err := PollIAMUsers(&awsmodels.ResourcePollerInput{

@@ -75,7 +75,7 @@ func TestInferJsonColumns(t *testing.T) {
 	var simpleTestType TestCustomSimpleType
 
 	obj := struct { // nolint
-		BoolField bool `description:"test field"`
+		BoolField bool `description:"test field" validate:"required"` // test we can find required tag
 
 		StringField    string  `json:"stringField" description:"test field"`              // test we use json tags
 		StringPtrField *string `json:"stringPtrField,omitempty" description:"test field"` // test we use json tags
@@ -104,9 +104,10 @@ func TestInferJsonColumns(t *testing.T) {
 
 		MapSlice []map[string]string `description:"test field"`
 
-		MapStringToInterface map[string]interface{} `description:"test field"`
-		MapStringToString    map[string]string      `description:"test field"`
-		MapStringToStruct    map[string]TestStruct  `description:"test field"`
+		MapStringToInterface map[string]interface{}       `description:"test field"`
+		MapStringToString    map[string]string            `description:"test field"`
+		MapStringToStruct    map[string]TestStruct        `description:"test field"`
+		MapStringToMap       map[string]map[string]string `description:"test field"`
 
 		StructField       TestStruct   `description:"test field"`
 		NestedStructField NestedStruct `description:"test field"`
@@ -149,6 +150,7 @@ func TestInferJsonColumns(t *testing.T) {
 		MapStringToInterface: make(map[string]interface{}),
 		MapStringToString:    make(map[string]string),
 		MapStringToStruct:    make(map[string]TestStruct),
+		MapStringToMap:       make(map[string]map[string]string),
 
 		StructField: TestStruct{},
 		NestedStructField: NestedStruct{
@@ -182,7 +184,7 @@ func TestInferJsonColumns(t *testing.T) {
 	}
 
 	excpectedCols := []Column{
-		{Name: "BoolField", Type: "boolean", Comment: "test field"},
+		{Name: "BoolField", Type: "boolean", Comment: "test field", Required: true}, // test finding required tag
 		{Name: "stringField", Type: "string", Comment: "test field"},
 		{Name: "stringPtrField", Type: "string", Comment: "test field"},
 		{Name: "IntField", Type: nativeIntMapping(), Comment: "test field"},
@@ -205,6 +207,7 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "MapStringToInterface", Type: "map<string,string>", Comment: "test field"}, // special case
 		{Name: "MapStringToString", Type: "map<string,string>", Comment: "test field"},
 		{Name: "MapStringToStruct", Type: "map<string,struct<Field1:string,Field2:int>>", Comment: "test field"},
+		{Name: "MapStringToMap", Type: "map<string,map<string,string>>", Comment: "test field"},
 		{Name: "StructField", Type: "struct<Field1:string,Field2:int>", Comment: "test field"},
 		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int>,B:struct<Field1:string,Field2:int>,C:struct<Field1:string,Field2:int>>", Comment: "test field"}, // nolint
 		{Name: "CustomTypeField", Type: "foo", Comment: "test field"},
@@ -213,6 +216,8 @@ func TestInferJsonColumns(t *testing.T) {
 	}
 
 	cols := InferJSONColumns(obj, customSimpleTypeMapping, customSliceTypeMapping, customStructTypeMapping)
+
+	resetField(cols) // reset the Field, not needed for tests
 
 	// uncomment to see results
 	/*
@@ -225,6 +230,7 @@ func TestInferJsonColumns(t *testing.T) {
 	// Test using interface
 	var testInterface TestInterface = &TestStruct{}
 	cols = InferJSONColumns(testInterface)
+	resetField(cols) // reset the Field, not needed for tests
 	assert.Equal(t, []Column{
 		{Name: "Field1", Type: "string", Comment: "test field"},
 		{Name: "Field2", Type: "int", Comment: "test field"},
@@ -249,9 +255,17 @@ func TestComposeStructs(t *testing.T) {
 		Bar: "bar",
 	}
 	cols := InferJSONColumns(&composition)
+	resetField(cols) // reset the Field, not needed for tests
 	expectedColumns := []Column{
 		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
 		{Name: "Bar", Type: "string", Comment: "test field"},
 	}
 	require.Equal(t, expectedColumns, cols)
+}
+
+func resetField(cols []Column) {
+	for i := range cols {
+		var empty reflect.StructField
+		cols[i].Field = empty
+	}
 }

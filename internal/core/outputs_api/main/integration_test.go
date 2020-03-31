@@ -141,9 +141,9 @@ func addInvalid(t *testing.T) {
 	}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("AddOutput failed: invalid input: " +
+		ErrorMessage: aws.String(
 			"Key: 'LambdaInput.AddOutput.DisplayName' " +
-			"Error:Field validation for 'DisplayName' failed on the 'required' tag"),
+				"Error:Field validation for 'DisplayName' failed on the 'required' tag"),
 		ErrorType:    aws.String("InvalidInputError"),
 		FunctionName: outputsAPI,
 	}
@@ -218,7 +218,7 @@ func addSnsDuplicate(t *testing.T) {
 	}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("AddOutput failed: already exists: " +
+		ErrorMessage: aws.String(
 			"A destination with the namealert-topic already exists, please choose another display name"),
 		ErrorType:    aws.String("AlreadyExistsError"),
 		FunctionName: outputsAPI,
@@ -233,10 +233,10 @@ func updateInvalid(t *testing.T) {
 			OutputConfig: &models.OutputConfig{Sns: sns}}}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("UpdateOutput failed: invalid input: " +
+		ErrorMessage: aws.String(
 			"Key: 'LambdaInput.UpdateOutput.UserID' Error:Field validation for 'UserID' failed on the 'required' tag\n" +
-			"Key: 'LambdaInput.UpdateOutput.DisplayName' Error:Field validation for 'DisplayName' failed on the 'required' tag\n" +
-			"Key: 'LambdaInput.UpdateOutput.OutputID' Error:Field validation for 'OutputID' failed on the 'required' tag"),
+				"Key: 'LambdaInput.UpdateOutput.DisplayName' Error:Field validation for 'DisplayName' failed on the 'required' tag\n" +
+				"Key: 'LambdaInput.UpdateOutput.OutputID' Error:Field validation for 'OutputID' failed on the 'required' tag"),
 		ErrorType:    aws.String("InvalidInputError"),
 		FunctionName: outputsAPI,
 	}
@@ -316,7 +316,7 @@ func deleteInvalid(t *testing.T) {
 	input := models.LambdaInput{DeleteOutput: &models.DeleteOutputInput{}}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("DeleteOutput failed: invalid input: " +
+		ErrorMessage: aws.String(
 			"Key: 'LambdaInput.DeleteOutput.OutputID' Error:Field validation for 'OutputID' failed on the 'required' tag"),
 		ErrorType:    aws.String("InvalidInputError"),
 		FunctionName: outputsAPI,
@@ -343,7 +343,7 @@ func deleteSnsEmpty(t *testing.T) {
 	}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String("DeleteOutput failed: does not exist: outputId=" + *snsOutputID),
+		ErrorMessage: aws.String("outputId=" + *snsOutputID + " does not exist"),
 		ErrorType:    aws.String("DoesNotExistError"),
 		FunctionName: outputsAPI,
 	}

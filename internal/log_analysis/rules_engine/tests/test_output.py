@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import hashlib
 import json
 import os
 import re
@@ -26,9 +27,9 @@ import boto3
 from . import mock_to_return, DDB_MOCK, S3_MOCK, SNS_MOCK
 from ..src import EventMatch
 
-with mock.patch.dict(os.environ, {'ALERTS_DEDUP_TABLE': 'table_name', 'S3_BUCKET': 's3_bucket', 'NOTIFICATIONS_TOPIC': 'sns_topic'}):
-    with mock.patch.object(boto3, 'client', side_effect=mock_to_return) as mock_boto:
-        from ..src.output import MatchedEventsBuffer
+with mock.patch.dict(os.environ, {'ALERTS_DEDUP_TABLE': 'table_name', 'S3_BUCKET': 's3_bucket', 'NOTIFICATIONS_TOPIC': 'sns_topic'}), \
+     mock.patch.object(boto3, 'client', side_effect=mock_to_return) as mock_boto:
+    from ..src.output import MatchedEventsBuffer
 
 
 class TestMatchedEventsBuffer(TestCase):
@@ -40,7 +41,15 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_and_flush_event_generate_new_alert(self) -> None:
         buffer = MatchedEventsBuffer()
-        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', {'data_key': 'data_value'})
+        event_match = EventMatch(
+            rule_id='rule_id',
+            rule_version='rule_version',
+            log_type='log_type',
+            dedup='dedup',
+            dedup_period_mins=100,
+            severity='INFO',
+            event={'data_key': 'data_value'}
+        )
         buffer.add_event(event_match)
 
         self.assertEqual(len(buffer.data), 1)
@@ -49,46 +58,61 @@ class TestMatchedEventsBuffer(TestCase):
         buffer.flush()
 
         DDB_MOCK.update_item.assert_called_once_with(
-            ConditionExpression='(#7 < :7) OR (attribute_not_exists(#8))',
+            ConditionExpression='(#1 < :1) OR (attribute_not_exists(#2))',
             ExpressionAttributeNames={
-                '#1': 'ruleId',
-                '#2': 'dedup',
-                '#3': 'alertCreationTime',
-                '#4': 'alertUpdateTime',
-                '#5': 'eventCount',
-                '#6': 'alertCount',
-                '#7': 'alertCreationTime',
-                '#8': 'partitionKey'
+                '#1': 'alertCreationTime',
+                '#2': 'partitionKey',
+                '#3': 'alertCount',
+                '#4': 'ruleId',
+                '#5': 'dedup',
+                '#6': 'alertCreationTime',
+                '#7': 'alertUpdateTime',
+                '#8': 'eventCount',
+                '#9': 'severity',
+                '#10': 'logTypes',
+                '#11': 'ruleVersion'
             },
             ExpressionAttributeValues={
                 ':1': {
-                    'S': 'rule_id'
-                },
-                ':2': {
-                    'S': 'dedup'
+                    'N': mock.ANY
                 },
                 ':3': {
-                    'N': mock.ANY
+                    'N': '1'
                 },
                 ':4': {
-                    'N': mock.ANY
+                    'S': 'rule_id'
                 },
                 ':5': {
-                    'N': '1'
+                    'S': 'dedup'
                 },
                 ':6': {
-                    'N': '1'
+                    'N': mock.ANY
                 },
                 ':7': {
                     'N': mock.ANY
+                },
+                ':8': {
+                    'N': '1'
+                },
+                ':9': {
+                    'S': 'INFO'
+                },
+                ':10': {
+                    'SS': ['log_type']
+                },
+                ':11': {
+                    'S': 'rule_version'
                 }
             },
-            Key={'partitionKey': {
-                'S': 'rule_id:dedup'
-            }},
+            Key={
+                'partitionKey': {
+                    'S':
+                        hashlib.md5(b'rule_id:dedup').hexdigest()  # nosec
+                }
+            },
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='SET #1=:1, #2=:2, #3=:3, #4=:4, #5=:5\nADD #6 :6'
+            UpdateExpression='ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)
@@ -103,7 +127,7 @@ class TestMatchedEventsBuffer(TestCase):
         content = json.loads(data.read().decode('utf-8'))
         # Verify extra fields
         self.assertEqual(content['p_rule_id'], 'rule_id')
-        self.assertEqual(content['p_alert_id'], 'rule_id-1')
+        self.assertEqual(content['p_alert_id'], hashlib.md5(b'rule_id:1:dedup').hexdigest())  # nosec
         # Verify fields are valid dates
         self.assertIsNotNone(datetime.strptime(content['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(content['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
@@ -131,8 +155,28 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_same_rule_different_log(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id', 'version', 'log1', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id', 'version', 'log2', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(
+            EventMatch(
+                rule_id='id',
+                rule_version='version',
+                log_type='log1',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key1': 'value1'}
+            )
+        )
+        buffer.add_event(
+            EventMatch(
+                rule_id='id',
+                rule_version='version',
+                log_type='log2',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key2': 'value2'}
+            )
+        )
 
         self.assertEqual(len(buffer.data), 2)
 
@@ -157,13 +201,13 @@ class TestMatchedEventsBuffer(TestCase):
                 self.assertEqual(content['key1'], 'value1')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id')
-                self.assertEqual(content['p_alert_id'], 'id-1')
+                self.assertEqual(content['p_alert_id'], hashlib.md5(b'id:1:dedup').hexdigest())  # nosec
             elif 'key2' in content:
                 # Verify actual event
                 self.assertEqual(content['key2'], 'value2')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id')
-                self.assertEqual(content['p_alert_id'], 'id-1')
+                self.assertEqual(content['p_alert_id'], hashlib.md5(b'id:1:dedup').hexdigest())  # nosec
             else:
                 self.fail('unexpected content')
 
@@ -173,8 +217,28 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_same_log_different_rules(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id1', 'version', 'log', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id2', 'version', 'log', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(
+            EventMatch(
+                rule_id='id1',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key1': 'value1'}
+            )
+        )
+        buffer.add_event(
+            EventMatch(
+                rule_id='id2',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key2': 'value2'}
+            )
+        )
 
         self.assertEqual(len(buffer.data), 2)
 
@@ -199,13 +263,13 @@ class TestMatchedEventsBuffer(TestCase):
                 self.assertEqual(content['key1'], 'value1')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id1')
-                self.assertEqual(content['p_alert_id'], 'id1-1')
+                self.assertEqual(content['p_alert_id'], hashlib.md5(b'id1:1:dedup').hexdigest())  # nosec
             elif 'key2' in content:
                 # Verify actual event
                 self.assertEqual(content['key2'], 'value2')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id2')
-                self.assertEqual(content['p_alert_id'], 'id2-1')
+                self.assertEqual(content['p_alert_id'], hashlib.md5(b'id2:1:dedup').hexdigest())  # nosec
             else:
                 self.fail('unexpected content')
 
@@ -215,8 +279,28 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_group_events_together(self) -> None:
         buffer = MatchedEventsBuffer()
-        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', {'key1': 'value1'}))
-        buffer.add_event(EventMatch('id', 'version', 'log', 'dedup', {'key2': 'value2'}))
+        buffer.add_event(
+            EventMatch(
+                rule_id='id',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key1': 'value1'}
+            )
+        )
+        buffer.add_event(
+            EventMatch(
+                rule_id='id',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                severity='INFO',
+                event={'key2': 'value2'}
+            )
+        )
 
         self.assertEqual(len(buffer.data), 1)
 
@@ -235,7 +319,7 @@ class TestMatchedEventsBuffer(TestCase):
         self.assertIsNotNone(datetime.strptime(event1['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(event1['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertEqual(event1['p_rule_id'], 'id')
-        self.assertEqual(event1['p_alert_id'], 'id-1')
+        self.assertEqual(event1['p_alert_id'], hashlib.md5(b'id:1:dedup').hexdigest())  # nosec
         self.assertEqual(event1['key1'], 'value1')
 
         # Verify first event
@@ -243,7 +327,7 @@ class TestMatchedEventsBuffer(TestCase):
         self.assertIsNotNone(datetime.strptime(event2['p_alert_creation_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertIsNotNone(datetime.strptime(event2['p_alert_update_time'], '%Y-%m-%d %H:%M:%S.%f000'))
         self.assertEqual(event2['p_rule_id'], 'id')
-        self.assertEqual(event2['p_alert_id'], 'id-1')
+        self.assertEqual(event2['p_alert_id'], hashlib.md5(b'id:1:dedup').hexdigest())  # nosec
         self.assertEqual(event2['key2'], 'value2')
 
         # Assert that the buffer has been cleared
@@ -254,7 +338,15 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         # Reducing max_bytes so that it will cause the overflow condition to trigger earlier
         buffer.max_bytes = 50
-        event_match = EventMatch('rule_id', 'rule_version', 'log_type', 'dedup', {'data_key': 'data_value'})
+        event_match = EventMatch(
+            rule_id='rule_id',
+            rule_version='rule_version',
+            log_type='log_type',
+            dedup='dedup',
+            dedup_period_mins=100,
+            severity='INFO',
+            event={'data_key': 'data_value'}
+        )
 
         DDB_MOCK.update_item.return_value = {'Attributes': {'alertCount': {'N': '1'}}}
 

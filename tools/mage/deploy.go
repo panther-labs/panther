@@ -27,37 +27,64 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/fatih/color"
 	"github.com/magefile/mage/sh"
-	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/awsglue"
+	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/athenaviews"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
-	// CloudFormation templates + stacks
-	backendStack    = "panther-app"
-	backendTemplate = "deployments/backend.yml"
-	bucketStack     = "panther-buckets" // prereq stack with Panther S3 buckets
-	bucketTemplate  = "deployments/core/buckets.yml"
+	// Bootstrap stacks
+	bootstrapStack    = "panther-bootstrap"
+	bootstrapTemplate = "deployments/bootstrap.yml"
+	gatewayStack      = "panther-bootstrap-gateway"
+	gatewayTemplate   = apiEmbeddedTemplate
+
+	// Main stacks
+	alarmsStack          = "panther-cw-alarms"
+	alarmsTemplate       = "deployments/alarms.yml"
+	appsyncStack         = "panther-appsync"
+	appsyncTemplate      = "deployments/appsync.yml"
+	cloudsecStack        = "panther-cloud-security"
+	cloudsecTemplate     = "deployments/cloud_security.yml"
+	coreStack            = "panther-core"
+	coreTemplate         = "deployments/core.yml"
+	dashboardStack       = "panther-cw-dashboards"
+	dashboardTemplate    = "out/deployments/monitoring/dashboards.json"
+	frontendStack        = "panther-web"
+	frontendTemplate     = "deployments/web_server.yml"
+	glueStack            = "panther-glue"
+	glueTemplate         = "out/deployments/gluetables.json"
+	logAnalysisStack     = "panther-log-analysis"
+	logAnalysisTemplate  = "deployments/log_analysis.yml"
+	metricFilterStack    = "panther-cw-metric-filters"
+	metricFilterTemplate = "out/deployments/monitoring/metrics.json"
+	onboardStack         = "panther-onboard"
+	onboardTemplate      = "deployments/onboard.yml"
 
 	// Python layer
 	layerSourceDir   = "out/pip/analysis/python"
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
+
+	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
@@ -85,9 +112,11 @@ var supportedRegions = map[string]bool{
 // Deploy Deploy application infrastructure
 func Deploy() {
 	start := time.Now()
-	var config PantherConfig
-	if err := yaml.Unmarshal(readFile(configFile), &config); err != nil {
-		logger.Fatalf("failed to parse config file %s: %v", configFile, err)
+
+	// ***** Step 0: load settings and AWS session and verify environment
+	settings, err := config.Settings()
+	if err != nil {
+		logger.Fatalf("failed to read config file %s: %v", config.Filepath, err)
 	}
 
 	awsSession, err := getSession()
@@ -95,40 +124,39 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
-	deployPrecheck(aws.StringValue(awsSession.Config.Region))
-	Build.Lambda(Build{})
-	preprocessTemplates()
-
-	// Deploy prerequisite bucket stack
-	bucketParams := map[string]string{
-		"AccessLogsBucketName": config.BucketsParameterValues.AccessLogsBucketName,
+	deployPrecheck(*awsSession.Config.Region)
+	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	if err != nil {
+		logger.Fatalf("failed to get caller identity: %v", err)
 	}
-	bucketOutputs := deployTemplate(awsSession, bucketTemplate, "", bucketStack, bucketParams)
-	bucket := bucketOutputs["SourceBucketName"]
+	accountID := *identity.Account
+	logger.Infof("deploy: deploying Panther to account %s (%s)", accountID, *awsSession.Config.Region)
 
-	// Deploy main application stack
-	params := getBackendDeployParams(awsSession, &config, bucket)
-	backendOutputs := deployTemplate(awsSession, backendTemplate, bucket, backendStack, params)
-	if err := postDeploySetup(awsSession, backendOutputs, &config); err != nil {
+	// ***** Step 1: bootstrap stacks and build artifacts
+	outputs := bootstrap(awsSession, settings)
+
+	// ***** Step 2: deploy remaining stacks in parallel
+	deployMainStacks(awsSession, settings, accountID, outputs)
+
+	// ***** Step 3: first-time setup if needed
+	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
+		logger.Fatal(err)
+	}
+	if err := inviteFirstUser(awsSession); err != nil {
 		logger.Fatal(err)
 	}
 
-	// Creates Glue/Athena related resources
-	deployDatabases(awsSession, bucket, backendOutputs)
-
-	// Deploy frontend stack
-	deployFrontend(awsSession, bucket, backendOutputs, &config)
-
-	// Deploy monitoring (must be last due to possible references to frontend/backend resources)
-	deployMonitoring(awsSession, bucket, backendOutputs, &config)
-
-	// Done!
 	logger.Infof("deploy: finished successfully in %s", time.Since(start))
-	color.Yellow("\nPanther URL = https://%s\n", backendOutputs["LoadBalancerUrl"])
+	color.Yellow("\nPanther URL = https://%s\n", outputs["LoadBalancerUrl"])
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.
 func deployPrecheck(awsRegion string) {
+	// Ensure the AWS region is supported
+	if !supportedRegions[awsRegion] {
+		logger.Fatalf("panther is not supported in %s region", awsRegion)
+	}
+
 	// Check the Go version (1.12 fails with a build error)
 	if version := runtime.Version(); version <= "go1.12" {
 		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
@@ -139,44 +167,92 @@ func deployPrecheck(awsRegion string) {
 		logger.Fatalf("docker is not available: %v", err)
 	}
 
-	// Ensure the AWS region is supported
-	if !supportedRegions[awsRegion] {
-		logger.Fatalf("panther is not supported in %s region", awsRegion)
+	// Ensure swagger is available
+	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
+		logger.Fatalf("swagger is not available (%v): try 'mage setup:swagger'", err)
+	}
+
+	// Warn if not deploying a tagged release
+	output, err := sh.Output("git", "describe", "--tags")
+	if err != nil {
+		logger.Fatalf("git describe failed: %v", err)
+	}
+	// The output is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
+	if strings.Contains(output, "-") {
+		logger.Warnf("%s is not a tagged release, proceed at your own risk", output)
 	}
 }
 
-// Generate the set of deploy parameters for the main application stack.
+// Deploy bootstrap stacks and build deployment artifacts.
 //
-// This will create a Python layer, pass down the name of the log database,
-// pass down user supplied alarm SNS topic and a self-signed cert if necessary.
-func getBackendDeployParams(awsSession *session.Session, config *PantherConfig, bucket string) map[string]string {
-	v := config.BackendParameterValues
-	result := map[string]string{
-		"CloudWatchLogRetentionDays":   strconv.Itoa(v.CloudWatchLogRetentionDays),
-		"Debug":                        strconv.FormatBool(v.Debug),
-		"LayerVersionArns":             v.LayerVersionArns,
-		"PythonLayerVersionArn":        v.PythonLayerVersionArn,
-		"WebApplicationCertificateArn": v.WebApplicationCertificateArn,
-		"TracingMode":                  v.TracingMode,
+// Returns combined outputs from bootstrap stacks.
+func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[string]string {
+	var outputs map[string]string
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// Deploy first bootstrap stack
+	go func() {
+		params := map[string]string{
+			"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+			"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
+			"CertificateArn":             certificateArn(awsSession, settings),
+			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+			"CustomDomain":               settings.Web.CustomDomain,
+			"TracingMode":                settings.Monitoring.TracingMode,
+		}
+
+		outputs = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
+
+		// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
+		userPoolID := outputs["UserPoolId"]
+		logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
+		_, err := cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
+			MfaConfiguration: aws.String("ON"),
+			SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
+				Enabled: aws.Bool(true),
+			},
+			UserPoolId: &userPoolID,
+		})
+		if err != nil {
+			logger.Fatalf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
+		}
+
+		wg.Done()
+	}()
+
+	// While waiting for bootstrap, build deployment artifacts
+	var build Build
+	build.Cfn()
+	build.Lambda()
+	wg.Wait()
+
+	// Now that the S3 buckets are in place and swagger specs are embedded, we can deploy the second
+	// bootstrap stack (API gateways and the Python layer).
+	sourceBucket := outputs["SourceBucket"]
+	params := map[string]string{
+		"TracingEnabled": strconv.FormatBool(settings.Monitoring.TracingMode != ""),
 	}
 
-	// If no custom Python layer is defined, then we need to build the default one.
-	if result["PythonLayerVersionArn"] == "" {
-		result["PythonLayerKey"] = layerS3ObjectKey
-		result["PythonLayerObjectVersion"] = uploadLayer(awsSession, config.PipLayer, bucket, layerS3ObjectKey)
+	if settings.Infra.PythonLayerVersionArn == "" {
+		// Build default layer
+		params["SourceBucket"] = sourceBucket
+		params["PythonLayerKey"] = layerS3ObjectKey
+		params["PythonLayerObjectVersion"] = uploadLayer(awsSession, settings.Infra.PipLayer, sourceBucket, layerS3ObjectKey)
+	} else {
+		// Use configured custom layer
+		params["PythonLayerVersionArn"] = settings.Infra.PythonLayerVersionArn
 	}
 
-	// If no pre-existing cert is provided, then create one if necessary.
-	if result["WebApplicationCertificateArn"] == "" {
-		result["WebApplicationCertificateArn"] = uploadLocalCertificate(awsSession)
+	// Deploy second bootstrap stack and merge outputs
+	for k, v := range deployTemplate(awsSession, gatewayTemplate, sourceBucket, gatewayStack, params) {
+		if _, exists := outputs[k]; exists {
+			logger.Fatalf("output %s exists in both bootstrap stacks", k)
+		}
+		outputs[k] = v
 	}
 
-	// set alarm sns topic if configured
-	result["AlarmSNSTopicArn"] = config.MonitoringParameterValues.AlarmSNSTopicARN
-
-	result["PantherLogProcessingDatabase"] = awsglue.LogProcessingDatabaseName
-
-	return result
+	return outputs
 }
 
 // Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
@@ -223,27 +299,163 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	return *result.VersionID
 }
 
-// After the main stack is deployed, we need to make several manual API calls
-func postDeploySetup(awsSession *session.Session, backendOutputs map[string]string, config *PantherConfig) error {
-	// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
-	userPoolID := backendOutputs["WebApplicationUserPoolId"]
-	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
-	_, err := cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
-		MfaConfiguration: aws.String("ON"),
-		SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
-			Enabled: aws.Bool(true),
-		},
-		UserPoolId: &userPoolID,
+// Deploy main stacks
+//
+// In parallel: alarms, appsync, cloudsec, core, dashboards, glue, log analysis, web
+// Then metric-filters and onboarding at the end
+//
+// nolint: funlen
+func deployMainStacks(awsSession *session.Session, settings *config.PantherConfig, accountID string, outputs map[string]string) {
+	finishedStacks := make(chan string)
+	sourceBucket := outputs["SourceBucket"]
+	parallelStacks := 0
+
+	// Alarms
+	parallelStacks++
+	go func(result chan string) {
+		deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
+			"AppsyncId":            outputs["GraphQLApiId"],
+			"LoadBalancerFullName": outputs["LoadBalancerFullName"],
+			"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
+		})
+		result <- alarmsStack
+	}(finishedStacks)
+
+	// Appsync
+	parallelStacks++
+	go func(result chan string) {
+		deployTemplate(awsSession, appsyncTemplate, sourceBucket, appsyncStack, map[string]string{
+			"ApiId":          outputs["GraphQLApiId"],
+			"ServiceRole":    outputs["AppsyncServiceRoleArn"],
+			"AnalysisApi":    "https://" + outputs["AnalysisApiEndpoint"],
+			"ComplianceApi":  "https://" + outputs["ComplianceApiEndpoint"],
+			"RemediationApi": "https://" + outputs["RemediationApiEndpoint"],
+			"ResourcesApi":   "https://" + outputs["ResourcesApiEndpoint"],
+		})
+		result <- appsyncStack
+	}(finishedStacks)
+
+	// Cloud security
+	parallelStacks++
+	go func(result chan string) {
+		deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
+			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"ComplianceApiId":       outputs["ComplianceApiId"],
+			"RemediationApiId":      outputs["RemediationApiId"],
+			"ResourcesApiId":        outputs["ResourcesApiId"],
+			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
+			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+
+			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+			"TracingMode":                settings.Monitoring.TracingMode,
+		})
+		result <- cloudsecStack
+	}(finishedStacks)
+
+	// Core
+	parallelStacks++
+	go func(result chan string) {
+		deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
+			"AppDomainURL":           outputs["LoadBalancerUrl"],
+			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
+			"AnalysisApiId":          outputs["AnalysisApiId"],
+			"ComplianceApiId":        outputs["ComplianceApiId"],
+			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
+			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
+			"UserPoolId":             outputs["UserPoolId"],
+
+			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+			"TracingMode":                settings.Monitoring.TracingMode,
+		})
+		result <- coreStack
+	}(finishedStacks)
+
+	// Dashboards
+	parallelStacks++
+	go func(result chan string) {
+		deployTemplate(awsSession, dashboardTemplate, sourceBucket, dashboardStack, nil)
+		result <- dashboardStack
+	}(finishedStacks)
+
+	// Glue
+	parallelStacks++
+	go func(result chan string) {
+		deployGlue(awsSession, outputs)
+		result <- glueStack
+	}(finishedStacks)
+
+	// Log analysis
+	parallelStacks++
+	go func(result chan string) {
+		deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
+			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
+			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+
+			"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+			"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
+			"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
+			"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
+			"TracingMode":                  settings.Monitoring.TracingMode,
+		})
+		result <- logAnalysisStack
+	}(finishedStacks)
+
+	// Web server
+	parallelStacks++
+	go func(result chan string) {
+		deployFrontend(awsSession, accountID, sourceBucket, outputs)
+		result <- frontendStack
+	}(finishedStacks)
+
+	// Wait for stacks to finish
+	// There will be two stacks (onboarding + monitoring) after this one
+	for i := 1; i <= parallelStacks; i++ {
+		logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
+	}
+
+	// Metric filters have to be deployed after all log groups have been created
+	go func(result chan string) {
+		deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
+		result <- metricFilterStack
+	}(finishedStacks)
+
+	// Onboard Panther to scan itself
+	go func(result chan string) {
+		if settings.Setup.OnboardSelf {
+			deployOnboard(awsSession, settings, accountID, outputs)
+		}
+		result <- onboardStack
+	}(finishedStacks)
+
+	// Wait for onboarding and monitoring to finish
+	for i := parallelStacks + 1; i <= parallelStacks+2; i++ {
+		logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
+	}
+}
+
+func deployGlue(awsSession *session.Session, outputs map[string]string) {
+	deployTemplate(awsSession, glueTemplate, outputs["SourceBucket"], glueStack, map[string]string{
+		"ProcessedDataBucket": outputs["ProcessedDataBucket"],
 	})
-	if err != nil {
-		return fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
-	}
 
-	if err := inviteFirstUser(awsSession); err != nil {
-		return err
+	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
+	const workgroup = "primary"
+	athenaBucket := outputs["AthenaResultsBucket"]
+	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, athenaBucket); err != nil {
+		logger.Fatalf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
 	}
-
-	return initializeAnalysisSets(awsSession, backendOutputs["AnalysisApiEndpoint"], config)
+	if err := athenaviews.CreateOrReplaceViews(athenaBucket); err != nil {
+		logger.Fatalf("failed to create/replace athena views for %s bucket: %v", athenaBucket, err)
+	}
 }
 
 // If the users list is empty (e.g. on the initial deploy), create the first user.
@@ -292,7 +504,7 @@ func inviteFirstUser(awsSession *session.Session) error {
 }
 
 // Install Python rules/policies if they don't already exist.
-func initializeAnalysisSets(awsSession *session.Session, endpoint string, config *PantherConfig) error {
+func initializeAnalysisSets(awsSession *session.Session, endpoint string, settings *config.PantherConfig) error {
 	httpClient := gatewayapi.GatewayClient(awsSession)
 	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
 		WithBasePath("/v1").WithHost(endpoint))
@@ -319,7 +531,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, config
 	}
 
 	var newRules, newPolicies int64
-	for _, path := range config.InitialAnalysisSets {
+	for _, path := range settings.Setup.InitialAnalysisSets {
 		logger.Info("deploy: uploading initial analysis pack " + path)
 		var contents []byte
 		if strings.HasPrefix(path, "file://") {
@@ -336,7 +548,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, config
 		response, err := apiClient.Operations.BulkUpload(&operations.BulkUploadParams{
 			Body: &analysismodels.BulkUpload{
 				Data:   analysismodels.Base64zipfile(encoded),
-				UserID: "00000000-0000-0000-0000-000000000000",
+				UserID: mageUserID,
 			},
 			HTTPClient: httpClient,
 		})

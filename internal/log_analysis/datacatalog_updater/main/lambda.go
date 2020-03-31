@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
@@ -38,9 +39,13 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+const (
+	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+)
+
 var (
 	validation                   = validator.New()
-	glueClient glueiface.GlueAPI = glue.New(session.Must(session.NewSession()))
+	glueClient glueiface.GlueAPI = glue.New(session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))))
 	// partitionPrefixCache is a cache that stores all the prefixes of the partitions we have created
 	// The cache is used to avoid attempts to create the same partitions in Glue table
 	partitionPrefixCache = make(map[string]struct{})
@@ -56,7 +61,8 @@ func handle(ctx context.Context, event events.SQSEvent) (err error) {
 	defer func() {
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
 	}()
-	return process(event)
+	err = process(event)
+	return err
 }
 
 func process(event events.SQSEvent) error {
@@ -80,7 +86,9 @@ func process(event events.SQSEvent) error {
 			continue
 		}
 
-		if _, ok := partitionPrefixCache[gluePartition.GetPartitionPrefix()]; ok {
+		// already done?
+		partitionLocation := gluePartition.GetPartitionLocation()
+		if _, ok := partitionPrefixCache[partitionLocation]; ok {
 			zap.L().Debug("partition has already been created")
 			continue
 		}
@@ -90,7 +98,7 @@ func process(event events.SQSEvent) error {
 			err = errors.Wrapf(err, "failed to create partition: %#v", notification)
 			return err
 		}
-		partitionPrefixCache[gluePartition.GetPartitionPrefix()] = struct{}{}
+		partitionPrefixCache[partitionLocation] = struct{}{} // remember
 	}
 	return nil
 }

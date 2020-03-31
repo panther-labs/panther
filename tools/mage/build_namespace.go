@@ -21,8 +21,8 @@ package mage
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -31,6 +31,7 @@ import (
 	"github.com/magefile/mage/target"
 
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const swaggerGlob = "api/gateway/*/api.yml"
@@ -40,6 +41,14 @@ var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 // Build contains targets for compiling source code.
 type Build mg.Namespace
 
+// Build all deployment artifacts
+func (b Build) All() {
+	b.Lambda() // implicitly does b.API()
+	b.Cfn()
+	b.Opstools()
+	b.Devtools()
+}
+
 // API Generate Go client/models from Swagger specs in api/
 func (b Build) API() {
 	specs, err := filepath.Glob(swaggerGlob)
@@ -48,21 +57,18 @@ func (b Build) API() {
 	}
 
 	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
+
+	cmd := filepath.Join(setupDirectory, "swagger")
+	if _, err = os.Stat(cmd); err != nil {
+		logger.Fatalf("%s not found (%v): run 'mage setup:swagger'", cmd, err)
+	}
+
 	for _, spec := range specs {
-		rebuild, err := apiNeedsRebuilt(spec)
-		if err == nil && !rebuild {
-			logger.Debugf("build:api: %s is up to date", spec)
-			continue
-		}
-
 		dir := filepath.Dir(spec)
+		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
 		start := time.Now().UTC()
-		args := []string{"generate", "client", "-q", "-t", dir, "-f", spec}
-		cmd := filepath.Join(setupDirectory, "swagger")
-		if _, err = os.Stat(cmd); err != nil {
-			logger.Fatalf("%s not found (%v): run 'mage setup:all'", cmd, err)
-		}
 
+		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models, "-r", agplSource}
 		if err := sh.Run(cmd, args...); err != nil {
 			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
@@ -77,38 +83,26 @@ func (b Build) API() {
 				}
 			}
 		}
-		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
 		walk(client, handler)
 		walk(models, handler)
-
-		// Add license and our formatting standard to the generated SDK.
-		fmtLicenseGroup(agplSource, client, models)
-		gofmt(dir, client, models)
 	}
-}
-
-// Returns true if the generated client + models are older than the given client spec
-func apiNeedsRebuilt(spec string) (bool, error) {
-	clientNeedsUpdate, err := target.Dir(path.Join(path.Dir(spec), "client"), spec)
-	if err != nil {
-		return true, err
-	}
-
-	modelsNeedUpdate, err := target.Dir(path.Join(path.Dir(spec), "models"), spec)
-	if err != nil {
-		return true, err
-	}
-
-	return clientNeedsUpdate || modelsNeedUpdate, nil
 }
 
 // Lambda Compile Go Lambda function source
 func (b Build) Lambda() {
+	if err := b.lambda(); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func (b Build) lambda() error {
 	modified, err := target.Dir("out/bin/internal", "api", "internal", "pkg")
 	if err == nil && !modified {
 		// The source folders are older than all the compiled binaries - nothing has changed
 		logger.Info("build:lambda: up to date")
-		return
+		return nil
+	} else if err != nil {
+		return err
 	}
 
 	mg.Deps(b.API)
@@ -120,12 +114,74 @@ func (b Build) Lambda() {
 		}
 	})
 
-	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main)", len(packages))
+	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
+		len(packages), runtime.Version())
 	for _, pkg := range packages {
 		if err := buildPackage(pkg); err != nil {
-			logger.Fatal(err)
+			return err
 		}
 	}
+
+	return nil
+}
+
+// Opstools Compile Go operational tools from source
+func (b Build) Opstools() {
+	buildTools("opstools", "out/bin/opstools", "cmd/opstools")
+}
+
+// Devtools Compile developer tools from source
+func (b Build) Devtools() {
+	buildTools("devtools", "out/bin/devtools", "cmd/devtools")
+}
+
+func buildTools(tools, binDir, sourceDir string) {
+	// cross compile so tools can be copied to other machines easily
+	archs := []string{"amd64", "386", "arm"} // yes arm, AWS is now supporting arm processors and they are cheap!
+	oses := []string{"linux", "darwin", "windows"}
+	blacklist := map[string]bool{ // incompatible combinations
+		"darwin:arm": true,
+	}
+	applyBuildEnv := func(apply func(arch, opsys, binPath string)) {
+		for _, arch := range archs {
+			for _, opsys := range oses {
+				if blacklist[opsys+":"+arch] {
+					continue
+				}
+				apply(arch, opsys, filepath.Join(binDir, opsys, arch))
+			}
+		}
+	}
+
+	// create the dirs
+	applyBuildEnv(func(arch, opsys, binPath string) {
+		if err := os.MkdirAll(binPath, 0755); err != nil {
+			logger.Fatalf("failed to create %s directory: %v", binPath, err)
+		}
+	})
+
+	logger.Infof("build:%s using %s for %s on %s",
+		tools, runtime.Version(), strings.Join(oses, ","), strings.Join(archs, ","))
+
+	// loop over arch and os to compile
+	compile := func(path string) {
+		applyBuildEnv(func(arch, opsys, binPath string) {
+			app := filepath.Dir(path)
+			logger.Debugf("build:%s compiling %s for %s on %s to %s",
+				tools, filepath.Base(app), opsys, arch, binPath)
+			if err := sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
+				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
+				logger.Fatalf("go build %s failed: %v", path, err)
+			}
+		})
+	}
+
+	// compile each app
+	walk(sourceDir, func(path string, info os.FileInfo) {
+		if !info.IsDir() && strings.HasSuffix(path, "main.go") {
+			compile(path)
+		}
+	})
 }
 
 func buildPackage(pkg string) error {
@@ -159,4 +215,28 @@ func buildPackage(pkg string) error {
 	}
 
 	return nil
+}
+
+// Generate CloudFormation templates in out/deployments folder
+func (b Build) Cfn() {
+	embedAPISpec()
+
+	if err := generateGlueTables(); err != nil {
+		logger.Fatal(err)
+	}
+
+	settings, err := config.Settings()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	if err := generateAlarms(settings); err != nil {
+		logger.Fatal(err)
+	}
+	if err := generateDashboards(); err != nil {
+		logger.Fatal(err)
+	}
+	if err := generateMetrics(); err != nil {
+		logger.Fatal(err)
+	}
 }

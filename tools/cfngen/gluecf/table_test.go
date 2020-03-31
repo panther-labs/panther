@@ -19,6 +19,7 @@ package gluecf
  */
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -93,11 +94,10 @@ func TestTables(t *testing.T) {
 	cf, err := cfTemplate.CloudFormation()
 	require.NoError(t, err)
 
-	// uncomment to make a new expected file
-	// writeTestFile(cf, expectedFile)
+	// uncomment to write new expected file
+	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
 
-	expectedOutput, err := readTestFile(expectedFile)
+	expected, err := ioutil.ReadFile(expectedFile)
 	require.NoError(t, err)
-
-	assert.Equal(t, expectedOutput, cf)
+	assert.JSONEq(t, string(cf), string(expected))
 }

@@ -47,7 +47,7 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 
 	transformed, err := embedAPIs(data)
 	require.NoError(t, err)
-	assert.Nil(t, transformed) // no changes - nil is returned
+	assert.YAMLEq(t, string(data), string(transformed))
 }
 
 func TestEmbedAPIs(t *testing.T) {
@@ -59,5 +59,6 @@ func TestEmbedAPIs(t *testing.T) {
 
 	expected, err := ioutil.ReadFile("testdata/valid-api-expected-output.yml")
 	require.NoError(t, err)
-	assert.Equal(t, string(expected), string(transformed))
+
+	assert.YAMLEq(t, string(expected), string(transformed))
 }

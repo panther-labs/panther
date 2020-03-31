@@ -37,21 +37,31 @@ import (
 func TestUpdateIntegrationSettings(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
-	resp := &dynamodb.UpdateItemOutput{Attributes: map[string]*dynamodb.AttributeValue{
-		"ScanEnabled": {BOOL: aws.Bool(false)},
+	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
+		"AWSAccountID":  {S: aws.String("123456789012")},
+		"IntegrationID": {S: aws.String("1111111")},
 	}}
-	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
+	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
+
+	updateResponse := &dynamodb.UpdateItemOutput{Attributes: map[string]*dynamodb.AttributeValue{
+		"awsAccountId": {
+			S: aws.String("123456789012"),
+		},
+	}}
+	mockClient.On("UpdateItem", mock.Anything).Return(updateResponse, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		ScanEnabled:      aws.Bool(false),
 		IntegrationID:    aws.String(testIntegrationID),
 		IntegrationLabel: aws.String("NewAWSTestingAccount"),
 		ScanIntervalMins: aws.Int(1440),
 	})
 
 	expected := &models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{ScanEnabled: aws.Bool(false)},
+		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			AWSAccountID: aws.String("123456789012"),
+		},
 	}
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
@@ -62,12 +72,20 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
+	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
+		"AWSAccountID":  {S: aws.String("123456789012")},
+		"IntegrationID": {S: aws.String("1111111")},
+	}}
+	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
+
 	resp := &dynamodb.UpdateItemOutput{}
 	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		S3Buckets: aws.StringSlice([]string{"test-bucket-1", "test-bucket-2/*"}),
-		KmsKeys:   aws.StringSlice([]string{"arn:aws:kms:us-west-2:415773754570:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"}),
+		S3Bucket: aws.String("test-bucket-1"),
+		S3Prefix: aws.String("prefix/"),
+		KmsKey:   aws.String("arn:aws:kms:us-west-2:415773754570:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"),
+		LogTypes: aws.StringSlice([]string{"logType1", "logType2"}),
 	})
 
 	assert.NoError(t, err)

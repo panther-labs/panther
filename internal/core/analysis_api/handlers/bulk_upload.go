@@ -192,7 +192,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 		}
 
 		// Map the Config struct fields over to the fields we need to store in Dynamo
-		policy := tableItem{
+		analysisItem := tableItem{
 			AutoRemediationID:         models.AutoRemediationID(config.AutoRemediationID),
 			AutoRemediationParameters: models.AutoRemediationParameters(config.AutoRemediationParameters),
 
@@ -204,7 +204,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Enabled:       models.Enabled(config.Enabled),
 			ID:            models.ID(config.PolicyID),
 			Reference:     models.Reference(config.Reference),
-			ResourceTypes: models.TypeSet(config.ResourceTypes),
+			ResourceTypes: config.ResourceTypes,
 			Runbook:       models.Runbook(config.Runbook),
 			Severity:      models.Severity(strings.ToUpper(config.Severity)),
 			Suppressions:  models.Suppressions(config.Suppressions),
@@ -213,24 +213,40 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Type:          strings.ToUpper(config.AnalysisType),
 		}
 
+		if analysisItem.Type == string(models.AnalysisTypeRULE) {
+			// If there is no value set, default to 60 minutes
+			if config.DedupPeriodMinutes == 0 {
+				analysisItem.DedupPeriodMinutes = defaultDedupPeriodMinutes
+			} else {
+				analysisItem.DedupPeriodMinutes = models.DedupPeriodMinutes(config.DedupPeriodMinutes)
+			}
+
+			// These "syntax sugar" re-mappings are to make managing rules from the CLI more intuitive
+			if config.PolicyID == "" {
+				analysisItem.ID = models.ID(config.RuleID)
+			}
+			if len(config.ResourceTypes) == 0 {
+				analysisItem.ResourceTypes = config.LogTypes
+			}
+		}
+
 		for i, test := range config.Tests {
-			resource, err := jsoniter.MarshalToString(test.Resource)
+			// A test can specify a resource and a resource type or a log and a log type.
+			// By convention, log and log type are used for rules and resource and resource type are used for policies.
+			if test.Resource == nil {
+				analysisItem.Tests[i], err = buildRuleTest(test)
+			} else {
+				analysisItem.Tests[i], err = buildPolicyTest(test)
+			}
 			if err != nil {
 				return nil, err
 			}
-
-			policy.Tests[i] = &models.UnitTest{
-				ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
-				Name:           models.TestName(test.Name),
-				Resource:       models.TestResource(resource),
-				ResourceType:   models.TestResourceType(test.ResourceType),
-			}
 		}
 
-		if _, exists := result[policy.ID]; exists {
-			return nil, fmt.Errorf("multiple policy specs with ID %s", policy.ID)
+		if _, exists := result[analysisItem.ID]; exists {
+			return nil, fmt.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
 		}
-		result[policy.ID] = &policy
+		result[analysisItem.ID] = &analysisItem
 	}
 
 	// Finish each policy by adding its body and then validate it
@@ -246,6 +262,34 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 	}
 
 	return result, nil
+}
+
+func buildRuleTest(test analysis.Test) (*models.UnitTest, error) {
+	log, err := jsoniter.MarshalToString(test.Log)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.UnitTest{
+		ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
+		Name:           models.TestName(test.Name),
+		Resource:       models.TestResource(log),
+		ResourceType:   models.TestResourceType(test.LogType),
+	}, nil
+}
+
+func buildPolicyTest(test analysis.Test) (*models.UnitTest, error) {
+	resource, err := jsoniter.MarshalToString(test.Resource)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.UnitTest{
+		ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
+		Name:           models.TestName(test.Name),
+		Resource:       models.TestResource(resource),
+		ResourceType:   models.TestResourceType(test.ResourceType),
+	}, nil
 }
 
 func readZipFile(zf *zip.File) ([]byte, error) {

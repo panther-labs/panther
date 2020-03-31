@@ -45,7 +45,8 @@ import (
 )
 
 const (
-	stackName           = "panther-app"
+	bootstrapStack      = "panther-bootstrap"
+	gatewayStack        = "panther-bootstrap-gateway"
 	tableName           = "panther-analysis"
 	policiesRoot        = "./test_policies"
 	policiesZipLocation = "./bulk_upload.zip"
@@ -187,13 +188,14 @@ var (
 	}
 
 	rule = &models.Rule{
-		Body:        "def rule(event): return len(event) > 0\n",
-		Description: "Matches every non-empty event",
-		Enabled:     true,
-		ID:          "NonEmptyEvent",
-		LogTypes:    []string{"AWS.CloudTrail"},
-		Severity:    "HIGH",
-		Tests:       []*models.UnitTest{},
+		Body:               "def rule(event): return len(event) > 0\n",
+		Description:        "Matches every non-empty event",
+		Enabled:            true,
+		ID:                 "NonEmptyEvent",
+		LogTypes:           []string{"AWS.CloudTrail"},
+		Severity:           "HIGH",
+		Tests:              []*models.UnitTest{},
+		DedupPeriodMinutes: 1440,
 	}
 )
 
@@ -218,19 +220,32 @@ func TestIntegrationAPI(t *testing.T) {
 	require.NoError(t, err)
 	policyFromBulk.Body = models.Body(cloudtrailBody)
 
-	// Lookup CloudFormation outputs
+	// Lookup analysis bucket name
 	cfnClient := cloudformation.New(awsSession)
 	response, err := cfnClient.DescribeStacks(
-		&cloudformation.DescribeStacksInput{StackName: aws.String(stackName)})
+		&cloudformation.DescribeStacksInput{StackName: aws.String(bootstrapStack)})
 	require.NoError(t, err)
-	var endpoint, bucketName string
+	var bucketName string
+	for _, output := range response.Stacks[0].Outputs {
+		if aws.StringValue(output.OutputKey) == "AnalysisVersionsBucket" {
+			bucketName = *output.OutputValue
+			break
+		}
+	}
+	require.NotEmpty(t, bucketName)
+
+	// Lookup analysis-api endpoint
+	response, err = cfnClient.DescribeStacks(
+		&cloudformation.DescribeStacksInput{StackName: aws.String(gatewayStack)})
+	require.NoError(t, err)
+	var endpoint string
 	for _, output := range response.Stacks[0].Outputs {
 		if aws.StringValue(output.OutputKey) == "AnalysisApiEndpoint" {
 			endpoint = *output.OutputValue
-		} else if aws.StringValue(output.OutputKey) == "AnalysisVersionsBucket" {
-			bucketName = *output.OutputValue
+			break
 		}
 	}
+	require.NotEmpty(t, endpoint)
 
 	// Reset data stores: S3 bucket and Dynamo table
 	require.NoError(t, testutils.ClearS3Bucket(awsSession, bucketName))
@@ -299,7 +314,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListFiltered", listFiltered)
 		t.Run("ListPaging", listPaging)
 		t.Run("ListRules", listRules)
-		t.Run("GetEnabledSuccess", getEnabledSuccess)
+		t.Run("GetEnabledSuccess", getEnabledPolicies)
 		t.Run("GetEnabledRules", getEnabledRules)
 	})
 
@@ -314,7 +329,7 @@ func testPolicyPass(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
-			AnalysisType:  "POLICY",
+			AnalysisType:  models.AnalysisTypePOLICY,
 			Body:          policy.Body,
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
@@ -336,7 +351,7 @@ func testPolicyNotApplicable(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
-			AnalysisType:  "POLICY",
+			AnalysisType:  models.AnalysisTypePOLICY,
 			Body:          policy.Body,
 			ResourceTypes: policy.ResourceTypes,
 			Tests: models.TestSuite{
@@ -370,7 +385,7 @@ func testPolicyFail(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
-			AnalysisType:  "POLICY",
+			AnalysisType:  models.AnalysisTypePOLICY,
 			Body:          "def policy(resource): return False",
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
@@ -392,7 +407,7 @@ func testPolicyError(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
-			AnalysisType:  "POLICY",
+			AnalysisType:  models.AnalysisTypePOLICY,
 			Body:          "whatever, I do what I want",
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
@@ -423,7 +438,7 @@ func testPolicyMixed(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
-			AnalysisType:  "POLICY",
+			AnalysisType:  models.AnalysisTypePOLICY,
 			Body:          "def policy(resource): return resource['Hello']",
 			ResourceTypes: policy.ResourceTypes,
 			Tests: models.TestSuite{
@@ -519,13 +534,14 @@ func createRuleSuccess(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.CreateRule(&operations.CreateRuleParams{
 		Body: &models.UpdateRule{
-			Body:        rule.Body,
-			Description: rule.Description,
-			Enabled:     rule.Enabled,
-			ID:          rule.ID,
-			LogTypes:    rule.LogTypes,
-			Severity:    rule.Severity,
-			UserID:      userID,
+			Body:               rule.Body,
+			Description:        rule.Description,
+			Enabled:            rule.Enabled,
+			ID:                 rule.ID,
+			LogTypes:           rule.LogTypes,
+			Severity:           rule.Severity,
+			UserID:             userID,
+			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 		},
 		HTTPClient: httpClient,
 	})
@@ -674,16 +690,18 @@ func modifySuccess(t *testing.T) {
 func modifyRule(t *testing.T) {
 	t.Parallel()
 	rule.Description = "SkyNet integration"
+	rule.DedupPeriodMinutes = 60
 
 	result, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
 		Body: &models.UpdateRule{
-			Body:        rule.Body,
-			Description: rule.Description,
-			Enabled:     rule.Enabled,
-			ID:          rule.ID,
-			LogTypes:    rule.LogTypes,
-			Severity:    rule.Severity,
-			UserID:      userID,
+			Body:               rule.Body,
+			Description:        rule.Description,
+			Enabled:            rule.Enabled,
+			ID:                 rule.ID,
+			LogTypes:           rule.LogTypes,
+			Severity:           rule.Severity,
+			UserID:             userID,
+			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 		},
 		HTTPClient: httpClient,
 	})
@@ -1101,15 +1119,17 @@ func getEnabledEmpty(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		HTTPClient: httpClient,
+		Type:       string(models.AnalysisTypePOLICY),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, &models.EnabledPolicies{Policies: []*models.EnabledPolicy{}}, result.Payload)
 }
 
-func getEnabledSuccess(t *testing.T) {
+func getEnabledPolicies(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		HTTPClient: httpClient,
+		Type:       string(models.AnalysisTypePOLICY),
 	})
 	require.NoError(t, err)
 
@@ -1146,7 +1166,7 @@ func getEnabledSuccess(t *testing.T) {
 func getEnabledRules(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
-		Type:       aws.String("RULE"),
+		Type:       string(models.AnalysisTypeRULE),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -1154,11 +1174,12 @@ func getEnabledRules(t *testing.T) {
 	expected := &models.EnabledPolicies{
 		Policies: []*models.EnabledPolicy{
 			{
-				Body:          rule.Body,
-				ID:            rule.ID,
-				ResourceTypes: rule.LogTypes,
-				Severity:      rule.Severity,
-				VersionID:     rule.VersionID,
+				Body:               rule.Body,
+				ID:                 rule.ID,
+				ResourceTypes:      rule.LogTypes,
+				Severity:           rule.Severity,
+				VersionID:          rule.VersionID,
+				DedupPeriodMinutes: rule.DedupPeriodMinutes,
 			},
 		},
 	}

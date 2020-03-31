@@ -112,7 +112,7 @@ func TestIntegrationAPI(t *testing.T) {
 	// Lookup CloudFormation outputs
 	cfnClient := cloudformation.New(awsSession)
 	response, err := cfnClient.DescribeStacks(
-		&cloudformation.DescribeStacksInput{StackName: aws.String("panther-app")})
+		&cloudformation.DescribeStacksInput{StackName: aws.String("panther-bootstrap-gateway")})
 	require.NoError(t, err)
 	var endpoint string
 	for _, output := range response.Stacks[0].Outputs {
@@ -319,7 +319,7 @@ func describeOrgResource(t *testing.T) {
 // A policy which doesn't exist returns empty results.
 //
 // We don't return 404 because a disabled policy will not exist in the compliance-api but would
-// in the policy-api
+// in the analysis-api
 func describePolicyEmpty(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.DescribePolicy(&operations.DescribePolicyParams{

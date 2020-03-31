@@ -21,30 +21,16 @@ package dashboards
 // nolint:lll
 var alertsJSON = `
 {
-    "start": "-P1D",
+    "start": "-PT1H",
     "widgets": [
         {
             "type": "log",
-            "x": 12,
-            "y": 15,
-            "width": 3,
-            "height": 3,
-            "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | filter component like 'alert_forwarder' | stats max(percentMemUsed) as used by bin(5min)\n",
-                "region": "us-east-1",
-                "title": "Memory Usage (%)",
-                "view": "timeSeries",
-                "stacked": false
-            }
-        },
-        {
-            "type": "log",
             "x": 15,
-            "y": 15,
+            "y": 21,
             "width": 3,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | filter component like 'alert_forwarder' | stats max(heapSizeMB) as heap by bin(5min)\n",
+                "query": "SOURCE '/aws/lambda/panther-alerts-api' | filter component like 'alerts' | stats max(heapSizeMB) as heap by bin(5min)\n",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Heap Usage (MB)",
@@ -192,7 +178,7 @@ var alertsJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | filter level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc",
+                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | filter level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Most Recent 20 Errors and Warnings",
@@ -264,11 +250,11 @@ var alertsJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 15,
+            "y": 21,
             "width": 3,
             "height": 3,
             "properties": {
-                "markdown": "\n### Alert Forwarder\n"
+                "markdown": "\n### Log Alert API\n"
             }
         },
         {
@@ -279,6 +265,203 @@ var alertsJSON = `
             "height": 3,
             "properties": {
                 "markdown": "\n### Alert Processor\n"
+            }
+        },
+        {
+            "type": "text",
+            "x": 0,
+            "y": 15,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "markdown": "\n### Alert Forwarder\n"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 3,
+            "y": 18,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-log-alert-forwarder", "Resource", "panther-log-alert-forwarder", { "stat": "Sum", "region": "us-east-1" } ]
+                ],
+                "region": "us-east-1",
+                "title": "Invocations",
+                "view": "timeSeries",
+                "stacked": false
+            }
+        },
+        {
+            "type": "metric",
+            "x": 6,
+            "y": 18,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-log-alert-forwarder", "Resource", "panther-log-alert-forwarder", { "stat": "Minimum", "region": "us-east-1" } ],
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-log-alert-forwarder", "Resource", "panther-log-alert-forwarder", { "stat": "Average", "region": "us-east-1" } ],
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-log-alert-forwarder", "Resource", "panther-log-alert-forwarder", { "stat": "Maximum", "region": "us-east-1" } ]
+                ],
+                "region": "us-east-1",
+                "view": "timeSeries",
+                "stacked": false,
+                "title": "Duration"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 9,
+            "y": 18,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Errors", "FunctionName", "panther-log-alert-forwarder", "Resource", "panther-log-alert-forwarder", { "id": "errors", "stat": "Sum", "color": "#d13212", "region": "us-east-1" } ],
+                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-log-alert-forwarder", "Resource", "panther-log-alert-forwarder", { "id": "invocations", "stat": "Sum", "visible": false, "region": "us-east-1" } ],
+                    [ { "expression": "100 - 100 * errors / MAX([errors, invocations])", "label": "Success rate (%)", "id": "availability", "yAxis": "right", "region": "us-east-1" } ]
+                ],
+                "region": "us-east-1",
+                "title": "Erros / Success (%)",
+                "yAxis": {
+                    "right": {
+                        "max": 100
+                    }
+                },
+                "view": "timeSeries",
+                "stacked": false
+            }
+        },
+        {
+            "type": "log",
+            "x": 12,
+            "y": 15,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | filter component like 'alert_forwarder' | stats max(percentMemUsed) as used by bin(5min)\n",
+                "region": "us-east-1",
+                "title": "Memory Usage (%)",
+                "view": "timeSeries",
+                "stacked": false
+            }
+        },
+        {
+            "type": "log",
+            "x": 15,
+            "y": 15,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | filter component like 'alert_forwarder' | stats max(heapSizeMB) as heap by bin(5min)\n",
+                "region": "us-east-1",
+                "stacked": false,
+                "title": "Heap Usage (MB)",
+                "view": "timeSeries"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 3,
+            "y": 21,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-alerts-api", "Resource", "panther-alerts-api", { "stat": "Sum" } ]
+                ],
+                "region": "us-east-1",
+                "title": "Invocations"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 6,
+            "y": 21,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-alerts-api", "Resource", "panther-alerts-api", { "stat": "Minimum" } ],
+                    [ "...", { "stat": "Average" } ],
+                    [ "...", { "stat": "Maximum" } ]
+                ],
+                "region": "us-east-1"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 9,
+            "y": 21,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Lambda", "Errors", "FunctionName", "panther-alerts-api", "Resource", "panther-alerts-api", { "id": "errors", "stat": "Sum", "color": "#d13212" } ],
+                    [ ".", "Invocations", ".", ".", ".", ".", { "id": "invocations", "stat": "Sum", "visible": false } ],
+                    [ { "expression": "100 - 100 * errors / MAX([errors, invocations])", "label": "Success rate (%)", "id": "availability", "yAxis": "right" } ]
+                ],
+                "region": "us-east-1",
+                "title": "Errors / Success (%)",
+                "yAxis": {
+                    "right": {
+                        "max": 100
+                    }
+                }
+            }
+        },
+        {
+            "type": "text",
+            "x": 0,
+            "y": 18,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "markdown": "\n### Log Alert Forwarder\n"
+            }
+        },
+        {
+            "type": "log",
+            "x": 12,
+            "y": 18,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-log-alert-forwarder' | filter operation like 'panther-log-alert-forwarder' | stats max(percentMemUsed) as used by bin(5min)\n",
+                "region": "us-east-1",
+                "title": "Memory Usage (%)",
+                "view": "timeSeries",
+                "stacked": false
+            }
+        },
+        {
+            "type": "log",
+            "x": 15,
+            "y": 18,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-log-alert-forwarder' | filter operation like 'panther-log-alert-forwarder' | stats max(heapSizeMB) as heap by bin(5min)\n",
+                "region": "us-east-1",
+                "stacked": false,
+                "title": "Heap Usage (MB)",
+                "view": "timeSeries"
+            }
+        },
+        {
+            "type": "log",
+            "x": 12,
+            "y": 21,
+            "width": 3,
+            "height": 3,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-alerts-api' | filter component like 'alerts'| stats max(percentMemUsed) as used by bin(5min)\n",
+                "region": "us-east-1",
+                "title": "Memory Usage (%)",
+                "view": "timeSeries",
+                "stacked": false
             }
         }
     ]

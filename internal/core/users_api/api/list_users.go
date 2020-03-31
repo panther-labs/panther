@@ -18,11 +18,29 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/panther-labs/panther/api/lambda/users/models"
+import (
+	"fmt"
+	"net/url"
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
+
+	"github.com/panther-labs/panther/api/lambda/users/models"
+	"github.com/panther-labs/panther/pkg/genericapi"
+)
 
 // ListUsers lists details for each user in Panther.
-func (API) ListUsers(*models.ListUsersInput) (*models.ListUsersOutput, error) {
-	users, err := userGateway.ListUsers()
+func (API) ListUsers(input *models.ListUsersInput) (*models.ListUsersOutput, error) {
+	if input.Contains != nil {
+		decoded, err := url.QueryUnescape(*input.Contains)
+		if err != nil {
+			return nil, &genericapi.InvalidInputError{
+				Message: fmt.Sprintf("\"%s\" url decoding failed: %v", *input.Contains, err)}
+		}
+		input.Contains = aws.String(strings.ToLower(strings.TrimSpace(decoded)))
+	}
+
+	users, err := userGateway.ListUsers(input)
 	if err != nil {
 		return nil, err
 	}

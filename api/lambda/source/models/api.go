@@ -26,7 +26,9 @@ type LambdaInput struct {
 
 	PutIntegration *PutIntegrationInput `json:"putIntegration"`
 
-	ListIntegrations *ListIntegrationsInput `json:"getEnabledIntegrations"`
+	ListIntegrations *ListIntegrationsInput `json:"listIntegrations"`
+
+	GetIntegrationTemplate *GetIntegrationTemplateInput `json:"getIntegrationTemplate"`
 
 	UpdateIntegrationLastScanEnd   *UpdateIntegrationLastScanEndInput   `json:"updateIntegrationLastScanEnd"`
 	UpdateIntegrationLastScanStart *UpdateIntegrationLastScanStartInput `json:"updateIntegrationLastScanStart"`
@@ -41,16 +43,18 @@ type LambdaInput struct {
 
 // CheckIntegrationInput is used to check the health of a potential configuration.
 type CheckIntegrationInput struct {
-	AWSAccountID    *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationType *string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	AWSAccountID     *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType  *string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	IntegrationLabel *string `json:"integrationLabel" validate:"required,integrationLabel"`
 
 	// Checks for cloudsec integrations
 	EnableCWESetup    *bool `json:"enableCWESetup"`
 	EnableRemediation *bool `json:"enableRemediation"`
 
 	// Checks for log analysis integrations
-	S3Buckets []*string `json:"s3Buckets"`
-	KmsKeys   []*string `json:"kmsKeys"`
+	S3Bucket *string `json:"s3Bucket,omitempty"`
+	S3Prefix *string `json:"s3Prefix,omitempty"`
+	KmsKey   *string `json:"kmsKey,omitempty"`
 }
 
 //
@@ -59,20 +63,23 @@ type CheckIntegrationInput struct {
 
 // PutIntegrationInput is used to add one or many integrations.
 type PutIntegrationInput struct {
-	Integrations  []*PutIntegrationSettings `json:"integrations" validate:"required,dive"`
-	SkipScanQueue *bool                     `json:"skipScanQueue"`
+	PutIntegrationSettings
+	SkipScanQueue *bool `json:"skipScanQueue"`
 }
 
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
-	AWSAccountID     *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationLabel *string   `json:"integrationLabel,omitempty" validate:"omitempty,min=1"`
-	IntegrationType  *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
-	ScanEnabled      *bool     `json:"scanEnabled,omitempty"`
-	ScanIntervalMins *int      `json:"scanIntervalMins,omitempty" validate:"omitempty,oneof=60 180 360 720 1440"`
-	UserID           *string   `json:"userId" validate:"required,uuid4"`
-	S3Buckets        []*string `json:"s3Buckets"`
-	KmsKeys          []*string `json:"kmsKeys"`
+	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel"`
+	IntegrationType    *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
+	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
+	ScanIntervalMins   *int      `json:"scanIntervalMins,omitempty" validate:"omitempty,oneof=60 180 360 720 1440"`
+	UserID             *string   `json:"userId" validate:"required,uuid4"`
+	S3Bucket           *string   `json:"s3Bucket,omitempty"`
+	S3Prefix           *string   `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
+	KmsKey             *string   `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
+	LogTypes           []*string `json:"logTypes,omitempty" validate:"omitempty,min=1"`
 }
 
 //
@@ -81,8 +88,23 @@ type PutIntegrationSettings struct {
 
 // ListIntegrationsInput allows filtering by the IntegrationType or Enabled fields
 type ListIntegrationsInput struct {
-	ScanEnabled     *bool   `json:"scanEnabled"`
-	IntegrationType *string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+	IntegrationType *string `json:"integrationType" validate:"omitempty,oneof=aws-scan aws-s3"`
+}
+
+//
+// GetIntegrationTemplate: Used by the frontend to provide templates for users
+//
+
+// GetIntegrationTemplateInput allows specification of what resources should be enabled/disabled in the template
+type GetIntegrationTemplateInput struct {
+	AWSAccountID       *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType    *string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+	IntegrationLabel   *string `json:"integrationLabel" validate:"required,integrationLabel"`
+	RemediationEnabled *bool   `json:"remediationEnabled,omitempty"`
+	CWEEnabled         *bool   `json:"cweEnabled,omitempty"`
+	S3Bucket           *string `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
+	S3Prefix           *string `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
+	KmsKey             *string `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
 }
 
 //
@@ -116,10 +138,13 @@ type UpdateIntegrationLastScanEndInput struct {
 
 // UpdateIntegrationSettingsInput is used to update integration settings.
 type UpdateIntegrationSettingsInput struct {
-	IntegrationID    *string   `json:"integrationId" validate:"required,uuid4"`
-	IntegrationLabel *string   `json:"integrationLabel,omitempty" validate:"omitempty,min=1"`
-	ScanEnabled      *bool     `json:"scanEnabled"`
-	ScanIntervalMins *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Buckets        []*string `json:"s3Buckets"`
-	KmsKeys          []*string `json:"kmsKeys"`
+	IntegrationID      *string   `json:"integrationId" validate:"required,uuid4"`
+	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel"`
+	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
+	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
+	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	S3Bucket           *string   `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
+	S3Prefix           *string   `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
+	KmsKey             *string   `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
+	LogTypes           []*string `json:"logTypes,omitempty" validate:"omitempty,min=1"`
 }

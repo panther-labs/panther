@@ -30,7 +30,7 @@ import (
 
 const (
 	golangciVersion = "1.23.6"
-	swaggerVersion  = "0.22.0"
+	swaggerVersion  = "0.23.0"
 )
 
 var (
@@ -87,6 +87,17 @@ func (Setup) Python() {
 	}
 	if err := sh.RunV(pythonLibPath("pip3"), args...); err != nil {
 		logger.Fatalf("pip installation failed: %v", err)
+	}
+}
+
+// Install go-swagger for SDK generation
+func (Setup) Swagger() {
+	env, err := sh.Output("uname")
+	if err != nil {
+		logger.Fatalf("couldn't determine environment: %v", err)
+	}
+	if err = installSwagger(env); err != nil {
+		logger.Fatal(err)
 	}
 }
 

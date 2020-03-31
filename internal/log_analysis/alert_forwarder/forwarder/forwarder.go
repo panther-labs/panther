@@ -19,26 +19,24 @@ package forwarder
  */
 
 import (
-	"os"
+	"crypto/md5" // nolint(gosec)
+	"encoding/hex"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
-)
 
-var (
-	alertsTable                           = os.Getenv("ALERTS_TABLE")
-	awsSession                            = session.Must(session.NewSession())
-	ddbClient   dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
+	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
 const defaultTimePartition = "defaultPartition"
 
-func Process(event *AlertDedupEvent) error {
+func Store(event *AlertDedupEvent) error {
 	alert := &Alert{
 		ID:              generateAlertID(event),
 		TimePartition:   defaultTimePartition,
@@ -51,17 +49,70 @@ func Process(event *AlertDedupEvent) error {
 	}
 	putItemRequest := &dynamodb.PutItemInput{
 		Item:      marshaledAlert,
-		TableName: aws.String(alertsTable),
+		TableName: aws.String(env.AlertsTable),
 	}
 	_, err = ddbClient.PutItem(putItemRequest)
 	if err != nil {
 		return errors.Wrap(err, "failed to update store alert")
 	}
+	return nil
+}
 
-	//TODO Add logic that forwards messages to Alert Delivery SQS queue
+func SendAlert(event *AlertDedupEvent) error {
+	alert, err := getAlert(event)
+	if err != nil {
+		return errors.Wrap(err, "failed to get alert information")
+	}
+	if alert == nil {
+		return nil
+	}
+	msgBody, err := jsoniter.MarshalToString(alert)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal alert notification")
+	}
+
+	input := &sqs.SendMessageInput{
+		QueueUrl:    aws.String(env.AlertingQueueURL),
+		MessageBody: aws.String(msgBody),
+	}
+	_, err = sqsClient.SendMessage(input)
+	if err != nil {
+		return errors.Wrap(err, "failed to send notification")
+	}
 	return nil
 }
 
 func generateAlertID(event *AlertDedupEvent) string {
-	return event.RuleID + ":" + event.DeduplicationString + ":" + strconv.FormatInt(event.AlertCount, 10)
+	key := event.RuleID + ":" + strconv.FormatInt(event.AlertCount, 10) + ":" + event.DeduplicationString
+	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
+	return hex.EncodeToString(keyHash[:])
+}
+
+func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
+	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
+		RuleID:     alert.RuleID,
+		HTTPClient: httpClient,
+	})
+
+	if err != nil {
+		if err.Error() == (&policiesoperations.GetRuleNotFound{}).Error() {
+			return nil, nil
+		}
+
+		return nil, errors.Wrapf(err, "failed to fetch information for ruleID %s", alert.RuleID)
+	}
+
+	return &alertModel.Alert{
+		CreatedAt:         aws.Time(alert.CreationTime),
+		PolicyDescription: aws.String(string(rule.Payload.Description)),
+		PolicyID:          aws.String(alert.RuleID),
+		PolicyVersionID:   aws.String(alert.RuleVersion),
+		PolicyName:        aws.String(string(rule.Payload.DisplayName)),
+		Runbook:           aws.String(string(rule.Payload.Runbook)),
+		Severity:          aws.String(alert.Severity),
+		Tags:              aws.StringSlice(rule.Payload.Tags),
+		Type:              aws.String(alertModel.RuleType),
+		AlertID:           aws.String(generateAlertID(alert)),
+		Title:             alert.Title,
+	}, nil
 }

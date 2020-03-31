@@ -93,8 +93,6 @@ func (t Test) Go() {
 }
 
 func testGo() bool {
-	pass := true
-
 	// unit tests
 	logger.Info("test:go: unit tests")
 	args := []string{"test", "-vet", "", "-cover", "./..."}
@@ -119,7 +117,7 @@ func testGo() bool {
 
 	if err != nil {
 		logger.Errorf("go unit tests failed: %v", err)
-		pass = false
+		return false
 	}
 
 	// metalinting
@@ -130,10 +128,10 @@ func testGo() bool {
 	}
 	if err := sh.RunV(filepath.Join(setupDirectory, "golangci-lint"), args...); err != nil {
 		logger.Errorf("go linting failed: %v", err)
-		pass = false
+		return false
 	}
 
-	return pass
+	return true
 }
 
 // Python Test Python source
@@ -238,15 +236,9 @@ func testWeb() bool {
 		return false
 	}
 
-	logger.Info("test:web: npm run lint")
-	if err := sh.RunV("npm", "run", "lint"); err != nil {
-		logger.Errorf("npm lint failed: %v", err)
-		pass = false
-	}
-
-	logger.Info("test:web: npm audit")
-	if err := sh.RunV("npm", "audit"); err != nil {
-		logger.Errorf("npm audit failed: %v", err)
+	logger.Info("test:web: npm run validate")
+	if err := sh.RunV("npm", "run", "validate"); err != nil {
+		logger.Errorf("npm validate failed: %v", err)
 		pass = false
 	}
 
@@ -267,8 +259,11 @@ func (t Test) Cover() error {
 	return sh.Run("go", "tool", "cover", "-html=out/.coverage")
 }
 
-// CI Run all required checks
+// CI Run all required checks (build:all, test:cfn, test:go, test:python, test:web)
 func (t Test) CI() {
+	var b Build
+	b.All()
+
 	var failed []string
 	if !testCfn() {
 		failed = append(failed, "cfn")
@@ -302,10 +297,11 @@ func (t Test) Integration() {
 		logger.Fatalf("failed to get caller identity: %v", err)
 	}
 
-	logger.Warnf("INTEGRATION TESTS WILL ERASE ALL PANTHER DATA IN AWS ACCOUNT %s", *identity.Account)
+	logger.Warnf("Integration tests will erase all Panther data in account %s (%s)",
+		*identity.Account, *awsSession.Config.Region)
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		logger.Fatal("permission denied: integration tests canceled")
+		logger.Fatal("integration tests aborted")
 	}
 
 	mg.Deps(build.API)

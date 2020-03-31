@@ -50,11 +50,12 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Action:  # permissions which can't be restricted to specific resources
+            Action: # permissions which can't be restricted to specific resources
               - acm:*
               - apigateway:*
               - appsync:*
               - athena:*
+              - cloudformation:Describe*
               - cloudformation:List*
               - cloudwatch:*
               - cognito-idp:*
@@ -63,6 +64,8 @@ Resources:
               - ecs:*
               - events:*
               - glue:*
+              - guardduty:CreatePublishingDestination
+              - guardduty:ListDetectors
               - kms:CreateKey
               - kms:List*
               - lambda:*EventSourceMapping
@@ -75,6 +78,7 @@ Resources:
             Action: cloudformation:*
             Resource:
               - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/panther-*
+              - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stackset/panther-*
               - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31
           - Effect: Allow
             Action: dynamodb:*
@@ -87,6 +91,7 @@ Resources:
               - ec2:AuthorizeSecurityGroupEgress
               - ec2:AuthorizeSecurityGroupIngress
               - ec2:AttachInternetGateway
+              - ec2:CreateFlowLogs
               - ec2:CreateInternetGateway
               - ec2:CreateRoute
               - ec2:CreateRouteTable
@@ -94,6 +99,7 @@ Resources:
               - ec2:CreateSubnet
               - ec2:CreateTags
               - ec2:CreateVpc
+              - ec2:DeleteFlowLogs
               - ec2:DeleteInternetGateway
               - ec2:DeleteRoute
               - ec2:DeleteRouteTable
@@ -123,7 +129,10 @@ Resources:
             Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:*
           - Effect: Allow
             Action: iam:*
-            Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/panther-*
+            Resource:
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/panther-*
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/Panther*
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*"
           - Effect: Allow
             Action: kms:*
             Resource:

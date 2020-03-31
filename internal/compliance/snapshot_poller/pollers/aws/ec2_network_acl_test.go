@@ -46,7 +46,6 @@ func TestEC2DescribeNetworkAclsError(t *testing.T) {
 func TestEC2PollNetworkAcls(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2NetworkAcls(&awsmodels.ResourcePollerInput{
@@ -69,7 +68,6 @@ func TestEC2PollNetworkAcls(t *testing.T) {
 func TestEC2PollNetworkAclsError(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2NetworkAcls(&awsmodels.ResourcePollerInput{

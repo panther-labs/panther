@@ -52,7 +52,7 @@ func reporterHandler(ctx context.Context, event events.DynamoDBEvent) (err error
 
 	for _, record := range event.Records {
 		if record.Change.NewImage == nil {
-			operation.LogWarn(errors.New("Skipping records"))
+			zap.L().Debug("Skipping record", zap.Any("record", record))
 			continue
 		}
 		var alert models.Alert

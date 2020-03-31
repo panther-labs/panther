@@ -1,12 +1,11 @@
 package awsglue
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
@@ -39,8 +38,9 @@ type GluePartition struct {
 	databaseName     string
 	tableName        string
 	s3Bucket         string
-	dataFormat       string // Can currently be only "json"
-	compression      string // Can only be "gzip" currently
+	dataFormat       string    // Can currently be only "json"
+	compression      string    // Can only be "gzip" currently
+	hour             time.Time // the hour this partition corresponds to
 	partitionColumns []PartitionColumnInfo
 }
 
@@ -68,7 +68,25 @@ func (gp *GluePartition) GetPartitionColumnsInfo() []PartitionColumnInfo {
 	return gp.partitionColumns
 }
 
-func (gp *GluePartition) GetPartitionPrefix() string {
+func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
+	tableName := GetTableName(logType)
+	tablePrefix := getTablePrefix(datatype, tableName)
+	return tablePrefix + getTimePartitionPrefix(timebin, time)
+}
+
+// Based on Timebin(), return an S3 prefix for objects of this table
+func getTimePartitionPrefix(timebin GlueTableTimebin, t time.Time) string {
+	switch timebin {
+	case GlueTableHourly:
+		return fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
+	case GlueTableDaily:
+		return fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
+	default:
+		return fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
+	}
+}
+
+func (gp *GluePartition) GetPartitionLocation() string {
 	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
 	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
 	for _, partitionField := range gp.partitionColumns {
@@ -85,45 +103,7 @@ type PartitionColumnInfo struct {
 
 // Creates a new partition in Glue using the client provided.
 func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
-	partitionValues := make([]*string, len(gp.partitionColumns))
-	for i, field := range gp.partitionColumns {
-		partitionValues[i] = aws.String(field.Value)
-	}
-	partitionPrefix := gp.GetPartitionPrefix()
-	partitionInput := &glue.PartitionInput{
-		Values:            partitionValues,
-		StorageDescriptor: getJSONPartitionDescriptor(partitionPrefix), // We only support JSON currently
-	}
-	input := &glue.CreatePartitionInput{
-		DatabaseName:   aws.String(gp.databaseName),
-		TableName:      aws.String(gp.tableName),
-		PartitionInput: partitionInput,
-	}
-	_, err := client.CreatePartition(input)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == glue.ErrCodeAlreadyExistsException {
-				return nil
-			}
-		}
-		return errors.Wrap(err, "failed to create new partition")
-	}
-	return nil
-}
-
-func getJSONPartitionDescriptor(s3Path string) *glue.StorageDescriptor {
-	return &glue.StorageDescriptor{
-		InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
-		OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
-		SerdeInfo: &glue.SerDeInfo{
-			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
-			Parameters: map[string]*string{
-				"serialization.format": aws.String("1"),
-				"case.insensitive":     aws.String("TRUE"), // treat as lower case
-			},
-		},
-		Location: aws.String(s3Path),
-	}
+	return NewGlueTableMetadata(gp.datatype, gp.tableName, "", GlueTableHourly, nil).CreateJSONPartition(client, gp.hour)
 }
 
 // Gets the partition from S3bucket and S3 object key info.
@@ -188,6 +168,26 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 		return partition, nil
 	}
 	partition.partitionColumns = append(partition.partitionColumns, hourPartitionKeyValue)
+
+	// add partition.hour as time.Time
+	year, err := strconv.Atoi(yearPartitionKeyValue.Value)
+	if err != nil {
+		return partition, nil
+	}
+	month, err := strconv.Atoi(monthPartitionKeyValue.Value)
+	if err != nil {
+		return partition, nil
+	}
+	day, err := strconv.Atoi(dayPartitionKeyValue.Value)
+	if err != nil {
+		return partition, nil
+	}
+	hour, err := strconv.Atoi(hourPartitionKeyValue.Value)
+	if err != nil {
+		return partition, nil
+	}
+	partition.hour = time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC)
+
 	return partition, nil
 }
 

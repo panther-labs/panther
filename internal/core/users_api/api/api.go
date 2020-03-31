@@ -20,15 +20,19 @@ package api
  */
 
 import (
+	"os"
+
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
+	"github.com/panther-labs/panther/internal/core/users_api/cognito"
 )
 
 // The API has receiver methods for each of the handlers.
 type API struct{}
 
 var (
-	awsSession              = session.Must(session.NewSession())
-	userGateway gateway.API = gateway.New(awsSession)
+	awsSession               = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
+	appDomainURL             = os.Getenv("APP_DOMAIN_URL")
+	userGateway  cognito.API = cognito.New(awsSession, os.Getenv("USER_POOL_ID"))
 )

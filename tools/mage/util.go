@@ -26,15 +26,20 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	jsoniter "github.com/json-iterator/go"
+)
+
+const (
+	maxRetries = 20 // try very hard, avoid throttles
 )
 
 // Wrapper around filepath.Walk, logging errors as fatal.
@@ -69,7 +74,7 @@ func writeFile(path string, data []byte) {
 
 // Build the AWS session from the environment or a credentials file.
 func getSession() (*session.Session, error) {
-	awsSession, err := session.NewSession()
+	awsSession, err := session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS session: %v", err)
 	}
@@ -93,32 +98,8 @@ func getSession() (*session.Session, error) {
 	return awsSession, nil
 }
 
-// Get CloudFormation stack outputs as a map.
-func getStackOutputs(awsSession *session.Session, name string) (map[string]string, error) {
-	cfnClient := cloudformation.New(awsSession)
-	input := &cloudformation.DescribeStacksInput{StackName: &name}
-	response, err := cfnClient.DescribeStacks(input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe stack %s: %v", name, err)
-	}
-
-	return flattenStackOutputs(response), nil
-}
-
-// Flatten CloudFormation stack outputs into a string map.
-func flattenStackOutputs(detail *cloudformation.DescribeStacksOutput) map[string]string {
-	outputs := detail.Stacks[0].Outputs
-	result := make(map[string]string, len(outputs))
-	for _, output := range outputs {
-		result[*output.OutputKey] = *output.OutputValue
-	}
-	return result
-}
-
 // Upload a local file to S3.
-func uploadFileToS3(
-	awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
-
+func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %v", path, err)
@@ -200,6 +181,23 @@ func emailValidator(email string) error {
 		return nil
 	}
 	return errors.New("invalid email: must be at least 4 characters and contain '@' and '.'")
+}
+
+func regexValidator(text string) error {
+	if _, err := regexp.Compile(text); err != nil {
+		return fmt.Errorf("invalid regex: %v", err)
+	}
+	return nil
+}
+
+func dateValidator(text string) error {
+	if len(text) == 0 { // allow no date
+		return nil
+	}
+	if _, err := time.Parse("2006-01-02", text); err != nil {
+		return fmt.Errorf("invalid date: %v", err)
+	}
+	return nil
 }
 
 // Download a file in memory.

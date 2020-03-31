@@ -37,7 +37,7 @@ import (
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-const stackName = "panther-app"
+const stackName = "panther-bootstrap-gateway"
 
 var (
 	integrationTest bool
@@ -117,12 +117,6 @@ func TestIntegrationAPI(t *testing.T) {
 	if t.Failed() {
 		return
 	}
-
-	t.Run("ModifyResource", func(t *testing.T) {
-		t.Run("ModifyInvalid", modifyInvalid)
-		t.Run("ModifyNotFound", modifyNotFound)
-		t.Run("ModifySuccess", modifySuccess)
-	})
 
 	t.Run("OrgOverview", func(t *testing.T) {
 		t.Run("OrgOverview", orgOverview)
@@ -269,62 +263,6 @@ func getSuccess(t *testing.T) {
 	require.NoError(t, result.Payload.Validate(nil))
 	bucket.LastModified = result.Payload.LastModified
 	require.Equal(t, bucket, result.Payload)
-}
-
-func modifyInvalid(t *testing.T) {
-	t.Parallel()
-	result, err := apiClient.Operations.ModifyResource(
-		&operations.ModifyResourceParams{HTTPClient: httpClient})
-	assert.Nil(t, result)
-	require.Error(t, err)
-
-	require.IsType(t, &operations.ModifyResourceBadRequest{}, err)
-	badRequest := err.(*operations.ModifyResourceBadRequest)
-	assert.Equal(t, "Invalid request body", aws.StringValue(badRequest.Payload.Message))
-}
-
-func modifyNotFound(t *testing.T) {
-	t.Parallel()
-	result, err := apiClient.Operations.ModifyResource(
-		&operations.ModifyResourceParams{
-			Body: &models.ModifyResource{
-				ID:                "arn:aws:s3:::no-such-bucket",
-				ReplaceAttributes: map[string]interface{}{"Nuka": "Cola"},
-			},
-			HTTPClient: httpClient,
-		})
-	assert.Nil(t, result)
-	require.Error(t, err)
-	require.IsType(t, &operations.ModifyResourceNotFound{}, err)
-}
-
-func modifySuccess(t *testing.T) {
-	t.Parallel()
-	result, err := apiClient.Operations.ModifyResource(
-		&operations.ModifyResourceParams{
-			Body: &models.ModifyResource{
-				ID:                bucket.ID,
-				ReplaceAttributes: map[string]interface{}{"Nuka": "Cola"},
-			},
-			HTTPClient: httpClient,
-		})
-	assert.Equal(t, &operations.ModifyResourceOK{}, result)
-	require.NoError(t, err)
-
-	// Get the result again and make sure the attributes were updated
-	get, err := apiClient.Operations.GetResource(
-		&operations.GetResourceParams{
-			ResourceID: string(bucket.ID),
-			HTTPClient: httpClient,
-		})
-	require.NoError(t, err)
-
-	expectedAttrs := map[string]interface{}{
-		"Panther": "Labs",
-		"Nuka":    "Cola",
-	}
-	assert.Equal(t, expectedAttrs, get.Payload.Attributes)
-	bucket.Attributes = expectedAttrs
 }
 
 func listAll(t *testing.T) {

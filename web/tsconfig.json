@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "target": "es6",
+    "module": "esnext",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "Assets/*": ["src/assets/*"],
+      "Components/*": ["src/components/*"],
+      "Generated/*": ["__generated__/*"],
+      "Helpers/*": ["src/helpers/*"],
+      "Pages/*": ["src/pages/*"],
+      "Hooks/*": ["src/hooks/*"],
+      "Hoc/*": ["src/hoc/*"],
+      "Source/*": ["src/*"]
+    }
+  },
+  "allowJs": false
+}

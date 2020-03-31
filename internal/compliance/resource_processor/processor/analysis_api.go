@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	"github.com/panther-labs/panther/api/gateway/analysis/models"
 )
 
 const cacheDuration = 30 * time.Second
@@ -35,7 +36,7 @@ type policyCacheEntry struct {
 
 var policyCache policyCacheEntry
 
-// Get enabled policies from either the memory cache or the policy-api
+// Get enabled policies from either the memory cache or the analysis-api
 func getPolicies() (policyMap, error) {
 	if policyCache.Policies != nil && policyCache.LastUpdated.Add(cacheDuration).After(time.Now()) {
 		// Cache entry exists and hasn't expired yet
@@ -44,14 +45,14 @@ func getPolicies() (policyMap, error) {
 		return policyCache.Policies, nil
 	}
 
-	// Load from policy-api
+	// Load from analysis-api
 	result, err := analysisClient.Operations.GetEnabledPolicies(
-		&operations.GetEnabledPoliciesParams{HTTPClient: httpClient})
+		&operations.GetEnabledPoliciesParams{HTTPClient: httpClient, Type: string(models.AnalysisTypePOLICY)})
 	if err != nil {
-		zap.L().Error("failed to load policies from policy-api", zap.Error(err))
+		zap.L().Error("failed to load policies from analysis-api", zap.Error(err))
 		return nil, err
 	}
-	zap.L().Info("successfully loaded enabled policies from policy-api",
+	zap.L().Info("successfully loaded enabled policies from analysis-api",
 		zap.Int("policyCount", len(result.Payload.Policies)))
 
 	// Convert list of policies into a map by ID
@@ -62,4 +63,33 @@ func getPolicies() (policyMap, error) {
 
 	policyCache = policyCacheEntry{LastUpdated: time.Now(), Policies: policies}
 	return policies, nil
+}
+
+func getGlobalPolicy() (*models.EnabledPolicy, error) {
+	if policyCache.Policies != nil && policyCache.LastUpdated.Add(cacheDuration).After(time.Now()) {
+		// Cache entry exists and hasn't expired yet
+		if globalPolicy, ok := policyCache.Policies[globalPolicy]; ok {
+			return globalPolicy, nil
+		}
+	}
+
+	globalPolicy, err := analysisClient.Operations.GetPolicy(
+		&operations.GetPolicyParams{
+			PolicyID:   globalPolicy,
+			VersionID:  nil,
+			HTTPClient: httpClient,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	// This should be easily extendable to multiple global policies by getting all policies and returning a list here
+	return &models.EnabledPolicy{
+		Body:          globalPolicy.Payload.Body,
+		ID:            globalPolicy.Payload.ID,
+		ResourceTypes: globalPolicy.Payload.ResourceTypes,
+		Severity:      globalPolicy.Payload.Severity,
+		Suppressions:  globalPolicy.Payload.Suppressions,
+		VersionID:     globalPolicy.Payload.VersionID,
+	}, nil
 }

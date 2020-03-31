@@ -31,8 +31,8 @@ consumes:
 produces:
   - application/json
 
-# The name of the CloudFormation resource for the Lambda handler function
-x-panther-lambda-cfn-resource: HandlerFunction
+# The name of the Lambda handler function that will process API requests
+x-panther-lambda-handler: panther-analysis-api
 
 parameters: # Parameters shared across multiple methods
   policyId:
@@ -41,7 +41,7 @@ parameters: # Parameters shared across multiple methods
     description: Unique ASCII policy identifier
     required: true
     type: string
-    pattern: '[a-zA-Z0-9\-\.: ]{1,200}'
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
   ruleId:
     name: ruleId
@@ -55,9 +55,18 @@ parameters: # Parameters shared across multiple methods
     name: type
     in: query
     description: Type of analysis logic to retrieve
-    default: policy
+    required: true
     type: string
-    enum: [policy, rule]
+    enum:
+      - POLICY
+      - RULE
+
+  versionId:
+    name: versionId
+    in: query
+    description: The version of the analysis to retrieve
+    type: string
+    pattern: '[a-zA-Z\._0-9]{32}'
 
 paths:
   /policy:
@@ -101,11 +110,8 @@ paths:
       summary: Get policy details
       parameters:
         - $ref: '#/parameters/policyId'
-        - name: versionId
-          in: query
-          description: Optional version ID to retrieve (for older versions)
-          type: string
-          pattern: '[a-zA-Z\._0-9]{32}'
+        - $ref: '#/parameters/versionId'
+
       responses:
         200:
           description: OK
@@ -155,11 +161,7 @@ paths:
       summary: Get rule details
       parameters:
         - $ref: '#/parameters/ruleId'
-        - name: versionId
-          in: query
-          description: Optional version ID to retrieve (for older versions)
-          type: string
-          pattern: '[a-zA-Z\._0-9]{32}'
+        - $ref: '#/parameters/versionId'
       responses:
         200:
           description: OK
@@ -814,6 +816,8 @@ definitions:
         $ref: '#/definitions/suppressions'
       versionId:
         $ref: '#/definitions/versionId'
+      dedupPeriodMinutes:
+        $ref: '#/definitions/dedupPeriodMinutes'
 
   ##### ListPolicies #####
   PolicyList:
@@ -1011,6 +1015,8 @@ definitions:
         $ref: '#/definitions/TestSuite'
       versionId:
         $ref: '#/definitions/versionId'
+      dedupPeriodMinutes:
+        $ref: '#/definitions/dedupPeriodMinutes'
     required:
       - body
       - createdAt
@@ -1028,6 +1034,7 @@ definitions:
       - tags
       - tests
       - versionId
+      - dedupPeriodMinutes
 
   UpdateRule:
     type: object
@@ -1056,6 +1063,8 @@ definitions:
         $ref: '#/definitions/TestSuite'
       userId:
         $ref: '#/definitions/userId'
+      dedupPeriodMinutes:
+        $ref: '#/definitions/dedupPeriodMinutes'
     required:
       - body
       - enabled
@@ -1153,7 +1162,7 @@ definitions:
   id:
     description: User-specified unique rule/policy ID
     type: string
-    pattern: '[a-zA-Z0-9\-\.: ]{1,200}'
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
   modifyTime:
     description: Policy modification timestamp
@@ -1168,6 +1177,13 @@ definitions:
   runbook:
     description: Internal documenation about what to do when a policy fails
     type: string
+
+  dedupPeriodMinutes:
+    description: The time in minutes for which we deduplicate events when generating alerts for log analysis
+    type: integer
+    minimum: 15
+    maximum: 1440 # 1 day in minutes
+    default: 60
 
   suppressions:
     description: >

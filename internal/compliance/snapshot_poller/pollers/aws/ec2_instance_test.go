@@ -32,14 +32,16 @@ import (
 func TestEC2DescribeInstances(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeInstancesPages"})
 
-	out := describeInstances(mockSvc)
+	out, err := describeInstances(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestEC2DescribeInstancesError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeInstancesPages"})
 
-	out := describeInstances(mockSvc)
+	out, err := describeInstances(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -54,7 +56,6 @@ func TestEC2BuildInstanceSnapshot(t *testing.T) {
 func TestEC2PollInstances(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
@@ -77,7 +78,6 @@ func TestEC2PollInstances(t *testing.T) {
 func TestEC2PollInstancesError(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
@@ -88,6 +88,6 @@ func TestEC2PollInstancesError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Empty(t, resources)
 }

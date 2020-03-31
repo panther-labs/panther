@@ -108,7 +108,6 @@ func TestBuildGuardDutyDetectorSnapshotError(t *testing.T) {
 func TestGuardDutyDetectorsPoller(t *testing.T) {
 	awstest.MockGuardDutyForSetup = awstest.BuildMockGuardDutySvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	GuardDutyClientFunc = awstest.SetupMockGuardDuty
 
 	resources, err := PollGuardDutyDetectors(&awsmodels.ResourcePollerInput{
@@ -140,7 +139,6 @@ func TestGuardDutyDetectorsPoller(t *testing.T) {
 func TestGuardDutyDetectorsPollerError(t *testing.T) {
 	awstest.MockGuardDutyForSetup = awstest.BuildMockGuardDutySvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	GuardDutyClientFunc = awstest.SetupMockGuardDuty
 
 	resources, err := PollGuardDutyDetectors(&awsmodels.ResourcePollerInput{

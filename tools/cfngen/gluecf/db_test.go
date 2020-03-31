@@ -19,6 +19,7 @@ package gluecf
  */
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,28 +29,20 @@ import (
 )
 
 func TestDatabase(t *testing.T) {
-	expectedFile := "testdata/db.template.json"
-
-	catalogID := "12345"
 	dbName := "db1"
-	description := "Test db"
-
-	db := NewDatabase(catalogID, dbName, description)
-
-	resources := make(map[string]interface{})
-
-	resources[dbName] = db
+	resources := map[string]interface{}{
+		dbName: NewDatabase("12345", dbName, "Test db"),
+	}
 
 	cfTemplate := cfngen.NewTemplate("Test template", nil, resources, nil)
-
 	cf, err := cfTemplate.CloudFormation()
 	require.NoError(t, err)
 
-	// uncomment to make a new expected file
-	// writeTestFile(cf, expectedFile)
+	const expectedFile = "testdata/db.template.json"
+	// uncomment to write new expected file
+	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
 
-	expectedOutput, err := readTestFile(expectedFile)
+	expected, err := ioutil.ReadFile(expectedFile)
 	require.NoError(t, err)
-
-	assert.Equal(t, expectedOutput, cf)
+	assert.JSONEq(t, string(expected), string(cf))
 }

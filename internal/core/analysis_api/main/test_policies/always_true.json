@@ -1,28 +1,26 @@
 {
-    "ActionDelaySeconds": 10,
-    "AnalysisType": "policy",
-    "AutoRemediationID": "fix-it",
-    "AutoRemediationParameters": {
-        "hello": "goodbye"
-    },
-    "Description": "Matches every resource",
-    "DisplayName": "AlwaysTrue",
-    "Enabled": true,
-    "Filename": "always_true.py",
-    "PolicyID": "Test:Policy:JSON",
-    "ResourceTypes": [
-        "AWS.S3.Bucket"
-    ],
-    "Severity": "Medium",
-    "Tags": [],
-    "Tests": [
-        {
-            "ExpectedResult": true,
-            "Name": "This will be True",
-            "Resource": {
-                "Bucket": "empty"
-            },
-            "ResourceType": "AWS.S3.Bucket"
-        }
-    ]
+  "ActionDelaySeconds": 10,
+  "AnalysisType": "policy",
+  "AutoRemediationID": "fix-it",
+  "AutoRemediationParameters": {
+    "hello": "goodbye"
+  },
+  "Description": "Matches every resource",
+  "DisplayName": "AlwaysTrue",
+  "Enabled": true,
+  "Filename": "always_true.py",
+  "PolicyID": "Test:Policy:JSON",
+  "ResourceTypes": ["AWS.S3.Bucket"],
+  "Severity": "Medium",
+  "Tags": [],
+  "Tests": [
+    {
+      "ExpectedResult": true,
+      "Name": "This will be True",
+      "Resource": {
+        "Bucket": "empty"
+      },
+      "ResourceType": "AWS.S3.Bucket"
+    }
+  ]
 }

@@ -1,0 +1,182 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "skipCi": false,
+  "badgeTemplate": "<a href=\"#contributors\"><img src=\"https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=svg\" alt=\"All Contributors\"/></a>",
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "3nvi",
+      "name": "Aggelos Arvanitakis",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/10436045?v=4",
+      "profile": "https://aggelos.dev",
+      "contributions": [
+        "code",
+        "doc",
+        "design",
+        "bug",
+        "infra"
+      ]
+    },
+    {
+      "login": "austinbyers",
+      "name": "Austin Byers",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/3608925?v=4",
+      "profile": "https://www.linkedin.com/in/austinbyers/",
+      "contributions": [
+        "code",
+        "doc",
+        "security",
+        "bug",
+        "infra"
+      ]
+    },
+    {
+      "login": "nhakmiller",
+      "name": "Nick",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/49166439?v=4",
+      "profile": "https://github.com/nhakmiller",
+      "contributions": [
+        "code",
+        "doc",
+        "security",
+        "bug",
+        "infra"
+      ]
+    },
+    {
+      "login": "kostaspap",
+      "name": "Kostas Papageorgiou",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/2652630?v=4",
+      "profile": "https://github.com/kostaspap",
+      "contributions": [
+        "code",
+        "security",
+        "bug",
+        "infra"
+      ]
+    },
+    {
+      "login": "drixta",
+      "name": "Quan Pham",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/2681321?v=4",
+      "profile": "https://github.com/drixta",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "alexmylonas",
+      "name": "Alex Mylonas",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/14179917?v=4",
+      "profile": "https://github.com/alexmylonas",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "rleighton",
+      "name": "Russell Leighton",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/18419762?v=4",
+      "profile": "https://github.com/rleighton",
+      "contributions": [
+        "code",
+        "security",
+        "bug",
+        "infra"
+      ]
+    },
+    {
+      "login": "sugandhalahoti",
+      "name": "Sugandha",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/60883353?v=4",
+      "profile": "https://github.com/sugandhalahoti",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "kartikeypan",
+      "name": "Kartikey Pandey",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/58938775?v=4",
+      "profile": "https://github.com/kartikeypan",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "stoggi",
+      "name": "Jeremy Stott",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/5227285?v=4",
+      "profile": "https://github.com/stoggi",
+      "contributions": [
+        "code",
+        "security",
+        "infra",
+        "ideas"
+      ]
+    },
+    {
+      "login": "jacknagz",
+      "name": "Jack Naglieri",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/11466941?v=4",
+      "profile": "https://www.twitter.com/jack_naglieri",
+      "contributions": [
+        "code",
+        "doc",
+        "security",
+        "content",
+        "ideas",
+        "projectManagement"
+      ]
+    },
+    {
+      "login": "gavinelder",
+      "name": "Gavin",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/1226100?v=4",
+      "profile": "http://www.improbable.io",
+      "contributions": [
+        "code",
+        "security",
+        "infra",
+        "ideas"
+      ]
+    },
+    {
+      "login": "Ryxias",
+      "name": "Ryxias",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/13323701?v=4",
+      "profile": "https://github.com/Ryxias",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "sardev08",
+      "name": "Sargon Sada",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/53259827?v=4",
+      "profile": "https://github.com/sardev08",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "SergeAx",
+      "name": "Sergey Aksenov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/3264530?v=4",
+      "profile": "http://sergeax.ru/",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "panther",
+  "projectOwner": "panther-labs",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}

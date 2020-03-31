@@ -97,7 +97,6 @@ var (
 				IntegrationLabel: aws.String("ProdAWS"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
-				ScanEnabled:      aws.Bool(true),
 			},
 			SourceIntegrationStatus: &models.SourceIntegrationStatus{
 				ScanStatus: aws.String("ok"),
@@ -113,7 +112,6 @@ var (
 				IntegrationLabel: aws.String("TestAWS"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(30),
-				ScanEnabled:      aws.Bool(true),
 			},
 			SourceIntegrationStatus: &models.SourceIntegrationStatus{
 				ScanStatus: aws.String("ok"),
@@ -130,7 +128,6 @@ var (
 				IntegrationLabel: aws.String("TestAWS"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(30),
-				ScanEnabled:      aws.Bool(true),
 			},
 		},
 		// An integration with a scan in progress, started 20 minutes ago.
@@ -140,7 +137,6 @@ var (
 				IntegrationLabel: aws.String("Staging AWS Account"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
-				ScanEnabled:      aws.Bool(true),
 			},
 			SourceIntegrationStatus: &models.SourceIntegrationStatus{
 				ScanStatus: aws.String("scanning"),
@@ -156,7 +152,6 @@ var (
 				IntegrationLabel: aws.String("Development AWS Account"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
-				ScanEnabled:      aws.Bool(true),
 			},
 			SourceIntegrationStatus: &models.SourceIntegrationStatus{
 				ScanStatus: aws.String("scanning"),

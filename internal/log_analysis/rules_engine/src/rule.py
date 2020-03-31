@@ -29,6 +29,18 @@ _RULE_FOLDER = os.path.join(tempfile.gettempdir(), 'rules')
 # Rule with ID 'aws_globals' contains common Python logic used by other rules
 COMMON_MODULE_RULE_ID = 'aws_globals'
 
+# Maximum size for a dedup string
+MAX_DEDUP_STRING_SIZE = 1000
+
+# Maximum size for a title
+MAX_TITLE_SIZE = 1000
+
+TRUNCATED_STRING_SUFFIX = '... (truncated)'
+
+DEFAULT_RULE_VERSION = 'default'
+
+DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
+
 
 @dataclass
 class RuleResult:
@@ -36,32 +48,49 @@ class RuleResult:
     exception: Optional[Exception] = None
     matched: Optional[bool] = None
     dedup_string: Optional[str] = None
+    title: Optional[str] = None
 
 
+# pylint: disable=too-many-instance-attributes
 class Rule:
     """Panther rule metadata and imported module."""
     logger = get_logger()
 
-    def __init__(self, rule_id: Optional[str], rule_body: Optional[str], rule_version: Optional[str] = None):
-        """Create new rule.
+    def __init__(self, config: Dict[str, Any]):
+        """Create new rule from a dict.
 
         Args:
-            rule_id: Unique rule identifier
-            rule_body: The rule body
-            rule_version: The version of the rule
+            config: Dictionary that we expect to have the following keys:
+                rule_id: Unique rule identifier
+                body: The rule body
+                severity: The severity of the rule
+                (Optional) version: The version of the rule
+                (Optional) dedup_period_mins: The period during which the events will be deduplicated
         """
-        if not rule_id or not rule_body:
-            raise AssertionError('rule_id and _rule_body are required fields')
-        self.rule_id = rule_id
-        self.rule_body = rule_body
+        if not ('id' in config) or not isinstance(config['id'], str):
+            raise AssertionError('Field "id" of type str is required field')
+        self.rule_id = config['id']
+
+        if not ('body' in config) or not isinstance(config['body'], str):
+            raise AssertionError('Field "body" of type str is required field')
+        self.rule_body = config['body']
+
+        if not ('severity' in config) or not isinstance(config['severity'], str):
+            raise AssertionError('Field "severity" of type str is required field')
+        self.rule_severity = config['severity']
+
+        if not ('versionId' in config) or not isinstance(config['versionId'], str):
+            self.rule_version = DEFAULT_RULE_VERSION
+        else:
+            self.rule_version = config['versionId']
+
+        if not ('dedupPeriodMinutes' in config) or not isinstance(config['dedupPeriodMinutes'], int):
+            self.rule_dedup_period_mins = DEFAULT_RULE_DEDUP_PERIOD_MINS
+        else:
+            self.rule_dedup_period_mins = config['dedupPeriodMinutes']
 
         self._store_rule()
         self._module = self._import_rule_as_module()
-
-        if not rule_version:
-            self.rule_version = 'default'
-        else:
-            self.rule_version = rule_version
 
         if not hasattr(self._module, 'rule'):
             raise AssertionError("rule needs to have a method named 'rule'")
@@ -71,21 +100,71 @@ class Rule:
         else:
             self._has_dedup = False
 
+        self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
+
+        if hasattr(self._module, 'title'):
+            self._has_title = True
+        else:
+            self._has_title = False
+
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
 
         dedup_string: Optional[str] = None
+        title: Optional[str] = None
         try:
-            rule_result = _run_command(self._module.rule, event, bool)
-            if rule_result and self._has_dedup:
-                dedup_string = _run_command(self._module.dedup, event, str)
+            rule_result = self._run_command(self._module.rule, event, bool)
+            if rule_result:
+                dedup_string = self._get_dedup(event)
+                title = self._get_title(event)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
+        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
 
-        # If users haven't specified a dedup function return a default value
-        if rule_result and not dedup_string:
-            dedup_string = "default"
-        return RuleResult(matched=rule_result, dedup_string=dedup_string)
+    def _get_dedup(self, event: Dict[str, Any]) -> str:
+        if not self._has_dedup:
+            # If no dedup function defined, return default dedup string
+            return self._default_dedup_string
+        try:
+            dedup_string = self._run_command(self._module.dedup, event, str)
+        except Exception as err:  # pylint: disable=broad-except
+            self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
+            return self._default_dedup_string
+
+        if dedup_string:
+            if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
+                # If dedup_string exceeds max size, truncate it
+                self.logger.warning(
+                    'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
+                    '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
+                )
+                num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
+                return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+            return dedup_string
+        # If dedup string was the empty string, return default dedup string
+        return self._default_dedup_string
+
+    def _get_title(self, event: Dict[str, Any]) -> Optional[str]:
+        if not self._has_title:
+            return None
+        try:
+            title_string = self._run_command(self._module.title, event, str)
+        except Exception as err:  # pylint: disable=broad-except
+            self.logger.warning('title method raised exception. Using default. Exception: %s', err)
+            return None
+
+        if title_string:
+            if len(title_string) > MAX_TITLE_SIZE:
+                # If title exceeds max size, truncate it
+                self.logger.warning(
+                    'maximum title string size is [%d] characters. Title for rule with ID '
+                    '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
+                )
+                num_characters_to_keep = MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)
+                return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+            return title_string
+        # If title is empty string, return None
+        return None
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""
@@ -114,15 +193,16 @@ class Rule:
             sys.modules[self.rule_id] = mod
         return mod
 
-
-def _run_command(function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:
-    result = function(event)
-    if not isinstance(result, expected_type):
-        raise Exception(
-            'rule fuction [{}] returned [{}], expected [{}]'.format(function.__name__,
-                                                                    type(result).__name__, expected_type.__name__)
-        )
-    return result
+    def _run_command(self, function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:
+        result = function(event)
+        if not isinstance(result, expected_type):
+            raise Exception(
+                'rule [{}] fuction [{}] returned [{}], expected [{}]'.format(
+                    self.rule_id, function.__name__,
+                    type(result).__name__, expected_type.__name__
+                )
+            )
+        return result
 
 
 def _rule_id_to_path(rule_id: str) -> str:
