@@ -105,7 +105,6 @@ class TestMainLoadS3Notifications(TestCase):
                 'eventSource': 'aws:s3',
                 'eventName': 'ObjectCreated:Put',
                 's3': {
-                    'configurationId': 'rule_id',
                     'bucket': {
                         'name': 'mybucket'
                     },
@@ -119,7 +118,6 @@ class TestMainLoadS3Notifications(TestCase):
                 'eventSource': 'aws:s3',
                 'eventName': 'ObjectCreated:Put',
                 's3': {
-                    'configurationId': 'rule_id',
                     'bucket': {
                         'name': 'mybucket2'
                     },
@@ -130,5 +128,5 @@ class TestMainLoadS3Notifications(TestCase):
                 }
             }
         ]
-        expected_response = [('mybucket', 'mykey', 'rule_id'), ('mybucket2', 'mykey2', 'rule_id')]
+        expected_response = [('mybucket', 'mykey'), ('mybucket2', 'mykey2')]
         self.assertEqual(expected_response, _load_s3_notifications(notifications))

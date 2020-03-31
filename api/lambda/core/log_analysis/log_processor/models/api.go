@@ -26,7 +26,7 @@ type S3Notification struct {
 	Records []events.S3EventRecord
 }
 
-func NewS3ObjectPutNotification(bucket, key, logType string, nbytes int) *S3Notification {
+func NewS3ObjectPutNotification(bucket, key string, nbytes int) *S3Notification {
 	const (
 		eventVersion = "2.0"
 		eventSource  = "aws:s3"
@@ -39,7 +39,6 @@ func NewS3ObjectPutNotification(bucket, key, logType string, nbytes int) *S3Noti
 				EventSource:  eventSource,
 				EventName:    eventName,
 				S3: events.S3Entity{
-					ConfigurationID: logType,
 					Bucket: events.S3Bucket{
 						Name: bucket,
 					},
