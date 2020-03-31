@@ -962,12 +962,6 @@ Resources:
       FieldName: deletePolicy
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
-        #set ($policiesInput = [])
-        #foreach($item in $ctx.args.input.policies)
-            #set ($inputItem = {})
-            $util.qr($inputItem.put("id", $item.id))
-            $util.qr($policiesInput.add($inputItem))
-        #end
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -977,7 +971,7 @@ Resources:
               "Content-Type": "application/json"
             },
             "body": $util.toJson({
-              "policies": $policiesInput
+              "policies": $ctx.args.input.policies
             })
           }
         }
