@@ -128,21 +128,7 @@ func initTest() *mockGlue {
 func getEvent(t *testing.T, s3Keys ...string) events.SQSEvent {
 	result := events.SQSEvent{Records: []events.SQSMessage{}}
 	for _, s3Key := range s3Keys {
-		s3Notification := &models.S3Notification{
-			Records: []events.S3EventRecord{
-				{
-					S3: events.S3Entity{
-						ConfigurationID: "test",
-						Bucket: events.S3Bucket{
-							Name: "bucket",
-						},
-						Object: events.S3Object{
-							Key: s3Key,
-						},
-					},
-				},
-			},
-		}
+		s3Notification := models.NewS3ObjectPutNotification("bucket", s3Key, "test", 0)
 		serialized, err := jsoniter.MarshalToString(s3Notification)
 		require.NoError(t, err)
 		event := events.SQSMessage{
