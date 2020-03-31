@@ -28,7 +28,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
@@ -229,25 +228,11 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 
 	// Verifying Sns Publish payload
 	publishInput := destination.mockSns.Calls[0].Arguments.Get(0).(*sns.PublishInput)
-	expectedS3Notification := &models.S3Notification{
-		Records: []events.S3EventRecord{
-			{
-				EventVersion: eventVersion,
-				EventSource:  eventSource,
-				EventName:    eventName,
-				S3: events.S3Entity{
-					ConfigurationID: testLogType,
-					Bucket: events.S3Bucket{
-						Name: "testbucket",
-					},
-					Object: events.S3Object{
-						Key:  *uploadInput.Key,
-						Size: int64(len(marshaledEvent) + len("\n")),
-					},
-				},
-			},
-		},
-	}
+	expectedS3Notification := destination.newSNSNotification(*uploadInput.Key, &s3EventBuffer{
+		logType: testLogType,
+		bytes:   len(marshaledEvent) + len("\n"),
+	})
+
 	marshaledExpectedS3Notification, _ := jsoniter.MarshalToString(expectedS3Notification)
 	expectedSnsPublishInput := &sns.PublishInput{
 		Message:  aws.String(marshaledExpectedS3Notification),

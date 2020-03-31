@@ -61,11 +61,6 @@ const (
 
 	bytesPerMB           = 1024 * 1024
 	maxS3BufferSizeBytes = 50 * bytesPerMB // the largest we let any single buffer get
-
-	// for the sns s3 events
-	eventVersion = "2.0"
-	eventSource  = "aws:s3"
-	eventName    = "ObjectCreated:Put"
 )
 
 var (
@@ -275,25 +270,7 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 			zap.String("topicArn", destination.snsTopicArn))
 	}()
 
-	s3Notification := &models.S3Notification{
-		Records: []events.S3EventRecord{
-			{
-				EventVersion: eventVersion,
-				EventSource:  eventSource,
-				EventName:    eventName,
-				S3: events.S3Entity{
-					ConfigurationID: buffer.logType,
-					Bucket: events.S3Bucket{
-						Name: destination.s3Bucket,
-					},
-					Object: events.S3Object{
-						Key:  key,
-						Size: int64(buffer.bytes),
-					},
-				},
-			},
-		},
-	}
+	s3Notification := destination.newSNSNotification(key, buffer)
 
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)
 	if err != nil {
@@ -321,6 +298,33 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	}
 
 	return err
+}
+
+func (destination *S3Destination) newSNSNotification(key string, buffer *s3EventBuffer) *models.S3Notification {
+	const (
+		eventVersion = "2.0"
+		eventSource  = "aws:s3"
+		eventName    = "ObjectCreated:Put"
+	)
+	return &models.S3Notification{
+		Records: []events.S3EventRecord{
+			{
+				EventVersion: eventVersion,
+				EventSource:  eventSource,
+				EventName:    eventName,
+				S3: events.S3Entity{
+					ConfigurationID: buffer.logType,
+					Bucket: events.S3Bucket{
+						Name: destination.s3Bucket,
+					},
+					Object: events.S3Object{
+						Key:  key,
+						Size: int64(buffer.bytes),
+					},
+				},
+			},
+		},
+	}
 }
 
 func getS3ObjectKey(logType string, timestamp time.Time) string {

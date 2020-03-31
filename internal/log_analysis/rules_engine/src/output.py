@@ -166,9 +166,8 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch
     )
 
 
-# pylint: disable=invalid-name
 def _s3notification(bucket: str, key: str, byte_size: int, rule_id: str) -> Dict[str, list]:
-    """The notification that will be send to the SNS topic when we create a new object in S3.
+    """The notification that will be sent to the SNS topic when we create a new object in S3.
 
     This needs to have a shape of an S3 event notification:
             https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
