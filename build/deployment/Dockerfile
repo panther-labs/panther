@@ -30,12 +30,7 @@ RUN apt-get update && \
     apt-get -y install docker-ce && \
     pip3 install awscli --upgrade --user
 
-
 RUN mkdir code
 
 WORKDIR code
 
-ADD magefile.go .
-ADD tools/mage/setup_namespace.go tools/mage/setup_namespace.go
-
-RUN mage setup:swagger
