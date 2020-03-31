@@ -1391,6 +1391,44 @@ Resources:
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
+  DeleteRuleResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: deleteRule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        #set ($policiesInput = [])
+        #foreach($item in $ctx.args.input.policies)
+            #set ($inputItem = {})
+            $util.qr($inputItem.put("id", $item.id))
+            $util.qr($policiesInput.add($inputItem))
+        #end
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/v1/delete",
+          "params": {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": $util.toJson({
+              "policies": $policiesInput
+            })
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+            true
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.args)
+        #else
+            $util.error($ctx.result.body, $statusCode, $ctx.args)
+        #end
+
   ListAlertsResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema

@@ -168,6 +168,14 @@ export type DeletePolicyInputItem = {
   id: Scalars['ID'];
 };
 
+export type DeleteRuleInput = {
+  policies?: Maybe<Array<Maybe<DeleteRuleInputItem>>>;
+};
+
+export type DeleteRuleInputItem = {
+  id: Scalars['ID'];
+};
+
 export type Destination = {
   __typename?: 'Destination';
   createdBy: Scalars['String'];
@@ -472,6 +480,7 @@ export type Mutation = {
   deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
   deleteLogIntegration?: Maybe<Scalars['Boolean']>;
   deletePolicy?: Maybe<Scalars['Boolean']>;
+  deleteRule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
   remediateResource?: Maybe<Scalars['Boolean']>;
@@ -522,6 +531,10 @@ export type MutationDeleteLogIntegrationArgs = {
 
 export type MutationDeletePolicyArgs = {
   input: DeletePolicyInput;
+};
+
+export type MutationDeleteRuleArgs = {
+  input: DeleteRuleInput;
 };
 
 export type MutationDeleteUserArgs = {
@@ -1155,6 +1168,8 @@ export type ResolversTypes = {
   CreateOrModifyRuleInput: CreateOrModifyRuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
+  DeleteRuleInput: DeleteRuleInput;
+  DeleteRuleInputItem: DeleteRuleInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
@@ -1263,6 +1278,8 @@ export type ResolversParentTypes = {
   CreateOrModifyRuleInput: CreateOrModifyRuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
+  DeleteRuleInput: DeleteRuleInput;
+  DeleteRuleInputItem: DeleteRuleInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
@@ -1645,6 +1662,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationDeletePolicyArgs, 'input'>
+  >;
+  deleteRule?: Resolver<
+    Maybe<ResolversTypes['Boolean']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteRuleArgs, 'input'>
   >;
   deleteUser?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
