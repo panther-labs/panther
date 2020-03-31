@@ -154,7 +154,6 @@ class TestMatchedEventsBuffer(TestCase):
         message_json = json.loads(call_args['Message'])
         self.assertEqual(message_json['Records'][0]['s3']['bucket']['name'], bucket)
         self.assertEqual(message_json['Records'][0]['s3']['object']['key'], key)
-        self.assertEqual(message_json['Records'][0]['s3']['configurationId'], 'rule_id')
 
         # Assert that the buffer has been cleared
         self.assertEqual(len(buffer.data), 0)
