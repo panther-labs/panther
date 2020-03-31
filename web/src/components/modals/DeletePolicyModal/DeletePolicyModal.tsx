@@ -17,11 +17,12 @@
  */
 
 import React from 'react';
+import { useSnackbar } from 'pouncejs';
 import { PolicySummary, PolicyDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeletePolicy } from './graphql/deletePolicy.generated';
+import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeletePolicyModalProps {
   policy: PolicyDetails | PolicySummary;
@@ -29,8 +30,9 @@ export interface DeletePolicyModalProps {
 
 const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
   const { location, history } = useRouter<{ id?: string }>();
+  const { pushSnackbar } = useSnackbar();
   const policyDisplayName = policy.displayName || policy.id;
-  const mutation = useDeletePolicy({
+  const [confirm] = useDeletePolicy({
     variables: {
       input: {
         policies: [
@@ -69,21 +71,32 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
 
       cache.gc();
     },
+    onCompleted: () => {
+      pushSnackbar({
+        variant: 'success',
+        title: `Successfully deleted policy: ${policyDisplayName}`,
+      });
+    },
+    onError: () => {
+      pushSnackbar({
+        variant: 'success',
+        title: `Failed to delete policy: ${policyDisplayName}`,
+      });
+    },
   });
 
+  function onConfirm() {
+    if (location.pathname.includes(policy.id)) {
+      // if we were on the particular policy's details page or edit page --> redirect on delete
+      history.push(urls.compliance.policies.list());
+    }
+    return confirm();
+  }
   return (
-    <BaseConfirmModal
-      mutation={mutation}
+    <OptimisticConfirmModal
       title={`Delete ${policyDisplayName}`}
       subtitle={`Are you sure you want to delete ${policyDisplayName}?`}
-      onSuccessMsg={`Successfully deleted ${policyDisplayName}`}
-      onErrorMsg={`Failed to delete ${policyDisplayName}`}
-      onSuccess={() => {
-        if (location.pathname.includes(policy.id)) {
-          // if we were on the particular policy's details page or edit page --> redirect on delete
-          history.push(urls.compliance.policies.list());
-        }
-      }}
+      onConfirm={onConfirm}
     />
   );
 };
