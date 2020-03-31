@@ -2,7 +2,7 @@
   "files": [
     "README.md"
   ],
-  "skipCi": false,
+  "skipCi": true,
   "badgeTemplate": "<a href=\"#contributors\"><img src=\"https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=svg\" alt=\"All Contributors\"/></a>",
   "imageSize": 100,
   "commit": false,
@@ -171,12 +171,20 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "glerb",
+      "name": "Patrick Hagan",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/56281590?v=4",
+      "profile": "https://github.com/glerb",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
   "projectName": "panther",
   "projectOwner": "panther-labs",
   "repoType": "github",
-  "repoHost": "https://github.com",
-  "skipCi": true
+  "repoHost": "https://github.com"
 }
