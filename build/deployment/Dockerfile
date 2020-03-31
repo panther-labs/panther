@@ -35,6 +35,7 @@ RUN mkdir code
 
 WORKDIR code
 
+ADD magefile.go .
 ADD tools/mage/setup_namespace.go tools/mage/setup_namespace.go
 
 RUN mage setup:swagger
