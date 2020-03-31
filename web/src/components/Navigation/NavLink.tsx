@@ -20,7 +20,7 @@ import { Flex, Icon, IconButtonProps, IconProps, MenuItem } from 'pouncejs';
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { Link } from 'react-router-dom';
-import { css } from '@emotion/core';
+import { css } from '@emotion/react';
 
 type NavLinkProps = Omit<IconButtonProps, 'variant'> & {
   icon: IconProps['type'];
