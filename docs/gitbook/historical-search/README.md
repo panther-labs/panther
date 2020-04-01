@@ -1,8 +1,8 @@
 # Background
 
-After Panther has loaded and processed log data via [Log Processing](../log-analysis/log-processing/), you can freely search using SQL with [AWS Athena](https://aws.amazon.com/athena/).
+Panther's Historical Search allows for freely searching collected and normalized log data using SQL via [AWS Athena](https://aws.amazon.com/athena/).
 
-This is helpful for investigations, baselining behaviors, and advanced analytics on log events that operate on the context of days, weeks, or months of data.
+This is helpful for investigations, baselining behaviors, writing rules, and advanced analytics on log events that operate on the context of days, weeks, or months of data.
 
 Panther performs initial data normalization and processing to store the log data in a standard and efficient way in S3.
 
@@ -14,9 +14,9 @@ The following databases are available to search from:
 
 |         Database         | Description                                                                               |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
-|  `panther_logs`   | All data sent via Log Analysis, organized by log type   |
-|       `panther_rule_matches`       | Events for all triggered alerts, organized by log type         |
-|      `panther_views`      | Standardized fields across all logs and rule matches                   |
+| `panther_logs`           | All data sent via Log Analysis, organized by log type   |
+| `panther_rule_matches`   | Events for all triggered alerts, organized by log type         |
+| `panther_views`          | Standardized fields across all logs and rule matches                   |
 
 ## Accessing Data with Athena
 

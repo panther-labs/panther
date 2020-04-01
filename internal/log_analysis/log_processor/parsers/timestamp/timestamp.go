@@ -19,6 +19,7 @@ package timestamp
  */
 
 import (
+	"math"
 	"strconv"
 	"time"
 )
@@ -124,4 +125,24 @@ func (ts *FluentdTimestamp) UnmarshalJSON(jsonBytes []byte) (err error) {
 	}
 	*ts = (FluentdTimestamp)(t)
 	return
+}
+
+// UnixFloat for JSON timestamps that are in unix seconds + fractions of a second
+type UnixFloat time.Time
+
+func (ts *UnixFloat) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+func (ts *UnixFloat) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
+}
+func (ts *UnixFloat) UnmarshalJSON(jsonBytes []byte) (err error) {
+	f, err := strconv.ParseFloat(string(jsonBytes), 64)
+	if err != nil {
+		return err
+	}
+	intPart, fracPart := math.Modf(f)
+	t := time.Unix(int64(intPart), int64(fracPart*1e9)).UTC()
+	*ts = (UnixFloat)(t)
+	return nil
 }

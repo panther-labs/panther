@@ -118,6 +118,7 @@ class TestMatchedEventsBuffer(TestCase):
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)
 
         _, call_args = S3_MOCK.put_object.call_args
+        bucket = call_args['Bucket']
         # Verify key format
         key = call_args['Key']
         pattern = re.compile("^rules/log_type/year=\\d{4}/month=\\d{2}/day=\\d{2}/hour=\\d{2}/.*json.gz$")
@@ -148,6 +149,11 @@ class TestMatchedEventsBuffer(TestCase):
                 }
             }
         )
+
+        _, call_args = SNS_MOCK.publish.call_args
+        message_json = json.loads(call_args['Message'])
+        self.assertEqual(message_json['Records'][0]['s3']['bucket']['name'], bucket)
+        self.assertEqual(message_json['Records'][0]['s3']['object']['key'], key)
 
         # Assert that the buffer has been cleared
         self.assertEqual(len(buffer.data), 0)

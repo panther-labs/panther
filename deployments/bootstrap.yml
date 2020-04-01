@@ -36,6 +36,9 @@ Parameters:
     Description: The ARN of the TLS certificate that is going to be used by the ALB listener
 
   # Optional
+  LogSubscriptionPrincipals:
+    Type: CommaDelimitedList
+    Description: The list of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
   EnableS3AccessLogs:
     Type: String
     Description: Enable S3 access logging for all Panther buckets.
@@ -115,6 +118,7 @@ Mappings:
       ARN: arn:aws:iam::037604701340:root
 
 Conditions:
+  ConfigureLogSubscriptions: !Not [!Equals [!Select [0, !Ref LogSubscriptionPrincipals], '']]
   EnableAccessLogs: !Equals [!Ref EnableS3AccessLogs, true]
   ExternalAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, '']]
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
@@ -299,6 +303,37 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
+  ProcessedDataPolicy: # read access on processed data bucket for log subscriptions
+    Condition: ConfigureLogSubscriptions
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ProcessedData
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ReadBucket
+            Effect: Allow
+            Principal:
+              AWS: !Ref LogSubscriptionPrincipals
+            Action: s3:ListBucket
+            Resource: !Sub arn:aws:s3:::${ProcessedData}
+          - Sid: ReadLogData
+            Effect: Allow
+            Principal:
+              AWS: !Ref LogSubscriptionPrincipals
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource: !Sub arn:aws:s3:::${ProcessedData}/logs/*
+          - Sid: ReadRuleData
+            Effect: Allow
+            Principal:
+              AWS: !Ref LogSubscriptionPrincipals
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource: !Sub arn:aws:s3:::${ProcessedData}/rules/*
+
   AthenaResults: # athena query results
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -353,8 +388,11 @@ Resources:
                 !If [UseCustomDomain, !Ref CustomDomain, !GetAtt PublicLoadBalancer.DNSName]
       AutoVerifiedAttributes:
         - email
+      EnabledMfas:
+        - SOFTWARE_TOKEN_MFA
       LambdaConfig:
         CustomMessage: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
+      MfaConfiguration: 'ON' # quotes required here, otherwise CFN interprets it as true because ???
       Policies:
         PasswordPolicy:
           MinimumLength: 12
@@ -375,6 +413,8 @@ Resources:
           Name: family_name
       UsernameAttributes:
         - email
+      UserPoolAddOns:
+        AdvancedSecurityMode: ENFORCED
       UserPoolName: panther-users
 
   AppClient:
@@ -725,6 +765,22 @@ Resources:
       # This topic triggers the log analysis flow
       # </cfndoc>
       KmsMasterKeyId: !Ref QueueEncryptionKey
+
+  ProcessedDataNotificationsTopicPolicy: # allow SNS subscriptions for log subscriptions
+    Condition: ConfigureLogSubscriptions
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref ProcessedDataNotifications
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ReadTopic
+            Effect: Allow
+            Principal:
+              AWS: !Ref LogSubscriptionPrincipals
+            Action: sns:Subscribe
+            Resource: !Ref ProcessedDataNotifications
 
 Outputs:
   # S3

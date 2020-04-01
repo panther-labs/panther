@@ -1,3 +1,3 @@
 mutation DeletePolicy($input: DeletePolicyInput!) {
-    deletePolicy(input: $input)
+  deletePolicy(input: $input)
 }

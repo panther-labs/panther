@@ -50,18 +50,3 @@ class OutputGroupingKey:
     def table_name(self) -> str:
         """ Output the name of the Glue table name for this log type"""
         return self.log_type.lower().replace('.', '_')
-
-
-# pylint: disable=invalid-name
-@dataclass
-class OutputNotification:
-    """The notification that will be send to the SNS topic when we create a new object in S3.
-
-    This class will be serialized to JSON, thus following camelCase rather than snake_case
-    """
-    s3Bucket: str
-    s3ObjectKey: str
-    events: int
-    bytes: int
-    id: str
-    type: str = 'RuleMatches'
