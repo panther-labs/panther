@@ -79,6 +79,8 @@ var (
 	nrows = 10
 	row   = `{"col1": 1}`
 	rows  []string
+
+	maxRowsPerResult int64 = 1 // force pagination to test
 )
 
 func TestMain(m *testing.M) {
@@ -157,35 +159,26 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		SQL:          `select * from ` + testTable,
 	})
 	require.NoError(t, err)
-	var results []*athena.Row
-	err = jsoniter.UnmarshalFromString(doQueryOutput.JSONData, &results)
-	require.NoError(t, err)
-	require.Equal(t, len(rows)+1, len(results))                // plus 1 because of header
-	require.Equal(t, "col1", *results[0].Data[0].VarCharValue) // header
-	require.Equal(t, "1", *results[1].Data[0].VarCharValue)    // header first row
+	checkQueryResults(t, true, len(rows)+1, doQueryOutput.JSONData)
 
 	//  -------- StartQuery
 
 	startQueryOutput, err := StartQuery(awsSession, &models.StartQueryInput{
 		DatabaseName: testDb,
 		SQL:          `select * from ` + testTable,
+		MaxResults:   &maxRowsPerResult,
 	})
 	require.NoError(t, err)
 	if startQueryOutput.Status == querySucceeded {
 		t.Log("StartQuery succeeded")
-		var results []*athena.Row
-		err = jsoniter.UnmarshalFromString(startQueryOutput.JSONData, &results)
-		require.NoError(t, err)
-		require.Equal(t, len(rows)+1, len(results))                // plus 1 because of header
-		require.Equal(t, "col1", *results[0].Data[0].VarCharValue) // header
-		require.Equal(t, "1", *results[1].Data[0].VarCharValue)    // header first row
+		checkQueryResults(t, true, int(maxRowsPerResult), startQueryOutput.JSONData)
 	}
 
 	//  -------- QueryStatus
 
 	var queryStatus string
 	for {
-		t.Log("QueryStatus polling for query status")
+		t.Log("QueryStatus polling query")
 		time.Sleep(time.Second * 10)
 		statusQueryOutput, err := GetQueryStatus(awsSession, &models.GetQueryStatusInput{
 			QueryID: startQueryOutput.QueryID,
@@ -201,19 +194,44 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	//  -------- GetQueryResults
 
 	getResultOutput, err := GetQueryResults(awsSession, &models.GetQueryResultsInput{
-		QueryID: startQueryOutput.QueryID,
+		QueryID:    startQueryOutput.QueryID,
+		MaxResults: &maxRowsPerResult,
 	})
 	require.NoError(t, err)
 	if getResultOutput.Status == querySucceeded {
 		t.Log("GetQueryResults succeeded")
-		var results []*athena.Row
-		err = jsoniter.UnmarshalFromString(getResultOutput.JSONData, &results)
-		require.NoError(t, err)
-		require.Equal(t, len(rows)+1, len(results))                // plus 1 because of header
-		require.Equal(t, "col1", *results[0].Data[0].VarCharValue) // header
-		require.Equal(t, "1", *results[1].Data[0].VarCharValue)    // header first row
+		checkQueryResults(t, true, int(maxRowsPerResult), getResultOutput.JSONData)
+
+		t.Log("Test pagination")
+		for getResultOutput.PaginationToken != "" { // when done this is set to empty
+			getResultOutput, err = GetQueryResults(awsSession, &models.GetQueryResultsInput{
+				PaginationToken: getResultOutput.PaginationToken,
+				QueryID:         startQueryOutput.QueryID,
+				MaxResults:      &maxRowsPerResult,
+			})
+			require.NoError(t, err)
+			if getResultOutput.NumRows > 0 { // not finished paging
+				checkQueryResults(t, false, int(maxRowsPerResult), getResultOutput.JSONData)
+			}
+		}
 	} else {
 		t.Log("GetQueryResults failed")
+	}
+}
+
+func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, jsonData string) {
+	var results []*athena.Row
+	err := jsoniter.UnmarshalFromString(jsonData, &results)
+	require.NoError(t, err)
+	require.Equal(t, expectedRowCount, len(results))
+	i := 0
+	nResults := len(results)
+	if hasHeader {
+		require.Equal(t, "col1", *results[i].Data[0].VarCharValue) // header
+		i++
+	}
+	for ; i < nResults; i++ {
+		require.Equal(t, "1", *results[i].Data[0].VarCharValue)
 	}
 }
 

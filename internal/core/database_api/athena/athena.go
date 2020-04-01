@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/pkg/awsathena"
@@ -40,10 +41,16 @@ const (
 	queryRunning   = "running"
 )
 
+var inputValidator = validator.New()
+
 func DoQuery(sess *session.Session, input *models.DoQueryInput) (*models.DoQueryOutput, error) {
 	output := &models.DoQueryOutput{}
 
 	var err error
+	if err = inputValidator.Struct(input); err != nil {
+		output.ErrorMessage = "DoQuery invalid input: " + err.Error() // simple error message for lambda caller
+		return output, errors.WithStack(err)
+	}
 	defer func() {
 		if err != nil {
 			output.Status = queryFailed
@@ -73,6 +80,10 @@ func StartQuery(sess *session.Session, input *models.StartQueryInput) (*models.S
 	output := &models.StartQueryOutput{}
 
 	var err error
+	if err = inputValidator.Struct(input); err != nil {
+		output.ErrorMessage = "StartQuery invalid input: " + err.Error() // simple error message for lambda caller
+		return output, errors.WithStack(err)
+	}
 	defer func() {
 		if err != nil {
 			output.Status = queryFailed
@@ -97,7 +108,7 @@ func StartQuery(sess *session.Session, input *models.StartQueryInput) (*models.S
 	output.Status = getQueryStatus(executionStatus)
 	if done { // fill results
 		if output.Status == querySucceeded {
-			err = getQueryResults(query.Client, executionStatus, &output.GetQueryResultsOutput)
+			err = getQueryResults(query.Client, executionStatus, &output.GetQueryResultsOutput, nil, input.MaxResults)
 			if err != nil {
 				return output, err
 			}
@@ -110,6 +121,10 @@ func GetQueryStatus(sess *session.Session, input *models.GetQueryStatusInput) (*
 	output := &models.GetQueryStatusOutput{}
 
 	var err error
+	if err = inputValidator.Struct(input); err != nil {
+		output.ErrorMessage = "GetQueryStatus invalid input: " + err.Error() // simple error message for lambda caller
+		return output, errors.WithStack(err)
+	}
 	defer func() {
 		if err != nil {
 			output.ErrorMessage = "GetQueryStatus failed" // simple error message for lambda caller
@@ -128,6 +143,10 @@ func GetQueryResults(sess *session.Session, input *models.GetQueryResultsInput) 
 	output := &models.GetQueryResultsOutput{}
 
 	var err error
+	if err = inputValidator.Struct(input); err != nil {
+		output.ErrorMessage = "GetQueryResults  invalid input: " + err.Error() // simple error message for lambda caller
+		return output, errors.WithStack(err)
+	}
 	defer func() {
 		if err != nil {
 			output.ErrorMessage = "GetQueryResults failed" // simple error message for lambda caller
@@ -143,7 +162,11 @@ func GetQueryResults(sess *session.Session, input *models.GetQueryResultsInput) 
 	output.Status = getQueryStatus(executionStatus)
 
 	if output.Status == querySucceeded {
-		err = getQueryResults(client, executionStatus, output)
+		var nextToken *string
+		if input.PaginationToken != "" { // paging thru results
+			nextToken = &input.PaginationToken
+		}
+		err = getQueryResults(client, executionStatus, output, nextToken, input.MaxResults)
 		if err != nil {
 			return output, err
 		}
@@ -162,17 +185,23 @@ func getQueryStatus(executionStatus *athena.GetQueryExecutionOutput) string {
 		athena.QueryExecutionStateFailed,
 		athena.QueryExecutionStateCancelled:
 		return queryFailed
-	default:
+	case
+		// still going
+		athena.QueryExecutionStateRunning,
+		athena.QueryExecutionStateQueued:
 		return queryRunning
+	default:
+		panic("unknown athena status: " + *executionStatus.QueryExecution.Status.State)
 	}
 }
 
-func getQueryResults(client athenaiface.AthenaAPI, executionStatus *athena.GetQueryExecutionOutput, output *models.GetQueryResultsOutput) (err error) {
-	queryResult, err := awsathena.Results(client, executionStatus)
+func getQueryResults(client athenaiface.AthenaAPI, executionStatus *athena.GetQueryExecutionOutput,
+	output *models.GetQueryResultsOutput, nextToken *string, maxResults *int64) (err error) {
+
+	queryResult, err := awsathena.Results(client, executionStatus, nextToken, maxResults)
 	if err != nil {
 		return err
 	}
-
 	err = serializeResults(queryResult, output)
 	if err != nil {
 		return err
@@ -186,6 +215,9 @@ func serializeResults(queryResult *athena.GetQueryResultsOutput, output *models.
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	output.PaginationToken = aws.StringValue(queryResult.NextToken)
+	output.NumRows = len(queryResult.ResultSet.Rows)
+	if output.NumRows > 0 { // could be more!
+		output.PaginationToken = aws.StringValue(queryResult.NextToken)
+	}
 	return nil
 }
