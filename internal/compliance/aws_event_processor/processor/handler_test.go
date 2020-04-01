@@ -37,6 +37,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
@@ -167,7 +168,34 @@ var (
 )
 
 // Invalid sqs message is dropped and logged
-func TestHandleInvalid(t *testing.T) {
+func TestHandlelInvalid(t *testing.T) {
+	logs := mockLogger()
+	resetAccountCache()
+
+	mockLambda := &mockLambdaClient{}
+	mockLambda.
+		On("Invoke", getTestInvokeInput()).
+		Return(getTestInvokeOutput(exampleIntegrations, 200), nil)
+	lambdaClient = mockLambda
+
+	// this will be skipped by all parsers
+	batch := &events.SQSEvent{
+		Records: []events.SQSMessage{
+			{
+				Body: `{this is " not even valid JSON:`,
+			},
+		},
+	}
+
+	require.Nil(t, Handle(testContext, batch))
+	t.Log(logs.AllUntimed())
+	require.Equal(t, 1, len(logs.FilterField(zap.String("body", `{this is " not even valid JSON:`)).AllUntimed()))
+	assert.Equal(t, logs.FilterField(zap.String("body", `{this is " not even valid JSON:`)).AllUntimed()[0].ContextMap()["error"].(string),
+		"unexpected SNS message")
+}
+
+// Invalid sqs message routed, parsed and fails
+func TestHandleLogCloudTailInvalid(t *testing.T) {
 	resetAccountCache()
 
 	mockLambda := &mockLambdaClient{}
@@ -178,7 +206,15 @@ func TestHandleInvalid(t *testing.T) {
 
 	batch := &events.SQSEvent{
 		Records: []events.SQSMessage{
-			{Body: `{this is " not even valid JSON:`},
+			{
+				MessageAttributes: map[string]events.SQSMessageAttribute{
+					"id": {
+						DataType:    "String",
+						StringValue: aws.String("AWS.CloudTrail"),
+					},
+				},
+				Body: `{this is " not even valid JSON:`,
+			},
 		},
 	}
 	err := Handle(testContext, batch)

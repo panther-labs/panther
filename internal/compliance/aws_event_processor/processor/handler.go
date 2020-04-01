@@ -72,6 +72,17 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 	//
 	// Since we don't want one bad notification to lose us the rest, we log failures and continue.
 	for _, record := range batch.Records {
+		// Check for a notification from the log processor that there are newly processed CloudTrail logs
+		if id, found := record.MessageAttributes["id"]; found {
+			if id.StringValue != nil && *id.StringValue == "AWS.CloudTrail" {
+				if isLogProcessorCloudTrail, err := handleLogProcessorCloudTrail(record.Body, changes); err != nil {
+					return err
+				} else if isLogProcessorCloudTrail {
+					continue
+				}
+			}
+		}
+
 		// Check for SNS raw message delivery of CloudTrail
 		detail := gjson.Get(record.Body, "detail")
 		if detail.Exists() {
@@ -80,13 +91,6 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 			if err != nil {
 				zap.L().Error("error processing raw CloudTrail", zap.Error(err))
 			}
-			continue
-		}
-
-		// Check for a notification from the log processor that there are newly processed CloudTrail logs
-		if isLogProcessorCloudTrail, err := handleLogProcessorCloudTrail(record.Body, changes); err != nil {
-			return err
-		} else if isLogProcessorCloudTrail {
 			continue
 		}
 
