@@ -2,7 +2,7 @@
 
 ## Overview
 
-Panther's Log Analysis is designed for analyzing high-volumes of events in real-time such as:
+Panther's Log Analysis is designed for analyzing high volumes of events in real-time such as:
 
 * Login/Logout
 * API calls
