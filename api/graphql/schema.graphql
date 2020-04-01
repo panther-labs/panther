@@ -18,6 +18,7 @@ type Mutation {
   deleteComplianceIntegration(id: ID!): Boolean
   deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
+  deleteRule(input: DeleteRuleInput!): Boolean
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
@@ -169,6 +170,14 @@ input CreateOrModifyRuleInput {
 input GetRuleInput {
   ruleId: ID!
   versionId: ID
+}
+
+input DeleteRuleInput {
+  rules: [DeleteRuleInputItem!]!
+}
+
+input DeleteRuleInputItem {
+  id: ID!
 }
 
 type RuleSummary {

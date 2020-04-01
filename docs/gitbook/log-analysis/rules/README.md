@@ -186,7 +186,7 @@ The `panther_analysis_tool` is available on pip!
 Simply install with:
 
 ```bash
-pip3 install panther_analysis_tool
+pip3 install panther-analysis-tool
 ```
 
 ### Running Tests
