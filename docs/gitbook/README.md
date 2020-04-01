@@ -1,12 +1,10 @@
 # Home
 
-*Panther detects threats with log data, improves cloud security posture, and powers investigations with a robust data warehouse.*
-
-## Architecture
+Panther detects threats with log data, improves cloud security posture, and powers investigations with a robust data warehouse.
 
 ![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
 
-The three main components in Panther are:
+The three primary components are:
 
 * **Log Analysis** to centralize, parse, and analyze log data
 * **Cloud Security** to detect misconfigurations and improve cloud security posture in AWS accounts
