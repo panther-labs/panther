@@ -44,6 +44,7 @@ func (scr *StreamingCSVReader) Read(b []byte) (n int, err error) {
 		scr.logLine = scr.logLine[n:] // the rest for next call
 		return n, nil
 	}
+	// Full copy has been performed
 	scr.logLine = ""
 	return n, io.EOF
 }
