@@ -32,7 +32,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/fatih/color"
@@ -213,21 +212,6 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 		}
 
 		outputs = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
-
-		// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
-		userPoolID := outputs["UserPoolId"]
-		logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
-		_, err := cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
-			MfaConfiguration: aws.String("ON"),
-			SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
-				Enabled: aws.Bool(true),
-			},
-			UserPoolId: &userPoolID,
-		})
-		if err != nil {
-			logger.Fatalf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
-		}
-
 		wg.Done()
 	}()
 
