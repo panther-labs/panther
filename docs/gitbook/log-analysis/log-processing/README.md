@@ -2,7 +2,7 @@
 
 ## Overview
 
-A critical aspect of security monitoring is collecting and analyzing log data for suspicious activity. Panther directly enables this by monitoring events in real-time such as:
+Panther's Log Analysis is designed for analyzing high-volumes of events in real-time such as:
 
 * Login/Logout
 * API calls
@@ -11,7 +11,7 @@ A critical aspect of security monitoring is collecting and analyzing log data fo
 * System changes
 * Output from IDS sensors
 
- In this guide, we'll walk through how to configure Panther to collect data from your S3 buckets to be analyzed by Panther rules.
+ In this guide, we'll walk through how to configure Panther to collect and analyze data with Python rules.
 
 ## How It Works
 
