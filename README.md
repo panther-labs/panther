@@ -163,7 +163,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://www.twitter.com/jack_naglieri"><img src="https://avatars1.githubusercontent.com/u/11466941?v=4" width="100px;" alt=""/><br /><sub><b>Jack Naglieri</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=jacknagz" title="Code">💻</a> <a href="https://github.com/panther-labs/panther/commits?author=jacknagz" title="Documentation">📖</a> <a href="#security-jacknagz" title="Security">🛡️</a> <a href="#content-jacknagz" title="Content">🖋</a> <a href="#ideas-jacknagz" title="Ideas, Planning, & Feedback">🤔</a> <a href="#projectManagement-jacknagz" title="Project Management">📆</a></td>
     <td align="center"><a href="http://www.improbable.io"><img src="https://avatars3.githubusercontent.com/u/1226100?v=4" width="100px;" alt=""/><br /><sub><b>Gavin</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=gavinelder" title="Code">💻</a> <a href="#security-gavinelder" title="Security">🛡️</a> <a href="#infra-gavinelder" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#ideas-gavinelder" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/Ryxias"><img src="https://avatars2.githubusercontent.com/u/13323701?v=4" width="100px;" alt=""/><br /><sub><b>Ryxias</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=Ryxias" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/sardev08"><img src="https://avatars0.githubusercontent.com/u/53259827?v=4" width="100px;" alt=""/><br /><sub><b>Sargon Sada</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=sardev08" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/sardev08"><img src="https://avatars0.githubusercontent.com/u/53259827?v=4" width="100px;" alt=""/><br /><sub><b>Sargon Sada</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=sardev08" title="Documentation">📖</a> <a href="https://github.com/panther-labs/panther/commits?author=sardev08" title="Code">💻</a></td>
   </tr>
   <tr>
     <td align="center"><a href="http://sergeax.ru/"><img src="https://avatars2.githubusercontent.com/u/3264530?v=4" width="100px;" alt=""/><br /><sub><b>Sergey Aksenov</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=SergeAx" title="Documentation">📖</a></td>
@@ -173,7 +173,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
-
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
