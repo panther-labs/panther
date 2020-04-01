@@ -32,6 +32,7 @@
   * [Osquery](log-analysis/log-processing/supported-logs/Osquery.md)
   * [OSSEC](log-analysis/log-processing/supported-logs/OSSEC.md)
   * [Syslog](log-analysis/log-processing/supported-logs/Syslog.md)
+  * [Zeek](log-analysis/log-processing/supported-logs/Zeek.md)
 * [Rules](log-analysis/rules/README.md)
   * [AWS CIS Runbooks]()
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)
