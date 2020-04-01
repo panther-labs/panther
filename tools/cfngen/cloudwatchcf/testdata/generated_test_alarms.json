@@ -99,7 +99,7 @@
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
         "AlarmName": "PantherAlarm-AppSyncHighLatency-panther-graphql-api",
-        "AlarmDescription": "AppSync panther-graphql-api is experience high latency. See: https://docs.runpanther.io/operations/runbooks#panther-graphql-api",
+        "AlarmDescription": "AppSync panther-graphql-api is experiencing high latency. See: https://docs.runpanther.io/operations/runbooks#panther-graphql-api",
         "AlarmActions": [
           {
             "Ref": "AlarmTopicArn"
