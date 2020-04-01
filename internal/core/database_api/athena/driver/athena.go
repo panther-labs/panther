@@ -1,15 +1,13 @@
-package athena
+package driver
 
 import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
-	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/pkg/awsathena"
@@ -41,16 +39,10 @@ const (
 	queryRunning   = "running"
 )
 
-var inputValidator = validator.New()
-
-func DoQuery(sess *session.Session, input *models.DoQueryInput) (*models.DoQueryOutput, error) {
+func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput) (*models.DoQueryOutput, error) {
 	output := &models.DoQueryOutput{}
 
 	var err error
-	if err = inputValidator.Struct(input); err != nil {
-		output.ErrorMessage = "DoQuery invalid input: " + err.Error() // simple error message for lambda caller
-		return output, errors.WithStack(err)
-	}
 	defer func() {
 		if err != nil {
 			output.Status = queryFailed
@@ -58,7 +50,7 @@ func DoQuery(sess *session.Session, input *models.DoQueryInput) (*models.DoQuery
 		}
 	}()
 
-	query := awsathena.NewAthenaQuery(sess, input.DatabaseName, input.SQL, nil)
+	query := awsathena.NewAthenaQuery(client, input.DatabaseName, input.SQL, nil)
 	err = query.Run()
 	if err != nil {
 		return output, err
@@ -76,14 +68,10 @@ func DoQuery(sess *session.Session, input *models.DoQueryInput) (*models.DoQuery
 	return output, nil
 }
 
-func StartQuery(sess *session.Session, input *models.StartQueryInput) (*models.StartQueryOutput, error) {
+func StartQuery(client athenaiface.AthenaAPI, input *models.StartQueryInput) (*models.StartQueryOutput, error) {
 	output := &models.StartQueryOutput{}
 
 	var err error
-	if err = inputValidator.Struct(input); err != nil {
-		output.ErrorMessage = "StartQuery invalid input: " + err.Error() // simple error message for lambda caller
-		return output, errors.WithStack(err)
-	}
 	defer func() {
 		if err != nil {
 			output.Status = queryFailed
@@ -91,7 +79,7 @@ func StartQuery(sess *session.Session, input *models.StartQueryInput) (*models.S
 		}
 	}()
 
-	query := awsathena.NewAthenaQuery(sess, input.DatabaseName, input.SQL, nil)
+	query := awsathena.NewAthenaQuery(client, input.DatabaseName, input.SQL, nil)
 	err = query.Run()
 	if err != nil {
 		return output, err
@@ -117,21 +105,17 @@ func StartQuery(sess *session.Session, input *models.StartQueryInput) (*models.S
 	return output, nil
 }
 
-func GetQueryStatus(sess *session.Session, input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
+func GetQueryStatus(client athenaiface.AthenaAPI, input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
 	output := &models.GetQueryStatusOutput{}
 
 	var err error
-	if err = inputValidator.Struct(input); err != nil {
-		output.ErrorMessage = "GetQueryStatus invalid input: " + err.Error() // simple error message for lambda caller
-		return output, errors.WithStack(err)
-	}
 	defer func() {
 		if err != nil {
 			output.ErrorMessage = "GetQueryStatus failed" // simple error message for lambda caller
 		}
 	}()
 
-	executionStatus, err := awsathena.Status(athena.New(sess), input.QueryID)
+	executionStatus, err := awsathena.Status(client, input.QueryID)
 	if err != nil {
 		return output, err
 	}
@@ -139,21 +123,15 @@ func GetQueryStatus(sess *session.Session, input *models.GetQueryStatusInput) (*
 	return output, nil
 }
 
-func GetQueryResults(sess *session.Session, input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
+func GetQueryResults(client athenaiface.AthenaAPI, input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
 	output := &models.GetQueryResultsOutput{}
 
 	var err error
-	if err = inputValidator.Struct(input); err != nil {
-		output.ErrorMessage = "GetQueryResults  invalid input: " + err.Error() // simple error message for lambda caller
-		return output, errors.WithStack(err)
-	}
 	defer func() {
 		if err != nil {
 			output.ErrorMessage = "GetQueryResults failed" // simple error message for lambda caller
 		}
 	}()
-
-	client := athena.New(sess)
 
 	executionStatus, err := awsathena.Status(client, input.QueryID)
 	if err != nil {

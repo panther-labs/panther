@@ -93,14 +93,20 @@ This ddb table holds the policies applied by the `panther-rules-engine` lambda a
  * The Panther user interface could be impacted.
 
 ## panther-analysis-api
+The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+
+## panther-analysis-api
 This lambda implements the analysis API which is responsible for
  policies/rules from being created, updated, and deleted.
 
  Failure Impact
  * Failure of this lambda will prevent policies/rules from being created, updated, deleted. Additionally, policies and rules will stop being evaluated by the policy/rules engines.
 
-## panther-analysis-api
-The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+## panther-athena-api
+The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
+
+ Failure Impact
+ * Failure of this lambda will the Panther UI from doing Athena queries.
 
 ## panther-auditlog-processing
 The panther-auditlog-processing topic is used to send s3 notifications to log processing
@@ -265,13 +271,13 @@ This lambda executes the user-defined policies against infrastructure events.
 This topic triggers the log analysis flow
 
 ## panther-remediation-api
+The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
+
+## panther-remediation-api
 The `panther-remediation-api` lambda triggers AWS remediations.
 
  Failure Impact
  * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
-
-## panther-remediation-api
-The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
 
 ## panther-remediation-processor
 The `panther-remediation-processor` lambda processes queued remediations

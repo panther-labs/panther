@@ -1,4 +1,4 @@
-package athena
+package driver
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -63,6 +63,7 @@ var (
 	integrationTest bool
 	awsSession      *session.Session
 	glueClient      *glue.Glue
+	athenaClient    *athena.Athena
 	s3Client        *s3.S3
 
 	testBucket string
@@ -88,6 +89,7 @@ func TestMain(m *testing.M) {
 	if integrationTest {
 		awsSession = session.Must(session.NewSession())
 		glueClient = glue.New(awsSession)
+		athenaClient = athena.New(awsSession)
 		s3Client = s3.New(awsSession)
 		testBucket = testBucketPrefix + time.Now().Format("20060102150405")
 
@@ -154,7 +156,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 
 	// -------- DoQuery
 
-	doQueryOutput, err := DoQuery(awsSession, &models.DoQueryInput{
+	doQueryOutput, err := DoQuery(athenaClient, &models.DoQueryInput{
 		DatabaseName: testDb,
 		SQL:          `select * from ` + testTable,
 	})
@@ -163,7 +165,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 
 	//  -------- StartQuery
 
-	startQueryOutput, err := StartQuery(awsSession, &models.StartQueryInput{
+	startQueryOutput, err := StartQuery(athenaClient, &models.StartQueryInput{
 		DatabaseName: testDb,
 		SQL:          `select * from ` + testTable,
 		MaxResults:   &maxRowsPerResult,
@@ -180,7 +182,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	for {
 		t.Log("QueryStatus polling query")
 		time.Sleep(time.Second * 10)
-		statusQueryOutput, err := GetQueryStatus(awsSession, &models.GetQueryStatusInput{
+		statusQueryOutput, err := GetQueryStatus(athenaClient, &models.GetQueryStatusInput{
 			QueryID: startQueryOutput.QueryID,
 		})
 		require.NoError(t, err)
@@ -193,7 +195,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 
 	//  -------- GetQueryResults
 
-	getResultOutput, err := GetQueryResults(awsSession, &models.GetQueryResultsInput{
+	getResultOutput, err := GetQueryResults(athenaClient, &models.GetQueryResultsInput{
 		QueryID:    startQueryOutput.QueryID,
 		MaxResults: &maxRowsPerResult,
 	})
@@ -204,7 +206,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 
 		t.Log("Test pagination")
 		for getResultOutput.PaginationToken != "" { // when done this is set to empty
-			getResultOutput, err = GetQueryResults(awsSession, &models.GetQueryResultsInput{
+			getResultOutput, err = GetQueryResults(athenaClient, &models.GetQueryResultsInput{
 				PaginationToken: getResultOutput.PaginationToken,
 				QueryID:         startQueryOutput.QueryID,
 				MaxResults:      &maxRowsPerResult,

@@ -1,4 +1,4 @@
-package athena
+package driver
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.

@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,7 +44,7 @@ func TestIntegrationAthenaQuery(t *testing.T) {
 		t.Skip()
 	}
 	var err error
-	query := NewAthenaQuery(awsSession, "panther_tables", "select 1 as c", nil)
+	query := NewAthenaQuery(athena.New(awsSession), "panther_tables", "select 1 as c", nil)
 	err = query.Run()
 	require.NoError(t, err)
 	err = query.Wait()

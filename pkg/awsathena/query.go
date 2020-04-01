@@ -19,7 +19,6 @@ package awsathena
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/pkg/errors"
@@ -39,9 +38,9 @@ type AthenaQuery struct {
 	StartExecutionOutput *athena.StartQueryExecutionOutput
 }
 
-func NewAthenaQuery(sess *session.Session, database, sql string, s3Path *string) *AthenaQuery {
+func NewAthenaQuery(client athenaiface.AthenaAPI, database, sql string, s3Path *string) *AthenaQuery {
 	return &AthenaQuery{
-		Client:        athena.New(sess),
+		Client:        client,
 		SQL:           sql,
 		S3ResultsPath: s3Path,
 		Database:      database,

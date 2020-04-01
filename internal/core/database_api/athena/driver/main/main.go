@@ -18,6 +18,32 @@ package main
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-func main() {
+import (
+	"context"
 
+	"github.com/aws/aws-lambda-go/lambda"
+
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/database_api/athena/driver/api"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
+)
+
+var router *genericapi.Router
+
+func init() {
+	validator, err := models.Validator()
+	if err != nil {
+		panic(err)
+	}
+	router = genericapi.NewRouter("database", "athena", validator, api.API{})
+}
+
+func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(request)
+}
+
+func main() {
+	lambda.Start(lambdaHandler)
 }

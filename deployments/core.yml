@@ -629,3 +629,47 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-source-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ##### Athena API #####
+  AthenaApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/core/database_api/athena/driver/main
+      Description: Executes Athena and Glue queries
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+      FunctionName: panther-athena-api
+      # <cfndoc>
+      # The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
+      #
+      # Failure Impact
+      # * Failure of this lambda will the Panther UI from doing Athena queries.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 900 # we want this as long as possible
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: AthenaPermissions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - athena:*
+              Resource: '*'
+        - Id: GluePermissions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:*
+              Resource: '*'
+
+    AthenaApiLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/panther-athena-api
+        RetentionInDays: !Ref CloudWatchLogRetentionDays
