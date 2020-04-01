@@ -75,7 +75,7 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
     },
     onError: () => {
       pushSnackbar({
-        variant: 'success',
+        variant: 'error',
         title: `Failed to delete rule: ${ruleDisplayName}`,
       });
     },

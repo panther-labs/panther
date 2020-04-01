@@ -17,17 +17,19 @@
  */
 
 import React from 'react';
-import { Text } from 'pouncejs';
+import { Text, useSnackbar } from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
-import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeleteComplianceSource } from './graphql/deleteComplianceSource.generated';
+import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteComplianceSourceModalProps {
   source: ComplianceIntegration;
 }
 
 const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source }) => {
-  const mutation = useDeleteComplianceSource({
+  const sourceDisplayName = source.integrationLabel;
+  const { pushSnackbar } = useSnackbar();
+  const [deleteComplianceSource] = useDeleteComplianceSource({
     variables: {
       id: source.integrationId,
     },
@@ -39,13 +41,24 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source 
           return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
         },
       });
+      cache.gc();
+    },
+    onCompleted: () => {
+      pushSnackbar({
+        variant: 'success',
+        title: `Successfully deleted Compliance source: ${sourceDisplayName}`,
+      });
+    },
+    onError: () => {
+      pushSnackbar({
+        variant: 'error',
+        title: `Failed to delete Compliance source:: ${sourceDisplayName}`,
+      });
     },
   });
 
-  const sourceDisplayName = source.integrationLabel;
   return (
-    <BaseConfirmModal
-      mutation={mutation}
+    <OptimisticConfirmModal
       title={`Delete ${sourceDisplayName}`}
       subtitle={[
         <Text size="large" key={0}>
@@ -57,8 +70,7 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source 
           <b>{source.awsAccountId}</b>
         </Text>,
       ]}
-      onSuccessMsg={`Successfully deleted ${sourceDisplayName}`}
-      onErrorMsg={`Failed to delete ${sourceDisplayName}`}
+      onConfirm={deleteComplianceSource}
     />
   );
 };

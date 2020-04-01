@@ -79,7 +79,7 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
     },
     onError: () => {
       pushSnackbar({
-        variant: 'success',
+        variant: 'error',
         title: `Failed to delete policy: ${policyDisplayName}`,
       });
     },
