@@ -7,7 +7,7 @@ Panther detects threats with log data, improves cloud security posture, and powe
 Its main components are:
 
 * [Log Analysis](log-analysis/log-processing/README.md) for collecting, parsing, and analyzing security data
-* [Cloud Security](policies/scanning/README.md) for scanning AWS accounts to detect misconfigurations and improve cloud security posture
+* [Cloud Security](policies/scanning/README.md) identifying misconfigurations in AWS accounts and improving security posture
 * [Historical Search](historical-search/README.md) for analytics on normalized log data, generated alerts, and common indicators
 
 ## Benefits
