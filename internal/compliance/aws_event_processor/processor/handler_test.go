@@ -168,7 +168,7 @@ var (
 )
 
 // Invalid sqs message is dropped and logged
-func TestHandlelInvalid(t *testing.T) {
+func TestHandleInvalid(t *testing.T) {
 	logs := mockLogger()
 	resetAccountCache()
 
