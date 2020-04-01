@@ -1,10 +1,27 @@
 # Home
 
-## Overview
+Panther detects threats with log data, improves cloud security posture, and powers investigations with a robust data warehouse.
 
-Panther is a cloud-native platform for detecting threats, improving cloud security posture, and powering investigations.
+![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
 
-Security teams can use Panther for:
+Its main components are:
+
+* [Log Analysis](log-analysis/log-processing/README.md) for collecting, parsing, and analyzing security data
+* [Cloud Security](policies/scanning/README.md) identifying misconfigurations in AWS accounts and improving security posture
+* [Historical Search](historical-search/README.md) for analytics on normalized log data, generated alerts, and common indicators
+
+## Benefits
+
+- Built on serverless technologies for high scale at low cost
+- Python-based real-time detections
+- SQL-based historical queries
+- Low-latency alerting and remediation
+- Simple deployments using infrastructure as code
+- Secure, least-privilege, and encrypted infrastructure deployed within your AWS account
+
+## Use Cases
+
+Teams use Panther for:
 
 |         Use Case         | Description                                                                               |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
@@ -12,24 +29,6 @@ Security teams can use Panther for:
 |       Alert Triage       | Pivot across all of your security data to understand the full context of an alert         |
 |      Searching IOCs      | Quickly search for matches against IOCs using standardized data fields                    |
 | Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices in code |
-
-## Architecture
-
-![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
-
-The three main components are:
-
-* **Log Analysis** to centralize, parse, and analyze log data with Python
-* **Cloud Security** to scan AWS accounts, detect misconfigurations, and improve cloud security posture
-* **Historical Search** for analytics on collected log data and alerts
-
-The benefits of Panther include:
-
-- Flexible Python-based detections
-- Built on serverless technologies for high scale at low cost
-- Near real-time analysis for quick alerting and remediation
-- Simple deployments using infrastructure as code
-- Secure, least-privilege, and encrypted infrastructure deployed within your AWS account
 
 ## Concepts
 
@@ -43,4 +42,12 @@ The benefits of Panther include:
 
 ## Get Started!
 
-To get set up with Panther, continue to the [Quick Start](quick-start.md) on the next page.
+To get set up with Panther, continue to the [quick start](quick-start.md)!
+
+## Enterprise
+
+For teams needing 24x7 support, advanced analysis packs (PCI, MITRE ATT&CK), RBAC, and SSO, please reach out to us at `contact@runpanther.io` to learn more about Panther Enterprise.
+
+### Hosted
+
+For teams that need Panther hosted in single-tenant SaaS environment, please reach out to us at `contact@runpanther.io`.
