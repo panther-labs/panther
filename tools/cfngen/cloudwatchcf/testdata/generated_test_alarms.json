@@ -112,7 +112,7 @@
         "ComparisonOperator": "GreaterThanThreshold",
         "EvaluationPeriods": 5,
         "Period": 60,
-        "Threshold": 1000,
+        "Threshold": 2000,
         "Unit": "None",
         "Statistic": "Maximum"
       }
