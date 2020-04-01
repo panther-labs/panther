@@ -17,10 +17,11 @@
  */
 
 import React from 'react';
+import { useSnackbar } from 'pouncejs';
 import { User } from 'Generated/schema';
 import useAuth from 'Hooks/useAuth';
-import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeleteUser } from './graphql/deleteUser.generated';
+import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteUserModalProps {
   user: User;
@@ -28,11 +29,10 @@ export interface DeleteUserModalProps {
 
 const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
   const { signOut, userInfo } = useAuth();
-  // Checking if user deleted is the same as the user signed in
-  const onSuccess = () => userInfo.sub === user.id && signOut();
+  const { pushSnackbar } = useSnackbar();
 
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
-  const mutation = useDeleteUser({
+  const [deleteUser] = useDeleteUser({
     variables: {
       id: user.id,
     },
@@ -48,16 +48,27 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user }) => {
       });
       cache.gc();
     },
+    onCompleted: async () => {
+      pushSnackbar({
+        variant: 'success',
+        title: `Successfully deleted user: ${userDisplayName}`,
+      });
+      // Checking if user deleted is the same as the user signed in
+      if (userInfo.sub === user.id) await signOut();
+    },
+    onError: () => {
+      pushSnackbar({
+        variant: 'error',
+        title: `Failed to delete user: ${userDisplayName}`,
+      });
+    },
   });
 
   return (
-    <BaseConfirmModal
-      mutation={mutation}
+    <OptimisticConfirmModal
       title={`Delete ${userDisplayName}`}
       subtitle={`Are you sure you want to delete ${userDisplayName}?`}
-      onSuccessMsg={`Successfully deleted ${userDisplayName}`}
-      onErrorMsg={`Failed to delete ${userDisplayName}`}
-      onSuccess={onSuccess}
+      onConfirm={deleteUser}
     />
   );
 };
