@@ -388,8 +388,11 @@ Resources:
                 !If [UseCustomDomain, !Ref CustomDomain, !GetAtt PublicLoadBalancer.DNSName]
       AutoVerifiedAttributes:
         - email
+      EnabledMfas:
+        - SOFTWARE_TOKEN_MFA
       LambdaConfig:
         CustomMessage: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
+      MfaConfiguration: 'ON' # quotes required here, otherwise CFN interprets it as true because ???
       Policies:
         PasswordPolicy:
           MinimumLength: 12
@@ -410,6 +413,8 @@ Resources:
           Name: family_name
       UsernameAttributes:
         - email
+      UserPoolAddOns:
+        AdvancedSecurityMode: ENFORCED
       UserPoolName: panther-users
 
   AppClient:
