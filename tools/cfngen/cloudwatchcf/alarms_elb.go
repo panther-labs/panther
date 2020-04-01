@@ -57,10 +57,6 @@ func generateApplicationELBAlarms(resource map[interface{}]interface{}) (alarms 
 	alarms = append(alarms, NewApplicationELBAlarm("ELBError", "HTTPCode_ELB_4XX_Count",
 		"has elevated ELB 4XX errors", resource).SumNoUnitsThreshold(20, 60*5) /* tolerate a few  errors */)
 
-	// latency
-	alarms = append(alarms, NewApplicationELBAlarm("ELBHighLatency", "TargetResponseLatency",
-		"is experience high latency", resource).MaxSecondsThreshold(1, 60).EvaluationPeriods(5))
-
 	// unhealthy
 	alarms = append(alarms, NewApplicationELBAlarm("ELBUnhealthy", "UnHealthyHostCount",
 		"has unhealthy hosts", resource).SumNoUnitsThreshold(0, 60*5))
