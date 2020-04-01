@@ -18,7 +18,10 @@ package csvstream
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "encoding/csv"
+import (
+	"encoding/csv"
+	"io"
+)
 
 type StreamingCSVReader struct {
 	CVSReader *csv.Reader
@@ -39,14 +42,10 @@ func (scr *StreamingCSVReader) Read(b []byte) (n int, err error) {
 	n = copy(b, scr.logLine)
 	if n < len(scr.logLine) { // partial copy
 		scr.logLine = scr.logLine[n:] // the rest for next call
-	} else { // full copy
-		scr.logLine = ""
-		if n < len(b) { // terminate line if there is room
-			b[n] = '\n'
-			n++
-		}
+		return n, nil
 	}
-	return n, nil
+	scr.logLine = ""
+	return n, io.EOF
 }
 
 func (scr *StreamingCSVReader) Parse(log string) ([]string, error) {
