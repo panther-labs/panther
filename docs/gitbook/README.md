@@ -4,25 +4,24 @@ Panther detects threats with log data, improves cloud security posture, and powe
 
 ![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
 
-The three primary components are:
+Its main components are:
 
-* **Log Analysis** to centralize, parse, and analyze log data
-* **Cloud Security** to detect misconfigurations and improve cloud security posture in AWS accounts
-* **Historical Search** for analytics on collected log data and alerts
+* [Log Analysis](log-analysis/log-processing/README.md) for collecting, parsing, and analyzing security data
+* [Cloud Security](policies/scanning/README.md) for scanning AWS accounts to detect misconfigurations and improve cloud security posture
+* [Historical Search](historical-search/README.md) for analytics on normalized log data, generated alerts, and common indicators
 
 ## Benefits
 
-The benefits of Panther include:
-
-- Flexible Python3-based detections
 - Built on serverless technologies for high scale at low cost
-- Near real-time analysis for quick alerting and remediation
+- Python-based real-time detections
+- SQL-based historical queries
+- Low-latency alerting and remediation
 - Simple deployments using infrastructure as code
 - Secure, least-privilege, and encrypted infrastructure deployed within your AWS account
 
 ## Use Cases
 
-Security teams can use Panther for:
+Teams use Panther for:
 
 |         Use Case         | Description                                                                               |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
@@ -43,4 +42,12 @@ Security teams can use Panther for:
 
 ## Get Started!
 
-To get set up with Panther, continue to the [Quick Start](quick-start.md) on the next page.
+To get set up with Panther, continue to the [quick start](quick-start.md)!
+
+## Enterprise
+
+For teams needing 24x7 support, advanced analysis packs (PCI, MITRE ATT&CK), RBAC, and SSO, please reach out to us at `contact@runpanther.io` to learn more about Panther Enterprise.
+
+### Hosted
+
+For teams that need Panther hosted in single-tenant SaaS environment, please reach out to us at `contact@runpanther.io`.
