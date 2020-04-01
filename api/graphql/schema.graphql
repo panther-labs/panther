@@ -579,7 +579,7 @@ input DeletePolicyInput {
   policies: [DeletePolicyInputItem]
 }
 
-input DeletePolicyInputItem
+input DeletePolicyInputItem {
   id: ID!
 }
 
