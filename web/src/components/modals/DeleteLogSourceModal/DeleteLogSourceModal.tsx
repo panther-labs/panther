@@ -17,17 +17,19 @@
  */
 
 import React from 'react';
-import { Text } from 'pouncejs';
+import { Text, useSnackbar } from 'pouncejs';
 import { LogIntegration } from 'Generated/schema';
-import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeleteLogSource } from './graphql/deleteLogSource.generated';
+import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteLogSourceModalProps {
   source: LogIntegration;
 }
 
 const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) => {
-  const mutation = useDeleteLogSource({
+  const sourceDisplayName = source.integrationLabel;
+  const { pushSnackbar } = useSnackbar();
+  const [deleteLogSource] = useDeleteLogSource({
     variables: {
       id: source.integrationId,
     },
@@ -40,12 +42,22 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) =
         },
       });
     },
+    onCompleted: () => {
+      pushSnackbar({
+        variant: 'success',
+        title: `Successfully deleted source: ${sourceDisplayName}`,
+      });
+    },
+    onError: () => {
+      pushSnackbar({
+        variant: 'error',
+        title: `Failed to delete source: ${sourceDisplayName}`,
+      });
+    },
   });
 
-  const sourceDisplayName = source.integrationLabel;
   return (
-    <BaseConfirmModal
-      mutation={mutation}
+    <OptimisticConfirmModal
       title={`Delete ${sourceDisplayName}`}
       subtitle={[
         <Text size="large" key={0}>
@@ -57,8 +69,7 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) =
           <b>AWS Account {source.awsAccountId}</b>
         </Text>,
       ]}
-      onSuccessMsg={`Successfully deleted ${sourceDisplayName}`}
-      onErrorMsg={`Failed to delete ${sourceDisplayName}`}
+      onConfirm={deleteLogSource}
     />
   );
 };
