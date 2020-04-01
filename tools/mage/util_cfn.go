@@ -191,16 +191,13 @@ func stackSetInstanceExists(cfClient *cfn.CloudFormation, stackSetName, account,
 	return true, nil
 }
 
-func describeStack(cfClient *cfn.CloudFormation, stackName string) (status string, output map[string]string, err error) {
+// Returns stack status, outputs, and any error
+func describeStack(cfClient *cfn.CloudFormation, stackName string) (string, map[string]string, error) {
 	input := &cfn.DescribeStacksInput{StackName: &stackName}
 	response, err := cfClient.DescribeStacks(input)
 	if err != nil {
-		return status, output, err
+		return "", nil, err
 	}
 
-	status = *response.Stacks[0].StackStatus
-	if status == cfn.StackStatusCreateComplete || status == cfn.StackStatusUpdateComplete {
-		output = flattenStackOutputs(response)
-	}
-	return status, output, err
+	return aws.StringValue(response.Stacks[0].StackStatus), flattenStackOutputs(response), nil
 }
