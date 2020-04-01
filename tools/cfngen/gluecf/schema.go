@@ -241,6 +241,8 @@ func toGlueType(t reflect.Type) (glueType string) {
 		glueType = "int" // Athena doesn't have an unsigned integer type
 	case "uint32":
 		glueType = "bigint" // Athena doesn't have an unsigned integer type
+	case "uint64":
+		glueType = "bigint" // Athena doesn't have an unsigned integer type
 	default:
 		panic("Cannot map " + t.String())
 	}

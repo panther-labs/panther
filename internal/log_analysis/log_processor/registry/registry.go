@@ -27,6 +27,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
@@ -71,6 +72,8 @@ var (
 			&fluentdsyslogs.RFC3164{}, fluentdsyslogs.RFC3164Desc),
 		(&fluentdsyslogs.RFC5424Parser{}).LogType(): DefaultLogParser(&fluentdsyslogs.RFC5424Parser{},
 			&fluentdsyslogs.RFC5424{}, fluentdsyslogs.RFC5424Desc),
+		(&zeeklogs.ZeekDNSParser{}).LogType(): DefaultLogParser(&zeeklogs.ZeekDNSParser{},
+			&zeeklogs.ZeekDNS{}, zeeklogs.ZeekDNSDesc),
 	}
 )
 
