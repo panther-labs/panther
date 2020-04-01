@@ -26,7 +26,7 @@ from typing import Dict, List, Optional
 
 import boto3
 
-from . import AlertInfo, EventMatch, OutputGroupingKey, OutputNotification
+from . import AlertInfo, EventMatch, OutputGroupingKey
 from .alert_merger import MatchingGroupInfo, update_get_alert_info
 from .logging import get_logger
 
@@ -146,24 +146,50 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch
     _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
     # Send notification to SNS topic
-    notification = OutputNotification(s3Bucket=_S3_BUCKET, s3ObjectKey=object_key, events=len(events), bytes=byte_size, id=key.rule_id)
+    notification = _s3_put_object_notification(_S3_BUCKET, object_key, byte_size)
 
-    # MessageAttributes are required so that subscribers to SNS topic
-    # can filter events in the subscription
+    # MessageAttributes are required so that subscribers to SNS topic can filter events in the subscription
     _SNS_CLIENT.publish(
         TopicArn=_SNS_TOPIC_ARN,
-        Message=json.dumps(asdict(notification)),
+        Message=json.dumps(notification),
         MessageAttributes={
             'type': {
                 'DataType': 'String',
-                'StringValue': notification.type
+                'StringValue': 'RuleMatches'
             },
             'id': {
                 'DataType': 'String',
-                'StringValue': notification.id
+                'StringValue': key.rule_id
             }
         }
     )
+
+
+def _s3_put_object_notification(bucket: str, key: str, byte_size: int) -> Dict[str, list]:
+    """The notification that will be sent to the SNS topic when we create a new object in S3.
+
+    This needs to have a shape of an S3 event notification:
+            https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+    """
+    return {
+        'Records':
+            [
+                {
+                    'eventVersion': '2.0',
+                    'eventSource': 'aws:s3',
+                    'eventName': 'ObjectCreated:Put',
+                    's3': {
+                        'bucket': {
+                            'name': bucket
+                        },
+                        'object': {
+                            'key': key,
+                            'size': byte_size
+                        }
+                    }
+                }
+            ]
+    }
 
 
 def _serialize_event(match: EventMatch, alert_info: AlertInfo) -> bytes:

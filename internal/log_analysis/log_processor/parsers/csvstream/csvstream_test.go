@@ -19,6 +19,7 @@ package csvstream
  */
 
 import (
+	"io"
 	"strings"
 	"testing"
 
@@ -62,4 +63,13 @@ func TestNewStreamingCSVReaderLongLines(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedLine, record)
 	}
+}
+
+func TestNewStreamingCSVReaderReadingEmptyString(t *testing.T) {
+	reader := NewStreamingCSVReader()
+	reader.logLine = ""
+	buffer := make([]byte, 100)
+	result, err := reader.Read(buffer)
+	assert.Equal(t, 0, result)
+	assert.EqualError(t, io.EOF, err.Error())
 }
