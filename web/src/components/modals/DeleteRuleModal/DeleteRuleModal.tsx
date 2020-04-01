@@ -22,7 +22,8 @@ import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 // Delete Rule and Delete Policy uses the same endpoint
-import { useDeletePolicy } from '../DeletePolicyModal/graphql/deletePolicy.generated';
+// import { useDeletePolicy } from '../DeletePolicyModal/graphql/deletePolicy.generated';
+import { useDeleteRule } from './graphql/deleteRule.generated';
 
 export interface DeleteRuleModalProps {
   rule: RuleDetails | RuleSummary;
@@ -31,10 +32,10 @@ export interface DeleteRuleModalProps {
 const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const ruleDisplayName = rule.displayName || rule.id;
-  const mutation = useDeletePolicy({
+  const mutation = useDeleteRule({
     variables: {
       input: {
-        policies: [
+        rules: [
           {
             id: rule.id,
           },
@@ -42,7 +43,7 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
       },
     },
     optimisticResponse: {
-      deletePolicy: true,
+      deleteRule: true,
     },
     update: async cache => {
       cache.modify('ROOT_QUERY', {
