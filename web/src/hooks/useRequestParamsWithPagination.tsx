@@ -30,8 +30,8 @@ function useRequestParamsWithPagination<
   const updateRequestParamsAndResetPaging = React.useCallback(
     (newParams: Partial<AvailableParams>) => {
       const params = { ...urlParams, ...newParams, page: 1 };
-      if (params.idContains) params.idContains = encodeURI(newParams.idContains);
-      if (params.nameContains) params.nameContains = encodeURI(newParams.nameContains);
+      if (params.idContains) params.idContains = encodeURIComponent(newParams.idContains);
+      if (params.nameContains) params.nameContains = encodeURIComponent(newParams.nameContains);
       updateUrlParams(params);
     },
     [urlParams]
