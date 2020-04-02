@@ -53,7 +53,7 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.AuroraMySQLAudit")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("10.0.143.147")
+	expectedEvent.AppendAnyIPAddress("10.0.143.147")
 	expectedEvent.AppendAnyDomainNames("db-instance-name")
 
 	checkAuroraMysqlAuditLogLog(t, log, expectedEvent)

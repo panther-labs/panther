@@ -36,7 +36,7 @@ const UsersPage: React.FC = () => {
           mb={8}
         >
           <Flex alignItems="center">
-            <Icon type="addUser" size="small" mr={2} />
+            <Icon type="add-user" size="small" mr={2} />
             Invite User
           </Flex>
         </Button>

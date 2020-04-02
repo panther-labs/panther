@@ -49,7 +49,7 @@ func TestRFC5424(t *testing.T) {
 
 	// panther fields
 	expectedRFC5424.PantherLogType = aws.String("Fluentd.Syslog5424")
-	expectedRFC5424.AppendAnyIPAddressPtrs(expectedRFC5424.Hostname)
+	expectedRFC5424.AppendAnyIPAddressPtr(expectedRFC5424.Hostname)
 	expectedRFC5424.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	checkRFC5424(t, log, expectedRFC5424)
 }

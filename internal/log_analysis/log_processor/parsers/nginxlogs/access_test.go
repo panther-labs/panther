@@ -48,7 +48,7 @@ func TestAccessLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Nginx.Access")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
+	expectedEvent.AppendAnyIPAddress("180.76.15.143")
 
 	checkAccessLog(t, log, expectedEvent)
 }
@@ -71,7 +71,7 @@ func TestAccessLogWithoutReferer(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Nginx.Access")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
+	expectedEvent.AppendAnyIPAddress("180.76.15.143")
 
 	checkAccessLog(t, log, expectedEvent)
 }
