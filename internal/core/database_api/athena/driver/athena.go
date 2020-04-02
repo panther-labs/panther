@@ -55,6 +55,8 @@ func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput, s3Path *s
 		return output, err
 	}
 
+	output.Status = models.QuerySucceeded
+
 	err = collectResults(query.QueryResult, (*models.GetQueryResultsOutput)(output), nil)
 	if err != nil {
 		return output, err
@@ -183,7 +185,6 @@ func getQueryResults(client athenaiface.AthenaAPI, executionStatus *athena.GetQu
 }
 
 func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput, maxResults *int64) (err error) {
-	output.Status = models.QuerySucceeded
 	for _, row := range queryResult.ResultSet.Rows {
 		var columns []*models.Column
 		for _, col := range row.Data {
