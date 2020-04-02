@@ -19,7 +19,9 @@
 import React from 'react';
 import useUrlParams from 'Hooks/useUrlParams';
 
-function useRequestParamsWithPagination<AvailableParams extends { page?: number }>() {
+function useRequestParamsWithPagination<
+  AvailableParams extends { page?: number; idContains?: string; nameContains?: string }
+>() {
   const { urlParams, updateUrlParams } = useUrlParams<Partial<AvailableParams>>();
 
   // This is our typical function that updates the parameters with the addition of resetting the
@@ -27,7 +29,10 @@ function useRequestParamsWithPagination<AvailableParams extends { page?: number 
   // scenario, we want to change the params but not reset the page.
   const updateRequestParamsAndResetPaging = React.useCallback(
     (newParams: Partial<AvailableParams>) => {
-      updateUrlParams({ ...urlParams, ...newParams, page: 1 });
+      const params = { ...urlParams, ...newParams, page: 1 };
+      if (params.idContains) params.idContains = encodeURI(newParams.idContains);
+      if (params.nameContains) params.nameContains = encodeURI(newParams.nameContains);
+      updateUrlParams(params);
     },
     [urlParams]
   );
