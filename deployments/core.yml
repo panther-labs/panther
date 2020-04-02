@@ -29,6 +29,9 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: Analysis API gateway ID
+  AthenaResultsBucket:
+    Type: String
+    Description: Bucket created to hold Athena results
   ComplianceApiId:
     Type: String
     Description: Compliance API gateway ID
@@ -658,22 +661,30 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - athena:* # FIXME: lock down
+                - athena:StartQueryExecution
+                - athena:GetQuery*
               Resource: '*'
         - Id: GluePermissions
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
-                - glue:* # FIXME: lock down
+                - glue:GetDatabase*
+                - glue:GetTable*
               Resource: '*'
         - Id: S3Permissions # Athena writes results to S3
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
-                - s3:* # FIXME: lock down
-              Resource: '*' # FIXME: needs to be Athena bucket
+                - s3:GetBucketLocation
+                - s3:GetObject
+                - s3:ListBucket
+                - s3:ListBucketMultipartUploads
+                - s3:ListMultipartUploadParts
+                - s3:AbortMultipartUpload
+                - s3:PutObject
+              Resource: !Sub 'arn:aws:s3:::${AthenaResultsBucket}*'
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup

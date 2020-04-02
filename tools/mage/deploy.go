@@ -374,6 +374,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
+			"AthenaResultsBucket":    outputs["AthenaResultsBucket"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],

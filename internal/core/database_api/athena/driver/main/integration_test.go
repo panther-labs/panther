@@ -27,7 +27,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -163,7 +162,7 @@ SELECT * FROM dataset
 	err = testutils.InvokeLambda(awsSession, "panther-athena-api", doQueryInput, &doQueryOutput)
 	require.NoError(t, err)
 
-	checkTestResults(t, true, nrows+1, doQueryOutput.JSONData) // has header
+	checkQueryResults(t, true, nrows+1, doQueryOutput.Rows) // has header
 
 	//  -------- StartQuery()
 
@@ -182,7 +181,7 @@ SELECT * FROM dataset
 
 	if startQueryOutput.Status == models.QuerySucceeded {
 		t.Log("StartQuery succeeded")
-		checkTestResults(t, true, nrows+1, startQueryOutput.JSONData) // has header
+		checkQueryResults(t, true, nrows+1, startQueryOutput.Rows) // has header
 	}
 
 	//  -------- GetQueryStatus()
@@ -230,16 +229,16 @@ SELECT * FROM dataset
 	if getQueryResultsOutput.Status == models.QuerySucceeded {
 		resultCount := 0
 		t.Log("GetQueryResults succeeded")
-		checkTestResults(t, true, int(maxResults), getQueryResultsOutput.JSONData)
+		checkQueryResults(t, true, int(maxResults), getQueryResultsOutput.Rows)
 		resultCount++
 
 		t.Log("Test pagination")
-		for getQueryResultsOutput.PaginationToken != "" { // when done this is set to empty
+		for getQueryResultsOutput.NumRows > 0 { // when done this is 0
 			getQueryResultsInput.GetQueryResults.PaginationToken = getQueryResultsOutput.PaginationToken
 			err = testutils.InvokeLambda(awsSession, "panther-athena-api", getQueryResultsInput, &getQueryResultsOutput)
 			require.NoError(t, err)
 			if getQueryResultsOutput.NumRows > 0 { // not finished paging
-				checkTestResults(t, false, int(maxResults), getQueryResultsOutput.JSONData)
+				checkQueryResults(t, false, int(maxResults), getQueryResultsOutput.Rows)
 				resultCount++
 			}
 		}
@@ -249,18 +248,15 @@ SELECT * FROM dataset
 	}
 }
 
-func checkTestResults(t *testing.T, hasHeader bool, expectedRowCount int, jsonData string) {
-	var results []*athena.Row
-	err := jsoniter.UnmarshalFromString(jsonData, &results)
-	require.NoError(t, err)
-	require.Equal(t, expectedRowCount, len(results))
+func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {
+	require.Equal(t, expectedRowCount, len(rows))
 	i := 0
-	nResults := len(results)
+	nResults := len(rows)
 	if hasHeader {
-		require.Equal(t, "c", *results[i].Data[0].VarCharValue) // header
+		require.Equal(t, "c", rows[0].Columns[0].Value) // header
 		i++
 	}
 	for ; i < nResults; i++ {
-		require.Equal(t, "1", *results[i].Data[0].VarCharValue)
+		require.Equal(t, "1", rows[i].Columns[0].Value)
 	}
 }

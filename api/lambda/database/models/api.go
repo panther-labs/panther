@@ -119,16 +119,16 @@ type GetQueryStatusOutput struct {
 
 type GetQueryResultsInput struct {
 	QueryID         string `json:"query_id" validate:"required"`
-	PaginationToken string `results:"pagination_token,omitempty"`
+	PaginationToken string `json:"pagination_token,omitempty"`
 	MaxResults      *int64 `json:"max_results"` // only return this many per call
 }
 
 type GetQueryResultsOutput struct {
 	Error
 	GetQueryResultsInput
-	Status   string `json:"status" validate:"required,oneof=running,succeeded,failed"`
-	NumRows  int    `results:"num_rows"`
-	JSONData string `results:"json_data,omitempty"`
+	Status  string `json:"status" validate:"required,oneof=running,succeeded,failed"`
+	NumRows int    `json:"num_rows"`
+	Rows    []*Row `json:"rows"`
 }
 
 // Blocking query
@@ -141,6 +141,14 @@ type DoPantherSimpleSummaryInput struct {
 }
 
 type DoPantherSimpleSummaryOutput GetQueryResultsOutput // GetQueryResults() to page thu results
+
+type Row struct {
+	Columns []*Column `json:"columns"`
+}
+
+type Column struct {
+	Value string `json:"value"`
+}
 
 type Error struct {
 	ErrorMessage string `json:"error_message,omitempty"`

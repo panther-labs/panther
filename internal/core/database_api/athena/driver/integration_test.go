@@ -46,7 +46,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/s3"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
@@ -161,7 +160,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		SQL:          `select * from ` + testTable,
 	})
 	require.NoError(t, err)
-	checkQueryResults(t, true, len(rows)+1, doQueryOutput.JSONData)
+	checkQueryResults(t, true, len(rows)+1, doQueryOutput.Rows)
 
 	//  -------- StartQuery()
 
@@ -173,7 +172,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	require.NoError(t, err)
 	if startQueryOutput.Status == models.QuerySucceeded {
 		t.Log("StartQuery succeeded")
-		checkQueryResults(t, true, int(maxRowsPerResult), startQueryOutput.JSONData)
+		checkQueryResults(t, true, int(maxRowsPerResult), startQueryOutput.Rows)
 	}
 
 	//  -------- GetQueryStatus()
@@ -195,28 +194,26 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 
 	//  -------- GetQueryResults()
 
-	getQueryResultsOutput, err := GetQueryResults(athenaClient, &models.GetQueryResultsInput{
+	getQueryResultsInput := &models.GetQueryResultsInput{
 		QueryID:    startQueryOutput.QueryID,
 		MaxResults: &maxRowsPerResult,
-	})
+	}
+	getQueryResultsOutput, err := GetQueryResults(athenaClient, getQueryResultsInput)
 	require.NoError(t, err)
 
 	if getQueryResultsOutput.Status == models.QuerySucceeded {
 		resultCount := 0
 		t.Log("GetQueryResults succeeded")
-		checkQueryResults(t, true, int(maxRowsPerResult), getQueryResultsOutput.JSONData)
+		checkQueryResults(t, true, int(maxRowsPerResult), getQueryResultsOutput.Rows)
 		resultCount++
 
 		t.Log("Test pagination")
-		for getQueryResultsOutput.PaginationToken != "" { // when done this is set to empty
-			getQueryResultsOutput, err = GetQueryResults(athenaClient, &models.GetQueryResultsInput{
-				PaginationToken: getQueryResultsOutput.PaginationToken,
-				QueryID:         startQueryOutput.QueryID,
-				MaxResults:      &maxRowsPerResult,
-			})
+		for getQueryResultsOutput.NumRows > 0 { // when done this is 0
+			getQueryResultsInput.PaginationToken = getQueryResultsOutput.PaginationToken
+			getQueryResultsOutput, err = GetQueryResults(athenaClient, getQueryResultsInput)
 			require.NoError(t, err)
 			if getQueryResultsOutput.NumRows > 0 { // not finished paging
-				checkQueryResults(t, false, int(maxRowsPerResult), getQueryResultsOutput.JSONData)
+				checkQueryResults(t, false, int(maxRowsPerResult), getQueryResultsOutput.Rows)
 				resultCount++
 			}
 		}
@@ -226,19 +223,16 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	}
 }
 
-func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, jsonData string) {
-	var results []*athena.Row
-	err := jsoniter.UnmarshalFromString(jsonData, &results)
-	require.NoError(t, err)
-	require.Equal(t, expectedRowCount, len(results))
+func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {
+	require.Equal(t, expectedRowCount, len(rows))
 	i := 0
-	nResults := len(results)
+	nResults := len(rows)
 	if hasHeader {
-		require.Equal(t, "col1", *results[i].Data[0].VarCharValue) // header
+		require.Equal(t, "col1", rows[0].Columns[0].Value) // header
 		i++
 	}
 	for ; i < nResults; i++ {
-		require.Equal(t, "1", *results[i].Data[0].VarCharValue)
+		require.Equal(t, "1", rows[i].Columns[0].Value)
 	}
 }
 

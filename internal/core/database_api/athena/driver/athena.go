@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
@@ -56,7 +55,7 @@ func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput) (*models.
 		return output, err
 	}
 
-	err = serializeResults(query.QueryResult, (*models.GetQueryResultsOutput)(output))
+	err = collectResults(query.QueryResult, (*models.GetQueryResultsOutput)(output), nil)
 	if err != nil {
 		return output, err
 	}
@@ -176,22 +175,32 @@ func getQueryResults(client athenaiface.AthenaAPI, executionStatus *athena.GetQu
 	if err != nil {
 		return err
 	}
-	err = serializeResults(queryResult, output)
+	err = collectResults(queryResult, output, maxResults)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func serializeResults(queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) (err error) {
+func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput, maxResults *int64) (err error) {
 	output.Status = models.QuerySucceeded
-	output.JSONData, err = jsoniter.MarshalToString(queryResult.ResultSet.Rows)
+	for _, row := range queryResult.ResultSet.Rows {
+		var columns []*models.Column
+		for _, col := range row.Data {
+			columns = append(columns, &models.Column{
+				Value: *col.VarCharValue,
+			})
+		}
+		output.Rows = append(output.Rows, &models.Row{Columns: columns})
+	}
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	output.NumRows = len(queryResult.ResultSet.Rows)
-	if output.NumRows > 0 { // could be more!
+	if output.NumRows > 0 && (maxResults == nil || int(*maxResults) == output.NumRows) { // could be more!
 		output.PaginationToken = aws.StringValue(queryResult.NextToken)
+	} else {
+		output.PaginationToken = "" // no more
 	}
 	return nil
 }
