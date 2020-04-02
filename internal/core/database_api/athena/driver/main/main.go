@@ -22,8 +22,9 @@ import (
 	"context"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/internal/core/database_api/athena/driver/api"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
@@ -32,11 +33,7 @@ import (
 var router *genericapi.Router
 
 func init() {
-	validator, err := models.Validator()
-	if err != nil {
-		panic(err)
-	}
-	router = genericapi.NewRouter("database", "athena", validator, api.API{})
+	router = genericapi.NewRouter("database", "athena", validator.New(), api.API{})
 }
 
 func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
