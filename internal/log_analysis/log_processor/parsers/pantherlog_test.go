@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
@@ -139,19 +140,33 @@ func TestSetCoreFieldsNilEventTime(t *testing.T) {
 	require.Equal(t, expectedEvent, event)
 }
 
-func TestAppendAnyIPAddresses(t *testing.T) {
+func TestAppendAnyIPV4(t *testing.T) {
 	event := PantherLog{}
-	value := "a"
+	require.True(t, event.AppendAnyIPAddressPtr(aws.String("192.168.1.1")))
+	require.True(t, event.AppendAnyIPAddress("192.168.1.2"))
+	require.False(t, event.AppendAnyIPAddress("not-an-ip"))
+
 	expectedAny := &PantherAnyString{
 		set: map[string]struct{}{
-			value: {},
+			"192.168.1.1": {},
+			"192.168.1.2": {},
 		},
 	}
-	event.AppendAnyIPAddresses(value)
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+}
 
-	event = PantherLog{}
-	event.AppendAnyIPAddressPtrs(&value)
+func TestAppendAnyIPV6(t *testing.T) {
+	event := PantherLog{}
+	require.True(t, event.AppendAnyIPAddressPtr(aws.String("2001:db8:85a3:0:0:8a2e:370:7334")))
+	require.True(t, event.AppendAnyIPAddress("::ffff:192.0.2.128"))
+	require.False(t, event.AppendAnyIPAddress("not-an-ip"))
+
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			"2001:db8:85a3:0:0:8a2e:370:7334": {},
+			"::ffff:192.0.2.128":              {},
+		},
+	}
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
 

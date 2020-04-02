@@ -119,6 +119,6 @@ func (p *AuroraMySQLAuditParser) LogType() string {
 
 func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {
 	event.SetCoreFields(p.LogType(), event.Timestamp, event)
-	event.AppendAnyIPAddressPtrs(event.Host)
+	event.AppendAnyIPAddressPtr(event.Host)
 	event.AppendAnyDomainNamePtrs(event.ServerHost)
 }

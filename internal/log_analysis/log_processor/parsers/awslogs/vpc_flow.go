@@ -266,5 +266,8 @@ func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
 	event.SetCoreFields(p.LogType(), event.Start, event)
 	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
 	event.AppendAnyAWSInstanceIdPtrs(event.InstanceID)
-	event.AppendAnyIPAddressPtrs(event.SrcAddr, event.DstAddr, event.PacketSrcAddr, event.PacketDstAddr)
+	event.AppendAnyIPAddressPtr(event.SrcAddr)
+	event.AppendAnyIPAddressPtr(event.DstAddr)
+	event.AppendAnyIPAddressPtr(event.PacketSrcAddr)
+	event.AppendAnyIPAddressPtr(event.PacketDstAddr)
 }

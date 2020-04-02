@@ -99,7 +99,7 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 	case "ipv6Addresses": // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		if value.IsArray() {
 			value.ForEach(func(v6ListKey, v6ListValue gjson.Result) bool {
-				e.pl.AppendAnyIPAddresses(v6ListValue.Str)
+				e.pl.AppendAnyIPAddress(v6ListValue.Str)
 				return true
 			})
 		}
@@ -108,7 +108,7 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 		"publicIp",         // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		"privateIpAddress", // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		"ipAddressV4":      // found in GuardDuty findings
-		e.pl.AppendAnyIPAddresses(value.Str)
+		e.pl.AppendAnyIPAddress(value.Str)
 
 	case
 		"publicDnsName",  // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)

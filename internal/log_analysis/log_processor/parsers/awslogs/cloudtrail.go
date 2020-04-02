@@ -19,8 +19,6 @@ package awslogs
  */
 
 import (
-	"strings"
-
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -156,9 +154,7 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 	event.SetCoreFields(p.LogType(), event.EventTime, event)
 
 	// structured (parsed) fields
-	if event.SourceIPAddress != nil && !strings.HasSuffix(*event.SourceIPAddress, "amazonaws.com") {
-		event.AppendAnyIPAddresses(*event.SourceIPAddress)
-	}
+	event.AppendAnyIPAddressPtr(event.SourceIPAddress)
 
 	for _, resource := range event.Resources {
 		event.AppendAnyAWSARNPtrs(resource.ARN)

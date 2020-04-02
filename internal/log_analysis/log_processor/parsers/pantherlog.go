@@ -19,6 +19,7 @@ package parsers
  */
 
 import (
+	"net"
 	"sort"
 
 	jsoniter "github.com/json-iterator/go"
@@ -125,19 +126,23 @@ func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339
 	pl.PantherParseTime = &parseTime
 }
 
-func (pl *PantherLog) AppendAnyIPAddressPtrs(values ...*string) {
-	for _, value := range values {
-		if value != nil {
-			pl.AppendAnyIPAddresses(*value)
-		}
+// Will return true if the IP address was successfully appended, false if the value was not an IP
+func (pl *PantherLog) AppendAnyIPAddressPtr(value *string) bool {
+	if value == nil {
+		return false
 	}
+	return pl.AppendAnyIPAddress(*value)
 }
 
-func (pl *PantherLog) AppendAnyIPAddresses(values ...string) {
-	if pl.PantherAnyIPAddresses == nil { // lazy create
-		pl.PantherAnyIPAddresses = NewPantherAnyString()
+func (pl *PantherLog) AppendAnyIPAddress(value string) bool {
+	if net.ParseIP(value) != nil {
+		if pl.PantherAnyIPAddresses == nil { // lazy create
+			pl.PantherAnyIPAddresses = NewPantherAnyString()
+		}
+		AppendAnyString(pl.PantherAnyIPAddresses, value)
+		return true
 	}
-	AppendAnyString(pl.PantherAnyIPAddresses, values...)
+	return false
 }
 
 func (pl *PantherLog) AppendAnyDomainNamePtrs(values ...*string) {

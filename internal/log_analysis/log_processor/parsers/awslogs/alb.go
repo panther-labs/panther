@@ -177,7 +177,8 @@ func (p *ALBParser) LogType() string {
 
 func (event *ALB) updatePantherFields(p *ALBParser) {
 	event.SetCoreFields(p.LogType(), event.Timestamp, event)
-	event.AppendAnyIPAddressPtrs(event.ClientIP, event.TargetIP)
+	event.AppendAnyIPAddressPtr(event.ClientIP)
+	event.AppendAnyIPAddressPtr(event.TargetIP)
 	event.AppendAnyDomainNamePtrs(event.DomainName)
 	event.AppendAnyAWSARNPtrs(event.ChosenCertARN, event.TargetGroupARN)
 }
