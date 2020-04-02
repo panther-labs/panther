@@ -362,6 +362,8 @@ Resources:
         Status: Enabled
 
   ########## Cognito ##########
+  # MFA is configured for the user pool via the Go SDK rather than CloudFormation.
+  # Using CFN for MFA forces SMS, but we only want software tokens (SMS is not as secure)
   UserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -410,6 +412,8 @@ Resources:
           Name: family_name
       UsernameAttributes:
         - email
+      UserPoolAddOns:
+        AdvancedSecurityMode: ENFORCED
       UserPoolName: panther-users
 
   AppClient:

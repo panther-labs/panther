@@ -214,7 +214,8 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 
 		outputs = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
 
-		// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
+		// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
+		// forces SMS as a fallback option, but the SDK does not.
 		userPoolID := outputs["UserPoolId"]
 		logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
 		_, err := cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{

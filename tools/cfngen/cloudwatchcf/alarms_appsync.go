@@ -56,9 +56,5 @@ func generateAppSyncAlarms(resource map[interface{}]interface{}) (alarms []*Alar
 	alarms = append(alarms, NewAppSyncAlarm("AppSyncClientError", "4XXError",
 		"has has elevated 4XX errors", resource).SumNoUnitsThreshold(20, 60*5) /* tolerate a few client errors */)
 
-	// latency
-	alarms = append(alarms, NewAppSyncAlarm("AppSyncHighLatency", "Latency",
-		"is experiencing high latency", resource).MaxNoUnitsThreshold(2000, 60).EvaluationPeriods(5))
-
 	return alarms
 }

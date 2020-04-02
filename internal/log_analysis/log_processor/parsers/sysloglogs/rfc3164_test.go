@@ -147,7 +147,7 @@ func testRFC3164Example2(t *testing.T) {
 		Message:   aws.String("Use the BFG!"),
 	}
 
-	expectedEvent.AppendAnyIPAddressPtrs(expectedEvent.Hostname)
+	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.Hostname)
 
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
