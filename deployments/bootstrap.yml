@@ -362,6 +362,8 @@ Resources:
         Status: Enabled
 
   ########## Cognito ##########
+  # MFA is configured for the user pool via the Go SDK rather than CloudFormation.
+  # Using CFN for MFA forces SMS, but we only want software tokens (SMS is not as secure)
   UserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -388,11 +390,8 @@ Resources:
                 !If [UseCustomDomain, !Ref CustomDomain, !GetAtt PublicLoadBalancer.DNSName]
       AutoVerifiedAttributes:
         - email
-      EnabledMfas:
-        - SOFTWARE_TOKEN_MFA
       LambdaConfig:
         CustomMessage: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
-      MfaConfiguration: 'ON' # quotes required here, otherwise CFN interprets it as true because ???
       Policies:
         PasswordPolicy:
           MinimumLength: 12
