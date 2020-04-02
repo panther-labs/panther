@@ -33,10 +33,6 @@ import (
 
 const (
 	minimalQueryWait = time.Second * 4
-
-	querySucceeded = "succeeded"
-	queryFailed    = "failed"
-	queryRunning   = "running"
 )
 
 func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput) (*models.DoQueryOutput, error) {
@@ -45,7 +41,7 @@ func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput) (*models.
 	var err error
 	defer func() {
 		if err != nil {
-			output.Status = queryFailed
+			output.Status = models.QueryFailed
 			output.ErrorMessage = "DoQuery failed" // simple error message for lambda caller
 		}
 	}()
@@ -74,7 +70,7 @@ func StartQuery(client athenaiface.AthenaAPI, input *models.StartQueryInput) (*m
 	var err error
 	defer func() {
 		if err != nil {
-			output.Status = queryFailed
+			output.Status = models.QueryFailed
 			output.ErrorMessage = "StartQuery failed" // simple error message for lambda caller
 		}
 	}()
@@ -95,7 +91,7 @@ func StartQuery(client athenaiface.AthenaAPI, input *models.StartQueryInput) (*m
 	}
 	output.Status = getQueryStatus(executionStatus)
 	if done { // fill results
-		if output.Status == querySucceeded {
+		if output.Status == models.QuerySucceeded {
 			err = getQueryResults(query.Client, executionStatus, &output.GetQueryResultsOutput, nil, input.MaxResults)
 			if err != nil {
 				return output, err
@@ -139,7 +135,7 @@ func GetQueryResults(client athenaiface.AthenaAPI, input *models.GetQueryResults
 	}
 	output.Status = getQueryStatus(executionStatus)
 
-	if output.Status == querySucceeded {
+	if output.Status == models.QuerySucceeded {
 		var nextToken *string
 		if input.PaginationToken != "" { // paging thru results
 			nextToken = &input.PaginationToken
@@ -157,17 +153,17 @@ func getQueryStatus(executionStatus *athena.GetQueryExecutionOutput) string {
 	switch *executionStatus.QueryExecution.Status.State {
 	case
 		athena.QueryExecutionStateSucceeded:
-		return querySucceeded
+		return models.QuerySucceeded
 	case
 		// failure modes
 		athena.QueryExecutionStateFailed,
 		athena.QueryExecutionStateCancelled:
-		return queryFailed
+		return models.QueryFailed
 	case
 		// still going
 		athena.QueryExecutionStateRunning,
 		athena.QueryExecutionStateQueued:
-		return queryRunning
+		return models.QueryRunning
 	default:
 		panic("unknown athena status: " + *executionStatus.QueryExecution.Status.State)
 	}
@@ -188,7 +184,7 @@ func getQueryResults(client athenaiface.AthenaAPI, executionStatus *athena.GetQu
 }
 
 func serializeResults(queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) (err error) {
-	output.Status = querySucceeded
+	output.Status = models.QuerySucceeded
 	output.JSONData, err = jsoniter.MarshalToString(queryResult.ResultSet.Rows)
 	if err != nil {
 		return errors.WithStack(err)

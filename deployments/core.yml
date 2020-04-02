@@ -644,7 +644,7 @@ Resources:
       # The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
       #
       # Failure Impact
-      # * Failure of this lambda will the Panther UI from doing Athena queries.
+      # * Failure of this lambda will stop the Panther UI from doing Athena queries.
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
@@ -658,18 +658,25 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - athena:*
+                - athena:* # FIXME: lock down
               Resource: '*'
         - Id: GluePermissions
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
-                - glue:*
+                - glue:* # FIXME: lock down
               Resource: '*'
+        - Id: S3Permissions # Athena writes results to S3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:* # FIXME: lock down
+              Resource: '*' # FIXME: needs to be Athena bucket
 
-    AthenaApiLogGroup:
-      Type: AWS::Logs::LogGroup
-      Properties:
-        LogGroupName: /aws/lambda/panther-athena-api
-        RetentionInDays: !Ref CloudWatchLogRetentionDays
+  AthenaApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-athena-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays

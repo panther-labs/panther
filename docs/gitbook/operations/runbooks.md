@@ -106,7 +106,7 @@ This lambda implements the analysis API which is responsible for
 The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
 
  Failure Impact
- * Failure of this lambda will the Panther UI from doing Athena queries.
+ * Failure of this lambda will stop the Panther UI from doing Athena queries.
 
 ## panther-auditlog-processing
 The panther-auditlog-processing topic is used to send s3 notifications to log processing

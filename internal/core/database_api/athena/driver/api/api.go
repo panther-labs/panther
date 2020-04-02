@@ -36,30 +36,30 @@ var (
 // API provides receiver methods for each route handler.
 type API struct{}
 
-func (api API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
+func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
 	return driver.GetDatabases(glueClient, input)
 }
 
-func (api API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, error) {
+func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, error) {
 	return driver.GetTables(glueClient, input)
 }
 
-func (api API) GetTablesDetails(input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
-	return driver.GetTablesDetails(glueClient, input)
+func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
+	return driver.GetTablesDetail(glueClient, input)
 }
 
-func (api API) DoQuery(input *models.DoQueryInput) (*models.DoQueryOutput, error) {
+func (API) DoQuery(input *models.DoQueryInput) (*models.DoQueryOutput, error) {
 	return driver.DoQuery(athenaClient, input)
 }
 
-func (api API) StartQuery(input *models.StartQueryInput) (*models.StartQueryOutput, error) {
+func (API) StartQuery(input *models.StartQueryInput) (*models.StartQueryOutput, error) {
 	return driver.StartQuery(athenaClient, input)
 }
 
-func (api API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
+func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
 	return driver.GetQueryStatus(athenaClient, input)
 }
 
-func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
+func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
 	return driver.GetQueryResults(athenaClient, input)
 }

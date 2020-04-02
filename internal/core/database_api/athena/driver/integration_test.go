@@ -140,9 +140,9 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	require.Equal(t, 1, len(tablesOutput.Tables))
 	require.Equal(t, testTable, tablesOutput.Tables[0].TableName)
 
-	// -------- GetTablesDetails()
+	// -------- GetTablesDetail()
 
-	tableOutput, err := GetTablesDetails(glueClient, &models.GetTablesDetailInput{
+	tableOutput, err := GetTablesDetail(glueClient, &models.GetTablesDetailInput{
 		DatabaseName: testDb,
 		TableNames:   []string{testTable},
 	})
@@ -154,7 +154,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	require.Equal(t, *columns[0].Type, tableOutput.TablesDetails[0].Columns[0].Type)
 	require.Equal(t, *columns[0].Comment, tableOutput.TablesDetails[0].Columns[0].Description)
 
-	// -------- DoQuery
+	// -------- DoQuery()
 
 	doQueryOutput, err := DoQuery(athenaClient, &models.DoQueryInput{
 		DatabaseName: testDb,
@@ -163,7 +163,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	require.NoError(t, err)
 	checkQueryResults(t, true, len(rows)+1, doQueryOutput.JSONData)
 
-	//  -------- StartQuery
+	//  -------- StartQuery()
 
 	startQueryOutput, err := StartQuery(athenaClient, &models.StartQueryInput{
 		DatabaseName: testDb,
@@ -171,51 +171,56 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		MaxResults:   &maxRowsPerResult,
 	})
 	require.NoError(t, err)
-	if startQueryOutput.Status == querySucceeded {
+	if startQueryOutput.Status == models.QuerySucceeded {
 		t.Log("StartQuery succeeded")
 		checkQueryResults(t, true, int(maxRowsPerResult), startQueryOutput.JSONData)
 	}
 
-	//  -------- QueryStatus
+	//  -------- GetQueryStatus()
 
 	var queryStatus string
 	for {
 		t.Log("QueryStatus polling query")
 		time.Sleep(time.Second * 10)
-		statusQueryOutput, err := GetQueryStatus(athenaClient, &models.GetQueryStatusInput{
+		getQueryStatusOutput, err := GetQueryStatus(athenaClient, &models.GetQueryStatusInput{
 			QueryID: startQueryOutput.QueryID,
 		})
 		require.NoError(t, err)
-		if statusQueryOutput.Status != queryRunning {
-			queryStatus = statusQueryOutput.Status
+		if getQueryStatusOutput.Status != models.QueryRunning {
+			queryStatus = getQueryStatusOutput.Status
 			break
 		}
 	}
 	t.Log("QueryStatus returned", queryStatus)
 
-	//  -------- GetQueryResults
+	//  -------- GetQueryResults()
 
-	getResultOutput, err := GetQueryResults(athenaClient, &models.GetQueryResultsInput{
+	getQueryResultsOutput, err := GetQueryResults(athenaClient, &models.GetQueryResultsInput{
 		QueryID:    startQueryOutput.QueryID,
 		MaxResults: &maxRowsPerResult,
 	})
 	require.NoError(t, err)
-	if getResultOutput.Status == querySucceeded {
+
+	if getQueryResultsOutput.Status == models.QuerySucceeded {
+		resultCount := 0
 		t.Log("GetQueryResults succeeded")
-		checkQueryResults(t, true, int(maxRowsPerResult), getResultOutput.JSONData)
+		checkQueryResults(t, true, int(maxRowsPerResult), getQueryResultsOutput.JSONData)
+		resultCount++
 
 		t.Log("Test pagination")
-		for getResultOutput.PaginationToken != "" { // when done this is set to empty
-			getResultOutput, err = GetQueryResults(athenaClient, &models.GetQueryResultsInput{
-				PaginationToken: getResultOutput.PaginationToken,
+		for getQueryResultsOutput.PaginationToken != "" { // when done this is set to empty
+			getQueryResultsOutput, err = GetQueryResults(athenaClient, &models.GetQueryResultsInput{
+				PaginationToken: getQueryResultsOutput.PaginationToken,
 				QueryID:         startQueryOutput.QueryID,
 				MaxResults:      &maxRowsPerResult,
 			})
 			require.NoError(t, err)
-			if getResultOutput.NumRows > 0 { // not finished paging
-				checkQueryResults(t, false, int(maxRowsPerResult), getResultOutput.JSONData)
+			if getQueryResultsOutput.NumRows > 0 { // not finished paging
+				checkQueryResults(t, false, int(maxRowsPerResult), getQueryResultsOutput.JSONData)
+				resultCount++
 			}
 		}
+		require.Equal(t, len(rows)+1, resultCount) // since we pace 1 at a time and have a header
 	} else {
 		t.Log("GetQueryResults failed")
 	}

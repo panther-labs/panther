@@ -20,6 +20,24 @@ package models
 
 // NOTE: different kinds of databases (e.g., Athena, Snowflake) will use different endpoints (lambda functions), same api.
 
+const (
+	QuerySucceeded = "succeeded"
+	QueryFailed    = "failed"
+	QueryRunning   = "running"
+)
+
+// LambdaInput is the collection of all possible args to the Lambda function.
+type LambdaInput struct {
+	GetDatabases           *GetDatabasesInput           `json:"getDatabases"`
+	GetTables              *GetTablesInput              `json:"getTables"`
+	GetTablesDetail        *GetTablesDetailInput        `json:"getTablesDetail"`
+	StartQuery             *StartQueryInput             `json:"startQuery"`
+	GetQueryStatus         *GetQueryStatusInput         `json:"getQueryStatus"`
+	GetQueryResults        *GetQueryResultsInput        `json:"getQueryResults"`
+	DoQuery                *DoQueryInput                `json:"doQuery"`
+	DoPantherSimpleSummary *DoPantherSimpleSummaryInput `json:"doPantherSimpleSummary"`
+}
+
 type GetDatabasesInput struct {
 	DatabaseName string `json:"database_name,omitempty"` // if empty get all databases
 }
@@ -118,7 +136,7 @@ type DoQueryInput StartQueryInput
 
 type DoQueryOutput GetQueryResultsOutput // call GetQueryResults() to page thu results
 
-type DoPantherSimpleSummary struct {
+type DoPantherSimpleSummaryInput struct {
 	SearchItems string `json:"search_items" validate:"required"`
 }
 

@@ -94,7 +94,7 @@ func GetTables(glueClient glueiface.GlueAPI, input *models.GetTablesInput) (*mod
 	return output, errors.WithStack(err)
 }
 
-func GetTablesDetails(glueClient glueiface.GlueAPI, input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
+func GetTablesDetail(glueClient glueiface.GlueAPI, input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
 	output := &models.GetTablesDetailOutput{}
 
 	var err error
