@@ -34,7 +34,7 @@ const (
 	minimalQueryWait = time.Second * 4
 )
 
-func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput) (*models.DoQueryOutput, error) {
+func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput, s3Path *string) (*models.DoQueryOutput, error) {
 	output := &models.DoQueryOutput{}
 
 	var err error
@@ -45,7 +45,7 @@ func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput) (*models.
 		}
 	}()
 
-	query := awsathena.NewAthenaQuery(client, input.DatabaseName, input.SQL, nil)
+	query := awsathena.NewAthenaQuery(client, input.DatabaseName, input.SQL, s3Path)
 	err = query.Run()
 	if err != nil {
 		return output, err
@@ -63,7 +63,7 @@ func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput) (*models.
 	return output, nil
 }
 
-func StartQuery(client athenaiface.AthenaAPI, input *models.StartQueryInput) (*models.StartQueryOutput, error) {
+func StartQuery(client athenaiface.AthenaAPI, input *models.StartQueryInput, s3Path *string) (*models.StartQueryOutput, error) {
 	output := &models.StartQueryOutput{}
 
 	var err error
@@ -74,7 +74,7 @@ func StartQuery(client athenaiface.AthenaAPI, input *models.StartQueryInput) (*m
 		}
 	}()
 
-	query := awsathena.NewAthenaQuery(client, input.DatabaseName, input.SQL, nil)
+	query := awsathena.NewAthenaQuery(client, input.DatabaseName, input.SQL, s3Path)
 	err = query.Run()
 	if err != nil {
 		return output, err

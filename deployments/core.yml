@@ -642,6 +642,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
+          ATHENA_BUCKET: !Ref AthenaResultsBucket
       FunctionName: panther-athena-api
       # <cfndoc>
       # The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
@@ -671,20 +672,27 @@ Resources:
               Action:
                 - glue:GetDatabase*
                 - glue:GetTable*
+                - glue:GetPartition*
               Resource: '*'
-        - Id: S3Permissions # Athena writes results to S3
+        - Id: S3ResultsPermissions # Athena writes results to S3
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
                 - s3:GetBucketLocation
+                - s3:List*
                 - s3:GetObject
-                - s3:ListBucket
-                - s3:ListBucketMultipartUploads
-                - s3:ListMultipartUploadParts
-                - s3:AbortMultipartUpload
                 - s3:PutObject
-              Resource: !Sub 'arn:aws:s3:::${AthenaResultsBucket}*'
+              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
+        - Id: S3ReadPermissions # Athena reads from S3, restrict to our processed data buckets
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+              Resource: 'arn:aws:s3:::panther-*-processeddata-*' # wild card use to allow integration tests
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup

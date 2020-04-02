@@ -81,6 +81,7 @@ type TableDetail struct {
 type GetTablesDetailInput struct {
 	DatabaseName string   `json:"database_name" validate:"required"`
 	TableNames   []string `json:"table_names" validate:"required"`
+	HavingData   bool     `json:"having_data,omitempty"` // if true, only return table containing data
 }
 
 // NOTE: we will assume this is small an not paginate

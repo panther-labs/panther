@@ -110,6 +110,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		&models.GetTablesDetailInput{
 			DatabaseName: awsglue.LogProcessingDatabaseName,
 			TableNames:   []string{"aws_cloudtrail"},
+			HavingData:   true,
 		},
 	}
 

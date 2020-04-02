@@ -18,22 +18,6 @@ package driver
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
- * Copyright 2020 Panther Labs Inc
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import (
 	"os"
 	"strings"
@@ -46,14 +30,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 const (
-	testBucketPrefix = "panther-athena-api-test-bucket-"
+	testBucketPrefix = "panther-athena-api-processeddata-test-"
 	testDb           = "panther_athena_api_test_db"
 	testTable        = "panther_athena_test_table"
 )
@@ -65,14 +51,23 @@ var (
 	athenaClient    *athena.Athena
 	s3Client        *s3.S3
 
-	testBucket string
-	testKey    = "testdata.json"
+	testBucket        string
+	testPartitionName = "part"
+	testPartition     = "foo"
+	testKey           = testPartitionName + "=" + testPartition + "/testdata.json"
 
 	columns = []*glue.Column{
 		{
 			Name:    aws.String("col1"),
 			Type:    aws.String("int"),
-			Comment: aws.String("this is a description"),
+			Comment: aws.String("this is a column"),
+		},
+	}
+	partitions = []*glue.Column{
+		{
+			Name:    aws.String(testPartitionName),
+			Type:    aws.String("string"),
+			Comment: aws.String("this is a partition"),
 		},
 	}
 
@@ -104,6 +99,14 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		t.Skip()
 	}
 
+	t.Log("testing direct calls from client")
+	testAthenaAPI(t, false)
+
+	t.Log("testing indirect calls thru deployed lambdas")
+	testAthenaAPI(t, true)
+}
+
+func testAthenaAPI(t *testing.T, useLambda bool) {
 	setupTables(t)
 	defer func() {
 		removeTables(t)
@@ -112,10 +115,11 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	// -------- GetDatabases()
 
 	// list
-	dbOutput, err := GetDatabases(glueClient, &models.GetDatabasesInput{})
+	getDatabasesInput := &models.GetDatabasesInput{}
+	getDatabasesOutput, err := runGetDatabases(useLambda, getDatabasesInput)
 	require.NoError(t, err)
 	foundDB := false
-	for _, db := range dbOutput.Databases {
+	for _, db := range getDatabasesOutput.Databases {
 		if db.DatabaseName == testDb {
 			foundDB = true
 		}
@@ -123,74 +127,79 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	require.True(t, foundDB)
 
 	// specific lookup
-	dbOutput, err = GetDatabases(glueClient, &models.GetDatabasesInput{
+	getDatabasesInput = &models.GetDatabasesInput{
 		DatabaseName: testDb,
-	})
+	}
+	getDatabasesOutput, err = runGetDatabases(useLambda, getDatabasesInput)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(dbOutput.Databases))
-	require.Equal(t, testDb, dbOutput.Databases[0].DatabaseName)
+	require.Equal(t, 1, len(getDatabasesOutput.Databases))
+	require.Equal(t, testDb, getDatabasesOutput.Databases[0].DatabaseName)
 
 	// -------- GetTables()
 
-	tablesOutput, err := GetTables(glueClient, &models.GetTablesInput{
+	getTablesIntput := &models.GetTablesInput{
 		DatabaseName: testDb,
-	})
+	}
+	getTablesOutput, err := runGetTables(useLambda, getTablesIntput)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(tablesOutput.Tables))
-	require.Equal(t, testTable, tablesOutput.Tables[0].TableName)
+	require.Equal(t, 1, len(getTablesOutput.Tables))
+	require.Equal(t, testTable, getTablesOutput.Tables[0].TableName)
 
 	// -------- GetTablesDetail()
 
-	tableOutput, err := GetTablesDetail(glueClient, &models.GetTablesDetailInput{
+	getTablesDetailInput := &models.GetTablesDetailInput{
 		DatabaseName: testDb,
 		TableNames:   []string{testTable},
-	})
+		HavingData:   true,
+	}
+	getTablesDetailOutput, err := runGetTablesDetail(useLambda, getTablesDetailInput)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(tableOutput.TablesDetails))
-	require.Equal(t, testTable, tableOutput.TablesDetails[0].TableName)
-	require.Equal(t, len(columns), len(tableOutput.TablesDetails[0].Columns))
-	require.Equal(t, *columns[0].Name, tableOutput.TablesDetails[0].Columns[0].Name)
-	require.Equal(t, *columns[0].Type, tableOutput.TablesDetails[0].Columns[0].Type)
-	require.Equal(t, *columns[0].Comment, tableOutput.TablesDetails[0].Columns[0].Description)
+	require.Equal(t, 1, len(getTablesDetailOutput.TablesDetails))
+	require.Equal(t, testTable, getTablesDetailOutput.TablesDetails[0].TableName)
+	require.Equal(t, len(columns)+len(partitions), len(getTablesDetailOutput.TablesDetails[0].Columns))
+	require.Equal(t, *columns[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[0].Name)
+	require.Equal(t, *columns[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[0].Type)
+	require.Equal(t, *columns[0].Comment, getTablesDetailOutput.TablesDetails[0].Columns[0].Description)
+	require.Equal(t, *partitions[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[1].Name)
+	require.Equal(t, *partitions[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[1].Type)
+	require.Equal(t, *partitions[0].Comment, getTablesDetailOutput.TablesDetails[0].Columns[1].Description)
 
 	// -------- DoQuery()
 
-	doQueryOutput, err := DoQuery(athenaClient, &models.DoQueryInput{
+	doQueryInput := &models.DoQueryInput{
 		DatabaseName: testDb,
 		SQL:          `select * from ` + testTable,
-	})
+	}
+	doQueryOutput, err := runDoQuery(useLambda, doQueryInput)
 	require.NoError(t, err)
 	checkQueryResults(t, true, len(rows)+1, doQueryOutput.Rows)
 
 	//  -------- StartQuery()
 
-	startQueryOutput, err := StartQuery(athenaClient, &models.StartQueryInput{
+	startQueryInput := &models.StartQueryInput{
 		DatabaseName: testDb,
 		SQL:          `select * from ` + testTable,
 		MaxResults:   &maxRowsPerResult,
-	})
+	}
+	startQueryOutput, err := runStartQuery(useLambda, startQueryInput)
 	require.NoError(t, err)
 	if startQueryOutput.Status == models.QuerySucceeded {
-		t.Log("StartQuery succeeded")
 		checkQueryResults(t, true, int(maxRowsPerResult), startQueryOutput.Rows)
 	}
 
 	//  -------- GetQueryStatus()
 
-	var queryStatus string
 	for {
-		t.Log("QueryStatus polling query")
 		time.Sleep(time.Second * 10)
-		getQueryStatusOutput, err := GetQueryStatus(athenaClient, &models.GetQueryStatusInput{
+		getQueryStatusInput := &models.GetQueryStatusInput{
 			QueryID: startQueryOutput.QueryID,
-		})
+		}
+		getQueryStatusOutput, err := runGetQueryStatus(useLambda, getQueryStatusInput)
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
-			queryStatus = getQueryStatusOutput.Status
 			break
 		}
 	}
-	t.Log("QueryStatus returned", queryStatus)
 
 	//  -------- GetQueryResults()
 
@@ -198,19 +207,17 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		QueryID:    startQueryOutput.QueryID,
 		MaxResults: &maxRowsPerResult,
 	}
-	getQueryResultsOutput, err := GetQueryResults(athenaClient, getQueryResultsInput)
+	getQueryResultsOutput, err := runGetQueryResults(useLambda, getQueryResultsInput)
 	require.NoError(t, err)
 
 	if getQueryResultsOutput.Status == models.QuerySucceeded {
 		resultCount := 0
-		t.Log("GetQueryResults succeeded")
 		checkQueryResults(t, true, int(maxRowsPerResult), getQueryResultsOutput.Rows)
 		resultCount++
 
-		t.Log("Test pagination")
 		for getQueryResultsOutput.NumRows > 0 { // when done this is 0
 			getQueryResultsInput.PaginationToken = getQueryResultsOutput.PaginationToken
-			getQueryResultsOutput, err = GetQueryResults(athenaClient, getQueryResultsInput)
+			getQueryResultsOutput, err = runGetQueryResults(useLambda, getQueryResultsInput)
 			require.NoError(t, err)
 			if getQueryResultsOutput.NumRows > 0 { // not finished paging
 				checkQueryResults(t, false, int(maxRowsPerResult), getQueryResultsOutput.Rows)
@@ -219,8 +226,106 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		}
 		require.Equal(t, len(rows)+1, resultCount) // since we pace 1 at a time and have a header
 	} else {
-		t.Log("GetQueryResults failed")
+		assert.Fail(t, "GetQueryResults failed")
 	}
+}
+
+func runGetDatabases(useLambda bool, input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
+	if useLambda {
+		var getDatabasesInput = struct {
+			GetDatabases *models.GetDatabasesInput
+		}{
+			input,
+		}
+		var getDatabasesOutput *models.GetDatabasesOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getDatabasesInput, &getDatabasesOutput)
+		return getDatabasesOutput, err
+	}
+	return GetDatabases(glueClient, input)
+}
+
+func runGetTables(useLambda bool, input *models.GetTablesInput) (*models.GetTablesOutput, error) {
+	if useLambda {
+		var getTablesInput = struct {
+			GetTables *models.GetTablesInput
+		}{
+			input,
+		}
+		var getTablesOutput *models.GetTablesOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getTablesInput, &getTablesOutput)
+		return getTablesOutput, err
+	}
+	return GetTables(glueClient, input)
+}
+
+func runGetTablesDetail(useLambda bool, input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
+	if useLambda {
+		var getTablesDetailInput = struct {
+			GetTablesDetail *models.GetTablesDetailInput
+		}{
+			input,
+		}
+		var getTablesDetailOutput *models.GetTablesDetailOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getTablesDetailInput, &getTablesDetailOutput)
+		return getTablesDetailOutput, err
+	}
+	return GetTablesDetail(glueClient, input)
+}
+
+func runDoQuery(useLambda bool, input *models.DoQueryInput) (*models.DoQueryOutput, error) {
+	if useLambda {
+		var doQueryInput = struct {
+			DoQuery *models.DoQueryInput
+		}{
+			input,
+		}
+		var doQueryOutput *models.DoQueryOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", doQueryInput, &doQueryOutput)
+		return doQueryOutput, err
+	}
+	return DoQuery(athenaClient, input, nil)
+}
+
+func runStartQuery(useLambda bool, input *models.StartQueryInput) (*models.StartQueryOutput, error) {
+	if useLambda {
+		var startQueryInput = struct {
+			StartQuery *models.StartQueryInput
+		}{
+			input,
+		}
+		var startQueryOutput *models.StartQueryOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", startQueryInput, &startQueryOutput)
+		return startQueryOutput, err
+	}
+	return StartQuery(athenaClient, input, nil)
+}
+
+func runGetQueryStatus(useLambda bool, input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
+	if useLambda {
+		var getQueryStatusInput = struct {
+			GetQueryStatus *models.GetQueryStatusInput
+		}{
+			input,
+		}
+		var getQueryStatusOutput *models.GetQueryStatusOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getQueryStatusInput, &getQueryStatusOutput)
+		return getQueryStatusOutput, err
+	}
+	return GetQueryStatus(athenaClient, input)
+}
+
+func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
+	if useLambda {
+		var getQueryResultsInput = struct {
+			GetQueryResults *models.GetQueryResultsInput
+		}{
+			input,
+		}
+		var getQueryResultsOutput *models.GetQueryResultsOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getQueryResultsInput, &getQueryResultsOutput)
+		return getQueryResultsOutput, err
+	}
+	return GetQueryResults(athenaClient, input)
 }
 
 func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {
@@ -256,24 +361,27 @@ func addTables(t *testing.T) {
 	_, err = glueClient.CreateDatabase(dbInput)
 	require.NoError(t, err)
 
+	storageDecriptor := &glue.StorageDescriptor{ // configure as JSON
+		Columns:      columns,
+		Location:     aws.String("s3://" + testBucket + "/"),
+		InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
+		OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
+		SerdeInfo: &glue.SerDeInfo{
+			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+			Parameters: map[string]*string{
+				"serialization.format": aws.String("1"),
+				"case.insensitive":     aws.String("TRUE"), // treat as lower case
+			},
+		},
+	}
+
 	tableInput := &glue.CreateTableInput{
 		DatabaseName: aws.String(testDb),
 		TableInput: &glue.TableInput{
-			Name: aws.String(testTable),
-			StorageDescriptor: &glue.StorageDescriptor{ // configure as JSON
-				Columns:      columns,
-				Location:     aws.String("s3://" + testBucket + "/"),
-				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
-				OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
-				SerdeInfo: &glue.SerDeInfo{
-					SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
-					Parameters: map[string]*string{
-						"serialization.format": aws.String("1"),
-						"case.insensitive":     aws.String("TRUE"), // treat as lower case
-					},
-				},
-			},
-			TableType: aws.String("EXTERNAL_TABLE"),
+			Name:              aws.String(testTable),
+			PartitionKeys:     partitions,
+			StorageDescriptor: storageDecriptor,
+			TableType:         aws.String("EXTERNAL_TABLE"),
 		},
 	}
 	_, err = glueClient.CreateTable(tableInput)
@@ -287,6 +395,18 @@ func addTables(t *testing.T) {
 	_, err = s3Client.PutObject(putInput)
 	require.NoError(t, err)
 	time.Sleep(time.Second / 4) // short pause since S3 is eventually consistent
+
+	_, err = glueClient.CreatePartition(&glue.CreatePartitionInput{
+		DatabaseName: aws.String(testDb),
+		TableName:    aws.String(testTable),
+		PartitionInput: &glue.PartitionInput{
+			StorageDescriptor: storageDecriptor,
+			Values: []*string{
+				aws.String(testPartition),
+			},
+		},
+	})
+	require.NoError(t, err)
 }
 
 func removeTables(t *testing.T) {

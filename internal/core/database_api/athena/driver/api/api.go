@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
@@ -28,10 +30,18 @@ import (
 )
 
 var (
-	sess         = session.Must(session.NewSession())
-	glueClient   = glue.New(sess)
-	athenaClient = athena.New(sess)
+	sess                = session.Must(session.NewSession())
+	glueClient          = glue.New(sess)
+	athenaClient        = athena.New(sess)
+	athenaS3ResultsPath *string
 )
+
+func init() {
+	if os.Getenv("ATHENA_BUCKET") != "" {
+		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"
+		athenaS3ResultsPath = &results
+	}
+}
 
 // API provides receiver methods for each route handler.
 type API struct{}
@@ -49,11 +59,11 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 }
 
 func (API) DoQuery(input *models.DoQueryInput) (*models.DoQueryOutput, error) {
-	return driver.DoQuery(athenaClient, input)
+	return driver.DoQuery(athenaClient, input, athenaS3ResultsPath)
 }
 
 func (API) StartQuery(input *models.StartQueryInput) (*models.StartQueryOutput, error) {
-	return driver.StartQuery(athenaClient, input)
+	return driver.StartQuery(athenaClient, input, athenaS3ResultsPath)
 }
 
 func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {

@@ -105,21 +105,42 @@ func GetTablesDetail(glueClient glueiface.GlueAPI, input *models.GetTablesDetail
 	}()
 
 	for _, tableName := range input.TableNames {
-		var glueOutput *glue.GetTableOutput
-		glueOutput, err = glueClient.GetTable(&glue.GetTableInput{
+		var glueTableOutput *glue.GetTableOutput
+		glueTableOutput, err = glueClient.GetTable(&glue.GetTableInput{
 			DatabaseName: aws.String(input.DatabaseName),
 			Name:         aws.String(tableName),
 		})
 		if err != nil {
 			return output, errors.WithStack(err)
 		}
+		if input.HavingData { // check there is at least 1 partition
+			var gluePartitionOutput *glue.GetPartitionsOutput
+			gluePartitionOutput, err = glueClient.GetPartitions(&glue.GetPartitionsInput{
+				DatabaseName: aws.String(input.DatabaseName),
+				TableName:    aws.String(tableName),
+				MaxResults:   aws.Int64(1),
+			})
+			if err != nil {
+				return output, errors.WithStack(err)
+			}
+			if len(gluePartitionOutput.Partitions) == 0 { // skip if no partitions
+				continue
+			}
+		}
 		detail := &models.TableDetail{
 			TableDescription: models.TableDescription{
 				DatabaseName: input.DatabaseName,
-				TableName:    *glueOutput.Table.Name,
+				TableName:    *glueTableOutput.Table.Name,
 			},
 		}
-		for _, column := range glueOutput.Table.StorageDescriptor.Columns {
+		for _, column := range glueTableOutput.Table.StorageDescriptor.Columns {
+			detail.Columns = append(detail.Columns, &models.TableColumn{
+				Name:        aws.StringValue(column.Name),
+				Type:        aws.StringValue(column.Type),
+				Description: aws.StringValue(column.Comment),
+			})
+		}
+		for _, column := range glueTableOutput.Table.PartitionKeys {
 			detail.Columns = append(detail.Columns, &models.TableColumn{
 				Name:        aws.StringValue(column.Name),
 				Type:        aws.StringValue(column.Type),
