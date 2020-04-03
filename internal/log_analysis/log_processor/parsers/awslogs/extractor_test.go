@@ -131,8 +131,10 @@ func TestAWSExtractor(t *testing.T) {
 		"arn:aws:ec2:region:111122223333:instance/")
 	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a", "i-0072230f74b3a798e" /* from ARN */)
 	expectedEvent.AppendAnyAWSAccountIds("123456789012", "888888888888" /* from ARN */, "111122223333" /* from ARN */)
-	expectedEvent.AppendAnyIPAddresses("54.152.215.140", "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-		"172.31.81.237", "151.80.19.228")
+	expectedEvent.AppendAnyIPAddress("54.152.215.140")
+	expectedEvent.AppendAnyIPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+	expectedEvent.AppendAnyIPAddress("172.31.81.237")
+	expectedEvent.AppendAnyIPAddress("151.80.19.228")
 	expectedEvent.AppendAnyAWSTags("tag1:val1")
 	expectedEvent.AppendAnyDomainNames("ec2-54-152-215-140.compute-1.amazonaws.com", "GeneratedFindingDomainName",
 		"ip-172-31-81-237.ec2.internal")

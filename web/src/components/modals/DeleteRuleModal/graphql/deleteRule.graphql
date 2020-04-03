@@ -1,0 +1,3 @@
+mutation DeleteRule($input: DeleteRuleInput!) {
+  deleteRule(input: $input)
+}

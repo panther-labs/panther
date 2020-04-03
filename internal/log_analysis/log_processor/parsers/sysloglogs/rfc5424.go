@@ -20,7 +20,6 @@ package sysloglogs
 
 import (
 	"errors"
-	"net"
 
 	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/rfc5424"
@@ -108,14 +107,9 @@ func (p *RFC5424Parser) LogType() string {
 func (event *RFC5424) updatePantherFields(p *RFC5424Parser) {
 	event.SetCoreFields(p.LogType(), event.Timestamp, event)
 
-	if event.Hostname != nil {
-		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
-		// add as a domain name. https://tools.ietf.org/html/rfc5424#section-6.2.4
-		hostname := *event.Hostname
-		if net.ParseIP(hostname) != nil {
-			event.AppendAnyIPAddresses(hostname)
-		} else {
-			event.AppendAnyDomainNames(hostname)
-		}
+	// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
+	// add as a domain name. https://tools.ietf.org/html/rfc5424#section-6.2.4
+	if !event.AppendAnyIPAddressPtr(event.Hostname) {
+		event.AppendAnyDomainNamePtrs(event.Hostname)
 	}
 }

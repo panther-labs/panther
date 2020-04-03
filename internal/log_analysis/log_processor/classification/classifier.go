@@ -82,11 +82,10 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []*parsers.PantherLog) {
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Error("parser panic",
+			zap.L().Debug("parser panic",
 				zap.String("parser", parser.LogType()),
 				zap.Error(fmt.Errorf("%v", r)),
-				zap.String("stacktrace", string(debug.Stack())),
-				zap.String("log", log))
+				zap.String("stacktrace", string(debug.Stack())))
 			parsedEvents = nil // return indicator that parse failed
 		}
 	}()

@@ -193,7 +193,17 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 
 	// Deploy first bootstrap stack
 	go func() {
+		// the example yml has an empty string to make it clear it is a list, remove empty strings
+		var sanitizedLogSubscriptionArns []string
+		for _, arn := range settings.Setup.LogSubscriptions.PrincipalARNs {
+			if arn == "" {
+				continue
+			}
+			sanitizedLogSubscriptionArns = append(sanitizedLogSubscriptionArns, arn)
+		}
+
 		params := map[string]string{
+			"LogSubscriptionPrincipals":  strings.Join(sanitizedLogSubscriptionArns, ","),
 			"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 			"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
 			"CertificateArn":             certificateArn(awsSession, settings),
@@ -204,7 +214,8 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 
 		outputs = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
 
-		// Enable software 2FA for the Cognito user pool - this is not yet supported in CloudFormation.
+		// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
+		// forces SMS as a fallback option, but the SDK does not.
 		userPoolID := outputs["UserPoolId"]
 		logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
 		_, err := cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{

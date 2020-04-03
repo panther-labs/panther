@@ -228,14 +228,9 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 
 	// Verifying Sns Publish payload
 	publishInput := destination.mockSns.Calls[0].Arguments.Get(0).(*sns.PublishInput)
-	expectedS3Notification := &models.S3Notification{
-		S3Bucket:    aws.String("testbucket"),
-		S3ObjectKey: uploadInput.Key,
-		Events:      aws.Int(1),
-		Bytes:       aws.Int(len(marshaledEvent) + len("\n")),
-		Type:        aws.String(models.LogData.String()),
-		ID:          aws.String(testLogType),
-	}
+	expectedS3Notification := models.NewS3ObjectPutNotification(destination.s3Bucket, *uploadInput.Key,
+		len(marshaledEvent)+len("\n"))
+
 	marshaledExpectedS3Notification, _ := jsoniter.MarshalToString(expectedS3Notification)
 	expectedSnsPublishInput := &sns.PublishInput{
 		Message:  aws.String(marshaledExpectedS3Notification),

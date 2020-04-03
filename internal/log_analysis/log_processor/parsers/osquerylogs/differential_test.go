@@ -90,7 +90,8 @@ func TestDifferentialLogWithExtraIps(t *testing.T) {
 	expectedEvent.PantherLogType = aws.String("Osquery.Differential")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyDomainNames("Quans-MacBook-Pro-2.local")
-	expectedEvent.AppendAnyIPAddresses("192.168.1.1", "192.168.1.2")
+	expectedEvent.AppendAnyIPAddress("192.168.1.1")
+	expectedEvent.AppendAnyIPAddress("192.168.1.2")
 
 	checkOsQueryDifferentialLog(t, log, expectedEvent)
 }

@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box } from 'pouncejs';
 import { LinkifyProps } from 'linkifyjs/react';
-import { css } from '@emotion/core';
+import { css } from '@emotion/react';
 
 const OriginalReactLinkify = React.lazy(() =>
   import(/* webpackChunkName: "linkify" */ 'linkifyjs/react.js')

@@ -21,7 +21,7 @@
 import React from 'react';
 import { Badge, Box, TableProps, Text, Icon, Tooltip, Label } from 'pouncejs';
 import { ComplianceStatusEnum, PolicySummary } from 'Generated/schema';
-import { css } from '@emotion/core';
+import { css } from '@emotion/react';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime, capitalize } from 'Helpers/utils';
 import ListPoliciesTableRowOptions from './ListPoliciesTableRowOptions';

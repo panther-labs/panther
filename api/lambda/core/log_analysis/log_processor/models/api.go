@@ -1,5 +1,7 @@
 package models
 
+import "github.com/aws/aws-lambda-go/events"
+
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -20,19 +22,34 @@ package models
 
 // S3Notification is sent when new data is available in S3
 type S3Notification struct {
-	// S3Bucket is name of the S3 Bucket where data is available
-	S3Bucket *string `json:"s3Bucket" validate:"required"`
-	// S3ObjectKey is the key of the S3 object that contains the new data
-	S3ObjectKey *string `json:"s3ObjectKey" validate:"required"`
-	// Events is the number of events in the S3 object
-	Events *int `json:"events"`
-	// Bytes is the uncompressed size in bytes of the S3 object
-	Bytes *int `json:"bytes"`
-	// Type is the type of data available in the S3 object (LogData,RuleOutput)
-	Type *string `json:"type" validate:"required"`
-	// ID is an identified for the data in the S3 object. In case of LogData this will be
-	// the Log Type, in case of RuleOutput data this will be the RuleID
-	ID *string `json:"id" validate:"required"`
+	// https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+	Records []events.S3EventRecord
+}
+
+func NewS3ObjectPutNotification(bucket, key string, nbytes int) *S3Notification {
+	const (
+		eventVersion = "2.0"
+		eventSource  = "aws:s3"
+		eventName    = "ObjectCreated:Put"
+	)
+	return &S3Notification{
+		Records: []events.S3EventRecord{
+			{
+				EventVersion: eventVersion,
+				EventSource:  eventSource,
+				EventName:    eventName,
+				S3: events.S3Entity{
+					Bucket: events.S3Bucket{
+						Name: bucket,
+					},
+					Object: events.S3Object{
+						Key:  key,
+						Size: int64(nbytes),
+					},
+				},
+			},
+		},
+	}
 }
 
 // The type of data that are stored in the Panther

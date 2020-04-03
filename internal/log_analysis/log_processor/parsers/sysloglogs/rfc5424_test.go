@@ -160,7 +160,7 @@ func testRFC5424NoStructuredDataNoMsgID(t *testing.T) {
 		StructuredData: nil,
 	}
 
-	expectedEvent.AppendAnyIPAddressPtrs(expectedEvent.Hostname)
+	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.Hostname)
 
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")

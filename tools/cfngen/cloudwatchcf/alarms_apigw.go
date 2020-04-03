@@ -50,13 +50,9 @@ func generateAPIGatewayAlarms(resource map[interface{}]interface{}) (alarms []*A
 
 	// client errors are used for signalling internally so we do not alarm on them
 
-	// latency
-	alarms = append(alarms, NewAPIGatewayAlarm("ApiGatewayHighLatency", "Latency",
-		"is experience high latency", resource).MaxMillisecondsThreshold(1000, 60).EvaluationPeriods(5))
-
 	// integration latency
 	alarms = append(alarms, NewAPIGatewayAlarm("ApiGatewayHighIntegationLatency", "IntegrationLatency",
-		"is experience high integration latency", resource).MaxMillisecondsThreshold(1000, 60).EvaluationPeriods(5))
+		"is experiencing high integration latency", resource).MaxMillisecondsThreshold(1000, 60).EvaluationPeriods(5))
 
 	return alarms
 }

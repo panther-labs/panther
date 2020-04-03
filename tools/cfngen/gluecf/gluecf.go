@@ -58,6 +58,10 @@ var (
 			To:   GlueTimestampType,
 		},
 		{
+			From: reflect.TypeOf(timestamp.UnixFloat{}),
+			To:   GlueTimestampType,
+		},
+		{
 			From: reflect.TypeOf(parsers.PantherAnyString{}),
 			To:   "array<string>",
 		},
