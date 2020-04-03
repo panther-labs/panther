@@ -170,14 +170,14 @@ func getQueryResults(client athenaiface.AthenaAPI, executionStatus *athena.GetQu
 	if err != nil {
 		return err
 	}
-	err = collectResults(queryResult, output, maxResults)
+	err = collectResults(queryResult, output)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput, maxResults *int64) (err error) {
+func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) (err error) {
 	for _, row := range queryResult.ResultSet.Rows {
 		var columns []*models.Column
 		for _, col := range row.Data {
@@ -191,10 +191,6 @@ func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.Ge
 		return errors.WithStack(err)
 	}
 	output.NumRows = len(queryResult.ResultSet.Rows)
-	if output.NumRows > 0 && (maxResults == nil || int(*maxResults) == output.NumRows) { // could be more!
-		output.PaginationToken = queryResult.NextToken
-	} else {
-		output.PaginationToken = nil // no more
-	}
+	output.PaginationToken = queryResult.NextToken
 	return nil
 }
