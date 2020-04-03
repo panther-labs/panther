@@ -97,6 +97,7 @@ func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 		ID:              generateAlertID(alertDedup),
 		TimePartition:   defaultTimePartition,
 		Severity:        string(rule.Severity),
+		RuleDisplayName: getRuleDisplayName(rule),
 		Title:           getAlertTitle(rule, alertDedup),
 		AlertDedupEvent: *alertDedup,
 	}
@@ -151,11 +152,14 @@ func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
 	if alertDedup.GeneratedTitle != nil {
 		return *alertDedup.GeneratedTitle
 	}
+	return getRuleDisplayName(rule) + " failed"
+}
 
+func getRuleDisplayName(rule *models.Rule) string {
 	if len(rule.DisplayName) > 0 {
-		return string(rule.DisplayName) + " failed"
+		return string(rule.DisplayName)
 	}
-	return string(rule.ID) + " failed"
+	return string(rule.ID)
 }
 
 func generateAlertID(event *AlertDedupEvent) string {

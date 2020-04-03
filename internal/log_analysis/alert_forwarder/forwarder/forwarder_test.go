@@ -150,6 +150,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
+		RuleDisplayName: string(testRuleResponse.DisplayName),
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		AlertDedupEvent: *newAlertDedupEvent,
 	}
@@ -211,6 +212,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
+		RuleDisplayName: string(testRuleResponse.DisplayName),
 		Title:           "DisplayName failed",
 		AlertDedupEvent: *newAlertDedupEvent,
 	}
@@ -283,6 +285,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
+		RuleDisplayName: string(testRuleResponse.DisplayName),
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		AlertDedupEvent: *newAlertDedupEvent,
 	}

@@ -96,12 +96,32 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		CreationTime:           &alertItem.CreationTime,
 		UpdateTime:             &alertItem.UpdateTime,
 		EventsMatched:          &alertItem.EventCount,
+		RuleDisplayName:        getRuleDisplayName(alertItem),
+		Title:                  getAlertTitle(alertItem),
 		Events:                 aws.StringSlice(events),
 		EventsLastEvaluatedKey: aws.String(encodedToken),
 	}
 
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result, nil
+}
+
+// Method required for backwards compatibility
+// In case the RuleDisplayName is empty, return the RuleID
+func getRuleDisplayName(alert *table.AlertItem) *string {
+	if len(alert.RuleDisplayName) > 0 {
+		return &alert.RuleDisplayName
+	}
+	return &alert.RuleID
+}
+
+// Method required for backwards compatibility
+// In case the alert title is empty, return custom title
+func getAlertTitle(alert *table.AlertItem) *string {
+	if len(alert.Title) > 0 {
+		return &alert.Title
+	}
+	return aws.String(*getRuleDisplayName(alert) + " failed")
 }
 
 // This method returns events from a specific log type that are associated to a given alert.

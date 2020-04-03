@@ -158,13 +158,15 @@ func TestGetAlert(t *testing.T) {
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
-		AlertID:       aws.String("alertId"),
-		RuleID:        aws.String("ruleId"),
-		DedupString:   aws.String("dedupString"),
-		CreationTime:  aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
-		UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
-		EventsMatched: aws.Int(5),
-		Events:        aws.StringSlice([]string{"testEvent"}),
+		AlertID:         aws.String("alertId"),
+		RuleID:          aws.String("ruleId"),
+		RuleDisplayName: aws.String("ruleId"),
+		Title:           aws.String("ruleId failed"),
+		DedupString:     aws.String("dedupString"),
+		CreationTime:    aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
+		UpdateTime:      aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
+		EventsMatched:   aws.Int(5),
+		Events:          aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
 		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
@@ -224,13 +226,15 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
-		AlertID:       aws.String("alertId"),
-		RuleID:        aws.String("ruleId"),
-		CreationTime:  aws.Time(time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC)),
-		UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC)),
-		EventsMatched: aws.Int(5),
-		DedupString:   aws.String("dedupString"),
-		Events:        aws.StringSlice([]string{"testEvent"}),
+		AlertID:         aws.String("alertId"),
+		RuleID:          aws.String("ruleId"),
+		RuleDisplayName: aws.String("ruleId"),
+		Title:           aws.String("ruleId failed"),
+		CreationTime:    aws.Time(time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC)),
+		UpdateTime:      aws.Time(time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC)),
+		EventsMatched:   aws.Int(5),
+		DedupString:     aws.String("dedupString"),
+		Events:          aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
 		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvMjAyMDAxMDFUMDEwNTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),

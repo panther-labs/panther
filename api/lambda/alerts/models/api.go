@@ -33,23 +33,17 @@ type LambdaInput struct {
 // Example:
 // {
 //     "getAlert": {
-// 	    "alertId": "ruleId-2"
+// 	    "alertId": "ruleId-2",
+//         "eventsPageSize": 20
 //     }
 // }
 type GetAlertInput struct {
 	AlertID                 *string `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
-	EventsPageSize          *int    `json:"eventsPageSize,omitempty"  validate:"omitempty,min=1,max=50"`
+	EventsPageSize          *int    `json:"eventsPageSize"  validate:"required,min=1,max=50"`
 	EventsExclusiveStartKey *string `json:"eventsExclusiveStartKey,omitempty"`
 }
 
 // GetAlertOutput retrieves details for a single alert.
-//
-// Example:
-// {
-//     "getAlert": {
-// 	    "alertId": "ruleId-2"
-//     }
-// }
 type GetAlertOutput = Alert
 
 // ListAlertsInput lists the alerts in reverse-chronological order (newest to oldest)
@@ -66,7 +60,7 @@ type GetAlertOutput = Alert
 // }
 type ListAlertsInput struct {
 	RuleID            *string `json:"ruleId,omitempty"`
-	PageSize          *int    `json:"pageSize,omitempty"  validate:"omitempty,min=1,max=50"`
+	PageSize          *int    `json:"pageSize"  validate:"required,min=1,max=50"`
 	ExclusiveStartKey *string `json:"exclusiveStartKey,omitempty"`
 }
 
@@ -83,23 +77,31 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID       *string    `json:"alertId"`
-	RuleID        *string    `json:"ruleId"`
-	DedupString   *string    `json:"dedupString"`
-	CreationTime  *time.Time `json:"creationTime"`
-	UpdateTime    *time.Time `json:"updateTime"`
-	EventsMatched *int       `json:"eventsMatched"`
-	Severity      *string    `json:"severity"`
+	AlertID *string `json:"alertId"`
+	RuleID  *string `json:"ruleId"`
+	// If user hasn't specified any rule display name, RuleDisplayName will be same as RuleID
+	RuleDisplayName *string    `json:"ruleDisplayName"`
+	RuleVersion     *string    `json:"ruleVersion"`
+	DedupString     *string    `json:"dedupString"`
+	CreationTime    *time.Time `json:"creationTime"`
+	UpdateTime      *time.Time `json:"updateTime"`
+	EventsMatched   *int       `json:"eventsMatched"`
+	Severity        *string    `json:"severity"`
+	Title           *string    `json:"title"`
 }
 
 // Alert contains the details of an alert
 type Alert struct {
-	AlertID                *string    `json:"alertId"`
-	RuleID                 *string    `json:"ruleId"`
+	AlertID *string `json:"alertId"`
+	RuleID  *string `json:"ruleId"`
+	// If user hasn't specified any rule display name, RuleDisplayName will be same as RuleID
+	RuleDisplayName        *string    `json:"ruleDisplayName"`
+	RuleVersion            *string    `json:"ruleVersion"`
 	DedupString            *string    `json:"dedupString"`
 	CreationTime           *time.Time `json:"creationTime"`
 	UpdateTime             *time.Time `json:"updateTime"`
 	EventsMatched          *int       `json:"eventsMatched"`
 	Events                 []*string  `json:"events"`
 	EventsLastEvaluatedKey *string    `json:"eventsLastEvaluatedKey,omitempty"`
+	Title                  *string    `json:"title"`
 }
