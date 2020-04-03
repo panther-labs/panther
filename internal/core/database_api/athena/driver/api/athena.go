@@ -45,7 +45,7 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 
 	executeAsyncQueryOutput, err := api.ExecuteAsyncQuery(input)
 	if err != nil {
-		output.Error = executeAsyncQueryOutput.Error
+		output.QueryError = executeAsyncQueryOutput.QueryError
 		return output, err
 	}
 
@@ -57,7 +57,6 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 		}
 		getQueryStatusOutput, err := api.GetQueryStatus(getQueryStatusInput)
 		if err != nil {
-			output.Error = getQueryStatusOutput.Error
 			return output, err
 		}
 		if getQueryStatusOutput.Status != models.QueryRunning {
@@ -138,7 +137,7 @@ func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQuery
 			return output, err
 		}
 	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
-		output.ErrorMessage = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
+		output.Message = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
 	}
 
 	return output, nil

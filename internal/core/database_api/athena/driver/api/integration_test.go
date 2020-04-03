@@ -19,8 +19,6 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/panther-labs/panther/pkg/genericapi"
 	"os"
 	"strings"
 	"testing"
@@ -29,12 +27,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
@@ -49,7 +49,7 @@ var (
 	api = API{}
 
 	lambdaClient *lambda.Lambda
-	s3Client *s3.S3
+	s3Client     *s3.S3
 
 	testBucket        string
 	testPartitionName = "part"
@@ -182,7 +182,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	executeBadQueryOutput, err := runExecuteQuery(useLambda, executeBadQueryInput)
 	require.NoError(t, err) // NO LAMBDA ERROR here!
 	require.Equal(t, models.QueryFailed, executeBadQueryOutput.Status)
-	require.True(t, strings.Contains(executeBadQueryOutput.ErrorMessage, "does not exist"))
+	require.True(t, strings.Contains(executeBadQueryOutput.Message, "does not exist"))
 
 	//  -------- ExecuteAsyncQuery()
 

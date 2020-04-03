@@ -32,8 +32,8 @@ type LambdaInput struct {
 	ExecuteQuery         *ExecuteQueryInput         `json:"executeQuery"`
 	ExecuteSimpleSummary *ExecuteSimpleSummaryInput `json:"executeSimpleSummary"`
 	GetDatabases         *GetDatabasesInput         `json:"getDatabases"`
-	GetQueryStatus       *GetQueryStatusInput       `json:"getQueryStatus"`
 	GetQueryResults      *GetQueryResultsInput      `json:"getQueryResults"`
+	GetQueryStatus       *GetQueryStatusInput       `json:"getQueryStatus"`
 	GetTables            *GetTablesInput            `json:"getTables"`
 	GetTablesDetail      *GetTablesDetailInput      `json:"getTablesDetail"`
 }
@@ -44,7 +44,6 @@ type GetDatabasesInput struct {
 
 // NOTE: we will assume this is small an not paginate
 type GetDatabasesOutput struct {
-	Error
 	Databases []*DatabaseDescription `json:"databases,omitempty"`
 }
 
@@ -61,7 +60,6 @@ type GetTablesInput struct {
 
 // NOTE: we will assume this is small an not paginate
 type GetTablesOutput struct {
-	Error
 	Tables []*TableDescription `json:"tables,omitempty"`
 }
 
@@ -84,7 +82,6 @@ type GetTablesDetailInput struct {
 
 // NOTE: we will assume this is small an not paginate
 type GetTablesDetailOutput struct {
-	Error
 	TablesDetails []*TableDetail `json:"tablesDetails,omitempty"`
 }
 
@@ -101,7 +98,7 @@ type ExecuteAsyncQueryInput struct {
 }
 
 type ExecuteAsyncQueryOutput struct {
-	Error
+	QueryError
 	QueryID string `json:"queryId" validate:"required"`
 }
 
@@ -110,7 +107,6 @@ type GetQueryStatusInput struct {
 }
 
 type GetQueryStatusOutput struct {
-	Error
 	Status string `json:"status" validate:"required,oneof=running,succeeded,failed"`
 }
 
@@ -121,7 +117,7 @@ type GetQueryResultsInput struct {
 }
 
 type GetQueryResultsOutput struct {
-	Error
+	QueryError
 	QueryID         string  `json:"queryId" validate:"required"`
 	Status          string  `json:"status" validate:"required,oneof=running,succeeded,failed"`
 	NumRows         int     `json:"numRows"`
@@ -149,6 +145,6 @@ type Column struct {
 	Value string `json:"value"`
 }
 
-type Error struct {
-	ErrorMessage string `json:"errorMessage,omitempty"`
+type QueryError struct {
+	Message string `json:"message,omitempty"`
 }
