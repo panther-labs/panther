@@ -37,17 +37,17 @@ func GetDatabases(glueClient glueiface.GlueAPI, input *models.GetDatabasesInput)
 		}
 	}()
 
-	if input.DatabaseName != "" {
+	if input.DatabaseName != nil {
 		var glueOutput *glue.GetDatabaseOutput
 		glueOutput, err = glueClient.GetDatabase(&glue.GetDatabaseInput{
-			Name: aws.String(input.DatabaseName),
+			Name: input.DatabaseName,
 		})
 		if err != nil {
 			return output, errors.WithStack(err)
 		}
 		output.Databases = append(output.Databases, &models.DatabaseDescription{
 			DatabaseName: *glueOutput.Database.Name,
-			Description:  aws.StringValue(glueOutput.Database.Description), // optional
+			Description:  glueOutput.Database.Description, // optional
 		})
 		return output, err
 	}
@@ -58,7 +58,7 @@ func GetDatabases(glueClient glueiface.GlueAPI, input *models.GetDatabasesInput)
 			for _, database := range page.DatabaseList {
 				output.Databases = append(output.Databases, &models.DatabaseDescription{
 					DatabaseName: *database.Name,
-					Description:  aws.StringValue(database.Description), // optional
+					Description:  database.Description, // optional
 				})
 			}
 			return false
@@ -85,7 +85,7 @@ func GetTables(glueClient glueiface.GlueAPI, input *models.GetTablesInput) (*mod
 				output.Tables = append(output.Tables, &models.TableDescription{
 					DatabaseName: input.DatabaseName,
 					TableName:    *table.Name,
-					Description:  aws.StringValue(table.Description), // optional
+					Description:  table.Description, // optional
 				})
 			}
 			return false
@@ -137,14 +137,14 @@ func GetTablesDetail(glueClient glueiface.GlueAPI, input *models.GetTablesDetail
 			detail.Columns = append(detail.Columns, &models.TableColumn{
 				Name:        aws.StringValue(column.Name),
 				Type:        aws.StringValue(column.Type),
-				Description: aws.StringValue(column.Comment),
+				Description: column.Comment,
 			})
 		}
 		for _, column := range glueTableOutput.Table.PartitionKeys {
 			detail.Columns = append(detail.Columns, &models.TableColumn{
 				Name:        aws.StringValue(column.Name),
 				Type:        aws.StringValue(column.Type),
-				Description: aws.StringValue(column.Comment),
+				Description: column.Comment,
 			})
 		}
 		output.TablesDetails = append(output.TablesDetails, detail)

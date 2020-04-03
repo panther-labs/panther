@@ -39,7 +39,7 @@ type LambdaInput struct {
 }
 
 type GetDatabasesInput struct {
-	DatabaseName string `json:"databaseName,omitempty"` // if empty get all databases
+	DatabaseName *string `json:"databaseName,omitempty"` // if empty get all databases
 }
 
 // NOTE: we will assume this is small an not paginate
@@ -50,8 +50,8 @@ type GetDatabasesOutput struct {
 }
 
 type DatabaseDescription struct {
-	DatabaseName string `json:"databaseName,omitempty"`
-	Description  string `json:"description,omitempty"`
+	DatabaseName string  `json:"databaseName"`
+	Description  *string `json:"description,omitempty"`
 	// other stuff? CreateDate?
 }
 
@@ -67,9 +67,9 @@ type GetTablesOutput struct {
 }
 
 type TableDescription struct {
-	DatabaseName string `json:"databaseName,omitempty"`
-	TableName    string `json:"tableName,omitempty"`
-	Description  string `json:"description,omitempty"`
+	DatabaseName string  `json:"databaseName"`
+	TableName    string  `json:"tableName"`
+	Description  *string `json:"description,omitempty"`
 	// other stuff? CreateDate?
 }
 
@@ -91,15 +91,15 @@ type GetTablesDetailOutput struct {
 }
 
 type TableColumn struct {
-	Name        string `json:"name,omitempty" validate:"required"`
-	Type        string `json:"type,omitempty" validate:"required"`
-	Description string `json:"description,omitempty"`
+	Name        string  `json:"name,omitempty" validate:"required"`
+	Type        string  `json:"type,omitempty" validate:"required"`
+	Description *string `json:"description,omitempty"`
 }
 
 type ExecuteAsyncQueryInput struct {
-	DatabaseName string `json:"databaseName" validate:"required"`
-	SQL          string `json:"sql" validate:"required"`
-	MaxResults   *int64 `json:"max_results"` // only return this many per call
+	DatabaseName       string `json:"databaseName" validate:"required"`
+	SQL                string `json:"sql" validate:"required"`
+	ResultsMaxPageSize *int64 `json:"resultsMaxPageSize"` // only return this many per call
 }
 
 type ExecuteAsyncQueryOutput struct {
@@ -118,9 +118,9 @@ type GetQueryStatusOutput struct {
 }
 
 type GetQueryResultsInput struct {
-	QueryID         string `json:"queryId" validate:"required"`
-	PaginationToken string `json:"paginationToken,omitempty"`
-	MaxResults      *int64 `json:"maxResults"` // only return this many per call
+	QueryID            string  `json:"queryId" validate:"required"`
+	PaginationToken    *string `json:"paginationToken,omitempty"`
+	ResultsMaxPageSize *int64  `json:"resultsMaxPageSize"` // only return this many per call
 }
 
 type GetQueryResultsOutput struct {

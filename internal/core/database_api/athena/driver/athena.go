@@ -21,7 +21,6 @@ package driver
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/pkg/errors"
@@ -95,7 +94,7 @@ func ExecuteAsyncQuery(client athenaiface.AthenaAPI, input *models.ExecuteAsyncQ
 	output.Status = getQueryStatus(executionStatus)
 	if done { // fill results
 		if output.Status == models.QuerySucceeded {
-			err = getQueryResults(query.Client, executionStatus, &output.GetQueryResultsOutput, nil, input.MaxResults)
+			err = getQueryResults(query.Client, executionStatus, &output.GetQueryResultsOutput, nil, input.ResultsMaxPageSize)
 			if err != nil {
 				return output, err
 			}
@@ -140,10 +139,10 @@ func GetQueryResults(client athenaiface.AthenaAPI, input *models.GetQueryResults
 
 	if output.Status == models.QuerySucceeded {
 		var nextToken *string
-		if input.PaginationToken != "" { // paging thru results
-			nextToken = &input.PaginationToken
+		if input.PaginationToken != nil { // paging thru results
+			nextToken = input.PaginationToken
 		}
-		err = getQueryResults(client, executionStatus, output, nextToken, input.MaxResults)
+		err = getQueryResults(client, executionStatus, output, nextToken, input.ResultsMaxPageSize)
 		if err != nil {
 			return output, err
 		}
@@ -201,9 +200,9 @@ func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.Ge
 	}
 	output.NumRows = len(queryResult.ResultSet.Rows)
 	if output.NumRows > 0 && (maxResults == nil || int(*maxResults) == output.NumRows) { // could be more!
-		output.PaginationToken = aws.StringValue(queryResult.NextToken)
+		output.PaginationToken = queryResult.NextToken
 	} else {
-		output.PaginationToken = "" // no more
+		output.PaginationToken = nil // no more
 	}
 	return nil
 }

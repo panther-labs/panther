@@ -128,7 +128,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	// specific lookup
 	getDatabasesInput = &models.GetDatabasesInput{
-		DatabaseName: testDb,
+		DatabaseName: aws.String(testDb),
 	}
 	getDatabasesOutput, err = runGetDatabases(useLambda, getDatabasesInput)
 	require.NoError(t, err)
@@ -159,10 +159,10 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.Equal(t, len(columns)+len(partitions), len(getTablesDetailOutput.TablesDetails[0].Columns))
 	require.Equal(t, *columns[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[0].Name)
 	require.Equal(t, *columns[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[0].Type)
-	require.Equal(t, *columns[0].Comment, getTablesDetailOutput.TablesDetails[0].Columns[0].Description)
+	require.Equal(t, *columns[0].Comment, *getTablesDetailOutput.TablesDetails[0].Columns[0].Description)
 	require.Equal(t, *partitions[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[1].Name)
 	require.Equal(t, *partitions[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[1].Type)
-	require.Equal(t, *partitions[0].Comment, getTablesDetailOutput.TablesDetails[0].Columns[1].Description)
+	require.Equal(t, *partitions[0].Comment, *getTablesDetailOutput.TablesDetails[0].Columns[1].Description)
 
 	// -------- ExecuteQuery()
 
@@ -177,9 +177,9 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- ExecuteAsyncQuery()
 
 	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{
-		DatabaseName: testDb,
-		SQL:          `select * from ` + testTable,
-		MaxResults:   &maxRowsPerResult,
+		DatabaseName:       testDb,
+		SQL:                `select * from ` + testTable,
+		ResultsMaxPageSize: &maxRowsPerResult,
 	}
 	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
 	require.NoError(t, err)
@@ -204,8 +204,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- GetQueryResults()
 
 	getQueryResultsInput := &models.GetQueryResultsInput{
-		QueryID:    executeAsyncQueryOutput.QueryID,
-		MaxResults: &maxRowsPerResult,
+		QueryID:            executeAsyncQueryOutput.QueryID,
+		ResultsMaxPageSize: &maxRowsPerResult,
 	}
 	getQueryResultsOutput, err := runGetQueryResults(useLambda, getQueryResultsInput)
 	require.NoError(t, err)
