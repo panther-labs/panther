@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -61,9 +62,30 @@ func handleNewAlert(event *AlertDedupEvent) error {
 }
 
 func updateExistingAlertDetails(event *AlertDedupEvent) error {
-	updateInput := dynamodb.UpdateItemInput{
-
+	updateExpression := expression.
+		Set(expression.Name(eventCountAttribute), expression.Value(aws.Int64(event.EventCount))).
+		Set(expression.Name(logTypesAttribute), expression.Value(aws.StringSlice(event.LogTypes))).
+		Set(expression.Name(updateTimeAttribute), expression.Value(aws.Time(event.UpdateTime)))
+	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
+	if err != nil {
+		return errors.Wrap(err, "failed to build update expression")
 	}
+
+	updateInput := &dynamodb.UpdateItemInput{
+		TableName:                 aws.String(env.AlertsTable),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		Key: map[string]*dynamodb.AttributeValue{
+			partitionKey: {S: aws.String(generateAlertID(event))},
+		},
+	}
+
+	_, err = ddbClient.UpdateItem(updateInput)
+	if err != nil {
+		return errors.Wrap(err, "failed to update alert")
+	}
+	return nil
+
 }
 
 func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
@@ -71,7 +93,7 @@ func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 		ID:              generateAlertID(alertDedup),
 		TimePartition:   defaultTimePartition,
 		Severity:        string(rule.Severity),
-		Title: getAlertTitle(rule, alertDedup),
+		Title:           getAlertTitle(rule, alertDedup),
 		AlertDedupEvent: *alertDedup,
 	}
 

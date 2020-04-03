@@ -35,10 +35,9 @@ func TestConvertAttribute(t *testing.T) {
 		AlertCount:          10,
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
 		UpdateTime:          time.Unix(1582285280, 0).UTC(),
-		Severity:            "INFO",
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
-		Title:               aws.String("test title"),
+		GeneratedTitle:      aws.String("test title"),
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())
@@ -60,7 +59,6 @@ func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
 		AlertCount:          10,
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
 		UpdateTime:          time.Unix(1582285280, 0).UTC(),
-		Severity:            "INFO",
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 	}

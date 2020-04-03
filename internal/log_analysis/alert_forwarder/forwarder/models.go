@@ -26,6 +26,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	partitionKey        = "id"
+	sortKey             = "timePartition"
+	logTypesAttribute   = "logTypes"
+	eventCountAttribute = "eventCount"
+	updateTimeAttribute = "updateTime"
+)
+
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
 	RuleID              string    `dynamodbav:"ruleId,string"`
