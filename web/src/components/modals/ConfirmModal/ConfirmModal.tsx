@@ -17,35 +17,60 @@
  */
 
 import React from 'react';
-import { Modal, Text, Flex, Button } from 'pouncejs';
-import SubmitButton from 'Components/buttons/SubmitButton';
+import { Button, Flex, Modal, Text, useSnackbar } from 'pouncejs';
+import { MutationTuple } from '@apollo/client';
+import useModal from 'Hooks/useModal';
+import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 
 export interface ConfirmModalProps {
+  mutation: MutationTuple<any, { [key: string]: any }>;
   title: string;
   subtitle: React.ReactNode;
-  loading: boolean;
-  onConfirm: () => void;
-  onClose: () => void;
+  onSuccessMsg: string;
+  onErrorMsg: string;
+  onSuccess?: () => void;
+  onError?: () => void;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
+  mutation,
   title,
   subtitle,
-  loading,
-  onConfirm,
-  onClose,
+  onErrorMsg,
+  onSuccessMsg,
+  onSuccess = () => {},
+  onError = () => {},
 }) => {
+  const { pushSnackbar } = useSnackbar();
+  const { hideModal } = useModal();
+  const [confirm, { loading, data, error }] = mutation;
+
+  React.useEffect(() => {
+    if (error) {
+      pushSnackbar({ variant: 'error', title: onErrorMsg });
+      onError();
+    }
+  }, [error]);
+
+  React.useEffect(() => {
+    if (data) {
+      pushSnackbar({ variant: 'success', title: onSuccessMsg });
+      hideModal();
+      onSuccess();
+    }
+  }, [data]);
+
   return (
-    <Modal open onClose={onClose} title={title}>
+    <Modal open onClose={hideModal} title={title}>
       <Text size="large" color="grey500" mb={8} textAlign="center">
         {subtitle}
       </Text>
 
       <Flex justifyContent="flex-end">
-        <Button size="large" variant="default" onClick={onClose} mr={3}>
+        <Button size="large" variant="default" onClick={hideModal} mr={3}>
           Cancel
         </Button>
-        <SubmitButton onClick={onConfirm} submitting={loading} disabled={loading}>
+        <SubmitButton onClick={() => confirm()} submitting={loading} disabled={loading}>
           Confirm
         </SubmitButton>
       </Flex>

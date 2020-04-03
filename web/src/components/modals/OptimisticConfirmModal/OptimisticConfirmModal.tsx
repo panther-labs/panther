@@ -17,8 +17,9 @@
  */
 
 import React from 'react';
-import ConfirmModal from 'Components/modals/ConfirmModal';
 import useModal from 'Hooks/useModal';
+import { Button, Flex, Modal, Text } from 'pouncejs';
+import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 
 export interface OptimisticConfirmModalProps {
   title: string;
@@ -39,13 +40,20 @@ const OptimisticConfirmModal: React.FC<OptimisticConfirmModalProps> = ({
   };
 
   return (
-    <ConfirmModal
-      title={title}
-      subtitle={subtitle}
-      loading={false}
-      onConfirm={handleConfirm}
-      onClose={hideModal}
-    />
+    <Modal open onClose={hideModal} title={title}>
+      <Text size="large" color="grey500" mb={8} textAlign="center">
+        {subtitle}
+      </Text>
+
+      <Flex justifyContent="flex-end">
+        <Button size="large" variant="default" onClick={hideModal} mr={3}>
+          Cancel
+        </Button>
+        <SubmitButton onClick={handleConfirm} submitting={false} disabled={false}>
+          Confirm
+        </SubmitButton>
+      </Flex>
+    </Modal>
   );
 };
 

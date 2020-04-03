@@ -20,7 +20,7 @@ import React from 'react';
 import { User } from 'Generated/schema';
 import { ListUsersDocument } from 'Pages/Users';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
-import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
+import ConfirmModal from 'Components/modals/ConfirmModal';
 import { useResetUserPassword } from './graphql/resetUserPassword.generated';
 
 export interface ResetUserPasswordProps {
@@ -37,7 +37,7 @@ const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
     refetchQueries: [getOperationName(ListUsersDocument)],
   });
   return (
-    <BaseConfirmModal
+    <ConfirmModal
       mutation={mutation}
       title={`Force a password change for ${userDisplayName}`}
       subtitle={`Are you sure you want to reset password for ${userDisplayName}?`}
