@@ -109,6 +109,14 @@ export const minutesToString = (minutes: number) =>
 export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
   mapValues(obj, v => (Array.isArray(v) ? v.join(',') : v));
 
+export const encodeParams = (obj: { [key: string]: any }, fields: [string]) => {
+  const encodedObj = { ...obj };
+  fields.forEach(field => {
+    if (obj[field]) encodedObj[field] = encodeURIComponent(obj[field]);
+  });
+  return encodedObj;
+};
+
 /**
  * makes sure that it properly formats a JSON struct in order to be properly displayed within the
  * editor
