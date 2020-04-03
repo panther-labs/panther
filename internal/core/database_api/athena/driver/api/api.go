@@ -58,12 +58,12 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 	return driver.GetTablesDetail(glueClient, input)
 }
 
-func (API) DoQuery(input *models.DoQueryInput) (*models.DoQueryOutput, error) {
-	return driver.DoQuery(athenaClient, input, athenaS3ResultsPath)
+func (API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
+	return driver.ExecuteQuery(athenaClient, input, athenaS3ResultsPath)
 }
 
-func (API) StartQuery(input *models.StartQueryInput) (*models.StartQueryOutput, error) {
-	return driver.StartQuery(athenaClient, input, athenaS3ResultsPath)
+func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.ExecuteAsyncQueryOutput, error) {
+	return driver.ExecuteAsyncQuery(athenaClient, input, athenaS3ResultsPath)
 }
 
 func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {

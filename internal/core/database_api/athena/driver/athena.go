@@ -34,14 +34,14 @@ const (
 	minimalQueryWait = time.Second * 4
 )
 
-func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput, s3Path *string) (*models.DoQueryOutput, error) {
-	output := &models.DoQueryOutput{}
+func ExecuteQuery(client athenaiface.AthenaAPI, input *models.ExecuteQueryInput, s3Path *string) (*models.ExecuteQueryOutput, error) {
+	output := &models.ExecuteQueryOutput{}
 
 	var err error
 	defer func() {
 		if err != nil {
 			output.Status = models.QueryFailed
-			output.ErrorMessage = "DoQuery failed" // simple error message for lambda caller
+			output.ErrorMessage = "ExecuteQuery failed" // simple error message for lambda caller
 		}
 	}()
 
@@ -65,14 +65,16 @@ func DoQuery(client athenaiface.AthenaAPI, input *models.DoQueryInput, s3Path *s
 	return output, nil
 }
 
-func StartQuery(client athenaiface.AthenaAPI, input *models.StartQueryInput, s3Path *string) (*models.StartQueryOutput, error) {
-	output := &models.StartQueryOutput{}
+func ExecuteAsyncQuery(client athenaiface.AthenaAPI, input *models.ExecuteAsyncQueryInput,
+	s3Path *string) (*models.ExecuteAsyncQueryOutput, error) {
+
+	output := &models.ExecuteAsyncQueryOutput{}
 
 	var err error
 	defer func() {
 		if err != nil {
 			output.Status = models.QueryFailed
-			output.ErrorMessage = "StartQuery failed" // simple error message for lambda caller
+			output.ErrorMessage = "ExecuteAsyncQuery failed" // simple error message for lambda caller
 		}
 	}()
 

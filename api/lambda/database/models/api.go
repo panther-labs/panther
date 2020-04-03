@@ -28,14 +28,14 @@ const (
 
 // LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
-	GetDatabases           *GetDatabasesInput           `json:"getDatabases"`
-	GetTables              *GetTablesInput              `json:"getTables"`
-	GetTablesDetail        *GetTablesDetailInput        `json:"getTablesDetail"`
-	StartQuery             *StartQueryInput             `json:"startQuery"`
-	GetQueryStatus         *GetQueryStatusInput         `json:"getQueryStatus"`
-	GetQueryResults        *GetQueryResultsInput        `json:"getQueryResults"`
-	DoQuery                *DoQueryInput                `json:"doQuery"`
-	DoPantherSimpleSummary *DoPantherSimpleSummaryInput `json:"doPantherSimpleSummary"`
+	ExecuteAsyncQuery    *ExecuteAsyncQueryInput    `json:"executeAsyncQuery"`
+	ExecuteQuery         *ExecuteQueryInput         `json:"executeQuery"`
+	ExecuteSimpleSummary *ExecuteSimpleSummaryInput `json:"executeSimpleSummary"`
+	GetDatabases         *GetDatabasesInput         `json:"getDatabases"`
+	GetQueryStatus       *GetQueryStatusInput       `json:"getQueryStatus"`
+	GetQueryResults      *GetQueryResultsInput      `json:"getQueryResults"`
+	GetTables            *GetTablesInput            `json:"getTables"`
+	GetTablesDetail      *GetTablesDetailInput      `json:"getTablesDetail"`
 }
 
 type GetDatabasesInput struct {
@@ -96,14 +96,13 @@ type TableColumn struct {
 	Description string `json:"description,omitempty"`
 }
 
-// Async query
-type StartQueryInput struct {
+type ExecuteAsyncQueryInput struct {
 	DatabaseName string `json:"databaseName" validate:"required"`
 	SQL          string `json:"sql" validate:"required"`
 	MaxResults   *int64 `json:"max_results"` // only return this many per call
 }
 
-type StartQueryOutput struct {
+type ExecuteAsyncQueryOutput struct {
 	Error
 	GetQueryResultsOutput // might be filled in if query ran fast
 }
@@ -133,15 +132,16 @@ type GetQueryResultsOutput struct {
 }
 
 // Blocking query
-type DoQueryInput StartQueryInput
+type ExecuteQueryInput ExecuteAsyncQueryInput
 
-type DoQueryOutput GetQueryResultsOutput // call GetQueryResults() to page thu results
+type ExecuteQueryOutput GetQueryResultsOutput // call GetQueryResults() to page thu results
 
-type DoPantherSimpleSummaryInput struct {
+// Google-like search returning a summary table
+type ExecuteSimpleSummaryInput struct {
 	SearchString string `json:"searchString" validate:"required"`
 }
 
-type DoPantherSimpleSummaryOutput GetQueryResultsOutput // GetQueryResults() to page thu results
+type ExecuteSimpleSummaryOutput GetQueryResultsOutput // GetQueryResults() to page thu results
 
 type Row struct {
 	Columns []*Column `json:"columns"`

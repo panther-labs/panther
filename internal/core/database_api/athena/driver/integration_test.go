@@ -164,27 +164,27 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.Equal(t, *partitions[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[1].Type)
 	require.Equal(t, *partitions[0].Comment, getTablesDetailOutput.TablesDetails[0].Columns[1].Description)
 
-	// -------- DoQuery()
+	// -------- ExecuteQuery()
 
-	doQueryInput := &models.DoQueryInput{
+	executeQueryInput := &models.ExecuteQueryInput{
 		DatabaseName: testDb,
 		SQL:          `select * from ` + testTable,
 	}
-	doQueryOutput, err := runDoQuery(useLambda, doQueryInput)
+	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
 	require.NoError(t, err)
-	checkQueryResults(t, true, len(rows)+1, doQueryOutput.Rows)
+	checkQueryResults(t, true, len(rows)+1, executeQueryOutput.Rows)
 
-	//  -------- StartQuery()
+	//  -------- ExecuteAsyncQuery()
 
-	startQueryInput := &models.StartQueryInput{
+	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{
 		DatabaseName: testDb,
 		SQL:          `select * from ` + testTable,
 		MaxResults:   &maxRowsPerResult,
 	}
-	startQueryOutput, err := runStartQuery(useLambda, startQueryInput)
+	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
 	require.NoError(t, err)
-	if startQueryOutput.Status == models.QuerySucceeded {
-		checkQueryResults(t, true, int(maxRowsPerResult), startQueryOutput.Rows)
+	if executeAsyncQueryOutput.Status == models.QuerySucceeded {
+		checkQueryResults(t, true, int(maxRowsPerResult), executeAsyncQueryOutput.Rows)
 	}
 
 	//  -------- GetQueryStatus()
@@ -192,7 +192,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	for {
 		time.Sleep(time.Second * 10)
 		getQueryStatusInput := &models.GetQueryStatusInput{
-			QueryID: startQueryOutput.QueryID,
+			QueryID: executeAsyncQueryOutput.QueryID,
 		}
 		getQueryStatusOutput, err := runGetQueryStatus(useLambda, getQueryStatusInput)
 		require.NoError(t, err)
@@ -204,7 +204,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- GetQueryResults()
 
 	getQueryResultsInput := &models.GetQueryResultsInput{
-		QueryID:    startQueryOutput.QueryID,
+		QueryID:    executeAsyncQueryOutput.QueryID,
 		MaxResults: &maxRowsPerResult,
 	}
 	getQueryResultsOutput, err := runGetQueryResults(useLambda, getQueryResultsInput)
@@ -272,32 +272,32 @@ func runGetTablesDetail(useLambda bool, input *models.GetTablesDetailInput) (*mo
 	return GetTablesDetail(glueClient, input)
 }
 
-func runDoQuery(useLambda bool, input *models.DoQueryInput) (*models.DoQueryOutput, error) {
+func runExecuteQuery(useLambda bool, input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
 	if useLambda {
-		var doQueryInput = struct {
-			DoQuery *models.DoQueryInput
+		var executeQueryInput = struct {
+			ExecuteQuery *models.ExecuteQueryInput
 		}{
 			input,
 		}
-		var doQueryOutput *models.DoQueryOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", doQueryInput, &doQueryOutput)
-		return doQueryOutput, err
+		var executeQueryOutput *models.ExecuteQueryOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", executeQueryInput, &executeQueryOutput)
+		return executeQueryOutput, err
 	}
-	return DoQuery(athenaClient, input, nil)
+	return ExecuteQuery(athenaClient, input, nil)
 }
 
-func runStartQuery(useLambda bool, input *models.StartQueryInput) (*models.StartQueryOutput, error) {
+func runExecuteAsyncQuery(useLambda bool, input *models.ExecuteAsyncQueryInput) (*models.ExecuteAsyncQueryOutput, error) {
 	if useLambda {
-		var startQueryInput = struct {
-			StartQuery *models.StartQueryInput
+		var executeAsyncQueryInput = struct {
+			ExecuteAsyncQuery *models.ExecuteAsyncQueryInput
 		}{
 			input,
 		}
-		var startQueryOutput *models.StartQueryOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", startQueryInput, &startQueryOutput)
-		return startQueryOutput, err
+		var executeAsyncQueryOutput *models.ExecuteAsyncQueryOutput
+		err := testutils.InvokeLambda(awsSession, "panther-athena-api", executeAsyncQueryInput, &executeAsyncQueryOutput)
+		return executeAsyncQueryOutput, err
 	}
-	return StartQuery(athenaClient, input, nil)
+	return ExecuteAsyncQuery(athenaClient, input, nil)
 }
 
 func runGetQueryStatus(useLambda bool, input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {

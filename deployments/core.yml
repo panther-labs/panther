@@ -665,7 +665,7 @@ Resources:
                 - athena:StartQueryExecution
                 - athena:GetQuery*
               Resource: '*'
-        - Id: GluePermissions
+        - Id: GluePermissions # Used for all table metadata queries
           Version: 2012-10-17
           Statement:
             - Effect: Allow
