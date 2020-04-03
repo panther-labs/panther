@@ -100,7 +100,10 @@ type ExecuteAsyncQueryInput struct {
 	ResultsMaxPageSize *int64 `json:"resultsMaxPageSize"` // only return this many per call
 }
 
-type ExecuteAsyncQueryOutput GetQueryResultsOutput
+type ExecuteAsyncQueryOutput struct {
+	Error
+	QueryID string `json:"queryId" validate:"required"`
+}
 
 type GetQueryStatusInput struct {
 	QueryID string `json:"queryId" validate:"required"`

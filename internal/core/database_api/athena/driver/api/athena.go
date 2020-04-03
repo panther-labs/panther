@@ -30,11 +30,12 @@ import (
 )
 
 const (
-	minimalQueryWait = time.Second * 4
-	pollWait         = time.Second * 10
+	pollWait         = time.Second * 4
 )
 
 func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
+	output := &models.ExecuteQueryOutput{}
+
 	var err error
 	defer func() {
 		if err != nil {
@@ -43,8 +44,9 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 	}()
 
 	executeAsyncQueryOutput, err := api.ExecuteAsyncQuery((*models.ExecuteAsyncQueryInput)(input))
-	if err != nil || executeAsyncQueryOutput.Status != models.QueryRunning {
-		return (*models.ExecuteQueryOutput)(executeAsyncQueryOutput), err
+	if err != nil {
+		output.Error = executeAsyncQueryOutput.Error
+		return output, err
 	}
 
 	// poll
@@ -55,7 +57,8 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 		}
 		getQueryStatusOutput, err := api.GetQueryStatus(getQueryStatusInput)
 		if err != nil {
-			return (*models.ExecuteQueryOutput)(executeAsyncQueryOutput), err
+			output.Error = getQueryStatusOutput.Error
+			return output, err
 		}
 		if getQueryStatusOutput.Status != models.QueryRunning {
 			break
@@ -88,25 +91,6 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 
 	output.QueryID = *query.StartExecutionOutput.QueryExecutionId
 
-	time.Sleep(minimalQueryWait) // give query opportunity to finish and avoid a later polling step
-
-	executionStatus, done, err := query.IsFinished()
-	if err != nil {
-		return output, err
-	}
-	output.Status = getQueryStatus(executionStatus)
-	if done { // fill results
-		switch output.Status {
-		case models.QuerySucceeded:
-			err = getQueryResults(query.Client, executionStatus, (*models.GetQueryResultsOutput)(output),
-				nil, input.ResultsMaxPageSize)
-			if err != nil {
-				return output, err
-			}
-		case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
-			output.ErrorMessage = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
-		}
-	}
 	return output, nil
 }
 
