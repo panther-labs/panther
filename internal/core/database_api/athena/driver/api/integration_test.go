@@ -170,6 +170,17 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.NoError(t, err)
 	checkQueryResults(t, true, len(rows)+1, executeQueryOutput.Rows)
 
+	// -------- ExecuteQuery() BAD SQL
+
+	executeBadQueryInput := &models.ExecuteQueryInput{
+		DatabaseName: testDb,
+		SQL:          `select * from nosuchtable`,
+	}
+	executeBadQueryOutput, err := runExecuteQuery(useLambda, executeBadQueryInput)
+	require.NoError(t, err) // NO LAMBDA ERROR here!
+	require.Equal(t, models.QueryFailed, executeBadQueryOutput.Status)
+	require.True(t, strings.Contains(executeBadQueryOutput.ErrorMessage, "does not exist"))
+
 	//  -------- ExecuteAsyncQuery()
 
 	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{

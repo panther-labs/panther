@@ -32,7 +32,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 	var err error
 	defer func() {
 		if err != nil {
-			output.ErrorMessage = "GetDatabase failed" // simple error message for lambda caller
+			err = apiError(err) // lambda failed
 		}
 	}()
 
@@ -74,7 +74,7 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 	var err error
 	defer func() {
 		if err != nil {
-			output.ErrorMessage = "GetTables failed" // simple error message for lambda caller
+			err = apiError(err) // lambda failed
 		}
 	}()
 
@@ -117,7 +117,7 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 	var err error
 	defer func() {
 		if err != nil {
-			output.ErrorMessage = "GetTablesDetails failed" // simple error message for lambda caller
+			err = apiError(err) // lambda failed
 		}
 	}()
 

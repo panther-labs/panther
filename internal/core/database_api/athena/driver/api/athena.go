@@ -31,37 +31,43 @@ import (
 
 const (
 	minimalQueryWait = time.Second * 4
+	pollWait = time.Second * 10
 )
 
-func (API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
-	output := &models.ExecuteQueryOutput{}
-
+func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
 	var err error
 	defer func() {
 		if err != nil {
-			output.Status = models.QueryFailed
-			output.ErrorMessage = "ExecuteQuery failed" // simple error message for lambda caller
+			err = apiError(err) // lambda failed
 		}
 	}()
 
-	query := awsathena.NewAthenaQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
-	err = query.Run()
-	if err != nil {
-		return output, err
-	}
-	err = query.Wait()
-	if err != nil {
-		return output, err
+	executeAsyncQueryOutput, err := api.ExecuteAsyncQuery((*models.ExecuteAsyncQueryInput)(input))
+	if err != nil || executeAsyncQueryOutput.Status != models.QueryRunning {
+		return (*models.ExecuteQueryOutput)(executeAsyncQueryOutput), err
 	}
 
-	output.Status = models.QuerySucceeded
-
-	err = collectResults(query.QueryResult, (*models.GetQueryResultsOutput)(output), nil)
-	if err != nil {
-		return output, err
+	// poll
+	for {
+		time.Sleep(pollWait)
+		getQueryStatusInput := &models.GetQueryStatusInput{
+			QueryID: executeAsyncQueryOutput.QueryID,
+		}
+		getQueryStatusOutput, err := api.GetQueryStatus(getQueryStatusInput)
+		if err != nil {
+			return (*models.ExecuteQueryOutput)(executeAsyncQueryOutput), err
+		}
+		if getQueryStatusOutput.Status != models.QueryRunning {
+			break
+		}
 	}
 
-	return output, nil
+	// get the results
+	getQueryResultsInput := &models.GetQueryResultsInput{
+		QueryID:            executeAsyncQueryOutput.QueryID,
+	}
+	getQueryResultsOutput, err := api.GetQueryResults(getQueryResultsInput)
+	return (*models.ExecuteQueryOutput)(getQueryResultsOutput), err
 }
 
 func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.ExecuteAsyncQueryOutput, error) {
@@ -70,8 +76,7 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 	var err error
 	defer func() {
 		if err != nil {
-			output.Status = models.QueryFailed
-			output.ErrorMessage = "ExecuteAsyncQuery failed" // simple error message for lambda caller
+			err = apiError(err) // lambda failed
 		}
 	}()
 
@@ -91,13 +96,17 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 	}
 	output.Status = getQueryStatus(executionStatus)
 	if done { // fill results
-		if output.Status == models.QuerySucceeded {
-			err = getQueryResults(query.Client, executionStatus, &output.GetQueryResultsOutput, nil, input.ResultsMaxPageSize)
-			if err != nil {
-				return output, err
-			}
+		switch  output.Status {
+		case models.QuerySucceeded:
+			err = getQueryResults(query.Client, executionStatus, (*models.GetQueryResultsOutput)(output),
+				nil, input.ResultsMaxPageSize)
+			if err != nil{
+			return output, err
+		    }
+		case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
+			output.ErrorMessage = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
 		}
-	}
+		}
 	return output, nil
 }
 
@@ -107,7 +116,7 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 	var err error
 	defer func() {
 		if err != nil {
-			output.ErrorMessage = "GetQueryStatus failed" // simple error message for lambda caller
+			err = apiError(err) // lambda failed
 		}
 	}()
 
@@ -125,7 +134,7 @@ func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQuery
 	var err error
 	defer func() {
 		if err != nil {
-			output.ErrorMessage = "GetQueryResults failed" // simple error message for lambda caller
+			err = apiError(err) // lambda failed
 		}
 	}()
 
@@ -135,15 +144,18 @@ func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQuery
 	}
 	output.Status = getQueryStatus(executionStatus)
 
-	if output.Status == models.QuerySucceeded {
-		var nextToken *string
-		if input.PaginationToken != nil { // paging thru results
-			nextToken = input.PaginationToken
-		}
-		err = getQueryResults(athenaClient, executionStatus, output, nextToken, input.ResultsMaxPageSize)
-		if err != nil {
-			return output, err
-		}
+	switch output.Status {
+		case models.QuerySucceeded :
+			var nextToken *string
+			if input.PaginationToken != nil { // paging thru results
+				nextToken = input.PaginationToken
+			}
+			err = getQueryResults(athenaClient, executionStatus, output, nextToken, input.ResultsMaxPageSize)
+			if err != nil {
+				return output, err
+			}
+	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
+		output.ErrorMessage = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
 	}
 
 	return output, nil
