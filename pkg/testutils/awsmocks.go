@@ -17,10 +17,14 @@ package testutils
  */
 
 import (
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -47,4 +51,24 @@ type LambdaMock struct {
 func (m *LambdaMock) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+}
+
+type DynamoDBMock struct {
+	dynamodbiface.DynamoDBAPI
+	mock.Mock
+}
+
+func (m *DynamoDBMock) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.PutItemOutput), args.Error(1)
+}
+
+type SqsMock struct {
+	sqsiface.SQSAPI
+	mock.Mock
+}
+
+func (m *SqsMock) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
 }

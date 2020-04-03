@@ -57,6 +57,11 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 			}
 		}
 	}()
+
+	if input == nil {
+		return nil, nil
+	}
+
 	ruleID, err := getAttribute("ruleId", input)
 	if err != nil {
 		return nil, err
@@ -118,7 +123,6 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 	if title != nil {
 		result.Title = aws.String(title.String())
 	}
-
 	return result, nil
 }
 

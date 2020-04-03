@@ -29,9 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -40,27 +38,8 @@ import (
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
-
-type mockDynamoDB struct {
-	dynamodbiface.DynamoDBAPI
-	mock.Mock
-}
-
-func (m *mockDynamoDB) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.PutItemOutput), args.Error(1)
-}
-
-type mockSqs struct {
-	sqsiface.SQSAPI
-	mock.Mock
-}
-
-func (m *mockSqs) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
-}
 
 type mockRoundTripper struct {
 	http.RoundTripper
@@ -73,7 +52,7 @@ func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, err
 }
 
 var (
-	testAlertDedupEvent = &AlertDedupEvent{
+	oldAlertDedupEvent = &AlertDedupEvent{
 		RuleID:              "ruleId",
 		RuleVersion:         "ruleVersion",
 		DeduplicationString: "dedupString",
@@ -84,6 +63,19 @@ var (
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 		Title:               aws.String("test title"),
+	}
+
+	newAlertDedupEvent = &AlertDedupEvent{
+		RuleID:              oldAlertDedupEvent.RuleID,
+		RuleVersion:         oldAlertDedupEvent.RuleVersion,
+		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
+		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
+		CreationTime:        time.Now().UTC(),
+		UpdateTime:          time.Now().UTC(),
+		EventCount:          oldAlertDedupEvent.EventCount,
+		Severity:            oldAlertDedupEvent.Severity,
+		LogTypes:            oldAlertDedupEvent.LogTypes,
+		Title:               oldAlertDedupEvent.Title,
 	}
 
 	testRuleResponse = &models.Rule{
@@ -100,13 +92,13 @@ func init() {
 }
 
 func TestStore(t *testing.T) {
-	ddbMock := &mockDynamoDB{}
+	ddbMock := &testutils.DynamoDBMock{}
 	ddbClient = ddbMock
 
 	expectedAlert := &Alert{
 		ID:              "8c1b7f1a597d0480354e66c3a6266ccc",
 		TimePartition:   "defaultPartition",
-		AlertDedupEvent: *testAlertDedupEvent,
+		AlertDedupEvent: *oldAlertDedupEvent,
 	}
 
 	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
@@ -118,20 +110,24 @@ func TestStore(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
-	assert.NoError(t, Store(testAlertDedupEvent))
+	assert.NoError(t, HandleUpdatingAlertInfo(oldAlertDedupEvent))
 }
 
 // The handler signatures must match those in the LambdaInput struct.
 func TestStoreDDBError(t *testing.T) {
-	ddbMock := &mockDynamoDB{}
+	ddbMock := &testutils.DynamoDBMock{}
 	ddbClient = ddbMock
 
 	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, errors.New("error"))
-	assert.Error(t, Store(testAlertDedupEvent))
+	assert.Error(t, HandleUpdatingAlertInfo(oldAlertDedupEvent))
+}
+
+func TestSendDoNotSendNotification(t *testing.T) {
+	assert.NoError(t, HandleSendingAlertNotification(oldAlertDedupEvent, oldAlertDedupEvent))
 }
 
 func TestSendAlert(t *testing.T) {
-	sqsMock := &mockSqs{}
+	sqsMock := &testutils.SqsMock{}
 	sqsClient = sqsMock
 
 	mockRoundTripper := &mockRoundTripper{}
@@ -142,16 +138,16 @@ func TestSendAlert(t *testing.T) {
 	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
 	expectedAlert := &alertModel.Alert{
-		CreatedAt:         aws.Time(testAlertDedupEvent.CreationTime),
+		CreatedAt:         aws.Time(newAlertDedupEvent.CreationTime),
 		PolicyDescription: aws.String("Description"),
-		PolicyID:          aws.String(testAlertDedupEvent.RuleID),
-		PolicyVersionID:   aws.String(testAlertDedupEvent.RuleVersion),
+		PolicyID:          aws.String(newAlertDedupEvent.RuleID),
+		PolicyVersionID:   aws.String(newAlertDedupEvent.RuleVersion),
 		PolicyName:        aws.String("DisplayName"),
 		Runbook:           aws.String("Runbook"),
-		Severity:          aws.String(testAlertDedupEvent.Severity),
+		Severity:          aws.String(newAlertDedupEvent.Severity),
 		Tags:              aws.StringSlice([]string{"Tag"}),
 		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("8c1b7f1a597d0480354e66c3a6266ccc"),
+		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
 		Title:             aws.String("test title"),
 	}
 	expectedMarshaledEvent, err := jsoniter.MarshalToString(expectedAlert)
@@ -163,11 +159,11 @@ func TestSendAlert(t *testing.T) {
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
-	assert.NoError(t, SendAlert(testAlertDedupEvent))
+	assert.NoError(t, HandleSendingAlertNotification(nil, newAlertDedupEvent))
 }
 
 func TestSendAlertWithoutTitle(t *testing.T) {
-	sqsMock := &mockSqs{}
+	sqsMock := &testutils.SqsMock{}
 	sqsClient = sqsMock
 
 	mockRoundTripper := &mockRoundTripper{}
@@ -178,15 +174,15 @@ func TestSendAlertWithoutTitle(t *testing.T) {
 	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
 	testEvent := &AlertDedupEvent{
-		RuleID:              "ruleId",
-		RuleVersion:         "ruleVersion",
-		DeduplicationString: "dedupString",
-		AlertCount:          10,
-		CreationTime:        time.Now().UTC(),
-		UpdateTime:          time.Now().UTC(),
-		Severity:            "INFO",
-		EventCount:          100,
-		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
+		RuleID:              newAlertDedupEvent.RuleID,
+		RuleVersion:         newAlertDedupEvent.RuleVersion,
+		DeduplicationString: newAlertDedupEvent.DeduplicationString,
+		AlertCount:          newAlertDedupEvent.AlertCount,
+		CreationTime:        newAlertDedupEvent.CreationTime,
+		UpdateTime:          newAlertDedupEvent.UpdateTime,
+		Severity:            newAlertDedupEvent.Severity,
+		EventCount:          newAlertDedupEvent.EventCount,
+		LogTypes:            newAlertDedupEvent.LogTypes,
 		Title:               nil,
 	}
 
@@ -197,10 +193,10 @@ func TestSendAlertWithoutTitle(t *testing.T) {
 		PolicyVersionID:   aws.String(testEvent.RuleVersion),
 		PolicyName:        aws.String("DisplayName"),
 		Runbook:           aws.String("Runbook"),
-		Severity:          aws.String(testAlertDedupEvent.Severity),
+		Severity:          aws.String(oldAlertDedupEvent.Severity),
 		Tags:              aws.StringSlice([]string{"Tag"}),
 		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("8c1b7f1a597d0480354e66c3a6266ccc"),
+		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
 	}
 	expectedMarshaledEvent, err := jsoniter.MarshalToString(expectedAlert)
 	require.NoError(t, err)
@@ -211,39 +207,39 @@ func TestSendAlertWithoutTitle(t *testing.T) {
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
-	assert.NoError(t, SendAlert(testEvent))
+	assert.NoError(t, HandleSendingAlertNotification(oldAlertDedupEvent, testEvent))
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestSendAlertFailureToGetRule(t *testing.T) {
-	sqsMock := &mockSqs{}
+	sqsMock := &testutils.SqsMock{}
 	sqsClient = sqsMock
 
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusInternalServerError), nil).Once()
-	assert.Error(t, SendAlert(testAlertDedupEvent))
+	assert.Error(t, HandleSendingAlertNotification(oldAlertDedupEvent, newAlertDedupEvent))
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestSendAlertRuleDoesntExist(t *testing.T) {
-	sqsMock := &mockSqs{}
+	sqsMock := &testutils.SqsMock{}
 	sqsClient = sqsMock
 
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusNotFound), nil).Once()
-	assert.NoError(t, SendAlert(testAlertDedupEvent))
+	assert.NoError(t, HandleSendingAlertNotification(oldAlertDedupEvent, newAlertDedupEvent))
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestSendAlertFailureToSendSqsMessage(t *testing.T) {
-	sqsMock := &mockSqs{}
+	sqsMock := &testutils.SqsMock{}
 	sqsClient = sqsMock
 
 	mockRoundTripper := &mockRoundTripper{}
@@ -251,7 +247,7 @@ func TestSendAlertFailureToSendSqsMessage(t *testing.T) {
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, errors.New("error"))
-	assert.Error(t, SendAlert(testAlertDedupEvent))
+	assert.Error(t, HandleSendingAlertNotification(oldAlertDedupEvent, newAlertDedupEvent))
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }

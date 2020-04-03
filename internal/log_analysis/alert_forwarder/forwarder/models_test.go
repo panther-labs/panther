@@ -46,6 +46,12 @@ func TestConvertAttribute(t *testing.T) {
 	require.Equal(t, expectedAlertDedup, alertDedupEvent)
 }
 
+func TestConvertNilValue(t *testing.T) {
+	alertDedupEvent, err := FromDynamodDBAttribute(nil)
+	require.NoError(t, err)
+	require.Nil(t, alertDedupEvent)
+}
+
 func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
 	expectedAlertDedup := &AlertDedupEvent{
 		RuleID:              "testRuleId",

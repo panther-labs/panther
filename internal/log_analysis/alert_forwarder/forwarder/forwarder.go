@@ -36,7 +36,7 @@ import (
 
 const defaultTimePartition = "defaultPartition"
 
-func Store(event *AlertDedupEvent) error {
+func HandleUpdatingAlertInfo(event *AlertDedupEvent) error {
 	alert := &Alert{
 		ID:              generateAlertID(event),
 		TimePartition:   defaultTimePartition,
@@ -58,8 +58,14 @@ func Store(event *AlertDedupEvent) error {
 	return nil
 }
 
-func SendAlert(event *AlertDedupEvent) error {
-	alert, err := getAlert(event)
+func HandleSendingAlertNotification(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) error {
+	// If we already have processed a alert deduplication for a rule
+	// and the alert count is the same, it means we haven't generated a new alert, thus we don't need to send a notification
+	if oldAlertDedupEvent != nil && oldAlertDedupEvent.AlertCount == newAlertDedupEvent.AlertCount {
+		return nil
+	}
+
+	alert, err := getAlert(newAlertDedupEvent)
 	if err != nil {
 		return errors.Wrap(err, "failed to get alert information")
 	}
@@ -91,11 +97,13 @@ func generateAlertID(event *AlertDedupEvent) string {
 func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
 	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
 		RuleID:     alert.RuleID,
+		VersionID:  aws.String(alert.RuleVersion),
 		HTTPClient: httpClient,
 	})
 
 	if err != nil {
-		if err.Error() == (&policiesoperations.GetRuleNotFound{}).Error() {
+		// if rule was not found, return nil
+		if _, ok := err.(*policiesoperations.GetRuleNotFound); ok {
 			return nil, nil
 		}
 
