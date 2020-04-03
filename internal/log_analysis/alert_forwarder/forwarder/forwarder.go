@@ -31,16 +31,48 @@ import (
 	"github.com/pkg/errors"
 
 	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
 const defaultTimePartition = "defaultPartition"
 
-func HandleUpdatingAlertInfo(event *AlertDedupEvent) error {
+func Handle(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) error {
+	if needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent) {
+		return handleNewAlert(newAlertDedupEvent)
+	}
+	return updateExistingAlertDetails(newAlertDedupEvent)
+}
+
+func needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
+	return oldAlertDedupEvent == nil || oldAlertDedupEvent.AlertCount != newAlertDedupEvent.AlertCount
+}
+
+func handleNewAlert(event *AlertDedupEvent) error {
+	ruleInfo, err := getRuleInfo(event)
+	if err != nil {
+		return err
+	}
+
+	if err := storeNewAlert(ruleInfo, event); err != nil {
+		return errors.Wrap(err, "failed to store new alert in DDB")
+	}
+	return sendAlertNotification(ruleInfo, event)
+}
+
+func updateExistingAlertDetails(event *AlertDedupEvent) error {
+	updateInput := dynamodb.UpdateItemInput{
+
+	}
+}
+
+func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 	alert := &Alert{
-		ID:              generateAlertID(event),
+		ID:              generateAlertID(alertDedup),
 		TimePartition:   defaultTimePartition,
-		AlertDedupEvent: *event,
+		Severity:        string(rule.Severity),
+		Title: getAlertTitle(rule, alertDedup),
+		AlertDedupEvent: *alertDedup,
 	}
 
 	marshaledAlert, err := dynamodbattribute.MarshalMap(alert)
@@ -58,21 +90,22 @@ func HandleUpdatingAlertInfo(event *AlertDedupEvent) error {
 	return nil
 }
 
-func HandleSendingAlertNotification(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) error {
-	// If we already have processed a alert deduplication for a rule
-	// and the alert count is the same, it means we haven't generated a new alert, thus we don't need to send a notification
-	if oldAlertDedupEvent != nil && oldAlertDedupEvent.AlertCount == newAlertDedupEvent.AlertCount {
-		return nil
+func sendAlertNotification(rule *models.Rule, alertDedup *AlertDedupEvent) error {
+	alertNotification := &alertModel.Alert{
+		CreatedAt:         aws.Time(alertDedup.CreationTime),
+		PolicyDescription: aws.String(string(rule.Description)),
+		PolicyID:          aws.String(alertDedup.RuleID),
+		PolicyVersionID:   aws.String(alertDedup.RuleVersion),
+		PolicyName:        aws.String(string(rule.DisplayName)),
+		Runbook:           aws.String(string(rule.Runbook)),
+		Severity:          aws.String(string(rule.Severity)),
+		Tags:              aws.StringSlice(rule.Tags),
+		Type:              aws.String(alertModel.RuleType),
+		AlertID:           aws.String(generateAlertID(alertDedup)),
+		Title:             aws.String(getAlertTitle(rule, alertDedup)),
 	}
 
-	alert, err := getAlert(newAlertDedupEvent)
-	if err != nil {
-		return errors.Wrap(err, "failed to get alert information")
-	}
-	if alert == nil {
-		return nil
-	}
-	msgBody, err := jsoniter.MarshalToString(alert)
+	msgBody, err := jsoniter.MarshalToString(alertNotification)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal alert notification")
 	}
@@ -88,39 +121,33 @@ func HandleSendingAlertNotification(oldAlertDedupEvent, newAlertDedupEvent *Aler
 	return nil
 }
 
+func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
+	if alertDedup.GeneratedTitle != nil {
+		return *alertDedup.GeneratedTitle
+	}
+
+	if len(rule.DisplayName) > 0 {
+		return string(rule.DisplayName) + " failed"
+	}
+	return string(rule.ID) + " failed"
+}
+
 func generateAlertID(event *AlertDedupEvent) string {
 	key := event.RuleID + ":" + strconv.FormatInt(event.AlertCount, 10) + ":" + event.DeduplicationString
 	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
 	return hex.EncodeToString(keyHash[:])
 }
 
-func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
+func getRuleInfo(event *AlertDedupEvent) (*models.Rule, error) {
 	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
-		RuleID:     alert.RuleID,
-		VersionID:  aws.String(alert.RuleVersion),
+		RuleID:     event.RuleID,
+		VersionID:  aws.String(event.RuleVersion),
 		HTTPClient: httpClient,
 	})
 
 	if err != nil {
-		// if rule was not found, return nil
-		if _, ok := err.(*policiesoperations.GetRuleNotFound); ok {
-			return nil, nil
-		}
-
-		return nil, errors.Wrapf(err, "failed to fetch information for ruleID %s", alert.RuleID)
+		return nil, errors.Wrapf(err, "failed to fetch information for ruleID [%s], version [%s]",
+			event.RuleID, event.RuleVersion)
 	}
-
-	return &alertModel.Alert{
-		CreatedAt:         aws.Time(alert.CreationTime),
-		PolicyDescription: aws.String(string(rule.Payload.Description)),
-		PolicyID:          aws.String(alert.RuleID),
-		PolicyVersionID:   aws.String(alert.RuleVersion),
-		PolicyName:        aws.String(string(rule.Payload.DisplayName)),
-		Runbook:           aws.String(string(rule.Payload.Runbook)),
-		Severity:          aws.String(alert.Severity),
-		Tags:              aws.StringSlice(rule.Payload.Tags),
-		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String(generateAlertID(alert)),
-		Title:             alert.Title,
-	}, nil
+	return rule.Payload, nil
 }
