@@ -92,7 +92,11 @@ const ListRulesActions: React.FC = () => {
   const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
 
   // If there is at least one filter set visibility to true
-  if (filtersCount > 0) setFiltersVisibility(true);
+  React.useEffect(() => {
+    if (filtersCount > 0) {
+      setFiltersVisibility(true);
+    }
+  }, [filtersCount]);
 
   // The initial filter values for when the filters component first renders. If you see down below,
   // we mount and unmount it depending on whether it's visible or not

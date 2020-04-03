@@ -125,6 +125,14 @@ const ListResourcesActions: React.FC = () => {
   // that to an `ComplianceIntegration` object, since that is the kind of items that the MultiCombobox has
   const filterKeys = Object.keys(filters) as (keyof ListResourcesFiltersValues)[];
   const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
+
+  // If there is at least one filter set visibility to true
+  React.useEffect(() => {
+    if (filtersCount > 0) {
+      setFiltersVisibility(true);
+    }
+  }, [filtersCount]);
+
   const mutatedInitialValues = React.useMemo(
     () => ({
       ...(pick(requestParams, filterKeys) as ListResourcesFiltersValues),
