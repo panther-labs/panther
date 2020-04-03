@@ -1,0 +1,173 @@
+# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+AWSTemplateFormatVersion: 2010-09-09
+Description: Sample template for gathering osquery logs into S3 via Firehose
+
+Parameters:
+  S3NotificationsTopic:
+    Type: String
+    Description: The SNS topic to send S3 notifications for pulling data
+
+Resources:
+  ### Osquery Firehose, Role, and Bucket ###
+  OsqueryDataFirehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: !Sub osquery-data-${AWS::Region}
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !GetAtt OsqueryDataBucket.Arn
+        Prefix: osquery/
+        BufferingHints:
+          # Data is flushed once one of the buffer hints are satisifed.
+          IntervalInSeconds: 300
+          SizeInMBs: 128
+        CompressionFormat: GZIP
+        RoleARN: !GetAtt OsqueryDataFirehoseRole.Arn
+
+  OsqueryDataFirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: FirehoseServiceAssumeRole
+            Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref AWS::AccountId
+
+  OsqueryFirehoseManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Firehose permissions to write to data bucket
+      Roles:
+        - !Ref OsqueryDataFirehoseRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowS3Delivery
+            Effect: Allow
+            Action:
+              - s3:AbortMultipartUpload
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:PutObject
+            Resource:
+              - !GetAtt OsqueryDataBucket.Arn
+              - !Sub ${OsqueryDataBucket.Arn}/osquery/*
+
+  OsqueryDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # Short expiration because this data is sent to Panther.
+      # This can be adjusted per your individual needs.
+      LifecycleConfiguration:
+        Rules:
+          - Id: 30DayExpiration
+            Status: Enabled
+            ExpirationInDays: 30
+            NoncurrentVersionExpirationInDays: 30
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+      # LoggingConfiguration:
+      #   DestinationBucketName: <bucket-name-here>
+      #   LogFilePrefix: osquery-data/
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Topic: !Ref S3NotificationsTopic
+            Event: s3:ObjectCreated:*
+
+  DataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref OsqueryDataBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub ${OsqueryDataBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  ### EC2 Instance Profile ###
+  OsqueryFirehoseInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub OsqueryFirehoseWriteOnly-${AWS::Region}
+      Roles:
+        - !Ref OsqueryFirehoseInstanceProfileAssumeRole
+
+  OsqueryFirehoseInstanceProfileAssumeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub OsqueryFirehoseAssumeRole-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AssumeFirehoseRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !GetAtt OsqueryFirehoseWriteOnlyRole.Arn
+
+  OsqueryFirehoseWriteOnlyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub OsqueryFirehoseWriteOnly-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: FirehosePutRecords
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - firehose:PutRecord
+                  - firehose:PutRecordBatch
+                Resource: !GetAtt OsqueryDataFirehose.Arn
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonKinesisFirehoseReadOnlyAccess
