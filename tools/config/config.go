@@ -49,12 +49,17 @@ type Monitoring struct {
 }
 
 type Setup struct {
-	OnboardSelf         bool     `yaml:"OnboardSelf"`
-	EnableS3AccessLogs  bool     `yaml:"EnableS3AccessLogs"`
-	EnableCloudTrail    bool     `yaml:"EnableCloudTrail"`
-	EnableGuardDuty     bool     `yaml:"EnableGuardDuty"`
-	S3AccessLogsBucket  string   `yaml:"S3AccessLogsBucket"`
-	InitialAnalysisSets []string `yaml:"InitialAnalysisSets"`
+	OnboardSelf         bool             `yaml:"OnboardSelf"`
+	EnableS3AccessLogs  bool             `yaml:"EnableS3AccessLogs"`
+	EnableCloudTrail    bool             `yaml:"EnableCloudTrail"`
+	EnableGuardDuty     bool             `yaml:"EnableGuardDuty"`
+	S3AccessLogsBucket  string           `yaml:"S3AccessLogsBucket"`
+	InitialAnalysisSets []string         `yaml:"InitialAnalysisSets"`
+	LogSubscriptions    LogSubscriptions `yaml:"LogSubscriptions"`
+}
+
+type LogSubscriptions struct {
+	PrincipalARNs []string `yaml:"PrincipalARNs"`
 }
 
 type Web struct {

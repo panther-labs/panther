@@ -4,7 +4,7 @@ version: 2.1
 executors:
   panther-buildpack:
     docker:
-      - image: pantherlabs/panther-buildpack:1.1.0
+      - image: pantherlabs/panther-buildpack:1.1.1
 
 # Set of re-usable commands to be used across different jobs
 commands:

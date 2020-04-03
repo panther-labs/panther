@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { css } from '@emotion/core';
+import { css } from '@emotion/react';
 import { Box, Card, Text } from 'pouncejs';
 
 interface ItemCardProps {

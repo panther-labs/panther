@@ -1,15 +1,13 @@
 # Cloud Security
 
-## Overview
+Panther's Cloud Security works by scanning AWS accounts, modeling the **Resources** within them, using **Policies** to detect misconfigurations, and optionally remediating resources.
 
-To analyze and detect misconfigured cloud resources, Panther scans AWS accounts, models the **Resources** within them, and uses **Policies** to evaluate their desired secure state.
+Common security misconfigurations include:
 
-Panther's Cloud Security capabilities can be used to detect security issues such as:
-
-- S3 Buckets missing encryption
-- VPCs allowing inbound SSH traffic from `0.0.0.0/0`
-- Access Keys are older than 90 days
-- IAM policies are too permissive
+- S3 Buckets without encryption
+- Security Groups allowing inbound SSH traffic from `0.0.0.0/0`
+- Access Keys being older than 90 days
+- IAM policies that are too permissive
 
 ## How It Works
 

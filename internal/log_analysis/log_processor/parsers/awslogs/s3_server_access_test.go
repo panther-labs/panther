@@ -58,7 +58,7 @@ func TestS3AccessLogGetHttpOk(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
-	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
+	expectedEvent.AppendAnyIPAddress("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
 }
@@ -93,7 +93,7 @@ func TestS3AccessLogGetHttpNotFound(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
-	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
+	expectedEvent.AppendAnyIPAddress("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
 }
@@ -129,7 +129,7 @@ func TestS3AccessLogPutHttpOK(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
-	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
+	expectedEvent.AppendAnyIPAddress("192.0.2.3")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:sts::123456789012:assumed-role/PantherLogProcessingRole/1579693334126446707")
 
 	checkS3AccessLog(t, log, expectedEvent)
@@ -167,7 +167,7 @@ func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
-	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
+	expectedEvent.AppendAnyIPAddress("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
 }

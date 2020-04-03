@@ -19,8 +19,6 @@ package fluentdsyslogs
  */
 
 import (
-	"net"
-
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -79,14 +77,10 @@ func (p *RFC3164Parser) LogType() string {
 
 func (event *RFC3164) updatePantherFields(p *RFC3164Parser) {
 	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp), event)
-	if event.Hostname != nil {
-		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
-		// add as a domain name. https://tools.ietf.org/html/rfc3164#section-6.2.4
-		hostname := *event.Hostname
-		if net.ParseIP(hostname) != nil {
-			event.AppendAnyIPAddresses(hostname)
-		} else {
-			event.AppendAnyDomainNames(hostname)
-		}
+
+	// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
+	// add as a domain name. https://tools.ietf.org/html/rfc3164#section-6.2.4
+	if !event.AppendAnyIPAddressPtr(event.Hostname) {
+		event.AppendAnyDomainNamePtrs(event.Hostname)
 	}
 }

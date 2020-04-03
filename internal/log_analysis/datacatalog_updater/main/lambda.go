@@ -31,7 +31,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
@@ -44,7 +43,6 @@ const (
 )
 
 var (
-	validation                   = validator.New()
 	glueClient glueiface.GlueAPI = glue.New(session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))))
 	// partitionPrefixCache is a cache that stores all the prefixes of the partitions we have created
 	// The cache is used to avoid attempts to create the same partitions in Glue table
@@ -74,31 +72,34 @@ func process(event events.SQSEvent) error {
 			continue
 		}
 
-		if err := validation.Struct(notification); err != nil {
-			zap.L().Error("received invalid message", zap.Error(errors.WithStack(err)))
+		if len(notification.Records) == 0 { // indications of a bug someplace
+			zap.L().Warn("no s3 event notifications in message",
+				zap.String("message", record.Body))
 			continue
 		}
 
-		gluePartition, err := awsglue.GetPartitionFromS3(*notification.S3Bucket, *notification.S3ObjectKey)
-		if err != nil {
-			zap.L().Error("failed to get partition information from notification",
-				zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
-			continue
-		}
+		for _, eventRecord := range notification.Records {
+			gluePartition, err := awsglue.GetPartitionFromS3(eventRecord.S3.Bucket.Name, eventRecord.S3.Object.Key)
+			if err != nil {
+				zap.L().Error("failed to get partition information from notification",
+					zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
+				continue
+			}
 
-		// already done?
-		partitionLocation := gluePartition.GetPartitionLocation()
-		if _, ok := partitionPrefixCache[partitionLocation]; ok {
-			zap.L().Debug("partition has already been created")
-			continue
-		}
+			// already done?
+			partitionLocation := gluePartition.GetPartitionLocation()
+			if _, ok := partitionPrefixCache[partitionLocation]; ok {
+				zap.L().Debug("partition has already been created")
+				continue
+			}
 
-		err = gluePartition.CreatePartition(glueClient)
-		if err != nil {
-			err = errors.Wrapf(err, "failed to create partition: %#v", notification)
-			return err
+			err = gluePartition.CreatePartition(glueClient)
+			if err != nil {
+				err = errors.Wrapf(err, "failed to create partition: %#v", notification)
+				return err
+			}
+			partitionPrefixCache[partitionLocation] = struct{}{} // remember
 		}
-		partitionPrefixCache[partitionLocation] = struct{}{} // remember
 	}
 	return nil
 }

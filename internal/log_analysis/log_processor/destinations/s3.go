@@ -269,14 +269,7 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 			zap.String("topicArn", destination.snsTopicArn))
 	}()
 
-	s3Notification := &models.S3Notification{
-		S3Bucket:    aws.String(destination.s3Bucket),
-		S3ObjectKey: aws.String(key),
-		Events:      aws.Int(buffer.events),
-		Bytes:       aws.Int(buffer.bytes),
-		Type:        aws.String(models.LogData.String()),
-		ID:          aws.String(buffer.logType),
-	}
+	s3Notification := models.NewS3ObjectPutNotification(destination.s3Bucket, key, buffer.bytes)
 
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)
 	if err != nil {

@@ -42,7 +42,7 @@ RUN set -eux \
             i386) goRelArch='linux-386'; goRelSha256='92d465accdebbe2d0749b2f90c22ecb1fd2492435144923f88ce410cd56b6546' ;; \
             ppc64el) goRelArch='linux-ppc64le'; goRelSha256='6559201d452ee2782dfd684d59c05e3ecf789dc40a7ec0ad9ae2dd9f489c0fe1' ;; \
             s390x) goRelArch='linux-s390x'; goRelSha256='af009bd6e7729c441fec78af427743fefbf11f919c562e01b37836d835f74226' ;; \
-            *) goRelArch='src'; goRelSha256='2ad2572115b0d1b4cb4c138e6b3a31cee6294cb48af75ee86bec3dca04507676'; \
+    		*) echo >&2 "warning: current architecture ($dpkgArch) does not have a corresponding Go binary release"; exit 1 ;; \
     	esac \
     && wget -O go.tgz https://golang.org/dl/go${GOLANG_VERSION}.${goRelArch}.tar.gz \
     && echo "${goRelSha256} *go.tgz" | sha256sum -c - \
