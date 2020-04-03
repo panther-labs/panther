@@ -1,17 +1,5 @@
 package driver
 
-import (
-	"time"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/athena"
-	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
-	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/api/lambda/database/models"
-	"github.com/panther-labs/panther/pkg/awsathena"
-)
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -29,6 +17,18 @@ import (
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
+	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/api/lambda/database/models"
+	"github.com/panther-labs/panther/pkg/awsathena"
+)
 
 const (
 	minimalQueryWait = time.Second * 4
