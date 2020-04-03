@@ -42,7 +42,7 @@ func Handle(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) error {
 	if needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent) {
 		return handleNewAlert(newAlertDedupEvent)
 	}
-	return updateExistingAlertDetails(newAlertDedupEvent)
+	return updateExistingAlert(newAlertDedupEvent)
 }
 
 func needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
@@ -52,7 +52,7 @@ func needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEven
 func handleNewAlert(event *AlertDedupEvent) error {
 	ruleInfo, err := getRuleInfo(event)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get rule information")
 	}
 
 	if err := storeNewAlert(ruleInfo, event); err != nil {
@@ -61,11 +61,15 @@ func handleNewAlert(event *AlertDedupEvent) error {
 	return sendAlertNotification(ruleInfo, event)
 }
 
-func updateExistingAlertDetails(event *AlertDedupEvent) error {
+func updateExistingAlert(event *AlertDedupEvent) error {
+	// When updating alert, we need to update only 3 fields
+	// - The number of events includes in the alert
+	// - The log types of the events matched
+	// - The alert update time
 	updateExpression := expression.
-		Set(expression.Name(eventCountAttribute), expression.Value(aws.Int64(event.EventCount))).
-		Set(expression.Name(logTypesAttribute), expression.Value(aws.StringSlice(event.LogTypes))).
-		Set(expression.Name(updateTimeAttribute), expression.Value(aws.Time(event.UpdateTime)))
+		Set(expression.Name(alertTableEventCountAttribute), expression.Value(aws.Int64(event.EventCount))).
+		Set(expression.Name(alertTableLogTypesAttribute), expression.Value(aws.StringSlice(event.LogTypes))).
+		Set(expression.Name(alertTableUpdateTimeAttribute), expression.Value(aws.Time(event.UpdateTime)))
 	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
 	if err != nil {
 		return errors.Wrap(err, "failed to build update expression")
@@ -73,10 +77,11 @@ func updateExistingAlertDetails(event *AlertDedupEvent) error {
 
 	updateInput := &dynamodb.UpdateItemInput{
 		TableName:                 aws.String(env.AlertsTable),
+		UpdateExpression:          expr.Update(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		Key: map[string]*dynamodb.AttributeValue{
-			partitionKey: {S: aws.String(generateAlertID(event))},
+			alertTablePartitionKey: {S: aws.String(generateAlertID(event))},
 		},
 	}
 
@@ -85,7 +90,6 @@ func updateExistingAlertDetails(event *AlertDedupEvent) error {
 		return errors.Wrap(err, "failed to update alert")
 	}
 	return nil
-
 }
 
 func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {

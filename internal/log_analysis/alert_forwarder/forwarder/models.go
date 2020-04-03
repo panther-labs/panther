@@ -27,11 +27,10 @@ import (
 )
 
 const (
-	partitionKey        = "id"
-	sortKey             = "timePartition"
-	logTypesAttribute   = "logTypes"
-	eventCountAttribute = "eventCount"
-	updateTimeAttribute = "updateTime"
+	alertTablePartitionKey        = "id"
+	alertTableLogTypesAttribute   = "logTypes"
+	alertTableEventCountAttribute = "eventCount"
+	alertTableUpdateTimeAttribute = "updateTime"
 )
 
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
