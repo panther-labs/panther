@@ -39,7 +39,7 @@ type LambdaInput struct {
 }
 
 type GetDatabasesInput struct {
-	DatabaseName string `json:"database_name,omitempty"` // if empty get all databases
+	DatabaseName string `json:"databaseName,omitempty"` // if empty get all databases
 }
 
 // NOTE: we will assume this is small an not paginate
@@ -50,13 +50,13 @@ type GetDatabasesOutput struct {
 }
 
 type DatabaseDescription struct {
-	DatabaseName string `json:"database_name,omitempty"`
+	DatabaseName string `json:"databaseName,omitempty"`
 	Description  string `json:"description,omitempty"`
 	// other stuff? CreateDate?
 }
 
 type GetTablesInput struct {
-	DatabaseName string `json:"database_name" validate:"required"`
+	DatabaseName string `json:"databaseName" validate:"required"`
 }
 
 // NOTE: we will assume this is small an not paginate
@@ -67,8 +67,8 @@ type GetTablesOutput struct {
 }
 
 type TableDescription struct {
-	DatabaseName string `json:"database_name,omitempty"`
-	TableName    string `json:"table_name,omitempty"`
+	DatabaseName string `json:"databaseName,omitempty"`
+	TableName    string `json:"tableName,omitempty"`
 	Description  string `json:"description,omitempty"`
 	// other stuff? CreateDate?
 }
@@ -79,9 +79,9 @@ type TableDetail struct {
 }
 
 type GetTablesDetailInput struct {
-	DatabaseName string   `json:"database_name" validate:"required"`
-	TableNames   []string `json:"table_names" validate:"required"`
-	HavingData   bool     `json:"having_data,omitempty"` // if true, only return table containing data
+	DatabaseName string   `json:"databaseName" validate:"required"`
+	TableNames   []string `json:"tableNames" validate:"required"`
+	HavingData   bool     `json:"havingData,omitempty"` // if true, only return table containing data
 }
 
 // NOTE: we will assume this is small an not paginate
@@ -98,7 +98,7 @@ type TableColumn struct {
 
 // Async query
 type StartQueryInput struct {
-	DatabaseName string `json:"database_name" validate:"required"`
+	DatabaseName string `json:"databaseName" validate:"required"`
 	SQL          string `json:"sql" validate:"required"`
 	MaxResults   *int64 `json:"max_results"` // only return this many per call
 }
@@ -109,7 +109,7 @@ type StartQueryOutput struct {
 }
 
 type GetQueryStatusInput struct {
-	QueryID string `json:"query_id" validate:"required"`
+	QueryID string `json:"queryId" validate:"required"`
 }
 
 type GetQueryStatusOutput struct {
@@ -119,16 +119,16 @@ type GetQueryStatusOutput struct {
 }
 
 type GetQueryResultsInput struct {
-	QueryID         string `json:"query_id" validate:"required"`
-	PaginationToken string `json:"pagination_token,omitempty"`
-	MaxResults      *int64 `json:"max_results"` // only return this many per call
+	QueryID         string `json:"queryId" validate:"required"`
+	PaginationToken string `json:"paginationToken,omitempty"`
+	MaxResults      *int64 `json:"maxResults"` // only return this many per call
 }
 
 type GetQueryResultsOutput struct {
 	Error
 	GetQueryResultsInput
 	Status  string `json:"status" validate:"required,oneof=running,succeeded,failed"`
-	NumRows int    `json:"num_rows"`
+	NumRows int    `json:"numRows"`
 	Rows    []*Row `json:"rows"`
 }
 
@@ -138,7 +138,7 @@ type DoQueryInput StartQueryInput
 type DoQueryOutput GetQueryResultsOutput // call GetQueryResults() to page thu results
 
 type DoPantherSimpleSummaryInput struct {
-	SearchItems string `json:"search_items" validate:"required"`
+	SearchString string `json:"searchString" validate:"required"`
 }
 
 type DoPantherSimpleSummaryOutput GetQueryResultsOutput // GetQueryResults() to page thu results
@@ -152,5 +152,5 @@ type Column struct {
 }
 
 type Error struct {
-	ErrorMessage string `json:"error_message,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
 }
