@@ -22,7 +22,7 @@ import { MutationTuple } from '@apollo/client';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useModal from 'Hooks/useModal';
 
-export interface BaseConfirmModalProps {
+export interface ConfirmModalProps {
   mutation: MutationTuple<any, { [key: string]: any }>;
   title: string;
   subtitle: React.ReactNode;
@@ -32,7 +32,7 @@ export interface BaseConfirmModalProps {
   onError?: () => void;
 }
 
-const BaseConfirmModal: React.FC<BaseConfirmModalProps> = ({
+const ConfirmModal: React.FC<ConfirmModalProps> = ({
   mutation,
   title,
   subtitle,
@@ -78,4 +78,4 @@ const BaseConfirmModal: React.FC<BaseConfirmModalProps> = ({
   );
 };
 
-export default BaseConfirmModal;
+export default ConfirmModal;

@@ -126,5 +126,5 @@ func (p *AccessParser) LogType() string {
 
 func (event *Access) updatePantherFields(p *AccessParser) {
 	event.SetCoreFields(p.LogType(), event.Time, event)
-	event.AppendAnyIPAddressPtrs(event.RemoteAddress)
+	event.AppendAnyIPAddressPtr(event.RemoteAddress)
 }

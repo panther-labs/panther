@@ -155,15 +155,15 @@ func GetTableName(logType string) string {
 }
 
 // SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.
-func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Client s3iface.S3API, startDate time.Time) (failed error) {
+func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Client s3iface.S3API, startDate time.Time) error {
 	// inherit StorageDescriptor from table
 	tableInput := &glue.GetTableInput{
 		DatabaseName: aws.String(gm.databaseName),
 		Name:         aws.String(gm.tableName),
 	}
-	tableOutput, failed := glueClient.GetTable(tableInput)
-	if failed != nil {
-		return failed
+	tableOutput, err := glueClient.GetTable(tableInput)
+	if err != nil {
+		return err
 	}
 
 	columns := tableOutput.Table.StorageDescriptor.Columns
@@ -176,13 +176,15 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 
 	const concurrency = 10
 	updateChan := make(chan time.Time, concurrency)
+	errChan := make(chan error, concurrency)
 	// update concurrently cuz the Glue API is very slow
 	var wg sync.WaitGroup
 	for i := 0; i < concurrency; i++ {
 		wg.Add(1)
 		go func() {
+			failed := false
 			for update := range updateChan {
-				if failed != nil {
+				if failed {
 					continue // drain channel
 				}
 
@@ -195,13 +197,16 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 				if err != nil {
 					// skip time period with no partition UNLESS there is data, then create
 					if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != glue.ErrCodeEntityNotFoundException {
-						failed = err
+						failed = true
+						errChan <- err
 					} else { // no partition, check if there is data in S3, if so, create
 						if hasData, err := gm.partitionHasData(s3Client, update, tableOutput); err != nil {
-							failed = err
+							failed = true
+							errChan <- err
 						} else if hasData {
 							if err = gm.createPartition(glueClient, update, tableOutput); err != nil {
-								failed = err
+								failed = true
+								errChan <- err
 							}
 						}
 					}
@@ -209,12 +214,13 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 				}
 
 				// leave _everything_ the same except the schema, and the serde info
-				getPartitionOutput.Partition.StorageDescriptor.Columns = columns
-				getPartitionOutput.Partition.StorageDescriptor.SerdeInfo = tableOutput.Table.StorageDescriptor.SerdeInfo
+				storageDescriptor := *getPartitionOutput.Partition.StorageDescriptor // copy because we will mutate
+				storageDescriptor.Columns = columns
+				storageDescriptor.SerdeInfo = tableOutput.Table.StorageDescriptor.SerdeInfo
 				values := gm.partitionValues(update)
 				partitionInput := &glue.PartitionInput{
 					Values:            values,
-					StorageDescriptor: getPartitionOutput.Partition.StorageDescriptor,
+					StorageDescriptor: &storageDescriptor,
 				}
 				updatePartitionInput := &glue.UpdatePartitionInput{
 					DatabaseName:       aws.String(gm.databaseName),
@@ -224,7 +230,8 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 				}
 				_, err = glueClient.UpdatePartition(updatePartitionInput)
 				if err != nil {
-					failed = err
+					failed = true
+					errChan <- err
 					continue
 				}
 			}
@@ -240,7 +247,8 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 	close(updateChan)
 	wg.Wait()
 
-	return failed
+	close(errChan)
+	return <-errChan
 }
 
 func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) error {
@@ -270,11 +278,12 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 			*tableOutput.Table.StorageDescriptor.Location)
 	}
 
-	tableOutput.Table.StorageDescriptor.Location = aws.String("s3://" + location.Host + "/" + gm.GetPartitionPrefix(t))
+	storageDescriptor := *tableOutput.Table.StorageDescriptor // copy because we will mutate
+	storageDescriptor.Location = aws.String("s3://" + location.Host + "/" + gm.GetPartitionPrefix(t))
 
 	partitionInput := &glue.PartitionInput{
 		Values:            gm.partitionValues(t),
-		StorageDescriptor: tableOutput.Table.StorageDescriptor,
+		StorageDescriptor: &storageDescriptor,
 	}
 	input := &glue.CreatePartitionInput{
 		DatabaseName:   aws.String(gm.databaseName),

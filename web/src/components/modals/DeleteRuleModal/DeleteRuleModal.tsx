@@ -17,13 +17,12 @@
  */
 
 import React from 'react';
+import { useSnackbar } from 'pouncejs';
 import { RuleSummary, RuleDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
-// Delete Rule and Delete Policy uses the same endpoint
-// import { useDeletePolicy } from '../DeletePolicyModal/graphql/deletePolicy.generated';
 import { useDeleteRule } from './graphql/deleteRule.generated';
+import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteRuleModalProps {
   rule: RuleDetails | RuleSummary;
@@ -31,8 +30,9 @@ export interface DeleteRuleModalProps {
 
 const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
   const { location, history } = useRouter<{ id?: string }>();
+  const { pushSnackbar } = useSnackbar();
   const ruleDisplayName = rule.displayName || rule.id;
-  const mutation = useDeleteRule({
+  const [confirmDeletion] = useDeleteRule({
     variables: {
       input: {
         rules: [
@@ -67,21 +67,33 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
       });
       cache.gc();
     },
+    onCompleted: () => {
+      pushSnackbar({
+        variant: 'success',
+        title: `Successfully deleted rule: ${ruleDisplayName}`,
+      });
+    },
+    onError: () => {
+      pushSnackbar({
+        variant: 'error',
+        title: `Failed to delete rule: ${ruleDisplayName}`,
+      });
+    },
   });
 
+  function onConfirm() {
+    if (location.pathname.includes(rule.id)) {
+      // if we were on the particular policy's details page or edit page --> redirect on delete
+      history.push(urls.compliance.policies.list());
+    }
+    return confirmDeletion();
+  }
+
   return (
-    <BaseConfirmModal
-      mutation={mutation}
+    <OptimisticConfirmModal
       title={`Delete ${ruleDisplayName}`}
       subtitle={`Are you sure you want to delete ${ruleDisplayName}?`}
-      onSuccessMsg={`Successfully deleted ${ruleDisplayName}`}
-      onErrorMsg={`Failed to delete ${ruleDisplayName}`}
-      onSuccess={() => {
-        if (location.pathname.includes(rule.id)) {
-          // if we were on the particular rule's details page or edit page --> redirect on delete
-          history.push(urls.logAnalysis.rules.list());
-        }
-      }}
+      onConfirm={onConfirm}
     />
   );
 };

@@ -101,8 +101,7 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 	registerCloudSec, registerLogProcessing := true, true
 	for _, integration := range listOutput {
 		if *integration.AWSAccountID == accountID &&
-			*integration.IntegrationType == models.IntegrationTypeAWSScan &&
-			*integration.IntegrationLabel == cloudSecLabel {
+			*integration.IntegrationType == models.IntegrationTypeAWSScan {
 
 			logger.Infof("deploy: account %s is already registered for cloud security", accountID)
 			registerCloudSec = false
