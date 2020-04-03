@@ -126,14 +126,6 @@ func TestMissingLogTypes(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestMissingSeverity(t *testing.T) {
-	testInput := getNewTestCase()
-	delete(testInput, "severity")
-	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
-	require.Nil(t, alertDedupEvent)
-	require.Error(t, err)
-}
-
 func TestInvalidInteger(t *testing.T) {
 	testInput := getNewTestCase()
 	testInput["alertCreationTime"] = events.NewNumberAttribute("notaninteger")
@@ -159,7 +151,6 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"alertCreationTime": events.NewNumberAttribute("1582285279"),
 		"alertUpdateTime":   events.NewNumberAttribute("1582285280"),
 		"eventCount":        events.NewNumberAttribute("100"),
-		"severity":          events.NewStringAttribute("INFO"),
 		"logTypes":          events.NewStringSetAttribute([]string{"Log.Type.1", "Log.Type.2"}),
 		"title":             events.NewStringAttribute("test title"),
 	}

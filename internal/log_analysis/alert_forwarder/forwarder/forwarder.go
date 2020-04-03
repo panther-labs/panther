@@ -63,8 +63,8 @@ func handleNewAlert(event *AlertDedupEvent) error {
 
 func updateExistingAlert(event *AlertDedupEvent) error {
 	// When updating alert, we need to update only 3 fields
-	// - The number of events includes in the alert
-	// - The log types of the events matched
+	// - The number of events included in the alert
+	// - The log types of the events in the alert
 	// - The alert update time
 	updateExpression := expression.
 		Set(expression.Name(alertTableEventCountAttribute), expression.Value(aws.Int64(event.EventCount))).

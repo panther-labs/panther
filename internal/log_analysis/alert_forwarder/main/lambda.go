@@ -61,7 +61,7 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 			continue
 		}
 
-		newAlertDedupEvent, unmarshalErr := forwarder.FromDynamodDBAttribute(record.Change.OldImage)
+		newAlertDedupEvent, unmarshalErr := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
 		if unmarshalErr != nil {
 			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
 			// continuing since there is nothing we can do here

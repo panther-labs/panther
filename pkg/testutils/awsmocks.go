@@ -63,6 +63,11 @@ func (m *DynamoDBMock) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemO
 	return args.Get(0).(*dynamodb.PutItemOutput), args.Error(1)
 }
 
+func (m *DynamoDBMock) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
+}
+
 type SqsMock struct {
 	sqsiface.SQSAPI
 	mock.Mock
