@@ -37,8 +37,6 @@ MAX_TITLE_SIZE = 1000
 
 TRUNCATED_STRING_SUFFIX = '... (truncated)'
 
-DEFAULT_RULE_VERSION = 'default'
-
 DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
 
 
@@ -75,9 +73,8 @@ class Rule:
         self.rule_body = config['body']
 
         if not ('versionId' in config) or not isinstance(config['versionId'], str):
-            self.rule_version = DEFAULT_RULE_VERSION
-        else:
-            self.rule_version = config['versionId']
+            raise AssertionError('Field "versionId" of type str is required field')
+        self.rule_version = config['versionId']
 
         if not ('dedupPeriodMinutes' in config) or not isinstance(config['dedupPeriodMinutes'], int):
             self.rule_dedup_period_mins = DEFAULT_RULE_DEDUP_PERIOD_MINS

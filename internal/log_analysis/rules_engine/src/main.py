@@ -52,6 +52,8 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
         raise RuntimeError('exactly one rule expected, found {}'.format(len(request['rules'])))
 
     raw_rule = request['rules'][0]
+    # The rule during direct invocation doesn't have a version
+    raw_rule['versionId'] = 'default'
     rule_exception: Optional[Exception] = None
     try:
         test_rule = Rule(raw_rule)
