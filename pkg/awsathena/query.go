@@ -78,7 +78,7 @@ func (aq *AthenaQuery) Wait() (err error) {
 
 func (aq *AthenaQuery) poll() (*athena.GetQueryExecutionOutput, error) {
 	for {
-		executionOutput, done, err := aq.Done()
+		executionOutput, done, err := aq.IsFinished()
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +89,7 @@ func (aq *AthenaQuery) poll() (*athena.GetQueryExecutionOutput, error) {
 	}
 }
 
-func (aq *AthenaQuery) Done() (executionOutput *athena.GetQueryExecutionOutput, done bool, err error) {
+func (aq *AthenaQuery) IsFinished() (executionOutput *athena.GetQueryExecutionOutput, done bool, err error) {
 	executionOutput, err = aq.Status()
 	if err != nil {
 		return nil, true, err

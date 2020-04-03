@@ -85,7 +85,7 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 
 	time.Sleep(minimalQueryWait) // give query opportunity to finish and avoid a later polling step
 
-	executionStatus, done, err := query.Done()
+	executionStatus, done, err := query.IsFinished()
 	if err != nil {
 		return output, err
 	}
