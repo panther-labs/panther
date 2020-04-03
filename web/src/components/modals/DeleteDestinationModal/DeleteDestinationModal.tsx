@@ -17,9 +17,10 @@
  */
 
 import React from 'react';
+import { useSnackbar } from 'pouncejs';
 import { Destination } from 'Generated/schema';
-import BaseConfirmModal from 'Components/modals/BaseConfirmModal';
 import { useDeleteOutput } from './graphql/deleteOutput.generated';
+import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteDestinationModalProps {
   destination: Destination;
@@ -27,7 +28,8 @@ export interface DeleteDestinationModalProps {
 
 const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destination }) => {
   const destinationDisplayName = destination.displayName || destination.outputId;
-  const mutation = useDeleteOutput({
+  const { pushSnackbar } = useSnackbar();
+  const [deleteDestination] = useDeleteOutput({
     variables: {
       id: destination.outputId,
     },
@@ -43,15 +45,25 @@ const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destina
       });
       cache.gc();
     },
+    onCompleted: () => {
+      pushSnackbar({
+        variant: 'success',
+        title: `Successfully deleted destination: ${destinationDisplayName}`,
+      });
+    },
+    onError: () => {
+      pushSnackbar({
+        variant: 'error',
+        title: `Failed to delete destination: ${destinationDisplayName}`,
+      });
+    },
   });
 
   return (
-    <BaseConfirmModal
-      mutation={mutation}
+    <OptimisticConfirmModal
       title={`Delete ${destinationDisplayName}`}
       subtitle={`Are you sure you want to delete ${destinationDisplayName}?`}
-      onSuccessMsg={`Successfully deleted ${destinationDisplayName}`}
-      onErrorMsg={`Failed to delete ${destinationDisplayName}`}
+      onConfirm={deleteDestination}
     />
   );
 };
