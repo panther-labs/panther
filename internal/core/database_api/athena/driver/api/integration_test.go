@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/panther-labs/panther/pkg/genericapi"
 	"os"
 	"strings"
 	"testing"
@@ -33,7 +35,6 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
-	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 const (
@@ -47,6 +48,7 @@ var (
 
 	api = API{}
 
+	lambdaClient *lambda.Lambda
 	s3Client *s3.S3
 
 	testBucket        string
@@ -80,6 +82,7 @@ func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
 		SessionInit()
+		lambdaClient = lambda.New(awsSession)
 		s3Client = s3.New(awsSession)
 		testBucket = testBucketPrefix + time.Now().Format("20060102150405")
 
@@ -190,9 +193,6 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	}
 	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
 	require.NoError(t, err)
-	if executeAsyncQueryOutput.Status == models.QuerySucceeded {
-		checkQueryResults(t, true, int(maxRowsPerResult), executeAsyncQueryOutput.Rows)
-	}
 
 	//  -------- GetQueryStatus()
 
@@ -245,7 +245,7 @@ func runGetDatabases(useLambda bool, input *models.GetDatabasesInput) (*models.G
 			input,
 		}
 		var getDatabasesOutput *models.GetDatabasesOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getDatabasesInput, &getDatabasesOutput)
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getDatabasesInput, &getDatabasesOutput)
 		return getDatabasesOutput, err
 	}
 	return api.GetDatabases(input)
@@ -259,7 +259,7 @@ func runGetTables(useLambda bool, input *models.GetTablesInput) (*models.GetTabl
 			input,
 		}
 		var getTablesOutput *models.GetTablesOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getTablesInput, &getTablesOutput)
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getTablesInput, &getTablesOutput)
 		return getTablesOutput, err
 	}
 	return api.GetTables(input)
@@ -273,7 +273,7 @@ func runGetTablesDetail(useLambda bool, input *models.GetTablesDetailInput) (*mo
 			input,
 		}
 		var getTablesDetailOutput *models.GetTablesDetailOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getTablesDetailInput, &getTablesDetailOutput)
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getTablesDetailInput, &getTablesDetailOutput)
 		return getTablesDetailOutput, err
 	}
 	return api.GetTablesDetail(input)
@@ -287,7 +287,7 @@ func runExecuteQuery(useLambda bool, input *models.ExecuteQueryInput) (*models.E
 			input,
 		}
 		var executeQueryOutput *models.ExecuteQueryOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", executeQueryInput, &executeQueryOutput)
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", executeQueryInput, &executeQueryOutput)
 		return executeQueryOutput, err
 	}
 	return api.ExecuteQuery(input)
@@ -301,7 +301,7 @@ func runExecuteAsyncQuery(useLambda bool, input *models.ExecuteAsyncQueryInput) 
 			input,
 		}
 		var executeAsyncQueryOutput *models.ExecuteAsyncQueryOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", executeAsyncQueryInput, &executeAsyncQueryOutput)
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", executeAsyncQueryInput, &executeAsyncQueryOutput)
 		return executeAsyncQueryOutput, err
 	}
 	return api.ExecuteAsyncQuery(input)
@@ -315,7 +315,7 @@ func runGetQueryStatus(useLambda bool, input *models.GetQueryStatusInput) (*mode
 			input,
 		}
 		var getQueryStatusOutput *models.GetQueryStatusOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getQueryStatusInput, &getQueryStatusOutput)
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getQueryStatusInput, &getQueryStatusOutput)
 		return getQueryStatusOutput, err
 	}
 	return api.GetQueryStatus(input)
@@ -329,7 +329,7 @@ func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*mo
 			input,
 		}
 		var getQueryResultsOutput *models.GetQueryResultsOutput
-		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getQueryResultsInput, &getQueryResultsOutput)
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getQueryResultsInput, &getQueryResultsOutput)
 		return getQueryResultsOutput, err
 	}
 	return api.GetQueryResults(input)
