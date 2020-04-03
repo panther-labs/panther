@@ -139,6 +139,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	getTablesIntput := &models.GetTablesInput{
 		DatabaseName: testDb,
+		HavingData:   true,
 	}
 	getTablesOutput, err := runGetTables(useLambda, getTablesIntput)
 	require.NoError(t, err)
@@ -150,7 +151,6 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	getTablesDetailInput := &models.GetTablesDetailInput{
 		DatabaseName: testDb,
 		TableNames:   []string{testTable},
-		HavingData:   true,
 	}
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, getTablesDetailInput)
 	require.NoError(t, err)

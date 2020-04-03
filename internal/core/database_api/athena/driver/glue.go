@@ -79,9 +79,24 @@ func GetTables(glueClient glueiface.GlueAPI, input *models.GetTablesInput) (*mod
 		}
 	}()
 
+	var partitionErr error
 	err = glueClient.GetTablesPages(&glue.GetTablesInput{DatabaseName: aws.String(input.DatabaseName)},
 		func(page *glue.GetTablesOutput, lastPage bool) bool {
 			for _, table := range page.TableList {
+				if input.HavingData { // check there is at least 1 partition
+					var gluePartitionOutput *glue.GetPartitionsOutput
+					gluePartitionOutput, partitionErr = glueClient.GetPartitions(&glue.GetPartitionsInput{
+						DatabaseName: aws.String(input.DatabaseName),
+						TableName:    table.Name,
+						MaxResults:   aws.Int64(1),
+					})
+					if partitionErr != nil {
+						return true // stop
+					}
+					if len(gluePartitionOutput.Partitions) == 0 { // skip if no partitions
+						continue
+					}
+				}
 				output.Tables = append(output.Tables, &models.TableDescription{
 					DatabaseName: input.DatabaseName,
 					TableName:    *table.Name,
@@ -90,6 +105,9 @@ func GetTables(glueClient glueiface.GlueAPI, input *models.GetTablesInput) (*mod
 			}
 			return false
 		})
+	if partitionErr != nil {
+		err = partitionErr
+	}
 
 	return output, errors.WithStack(err)
 }
@@ -112,20 +130,6 @@ func GetTablesDetail(glueClient glueiface.GlueAPI, input *models.GetTablesDetail
 		})
 		if err != nil {
 			return output, errors.WithStack(err)
-		}
-		if input.HavingData { // check there is at least 1 partition
-			var gluePartitionOutput *glue.GetPartitionsOutput
-			gluePartitionOutput, err = glueClient.GetPartitions(&glue.GetPartitionsInput{
-				DatabaseName: aws.String(input.DatabaseName),
-				TableName:    aws.String(tableName),
-				MaxResults:   aws.Int64(1),
-			})
-			if err != nil {
-				return output, errors.WithStack(err)
-			}
-			if len(gluePartitionOutput.Partitions) == 0 { // skip if no partitions
-				continue
-			}
 		}
 		detail := &models.TableDetail{
 			TableDescription: models.TableDescription{
