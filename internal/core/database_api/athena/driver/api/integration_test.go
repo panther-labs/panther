@@ -1,4 +1,4 @@
-package driver
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -26,8 +26,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/assert"
@@ -46,10 +44,10 @@ const (
 
 var (
 	integrationTest bool
-	awsSession      *session.Session
-	glueClient      *glue.Glue
-	athenaClient    *athena.Athena
-	s3Client        *s3.S3
+
+	api = API{}
+
+	s3Client *s3.S3
 
 	testBucket        string
 	testPartitionName = "part"
@@ -81,9 +79,7 @@ var (
 func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
-		awsSession = session.Must(session.NewSession())
-		glueClient = glue.New(awsSession)
-		athenaClient = athena.New(awsSession)
+		SessionInit()
 		s3Client = s3.New(awsSession)
 		testBucket = testBucketPrefix + time.Now().Format("20060102150405")
 
@@ -241,7 +237,7 @@ func runGetDatabases(useLambda bool, input *models.GetDatabasesInput) (*models.G
 		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getDatabasesInput, &getDatabasesOutput)
 		return getDatabasesOutput, err
 	}
-	return GetDatabases(glueClient, input)
+	return api.GetDatabases(input)
 }
 
 func runGetTables(useLambda bool, input *models.GetTablesInput) (*models.GetTablesOutput, error) {
@@ -255,7 +251,7 @@ func runGetTables(useLambda bool, input *models.GetTablesInput) (*models.GetTabl
 		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getTablesInput, &getTablesOutput)
 		return getTablesOutput, err
 	}
-	return GetTables(glueClient, input)
+	return api.GetTables(input)
 }
 
 func runGetTablesDetail(useLambda bool, input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
@@ -269,7 +265,7 @@ func runGetTablesDetail(useLambda bool, input *models.GetTablesDetailInput) (*mo
 		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getTablesDetailInput, &getTablesDetailOutput)
 		return getTablesDetailOutput, err
 	}
-	return GetTablesDetail(glueClient, input)
+	return api.GetTablesDetail(input)
 }
 
 func runExecuteQuery(useLambda bool, input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
@@ -283,7 +279,7 @@ func runExecuteQuery(useLambda bool, input *models.ExecuteQueryInput) (*models.E
 		err := testutils.InvokeLambda(awsSession, "panther-athena-api", executeQueryInput, &executeQueryOutput)
 		return executeQueryOutput, err
 	}
-	return ExecuteQuery(athenaClient, input, nil)
+	return api.ExecuteQuery(input)
 }
 
 func runExecuteAsyncQuery(useLambda bool, input *models.ExecuteAsyncQueryInput) (*models.ExecuteAsyncQueryOutput, error) {
@@ -297,7 +293,7 @@ func runExecuteAsyncQuery(useLambda bool, input *models.ExecuteAsyncQueryInput) 
 		err := testutils.InvokeLambda(awsSession, "panther-athena-api", executeAsyncQueryInput, &executeAsyncQueryOutput)
 		return executeAsyncQueryOutput, err
 	}
-	return ExecuteAsyncQuery(athenaClient, input, nil)
+	return api.ExecuteAsyncQuery(input)
 }
 
 func runGetQueryStatus(useLambda bool, input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
@@ -311,7 +307,7 @@ func runGetQueryStatus(useLambda bool, input *models.GetQueryStatusInput) (*mode
 		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getQueryStatusInput, &getQueryStatusOutput)
 		return getQueryStatusOutput, err
 	}
-	return GetQueryStatus(athenaClient, input)
+	return api.GetQueryStatus(input)
 }
 
 func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
@@ -325,7 +321,7 @@ func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*mo
 		err := testutils.InvokeLambda(awsSession, "panther-athena-api", getQueryResultsInput, &getQueryResultsOutput)
 		return getQueryResultsOutput, err
 	}
-	return GetQueryResults(athenaClient, input)
+	return api.GetQueryResults(input)
 }
 
 func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {

@@ -1,4 +1,4 @@
-package driver
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -21,13 +21,12 @@ package driver
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
 
-func GetDatabases(glueClient glueiface.GlueAPI, input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
+func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
 	output := &models.GetDatabasesOutput{}
 
 	var err error
@@ -67,7 +66,7 @@ func GetDatabases(glueClient glueiface.GlueAPI, input *models.GetDatabasesInput)
 	return output, errors.WithStack(err)
 }
 
-func GetTables(glueClient glueiface.GlueAPI, input *models.GetTablesInput) (*models.GetTablesOutput, error) {
+func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, error) {
 	output := &models.GetTablesOutput{
 		GetTablesInput: *input,
 	}
@@ -112,7 +111,7 @@ func GetTables(glueClient glueiface.GlueAPI, input *models.GetTablesInput) (*mod
 	return output, errors.WithStack(err)
 }
 
-func GetTablesDetail(glueClient glueiface.GlueAPI, input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
+func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
 	output := &models.GetTablesDetailOutput{}
 
 	var err error

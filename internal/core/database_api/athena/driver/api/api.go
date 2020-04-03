@@ -24,19 +24,20 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
-
-	"github.com/panther-labs/panther/api/lambda/database/models"
-	"github.com/panther-labs/panther/internal/core/database_api/athena/driver"
 )
 
 var (
-	sess                = session.Must(session.NewSession())
-	glueClient          = glue.New(sess)
-	athenaClient        = athena.New(sess)
+	awsSession          *session.Session
+	glueClient          *glue.Glue
+	athenaClient        *athena.Athena
 	athenaS3ResultsPath *string
 )
 
-func init() {
+func SessionInit() {
+	awsSession = session.Must(session.NewSession())
+	glueClient = glue.New(awsSession)
+	athenaClient = athena.New(awsSession)
+
 	if os.Getenv("ATHENA_BUCKET") != "" {
 		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"
 		athenaS3ResultsPath = &results
@@ -45,31 +46,3 @@ func init() {
 
 // API provides receiver methods for each route handler.
 type API struct{}
-
-func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
-	return driver.GetDatabases(glueClient, input)
-}
-
-func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, error) {
-	return driver.GetTables(glueClient, input)
-}
-
-func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
-	return driver.GetTablesDetail(glueClient, input)
-}
-
-func (API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
-	return driver.ExecuteQuery(athenaClient, input, athenaS3ResultsPath)
-}
-
-func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.ExecuteAsyncQueryOutput, error) {
-	return driver.ExecuteAsyncQuery(athenaClient, input, athenaS3ResultsPath)
-}
-
-func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
-	return driver.GetQueryStatus(athenaClient, input)
-}
-
-func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
-	return driver.GetQueryResults(athenaClient, input)
-}

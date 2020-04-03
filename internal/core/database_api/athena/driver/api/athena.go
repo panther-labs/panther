@@ -1,4 +1,4 @@
-package driver
+package api
 
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
@@ -33,7 +33,7 @@ const (
 	minimalQueryWait = time.Second * 4
 )
 
-func ExecuteQuery(client athenaiface.AthenaAPI, input *models.ExecuteQueryInput, s3Path *string) (*models.ExecuteQueryOutput, error) {
+func (API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
 	output := &models.ExecuteQueryOutput{}
 
 	var err error
@@ -44,7 +44,7 @@ func ExecuteQuery(client athenaiface.AthenaAPI, input *models.ExecuteQueryInput,
 		}
 	}()
 
-	query := awsathena.NewAthenaQuery(client, input.DatabaseName, input.SQL, s3Path)
+	query := awsathena.NewAthenaQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
 	err = query.Run()
 	if err != nil {
 		return output, err
@@ -64,9 +64,7 @@ func ExecuteQuery(client athenaiface.AthenaAPI, input *models.ExecuteQueryInput,
 	return output, nil
 }
 
-func ExecuteAsyncQuery(client athenaiface.AthenaAPI, input *models.ExecuteAsyncQueryInput,
-	s3Path *string) (*models.ExecuteAsyncQueryOutput, error) {
-
+func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.ExecuteAsyncQueryOutput, error) {
 	output := &models.ExecuteAsyncQueryOutput{}
 
 	var err error
@@ -77,7 +75,7 @@ func ExecuteAsyncQuery(client athenaiface.AthenaAPI, input *models.ExecuteAsyncQ
 		}
 	}()
 
-	query := awsathena.NewAthenaQuery(client, input.DatabaseName, input.SQL, s3Path)
+	query := awsathena.NewAthenaQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
 	err = query.Run()
 	if err != nil {
 		return output, err
@@ -103,7 +101,7 @@ func ExecuteAsyncQuery(client athenaiface.AthenaAPI, input *models.ExecuteAsyncQ
 	return output, nil
 }
 
-func GetQueryStatus(client athenaiface.AthenaAPI, input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
+func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
 	output := &models.GetQueryStatusOutput{}
 
 	var err error
@@ -113,7 +111,7 @@ func GetQueryStatus(client athenaiface.AthenaAPI, input *models.GetQueryStatusIn
 		}
 	}()
 
-	executionStatus, err := awsathena.Status(client, input.QueryID)
+	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
 	if err != nil {
 		return output, err
 	}
@@ -121,7 +119,7 @@ func GetQueryStatus(client athenaiface.AthenaAPI, input *models.GetQueryStatusIn
 	return output, nil
 }
 
-func GetQueryResults(client athenaiface.AthenaAPI, input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
+func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
 	output := &models.GetQueryResultsOutput{}
 
 	var err error
@@ -131,7 +129,7 @@ func GetQueryResults(client athenaiface.AthenaAPI, input *models.GetQueryResults
 		}
 	}()
 
-	executionStatus, err := awsathena.Status(client, input.QueryID)
+	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
 	if err != nil {
 		return output, err
 	}
@@ -142,7 +140,7 @@ func GetQueryResults(client athenaiface.AthenaAPI, input *models.GetQueryResults
 		if input.PaginationToken != nil { // paging thru results
 			nextToken = input.PaginationToken
 		}
-		err = getQueryResults(client, executionStatus, output, nextToken, input.ResultsMaxPageSize)
+		err = getQueryResults(athenaClient, executionStatus, output, nextToken, input.ResultsMaxPageSize)
 		if err != nil {
 			return output, err
 		}
