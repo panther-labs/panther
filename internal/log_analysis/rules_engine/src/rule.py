@@ -63,7 +63,6 @@ class Rule:
             config: Dictionary that we expect to have the following keys:
                 rule_id: Unique rule identifier
                 body: The rule body
-                severity: The severity of the rule
                 (Optional) version: The version of the rule
                 (Optional) dedup_period_mins: The period during which the events will be deduplicated
         """
@@ -74,10 +73,6 @@ class Rule:
         if not ('body' in config) or not isinstance(config['body'], str):
             raise AssertionError('Field "body" of type str is required field')
         self.rule_body = config['body']
-
-        if not ('severity' in config) or not isinstance(config['severity'], str):
-            raise AssertionError('Field "severity" of type str is required field')
-        self.rule_severity = config['severity']
 
         if not ('versionId' in config) or not isinstance(config['versionId'], str):
             self.rule_version = DEFAULT_RULE_VERSION
