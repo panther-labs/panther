@@ -85,7 +85,7 @@ type GetTablesDetailInput struct {
 // NOTE: we will assume this is small an not paginate
 type GetTablesDetailOutput struct {
 	Error
-	TablesDetails []*TableDetail `json:"tables_details,omitempty"`
+	TablesDetails []*TableDetail `json:"tablesDetails,omitempty"`
 }
 
 type TableColumn struct {
@@ -117,7 +117,7 @@ type GetQueryStatusOutput struct {
 type GetQueryResultsInput struct {
 	QueryID            string  `json:"queryId" validate:"required"`
 	PaginationToken    *string `json:"paginationToken,omitempty"`
-	ResultsMaxPageSize *int64  `json:"resultsMaxPageSize"` // only return this many per call
+	ResultsMaxPageSize *int64  `json:"resultsMaxPageSize" validate:"omitempty,gt=0"` // only return this many per call
 }
 
 type GetQueryResultsOutput struct {
@@ -130,16 +130,16 @@ type GetQueryResultsOutput struct {
 }
 
 // Blocking query
-type ExecuteQueryInput ExecuteAsyncQueryInput
+type ExecuteQueryInput = ExecuteAsyncQueryInput
 
-type ExecuteQueryOutput GetQueryResultsOutput // call GetQueryResults() to page thu results
+type ExecuteQueryOutput = GetQueryResultsOutput // call GetQueryResults() to page thu results
 
 // Google-like search returning a summary table
 type ExecuteSimpleSummaryInput struct {
 	SearchString string `json:"searchString" validate:"required"`
 }
 
-type ExecuteSimpleSummaryOutput GetQueryResultsOutput // GetQueryResults() to page thu results
+type ExecuteSimpleSummaryOutput = GetQueryResultsOutput // GetQueryResults() to page thu results
 
 type Row struct {
 	Columns []*Column `json:"columns"`

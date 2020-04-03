@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	pollWait         = time.Second * 4
+	pollWait = time.Second * 4
 )
 
 func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
@@ -43,7 +43,7 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 		}
 	}()
 
-	executeAsyncQueryOutput, err := api.ExecuteAsyncQuery((*models.ExecuteAsyncQueryInput)(input))
+	executeAsyncQueryOutput, err := api.ExecuteAsyncQuery(input)
 	if err != nil {
 		output.Error = executeAsyncQueryOutput.Error
 		return output, err
@@ -69,8 +69,7 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 	getQueryResultsInput := &models.GetQueryResultsInput{
 		QueryID: executeAsyncQueryOutput.QueryID,
 	}
-	getQueryResultsOutput, err := api.GetQueryResults(getQueryResultsInput)
-	return (*models.ExecuteQueryOutput)(getQueryResultsOutput), err
+	return api.GetQueryResults(getQueryResultsInput)
 }
 
 func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.ExecuteAsyncQueryOutput, error) {
