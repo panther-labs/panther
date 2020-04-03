@@ -100,6 +100,7 @@ var (
 
 		// cognito
 		"ConfirmForgotPassword": {},
+		"ConfirmDevice":         {}, // This API call does not log a userIdentity with an accountID
 
 		// config
 		"BatchGetResourceConfig":          {},

@@ -60,7 +60,8 @@ func TestStandardVpcFlowLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
-	expectedEvent.AppendAnyIPAddresses("172.31.20.31", "52.119.169.95")
+	expectedEvent.AppendAnyIPAddress("172.31.20.31")
+	expectedEvent.AppendAnyIPAddress("52.119.169.95")
 	expectedEvent.AppendAnyAWSAccountIds("348372346321")
 
 	checkVPCFlowLog(t, vpcFlowDefaultHeader, log, expectedEvent)
@@ -99,7 +100,10 @@ func TestExtendedVpcFlowLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
-	expectedEvent.AppendAnyIPAddresses("172.31.20.31", "52.119.169.95", "76.198.154.105", "172.31.88.3")
+	expectedEvent.AppendAnyIPAddress("172.31.20.31")
+	expectedEvent.AppendAnyIPAddress("52.119.169.95")
+	expectedEvent.AppendAnyIPAddress("76.198.154.105")
+	expectedEvent.AppendAnyIPAddress("172.31.88.3")
 	expectedEvent.AppendAnyAWSAccountIds("348372346321")
 	expectedEvent.AppendAnyAWSInstanceIds("i-038407d32b0f38c60")
 

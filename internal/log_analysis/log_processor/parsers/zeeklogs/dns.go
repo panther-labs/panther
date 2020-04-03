@@ -19,8 +19,6 @@ package zeeklogs
  */
 
 import (
-	"net"
-
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -99,12 +97,9 @@ func (p *ZeekDNSParser) LogType() string {
 
 func (event *ZeekDNS) updatePantherFields(p *ZeekDNSParser) {
 	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Ts), event)
-	if net.ParseIP(*event.IDOrigH) != nil {
-		event.AppendAnyIPAddresses(*event.IDOrigH)
-	}
-	if net.ParseIP(*event.IDRespH) != nil {
-		event.AppendAnyIPAddresses(*event.IDRespH)
-	}
+
+	event.AppendAnyIPAddressPtr(event.IDOrigH)
+	event.AppendAnyIPAddressPtr(event.IDRespH)
 
 	if event.QType != nil && (*event.QType == aQueryType || *event.QType == aaaaQueryType) {
 		if event.Query != nil {
@@ -113,9 +108,8 @@ func (event *ZeekDNS) updatePantherFields(p *ZeekDNSParser) {
 	}
 
 	for _, answer := range event.Answers {
-		if net.ParseIP(answer) != nil {
-			event.AppendAnyIPAddresses(answer)
-		} else {
+		// Answer might be IP or Domain name
+		if !event.AppendAnyIPAddress(answer) {
 			event.AppendAnyDomainNames(answer)
 		}
 	}

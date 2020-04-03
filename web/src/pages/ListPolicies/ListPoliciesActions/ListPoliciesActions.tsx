@@ -114,6 +114,13 @@ const ListPoliciesActions: React.FC = () => {
   const filterKeys = Object.keys(filters) as (keyof ListPoliciesInput)[];
   const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
 
+  // If there is at least one filter set visibility to true
+  React.useEffect(() => {
+    if (filtersCount > 0) {
+      setFiltersVisibility(true);
+    }
+  }, [filtersCount]);
+
   // The initial filter values for when the filters component first renders. If you see down below,
   // we mount and unmount it depending on whether it's visible or not
   const initialFilterValues = React.useMemo(

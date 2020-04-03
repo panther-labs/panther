@@ -133,7 +133,7 @@ func TestCloudTrailLogDecrypt(t *testing.T) {
 		"arn:aws:sts::888888888888:assumed-role/panther-app-LogProcessor-XXXXXXXXXXXX-FunctionRole-XXXXXXXXXX/panther-log-processor",
 		"arn:aws:lambda:us-east-1:888888888888:function:panther-log-processor")
 	expectedEvent.AppendAnyAWSAccountIds("888888888888")
-	expectedEvent.AppendAnyIPAddresses("1.2.3.4")
+	expectedEvent.AppendAnyIPAddress("1.2.3.4")
 
 	checkCloudTrailLog(t, log, []*CloudTrail{expectedEvent})
 }
