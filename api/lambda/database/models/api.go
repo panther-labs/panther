@@ -45,7 +45,6 @@ type GetDatabasesInput struct {
 // NOTE: we will assume this is small an not paginate
 type GetDatabasesOutput struct {
 	Error
-	GetDatabasesInput
 	Databases []*DatabaseDescription `json:"databases,omitempty"`
 }
 
@@ -56,14 +55,13 @@ type DatabaseDescription struct {
 }
 
 type GetTablesInput struct {
-	DatabaseName string `json:"databaseName" validate:"required"`
-	HavingData   bool   `json:"havingData,omitempty"` // if true, only return table containing data
+	DatabaseName  string `json:"databaseName" validate:"required"`
+	OnlyPopulated bool   `json:"onlyPopulated,omitempty"` // if true, only return table containing data
 }
 
 // NOTE: we will assume this is small an not paginate
 type GetTablesOutput struct {
 	Error
-	GetTablesInput
 	Tables []*TableDescription `json:"tables,omitempty"`
 }
 
@@ -110,7 +108,6 @@ type GetQueryStatusInput struct {
 
 type GetQueryStatusOutput struct {
 	Error
-	GetQueryStatusInput
 	Status string `json:"status" validate:"required,oneof=running,succeeded,failed"`
 }
 
@@ -122,10 +119,11 @@ type GetQueryResultsInput struct {
 
 type GetQueryResultsOutput struct {
 	Error
-	GetQueryResultsInput
-	Status  string `json:"status" validate:"required,oneof=running,succeeded,failed"`
-	NumRows int    `json:"numRows"`
-	Rows    []*Row `json:"rows"`
+	QueryID         string  `json:"queryId" validate:"required"`
+	Status          string  `json:"status" validate:"required,oneof=running,succeeded,failed"`
+	NumRows         int     `json:"numRows"`
+	Rows            []*Row  `json:"rows"`
+	PaginationToken *string `json:"paginationToken,omitempty"`
 }
 
 // Blocking query

@@ -67,9 +67,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 }
 
 func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, error) {
-	output := &models.GetTablesOutput{
-		GetTablesInput: *input,
-	}
+	output := &models.GetTablesOutput{}
 
 	var err error
 	defer func() {
@@ -82,7 +80,7 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 	err = glueClient.GetTablesPages(&glue.GetTablesInput{DatabaseName: aws.String(input.DatabaseName)},
 		func(page *glue.GetTablesOutput, lastPage bool) bool {
 			for _, table := range page.TableList {
-				if input.HavingData { // check there is at least 1 partition
+				if input.OnlyPopulated { // check there is at least 1 partition
 					var gluePartitionOutput *glue.GetPartitionsOutput
 					gluePartitionOutput, partitionErr = glueClient.GetPartitions(&glue.GetPartitionsInput{
 						DatabaseName: aws.String(input.DatabaseName),

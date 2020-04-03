@@ -31,7 +31,7 @@ import (
 
 const (
 	minimalQueryWait = time.Second * 4
-	pollWait = time.Second * 10
+	pollWait         = time.Second * 10
 )
 
 func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
@@ -64,7 +64,7 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 
 	// get the results
 	getQueryResultsInput := &models.GetQueryResultsInput{
-		QueryID:            executeAsyncQueryOutput.QueryID,
+		QueryID: executeAsyncQueryOutput.QueryID,
 	}
 	getQueryResultsOutput, err := api.GetQueryResults(getQueryResultsInput)
 	return (*models.ExecuteQueryOutput)(getQueryResultsOutput), err
@@ -96,17 +96,17 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 	}
 	output.Status = getQueryStatus(executionStatus)
 	if done { // fill results
-		switch  output.Status {
+		switch output.Status {
 		case models.QuerySucceeded:
 			err = getQueryResults(query.Client, executionStatus, (*models.GetQueryResultsOutput)(output),
 				nil, input.ResultsMaxPageSize)
-			if err != nil{
-			return output, err
-		    }
+			if err != nil {
+				return output, err
+			}
 		case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
 			output.ErrorMessage = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
 		}
-		}
+	}
 	return output, nil
 }
 
@@ -145,15 +145,15 @@ func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQuery
 	output.Status = getQueryStatus(executionStatus)
 
 	switch output.Status {
-		case models.QuerySucceeded :
-			var nextToken *string
-			if input.PaginationToken != nil { // paging thru results
-				nextToken = input.PaginationToken
-			}
-			err = getQueryResults(athenaClient, executionStatus, output, nextToken, input.ResultsMaxPageSize)
-			if err != nil {
-				return output, err
-			}
+	case models.QuerySucceeded:
+		var nextToken *string
+		if input.PaginationToken != nil { // paging thru results
+			nextToken = input.PaginationToken
+		}
+		err = getQueryResults(athenaClient, executionStatus, output, nextToken, input.ResultsMaxPageSize)
+		if err != nil {
+			return output, err
+		}
 	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
 		output.ErrorMessage = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
 	}

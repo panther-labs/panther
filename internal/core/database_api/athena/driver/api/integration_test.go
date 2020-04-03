@@ -134,8 +134,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	// -------- GetTables()
 
 	getTablesIntput := &models.GetTablesInput{
-		DatabaseName: testDb,
-		HavingData:   true,
+		DatabaseName:  testDb,
+		OnlyPopulated: true,
 	}
 	getTablesOutput, err := runGetTables(useLambda, getTablesIntput)
 	require.NoError(t, err)
