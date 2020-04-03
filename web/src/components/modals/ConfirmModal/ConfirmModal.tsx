@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Button, Flex, Modal, Text, useSnackbar } from 'pouncejs';
+import { Modal, Text, Flex, Button, useSnackbar } from 'pouncejs';
 import { MutationTuple } from '@apollo/client';
+import SubmitButton from 'Components/buttons/SubmitButton';
 import useModal from 'Hooks/useModal';
-import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 
 export interface ConfirmModalProps {
   mutation: MutationTuple<any, { [key: string]: any }>;
