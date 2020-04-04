@@ -81,13 +81,12 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 		}
 	}()
 
-	query := awsathena.NewAthenaQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
-	err = query.Run()
+	startOutput, err := awsathena.StartQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
 	if err != nil {
 		return output, err
 	}
 
-	output.QueryID = *query.StartExecutionOutput.QueryExecutionId
+	output.QueryID = *startOutput.QueryExecutionId
 
 	return output, nil
 }

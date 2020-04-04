@@ -44,14 +44,11 @@ func TestIntegrationAthenaQuery(t *testing.T) {
 		t.Skip()
 	}
 	var err error
-	query := NewAthenaQuery(athena.New(awsSession), "panther_tables", "select 1 as c", nil)
-	err = query.Run()
-	require.NoError(t, err)
-	err = query.Wait()
+	queryResult, err := RunQuery(athena.New(awsSession), "panther_tables", "select 1 as c", nil)
 	require.NoError(t, err)
 	expectedCol := "c"
 	expectedResult := "1"
-	rows := query.QueryResult.ResultSet.Rows
+	rows := queryResult.ResultSet.Rows
 	require.Equal(t, 2, len(rows))
 	require.Equal(t, expectedCol, *rows[0].Data[0].VarCharValue)
 	require.Equal(t, expectedResult, *rows[1].Data[0].VarCharValue)

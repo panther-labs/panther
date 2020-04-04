@@ -47,12 +47,7 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 		return err
 	}
 	for _, sql := range sqlStatements {
-		q := awsathena.NewAthenaQuery(athena.New(sess), awsglue.ViewsDatabaseName, sql, &s3Path) // use default bucket
-		err = q.Run()
-		if err != nil {
-			return errors.Wrap(err, "CreateOrReplaceViews() failed")
-		}
-		err = q.Wait()
+		_, err := awsathena.RunQuery(athena.New(sess), awsglue.ViewsDatabaseName, sql, &s3Path) // use default bucket
 		if err != nil {
 			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}

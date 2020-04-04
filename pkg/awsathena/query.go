@@ -28,85 +28,67 @@ const (
 	pollDelay = time.Second * 2
 )
 
-type AthenaQuery struct {
-	Client        athenaiface.AthenaAPI
-	SQL           string
-	S3ResultsPath *string // this can be nil, to use defaults
-	Database      string
-	QueryResult   *athena.GetQueryResultsOutput
-	// internal state
-	StartExecutionOutput *athena.StartQueryExecutionOutput
-}
-
-func NewAthenaQuery(client athenaiface.AthenaAPI, database, sql string, s3Path *string) *AthenaQuery {
-	return &AthenaQuery{
-		Client:        client,
-		SQL:           sql,
-		S3ResultsPath: s3Path,
-		Database:      database,
+// RunQuery executes query, blocking until done
+func RunQuery(client athenaiface.AthenaAPI, database, sql string, s3Path *string) (*athena.GetQueryResultsOutput, error) {
+	startOutput, err := StartQuery(client, database, sql, s3Path)
+	if err != nil {
+		return nil, err
 	}
+	return WaitForResults(client, *startOutput.QueryExecutionId)
 }
 
-func (aq *AthenaQuery) Run() (err error) {
+func StartQuery(client athenaiface.AthenaAPI, database, sql string, s3Path *string) (*athena.StartQueryExecutionOutput, error) {
 	var startInput athena.StartQueryExecutionInput
-	startInput.SetQueryString(aq.SQL)
+	startInput.SetQueryString(sql)
 
 	var startContext athena.QueryExecutionContext
-	startContext.SetDatabase(aq.Database)
+	startContext.SetDatabase(database)
 	startInput.SetQueryExecutionContext(&startContext)
 
 	var resultConfig athena.ResultConfiguration
-	if aq.S3ResultsPath != nil {
-		resultConfig.SetOutputLocation(*aq.S3ResultsPath)
+	if s3Path != nil {
+		resultConfig.SetOutputLocation(*s3Path)
 	}
 	startInput.SetResultConfiguration(&resultConfig)
 
-	aq.StartExecutionOutput, err = aq.Client.StartQueryExecution(&startInput)
-	if err != nil {
-		err = errors.Wrapf(err, "athena failed to start query: %#v", *aq)
-	}
-	return err
+	return client.StartQueryExecution(&startInput)
 }
 
-func (aq *AthenaQuery) Wait() (err error) {
-	executionOutput, err := aq.poll()
-	if err != nil {
-		return err
-	}
-	return aq.Results(executionOutput, nil, nil)
-}
-
-func (aq *AthenaQuery) poll() (*athena.GetQueryExecutionOutput, error) {
-	for {
-		executionOutput, done, err := aq.IsFinished()
+func WaitForResults(client athenaiface.AthenaAPI, queryExecutionID string) (queryResult *athena.GetQueryResultsOutput, err error) {
+	isFinished := func() (executionOutput *athena.GetQueryExecutionOutput, done bool, err error) {
+		executionOutput, err = Status(client, queryExecutionID)
 		if err != nil {
-			return nil, err
+			return nil, true, err
 		}
-		if done {
-			return executionOutput, nil
+		// not athena.QueryExecutionStateRunning or athena.QueryExecutionStateQueued
+		switch *executionOutput.QueryExecution.Status.State {
+		case
+			athena.QueryExecutionStateSucceeded,
+			athena.QueryExecutionStateFailed,
+			athena.QueryExecutionStateCancelled:
+			return executionOutput, true, nil
 		}
-		time.Sleep(pollDelay)
+		return executionOutput, false, nil
 	}
-}
 
-func (aq *AthenaQuery) IsFinished() (executionOutput *athena.GetQueryExecutionOutput, done bool, err error) {
-	executionOutput, err = aq.Status()
+	poll := func() (*athena.GetQueryExecutionOutput, error) {
+		for {
+			executionOutput, done, err := isFinished()
+			if err != nil {
+				return nil, err
+			}
+			if done {
+				return executionOutput, nil
+			}
+			time.Sleep(pollDelay)
+		}
+	}
+
+	executionOutput, err := poll()
 	if err != nil {
-		return nil, true, err
+		return nil, err
 	}
-	// not athena.QueryExecutionStateRunning or athena.QueryExecutionStateQueued
-	switch *executionOutput.QueryExecution.Status.State {
-	case
-		athena.QueryExecutionStateSucceeded,
-		athena.QueryExecutionStateFailed,
-		athena.QueryExecutionStateCancelled:
-		return executionOutput, true, nil
-	}
-	return executionOutput, false, nil
-}
-
-func (aq *AthenaQuery) Status() (executionOutput *athena.GetQueryExecutionOutput, err error) {
-	return Status(aq.Client, *aq.StartExecutionOutput.QueryExecutionId)
+	return Results(client, executionOutput, nil, nil)
 }
 
 func Status(client athenaiface.AthenaAPI, queryExecutionID string) (executionOutput *athena.GetQueryExecutionOutput, err error) {
@@ -117,11 +99,6 @@ func Status(client athenaiface.AthenaAPI, queryExecutionID string) (executionOut
 		return executionOutput, errors.WithStack(err)
 	}
 	return executionOutput, nil
-}
-
-func (aq *AthenaQuery) Results(executionOutput *athena.GetQueryExecutionOutput, nextToken *string, maxResults *int64) (err error) {
-	aq.QueryResult, err = Results(aq.Client, executionOutput, nextToken, maxResults)
-	return err
 }
 
 func Results(client athenaiface.AthenaAPI, executionOutput *athena.GetQueryExecutionOutput,
