@@ -68,6 +68,14 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 			continue
 		}
 
+		if newAlertDedupEvent == nil {
+			// This can happen only if someone manually deleted entries from DDB
+			// It shouldn't happen under normal operation - only if someone altered the DDB manually.
+			// We can skip these records since there is nothing we can do in this scenario
+			operation.LogWarn(errors.New("skipping deleted record"))
+			continue
+		}
+
 		if err = forwarder.Handle(oldAlertDedupEvent, newAlertDedupEvent); err != nil {
 			return errors.Wrap(err, "encountered issue while handling deduplication event")
 		}

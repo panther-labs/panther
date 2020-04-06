@@ -60,7 +60,7 @@ type GetAlertOutput = Alert
 // }
 type ListAlertsInput struct {
 	RuleID            *string `json:"ruleId,omitempty"`
-	PageSize          *int    `json:"pageSize"  validate:"required,min=1,max=50"`
+	PageSize          *int    `json:"pageSize,omitempty"  validate:"omitempty,min=1,max=50"`
 	ExclusiveStartKey *string `json:"exclusiveStartKey,omitempty"`
 }
 
