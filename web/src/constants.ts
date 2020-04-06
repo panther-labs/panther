@@ -103,7 +103,7 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } 
   [SeverityEnum.Info]: 'neutral' as const,
 };
 
-export const PANTHER_SCHEMA_DOCS_LINK = 'https://docs.runpanther.io';
+export const PANTHER_SCHEMA_DOCS_LINK = 'https://runpanther.io/docs';
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
 export const DEFAULT_LARGE_PAGE_SIZE = 25;
