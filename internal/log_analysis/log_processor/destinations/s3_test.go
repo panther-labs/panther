@@ -313,6 +313,7 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 
 	destination := newS3Destination()
 	eventChannel := make(chan *parsers.PantherLog, 2)
+	doneChannel := make(chan bool, 1)
 
 	const nevents = 7
 	testEvent := newSimpleTestEvent()
@@ -327,16 +328,19 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	// sending nevents to buffered channel
 	// The first n-1 should cause the S3 time limit to be exceeded
 	// so we expect two objects to be written to s3 from that,
-	// the last event is needed to trigger the flush of the second
+	// the last event is needed to trigger the flush of the previous
 	go func() {
 		for i := 0; i < nevents-1; i++ {
 			eventChannel <- testEvent
 			time.Sleep(destination.maxDuration + (time.Millisecond * 10)) // give time to for timers to expire
 		}
 		eventChannel <- testEvent // last event will trigger flush of the last event above
+		doneChannel <- true
 	}()
 
-	runSendEventsTimed(t, destination, eventChannel, false, destination.maxDuration*(nevents+1)) // this blocks
+	runSendEventsSignaled(t, destination, eventChannel, false, doneChannel) // this blocks
+
+	close(doneChannel)
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -490,11 +494,11 @@ func TestBufferSetLargest(t *testing.T) {
 }
 
 func runSendEvents(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLog, expectErr bool) {
-	runSendEventsTimed(t, destination, eventChannel, expectErr, 0)
+	runSendEventsSignaled(t, destination, eventChannel, expectErr, nil)
 }
 
-func runSendEventsTimed(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLog,
-	expectErr bool, delay time.Duration) {
+func runSendEventsSignaled(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLog,
+	expectErr bool, doneChan chan bool) {
 
 	var waitErr sync.WaitGroup
 	errChan := make(chan error, 128)
@@ -524,7 +528,9 @@ func runSendEventsTimed(t *testing.T, destination Destination, eventChannel chan
 		waitSend.Done()
 	}()
 
-	time.Sleep(delay)
+	if doneChan != nil {
+		<-doneChan
+	}
 	close(eventChannel) // causes SendEvents() to terminate
 	waitSend.Wait()
 
