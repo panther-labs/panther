@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	stateMachineName = "AthenaQuery"
+	stateMachineName = "panther-athena-workflow"
 )
 
 func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (*models.ExecuteAsyncQueryNotifyOutput, error) {

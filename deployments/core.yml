@@ -703,7 +703,7 @@ Resources:
             - Effect: Allow
               Action:
                 - states:StartExecution
-              Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:AthenaQuery
+              Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -734,7 +734,13 @@ Resources:
   AthenaQueryStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: AthenaQuery
+      StateMachineName: panther-athena-workflow
+      # <cfndoc>
+      # The `panther-athena-workflow` is a Step Functions state machine used execute Athena queries and notify callers when done.
+      #
+      # Failure Impact
+      # * Failure of this state machine will stop the Panther UI from doing Athena queries.
+      # </cfndoc>
       DefinitionString: !Sub |
         {
              "Comment": "Run Athena query. Parameters are: databaseName,sql,lambdaName,methodName",
