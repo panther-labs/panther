@@ -58,6 +58,7 @@ type DynamoItem = map[string]*dynamodb.AttributeValue
 type AlertItem struct {
 	AlertID         string    `json:"id"`
 	RuleID          string    `json:"ruleId"`
+	RuleVersion     string    `json:"ruleVersion"`
 	RuleDisplayName *string   `json:"ruleDisplayName"`
 	Title           *string   `json:"title"`
 	DedupString     string    `json:"dedup"`

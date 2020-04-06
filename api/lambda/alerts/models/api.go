@@ -91,15 +91,7 @@ type AlertSummary struct {
 
 // Alert contains the details of an alert
 type Alert struct {
-	AlertID                *string    `json:"alertId" validate:"required"`
-	RuleID                 *string    `json:"ruleId" validate:"required"`
-	RuleDisplayName        *string    `json:"ruleDisplayName,omitempty"`
-	RuleVersion            *string    `json:"ruleVersion" validate:"required"`
-	DedupString            *string    `json:"dedupString,omitempty"`
-	CreationTime           *time.Time `json:"creationTime" validate:"required"`
-	UpdateTime             *time.Time `json:"updateTime" validate:"required"`
-	EventsMatched          *int       `json:"eventsMatched" validate:"required"`
-	Events                 []*string  `json:"events" validate:"required"`
-	EventsLastEvaluatedKey *string    `json:"eventsLastEvaluatedKey,omitempty"`
-	Title                  *string    `json:"title" validate:"required"`
+	*AlertSummary
+	Events                 []*string `json:"events" validate:"required"`
+	EventsLastEvaluatedKey *string   `json:"eventsLastEvaluatedKey,omitempty"`
 }

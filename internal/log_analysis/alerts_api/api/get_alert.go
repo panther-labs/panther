@@ -90,14 +90,18 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		return nil, err
 	}
 	result = &models.Alert{
-		AlertID:                &alertItem.AlertID,
-		RuleID:                 &alertItem.RuleID,
-		DedupString:            &alertItem.DedupString,
-		CreationTime:           &alertItem.CreationTime,
-		UpdateTime:             &alertItem.UpdateTime,
-		EventsMatched:          &alertItem.EventCount,
-		RuleDisplayName:        alertItem.RuleDisplayName,
-		Title:                  getAlertTitle(alertItem),
+		AlertSummary: &models.AlertSummary{
+			AlertID:         &alertItem.AlertID,
+			RuleID:          &alertItem.RuleID,
+			DedupString:     &alertItem.DedupString,
+			CreationTime:    &alertItem.CreationTime,
+			UpdateTime:      &alertItem.UpdateTime,
+			EventsMatched:   &alertItem.EventCount,
+			RuleDisplayName: alertItem.RuleDisplayName,
+			Title:           getAlertTitle(alertItem),
+			RuleVersion:     &alertItem.RuleVersion,
+			Severity:        &alertItem.Severity,
+		},
 		Events:                 aws.StringSlice(events),
 		EventsLastEvaluatedKey: aws.String(encodedToken),
 	}
