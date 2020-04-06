@@ -22,13 +22,12 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
 
-// called by Step workflow to execute callback the query that ran
+// called by Step workflow to execute callback lambda after query has finished
 func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.InvokeNotifyLambdaInput, error) {
 	output := &models.InvokeNotifyLambdaInput{}
 
@@ -39,17 +38,22 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 		}
 	}()
 
-	// these lambdas are expected to take QueryID in as argument, then execute a callback to get results/continue
-	queryIDJSON, err := jsoniter.Marshal(&input.GetQueryStatusInput)
-	if err != nil {
-		return output, errors.Wrapf(err, "failed to marshal %#v", input.GetQueryStatusInput)
-	}
-
-	payload := []byte(fmt.Sprintf("%s %s", input.MethodName, string(queryIDJSON)))
-	_, err = lambdaClient.Invoke(&lambda.InvokeInput{
+	// these lambdas are expected to take queryId and workflowId in as arguments, then execute a callback to get results/continue
+	payload := []byte(fmt.Sprintf(`{"%s": { "queryId": "%s", "workflowId": "%s" }}`,
+		input.MethodName, input.QueryID, input.WorkflowID))
+	resp, err := lambdaClient.Invoke(&lambda.InvokeInput{
 		FunctionName: &input.LambdaName,
 		Payload:      payload,
 	})
+	if err != nil {
+		err = errors.Wrapf(err, "failed to invoke %#v", input)
+		return output, err
+	}
 
-	return output, errors.Wrapf(err, "failed to invoke %#v", input)
+	if resp.FunctionError != nil {
+		err = errors.Errorf("%s: failed to invoke %#v", *resp.FunctionError, input)
+		return output, err
+	}
+
+	return output, nil
 }

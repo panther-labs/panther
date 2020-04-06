@@ -52,11 +52,13 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 
 	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil || identity.Account == nil {
-		return output, errors.Wrapf(err, "failed to get identity %#v", input)
+		err = errors.Wrapf(err, "failed to get identity %#v", input)
+		return output, err
 	}
 
 	if awsSession.Config.Region == nil {
-		return output, errors.Wrapf(err, "failed to get aws region %#v", input)
+		err = errors.Wrapf(err, "failed to get aws region %#v", input)
+		return output, err
 	}
 
 	stateMachineARN := fmt.Sprintf("arn:aws:states:%s:%s:stateMachine:%s",
@@ -68,9 +70,11 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 		StateMachineArn: &stateMachineARN,
 	}
 	startExecutionOutput, err := sfnClient.StartExecution(startExecutionInput)
-	if err == nil {
-		output.WorkflowID = *startExecutionOutput.ExecutionArn
+	if err != nil {
+		err = errors.Wrapf(err, "failed to start workflow execution for: %#v", input)
+		return output, err
 	}
+	output.WorkflowID = *startExecutionOutput.ExecutionArn
 
 	return output, err
 }

@@ -42,7 +42,8 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 			Name: input.Name,
 		})
 		if err != nil {
-			return output, errors.WithStack(err)
+			err = errors.WithStack(err)
+			return output, err
 		}
 		output.Databases = append(output.Databases, &models.DatabaseDescription{
 			Name:        *glueOutput.Database.Name,
@@ -126,7 +127,8 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 			Name:         aws.String(tableName),
 		})
 		if err != nil {
-			return output, errors.WithStack(err)
+			err = errors.WithStack(err)
+			return output, err
 		}
 		detail := &models.TableDetail{
 			TableDescription: models.TableDescription{

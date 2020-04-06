@@ -278,13 +278,15 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			SQL:          testSQL,
 		},
 		LambdaInvoke: models.LambdaInvoke{
-			LambdaName: "panther-athenaa-api",
-			MethodName: "notifyAppSync",
+			LambdaName: "panther-athena-api",
+			MethodName: "notifyAppSync", // right now this will fail
+			// MethodName:  "getQueryStatus", // we use this because it has compatible API with notification
 		},
 	}
 	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, executeAsyncQueryNotifyInput)
 	require.NoError(t, err)
 
+	// wait for workflow to finish
 	for {
 		time.Sleep(time.Second * 10)
 		descExecutionInput := &sfn.DescribeExecutionInput{

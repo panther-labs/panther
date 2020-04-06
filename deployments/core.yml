@@ -704,6 +704,13 @@ Resources:
               Action:
                 - states:StartExecution
               Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
+        - Id: InvokePantherLambdas # call other panther lambdas (notify support)
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-*
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -831,7 +838,7 @@ Resources:
                  "Parameters": {
                    "FunctionName": "${AthenaApiFunction.Arn}",
                    "Payload": {
-                     "notifyAppSync": {
+                     "invokeNotifyLambda": {
                        "queryId.$": "$.queryResults.Payload.queryId",
                        "lambdaName.$": "$.lambdaName",
                        "methodName.$": "$.methodName",

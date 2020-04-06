@@ -153,8 +153,9 @@ type QueryResultsPage struct {
 }
 
 type InvokeNotifyLambdaInput struct {
-	GetQueryStatusInput
 	LambdaInvoke
+	ExecuteAsyncQueryOutput
+	ExecuteAsyncQueryNotifyOutput
 }
 
 type InvokeNotifyLambdaOutput struct {
