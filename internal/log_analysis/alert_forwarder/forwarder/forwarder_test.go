@@ -150,7 +150,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
-		RuleDisplayName: string(testRuleResponse.DisplayName),
+		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		AlertDedupEvent: *newAlertDedupEvent,
 	}
@@ -212,7 +212,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
-		RuleDisplayName: string(testRuleResponse.DisplayName),
+		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
 		Title:           "DisplayName failed",
 		AlertDedupEvent: *newAlertDedupEvent,
 	}
@@ -258,14 +258,20 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		WithBasePath("path")
 	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
+	ruleResponseWithoutDisplayName := &models.Rule{
+		Description: "Description",
+		Severity:    "INFO",
+		Runbook:     "Runbook",
+		Tags:        []string{"Tag"},
+	}
+
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:         aws.Time(newAlertDedupEvent.CreationTime),
-		PolicyDescription: aws.String(string(testRuleResponse.Description)),
+		PolicyDescription: aws.String(string(ruleResponseWithoutDisplayName.Description)),
 		PolicyID:          aws.String(newAlertDedupEvent.RuleID),
 		PolicyVersionID:   aws.String(newAlertDedupEvent.RuleVersion),
-		PolicyName:        aws.String(string(testRuleResponse.DisplayName)),
-		Runbook:           aws.String(string(testRuleResponse.Runbook)),
-		Severity:          aws.String(string(testRuleResponse.Severity)),
+		Runbook:           aws.String(string(ruleResponseWithoutDisplayName.Runbook)),
+		Severity:          aws.String(string(ruleResponseWithoutDisplayName.Severity)),
 		Tags:              aws.StringSlice([]string{"Tag"}),
 		Type:              aws.String(alertModel.RuleType),
 		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
@@ -278,14 +284,13 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		QueueUrl:    aws.String("queueUrl"),
 	}
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(ruleResponseWithoutDisplayName, http.StatusOK), nil).Once()
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
-		RuleDisplayName: string(testRuleResponse.DisplayName),
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		AlertDedupEvent: *newAlertDedupEvent,
 	}

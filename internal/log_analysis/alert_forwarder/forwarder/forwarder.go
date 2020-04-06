@@ -123,7 +123,7 @@ func sendAlertNotification(rule *models.Rule, alertDedup *AlertDedupEvent) error
 		PolicyDescription: aws.String(string(rule.Description)),
 		PolicyID:          aws.String(alertDedup.RuleID),
 		PolicyVersionID:   aws.String(alertDedup.RuleVersion),
-		PolicyName:        aws.String(string(rule.DisplayName)),
+		PolicyName:        getRuleDisplayName(rule),
 		Runbook:           aws.String(string(rule.Runbook)),
 		Severity:          aws.String(string(rule.Severity)),
 		Tags:              aws.StringSlice(rule.Tags),
@@ -152,14 +152,18 @@ func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
 	if alertDedup.GeneratedTitle != nil {
 		return *alertDedup.GeneratedTitle
 	}
-	return getRuleDisplayName(rule) + " failed"
+	ruleDisplayName := getRuleDisplayName(rule)
+	if ruleDisplayName != nil {
+		return *ruleDisplayName + " failed"
+	}
+	return string(rule.ID) + " failed"
 }
 
-func getRuleDisplayName(rule *models.Rule) string {
+func getRuleDisplayName(rule *models.Rule) *string {
 	if len(rule.DisplayName) > 0 {
-		return string(rule.DisplayName)
+		return aws.String(string(rule.DisplayName))
 	}
-	return string(rule.ID)
+	return nil
 }
 
 func generateAlertID(event *AlertDedupEvent) string {

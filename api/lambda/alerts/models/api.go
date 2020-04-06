@@ -77,31 +77,29 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID *string `json:"alertId"`
-	RuleID  *string `json:"ruleId"`
-	// If user hasn't specified any rule display name, RuleDisplayName will be same as RuleID
-	RuleDisplayName *string    `json:"ruleDisplayName"`
-	RuleVersion     *string    `json:"ruleVersion"`
-	DedupString     *string    `json:"dedupString"`
-	CreationTime    *time.Time `json:"creationTime"`
-	UpdateTime      *time.Time `json:"updateTime"`
-	EventsMatched   *int       `json:"eventsMatched"`
-	Severity        *string    `json:"severity"`
-	Title           *string    `json:"title"`
+	AlertID         *string    `json:"alertId" validate:"required"`
+	RuleID          *string    `json:"ruleId" validate:"required"`
+	RuleDisplayName *string    `json:"ruleDisplayName,omitempty"`
+	RuleVersion     *string    `json:"ruleVersion" validate:"required"`
+	DedupString     *string    `json:"dedupString,omitempty"`
+	CreationTime    *time.Time `json:"creationTime" validate:"required"`
+	UpdateTime      *time.Time `json:"updateTime" validate:"required"`
+	EventsMatched   *int       `json:"eventsMatched" validate:"required"`
+	Severity        *string    `json:"severity" validate:"required"`
+	Title           *string    `json:"title" validate:"required"`
 }
 
 // Alert contains the details of an alert
 type Alert struct {
-	AlertID *string `json:"alertId"`
-	RuleID  *string `json:"ruleId"`
-	// If user hasn't specified any rule display name, RuleDisplayName will be same as RuleID
-	RuleDisplayName        *string    `json:"ruleDisplayName"`
-	RuleVersion            *string    `json:"ruleVersion"`
-	DedupString            *string    `json:"dedupString"`
-	CreationTime           *time.Time `json:"creationTime"`
-	UpdateTime             *time.Time `json:"updateTime"`
-	EventsMatched          *int       `json:"eventsMatched"`
-	Events                 []*string  `json:"events"`
+	AlertID                *string    `json:"alertId" validate:"required"`
+	RuleID                 *string    `json:"ruleId" validate:"required"`
+	RuleDisplayName        *string    `json:"ruleDisplayName,omitempty"`
+	RuleVersion            *string    `json:"ruleVersion" validate:"required"`
+	DedupString            *string    `json:"dedupString,omitempty"`
+	CreationTime           *time.Time `json:"creationTime" validate:"required"`
+	UpdateTime             *time.Time `json:"updateTime" validate:"required"`
+	EventsMatched          *int       `json:"eventsMatched" validate:"required"`
+	Events                 []*string  `json:"events" validate:"required"`
 	EventsLastEvaluatedKey *string    `json:"eventsLastEvaluatedKey,omitempty"`
-	Title                  *string    `json:"title"`
+	Title                  *string    `json:"title" validate:"required"`
 }
