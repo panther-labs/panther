@@ -67,8 +67,9 @@ func WaitForResults(client athenaiface.AthenaAPI, queryExecutionID string) (quer
 			athena.QueryExecutionStateFailed,
 			athena.QueryExecutionStateCancelled:
 			return executionOutput, true, nil
+		default:
+			return executionOutput, false, nil
 		}
-		return executionOutput, false, nil
 	}
 
 	poll := func() (*athena.GetQueryExecutionOutput, error) {

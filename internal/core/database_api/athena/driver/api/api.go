@@ -23,13 +23,15 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 )
 
 var (
 	awsSession          *session.Session
-	glueClient          *glue.Glue
-	athenaClient        *athena.Athena
+	glueClient          glueiface.GlueAPI
+	athenaClient        athenaiface.AthenaAPI
 	athenaS3ResultsPath *string
 )
 
