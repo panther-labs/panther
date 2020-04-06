@@ -28,8 +28,8 @@ const (
 
 // LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
-	ExecuteAsyncQueryNotify *ExecuteAsyncQueryNotifyInput `json:"executeAsyncQueryNotify"`
 	ExecuteAsyncQuery       *ExecuteAsyncQueryInput       `json:"executeAsyncQuery"`
+	ExecuteAsyncQueryNotify *ExecuteAsyncQueryNotifyInput `json:"executeAsyncQueryNotify"`
 	ExecuteQuery            *ExecuteQueryInput            `json:"executeQuery"`
 	ExecuteSimpleSummary    *ExecuteSimpleSummaryInput    `json:"executeSimpleSummary"`
 	GetDatabases            *GetDatabasesInput            `json:"getDatabases"`
@@ -123,6 +123,7 @@ type GetQueryStatusInput struct {
 type GetQueryStatusOutput struct {
 	QueryError
 	Status string `json:"status" validate:"required,oneof=running,succeeded,failed"`
+	SQL    string `json:"sql" validate:"required"`
 }
 
 type GetQueryResultsInput struct {
@@ -135,6 +136,7 @@ type GetQueryResultsOutput struct {
 	QueryError
 	QueryID     string           `json:"queryId" validate:"required"`
 	Status      string           `json:"status" validate:"required,oneof=running,succeeded,failed"`
+	SQL         string           `json:"sql" validate:"required"`
 	ResultsPage QueryResultsPage `json:"resultsPage" validate:"required"`
 }
 

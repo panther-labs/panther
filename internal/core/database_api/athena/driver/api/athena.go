@@ -104,6 +104,8 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 	if err != nil {
 		return output, err
 	}
+
+	output.SQL = *executionStatus.QueryExecution.Query
 	output.Status = getQueryStatus(executionStatus)
 
 	switch output.Status {
@@ -128,6 +130,8 @@ func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQuery
 	if err != nil {
 		return output, err
 	}
+
+	output.SQL = *executionStatus.QueryExecution.Query
 	output.Status = getQueryStatus(executionStatus)
 
 	switch output.Status {

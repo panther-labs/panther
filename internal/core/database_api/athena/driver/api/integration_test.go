@@ -41,6 +41,8 @@ const (
 	testBucketPrefix = "panther-athena-api-processeddata-test-"
 	testDb           = "panther_athena_api_test_db"
 	testTable        = "panther_athena_test_table"
+
+	badSQL = `select * from nosuchtable`
 )
 
 var (
@@ -183,12 +185,13 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeBadQueryInput := &models.ExecuteQueryInput{
 		DatabaseName: testDb,
-		SQL:          `select * from nosuchtable`,
+		SQL:          badSQL,
 	}
 	executeBadQueryOutput, err := runExecuteQuery(useLambda, executeBadQueryInput)
 	require.NoError(t, err) // NO LAMBDA ERROR here!
 	require.Equal(t, models.QueryFailed, executeBadQueryOutput.Status)
 	require.True(t, strings.Contains(executeBadQueryOutput.Message, "does not exist"))
+	require.Equal(t, badSQL, executeBadQueryOutput.SQL)
 
 	//  -------- ExecuteAsyncQuery()
 
@@ -245,7 +248,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeBadAsyncQueryInput := &models.ExecuteAsyncQueryInput{
 		DatabaseName: testDb,
-		SQL:          `select * from nosuchtable`,
+		SQL:          badSQL,
 	}
 	executeBadAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeBadAsyncQueryInput)
 	require.NoError(t, err)
@@ -260,6 +263,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		if getBadQueryStatusOutput.Status != models.QueryRunning {
 			require.Equal(t, models.QueryFailed, getBadQueryStatusOutput.Status)
 			require.True(t, strings.Contains(getBadQueryStatusOutput.Message, "does not exist"))
+			require.Equal(t, badSQL, getBadQueryStatusOutput.SQL)
 			break
 		}
 	}
