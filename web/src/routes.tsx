@@ -52,6 +52,7 @@ import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
 import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import EditLogSourcePage from 'Pages/EditLogSource';
 import PromptController from 'Components/utils/PromptController';
+import SQLShellPage from 'Pages/SQLShell';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -157,6 +158,13 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.logAnalysis.sources.edit(':id')}
                   component={EditLogSourcePage}
                 />
+                /******************** LOG ANALYSIS ******************************/
+                <Redirect
+                  exact
+                  from={urls.historicalSearch.home()}
+                  to={urls.historicalSearch.sqlShell()}
+                />
+                <Route exact path={urls.historicalSearch.sqlShell()} component={SQLShellPage} />
                 /******************** SETTINGS ******************************/
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
                 <Route exact path={urls.settings.users()} component={UsersPage} />

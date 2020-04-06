@@ -71,6 +71,10 @@ const urls = {
         `${urls.logAnalysis.sources.list()}${id}/edit/`,
     },
   },
+  historicalSearch: {
+    home: () => '/historical-search/',
+    sqlShell: () => `${urls.historicalSearch.home()}sql-shell`,
+  },
   settings: {
     overview: () => `/settings/`,
     general: () => `${urls.settings.overview()}general`,
