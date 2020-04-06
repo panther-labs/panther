@@ -100,6 +100,12 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 
 	t.Log("testing direct calls from client")
 	testAthenaAPI(t, false)
+}
+
+func TestIntegrationLambdaAthenaAPI(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
 
 	t.Log("testing indirect calls thru deployed lambdas")
 	testAthenaAPI(t, true)
@@ -119,7 +125,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.NoError(t, err)
 	foundDB := false
 	for _, db := range getDatabasesOutput.Databases {
-		if db.DatabaseName == testDb {
+		if db.Name == testDb {
 			foundDB = true
 		}
 	}
@@ -127,12 +133,12 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	// specific lookup
 	getDatabasesInput = &models.GetDatabasesInput{
-		DatabaseName: aws.String(testDb),
+		Name: aws.String(testDb),
 	}
 	getDatabasesOutput, err = runGetDatabases(useLambda, getDatabasesInput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getDatabasesOutput.Databases))
-	require.Equal(t, testDb, getDatabasesOutput.Databases[0].DatabaseName)
+	require.Equal(t, testDb, getDatabasesOutput.Databases[0].Name)
 
 	// -------- GetTables()
 
@@ -143,18 +149,18 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	getTablesOutput, err := runGetTables(useLambda, getTablesIntput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getTablesOutput.Tables))
-	require.Equal(t, testTable, getTablesOutput.Tables[0].TableName)
+	require.Equal(t, testTable, getTablesOutput.Tables[0].Name)
 
 	// -------- GetTablesDetail()
 
 	getTablesDetailInput := &models.GetTablesDetailInput{
 		DatabaseName: testDb,
-		TableNames:   []string{testTable},
+		Names:        []string{testTable},
 	}
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, getTablesDetailInput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getTablesDetailOutput.TablesDetails))
-	require.Equal(t, testTable, getTablesDetailOutput.TablesDetails[0].TableName)
+	require.Equal(t, testTable, getTablesDetailOutput.TablesDetails[0].Name)
 	require.Equal(t, len(columns)+len(partitions), len(getTablesDetailOutput.TablesDetails[0].Columns))
 	require.Equal(t, *columns[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[0].Name)
 	require.Equal(t, *columns[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[0].Type)
@@ -171,7 +177,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	}
 	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
 	require.NoError(t, err)
-	checkQueryResults(t, true, len(rows)+1, executeQueryOutput.Rows)
+	checkQueryResults(t, true, len(rows)+1, executeQueryOutput.ResultsPage.Rows)
 
 	// -------- ExecuteQuery() BAD SQL
 
@@ -187,9 +193,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- ExecuteAsyncQuery()
 
 	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{
-		DatabaseName:       testDb,
-		SQL:                `select * from ` + testTable,
-		ResultsMaxPageSize: &maxRowsPerResult,
+		DatabaseName: testDb,
+		SQL:          `select * from ` + testTable,
 	}
 	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
 	require.NoError(t, err)
@@ -211,29 +216,52 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- GetQueryResults()
 
 	getQueryResultsInput := &models.GetQueryResultsInput{
-		QueryID:            executeAsyncQueryOutput.QueryID,
-		ResultsMaxPageSize: &maxRowsPerResult,
+		QueryID:  executeAsyncQueryOutput.QueryID,
+		PageSize: &maxRowsPerResult,
 	}
 	getQueryResultsOutput, err := runGetQueryResults(useLambda, getQueryResultsInput)
 	require.NoError(t, err)
 
 	if getQueryResultsOutput.Status == models.QuerySucceeded {
 		resultCount := 0
-		checkQueryResults(t, true, int(maxRowsPerResult), getQueryResultsOutput.Rows)
+		checkQueryResults(t, true, int(maxRowsPerResult), getQueryResultsOutput.ResultsPage.Rows)
 		resultCount++
 
-		for getQueryResultsOutput.NumRows > 0 { // when done this is 0
-			getQueryResultsInput.PaginationToken = getQueryResultsOutput.PaginationToken
+		for getQueryResultsOutput.ResultsPage.NumRows > 0 { // when done this is 0
+			getQueryResultsInput.PaginationToken = getQueryResultsOutput.ResultsPage.PaginationToken
 			getQueryResultsOutput, err = runGetQueryResults(useLambda, getQueryResultsInput)
 			require.NoError(t, err)
-			if getQueryResultsOutput.NumRows > 0 { // not finished paging
-				checkQueryResults(t, false, int(maxRowsPerResult), getQueryResultsOutput.Rows)
+			if getQueryResultsOutput.ResultsPage.NumRows > 0 {
+				checkQueryResults(t, false, int(maxRowsPerResult), getQueryResultsOutput.ResultsPage.Rows)
 				resultCount++
 			}
 		}
-		require.Equal(t, len(rows)+1, resultCount) // since we pace 1 at a time and have a header
+		require.Equal(t, len(rows)+1, resultCount) // since we page 1 at a time and have a header
 	} else {
 		assert.Fail(t, "GetQueryResults failed")
+	}
+
+	//  -------- ExecuteAsyncQuery() BAD SQL
+
+	executeBadAsyncQueryInput := &models.ExecuteAsyncQueryInput{
+		DatabaseName: testDb,
+		SQL:          `select * from nosuchtable`,
+	}
+	executeBadAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeBadAsyncQueryInput)
+	require.NoError(t, err)
+
+	for {
+		time.Sleep(time.Second * 10)
+		getBadQueryStatusInput := &models.GetQueryStatusInput{
+			QueryID: executeBadAsyncQueryOutput.QueryID,
+		}
+		getBadQueryStatusOutput, err := runGetQueryStatus(useLambda, getBadQueryStatusInput)
+		require.NoError(t, err)
+		if getBadQueryStatusOutput.Status != models.QueryRunning {
+			require.Equal(t, models.QueryFailed, getBadQueryStatusOutput.Status)
+			require.True(t, strings.Contains(getBadQueryStatusOutput.Message, "does not exist"))
+			break
+		}
 	}
 }
 

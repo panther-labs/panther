@@ -36,17 +36,17 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 		}
 	}()
 
-	if input.DatabaseName != nil {
+	if input.Name != nil {
 		var glueOutput *glue.GetDatabaseOutput
 		glueOutput, err = glueClient.GetDatabase(&glue.GetDatabaseInput{
-			Name: input.DatabaseName,
+			Name: input.Name,
 		})
 		if err != nil {
 			return output, errors.WithStack(err)
 		}
 		output.Databases = append(output.Databases, &models.DatabaseDescription{
-			DatabaseName: *glueOutput.Database.Name,
-			Description:  glueOutput.Database.Description, // optional
+			Name:        *glueOutput.Database.Name,
+			Description: glueOutput.Database.Description, // optional
 		})
 		return output, err
 	}
@@ -56,8 +56,8 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 		func(page *glue.GetDatabasesOutput, lastPage bool) bool {
 			for _, database := range page.DatabaseList {
 				output.Databases = append(output.Databases, &models.DatabaseDescription{
-					DatabaseName: *database.Name,
-					Description:  database.Description, // optional
+					Name:        *database.Name,
+					Description: database.Description, // optional
 				})
 			}
 			return false
@@ -96,7 +96,7 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 				}
 				output.Tables = append(output.Tables, &models.TableDescription{
 					DatabaseName: input.DatabaseName,
-					TableName:    *table.Name,
+					Name:         *table.Name,
 					Description:  table.Description, // optional
 				})
 			}
@@ -119,7 +119,7 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 		}
 	}()
 
-	for _, tableName := range input.TableNames {
+	for _, tableName := range input.Names {
 		var glueTableOutput *glue.GetTableOutput
 		glueTableOutput, err = glueClient.GetTable(&glue.GetTableInput{
 			DatabaseName: aws.String(input.DatabaseName),
@@ -131,7 +131,7 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 		detail := &models.TableDetail{
 			TableDescription: models.TableDescription{
 				DatabaseName: input.DatabaseName,
-				TableName:    *glueTableOutput.Table.Name,
+				Name:         *glueTableOutput.Table.Name,
 			},
 		}
 		for _, column := range glueTableOutput.Table.StorageDescriptor.Columns {

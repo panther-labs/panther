@@ -35,6 +35,9 @@ Parameters:
   ComplianceApiId:
     Type: String
     Description: Compliance API gateway ID
+  GraphQLApiEndpoint:
+    Type: String
+    Description: The URL to the Appsync GraphQL Endpoint
   OutputsKeyId:
     Type: String
     Description: KMS key for encrypting alert outputs
@@ -643,6 +646,7 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ATHENA_BUCKET: !Ref AthenaResultsBucket
+          GRAPHQL_ENDPOINT: !Ref GraphQLApiEndpoint
       FunctionName: panther-athena-api
       # <cfndoc>
       # The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
@@ -699,3 +703,55 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-athena-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AthenaStepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role used by Step Functions to run Athena queries
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: !Sub states.${AWS::Region}.amazonaws.com
+      Policies:
+        - PolicyName: LogToCloudWatch
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                Resource: '*'
+        - PolicyName: InvokeAthenaLambda
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
+
+  AthenaQueryStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: AthenaQuery # FIXME: replace with real workflow
+      DefinitionString: |-
+        {
+          "StartAt": "HelloWorld",
+          "States": {
+            "HelloWorld": {
+              "Type": "Task",
+              "Resource": "arn:*:lambda:*:*:function:panther-athena-api",
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt AthenaStepFunctionRole.Arn

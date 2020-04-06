@@ -45,7 +45,6 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 
 	executeAsyncQueryOutput, err := api.ExecuteAsyncQuery(input)
 	if err != nil {
-		output.QueryError = executeAsyncQueryOutput.QueryError
 		return output, err
 	}
 
@@ -106,6 +105,12 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 		return output, err
 	}
 	output.Status = getQueryStatus(executionStatus)
+
+	switch output.Status {
+	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
+		output.Message = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
+	}
+
 	return output, nil
 }
 
@@ -131,7 +136,7 @@ func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQuery
 		if input.PaginationToken != nil { // paging thru results
 			nextToken = input.PaginationToken
 		}
-		err = getQueryResults(athenaClient, executionStatus, output, nextToken, input.ResultsMaxPageSize)
+		err = getQueryResults(athenaClient, executionStatus, output, nextToken, input.PageSize)
 		if err != nil {
 			return output, err
 		}
@@ -184,12 +189,12 @@ func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.Ge
 				Value: *col.VarCharValue,
 			})
 		}
-		output.Rows = append(output.Rows, &models.Row{Columns: columns})
+		output.ResultsPage.Rows = append(output.ResultsPage.Rows, &models.Row{Columns: columns})
 	}
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	output.NumRows = len(queryResult.ResultSet.Rows)
-	output.PaginationToken = queryResult.NextToken
+	output.ResultsPage.NumRows = len(queryResult.ResultSet.Rows)
+	output.ResultsPage.PaginationToken = queryResult.NextToken
 	return nil
 }
