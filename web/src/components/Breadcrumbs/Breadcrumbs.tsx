@@ -35,7 +35,7 @@ import useRouter from 'Hooks/useRouter';
 // that can fit our usecase that doesn't involve complex JS calculations, so please help out
 const widthSentinelStyles = {
   display: 'block',
-  maxWidth: '550px',
+  maxWidth: '450px',
   whiteSpace: 'nowrap' as const,
   overflow: 'hidden' as const,
   textOverflow: 'ellipsis' as const,

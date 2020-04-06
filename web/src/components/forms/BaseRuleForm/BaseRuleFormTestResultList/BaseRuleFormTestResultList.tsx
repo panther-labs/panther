@@ -28,6 +28,7 @@ interface PolicyFormTestResultsProps {
 
 const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ running, results }) => {
   return (
+    // @ts-ignore
     <Box bg="#FEF5ED" p={5}>
       {running && (
         <Label size="medium" is="p">

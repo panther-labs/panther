@@ -22,10 +22,10 @@ import DonutChart from 'Components/DonutChart';
 import map from 'lodash-es/map';
 import sum from 'lodash-es/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
-import { defaultTheme } from 'pouncejs';
+import { theme } from 'pouncejs';
 
 const severityToColorMapping: {
-  [key in keyof OrganizationReportBySeverity]: keyof typeof defaultTheme['colors'];
+  [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
 } = {
   critical: 'red300',
   high: 'red200',

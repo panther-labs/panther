@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Box, useTheme, defaultTheme } from 'pouncejs';
+import { Box, useTheme, Theme } from 'pouncejs';
 
 interface DonutChartDatum {
-  color: keyof typeof defaultTheme['colors'];
+  color: keyof Theme['colors'];
   value: number;
   label: string;
 }

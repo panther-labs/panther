@@ -58,13 +58,7 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
             <Label size="medium" mb={5} color="white" textAlign="center">
               Panther Community Edition
             </Label>
-            <Heading
-              size="medium"
-              color="white"
-              lineHeight={5}
-              letterSpacing="0.5px"
-              textAlign="center"
-            >
+            <Heading size="medium" color="white" lineHeight={5} textAlign="center">
               Detect threats with log data and improve cloud security posture
             </Heading>
             <Text size="large" color="white" mt={5} textAlign="center">

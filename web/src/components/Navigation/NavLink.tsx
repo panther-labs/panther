@@ -20,7 +20,6 @@ import { Flex, Icon, IconButtonProps, IconProps, MenuItem } from 'pouncejs';
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { Link } from 'react-router-dom';
-import { css } from '@emotion/react';
 
 type NavLinkProps = Omit<IconButtonProps, 'variant'> & {
   icon: IconProps['type'];
@@ -39,9 +38,7 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
       my={2}
       is={Link}
       to={to}
-      css={css`
-        text-decoration: none;
-      `}
+      textDecoration="none"
       aria-label={label}
     >
       <Flex alignItems="center" px={4}>

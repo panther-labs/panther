@@ -19,7 +19,7 @@
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-import { convertObjArrayValuesToCsv, extractErrorMessage } from 'Helpers/utils';
+import { convertObjArrayValuesToCsv, extractErrorMessage, encodeParams } from 'Helpers/utils';
 import { ListRulesInput, SortDirEnum, ListRulesSortFieldsEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
@@ -41,7 +41,7 @@ const ListRules = () => {
   const { loading, error, data } = useListRules({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: convertObjArrayValuesToCsv(requestParams),
+      input: encodeParams(convertObjArrayValuesToCsv(requestParams), ['nameContains']),
     },
   });
 

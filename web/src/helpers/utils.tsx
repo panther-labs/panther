@@ -109,6 +109,9 @@ export const minutesToString = (minutes: number) =>
 export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
   mapValues(obj, v => (Array.isArray(v) ? v.join(',') : v));
 
+/** URI encoding for specified fields in object */
+export const encodeParams = (obj: { [key: string]: any }, fields: [string]) =>
+  mapValues(obj, (v, key) => (fields.includes(key) ? encodeURIComponent(v) : v));
 /**
  * makes sure that it properly formats a JSON struct in order to be properly displayed within the
  * editor

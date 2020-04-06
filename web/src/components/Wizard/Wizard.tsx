@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, IconProps, Icon, Label, Grid, ProgressBar } from 'pouncejs';
+import { Box, Flex, IconProps, Icon, Label, Grid, ProgressBar, Theme } from 'pouncejs';
 import { WizardContext } from './WizardContext';
 
 export interface WizardStepProps {
@@ -80,7 +80,7 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
           {steps.map((step, index) => {
             const isComplete = currentStepIndex > index || currentStepIndex === steps.length - 1;
 
-            let labelColor = 'grey100';
+            let labelColor: keyof Theme['colors'] = 'grey100';
             if (currentStepIndex === index) {
               labelColor = 'grey400';
             }

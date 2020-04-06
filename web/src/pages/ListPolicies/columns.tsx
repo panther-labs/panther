@@ -21,7 +21,6 @@
 import React from 'react';
 import { Badge, Box, TableProps, Text, Icon, Tooltip, Label } from 'pouncejs';
 import { ComplianceStatusEnum, PolicySummary } from 'Generated/schema';
-import { css } from '@emotion/react';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime, capitalize } from 'Helpers/utils';
 import ListPoliciesTableRowOptions from './ListPoliciesTableRowOptions';
@@ -48,14 +47,7 @@ const columns = [
       resourceTypes.length ? (
         <div>
           {resourceTypes.map(resourceType => (
-            <Text
-              size="medium"
-              css={css`
-                word-break: break-word;
-              `}
-              key={resourceType}
-              mb={1}
-            >
+            <Text size="medium" wordBreak="break-word" key={resourceType} mb={1}>
               {resourceType}
             </Text>
           ))}
