@@ -680,7 +680,7 @@
         "MetricName": "ExecutionsFailed",
         "Dimensions": [
           {
-            "Name": "StateMachineName",
+            "Name": "StateMachineArn",
             "Value": {
               "Fn::Sub": "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:my-state-machine"
             }
@@ -690,7 +690,7 @@
         "EvaluationPeriods": 1,
         "Period": 300,
         "Threshold": 0,
-        "Unit": "None",
+        "Unit": "Count",
         "Statistic": "Sum"
       }
     },

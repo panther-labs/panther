@@ -26,10 +26,10 @@ type SFNAlarm struct {
 
 func NewSFNAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) *SFNAlarm {
 	const (
-		metricDimension = "StateMachineName"
+		metricDimension = "StateMachineArn"
 		metricNamespace = "AWS/States"
 	)
-	stateMachineName := getResourceProperty(metricDimension, resource)
+	stateMachineName := getResourceProperty("StateMachineName", resource)
 	stateMachineArn := fmt.Sprintf("arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:%s",
 		stateMachineName)
 	alarmName := AlarmName(alarmType, stateMachineName)
@@ -52,6 +52,6 @@ func generateSFNAlarms(resource map[interface{}]interface{}) []*Alarm {
 			"ExecutionsFailed",
 			"is failing",
 			resource,
-		).SumNoUnitsThreshold(0, 60*5), // metric has no units
+		).SumCountThreshold(0, 60*5),
 	}
 }
