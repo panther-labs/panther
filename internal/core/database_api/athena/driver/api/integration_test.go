@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sfn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -50,8 +51,7 @@ var (
 
 	api = API{}
 
-	lambdaClient *lambda.Lambda
-	s3Client     *s3.S3
+	s3Client *s3.S3
 
 	testBucket        string
 	testPartitionName = "part"
@@ -76,6 +76,8 @@ var (
 	nrows = 10
 	row   = `{"col1": 1}`
 	rows  []string
+
+	testSQL = `select * from ` + testTable
 
 	maxRowsPerResult int64 = 1 // force pagination to test
 )
@@ -175,7 +177,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeQueryInput := &models.ExecuteQueryInput{
 		DatabaseName: testDb,
-		SQL:          `select * from ` + testTable,
+		SQL:          testSQL,
 	}
 	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
 	require.NoError(t, err)
@@ -197,7 +199,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{
 		DatabaseName: testDb,
-		SQL:          `select * from ` + testTable,
+		SQL:          testSQL,
 	}
 	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
 	require.NoError(t, err)
@@ -264,6 +266,34 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			require.Equal(t, models.QueryFailed, getBadQueryStatusOutput.Status)
 			require.True(t, strings.Contains(getBadQueryStatusOutput.Message, "does not exist"))
 			require.Equal(t, badSQL, getBadQueryStatusOutput.SQL)
+			break
+		}
+	}
+
+	//  -------- ExecuteAsyncQueryNotify()
+
+	executeAsyncQueryNotifyInput := &models.ExecuteAsyncQueryNotifyInput{
+		ExecuteAsyncQueryInput: models.ExecuteAsyncQueryInput{
+			DatabaseName: testDb,
+			SQL:          testSQL,
+		},
+		LambdaInvoke: models.LambdaInvoke{
+			LambdaName: "panther-athenaa-api",
+			MethodName: "notifyAppSync",
+		},
+	}
+	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, executeAsyncQueryNotifyInput)
+	require.NoError(t, err)
+
+	for {
+		time.Sleep(time.Second * 10)
+		descExecutionInput := &sfn.DescribeExecutionInput{
+			ExecutionArn: &executeAsyncQueryNotifyOutput.WorkflowID,
+		}
+		descExecutionOutput, err := sfnClient.DescribeExecution(descExecutionInput)
+		require.NoError(t, err)
+		if *descExecutionOutput.Status != sfn.ExecutionStatusRunning {
+			require.Equal(t, sfn.ExecutionStatusSucceeded, *descExecutionOutput.Status)
 			break
 		}
 	}
@@ -337,6 +367,20 @@ func runExecuteAsyncQuery(useLambda bool, input *models.ExecuteAsyncQueryInput) 
 		return executeAsyncQueryOutput, err
 	}
 	return api.ExecuteAsyncQuery(input)
+}
+
+func runExecuteAsyncQueryNotify(useLambda bool, input *models.ExecuteAsyncQueryNotifyInput) (*models.ExecuteAsyncQueryNotifyOutput, error) {
+	if useLambda {
+		var executeAsyncQueryNotifyInput = struct {
+			ExecuteAsyncQueryNotify *models.ExecuteAsyncQueryNotifyInput
+		}{
+			input,
+		}
+		var executeAsyncQueryNotifyOutput *models.ExecuteAsyncQueryNotifyOutput
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", executeAsyncQueryNotifyInput, &executeAsyncQueryNotifyOutput)
+		return executeAsyncQueryNotifyOutput, err
+	}
+	return api.ExecuteAsyncQueryNotify(input)
 }
 
 func runGetQueryStatus(useLambda bool, input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {

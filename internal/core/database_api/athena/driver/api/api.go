@@ -26,12 +26,18 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/aws/aws-sdk-go/service/sfn"
+	"github.com/aws/aws-sdk-go/service/sfn/sfniface"
 )
 
 var (
 	awsSession          *session.Session
 	glueClient          glueiface.GlueAPI
 	athenaClient        athenaiface.AthenaAPI
+	lambdaClient        lambdaiface.LambdaAPI
+	sfnClient           sfniface.SFNAPI
 	athenaS3ResultsPath *string
 )
 
@@ -39,6 +45,8 @@ func SessionInit() {
 	awsSession = session.Must(session.NewSession())
 	glueClient = glue.New(awsSession)
 	athenaClient = athena.New(awsSession)
+	lambdaClient = lambda.New(awsSession)
+	sfnClient = sfn.New(awsSession)
 
 	if os.Getenv("ATHENA_BUCKET") != "" {
 		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"

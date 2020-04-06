@@ -29,14 +29,15 @@ const (
 // LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
 	ExecuteAsyncQuery       *ExecuteAsyncQueryInput       `json:"executeAsyncQuery"`
-	ExecuteAsyncQueryNotify *ExecuteAsyncQueryNotifyInput `json:"executeAsyncQueryNotify"`
+	ExecuteAsyncQueryNotify *ExecuteAsyncQueryNotifyInput `json:"executeAsyncQueryNotify"` // uses Step functions
 	ExecuteQuery            *ExecuteQueryInput            `json:"executeQuery"`
-	ExecuteSimpleSummary    *ExecuteSimpleSummaryInput    `json:"executeSimpleSummary"`
+	ExecutePantherSummary   *ExecutePantherSummaryInput   `json:"executePantherSummary"`
 	GetDatabases            *GetDatabasesInput            `json:"getDatabases"`
 	GetQueryResults         *GetQueryResultsInput         `json:"getQueryResults"`
 	GetQueryStatus          *GetQueryStatusInput          `json:"getQueryStatus"`
 	GetTables               *GetTablesInput               `json:"getTables"`
 	GetTablesDetail         *GetTablesDetailInput         `json:"getTablesDetail"`
+	InvokeNotifyLambda      *InvokeNotifyLambdaInput      `json:"invokeNotifyLambda"`
 	NotifyAppSync           *NotifyAppSyncInput           `json:"notifyAppSync"`
 }
 
@@ -95,11 +96,16 @@ type TableColumn struct {
 
 type ExecuteAsyncQueryNotifyInput struct {
 	ExecuteAsyncQueryInput
+	LambdaInvoke
 }
 
 type ExecuteAsyncQueryNotifyOutput struct {
-	ExecuteAsyncQueryOutput
 	WorkflowID string `json:"workflowId" validate:"required"`
+}
+
+type LambdaInvoke struct {
+	LambdaName string `json:"lambdaName" validate:"required"` // the name of the lambda to call when done
+	MethodName string `json:"methodName" validate:"required"` // the method to call on the lambda, should take QueryID as input
 }
 
 // Blocking query
@@ -146,16 +152,30 @@ type QueryResultsPage struct {
 	PaginationToken *string `json:"paginationToken,omitempty"`
 }
 
-type NotifyAppSyncInput = GetQueryStatusInput
-
-type NotifyAppSyncOutput = GetQueryStatusOutput
-
-// Google-like search returning a summary table
-type ExecuteSimpleSummaryInput struct {
-	SearchString string `json:"searchString" validate:"required"`
+type InvokeNotifyLambdaInput struct {
+	GetQueryStatusInput
+	LambdaInvoke
 }
 
-type ExecuteSimpleSummaryOutput = GetQueryResultsOutput // GetQueryResults() to page thu results
+type InvokeNotifyLambdaOutput struct {
+}
+
+type NotifyAppSyncInput struct {
+	GetQueryStatusInput
+	ExecuteAsyncQueryNotifyOutput
+}
+
+type NotifyAppSyncOutput struct {
+	StatusCode int `json:"statusCode" validate:"required"` // the http status returned from POSTing callback to appsync
+}
+
+// Search panther fields, returning a summary table
+type ExecutePantherSummaryInput struct {
+	PantherField string   `json:"pantherFiled" validate:"required"` // FIXME: add validator that checks against list
+	Values       []string `json:"values" validate:"required,gt=0"`
+}
+
+type ExecutePantherSummaryOutput = GetQueryResultsOutput // GetQueryResults() to page thu results
 
 type Row struct {
 	Columns []*Column `json:"columns"`

@@ -19,13 +19,18 @@ package api
  */
 
 import (
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/service/lambda"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
 
-// FIXME: consider adding as stand-alone lambda to de-couple this from Athena api
-
-func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyncOutput, error) {
-	output := &models.NotifyAppSyncOutput{}
+// called by Step workflow to execute callback the query that ran
+func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.InvokeNotifyLambdaInput, error) {
+	output := &models.InvokeNotifyLambdaInput{}
 
 	var err error
 	defer func() {
@@ -34,10 +39,17 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		}
 	}()
 
-	// make https request to appsync endpoint notifying query is complete, sending  queryId and status
-	// FIXME: add call back
+	// these lambdas are expected to take QueryID in as argument, then execute a callback to get results/continue
+	queryIDJSON, err := jsoniter.Marshal(&input.GetQueryStatusInput)
+	if err != nil {
+		return output, errors.Wrapf(err, "failed to marshal %#v", input.GetQueryStatusInput)
+	}
 
-	println("notify!")
+	payload := []byte(fmt.Sprintf("%s %s", input.MethodName, string(queryIDJSON)))
+	_, err = lambdaClient.Invoke(&lambda.InvokeInput{
+		FunctionName: &input.LambdaName,
+		Payload:      payload,
+	})
 
-	return output, nil
+	return output, errors.Wrapf(err, "failed to invoke %#v", input)
 }
