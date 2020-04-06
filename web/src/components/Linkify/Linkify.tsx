@@ -19,7 +19,6 @@
 import React from 'react';
 import { Box } from 'pouncejs';
 import { LinkifyProps } from 'linkifyjs/react';
-import { css } from '@emotion/react';
 
 const OriginalReactLinkify = React.lazy(() =>
   import(/* webpackChunkName: "linkify" */ 'linkifyjs/react.js')
@@ -35,11 +34,7 @@ const linkifyOptions = {
 
 const Linkify: React.FC = ({ children }) => {
   return (
-    <Box
-      css={css`
-        word-break: break-word;
-      `}
-    >
+    <Box wordBreak="break-word">
       <React.Suspense fallback={<div>{children}</div>}>
         <OriginalReactLinkify options={linkifyOptions}>{children}</OriginalReactLinkify>
       </React.Suspense>

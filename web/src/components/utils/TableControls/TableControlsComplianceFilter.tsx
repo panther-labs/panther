@@ -17,13 +17,13 @@
  */
 
 import React from 'react';
-import { Text, TextProps, defaultTheme } from 'pouncejs';
+import { Text, TextProps, theme } from 'pouncejs';
 
 interface TableControlsComplianceFilterProps extends Omit<TextProps, 'size'> {
   text: string;
   isActive: boolean;
   count?: number;
-  countColor?: keyof typeof defaultTheme.colors;
+  countColor?: keyof typeof theme.colors;
 }
 
 const TableControlsComplianceFilter: React.FC<TableControlsComplianceFilterProps> = ({

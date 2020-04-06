@@ -21,7 +21,6 @@
 import React from 'react';
 import { Badge, Box, TableProps, Text, Icon } from 'pouncejs';
 import { RuleSummary } from 'Generated/schema';
-import { css } from '@emotion/react';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
 import ListRulesTableRowOptions from './ListRulesTableRowOptions';
@@ -48,14 +47,7 @@ const columns = [
       logTypes.length ? (
         <div>
           {logTypes.map(logType => (
-            <Text
-              size="medium"
-              css={css`
-                word-break: break-word;
-              `}
-              key={id}
-              mb={1}
-            >
+            <Text size="medium" wordBreak="break-word" key={id} mb={1}>
               {logType}
             </Text>
           ))}

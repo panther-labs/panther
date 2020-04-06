@@ -35,7 +35,7 @@ const PanelPlaceholder: React.FC<PanelPlaceholderProps> = ({ rowCount = 4, rowHe
     borderColor="grey100"
     py={8}
     px={8}
-    backgroundColor="#fff"
+    backgroundColor="white"
   >
     <Box pb={8} borderBottom="1px solid" borderColor="grey100">
       <ContentLoader height={10}>

@@ -18,12 +18,12 @@
 
 import React from 'react';
 import { ComplianceStatusEnum } from 'Generated/schema';
-import { Card, defaultTheme, Flex, Label } from 'pouncejs';
+import { Card, theme, Flex, Label } from 'pouncejs';
 
 // A mapping from status to background color for our test results (background color of where it says
 // 'pass', 'fail' or 'error'
 export const mapTestStatusToColor: {
-  [key in ComplianceStatusEnum]: keyof typeof defaultTheme['colors'];
+  [key in ComplianceStatusEnum]: keyof typeof theme['colors'];
 } = {
   [ComplianceStatusEnum.Pass]: 'green200',
   [ComplianceStatusEnum.Fail]: 'red300',
