@@ -19,10 +19,11 @@
 import { Flex, Icon, IconButton, IconButtonProps, IconProps, Label, Tooltip } from 'pouncejs';
 import React from 'react';
 
-type NavIconButtonProps = Omit<IconButtonProps, 'variant'> & {
-  icon: IconProps['type'];
-  tooltipLabel: string;
-};
+type NavIconButtonProps = Omit<IconButtonProps, 'variant'> &
+  React.AnchorHTMLAttributes<HTMLButtonElement> & {
+    icon: IconProps['type'];
+    tooltipLabel: string;
+  };
 
 const NavIconButton: React.FC<NavIconButtonProps> = ({ icon, active, tooltipLabel, ...rest }) => (
   <Tooltip content={<Label size="medium">{tooltipLabel}</Label>}>

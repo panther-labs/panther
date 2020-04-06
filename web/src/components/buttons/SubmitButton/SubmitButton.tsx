@@ -17,9 +17,9 @@
  */
 
 import React from 'react';
-import { Button, BoxProps, Spinner, Flex } from 'pouncejs';
+import { Button, Spinner, Flex, ButtonProps } from 'pouncejs';
 
-const SubmitButton: React.FC<BoxProps<HTMLButtonElement> & { submitting: boolean }> = ({
+const SubmitButton: React.FC<Omit<ButtonProps, 'size' | 'variant'> & { submitting: boolean }> = ({
   submitting,
   disabled,
   children,

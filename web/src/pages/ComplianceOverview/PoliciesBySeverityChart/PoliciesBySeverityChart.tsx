@@ -17,14 +17,14 @@
  */
 
 import React from 'react';
-import { defaultTheme } from 'pouncejs';
+import { theme } from 'pouncejs';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
 import DonutChart from 'Components/DonutChart';
 import map from 'lodash-es/map';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 
 const severityToGrayscaleMapping: {
-  [key in keyof OrganizationReportBySeverity]: keyof typeof defaultTheme['colors'];
+  [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
 } = {
   critical: 'grey500',
   high: 'grey400',
