@@ -1,0 +1,5 @@
+query ListLogDatabases {
+  listLogDatabases {
+    name
+  }
+}
