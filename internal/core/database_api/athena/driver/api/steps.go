@@ -18,33 +18,21 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"os"
+import "github.com/panther-labs/panther/api/lambda/database/models"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/athena"
-	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
-)
+func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (*models.ExecuteAsyncQueryNotifyOutput, error) {
+	output := &models.ExecuteAsyncQueryNotifyOutput{}
 
-var (
-	awsSession          *session.Session
-	glueClient          glueiface.GlueAPI
-	athenaClient        athenaiface.AthenaAPI
-	athenaS3ResultsPath *string
-)
+	var err error
+	defer func() {
+		if err != nil {
+			err = apiError(err) // lambda failed
+		}
+	}()
 
-func SessionInit() {
-	awsSession = session.Must(session.NewSession())
-	glueClient = glue.New(awsSession)
-	athenaClient = athena.New(awsSession)
+	// start workflow
 
-	if os.Getenv("ATHENA_BUCKET") != "" {
-		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"
-		athenaS3ResultsPath = &results
-	}
+	// FIXME: add workflow
+
+	return output, nil
 }
-
-// API provides receiver methods for each route handler.
-type API struct{}

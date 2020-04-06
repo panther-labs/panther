@@ -692,6 +692,8 @@ Resources:
       # * The Panther user interface will show errors.
       # </cfndoc>
       AuthenticationType: AMAZON_COGNITO_USER_POOLS
+      AdditionalAuthenticationProviders:
+        - AuthenticationType: AWS_IAM # used for lambda callbacks
       UserPoolConfig:
         AwsRegion: !Ref AWS::Region
         UserPoolId: !Ref UserPool

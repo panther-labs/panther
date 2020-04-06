@@ -28,18 +28,20 @@ const (
 
 // LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
-	ExecuteAsyncQuery    *ExecuteAsyncQueryInput    `json:"executeAsyncQuery"`
-	ExecuteQuery         *ExecuteQueryInput         `json:"executeQuery"`
-	ExecuteSimpleSummary *ExecuteSimpleSummaryInput `json:"executeSimpleSummary"`
-	GetDatabases         *GetDatabasesInput         `json:"getDatabases"`
-	GetQueryResults      *GetQueryResultsInput      `json:"getQueryResults"`
-	GetQueryStatus       *GetQueryStatusInput       `json:"getQueryStatus"`
-	GetTables            *GetTablesInput            `json:"getTables"`
-	GetTablesDetail      *GetTablesDetailInput      `json:"getTablesDetail"`
+	ExecuteAsyncQuery       *ExecuteAsyncQueryInput       `json:"executeAsyncQuery"`
+	ExecuteAsyncQueryNotify *ExecuteAsyncQueryNotifyInput `json:"executeAsyncQueryNotify"`
+	ExecuteQuery            *ExecuteQueryInput            `json:"executeQuery"`
+	ExecuteSimpleSummary    *ExecuteSimpleSummaryInput    `json:"executeSimpleSummary"`
+	GetDatabases            *GetDatabasesInput            `json:"getDatabases"`
+	GetQueryResults         *GetQueryResultsInput         `json:"getQueryResults"`
+	GetQueryStatus          *GetQueryStatusInput          `json:"getQueryStatus"`
+	GetTables               *GetTablesInput               `json:"getTables"`
+	GetTablesDetail         *GetTablesDetailInput         `json:"getTablesDetail"`
+	NotifyAppSync           *NotifyAppSyncInput           `json:"notifyAppSync"`
 }
 
 type GetDatabasesInput struct {
-	DatabaseName *string `json:"databaseName,omitempty"` // if empty get all databases
+	Name *string `json:"name,omitempty"` // if empty get all databases
 }
 
 // NOTE: we will assume this is small an not paginate
@@ -48,8 +50,8 @@ type GetDatabasesOutput struct {
 }
 
 type DatabaseDescription struct {
-	DatabaseName string  `json:"databaseName"`
-	Description  *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
 	// other stuff? CreateDate?
 }
 
@@ -60,24 +62,24 @@ type GetTablesInput struct {
 
 // NOTE: we will assume this is small an not paginate
 type GetTablesOutput struct {
-	Tables []*TableDescription `json:"tables,omitempty"`
+	Tables []*TableDescription `json:"tables"`
 }
 
 type TableDescription struct {
-	DatabaseName string  `json:"databaseName"`
-	TableName    string  `json:"tableName"`
+	DatabaseName string  `json:"databaseName" validate:"required"`
+	Name         string  `json:"name" validate:"required"`
 	Description  *string `json:"description,omitempty"`
 	// other stuff? CreateDate?
 }
 
 type TableDetail struct {
 	TableDescription
-	Columns []*TableColumn `json:"columns,omitempty"`
+	Columns []*TableColumn `json:"columns"`
 }
 
 type GetTablesDetailInput struct {
 	DatabaseName string   `json:"databaseName" validate:"required"`
-	TableNames   []string `json:"tableNames" validate:"required"`
+	Names        []string `json:"names" validate:"required"`
 }
 
 // NOTE: we will assume this is small an not paginate
@@ -86,19 +88,31 @@ type GetTablesDetailOutput struct {
 }
 
 type TableColumn struct {
-	Name        string  `json:"name,omitempty" validate:"required"`
-	Type        string  `json:"type,omitempty" validate:"required"`
+	Name        string  `json:"name" validate:"required"`
+	Type        string  `json:"type" validate:"required"`
 	Description *string `json:"description,omitempty"`
 }
 
+type ExecuteAsyncQueryNotifyInput struct {
+	ExecuteAsyncQueryInput
+}
+
+type ExecuteAsyncQueryNotifyOutput struct {
+	ExecuteAsyncQueryOutput
+	WorkflowID string `json:"workflowId" validate:"required"`
+}
+
+// Blocking query
+type ExecuteQueryInput = ExecuteAsyncQueryInput
+
+type ExecuteQueryOutput = GetQueryResultsOutput // call GetQueryResults() to page thu results
+
 type ExecuteAsyncQueryInput struct {
-	DatabaseName       string `json:"databaseName" validate:"required"`
-	SQL                string `json:"sql" validate:"required"`
-	ResultsMaxPageSize *int64 `json:"resultsMaxPageSize"` // only return this many per call
+	DatabaseName string `json:"databaseName" validate:"required"`
+	SQL          string `json:"sql" validate:"required"`
 }
 
 type ExecuteAsyncQueryOutput struct {
-	QueryError
 	QueryID string `json:"queryId" validate:"required"`
 }
 
@@ -107,28 +121,34 @@ type GetQueryStatusInput struct {
 }
 
 type GetQueryStatusOutput struct {
+	QueryError
 	Status string `json:"status" validate:"required,oneof=running,succeeded,failed"`
+	SQL    string `json:"sql" validate:"required"`
 }
 
 type GetQueryResultsInput struct {
-	QueryID            string  `json:"queryId" validate:"required"`
-	PaginationToken    *string `json:"paginationToken,omitempty"`
-	ResultsMaxPageSize *int64  `json:"resultsMaxPageSize" validate:"omitempty,gt=0"` // only return this many per call
+	QueryID         string  `json:"queryId" validate:"required"`
+	PaginationToken *string `json:"paginationToken,omitempty"`
+	PageSize        *int64  `json:"pageSize" validate:"omitempty,gt=0,lt=1000"` // only return this many rows per call
 }
 
 type GetQueryResultsOutput struct {
 	QueryError
-	QueryID         string  `json:"queryId" validate:"required"`
-	Status          string  `json:"status" validate:"required,oneof=running,succeeded,failed"`
-	NumRows         int     `json:"numRows"`
+	QueryID     string           `json:"queryId" validate:"required"`
+	Status      string           `json:"status" validate:"required,oneof=running,succeeded,failed"`
+	SQL         string           `json:"sql" validate:"required"`
+	ResultsPage QueryResultsPage `json:"resultsPage" validate:"required"`
+}
+
+type QueryResultsPage struct {
+	NumRows         int     `json:"numRows"` // number of rows in page of results, len(Rows)
 	Rows            []*Row  `json:"rows"`
 	PaginationToken *string `json:"paginationToken,omitempty"`
 }
 
-// Blocking query
-type ExecuteQueryInput = ExecuteAsyncQueryInput
+type NotifyAppSyncInput = GetQueryStatusInput
 
-type ExecuteQueryOutput = GetQueryResultsOutput // call GetQueryResults() to page thu results
+type NotifyAppSyncOutput = GetQueryStatusOutput
 
 // Google-like search returning a summary table
 type ExecuteSimpleSummaryInput struct {

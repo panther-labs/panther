@@ -19,32 +19,30 @@ package api
  */
 
 import (
-	"os"
-
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/athena"
-	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/panther-labs/panther/api/lambda/database/models"
+	"github.com/panther-labs/panther/pkg/awsathena"
 )
 
-var (
-	awsSession          *session.Session
-	glueClient          glueiface.GlueAPI
-	athenaClient        athenaiface.AthenaAPI
-	athenaS3ResultsPath *string
-)
+// FIXME: consider adding as stand-alone lambda to de-couple this from Athena api
 
-func SessionInit() {
-	awsSession = session.Must(session.NewSession())
-	glueClient = glue.New(awsSession)
-	athenaClient = athena.New(awsSession)
+func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyncOutput, error) {
+	output := &models.NotifyAppSyncOutput{}
 
-	if os.Getenv("ATHENA_BUCKET") != "" {
-		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"
-		athenaS3ResultsPath = &results
+	var err error
+	defer func() {
+		if err != nil {
+			err = apiError(err) // lambda failed
+		}
+	}()
+
+	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
+	if err != nil {
+		return output, err
 	}
-}
+	output.Status = getQueryStatus(executionStatus)
 
-// API provides receiver methods for each route handler.
-type API struct{}
+	// make https request to appsync endpoint notifying query is complete, sending  queryId and status
+	// FIXME: add call back
+
+	return output, nil
+}
