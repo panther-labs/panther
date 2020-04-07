@@ -112,7 +112,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
-	oldAlertItems := []*table.AlertItem{
+	alertItems := []*table.AlertItem{
 		{
 			RuleID:       "ruleId",
 			AlertID:      "alertId",
@@ -123,6 +123,18 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			LogTypes:     []string{"AWS.CloudTrail"},
 			EventCount:   100,
 			RuleVersion:  "ruleVersion",
+		},
+		{ // Alert with Display Name for rule
+			RuleID:          "ruleId",
+			AlertID:         "alertId",
+			UpdateTime:      timeInTest,
+			CreationTime:    timeInTest,
+			Severity:        "INFO",
+			DedupString:     "dedupString",
+			LogTypes:        []string{"AWS.CloudTrail"},
+			EventCount:      100,
+			RuleVersion:     "ruleVersion",
+			RuleDisplayName: aws.String("ruleDisplayName"),
 		},
 	}
 
@@ -136,7 +148,21 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			Severity:      aws.String("INFO"),
 			DedupString:   aws.String("dedupString"),
 			EventsMatched: aws.Int(100),
-			Title:         aws.String("ruleId failed"),
+			Title:         aws.String("ruleId"),
+		},
+		{
+			RuleID:          aws.String("ruleId"),
+			RuleVersion:     aws.String("ruleVersion"),
+			AlertID:         aws.String("alertId"),
+			UpdateTime:      aws.Time(timeInTest),
+			CreationTime:    aws.Time(timeInTest),
+			Severity:        aws.String("INFO"),
+			DedupString:     aws.String("dedupString"),
+			EventsMatched:   aws.Int(100),
+			RuleDisplayName: aws.String("ruleDisplayName"),
+			// Since there is no dynamically generated title,
+			// we return the display name
+			Title: aws.String("ruleDisplayName"),
 		},
 	}
 
@@ -146,7 +172,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 	}
 
 	tableMock.On("ListAll", aws.String("startKey"), aws.Int(10)).
-		Return(oldAlertItems, aws.String("lastKey"), nil)
+		Return(alertItems, aws.String("lastKey"), nil)
 	result, err := API{}.ListAlerts(input)
 	require.NoError(t, err)
 

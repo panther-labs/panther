@@ -117,9 +117,9 @@ func getAlertTitle(alert *table.AlertItem) *string {
 		return alert.Title
 	}
 	if alert.RuleDisplayName != nil {
-		return aws.String(*alert.RuleDisplayName + " failed")
+		return alert.RuleDisplayName
 	}
-	return aws.String(alert.RuleID + " failed")
+	return &alert.RuleID
 }
 
 // This method returns events from a specific log type that are associated to a given alert.

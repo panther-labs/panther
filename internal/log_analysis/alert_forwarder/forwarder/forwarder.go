@@ -154,9 +154,9 @@ func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
 	}
 	ruleDisplayName := getRuleDisplayName(rule)
 	if ruleDisplayName != nil {
-		return *ruleDisplayName + " failed"
+		return *ruleDisplayName
 	}
-	return string(rule.ID) + " failed"
+	return string(rule.ID)
 }
 
 func getRuleDisplayName(rule *models.Rule) *string {
