@@ -73,7 +73,6 @@ const urls = {
   },
   settings: {
     home: () => '/settings/',
-    overview: () => `${urls.settings.home()}general/`,
     general: () => `${urls.settings.home()}general/`,
     users: () => `${urls.settings.home()}users/`,
     destinations: () => `${urls.settings.home()}destinations/`,
