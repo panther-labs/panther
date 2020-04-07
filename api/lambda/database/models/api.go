@@ -31,7 +31,6 @@ type LambdaInput struct {
 	ExecuteAsyncQuery       *ExecuteAsyncQueryInput       `json:"executeAsyncQuery"`
 	ExecuteAsyncQueryNotify *ExecuteAsyncQueryNotifyInput `json:"executeAsyncQueryNotify"` // uses Step functions
 	ExecuteQuery            *ExecuteQueryInput            `json:"executeQuery"`
-	ExecutePantherSummary   *ExecutePantherSummaryInput   `json:"executePantherSummary"`
 	GetDatabases            *GetDatabasesInput            `json:"getDatabases"`
 	GetQueryResults         *GetQueryResultsInput         `json:"getQueryResults"`
 	GetQueryStatus          *GetQueryStatusInput          `json:"getQueryStatus"`
@@ -169,14 +168,6 @@ type NotifyAppSyncInput struct {
 type NotifyAppSyncOutput struct {
 	StatusCode int `json:"statusCode" validate:"required"` // the http status returned from POSTing callback to appsync
 }
-
-// Search panther fields, returning a summary table
-type ExecutePantherSummaryInput struct {
-	PantherField string   `json:"pantherFiled" validate:"required"` // FIXME: add validator that checks against list
-	Values       []string `json:"values" validate:"required,gt=0"`
-}
-
-type ExecutePantherSummaryOutput = GetQueryResultsOutput // GetQueryResults() to page thu results
 
 type Row struct {
 	Columns []*Column `json:"columns"`

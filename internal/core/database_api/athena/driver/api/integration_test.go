@@ -279,8 +279,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		},
 		LambdaInvoke: models.LambdaInvoke{
 			LambdaName: "panther-athena-api",
-			MethodName: "notifyAppSync", // right now this will fail
-			// MethodName:  "getQueryStatus", // we use this because it has compatible API with notification
+			// MethodName: "notifyAppSync", // requires a deployment so our appsync is available
+			MethodName: "getQueryStatus", // we use this because it has compatible API with notification
 		},
 	}
 	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, executeAsyncQueryNotifyInput)

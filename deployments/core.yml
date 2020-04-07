@@ -711,6 +711,13 @@ Resources:
               Action:
                 - lambda:InvokeFunction
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-*
+        - Id: CallAppSync # make appsync queries (notify support)
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - appsync:GraphQL
+              Resource: '*'
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -771,7 +778,7 @@ Resources:
                "running (wait)": {
                  "Comment": "Pause to allow query to run.",
                  "Type": "Wait",
-                 "Seconds": 3,
+                 "Seconds": 2,
                  "Next": "status"
                },
                "status": {

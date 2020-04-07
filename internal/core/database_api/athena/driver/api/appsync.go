@@ -19,14 +19,15 @@ package api
  */
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -34,6 +35,32 @@ import (
 )
 
 // FIXME: consider adding as stand-alone lambda to de-couple this from Athena api
+
+// https://docs.aws.amazon.com/appsync/latest/devguide/tutorial-local-resolvers.html
+
+const (
+	// what we send to appsync
+	mutationTemplate = `
+mutation {
+     queryDone(input: {
+      queryId: "%s",
+      workflowId: "%s"
+     }) {
+       queryId
+       workflowId
+     }
+}
+`
+)
+
+type GraphQlQuery struct {
+	Query string `json:"query"` // when we marshal, this will escape the mutation JSON as required by graphQL
+}
+
+type GraphQlResponse struct {
+	Data   interface{}   `json:"data"`
+	Errors []interface{} `json:"errors"`
+}
 
 func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyncOutput, error) {
 	output := &models.NotifyAppSyncOutput{}
@@ -45,16 +72,21 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		}
 	}()
 
-	// FIXME: this is unfinished, don't bother looking
-
 	// make sigv4 https request to appsync endpoint notifying query is complete, sending  queryId and workflowId
 	appSyncEndpoint := os.Getenv("GRAPHQL_ENDPOINT")
 	httpClient := http.Client{}
 	signer := v4.NewSigner(awsSession.Config.Credentials)
 
-	// FIXME: needs to be an agreed on mutation to trigger a subscription
-	body := strings.NewReader(fmt.Sprintf(`{ "queryId": "%s", workflowId": "%s"}`,
-		input.QueryID, input.WorkflowID))
+	mutation := &GraphQlQuery{
+		Query: fmt.Sprintf(mutationTemplate, input.QueryID, input.WorkflowID),
+	}
+	jsonMessage, err := jsoniter.Marshal(mutation)
+	if err != nil {
+		err = errors.Wrapf(err, "json marshal failed for: %#v", input)
+		return output, err
+	}
+
+	body := bytes.NewReader(jsonMessage) // JSON envelope for graphQL
 
 	req, err := http.NewRequest("POST", appSyncEndpoint, body)
 	if err != nil {
@@ -68,7 +100,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		return output, err
 	}
 
-	_, err = signer.Sign(req, body, "states", *awsSession.Config.Region, time.Now().UTC())
+	_, err = signer.Sign(req, body, "appsync", *awsSession.Config.Region, time.Now().UTC())
 	if err != nil {
 		err = errors.Wrapf(err, "failed to v4 sign %#v", input)
 		return output, err
@@ -82,13 +114,25 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	defer resp.Body.Close()
 
 	respBody, _ := ioutil.ReadAll(resp.Body)
-	zap.L().Error("NotifyAppSync I/O",
-		zap.Any("respCode", resp.StatusCode),
-		zap.Any("respBody", string(respBody)))
+
+	zap.L().Error("NotifyAppSync",
+		zap.String("graphQlRequest", string(jsonMessage)),
+		zap.String("graphQlResponse", string(respBody)))
 
 	if resp.StatusCode != 200 {
-		zap.L().Error("NotifyAppSync NOT 200")
-		err = errors.Wrapf(err, "failed to POST %#v: %#v", req, resp)
+		err = errors.Errorf("failed to POST (%d): %s", resp.StatusCode, string(respBody))
+		return output, err
+	}
+
+	graphQlResp := &GraphQlResponse{}
+	err = jsoniter.Unmarshal(respBody, graphQlResp)
+	if err != nil {
+		err = errors.Wrapf(err, "json marshal failed for: %#v", string(respBody))
+		return output, err
+	}
+
+	if len(graphQlResp.Errors) > 0 {
+		err = errors.Errorf("graphQL error for %#v: %#v", input, graphQlResp)
 		return output, err
 	}
 
