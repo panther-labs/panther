@@ -255,6 +255,11 @@ export type GetComplianceIntegrationTemplateInput = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
 
+export type GetLogDatabaseTableInput = {
+  name: Scalars['String'];
+  databaseName: Scalars['String'];
+};
+
 export type GetLogIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
   integrationLabel: Scalars['String'];
@@ -438,6 +443,28 @@ export enum ListRulesSortFieldsEnum {
   Severity = 'severity',
 }
 
+export type LogDatabase = {
+  __typename?: 'LogDatabase';
+  name: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
+  tables: Array<LogDatabaseTable>;
+};
+
+export type LogDatabaseTable = {
+  __typename?: 'LogDatabaseTable';
+  name: Scalars['String'];
+  databaseName: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
+  columns: Array<LogDatabaseTableColumn>;
+};
+
+export type LogDatabaseTableColumn = {
+  __typename?: 'LogDatabaseTableColumn';
+  name: Scalars['String'];
+  type?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+};
+
 export type LogIntegration = {
   __typename?: 'LogIntegration';
   awsAccountId: Scalars['String'];
@@ -459,6 +486,12 @@ export type LogIntegrationHealth = {
   s3BucketStatus: IntegrationItemHealthStatus;
   kmsKeyStatus: IntegrationItemHealthStatus;
 };
+
+export enum LogQueryStatus {
+  Running = 'running',
+  Succeeded = 'succeeded',
+  Failed = 'failed',
+}
 
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
@@ -721,6 +754,8 @@ export type Query = {
   getComplianceIntegration: ComplianceIntegration;
   getComplianceIntegrationTemplate: IntegrationTemplate;
   getLogIntegration: LogIntegration;
+  getLogDatabase?: Maybe<LogDatabase>;
+  getLogDatabaseTable?: Maybe<LogDatabaseTable>;
   getLogIntegrationTemplate: IntegrationTemplate;
   remediations?: Maybe<Scalars['AWSJSON']>;
   resource?: Maybe<ResourceDetails>;
@@ -731,6 +766,8 @@ export type Query = {
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
+  listLogDatabases: Array<LogDatabase>;
+  listLogDatabaseTables: Array<LogDatabaseTable>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
@@ -761,6 +798,14 @@ export type QueryGetLogIntegrationArgs = {
   id: Scalars['ID'];
 };
 
+export type QueryGetLogDatabaseArgs = {
+  name: Scalars['String'];
+};
+
+export type QueryGetLogDatabaseTableArgs = {
+  input: GetLogDatabaseTableInput;
+};
+
 export type QueryGetLogIntegrationTemplateArgs = {
   input: GetLogIntegrationTemplateInput;
 };
@@ -787,6 +832,10 @@ export type QueryPoliciesArgs = {
 
 export type QueryPoliciesForResourceArgs = {
   input?: Maybe<PoliciesForResourceInput>;
+};
+
+export type QueryListLogDatabaseTablesArgs = {
+  databaseName: Scalars['String'];
 };
 
 export type QueryOrganizationStatsArgs = {
@@ -1112,6 +1161,10 @@ export type ResolversTypes = {
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
   LogIntegration: ResolverTypeWrapper<LogIntegration>;
   LogIntegrationHealth: ResolverTypeWrapper<LogIntegrationHealth>;
+  LogDatabase: ResolverTypeWrapper<LogDatabase>;
+  LogDatabaseTable: ResolverTypeWrapper<LogDatabaseTable>;
+  LogDatabaseTableColumn: ResolverTypeWrapper<LogDatabaseTableColumn>;
+  GetLogDatabaseTableInput: GetLogDatabaseTableInput;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResolverTypeWrapper<ResourceDetails>;
@@ -1184,6 +1237,7 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   AccountTypeEnum: AccountTypeEnum;
+  LogQueryStatus: LogQueryStatus;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -1222,6 +1276,10 @@ export type ResolversParentTypes = {
   IntegrationTemplate: IntegrationTemplate;
   LogIntegration: LogIntegration;
   LogIntegrationHealth: LogIntegrationHealth;
+  LogDatabase: LogDatabase;
+  LogDatabaseTable: LogDatabaseTable;
+  LogDatabaseTableColumn: LogDatabaseTableColumn;
+  GetLogDatabaseTableInput: GetLogDatabaseTableInput;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResourceDetails;
@@ -1294,6 +1352,7 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   AccountTypeEnum: AccountTypeEnum;
+  LogQueryStatus: LogQueryStatus;
 };
 
 export type ActiveSuppressCountResolvers<
@@ -1562,6 +1621,37 @@ export type ListRulesResponseResolvers<
 > = {
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   rules?: Resolver<Maybe<Array<Maybe<ResolversTypes['RuleSummary']>>>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type LogDatabaseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogDatabase'] = ResolversParentTypes['LogDatabase']
+> = {
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  tables?: Resolver<Array<ResolversTypes['LogDatabaseTable']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type LogDatabaseTableResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogDatabaseTable'] = ResolversParentTypes['LogDatabaseTable']
+> = {
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  databaseName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  columns?: Resolver<Array<ResolversTypes['LogDatabaseTableColumn']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type LogDatabaseTableColumnResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogDatabaseTableColumn'] = ResolversParentTypes['LogDatabaseTableColumn']
+> = {
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1937,6 +2027,18 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryGetLogIntegrationArgs, 'id'>
   >;
+  getLogDatabase?: Resolver<
+    Maybe<ResolversTypes['LogDatabase']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetLogDatabaseArgs, 'name'>
+  >;
+  getLogDatabaseTable?: Resolver<
+    Maybe<ResolversTypes['LogDatabaseTable']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetLogDatabaseTableArgs, 'input'>
+  >;
   getLogIntegrationTemplate?: Resolver<
     ResolversTypes['IntegrationTemplate'],
     ParentType,
@@ -1986,6 +2088,13 @@ export type QueryResolvers<
     ContextType
   >;
   listLogIntegrations?: Resolver<Array<ResolversTypes['LogIntegration']>, ParentType, ContextType>;
+  listLogDatabases?: Resolver<Array<ResolversTypes['LogDatabase']>, ParentType, ContextType>;
+  listLogDatabaseTables?: Resolver<
+    Array<ResolversTypes['LogDatabaseTable']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryListLogDatabaseTablesArgs, 'databaseName'>
+  >;
   organizationStats?: Resolver<
     Maybe<ResolversTypes['OrganizationStatsResponse']>,
     ParentType,
@@ -2192,6 +2301,9 @@ export type Resolvers<ContextType = any> = {
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
+  LogDatabase?: LogDatabaseResolvers<ContextType>;
+  LogDatabaseTable?: LogDatabaseTableResolvers<ContextType>;
+  LogDatabaseTableColumn?: LogDatabaseTableColumnResolvers<ContextType>;
   LogIntegration?: LogIntegrationResolvers<ContextType>;
   LogIntegrationHealth?: LogIntegrationHealthResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;

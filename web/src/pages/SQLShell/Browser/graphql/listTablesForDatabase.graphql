@@ -1,0 +1,8 @@
+query ListTablesForDatabase($name: String!) {
+  getLogDatabase(name: $name) {
+    name
+    tables {
+      name
+    }
+  }
+}
