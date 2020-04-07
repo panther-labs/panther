@@ -119,8 +119,10 @@ func shouldTriggerActions(event *models.ComplianceNotification) (bool, error) {
 			ResourceID: *event.ResourceID,
 			HTTPClient: httpClient,
 		})
-
 	if err != nil {
+		if _, ok := err.(*complianceoperations.GetStatusNotFound); ok {
+			return false, nil
+		}
 		return false, err
 	}
 
