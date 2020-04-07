@@ -47,8 +47,7 @@ available in many tools such as Athena, Redshift, Glue Spark Jobs and SageMaker.
 
 Panther Historical Search is still in it's early phases! For upcoming releases, we have planned:
 
-- More log types
 - Scheduled searches
-- Even more search optimization
+- Search optimization
 - Pre-canned searches
 - Cross integration with Panther Cloud Security findings and more!
