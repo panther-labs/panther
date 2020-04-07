@@ -90,7 +90,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		return nil, err
 	}
 	result = &models.Alert{
-		AlertSummary: &models.AlertSummary{
+		AlertSummary: models.AlertSummary{
 			AlertID:         &alertItem.AlertID,
 			RuleID:          &alertItem.RuleID,
 			DedupString:     &alertItem.DedupString,

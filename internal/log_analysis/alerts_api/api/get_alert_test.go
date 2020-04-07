@@ -159,7 +159,7 @@ func TestGetAlert(t *testing.T) {
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
-		AlertSummary: &models.AlertSummary{
+		AlertSummary: models.AlertSummary{
 			AlertID:       aws.String("alertId"),
 			RuleID:        aws.String("ruleId"),
 			RuleVersion:   aws.String("ruleVersion"),
@@ -231,7 +231,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
-		AlertSummary: &models.AlertSummary{
+		AlertSummary: models.AlertSummary{
 			AlertID:       aws.String("alertId"),
 			RuleID:        aws.String("ruleId"),
 			RuleVersion:   aws.String("ruleVersion"),
