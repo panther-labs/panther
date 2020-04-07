@@ -14,6 +14,7 @@ const ColumnList: React.FC = () => {
     selectedColumn,
     selectColumn,
     selectTable,
+    searchValue,
   } = useBrowserContext();
 
   const { data, loading } = useListColumnsForTable({
@@ -50,19 +51,21 @@ const ColumnList: React.FC = () => {
         </Text>
       </Flex>
       <Box overflowY="scroll" is="ul" py={2} height="100%">
-        {data?.getLogDatabaseTable.columns.map(({ name, type, description }) => {
-          return (
-            <ColumnListItem
-              key={name}
-              name={name}
-              type={type}
-              description={description}
-              isSelected={selectedColumn === name}
-              isPristine={selectedColumn === null}
-              onClick={selectColumn}
-            />
-          );
-        })}
+        {data?.getLogDatabaseTable.columns
+          .filter(({ name }) => name.includes(searchValue))
+          .map(({ name, type, description }) => {
+            return (
+              <ColumnListItem
+                key={name}
+                name={name}
+                type={type}
+                description={description}
+                isSelected={selectedColumn === name}
+                isPristine={selectedColumn === null}
+                onClick={selectColumn}
+              />
+            );
+          })}
       </Box>
     </React.Fragment>
   );

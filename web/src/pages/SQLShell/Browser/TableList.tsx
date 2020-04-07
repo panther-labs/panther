@@ -8,7 +8,7 @@ import TableListItem from './TableListItem';
 
 const TableList: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
-  const { selectTable, selectedDatabase } = useBrowserContext();
+  const { selectTable, selectedDatabase, searchValue } = useBrowserContext();
   const { data, loading } = useListTablesForDatabase({
     variables: {
       name: selectedDatabase,
@@ -30,10 +30,12 @@ const TableList: React.FC = () => {
   }
 
   return (
-    <Box overflowY="scroll" is="ul" py={2}>
-      {data?.getLogDatabase.tables.map(({ name }) => (
-        <TableListItem key={name} name={name} onClick={selectTable} />
-      ))}
+    <Box overflowY="scroll" is="ul" py={2} height="100%">
+      {data?.getLogDatabase.tables
+        .filter(({ name }) => name.includes(searchValue))
+        .map(({ name }) => (
+          <TableListItem key={name} name={name} onClick={selectTable} />
+        ))}
     </Box>
   );
 };
