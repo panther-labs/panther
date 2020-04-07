@@ -158,6 +158,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   component={EditLogSourcePage}
                 />
                 /******************** SETTINGS ******************************/
+                <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
                 <Route exact path={urls.settings.destinations()} component={DestinationsPage} />

@@ -45,7 +45,7 @@ By default, rules are pre-installed from Panther's [open-source packs](https://g
 - Osquery CIS
 - Osquery Samples
 
-## Rule Writing Workflow
+## Workflow
 
 Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](https://github.com/panther-labs/panther_analysis_tool) CLI utility.
 
@@ -98,36 +98,35 @@ This example rule alerts on successful admin panel logins:
 def rule(event):
   if 'admin-panel' in event.get('request') and event.get('status') == 200:
     return True
-
   return False
 ```
 
 In the `rule()` body, returning a value of `True` indicates an alert should send. Returning a value of `False` indicates the log is not suspicious.
 
-### Rule Deduplication
+### Alert Deduplication
 
-Alerts group together all events that matched a rule for the period configured in the rule settings. By default, this deduplication is based on `default:RuleID` over the period of 1 hour.
+To avoid a flood of alerts, events are grouped together within a given time period and associated with a single `alertID`.
 
-To modify the merge logic, you can use the `dedup()` in your rule body:
+By default, events are merged by the key `defaultDedupString:${RuleID}` over a period of `1h`. Each of these options are fully configurable.
+
+{% hint style="warn" %}
+The deduplication string is limited to `1000` characters and will be truncated if it goes over.
+{% endhint %}
+
+To modify the merge key, use the `dedup()` function in your rule body. The same parsed log `event` is passed into this function, and you may use any logic desired to return the `dedupString`. If a Falsy value is returned from `dedup()`, then the default string will be used.
+
+The `dedupPeriodMinutes` may be set to either `15m`, `30m`, `1h`, `3h`, `12h`, or `24h`.
+
+To keep with the previous example, all events will merge on the requested webpage:
 
 ```python
 def dedup(event):
   return event.get('request', '').split(' ')[1]
 ```
 
-In this example, all alerts will merge on the requested page of `/admin-panel/`.
-
-The merging period is also configurable an can be set to:
-* 15m
-* 30m
-* 1h
-* 3h
-* 12h
-* 24h
-
 ### Alert Titles
 
-Alert titles, sent to our destinations, are by default `New Alert: #{Rule Description}`. To override this message, use the `title()` function:
+Alert titles, sent to our destinations, are by default `New Alert: ${Rule Description}`. To override this message, use the `title()` function:
 
 ```python
 def title(event):

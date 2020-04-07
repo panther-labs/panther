@@ -72,10 +72,10 @@ const urls = {
     },
   },
   settings: {
-    overview: () => `/settings/`,
-    general: () => `${urls.settings.overview()}general`,
-    users: () => `${urls.settings.overview()}users`,
-    destinations: () => `${urls.settings.overview()}destinations`,
+    home: () => '/settings/',
+    general: () => `${urls.settings.home()}general/`,
+    users: () => `${urls.settings.home()}users/`,
+    destinations: () => `${urls.settings.home()}destinations/`,
   },
   account: {
     auth: {
