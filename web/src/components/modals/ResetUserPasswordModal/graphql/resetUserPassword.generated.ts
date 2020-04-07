@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { UserDetails } from '../../../../graphql/fragments/UserDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,12 +29,15 @@ export type ResetUserPasswordVariables = {
   id: Types.Scalars['ID'];
 };
 
-export type ResetUserPassword = Pick<Types.Mutation, 'resetUserPassword'>;
+export type ResetUserPassword = { resetUserPassword: UserDetails };
 
 export const ResetUserPasswordDocument = gql`
   mutation ResetUserPassword($id: ID!) {
-    resetUserPassword(id: $id)
+    resetUserPassword(id: $id) {
+      ...UserDetails
+    }
   }
+  ${UserDetails}
 `;
 export type ResetUserPasswordMutationFn = ApolloReactCommon.MutationFunction<
   ResetUserPassword,
