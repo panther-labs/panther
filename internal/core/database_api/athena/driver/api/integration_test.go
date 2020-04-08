@@ -286,7 +286,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			        export INTEGRATION_TEST=true
 			        aws-vault exec dev-<you>-admin -d 3h -- go test -v
 
-			    - On the console you should see in the results pane something like:
+			    - After a minute or two in the console you should see in the results pane something like:
 
 			        {
 			          "data": {
@@ -298,7 +298,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			          }
 			        }
 
-			     NOTE: then UI should call the lambda panther-athena-api:ExecuteAsyncQueryNotify as below and set up
+			     NOTE: the UI should call the lambda panther-athena-api:ExecuteAsyncQueryNotify as below and set up
 			     a subscription filtering by user id (or session id). When the query finishes appsync will be notified.
 			     UI should use the queryId to call panther-athena-api:GetQueryResults to display results.
 	*/
