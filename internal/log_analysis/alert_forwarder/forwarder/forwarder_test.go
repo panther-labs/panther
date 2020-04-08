@@ -258,7 +258,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		Tags:              aws.StringSlice([]string{"Tag"}),
 		Type:              aws.String(alertModel.RuleType),
 		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:             aws.String("DisplayName failed"),
+		Title:             aws.String("DisplayName"),
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -275,7 +275,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
-		Title:           "DisplayName failed",
+		Title:           "DisplayName",
 		AlertDedupEvent: *newAlertDedupEvent,
 	}
 
