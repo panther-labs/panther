@@ -42,6 +42,32 @@ const (
 	maxRetries = 20 // try very hard, avoid throttles
 )
 
+// Track results when executing similar tasks in parallel
+type goroutineResult struct {
+	summary string
+	err     error
+}
+
+// Wait for the given number of goroutines to finish, logging results as they come in.
+//
+// Logs a fatal message at the end if there were any errors.
+func logResults(results chan goroutineResult, command string, count int) {
+	var erroredTasks []string
+	for i := 1; i <= count; i++ {
+		r := <-results
+		if r.err == nil {
+			logger.Infof("    √ %s finished (%d/%d)", r.summary, i, count)
+		} else {
+			logger.Errorf("    X %s failed (%d/%d): %v", r.summary, i, count, r.err)
+			erroredTasks = append(erroredTasks, r.summary)
+		}
+	}
+
+	if len(erroredTasks) > 0 {
+		logger.Fatalf("%s failed: %s", command, strings.Join(erroredTasks, ", "))
+	}
+}
+
 // Wrapper around filepath.Walk, logging errors as fatal.
 func walk(root string, handler func(string, os.FileInfo)) {
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {

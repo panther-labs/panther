@@ -48,53 +48,35 @@ func Setup() {
 		logger.Fatalf("failed to create setup directory %s: %v", setupDirectory, err)
 	}
 
-	type installResult struct {
-		summary string
-		err     error
-	}
-	results := make(chan installResult)
+	results := make(chan goroutineResult)
 	count := 0
 
 	count++
-	go func(c chan installResult) {
-		c <- installResult{"go get modules", installGoModules()}
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"go get modules", installGoModules()}
 	}(results)
 
 	count++
-	go func(c chan installResult) {
-		c <- installResult{"download go-swagger", installSwagger(env)}
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"download go-swagger", installSwagger(env)}
 	}(results)
 
 	count++
-	go func(c chan installResult) {
-		c <- installResult{"download golangci-lint", installGolangCiLint(env)}
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"download golangci-lint", installGolangCiLint(env)}
 	}(results)
 
 	count++
-	go func(c chan installResult) {
-		c <- installResult{"pip install", installPythonEnv()}
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"pip install", installPythonEnv()}
 	}(results)
 
 	count++
-	go func(c chan installResult) {
-		c <- installResult{"npm install", installNodeModules()}
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"npm install", installNodeModules()}
 	}(results)
 
-	// Print the result of each goroutine as it finishes
-	errors := 0
-	for i := 0; i < count; i++ {
-		r := <-results
-		if r.err == nil {
-			logger.Infof("    √ %s finished", r.summary)
-		} else {
-			logger.Errorf("    X %s failed: %v", r.summary, r.err)
-			errors++
-		}
-	}
-
-	if errors > 0 {
-		logger.Fatalf("setup failed: %s total errors", errors)
-	}
+	logResults(results, "setup", count)
 }
 
 // Fetch all Go modules needed for tests and compilation.
