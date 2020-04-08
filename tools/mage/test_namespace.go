@@ -93,17 +93,15 @@ func (t Test) Go() {
 }
 
 func testGo() bool {
-	// unit tests
-	logger.Info("test:go: unit tests")
-	args := []string{"test", "-vet", "", "-cover", "./..."}
-	var err error
-	if mg.Verbose() {
-		// verbose mode - show "go test" output (all package names)
-		err = sh.Run("go", args...)
-	} else {
+	runGoTest := func(args ...string) error {
+		if mg.Verbose() {
+			// verbose mode - show "go test" output (all package names)
+			return sh.Run("go", args...)
+		}
+
 		// standard mode - filter output to show only the errors
 		var output string
-		output, err = sh.Output("go", args...)
+		output, err := sh.Output("go", args...)
 		if err != nil {
 			for _, line := range strings.Split(output, "\n") {
 				if !strings.HasPrefix(line, "ok  	github.com/panther-labs/panther") &&
@@ -113,16 +111,25 @@ func testGo() bool {
 				}
 			}
 		}
+		return err
 	}
 
-	if err != nil {
+	// unit tests and race detection
+	logger.Info("test:go: unit tests")
+	if err := runGoTest("test", "-race", "-vet", "", "-cover", "./..."); err != nil {
+		logger.Errorf("go unit tests failed: %v", err)
+		return false
+	}
+
+	// One package is explicitly skipped by -race, we have to run just the unit tests separately
+	if err := runGoTest("test", "-vet", "", "-cover", "internal/log_analysis/log_processor/destinations"); err != nil {
 		logger.Errorf("go unit tests failed: %v", err)
 		return false
 	}
 
 	// metalinting
 	logger.Info("test:go: golangci-lint")
-	args = []string{"run", "--timeout", "10m"}
+	args := []string{"run", "--timeout", "10m"}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
@@ -243,20 +250,6 @@ func testWeb() bool {
 	}
 
 	return pass
-}
-
-// Cover Run Go unit tests and view test coverage in HTML
-func (t Test) Cover() error {
-	mg.Deps(build.API)
-	if err := os.MkdirAll("out/", 0755); err != nil {
-		return err
-	}
-
-	if err := sh.RunV("go", "test", "-cover", "-coverprofile=out/.coverage", "./..."); err != nil {
-		return err
-	}
-
-	return sh.Run("go", "tool", "cover", "-html=out/.coverage")
 }
 
 // CI Run all required checks (build:all, test:cfn, test:go, test:python, test:web)

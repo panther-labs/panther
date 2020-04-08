@@ -28,8 +28,6 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
-	"github.com/magefile/mage/target"
-
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/config"
 )
@@ -96,15 +94,6 @@ func (b Build) Lambda() {
 }
 
 func (b Build) lambda() error {
-	modified, err := target.Dir("out/bin/internal", "api", "internal", "pkg")
-	if err == nil && !modified {
-		// The source folders are older than all the compiled binaries - nothing has changed
-		logger.Info("build:lambda: up to date")
-		return nil
-	} else if err != nil {
-		return err
-	}
-
 	mg.Deps(b.API)
 
 	var packages []string

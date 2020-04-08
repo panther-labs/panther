@@ -23,9 +23,9 @@ import (
 	"strings"
 )
 
-// Clean Remove auto-generated build artifacts
+// Clean Remove dev libraries and build/test artifacts
 func Clean() {
-	paths := []string{"out", "internal/core/analysis_api/main/bulk_upload.zip"} // paths to remove
+	paths := []string{setupDirectory, "node_modules", "out", "internal/core/analysis_api/main/bulk_upload.zip"}
 
 	// Remove __pycache__ folders
 	for _, target := range pyTargets {
