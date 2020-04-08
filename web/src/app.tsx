@@ -26,7 +26,7 @@ import { AuthProvider } from 'Components/utils/AuthContext';
 import { ModalProvider, ModalManager } from 'Components/utils/Modal';
 import { SidesheetProvider, SidesheetManager } from 'Components/utils/Sidesheet';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import createApolloClient from 'Source/client';
+import { createApolloClient } from 'Source/apollo';
 
 interface AppProps {
   history: History;
