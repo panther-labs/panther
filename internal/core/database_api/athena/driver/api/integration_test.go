@@ -173,6 +173,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	}
 	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
 	require.NoError(t, err)
+	assert.Equal(t, "", executeQueryOutput.Message)
+	require.Equal(t, models.QuerySucceeded, executeQueryOutput.Status)
 	checkQueryResults(t, true, len(rows)+1, executeQueryOutput.ResultsPage.Rows)
 
 	// -------- ExecuteQuery() BAD SQL
