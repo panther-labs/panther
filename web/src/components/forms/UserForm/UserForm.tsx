@@ -43,7 +43,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
    This is temporal fix for inviting OR editing users that already exist
    when this is fixed we should revert it: https://github.com/apollographql/apollo-client/issues/5790
    */
-  const { data } = useListUsers({ fetchPolicy: 'cache-first' });
+  const { data } = useListUsers();
   const userEmails = data.users.map(u => u.email);
 
   const validationSchema = Yup.object().shape({
