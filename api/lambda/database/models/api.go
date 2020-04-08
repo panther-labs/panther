@@ -96,6 +96,7 @@ type TableColumn struct {
 type ExecuteAsyncQueryNotifyInput struct {
 	ExecuteAsyncQueryInput
 	LambdaInvoke
+	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
 }
 
 type ExecuteAsyncQueryNotifyOutput struct {
@@ -104,7 +105,7 @@ type ExecuteAsyncQueryNotifyOutput struct {
 
 type LambdaInvoke struct {
 	LambdaName string `json:"lambdaName" validate:"required"` // the name of the lambda to call when done
-	MethodName string `json:"methodName" validate:"required"` // the method to call on the lambda, should take QueryID as input
+	MethodName string `json:"methodName" validate:"required"` // the method to call on the lambda
 }
 
 // Blocking query
@@ -155,18 +156,24 @@ type InvokeNotifyLambdaInput struct {
 	LambdaInvoke
 	ExecuteAsyncQueryOutput
 	ExecuteAsyncQueryNotifyOutput
+	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
 }
 
 type InvokeNotifyLambdaOutput struct {
 }
 
 type NotifyAppSyncInput struct {
-	GetQueryStatusInput
-	ExecuteAsyncQueryNotifyOutput
+	NotifyInput
 }
 
 type NotifyAppSyncOutput struct {
 	StatusCode int `json:"statusCode" validate:"required"` // the http status returned from POSTing callback to appsync
+}
+
+type NotifyInput struct { // notify lambdas need to have this as input
+	GetQueryStatusInput
+	ExecuteAsyncQueryNotifyOutput
+	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
 }
 
 type Row struct {

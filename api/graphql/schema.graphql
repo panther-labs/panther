@@ -714,11 +714,13 @@ input InviteUserInput {
 }
 
 input QueryDoneInput {
+  userData: String!
   queryId: String!
   workflowId: String!
 }
 
 type QueryDone @aws_iam {
+  userData: String!
   queryId: String!
   workflowId: String!
 }

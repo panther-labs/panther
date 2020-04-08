@@ -266,6 +266,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	//  -------- ExecuteAsyncQueryNotify()
 
+	userData := "testUser" // this is expected to be passed all the way through the workflow, validations will enforce
+
 	executeAsyncQueryNotifyInput := &models.ExecuteAsyncQueryNotifyInput{
 		ExecuteAsyncQueryInput: models.ExecuteAsyncQueryInput{
 			DatabaseName: testDb,
@@ -275,6 +277,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			LambdaName: "panther-athena-api",
 			MethodName: "notifyAppSync",
 		},
+		UserData: userData,
 	}
 	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, executeAsyncQueryNotifyInput)
 	require.NoError(t, err)

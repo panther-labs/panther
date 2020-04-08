@@ -771,7 +771,7 @@ Resources:
                    "FunctionName": "${AthenaApiFunction.Arn}",
                    "Payload": {
                      "executeAsyncQuery": {
-                       "DatabaseName.$": "$.databaseName",
+                       "databaseName.$": "$.databaseName",
                        "sql.$": "$.sql"
                      }
                    }
@@ -843,17 +843,18 @@ Resources:
                  "End": true
                },
                "notify": {
-                 "Comment": "Call lambdaName.methodName with queryId and workflowId to notify",
+                 "Comment": "Call lambdaName.methodName with userData, queryId and workflowId to notify done",
                  "Type": "Task",
                  "Resource": "arn:aws:states:::lambda:invoke",
                  "Parameters": {
                    "FunctionName": "${AthenaApiFunction.Arn}",
                    "Payload": {
                      "invokeNotifyLambda": {
+                       "userData.$": "$.userData",
                        "queryId.$": "$.queryResults.Payload.queryId",
+                       "workflowId.$": "$$.Execution.Id",
                        "lambdaName.$": "$.lambdaName",
-                       "methodName.$": "$.methodName",
-                       "workflowId.$": "$$.Execution.Id"
+                       "methodName.$": "$.methodName"
                      }
                    }
                  },
