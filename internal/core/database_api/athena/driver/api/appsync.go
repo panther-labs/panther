@@ -29,7 +29,6 @@ import (
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
@@ -37,6 +36,9 @@ import (
 // FIXME: consider adding as stand-alone lambda to de-couple this from Athena api
 
 // https://docs.aws.amazon.com/appsync/latest/devguide/tutorial-local-resolvers.html
+// https://www.youtube.com/watch?v=QabeZ4sag44
+// https://www.youtube.com/watch?v=UK-c1NkdLA0
+// https://www.youtube.com/watch?v=nAYikoFCN4k
 
 const (
 	// what we send to appsync
@@ -114,10 +116,6 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	defer resp.Body.Close()
 
 	respBody, _ := ioutil.ReadAll(resp.Body)
-
-	zap.L().Error("NotifyAppSync",
-		zap.String("graphQlRequest", string(jsonMessage)),
-		zap.String("graphQlResponse", string(respBody)))
 
 	if resp.StatusCode != 200 {
 		err = errors.Errorf("failed to POST (%d): %s", resp.StatusCode, string(respBody))

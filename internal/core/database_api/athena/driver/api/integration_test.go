@@ -153,7 +153,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	getTablesOutput, err := runGetTables(useLambda, getTablesIntput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getTablesOutput.Tables))
-	require.Equal(t, testTable, getTablesOutput.Tables[0].Name)
+	checkTableDetail(t, getTablesOutput.Tables)
 
 	// -------- GetTablesDetail()
 
@@ -163,15 +163,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	}
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, getTablesDetailInput)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(getTablesDetailOutput.TablesDetails))
-	require.Equal(t, testTable, getTablesDetailOutput.TablesDetails[0].Name)
-	require.Equal(t, len(columns)+len(partitions), len(getTablesDetailOutput.TablesDetails[0].Columns))
-	require.Equal(t, *columns[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[0].Name)
-	require.Equal(t, *columns[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[0].Type)
-	require.Equal(t, *columns[0].Comment, *getTablesDetailOutput.TablesDetails[0].Columns[0].Description)
-	require.Equal(t, *partitions[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[1].Name)
-	require.Equal(t, *partitions[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[1].Type)
-	require.Equal(t, *partitions[0].Comment, *getTablesDetailOutput.TablesDetails[0].Columns[1].Description)
+	checkTableDetail(t, getTablesDetailOutput.Tables)
 
 	// -------- ExecuteQuery()
 
@@ -279,8 +271,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		},
 		LambdaInvoke: models.LambdaInvoke{
 			LambdaName: "panther-athena-api",
-			// MethodName: "notifyAppSync", // requires a deployment so our appsync is available
-			MethodName: "getQueryStatus", // we use this because it has compatible API with notification
+			MethodName: "notifyAppSync",
 		},
 	}
 	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, executeAsyncQueryNotifyInput)
@@ -411,6 +402,17 @@ func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*mo
 		return getQueryResultsOutput, err
 	}
 	return api.GetQueryResults(input)
+}
+
+func checkTableDetail(t *testing.T, tables []*models.TableDetail) {
+	require.Equal(t, testTable, tables[0].Name)
+	require.Equal(t, len(columns)+len(partitions), len(tables[0].Columns))
+	require.Equal(t, *columns[0].Name, tables[0].Columns[0].Name)
+	require.Equal(t, *columns[0].Type, tables[0].Columns[0].Type)
+	require.Equal(t, *columns[0].Comment, *tables[0].Columns[0].Description)
+	require.Equal(t, *partitions[0].Name, tables[0].Columns[1].Name)
+	require.Equal(t, *partitions[0].Type, tables[0].Columns[1].Type)
+	require.Equal(t, *partitions[0].Comment, *tables[0].Columns[1].Description)
 }
 
 func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {

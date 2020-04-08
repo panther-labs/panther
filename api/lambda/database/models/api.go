@@ -62,7 +62,7 @@ type GetTablesInput struct {
 
 // NOTE: we will assume this is small an not paginate
 type GetTablesOutput struct {
-	Tables []*TableDescription `json:"tables"`
+	Tables []*TableDetail `json:"tables"`
 }
 
 type TableDescription struct {
@@ -84,7 +84,7 @@ type GetTablesDetailInput struct {
 
 // NOTE: we will assume this is small an not paginate
 type GetTablesDetailOutput struct {
-	TablesDetails []*TableDetail `json:"tablesDetails,omitempty"`
+	Tables []*TableDetail `json:"tables,omitempty"`
 }
 
 type TableColumn struct {
