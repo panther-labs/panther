@@ -35,26 +35,32 @@ var (
 
 	alertItems = []*table.AlertItem{
 		{
-			RuleID:       "ruleId",
-			AlertID:      "alertId",
-			UpdateTime:   timeInTest,
-			CreationTime: timeInTest,
-			Severity:     "INFO",
-			DedupString:  "dedupString",
-			LogTypes:     []string{"AWS.CloudTrail"},
-			EventCount:   100,
+			RuleID:          "ruleId",
+			AlertID:         "alertId",
+			UpdateTime:      timeInTest,
+			CreationTime:    timeInTest,
+			Severity:        "INFO",
+			DedupString:     "dedupString",
+			LogTypes:        []string{"AWS.CloudTrail"},
+			EventCount:      100,
+			RuleVersion:     "ruleVersion",
+			RuleDisplayName: aws.String("ruleDisplayName"),
+			Title:           aws.String("title"),
 		},
 	}
 
 	expectedAlertSummary = []*models.AlertSummary{
 		{
-			RuleID:        aws.String("ruleId"),
-			AlertID:       aws.String("alertId"),
-			UpdateTime:    aws.Time(timeInTest),
-			CreationTime:  aws.Time(timeInTest),
-			Severity:      aws.String("INFO"),
-			DedupString:   aws.String("dedupString"),
-			EventsMatched: aws.Int(100),
+			RuleID:          aws.String("ruleId"),
+			RuleVersion:     aws.String("ruleVersion"),
+			RuleDisplayName: aws.String("ruleDisplayName"),
+			AlertID:         aws.String("alertId"),
+			UpdateTime:      aws.Time(timeInTest),
+			CreationTime:    aws.Time(timeInTest),
+			Severity:        aws.String("INFO"),
+			DedupString:     aws.String("dedupString"),
+			EventsMatched:   aws.Int(100),
+			Title:           aws.String("title"),
 		},
 	}
 )
@@ -83,6 +89,82 @@ func TestListAlertsForRule(t *testing.T) {
 func TestListAllAlerts(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
+
+	input := &models.ListAlertsInput{
+		PageSize:          aws.Int(10),
+		ExclusiveStartKey: aws.String("startKey"),
+	}
+
+	tableMock.On("ListAll", aws.String("startKey"), aws.Int(10)).
+		Return(alertItems, aws.String("lastKey"), nil)
+	result, err := API{}.ListAlerts(input)
+	require.NoError(t, err)
+
+	assert.Equal(t, &models.ListAlertsOutput{
+		Alerts:           expectedAlertSummary,
+		LastEvaluatedKey: aws.String("lastKey"),
+	}, result)
+}
+
+// Verifies backwards compatibility
+// Verifies that API returns correct results when alert title is not specified
+func TestListAllAlertsWithoutTitle(t *testing.T) {
+	tableMock := &tableMock{}
+	alertsDB = tableMock
+
+	alertItems := []*table.AlertItem{
+		{
+			RuleID:       "ruleId",
+			AlertID:      "alertId",
+			UpdateTime:   timeInTest,
+			CreationTime: timeInTest,
+			Severity:     "INFO",
+			DedupString:  "dedupString",
+			LogTypes:     []string{"AWS.CloudTrail"},
+			EventCount:   100,
+			RuleVersion:  "ruleVersion",
+		},
+		{ // Alert with Display Name for rule
+			RuleID:          "ruleId",
+			AlertID:         "alertId",
+			UpdateTime:      timeInTest,
+			CreationTime:    timeInTest,
+			Severity:        "INFO",
+			DedupString:     "dedupString",
+			LogTypes:        []string{"AWS.CloudTrail"},
+			EventCount:      100,
+			RuleVersion:     "ruleVersion",
+			RuleDisplayName: aws.String("ruleDisplayName"),
+		},
+	}
+
+	expectedAlertSummary := []*models.AlertSummary{
+		{
+			RuleID:        aws.String("ruleId"),
+			RuleVersion:   aws.String("ruleVersion"),
+			AlertID:       aws.String("alertId"),
+			UpdateTime:    aws.Time(timeInTest),
+			CreationTime:  aws.Time(timeInTest),
+			Severity:      aws.String("INFO"),
+			DedupString:   aws.String("dedupString"),
+			EventsMatched: aws.Int(100),
+			Title:         aws.String("ruleId"),
+		},
+		{
+			RuleID:          aws.String("ruleId"),
+			RuleVersion:     aws.String("ruleVersion"),
+			AlertID:         aws.String("alertId"),
+			UpdateTime:      aws.Time(timeInTest),
+			CreationTime:    aws.Time(timeInTest),
+			Severity:        aws.String("INFO"),
+			DedupString:     aws.String("dedupString"),
+			EventsMatched:   aws.Int(100),
+			RuleDisplayName: aws.String("ruleDisplayName"),
+			// Since there is no dynamically generated title,
+			// we return the display name
+			Title: aws.String("ruleDisplayName"),
+		},
+	}
 
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),

@@ -27,7 +27,6 @@ class EventMatch:
     log_type: str
     dedup: str
     dedup_period_mins: int
-    severity: str
     event: Dict[str, Any]
     title: Optional[str] = None
 
