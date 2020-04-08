@@ -29,7 +29,7 @@ export type ResetUserPasswordVariables = {
   id: Types.Scalars['ID'];
 };
 
-export type ResetUserPassword = { resetUserPassword: UserDetails };
+export type ResetUserPassword = { resetUserPassword?: Types.Maybe<UserDetails> };
 
 export const ResetUserPasswordDocument = gql`
   mutation ResetUserPassword($id: ID!) {
