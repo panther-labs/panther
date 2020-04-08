@@ -33,7 +33,9 @@ const AnalyticsConsentModal: React.FC = () => {
     onError: error => {
       pushSnackbar({
         variant: 'error',
-        title: extractErrorMessage(error) || 'Failed to update your preferences',
+        title:
+          extractErrorMessage(error) ||
+          "Failed to update your preferences due to an unknown and unpredicted error'",
       });
     },
   });
