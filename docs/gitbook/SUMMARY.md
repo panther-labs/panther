@@ -171,7 +171,7 @@
     * [WAF Web ACL](policies/resources/aws/waf-web-acl.md)
 * [Historical Search](historical-search/README.md)
   * [Example Queries](historical-search/example-queries.md)
-  * [Standard Fields](historical-search/panther-fields.md)
+* [Standard Fields](historical-search/panther-fields.md)
 * [Destinations](destinations/setup/README.md)
   * [Asana](destinations/setup/asana.md)
   * [GitHub](destinations/setup/github.md)
