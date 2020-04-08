@@ -29,7 +29,7 @@ export const SOURCE_LABEL_REGEX = new RegExp('^[a-zA-Z0-9- ]+$');
 
 export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
-export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('(?=.*[!@#\\$%\\^&\\*;:,.<>?/])');
+export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('[^\\d\\sA-Za-z]');
 
 export const DEFAULT_POLICY_FUNCTION =
   'def policy(resource):\n\t# Write your code here.\n\treturn True';
