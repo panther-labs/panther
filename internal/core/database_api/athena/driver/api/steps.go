@@ -18,7 +18,22 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/panther-labs/panther/api/lambda/database/models"
+import (
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sfn"
+	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/api/lambda/database/models"
+)
+
+const (
+	stateMachineName = "panther-athena-workflow"
+)
 
 func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (*models.ExecuteAsyncQueryNotifyOutput, error) {
 	output := &models.ExecuteAsyncQueryNotifyOutput{}
@@ -30,9 +45,36 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 		}
 	}()
 
-	// start workflow
+	worflowJSON, err := jsoniter.Marshal(input)
+	if err != nil {
+		return output, errors.Wrapf(err, "failed to marshal %#v", input)
+	}
 
-	// FIXME: add workflow
+	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	if err != nil || identity.Account == nil {
+		err = errors.Wrapf(err, "failed to get identity %#v", input)
+		return output, err
+	}
 
-	return output, nil
+	if awsSession.Config.Region == nil {
+		err = errors.Wrapf(err, "failed to get aws region %#v", input)
+		return output, err
+	}
+
+	stateMachineARN := fmt.Sprintf("arn:aws:states:%s:%s:stateMachine:%s",
+		*awsSession.Config.Region, *identity.Account, stateMachineName)
+
+	startExecutionInput := &sfn.StartExecutionInput{
+		Input:           aws.String(string(worflowJSON)),
+		Name:            aws.String(uuid.New().String()),
+		StateMachineArn: &stateMachineARN,
+	}
+	startExecutionOutput, err := sfnClient.StartExecution(startExecutionInput)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to start workflow execution for: %#v", input)
+		return output, err
+	}
+	output.WorkflowID = *startExecutionOutput.ExecutionArn
+
+	return output, err
 }

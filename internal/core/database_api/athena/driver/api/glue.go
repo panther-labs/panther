@@ -42,7 +42,8 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 			Name: input.Name,
 		})
 		if err != nil {
-			return output, errors.WithStack(err)
+			err = errors.WithStack(err)
+			return output, err
 		}
 		output.Databases = append(output.Databases, &models.DatabaseDescription{
 			Name:        *glueOutput.Database.Name,
@@ -94,11 +95,15 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 						continue
 					}
 				}
-				output.Tables = append(output.Tables, &models.TableDescription{
-					DatabaseName: input.DatabaseName,
-					Name:         *table.Name,
-					Description:  table.Description, // optional
-				})
+				detail := &models.TableDetail{
+					TableDescription: models.TableDescription{
+						DatabaseName: input.DatabaseName,
+						Name:         *table.Name,
+						Description:  table.Description, // optional
+					},
+				}
+				populateTableDetailColumns(detail, table)
+				output.Tables = append(output.Tables, detail)
 			}
 			return false
 		})
@@ -126,7 +131,8 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 			Name:         aws.String(tableName),
 		})
 		if err != nil {
-			return output, errors.WithStack(err)
+			err = errors.WithStack(err)
+			return output, err
 		}
 		detail := &models.TableDetail{
 			TableDescription: models.TableDescription{
@@ -134,21 +140,25 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 				Name:         *glueTableOutput.Table.Name,
 			},
 		}
-		for _, column := range glueTableOutput.Table.StorageDescriptor.Columns {
-			detail.Columns = append(detail.Columns, &models.TableColumn{
-				Name:        aws.StringValue(column.Name),
-				Type:        aws.StringValue(column.Type),
-				Description: column.Comment,
-			})
-		}
-		for _, column := range glueTableOutput.Table.PartitionKeys {
-			detail.Columns = append(detail.Columns, &models.TableColumn{
-				Name:        aws.StringValue(column.Name),
-				Type:        aws.StringValue(column.Type),
-				Description: column.Comment,
-			})
-		}
-		output.TablesDetails = append(output.TablesDetails, detail)
+		populateTableDetailColumns(detail, glueTableOutput.Table)
+		output.Tables = append(output.Tables, detail)
 	}
 	return output, nil
+}
+
+func populateTableDetailColumns(tableDetail *models.TableDetail, glueTableData *glue.TableData) {
+	for _, column := range glueTableData.StorageDescriptor.Columns {
+		tableDetail.Columns = append(tableDetail.Columns, &models.TableColumn{
+			Name:        aws.StringValue(column.Name),
+			Type:        aws.StringValue(column.Type),
+			Description: column.Comment,
+		})
+	}
+	for _, column := range glueTableData.PartitionKeys {
+		tableDetail.Columns = append(tableDetail.Columns, &models.TableColumn{
+			Name:        aws.StringValue(column.Name),
+			Type:        aws.StringValue(column.Type),
+			Description: column.Comment,
+		})
+	}
 }

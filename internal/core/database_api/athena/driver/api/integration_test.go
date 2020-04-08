@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sfn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -50,8 +51,7 @@ var (
 
 	api = API{}
 
-	lambdaClient *lambda.Lambda
-	s3Client     *s3.S3
+	s3Client *s3.S3
 
 	testBucket        string
 	testPartitionName = "part"
@@ -76,6 +76,8 @@ var (
 	nrows = 10
 	row   = `{"col1": 1}`
 	rows  []string
+
+	testSQL = `select * from ` + testTable
 
 	maxRowsPerResult int64 = 1 // force pagination to test
 )
@@ -151,7 +153,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	getTablesOutput, err := runGetTables(useLambda, getTablesIntput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getTablesOutput.Tables))
-	require.Equal(t, testTable, getTablesOutput.Tables[0].Name)
+	checkTableDetail(t, getTablesOutput.Tables)
 
 	// -------- GetTablesDetail()
 
@@ -161,21 +163,13 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	}
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, getTablesDetailInput)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(getTablesDetailOutput.TablesDetails))
-	require.Equal(t, testTable, getTablesDetailOutput.TablesDetails[0].Name)
-	require.Equal(t, len(columns)+len(partitions), len(getTablesDetailOutput.TablesDetails[0].Columns))
-	require.Equal(t, *columns[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[0].Name)
-	require.Equal(t, *columns[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[0].Type)
-	require.Equal(t, *columns[0].Comment, *getTablesDetailOutput.TablesDetails[0].Columns[0].Description)
-	require.Equal(t, *partitions[0].Name, getTablesDetailOutput.TablesDetails[0].Columns[1].Name)
-	require.Equal(t, *partitions[0].Type, getTablesDetailOutput.TablesDetails[0].Columns[1].Type)
-	require.Equal(t, *partitions[0].Comment, *getTablesDetailOutput.TablesDetails[0].Columns[1].Description)
+	checkTableDetail(t, getTablesDetailOutput.Tables)
 
 	// -------- ExecuteQuery()
 
 	executeQueryInput := &models.ExecuteQueryInput{
 		DatabaseName: testDb,
-		SQL:          `select * from ` + testTable,
+		SQL:          testSQL,
 	}
 	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
 	require.NoError(t, err)
@@ -197,7 +191,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{
 		DatabaseName: testDb,
-		SQL:          `select * from ` + testTable,
+		SQL:          testSQL,
 	}
 	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
 	require.NoError(t, err)
@@ -264,6 +258,35 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			require.Equal(t, models.QueryFailed, getBadQueryStatusOutput.Status)
 			require.True(t, strings.Contains(getBadQueryStatusOutput.Message, "does not exist"))
 			require.Equal(t, badSQL, getBadQueryStatusOutput.SQL)
+			break
+		}
+	}
+
+	//  -------- ExecuteAsyncQueryNotify()
+
+	executeAsyncQueryNotifyInput := &models.ExecuteAsyncQueryNotifyInput{
+		ExecuteAsyncQueryInput: models.ExecuteAsyncQueryInput{
+			DatabaseName: testDb,
+			SQL:          testSQL,
+		},
+		LambdaInvoke: models.LambdaInvoke{
+			LambdaName: "panther-athena-api",
+			MethodName: "notifyAppSync",
+		},
+	}
+	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, executeAsyncQueryNotifyInput)
+	require.NoError(t, err)
+
+	// wait for workflow to finish
+	for {
+		time.Sleep(time.Second * 10)
+		descExecutionInput := &sfn.DescribeExecutionInput{
+			ExecutionArn: &executeAsyncQueryNotifyOutput.WorkflowID,
+		}
+		descExecutionOutput, err := sfnClient.DescribeExecution(descExecutionInput)
+		require.NoError(t, err)
+		if *descExecutionOutput.Status != sfn.ExecutionStatusRunning {
+			require.Equal(t, sfn.ExecutionStatusSucceeded, *descExecutionOutput.Status)
 			break
 		}
 	}
@@ -339,6 +362,20 @@ func runExecuteAsyncQuery(useLambda bool, input *models.ExecuteAsyncQueryInput) 
 	return api.ExecuteAsyncQuery(input)
 }
 
+func runExecuteAsyncQueryNotify(useLambda bool, input *models.ExecuteAsyncQueryNotifyInput) (*models.ExecuteAsyncQueryNotifyOutput, error) {
+	if useLambda {
+		var executeAsyncQueryNotifyInput = struct {
+			ExecuteAsyncQueryNotify *models.ExecuteAsyncQueryNotifyInput
+		}{
+			input,
+		}
+		var executeAsyncQueryNotifyOutput *models.ExecuteAsyncQueryNotifyOutput
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", executeAsyncQueryNotifyInput, &executeAsyncQueryNotifyOutput)
+		return executeAsyncQueryNotifyOutput, err
+	}
+	return api.ExecuteAsyncQueryNotify(input)
+}
+
 func runGetQueryStatus(useLambda bool, input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
 	if useLambda {
 		var getQueryStatusInput = struct {
@@ -365,6 +402,17 @@ func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*mo
 		return getQueryResultsOutput, err
 	}
 	return api.GetQueryResults(input)
+}
+
+func checkTableDetail(t *testing.T, tables []*models.TableDetail) {
+	require.Equal(t, testTable, tables[0].Name)
+	require.Equal(t, len(columns)+len(partitions), len(tables[0].Columns))
+	require.Equal(t, *columns[0].Name, tables[0].Columns[0].Name)
+	require.Equal(t, *columns[0].Type, tables[0].Columns[0].Type)
+	require.Equal(t, *columns[0].Comment, *tables[0].Columns[0].Description)
+	require.Equal(t, *partitions[0].Name, tables[0].Columns[1].Name)
+	require.Equal(t, *partitions[0].Type, tables[0].Columns[1].Type)
+	require.Equal(t, *partitions[0].Comment, *tables[0].Columns[1].Description)
 }
 
 func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {

@@ -21,6 +21,7 @@ type Mutation {
   deleteRule(input: DeleteRuleInput!): Boolean
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
+  queryDone(input: QueryDoneInput!): QueryDone! @aws_iam
   remediateResource(input: RemediateResourceInput!): Boolean
   resetUserPassword(id: ID!): Boolean
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
@@ -737,6 +738,16 @@ input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
+}
+
+input QueryDoneInput {
+  queryId: String!
+  workflowId: String!
+}
+
+type QueryDone @aws_iam {
+  queryId: String!
+  workflowId: String!
 }
 
 enum ComplianceStatusEnum {

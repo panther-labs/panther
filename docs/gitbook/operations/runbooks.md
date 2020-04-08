@@ -27,19 +27,19 @@ This lambda dispatches alerts to their specified outputs (destinations).
  * Failed events will go into the `panther-alerts-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alerts-queue` using the Panther tool `requeue`.
 
 ## panther-alert-forwarder
-The `panther-alert-forwarder` ddb table is updated conditionally when new policies have a violation
- or a time limit has been exceeded.
-
- Failure Impact
- * Processing of alerts could be slowed or stopped if there are errors/throttles.
-
-## panther-alert-forwarder
 The `panther-alert-forwarder` lambda reads from the ddb stream for the table `panther-alert-forwarder`
  and sends them to the `panther-alerts-queue` sqs queue.
 
  Failure Impact
  * Failure of this lambda will stop delivery of alerts to destinations.
  * There will be no data loss until events are purged from the ddb stream (24 hours).
+
+## panther-alert-forwarder
+The `panther-alert-forwarder` ddb table is updated conditionally when new policies have a violation
+ or a time limit has been exceeded.
+
+ Failure Impact
+ * Processing of alerts could be slowed or stopped if there are errors/throttles.
 
 ## panther-alert-processor
 This lambda reads events from the `panther-alert-processor-queue`
@@ -107,6 +107,12 @@ The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
 
  Failure Impact
  * Failure of this lambda will stop the Panther UI from doing Athena queries.
+
+## panther-athena-workflow
+The `panther-athena-workflow` is a Step Functions state machine used execute Athena queries and notify callers when done.
+
+ Failure Impact
+ * Failure of this state machine will stop the Panther UI from doing Athena queries.
 
 ## panther-auditlog-processing
 The panther-auditlog-processing topic is used to send s3 notifications to log processing
@@ -271,13 +277,13 @@ This lambda executes the user-defined policies against infrastructure events.
 This topic triggers the log analysis flow
 
 ## panther-remediation-api
-The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
-
-## panther-remediation-api
 The `panther-remediation-api` lambda triggers AWS remediations.
 
  Failure Impact
  * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
+
+## panther-remediation-api
+The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
 
 ## panther-remediation-processor
 The `panther-remediation-processor` lambda processes queued remediations
@@ -319,14 +325,14 @@ This table holds descriptions of the AWS resources in all accounts being monitor
  * The Panther user interface could be impacted.
 
 ## panther-resources-api
+The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
+
+## panther-resources-api
 The `panther-resources-api` lambda implements the resources API.
 
  Failure Impact
  * Infrastructure scans may be impacted when updating resources.
  * The Panther user interface for display of resources.
-
-## panther-resources-api
-The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
 
 ## panther-resources-queue
 This sqs queue has events from recently changed infrastructure.

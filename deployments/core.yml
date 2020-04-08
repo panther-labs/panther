@@ -697,6 +697,27 @@ Resources:
                 - s3:List*
                 - s3:GetObject
               Resource: 'arn:aws:s3:::panther-*-processeddata-*' # wild card use to allow integration tests
+        - Id: StepsPermissions # start an async workflow
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - states:StartExecution
+              Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
+        - Id: InvokePantherLambdas # call other panther lambdas (notify support)
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-*
+        - Id: CallAppSync # make appsync mutation call 'queryDone()' for notify support
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - appsync:GraphQL
+              Resource: '*'
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -716,21 +737,6 @@ Resources:
             Principal:
               Service: !Sub states.${AWS::Region}.amazonaws.com
       Policies:
-        - PolicyName: LogToCloudWatch
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogDelivery
-                  - logs:GetLogDelivery
-                  - logs:UpdateLogDelivery
-                  - logs:DeleteLogDelivery
-                  - logs:ListLogDeliveries
-                  - logs:PutResourcePolicy
-                  - logs:DescribeResourcePolicies
-                  - logs:DescribeLogGroups
-                Resource: '*'
         - PolicyName: InvokeAthenaLambda
           PolicyDocument:
             Version: 2012-10-17
@@ -742,16 +748,114 @@ Resources:
   AthenaQueryStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: AthenaQuery # FIXME: replace with real workflow
-      DefinitionString: |-
+      StateMachineName: panther-athena-workflow
+      # <cfndoc>
+      # The `panther-athena-workflow` is a Step Functions state machine used execute Athena queries and notify callers when done.
+      #
+      # Failure Impact
+      # * Failure of this state machine will stop the Panther UI from doing Athena queries.
+      # </cfndoc>
+      DefinitionString: !Sub |
         {
-          "StartAt": "HelloWorld",
-          "States": {
-            "HelloWorld": {
-              "Type": "Task",
-              "Resource": "arn:*:lambda:*:*:function:panther-athena-api",
-              "End": true
-            }
-          }
+             "Comment": "Run Athena query. Parameters are: databaseName,sql,lambdaName,methodName",
+             "StartAt": "query",
+             "States": {
+               "query": {
+                 "Type": "Task",
+                 "Resource": "arn:aws:states:::lambda:invoke",
+                 "Parameters": {
+                   "FunctionName": "${AthenaApiFunction.Arn}",
+                   "Payload": {
+                     "executeAsyncQuery": {
+                       "DatabaseName.$": "$.databaseName",
+                       "sql.$": "$.sql"
+                     }
+                   }
+                 },
+                 "ResultPath": "$.queryResults",
+                 "Next": "status"
+               },
+               "running (wait)": {
+                 "Comment": "Pause to allow query to run.",
+                 "Type": "Wait",
+                 "Seconds": 2,
+                 "Next": "status"
+               },
+               "status": {
+                 "Type": "Task",
+                 "Resource": "arn:aws:states:::lambda:invoke",
+                 "Parameters": {
+                   "FunctionName": "${AthenaApiFunction.Arn}",
+                   "Payload": {
+                     "getQueryStatus": {
+                       "queryId.$": "$.queryResults.Payload.queryId"
+                     }
+                   }
+                 },
+                 "ResultPath": "$.queryStatus",
+                 "Next": "done?"
+               },
+               "done?": {
+                 "Type": "Choice",
+                 "Choices": [
+                 {
+                   "Variable": "$.queryStatus.Payload.status",
+                   "StringEquals": "succeeded",
+                   "Next": "succeeded"
+                 },
+                 {
+                   "Variable": "$.queryStatus.Payload.status",
+                   "StringEquals": "failed",
+                   "Next": "failed"
+                 }
+                 ],
+                 "Default": "running (wait)"
+               },
+               "succeeded": {
+                 "Type": "Pass",
+                 "Next": "notify?"
+               },
+               "failed": {
+                 "Type": "Pass",
+                 "Next": "notify?"
+               },
+               "notify?": {
+                 "Type": "Choice",
+                 "Choices": [
+                 {
+                   "Variable": "$.lambdaName",
+                   "StringEquals": "",
+                   "Next": "no"
+                 }
+                 ],
+                 "Default": "yes"
+               },
+               "yes": {
+                 "Type": "Pass",
+                 "Next": "notify"
+               },
+               "no": {
+                 "Type": "Pass",
+                 "End": true
+               },
+               "notify": {
+                 "Comment": "Call lambdaName.methodName with queryId and workflowId to notify",
+                 "Type": "Task",
+                 "Resource": "arn:aws:states:::lambda:invoke",
+                 "Parameters": {
+                   "FunctionName": "${AthenaApiFunction.Arn}",
+                   "Payload": {
+                     "invokeNotifyLambda": {
+                       "queryId.$": "$.queryResults.Payload.queryId",
+                       "lambdaName.$": "$.lambdaName",
+                       "methodName.$": "$.methodName",
+                       "workflowId.$": "$$.Execution.Id"
+                     }
+                   }
+                 },
+                 "ResultPath": "$.notifyOutput",
+                 "End": true
+               }
+             }
         }
       RoleArn: !GetAtt AthenaStepFunctionRole.Arn
