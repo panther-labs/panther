@@ -52,33 +52,32 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 		operation.Stop().Log(err, zap.Int("messageCount", len(event.Records)))
 	}()
 
+	// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
 	for _, record := range event.Records {
-		newAlertItem, err := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
-		if err != nil {
+		oldAlertDedupEvent, unmarshalErr := forwarder.FromDynamodDBAttribute(record.Change.OldImage)
+		if unmarshalErr != nil {
 			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
 			// continuing since there is nothing we can do here
 			continue
 		}
-		// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
-		if err = forwarder.Store(newAlertItem); err != nil {
-			return errors.Wrap(err, "encountered issue while storing alert")
+
+		newAlertDedupEvent, unmarshalErr := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
+		if unmarshalErr != nil {
+			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
+			// continuing since there is nothing we can do here
+			continue
 		}
 
-		var oldAlertEvent *forwarder.AlertDedupEvent
-		if record.Change.OldImage != nil {
-			oldAlertEvent, err = forwarder.FromDynamodDBAttribute(record.Change.OldImage)
-			if err != nil {
-				operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
-				// continuing since there is nothing we can do here
-				continue
-			}
+		if newAlertDedupEvent == nil {
+			// This can happen only if someone manually deleted entries from DDB
+			// It shouldn't happen under normal operation - only if someone altered the DDB manually.
+			// We can skip these records since there is nothing we can do in this scenario
+			operation.LogWarn(errors.New("skipping deleted record"))
+			continue
 		}
 
-		if oldAlertEvent == nil || oldAlertEvent.AlertCount != newAlertItem.AlertCount {
-			// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
-			if err = forwarder.SendAlert(newAlertItem); err != nil {
-				return errors.Wrap(err, "encountered issue while sending alert")
-			}
+		if err = forwarder.Handle(oldAlertDedupEvent, newAlertDedupEvent); err != nil {
+			return errors.Wrap(err, "encountered issue while handling deduplication event")
 		}
 	}
 	return nil

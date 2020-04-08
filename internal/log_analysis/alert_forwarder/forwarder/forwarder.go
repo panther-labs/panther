@@ -26,21 +26,80 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
 const defaultTimePartition = "defaultPartition"
 
-func Store(event *AlertDedupEvent) error {
+func Handle(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) error {
+	if needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent) {
+		return handleNewAlert(newAlertDedupEvent)
+	}
+	return updateExistingAlert(newAlertDedupEvent)
+}
+
+func needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
+	return oldAlertDedupEvent == nil || oldAlertDedupEvent.AlertCount != newAlertDedupEvent.AlertCount
+}
+
+func handleNewAlert(event *AlertDedupEvent) error {
+	ruleInfo, err := getRuleInfo(event)
+	if err != nil {
+		return errors.Wrap(err, "failed to get rule information")
+	}
+
+	if err := storeNewAlert(ruleInfo, event); err != nil {
+		return errors.Wrap(err, "failed to store new alert in DDB")
+	}
+	return sendAlertNotification(ruleInfo, event)
+}
+
+func updateExistingAlert(event *AlertDedupEvent) error {
+	// When updating alert, we need to update only 3 fields
+	// - The number of events included in the alert
+	// - The log types of the events in the alert
+	// - The alert update time
+	updateExpression := expression.
+		Set(expression.Name(alertTableEventCountAttribute), expression.Value(aws.Int64(event.EventCount))).
+		Set(expression.Name(alertTableLogTypesAttribute), expression.Value(aws.StringSlice(event.LogTypes))).
+		Set(expression.Name(alertTableUpdateTimeAttribute), expression.Value(aws.Time(event.UpdateTime)))
+	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
+	if err != nil {
+		return errors.Wrap(err, "failed to build update expression")
+	}
+
+	updateInput := &dynamodb.UpdateItemInput{
+		TableName:                 aws.String(env.AlertsTable),
+		UpdateExpression:          expr.Update(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		Key: map[string]*dynamodb.AttributeValue{
+			alertTablePartitionKey: {S: aws.String(generateAlertID(event))},
+		},
+	}
+
+	_, err = ddbClient.UpdateItem(updateInput)
+	if err != nil {
+		return errors.Wrap(err, "failed to update alert")
+	}
+	return nil
+}
+
+func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 	alert := &Alert{
-		ID:              generateAlertID(event),
+		ID:              generateAlertID(alertDedup),
 		TimePartition:   defaultTimePartition,
-		AlertDedupEvent: *event,
+		Severity:        string(rule.Severity),
+		RuleDisplayName: getRuleDisplayName(rule),
+		Title:           getAlertTitle(rule, alertDedup),
+		AlertDedupEvent: *alertDedup,
 	}
 
 	marshaledAlert, err := dynamodbattribute.MarshalMap(alert)
@@ -58,15 +117,22 @@ func Store(event *AlertDedupEvent) error {
 	return nil
 }
 
-func SendAlert(event *AlertDedupEvent) error {
-	alert, err := getAlert(event)
-	if err != nil {
-		return errors.Wrap(err, "failed to get alert information")
+func sendAlertNotification(rule *models.Rule, alertDedup *AlertDedupEvent) error {
+	alertNotification := &alertModel.Alert{
+		CreatedAt:         aws.Time(alertDedup.CreationTime),
+		PolicyDescription: aws.String(string(rule.Description)),
+		PolicyID:          aws.String(alertDedup.RuleID),
+		PolicyVersionID:   aws.String(alertDedup.RuleVersion),
+		PolicyName:        getRuleDisplayName(rule),
+		Runbook:           aws.String(string(rule.Runbook)),
+		Severity:          aws.String(string(rule.Severity)),
+		Tags:              aws.StringSlice(rule.Tags),
+		Type:              aws.String(alertModel.RuleType),
+		AlertID:           aws.String(generateAlertID(alertDedup)),
+		Title:             aws.String(getAlertTitle(rule, alertDedup)),
 	}
-	if alert == nil {
-		return nil
-	}
-	msgBody, err := jsoniter.MarshalToString(alert)
+
+	msgBody, err := jsoniter.MarshalToString(alertNotification)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal alert notification")
 	}
@@ -82,37 +148,40 @@ func SendAlert(event *AlertDedupEvent) error {
 	return nil
 }
 
+func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
+	if alertDedup.GeneratedTitle != nil {
+		return *alertDedup.GeneratedTitle
+	}
+	ruleDisplayName := getRuleDisplayName(rule)
+	if ruleDisplayName != nil {
+		return *ruleDisplayName
+	}
+	return string(rule.ID)
+}
+
+func getRuleDisplayName(rule *models.Rule) *string {
+	if len(rule.DisplayName) > 0 {
+		return aws.String(string(rule.DisplayName))
+	}
+	return nil
+}
+
 func generateAlertID(event *AlertDedupEvent) string {
 	key := event.RuleID + ":" + strconv.FormatInt(event.AlertCount, 10) + ":" + event.DeduplicationString
 	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
 	return hex.EncodeToString(keyHash[:])
 }
 
-func getAlert(alert *AlertDedupEvent) (*alertModel.Alert, error) {
+func getRuleInfo(event *AlertDedupEvent) (*models.Rule, error) {
 	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
-		RuleID:     alert.RuleID,
+		RuleID:     event.RuleID,
+		VersionID:  aws.String(event.RuleVersion),
 		HTTPClient: httpClient,
 	})
 
 	if err != nil {
-		if err.Error() == (&policiesoperations.GetRuleNotFound{}).Error() {
-			return nil, nil
-		}
-
-		return nil, errors.Wrapf(err, "failed to fetch information for ruleID %s", alert.RuleID)
+		return nil, errors.Wrapf(err, "failed to fetch information for ruleID [%s], version [%s]",
+			event.RuleID, event.RuleVersion)
 	}
-
-	return &alertModel.Alert{
-		CreatedAt:         aws.Time(alert.CreationTime),
-		PolicyDescription: aws.String(string(rule.Payload.Description)),
-		PolicyID:          aws.String(alert.RuleID),
-		PolicyVersionID:   aws.String(alert.RuleVersion),
-		PolicyName:        aws.String(string(rule.Payload.DisplayName)),
-		Runbook:           aws.String(string(rule.Payload.Runbook)),
-		Severity:          aws.String(alert.Severity),
-		Tags:              aws.StringSlice(rule.Payload.Tags),
-		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String(generateAlertID(alert)),
-		Title:             alert.Title,
-	}, nil
+	return rule.Payload, nil
 }
