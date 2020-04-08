@@ -121,8 +121,8 @@ func testGo() bool {
 		return false
 	}
 
-	// One package is explicitly skipped by -race, we have to run just the unit tests separately
-	if err := runGoTest("test", "-vet", "", "-cover", "internal/log_analysis/log_processor/destinations"); err != nil {
+	// One package is explicitly skipped by -race, we have to run its unit tests separately
+	if err := runGoTest("test", "-vet", "", "-cover", "./internal/log_analysis/log_processor/destinations"); err != nil {
 		logger.Errorf("go unit tests failed: %v", err)
 		return false
 	}

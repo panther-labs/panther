@@ -28,6 +28,7 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/config"
 )
