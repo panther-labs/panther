@@ -29,7 +29,6 @@ class TestEngine(TestCase):
                 'id': 'rule_id',
                 'resourceTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
-                'severity': 'INFO',
                 'versionId': 'version'
             }
         ]
@@ -45,13 +44,11 @@ class TestEngine(TestCase):
                 'id': 'aws_globals',
                 'resourceTypes': ['log'],
                 'body': 'def is_true():\n\treturn True',
-                'severity': 'INFO',
                 'versionId': 'version'
             }, {
                 'id': 'rule_id',
                 'resourceTypes': ['log'],
                 'body': 'from aws_globals import is_true\ndef rule(event):\n\tis_true()',
-                'severity': 'INFO',
                 'versionId': 'version'
             }
         ]
@@ -69,7 +66,6 @@ class TestEngine(TestCase):
                 'id': 'rule_id_1',
                 'resourceTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
-                'severity': 'INFO',
                 'versionId': 'version',
                 'dedupPeriodMinutes': 120
             },  # This rule should match the event
@@ -77,7 +73,6 @@ class TestEngine(TestCase):
                 'id': 'rule_id_2',
                 'resourceTypes': ['log'],
                 'body': 'def rule(event):\n\treturn False',
-                'severity': 'INFO',
                 'versionId': 'version'
             }  # This rule shouldn't match the event
         ]
@@ -89,7 +84,6 @@ class TestEngine(TestCase):
                 rule_id='rule_id_1',
                 rule_version='version',
                 log_type='log',
-                severity='INFO',
                 dedup='defaultDedupString:rule_id_1',
                 dedup_period_mins=120,
                 event={}
@@ -104,19 +98,16 @@ class TestEngine(TestCase):
                 'id': 'rule_id_1',
                 'resourceTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
-                'severity': 'INFO',
                 'versionId': 'version'
             }, {
                 'id': 'rule_id_2',
                 'resourceTypes': ['log'],
                 'body': 'def rule(event):\n\traise Exception()',
-                'severity': 'INFO',
                 'versionId': 'version'
             }, {
                 'id': 'rule_id_3',
                 'resourceTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
-                'severity': 'INFO',
                 'versionId': 'version'
             }
         ]
@@ -128,7 +119,6 @@ class TestEngine(TestCase):
                 rule_id='rule_id_1',
                 rule_version='version',
                 log_type='log',
-                severity='INFO',
                 dedup='defaultDedupString:rule_id_1',
                 event={},
                 dedup_period_mins=60
@@ -137,7 +127,6 @@ class TestEngine(TestCase):
                 rule_id='rule_id_3',
                 rule_version='version',
                 log_type='log',
-                severity='INFO',
                 dedup='defaultDedupString:rule_id_3',
                 event={},
                 dedup_period_mins=60
