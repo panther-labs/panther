@@ -26,24 +26,34 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	alertTablePartitionKey        = "id"
+	alertTableLogTypesAttribute   = "logTypes"
+	alertTableEventCountAttribute = "eventCount"
+	alertTableUpdateTimeAttribute = "updateTime"
+)
+
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
 	RuleID              string    `dynamodbav:"ruleId,string"`
 	RuleVersion         string    `dynamodbav:"ruleVersion,string"`
 	DeduplicationString string    `dynamodbav:"dedup,string"`
-	AlertCount          int64     `dynamodbav:"-"` // Not storing this field in DDB
 	CreationTime        time.Time `dynamodbav:"creationTime,string"`
 	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
 	EventCount          int64     `dynamodbav:"eventCount,number"`
-	Severity            string    `dynamodbav:"severity,string"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
-	Title               *string   `dynamodbav:"title,string,omitempty"`
+	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
+	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
 type Alert struct {
-	ID            string `dynamodbav:"id,string"`
-	TimePartition string `dynamodbav:"timePartition,string"`
+	ID              string  `dynamodbav:"id,string"`
+	TimePartition   string  `dynamodbav:"timePartition,string"`
+	Severity        string  `dynamodbav:"severity,string"`
+	RuleDisplayName *string `dynamodbav:"ruleDisplayName,string"`
+	Title           string  `dynamodbav:"title,string"` // The alert title. It will be the Python-generated title or a default one if
+	// no Python-generated title is available.
 	AlertDedupEvent
 }
 
@@ -57,6 +67,11 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 			}
 		}
 	}()
+
+	if input == nil {
+		return nil, nil
+	}
+
 	ruleID, err := getAttribute("ruleId", input)
 	if err != nil {
 		return nil, err
@@ -68,11 +83,6 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 	}
 
 	deduplicationString, err := getAttribute("dedup", input)
-	if err != nil {
-		return nil, err
-	}
-
-	severity, err := getAttribute("severity", input)
 	if err != nil {
 		return nil, err
 	}
@@ -110,15 +120,13 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		CreationTime:        time.Unix(alertCreationEpoch, 0).UTC(),
 		UpdateTime:          time.Unix(alertUpdateEpoch, 0).UTC(),
 		EventCount:          eventCount,
-		Severity:            severity.String(),
 		LogTypes:            logTypes.StringSet(),
 	}
 
-	title := getOptionalAttribute("title", input)
-	if title != nil {
-		result.Title = aws.String(title.String())
+	generatedTitle := getOptionalAttribute("title", input)
+	if generatedTitle != nil {
+		result.GeneratedTitle = aws.String(generatedTitle.String())
 	}
-
 	return result, nil
 }
 

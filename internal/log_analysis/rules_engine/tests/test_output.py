@@ -47,7 +47,6 @@ class TestMatchedEventsBuffer(TestCase):
             log_type='log_type',
             dedup='dedup',
             dedup_period_mins=100,
-            severity='INFO',
             event={'data_key': 'data_value'}
         )
         buffer.add_event(event_match)
@@ -68,9 +67,8 @@ class TestMatchedEventsBuffer(TestCase):
                 '#6': 'alertCreationTime',
                 '#7': 'alertUpdateTime',
                 '#8': 'eventCount',
-                '#9': 'severity',
-                '#10': 'logTypes',
-                '#11': 'ruleVersion'
+                '#9': 'logTypes',
+                '#10': 'ruleVersion'
             },
             ExpressionAttributeValues={
                 ':1': {
@@ -95,12 +93,9 @@ class TestMatchedEventsBuffer(TestCase):
                     'N': '1'
                 },
                 ':9': {
-                    'S': 'INFO'
-                },
-                ':10': {
                     'SS': ['log_type']
                 },
-                ':11': {
+                ':10': {
                     'S': 'rule_version'
                 }
             },
@@ -112,7 +107,7 @@ class TestMatchedEventsBuffer(TestCase):
             },
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
+            UpdateExpression='ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)
@@ -163,24 +158,12 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         buffer.add_event(
             EventMatch(
-                rule_id='id',
-                rule_version='version',
-                log_type='log1',
-                dedup='dedup',
-                dedup_period_mins=100,
-                severity='INFO',
-                event={'key1': 'value1'}
+                rule_id='id', rule_version='version', log_type='log1', dedup='dedup', dedup_period_mins=100, event={'key1': 'value1'}
             )
         )
         buffer.add_event(
             EventMatch(
-                rule_id='id',
-                rule_version='version',
-                log_type='log2',
-                dedup='dedup',
-                dedup_period_mins=100,
-                severity='INFO',
-                event={'key2': 'value2'}
+                rule_id='id', rule_version='version', log_type='log2', dedup='dedup', dedup_period_mins=100, event={'key2': 'value2'}
             )
         )
 
@@ -225,24 +208,12 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         buffer.add_event(
             EventMatch(
-                rule_id='id1',
-                rule_version='version',
-                log_type='log',
-                dedup='dedup',
-                dedup_period_mins=100,
-                severity='INFO',
-                event={'key1': 'value1'}
+                rule_id='id1', rule_version='version', log_type='log', dedup='dedup', dedup_period_mins=100, event={'key1': 'value1'}
             )
         )
         buffer.add_event(
             EventMatch(
-                rule_id='id2',
-                rule_version='version',
-                log_type='log',
-                dedup='dedup',
-                dedup_period_mins=100,
-                severity='INFO',
-                event={'key2': 'value2'}
+                rule_id='id2', rule_version='version', log_type='log', dedup='dedup', dedup_period_mins=100, event={'key2': 'value2'}
             )
         )
 
@@ -287,24 +258,12 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         buffer.add_event(
             EventMatch(
-                rule_id='id',
-                rule_version='version',
-                log_type='log',
-                dedup='dedup',
-                dedup_period_mins=100,
-                severity='INFO',
-                event={'key1': 'value1'}
+                rule_id='id', rule_version='version', log_type='log', dedup='dedup', dedup_period_mins=100, event={'key1': 'value1'}
             )
         )
         buffer.add_event(
             EventMatch(
-                rule_id='id',
-                rule_version='version',
-                log_type='log',
-                dedup='dedup',
-                dedup_period_mins=100,
-                severity='INFO',
-                event={'key2': 'value2'}
+                rule_id='id', rule_version='version', log_type='log', dedup='dedup', dedup_period_mins=100, event={'key2': 'value2'}
             )
         )
 
@@ -350,7 +309,6 @@ class TestMatchedEventsBuffer(TestCase):
             log_type='log_type',
             dedup='dedup',
             dedup_period_mins=100,
-            severity='INFO',
             event={'data_key': 'data_value'}
         )
 

@@ -35,15 +35,20 @@ func TestConvertAttribute(t *testing.T) {
 		AlertCount:          10,
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
 		UpdateTime:          time.Unix(1582285280, 0).UTC(),
-		Severity:            "INFO",
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
-		Title:               aws.String("test title"),
+		GeneratedTitle:      aws.String("test title"),
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())
 	require.NoError(t, err)
 	require.Equal(t, expectedAlertDedup, alertDedupEvent)
+}
+
+func TestConvertNilValue(t *testing.T) {
+	alertDedupEvent, err := FromDynamodDBAttribute(nil)
+	require.NoError(t, err)
+	require.Nil(t, alertDedupEvent)
 }
 
 func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
@@ -54,7 +59,6 @@ func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
 		AlertCount:          10,
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
 		UpdateTime:          time.Unix(1582285280, 0).UTC(),
-		Severity:            "INFO",
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 	}
@@ -122,14 +126,6 @@ func TestMissingLogTypes(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestMissingSeverity(t *testing.T) {
-	testInput := getNewTestCase()
-	delete(testInput, "severity")
-	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
-	require.Nil(t, alertDedupEvent)
-	require.Error(t, err)
-}
-
 func TestInvalidInteger(t *testing.T) {
 	testInput := getNewTestCase()
 	testInput["alertCreationTime"] = events.NewNumberAttribute("notaninteger")
@@ -155,7 +151,6 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"alertCreationTime": events.NewNumberAttribute("1582285279"),
 		"alertUpdateTime":   events.NewNumberAttribute("1582285280"),
 		"eventCount":        events.NewNumberAttribute("100"),
-		"severity":          events.NewStringAttribute("INFO"),
 		"logTypes":          events.NewStringSetAttribute([]string{"Log.Type.1", "Log.Type.2"}),
 		"title":             events.NewStringAttribute("test title"),
 	}
