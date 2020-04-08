@@ -299,8 +299,6 @@ Resources:
       TypeName: Query
       FieldName: listLogDatabases
       DataSourceName: !GetAtt DatabaseAPILambdaDataSource.Name
-      CachingConfig:
-        Ttl: 3600
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
@@ -324,10 +322,6 @@ Resources:
       TypeName: Query
       FieldName: getLogDatabase
       DataSourceName: !GetAtt DatabaseAPILambdaDataSource.Name
-      CachingConfig:
-        Ttl: 3600
-        CachingKeys:
-          - $ctx.args.name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
@@ -353,11 +347,6 @@ Resources:
       TypeName: Query
       FieldName: getLogDatabaseTable
       DataSourceName: !GetAtt DatabaseAPILambdaDataSource.Name
-      CachingConfig:
-        Ttl: 3600
-        CachingKeys:
-          - $ctx.args.input.databaseName
-          - $ctx.args.input.name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
@@ -384,10 +373,6 @@ Resources:
       TypeName: LogDatabase
       FieldName: tables
       DataSourceName: !GetAtt DatabaseAPILambdaDataSource.Name
-      CachingConfig:
-        Ttl: 3600
-        CachingKeys:
-          - $ctx.source.name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
@@ -403,41 +388,6 @@ Resources:
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
           $util.toJson($context.result.tables)
-        #end
-
-  LogDatabaseTableColumnsFieldResolver:
-    Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: LogDatabaseTable
-      FieldName: columns
-      DataSourceName: !GetAtt DatabaseAPILambdaDataSource.Name
-      CachingConfig:
-        Ttl: 3600
-        CachingKeys:
-          - $ctx.source.databaseName
-          - $ctx.source.name
-      RequestMappingTemplate: |
-        #if ($ctx.source.columns)
-          #return($ctx.source.columns)
-        #end
-
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "getTablesDetail": {
-              "databaseName": $ctx.source.databaseName,
-              "names": [$ctx.source.name]
-            }
-          })
-        }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result.tablesDetails.get(0).columns)
         #end
 
   GetDestinationResolver:
