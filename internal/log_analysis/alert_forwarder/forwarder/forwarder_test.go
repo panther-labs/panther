@@ -29,9 +29,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -40,27 +39,8 @@ import (
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
-
-type mockDynamoDB struct {
-	dynamodbiface.DynamoDBAPI
-	mock.Mock
-}
-
-func (m *mockDynamoDB) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.PutItemOutput), args.Error(1)
-}
-
-type mockSqs struct {
-	sqsiface.SQSAPI
-	mock.Mock
-}
-
-func (m *mockSqs) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
-}
 
 type mockRoundTripper struct {
 	http.RoundTripper
@@ -73,22 +53,35 @@ func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, err
 }
 
 var (
-	testAlertDedupEvent = &AlertDedupEvent{
+	oldAlertDedupEvent = &AlertDedupEvent{
 		RuleID:              "ruleId",
 		RuleVersion:         "ruleVersion",
 		DeduplicationString: "dedupString",
 		AlertCount:          10,
 		CreationTime:        time.Now().UTC(),
 		UpdateTime:          time.Now().UTC(),
-		Severity:            "INFO",
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
-		Title:               aws.String("test title"),
+		GeneratedTitle:      aws.String("test title"),
+	}
+
+	newAlertDedupEvent = &AlertDedupEvent{
+		RuleID:              oldAlertDedupEvent.RuleID,
+		RuleVersion:         oldAlertDedupEvent.RuleVersion,
+		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
+		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
+		CreationTime:        time.Now().UTC(),
+		UpdateTime:          time.Now().UTC(),
+		EventCount:          oldAlertDedupEvent.EventCount,
+		LogTypes:            oldAlertDedupEvent.LogTypes,
+		GeneratedTitle:      oldAlertDedupEvent.GeneratedTitle,
 	}
 
 	testRuleResponse = &models.Rule{
+		ID:          "ruleId",
 		Description: "Description",
 		DisplayName: "DisplayName",
+		Severity:    "INFO",
 		Runbook:     "Runbook",
 		Tags:        []string{"Tag"},
 	}
@@ -99,14 +92,50 @@ func init() {
 	env.AlertingQueueURL = "queueUrl"
 }
 
-func TestStore(t *testing.T) {
-	ddbMock := &mockDynamoDB{}
+func TestHandleStoreAndSendNotification(t *testing.T) {
+	ddbMock := &testutils.DynamoDBMock{}
 	ddbClient = ddbMock
 
+	sqsMock := &testutils.SqsMock{}
+	sqsClient = sqsMock
+
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient = &http.Client{Transport: mockRoundTripper}
+	policyConfig = policiesclient.DefaultTransportConfig().
+		WithHost("host").
+		WithBasePath("path")
+	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+
+	expectedAlertNotification := &alertModel.Alert{
+		CreatedAt:         aws.Time(newAlertDedupEvent.CreationTime),
+		PolicyDescription: aws.String(string(testRuleResponse.Description)),
+		PolicyID:          aws.String(newAlertDedupEvent.RuleID),
+		PolicyVersionID:   aws.String(newAlertDedupEvent.RuleVersion),
+		PolicyName:        aws.String(string(testRuleResponse.DisplayName)),
+		Runbook:           aws.String(string(testRuleResponse.Runbook)),
+		Severity:          aws.String(string(testRuleResponse.Severity)),
+		Tags:              aws.StringSlice([]string{"Tag"}),
+		Type:              aws.String(alertModel.RuleType),
+		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Title:             newAlertDedupEvent.GeneratedTitle,
+	}
+	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
+	require.NoError(t, err)
+	expectedSendMessageInput := &sqs.SendMessageInput{
+		MessageBody: aws.String(expectedMarshaledAlertNotification),
+		QueueUrl:    aws.String("queueUrl"),
+	}
+
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
+
 	expectedAlert := &Alert{
-		ID:              "8c1b7f1a597d0480354e66c3a6266ccc",
+		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
-		AlertDedupEvent: *testAlertDedupEvent,
+		Severity:        string(testRuleResponse.Severity),
+		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
+		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
+		AlertDedupEvent: *newAlertDedupEvent,
 	}
 
 	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
@@ -118,20 +147,18 @@ func TestStore(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
-	assert.NoError(t, Store(testAlertDedupEvent))
+	assert.NoError(t, Handle(oldAlertDedupEvent, newAlertDedupEvent))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
 }
 
-// The handler signatures must match those in the LambdaInput struct.
-func TestStoreDDBError(t *testing.T) {
-	ddbMock := &mockDynamoDB{}
+func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
+	ddbMock := &testutils.DynamoDBMock{}
 	ddbClient = ddbMock
 
-	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, errors.New("error"))
-	assert.Error(t, Store(testAlertDedupEvent))
-}
-
-func TestSendAlert(t *testing.T) {
-	sqsMock := &mockSqs{}
+	sqsMock := &testutils.SqsMock{}
 	sqsClient = sqsMock
 
 	mockRoundTripper := &mockRoundTripper{}
@@ -141,119 +168,263 @@ func TestSendAlert(t *testing.T) {
 		WithBasePath("path")
 	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
-	expectedAlert := &alertModel.Alert{
-		CreatedAt:         aws.Time(testAlertDedupEvent.CreationTime),
-		PolicyDescription: aws.String("Description"),
-		PolicyID:          aws.String(testAlertDedupEvent.RuleID),
-		PolicyVersionID:   aws.String(testAlertDedupEvent.RuleVersion),
-		PolicyName:        aws.String("DisplayName"),
-		Runbook:           aws.String("Runbook"),
-		Severity:          aws.String(testAlertDedupEvent.Severity),
-		Tags:              aws.StringSlice([]string{"Tag"}),
-		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("8c1b7f1a597d0480354e66c3a6266ccc"),
-		Title:             aws.String("test title"),
-	}
-	expectedMarshaledEvent, err := jsoniter.MarshalToString(expectedAlert)
-	require.NoError(t, err)
-	expectedSendMessageInput := &sqs.SendMessageInput{
-		MessageBody: aws.String(expectedMarshaledEvent),
-		QueueUrl:    aws.String("queueUrl"),
-	}
-
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
-	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
-	assert.NoError(t, SendAlert(testAlertDedupEvent))
-}
-
-func TestSendAlertWithoutTitle(t *testing.T) {
-	sqsMock := &mockSqs{}
-	sqsClient = sqsMock
-
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
-	policyConfig = policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
-
-	testEvent := &AlertDedupEvent{
-		RuleID:              "ruleId",
-		RuleVersion:         "ruleVersion",
-		DeduplicationString: "dedupString",
-		AlertCount:          10,
+	newAlertDedupEventWithoutTitle := &AlertDedupEvent{
+		RuleID:              oldAlertDedupEvent.RuleID,
+		RuleVersion:         oldAlertDedupEvent.RuleVersion,
+		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
+		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
 		CreationTime:        time.Now().UTC(),
 		UpdateTime:          time.Now().UTC(),
-		Severity:            "INFO",
-		EventCount:          100,
-		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
-		Title:               nil,
+		EventCount:          oldAlertDedupEvent.EventCount,
+		LogTypes:            oldAlertDedupEvent.LogTypes,
 	}
 
-	expectedAlert := &alertModel.Alert{
-		CreatedAt:         aws.Time(testEvent.CreationTime),
-		PolicyDescription: aws.String("Description"),
-		PolicyID:          aws.String(testEvent.RuleID),
-		PolicyVersionID:   aws.String(testEvent.RuleVersion),
-		PolicyName:        aws.String("DisplayName"),
-		Runbook:           aws.String("Runbook"),
-		Severity:          aws.String(testAlertDedupEvent.Severity),
+	expectedAlertNotification := &alertModel.Alert{
+		CreatedAt:         aws.Time(newAlertDedupEventWithoutTitle.CreationTime),
+		PolicyDescription: aws.String(string(testRuleResponse.Description)),
+		PolicyID:          aws.String(newAlertDedupEventWithoutTitle.RuleID),
+		PolicyVersionID:   aws.String(newAlertDedupEventWithoutTitle.RuleVersion),
+		Runbook:           aws.String(string(testRuleResponse.Runbook)),
+		Severity:          aws.String(string(testRuleResponse.Severity)),
 		Tags:              aws.StringSlice([]string{"Tag"}),
 		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("8c1b7f1a597d0480354e66c3a6266ccc"),
+		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Title:             aws.String(newAlertDedupEventWithoutTitle.RuleID),
 	}
-	expectedMarshaledEvent, err := jsoniter.MarshalToString(expectedAlert)
+	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
 	expectedSendMessageInput := &sqs.SendMessageInput{
-		MessageBody: aws.String(expectedMarshaledEvent),
+		MessageBody: aws.String(expectedMarshaledAlertNotification),
+		QueueUrl:    aws.String("queueUrl"),
+	}
+
+	testRuleResponseWithoutDisplayName := &models.Rule{
+		ID:          "ruleId",
+		Description: "Description",
+		Severity:    "INFO",
+		Runbook:     "Runbook",
+		Tags:        []string{"Tag"},
+	}
+
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponseWithoutDisplayName, http.StatusOK), nil).Once()
+	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
+
+	expectedAlert := &Alert{
+		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
+		TimePartition:   "defaultPartition",
+		Severity:        string(testRuleResponse.Severity),
+		Title:           newAlertDedupEventWithoutTitle.RuleID,
+		AlertDedupEvent: *newAlertDedupEventWithoutTitle,
+	}
+
+	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
+	assert.NoError(t, err)
+
+	expectedPutItemRequest := &dynamodb.PutItemInput{
+		Item:      expectedMarshaledAlert,
+		TableName: aws.String("alertsTable"),
+	}
+
+	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	assert.NoError(t, Handle(oldAlertDedupEvent, newAlertDedupEventWithoutTitle))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
+}
+
+func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
+	ddbMock := &testutils.DynamoDBMock{}
+	ddbClient = ddbMock
+
+	sqsMock := &testutils.SqsMock{}
+	sqsClient = sqsMock
+
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient = &http.Client{Transport: mockRoundTripper}
+	policyConfig = policiesclient.DefaultTransportConfig().
+		WithHost("host").
+		WithBasePath("path")
+	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+
+	expectedAlertNotification := &alertModel.Alert{
+		CreatedAt:         aws.Time(newAlertDedupEvent.CreationTime),
+		PolicyDescription: aws.String(string(testRuleResponse.Description)),
+		PolicyID:          aws.String(newAlertDedupEvent.RuleID),
+		PolicyVersionID:   aws.String(newAlertDedupEvent.RuleVersion),
+		PolicyName:        aws.String(string(testRuleResponse.DisplayName)),
+		Runbook:           aws.String(string(testRuleResponse.Runbook)),
+		Severity:          aws.String(string(testRuleResponse.Severity)),
+		Tags:              aws.StringSlice([]string{"Tag"}),
+		Type:              aws.String(alertModel.RuleType),
+		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Title:             aws.String("DisplayName"),
+	}
+	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
+	require.NoError(t, err)
+	expectedSendMessageInput := &sqs.SendMessageInput{
+		MessageBody: aws.String(expectedMarshaledAlertNotification),
 		QueueUrl:    aws.String("queueUrl"),
 	}
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
-	assert.NoError(t, SendAlert(testEvent))
+
+	expectedAlert := &Alert{
+		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
+		TimePartition:   "defaultPartition",
+		Severity:        string(testRuleResponse.Severity),
+		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
+		Title:           "DisplayName",
+		AlertDedupEvent: *newAlertDedupEvent,
+	}
+
+	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
+	assert.NoError(t, err)
+
+	expectedPutItemRequest := &dynamodb.PutItemInput{
+		Item:      expectedMarshaledAlert,
+		TableName: aws.String("alertsTable"),
+	}
+
+	dedupEventWithoutTitle := &AlertDedupEvent{
+		RuleID:              newAlertDedupEvent.RuleID,
+		RuleVersion:         newAlertDedupEvent.RuleVersion,
+		DeduplicationString: newAlertDedupEvent.DeduplicationString,
+		AlertCount:          newAlertDedupEvent.AlertCount,
+		CreationTime:        newAlertDedupEvent.CreationTime,
+		UpdateTime:          newAlertDedupEvent.UpdateTime,
+		EventCount:          newAlertDedupEvent.EventCount,
+		LogTypes:            newAlertDedupEvent.LogTypes,
+	}
+
+	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	assert.NoError(t, Handle(oldAlertDedupEvent, dedupEventWithoutTitle))
+
+	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }
 
-func TestSendAlertFailureToGetRule(t *testing.T) {
-	sqsMock := &mockSqs{}
+func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
+	ddbMock := &testutils.DynamoDBMock{}
+	ddbClient = ddbMock
+
+	sqsMock := &testutils.SqsMock{}
 	sqsClient = sqsMock
 
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
+	policyConfig = policiesclient.DefaultTransportConfig().
+		WithHost("host").
+		WithBasePath("path")
+	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusInternalServerError), nil).Once()
-	assert.Error(t, SendAlert(testAlertDedupEvent))
-	sqsMock.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
-}
-
-func TestSendAlertRuleDoesntExist(t *testing.T) {
-	sqsMock := &mockSqs{}
-	sqsClient = sqsMock
-
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
-
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusNotFound), nil).Once()
-	assert.NoError(t, SendAlert(testAlertDedupEvent))
-	sqsMock.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
-}
-
-func TestSendAlertFailureToSendSqsMessage(t *testing.T) {
-	sqsMock := &mockSqs{}
-	sqsClient = sqsMock
-
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
+	expectedAlertNotification := &alertModel.Alert{
+		CreatedAt:         aws.Time(newAlertDedupEvent.CreationTime),
+		PolicyDescription: aws.String(string(testRuleResponse.Description)),
+		PolicyID:          aws.String(newAlertDedupEvent.RuleID),
+		PolicyName:        aws.String(string(testRuleResponse.DisplayName)),
+		PolicyVersionID:   aws.String(newAlertDedupEvent.RuleVersion),
+		Runbook:           aws.String(string(testRuleResponse.Runbook)),
+		Severity:          aws.String(string(testRuleResponse.Severity)),
+		Tags:              aws.StringSlice([]string{"Tag"}),
+		Type:              aws.String(alertModel.RuleType),
+		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Title:             newAlertDedupEvent.GeneratedTitle,
+	}
+	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
+	require.NoError(t, err)
+	expectedSendMessageInput := &sqs.SendMessageInput{
+		MessageBody: aws.String(expectedMarshaledAlertNotification),
+		QueueUrl:    aws.String("queueUrl"),
+	}
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
-	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, errors.New("error"))
-	assert.Error(t, SendAlert(testAlertDedupEvent))
+	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
+
+	expectedAlert := &Alert{
+		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
+		TimePartition:   "defaultPartition",
+		Severity:        string(testRuleResponse.Severity),
+		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
+		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
+		AlertDedupEvent: *newAlertDedupEvent,
+	}
+
+	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
+	require.NoError(t, err)
+
+	expectedPutItemRequest := &dynamodb.PutItemInput{
+		Item:      expectedMarshaledAlert,
+		TableName: aws.String("alertsTable"),
+	}
+
+	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	require.NoError(t, Handle(nil, newAlertDedupEvent))
+
+	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
+}
+
+func TestHandleUpdateAlert(t *testing.T) {
+	ddbMock := &testutils.DynamoDBMock{}
+	ddbClient = ddbMock
+
+	dedupEventWithUpdatedFields := &AlertDedupEvent{
+		RuleID:              newAlertDedupEvent.RuleID,
+		RuleVersion:         newAlertDedupEvent.RuleVersion,
+		DeduplicationString: newAlertDedupEvent.DeduplicationString,
+		AlertCount:          newAlertDedupEvent.AlertCount,
+		CreationTime:        newAlertDedupEvent.CreationTime,
+		UpdateTime:          newAlertDedupEvent.UpdateTime.Add(1 * time.Minute),
+		EventCount:          newAlertDedupEvent.EventCount + 10,
+		LogTypes:            append(newAlertDedupEvent.LogTypes, "New.Log.Type"),
+		GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
+	}
+
+	updateExpression := expression.
+		Set(expression.Name("eventCount"), expression.Value(aws.Int64(dedupEventWithUpdatedFields.EventCount))).
+		Set(expression.Name("logTypes"), expression.Value(aws.StringSlice(dedupEventWithUpdatedFields.LogTypes))).
+		Set(expression.Name("updateTime"), expression.Value(aws.Time(dedupEventWithUpdatedFields.UpdateTime)))
+	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
+	require.NoError(t, err)
+
+	expectedUpdateItemInput := &dynamodb.UpdateItemInput{
+		TableName: aws.String("alertsTable"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {S: aws.String("b25dc23fb2a0b362da8428dbec1381a8")},
+		},
+		UpdateExpression:          expr.Update(),
+		ExpressionAttributeValues: expr.Values(),
+		ExpressionAttributeNames:  expr.Names(),
+	}
+
+	ddbMock.On("UpdateItem", expectedUpdateItemInput).Return(&dynamodb.UpdateItemOutput{}, nil)
+	assert.NoError(t, Handle(newAlertDedupEvent, dedupEventWithUpdatedFields))
+
+	ddbMock.AssertExpectations(t)
+}
+
+func TestHandleUpdateAlertDDBError(t *testing.T) {
+	ddbMock := &testutils.DynamoDBMock{}
+	ddbClient = ddbMock
+
+	dedupEventWithUpdatedFields := &AlertDedupEvent{
+		RuleID:              newAlertDedupEvent.RuleID,
+		RuleVersion:         newAlertDedupEvent.RuleVersion,
+		DeduplicationString: newAlertDedupEvent.DeduplicationString,
+		AlertCount:          newAlertDedupEvent.AlertCount,
+		CreationTime:        newAlertDedupEvent.CreationTime,
+		UpdateTime:          newAlertDedupEvent.UpdateTime.Add(1 * time.Minute),
+		EventCount:          newAlertDedupEvent.EventCount + 10,
+		LogTypes:            append(newAlertDedupEvent.LogTypes, "New.Log.Type"),
+		GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
+	}
+
+	ddbMock.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, errors.New("error"))
+	assert.Error(t, Handle(newAlertDedupEvent, dedupEventWithUpdatedFields))
 }
 
 func generateResponse(body interface{}, httpCode int) *http.Response {
