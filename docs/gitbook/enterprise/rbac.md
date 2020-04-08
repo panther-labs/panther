@@ -1,12 +1,9 @@
 # Role-Based Access Control
 Role-Based Access Control (RBAC) gives Panther Enterprise deployments fine-grained access control for
-their user accounts. Each user is assigned a role with a fully customizable permission set.
-
-## Roles
-In Panther Enterprise, a *role* is a configurable set of permissions and every user is assigned
+their user accounts. A *role* is a configurable set of permissions and every user is assigned
 exactly one role.
 
-### Default Roles
+## Default Roles
 When you first deploy Panther Enterprise, the following 3 roles are created for you:
 
 ![Default Roles](../.gitbook/assets/rbac-default-roles.png)
@@ -17,7 +14,7 @@ community edition and has all available permissions.
 modify settings.
 * The "AnalystReadOnly" role can view resources and alerts and Python code, but can't change anything.
 
-### Customizing Roles
+## Customizing Roles
 All roles (including the default ones above) are fully customizable by any user with UserModify permissions:
 
 * You can create as many roles as you want (see the "Create New" button in the screenshot above)
