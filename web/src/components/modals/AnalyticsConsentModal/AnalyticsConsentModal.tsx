@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Modal, Text, Box, useSnackbar, Alert } from 'pouncejs';
+import { Modal, Text, Box, useSnackbar } from 'pouncejs';
 import useModal from 'Hooks/useModal';
 import AnalyticsConsentForm from 'Components/forms/AnalyticsConsentForm';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -26,14 +26,17 @@ import { useUpdateGeneralSettingsConsents } from './graphql/updateGeneralSetting
 const AnalyticsConsentModal: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { hideModal } = useModal();
-  const [saveConsentPreferences, { data, error }] = useUpdateGeneralSettingsConsents();
-
-  React.useEffect(() => {
-    if (data) {
+  const [saveConsentPreferences] = useUpdateGeneralSettingsConsents({
+    onCompleted: () => {
       pushSnackbar({ variant: 'success', title: `Successfully updated your preferences` });
-      hideModal();
-    }
-  }, [data]);
+    },
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title: extractErrorMessage(error) || 'Failed to update your preferences',
+      });
+    },
+  });
 
   return (
     <Modal
@@ -48,23 +51,15 @@ const AnalyticsConsentModal: React.FC = () => {
           Opt-in to occasionally provide diagnostic information for improving reliability.
           <b> All information is anonymized.</b>
         </Text>
-        {error ? (
-          <Alert
-            title="An error occured"
-            description={extractErrorMessage(error)}
-            variant="error"
-          />
-        ) : (
-          <AnalyticsConsentForm
-            onSubmit={values =>
-              saveConsentPreferences({
-                variables: {
-                  input: values,
-                },
-              })
-            }
-          />
-        )}
+        <AnalyticsConsentForm
+          onSubmit={values =>
+            saveConsentPreferences({
+              variables: {
+                input: values,
+              },
+            })
+          }
+        />
       </Box>
     </Modal>
   );
