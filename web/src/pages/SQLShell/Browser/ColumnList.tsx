@@ -18,6 +18,7 @@ const ColumnList: React.FC = () => {
   } = useBrowserContext();
 
   const { data, loading } = useListColumnsForTable({
+    returnPartialData: true,
     variables: {
       input: {
         databaseName: selectedDatabase,
@@ -32,14 +33,7 @@ const ColumnList: React.FC = () => {
       }),
   });
 
-  if (loading) {
-    return (
-      <Box m={6}>
-        <TablePlaceholder rowCount={10} rowHeight={30} rowGap={15} />
-      </Box>
-    );
-  }
-
+  const columns = data?.getLogDatabaseTable?.columns;
   return (
     <React.Fragment>
       <Flex alignItems="center" mx={2} is="li">
@@ -50,23 +44,30 @@ const ColumnList: React.FC = () => {
           {selectedTable}
         </Text>
       </Flex>
-      <Box overflowY="scroll" is="ul" py={2} height="100%">
-        {data?.getLogDatabaseTable.columns
-          .filter(({ name }) => name.includes(searchValue))
-          .map(({ name, type, description }) => {
-            return (
-              <ColumnListItem
-                key={name}
-                name={name}
-                type={type}
-                description={description}
-                isSelected={selectedColumn === name}
-                isPristine={selectedColumn === null}
-                onClick={selectColumn}
-              />
-            );
-          })}
-      </Box>
+      {loading && !columns && (
+        <Box m={6}>
+          <TablePlaceholder rowCount={8} rowHeight={30} rowGap={15} />
+        </Box>
+      )}
+      {columns && (
+        <Box overflowY="scroll" is="ul" py={2} height="100%">
+          {columns
+            .filter(({ name }) => name.includes(searchValue))
+            .map(({ name, type, description }) => {
+              return (
+                <ColumnListItem
+                  key={name}
+                  name={name}
+                  type={type}
+                  description={description}
+                  isSelected={selectedColumn === name}
+                  isPristine={selectedColumn === null}
+                  onClick={selectColumn}
+                />
+              );
+            })}
+        </Box>
+      )}
     </React.Fragment>
   );
 };

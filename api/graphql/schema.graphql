@@ -46,6 +46,8 @@ type Query {
     input: GetComplianceIntegrationTemplateInput!
   ): IntegrationTemplate!
   getLogIntegration(id: ID!): LogIntegration!
+  getLogDatabase(name: String!): LogDatabase
+  getLogDatabaseTable(input: GetLogDatabaseTableInput!): LogDatabaseTable
   getLogIntegrationTemplate(input: GetLogIntegrationTemplateInput!): IntegrationTemplate!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
@@ -56,6 +58,7 @@ type Query {
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
+  listLogDatabases: [LogDatabase!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
@@ -84,10 +87,34 @@ input ListAlertsInput {
   exclusiveStartKey: String
 }
 
+input GetLogDatabaseTableInput {
+  name: String!
+  databaseName: String!
+}
+
 input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type LogDatabaseTableColumn {
+  name: String!
+  type: String
+  description: String
+}
+
+type LogDatabaseTable {
+  name: String!
+  databaseName: String!
+  description: String
+  columns: [LogDatabaseTableColumn!]!
+}
+
+type LogDatabase {
+  name: String!
+  description: String
+  tables: [LogDatabaseTable!]!
 }
 
 type IntegrationTemplate {

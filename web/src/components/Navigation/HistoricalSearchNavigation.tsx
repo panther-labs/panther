@@ -18,10 +18,19 @@
 
 import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
+import { useListLogDatabases } from 'Pages/SQLShell';
 import urls from 'Source/urls';
 import NavLink from './NavLink';
 
 const HistoricalSearchNavigation: React.FC = () => {
+  // We expect that oftentimes the user will go to the historical data if the historical search
+  // menu was opened.
+  //
+  // As an optimization, prefetch a list of database names as soon as the historical search menu
+  // is opened. This will make the related lambda hot (if it was cold) and will minimize the
+  //  perceived delay from the user's standpoint
+  useListLogDatabases();
+
   return (
     <Box>
       <Heading size="medium" textAlign="center" mt={10} mb={5}>

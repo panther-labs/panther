@@ -1,5 +1,6 @@
 query ListColumnsForTable($input: GetLogDatabaseTableInput!) {
   getLogDatabaseTable(input: $input) {
+    name
     columns {
       name
       type

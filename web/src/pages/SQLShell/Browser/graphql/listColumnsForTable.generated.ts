@@ -29,14 +29,17 @@ export type ListColumnsForTableVariables = {
 };
 
 export type ListColumnsForTable = {
-  getLogDatabaseTable?: Types.Maybe<{
-    columns: Array<Pick<Types.LogDatabaseTableColumn, 'name' | 'type' | 'description'>>;
-  }>;
+  getLogDatabaseTable?: Types.Maybe<
+    Pick<Types.LogDatabaseTable, 'name'> & {
+      columns: Array<Pick<Types.LogDatabaseTableColumn, 'name' | 'type' | 'description'>>;
+    }
+  >;
 };
 
 export const ListColumnsForTableDocument = gql`
   query ListColumnsForTable($input: GetLogDatabaseTableInput!) {
     getLogDatabaseTable(input: $input) {
+      name
       columns {
         name
         type

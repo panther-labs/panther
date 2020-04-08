@@ -1,0 +1,12 @@
+query LoadAllSchemaEntities {
+  listLogDatabases {
+    name
+    tables {
+      name
+      columns {
+        name
+        type
+      }
+    }
+  }
+}

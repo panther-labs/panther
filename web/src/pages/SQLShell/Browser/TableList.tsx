@@ -24,7 +24,7 @@ const TableList: React.FC = () => {
   if (loading) {
     return (
       <Box m={6}>
-        <TablePlaceholder rowCount={10} rowHeight={30} rowGap={15} />
+        <TablePlaceholder rowCount={8} rowHeight={30} rowGap={15} />
       </Box>
     );
   }

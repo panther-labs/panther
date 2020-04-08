@@ -1,21 +1,38 @@
 import React from 'react';
-import { Box } from 'pouncejs';
+import { Box, Button, useSnackbar } from 'pouncejs';
 import Editor from 'Components/Editor';
+import { shouldSaveData } from 'Helpers/connection';
+import { extractErrorMessage } from 'Helpers/utils';
+import { useLoadAllSchemaEntities } from './graphql/loadAllSchemaEntities.generated';
 
-const PLACEHOLDER = `
--- SELECT * FROM default.cloudfront_logs limit 10;
-`;
+const PLACEHOLDER = `Run any SQL query. For example: SELECT * FROM panther_logs.aws_alb;`;
 
 const SQLEditor: React.FC = () => {
-  const minLines = 16;
+  const { pushSnackbar } = useSnackbar();
+  useLoadAllSchemaEntities({
+    skip: shouldSaveData(),
+    onError: error =>
+      pushSnackbar({
+        variant: 'warning',
+        title: 'SQL autocomplete is disabled',
+        description: extractErrorMessage(error),
+      }),
+  });
+
+  const minLines = 19;
   return (
-    <Editor
-      fallback={<Box width="100%" bg="grey500" height={minLines * 16} />}
-      placeholder={PLACEHOLDER}
-      minLines={minLines}
-      mode="sql"
-      width="100%"
-    />
+    <Box>
+      <Editor
+        fallback={<Box width="100%" bg="grey500" height={minLines * 16} />}
+        placeholder={PLACEHOLDER}
+        minLines={minLines}
+        mode="sql"
+        width="100%"
+      />
+      <Button size="large" variant="primary" mt={6}>
+        Run Query
+      </Button>
+    </Box>
   );
 };
 

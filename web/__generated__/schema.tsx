@@ -487,12 +487,6 @@ export type LogIntegrationHealth = {
   kmsKeyStatus: IntegrationItemHealthStatus;
 };
 
-export enum LogQueryStatus {
-  Running = 'running',
-  Succeeded = 'succeeded',
-  Failed = 'failed',
-}
-
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
   webhookURL: Scalars['String'];
@@ -767,7 +761,6 @@ export type Query = {
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
   listLogDatabases: Array<LogDatabase>;
-  listLogDatabaseTables: Array<LogDatabaseTable>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
@@ -832,10 +825,6 @@ export type QueryPoliciesArgs = {
 
 export type QueryPoliciesForResourceArgs = {
   input?: Maybe<PoliciesForResourceInput>;
-};
-
-export type QueryListLogDatabaseTablesArgs = {
-  databaseName: Scalars['String'];
 };
 
 export type QueryOrganizationStatsArgs = {
@@ -1237,7 +1226,6 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   AccountTypeEnum: AccountTypeEnum;
-  LogQueryStatus: LogQueryStatus;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -1352,7 +1340,6 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   AccountTypeEnum: AccountTypeEnum;
-  LogQueryStatus: LogQueryStatus;
 };
 
 export type ActiveSuppressCountResolvers<
@@ -2089,12 +2076,6 @@ export type QueryResolvers<
   >;
   listLogIntegrations?: Resolver<Array<ResolversTypes['LogIntegration']>, ParentType, ContextType>;
   listLogDatabases?: Resolver<Array<ResolversTypes['LogDatabase']>, ParentType, ContextType>;
-  listLogDatabaseTables?: Resolver<
-    Array<ResolversTypes['LogDatabaseTable']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryListLogDatabaseTablesArgs, 'databaseName'>
-  >;
   organizationStats?: Resolver<
     Maybe<ResolversTypes['OrganizationStatsResponse']>,
     ParentType,
