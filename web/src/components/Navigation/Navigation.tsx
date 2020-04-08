@@ -46,7 +46,7 @@ const Navigation = () => {
 
   const isCompliancePage = pathname.includes(urls.compliance.home());
   const isLogAnalysisPage = pathname.includes(urls.logAnalysis.home());
-  const isSettingsPage = pathname.includes(urls.settings.overview());
+  const isSettingsPage = pathname.includes(urls.settings.home());
   const [secondaryNav, setSecondaryNav] = React.useState<NavKeys>(null);
 
   React.useEffect(() => {

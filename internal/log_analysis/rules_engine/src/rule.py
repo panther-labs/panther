@@ -37,8 +37,6 @@ MAX_TITLE_SIZE = 1000
 
 TRUNCATED_STRING_SUFFIX = '... (truncated)'
 
-DEFAULT_RULE_VERSION = 'default'
-
 DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
 
 
@@ -63,7 +61,6 @@ class Rule:
             config: Dictionary that we expect to have the following keys:
                 rule_id: Unique rule identifier
                 body: The rule body
-                severity: The severity of the rule
                 (Optional) version: The version of the rule
                 (Optional) dedup_period_mins: The period during which the events will be deduplicated
         """
@@ -75,14 +72,9 @@ class Rule:
             raise AssertionError('Field "body" of type str is required field')
         self.rule_body = config['body']
 
-        if not ('severity' in config) or not isinstance(config['severity'], str):
-            raise AssertionError('Field "severity" of type str is required field')
-        self.rule_severity = config['severity']
-
         if not ('versionId' in config) or not isinstance(config['versionId'], str):
-            self.rule_version = DEFAULT_RULE_VERSION
-        else:
-            self.rule_version = config['versionId']
+            raise AssertionError('Field "versionId" of type str is required field')
+        self.rule_version = config['versionId']
 
         if not ('dedupPeriodMinutes' in config) or not isinstance(config['dedupPeriodMinutes'], int):
             self.rule_dedup_period_mins = DEFAULT_RULE_DEDUP_PERIOD_MINS
