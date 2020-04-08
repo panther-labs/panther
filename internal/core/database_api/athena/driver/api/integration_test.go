@@ -266,6 +266,43 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	//  -------- ExecuteAsyncQueryNotify()
 
+	/*
+				See: https://aws.amazon.com/premiumsupport/knowledge-center/appsync-notify-subscribers-real-time/
+
+				To see queryDone subscriptions work in the AppSync console:
+			    - Go to Queries
+			    - Pick IAM as auth method
+				- Add a subscription below and click "play" button ... you should see "Subscribed to 1 mutations" and a spinner:
+
+			       subscription integQuerySub {
+			          queryDone(userData: "testUser") {
+			            userData
+			            queryId
+			            workflowId
+			          }
+			       }
+		        - Run integration tests:
+			        pushd internal/core/database_api/athena/driver/api/
+			        export INTEGRATION_TEST=true
+			        aws-vault exec dev-<you>-admin -d 3h -- go test -v
+
+			    - On the console you should see in the results pane something like:
+
+			        {
+			          "data": {
+			           "queryDone": {
+			             "userData": "testUser",
+			             "queryId": "4c223d6e-a41a-418f-b97b-b01f044cbdc9",
+			             "workflowId": "arn:aws:states:us-east-2:050603629990:execution:panther-athena-workflow:cf56beb0-7493-42ae-a9fd-a024812b8eac"
+			           }
+			          }
+			        }
+
+			     NOTE: then UI should call the lambda panther-athena-api:ExecuteAsyncQueryNotify as below and set up
+			     a subscription filtering by user id (or session id). When the query finishes appsync will be notified.
+			     UI should use the queryId to call panther-athena-api:GetQueryResults to display results.
+	*/
+
 	userData := "testUser" // this is expected to be passed all the way through the workflow, validations will enforce
 
 	executeAsyncQueryNotifyInput := &models.ExecuteAsyncQueryNotifyInput{

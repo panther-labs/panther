@@ -36,7 +36,7 @@ require (
 	go.mongodb.org/mongo-driver v1.3.1 // indirect
 	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
-	golang.org/x/tools v0.0.0-20200406172401-903869a8272d // indirect
+	golang.org/x/tools v0.0.0-20200408132156-9ee5ef7a2c0d // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.2.8
