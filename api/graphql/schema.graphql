@@ -24,7 +24,7 @@ type Mutation {
   inviteUser(input: InviteUserInput): User!
   queryDone(input: QueryDoneInput!): QueryDone! @aws_iam
   remediateResource(input: RemediateResourceInput!): Boolean
-  resetUserPassword(id: ID!): Boolean
+  resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
   updateDestination(input: DestinationInput!): Destination

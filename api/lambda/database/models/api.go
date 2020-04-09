@@ -96,7 +96,8 @@ type TableColumn struct {
 type ExecuteAsyncQueryNotifyInput struct {
 	ExecuteAsyncQueryInput
 	LambdaInvoke
-	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
+	UserData     string `json:"userData" validate:"required,gt=0"`      // token passed though to notifications (usually the userid)
+	DelaySeconds int    `json:"delaySeconds" validate:"omitempty,gt=0"` // wait this long before starting workflow (default 0)
 }
 
 type ExecuteAsyncQueryNotifyOutput struct {

@@ -764,9 +764,15 @@ Resources:
       # </cfndoc>
       DefinitionString: !Sub |
         {
-             "Comment": "Run Athena query. Parameters are: databaseName,sql,lambdaName,methodName",
-             "StartAt": "query",
+             "Comment": "Run Athena query. Parameters are: userData, delay, databaseName,sql,lambdaName,methodName",
+             "StartAt": "delay",
              "States": {
+               "delay": {
+                "Comment": "Configurable delay to start",
+                "Type": "Wait",
+                "SecondsPath": "$.delaySeconds",
+                "Next": "query"
+               },
                "query": {
                  "Type": "Task",
                  "Resource": "arn:aws:states:::lambda:invoke",

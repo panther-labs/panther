@@ -25,8 +25,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sfn"
@@ -34,15 +32,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
-	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
+	"github.com/panther-labs/panther/internal/core/database_api/athena/testutils"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
-	testBucketPrefix = "panther-athena-api-processeddata-test-"
-	testDb           = "panther_athena_api_test_db"
-	testTable        = "panther_athena_test_table"
-
 	badSQL = `select * from nosuchtable`
 )
 
@@ -53,31 +47,7 @@ var (
 
 	s3Client *s3.S3
 
-	testBucket        string
-	testPartitionName = "part"
-	testPartition     = "foo"
-	testKey           = testPartitionName + "=" + testPartition + "/testdata.json"
-
-	columns = []*glue.Column{
-		{
-			Name:    aws.String("col1"),
-			Type:    aws.String("int"),
-			Comment: aws.String("this is a column"),
-		},
-	}
-	partitions = []*glue.Column{
-		{
-			Name:    aws.String(testPartitionName),
-			Type:    aws.String("string"),
-			Comment: aws.String("this is a partition"),
-		},
-	}
-
-	nrows = 10
-	row   = `{"col1": 1}`
-	rows  []string
-
-	testSQL = `select * from ` + testTable
+	testSQL = `select * from ` + testutils.TestTable
 
 	maxRowsPerResult int64 = 1 // force pagination to test
 )
@@ -88,11 +58,6 @@ func TestMain(m *testing.M) {
 		SessionInit()
 		lambdaClient = lambda.New(awsSession)
 		s3Client = s3.New(awsSession)
-		testBucket = testBucketPrefix + time.Now().Format("20060102150405")
-
-		for i := 0; i < nrows; i++ {
-			rows = append(rows, row)
-		}
 	}
 	os.Exit(m.Run())
 }
@@ -116,9 +81,9 @@ func TestIntegrationLambdaAthenaAPI(t *testing.T) {
 }
 
 func testAthenaAPI(t *testing.T, useLambda bool) {
-	setupTables(t)
+	testutils.SetupTables(t, glueClient, s3Client)
 	defer func() {
-		removeTables(t)
+		testutils.RemoveTables(t, glueClient, s3Client)
 	}()
 
 	// -------- GetDatabases()
@@ -129,7 +94,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.NoError(t, err)
 	foundDB := false
 	for _, db := range getDatabasesOutput.Databases {
-		if db.Name == testDb {
+		if db.Name == testutils.TestDb {
 			foundDB = true
 		}
 	}
@@ -137,50 +102,50 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	// specific lookup
 	getDatabasesInput = &models.GetDatabasesInput{
-		Name: aws.String(testDb),
+		Name: aws.String(testutils.TestDb),
 	}
 	getDatabasesOutput, err = runGetDatabases(useLambda, getDatabasesInput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getDatabasesOutput.Databases))
-	require.Equal(t, testDb, getDatabasesOutput.Databases[0].Name)
+	require.Equal(t, testutils.TestDb, getDatabasesOutput.Databases[0].Name)
 
 	// -------- GetTables()
 
 	getTablesIntput := &models.GetTablesInput{
-		DatabaseName:  testDb,
+		DatabaseName:  testutils.TestDb,
 		OnlyPopulated: true,
 	}
 	getTablesOutput, err := runGetTables(useLambda, getTablesIntput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getTablesOutput.Tables))
-	checkTableDetail(t, getTablesOutput.Tables)
+	testutils.CheckTableDetail(t, getTablesOutput.Tables)
 
 	// -------- GetTablesDetail()
 
 	getTablesDetailInput := &models.GetTablesDetailInput{
-		DatabaseName: testDb,
-		Names:        []string{testTable},
+		DatabaseName: testutils.TestDb,
+		Names:        []string{testutils.TestTable},
 	}
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, getTablesDetailInput)
 	require.NoError(t, err)
-	checkTableDetail(t, getTablesDetailOutput.Tables)
+	testutils.CheckTableDetail(t, getTablesDetailOutput.Tables)
 
 	// -------- ExecuteQuery()
 
 	executeQueryInput := &models.ExecuteQueryInput{
-		DatabaseName: testDb,
+		DatabaseName: testutils.TestDb,
 		SQL:          testSQL,
 	}
 	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
 	require.NoError(t, err)
 	assert.Equal(t, "", executeQueryOutput.Message)
 	require.Equal(t, models.QuerySucceeded, executeQueryOutput.Status)
-	checkQueryResults(t, true, len(rows)+1, executeQueryOutput.ResultsPage.Rows)
+	checkQueryResults(t, true, len(testutils.TestTableRows)+1, executeQueryOutput.ResultsPage.Rows)
 
 	// -------- ExecuteQuery() BAD SQL
 
 	executeBadQueryInput := &models.ExecuteQueryInput{
-		DatabaseName: testDb,
+		DatabaseName: testutils.TestDb,
 		SQL:          badSQL,
 	}
 	executeBadQueryOutput, err := runExecuteQuery(useLambda, executeBadQueryInput)
@@ -192,7 +157,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- ExecuteAsyncQuery()
 
 	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{
-		DatabaseName: testDb,
+		DatabaseName: testutils.TestDb,
 		SQL:          testSQL,
 	}
 	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
@@ -235,7 +200,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 				resultCount++
 			}
 		}
-		require.Equal(t, len(rows)+1, resultCount) // since we page 1 at a time and have a header
+		require.Equal(t, len(testutils.TestTableRows)+1, resultCount) // since we page 1 at a time and have a header
 	} else {
 		assert.Fail(t, "GetQueryResults failed")
 	}
@@ -243,7 +208,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- ExecuteAsyncQuery() BAD SQL
 
 	executeBadAsyncQueryInput := &models.ExecuteAsyncQueryInput{
-		DatabaseName: testDb,
+		DatabaseName: testutils.TestDb,
 		SQL:          badSQL,
 	}
 	executeBadAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeBadAsyncQueryInput)
@@ -307,7 +272,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeAsyncQueryNotifyInput := &models.ExecuteAsyncQueryNotifyInput{
 		ExecuteAsyncQueryInput: models.ExecuteAsyncQueryInput{
-			DatabaseName: testDb,
+			DatabaseName: testutils.TestDb,
 			SQL:          testSQL,
 		},
 		LambdaInvoke: models.LambdaInvoke{
@@ -446,17 +411,6 @@ func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*mo
 	return api.GetQueryResults(input)
 }
 
-func checkTableDetail(t *testing.T, tables []*models.TableDetail) {
-	require.Equal(t, testTable, tables[0].Name)
-	require.Equal(t, len(columns)+len(partitions), len(tables[0].Columns))
-	require.Equal(t, *columns[0].Name, tables[0].Columns[0].Name)
-	require.Equal(t, *columns[0].Type, tables[0].Columns[0].Type)
-	require.Equal(t, *columns[0].Comment, *tables[0].Columns[0].Description)
-	require.Equal(t, *partitions[0].Name, tables[0].Columns[1].Name)
-	require.Equal(t, *partitions[0].Type, tables[0].Columns[1].Type)
-	require.Equal(t, *partitions[0].Comment, *tables[0].Columns[1].Description)
-}
-
 func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {
 	require.Equal(t, expectedRowCount, len(rows))
 	i := 0
@@ -467,126 +421,5 @@ func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows 
 	}
 	for ; i < nResults; i++ {
 		require.Equal(t, "1", rows[i].Columns[0].Value)
-	}
-}
-
-func setupTables(t *testing.T) {
-	removeTables(t) // in case of left over
-	addTables(t)
-}
-
-func addTables(t *testing.T) {
-	var err error
-
-	bucketInput := &s3.CreateBucketInput{Bucket: aws.String(testBucket)}
-	_, err = s3Client.CreateBucket(bucketInput)
-	require.NoError(t, err)
-
-	dbInput := &glue.CreateDatabaseInput{
-		DatabaseInput: &glue.DatabaseInput{
-			Name: aws.String(testDb),
-		},
-	}
-	_, err = glueClient.CreateDatabase(dbInput)
-	require.NoError(t, err)
-
-	storageDecriptor := &glue.StorageDescriptor{ // configure as JSON
-		Columns:      columns,
-		Location:     aws.String("s3://" + testBucket + "/"),
-		InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
-		OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
-		SerdeInfo: &glue.SerDeInfo{
-			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
-			Parameters: map[string]*string{
-				"serialization.format": aws.String("1"),
-				"case.insensitive":     aws.String("TRUE"), // treat as lower case
-			},
-		},
-	}
-
-	tableInput := &glue.CreateTableInput{
-		DatabaseName: aws.String(testDb),
-		TableInput: &glue.TableInput{
-			Name:              aws.String(testTable),
-			PartitionKeys:     partitions,
-			StorageDescriptor: storageDecriptor,
-			TableType:         aws.String("EXTERNAL_TABLE"),
-		},
-	}
-	_, err = glueClient.CreateTable(tableInput)
-	require.NoError(t, err)
-
-	putInput := &s3.PutObjectInput{
-		Body:   strings.NewReader(strings.Join(rows, "\n")),
-		Bucket: &testBucket,
-		Key:    &testKey,
-	}
-	_, err = s3Client.PutObject(putInput)
-	require.NoError(t, err)
-	time.Sleep(time.Second / 4) // short pause since S3 is eventually consistent
-
-	_, err = glueClient.CreatePartition(&glue.CreatePartitionInput{
-		DatabaseName: aws.String(testDb),
-		TableName:    aws.String(testTable),
-		PartitionInput: &glue.PartitionInput{
-			StorageDescriptor: storageDecriptor,
-			Values: []*string{
-				aws.String(testPartition),
-			},
-		},
-	})
-	require.NoError(t, err)
-}
-
-func removeTables(t *testing.T) {
-	// best effort, no error checks
-
-	tableInput := &glue.DeleteTableInput{
-		DatabaseName: aws.String(testDb),
-		Name:         aws.String(testTable),
-	}
-	glueClient.DeleteTable(tableInput) // nolint (errcheck)
-
-	dbInput := &glue.DeleteDatabaseInput{
-		Name: aws.String(testDb),
-	}
-	glueClient.DeleteDatabase(dbInput) // nolint (errcheck)
-
-	removeBucket(testBucket)
-}
-
-func removeBucket(bucketName string) {
-	input := &s3.ListObjectVersionsInput{Bucket: &bucketName}
-	var objectVersions []*s3.ObjectIdentifier
-
-	// List all object versions (including delete markers)
-	err := s3Client.ListObjectVersionsPages(input, func(page *s3.ListObjectVersionsOutput, lastPage bool) bool {
-		for _, marker := range page.DeleteMarkers {
-			objectVersions = append(objectVersions, &s3.ObjectIdentifier{
-				Key: marker.Key, VersionId: marker.VersionId})
-		}
-
-		for _, version := range page.Versions {
-			objectVersions = append(objectVersions, &s3.ObjectIdentifier{
-				Key: version.Key, VersionId: version.VersionId})
-		}
-		return false
-	})
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchBucket" {
-			return
-		}
-	}
-
-	err = s3batch.DeleteObjects(s3Client, 2*time.Minute, &s3.DeleteObjectsInput{
-		Bucket: &bucketName,
-		Delete: &s3.Delete{Objects: objectVersions},
-	})
-	if err != nil {
-		return
-	}
-	time.Sleep(time.Second / 4) // short pause since S3 is eventually consistent to avoid next call from failing
-	if _, err = s3Client.DeleteBucket(&s3.DeleteBucketInput{Bucket: &bucketName}); err != nil {
-		return
 	}
 }
