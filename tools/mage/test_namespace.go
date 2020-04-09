@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -48,62 +49,140 @@ var (
 	)
 )
 
-// Cfn Lint CloudFormation templates
-func (t Test) Cfn() {
-	if testCfn() {
-		logger.Info("test:cfn: PASS")
-	} else {
-		logger.Fatal("test:cfn: FAIL")
-	}
+// CI Run all required checks for a pull request
+func (t Test) CI() {
+	// Formatting modifies files (and may generate new ones), so we need to run this first
+	fmtErr := testFmtAndGeneratedFiles()
+
+	results := make(chan goroutineResult)
+	count := 0
+
+	logger.Info("running tests in parallel...")
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt", fmtErr}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"build:cfn", build.cfn()}
+	}(results)
+
+	// We build tools and lambda source in parallel, but if you run into problems with Go modules,
+	// we may have to do all go compilation sequentially.
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"build:lambda", build.lambda()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"build:tools", build.tools()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"cfn-lint", testCfnLint()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"go unit tests", testGoUnit()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"golangci-lint", testGoLint()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"python unit tests", testPythonUnit()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"pylint", testPythonLint()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"bandit (python security linting)", testPythonBandit()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"mypy (python type checking)", testPythonMypy()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"npm run eslint", testWebEslint()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"npm run tsc", testWebTsc()}
+	}(results)
+
+	logResults(results, "test:ci", count)
 }
 
-func testCfn() bool {
+// Format source files and build APIs and check for changes.
+//
+// In CI, this returns an error and fails the test if files were not formatted.
+// Locally, we only log a warning if files were not formatted (test:ci will still pass).
+func testFmtAndGeneratedFiles() error {
+	// Formatting is fairly complex: yapf, gofmt, goimports, prettier, docs, license headers, etc
+	// It's easier to just run "fmt" and look for changes than to check diffs from each tool individually
+	beforeHashes, err := sourceHashes()
+	if err != nil {
+		return err
+	}
+
+	build.API()
+	Fmt()
+
+	afterHashes, err := sourceHashes()
+	if err != nil {
+		return err
+	}
+
+	if diffs := fileDiffs(beforeHashes, afterHashes); len(diffs) > 0 {
+		sort.Strings(diffs)
+		if runningInCI() {
+			logger.Errorf("%d file diffs after build:api + fmt:\n  %s", len(diffs), strings.Join(diffs, "\n  "))
+			return fmt.Errorf("%d file diffs after 'mage build:api fmt'", len(diffs))
+		}
+
+		logger.Warnf("%d file diffs after build:api + fmt:\n  %s", len(diffs), strings.Join(diffs, "\n  "))
+		logger.Warn("remember to commit formatted files or CI will fail")
+	}
+
+	return nil
+}
+
+func testCfnLint() error {
 	var templates []string
 	walk("deployments", func(path string, info os.FileInfo) {
 		if !info.IsDir() && filepath.Ext(path) == ".yml" && filepath.Base(path) != "panther_config.yml" {
 			templates = append(templates, path)
 		}
 	})
-	pass := true
 
-	// cfn-lint
-	logger.Infof("test:cfn: cfn-lint %d templates", len(templates))
-	if err := sh.RunV(pythonLibPath("cfn-lint"), templates...); err != nil {
-		logger.Errorf("cfn-lint failed: %v", err)
-		pass = false
-	}
-
-	// formatting
-	logger.Infof("test:cfn: formatting")
-	if err := sh.RunV(nodePath("prettier"), "--list-different", "deployments/**.yml"); err != nil {
-		logger.Errorf("prettier diff: %v", err)
-		pass = false
-	}
-
-	return pass
+	return sh.RunV(pythonLibPath("cfn-lint"), templates...)
 }
 
-// Go Test Go source
-func (t Test) Go() {
-	if testGo() {
-		logger.Info("test:go: PASS")
-	} else {
-		logger.Fatal("test:go: FAIL")
-	}
-}
+func testGoUnit() error {
+	runGoTest := func(args ...string) error {
+		if mg.Verbose() {
+			// verbose mode - show "go test" output (all package names)
+			return sh.Run("go", args...)
+		}
 
-func testGo() bool {
-	// unit tests
-	logger.Info("test:go: unit tests")
-	args := []string{"test", "-vet", "", "-cover", "./..."}
-	var err error
-	if mg.Verbose() {
-		// verbose mode - show "go test" output (all package names)
-		err = sh.Run("go", args...)
-	} else {
 		// standard mode - filter output to show only the errors
 		var output string
-		output, err = sh.Output("go", args...)
+		output, err := sh.Output("go", args...)
 		if err != nil {
 			for _, line := range strings.Split(output, "\n") {
 				if !strings.HasPrefix(line, "ok  	github.com/panther-labs/panther") &&
@@ -113,39 +192,27 @@ func testGo() bool {
 				}
 			}
 		}
+		return err
 	}
 
-	if err != nil {
-		logger.Errorf("go unit tests failed: %v", err)
-		return false
+	// unit tests and race detection
+	if err := runGoTest("test", "-race", "-vet", "", "-cover", "./..."); err != nil {
+		return err
 	}
 
-	// metalinting
-	logger.Info("test:go: golangci-lint")
-	args = []string{"run", "--timeout", "10m"}
+	// One package is explicitly skipped by -race, we have to run its unit tests separately
+	return runGoTest("test", "-vet", "", "-cover", "./internal/log_analysis/log_processor/destinations")
+}
+
+func testGoLint() error {
+	args := []string{"run", "--timeout", "10m"}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
-	if err := sh.RunV(filepath.Join(setupDirectory, "golangci-lint"), args...); err != nil {
-		logger.Errorf("go linting failed: %v", err)
-		return false
-	}
-
-	return true
+	return sh.RunV(filepath.Join(setupDirectory, "golangci-lint"), args...)
 }
 
-// Python Test Python source
-func (t Test) Python() {
-	if testPython() {
-		logger.Info("test:python: PASS")
-	} else {
-		logger.Fatal("test:python: FAIL")
-	}
-}
-
-func testPython() bool {
-	pass := true
-
+func testPythonUnit() error {
 	args := []string{"-m", "unittest", "discover"}
 	if mg.Verbose() {
 		args = append(args, "--verbose")
@@ -153,136 +220,62 @@ func testPython() bool {
 		args = append(args, "--quiet")
 	}
 
-	logger.Info("test:python: unit tests")
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		if err := sh.RunV(pythonLibPath("python3"), append(args, target)...); err != nil {
-			logger.Errorf("python unit tests failed: %v", err)
-			pass = false
+		if err := sh.Run(pythonLibPath("python3"), append(args, target)...); err != nil {
+			return fmt.Errorf("python unit tests failed: %v", err)
 		}
 	}
 
-	// python bandit (security linting)
-	logger.Info("test:python: bandit security linting")
-	args = []string{"--recursive"}
+	return nil
+}
+
+func testPythonLint() error {
+	// pylint - runs twice (once for src directories, once for test directories)
+	args := []string{"-j", "0", "--max-line-length", "140", "--score", "no"}
+	if mg.Verbose() {
+		args = append(args, "--verbose")
+	}
+
+	// pylint src
+	srcArgs := append(args, "--ignore", "tests", "--disable", strings.Join(pylintSrcDisabled, ","))
+	if err := sh.RunV(pythonLibPath("pylint"), append(srcArgs, pyTargets...)...); err != nil {
+		return fmt.Errorf("pylint source failed: %v", err)
+	}
+
+	// pylint tests
+	testArgs := append(args, "--ignore", "src", "--disable", strings.Join(pylintTestsDisabled, ","))
+	if err := sh.RunV(pythonLibPath("pylint"), append(testArgs, pyTargets...)...); err != nil {
+		return fmt.Errorf("pylint tests failed: %v", err)
+	}
+
+	return nil
+}
+
+func testPythonBandit() error {
+	args := []string{"--recursive"}
 	if mg.Verbose() {
 		args = append(args, "--verbose")
 	} else {
 		args = append(args, "--quiet")
 	}
-	if err := sh.Run(pythonLibPath("bandit"), append(args, pyTargets...)...); err != nil {
-		logger.Errorf("python security linting failed: %v", err)
-		pass = false
-	}
+	return sh.Run(pythonLibPath("bandit"), append(args, pyTargets...)...)
+}
 
-	// python lint - runs twice (once for src directories, once for test directories)
-	logger.Info("test:python: pylint")
-	args = []string{"-j", "0", "--max-line-length", "140", "--score", "no"}
-	if mg.Verbose() {
-		args = append(args, "--verbose")
-	}
-	// pylint src
-	srcArgs := append(args, "--ignore", "tests", "--disable", strings.Join(pylintSrcDisabled, ","))
-	if err := sh.RunV(pythonLibPath("pylint"), append(srcArgs, pyTargets...)...); err != nil {
-		logger.Errorf("pylint source failed: %v", err)
-		pass = false
-	}
-	// pylint tests
-	testArgs := append(args, "--ignore", "src", "--disable", strings.Join(pylintTestsDisabled, ","))
-	if err := sh.RunV(pythonLibPath("pylint"), append(testArgs, pyTargets...)...); err != nil {
-		logger.Errorf("pylint tests failed: %v", err)
-		pass = false
-	}
-
-	// python mypy (type check)
-	logger.Info("test:python: mypy type-checking")
-	args = []string{"--cache-dir", "out/.mypy_cache", "--no-error-summary",
+func testPythonMypy() error {
+	args := []string{"--cache-dir", "out/.mypy_cache", "--no-error-summary",
 		"--disallow-untyped-defs", "--ignore-missing-imports", "--warn-unused-ignores"}
 	if mg.Verbose() {
 		args = append(args, "--verbose")
 	}
-	if err := sh.RunV(pythonLibPath("mypy"), append(args, pyTargets...)...); err != nil {
-		logger.Errorf("mypy failed: %v", err)
-		pass = false
-	}
-
-	// python formatting
-	logger.Info("test:python: yapf formatting")
-	args = []string{"--diff", "--parallel", "--recursive"}
-	if mg.Verbose() {
-		args = append(args, "--verbose")
-	}
-	if output, err := sh.Output(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
-		logger.Errorf("yapf diff: %d bytes (err: %v)", len(output), err)
-		pass = false
-	}
-
-	return pass
+	return sh.RunV(pythonLibPath("mypy"), append(args, pyTargets...)...)
 }
 
-// Web Test web source
-func (t Test) Web() {
-	if testWeb() {
-		logger.Info("test:web: PASS")
-	} else {
-		logger.Fatal("test:web: FAIL")
-	}
+func testWebEslint() error {
+	return sh.Run("npm", "run", "eslint")
 }
 
-func testWeb() bool {
-	pass := true
-
-	if _, err := os.Stat("node_modules"); err != nil {
-		logger.Errorf("npm not initialized (%v): run 'mage setup:web'", err)
-		return false
-	}
-
-	logger.Info("test:web: npm run validate")
-	if err := sh.RunV("npm", "run", "validate"); err != nil {
-		logger.Errorf("npm validate failed: %v", err)
-		pass = false
-	}
-
-	return pass
-}
-
-// Cover Run Go unit tests and view test coverage in HTML
-func (t Test) Cover() error {
-	mg.Deps(build.API)
-	if err := os.MkdirAll("out/", 0755); err != nil {
-		return err
-	}
-
-	if err := sh.RunV("go", "test", "-cover", "-coverprofile=out/.coverage", "./..."); err != nil {
-		return err
-	}
-
-	return sh.Run("go", "tool", "cover", "-html=out/.coverage")
-}
-
-// CI Run all required checks (build:all, test:cfn, test:go, test:python, test:web)
-func (t Test) CI() {
-	var b Build
-	b.All()
-
-	var failed []string
-	if !testCfn() {
-		failed = append(failed, "cfn")
-	}
-	if !testGo() {
-		failed = append(failed, "go")
-	}
-	if !testPython() {
-		failed = append(failed, "python")
-	}
-	if !testWeb() {
-		failed = append(failed, "web")
-	}
-
-	if len(failed) == 0 {
-		logger.Info("test:ci: PASS")
-	} else {
-		logger.Fatal("test:ci: FAIL: " + strings.Join(failed, ","))
-	}
+func testWebTsc() error {
+	return sh.Run("npm", "run", "tsc")
 }
 
 // Integration Run integration tests (integration_test.go,integration.py)

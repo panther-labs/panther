@@ -124,6 +124,8 @@
     "serve": "node web/scripts/serve.js",
     "graphql-codegen": "graphql-codegen --config web/codegen.yml",
     "graphql-codegen:watch": "npm run graphql-codegen -- --watch",
-    "validate": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\" && prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\" && tsc -p web"
+    "eslint": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\"",
+    "tsc": "tsc -p web",
+    "validate": "npm run eslint && prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\" && npm run tsc"
   }
 }
