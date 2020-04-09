@@ -43,7 +43,7 @@ go get github.com/magefile/mage
 Finally, install the remaining development libraries:
 
 ```bash
-mage setup:all
+mage setup
 ```
 
 ### Mage
@@ -54,28 +54,24 @@ Run `mage` from the repo root to see the list of available commands:
 
 ```text
 Targets:
-  build:api           Generate Go client/models from Swagger specs in api/
+  build:api           Generate API source files from GraphQL + Swagger
+  build:cfn           Generate CloudFormation templates in out/deployments folder
   build:lambda        Compile Go Lambda function source
-  clean               Remove auto-generated build artifacts
-  deploy              Deploy application infrastructure
-  doc:cfn             Cfn will generate user documentation from deployment CloudFormation
+  build:tools         Compile devtools and opstools
+  clean               Remove dev libraries and build/test artifacts
+  deploy              Deploy Panther to your AWS account
+  doc                 Auto-generate specific sections of documentation
   fmt                 Format source files
   glue:sync           Sync glue table partitions after schema change
-  setup:all           Install all development dependencies
-  setup:go            Install goimports, go-swagger, and golangci-lint
-  setup:python        Install the Python virtual env
-  setup:web           Npm install
+  glue:update         Updates the panther-glue cloudformation template (used for schema migrations)
+  setup               Install all build and development dependencies
+  show:schemas        Prints to stdout a JSON representation each supported log type
   teardown            Destroy all Panther infrastructure
-  test:cfn            Lint CloudFormation templates
-  test:ci             Run all required checks
-  test:cover          Run Go unit tests and view test coverage in HTML
-  test:go             Test Go source
+  test:ci             Run all required checks for a pull request
   test:integration    Run integration tests (integration_test.go,integration.py)
-  test:python         Test Python source
-  test:web            Test web source
 ```
 
-You can easily chain `mage` commands together, for example: `mage fmt test:ci deploy`
+You can easily chain `mage` commands together, for example: `mage clean setup test:ci deploy`
 
 ## Testing
 

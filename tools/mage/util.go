@@ -243,11 +243,10 @@ func download(url string) ([]byte, error) {
 	return body, nil
 }
 
-// isRunningInCI returns true if the mage command is running inside the CI environment
-// TODO - remove / use
-//func isRunningInCI() bool {
-//	return os.Getenv("CI") != ""
-//}
+// runningInCI returns true if the mage command is running inside the CI environment
+func runningInCI() bool {
+	return os.Getenv("CI") != ""
+}
 
 // pythonLibPath the Python venv path of the given library
 func pythonLibPath(lib string) string {
