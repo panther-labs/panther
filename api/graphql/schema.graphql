@@ -22,7 +22,7 @@ type Mutation {
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
-  resetUserPassword(id: ID!): Boolean
+  resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
   updateDestination(input: DestinationInput!): Destination
