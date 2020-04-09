@@ -5,13 +5,13 @@ import { shouldSaveData } from 'Helpers/connection';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useLoadAllSchemaEntities } from './graphql/loadAllSchemaEntities.generated';
 
-const PLACEHOLDER = `Run any SQL query. For example: select * from panther_logs.aws_alb;`;
-
 const minLines = 19;
-const fallback = <Box width="100%" bg="grey500" height={minLines * 19} />;
 
 const SQLEditor: React.FC = () => {
+  const [value, setValue] = React.useState('');
   const { pushSnackbar } = useSnackbar();
+
+  // Fetch Autocomplete suggestions
   const { data } = useLoadAllSchemaEntities({
     skip: shouldSaveData(),
     onError: error =>
@@ -22,6 +22,7 @@ const SQLEditor: React.FC = () => {
       }),
   });
 
+  // Create proper completion data
   const completions = React.useMemo(() => {
     const acc = new Set<Completion>();
     if (data) {
@@ -42,12 +43,14 @@ const SQLEditor: React.FC = () => {
   return (
     <Box>
       <Editor
-        fallback={fallback}
-        placeholder={PLACEHOLDER}
+        fallback={<Box width="100%" bg="grey500" height={minLines * 19} />}
+        placeholder="Run any SQL query. For example: select * from panther_logs.aws_alb;"
         minLines={minLines}
         mode="sql"
         width="100%"
         completions={completions}
+        onChange={setValue}
+        value={value}
       />
       <Button size="large" variant="primary" mt={6}>
         Run Query

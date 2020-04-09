@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { useTheme } from 'pouncejs';
-import { IAceEditorProps, IEditorProps } from 'react-ace';
+import { IAceEditorProps } from 'react-ace';
 
 // Lazy-load the ace editor. Make sure that both editor and modes get bundled under the same chunk
 const AceEditor = React.lazy(() => import(/* webpackChunkName: "ace-editor" */ 'react-ace'));
@@ -30,7 +30,6 @@ export type EditorProps = IAceEditorProps & {
 };
 
 const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...rest }) => {
-  const [editor, setEditor] = React.useState<IEditorProps>(null);
   const theme = useTheme();
 
   // Asynchronously load (post-mount) all the mode & themes
@@ -61,22 +60,8 @@ const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...r
     }
   }, [completions]);
 
-  // Shows autocomplete on `.` keypress
-  React.useEffect(() => {
-    if (editor) {
-      editor.commands.on('afterExec', e => {
-        if (e.command.name === 'insertstring' && /^[\w.]$/.test(e.args)) {
-          if (e.args === '.') {
-            editor.execCommand('startAutocomplete');
-          }
-        }
-      });
-    }
-  }, [editor]);
-
   const baseAceEditorConfig = React.useMemo(
     () => ({
-      onLoad: setEditor,
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
       highlightActiveLine: false,
@@ -91,7 +76,7 @@ const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...r
         zIndex: 0,
       },
     }),
-    [theme, setEditor]
+    [theme]
   );
 
   return (
