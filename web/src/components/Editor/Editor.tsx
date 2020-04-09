@@ -17,30 +17,66 @@
  */
 
 import React from 'react';
-import { IAceEditorProps } from 'react-ace/lib/ace';
 import { useTheme } from 'pouncejs';
+import { IAceEditorProps, IEditorProps } from 'react-ace';
 
 // Lazy-load the ace editor. Make sure that both editor and modes get bundled under the same chunk
 const AceEditor = React.lazy(() => import(/* webpackChunkName: "ace-editor" */ 'react-ace'));
 
+export type Completion = { value: string; type: string };
 export type EditorProps = IAceEditorProps & {
   fallback?: React.ReactElement;
+  completions?: Completion[];
 };
 
-const Editor: React.FC<EditorProps> = ({ fallback = null, ...rest }) => {
+const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...rest }) => {
+  const [editor, setEditor] = React.useState<IEditorProps>(null);
   const theme = useTheme();
 
   // Asynchronously load (post-mount) all the mode & themes
   React.useEffect(() => {
-    import(/* webpackChunkName: "ace-editor" */ 'brace/ext/language_tools');
     import(/* webpackChunkName: "ace-editor" */ 'brace/mode/json');
     import(/* webpackChunkName: "ace-editor" */ 'brace/mode/sql');
     import(/* webpackChunkName: "ace-editor" */ 'brace/mode/python');
+    import(/* webpackChunkName: "ace-editor" */ 'brace/ext/language_tools');
     import(/* webpackChunkName: "ace-editor" */ './theme');
   }, []);
 
+  React.useEffect(() => {
+    if (completions.length) {
+      import(/* webpackChunkName: "ace-editor" */ 'brace').then(({ acequire }) => {
+        // @ts-ignore
+        // Project is so old that I cba to deal with typings
+        acequire(['ace/ext/language_tools'], langTools => {
+          langTools.addCompleter({
+            getCompletions: (e, session, pos, prefix, callback) => {
+              callback(
+                null,
+                completions.map(({ value, type }) => ({ name: value, value, score: 0, meta: type }))
+              );
+            },
+          });
+        });
+      });
+    }
+  }, [completions]);
+
+  // Shows autocomplete on `.` keypress
+  React.useEffect(() => {
+    if (editor) {
+      editor.commands.on('afterExec', e => {
+        if (e.command.name === 'insertstring' && /^[\w.]$/.test(e.args)) {
+          if (e.args === '.') {
+            editor.execCommand('startAutocomplete');
+          }
+        }
+      });
+    }
+  }, [editor]);
+
   const baseAceEditorConfig = React.useMemo(
     () => ({
+      onLoad: setEditor,
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
       highlightActiveLine: false,
@@ -55,7 +91,7 @@ const Editor: React.FC<EditorProps> = ({ fallback = null, ...rest }) => {
         zIndex: 0,
       },
     }),
-    [theme]
+    [theme, setEditor]
   );
 
   return (

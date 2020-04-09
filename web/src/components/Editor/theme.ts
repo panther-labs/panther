@@ -97,7 +97,7 @@ ace.define(
   }
   
   .ace-panther .ace_support {
-    color: #80FFBB
+    color: white
   }
   
   .ace-panther .ace_support.ace_constant {
@@ -153,6 +153,10 @@ ace.define(
   
   .ace-panther .ace_meta.ace_tag {
     color: #9EFFFF
+  }
+  
+  .ace-panther .ace_rightAlignedText {
+    color: ${theme.colors.grey200}
   }
   
   .ace-panther .ace_indent-guide {
