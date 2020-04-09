@@ -19,7 +19,6 @@ package testutils
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/database/models"
 	"strings"
 	"testing"
 	"time"
@@ -32,6 +31,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
 )
 
@@ -42,12 +42,12 @@ const (
 )
 
 var (
-	TestBucket        string
+	TestBucket string
 
-	TestYear     = "2020"
-	TestMonth     = "03"
-	TestDay = "02"
-	TestHour = "01"
+	TestYear  = "2020"
+	TestMonth = "03"
+	TestDay   = "02"
+	TestHour  = "01"
 
 	TestTableColumns = []*glue.Column{
 		{
@@ -57,10 +57,10 @@ var (
 		},
 	}
 
-	YearPartitionName   = "year"
-	MonthPartitionName   = "month"
+	YearPartitionName  = "year"
+	MonthPartitionName = "month"
 	DayPartitionName   = "day"
-	HourPartitionName   = "hour"
+	HourPartitionName  = "hour"
 
 	TestTablePartitions = []*glue.Column{
 		{
@@ -85,7 +85,7 @@ var (
 		},
 	}
 
-	TestKey           string
+	TestKey string
 
 	TestTableDataNrows = 10
 	TestTableRow       = `{"col1": 1}`
@@ -97,11 +97,11 @@ func init() {
 
 	// make it look like log data
 	TestKey = "logs/aws_cloudtrail/"
-	TestKey +=  YearPartitionName + "=" + TestYear +  "/"
-	TestKey +=  MonthPartitionName + "=" + TestMonth +  "/"
-	TestKey +=  DayPartitionName + "=" + TestDay +  "/"
-	TestKey +=  HourPartitionName + "=" + TestHour +  "/"
-	TestKey +="testdata.json"
+	TestKey += YearPartitionName + "=" + TestYear + "/"
+	TestKey += MonthPartitionName + "=" + TestMonth + "/"
+	TestKey += DayPartitionName + "=" + TestDay + "/"
+	TestKey += HourPartitionName + "=" + TestHour + "/"
+	TestKey += "testdata.json"
 
 	for i := 0; i < TestTableDataNrows; i++ {
 		TestTableRows = append(TestTableRows, TestTableRow)
