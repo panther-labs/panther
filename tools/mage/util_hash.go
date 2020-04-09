@@ -26,6 +26,18 @@ import (
 	"path/filepath"
 )
 
+// Compute MD5 checksum of file contents.
+func fileMD5(path string) ([16]byte, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return [16]byte{}, fmt.Errorf("readFile %s: %v", path, err)
+	}
+
+	// nolint:gosec
+	// Benchmarking shows MD5 is almost twice as fast as SHA2 and we don't need cryptographic guarantees here.
+	return md5.Sum(data), nil
+}
+
 // Hash every file in the given directory
 //
 // Returns map from file path => MD5 sum
@@ -39,13 +51,10 @@ func fileHashMap(roots ...string) (map[string][16]byte, error) {
 			}
 
 			if !info.IsDir() {
-				data, err := ioutil.ReadFile(path)
+				result[path], err = fileMD5(path)
 				if err != nil {
-					return fmt.Errorf("readFile %s: %v", path, err)
+					return err
 				}
-				// nolint:gosec
-				// Benchmarking shows MD5 is almost twice as fast as SHA2 and we don't cryptographic guarantees here.
-				result[path] = md5.Sum(data)
 			}
 
 			return nil
@@ -90,6 +99,12 @@ func fileDiffs(before, after map[string][16]byte) []string {
 			// doesn't exist afterward
 			diffs = append(diffs, "- "+path)
 		}
+	}
+
+	// Optimization: if there are no diffs yet and the two sets have the same number of elements,
+	// there can't be any new files and we don't have to traverse the second set.
+	if len(diffs) == 0 && len(before) == len(after) {
+		return nil
 	}
 
 	// Check for added files

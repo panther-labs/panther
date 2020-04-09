@@ -29,7 +29,6 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
-	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -191,7 +190,7 @@ func buildPackage(pkg string) error {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")
 	oldInfo, statErr := os.Stat(binary)
-	oldHash, hashErr := shutil.SHA256(binary)
+	oldHash, hashErr := fileMD5(binary)
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
@@ -201,7 +200,7 @@ func buildPackage(pkg string) error {
 	}
 
 	if statErr == nil && hashErr == nil {
-		if hash, err := shutil.SHA256(binary); err == nil && hash == oldHash {
+		if hash, err := fileMD5(binary); err == nil && hash == oldHash {
 			// Optimization - if the binary contents haven't changed, reset the last modified time.
 			// "aws cloudformation package" re-uploads any binary whose modification time has changed,
 			// even if the contents are identical. So this lets us skip any unmodified binaries, which can

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -148,9 +149,10 @@ func testFmtAndGeneratedFiles() error {
 	}
 
 	if diffs := fileDiffs(beforeHashes, afterHashes); len(diffs) > 0 {
+		sort.Strings(diffs)
 		if runningInCI() {
 			logger.Errorf("%d file diffs after build:api + fmt:\n  %s", len(diffs), strings.Join(diffs, "\n  "))
-			return fmt.Errorf("%d file diffs after build:api + fmt", len(diffs))
+			return fmt.Errorf("%d file diffs after 'mage build:api fmt'", len(diffs))
 		}
 
 		logger.Warnf("%d file diffs after build:api + fmt:\n  %s", len(diffs), strings.Join(diffs, "\n  "))
