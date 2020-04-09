@@ -45,7 +45,12 @@ func GetRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResp
 	return handleGet(request, typeRule)
 }
 
-// Handle GET request for GetPolicy and GetRule
+// GetRule retrieves a rule from Dynamo or S3.
+func GetGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+	return handleGet(request, typeGlobal)
+}
+
+// Handle GET request for GetPolicy, GetRule, and GetGlobal
 func handleGet(request *events.APIGatewayProxyRequest, codeType string) *events.APIGatewayProxyResponse {
 	input, err := parseGet(request, codeType)
 	if err != nil {
@@ -94,6 +99,8 @@ func parseGet(request *events.APIGatewayProxyRequest, codeType string) (*getPara
 	idKey := "policyId"
 	if codeType == typeRule {
 		idKey = "ruleId"
+	} else if codeType == typeGlobal {
+		idKey = "globalId"
 	}
 	id, err := url.QueryUnescape(request.QueryStringParameters[idKey])
 	if err != nil {

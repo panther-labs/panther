@@ -46,13 +46,19 @@ type Client struct {
 type ClientService interface {
 	BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error)
 
+	CreateGlobal(params *CreateGlobalParams) (*CreateGlobalCreated, error)
+
 	CreatePolicy(params *CreatePolicyParams) (*CreatePolicyCreated, error)
 
 	CreateRule(params *CreateRuleParams) (*CreateRuleCreated, error)
 
+	DeleteGlobals(params *DeleteGlobalsParams) (*DeleteGlobalsOK, error)
+
 	DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK, error)
 
 	GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabledPoliciesOK, error)
+
+	GetGlobal(params *GetGlobalParams) (*GetGlobalOK, error)
 
 	GetPolicy(params *GetPolicyParams) (*GetPolicyOK, error)
 
@@ -61,6 +67,8 @@ type ClientService interface {
 	ListPolicies(params *ListPoliciesParams) (*ListPoliciesOK, error)
 
 	ListRules(params *ListRulesParams) (*ListRulesOK, error)
+
+	ModifyGlobal(params *ModifyGlobalParams) (*ModifyGlobalOK, error)
 
 	ModifyPolicy(params *ModifyPolicyParams) (*ModifyPolicyOK, error)
 
@@ -104,6 +112,40 @@ func (a *Client) BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error) {
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for BulkUpload: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  CreateGlobal creates a new global module
+*/
+func (a *Client) CreateGlobal(params *CreateGlobalParams) (*CreateGlobalCreated, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewCreateGlobalParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "CreateGlobal",
+		Method:             "POST",
+		PathPattern:        "/global",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &CreateGlobalReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*CreateGlobalCreated)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for CreateGlobal: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -176,6 +218,40 @@ func (a *Client) CreateRule(params *CreateRuleParams) (*CreateRuleCreated, error
 }
 
 /*
+  DeleteGlobals deletes one or more globals
+*/
+func (a *Client) DeleteGlobals(params *DeleteGlobalsParams) (*DeleteGlobalsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteGlobalsParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "DeleteGlobals",
+		Method:             "POST",
+		PathPattern:        "/global/delete",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &DeleteGlobalsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteGlobalsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for DeleteGlobals: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
   DeletePolicies deletes one or more policies rules
 */
 func (a *Client) DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK, error) {
@@ -240,6 +316,40 @@ func (a *Client) GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabl
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for GetEnabledPolicies: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  GetGlobal gets global details
+*/
+func (a *Client) GetGlobal(params *GetGlobalParams) (*GetGlobalOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetGlobalParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "GetGlobal",
+		Method:             "GET",
+		PathPattern:        "/global",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &GetGlobalReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetGlobalOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetGlobal: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -376,6 +486,40 @@ func (a *Client) ListRules(params *ListRulesParams) (*ListRulesOK, error) {
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for ListRules: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  ModifyGlobal modifies an existing global
+*/
+func (a *Client) ModifyGlobal(params *ModifyGlobalParams) (*ModifyGlobalOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewModifyGlobalParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "ModifyGlobal",
+		Method:             "POST",
+		PathPattern:        "/global/update",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &ModifyGlobalReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ModifyGlobalOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for ModifyGlobal: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
