@@ -46,6 +46,9 @@ const (
 
 	ViewsDatabaseName        = "panther_views"
 	ViewsDatabaseDescription = "Holds views useful for querying Panther data"
+
+	TempDatabaseName        = "panther_temp"
+	TempDatabaseDescription = "Holds temporary tables used for processing tasks"
 )
 
 type PartitionKey struct {

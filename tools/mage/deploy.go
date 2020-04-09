@@ -203,13 +203,15 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 		}
 
 		params := map[string]string{
-			"LogSubscriptionPrincipals":  strings.Join(sanitizedLogSubscriptionArns, ","),
-			"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
-			"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
-			"CertificateArn":             certificateArn(awsSession, settings),
-			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"CustomDomain":               settings.Web.CustomDomain,
-			"TracingMode":                settings.Monitoring.TracingMode,
+			"LogSubscriptionPrincipals":         strings.Join(sanitizedLogSubscriptionArns, ","),
+			"EnableS3AccessLogs":                strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+			"AccessLogsBucket":                  settings.Setup.S3AccessLogsBucket,
+			"CertificateArn":                    certificateArn(awsSession, settings),
+			"CloudWatchLogRetentionDays":        strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+			"ProcessedDataBucketRetentionDays":  strconv.Itoa(settings.Setup.LogRetention.ProcessedDataBucketRetentionDays),
+			"HistoricalDataBucketRetentionDays": strconv.Itoa(settings.Setup.LogRetention.HistoricalDataBucketRetentionDays),
+			"CustomDomain":                      settings.Web.CustomDomain,
+			"TracingMode":                       settings.Monitoring.TracingMode,
 		}
 
 		outputs = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)

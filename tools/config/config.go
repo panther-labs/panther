@@ -55,7 +55,13 @@ type Setup struct {
 	EnableGuardDuty     bool             `yaml:"EnableGuardDuty"`
 	S3AccessLogsBucket  string           `yaml:"S3AccessLogsBucket"`
 	InitialAnalysisSets []string         `yaml:"InitialAnalysisSets"`
+	LogRetention        LogRetention     `yaml:"LogRetention"`
 	LogSubscriptions    LogSubscriptions `yaml:"LogSubscriptions"`
+}
+
+type LogRetention struct {
+	ProcessedDataBucketRetentionDays  int `yaml:"ProcessedDataBucketRetentionDays"`
+	HistoricalDataBucketRetentionDays int `yaml:"HistoricalDataBucketRetentionDays"`
 }
 
 type LogSubscriptions struct {

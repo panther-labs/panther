@@ -20,9 +20,9 @@ package main
 
 import (
 	"context"
+	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -49,8 +49,13 @@ var (
 	partitionPrefixCache = make(map[string]struct{})
 )
 
-func main() {
-	lambda.Start(handle)
+// This lambda takes either an SQSEvent or a CtasComplete
+type CatlogEvent struct {
+	events.SQSEvent
+}
+
+type CtasComplete struct { // this event comes from the Step function state machine that executed CTAS to generate Parquet
+
 }
 
 func handle(ctx context.Context, event events.SQSEvent) (err error) {
@@ -102,4 +107,9 @@ func process(event events.SQSEvent) error {
 		}
 	}
 	return nil
+}
+
+
+func main() {
+	lambda.Start(handle)
 }

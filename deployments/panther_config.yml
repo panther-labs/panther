@@ -94,6 +94,13 @@ Setup:
   # You may want this off if you have org-level GD configured for Panther.
   EnableGuardDuty: false
 
+  # Configure data retention for processed log data
+  LogRetention:
+    # Staging bucket where processed log data is first written
+    ProcessedDataBucketRetentionDays: 365 # 30
+    # Historical bucket where processed log data transferred compacted as Parquet
+    HistoricalDataBucketRetentionDays: 365
+
   # Grant external access to the Panther processed data.
   LogSubscriptions:
     # A list of ARNs of Principals that want to subscribe to log data.

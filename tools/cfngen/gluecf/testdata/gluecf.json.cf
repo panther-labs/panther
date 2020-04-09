@@ -212,6 +212,18 @@
   }
  }
 },
+  "panthertemp": {
+ "Type": "AWS::Glue::Database",
+ "Properties": {
+  "CatalogId": {
+   "Ref": "AWS::AccountId"
+  },
+  "DatabaseInput": {
+   "Name": "panther_temp",
+   "Description": "Holds temporary tables used for processing tasks"
+  }
+ }
+},
   "pantherviews": {
  "Type": "AWS::Glue::Database",
  "Properties": {
@@ -236,6 +248,12 @@
  "Description": "Holds tables with data from Panther rule matching (same table structure as panther_logs)",
  "Value": {
   "Ref": "pantherrulematches"
+ }
+},
+  "PantherTempDatabase": {
+ "Description": "Holds temporary tables used for processing tasks",
+ "Value": {
+  "Ref": "panthertemp"
  }
 },
   "PantherViewsDatabase": {

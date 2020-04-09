@@ -699,7 +699,9 @@ Resources:
                 - s3:GetBucketLocation
                 - s3:List*
                 - s3:GetObject
-              Resource: 'arn:aws:s3:::panther-*-processeddata-*' # wild card use to allow integration tests
+              Resource:
+                - 'arn:aws:s3:::panther-*-processeddata-*' # wild card use to allow integration tests
+                - 'arn:aws:s3:::panther-*-historicaldata-*' # wild card use to allow integration tests
         - Id: StepsPermissions # start an async workflow that tracks the query execution
           Version: 2012-10-17
           Statement:
@@ -715,6 +717,7 @@ Resources:
                 - lambda:InvokeFunction
               Resource: # list lambdas that can be called below
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-datacatalog-updater
         - Id: CallAppSync # allow calling appsync mutation 'queryDone()' for notify support
           Version: 2012-10-17
           Statement:
