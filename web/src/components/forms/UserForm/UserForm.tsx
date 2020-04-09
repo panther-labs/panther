@@ -22,6 +22,7 @@ import SubmitButton from 'Components/buttons/SubmitButton';
 import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
 import * as Yup from 'yup';
+import { useListUsers } from 'Pages/Users';
 
 export interface UserFormValues {
   id?: string; // optional value
@@ -37,15 +38,23 @@ export interface UserFormProps {
   onSubmit: (values: UserFormValues) => void;
 }
 
-const validationSchema = Yup.object().shape({
-  email: Yup.string()
-    .email('Must be a valid email')
-    .required('Email is required'),
-  familyName: Yup.string().required('Last name is required'),
-  givenName: Yup.string().required('First name is required'),
-});
-
 const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
+  /*
+   This is temporal fix for inviting OR editing users that already exist
+   when this is fixed we should revert it: https://github.com/apollographql/apollo-client/issues/5790
+   */
+  const { data } = useListUsers();
+  const userEmails = data.users.map(u => u.email);
+
+  const validationSchema = Yup.object().shape({
+    email: Yup.string()
+      .email('Must be a valid email')
+      .required('Email is required')
+      .notOneOf(userEmails, 'Email already in use'),
+    familyName: Yup.string().required('Last name is required'),
+    givenName: Yup.string().required('First name is required'),
+  });
+
   return (
     <Formik<UserFormValues>
       initialValues={initialValues}
