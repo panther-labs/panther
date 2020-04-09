@@ -2,19 +2,6 @@ provider "aws" {
   version = "~> 2.0"
 }
 
-variable "aws_partition" {
-  type    = string
-  default = "aws"
-}
-
-variable "aws_region" {
-  type = string
-}
-
-variable "aws_account_id" {
-  type = string
-}
-
 resource "aws_iam_role" "deployment" {
   name        = "PantherDeployment2"
   description = "IAM role for deploying Panther"

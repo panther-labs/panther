@@ -48,17 +48,22 @@ func Fmt() {
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"gofmt", gofmt(goTargets...)}
+		c <- goroutineResult{"fmt: gofmt", gofmt(goTargets...)}
 	}(results)
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"yapf", yapf(pyTargets...)}
+		c <- goroutineResult{"fmt: yapf", yapf(pyTargets...)}
 	}(results)
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"prettier", prettier()}
+		c <- goroutineResult{"fmt: prettier", prettier()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt: tf", terraformFmt()}
 	}(results)
 
 	count++
@@ -71,7 +76,7 @@ func Fmt() {
 
 // Apply full go formatting to the given paths
 func gofmt(paths ...string) error {
-	logger.Info("fmt: gofmt " + strings.Join(paths, " "))
+	logger.Debug("fmt: gofmt " + strings.Join(paths, " "))
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
 	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, paths...)...); err != nil {
@@ -129,7 +134,7 @@ func removeImportNewlines(path string) error {
 
 // Apply Python formatting to the given paths
 func yapf(paths ...string) error {
-	logger.Info("fmt: python yapf " + strings.Join(paths, " "))
+	logger.Debug("fmt: python yapf " + strings.Join(paths, " "))
 	args := []string{"--in-place", "--parallel", "--recursive"}
 	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
 		return fmt.Errorf("failed to format python: %v", err)
@@ -140,7 +145,7 @@ func yapf(paths ...string) error {
 // Apply prettier formatting to web, markdown, and yml files
 func prettier() error {
 	files := "**/*.{ts,js,tsx,md,json,yaml,yml}"
-	logger.Info("fmt: prettier " + files)
+	logger.Debug("fmt: prettier " + files)
 	args := []string{"--write", files}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
@@ -150,4 +155,10 @@ func prettier() error {
 		return fmt.Errorf("failed to format with prettier: %v", err)
 	}
 	return nil
+}
+
+// Apply Terraform formatting to aux templates
+func terraformFmt() error {
+	root := filepath.Join("deployments", "auxiliary", "terraform")
+	return sh.Run(terraformPath, "fmt", "-recursive", root)
 }

@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libc6-dev \
         make \
         pkg-config \
+        unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Depending on the CPU architecture of the latest stable debian stretch, pick which GO distribution

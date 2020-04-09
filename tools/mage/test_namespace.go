@@ -20,6 +20,7 @@ package mage
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -123,6 +124,11 @@ func (t Test) CI() {
 	count++
 	go func(c chan goroutineResult) {
 		c <- goroutineResult{"npm run tsc", testWebTsc()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"terraform validate", testTfValidate()}
 	}(results)
 
 	logResults(results, "test:ci", count)
@@ -276,6 +282,31 @@ func testWebEslint() error {
 
 func testWebTsc() error {
 	return sh.Run("npm", "run", "tsc")
+}
+
+func testTfValidate() error {
+	root := filepath.Join("deployments", "auxiliary", "terraform")
+	paths, err := ioutil.ReadDir(root)
+	if err != nil {
+		return fmt.Errorf("failed to list tf templates: %v", err)
+	}
+
+	for _, info := range paths {
+		if !info.IsDir() {
+			continue
+		}
+
+		dir := filepath.Join(root, info.Name())
+		if err := sh.Run(terraformPath, "init", "-backend=false", dir); err != nil {
+			return fmt.Errorf("tf init %s failed: %v", dir, err)
+		}
+
+		if err := sh.Run(terraformPath, "validate", dir); err != nil {
+			return fmt.Errorf("tf validate %s failed: %v", dir, err)
+		}
+	}
+
+	return nil
 }
 
 // Integration Run integration tests (integration_test.go,integration.py)
