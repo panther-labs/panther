@@ -36,27 +36,19 @@ const GeneralSettingsContainer: React.FC = () => {
     data: getGeneralSettingsData,
   } = useGetGeneralSettings();
 
-  const [
-    updateGeneralSettings,
-    { error: updateGeneralSettingsError, data: updateGeneralSettingsData },
-  ] = useUpdateGeneralSettings();
-
-  React.useEffect(() => {
-    if (updateGeneralSettingsData) {
+  const [updateGeneralSettings] = useUpdateGeneralSettings({
+    onCompleted: () => {
       pushSnackbar({ variant: 'success', title: `Successfully updated company information` });
-    }
-  }, [updateGeneralSettingsData]);
-
-  React.useEffect(() => {
-    if (updateGeneralSettingsError) {
+    },
+    onError: error => {
       pushSnackbar({
         variant: 'error',
         title:
-          extractErrorMessage(updateGeneralSettingsError) ||
+          extractErrorMessage(error) ||
           'Failed to update company information due to an unknown error',
       });
-    }
-  }, [updateGeneralSettingsError]);
+    },
+  });
 
   if (getGeneralSettingsLoading) {
     return <GeneralSettingsPageSkeleton />;
