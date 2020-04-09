@@ -58,7 +58,7 @@ func (b Build) API() {
 		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
 		start := time.Now().UTC()
 
-		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models, "-r", agplSource}
+		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models}
 		if err := sh.Run(cmd, args...); err != nil {
 			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
