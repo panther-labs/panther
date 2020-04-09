@@ -30,7 +30,13 @@ export type ListTablesForDatabaseVariables = {
 
 export type ListTablesForDatabase = {
   getLogDatabase?: Types.Maybe<
-    Pick<Types.LogDatabase, 'name'> & { tables: Array<Pick<Types.LogDatabaseTable, 'name'>> }
+    Pick<Types.LogDatabase, 'name'> & {
+      tables: Array<
+        Pick<Types.LogDatabaseTable, 'name'> & {
+          columns: Array<Pick<Types.LogDatabaseTableColumn, 'name' | 'description' | 'type'>>;
+        }
+      >;
+    }
   >;
 };
 
@@ -40,6 +46,11 @@ export const ListTablesForDatabaseDocument = gql`
       name
       tables {
         name
+        columns {
+          name
+          description
+          type
+        }
       }
     }
   }

@@ -3,6 +3,11 @@ query ListTablesForDatabase($name: String!) {
     name
     tables {
       name
+      columns {
+        name
+        description
+        type
+      }
     }
   }
 }

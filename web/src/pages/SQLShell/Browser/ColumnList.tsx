@@ -1,13 +1,10 @@
 import React from 'react';
-import { Box, Flex, Icon, IconButton, Text, useSnackbar } from 'pouncejs';
-import { extractErrorMessage } from 'Helpers/utils';
-import TablePlaceholder from 'Components/TablePlaceholder';
+import { Box, Flex, Icon, IconButton, Text } from 'pouncejs';
 import { useBrowserContext } from './BrowserContext';
 import { useListColumnsForTable } from './graphql/listColumnsForTable.generated';
 import ColumnListItem from './ColumnListItem';
 
 const ColumnList: React.FC = () => {
-  const { pushSnackbar } = useSnackbar();
   const {
     selectedTable,
     selectedDatabase,
@@ -17,23 +14,16 @@ const ColumnList: React.FC = () => {
     searchValue,
   } = useBrowserContext();
 
-  const { data, loading } = useListColumnsForTable({
-    returnPartialData: true,
+  const { data } = useListColumnsForTable({
+    fetchPolicy: 'cache-only', // will be there from the table listing. Throw if it's not
     variables: {
       input: {
         databaseName: selectedDatabase,
         name: selectedTable,
       },
     },
-    onError: error =>
-      pushSnackbar({
-        variant: 'error',
-        title: "Couldn't fetch the table's columns",
-        description: extractErrorMessage(error),
-      }),
   });
 
-  const columns = data?.getLogDatabaseTable?.columns;
   return (
     <React.Fragment>
       <Flex alignItems="center" mx={2} is="li">
@@ -44,30 +34,23 @@ const ColumnList: React.FC = () => {
           {selectedTable}
         </Text>
       </Flex>
-      {loading && !columns && (
-        <Box m={6}>
-          <TablePlaceholder rowCount={8} rowHeight={30} rowGap={15} />
-        </Box>
-      )}
-      {columns && (
-        <Box overflowY="scroll" is="ul" py={2} height="100%">
-          {columns
-            .filter(({ name }) => name.includes(searchValue))
-            .map(({ name, type, description }) => {
-              return (
-                <ColumnListItem
-                  key={name}
-                  name={name}
-                  type={type}
-                  description={description}
-                  isSelected={selectedColumn === name}
-                  isPristine={selectedColumn === null}
-                  onClick={selectColumn}
-                />
-              );
-            })}
-        </Box>
-      )}
+      <Box overflowY="scroll" is="ul" py={2} height="100%">
+        {data?.getLogDatabaseTable?.columns
+          .filter(({ name }) => name.includes(searchValue))
+          .map(({ name, type, description }) => {
+            return (
+              <ColumnListItem
+                key={name}
+                name={name}
+                type={type}
+                description={description}
+                isSelected={selectedColumn === name}
+                isPristine={selectedColumn === null}
+                onClick={selectColumn}
+              />
+            );
+          })}
+      </Box>
     </React.Fragment>
   );
 };
