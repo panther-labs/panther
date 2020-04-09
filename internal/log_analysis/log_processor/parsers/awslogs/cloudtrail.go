@@ -155,6 +155,7 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 
 	// structured (parsed) fields
 	event.AppendAnyIPAddressPtr(event.SourceIPAddress)
+	event.AppendAnyAWSAccountIdPtrs(event.RecipientAccountID)
 
 	for _, resource := range event.Resources {
 		event.AppendAnyAWSARNPtrs(resource.ARN)
@@ -178,7 +179,10 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 	extract.Extract(event.RequestParameters, awsExtractor)
 	extract.Extract(event.ResponseElements, awsExtractor)
 	extract.Extract(event.ServiceEventDetails, awsExtractor)
-	if event.UserIdentity.SessionContext != nil && event.UserIdentity.SessionContext.WebIDFederationData != nil {
+	if event.UserIdentity != nil &&
+		event.UserIdentity.SessionContext != nil &&
+		event.UserIdentity.SessionContext.WebIDFederationData != nil {
+
 		extract.Extract(event.UserIdentity.SessionContext.WebIDFederationData.Attributes, awsExtractor)
 	}
 }
