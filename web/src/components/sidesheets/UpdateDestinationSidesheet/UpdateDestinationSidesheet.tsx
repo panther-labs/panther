@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
+import { Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
 import React from 'react';
 
 import pick from 'lodash-es/pick';
@@ -53,20 +53,24 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   const { hideSidesheet } = useSidesheet();
 
   // If destination object exist, handleSubmit should call updateDestination and use attributes from the destination object for form initial values
-  const [
-    updateDestination,
-    { data: updateDestinationData, error: updateDestinationError },
-  ] = useUpdateDestination();
-
-  React.useEffect(() => {
-    if (updateDestinationData) {
+  const [updateDestination] = useUpdateDestination({
+    onCompleted: data => {
+      hideSidesheet();
       pushSnackbar({
         variant: 'success',
-        title: `Successfully updated ${updateDestinationData.updateDestination.displayName}`,
+        title: `Successfully updated ${data.updateDestination.displayName}`,
       });
+    },
+    onError: error => {
       hideSidesheet();
-    }
-  }, [updateDestinationData]);
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) ||
+          'An unknown error has occurred while trying to update your destination',
+      });
+    },
+  });
 
   const handleSubmit = React.useCallback(
     async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {
@@ -212,18 +216,6 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
         <Heading size="medium" mb={8}>
           Update {destination.outputType}
         </Heading>
-        {updateDestinationError && (
-          <Alert
-            mt={2}
-            mb={6}
-            variant="error"
-            title="Destination not updated"
-            description={
-              extractErrorMessage(updateDestinationError) ||
-              'An unknown error has occured while trying to update your destination'
-            }
-          />
-        )}
         {renderFullDestinationForm()}
       </Box>
     </SideSheet>
