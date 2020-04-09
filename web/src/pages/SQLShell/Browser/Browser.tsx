@@ -12,33 +12,35 @@ const Browser: React.FC = () => {
 
   return (
     <Card height={507} is="aside" overflow="hidden">
-      <Flex flexDirection="column" height="100%">
-        <Box is="header" p={6}>
-          <Box mb={4} is="section">
-            <DatabaseSelector />
+      <ErrorBoundary>
+        <Flex flexDirection="column" height="100%">
+          <Box is="header" p={6}>
+            <Box mb={4} is="section">
+              <DatabaseSelector />
+            </Box>
+            <Box is="section">
+              <Search />
+            </Box>
           </Box>
-          <Box is="section">
-            <Search />
+          <Box overflowY="hidden" width="100%">
+            {!selectedDatabase && (
+              <Text size="large" color="grey200" textAlign="center" mt={100}>
+                Nothing selected yet
+              </Text>
+            )}
+            {!!selectedDatabase && !selectedTable && (
+              <ErrorBoundary>
+                <TableList />
+              </ErrorBoundary>
+            )}
+            {!!selectedDatabase && selectedTable && (
+              <ErrorBoundary>
+                <ColumnList />
+              </ErrorBoundary>
+            )}
           </Box>
-        </Box>
-        <Box overflowY="hidden" width="100%">
-          {!selectedDatabase && (
-            <Text size="large" color="grey200" textAlign="center" mt={100}>
-              Nothing selected yet
-            </Text>
-          )}
-          {!!selectedDatabase && !selectedTable && (
-            <ErrorBoundary>
-              <TableList />
-            </ErrorBoundary>
-          )}
-          {!!selectedDatabase && selectedTable && (
-            <ErrorBoundary>
-              <ColumnList />
-            </ErrorBoundary>
-          )}
-        </Box>
-      </Flex>
+        </Flex>
+      </ErrorBoundary>
     </Card>
   );
 };

@@ -1,11 +1,10 @@
 query LoadAllSchemaEntities {
   listLogDatabases {
-    name
+    ...LogDatabaseSummary
     tables {
-      name
+      ...LogDatabaseTableSummary
       columns {
-        name
-        type
+        ...LogDatabaseTableColumnDetails
       }
     }
   }

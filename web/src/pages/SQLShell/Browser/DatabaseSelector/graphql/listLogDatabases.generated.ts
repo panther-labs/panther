@@ -18,22 +18,24 @@
 
 /* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
-import * as Types from '../../../../../__generated__/schema';
+import * as Types from '../../../../../../__generated__/schema';
 
+import { LogDatabaseSummary } from '../../../../../graphql/fragments/LogDatabaseSummary.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type ListLogDatabasesVariables = {};
 
-export type ListLogDatabases = { listLogDatabases: Array<Pick<Types.LogDatabase, 'name'>> };
+export type ListLogDatabases = { listLogDatabases: Array<LogDatabaseSummary> };
 
 export const ListLogDatabasesDocument = gql`
   query ListLogDatabases {
     listLogDatabases {
-      name
+      ...LogDatabaseSummary
     }
   }
+  ${LogDatabaseSummary}
 `;
 
 /**

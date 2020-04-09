@@ -1,12 +1,10 @@
 query ListTablesForDatabase($name: String!) {
   getLogDatabase(name: $name) {
-    name
+    ...LogDatabaseSummary
     tables {
-      name
+      ...LogDatabaseTableSummary
       columns {
-        name
-        description
-        type
+        ...LogDatabaseTableColumnDetails
       }
     }
   }

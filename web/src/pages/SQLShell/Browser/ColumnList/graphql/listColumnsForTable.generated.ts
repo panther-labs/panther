@@ -18,8 +18,10 @@
 
 /* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
-import * as Types from '../../../../../__generated__/schema';
+import * as Types from '../../../../../../__generated__/schema';
 
+import { LogDatabaseTableSummary } from '../../../../../graphql/fragments/LogDatabaseTableSummary.generated';
+import { LogDatabaseTableColumnDetails } from '../../../../../graphql/fragments/LogDatabaseTableColumnDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -30,23 +32,21 @@ export type ListColumnsForTableVariables = {
 
 export type ListColumnsForTable = {
   getLogDatabaseTable?: Types.Maybe<
-    Pick<Types.LogDatabaseTable, 'name'> & {
-      columns: Array<Pick<Types.LogDatabaseTableColumn, 'name' | 'type' | 'description'>>;
-    }
+    { columns: Array<LogDatabaseTableColumnDetails> } & LogDatabaseTableSummary
   >;
 };
 
 export const ListColumnsForTableDocument = gql`
   query ListColumnsForTable($input: GetLogDatabaseTableInput!) {
     getLogDatabaseTable(input: $input) {
-      name
+      ...LogDatabaseTableSummary
       columns {
-        name
-        type
-        description
+        ...LogDatabaseTableColumnDetails
       }
     }
   }
+  ${LogDatabaseTableSummary}
+  ${LogDatabaseTableColumnDetails}
 `;
 
 /**

@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, useSnackbar } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { useBrowserContext } from './BrowserContext';
+import { useBrowserContext } from '../BrowserContext';
 import { useListTablesForDatabase } from './graphql/listTablesForDatabase.generated';
 import TableListItem from './TableListItem';
 

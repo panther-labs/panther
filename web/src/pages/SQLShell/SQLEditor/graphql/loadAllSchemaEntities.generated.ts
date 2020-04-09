@@ -20,6 +20,9 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { LogDatabaseSummary } from '../../../../graphql/fragments/LogDatabaseSummary.generated';
+import { LogDatabaseTableSummary } from '../../../../graphql/fragments/LogDatabaseTableSummary.generated';
+import { LogDatabaseTableColumnDetails } from '../../../../graphql/fragments/LogDatabaseTableColumnDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,29 +31,27 @@ export type LoadAllSchemaEntitiesVariables = {};
 
 export type LoadAllSchemaEntities = {
   listLogDatabases: Array<
-    Pick<Types.LogDatabase, 'name'> & {
-      tables: Array<
-        Pick<Types.LogDatabaseTable, 'name'> & {
-          columns: Array<Pick<Types.LogDatabaseTableColumn, 'name' | 'type'>>;
-        }
-      >;
-    }
+    {
+      tables: Array<{ columns: Array<LogDatabaseTableColumnDetails> } & LogDatabaseTableSummary>;
+    } & LogDatabaseSummary
   >;
 };
 
 export const LoadAllSchemaEntitiesDocument = gql`
   query LoadAllSchemaEntities {
     listLogDatabases {
-      name
+      ...LogDatabaseSummary
       tables {
-        name
+        ...LogDatabaseTableSummary
         columns {
-          name
-          type
+          ...LogDatabaseTableColumnDetails
         }
       }
     }
   }
+  ${LogDatabaseSummary}
+  ${LogDatabaseTableSummary}
+  ${LogDatabaseTableColumnDetails}
 `;
 
 /**

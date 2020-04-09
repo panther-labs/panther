@@ -1,8 +1,8 @@
 import React from 'react';
 import { Combobox, useSnackbar } from 'pouncejs';
-import { useListLogDatabases } from 'Pages/SQLShell/Browser/graphql/listLogDatabases.generated';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useBrowserContext } from './BrowserContext';
+import { useListLogDatabases } from './graphql/listLogDatabases.generated';
+import { useBrowserContext } from '../BrowserContext';
 
 const DatabaseSelector: React.FC = () => {
   const { selectDatabase, selectedDatabase } = useBrowserContext();

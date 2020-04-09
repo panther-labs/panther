@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextInput } from 'pouncejs';
-import { useBrowserContext } from './BrowserContext';
+import { useBrowserContext } from '../BrowserContext';
 
 const Search: React.FC = () => {
   const { searchValue, setSearchValue, selectedDatabase } = useBrowserContext();

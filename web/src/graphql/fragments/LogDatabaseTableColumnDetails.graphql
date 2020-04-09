@@ -1,0 +1,5 @@
+fragment LogDatabaseTableColumnDetails on LogDatabaseTableColumn {
+  name
+  description
+  type
+}

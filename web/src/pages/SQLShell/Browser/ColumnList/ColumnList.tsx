@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Flex, Icon, IconButton, Text } from 'pouncejs';
-import { useBrowserContext } from './BrowserContext';
+import { useBrowserContext } from '../BrowserContext';
 import { useListColumnsForTable } from './graphql/listColumnsForTable.generated';
 import ColumnListItem from './ColumnListItem';
 

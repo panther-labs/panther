@@ -51,7 +51,7 @@ const typePolicies: Partial<Record<keyof ResolversTypes, TypePolicy>> = {
     keyFields: ['name'],
   },
   LogDatabaseTable: {
-    keyFields: ['name'],
+    keyFields: ['name', 'databaseName'],
   },
   GeneralSettings: {
     keyFields: ['email'],
