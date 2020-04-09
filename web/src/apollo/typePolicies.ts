@@ -1,9 +1,35 @@
-import { ResolversTypes } from 'Generated/schema';
-import { TypePolicy } from '@apollo/client';
+import { Query, ResolversParentTypes } from 'Generated/schema';
 import Storage from 'Helpers/storage';
 import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
+import {
+  Reference,
+  FieldPolicy,
+  FieldReadFunction,
+  TypePolicies as ApolloTypePolicies,
+} from '@apollo/client';
 
-const typePolicies: Partial<Record<keyof ResolversTypes, TypePolicy>> = {
+type FieldValues<T> =
+  | FieldPolicy<T, T, T | Reference | undefined>
+  | FieldReadFunction<T, T | Reference | undefined>;
+
+type TypePolicy<T> = {
+  keyFields?: keyof T | (keyof T)[] | false;
+  fields?: Partial<
+    {
+      [P in keyof T]: FieldValues<T[P]>;
+    }
+  >;
+};
+
+export type TypePolicies = Partial<
+  {
+    [T in keyof ResolversParentTypes]: TypePolicy<ResolversParentTypes[T]>;
+  }
+> & {
+  Query: TypePolicy<Query>;
+};
+
+const typePolicies: TypePolicies = {
   Query: {
     fields: {
       getComplianceIntegration(existingData, { args, toReference }) {
@@ -66,4 +92,4 @@ const typePolicies: Partial<Record<keyof ResolversTypes, TypePolicy>> = {
   },
 };
 
-export default typePolicies;
+export default (typePolicies as unknown) as ApolloTypePolicies;
