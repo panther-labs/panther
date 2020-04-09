@@ -28,11 +28,13 @@ export type ResetUserPasswordVariables = {
   id: Types.Scalars['ID'];
 };
 
-export type ResetUserPassword = Pick<Types.Mutation, 'resetUserPassword'>;
+export type ResetUserPassword = { resetUserPassword: Pick<Types.User, 'id'> };
 
 export const ResetUserPasswordDocument = gql`
   mutation ResetUserPassword($id: ID!) {
-    resetUserPassword(id: $id)
+    resetUserPassword(id: $id) {
+      id
+    }
   }
 `;
 export type ResetUserPasswordMutationFn = ApolloReactCommon.MutationFunction<

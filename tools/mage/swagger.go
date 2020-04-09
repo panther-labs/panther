@@ -41,21 +41,22 @@ const (
 var swaggerPattern = regexp.MustCompile(`\n {6}DefinitionBody:[ \t]*[\w./]+\.yml[ \t]*(#.+)?`)
 
 // Embed swagger specs into the API gateway template, saving it to out/deployments.
-func embedAPISpec() {
+func embedAPISpec() error {
 	cfn := readFile(apiTemplate)
 
 	newCfn, err := embedAPIs(cfn)
 	if err != nil {
-		logger.Fatal(err)
+		return err
 	}
 
 	// Save the new file
 	if err := os.MkdirAll(filepath.Dir(apiEmbeddedTemplate), 0755); err != nil {
-		logger.Fatalf("failed to create directory %s: %v", filepath.Dir(apiEmbeddedTemplate), err)
+		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(apiEmbeddedTemplate), err)
 	}
 
 	logger.Debugf("deploy: transformed %s => %s with embedded APIs", apiTemplate, apiEmbeddedTemplate)
 	writeFile(apiEmbeddedTemplate, newCfn)
+	return nil
 }
 
 // Transform a single CloudFormation template by embedding Swagger definitions.

@@ -102,6 +102,7 @@ var (
 		"ConfirmForgotPassword": {},
 		"ConfirmDevice":         {}, // This API call does not log a userIdentity with an accountID
 		"ForgotPassword":        {},
+		"UpdateUserAttributes":  {},
 
 		// config
 		"BatchGetResourceConfig":          {},

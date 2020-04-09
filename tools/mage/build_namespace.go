@@ -28,9 +28,7 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
-	"github.com/magefile/mage/target"
 
-	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -41,15 +39,7 @@ var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 // Build contains targets for compiling source code.
 type Build mg.Namespace
 
-// Build all deployment artifacts
-func (b Build) All() {
-	b.Lambda() // implicitly does b.API()
-	b.Cfn()
-	b.Opstools()
-	b.Devtools()
-}
-
-// API Generate Go client/models from Swagger specs in api/
+// API Generate API source files from GraphQL + Swagger
 func (b Build) API() {
 	specs, err := filepath.Glob(swaggerGlob)
 	if err != nil {
@@ -60,7 +50,7 @@ func (b Build) API() {
 
 	cmd := filepath.Join(setupDirectory, "swagger")
 	if _, err = os.Stat(cmd); err != nil {
-		logger.Fatalf("%s not found (%v): run 'mage setup:swagger'", cmd, err)
+		logger.Fatalf("%s not found (%v): run 'mage setup'", cmd, err)
 	}
 
 	for _, spec := range specs {
@@ -86,6 +76,11 @@ func (b Build) API() {
 		walk(client, handler)
 		walk(models, handler)
 	}
+
+	logger.Info("build:api: generating web/__generated__/schema.tsx from graphql")
+	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
+		logger.Fatalf("graphql generation failed: %v", err)
+	}
 }
 
 // Lambda Compile Go Lambda function source
@@ -96,17 +91,6 @@ func (b Build) Lambda() {
 }
 
 func (b Build) lambda() error {
-	modified, err := target.Dir("out/bin/internal", "api", "internal", "pkg")
-	if err == nil && !modified {
-		// The source folders are older than all the compiled binaries - nothing has changed
-		logger.Info("build:lambda: up to date")
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	mg.Deps(b.API)
-
 	var packages []string
 	walk("internal", func(path string, info os.FileInfo) {
 		if info.IsDir() && strings.HasSuffix(path, "main") {
@@ -125,62 +109,80 @@ func (b Build) lambda() error {
 	return nil
 }
 
-// Opstools Compile Go operational tools from source
-func (b Build) Opstools() {
-	buildTools("opstools", "out/bin/opstools", "cmd/opstools")
+// Tools Compile devtools and opstools
+func (b Build) Tools() {
+	if err := b.tools(); err != nil {
+		logger.Fatal(err)
+	}
 }
 
-// Devtools Compile developer tools from source
-func (b Build) Devtools() {
-	buildTools("devtools", "out/bin/devtools", "cmd/devtools")
+func (b Build) tools() error {
+	if err := buildTools("devtools", "out/bin/devtools", "cmd/devtools"); err != nil {
+		return err
+	}
+	return buildTools("opstools", "out/bin/opstools", "cmd/opstools")
 }
 
-func buildTools(tools, binDir, sourceDir string) {
+func buildTools(tools, binDir, sourceDir string) error {
 	// cross compile so tools can be copied to other machines easily
 	archs := []string{"amd64", "386", "arm"} // yes arm, AWS is now supporting arm processors and they are cheap!
 	oses := []string{"linux", "darwin", "windows"}
 	blacklist := map[string]bool{ // incompatible combinations
 		"darwin:arm": true,
 	}
-	applyBuildEnv := func(apply func(arch, opsys, binPath string)) {
+
+	applyBuildEnv := func(apply func(arch, opsys, binPath string) error) error {
 		for _, arch := range archs {
 			for _, opsys := range oses {
 				if blacklist[opsys+":"+arch] {
 					continue
 				}
-				apply(arch, opsys, filepath.Join(binDir, opsys, arch))
+
+				if err := apply(arch, opsys, filepath.Join(binDir, opsys, arch)); err != nil {
+					return err
+				}
 			}
 		}
+
+		return nil
 	}
 
 	// create the dirs
-	applyBuildEnv(func(arch, opsys, binPath string) {
+	err := applyBuildEnv(func(arch, opsys, binPath string) error {
 		if err := os.MkdirAll(binPath, 0755); err != nil {
-			logger.Fatalf("failed to create %s directory: %v", binPath, err)
+			return fmt.Errorf("failed to create %s directory: %v", binPath, err)
 		}
+		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	logger.Infof("build:%s using %s for %s on %s",
 		tools, runtime.Version(), strings.Join(oses, ","), strings.Join(archs, ","))
 
-	// loop over arch and os to compile
-	compile := func(path string) {
-		applyBuildEnv(func(arch, opsys, binPath string) {
+	// compile each app
+	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() || filepath.Base(path) != "main.go" {
+			return nil
+		}
+
+		return applyBuildEnv(func(arch, opsys, binPath string) error {
 			app := filepath.Dir(path)
 			logger.Debugf("build:%s compiling %s for %s on %s to %s",
 				tools, filepath.Base(app), opsys, arch, binPath)
-			if err := sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
-				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
-				logger.Fatalf("go build %s failed: %v", path, err)
-			}
-		})
-	}
 
-	// compile each app
-	walk(sourceDir, func(path string, info os.FileInfo) {
-		if !info.IsDir() && strings.HasSuffix(path, "main.go") {
-			compile(path)
-		}
+			if err = sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
+				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
+				return fmt.Errorf("go build %s failed: %v", path, err)
+			}
+
+			return nil
+		})
 	})
 }
 
@@ -188,7 +190,7 @@ func buildPackage(pkg string) error {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")
 	oldInfo, statErr := os.Stat(binary)
-	oldHash, hashErr := shutil.SHA256(binary)
+	oldHash, hashErr := fileMD5(binary)
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
@@ -198,7 +200,7 @@ func buildPackage(pkg string) error {
 	}
 
 	if statErr == nil && hashErr == nil {
-		if hash, err := shutil.SHA256(binary); err == nil && hash == oldHash {
+		if hash, err := fileMD5(binary); err == nil && hash == oldHash {
 			// Optimization - if the binary contents haven't changed, reset the last modified time.
 			// "aws cloudformation package" re-uploads any binary whose modification time has changed,
 			// even if the contents are identical. So this lets us skip any unmodified binaries, which can
@@ -219,24 +221,34 @@ func buildPackage(pkg string) error {
 
 // Generate CloudFormation templates in out/deployments folder
 func (b Build) Cfn() {
-	embedAPISpec()
+	if err := b.cfn(); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func (b Build) cfn() error {
+	if err := embedAPISpec(); err != nil {
+		return err
+	}
 
 	if err := generateGlueTables(); err != nil {
-		logger.Fatal(err)
+		return err
 	}
 
 	settings, err := config.Settings()
 	if err != nil {
-		logger.Fatal(err)
+		return err
 	}
 
 	if err := generateAlarms(settings); err != nil {
-		logger.Fatal(err)
+		return err
 	}
 	if err := generateDashboards(); err != nil {
-		logger.Fatal(err)
+		return err
 	}
 	if err := generateMetrics(); err != nil {
-		logger.Fatal(err)
+		return err
 	}
+
+	return nil
 }
