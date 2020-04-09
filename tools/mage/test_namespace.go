@@ -291,6 +291,10 @@ func testTfValidate() error {
 		return fmt.Errorf("failed to list tf templates: %v", err)
 	}
 
+	// Terraform validate needs a valid AWS region to "configure" the provider.
+	// No AWS calls are actually necessary; this can be any region.
+	env := map[string]string{"AWS_REGION": "us-east-1"}
+
 	for _, info := range paths {
 		if !info.IsDir() {
 			continue
@@ -301,7 +305,7 @@ func testTfValidate() error {
 			return fmt.Errorf("tf init %s failed: %v", dir, err)
 		}
 
-		if err := sh.Run(terraformPath, "validate", dir); err != nil {
+		if err := sh.RunWith(env, terraformPath, "validate", dir); err != nil {
 			return fmt.Errorf("tf validate %s failed: %v", dir, err)
 		}
 	}
