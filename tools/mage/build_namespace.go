@@ -1,7 +1,7 @@
 package mage
 
 /**
- * A Cloud-Native SIEM for the Modern Security Team
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -77,7 +77,7 @@ func (b Build) API() {
 		walk(models, handler)
 	}
 
-	logger.Info("build:api: generating web/__generated__/schema.tsx from graphql")
+	logger.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		logger.Fatalf("graphql generation failed: %v", err)
 	}

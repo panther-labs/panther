@@ -1,4 +1,4 @@
-# A Cloud-Native SIEM for the Modern Security Team
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
