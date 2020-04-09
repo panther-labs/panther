@@ -28,14 +28,16 @@ const AnalyticsConsentModal: React.FC = () => {
   const { hideModal } = useModal();
   const [saveConsentPreferences] = useUpdateGeneralSettingsConsents({
     onCompleted: () => {
+      hideModal();
       pushSnackbar({ variant: 'success', title: `Successfully updated your preferences` });
     },
     onError: error => {
+      hideModal();
       pushSnackbar({
         variant: 'error',
         title:
           extractErrorMessage(error) ||
-          "Failed to update your preferences due to an unknown and unpredicted error'",
+          'Failed to update your preferences due to an unknown and unpredicted error',
       });
     },
   });

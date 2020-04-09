@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Box, Flex, Heading, Icon, IconButton, SideSheet, useSnackbar } from 'pouncejs';
+import { Box, Flex, Heading, Icon, IconButton, SideSheet, useSnackbar } from 'pouncejs';
 import React from 'react';
 
 import useSidesheet from 'Hooks/useSidesheet';
@@ -51,20 +51,24 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   const { hideSidesheet, showSidesheet } = useSidesheet();
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
-  const [
-    addDestination,
-    { data: addDestinationData, error: addDestinationError },
-  ] = useAddDestination();
-
-  React.useEffect(() => {
-    if (addDestinationData) {
+  const [addDestination] = useAddDestination({
+    onCompleted: data => {
+      hideSidesheet();
       pushSnackbar({
         variant: 'success',
-        title: `Successfully added ${addDestinationData.addDestination.displayName}`,
+        title: `Successfully added ${data.addDestination.displayName}`,
       });
+    },
+    onError: error => {
       hideSidesheet();
-    }
-  }, [addDestinationData]);
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) ||
+          "An unknown error occurred and we couldn't add your new destination",
+      });
+    },
+  });
 
   // The typescript on `values` simply says that we expect to have DestinationFormValues with an
   // `outputType` that partially implements the DestinationConfigInput (we say partially since each
@@ -225,18 +229,6 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
           </IconButton>
           <Heading size="medium">{capitalize(destinationType)} Configuration</Heading>
         </Flex>
-        {addDestinationError && (
-          <Alert
-            mt={2}
-            mb={6}
-            variant="error"
-            title="Destination not added"
-            description={
-              extractErrorMessage(addDestinationError) ||
-              "An unknown error occured and we couldn't add your new destination"
-            }
-          />
-        )}
         {renderFullDestinationForm()}
       </Box>
     </SideSheet>
