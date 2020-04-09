@@ -20,9 +20,9 @@ package main
 
 import (
 	"context"
-	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -48,15 +48,6 @@ var (
 	// The cache is used to avoid attempts to create the same partitions in Glue table
 	partitionPrefixCache = make(map[string]struct{})
 )
-
-// This lambda takes either an SQSEvent or a CtasComplete
-type CatlogEvent struct {
-	events.SQSEvent
-}
-
-type CtasComplete struct { // this event comes from the Step function state machine that executed CTAS to generate Parquet
-
-}
 
 func handle(ctx context.Context, event events.SQSEvent) (err error) {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
@@ -108,7 +99,6 @@ func process(event events.SQSEvent) error {
 	}
 	return nil
 }
-
 
 func main() {
 	lambda.Start(handle)
