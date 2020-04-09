@@ -44,7 +44,8 @@ func fileHashMap(roots ...string) (map[string][16]byte, error) {
 					return fmt.Errorf("readFile %s: %v", path, err)
 				}
 				// nolint:gosec
-				result[path] = md5.Sum(data) // md5 is almost twice as fast as sha, works for our purposes
+				// Benchmarking shows MD5 is almost twice as fast as SHA2 and we don't cryptographic guarantees here.
+				result[path] = md5.Sum(data)
 			}
 
 			return nil
