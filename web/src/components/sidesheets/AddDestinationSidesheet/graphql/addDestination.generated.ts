@@ -30,7 +30,7 @@ export type AddDestinationVariables = {
 
 export type AddDestination = {
   addDestination?: Types.Maybe<
-    Pick<
+    { __typename: 'Destination' } & Pick<
       Types.Destination,
       | 'createdBy'
       | 'creationTime'
@@ -42,23 +42,23 @@ export type AddDestination = {
       | 'verificationStatus'
       | 'defaultForSeverity'
     > & {
-      outputConfig: {
-        slack?: Types.Maybe<Pick<Types.SlackConfig, 'webhookURL'>>;
-        sns?: Types.Maybe<Pick<Types.SnsConfig, 'topicArn'>>;
-        pagerDuty?: Types.Maybe<Pick<Types.PagerDutyConfig, 'integrationKey'>>;
-        github?: Types.Maybe<Pick<Types.GithubConfig, 'repoName' | 'token'>>;
-        jira?: Types.Maybe<
-          Pick<
-            Types.JiraConfig,
-            'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType'
-          >
-        >;
-        opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
-        msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
-        sqs?: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
-        asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
-      };
-    }
+        outputConfig: {
+          slack?: Types.Maybe<Pick<Types.SlackConfig, 'webhookURL'>>;
+          sns?: Types.Maybe<Pick<Types.SnsConfig, 'topicArn'>>;
+          pagerDuty?: Types.Maybe<Pick<Types.PagerDutyConfig, 'integrationKey'>>;
+          github?: Types.Maybe<Pick<Types.GithubConfig, 'repoName' | 'token'>>;
+          jira?: Types.Maybe<
+            Pick<
+              Types.JiraConfig,
+              'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType'
+            >
+          >;
+          opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
+          msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
+          sqs?: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
+          asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
+        };
+      }
   >;
 };
 
@@ -110,6 +110,7 @@ export const AddDestinationDocument = gql`
       }
       verificationStatus
       defaultForSeverity
+      __typename
     }
   }
 `;

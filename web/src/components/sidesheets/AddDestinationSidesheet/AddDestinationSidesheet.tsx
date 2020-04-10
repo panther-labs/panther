@@ -33,8 +33,6 @@ import MicrosoftTeamsDestinationForm from 'Components/forms/MicrosoftTeamsDestin
 import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
 import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
-
-import { ListDestinationsAndDefaultsDocument, ListDestinationsQueryData } from 'Pages/Destinations';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useAddDestination } from './graphql/addDestination.generated';
 
@@ -52,7 +50,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
   const [
-    addDestination,
+    addNewDestination,
     { data: addDestinationData, error: addDestinationError },
   ] = useAddDestination();
 
@@ -74,7 +72,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   const handleSubmit = React.useCallback(
     async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {
       const { displayName, defaultForSeverity, outputConfig } = values;
-      await addDestination({
+      await addNewDestination({
         variables: {
           input: {
             // form values that are present in all Destinations
@@ -86,20 +84,14 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
             outputConfig,
           },
         },
-        update: (proxy, { data }) => {
-          // Read the data from our cache for this query.
-          const existingData: ListDestinationsQueryData = proxy.readQuery({
-            query: ListDestinationsAndDefaultsDocument,
-          });
-
-          // Write our data back to the cache with the new comment in it
-          proxy.writeQuery({
-            query: ListDestinationsAndDefaultsDocument,
-            data: {
-              ...existingData,
-              destinations: [data.addDestination, ...existingData.destinations],
+        update: (cache, { data: { addDestination } }) => {
+          cache.modify('ROOT_QUERY', {
+            destinations: (cachedData, { toReference }) => {
+              const addedIntegrationCacheRef = toReference(addDestination);
+              return [addedIntegrationCacheRef, ...cachedData];
             },
           });
+          cache.gc();
         },
       });
     },
