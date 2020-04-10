@@ -55,7 +55,10 @@ func (m *mockSQS) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendM
 			result.Successful = append(result.Successful, &sqs.SendMessageBatchResultEntry{Id: entry.Id})
 		} else {
 			// All other records fail
-			result.Failed = append(result.Failed, &sqs.BatchResultErrorEntry{Id: entry.Id})
+			result.Failed = append(result.Failed, &sqs.BatchResultErrorEntry{
+				Id:      entry.Id,
+				Message: aws.String("test error"),
+			})
 		}
 	}
 
