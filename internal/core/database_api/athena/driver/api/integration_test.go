@@ -37,7 +37,8 @@ import (
 )
 
 const (
-	badSQL = `select * from nosuchtable`
+	badExecutingSQL = `select * from nosuchtable` // fails AFTER query starts
+	malformedSQL    = `wewewewew`                 // fails when query starts
 )
 
 var (
@@ -138,7 +139,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	}
 	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
 	require.NoError(t, err)
-	assert.Equal(t, "", executeQueryOutput.Message)
+	assert.Equal(t, "", executeQueryOutput.ErrorMessage)
 	require.Equal(t, models.QuerySucceeded, executeQueryOutput.Status)
 	checkQueryResults(t, true, len(testutils.TestTableRows)+1, executeQueryOutput.ResultsPage.Rows)
 
@@ -146,13 +147,13 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeBadQueryInput := &models.ExecuteQueryInput{
 		DatabaseName: testutils.TestDb,
-		SQL:          badSQL,
+		SQL:          malformedSQL,
 	}
 	executeBadQueryOutput, err := runExecuteQuery(useLambda, executeBadQueryInput)
 	require.NoError(t, err) // NO LAMBDA ERROR here!
 	require.Equal(t, models.QueryFailed, executeBadQueryOutput.Status)
-	require.True(t, strings.Contains(executeBadQueryOutput.Message, "does not exist"))
-	require.Equal(t, badSQL, executeBadQueryOutput.SQL)
+	assert.True(t, strings.Contains(executeBadQueryOutput.ErrorMessage, "mismatched input 'wewewewew'"))
+	assert.Equal(t, malformedSQL, executeBadQueryOutput.SQL)
 
 	//  -------- ExecuteAsyncQuery()
 
@@ -211,7 +212,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeBadAsyncQueryInput := &models.ExecuteAsyncQueryInput{
 		DatabaseName: testutils.TestDb,
-		SQL:          badSQL,
+		SQL:          badExecutingSQL,
 	}
 	executeBadAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeBadAsyncQueryInput)
 	require.NoError(t, err)
@@ -225,8 +226,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
 			require.Equal(t, models.QueryFailed, getQueryStatusOutput.Status)
-			assert.True(t, strings.Contains(getQueryStatusOutput.Message, "does not exist"))
-			assert.Equal(t, badSQL, getQueryStatusOutput.SQL)
+			assert.True(t, strings.Contains(getQueryStatusOutput.ErrorMessage, "does not exist"))
+			assert.Equal(t, badExecutingSQL, getQueryStatusOutput.SQL)
 			break
 		}
 	}
@@ -255,7 +256,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
 			require.Equal(t, models.QueryCanceled, getQueryStatusOutput.Status)
-			assert.Equal(t, getQueryStatusOutput.Message, "Query canceled")
+			assert.Equal(t, getQueryStatusOutput.ErrorMessage, "Query canceled")
 			assert.Equal(t, testSQL, getQueryStatusOutput.SQL)
 			break
 		}

@@ -44,7 +44,10 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 	}()
 
 	executeAsyncQueryOutput, err := api.ExecuteAsyncQuery(input)
-	if err != nil {
+	if err != nil || executeAsyncQueryOutput.ErrorMessage != "" { // either API error OR sql error
+		output.Status = models.QueryFailed
+		output.ErrorMessage = executeAsyncQueryOutput.ErrorMessage
+		output.SQL = input.SQL
 		return output, err
 	}
 
@@ -81,6 +84,12 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 
 	startOutput, err := awsathena.StartQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
 	if err != nil {
+		// try to dig out the athena error if there is one
+		if athenaErr, ok := err.(*athena.InvalidRequestException); ok {
+			output.ErrorMessage = athenaErr.Message()
+			return output, nil // no lambda err
+		}
+
 		return output, err
 	}
 
@@ -109,9 +118,9 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 
 	switch output.Status {
 	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
-		output.Message = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
+		output.ErrorMessage = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
 	case models.QueryCanceled:
-		output.Message = "Query canceled"
+		output.ErrorMessage = "Query canceled"
 	}
 
 	return output, nil

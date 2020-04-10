@@ -54,7 +54,6 @@ type GetDatabasesOutput struct {
 type DatabaseDescription struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
-	// other stuff? CreateDate?
 }
 
 type GetTablesInput struct {
@@ -71,7 +70,6 @@ type TableDescription struct {
 	DatabaseName string  `json:"databaseName" validate:"required"`
 	Name         string  `json:"name" validate:"required"`
 	Description  *string `json:"description,omitempty"`
-	// other stuff? CreateDate?
 }
 
 type TableDetail struct {
@@ -121,7 +119,10 @@ type ExecuteAsyncQueryInput struct {
 	SQL          string `json:"sql" validate:"required"`
 }
 
-type ExecuteAsyncQueryOutput = QueryIdentifier
+type ExecuteAsyncQueryOutput struct {
+	QueryError
+	QueryIdentifier
+}
 
 type GetQueryStatusInput = QueryIdentifier
 
@@ -189,5 +190,5 @@ type Column struct {
 }
 
 type QueryError struct {
-	Message string `json:"message,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"` // this is 'ErrorMessage' not 'Message' because we are composing
 }
