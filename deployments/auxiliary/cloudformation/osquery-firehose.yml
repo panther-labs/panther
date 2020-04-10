@@ -33,7 +33,7 @@ Resources:
         BucketARN: !GetAtt OsqueryDataBucket.Arn
         Prefix: osquery/
         BufferingHints:
-          # Data is flushed once one of the buffer hints are satisifed.
+          # Data is flushed once one of the buffer hints are satisfied.
           IntervalInSeconds: 300
           SizeInMBs: 128
         CompressionFormat: GZIP
