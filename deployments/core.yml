@@ -291,6 +291,13 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: PublishToLayerManagerQueue
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-layer-manager-queue
 
   AnalysisApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -424,7 +431,7 @@ Resources:
     Properties:
       QueueName: panther-alerts-queue
       # <cfndoc>
-      # This sqs q does hold alerts to be delivery to user configured destinations.
+      # This sqs queue holds alerts to be delivered to user configured destinations.
       #
       # Failure Impact
       # * Failure of this sqs q will impact delivery of alerts to output destinations.
@@ -628,4 +635,99 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-source-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ##### Layer Management #####
+  LayerQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-layer-manager-queue
+      # <cfndoc>
+      # This sqs queue is used to communicate layer update requests to the layer manager function.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will prevent users from updating the globals layer.
+      # * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered, one event should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue` and the rest should be purged.
+      # </cfndoc>
+      MessageRetentionPeriod: 86400 # 24 hours
+      KmsMasterKeyId: !Ref SqsKeyId
+      VisibilityTimeout: 60 # Should match lambda timeout
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt LayerDLQ.Arn
+        maxReceiveCount: 10
+
+  LayerDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-layer-manager-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-layer-manager-queue`.
+      # Items are in this queue due to a failure of the `panther-layer-manager` lambda.
+      # When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: 60
+
+  LayerManagerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/core/layer_manager/main
+      Description: Manage updates to the layers on the panther python engines.
+      Environment:
+        Variables:
+          GLOBAL_LAYER: panther-engine-globals
+          POLICY_ENGINE: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine'
+          RULE_ENGINE: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rule-engine'
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+      Events:
+        LayerQueue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt LayerQueue.Arn
+            BatchSize: 10
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      FunctionName: panther-layer-manager
+      # <cfndoc>
+      # This lambda manages updates to the lambda layers attached to the Panther policy and rule engines.
+      #
+      # Failure Impact
+      # * Failure of this lambda will prevent users from updating global helper functions.
+      # * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue`.
+      # </cfndoc>
+      Handler: main
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 60
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: GetAnalyses
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/global
+        - Id: ManageEngines
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:GetFunctionConfiguration
+                - lambda:UpdateFunctionConfiguration
+              Resource:
+                - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine'
+                - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rule-engine'
+        - Id: ManageLayers
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:PublishLayerVersion
+              Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals'
+
+  LayerManagerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-layer-manager
       RetentionInDays: !Ref CloudWatchLogRetentionDays

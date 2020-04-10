@@ -36,7 +36,7 @@ import (
 
 const (
 	typePolicy       = string(models.AnalysisTypePOLICY)
-	typeGlobal = string(models.AnalysisTypeGLOBAL)
+	typeGlobal       = string(models.AnalysisTypeGLOBAL)
 	typeRule         = string(models.AnalysisTypeRULE)
 	maxDynamoBackoff = 30 * time.Second
 )
@@ -170,15 +170,15 @@ func (r *tableItem) Rule() *models.Rule {
 func (r *tableItem) Global() *models.Global {
 	r.normalize()
 	result := &models.Global{
-		Body:                      r.Body,
-		CreatedAt:                 r.CreatedAt,
-		CreatedBy:                 r.CreatedBy,
-		Description:               r.Description,
-		ID:                        r.ID,
-		LastModified:              r.LastModified,
-		LastModifiedBy:            r.LastModifiedBy,
-		Tags:                      r.Tags,
-		VersionID:                 r.VersionID,
+		Body:           r.Body,
+		CreatedAt:      r.CreatedAt,
+		CreatedBy:      r.CreatedBy,
+		Description:    r.Description,
+		ID:             r.ID,
+		LastModified:   r.LastModified,
+		LastModifiedBy: r.LastModifiedBy,
+		Tags:           r.Tags,
+		VersionID:      r.VersionID,
 	}
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result

@@ -21,14 +21,12 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"reflect"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
@@ -124,47 +122,6 @@ func setEquality(first, second []string) bool {
 	return true
 }
 
-// Rewrite test resource json in alphabetical order.
-func standardizeTests(p *models.Policy) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	for _, test := range p.Tests {
-		var data map[string]interface{}
-		if err := json.UnmarshalFromString(string(test.Resource), &data); err != nil {
-			return err
-		}
-		normalized, err := json.MarshalToString(&data)
-		if err != nil {
-			return err
-		}
-		test.Resource = models.TestResource(normalized)
-	}
-
-	return nil
-}
-
-// Returns true if the two policies are logically equivalent.
-func policiesEqual(first, second *tableItem) (bool, error) {
-	p1, p2 := first.Policy(""), second.Policy("")
-	p1.CreatedAt = p2.CreatedAt
-	p1.CreatedBy = p2.CreatedBy
-	p1.LastModified = p2.LastModified
-	p1.LastModifiedBy = p2.LastModifiedBy
-	p1.VersionID = p2.VersionID
-
-	// Test resources are json strings which may not be serialized in the same order
-	if err := standardizeTests(p1); err != nil {
-		zap.L().Warn("failed to marshal/unmarshal test json", zap.Error(err))
-		return false, err
-	}
-	if err := standardizeTests(p2); err != nil {
-		zap.L().Warn("failed to marshal/unmarshal test json", zap.Error(err))
-		return false, err
-	}
-
-	return reflect.DeepEqual(p1, p2), nil
-}
-
 // Create/update a policy or rule.
 //
 // The following fields are set automatically (need not be set by the caller):
@@ -200,14 +157,6 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 			return changeType, errWrongType
 		}
 
-		if equal, err := policiesEqual(oldItem, item); equal && err != nil {
-			zap.L().Info("no changes necessary",
-				zap.String("policyId", string(item.ID)))
-			return changeType, nil
-		}
-		// If there was an error evaluating equality, just assume they are not equal and continue
-		// with the update as normal.
-
 		item.CreatedAt = oldItem.CreatedAt
 		item.CreatedBy = oldItem.CreatedBy
 		changeType = updatedItem
@@ -228,6 +177,13 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 
 	if item.Type == typeRule {
 		return changeType, nil
+	}
+
+	if item.Type == typeGlobal {
+		// When policies and rules are also managed by globals, this can be moved out of the if statement,
+		// although at that point it may be desirable to move this to the caller function so as to only make the call
+		// once for BulkUpload.
+		return changeType, updateLayer(item.Type)
 	}
 
 	// Updated policies may require changes to the compliance status.

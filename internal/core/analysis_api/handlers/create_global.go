@@ -37,11 +37,11 @@ func CreateGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	}
 
 	item := &tableItem{
-		Body:                      input.Body,
-		Description:               input.Description,
-		ID:                        input.ID,
-		Tags:                      input.Tags,
-		Type:                      typeGlobal,
+		Body:        input.Body,
+		Description: input.Description,
+		ID:          input.ID,
+		Tags:        input.Tags,
+		Type:        typeGlobal,
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
