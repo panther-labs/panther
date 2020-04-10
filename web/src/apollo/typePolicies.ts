@@ -1,5 +1,5 @@
 import { Query, ResolversParentTypes } from 'Generated/schema';
-import Storage from 'Helpers/storage';
+import storage from 'Helpers/storage';
 import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
 import {
   Reference,
@@ -84,7 +84,7 @@ const typePolicies: TypePolicies = {
     fields: {
       errorReportingConsent: {
         merge(oldValue, newValue) {
-          Storage.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, newValue);
+          storage.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, newValue);
           return newValue;
         },
       },
