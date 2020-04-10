@@ -29,8 +29,6 @@ import {
 } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import { getOperationName } from '@apollo/client/utilities';
-import { ListRulesDocument } from 'Pages/ListRules';
 import { useCreateRule } from './graphql/createRule.generated';
 
 export const initialValues: RuleDetails = {
@@ -51,8 +49,11 @@ export const initialValues: RuleDetails = {
 const CreateRulePage: React.FC = () => {
   const { history } = useRouter();
   const [createRule, { error }] = useCreateRule({
-    refetchQueries: [getOperationName(ListRulesDocument)],
     onCompleted: data => history.push(urls.logAnalysis.rules.details(data.addRule.id)),
+    update: cache => {
+      cache.evict('ROOT_QUERY', 'rules');
+      cache.gc();
+    },
   });
 
   const handleSubmit = React.useCallback(

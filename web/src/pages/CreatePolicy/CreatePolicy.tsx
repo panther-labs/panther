@@ -23,9 +23,7 @@ import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/PolicyForm';
 import { PolicyDetails } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
-import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import useRouter from 'Hooks/useRouter';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
@@ -49,8 +47,11 @@ export const initialValues: PolicyDetails = {
 const CreatePolicyPage: React.FC = () => {
   const { history } = useRouter();
   const [createPolicy, { error }] = useCreatePolicy({
-    refetchQueries: [getOperationName(ListPoliciesDocument)],
     onCompleted: data => history.push(urls.compliance.policies.details(data.addPolicy.id)),
+    update: cache => {
+      cache.evict('ROOT_QUERY', 'policies');
+      cache.gc();
+    },
   });
 
   const handleSubmit = React.useCallback(
