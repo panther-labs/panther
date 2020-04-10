@@ -1,0 +1,19 @@
+query GetLogQueryResults($input: GetLogQueryInput!) {
+  getLogQuery(input: $input) {
+    error {
+      message
+    }
+    query {
+      status
+    }
+    results {
+      columns {
+        value
+      }
+    }
+    pageInfo {
+      hasNextPage
+      paginationToken
+    }
+  }
+}

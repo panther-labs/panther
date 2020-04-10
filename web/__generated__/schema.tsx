@@ -235,6 +235,21 @@ export enum DestinationTypeEnum {
   Asana = 'asana',
 }
 
+export type Error = {
+  __typename?: 'Error';
+  message: Scalars['String'];
+};
+
+export type ExecuteAsyncLogQueryInput = {
+  databaseName: Scalars['String'];
+  sql: Scalars['String'];
+};
+
+export type ExecuteAsyncLogQueryOutput = {
+  __typename?: 'ExecuteAsyncLogQueryOutput';
+  queryId: Scalars['String'];
+};
+
 export type GeneralSettings = {
   __typename?: 'GeneralSettings';
   displayName?: Maybe<Scalars['String']>;
@@ -267,6 +282,20 @@ export type GetLogIntegrationTemplateInput = {
   s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
   logTypes: Array<Scalars['String']>;
+};
+
+export type GetLogQueryInput = {
+  queryId: Scalars['ID'];
+  paginationToken?: Maybe<Scalars['ID']>;
+  pageSize?: Maybe<Scalars['Int']>;
+};
+
+export type GetLogQueryOutput = {
+  __typename?: 'GetLogQueryOutput';
+  error?: Maybe<Error>;
+  query?: Maybe<LogQueryOutputQueryData>;
+  results?: Maybe<Array<LogRow>>;
+  pageInfo: PageInfo;
 };
 
 export type GetPolicyInput = {
@@ -443,6 +472,11 @@ export enum ListRulesSortFieldsEnum {
   Severity = 'severity',
 }
 
+export type LogColumn = {
+  __typename?: 'LogColumn';
+  value?: Maybe<Scalars['String']>;
+};
+
 export type LogDatabase = {
   __typename?: 'LogDatabase';
   name: Scalars['String'];
@@ -487,6 +521,23 @@ export type LogIntegrationHealth = {
   kmsKeyStatus: IntegrationItemHealthStatus;
 };
 
+export type LogQueryOutputQueryData = {
+  __typename?: 'LogQueryOutputQueryData';
+  status: LogQueryStatus;
+  sql: Scalars['String'];
+};
+
+export enum LogQueryStatus {
+  Running = 'running',
+  Succeeded = 'succeeded',
+  Failed = 'failed',
+}
+
+export type LogRow = {
+  __typename?: 'LogRow';
+  columns: Array<LogColumn>;
+};
+
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
   webhookURL: Scalars['String'];
@@ -509,7 +560,9 @@ export type Mutation = {
   deletePolicy?: Maybe<Scalars['Boolean']>;
   deleteRule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
+  executeAsyncLogQuery: ExecuteAsyncLogQueryOutput;
   inviteUser: User;
+  queryDone: QueryDone;
   remediateResource?: Maybe<Scalars['Boolean']>;
   resetUserPassword?: Maybe<Scalars['Boolean']>;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
@@ -568,8 +621,16 @@ export type MutationDeleteUserArgs = {
   id: Scalars['ID'];
 };
 
+export type MutationExecuteAsyncLogQueryArgs = {
+  input: ExecuteAsyncLogQueryInput;
+};
+
 export type MutationInviteUserArgs = {
   input?: Maybe<InviteUserInput>;
+};
+
+export type MutationQueryDoneArgs = {
+  input: QueryDoneInput;
 };
 
 export type MutationRemediateResourceArgs = {
@@ -648,6 +709,12 @@ export type OrganizationStatsResponse = {
   scannedResources?: Maybe<ScannedResources>;
   topFailingPolicies?: Maybe<Array<Maybe<PolicySummary>>>;
   topFailingResources?: Maybe<Array<Maybe<ResourceSummary>>>;
+};
+
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  hasNextPage: Scalars['Boolean'];
+  paginationToken?: Maybe<Scalars['ID']>;
 };
 
 export type PagerDutyConfig = {
@@ -751,6 +818,7 @@ export type Query = {
   getLogDatabase?: Maybe<LogDatabase>;
   getLogDatabaseTable?: Maybe<LogDatabaseTable>;
   getLogIntegrationTemplate: IntegrationTemplate;
+  getLogQuery: GetLogQueryOutput;
   remediations?: Maybe<Scalars['AWSJSON']>;
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
@@ -803,6 +871,10 @@ export type QueryGetLogIntegrationTemplateArgs = {
   input: GetLogIntegrationTemplateInput;
 };
 
+export type QueryGetLogQueryArgs = {
+  input: GetLogQueryInput;
+};
+
 export type QueryResourceArgs = {
   input: GetResourceInput;
 };
@@ -837,6 +909,17 @@ export type QueryRuleArgs = {
 
 export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
+};
+
+export type QueryDone = {
+  __typename?: 'QueryDone';
+  queryId: Scalars['String'];
+  workflowId: Scalars['String'];
+};
+
+export type QueryDoneInput = {
+  queryId: Scalars['String'];
+  workflowId: Scalars['String'];
 };
 
 export type RemediateResourceInput = {
@@ -1155,6 +1238,14 @@ export type ResolversTypes = {
   LogDatabaseTableColumn: ResolverTypeWrapper<LogDatabaseTableColumn>;
   GetLogDatabaseTableInput: GetLogDatabaseTableInput;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
+  GetLogQueryInput: GetLogQueryInput;
+  GetLogQueryOutput: ResolverTypeWrapper<GetLogQueryOutput>;
+  Error: ResolverTypeWrapper<Error>;
+  LogQueryOutputQueryData: ResolverTypeWrapper<LogQueryOutputQueryData>;
+  LogQueryStatus: LogQueryStatus;
+  LogRow: ResolverTypeWrapper<LogRow>;
+  LogColumn: ResolverTypeWrapper<LogColumn>;
+  PageInfo: ResolverTypeWrapper<PageInfo>;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResolverTypeWrapper<ResourceDetails>;
   ComplianceStatusEnum: ComplianceStatusEnum;
@@ -1212,7 +1303,11 @@ export type ResolversTypes = {
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
+  executeAsyncLogQueryInput: ExecuteAsyncLogQueryInput;
+  ExecuteAsyncLogQueryOutput: ResolverTypeWrapper<ExecuteAsyncLogQueryOutput>;
   InviteUserInput: InviteUserInput;
+  QueryDoneInput: QueryDoneInput;
+  QueryDone: ResolverTypeWrapper<QueryDone>;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
@@ -1269,6 +1364,14 @@ export type ResolversParentTypes = {
   LogDatabaseTableColumn: LogDatabaseTableColumn;
   GetLogDatabaseTableInput: GetLogDatabaseTableInput;
   GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
+  GetLogQueryInput: GetLogQueryInput;
+  GetLogQueryOutput: GetLogQueryOutput;
+  Error: Error;
+  LogQueryOutputQueryData: LogQueryOutputQueryData;
+  LogQueryStatus: LogQueryStatus;
+  LogRow: LogRow;
+  LogColumn: LogColumn;
+  PageInfo: PageInfo;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResourceDetails;
   ComplianceStatusEnum: ComplianceStatusEnum;
@@ -1326,7 +1429,11 @@ export type ResolversParentTypes = {
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
+  executeAsyncLogQueryInput: ExecuteAsyncLogQueryInput;
+  ExecuteAsyncLogQueryOutput: ExecuteAsyncLogQueryOutput;
   InviteUserInput: InviteUserInput;
+  QueryDoneInput: QueryDoneInput;
+  QueryDone: QueryDone;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
@@ -1506,6 +1613,22 @@ export type DestinationConfigResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
+export type ErrorResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Error'] = ResolversParentTypes['Error']
+> = {
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type ExecuteAsyncLogQueryOutputResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ExecuteAsyncLogQueryOutput'] = ResolversParentTypes['ExecuteAsyncLogQueryOutput']
+> = {
+  queryId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
 export type GeneralSettingsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['GeneralSettings'] = ResolversParentTypes['GeneralSettings']
@@ -1513,6 +1636,17 @@ export type GeneralSettingsResolvers<
   displayName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   errorReportingConsent?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type GetLogQueryOutputResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['GetLogQueryOutput'] = ResolversParentTypes['GetLogQueryOutput']
+> = {
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  query?: Resolver<Maybe<ResolversTypes['LogQueryOutputQueryData']>, ParentType, ContextType>;
+  results?: Resolver<Maybe<Array<ResolversTypes['LogRow']>>, ParentType, ContextType>;
+  pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1611,6 +1745,14 @@ export type ListRulesResponseResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
+export type LogColumnResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogColumn'] = ResolversParentTypes['LogColumn']
+> = {
+  value?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
 export type LogDatabaseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogDatabase'] = ResolversParentTypes['LogDatabase']
@@ -1671,6 +1813,23 @@ export type LogIntegrationHealthResolvers<
   >;
   s3BucketStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
   kmsKeyStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type LogQueryOutputQueryDataResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogQueryOutputQueryData'] = ResolversParentTypes['LogQueryOutputQueryData']
+> = {
+  status?: Resolver<ResolversTypes['LogQueryStatus'], ParentType, ContextType>;
+  sql?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type LogRowResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogRow'] = ResolversParentTypes['LogRow']
+> = {
+  columns?: Resolver<Array<ResolversTypes['LogColumn']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1752,11 +1911,23 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationDeleteUserArgs, 'id'>
   >;
+  executeAsyncLogQuery?: Resolver<
+    ResolversTypes['ExecuteAsyncLogQueryOutput'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationExecuteAsyncLogQueryArgs, 'input'>
+  >;
   inviteUser?: Resolver<
     ResolversTypes['User'],
     ParentType,
     ContextType,
     RequireFields<MutationInviteUserArgs, never>
+  >;
+  queryDone?: Resolver<
+    ResolversTypes['QueryDone'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationQueryDoneArgs, 'input'>
   >;
   remediateResource?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
@@ -1872,6 +2043,15 @@ export type OrganizationStatsResponseResolvers<
     ParentType,
     ContextType
   >;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type PageInfoResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['PageInfo'] = ResolversParentTypes['PageInfo']
+> = {
+  hasNextPage?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  paginationToken?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -2032,6 +2212,12 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryGetLogIntegrationTemplateArgs, 'input'>
   >;
+  getLogQuery?: Resolver<
+    ResolversTypes['GetLogQueryOutput'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetLogQueryArgs, 'input'>
+  >;
   remediations?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   resource?: Resolver<
     Maybe<ResolversTypes['ResourceDetails']>,
@@ -2095,6 +2281,15 @@ export type QueryResolvers<
     RequireFields<QueryRulesArgs, never>
   >;
   users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
+};
+
+export type QueryDoneResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['QueryDone'] = ResolversParentTypes['QueryDone']
+> = {
+  queryId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  workflowId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ResourceDetailsResolvers<
@@ -2272,7 +2467,10 @@ export type Resolvers<ContextType = any> = {
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
+  Error?: ErrorResolvers<ContextType>;
+  ExecuteAsyncLogQueryOutput?: ExecuteAsyncLogQueryOutputResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
+  GetLogQueryOutput?: GetLogQueryOutputResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
   IntegrationItemHealthStatus?: IntegrationItemHealthStatusResolvers<ContextType>;
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
@@ -2282,16 +2480,20 @@ export type Resolvers<ContextType = any> = {
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
+  LogColumn?: LogColumnResolvers<ContextType>;
   LogDatabase?: LogDatabaseResolvers<ContextType>;
   LogDatabaseTable?: LogDatabaseTableResolvers<ContextType>;
   LogDatabaseTableColumn?: LogDatabaseTableColumnResolvers<ContextType>;
   LogIntegration?: LogIntegrationResolvers<ContextType>;
   LogIntegrationHealth?: LogIntegrationHealthResolvers<ContextType>;
+  LogQueryOutputQueryData?: LogQueryOutputQueryDataResolvers<ContextType>;
+  LogRow?: LogRowResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;
   OrganizationReportBySeverity?: OrganizationReportBySeverityResolvers<ContextType>;
   OrganizationStatsResponse?: OrganizationStatsResponseResolvers<ContextType>;
+  PageInfo?: PageInfoResolvers<ContextType>;
   PagerDutyConfig?: PagerDutyConfigResolvers<ContextType>;
   PagingData?: PagingDataResolvers<ContextType>;
   PolicyDetails?: PolicyDetailsResolvers<ContextType>;
@@ -2299,6 +2501,7 @@ export type Resolvers<ContextType = any> = {
   PolicyUnitTest?: PolicyUnitTestResolvers<ContextType>;
   PolicyUnitTestError?: PolicyUnitTestErrorResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  QueryDone?: QueryDoneResolvers<ContextType>;
   ResourceDetails?: ResourceDetailsResolvers<ContextType>;
   ResourceSummary?: ResourceSummaryResolvers<ContextType>;
   RuleDetails?: RuleDetailsResolvers<ContextType>;

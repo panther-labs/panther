@@ -3,7 +3,7 @@ import { Box, Card, Flex, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import TableList from './TableList';
 import DatabaseSelector from './DatabaseSelector';
-import { withBrowserContext, useBrowserContext } from './BrowserContext';
+import { useBrowserContext } from './BrowserContext';
 import ColumnList from './ColumnList';
 import Search from './Search';
 
@@ -45,4 +45,4 @@ const Browser: React.FC = () => {
   );
 };
 
-export default withBrowserContext(Browser);
+export default Browser;

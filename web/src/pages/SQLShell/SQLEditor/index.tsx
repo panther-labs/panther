@@ -1,1 +1,2 @@
-export { default } from './SQLEditor'
+export { default } from './SQLEditor';
+export * from './SQLEditor';

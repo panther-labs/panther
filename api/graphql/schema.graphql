@@ -20,6 +20,7 @@ type Mutation {
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteRule(input: DeleteRuleInput!): Boolean
   deleteUser(id: ID!): Boolean
+  executeAsyncLogQuery(input: executeAsyncLogQueryInput!): ExecuteAsyncLogQueryOutput!
   inviteUser(input: InviteUserInput): User!
   queryDone(input: QueryDoneInput!): QueryDone! @aws_iam
   remediateResource(input: RemediateResourceInput!): Boolean
@@ -50,6 +51,7 @@ type Query {
   getLogDatabase(name: String!): LogDatabase
   getLogDatabaseTable(input: GetLogDatabaseTableInput!): LogDatabaseTable
   getLogIntegrationTemplate(input: GetLogIntegrationTemplateInput!): IntegrationTemplate!
+  getLogQuery(input: GetLogQueryInput!): GetLogQueryOutput!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -64,6 +66,17 @@ type Query {
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   users: [User!]!
+}
+
+input GetLogQueryInput {
+  queryId: ID!
+  paginationToken: ID
+  pageSize: Int
+}
+
+input executeAsyncLogQueryInput {
+  databaseName: String!
+  sql: String!
 }
 
 input GetComplianceIntegrationTemplateInput {
@@ -97,6 +110,10 @@ input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type ExecuteAsyncLogQueryOutput {
+  queryId: String!
 }
 
 type LogDatabaseTableColumn {
@@ -284,6 +301,35 @@ type ComplianceItem {
   status: ComplianceStatusEnum
   suppressed: Boolean
   integrationId: ID
+}
+
+type Error {
+  message: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  paginationToken: ID
+}
+
+type LogQueryOutputQueryData {
+  status: LogQueryStatus!
+  sql: String!
+}
+
+type LogColumn {
+  value: String
+}
+
+type LogRow {
+  columns: [LogColumn!]!
+}
+
+type GetLogQueryOutput {
+  error: Error
+  query: LogQueryOutputQueryData
+  results: [LogRow!]
+  pageInfo: PageInfo!
 }
 
 type ActiveSuppressCount {
@@ -818,4 +864,10 @@ enum DestinationTypeEnum {
 enum AnalysisTypeEnum {
   RULE
   POLICY
+}
+
+enum LogQueryStatus {
+  running
+  succeeded
+  failed
 }

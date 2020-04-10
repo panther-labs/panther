@@ -1,18 +1,44 @@
 import React from 'react';
-import { Box, Button, useSnackbar } from 'pouncejs';
+import { Box, useSnackbar } from 'pouncejs';
+import SubmitButton from 'Components/buttons/SubmitButton';
 import Editor, { Completion } from 'Components/Editor';
 import { shouldSaveData } from 'Helpers/connection';
 import { extractErrorMessage } from 'Helpers/utils';
+import useUrlParams from 'Hooks/useUrlParams';
 import { useLoadAllSchemaEntities } from './graphql/loadAllSchemaEntities.generated';
+import { useBrowserContext } from '../Browser';
+import { useRunQuery } from './graphql/runQuery.generated';
 
 const minLines = 19;
 
+export interface LogQueryUrlParams {
+  queryId?: string;
+}
+
 const SQLEditor: React.FC = () => {
+  const { updateUrlParams } = useUrlParams<LogQueryUrlParams>();
   const [value, setValue] = React.useState('');
+  const { selectedDatabase } = useBrowserContext();
   const { pushSnackbar } = useSnackbar();
 
+  const [runQuery, { loading: isSubmittingQueryRequest }] = useRunQuery({
+    variables: {
+      input: {
+        databaseName: selectedDatabase,
+        sql: value,
+      },
+    },
+    onCompleted: data => updateUrlParams({ queryId: data.executeAsyncLogQuery.queryId }),
+    onError: error =>
+      pushSnackbar({
+        variant: 'error',
+        title: "Couldn't execute your Query",
+        description: extractErrorMessage(error),
+      }),
+  });
+
   // Fetch Autocomplete suggestions
-  const { data } = useLoadAllSchemaEntities({
+  const { data: schemaData } = useLoadAllSchemaEntities({
     skip: shouldSaveData(),
     onError: error =>
       pushSnackbar({
@@ -25,8 +51,8 @@ const SQLEditor: React.FC = () => {
   // Create proper completion data
   const completions = React.useMemo(() => {
     const acc = new Set<Completion>();
-    if (data) {
-      data.listLogDatabases.forEach(database => {
+    if (schemaData) {
+      schemaData.listLogDatabases.forEach(database => {
         acc.add({ value: database.name, type: 'database' });
         database.tables.forEach(table => {
           acc.add({ value: table.name, type: 'table' });
@@ -38,7 +64,7 @@ const SQLEditor: React.FC = () => {
     }
 
     return [...acc];
-  }, [data]);
+  }, [schemaData]);
 
   return (
     <Box>
@@ -52,9 +78,14 @@ const SQLEditor: React.FC = () => {
         onChange={setValue}
         value={value}
       />
-      <Button size="large" variant="primary" mt={6}>
+      <SubmitButton
+        mt={6}
+        disabled={!value || !selectedDatabase || isSubmittingQueryRequest}
+        submitting={isSubmittingQueryRequest}
+        onClick={() => runQuery()}
+      >
         Run Query
-      </Button>
+      </SubmitButton>
     </Box>
   );
 };
