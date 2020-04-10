@@ -16,6 +16,13 @@ const DatabaseSelector: React.FC = () => {
       }),
   });
 
+  // There must always be one database selected. If it's not, arbitrarily select the 1st one
+  React.useEffect(() => {
+    if (data && !selectedDatabase) {
+      selectDatabase(data.listLogDatabases[0]?.name);
+    }
+  }, [data, selectedDatabase, selectDatabase]);
+
   return (
     <Combobox
       label="Select Database"
