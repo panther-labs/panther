@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -109,7 +109,7 @@ var supportedRegions = map[string]bool{
 // NOTE: Mage ignores the first word of the comment if it matches the function name.
 // So the comment below is intentionally "Deploy Deploy"
 
-// Deploy Deploy application infrastructure
+// Deploy Deploy Panther to your AWS account
 func Deploy() {
 	start := time.Now()
 
@@ -169,7 +169,7 @@ func deployPrecheck(awsRegion string) {
 
 	// Ensure swagger is available
 	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
-		logger.Fatalf("swagger is not available (%v): try 'mage setup:swagger'", err)
+		logger.Fatalf("swagger is not available (%v): try 'mage setup'", err)
 	}
 
 	// Warn if not deploying a tagged release
@@ -233,7 +233,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	}()
 
 	// While waiting for bootstrap, build deployment artifacts
-	var build Build
+	build.API()
 	build.Cfn()
 	build.Lambda()
 	wg.Wait()

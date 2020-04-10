@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -41,6 +41,32 @@ import (
 const (
 	maxRetries = 20 // try very hard, avoid throttles
 )
+
+// Track results when executing similar tasks in parallel
+type goroutineResult struct {
+	summary string
+	err     error
+}
+
+// Wait for the given number of goroutines to finish, logging results as they come in.
+//
+// Logs a fatal message at the end if there were any errors.
+func logResults(results chan goroutineResult, command string, count int) {
+	var erroredTasks []string
+	for i := 1; i <= count; i++ {
+		r := <-results
+		if r.err == nil {
+			logger.Infof("    √ %s finished (%d/%d)", r.summary, i, count)
+		} else {
+			logger.Errorf("    X %s failed (%d/%d): %v", r.summary, i, count, r.err)
+			erroredTasks = append(erroredTasks, r.summary)
+		}
+	}
+
+	if len(erroredTasks) > 0 {
+		logger.Fatalf("%s failed: %s", command, strings.Join(erroredTasks, ", "))
+	}
+}
 
 // Wrapper around filepath.Walk, logging errors as fatal.
 func walk(root string, handler func(string, os.FileInfo)) {
@@ -217,8 +243,8 @@ func download(url string) ([]byte, error) {
 	return body, nil
 }
 
-// isRunningInCI returns true if the mage command is running inside the CI environment
-func isRunningInCI() bool {
+// runningInCI returns true if the mage command is running inside the CI environment
+func runningInCI() bool {
 	return os.Getenv("CI") != ""
 }
 

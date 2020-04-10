@@ -36,6 +36,7 @@ require (
 	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/sys v0.0.0-20200406155108-e3b113bbe6a4 // indirect
+	golang.org/x/tools v0.0.0-20200408132156-9ee5ef7a2c0d // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.2.8

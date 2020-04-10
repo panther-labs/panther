@@ -25,8 +25,6 @@ linters:
     - dupl
     - funlen
     - gocyclo
-    - gofmt
-    - goimports
     - golint
     - gosec
     - lll
@@ -40,6 +38,11 @@ linters:
     - whitespace
 
   # don't enable:
+  # Formatting (we check for that separately)
+  # - gofmt
+  # - goimports
+  #
+  # Other
   # - gochecknoinits
   # - gochecknoglobals
   # - gocognit

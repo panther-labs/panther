@@ -6,56 +6,31 @@ executors:
     docker:
       - image: pantherlabs/panther-buildpack:1.1.1
 
-# Set of re-usable commands to be used across different jobs
-commands:
-  setup_backend:
-    steps:
-      - checkout
-      - run:
-          name: Install Go and Python libraries
-          command: mage setup:go setup:python
-      - run:
-          name: Install prettier for CloudFormation formatting
-          command: npm install prettier
-
-  setup_frontend:
-    steps:
-      - checkout
-      - run:
-          name: Install JS dependencies
-          command: mage setup:web
-
 # The pool of jobs that that our CI will be able to run
 jobs:
-  audit_modules:
-    executor: panther-buildpack
-    steps:
-      - setup_frontend
-      - run:
-          name: Audit NPM packages
-          command: npm audit
-
-  validate_frontend:
-    executor: panther-buildpack
-    steps:
-      - setup_frontend
-      - run:
-          name: Lint and audit web source
-          command: mage test:web
-
-  validate_backend:
+  mage_test_ci:
     executor: panther-buildpack
     resource_class: xlarge
     steps:
-      - setup_backend
+      - checkout
       - run:
-          name: Lint and test the backend infrastructure
-          command: mage build:api build:cfn test:cfn test:go test:python
+          name: Install dependencies
+          command: mage setup # TODO: cache these
+      - run:
+          name: Run all tests
+          command: mage test:ci
+
+  npm_audit:
+    executor: panther-buildpack
+    steps:
+      - checkout
+      - run:
+          name: Audit NPM packages
+          command: npm audit # does not require installing packages first
 
 workflows:
   version: 2
   pipeline:
     jobs:
-      - audit_modules
-      - validate_frontend
-      - validate_backend
+      - mage_test_ci
+      - npm_audit

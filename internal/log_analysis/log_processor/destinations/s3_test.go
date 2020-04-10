@@ -1,7 +1,10 @@
+// Skip -race testing for this package (takes > 2 minutes)
+// +build !race
+
 package destinations
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
