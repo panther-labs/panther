@@ -86,8 +86,9 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
         },
         update: (cache, { data: { addDestination: newDestination } }) => {
           cache.modify('ROOT_QUERY', {
-            destinations: (cachedData, { toReference }) => {
-              return [toReference(newDestination), ...cachedData];
+            destinations: (queryData, { toReference }) => {
+              const addDestinationRef = toReference(newDestination);
+              return queryData ? [addDestinationRef, ...queryData] : [addDestinationRef];
             },
           });
           cache.gc();
