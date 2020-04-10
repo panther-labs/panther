@@ -14,17 +14,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-variable "aws_account_id" {
-  type        = string
-  description = "AWS account where this template will be deployed"
+output "panther_audit_role_arn" {
+  value       = var.include_audit_role ? aws_iam_role.panther_audit[0].arn : "N/A"
+  description = "The ARN of the Panther Audit IAM Role"
 }
 
-variable "aws_region" {
-  type        = string
-  description = "AWS region where this template will be deployed"
+output "panther_cloud_formation_stackset_execution_role_arn" {
+  value       = var.include_stack_set_execution_role ? aws_iam_role.panther_cloud_formation_stackset_execution[0].arn : "N/A"
+  description = "The ARN of the CloudFormation StackSet Execution IAM Role"
 }
 
-variable "s3_notifications_topic" {
-  type        = string
-  description = "SNS topic arn to send S3 notifications for pulling data"
+output "panther_remediation_role_arn" {
+  value       = var.include_remediation_role ? aws_iam_role.panther_remediation[0].arn : "N/A"
+  description = "The ARN of the Panther Auto Remediation IAM Role"
 }

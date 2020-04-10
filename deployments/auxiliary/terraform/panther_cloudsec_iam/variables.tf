@@ -14,17 +14,33 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-variable "aws_account_id" {
+variable "aws_partition" {
   type        = string
-  description = "AWS account where this template will be deployed"
+  description = "AWS partition where this template / Panther is deployed"
+  default     = "aws"
 }
 
-variable "aws_region" {
+variable "master_account_id" {
   type        = string
-  description = "AWS region where this template will be deployed"
+  description = "Panther AWS account ID"
 }
 
-variable "s3_notifications_topic" {
+variable "master_account_region" {
   type        = string
-  description = "SNS topic arn to send S3 notifications for pulling data"
+  description = "Panther AWS account region"
+}
+
+variable "include_audit_role" {
+  type    = bool
+  default = true
+}
+
+variable "include_stack_set_execution_role" {
+  type    = bool
+  default = true
+}
+
+variable "include_remediation_role" {
+  type    = bool
+  default = true
 }
