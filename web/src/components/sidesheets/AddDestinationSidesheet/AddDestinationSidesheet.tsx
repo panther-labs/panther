@@ -50,7 +50,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
   const [
-    addNewDestination,
+    addDestination,
     { data: addDestinationData, error: addDestinationError },
   ] = useAddDestination();
 
@@ -72,7 +72,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   const handleSubmit = React.useCallback(
     async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {
       const { displayName, defaultForSeverity, outputConfig } = values;
-      await addNewDestination({
+      await addDestination({
         variables: {
           input: {
             // form values that are present in all Destinations
@@ -84,11 +84,10 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
             outputConfig,
           },
         },
-        update: (cache, { data: { addDestination } }) => {
+        update: (cache, { data: { addDestination: newDestination } }) => {
           cache.modify('ROOT_QUERY', {
             destinations: (cachedData, { toReference }) => {
-              const addedIntegrationCacheRef = toReference(addDestination);
-              return [addedIntegrationCacheRef, ...cachedData];
+              return [toReference(newDestination), ...cachedData];
             },
           });
           cache.gc();
