@@ -141,7 +141,6 @@ type GetQueryResultsInput struct {
 
 type GetQueryResultsOutput struct {
 	QueryError
-	QueryID     string           `json:"queryId" validate:"required"`
 	Status      string           `json:"status" validate:"required,oneof=running,succeeded,failed"`
 	SQL         string           `json:"sql" validate:"required"`
 	ResultsPage QueryResultsPage `json:"resultsPage" validate:"required"`
