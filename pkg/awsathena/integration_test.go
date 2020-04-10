@@ -43,8 +43,8 @@ func TestIntegrationAthenaQuery(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
 	}
-	var err error
-	queryResult, err := RunQuery(athena.New(awsSession), "panther_tables", "select 1 as c", nil)
+
+	queryResult, err := RunQuery(athena.New(awsSession), "panther_logs", "select 1 as c", nil)
 	require.NoError(t, err)
 	expectedCol := "c"
 	expectedResult := "1"
@@ -52,4 +52,22 @@ func TestIntegrationAthenaQuery(t *testing.T) {
 	require.Equal(t, 2, len(rows))
 	require.Equal(t, expectedCol, *rows[0].Data[0].VarCharValue)
 	require.Equal(t, expectedResult, *rows[1].Data[0].VarCharValue)
+}
+
+func TestIntegrationAthenaQueryStop(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	athenaClient := athena.New(awsSession)
+
+	startOutput, err := StartQuery(athenaClient, "panther_logs", "select 1 as c", nil)
+	require.NoError(t, err)
+
+	_, err = StopQuery(athenaClient, *startOutput.QueryExecutionId)
+	require.NoError(t, err)
+
+	statusOutput, err := Status(athenaClient, *startOutput.QueryExecutionId)
+	require.NoError(t, err)
+	require.Equal(t, athena.QueryExecutionStateCancelled, *statusOutput.QueryExecution.Status.State)
 }

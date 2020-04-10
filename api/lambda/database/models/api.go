@@ -24,6 +24,7 @@ const (
 	QuerySucceeded = "succeeded"
 	QueryFailed    = "failed"
 	QueryRunning   = "running"
+	QueryCanceled  = "canceled"
 )
 
 // LambdaInput is the collection of all possible args to the Lambda function.
@@ -38,6 +39,7 @@ type LambdaInput struct {
 	GetTablesDetail         *GetTablesDetailInput         `json:"getTablesDetail"`
 	InvokeNotifyLambda      *InvokeNotifyLambdaInput      `json:"invokeNotifyLambda"`
 	NotifyAppSync           *NotifyAppSyncInput           `json:"notifyAppSync"`
+	StopQuery               *StopQueryInput               `json:"stopQuery"`
 }
 
 type GetDatabasesInput struct {
@@ -119,13 +121,9 @@ type ExecuteAsyncQueryInput struct {
 	SQL          string `json:"sql" validate:"required"`
 }
 
-type ExecuteAsyncQueryOutput struct {
-	QueryID string `json:"queryId" validate:"required"`
-}
+type ExecuteAsyncQueryOutput = QueryIdentifier
 
-type GetQueryStatusInput struct {
-	QueryID string `json:"queryId" validate:"required"`
-}
+type GetQueryStatusInput = QueryIdentifier
 
 type GetQueryStatusOutput struct {
 	QueryError
@@ -134,15 +132,13 @@ type GetQueryStatusOutput struct {
 }
 
 type GetQueryResultsInput struct {
-	QueryID         string  `json:"queryId" validate:"required"`
+	QueryIdentifier
 	PaginationToken *string `json:"paginationToken,omitempty"`
 	PageSize        *int64  `json:"pageSize" validate:"omitempty,gt=0,lt=1000"` // only return this many rows per call
 }
 
 type GetQueryResultsOutput struct {
-	QueryError
-	Status      string           `json:"status" validate:"required,oneof=running,succeeded,failed"`
-	SQL         string           `json:"sql" validate:"required"`
+	GetQueryStatusOutput
 	ResultsPage QueryResultsPage `json:"resultsPage" validate:"required"`
 }
 
@@ -151,6 +147,10 @@ type QueryResultsPage struct {
 	Rows            []*Row  `json:"rows"`
 	PaginationToken *string `json:"paginationToken,omitempty"`
 }
+
+type StopQueryInput = QueryIdentifier
+
+type StopQueryOutput = GetQueryStatusOutput
 
 type InvokeNotifyLambdaInput struct {
 	LambdaInvoke
@@ -174,6 +174,10 @@ type NotifyInput struct { // notify lambdas need to have this as input
 	GetQueryStatusInput
 	ExecuteAsyncQueryNotifyOutput
 	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
+}
+
+type QueryIdentifier struct {
+	QueryID string `json:"queryId" validate:"required"`
 }
 
 type Row struct {

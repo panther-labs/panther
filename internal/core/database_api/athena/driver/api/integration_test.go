@@ -180,7 +180,9 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- GetQueryResults()
 
 	getQueryResultsInput := &models.GetQueryResultsInput{
-		QueryID:  executeAsyncQueryOutput.QueryID,
+		QueryIdentifier: models.QueryIdentifier{
+			QueryID: executeAsyncQueryOutput.QueryID,
+		},
 		PageSize: &maxRowsPerResult,
 	}
 	getQueryResultsOutput, err := runGetQueryResults(useLambda, getQueryResultsInput)
@@ -215,16 +217,46 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.NoError(t, err)
 
 	for {
-		time.Sleep(time.Second * 10)
-		getBadQueryStatusInput := &models.GetQueryStatusInput{
+		time.Sleep(time.Second * 2)
+		getQueryStatusInput := &models.GetQueryStatusInput{
 			QueryID: executeBadAsyncQueryOutput.QueryID,
 		}
-		getBadQueryStatusOutput, err := runGetQueryStatus(useLambda, getBadQueryStatusInput)
+		getQueryStatusOutput, err := runGetQueryStatus(useLambda, getQueryStatusInput)
 		require.NoError(t, err)
-		if getBadQueryStatusOutput.Status != models.QueryRunning {
-			require.Equal(t, models.QueryFailed, getBadQueryStatusOutput.Status)
-			require.True(t, strings.Contains(getBadQueryStatusOutput.Message, "does not exist"))
-			require.Equal(t, badSQL, getBadQueryStatusOutput.SQL)
+		if getQueryStatusOutput.Status != models.QueryRunning {
+			require.Equal(t, models.QueryFailed, getQueryStatusOutput.Status)
+			assert.True(t, strings.Contains(getQueryStatusOutput.Message, "does not exist"))
+			assert.Equal(t, badSQL, getQueryStatusOutput.SQL)
+			break
+		}
+	}
+
+	//  -------- StopQuery()
+
+	executeStopQueryInput := &models.ExecuteAsyncQueryInput{
+		DatabaseName: testutils.TestDb,
+		SQL:          testSQL,
+	}
+	executeStopQueryOutput, err := runExecuteAsyncQuery(useLambda, executeStopQueryInput)
+	require.NoError(t, err)
+
+	stopQueryInput := &models.StopQueryInput{
+		QueryID: executeStopQueryOutput.QueryID,
+	}
+	_, err = runStopQuery(useLambda, stopQueryInput)
+	require.NoError(t, err)
+
+	for {
+		time.Sleep(time.Second * 2)
+		getQueryStatusInput := &models.GetQueryStatusInput{
+			QueryID: executeStopQueryOutput.QueryID,
+		}
+		getQueryStatusOutput, err := runGetQueryStatus(useLambda, getQueryStatusInput)
+		require.NoError(t, err)
+		if getQueryStatusOutput.Status != models.QueryRunning {
+			require.Equal(t, models.QueryCanceled, getQueryStatusOutput.Status)
+			assert.Equal(t, getQueryStatusOutput.Message, "Query canceled")
+			assert.Equal(t, testSQL, getQueryStatusOutput.SQL)
 			break
 		}
 	}
@@ -410,6 +442,20 @@ func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*mo
 		return getQueryResultsOutput, err
 	}
 	return api.GetQueryResults(input)
+}
+
+func runStopQuery(useLambda bool, input *models.StopQueryInput) (*models.StopQueryOutput, error) {
+	if useLambda {
+		var stopQueryInput = struct {
+			StopQuery *models.StopQueryInput
+		}{
+			input,
+		}
+		var stopQueryOutput *models.StopQueryOutput
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", stopQueryInput, &stopQueryOutput)
+		return stopQueryOutput, err
+	}
+	return api.StopQuery(input)
 }
 
 func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {

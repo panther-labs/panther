@@ -670,6 +670,7 @@ Resources:
             - Effect: Allow
               Action:
                 - athena:StartQueryExecution
+                - athena:StopQueryExecution
                 - athena:GetQuery*
               Resource: '*'
         - Id: GluePermissions # used for all table metadata queries
