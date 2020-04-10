@@ -246,6 +246,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			            workflowId
 			          }
 			       }
+
 		        - Run integration tests:
 			        pushd internal/core/database_api/athena/driver/api/
 			        export INTEGRATION_TEST=true

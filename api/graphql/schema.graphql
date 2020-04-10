@@ -65,7 +65,7 @@ type Query {
 }
 
 type Subscription {
-  queryDone(userData: String): QueryDone @aws_subscribe(mutations: ["queryDone"]) @aws_iam
+  queryDone(userData: String!): QueryDone @aws_subscribe(mutations: ["queryDone"]) @aws_iam
 }
 
 input GetComplianceIntegrationTemplateInput {

@@ -944,7 +944,7 @@ export type Subscription = {
 };
 
 export type SubscriptionQueryDoneArgs = {
-  userData?: Maybe<Scalars['String']>;
+  userData: Scalars['String'];
 };
 
 export type SuppressPoliciesInput = {
@@ -2184,7 +2184,7 @@ export type SubscriptionResolvers<
     'queryDone',
     ParentType,
     ContextType,
-    RequireFields<SubscriptionQueryDoneArgs, never>
+    RequireFields<SubscriptionQueryDoneArgs, 'userData'>
   >;
 };
 
