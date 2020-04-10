@@ -543,7 +543,7 @@ Resources:
   PublicLoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: web-lb
+      GroupName: panther-web-lb
       GroupDescription: Access to the public facing load balancer
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -562,7 +562,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     DependsOn: AuditLogsBucketPolicy
     Properties:
-      Name: web
+      Name: panther-web
       # <cfndoc>
       # The load balancer associated with the Panther UI.
       #
