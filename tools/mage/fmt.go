@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import (
 )
 
 var (
-	goTargets = []string{"api/lambda", "internal", "pkg", "tools", "cmd", "magefile.go"}
+	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
 	pyTargets = []string{
 		"internal/compliance/remediation_aws",
 		"internal/compliance/policy_engine",
