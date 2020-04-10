@@ -16,10 +16,6 @@
 
 # Sample template for gathering osquery logs into S3 via Firehose.
 
-provider "aws" {
-  version = "~> 2.0"
-}
-
 ### Osquery Firehose, Role, and Bucket ###
 
 resource "aws_kinesis_firehose_delivery_stream" "osquery_data_firehose" {
