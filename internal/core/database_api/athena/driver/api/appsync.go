@@ -82,7 +82,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	signer := v4.NewSigner(awsSession.Config.Credentials)
 
 	mutation := &GraphQlQuery{
-		Query: fmt.Sprintf(mutationTemplate, input.UserData, input.QueryID, input.WorkflowID),
+		Query: fmt.Sprintf(mutationTemplate, input.UserDataToken, input.QueryID, input.WorkflowIdentifier),
 	}
 	jsonMessage, err := jsoniter.Marshal(mutation)
 	if err != nil {

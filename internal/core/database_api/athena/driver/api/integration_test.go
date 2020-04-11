@@ -90,8 +90,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	// -------- GetDatabases()
 
 	// list
-	getDatabasesInput := &models.GetDatabasesInput{}
-	getDatabasesOutput, err := runGetDatabases(useLambda, getDatabasesInput)
+	var getDatabasesInput models.GetDatabasesInput
+	getDatabasesOutput, err := runGetDatabases(useLambda, &getDatabasesInput)
 	require.NoError(t, err)
 	foundDB := false
 	for _, db := range getDatabasesOutput.Databases {
@@ -102,21 +102,21 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.True(t, foundDB)
 
 	// specific lookup
-	getDatabasesInput = &models.GetDatabasesInput{
-		Name: aws.String(testutils.TestDb),
-	}
-	getDatabasesOutput, err = runGetDatabases(useLambda, getDatabasesInput)
+	getDatabasesInput.Name = aws.String(testutils.TestDb)
+	getDatabasesOutput, err = runGetDatabases(useLambda, &getDatabasesInput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getDatabasesOutput.Databases))
 	require.Equal(t, testutils.TestDb, getDatabasesOutput.Databases[0].Name)
 
 	// -------- GetTables()
 
-	getTablesIntput := &models.GetTablesInput{
-		DatabaseName:  testutils.TestDb,
+	getTablesInput := &models.GetTablesInput{
+		Database: models.Database{
+			DatabaseName: testutils.TestDb,
+		},
 		OnlyPopulated: true,
 	}
-	getTablesOutput, err := runGetTables(useLambda, getTablesIntput)
+	getTablesOutput, err := runGetTables(useLambda, getTablesInput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getTablesOutput.Tables))
 	testutils.CheckTableDetail(t, getTablesOutput.Tables)
@@ -124,8 +124,10 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	// -------- GetTablesDetail()
 
 	getTablesDetailInput := &models.GetTablesDetailInput{
-		DatabaseName: testutils.TestDb,
-		Names:        []string{testutils.TestTable},
+		Database: models.Database{
+			DatabaseName: testutils.TestDb,
+		},
+		Names: []string{testutils.TestTable},
 	}
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, getTablesDetailInput)
 	require.NoError(t, err)
@@ -134,32 +136,44 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	// -------- ExecuteQuery()
 
 	executeQueryInput := &models.ExecuteQueryInput{
-		DatabaseName: testutils.TestDb,
-		SQL:          testSQL,
+		Database: models.Database{
+			DatabaseName: testutils.TestDb,
+		},
+		SQLQuery: models.SQLQuery{
+			SQL: testSQL,
+		},
 	}
 	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
 	require.NoError(t, err)
-	assert.Equal(t, "", executeQueryOutput.ErrorMessage)
+	assert.Equal(t, "", executeQueryOutput.QueryStatus.SQLError)
 	require.Equal(t, models.QuerySucceeded, executeQueryOutput.Status)
 	checkQueryResults(t, true, len(testutils.TestTableRows)+1, executeQueryOutput.ResultsPage.Rows)
 
 	// -------- ExecuteQuery() BAD SQL
 
 	executeBadQueryInput := &models.ExecuteQueryInput{
-		DatabaseName: testutils.TestDb,
-		SQL:          malformedSQL,
+		Database: models.Database{
+			DatabaseName: testutils.TestDb,
+		},
+		SQLQuery: models.SQLQuery{
+			SQL: malformedSQL,
+		},
 	}
 	executeBadQueryOutput, err := runExecuteQuery(useLambda, executeBadQueryInput)
 	require.NoError(t, err) // NO LAMBDA ERROR here!
 	require.Equal(t, models.QueryFailed, executeBadQueryOutput.Status)
-	assert.True(t, strings.Contains(executeBadQueryOutput.ErrorMessage, "mismatched input 'wewewewew'"))
+	assert.True(t, strings.Contains(executeBadQueryOutput.SQLError, "mismatched input 'wewewewew'"))
 	assert.Equal(t, malformedSQL, executeBadQueryOutput.SQL)
 
 	//  -------- ExecuteAsyncQuery()
 
 	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{
-		DatabaseName: testutils.TestDb,
-		SQL:          testSQL,
+		Database: models.Database{
+			DatabaseName: testutils.TestDb,
+		},
+		SQLQuery: models.SQLQuery{
+			SQL: testSQL,
+		},
 	}
 	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
 	require.NoError(t, err)
@@ -211,8 +225,12 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- ExecuteAsyncQuery() BAD SQL
 
 	executeBadAsyncQueryInput := &models.ExecuteAsyncQueryInput{
-		DatabaseName: testutils.TestDb,
-		SQL:          badExecutingSQL,
+		Database: models.Database{
+			DatabaseName: testutils.TestDb,
+		},
+		SQLQuery: models.SQLQuery{
+			SQL: badExecutingSQL,
+		},
 	}
 	executeBadAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeBadAsyncQueryInput)
 	require.NoError(t, err)
@@ -226,7 +244,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
 			require.Equal(t, models.QueryFailed, getQueryStatusOutput.Status)
-			assert.True(t, strings.Contains(getQueryStatusOutput.ErrorMessage, "does not exist"))
+			assert.True(t, strings.Contains(getQueryStatusOutput.SQLError, "does not exist"))
 			assert.Equal(t, badExecutingSQL, getQueryStatusOutput.SQL)
 			break
 		}
@@ -235,8 +253,12 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- StopQuery()
 
 	executeStopQueryInput := &models.ExecuteAsyncQueryInput{
-		DatabaseName: testutils.TestDb,
-		SQL:          testSQL,
+		Database: models.Database{
+			DatabaseName: testutils.TestDb,
+		},
+		SQLQuery: models.SQLQuery{
+			SQL: testSQL,
+		},
 	}
 	executeStopQueryOutput, err := runExecuteAsyncQuery(useLambda, executeStopQueryInput)
 	require.NoError(t, err)
@@ -256,7 +278,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
 			require.Equal(t, models.QueryCanceled, getQueryStatusOutput.Status)
-			assert.Equal(t, getQueryStatusOutput.ErrorMessage, "Query canceled")
+			assert.Equal(t, getQueryStatusOutput.SQLError, "Query canceled")
 			assert.Equal(t, testSQL, getQueryStatusOutput.SQL)
 			break
 		}
@@ -306,14 +328,20 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	executeAsyncQueryNotifyInput := &models.ExecuteAsyncQueryNotifyInput{
 		ExecuteAsyncQueryInput: models.ExecuteAsyncQueryInput{
-			DatabaseName: testutils.TestDb,
-			SQL:          testSQL,
+			Database: models.Database{
+				DatabaseName: testutils.TestDb,
+			},
+			SQLQuery: models.SQLQuery{
+				SQL: testSQL,
+			},
 		},
 		LambdaInvoke: models.LambdaInvoke{
 			LambdaName: "panther-athena-api",
 			MethodName: "notifyAppSync",
 		},
-		UserData: userData,
+		UserDataToken: models.UserDataToken{
+			UserData: userData,
+		},
 	}
 	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, executeAsyncQueryNotifyInput)
 	require.NoError(t, err)

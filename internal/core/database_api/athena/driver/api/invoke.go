@@ -45,9 +45,9 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 			QueryID: input.QueryID,
 		},
 		ExecuteAsyncQueryNotifyOutput: models.ExecuteAsyncQueryNotifyOutput{
-			WorkflowID: input.WorkflowID,
+			WorkflowIdentifier: input.WorkflowIdentifier,
 		},
-		UserData: input.UserData,
+		UserDataToken: input.UserDataToken,
 	}
 	payload, err := jsoniter.MarshalToString(notifyInput)
 	if err != nil {
