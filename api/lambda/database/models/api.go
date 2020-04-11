@@ -123,6 +123,7 @@ type GetQueryStatusInput = QueryIdentifier
 type GetQueryStatusOutput struct {
 	QueryStatus
 	SQLQuery
+	Stats *QueryResultsStats `json:"stats,omitempty"` // present only on successful queries
 }
 
 type GetQueryResultsInput struct {
@@ -138,8 +139,13 @@ type GetQueryResultsOutput struct {
 
 type QueryResultsPage struct {
 	Pagination
-	NumRows int    `json:"numRows"` // number of rows in page of results, len(Rows)
-	Rows    []*Row `json:"rows"`
+	NumRows int    `json:"numRows"  validate:"required"` // number of rows in page of results, len(Rows)
+	Rows    []*Row `json:"rows"  validate:"required"`
+}
+
+type QueryResultsStats struct {
+	ExecutionTimeMilliseconds int64 `json:"executionTimeMilliseconds"  validate:"required"`
+	DataScannedBytes          int64 `json:"dataScannedBytes"  validate:"required"`
 }
 
 type StopQueryInput = QueryIdentifier

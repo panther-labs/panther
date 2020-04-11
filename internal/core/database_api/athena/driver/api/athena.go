@@ -120,6 +120,11 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 	output.Status = getQueryStatus(executionStatus)
 
 	switch output.Status {
+	case models.QuerySucceeded:
+		output.Stats = &models.QueryResultsStats{
+			ExecutionTimeMilliseconds: *executionStatus.QueryExecution.Statistics.TotalExecutionTimeInMillis,
+			DataScannedBytes:          *executionStatus.QueryExecution.Statistics.DataScannedInBytes,
+		}
 	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
 		output.SQLError = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
 	case models.QueryCanceled:
