@@ -19,6 +19,7 @@ package testutils
  */
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -87,9 +88,9 @@ var (
 
 	TestKey string
 
-	TestTableDataNrows = 10
-	TestTableRow       = `{"col1": 1}`
-	TestTableRows      []string
+	TestTableDataNrows   = 10
+	TestTableRowTemplate = `{"col1": %d}`
+	TestTableRows        []string
 )
 
 func init() {
@@ -104,7 +105,7 @@ func init() {
 	TestKey += "testdata.json"
 
 	for i := 0; i < TestTableDataNrows; i++ {
-		TestTableRows = append(TestTableRows, TestTableRow)
+		TestTableRows = append(TestTableRows, fmt.Sprintf(TestTableRowTemplate, i))
 	}
 }
 

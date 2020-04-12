@@ -96,7 +96,7 @@ type ExecuteAsyncQueryNotifyInput struct {
 	ExecuteAsyncQueryInput
 	LambdaInvoke
 	UserDataToken
-	DelaySeconds int `json:"delaySeconds" validate:"omitempty,gt=0"` // wait this long before starting workflow (default 0)
+	DelaySeconds int `json:"delaySeconds"` // wait this long before starting workflow (default 0)
 }
 
 type ExecuteAsyncQueryNotifyOutput struct {
@@ -129,11 +129,12 @@ type GetQueryStatusOutput struct {
 type GetQueryResultsInput struct {
 	QueryIdentifier
 	Pagination
-	PageSize *int64 `json:"pageSize" validate:"omitempty,gt=0,lt=1000"` // only return this many rows per call
+	PageSize *int64 `json:"pageSize" validate:"omitempty,gt=1,lt=1000"` // only return this many rows per call
 }
 
 type GetQueryResultsOutput struct {
 	GetQueryStatusOutput
+	ColumnInfo  []*Column        `json:"columnInfo" validate:"required"`
 	ResultsPage QueryResultsPage `json:"resultsPage" validate:"required"`
 }
 
@@ -198,11 +199,12 @@ type Database struct {
 }
 
 type Row struct {
-	Columns []*Column `json:"columns"`
+	Columns []*Column `json:"columns" validate:"required"`
 }
 
 type Column struct {
-	Value string `json:"value"`
+	Value string  `json:"value" validate:"required"`
+	Type  *string `json:"type,omitempty"`
 }
 
 type Pagination struct {

@@ -19,7 +19,10 @@ package api
  */
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -37,6 +40,8 @@ import (
 )
 
 const (
+	printJSON = false // set to true to print json input/output (useful for sharing with frontend devs)
+
 	badExecutingSQL = `select * from nosuchtable` // fails AFTER query starts
 	malformedSQL    = `wewewewew`                 // fails when query starts
 )
@@ -48,9 +53,9 @@ var (
 
 	s3Client *s3.S3
 
-	testSQL = `select * from ` + testutils.TestTable
+	testSQL = `select * from ` + testutils.TestTable + ` order by col1 asc` // tests may break w/out order by
 
-	maxRowsPerResult int64 = 1 // force pagination to test
+	maxRowsPerResult int64 = 3 // force pagination to test
 )
 
 func TestMain(m *testing.M) {
@@ -149,7 +154,16 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.Equal(t, models.QuerySucceeded, executeQueryOutput.Status)
 	assert.Greater(t, executeQueryOutput.Stats.ExecutionTimeMilliseconds, int64(0)) // ata least something
 	assert.Greater(t, executeQueryOutput.Stats.DataScannedBytes, int64(0))          // ata least something
-	checkQueryResults(t, true, len(testutils.TestTableRows)+1, executeQueryOutput.ResultsPage.Rows)
+	assert.Equal(t, len(testutils.TestTableColumns)+len(testutils.TestTablePartitions), len(executeQueryOutput.ColumnInfo))
+	for i, c := range executeQueryOutput.ColumnInfo {
+		if i < len(testutils.TestTableColumns) {
+			assert.Equal(t, c.Value, *testutils.TestTableColumns[i].Name)
+		} else { // partitions
+			assert.Equal(t, c.Value, *testutils.TestTablePartitions[i-len(testutils.TestTableColumns)].Name)
+		}
+	}
+	assert.Equal(t, len(testutils.TestTableRows), len(executeQueryOutput.ResultsPage.Rows))
+	checkQueryResults(t, len(testutils.TestTableRows), 0, executeQueryOutput.ResultsPage.Rows)
 
 	// -------- ExecuteQuery() BAD SQL
 
@@ -194,7 +208,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		}
 	}
 
-	//  -------- GetQueryResults()
+	//  -------- GetQueryResults() test paging
 
 	getQueryResultsInput := &models.GetQueryResultsInput{
 		QueryIdentifier: models.QueryIdentifier{
@@ -206,20 +220,30 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.NoError(t, err)
 
 	if getQueryResultsOutput.Status == models.QuerySucceeded {
-		resultCount := 0
-		checkQueryResults(t, true, int(maxRowsPerResult), getQueryResultsOutput.ResultsPage.Rows)
-		resultCount++
+		resultRowCount := 0
 
-		for getQueryResultsOutput.ResultsPage.NumRows > 0 { // when done this is 0
+		// -1 because header is removed
+		expectedRowCount := int(maxRowsPerResult) - 1
+		require.Equal(t, expectedRowCount, len(getQueryResultsOutput.ResultsPage.Rows))
+		checkQueryResults(t, expectedRowCount, 0, getQueryResultsOutput.ResultsPage.Rows)
+		resultRowCount += expectedRowCount
+
+		for getQueryResultsOutput.ResultsPage.PaginationToken != nil { // when done this is nil
 			getQueryResultsInput.PaginationToken = getQueryResultsOutput.ResultsPage.PaginationToken
 			getQueryResultsOutput, err = runGetQueryResults(useLambda, getQueryResultsInput)
 			require.NoError(t, err)
 			if getQueryResultsOutput.ResultsPage.NumRows > 0 {
-				checkQueryResults(t, false, int(maxRowsPerResult), getQueryResultsOutput.ResultsPage.Rows)
-				resultCount++
+				expectedRowCount = int(maxRowsPerResult)
+				// the last page will have 1 less because we remove the header in the first page
+				if resultRowCount+len(getQueryResultsOutput.ResultsPage.Rows) == testutils.TestTableDataNrows {
+					expectedRowCount--
+				}
+				require.Equal(t, expectedRowCount, len(getQueryResultsOutput.ResultsPage.Rows))
+				checkQueryResults(t, expectedRowCount, resultRowCount, getQueryResultsOutput.ResultsPage.Rows)
+				resultRowCount += expectedRowCount
 			}
 		}
-		require.Equal(t, len(testutils.TestTableRows)+1, resultCount) // since we page 1 at a time and have a header
+		require.Equal(t, testutils.TestTableDataNrows, resultRowCount)
 	} else {
 		assert.Fail(t, "GetQueryResults failed")
 	}
@@ -372,6 +396,7 @@ func runGetDatabases(useLambda bool, input *models.GetDatabasesInput) (*models.G
 		}
 		var getDatabasesOutput *models.GetDatabasesOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getDatabasesInput, &getDatabasesOutput)
+		printAPI(getDatabasesInput, getDatabasesOutput)
 		return getDatabasesOutput, err
 	}
 	return api.GetDatabases(input)
@@ -386,6 +411,7 @@ func runGetTables(useLambda bool, input *models.GetTablesInput) (*models.GetTabl
 		}
 		var getTablesOutput *models.GetTablesOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getTablesInput, &getTablesOutput)
+		printAPI(getTablesInput, getTablesOutput)
 		return getTablesOutput, err
 	}
 	return api.GetTables(input)
@@ -400,6 +426,7 @@ func runGetTablesDetail(useLambda bool, input *models.GetTablesDetailInput) (*mo
 		}
 		var getTablesDetailOutput *models.GetTablesDetailOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getTablesDetailInput, &getTablesDetailOutput)
+		printAPI(getTablesDetailInput, getTablesDetailOutput)
 		return getTablesDetailOutput, err
 	}
 	return api.GetTablesDetail(input)
@@ -414,6 +441,7 @@ func runExecuteQuery(useLambda bool, input *models.ExecuteQueryInput) (*models.E
 		}
 		var executeQueryOutput *models.ExecuteQueryOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", executeQueryInput, &executeQueryOutput)
+		printAPI(executeQueryInput, executeQueryOutput)
 		return executeQueryOutput, err
 	}
 	return api.ExecuteQuery(input)
@@ -428,6 +456,7 @@ func runExecuteAsyncQuery(useLambda bool, input *models.ExecuteAsyncQueryInput) 
 		}
 		var executeAsyncQueryOutput *models.ExecuteAsyncQueryOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", executeAsyncQueryInput, &executeAsyncQueryOutput)
+		printAPI(executeAsyncQueryInput, executeAsyncQueryOutput)
 		return executeAsyncQueryOutput, err
 	}
 	return api.ExecuteAsyncQuery(input)
@@ -442,6 +471,7 @@ func runExecuteAsyncQueryNotify(useLambda bool, input *models.ExecuteAsyncQueryN
 		}
 		var executeAsyncQueryNotifyOutput *models.ExecuteAsyncQueryNotifyOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", executeAsyncQueryNotifyInput, &executeAsyncQueryNotifyOutput)
+		printAPI(executeAsyncQueryNotifyInput, executeAsyncQueryNotifyOutput)
 		return executeAsyncQueryNotifyOutput, err
 	}
 	return api.ExecuteAsyncQueryNotify(input)
@@ -456,6 +486,7 @@ func runGetQueryStatus(useLambda bool, input *models.GetQueryStatusInput) (*mode
 		}
 		var getQueryStatusOutput *models.GetQueryStatusOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getQueryStatusInput, &getQueryStatusOutput)
+		printAPI(getQueryStatusInput, getQueryStatusOutput)
 		return getQueryStatusOutput, err
 	}
 	return api.GetQueryStatus(input)
@@ -470,6 +501,7 @@ func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*mo
 		}
 		var getQueryResultsOutput *models.GetQueryResultsOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getQueryResultsInput, &getQueryResultsOutput)
+		printAPI(getQueryResultsInput, getQueryResultsOutput)
 		return getQueryResultsOutput, err
 	}
 	return api.GetQueryResults(input)
@@ -484,20 +516,25 @@ func runStopQuery(useLambda bool, input *models.StopQueryInput) (*models.StopQue
 		}
 		var stopQueryOutput *models.StopQueryOutput
 		err := genericapi.Invoke(lambdaClient, "panther-athena-api", stopQueryInput, &stopQueryOutput)
+		printAPI(stopQueryInput, stopQueryOutput)
 		return stopQueryOutput, err
 	}
 	return api.StopQuery(input)
 }
 
-func checkQueryResults(t *testing.T, hasHeader bool, expectedRowCount int, rows []*models.Row) {
+func checkQueryResults(t *testing.T, expectedRowCount, offset int, rows []*models.Row) {
 	require.Equal(t, expectedRowCount, len(rows))
-	i := 0
-	nResults := len(rows)
-	if hasHeader {
-		require.Equal(t, "col1", rows[0].Columns[0].Value) // header
-		i++
+	for i := 0; i < len(rows); i++ {
+		require.Equal(t, strconv.Itoa(i+offset), rows[i].Columns[0].Value)
 	}
-	for ; i < nResults; i++ {
-		require.Equal(t, "1", rows[i].Columns[0].Value)
+}
+
+// useful to share examples of json APi usage
+func printAPI(input, output interface{}) {
+	if !printJSON {
+		return
 	}
+	inputJSON, _ := json.MarshalIndent(input, "", "   ")
+	outputJSON, _ := json.MarshalIndent(output, "", "   ")
+	fmt.Printf("\nrequest:\n%s\nreply:\n%s\n", string(inputJSON), string(outputJSON))
 }

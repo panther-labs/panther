@@ -213,15 +213,29 @@ func getQueryResults(client athenaiface.AthenaAPI, queryID string,
 	if err != nil {
 		return err
 	}
-	err = collectResults(queryResult, output)
+
+	// header with types
+	for _, columnInfo := range queryResult.ResultSet.ResultSetMetadata.ColumnInfo {
+		output.ColumnInfo = append(output.ColumnInfo, &models.Column{
+			Value: *columnInfo.Name,
+			Type:  columnInfo.Type,
+		})
+	}
+
+	skipHeader := nextToken == nil // athena puts header in first row of first page
+	err = collectResults(skipHeader, queryResult, output)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) (err error) {
+func collectResults(skipHeader bool, queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) (err error) {
 	for _, row := range queryResult.ResultSet.Rows {
+		if skipHeader {
+			skipHeader = false
+			continue
+		}
 		var columns []*models.Column
 		for _, col := range row.Data {
 			columns = append(columns, &models.Column{
@@ -233,7 +247,7 @@ func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.Ge
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	output.ResultsPage.NumRows = len(queryResult.ResultSet.Rows)
+	output.ResultsPage.NumRows = len(output.ResultsPage.Rows)
 	output.ResultsPage.PaginationToken = queryResult.NextToken
 	return nil
 }
