@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -167,3 +167,23 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
+
+  MyStateMachine:
+    Type: 'AWS::StepFunctions::StateMachine'
+    Properties:
+      StateMachineName: my-state-machine
+      DefinitionString: !Sub
+        - |-
+          {
+            "Comment": "A Hello World example using an AWS Lambda function",
+            "StartAt": "HelloWorld",
+            "States": {
+              "HelloWorld": {
+                "Type": "Task",
+                "Resource": "${lambdaArn}",
+                "End": true
+              }
+            }
+          }
+        - { lambdaArn: !GetAtt [MyLambdaFunction, Arn] }
+      RoleArn: !GetAtt [StatesExecutionRole, Arn]
