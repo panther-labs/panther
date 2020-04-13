@@ -52,6 +52,9 @@ Parameters:
     Description: Cognito user pool ID
 
   # Options from config file
+  AthenaS3BucketARNS:
+    Type: CommaDelimitedList
+    Description: The list of S3 ARNs to allow read access by Athena lambda
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -700,7 +703,7 @@ Resources:
                 - s3:GetBucketLocation
                 - s3:List*
                 - s3:GetObject
-              Resource: 'arn:aws:s3:::panther-*-processeddata-*' # wild card use to allow integration tests
+              Resource: !Ref AthenaS3BucketARNS
         - Id: StepsPermissions # start an async workflow that tracks the query execution
           Version: 2012-10-17
           Statement:

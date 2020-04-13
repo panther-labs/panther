@@ -56,10 +56,15 @@ type Setup struct {
 	S3AccessLogsBucket  string           `yaml:"S3AccessLogsBucket"`
 	InitialAnalysisSets []string         `yaml:"InitialAnalysisSets"`
 	LogSubscriptions    LogSubscriptions `yaml:"LogSubscriptions"`
+	Athena              Athena           `yaml:"Athena"`
 }
 
 type LogSubscriptions struct {
 	PrincipalARNs []string `yaml:"PrincipalARNs"`
+}
+
+type Athena struct {
+	S3ARNs []string `yaml:"S3ARNs"`
 }
 
 type Web struct {
