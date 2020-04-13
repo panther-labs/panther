@@ -75,11 +75,23 @@ func (b Build) API() {
 		}
 		walk(client, handler)
 		walk(models, handler)
+
+		// Format generated files with our license header and import ordering.
+		// "swagger generate client" can embed the header, but it's simpler to keep the whole repo
+		// formatted the exact same way.
+		fmtLicense(client, models)
+		if err := gofmt(client, models); err != nil {
+			logger.Warnf("gofmt %s %s failed: %v", client, models, err)
+		}
 	}
 
 	logger.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		logger.Fatalf("graphql generation failed: %v", err)
+	}
+	fmtLicense("web/__generated__")
+	if err := prettier("web/__generated__/*"); err != nil {
+		logger.Warnf("prettier web/__generated__/ failed: %v", err)
 	}
 }
 
