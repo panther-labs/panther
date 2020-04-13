@@ -43,16 +43,17 @@ import (
 const (
 	printJSON = false // set to true to print json input/output (useful for sharing with frontend devs)
 
-	badExecutingSQL = `select * from nosuchtable` // fails AFTER query starts
-	malformedSQL    = `wewewewew`                 // fails when query starts
+	testSQL          = `select * from ` + testutils.TestTable + ` order by col1 asc`      // tests may break w/out order by
+	badExecutingSQL  = `select * from nosuchtable`                                        // fails AFTER query starts
+	malformedSQL     = `wewewewew`                                                        // fails when query starts
+	dropTableSQL     = `drop table ` + testutils.TestTable                                // tests for mutating permissions
+	createTableAsSQL = `create table ishouldfail as select * from ` + testutils.TestTable // tests for mutating permissions
 )
 
 var (
 	integrationTest bool
 
 	api = API{}
-
-	testSQL = `select * from ` + testutils.TestTable + ` order by col1 asc` // tests may break w/out order by
 
 	maxRowsPerResult int64 = 3 // force pagination to test
 )
@@ -163,6 +164,32 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.Equal(t, models.QueryFailed, executeBadQueryOutput.Status)
 	assert.True(t, strings.Contains(executeBadQueryOutput.SQLError, "mismatched input 'wewewewew'"))
 	assert.Equal(t, malformedSQL, executeBadQueryOutput.SQL)
+
+	// -------- ExecuteQuery() DROP TABLE
+
+	if useLambda { // only for lambda to test access restrictions
+		var executeDropTableInput models.ExecuteQueryInput
+		executeDropTableInput.DatabaseName = testutils.TestDb
+		executeDropTableInput.SQL = dropTableSQL
+		executeDropTableOutput, err := runExecuteQuery(useLambda, &executeDropTableInput)
+		require.NoError(t, err) // NO LAMBDA ERROR here!
+		require.Equal(t, models.QueryFailed, executeDropTableOutput.Status)
+		assert.True(t, strings.Contains(executeDropTableOutput.SQLError, "AccessDeniedException"))
+		assert.Equal(t, dropTableSQL, executeDropTableOutput.SQL)
+	}
+
+	// -------- ExecuteQuery() CREATE TABLE AS
+
+	if useLambda { // only for lambda to test access restrictions
+		var executeCreateTableAsInput models.ExecuteQueryInput
+		executeCreateTableAsInput.DatabaseName = testutils.TestDb
+		executeCreateTableAsInput.SQL = createTableAsSQL
+		executeCreateTableAsOutput, err := runExecuteQuery(useLambda, &executeCreateTableAsInput)
+		require.NoError(t, err) // NO LAMBDA ERROR here!
+		require.Equal(t, models.QueryFailed, executeCreateTableAsOutput.Status)
+		assert.True(t, strings.Contains(executeCreateTableAsOutput.SQLError, "Insufficient permissions"))
+		assert.Equal(t, createTableAsSQL, executeCreateTableAsOutput.SQL)
+	}
 
 	//  -------- ExecuteAsyncQuery()
 
