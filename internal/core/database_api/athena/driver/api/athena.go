@@ -19,10 +19,13 @@ package api
  */
 
 import (
+	"net/url"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
@@ -31,6 +34,8 @@ import (
 
 const (
 	pollWait = time.Second * 4
+
+	presignedLinkTimeLimit = time.Minute
 )
 
 func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
@@ -161,6 +166,57 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 		if err != nil {
 			return output, err
 		}
+	}
+
+	return output, nil
+}
+
+func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*models.GetQueryResultsLinkOutput, error) {
+	output := &models.GetQueryResultsLinkOutput{}
+
+	var err error
+	defer func() {
+		if err != nil {
+			err = apiError(err) // lambda failed
+		}
+	}()
+
+	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
+	if err != nil {
+		return output, err
+	}
+
+	s3path := *executionStatus.QueryExecution.ResultConfiguration.OutputLocation
+
+	parsedPath, err := url.Parse(s3path)
+	if err != nil {
+		err = errors.Errorf("bad s3 url: %s,", err)
+		return output, err
+	}
+
+	if parsedPath.Scheme != "s3" {
+		err = errors.Errorf("not s3 protocol (expecting s3://): %s,", s3path)
+		return output, err
+	}
+
+	bucket := parsedPath.Host
+	if bucket == "" {
+		err = errors.Errorf("missing bucket: %s,", s3path)
+		return output, err
+	}
+	var key string
+	if len(parsedPath.Path) > 0 {
+		key = parsedPath.Path[1:] // remove leading '/'
+	}
+
+	req, _ := s3Client.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	output.PresignedLink, err = req.Presign(presignedLinkTimeLimit)
+	if err != nil {
+		err = errors.Errorf("failed to sign: %s,", s3path)
+		return output, err
 	}
 
 	return output, nil

@@ -36,6 +36,7 @@ type LambdaInput struct {
 	ExecuteQuery            *ExecuteQueryInput            `json:"executeQuery"`
 	GetDatabases            *GetDatabasesInput            `json:"getDatabases"`
 	GetQueryResults         *GetQueryResultsInput         `json:"getQueryResults"`
+	GetQueryResultsLink     *GetQueryResultsLinkInput     `json:"getQueryResultsLink"`
 	GetQueryStatus          *GetQueryStatusInput          `json:"getQueryStatus"`
 	GetTables               *GetTablesInput               `json:"getTables"`
 	GetTablesDetail         *GetTablesDetailInput         `json:"getTablesDetail"`
@@ -147,6 +148,14 @@ type QueryResultsPage struct {
 type QueryResultsStats struct {
 	ExecutionTimeMilliseconds int64 `json:"executionTimeMilliseconds"  validate:"required"`
 	DataScannedBytes          int64 `json:"dataScannedBytes"  validate:"required"`
+}
+
+type GetQueryResultsLinkInput struct {
+	QueryIdentifier
+}
+
+type GetQueryResultsLinkOutput struct {
+	PresignedLink string `json:"presignedLink"` // presigned s3 link to results
 }
 
 type StopQueryInput = QueryIdentifier

@@ -21,6 +21,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -50,8 +51,6 @@ var (
 	integrationTest bool
 
 	api = API{}
-
-	s3Client *s3.S3
 
 	testSQL = `select * from ` + testutils.TestTable + ` order by col1 asc` // tests may break w/out order by
 
@@ -115,40 +114,29 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	// -------- GetTables()
 
-	getTablesInput := &models.GetTablesInput{
-		Database: models.Database{
-			DatabaseName: testutils.TestDb,
-		},
-		OnlyPopulated: true,
-	}
-	getTablesOutput, err := runGetTables(useLambda, getTablesInput)
+	var getTablesInput models.GetTablesInput
+	getTablesInput.DatabaseName = testutils.TestDb
+	getTablesInput.OnlyPopulated = true
+	getTablesOutput, err := runGetTables(useLambda, &getTablesInput)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(getTablesOutput.Tables))
 	testutils.CheckTableDetail(t, getTablesOutput.Tables)
 
 	// -------- GetTablesDetail()
 
-	getTablesDetailInput := &models.GetTablesDetailInput{
-		Database: models.Database{
-			DatabaseName: testutils.TestDb,
-		},
-		Names: []string{testutils.TestTable},
-	}
-	getTablesDetailOutput, err := runGetTablesDetail(useLambda, getTablesDetailInput)
+	var getTablesDetailInput models.GetTablesDetailInput
+	getTablesDetailInput.DatabaseName = testutils.TestDb
+	getTablesDetailInput.Names = []string{testutils.TestTable}
+	getTablesDetailOutput, err := runGetTablesDetail(useLambda, &getTablesDetailInput)
 	require.NoError(t, err)
 	testutils.CheckTableDetail(t, getTablesDetailOutput.Tables)
 
 	// -------- ExecuteQuery()
 
-	executeQueryInput := &models.ExecuteQueryInput{
-		Database: models.Database{
-			DatabaseName: testutils.TestDb,
-		},
-		SQLQuery: models.SQLQuery{
-			SQL: testSQL,
-		},
-	}
-	executeQueryOutput, err := runExecuteQuery(useLambda, executeQueryInput)
+	var executeQueryInput models.ExecuteQueryInput
+	executeQueryInput.DatabaseName = testutils.TestDb
+	executeQueryInput.SQL = testSQL
+	executeQueryOutput, err := runExecuteQuery(useLambda, &executeQueryInput)
 	require.NoError(t, err)
 	assert.Equal(t, "", executeQueryOutput.QueryStatus.SQLError)
 	require.Equal(t, models.QuerySucceeded, executeQueryOutput.Status)
@@ -167,15 +155,10 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	// -------- ExecuteQuery() BAD SQL
 
-	executeBadQueryInput := &models.ExecuteQueryInput{
-		Database: models.Database{
-			DatabaseName: testutils.TestDb,
-		},
-		SQLQuery: models.SQLQuery{
-			SQL: malformedSQL,
-		},
-	}
-	executeBadQueryOutput, err := runExecuteQuery(useLambda, executeBadQueryInput)
+	var executeBadQueryInput models.ExecuteQueryInput
+	executeBadQueryInput.DatabaseName = testutils.TestDb
+	executeBadQueryInput.SQL = malformedSQL
+	executeBadQueryOutput, err := runExecuteQuery(useLambda, &executeBadQueryInput)
 	require.NoError(t, err) // NO LAMBDA ERROR here!
 	require.Equal(t, models.QueryFailed, executeBadQueryOutput.Status)
 	assert.True(t, strings.Contains(executeBadQueryOutput.SQLError, "mismatched input 'wewewewew'"))
@@ -183,15 +166,10 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	//  -------- ExecuteAsyncQuery()
 
-	executeAsyncQueryInput := &models.ExecuteAsyncQueryInput{
-		Database: models.Database{
-			DatabaseName: testutils.TestDb,
-		},
-		SQLQuery: models.SQLQuery{
-			SQL: testSQL,
-		},
-	}
-	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeAsyncQueryInput)
+	var executeAsyncQueryInput models.ExecuteAsyncQueryInput
+	executeAsyncQueryInput.DatabaseName = testutils.TestDb
+	executeAsyncQueryInput.SQL = testSQL
+	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, &executeAsyncQueryInput)
 	require.NoError(t, err)
 
 	//  -------- GetQueryStatus()
@@ -210,13 +188,10 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	//  -------- GetQueryResults() test paging
 
-	getQueryResultsInput := &models.GetQueryResultsInput{
-		QueryIdentifier: models.QueryIdentifier{
-			QueryID: executeAsyncQueryOutput.QueryID,
-		},
-		PageSize: &maxRowsPerResult,
-	}
-	getQueryResultsOutput, err := runGetQueryResults(useLambda, getQueryResultsInput)
+	var getQueryResultsInput models.GetQueryResultsInput
+	getQueryResultsInput.QueryID = executeAsyncQueryOutput.QueryID
+	getQueryResultsInput.PageSize = &maxRowsPerResult
+	getQueryResultsOutput, err := runGetQueryResults(useLambda, &getQueryResultsInput)
 	require.NoError(t, err)
 
 	if getQueryResultsOutput.Status == models.QuerySucceeded {
@@ -230,7 +205,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 		for getQueryResultsOutput.ResultsPage.PaginationToken != nil { // when done this is nil
 			getQueryResultsInput.PaginationToken = getQueryResultsOutput.ResultsPage.PaginationToken
-			getQueryResultsOutput, err = runGetQueryResults(useLambda, getQueryResultsInput)
+			getQueryResultsOutput, err = runGetQueryResults(useLambda, &getQueryResultsInput)
 			require.NoError(t, err)
 			if getQueryResultsOutput.ResultsPage.NumRows > 0 {
 				expectedRowCount = int(maxRowsPerResult)
@@ -248,25 +223,32 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		assert.Fail(t, "GetQueryResults failed")
 	}
 
+	// -------- GetQueryResultsLink() for above query
+
+	var getQueryResultsLinkInput models.GetQueryResultsLinkInput
+	getQueryResultsLinkInput.QueryID = executeAsyncQueryOutput.QueryID
+
+	getQueryResultsLinkOutput, err := runGetQueryResultsLink(useLambda, &getQueryResultsLinkInput)
+	require.NoError(t, err)
+
+	// try it ...
+	resultsResponse, err := http.Get(getQueryResultsLinkOutput.PresignedLink)
+	require.NoError(t, err)
+	require.Equal(t, 200, resultsResponse.StatusCode)
+
 	//  -------- ExecuteAsyncQuery() BAD SQL
 
-	executeBadAsyncQueryInput := &models.ExecuteAsyncQueryInput{
-		Database: models.Database{
-			DatabaseName: testutils.TestDb,
-		},
-		SQLQuery: models.SQLQuery{
-			SQL: badExecutingSQL,
-		},
-	}
-	executeBadAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, executeBadAsyncQueryInput)
+	var executeBadAsyncQueryInput models.ExecuteAsyncQueryInput
+	executeBadAsyncQueryInput.DatabaseName = testutils.TestDb
+	executeBadAsyncQueryInput.SQL = badExecutingSQL
+	executeBadAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, &executeBadAsyncQueryInput)
 	require.NoError(t, err)
 
 	for {
 		time.Sleep(time.Second * 2)
-		getQueryStatusInput := &models.GetQueryStatusInput{
-			QueryID: executeBadAsyncQueryOutput.QueryID,
-		}
-		getQueryStatusOutput, err := runGetQueryStatus(useLambda, getQueryStatusInput)
+		var getQueryStatusInput models.GetQueryStatusInput
+		getQueryStatusInput.QueryID = executeBadAsyncQueryOutput.QueryID
+		getQueryStatusOutput, err := runGetQueryStatus(useLambda, &getQueryStatusInput)
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
 			require.Equal(t, models.QueryFailed, getQueryStatusOutput.Status)
@@ -278,29 +260,22 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	//  -------- StopQuery()
 
-	executeStopQueryInput := &models.ExecuteAsyncQueryInput{
-		Database: models.Database{
-			DatabaseName: testutils.TestDb,
-		},
-		SQLQuery: models.SQLQuery{
-			SQL: testSQL,
-		},
-	}
-	executeStopQueryOutput, err := runExecuteAsyncQuery(useLambda, executeStopQueryInput)
+	var executeStopQueryInput models.ExecuteAsyncQueryInput
+	executeStopQueryInput.DatabaseName = testutils.TestDb
+	executeStopQueryInput.SQL = testSQL
+	executeStopQueryOutput, err := runExecuteAsyncQuery(useLambda, &executeStopQueryInput)
 	require.NoError(t, err)
 
-	stopQueryInput := &models.StopQueryInput{
-		QueryID: executeStopQueryOutput.QueryID,
-	}
-	_, err = runStopQuery(useLambda, stopQueryInput)
+	var stopQueryInput models.StopQueryInput
+	stopQueryInput.QueryID = executeStopQueryOutput.QueryID
+	_, err = runStopQuery(useLambda, &stopQueryInput)
 	require.NoError(t, err)
 
 	for {
 		time.Sleep(time.Second * 2)
-		getQueryStatusInput := &models.GetQueryStatusInput{
-			QueryID: executeStopQueryOutput.QueryID,
-		}
-		getQueryStatusOutput, err := runGetQueryStatus(useLambda, getQueryStatusInput)
+		var getQueryStatusInput models.GetQueryStatusInput
+		getQueryStatusInput.QueryID = executeStopQueryOutput.QueryID
+		getQueryStatusOutput, err := runGetQueryStatus(useLambda, &getQueryStatusInput)
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
 			require.Equal(t, models.QueryCanceled, getQueryStatusOutput.Status)
@@ -352,24 +327,13 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	userData := "testUser" // this is expected to be passed all the way through the workflow, validations will enforce
 
-	executeAsyncQueryNotifyInput := &models.ExecuteAsyncQueryNotifyInput{
-		ExecuteAsyncQueryInput: models.ExecuteAsyncQueryInput{
-			Database: models.Database{
-				DatabaseName: testutils.TestDb,
-			},
-			SQLQuery: models.SQLQuery{
-				SQL: testSQL,
-			},
-		},
-		LambdaInvoke: models.LambdaInvoke{
-			LambdaName: "panther-athena-api",
-			MethodName: "notifyAppSync",
-		},
-		UserDataToken: models.UserDataToken{
-			UserData: userData,
-		},
-	}
-	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, executeAsyncQueryNotifyInput)
+	var executeAsyncQueryNotifyInput models.ExecuteAsyncQueryNotifyInput
+	executeAsyncQueryNotifyInput.DatabaseName = testutils.TestDb
+	executeAsyncQueryNotifyInput.SQL = testSQL
+	executeAsyncQueryNotifyInput.LambdaName = "panther-athena-api"
+	executeAsyncQueryNotifyInput.MethodName = "notifyAppSync"
+	executeAsyncQueryNotifyInput.UserData = userData
+	executeAsyncQueryNotifyOutput, err := runExecuteAsyncQueryNotify(useLambda, &executeAsyncQueryNotifyInput)
 	require.NoError(t, err)
 
 	// wait for workflow to finish
@@ -505,6 +469,21 @@ func runGetQueryResults(useLambda bool, input *models.GetQueryResultsInput) (*mo
 		return getQueryResultsOutput, err
 	}
 	return api.GetQueryResults(input)
+}
+
+func runGetQueryResultsLink(useLambda bool, input *models.GetQueryResultsLinkInput) (*models.GetQueryResultsLinkOutput, error) {
+	if useLambda {
+		var getQueryResultsLinkInput = struct {
+			GetQueryResultsLink *models.GetQueryResultsLinkInput
+		}{
+			input,
+		}
+		var getQueryResultsLinkOutput *models.GetQueryResultsLinkOutput
+		err := genericapi.Invoke(lambdaClient, "panther-athena-api", getQueryResultsLinkInput, &getQueryResultsLinkOutput)
+		printAPI(getQueryResultsLinkInput, getQueryResultsLinkOutput)
+		return getQueryResultsLinkOutput, err
+	}
+	return api.GetQueryResultsLink(input)
 }
 
 func runStopQuery(useLambda bool, input *models.StopQueryInput) (*models.StopQueryOutput, error) {

@@ -40,16 +40,11 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 	}()
 
 	// these lambdas are expected to take userData, queryId and workflowId in as arguments
-	notifyInput := &models.NotifyInput{
-		GetQueryStatusInput: models.GetQueryStatusInput{
-			QueryID: input.QueryID,
-		},
-		ExecuteAsyncQueryNotifyOutput: models.ExecuteAsyncQueryNotifyOutput{
-			WorkflowIdentifier: input.WorkflowIdentifier,
-		},
-		UserDataToken: input.UserDataToken,
-	}
-	payload, err := jsoniter.MarshalToString(notifyInput)
+	var notifyInput models.NotifyInput
+	notifyInput.QueryID = input.QueryID
+	notifyInput.WorkflowIdentifier = input.WorkflowIdentifier
+	notifyInput.UserDataToken = input.UserDataToken
+	payload, err := jsoniter.MarshalToString(&notifyInput)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to marshal %#v", input)
 		return output, err
