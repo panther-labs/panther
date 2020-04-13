@@ -1,0 +1,10 @@
+fragment AlertDetailsFragment on AlertDetails {
+  alertId
+  ruleId
+  creationTime
+  eventsMatched
+  updateTime
+  eventsLastEvaluatedKey
+  events
+  dedupString
+}
