@@ -58,7 +58,6 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 		err = errors.Wrapf(err, "failed to invoke %#v", input)
 		return output, err
 	}
-
 	if resp.FunctionError != nil {
 		err = errors.Errorf("%s: failed to invoke %#v", *resp.FunctionError, input)
 		return output, err

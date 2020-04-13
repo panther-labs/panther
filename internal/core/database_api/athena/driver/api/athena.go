@@ -102,7 +102,6 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 
 	output.Status = models.QueryRunning
 	output.QueryID = *startOutput.QueryExecutionId
-
 	return output, nil
 }
 
@@ -135,7 +134,6 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 	case models.QueryCanceled:
 		output.SQLError = "Query canceled"
 	}
-
 	return output, nil
 }
 
@@ -167,7 +165,6 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 			return output, err
 		}
 	}
-
 	return output, nil
 }
 
@@ -218,7 +215,6 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 		err = errors.Errorf("failed to sign: %s,", s3path)
 		return output, err
 	}
-
 	return output, nil
 }
 

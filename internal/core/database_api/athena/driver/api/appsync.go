@@ -33,12 +33,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
 
-// FIXME: consider adding as stand-alone lambda to de-couple this from Athena api
-
 // https://docs.aws.amazon.com/appsync/latest/devguide/tutorial-local-resolvers.html
-// https://www.youtube.com/watch?v=QabeZ4sag44
-// https://www.youtube.com/watch?v=UK-c1NkdLA0
-// https://www.youtube.com/watch?v=nAYikoFCN4k
 
 const (
 	// what we send to appsync
@@ -116,9 +111,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		return output, err
 	}
 	defer resp.Body.Close()
-
 	respBody, _ := ioutil.ReadAll(resp.Body)
-
 	if resp.StatusCode != 200 {
 		err = errors.Errorf("failed to POST (%d): %s", resp.StatusCode, string(respBody))
 		return output, err
@@ -130,7 +123,6 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		err = errors.Wrapf(err, "json marshal failed for: %#v", string(respBody))
 		return output, err
 	}
-
 	if len(graphQlResp.Errors) > 0 {
 		err = errors.Errorf("graphQL error for %#v: %#v", input, graphQlResp)
 		return output, err

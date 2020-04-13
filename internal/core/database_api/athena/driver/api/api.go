@@ -51,7 +51,6 @@ func SessionInit() {
 	lambdaClient = lambda.New(awsSession)
 	sfnClient = sfn.New(awsSession)
 	s3Client = s3.New(awsSession)
-
 	if os.Getenv("ATHENA_BUCKET") != "" {
 		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"
 		athenaS3ResultsPath = &results

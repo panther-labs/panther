@@ -31,6 +31,8 @@ import (
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
 
+// Execute an Athena query via step function workflow.
+
 const (
 	stateMachineName = "panther-athena-workflow"
 )
