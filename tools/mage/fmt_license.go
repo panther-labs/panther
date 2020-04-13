@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,18 +24,9 @@ import (
 	"strings"
 )
 
-const (
-	agplSource   = "docs/LICENSE_HEADER_AGPL.txt"
-	apacheSource = "docs/LICENSE_HEADER_APACHE.txt"
-)
+const agplSource = "docs/LICENSE_HEADER_AGPL.txt"
 
-var (
-	// Most open-source code is AGPL
-	agplPaths = []string{"api/lambda", "build", "deployments", "internal", "tools", "web/scripts", "web/src", "magefile.go"}
-
-	// Standalone Go packages are Apache
-	apachePaths = []string{"pkg"}
-)
+var licensePaths = []string{"api", "build", "deployments", "internal", "pkg", "tools", "web", "magefile.go"}
 
 // Add a comment character in front of each line in a block of license text.
 func commentEachLine(prefix, text string) string {
@@ -52,22 +43,15 @@ func commentEachLine(prefix, text string) string {
 	return strings.Join(result, "\n")
 }
 
-// Add license headers to all applicable source files.
+// Add the license header to all applicable source files
 func fmtLicense() {
-	logger.Info("fmt: license headers")
-	fmtLicenseGroup(agplSource, agplPaths...)
-	fmtLicenseGroup(apacheSource, apachePaths...)
-}
-
-// Add one type of license header to a group of files.
-func fmtLicenseGroup(sourceFile string, basePaths ...string) {
-	logger.Debugf("fmt: license header %s for %s", sourceFile, strings.Join(basePaths, " "))
-	header := strings.TrimSpace(string(readFile(sourceFile)))
+	logger.Debugf("fmt: license header %s for %s", agplSource, strings.Join(licensePaths, " "))
+	header := strings.TrimSpace(string(readFile(agplSource)))
 
 	asteriskLicense := "/**\n" + commentEachLine(" *", header) + "\n */"
 	hashtagLicense := commentEachLine("#", header)
 
-	for _, root := range basePaths {
+	for _, root := range licensePaths {
 		walk(root, func(path string, info os.FileInfo) {
 			if !info.IsDir() {
 				addFileLicense(path, asteriskLicense, hashtagLicense)
@@ -86,7 +70,7 @@ func addFileLicense(path, asteriskLicense, hashtagLicense string) {
 		licenseModifier(path, func(contents string) string {
 			return prependHeader(contents, asteriskLicense)
 		})
-	case ".py", ".sh", ".yml", ".yaml":
+	case ".py", ".sh", ".tf", ".yml", ".yaml":
 		licenseModifier(path, func(contents string) string {
 			return prependHeader(contents, hashtagLicense)
 		})

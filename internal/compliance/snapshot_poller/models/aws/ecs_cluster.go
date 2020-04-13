@@ -1,12 +1,7 @@
 package aws
 
-import (
-	"github.com/aws/aws-sdk-go/service/ecs"
-	"github.com/go-openapi/strfmt"
-)
-
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,6 +17,11 @@ import (
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/go-openapi/strfmt"
+)
 
 const (
 	EcsClusterSchema = "AWS.ECS.Cluster"

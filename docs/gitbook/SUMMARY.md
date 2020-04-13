@@ -189,6 +189,8 @@
   * [Support](support.md)
   * [Security and Privacy](security-privacy.md)
   * [Cost](cost.md)
+* [Tutorials]()
+  * [Osquery Log Analysis](tutorials/osquery-log-analysis.md)
 * [Development](development.md)
   * [Parsers](log-analysis/log-processing/writing-parsers.md)
 * [Operations](operations/ops-home.md)
