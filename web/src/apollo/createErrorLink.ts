@@ -27,7 +27,9 @@ const createErrorLink = (history: History<LocationErrorState>) => {
     if (graphQLErrors) {
       graphQLErrors.forEach(error => {
         logError(error, { operation });
-        history.replace(history.location.pathname, { errorType: error.errorType });
+        history.replace(history.location.pathname + history.location.search, {
+          errorType: error.errorType,
+        });
       });
     }
 
