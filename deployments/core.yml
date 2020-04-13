@@ -296,8 +296,7 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - sqs:SendMessage
+              Action: sqs:SendMessage
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-layer-manager-queue
 
   AnalysisApiLogGroup:
