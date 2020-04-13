@@ -2,8 +2,9 @@ import React from 'react';
 import { Box, Card, Grid } from 'pouncejs';
 import Panel from 'Components/Panel';
 import SQLEditor from './SQLEditor';
-import Browser, { withBrowserContext } from './Browser';
+import Browser from './Browser';
 import ResultsTable from './ResultsTable';
+import { withSQLShellContext } from './SQLShellContext';
 
 const SQLShellPage: React.FC = () => {
   return (
@@ -23,4 +24,4 @@ const SQLShellPage: React.FC = () => {
   );
 };
 
-export default withBrowserContext(React.memo(SQLShellPage));
+export default withSQLShellContext(React.memo(SQLShellPage));

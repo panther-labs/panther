@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Flex, Icon, IconButton, Text } from 'pouncejs';
-import { useBrowserContext } from '../BrowserContext';
+import { useSQLShellContext } from '../../SQLShellContext';
 import { useListColumnsForTable } from './graphql/listColumnsForTable.generated';
 import ColumnListItem from './ColumnListItem';
 
@@ -12,7 +12,7 @@ const ColumnList: React.FC = () => {
     selectColumn,
     selectTable,
     searchValue,
-  } = useBrowserContext();
+  } = useSQLShellContext();
 
   const { data } = useListColumnsForTable({
     fetchPolicy: 'cache-only', // will be there from the table listing. Throw if it's not

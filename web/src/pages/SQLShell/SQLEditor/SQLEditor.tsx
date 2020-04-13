@@ -6,7 +6,7 @@ import { shouldSaveData } from 'Helpers/connection';
 import { extractErrorMessage } from 'Helpers/utils';
 import useUrlParams from 'Hooks/useUrlParams';
 import { useLoadAllSchemaEntities } from './graphql/loadAllSchemaEntities.generated';
-import { useBrowserContext } from '../Browser';
+import { useSQLShellContext } from '../SQLShellContext';
 import { useRunQuery } from './graphql/runQuery.generated';
 
 const minLines = 19;
@@ -18,7 +18,7 @@ export interface LogQueryUrlParams {
 const SQLEditor: React.FC = () => {
   const { updateUrlParams } = useUrlParams<LogQueryUrlParams>();
   const [value, setValue] = React.useState('');
-  const { selectedDatabase } = useBrowserContext();
+  const { selectedDatabase } = useSQLShellContext();
   const { pushSnackbar } = useSnackbar();
 
   const [runQuery, { loading: isSubmittingQueryRequest }] = useRunQuery({

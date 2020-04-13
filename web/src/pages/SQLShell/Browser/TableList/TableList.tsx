@@ -2,13 +2,13 @@ import React from 'react';
 import { Box, useSnackbar } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { useBrowserContext } from '../BrowserContext';
+import { useSQLShellContext } from '../../SQLShellContext';
 import { useListTablesForDatabase } from './graphql/listTablesForDatabase.generated';
 import TableListItem from './TableListItem';
 
 const TableList: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
-  const { selectTable, selectedDatabase, searchValue } = useBrowserContext();
+  const { selectTable, selectedDatabase, searchValue } = useSQLShellContext();
   const { data, loading } = useListTablesForDatabase({
     variables: {
       name: selectedDatabase,

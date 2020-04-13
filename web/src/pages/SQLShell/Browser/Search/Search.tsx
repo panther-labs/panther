@@ -1,9 +1,9 @@
 import React from 'react';
 import { TextInput } from 'pouncejs';
-import { useBrowserContext } from '../BrowserContext';
+import { useSQLShellContext } from '../../SQLShellContext';
 
 const Search: React.FC = () => {
-  const { searchValue, setSearchValue, selectedDatabase } = useBrowserContext();
+  const { searchValue, setSearchValue, selectedDatabase } = useSQLShellContext();
   return (
     <TextInput
       label="Filter"
