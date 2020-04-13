@@ -112,8 +112,23 @@ func (b Build) lambda() error {
 
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
+
+	// "go build" in parallel for each Lambda function.
+	//
+	// If you don't already have all go modules downloaded, this may fail because each goroutine will
+	// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
+	//
+	// Run "go mod download" or "mage setup" before building to download the go modules.
+	// If you're adding a new module, run "go get ./..." before building to fetch the new module.
+	errs := make(chan error)
 	for _, pkg := range packages {
-		if err := buildPackage(pkg); err != nil {
+		go func(pkg string, errs chan error) {
+			errs <- buildPackage(pkg)
+		}(pkg, errs)
+	}
+
+	for range packages {
+		if err := <-errs; err != nil {
 			return err
 		}
 	}
