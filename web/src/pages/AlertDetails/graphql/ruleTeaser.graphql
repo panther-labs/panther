@@ -1,11 +1,5 @@
 query RuleTeaser($input: GetRuleInput!) {
-    rule(input: $input) {
-        description
-        displayName
-        id
-        logTypes
-        runbook
-        severity
-        tags
-    }
+  rule(input: $input) {
+    ...RuleTeaserFragment
+  }
 }

@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { RuleDetailsFragment } from '../../../graphql/fragments/RuleDetailsFragment.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -30,23 +31,7 @@ export type RuleDetailsVariables = {
 };
 
 export type RuleDetails = {
-  rule?: Types.Maybe<
-    Pick<
-      Types.RuleDetails,
-      | 'createdAt'
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'id'
-      | 'dedupPeriodMinutes'
-      | 'lastModified'
-      | 'reference'
-      | 'logTypes'
-      | 'runbook'
-      | 'severity'
-      | 'tags'
-    >
-  >;
+  rule?: Types.Maybe<RuleDetailsFragment>;
   alerts?: Types.Maybe<{
     alertSummaries: Array<Types.Maybe<Pick<Types.AlertSummary, 'alertId' | 'creationTime'>>>;
   }>;
@@ -55,18 +40,7 @@ export type RuleDetails = {
 export const RuleDetailsDocument = gql`
   query RuleDetails($ruleDetailsInput: GetRuleInput!, $alertsForRuleInput: ListAlertsInput!) {
     rule(input: $ruleDetailsInput) {
-      createdAt
-      description
-      displayName
-      enabled
-      id
-      dedupPeriodMinutes
-      lastModified
-      reference
-      logTypes
-      runbook
-      severity
-      tags
+      ...RuleDetailsFragment
     }
     alerts(input: $alertsForRuleInput) {
       alertSummaries {
@@ -75,6 +49,7 @@ export const RuleDetailsDocument = gql`
       }
     }
   }
+  ${RuleDetailsFragment}
 `;
 
 /**

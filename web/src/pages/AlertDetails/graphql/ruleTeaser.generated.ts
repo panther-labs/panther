@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { RuleTeaserFragment } from '../../../graphql/fragments/RuleTeaserFragment.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,27 +29,15 @@ export type RuleTeaserVariables = {
   input: Types.GetRuleInput;
 };
 
-export type RuleTeaser = {
-  rule?: Types.Maybe<
-    Pick<
-      Types.RuleDetails,
-      'description' | 'displayName' | 'id' | 'logTypes' | 'runbook' | 'severity' | 'tags'
-    >
-  >;
-};
+export type RuleTeaser = { rule?: Types.Maybe<RuleTeaserFragment> };
 
 export const RuleTeaserDocument = gql`
   query RuleTeaser($input: GetRuleInput!) {
     rule(input: $input) {
-      description
-      displayName
-      id
-      logTypes
-      runbook
-      severity
-      tags
+      ...RuleTeaserFragment
     }
   }
+  ${RuleTeaserFragment}
 `;
 
 /**

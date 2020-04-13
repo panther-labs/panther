@@ -1,0 +1,8 @@
+fragment RuleDetailsFragment on RuleDetails {
+  ...RuleTeaserFragment
+  createdAt
+  enabled
+  dedupPeriodMinutes
+  lastModified
+  reference
+}
