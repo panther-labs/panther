@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { DestinationFragment } from '../../../../graphql/fragments/DestinationFragment.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,90 +29,15 @@ export type UpdateDestinationVariables = {
   input: Types.DestinationInput;
 };
 
-export type UpdateDestination = {
-  updateDestination?: Types.Maybe<
-    Pick<
-      Types.Destination,
-      | 'createdBy'
-      | 'creationTime'
-      | 'displayName'
-      | 'lastModifiedBy'
-      | 'lastModifiedTime'
-      | 'outputId'
-      | 'outputType'
-      | 'verificationStatus'
-      | 'defaultForSeverity'
-    > & {
-      outputConfig: {
-        slack?: Types.Maybe<Pick<Types.SlackConfig, 'webhookURL'>>;
-        sns?: Types.Maybe<Pick<Types.SnsConfig, 'topicArn'>>;
-        pagerDuty?: Types.Maybe<Pick<Types.PagerDutyConfig, 'integrationKey'>>;
-        github?: Types.Maybe<Pick<Types.GithubConfig, 'repoName' | 'token'>>;
-        jira?: Types.Maybe<
-          Pick<
-            Types.JiraConfig,
-            'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType'
-          >
-        >;
-        opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
-        msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
-        sqs?: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
-        asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
-      };
-    }
-  >;
-};
+export type UpdateDestination = { updateDestination?: Types.Maybe<DestinationFragment> };
 
 export const UpdateDestinationDocument = gql`
   mutation UpdateDestination($input: DestinationInput!) {
     updateDestination(input: $input) {
-      createdBy
-      creationTime
-      displayName
-      lastModifiedBy
-      lastModifiedTime
-      outputId
-      outputType
-      outputConfig {
-        slack {
-          webhookURL
-        }
-        sns {
-          topicArn
-        }
-        pagerDuty {
-          integrationKey
-        }
-        github {
-          repoName
-          token
-        }
-        jira {
-          orgDomain
-          projectKey
-          userName
-          apiKey
-          assigneeId
-          issueType
-        }
-        opsgenie {
-          apiKey
-        }
-        msTeams {
-          webhookURL
-        }
-        sqs {
-          queueUrl
-        }
-        asana {
-          personalAccessToken
-          projectGids
-        }
-      }
-      verificationStatus
-      defaultForSeverity
+      ...DestinationFragment
     }
   }
+  ${DestinationFragment}
 `;
 export type UpdateDestinationMutationFn = ApolloReactCommon.MutationFunction<
   UpdateDestination,
