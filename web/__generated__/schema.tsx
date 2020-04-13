@@ -564,7 +564,7 @@ export type Mutation = {
   inviteUser: User;
   queryDone: QueryDone;
   remediateResource?: Maybe<Scalars['Boolean']>;
-  resetUserPassword?: Maybe<Scalars['Boolean']>;
+  resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
   updateDestination?: Maybe<Destination>;
@@ -913,11 +913,13 @@ export type QueryRulesArgs = {
 
 export type QueryDone = {
   __typename?: 'QueryDone';
+  userData: Scalars['String'];
   queryId: Scalars['String'];
   workflowId: Scalars['String'];
 };
 
 export type QueryDoneInput = {
+  userData: Scalars['String'];
   queryId: Scalars['String'];
   workflowId: Scalars['String'];
 };
@@ -1039,6 +1041,15 @@ export type SqsConfig = {
 
 export type SqsConfigInput = {
   queueUrl: Scalars['String'];
+};
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  queryDone?: Maybe<QueryDone>;
+};
+
+export type SubscriptionQueryDoneArgs = {
+  userData: Scalars['String'];
 };
 
 export type SuppressPoliciesInput = {
@@ -1320,6 +1331,7 @@ export type ResolversTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
+  Subscription: ResolverTypeWrapper<{}>;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1446,6 +1458,7 @@ export type ResolversParentTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
+  Subscription: {};
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1936,7 +1949,7 @@ export type MutationResolvers<
     RequireFields<MutationRemediateResourceArgs, 'input'>
   >;
   resetUserPassword?: Resolver<
-    Maybe<ResolversTypes['Boolean']>,
+    ResolversTypes['User'],
     ParentType,
     ContextType,
     RequireFields<MutationResetUserPasswordArgs, 'id'>
@@ -2287,6 +2300,7 @@ export type QueryDoneResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['QueryDone'] = ResolversParentTypes['QueryDone']
 > = {
+  userData?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   queryId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   workflowId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
@@ -2411,6 +2425,19 @@ export type SqsConfigResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
+export type SubscriptionResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']
+> = {
+  queryDone?: SubscriptionResolver<
+    Maybe<ResolversTypes['QueryDone']>,
+    'queryDone',
+    ParentType,
+    ContextType,
+    RequireFields<SubscriptionQueryDoneArgs, 'userData'>
+  >;
+};
+
 export type TestPolicyResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestPolicyResponse'] = ResolversParentTypes['TestPolicyResponse']
@@ -2511,6 +2538,7 @@ export type Resolvers<ContextType = any> = {
   SlackConfig?: SlackConfigResolvers<ContextType>;
   SnsConfig?: SnsConfigResolvers<ContextType>;
   SqsConfig?: SqsConfigResolvers<ContextType>;
+  Subscription?: SubscriptionResolvers<ContextType>;
   TestPolicyResponse?: TestPolicyResponseResolvers<ContextType>;
   UploadPoliciesResponse?: UploadPoliciesResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;

@@ -109,7 +109,7 @@ var supportedRegions = map[string]bool{
 // NOTE: Mage ignores the first word of the comment if it matches the function name.
 // So the comment below is intentionally "Deploy Deploy"
 
-// Deploy Deploy application infrastructure
+// Deploy Deploy Panther to your AWS account
 func Deploy() {
 	start := time.Now()
 
@@ -169,7 +169,7 @@ func deployPrecheck(awsRegion string) {
 
 	// Ensure swagger is available
 	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
-		logger.Fatalf("swagger is not available (%v): try 'mage setup:swagger'", err)
+		logger.Fatalf("swagger is not available (%v): try 'mage setup'", err)
 	}
 
 	// Warn if not deploying a tagged release
@@ -233,7 +233,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	}()
 
 	// While waiting for bootstrap, build deployment artifacts
-	var build Build
+	build.API()
 	build.Cfn()
 	build.Lambda()
 	wg.Wait()
@@ -370,6 +370,17 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Core
 	parallelStacks++
 	go func(result chan string) {
+		// the example yml has an empty string to make it clear it is a list, remove empty strings
+		var sanitizedAthenaS3Arns []string
+		for _, arn := range settings.Setup.Athena.S3ARNs {
+			if arn == "" {
+				continue
+			}
+			sanitizedAthenaS3Arns = append(sanitizedAthenaS3Arns, arn)
+		}
+		// add in the panther buckets
+		sanitizedAthenaS3Arns = append(sanitizedAthenaS3Arns, "arn:aws:s3:::panther-*-processeddata-*")
+
 		deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
@@ -377,10 +388,12 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AthenaResultsBucket":    outputs["AthenaResultsBucket"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
 			"GraphQLApiEndpoint":     outputs["GraphQLApiEndpoint"],
+			"GraphQLApiId":           outputs["GraphQLApiId"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
 
+			"AthenaS3BucketARNS":         strings.Join(sanitizedAthenaS3Arns, ","),
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,

@@ -102,6 +102,12 @@ Setup:
     PrincipalARNs:
       -
 
+  # Grant access for the Athena UI to read from your non-Panther buckets to allow joining to with Panther data
+  Athena:
+    # A list of S3 ARNs of buckets/prefixes that Athena is allowed to query
+    S3ARNs:
+      -
+
 Web:
   # ARN of an AWS ACM certificate used on the loadbalancer presenting the panther web app
   #

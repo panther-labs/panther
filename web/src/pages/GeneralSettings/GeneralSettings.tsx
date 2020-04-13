@@ -83,19 +83,35 @@ const GeneralSettingsContainer: React.FC = () => {
           <Panel title="About Panther" size="large">
             <Box width={500} m="auto">
               <Flex mb={6}>
-                <Text color="grey300" size="large" width={80}>
+                <Text color="grey300" size="large" width={150}>
                   Plan
                 </Text>
                 <Text color="grey500" size="large" fontWeight="bold">
                   Community
                 </Text>
               </Flex>
-              <Flex>
-                <Text color="grey300" size="large" width={80}>
+              <Flex mb={6}>
+                <Text color="grey300" size="large" width={150}>
                   Version
                 </Text>
                 <Text color="grey500" size="large" fontWeight="bold">
                   {process.env.PANTHER_VERSION || 'N/A'}
+                </Text>
+              </Flex>
+              <Flex mb={6}>
+                <Text color="grey300" size="large" width={150}>
+                  AWS Account ID
+                </Text>
+                <Text color="grey500" size="large" fontWeight="bold">
+                  {process.env.AWS_ACCOUNT_ID || 'N/A'}
+                </Text>
+              </Flex>
+              <Flex>
+                <Text color="grey300" size="large" width={150}>
+                  AWS Region
+                </Text>
+                <Text color="grey500" size="large" fontWeight="bold">
+                  {process.env.AWS_REGION || 'N/A'}
                 </Text>
               </Flex>
             </Box>

@@ -37,10 +37,18 @@ import (
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
 )
 
-// Generate all documentation
+// Auto-generate specific sections of documentation
 func Doc() {
-	opDocs()
-	logDocs()
+	if err := doc(); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func doc() error {
+	if err := opDocs(); err != nil {
+		return err
+	}
+	return logDocs()
 }
 
 const (
@@ -63,23 +71,23 @@ Each resource describes its function and failure impacts.
 )
 
 // generate operational documentation from deployment CloudFormation
-func opDocs() {
+func opDocs() error {
 	logger.Infof("doc: generating operational documentation from cloudformation")
 	outDir := filepath.Join("docs", "gitbook", "operations")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
-		logger.Fatalf("failed to create directory %s: %v", outDir, err)
+		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
 	}
 	inventoryFileName := filepath.Join(outDir, "runbooks.md")
 
 	inventoryFile, err := os.Create(inventoryFileName)
 	if err != nil {
-		logger.Fatalf("failed to create file %s: %v", inventoryFileName, err)
+		return fmt.Errorf("failed to create file %s: %v", inventoryFileName, err)
 	}
 	defer inventoryFile.Close()
 
 	docs, err := cfndoc.ReadCfn(cfnFiles()...)
 	if err != nil {
-		logger.Fatalf("failed to generate operational documentation: %v", err)
+		return fmt.Errorf("failed to generate operational documentation: %v", err)
 	}
 
 	var docsBuffer bytes.Buffer
@@ -88,8 +96,10 @@ func opDocs() {
 		docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n\n", doc.Resource, doc.Documentation))
 	}
 	if _, err = inventoryFile.Write(docsBuffer.Bytes()); err != nil {
-		logger.Fatalf("failed to write file %s: %v", inventoryFileName, err)
+		return fmt.Errorf("failed to write file %s: %v", inventoryFileName, err)
 	}
+
+	return nil
 }
 
 const (
@@ -98,11 +108,11 @@ const (
 `
 )
 
-func logDocs() {
+func logDocs() error {
 	logger.Infof("doc: generating documentation on supported logs")
 	outDir := filepath.Join("docs", "gitbook", "log-analysis", "log-processing", "supported-logs")
 	if err := os.MkdirAll(outDir, 0755); err != nil {
-		logger.Fatalf("failed to create directory %s: %v", outDir, err)
+		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
 	}
 
 	// group the data by category
@@ -112,7 +122,7 @@ func logDocs() {
 		logType := table.LogType()
 		categoryType := strings.Split(logType, ".")
 		if len(categoryType) != 2 {
-			logger.Fatalf("unexpected logType format: %s", logType)
+			return fmt.Errorf("unexpected logType format: %s", logType)
 		}
 		logCategories[categoryType[0]] = append(logCategories[categoryType[0]], logType)
 	}
@@ -123,14 +133,14 @@ func logDocs() {
 	}
 	sort.Strings(sortedCategories)
 
-	docCategory := func(category string) {
+	docCategory := func(category string) error {
 		var docsBuffer bytes.Buffer
 		docsBuffer.WriteString(parserReadmeHeader)
 
 		readmeFileName := filepath.Join(outDir, category+".md")
 		readmeFile, err := os.Create(readmeFileName)
 		if err != nil {
-			logger.Fatalf("failed to create file %s: %v", readmeFileName, err)
+			return fmt.Errorf("failed to create file %s: %v", readmeFileName, err)
 		}
 		defer readmeFile.Close()
 
@@ -168,14 +178,19 @@ func logDocs() {
 		}
 
 		if _, err = readmeFile.Write(docsBuffer.Bytes()); err != nil {
-			logger.Fatalf("failed to write file %s: %v", readmeFileName, err)
+			return fmt.Errorf("failed to write file %s: %v", readmeFileName, err)
 		}
+		return nil
 	}
 
 	// one file per category
 	for _, category := range sortedCategories {
-		docCategory(category)
+		if err := docCategory(category); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func formatColumnName(name string) string {

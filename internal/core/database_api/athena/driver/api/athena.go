@@ -19,10 +19,13 @@ package api
  */
 
 import (
+	"net/url"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
@@ -31,6 +34,8 @@ import (
 
 const (
 	pollWait = time.Second * 4
+
+	presignedLinkTimeLimit = time.Minute
 )
 
 func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
@@ -44,7 +49,10 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 	}()
 
 	executeAsyncQueryOutput, err := api.ExecuteAsyncQuery(input)
-	if err != nil {
+	if err != nil || executeAsyncQueryOutput.SQLError != "" { // either API error OR sql error
+		output.Status = models.QueryFailed
+		output.QueryStatus = executeAsyncQueryOutput.QueryStatus
+		output.SQL = input.SQL
 		return output, err
 	}
 
@@ -64,9 +72,8 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 	}
 
 	// get the results
-	getQueryResultsInput := &models.GetQueryResultsInput{
-		QueryID: executeAsyncQueryOutput.QueryID,
-	}
+	getQueryResultsInput := &models.GetQueryResultsInput{}
+	getQueryResultsInput.QueryID = executeAsyncQueryOutput.QueryID
 	return api.GetQueryResults(getQueryResultsInput)
 }
 
@@ -82,9 +89,18 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 
 	startOutput, err := awsathena.StartQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
 	if err != nil {
+		output.Status = models.QueryFailed
+
+		// try to dig out the athena error if there is one
+		if athenaErr, ok := err.(*athena.InvalidRequestException); ok {
+			output.SQLError = athenaErr.Message()
+			return output, nil // no lambda err
+		}
+
 		return output, err
 	}
 
+	output.Status = models.QueryRunning
 	output.QueryID = *startOutput.QueryExecutionId
 
 	return output, nil
@@ -109,15 +125,54 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 	output.Status = getQueryStatus(executionStatus)
 
 	switch output.Status {
+	case models.QuerySucceeded:
+		output.Stats = &models.QueryResultsStats{
+			ExecutionTimeMilliseconds: *executionStatus.QueryExecution.Statistics.TotalExecutionTimeInMillis,
+			DataScannedBytes:          *executionStatus.QueryExecution.Statistics.DataScannedInBytes,
+		}
 	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
-		output.Message = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
+		output.SQLError = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
+	case models.QueryCanceled:
+		output.SQLError = "Query canceled"
 	}
 
 	return output, nil
 }
 
-func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
+func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
 	output := &models.GetQueryResultsOutput{}
+
+	var err error
+	defer func() {
+		if err != nil {
+			err = apiError(err) // lambda failed
+		}
+	}()
+
+	getStatusOutput, err := api.GetQueryStatus(&input.QueryIdentifier)
+	if err != nil {
+		return output, err
+	}
+
+	output.GetQueryStatusOutput = *getStatusOutput
+
+	switch output.Status {
+	case models.QuerySucceeded:
+		var nextToken *string
+		if input.PaginationToken != nil { // paging thru results
+			nextToken = input.PaginationToken
+		}
+		err = getQueryResults(athenaClient, input.QueryID, output, nextToken, input.PageSize)
+		if err != nil {
+			return output, err
+		}
+	}
+
+	return output, nil
+}
+
+func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*models.GetQueryResultsLinkOutput, error) {
+	output := &models.GetQueryResultsLinkOutput{}
 
 	var err error
 	defer func() {
@@ -131,24 +186,58 @@ func (API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQuery
 		return output, err
 	}
 
-	output.SQL = *executionStatus.QueryExecution.Query
-	output.Status = getQueryStatus(executionStatus)
+	s3path := *executionStatus.QueryExecution.ResultConfiguration.OutputLocation
 
-	switch output.Status {
-	case models.QuerySucceeded:
-		var nextToken *string
-		if input.PaginationToken != nil { // paging thru results
-			nextToken = input.PaginationToken
-		}
-		err = getQueryResults(athenaClient, executionStatus, output, nextToken, input.PageSize)
-		if err != nil {
-			return output, err
-		}
-	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
-		output.Message = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
+	parsedPath, err := url.Parse(s3path)
+	if err != nil {
+		err = errors.Errorf("bad s3 url: %s,", err)
+		return output, err
+	}
+
+	if parsedPath.Scheme != "s3" {
+		err = errors.Errorf("not s3 protocol (expecting s3://): %s,", s3path)
+		return output, err
+	}
+
+	bucket := parsedPath.Host
+	if bucket == "" {
+		err = errors.Errorf("missing bucket: %s,", s3path)
+		return output, err
+	}
+	var key string
+	if len(parsedPath.Path) > 0 {
+		key = parsedPath.Path[1:] // remove leading '/'
+	}
+
+	req, _ := s3Client.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	output.PresignedLink, err = req.Presign(presignedLinkTimeLimit)
+	if err != nil {
+		err = errors.Errorf("failed to sign: %s,", s3path)
+		return output, err
 	}
 
 	return output, nil
+}
+
+func (api API) StopQuery(input *models.StopQueryInput) (*models.StopQueryOutput, error) {
+	output := &models.StopQueryOutput{}
+
+	var err error
+	defer func() {
+		if err != nil {
+			err = apiError(err) // lambda failed
+		}
+	}()
+
+	_, err = awsathena.StopQuery(athenaClient, input.QueryID)
+	if err != nil {
+		return output, err
+	}
+
+	return api.GetQueryStatus(input)
 }
 
 func getQueryStatus(executionStatus *athena.GetQueryExecutionOutput) string {
@@ -158,9 +247,11 @@ func getQueryStatus(executionStatus *athena.GetQueryExecutionOutput) string {
 		return models.QuerySucceeded
 	case
 		// failure modes
-		athena.QueryExecutionStateFailed,
-		athena.QueryExecutionStateCancelled:
+		athena.QueryExecutionStateFailed:
 		return models.QueryFailed
+	case
+		athena.QueryExecutionStateCancelled:
+		return models.QueryCanceled
 	case
 		// still going
 		athena.QueryExecutionStateRunning,
@@ -171,22 +262,36 @@ func getQueryStatus(executionStatus *athena.GetQueryExecutionOutput) string {
 	}
 }
 
-func getQueryResults(client athenaiface.AthenaAPI, executionStatus *athena.GetQueryExecutionOutput,
+func getQueryResults(client athenaiface.AthenaAPI, queryID string,
 	output *models.GetQueryResultsOutput, nextToken *string, maxResults *int64) (err error) {
 
-	queryResult, err := awsathena.Results(client, executionStatus, nextToken, maxResults)
+	queryResult, err := awsathena.Results(client, queryID, nextToken, maxResults)
 	if err != nil {
 		return err
 	}
-	err = collectResults(queryResult, output)
+
+	// header with types
+	for _, columnInfo := range queryResult.ResultSet.ResultSetMetadata.ColumnInfo {
+		output.ColumnInfo = append(output.ColumnInfo, &models.Column{
+			Value: *columnInfo.Name,
+			Type:  columnInfo.Type,
+		})
+	}
+
+	skipHeader := nextToken == nil // athena puts header in first row of first page
+	err = collectResults(skipHeader, queryResult, output)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) (err error) {
+func collectResults(skipHeader bool, queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) (err error) {
 	for _, row := range queryResult.ResultSet.Rows {
+		if skipHeader {
+			skipHeader = false
+			continue
+		}
 		var columns []*models.Column
 		for _, col := range row.Data {
 			columns = append(columns, &models.Column{
@@ -198,7 +303,7 @@ func collectResults(queryResult *athena.GetQueryResultsOutput, output *models.Ge
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	output.ResultsPage.NumRows = len(queryResult.ResultSet.Rows)
+	output.ResultsPage.NumRows = len(output.ResultsPage.Rows)
 	output.ResultsPage.PaginationToken = queryResult.NextToken
 	return nil
 }

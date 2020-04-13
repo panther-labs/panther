@@ -182,6 +182,8 @@
   * [Slack](destinations/setup/slack.md)
   * [SNS](destinations/setup/sns.md)
   * [SQS](destinations/setup/sqs.md)
+* [Enterprise](enterprise/README.md)
+  * [Role-Based Access Control](enterprise/rbac.md)
 * [Help]()
   * [Troubleshooting](troubleshooting.md)
   * [Support](support.md)

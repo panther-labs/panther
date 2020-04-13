@@ -45,7 +45,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 			err = errors.WithStack(err)
 			return output, err
 		}
-		output.Databases = append(output.Databases, &models.DatabaseDescription{
+		output.Databases = append(output.Databases, &models.NameAndDescription{
 			Name:        *glueOutput.Database.Name,
 			Description: glueOutput.Database.Description, // optional
 		})
@@ -56,7 +56,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 	err = glueClient.GetDatabasesPages(&glue.GetDatabasesInput{},
 		func(page *glue.GetDatabasesOutput, lastPage bool) bool {
 			for _, database := range page.DatabaseList {
-				output.Databases = append(output.Databases, &models.DatabaseDescription{
+				output.Databases = append(output.Databases, &models.NameAndDescription{
 					Name:        *database.Name,
 					Description: database.Description, // optional
 				})
@@ -97,9 +97,13 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 				}
 				detail := &models.TableDetail{
 					TableDescription: models.TableDescription{
-						DatabaseName: input.DatabaseName,
-						Name:         *table.Name,
-						Description:  table.Description, // optional
+						Database: models.Database{
+							DatabaseName: input.DatabaseName,
+						},
+						NameAndDescription: models.NameAndDescription{
+							Name:        *table.Name,
+							Description: table.Description, // optional
+						},
 					},
 				}
 				populateTableDetailColumns(detail, table)
@@ -136,8 +140,13 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 		}
 		detail := &models.TableDetail{
 			TableDescription: models.TableDescription{
-				DatabaseName: input.DatabaseName,
-				Name:         *glueTableOutput.Table.Name,
+				Database: models.Database{
+					DatabaseName: input.DatabaseName,
+				},
+				NameAndDescription: models.NameAndDescription{
+					Name:        *glueTableOutput.Table.Name,
+					Description: glueTableOutput.Table.Description,
+				},
 			},
 		}
 		populateTableDetailColumns(detail, glueTableOutput.Table)
@@ -149,16 +158,20 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 func populateTableDetailColumns(tableDetail *models.TableDetail, glueTableData *glue.TableData) {
 	for _, column := range glueTableData.StorageDescriptor.Columns {
 		tableDetail.Columns = append(tableDetail.Columns, &models.TableColumn{
-			Name:        aws.StringValue(column.Name),
-			Type:        aws.StringValue(column.Type),
-			Description: column.Comment,
+			NameAndDescription: models.NameAndDescription{
+				Name:        aws.StringValue(column.Name),
+				Description: column.Comment,
+			},
+			Type: aws.StringValue(column.Type),
 		})
 	}
 	for _, column := range glueTableData.PartitionKeys {
 		tableDetail.Columns = append(tableDetail.Columns, &models.TableColumn{
-			Name:        aws.StringValue(column.Name),
-			Type:        aws.StringValue(column.Type),
-			Description: column.Comment,
+			NameAndDescription: models.NameAndDescription{
+				Name:        aws.StringValue(column.Name),
+				Description: column.Comment,
+			},
+			Type: aws.StringValue(column.Type),
 		})
 	}
 }

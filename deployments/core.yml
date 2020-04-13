@@ -38,6 +38,9 @@ Parameters:
   GraphQLApiEndpoint:
     Type: String
     Description: The URL to the Appsync GraphQL Endpoint
+  GraphQLApiId:
+    Type: String
+    Description: The id of the Appsync GraphQL Endpoint
   OutputsKeyId:
     Type: String
     Description: KMS key for encrypting alert outputs
@@ -49,6 +52,9 @@ Parameters:
     Description: Cognito user pool ID
 
   # Options from config file
+  AthenaS3BucketARNS:
+    Type: CommaDelimitedList
+    Description: The list of S3 ARNs to allow read access by Athena lambda
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -667,9 +673,10 @@ Resources:
             - Effect: Allow
               Action:
                 - athena:StartQueryExecution
+                - athena:StopQueryExecution
                 - athena:GetQuery*
               Resource: '*'
-        - Id: GluePermissions # Used for all table metadata queries
+        - Id: GluePermissions # used for all table metadata queries
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -678,7 +685,7 @@ Resources:
                 - glue:GetTable*
                 - glue:GetPartition*
               Resource: '*'
-        - Id: S3ResultsPermissions # Athena writes results to S3
+        - Id: S3ResultsPermissions # athena writes results to S3
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -688,7 +695,7 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
-        - Id: S3ReadPermissions # Athena reads from S3, restrict to our processed data buckets
+        - Id: S3ReadPermissions # athena reads from S3, restrict to our processed data buckets
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -696,28 +703,29 @@ Resources:
                 - s3:GetBucketLocation
                 - s3:List*
                 - s3:GetObject
-              Resource: 'arn:aws:s3:::panther-*-processeddata-*' # wild card use to allow integration tests
-        - Id: StepsPermissions # start an async workflow
+              Resource: !Ref AthenaS3BucketARNS
+        - Id: StepsPermissions # start an async workflow that tracks the query execution
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
                 - states:StartExecution
               Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
-        - Id: InvokePantherLambdas # call other panther lambdas (notify support)
+        - Id: InvokePantherLambdas # allow calling other panther lambdas
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
                 - lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-*
-        - Id: CallAppSync # make appsync mutation call 'queryDone()' for notify support
+              Resource: # list lambdas that can be called below
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
+        - Id: CallAppSync # allow calling appsync mutation 'queryDone()' for notify support
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
                 - appsync:GraphQL
-              Resource: '*'
+              Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:apis/${GraphQLApiId}/types/Mutation/fields/queryDone
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -757,9 +765,15 @@ Resources:
       # </cfndoc>
       DefinitionString: !Sub |
         {
-             "Comment": "Run Athena query. Parameters are: databaseName,sql,lambdaName,methodName",
-             "StartAt": "query",
+             "Comment": "Run Athena query. Parameters are: userData, delay, databaseName,sql,lambdaName,methodName",
+             "StartAt": "delay",
              "States": {
+               "delay": {
+                "Comment": "Configurable delay to start",
+                "Type": "Wait",
+                "SecondsPath": "$.delaySeconds",
+                "Next": "query"
+               },
                "query": {
                  "Type": "Task",
                  "Resource": "arn:aws:states:::lambda:invoke",
@@ -767,7 +781,7 @@ Resources:
                    "FunctionName": "${AthenaApiFunction.Arn}",
                    "Payload": {
                      "executeAsyncQuery": {
-                       "DatabaseName.$": "$.databaseName",
+                       "databaseName.$": "$.databaseName",
                        "sql.$": "$.sql"
                      }
                    }
@@ -839,17 +853,18 @@ Resources:
                  "End": true
                },
                "notify": {
-                 "Comment": "Call lambdaName.methodName with queryId and workflowId to notify",
+                 "Comment": "Call lambdaName.methodName with userData, queryId and workflowId to notify done",
                  "Type": "Task",
                  "Resource": "arn:aws:states:::lambda:invoke",
                  "Parameters": {
                    "FunctionName": "${AthenaApiFunction.Arn}",
                    "Payload": {
                      "invokeNotifyLambda": {
+                       "userData.$": "$.userData",
                        "queryId.$": "$.queryResults.Payload.queryId",
+                       "workflowId.$": "$$.Execution.Id",
                        "lambdaName.$": "$.lambdaName",
-                       "methodName.$": "$.methodName",
-                       "workflowId.$": "$$.Execution.Id"
+                       "methodName.$": "$.methodName"
                      }
                    }
                  },

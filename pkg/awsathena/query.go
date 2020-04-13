@@ -89,7 +89,7 @@ func WaitForResults(client athenaiface.AthenaAPI, queryExecutionID string) (quer
 	if err != nil {
 		return nil, err
 	}
-	return Results(client, executionOutput, nil, nil)
+	return Results(client, *executionOutput.QueryExecution.QueryExecutionId, nil, nil)
 }
 
 func Status(client athenaiface.AthenaAPI, queryExecutionID string) (executionOutput *athena.GetQueryExecutionOutput, err error) {
@@ -102,23 +102,27 @@ func Status(client athenaiface.AthenaAPI, queryExecutionID string) (executionOut
 	return executionOutput, nil
 }
 
-func Results(client athenaiface.AthenaAPI, executionOutput *athena.GetQueryExecutionOutput,
-	nextToken *string, maxResults *int64) (queryResult *athena.GetQueryResultsOutput, err error) {
-
-	if *executionOutput.QueryExecution.Status.State == athena.QueryExecutionStateSucceeded {
-		var ip athena.GetQueryResultsInput
-		ip.SetQueryExecutionId(*executionOutput.QueryExecution.QueryExecutionId)
-		ip.NextToken = nextToken
-		ip.MaxResults = maxResults
-
-		queryResult, err = client.GetQueryResults(&ip)
-		if err != nil {
-			return nil, errors.Wrapf(err, "athena failed reading results: %s",
-				*executionOutput.QueryExecution.QueryExecutionId)
-		}
-		return queryResult, err
+func StopQuery(client athenaiface.AthenaAPI, queryExecutionID string) (executionOutput *athena.StopQueryExecutionOutput, err error) {
+	var executionInput athena.StopQueryExecutionInput
+	executionInput.SetQueryExecutionId(queryExecutionID)
+	executionOutput, err = client.StopQueryExecution(&executionInput)
+	if err != nil {
+		return executionOutput, errors.WithStack(err)
 	}
+	return executionOutput, nil
+}
 
-	return nil, errors.Errorf("athena failed with status %s running: %s",
-		*executionOutput.QueryExecution.Status.State, *executionOutput.QueryExecution.QueryExecutionId)
+func Results(client athenaiface.AthenaAPI, queryID string, nextToken *string,
+	maxResults *int64) (queryResult *athena.GetQueryResultsOutput, err error) {
+
+	var ip athena.GetQueryResultsInput
+	ip.SetQueryExecutionId(queryID)
+	ip.NextToken = nextToken
+	ip.MaxResults = maxResults
+
+	queryResult, err = client.GetQueryResults(&ip)
+	if err != nil {
+		return nil, errors.Wrapf(err, "athena failed reading results for: %s", queryID)
+	}
+	return queryResult, err
 }

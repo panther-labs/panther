@@ -6,6 +6,7 @@ scalar AWSJSON
 schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
 }
 
 type Mutation {
@@ -24,7 +25,7 @@ type Mutation {
   inviteUser(input: InviteUserInput): User!
   queryDone(input: QueryDoneInput!): QueryDone! @aws_iam
   remediateResource(input: RemediateResourceInput!): Boolean
-  resetUserPassword(id: ID!): Boolean
+  resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
   updateDestination(input: DestinationInput!): Destination
@@ -66,6 +67,10 @@ type Query {
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   users: [User!]!
+}
+
+type Subscription {
+  queryDone(userData: String!): QueryDone @aws_subscribe(mutations: ["queryDone"]) @aws_iam
 }
 
 input GetLogQueryInput {
@@ -787,11 +792,13 @@ input InviteUserInput {
 }
 
 input QueryDoneInput {
+  userData: String!
   queryId: String!
   workflowId: String!
 }
 
 type QueryDone @aws_iam {
+  userData: String!
   queryId: String!
   workflowId: String!
 }
