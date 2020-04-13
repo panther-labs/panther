@@ -26,13 +26,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 
 	analysisapi "github.com/panther-labs/panther/api/gateway/analysis/client"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 var (
-	awsSession = session.Must(session.NewSession())
+	analysisServiceHost = os.Getenv("ANALYSIS_API_HOST")
+	analysisServicePath = os.Getenv("ANALYSIS_API_PATH")
+
+	awsSession     = session.Must(session.NewSession())
+	httpClient     = gatewayapi.GatewayClient(awsSession)
+	analysisConfig = analysisapi.DefaultTransportConfig().
+			WithHost(analysisServiceHost).
+			WithBasePath(analysisServicePath)
 
 	// We will always need the Lambda client (to get output details)
 	lambdaClient   lambdaiface.LambdaAPI = lambda.New(awsSession)
-	analysisClient                       = analysisapi.NewHTTPClientWithConfig(nil, analysisapi.DefaultTransportConfig().
-			WithHost(os.Getenv("ANALYSIS_API_HOST")).WithBasePath("/"+os.Getenv("ANALYSIS_API_PATH")))
+	analysisClient                       = analysisapi.NewHTTPClientWithConfig(nil, analysisConfig)
 )

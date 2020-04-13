@@ -21,6 +21,7 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -83,6 +84,9 @@ const (
 	layerSourceDir   = "out/pip/analysis/python"
 	layerZipfile     = "out/layer.zip"
 	layerS3ObjectKey = "layers/python-analysis.zip"
+	defaultGlobalId= "panther"
+	defaultGlobalLocation= "internal/compliance/policy_engine/src/helpers.py"
+
 
 	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
@@ -536,6 +540,7 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, settin
 		return fmt.Errorf("failed to list existing rules: %v", err)
 	}
 
+
 	if len(policies.Payload.Policies) > 0 || len(rules.Payload.Rules) > 0 {
 		logger.Debug("deploy: initial analysis set ignored: policies and/or rules already exist")
 		return nil
@@ -572,5 +577,27 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, settin
 	}
 
 	logger.Infof("deploy: initialized with %d policies and %d rules", newPolicies, newRules)
+
+	// Setup the initial helper layer
+	content, err := ioutil.ReadFile(defaultGlobalLocation)
+	if err != nil {
+		return fmt.Errorf("failed to read default globals file: %v", err)
+	}
+
+	logger.Infof("deploy: uploading initial global helper module")
+	_, err = apiClient.Operations.CreateGlobal(&operations.CreateGlobalParams{
+		Body:       &analysismodels.UpdateGlobal{
+			Body:        analysismodels.Body(string(content)),
+			Description: "A set of default helper functions.",
+			ID:          defaultGlobalId,
+			UserID:      mageUserID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to upload default globals file: %v", err)
+	}
+
 	return nil
 }

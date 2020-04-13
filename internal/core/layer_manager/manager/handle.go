@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"go.uber.org/zap"
 
 	analysisoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
@@ -49,6 +50,7 @@ var (
 // Currently global is the only supported analysis type.
 func UpdateLayer(analysisType string) error {
 	if analysisType != string(models.AnalysisTypeGLOBAL) {
+		zap.L().Warn("unsupported analysis type", zap.String("type", analysisType))
 		// When we add support for policies/rules, we can use this variable to control which layers are re-created
 		// and from which sources. We can either have entirely separate paths for these, or have some sort of config
 		// stored that records the different names, paths, etc. mapped to the different analysis types.
@@ -76,12 +78,14 @@ func UpdateLayer(analysisType string) error {
 
 // buildLayer looks up the required analyses and from them constructs the zip archive that defines the layer
 func buildLayer() ([]byte, error) {
+	zap.L().Debug("building lambda layer")
 	// TODO: talk to the analysis-api GetEnabledPolicies endpoint and build the layer for policies/rules
 	// be sure to have a means of differentiating the resource/log type of each policy/rule
 
 	// When multiple globals are supported, this can be updated to get a list
 	global, err := analysisClient.Operations.GetGlobal(&analysisoperations.GetGlobalParams{
-		GlobalID: globalModuleName,
+		GlobalID:   globalModuleName,
+		HTTPClient: httpClient,
 	})
 	if err != nil {
 		return nil, err
@@ -92,12 +96,12 @@ func buildLayer() ([]byte, error) {
 // packageLayer takes a mapping of filenames to function bodies and constructs a zip archive with the file structure
 // that AWS is expecting.
 func packageLayer(analyses map[string]string) ([]byte, error) {
+	zap.L().Debug("packaging lambda layer")
 	buf := new(bytes.Buffer)
 	w := zip.NewWriter(buf)
-	defer func() { _ = w.Close() }()
 
 	for id, body := range analyses {
-		f, err := w.Create(layerPath + "/" + id)
+		f, err := w.Create(layerPath + id + ".py")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -107,10 +111,15 @@ func packageLayer(analyses map[string]string) ([]byte, error) {
 		}
 	}
 
+	err := w.Close()
+	if err != nil {
+		return nil, err
+	}
 	return buf.Bytes(), nil
 }
 
 func publishLayer(layerBody []byte) (*string, *string, error) {
+	zap.L().Debug("publishing lambda layer")
 	layer, err := lambdaClient.PublishLayerVersion(&lambda.PublishLayerVersionInput{
 		CompatibleRuntimes: []*string{aws.String(layerRuntime)},
 		Content: &lambda.LayerVersionContentInput{
@@ -126,17 +135,18 @@ func publishLayer(layerBody []byte) (*string, *string, error) {
 }
 
 func updateLambda(lambdaName, lambdarArn, layerVersionArn *string) error {
+	zap.L().Debug("updating lambda function with new layer", zap.String("lambda", *lambdaName), zap.String("layer", *layerVersionArn))
 	// Lambda does not let you update just one layer on a lambda, you must specify the name of each desired lambda so
 	// we start by listing what layers are already present to preserve them.
 	oldLayers, err := lambdaClient.GetFunctionConfiguration(&lambda.GetFunctionConfigurationInput{
 		FunctionName: lambdaName,
 	})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	// Replace the layer we want to update with the new layer
-	newLayers := make([]*string, 0, len(oldLayers.Layers))
+	newLayers := make([]*string, len(oldLayers.Layers))
 	replaced := false
 	for i, layer := range oldLayers.Layers {
 		if strings.HasPrefix(*layer.Arn, *lambdarArn) {
@@ -149,6 +159,7 @@ func updateLambda(lambdaName, lambdarArn, layerVersionArn *string) error {
 
 	// Handle the case where we are not updating an existing layer
 	if !replaced {
+		zap.L().Debug("no lambda layer to replace")
 		newLayers = append(newLayers, layerVersionArn)
 	}
 

@@ -52,7 +52,6 @@ func CreateGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	}
 
 	// TODO: recreate the layer
-	// New policies are "passing" since they haven't evaluated anything yet.
 	return gatewayapi.MarshalResponse(item.Global(), http.StatusCreated)
 }
 

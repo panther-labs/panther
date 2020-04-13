@@ -47,7 +47,7 @@ func queuePolicy(policy *tableItem) error {
 func updateLayer(analysisType string) error {
 	_, err := sqsClient.SendMessage(&sqs.SendMessageInput{
 		MessageBody: aws.String(analysisType),
-		QueueUrl:    aws.String(env.LayerManagerQueue),
+		QueueUrl:    aws.String(env.LayerManagerQueueURL),
 	})
 	return err
 }

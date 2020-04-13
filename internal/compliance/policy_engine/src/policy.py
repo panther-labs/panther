@@ -19,9 +19,6 @@ import sys
 from importlib import util as import_util
 from typing import Any, Dict, List, Union
 
-from . import helpers
-AWS_GLOBALS = 'aws_globals'
-
 
 class Policy:
     """Panther policy metadata and imported module."""
@@ -75,10 +72,6 @@ class PolicySet:
         # For efficient lookup, map resource type to list of applicable policies.
         self._policies_by_type: Dict[str, List[Policy]] = collections.defaultdict(list)
         self._global_policies: List[Policy] = []  # List of policies that apply to all log types
-
-        # Import panther helper functions, and add them to sys.modules so they can be imported by
-        # user defined policies
-        sys.modules['panther'] = Policy.import_module(helpers.__name__, helpers.__file__)
 
         for index, raw_policy in enumerate(policies):
             if raw_policy['id'] == AWS_GLOBALS:
