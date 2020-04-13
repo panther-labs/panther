@@ -107,7 +107,9 @@ func gofmt(paths ...string) error {
 	if err := sh.Run("goimports", args...); err != nil {
 		return fmt.Errorf("goimports failed: %v", err)
 	}
-	return nil
+
+	// 4) Tidy go.mod file
+	return sh.Run("go", "mod", "tidy")
 }
 
 // Remove empty newlines from formatted import groups so goimports will correctly group them.
