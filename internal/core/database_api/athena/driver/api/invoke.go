@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -40,16 +40,11 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 	}()
 
 	// these lambdas are expected to take userData, queryId and workflowId in as arguments
-	notifyInput := &models.NotifyInput{
-		GetQueryStatusInput: models.GetQueryStatusInput{
-			QueryID: input.QueryID,
-		},
-		ExecuteAsyncQueryNotifyOutput: models.ExecuteAsyncQueryNotifyOutput{
-			WorkflowID: input.WorkflowID,
-		},
-		UserData: input.UserData,
-	}
-	payload, err := jsoniter.MarshalToString(notifyInput)
+	var notifyInput models.NotifyInput
+	notifyInput.QueryID = input.QueryID
+	notifyInput.WorkflowIdentifier = input.WorkflowIdentifier
+	notifyInput.UserDataToken = input.UserDataToken
+	payload, err := jsoniter.MarshalToString(&notifyInput)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to marshal %#v", input)
 		return output, err
@@ -63,7 +58,6 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 		err = errors.Wrapf(err, "failed to invoke %#v", input)
 		return output, err
 	}
-
 	if resp.FunctionError != nil {
 		err = errors.Errorf("%s: failed to invoke %#v", *resp.FunctionError, input)
 		return output, err

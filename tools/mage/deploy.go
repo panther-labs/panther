@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -372,6 +372,18 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Core
 	parallelStacks++
 	go func(result chan string) {
+		// the example yml has an empty string to make it clear it is a list, remove empty strings
+		var sanitizedAthenaS3Arns []string
+		for _, arn := range settings.Setup.Athena.S3ARNs {
+			if arn == "" {
+				continue
+			}
+			sanitizedAthenaS3Arns = append(sanitizedAthenaS3Arns, arn)
+		}
+		// add in the panther buckets
+		sanitizedAthenaS3Arns = append(sanitizedAthenaS3Arns, "arn:aws:s3:::panther-*-processeddata-*")
+		sanitizedAthenaS3Arns = append(sanitizedAthenaS3Arns, "arn:aws:s3:::panther-*-historicaldata-*")
+
 		deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
@@ -384,6 +396,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
 
+			"AthenaS3BucketARNS":         strings.Join(sanitizedAthenaS3Arns, ","),
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,

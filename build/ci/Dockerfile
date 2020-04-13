@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libc6-dev \
         make \
         pkg-config \
+        unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Depending on the CPU architecture of the latest stable debian stretch, pick which GO distribution

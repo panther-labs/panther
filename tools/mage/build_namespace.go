@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -58,7 +58,7 @@ func (b Build) API() {
 		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
 		start := time.Now().UTC()
 
-		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models, "-r", agplSource}
+		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models}
 		if err := sh.Run(cmd, args...); err != nil {
 			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
@@ -77,7 +77,7 @@ func (b Build) API() {
 		walk(models, handler)
 	}
 
-	logger.Info("build:api: generating web/__generated__/schema.tsx from graphql")
+	logger.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		logger.Fatalf("graphql generation failed: %v", err)
 	}

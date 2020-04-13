@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,6 +28,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sfn"
 	"github.com/aws/aws-sdk-go/service/sfn/sfniface"
 )
@@ -38,6 +40,7 @@ var (
 	athenaClient        athenaiface.AthenaAPI
 	lambdaClient        lambdaiface.LambdaAPI
 	sfnClient           sfniface.SFNAPI
+	s3Client            s3iface.S3API
 	athenaS3ResultsPath *string
 )
 
@@ -47,7 +50,7 @@ func SessionInit() {
 	athenaClient = athena.New(awsSession)
 	lambdaClient = lambda.New(awsSession)
 	sfnClient = sfn.New(awsSession)
-
+	s3Client = s3.New(awsSession)
 	if os.Getenv("ATHENA_BUCKET") != "" {
 		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"
 		athenaS3ResultsPath = &results

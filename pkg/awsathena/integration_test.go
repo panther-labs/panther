@@ -1,19 +1,21 @@
 package awsathena
 
 /**
- * Copyright 2020 Panther Labs Inc
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 import (
@@ -43,8 +45,8 @@ func TestIntegrationAthenaQuery(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
 	}
-	var err error
-	queryResult, err := RunQuery(athena.New(awsSession), "panther_tables", "select 1 as c", nil)
+
+	queryResult, err := RunQuery(athena.New(awsSession), "panther_logs", "select 1 as c", nil)
 	require.NoError(t, err)
 	expectedCol := "c"
 	expectedResult := "1"
@@ -52,4 +54,22 @@ func TestIntegrationAthenaQuery(t *testing.T) {
 	require.Equal(t, 2, len(rows))
 	require.Equal(t, expectedCol, *rows[0].Data[0].VarCharValue)
 	require.Equal(t, expectedResult, *rows[1].Data[0].VarCharValue)
+}
+
+func TestIntegrationAthenaQueryStop(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	athenaClient := athena.New(awsSession)
+
+	startOutput, err := StartQuery(athenaClient, "panther_logs", "select 1 as c", nil)
+	require.NoError(t, err)
+
+	_, err = StopQuery(athenaClient, *startOutput.QueryExecutionId)
+	require.NoError(t, err)
+
+	statusOutput, err := Status(athenaClient, *startOutput.QueryExecutionId)
+	require.NoError(t, err)
+	require.Equal(t, athena.QueryExecutionStateCancelled, *statusOutput.QueryExecution.Status.State)
 }

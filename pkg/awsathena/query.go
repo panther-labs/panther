@@ -1,19 +1,21 @@
 package awsathena
 
 /**
- * Copyright 2020 Panther Labs Inc
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 import (
@@ -89,7 +91,7 @@ func WaitForResults(client athenaiface.AthenaAPI, queryExecutionID string) (quer
 	if err != nil {
 		return nil, err
 	}
-	return Results(client, executionOutput, nil, nil)
+	return Results(client, *executionOutput.QueryExecution.QueryExecutionId, nil, nil)
 }
 
 func Status(client athenaiface.AthenaAPI, queryExecutionID string) (executionOutput *athena.GetQueryExecutionOutput, err error) {
@@ -102,23 +104,27 @@ func Status(client athenaiface.AthenaAPI, queryExecutionID string) (executionOut
 	return executionOutput, nil
 }
 
-func Results(client athenaiface.AthenaAPI, executionOutput *athena.GetQueryExecutionOutput,
-	nextToken *string, maxResults *int64) (queryResult *athena.GetQueryResultsOutput, err error) {
-
-	if *executionOutput.QueryExecution.Status.State == athena.QueryExecutionStateSucceeded {
-		var ip athena.GetQueryResultsInput
-		ip.SetQueryExecutionId(*executionOutput.QueryExecution.QueryExecutionId)
-		ip.NextToken = nextToken
-		ip.MaxResults = maxResults
-
-		queryResult, err = client.GetQueryResults(&ip)
-		if err != nil {
-			return nil, errors.Wrapf(err, "athena failed reading results: %s",
-				*executionOutput.QueryExecution.QueryExecutionId)
-		}
-		return queryResult, err
+func StopQuery(client athenaiface.AthenaAPI, queryExecutionID string) (executionOutput *athena.StopQueryExecutionOutput, err error) {
+	var executionInput athena.StopQueryExecutionInput
+	executionInput.SetQueryExecutionId(queryExecutionID)
+	executionOutput, err = client.StopQueryExecution(&executionInput)
+	if err != nil {
+		return executionOutput, errors.WithStack(err)
 	}
+	return executionOutput, nil
+}
 
-	return nil, errors.Errorf("athena failed with status %s running: %s",
-		*executionOutput.QueryExecution.Status.State, *executionOutput.QueryExecution.QueryExecutionId)
+func Results(client athenaiface.AthenaAPI, queryID string, nextToken *string,
+	maxResults *int64) (queryResult *athena.GetQueryResultsOutput, err error) {
+
+	var ip athena.GetQueryResultsInput
+	ip.SetQueryExecutionId(queryID)
+	ip.NextToken = nextToken
+	ip.MaxResults = maxResults
+
+	queryResult, err = client.GetQueryResults(&ip)
+	if err != nil {
+		return nil, errors.Wrapf(err, "athena failed reading results for: %s", queryID)
+	}
+	return queryResult, err
 }

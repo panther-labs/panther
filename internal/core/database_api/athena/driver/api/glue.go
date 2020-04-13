@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -45,7 +45,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 			err = errors.WithStack(err)
 			return output, err
 		}
-		output.Databases = append(output.Databases, &models.DatabaseDescription{
+		output.Databases = append(output.Databases, &models.NameAndDescription{
 			Name:        *glueOutput.Database.Name,
 			Description: glueOutput.Database.Description, // optional
 		})
@@ -56,7 +56,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 	err = glueClient.GetDatabasesPages(&glue.GetDatabasesInput{},
 		func(page *glue.GetDatabasesOutput, lastPage bool) bool {
 			for _, database := range page.DatabaseList {
-				output.Databases = append(output.Databases, &models.DatabaseDescription{
+				output.Databases = append(output.Databases, &models.NameAndDescription{
 					Name:        *database.Name,
 					Description: database.Description, // optional
 				})
@@ -95,13 +95,7 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 						continue
 					}
 				}
-				detail := &models.TableDetail{
-					TableDescription: models.TableDescription{
-						DatabaseName: input.DatabaseName,
-						Name:         *table.Name,
-						Description:  table.Description, // optional
-					},
-				}
+				detail := newTableDetail(input.DatabaseName, *table.Name, table.Description)
 				populateTableDetailColumns(detail, table)
 				output.Tables = append(output.Tables, detail)
 			}
@@ -134,12 +128,7 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 			err = errors.WithStack(err)
 			return output, err
 		}
-		detail := &models.TableDetail{
-			TableDescription: models.TableDescription{
-				DatabaseName: input.DatabaseName,
-				Name:         *glueTableOutput.Table.Name,
-			},
-		}
+		detail := newTableDetail(input.DatabaseName, *glueTableOutput.Table.Name, glueTableOutput.Table.Description)
 		populateTableDetailColumns(detail, glueTableOutput.Table)
 		output.Tables = append(output.Tables, detail)
 	}
@@ -148,17 +137,37 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 
 func populateTableDetailColumns(tableDetail *models.TableDetail, glueTableData *glue.TableData) {
 	for _, column := range glueTableData.StorageDescriptor.Columns {
-		tableDetail.Columns = append(tableDetail.Columns, &models.TableColumn{
-			Name:        aws.StringValue(column.Name),
-			Type:        aws.StringValue(column.Type),
-			Description: column.Comment,
-		})
+		tableDetail.Columns = append(tableDetail.Columns,
+			newTableColumn(aws.StringValue(column.Name), aws.StringValue(column.Type), column.Comment))
 	}
 	for _, column := range glueTableData.PartitionKeys {
-		tableDetail.Columns = append(tableDetail.Columns, &models.TableColumn{
-			Name:        aws.StringValue(column.Name),
-			Type:        aws.StringValue(column.Type),
-			Description: column.Comment,
-		})
+		tableDetail.Columns = append(tableDetail.Columns,
+			newTableColumn(aws.StringValue(column.Name), aws.StringValue(column.Type), column.Comment))
+	}
+}
+
+// wrap complex constructors to make code more readable above
+
+func newTableDetail(databaseName, tableName string, description *string) *models.TableDetail {
+	return &models.TableDetail{
+		TableDescription: models.TableDescription{
+			Database: models.Database{
+				DatabaseName: databaseName,
+			},
+			NameAndDescription: models.NameAndDescription{
+				Name:        tableName,
+				Description: description, // optional
+			},
+		},
+	}
+}
+
+func newTableColumn(colName, colType string, description *string) *models.TableColumn {
+	return &models.TableColumn{
+		NameAndDescription: models.NameAndDescription{
+			Name:        colName,
+			Description: description,
+		},
+		Type: colType,
 	}
 }

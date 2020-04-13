@@ -1,13 +1,7 @@
 package config
 
-import (
-	"io/ioutil"
-
-	"gopkg.in/yaml.v2"
-)
-
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,6 +17,12 @@ import (
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
+)
 
 // Filepath is the config settings file
 const Filepath = "deployments/panther_config.yml"
@@ -57,6 +57,7 @@ type Setup struct {
 	InitialAnalysisSets []string         `yaml:"InitialAnalysisSets"`
 	LogRetention        LogRetention     `yaml:"LogRetention"`
 	LogSubscriptions    LogSubscriptions `yaml:"LogSubscriptions"`
+	Athena              Athena           `yaml:"Athena"`
 }
 
 type LogRetention struct {
@@ -66,6 +67,10 @@ type LogRetention struct {
 
 type LogSubscriptions struct {
 	PrincipalARNs []string `yaml:"PrincipalARNs"`
+}
+
+type Athena struct {
+	S3ARNs []string `yaml:"S3ARNs"`
 }
 
 type Web struct {

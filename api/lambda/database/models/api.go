@@ -1,7 +1,7 @@
 package models
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,10 +20,13 @@ package models
 
 // NOTE: different kinds of databases (e.g., Athena, Snowflake) will use different endpoints (lambda functions), same api.
 
+// NOTE: if a json tag is used more than once it is factored into a struct to avoid inconsistencies
+
 const (
 	QuerySucceeded = "succeeded"
 	QueryFailed    = "failed"
 	QueryRunning   = "running"
+	QueryCanceled  = "canceled"
 )
 
 // LambdaInput is the collection of all possible args to the Lambda function.
@@ -33,43 +36,36 @@ type LambdaInput struct {
 	ExecuteQuery            *ExecuteQueryInput            `json:"executeQuery"`
 	GetDatabases            *GetDatabasesInput            `json:"getDatabases"`
 	GetQueryResults         *GetQueryResultsInput         `json:"getQueryResults"`
+	GetQueryResultsLink     *GetQueryResultsLinkInput     `json:"getQueryResultsLink"`
 	GetQueryStatus          *GetQueryStatusInput          `json:"getQueryStatus"`
 	GetTables               *GetTablesInput               `json:"getTables"`
 	GetTablesDetail         *GetTablesDetailInput         `json:"getTablesDetail"`
 	InvokeNotifyLambda      *InvokeNotifyLambdaInput      `json:"invokeNotifyLambda"`
 	NotifyAppSync           *NotifyAppSyncInput           `json:"notifyAppSync"`
+	StopQuery               *StopQueryInput               `json:"stopQuery"`
 }
 
 type GetDatabasesInput struct {
-	Name *string `json:"name,omitempty"` // if empty get all databases
+	OptionalName // if nil get all databases
 }
 
 // NOTE: we will assume this is small an not paginate
 type GetDatabasesOutput struct {
-	Databases []*DatabaseDescription `json:"databases,omitempty"`
-}
-
-type DatabaseDescription struct {
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	// other stuff? CreateDate?
+	Databases []*NameAndDescription `json:"databases,omitempty"`
 }
 
 type GetTablesInput struct {
-	DatabaseName  string `json:"databaseName" validate:"required"`
-	OnlyPopulated bool   `json:"onlyPopulated,omitempty"` // if true, only return table containing data
+	Database
+	OnlyPopulated bool `json:"onlyPopulated,omitempty"` // if true, only return table containing data
 }
 
 // NOTE: we will assume this is small an not paginate
 type GetTablesOutput struct {
-	Tables []*TableDetail `json:"tables"`
+	TablesDetail
 }
 
-type TableDescription struct {
-	DatabaseName string  `json:"databaseName" validate:"required"`
-	Name         string  `json:"name" validate:"required"`
-	Description  *string `json:"description,omitempty"`
-	// other stuff? CreateDate?
+type TablesDetail struct {
+	Tables []*TableDetail `json:"tables"`
 }
 
 type TableDetail struct {
@@ -77,36 +73,35 @@ type TableDetail struct {
 	Columns []*TableColumn `json:"columns"`
 }
 
+type TableDescription struct {
+	Database
+	NameAndDescription
+}
+
 type GetTablesDetailInput struct {
-	DatabaseName string   `json:"databaseName" validate:"required"`
-	Names        []string `json:"names" validate:"required"`
+	Database
+	Names []string `json:"names" validate:"required"`
 }
 
 // NOTE: we will assume this is small an not paginate
 type GetTablesDetailOutput struct {
-	Tables []*TableDetail `json:"tables,omitempty"`
+	TablesDetail
 }
 
 type TableColumn struct {
-	Name        string  `json:"name" validate:"required"`
-	Type        string  `json:"type" validate:"required"`
-	Description *string `json:"description,omitempty"`
+	NameAndDescription
+	Type string `json:"type" validate:"required"`
 }
 
 type ExecuteAsyncQueryNotifyInput struct {
 	ExecuteAsyncQueryInput
 	LambdaInvoke
-	UserData     string `json:"userData" validate:"required,gt=0"`      // token passed though to notifications (usually the userid)
-	DelaySeconds int    `json:"delaySeconds" validate:"omitempty,gt=0"` // wait this long before starting workflow (default 0)
+	UserDataToken
+	DelaySeconds int `json:"delaySeconds"` // wait this long before starting workflow (default 0)
 }
 
 type ExecuteAsyncQueryNotifyOutput struct {
-	WorkflowID string `json:"workflowId" validate:"required"`
-}
-
-type LambdaInvoke struct {
-	LambdaName string `json:"lambdaName" validate:"required"` // the name of the lambda to call when done
-	MethodName string `json:"methodName" validate:"required"` // the method to call on the lambda
+	WorkflowIdentifier
 }
 
 // Blocking query
@@ -115,48 +110,63 @@ type ExecuteQueryInput = ExecuteAsyncQueryInput
 type ExecuteQueryOutput = GetQueryResultsOutput // call GetQueryResults() to page thu results
 
 type ExecuteAsyncQueryInput struct {
-	DatabaseName string `json:"databaseName" validate:"required"`
-	SQL          string `json:"sql" validate:"required"`
+	Database
+	SQLQuery
 }
 
 type ExecuteAsyncQueryOutput struct {
-	QueryID string `json:"queryId" validate:"required"`
+	QueryStatus
+	QueryIdentifier
 }
 
-type GetQueryStatusInput struct {
-	QueryID string `json:"queryId" validate:"required"`
-}
+type GetQueryStatusInput = QueryIdentifier
 
 type GetQueryStatusOutput struct {
-	QueryError
-	Status string `json:"status" validate:"required,oneof=running,succeeded,failed"`
-	SQL    string `json:"sql" validate:"required"`
+	QueryStatus
+	SQLQuery
+	Stats *QueryResultsStats `json:"stats,omitempty"` // present only on successful queries
 }
 
 type GetQueryResultsInput struct {
-	QueryID         string  `json:"queryId" validate:"required"`
-	PaginationToken *string `json:"paginationToken,omitempty"`
-	PageSize        *int64  `json:"pageSize" validate:"omitempty,gt=0,lt=1000"` // only return this many rows per call
+	QueryIdentifier
+	Pagination
+	PageSize *int64 `json:"pageSize" validate:"omitempty,gt=1,lt=1000"` // only return this many rows per call
 }
 
 type GetQueryResultsOutput struct {
-	QueryError
-	Status      string           `json:"status" validate:"required,oneof=running,succeeded,failed"`
-	SQL         string           `json:"sql" validate:"required"`
+	GetQueryStatusOutput
+	ColumnInfo  []*Column        `json:"columnInfo" validate:"required"`
 	ResultsPage QueryResultsPage `json:"resultsPage" validate:"required"`
 }
 
 type QueryResultsPage struct {
-	NumRows         int     `json:"numRows"` // number of rows in page of results, len(Rows)
-	Rows            []*Row  `json:"rows"`
-	PaginationToken *string `json:"paginationToken,omitempty"`
+	Pagination
+	NumRows int    `json:"numRows"  validate:"required"` // number of rows in page of results, len(Rows)
+	Rows    []*Row `json:"rows"  validate:"required"`
 }
+
+type QueryResultsStats struct {
+	ExecutionTimeMilliseconds int64 `json:"executionTimeMilliseconds"  validate:"required"`
+	DataScannedBytes          int64 `json:"dataScannedBytes"  validate:"required"`
+}
+
+type GetQueryResultsLinkInput struct {
+	QueryIdentifier
+}
+
+type GetQueryResultsLinkOutput struct {
+	PresignedLink string `json:"presignedLink"` // presigned s3 link to results
+}
+
+type StopQueryInput = QueryIdentifier
+
+type StopQueryOutput = GetQueryStatusOutput
 
 type InvokeNotifyLambdaInput struct {
 	LambdaInvoke
-	ExecuteAsyncQueryOutput
-	ExecuteAsyncQueryNotifyOutput
-	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
+	QueryIdentifier
+	WorkflowIdentifier
+	UserDataToken
 }
 
 type InvokeNotifyLambdaOutput struct {
@@ -173,17 +183,57 @@ type NotifyAppSyncOutput struct {
 type NotifyInput struct { // notify lambdas need to have this as input
 	GetQueryStatusInput
 	ExecuteAsyncQueryNotifyOutput
-	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
+	UserDataToken
+}
+
+type NameAndDescription struct {
+	Name        string  `json:"name" validate:"required"`
+	Description *string `json:"description,omitempty"`
+}
+
+type OptionalName struct {
+	Name *string `json:"name,omitempty"`
+}
+
+type SQLQuery struct {
+	SQL string `json:"sql" validate:"required"`
+}
+
+type QueryIdentifier struct {
+	QueryID string `json:"queryId" validate:"required"`
+}
+
+type Database struct {
+	DatabaseName string `json:"databaseName" validate:"required"`
 }
 
 type Row struct {
-	Columns []*Column `json:"columns"`
+	Columns []*Column `json:"columns" validate:"required"`
 }
 
 type Column struct {
-	Value string `json:"value"`
+	Value string  `json:"value" validate:"required"`
+	Type  *string `json:"type,omitempty"`
 }
 
-type QueryError struct {
-	Message string `json:"message,omitempty"`
+type Pagination struct {
+	PaginationToken *string `json:"paginationToken,omitempty"`
+}
+
+type QueryStatus struct {
+	Status   string `json:"status" validate:"required,oneof=running,succeeded,failed,canceled"`
+	SQLError string `json:"sqlError,omitempty"`
+}
+
+type WorkflowIdentifier struct {
+	WorkflowID string `json:"workflowId" validate:"required"`
+}
+
+type UserDataToken struct {
+	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
+}
+
+type LambdaInvoke struct {
+	LambdaName string `json:"lambdaName" validate:"required"` // the name of the lambda to call when done
+	MethodName string `json:"methodName" validate:"required"` // the method to call on the lambda
 }
