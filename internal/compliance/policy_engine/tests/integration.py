@@ -47,13 +47,8 @@ _INPUT = {
                 'id': 'runtime-error'
             },
             {
-                'body': 'import aws_globals\ndef policy(resource): return aws_globals.GLOBAL_TRUE',
+                'body': 'import panther\ndef policy(resource): return True',
                 'id': 'import-test'
-            },
-            {
-                'body': 'GLOBAL_TRUE=True\ndef policy(resource): return True',
-                'id': 'aws_globals',
-                'resourceTypes': ['AWS.Dummy.Type']
             }
         ],
     'resources':

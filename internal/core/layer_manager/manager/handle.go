@@ -1,6 +1,24 @@
 package manager
 
 /**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
  *
@@ -22,7 +40,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"errors"
-	"log"
 	"os"
 	"strings"
 
@@ -103,11 +120,11 @@ func packageLayer(analyses map[string]string) ([]byte, error) {
 	for id, body := range analyses {
 		f, err := w.Create(layerPath + id + ".py")
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		_, err = f.Write([]byte(body))
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 	}
 
@@ -118,6 +135,8 @@ func packageLayer(analyses map[string]string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// publishLayer takes a zip file and publishes it as a new lambda layer. It returns both the layer ARN and the layer
+// ARN with version, for simplicity's sake.
 func publishLayer(layerBody []byte) (*string, *string, error) {
 	zap.L().Debug("publishing lambda layer")
 	layer, err := lambdaClient.PublishLayerVersion(&lambda.PublishLayerVersionInput{
@@ -134,9 +153,11 @@ func publishLayer(layerBody []byte) (*string, *string, error) {
 	return layer.LayerArn, layer.LayerVersionArn, nil
 }
 
-func updateLambda(lambdaName, lambdarArn, layerVersionArn *string) error {
+// updateLambda updates the function configuration of a given lambda to include the specified lambda layer.
+// The layer is updated to the given version if it is already present.
+func updateLambda(lambdaName, layerArn, layerVersionArn *string) error {
 	zap.L().Debug("updating lambda function with new layer", zap.String("lambda", *lambdaName), zap.String("layer", *layerVersionArn))
-	// Lambda does not let you update just one layer on a lambda, you must specify the name of each desired lambda so
+	// Lambda does not let you update just one layer on a lambda, you must specify the name of each desired layer so
 	// we start by listing what layers are already present to preserve them.
 	oldLayers, err := lambdaClient.GetFunctionConfiguration(&lambda.GetFunctionConfigurationInput{
 		FunctionName: lambdaName,
@@ -149,7 +170,7 @@ func updateLambda(lambdaName, lambdarArn, layerVersionArn *string) error {
 	newLayers := make([]*string, len(oldLayers.Layers))
 	replaced := false
 	for i, layer := range oldLayers.Layers {
-		if strings.HasPrefix(*layer.Arn, *lambdarArn) {
+		if strings.HasPrefix(*layer.Arn, *layerArn) {
 			newLayers[i] = layerVersionArn
 			replaced = true
 		} else {
@@ -163,7 +184,7 @@ func updateLambda(lambdaName, lambdarArn, layerVersionArn *string) error {
 		newLayers = append(newLayers, layerVersionArn)
 	}
 
-	// Update the lambda function. This is the operation which may take 1-3 seconds.
+	// Update the lambda function. This operation may take 1-3 seconds.
 	_, err = lambdaClient.UpdateFunctionConfiguration(&lambda.UpdateFunctionConfigurationInput{
 		FunctionName: lambdaName,
 		Layers:       newLayers,
