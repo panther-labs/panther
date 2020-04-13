@@ -14,23 +14,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM pantherlabs/panther-buildpack:1.1.2
+output "panther_audit_role_arn" {
+  value       = var.include_audit_role ? aws_iam_role.panther_audit[0].arn : "N/A"
+  description = "The ARN of the Panther Audit IAM Role"
+}
 
-ENV PATH=/root/.local/bin:$PATH
+output "panther_cloud_formation_stackset_execution_role_arn" {
+  value       = var.include_stack_set_execution_role ? aws_iam_role.panther_cloud_formation_stackset_execution[0].arn : "N/A"
+  description = "The ARN of the CloudFormation StackSet Execution IAM Role"
+}
 
-RUN apt-get update && \
-    apt-get -y install apt-transport-https \
-         ca-certificates \
-         curl \
-         gnupg2 \
-         software-properties-common && \
-    curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg > /tmp/dkey; apt-key add /tmp/dkey && \
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" && \
-    apt-get update && \
-    apt-get -y install docker-ce && \
-    pip3 install awscli --upgrade --user
-
-RUN mkdir code
-
-WORKDIR code
-
+output "panther_remediation_role_arn" {
+  value       = var.include_remediation_role ? aws_iam_role.panther_remediation[0].arn : "N/A"
+  description = "The ARN of the Panther Auto Remediation IAM Role"
+}
