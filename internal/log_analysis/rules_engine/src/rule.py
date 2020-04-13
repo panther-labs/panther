@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import sys
 import tempfile
 from dataclasses import dataclass
 from importlib import util as import_util
@@ -25,9 +24,6 @@ from typing import Any, Dict, Optional, Callable
 from .logging import get_logger
 
 _RULE_FOLDER = os.path.join(tempfile.gettempdir(), 'rules')
-
-# Rule with ID 'aws_globals' contains common Python logic used by other rules
-COMMON_MODULE_RULE_ID = 'aws_globals'
 
 # Maximum size for a dedup string
 MAX_DEDUP_STRING_SIZE = 1000
@@ -179,10 +175,6 @@ class Rule:
         mod = import_util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # type: ignore
         self.logger.debug('imported module %s from path %s', self.rule_id, path)
-        if self.rule_id == COMMON_MODULE_RULE_ID:
-            self.logger.debug('imported global module %s from path %s', self.rule_id, path)
-            # Importing it as a shared module
-            sys.modules[self.rule_id] = mod
         return mod
 
     def _run_command(self, function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:

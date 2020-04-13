@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """Classes to represent a Panther policy and a collection of policies."""
 import collections
-import sys
 from importlib import util as import_util
 from typing import Any, Dict, List, Union
 
@@ -72,12 +71,6 @@ class PolicySet:
         # For efficient lookup, map resource type to list of applicable policies.
         self._policies_by_type: Dict[str, List[Policy]] = collections.defaultdict(list)
         self._global_policies: List[Policy] = []  # List of policies that apply to all log types
-
-        for index, raw_policy in enumerate(policies):
-            if raw_policy['id'] == AWS_GLOBALS:
-                sys.modules[AWS_GLOBALS] = Policy.import_module(AWS_GLOBALS, raw_policy['body'])
-                del policies[index]
-                break
 
         for raw_policy in policies:
             policy = Policy(raw_policy['id'], raw_policy['body'])
