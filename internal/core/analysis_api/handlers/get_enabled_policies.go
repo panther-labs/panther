@@ -32,8 +32,8 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// GetEnabledPolicies fetches all enabled policies or rules from an organization for backend processing.
-func GetEnabledPolicies(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+// GetEnabledAnalyses fetches all enabled policies or rules.
+func GetEnabledAnalyses(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	analysisType, err := parseAnalysisType(request)
 	if err != nil {
 		return badRequest(err)

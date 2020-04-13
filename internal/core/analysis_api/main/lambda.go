@@ -48,7 +48,7 @@ var methodHandlers = map[string]gatewayapi.RequestHandler{
 
 	// Rules and Policies
 	"POST /delete": handlers.DeletePolicies,
-	"GET /enabled": handlers.GetEnabledPolicies,
+	"GET /enabled": handlers.GetEnabledAnalyses,
 	"POST /test":   handlers.TestPolicy,
 }
 

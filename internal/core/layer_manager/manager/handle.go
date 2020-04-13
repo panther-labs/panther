@@ -1,21 +1,5 @@
 package manager
 
-import (
-	"archive/zip"
-	"bytes"
-	"errors"
-	"log"
-	"os"
-	"strings"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"go.uber.org/zap"
-
-	analysisoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
-)
-
 /**
  * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
  * Copyright (C) 2020 Panther Labs Inc
@@ -33,6 +17,22 @@ import (
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"archive/zip"
+	"bytes"
+	"errors"
+	"log"
+	"os"
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"go.uber.org/zap"
+
+	analysisoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	"github.com/panther-labs/panther/api/gateway/analysis/models"
+)
 
 const (
 	layerPath        = "python/lib/python3.7/site-packages/"
