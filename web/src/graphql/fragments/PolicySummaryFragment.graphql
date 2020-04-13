@@ -1,0 +1,9 @@
+fragment PolicySummaryFragment on PolicySummary {
+  complianceStatus
+  lastModified
+  resourceTypes
+  severity
+  id
+  displayName
+  enabled
+}

@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { PolicyDetailsFragment } from '../../../graphql/fragments/PolicyDetailsFragment.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -30,22 +31,7 @@ export type CreatePolicyVariables = {
 
 export type CreatePolicy = {
   addPolicy?: Types.Maybe<
-    Pick<
-      Types.PolicyDetails,
-      | 'autoRemediationId'
-      | 'autoRemediationParameters'
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'suppressions'
-      | 'id'
-      | 'reference'
-      | 'resourceTypes'
-      | 'runbook'
-      | 'severity'
-      | 'tags'
-      | 'body'
-    > & {
+    Pick<Types.PolicyDetails, 'body'> & {
       tests?: Types.Maybe<
         Array<
           Types.Maybe<
@@ -53,25 +39,14 @@ export type CreatePolicy = {
           >
         >
       >;
-    }
+    } & PolicyDetailsFragment
   >;
 };
 
 export const CreatePolicyDocument = gql`
   mutation CreatePolicy($input: CreateOrModifyPolicyInput!) {
     addPolicy(input: $input) {
-      autoRemediationId
-      autoRemediationParameters
-      description
-      displayName
-      enabled
-      suppressions
-      id
-      reference
-      resourceTypes
-      runbook
-      severity
-      tags
+      ...PolicyDetailsFragment
       body
       tests {
         expectedResult
@@ -81,6 +56,7 @@ export const CreatePolicyDocument = gql`
       }
     }
   }
+  ${PolicyDetailsFragment}
 `;
 export type CreatePolicyMutationFn = ApolloReactCommon.MutationFunction<
   CreatePolicy,

@@ -1,0 +1,17 @@
+fragment PolicyDetailsFragment on PolicyDetails {
+  autoRemediationId
+  autoRemediationParameters
+  complianceStatus
+  createdAt
+  description
+  displayName
+  enabled
+  suppressions
+  id
+  lastModified
+  reference
+  resourceTypes
+  runbook
+  severity
+  tags
+}
