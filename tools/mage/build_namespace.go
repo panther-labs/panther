@@ -75,11 +75,23 @@ func (b Build) API() {
 		}
 		walk(client, handler)
 		walk(models, handler)
+
+		// Format generated files with our license header and import ordering.
+		// "swagger generate client" can embed the header, but it's simpler to keep the whole repo
+		// formatted the exact same way.
+		fmtLicense(client, models)
+		if err := gofmt(client, models); err != nil {
+			logger.Warnf("gofmt %s %s failed: %v", client, models, err)
+		}
 	}
 
 	logger.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		logger.Fatalf("graphql generation failed: %v", err)
+	}
+	fmtLicense("web/__generated__")
+	if err := prettier("web/__generated__/*"); err != nil {
+		logger.Warnf("prettier web/__generated__/ failed: %v", err)
 	}
 }
 
@@ -100,8 +112,23 @@ func (b Build) lambda() error {
 
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
+
+	// "go build" in parallel for each Lambda function.
+	//
+	// If you don't already have all go modules downloaded, this may fail because each goroutine will
+	// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
+	//
+	// Run "go mod download" or "mage setup" before building to download the go modules.
+	// If you're adding a new module, run "go get ./..." before building to fetch the new module.
+	errs := make(chan error)
 	for _, pkg := range packages {
-		if err := buildPackage(pkg); err != nil {
+		go func(pkg string, errs chan error) {
+			errs <- buildPackage(pkg)
+		}(pkg, errs)
+	}
+
+	for range packages {
+		if err := <-errs; err != nil {
 			return err
 		}
 	}

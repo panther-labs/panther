@@ -147,7 +147,7 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 		}
 	}()
 
-	getStatusOutput, err := api.GetQueryStatus(&input.QueryIdentifier)
+	getStatusOutput, err := api.GetQueryStatus(&input.QueryInfo)
 	if err != nil {
 		return output, err
 	}
@@ -290,8 +290,14 @@ func collectResults(skipHeader bool, queryResult *athena.GetQueryResultsOutput, 
 		}
 		var columns []*models.Column
 		for _, col := range row.Data {
+			var value string
+			if col.VarCharValue == nil {
+				value = "NULL"
+			} else {
+				value = *col.VarCharValue
+			}
 			columns = append(columns, &models.Column{
-				Value: *col.VarCharValue,
+				Value: value,
 			})
 		}
 		output.ResultsPage.Rows = append(output.ResultsPage.Rows, &models.Row{Columns: columns})

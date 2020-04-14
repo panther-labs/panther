@@ -35,7 +35,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/fatih/color"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client"
@@ -147,7 +146,7 @@ func Deploy() {
 	}
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start))
-	color.Yellow("\nPanther URL = https://%s\n", outputs["LoadBalancerUrl"])
+	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.

@@ -532,6 +532,7 @@ func checkQueryResults(t *testing.T, expectedRowCount, offset int, rows []*model
 	require.Equal(t, expectedRowCount, len(rows))
 	for i := 0; i < len(rows); i++ {
 		require.Equal(t, strconv.Itoa(i+offset), rows[i].Columns[0].Value)
+		require.Equal(t, "NULL", rows[i].Columns[1].Value)
 	}
 }
 

@@ -76,7 +76,7 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 		err = errors.Wrapf(err, "failed to start workflow execution for: %#v", input)
 		return output, err
 	}
-	output.WorkflowIdentifier.WorkflowID = *startExecutionOutput.ExecutionArn
+	output.Workflow.WorkflowID = *startExecutionOutput.ExecutionArn
 
 	return output, err
 }

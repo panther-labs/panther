@@ -20,7 +20,7 @@ package models
 
 // NOTE: different kinds of databases (e.g., Athena, Snowflake) will use different endpoints (lambda functions), same api.
 
-// NOTE: if a json tag is used more than once it is factored into a struct to avoid inconsistencies
+// NOTE: if a json tag _set_ is used more than once it is factored into a struct to avoid inconsistencies
 
 const (
 	QuerySucceeded = "succeeded"
@@ -96,12 +96,12 @@ type TableColumn struct {
 type ExecuteAsyncQueryNotifyInput struct {
 	ExecuteAsyncQueryInput
 	LambdaInvoke
-	UserDataToken
+	UserPassThruData
 	DelaySeconds int `json:"delaySeconds"` // wait this long before starting workflow (default 0)
 }
 
 type ExecuteAsyncQueryNotifyOutput struct {
-	WorkflowIdentifier
+	Workflow
 }
 
 // Blocking query
@@ -116,10 +116,10 @@ type ExecuteAsyncQueryInput struct {
 
 type ExecuteAsyncQueryOutput struct {
 	QueryStatus
-	QueryIdentifier
+	QueryInfo
 }
 
-type GetQueryStatusInput = QueryIdentifier
+type GetQueryStatusInput = QueryInfo
 
 type GetQueryStatusOutput struct {
 	QueryStatus
@@ -128,9 +128,12 @@ type GetQueryStatusOutput struct {
 }
 
 type GetQueryResultsInput struct {
-	QueryIdentifier
+	QueryInfo
 	Pagination
+
 	PageSize *int64 `json:"pageSize" validate:"omitempty,gt=1,lt=1000"` // only return this many rows per call
+	// NOTE: gt=1 above to ensure there are results on the first page w/header. If PageSize = 1 then
+	// user will get no rows for the first page with Athena because Athena returns header as first row and we remove it.
 }
 
 type GetQueryResultsOutput struct {
@@ -151,26 +154,25 @@ type QueryResultsStats struct {
 }
 
 type GetQueryResultsLinkInput struct {
-	QueryIdentifier
+	QueryInfo
 }
 
 type GetQueryResultsLinkOutput struct {
 	PresignedLink string `json:"presignedLink"` // presigned s3 link to results
 }
 
-type StopQueryInput = QueryIdentifier
+type StopQueryInput = QueryInfo
 
 type StopQueryOutput = GetQueryStatusOutput
 
 type InvokeNotifyLambdaInput struct {
 	LambdaInvoke
-	QueryIdentifier
-	WorkflowIdentifier
-	UserDataToken
+	QueryInfo
+	Workflow
+	UserPassThruData
 }
 
-type InvokeNotifyLambdaOutput struct {
-}
+type InvokeNotifyLambdaOutput = InvokeNotifyLambdaInput // so input can be confirmed
 
 type NotifyAppSyncInput struct {
 	NotifyInput
@@ -183,7 +185,7 @@ type NotifyAppSyncOutput struct {
 type NotifyInput struct { // notify lambdas need to have this as input
 	GetQueryStatusInput
 	ExecuteAsyncQueryNotifyOutput
-	UserDataToken
+	UserPassThruData
 }
 
 type NameAndDescription struct {
@@ -199,7 +201,7 @@ type SQLQuery struct {
 	SQL string `json:"sql" validate:"required"`
 }
 
-type QueryIdentifier struct {
+type QueryInfo struct {
 	QueryID string `json:"queryId" validate:"required"`
 }
 
@@ -225,11 +227,11 @@ type QueryStatus struct {
 	SQLError string `json:"sqlError,omitempty"`
 }
 
-type WorkflowIdentifier struct {
+type Workflow struct {
 	WorkflowID string `json:"workflowId" validate:"required"`
 }
 
-type UserDataToken struct {
+type UserPassThruData struct {
 	UserData string `json:"userData" validate:"required,gt=0"` // token passed though to notifications (usually the userid)
 }
 

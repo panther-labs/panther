@@ -29,6 +29,9 @@ import (
 )
 
 const (
+	// Use the commit from the latest tagged release of https://github.com/golang/tools/releases
+	goimportsVersion = "5fc56a9" // gopls/v0.4.0
+
 	golangciVersion  = "1.23.6"
 	swaggerVersion   = "0.23.0"
 	terraformVersion = "0.12.24"
@@ -55,7 +58,7 @@ func Setup() {
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"go get modules", installGoModules()}
+		c <- goroutineResult{"download go modules", installGoModules()}
 	}(results)
 
 	count++
@@ -91,10 +94,14 @@ func Setup() {
 // "go test" and "go build" will do this automatically, but putting it in the setup flow allows it
 // to happen in parallel with the rest of the downloads.
 func installGoModules() error {
-	logger.Info("setup: go get modules...")
+	logger.Info("setup: download go modules...")
 
-	// goimports is needed for formatting but won't be listed as an explicit dependency
-	return sh.Run("go", "get", "-t", "golang.org/x/tools/cmd/goimports", "./...")
+	if err := sh.Run("go", "mod", "download"); err != nil {
+		return err
+	}
+
+	// goimports is needed for formatting but isn't importable (won't be in go.mod)
+	return sh.Run("go", "get", "golang.org/x/tools/cmd/goimports@"+goimportsVersion)
 }
 
 // Download go-swagger if it hasn't been already

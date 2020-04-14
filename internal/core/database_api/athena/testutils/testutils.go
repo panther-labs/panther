@@ -36,6 +36,13 @@ import (
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
 )
 
+/*
+	This file has functions to create a bucket and a Panther JSON table, populated with a small amount of data.
+	There are also functions to clean up after running the tests.
+
+	This can be used to drive Athena API related integration tests for packages that need example data.
+*/
+
 const (
 	TestBucketPrefix = "panther-athena-api-processeddata-test-"
 	TestDb           = "panther_athena_api_test_db"
@@ -53,6 +60,11 @@ var (
 	TestTableColumns = []*glue.Column{
 		{
 			Name:    aws.String("col1"),
+			Type:    aws.String("int"),
+			Comment: aws.String("this is a column"),
+		},
+		{
+			Name:    aws.String("col2"),
 			Type:    aws.String("int"),
 			Comment: aws.String("this is a column"),
 		},
@@ -89,7 +101,7 @@ var (
 	TestKey string
 
 	TestTableDataNrows   = 10
-	TestTableRowTemplate = `{"col1": %d}`
+	TestTableRowTemplate = `{"col1": %d, "col2": null}`
 	TestTableRows        []string
 )
 
@@ -112,12 +124,36 @@ func init() {
 func CheckTableDetail(t *testing.T, tables []*models.TableDetail) {
 	require.Equal(t, TestTable, tables[0].Name)
 	require.Equal(t, len(TestTableColumns)+len(TestTablePartitions), len(tables[0].Columns))
+
+	// col1
 	require.Equal(t, *TestTableColumns[0].Name, tables[0].Columns[0].Name)
 	require.Equal(t, *TestTableColumns[0].Type, tables[0].Columns[0].Type)
 	require.Equal(t, *TestTableColumns[0].Comment, *tables[0].Columns[0].Description)
-	require.Equal(t, *TestTablePartitions[0].Name, tables[0].Columns[1].Name)
-	require.Equal(t, *TestTablePartitions[0].Type, tables[0].Columns[1].Type)
-	require.Equal(t, *TestTablePartitions[0].Comment, *tables[0].Columns[1].Description)
+
+	// col2
+	require.Equal(t, *TestTableColumns[1].Name, tables[0].Columns[1].Name)
+	require.Equal(t, *TestTableColumns[1].Type, tables[0].Columns[1].Type)
+	require.Equal(t, *TestTableColumns[1].Comment, *tables[0].Columns[1].Description)
+
+	// year
+	require.Equal(t, *TestTablePartitions[0].Name, tables[0].Columns[2].Name)
+	require.Equal(t, *TestTablePartitions[0].Type, tables[0].Columns[2].Type)
+	require.Equal(t, *TestTablePartitions[0].Comment, *tables[0].Columns[2].Description)
+
+	// month
+	require.Equal(t, *TestTablePartitions[1].Name, tables[0].Columns[3].Name)
+	require.Equal(t, *TestTablePartitions[1].Type, tables[0].Columns[3].Type)
+	require.Equal(t, *TestTablePartitions[1].Comment, *tables[0].Columns[3].Description)
+
+	// day
+	require.Equal(t, *TestTablePartitions[2].Name, tables[0].Columns[4].Name)
+	require.Equal(t, *TestTablePartitions[2].Type, tables[0].Columns[4].Type)
+	require.Equal(t, *TestTablePartitions[2].Comment, *tables[0].Columns[4].Description)
+
+	// hour
+	require.Equal(t, *TestTablePartitions[3].Name, tables[0].Columns[5].Name)
+	require.Equal(t, *TestTablePartitions[3].Type, tables[0].Columns[5].Type)
+	require.Equal(t, *TestTablePartitions[3].Comment, *tables[0].Columns[5].Description)
 }
 
 func SetupTables(t *testing.T, glueClient glueiface.GlueAPI, s3Client s3iface.S3API) {
