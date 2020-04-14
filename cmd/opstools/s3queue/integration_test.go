@@ -24,6 +24,7 @@ const (
 	numberOfFiles            = 10                                              // we expect at least this many
 	messageBatchSize         = 10
 	visibilityTimeoutSeconds = 10
+	concurrency              = 10
 )
 
 var (
@@ -65,7 +66,7 @@ func TestIntegrationS3queue(t *testing.T) {
 	require.NoError(t, err)
 
 	stats := &Stats{}
-	err = S3Queue(awsSession, fakeAccountID, s3Path, toq, numberOfFiles, stats)
+	err = S3Queue(awsSession, fakeAccountID, s3Path, toq, concurrency, numberOfFiles, false, stats)
 	require.NoError(t, err)
 	assert.Equal(t, numberOfFiles, (int)(stats.NumFiles))
 

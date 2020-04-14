@@ -180,6 +180,10 @@ func createChangeSet(
 				Key:   aws.String("Application"),
 				Value: aws.String("Panther"),
 			},
+			{
+				Key:   aws.String("Stack"),
+				Value: &stack,
+			},
 		},
 	}
 

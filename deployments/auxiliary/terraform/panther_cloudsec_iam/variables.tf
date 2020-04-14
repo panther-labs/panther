@@ -14,23 +14,33 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM pantherlabs/panther-buildpack:1.1.2
+variable "aws_partition" {
+  type        = string
+  description = "AWS partition where this template / Panther is deployed"
+  default     = "aws"
+}
 
-ENV PATH=/root/.local/bin:$PATH
+variable "master_account_id" {
+  type        = string
+  description = "Panther AWS account ID"
+}
 
-RUN apt-get update && \
-    apt-get -y install apt-transport-https \
-         ca-certificates \
-         curl \
-         gnupg2 \
-         software-properties-common && \
-    curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg > /tmp/dkey; apt-key add /tmp/dkey && \
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" && \
-    apt-get update && \
-    apt-get -y install docker-ce && \
-    pip3 install awscli --upgrade --user
+variable "master_account_region" {
+  type        = string
+  description = "Panther AWS account region"
+}
 
-RUN mkdir code
+variable "include_audit_role" {
+  type    = bool
+  default = true
+}
 
-WORKDIR code
+variable "include_stack_set_execution_role" {
+  type    = bool
+  default = true
+}
 
+variable "include_remediation_role" {
+  type    = bool
+  default = true
+}
