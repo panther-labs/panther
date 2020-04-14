@@ -6,12 +6,8 @@ import ColumnListItem from './ColumnListItem';
 
 const ColumnList: React.FC = () => {
   const {
-    selectedTable,
-    selectedDatabase,
-    selectedColumn,
-    selectColumn,
-    selectTable,
-    searchValue,
+    state: { selectedTable, selectedDatabase, selectedColumn, searchValue },
+    dispatch,
   } = useSQLShellContext();
 
   const { data } = useListColumnsForTable({
@@ -24,10 +20,18 @@ const ColumnList: React.FC = () => {
     },
   });
 
+  const selectColumn = React.useCallback(
+    column => dispatch({ type: 'SELECT_COLUMN', payload: { column } }),
+    [dispatch]
+  );
+
   return (
     <React.Fragment>
       <Flex alignItems="center" mx={2} is="li">
-        <IconButton variant="default" onClick={() => selectTable(null)}>
+        <IconButton
+          variant="default"
+          onClick={() => dispatch({ type: 'SELECT_TABLE', payload: { table: null } })}
+        >
           <Icon type="arrow-back" />
         </IconButton>
         <Text color="black" fontWeight="bold" size="medium" ml={2}>

@@ -7,7 +7,10 @@ import Results from './Results';
 import { useSQLShellContext, withSQLShellContext } from './SQLShellContext';
 
 const SQLShellPage: React.FC = () => {
-  const { globalErrorMessage } = useSQLShellContext();
+  const {
+    state: { globalErrorMessage },
+  } = useSQLShellContext();
+
   return (
     <Box>
       {globalErrorMessage && (

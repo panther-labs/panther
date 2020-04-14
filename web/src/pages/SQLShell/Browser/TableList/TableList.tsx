@@ -8,7 +8,10 @@ import TableListItem from './TableListItem';
 
 const TableList: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
-  const { selectTable, selectedDatabase, searchValue } = useSQLShellContext();
+  const {
+    state: { selectedDatabase, searchValue },
+    dispatch,
+  } = useSQLShellContext();
   const { data, loading } = useListTablesForDatabase({
     variables: {
       name: selectedDatabase,
@@ -20,6 +23,11 @@ const TableList: React.FC = () => {
         description: extractErrorMessage(error),
       }),
   });
+
+  const selectTable = React.useCallback(
+    table => dispatch({ type: 'SELECT_TABLE', payload: { table } }),
+    [dispatch]
+  );
 
   if (loading) {
     return (

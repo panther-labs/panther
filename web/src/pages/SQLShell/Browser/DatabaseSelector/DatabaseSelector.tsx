@@ -5,8 +5,12 @@ import { useListLogDatabases } from './graphql/listLogDatabases.generated';
 import { useSQLShellContext } from '../../SQLShellContext';
 
 const DatabaseSelector: React.FC = () => {
-  const { selectDatabase, selectedDatabase } = useSQLShellContext();
   const { pushSnackbar } = useSnackbar();
+  const {
+    state: { selectedDatabase },
+    dispatch,
+  } = useSQLShellContext();
+
   const { data } = useListLogDatabases({
     onError: error =>
       pushSnackbar({
@@ -19,15 +23,18 @@ const DatabaseSelector: React.FC = () => {
   // There must always be one database selected. If it's not, arbitrarily select the 1st one
   React.useEffect(() => {
     if (data && !selectedDatabase) {
-      selectDatabase(data.listLogDatabases[0]?.name);
+      dispatch({
+        type: 'SELECT_DATABASE',
+        payload: { database: data.listLogDatabases[0]?.name },
+      });
     }
-  }, [data, selectedDatabase, selectDatabase]);
+  }, [data, selectedDatabase, dispatch]);
 
   return (
     <Combobox
       label="Select Database"
       items={data?.listLogDatabases.map(db => db.name) ?? []}
-      onChange={selectDatabase}
+      onChange={database => dispatch({ type: 'SELECT_DATABASE', payload: { database } })}
       value={selectedDatabase}
       inputProps={{ placeholder: 'Select a database...' }}
     />

@@ -8,7 +8,9 @@ import ColumnList from './ColumnList';
 import Search from './Search';
 
 const Browser: React.FC = () => {
-  const { selectedDatabase, selectedTable } = useSQLShellContext();
+  const {
+    state: { selectedDatabase, selectedTable },
+  } = useSQLShellContext();
 
   return (
     <Card height={507} is="aside" overflow="hidden">

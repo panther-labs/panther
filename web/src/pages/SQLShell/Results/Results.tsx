@@ -13,7 +13,7 @@ import ResultsTable, { ResultsTableProps } from './ResultsTable';
 const POLL_INTERVAL_MS = 750;
 
 const Results: React.FC = () => {
-  const { setGlobalErrorMessage } = useSQLShellContext();
+  const { dispatch } = useSQLShellContext();
   const { urlParams } = useUrlParams<LogQueryUrlParams>();
   const {
     data,
@@ -85,8 +85,8 @@ const Results: React.FC = () => {
 
   React.useEffect(() => {
     if (queryHasFailed) {
-      const errorMessage = error ? extractErrorMessage(error) : data?.getLogQuery.error?.message;
-      setGlobalErrorMessage(errorMessage);
+      const message = error ? extractErrorMessage(error) : data?.getLogQuery.error?.message;
+      dispatch({ type: 'SET_ERROR', payload: { message } });
     }
   }, [queryHasFailed]);
 

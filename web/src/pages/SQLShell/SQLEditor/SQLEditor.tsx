@@ -18,7 +18,10 @@ export interface LogQueryUrlParams {
 const SQLEditor: React.FC = () => {
   const { updateUrlParams } = useUrlParams<LogQueryUrlParams>();
   const [value, setValue] = React.useState('');
-  const { selectedDatabase, setGlobalErrorMessage } = useSQLShellContext();
+  const {
+    state: { selectedDatabase },
+    dispatch,
+  } = useSQLShellContext();
   const { pushSnackbar } = useSnackbar();
 
   const [runQuery, { loading: isSubmittingQueryRequest }] = useRunQuery({
@@ -30,7 +33,10 @@ const SQLEditor: React.FC = () => {
     },
     onCompleted: data => {
       if (data.executeAsyncLogQuery.error) {
-        setGlobalErrorMessage(data.executeAsyncLogQuery.error.message);
+        dispatch({
+          type: 'SET_ERROR',
+          payload: { message: data.executeAsyncLogQuery.error.message },
+        });
       } else {
         updateUrlParams({ queryId: data.executeAsyncLogQuery.queryId });
       }
@@ -83,7 +89,7 @@ const SQLEditor: React.FC = () => {
 
   React.useEffect(() => {
     if (isSubmittingQueryRequest) {
-      setGlobalErrorMessage('');
+      dispatch({ type: 'RESET_ERROR' });
     }
   }, [isSubmittingQueryRequest]);
 
