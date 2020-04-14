@@ -22,41 +22,25 @@ import * as Types from '../../../__generated__/schema';
 
 import gql from 'graphql-tag';
 
-export type PolicyDetailsFragment = Pick<
-  Types.PolicyDetails,
-  | 'autoRemediationId'
-  | 'autoRemediationParameters'
+export type PolicyTeaser = Pick<
+  Types.PolicySummary,
   | 'complianceStatus'
-  | 'createdAt'
-  | 'description'
+  | 'lastModified'
+  | 'resourceTypes'
+  | 'severity'
+  | 'id'
   | 'displayName'
   | 'enabled'
-  | 'suppressions'
-  | 'id'
-  | 'lastModified'
-  | 'reference'
-  | 'resourceTypes'
-  | 'runbook'
-  | 'severity'
-  | 'tags'
 >;
 
-export const PolicyDetailsFragment = gql`
-  fragment PolicyDetailsFragment on PolicyDetails {
-    autoRemediationId
-    autoRemediationParameters
+export const PolicyTeaser = gql`
+  fragment PolicyTeaser on PolicySummary {
     complianceStatus
-    createdAt
-    description
+    lastModified
+    resourceTypes
+    severity
+    id
     displayName
     enabled
-    suppressions
-    id
-    lastModified
-    reference
-    resourceTypes
-    runbook
-    severity
-    tags
   }
 `;

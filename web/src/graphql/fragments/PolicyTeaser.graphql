@@ -1,4 +1,4 @@
-fragment PolicySummaryFragment on PolicySummary {
+fragment PolicyTeaser on PolicySummary {
   complianceStatus
   lastModified
   resourceTypes

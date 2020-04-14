@@ -3,7 +3,7 @@ query PolicyDetails(
   $resourcesForPolicyInput: ResourcesForPolicyInput!
 ) {
   policy(input: $policyDetailsInput) {
-    ...PolicyDetailsFragment
+    ...PolicyDetailsMain
   }
   resourcesForPolicy(input: $resourcesForPolicyInput) {
     items {

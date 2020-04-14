@@ -22,25 +22,24 @@ import * as Types from '../../../__generated__/schema';
 
 import gql from 'graphql-tag';
 
-export type PolicySummaryFragment = Pick<
-  Types.PolicySummary,
-  | 'complianceStatus'
-  | 'lastModified'
-  | 'resourceTypes'
-  | 'severity'
-  | 'id'
-  | 'displayName'
-  | 'enabled'
->;
+export type PolicyDetailsExtra = Pick<Types.PolicyDetails, 'body'> & {
+  tests?: Types.Maybe<
+    Array<
+      Types.Maybe<
+        Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
+      >
+    >
+  >;
+};
 
-export const PolicySummaryFragment = gql`
-  fragment PolicySummaryFragment on PolicySummary {
-    complianceStatus
-    lastModified
-    resourceTypes
-    severity
-    id
-    displayName
-    enabled
+export const PolicyDetailsExtra = gql`
+  fragment PolicyDetailsExtra on PolicyDetails {
+    body
+    tests {
+      expectedResult
+      name
+      resource
+      resourceType
+    }
   }
 `;

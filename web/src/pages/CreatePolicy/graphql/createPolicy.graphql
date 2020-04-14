@@ -1,12 +1,6 @@
 mutation CreatePolicy($input: CreateOrModifyPolicyInput!) {
   addPolicy(input: $input) {
-    ...PolicyDetailsFragment
-    body
-    tests {
-      expectedResult
-      name
-      resource
-      resourceType
-    }
+    ...PolicyDetailsMain
+    ...PolicyDetailsExtra
   }
 }

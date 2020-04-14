@@ -20,7 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { PolicySummaryFragment } from '../../../graphql/fragments/PolicySummaryFragment.generated';
+import { PolicyTeaser } from '../../../graphql/fragments/PolicyTeaser.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -31,7 +31,7 @@ export type ListPoliciesVariables = {
 
 export type ListPolicies = {
   policies?: Types.Maybe<{
-    policies?: Types.Maybe<Array<Types.Maybe<PolicySummaryFragment>>>;
+    policies?: Types.Maybe<Array<Types.Maybe<PolicyTeaser>>>;
     paging?: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
   }>;
 };
@@ -40,7 +40,7 @@ export const ListPoliciesDocument = gql`
   query ListPolicies($input: ListPoliciesInput) {
     policies(input: $input) {
       policies {
-        ...PolicySummaryFragment
+        ...PolicyTeaser
       }
       paging {
         totalPages
@@ -49,7 +49,7 @@ export const ListPoliciesDocument = gql`
       }
     }
   }
-  ${PolicySummaryFragment}
+  ${PolicyTeaser}
 `;
 
 /**

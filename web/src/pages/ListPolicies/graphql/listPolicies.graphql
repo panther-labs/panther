@@ -1,7 +1,7 @@
 query ListPolicies($input: ListPoliciesInput) {
   policies(input: $input) {
     policies {
-      ...PolicySummaryFragment
+      ...PolicyTeaser
     }
     paging {
       totalPages

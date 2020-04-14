@@ -1,4 +1,4 @@
-fragment PolicyDetailsFragment on PolicyDetails {
+fragment PolicyDetailsMain on PolicyDetails {
   autoRemediationId
   autoRemediationParameters
   complianceStatus

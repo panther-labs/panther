@@ -20,7 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { PolicyDetailsFragment } from '../../../graphql/fragments/PolicyDetailsFragment.generated';
+import { PolicyDetailsMain } from '../../../graphql/fragments/PolicyDetailsMain.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -31,7 +31,7 @@ export type PolicyDetailsVariables = {
 };
 
 export type PolicyDetails = {
-  policy?: Types.Maybe<PolicyDetailsFragment>;
+  policy?: Types.Maybe<PolicyDetailsMain>;
   resourcesForPolicy?: Types.Maybe<{
     items?: Types.Maybe<
       Array<
@@ -66,7 +66,7 @@ export const PolicyDetailsDocument = gql`
     $resourcesForPolicyInput: ResourcesForPolicyInput!
   ) {
     policy(input: $policyDetailsInput) {
-      ...PolicyDetailsFragment
+      ...PolicyDetailsMain
     }
     resourcesForPolicy(input: $resourcesForPolicyInput) {
       items {
@@ -101,7 +101,7 @@ export const PolicyDetailsDocument = gql`
       integrationLabel
     }
   }
-  ${PolicyDetailsFragment}
+  ${PolicyDetailsMain}
 `;
 
 /**
