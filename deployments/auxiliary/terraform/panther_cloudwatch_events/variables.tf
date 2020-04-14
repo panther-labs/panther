@@ -14,23 +14,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM pantherlabs/panther-buildpack:1.1.2
+variable "aws_partition" {
+  type        = string
+  description = "AWS partition of the account running the Panther backend"
+  default     = "aws"
+}
 
-ENV PATH=/root/.local/bin:$PATH
+variable "master_account_id" {
+  type        = string
+  description = "AWS account ID of the account running the Panther backend"
+}
 
-RUN apt-get update && \
-    apt-get -y install apt-transport-https \
-         ca-certificates \
-         curl \
-         gnupg2 \
-         software-properties-common && \
-    curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg > /tmp/dkey; apt-key add /tmp/dkey && \
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" && \
-    apt-get update && \
-    apt-get -y install docker-ce && \
-    pip3 install awscli --upgrade --user
-
-RUN mkdir code
-
-WORKDIR code
-
+variable "queue_arn" {
+  type        = string
+  description = "The Panther SQS Queue Arn to forward CloudWatch Events to via SNS."
+}

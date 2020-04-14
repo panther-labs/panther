@@ -44,14 +44,18 @@ func commentEachLine(prefix, text string) string {
 }
 
 // Add the license header to all applicable source files
-func fmtLicense() {
-	logger.Debugf("fmt: license header %s for %s", agplSource, strings.Join(licensePaths, " "))
+func fmtLicenseAll() {
+	fmtLicense(licensePaths...)
+}
+
+func fmtLicense(paths ...string) {
+	logger.Debugf("fmt: license header %s for %s", agplSource, strings.Join(paths, " "))
 	header := strings.TrimSpace(string(readFile(agplSource)))
 
 	asteriskLicense := "/**\n" + commentEachLine(" *", header) + "\n */"
 	hashtagLicense := commentEachLine("#", header)
 
-	for _, root := range licensePaths {
+	for _, root := range paths {
 		walk(root, func(path string, info os.FileInfo) {
 			if !info.IsDir() {
 				addFileLicense(path, asteriskLicense, hashtagLicense)
