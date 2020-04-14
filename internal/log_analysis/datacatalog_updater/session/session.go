@@ -1,12 +1,4 @@
-package compaction
-
-import (
-	"os"
-	"strings"
-	"testing"
-
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/session"
-)
+package session
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -26,16 +18,30 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-var (
-	integrationTest bool
-
-	catalogSession *session.Session
+import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 )
 
-func TestMain(m *testing.M) {
-	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
-	if integrationTest {
-		catalogSession = session.NewSession()
+const (
+	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+)
+
+type Session struct {
+	awsSession   *session.Session
+	glueClient   glueiface.GlueAPI
+	lambdaClient lambdaiface.LambdaAPI
+}
+
+func NewSession() *Session {
+	awsSession := session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
+	return &Session{
+		awsSession:   awsSession,
+		glueClient:   glue.New(awsSession),
+		lambdaClient: lambda.New(awsSession),
 	}
-	os.Exit(m.Run())
 }

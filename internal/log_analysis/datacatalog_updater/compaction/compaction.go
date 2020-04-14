@@ -27,11 +27,13 @@ import (
 )
 
 const (
-	ctasDatabase    = "panther_temp"
+	maxCompactionRetries = 5 // how many times we re-try compacting on error
+
+	ctasDatabase    = "panther_temp" // create temp tables here and delete when done
 	ctasSQLTemplate = `
 create table %s
 with (
-  external_location='s3://%s/%s/%s/year=%d/month=%02d/day=%02d/hour=%02d/',
+  external_location='s3://%s/%s/%s/year=%d/month=%02d/day=%02d/hour=%02d/%s/',
   format='PARQUET', parquet_compression='UNCOMPRESSED'
 )
 as 
@@ -41,11 +43,24 @@ FROM "%s"."%s" where year=%d and month=%d and day=%d and hour=%d order by p_even
 `
 )
 
-func GenerateCtasSQL(databaseName, tableType, tableName, bucketName string, columns []*glue.Column,
-	hour time.Time) (tempTable, ctsa string) {
+func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time) (workflowID string, err error) {
+	// get the table schema to collect the columns
+
+	// generate CTAS sql
+
+	// execute CTAS through the Athena API Step Function (non-blocking)
+
+	return workflowID, nil
+}
+
+func generateCtasSQL(databaseName, tableType, tableName, bucketName string, columns []*glue.Column,
+	hour time.Time, tag string) (tempTable, ctsa string) {
 
 	// generate name for table, by using this key it will fail if another is tried concurrently
 	tempTable = ctasDatabase + "." + databaseName + "_" + tableType + "_" + tableName + "_" + hour.Format("2006010215")
+
+	// generate a "tag" for the results folder, VERY IMPORTANT, this allows us to repeat without over writing results
+	// tag := uuid.New().String()
 
 	// list the columns
 	selectCols := make([]string, len(columns))
@@ -55,7 +70,7 @@ func GenerateCtasSQL(databaseName, tableType, tableName, bucketName string, colu
 
 	return tempTable, fmt.Sprintf(ctasSQLTemplate,
 		tempTable,
-		bucketName, tableType, tableName, hour.Year(), hour.Month(), hour.Day(), hour.Hour(),
+		bucketName, tableType, tableName, hour.Year(), hour.Month(), hour.Day(), hour.Hour(), tag,
 		strings.Join(selectCols, ","),
 		databaseName, tableName, hour.Year(), hour.Month(), hour.Day(), hour.Hour(),
 	)

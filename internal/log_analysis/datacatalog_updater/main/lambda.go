@@ -49,17 +49,52 @@ var (
 	partitionPrefixCache = make(map[string]struct{})
 )
 
-func handle(ctx context.Context, event events.SQSEvent) (err error) {
+/*
+   The datacatalog_updater lambda takes 2 kinds of events:
+     1) SQS messages with s3 paths of files written, these cause Glue partitions to be registered.
+     2) Events that request compacted partitions be registered
+
+   Operation:
+     1) S3 path from SQS is tested to see if a new Glue hourly partition needs to be created
+	     - if NO, then return
+     2) Glue partition is created
+     3) An async request is made to Athena API to convert the new partition to Parquet 2 HOURS FROM NOW
+         - The Athena API implements this using a Step Function that waits 2 hours then executes
+           CREATE TABLE AS SELECT ... (aka CTAS) to convert the partition to Parquet under a new S3 prefix.
+         - The Athena API Step Function allows 'userData' to be passed through the function to the lambda callback.
+           In this case the 'userData' is a JSON snippet to track:
+                     1) the table and partition being converted
+                     2) the number of failed executions
+         - The S3 prefixes where the new data is written all are unique (they have an appended uuid) so that
+           the process can be re-run on failures without interference. Only successful prefixes will be registered.
+           Currently we have no "cleanup" implemented for failed compactions for 2 reasons:
+                    1) this should be infrequent and not expensive, hence the code complexity for clean up is worth it.
+                    2) the data is useful for troubleshooting
+     4) When done (success or fail) the Step Function executes a lambda callback to _this_ lambda
+        passing the userData with the above information. The Glue partition is updated, setting type to Parquet
+        and Location to the new S3 prefix.
+          - If the step function failed, we log an error and execute again up to 'maxCompactionRetries'
+            without a configured initial delay.
+
+    This lambda and the Step Function have automatically generated CW alarms on failures.
+*/
+
+type DataCatalogEvent struct {
+	events.SQSEvent
+}
+
+func handle(ctx context.Context, event DataCatalogEvent) (err error) {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
-		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
+		operation.Stop().Log(err,
+			zap.Int("sqsMessageCount", len(event.Records)))
 	}()
-	err = process(event)
+	err = processSQS(event.SQSEvent)
 	return err
 }
 
-func process(event events.SQSEvent) error {
+func processSQS(event events.SQSEvent) error {
 	for _, record := range event.Records {
 		zap.L().Debug("processing record", zap.String("content", record.Body))
 		notification := &models.S3Notification{}

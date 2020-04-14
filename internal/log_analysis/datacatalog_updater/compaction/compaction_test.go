@@ -28,10 +28,11 @@ import (
  */
 
 const (
-	testBucket = "testBucket"
-	testDb     = "panther_logs"
-	tableType  = "logs"
-	tableName  = "aws_cloudtrail"
+	testBucket   = "testBucket"
+	testDb       = "panther_logs"
+	tableType    = "logs"
+	tableName    = "aws_cloudtrail"
+	executionTag = "1234"
 )
 
 func TestGenerateCtasSQL(t *testing.T) {
@@ -39,7 +40,7 @@ func TestGenerateCtasSQL(t *testing.T) {
 	expectedSQL := `
 create table panther_temp.panther_logs_logs_aws_cloudtrail_2020041005
 with (
-  external_location='s3://testBucket/logs/aws_cloudtrail/year=2020/month=04/day=10/hour=05/',
+  external_location='s3://testBucket/logs/aws_cloudtrail/year=2020/month=04/day=10/hour=05/1234/',
   format='PARQUET', parquet_compression='UNCOMPRESSED'
 )
 as 
@@ -51,7 +52,7 @@ FROM "panther_logs"."aws_cloudtrail" where year=2020 and month=4 and day=10 and 
 		{Name: aws.String("c1")},
 		{Name: aws.String("c2")},
 	}
-	tableName, sql := GenerateCtasSQL(testDb, tableType, tableName, testBucket, cols, refTime)
+	tableName, sql := generateCtasSQL(testDb, tableType, tableName, testBucket, cols, refTime, executionTag)
 	assert.Equal(t, "panther_temp.panther_logs_logs_aws_cloudtrail_2020041005", tableName)
 	assert.Equal(t, expectedSQL, sql)
 }
