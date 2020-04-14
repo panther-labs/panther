@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
@@ -28,21 +29,19 @@ const (
 	progressNotify       = 5000                                                  // log a line every this many to show progress
 )
 
-var (
-	concurrency = 10 // var so we can set in tests
-)
-
 type Stats struct {
 	NumFiles uint64
 	NumBytes uint64
 }
 
-func S3Queue(sess *session.Session, account, s3path, queueName string, limit uint64, stats *Stats) (err error) {
-	return s3Queue(s3.New(sess), sqs.New(sess), account, s3path, queueName, limit, stats)
+func S3Queue(sess *session.Session, account, s3path, queueName string,
+	concurrency int, limit uint64, verbose bool, stats *Stats) (err error) {
+
+	return s3Queue(s3.New(sess), sqs.New(sess), account, s3path, queueName, concurrency, limit, verbose, stats)
 }
 
 func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path, queueName string,
-	limit uint64, stats *Stats) (failed error) {
+	concurrency int, limit uint64, verbose bool, stats *Stats) (failed error) {
 
 	queueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &queueName,
@@ -61,7 +60,7 @@ func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path,
 	for i := 0; i < concurrency; i++ {
 		queueWg.Add(1)
 		go func() {
-			queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan, errChan)
+			queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan, errChan, verbose)
 			queueWg.Done()
 		}()
 	}
@@ -163,7 +162,7 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 
 // post message per file as-if it was an S3 notification
 func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
-	notifyChan chan *events.S3Event, errChan chan error) {
+	notifyChan chan *events.S3Event, errChan chan error, verbose bool) {
 
 	sendMessageBatchInput := &sqs.SendMessageBatchInput{
 		QueueUrl: queueURL,
@@ -178,6 +177,12 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 	for s3Notification := range notifyChan {
 		if failed { // drain channel
 			continue
+		}
+
+		if verbose {
+			zap.L().Info("sending file to SQS",
+				zap.String("bucket", s3Notification.Records[0].S3.Bucket.Name),
+				zap.String("key", s3Notification.Records[0].S3.Object.Key))
 		}
 
 		ctnJSON, err := jsoniter.MarshalToString(s3Notification)
@@ -216,7 +221,7 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 	}
 
 	// send remaining
-	if len(sendMessageBatchInput.Entries) > 0 {
+	if !failed && len(sendMessageBatchInput.Entries) > 0 {
 		_, err := sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
 		if err != nil {
 			errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
