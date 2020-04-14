@@ -80,6 +80,17 @@ export type AsanaConfigInput = {
   projectGids: Array<Scalars['String']>;
 };
 
+export type CancelLogQueryInput = {
+  queryId: Scalars['ID'];
+};
+
+export type CancelLogQueryOutput = {
+  __typename?: 'CancelLogQueryOutput';
+  error?: Maybe<Error>;
+  query?: Maybe<LogQueryOutputQueryData>;
+  stats?: Maybe<GetLogQueryStats>;
+};
+
 export type ComplianceIntegration = {
   __typename?: 'ComplianceIntegration';
   awsAccountId: Scalars['String'];
@@ -540,12 +551,8 @@ export enum LogQueryStatus {
   Running = 'running',
   Succeeded = 'succeeded',
   Failed = 'failed',
+  Canceled = 'canceled',
 }
-
-export type LogRow = {
-  __typename?: 'LogRow';
-  columns: Array<LogColumn>;
-};
 
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
@@ -563,6 +570,7 @@ export type Mutation = {
   addLogIntegration: LogIntegration;
   addPolicy?: Maybe<PolicyDetails>;
   addRule?: Maybe<RuleDetails>;
+  cancelLogQuery: CancelLogQueryOutput;
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
   deleteLogIntegration?: Maybe<Scalars['Boolean']>;
@@ -604,6 +612,10 @@ export type MutationAddPolicyArgs = {
 
 export type MutationAddRuleArgs = {
   input: CreateOrModifyRuleInput;
+};
+
+export type MutationCancelLogQueryArgs = {
+  input: CancelLogQueryInput;
 };
 
 export type MutationDeleteDestinationArgs = {
@@ -1319,6 +1331,8 @@ export type ResolversTypes = {
   CreateOrModifyPolicyInput: CreateOrModifyPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
   CreateOrModifyRuleInput: CreateOrModifyRuleInput;
+  CancelLogQueryInput: CancelLogQueryInput;
+  CancelLogQueryOutput: ResolverTypeWrapper<CancelLogQueryOutput>;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
@@ -1341,7 +1355,6 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   Subscription: ResolverTypeWrapper<{}>;
-  LogRow: ResolverTypeWrapper<LogRow>;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1447,6 +1460,8 @@ export type ResolversParentTypes = {
   CreateOrModifyPolicyInput: CreateOrModifyPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
   CreateOrModifyRuleInput: CreateOrModifyRuleInput;
+  CancelLogQueryInput: CancelLogQueryInput;
+  CancelLogQueryOutput: CancelLogQueryOutput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
@@ -1469,7 +1484,6 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   Subscription: {};
-  LogRow: LogRow;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1539,6 +1553,16 @@ export interface AwsTimestampScalarConfig
   extends GraphQLScalarTypeConfig<ResolversTypes['AWSTimestamp'], any> {
   name: 'AWSTimestamp';
 }
+
+export type CancelLogQueryOutputResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['CancelLogQueryOutput'] = ResolversParentTypes['CancelLogQueryOutput']
+> = {
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  query?: Resolver<Maybe<ResolversTypes['LogQueryOutputQueryData']>, ParentType, ContextType>;
+  stats?: Resolver<Maybe<ResolversTypes['GetLogQueryStats']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
 
 export type ComplianceIntegrationResolvers<
   ContextType = any,
@@ -1861,14 +1885,6 @@ export type LogQueryOutputQueryDataResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
-export type LogRowResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['LogRow'] = ResolversParentTypes['LogRow']
-> = {
-  columns?: Resolver<Array<ResolversTypes['LogColumn']>, ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
-};
-
 export type MsTeamsConfigResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['MsTeamsConfig'] = ResolversParentTypes['MsTeamsConfig']
@@ -1910,6 +1926,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationAddRuleArgs, 'input'>
+  >;
+  cancelLogQuery?: Resolver<
+    ResolversTypes['CancelLogQueryOutput'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationCancelLogQueryArgs, 'input'>
   >;
   deleteDestination?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
@@ -2511,6 +2533,7 @@ export type Resolvers<ContextType = any> = {
   AWSEmail?: GraphQLScalarType;
   AWSJSON?: GraphQLScalarType;
   AWSTimestamp?: GraphQLScalarType;
+  CancelLogQueryOutput?: CancelLogQueryOutputResolvers<ContextType>;
   ComplianceIntegration?: ComplianceIntegrationResolvers<ContextType>;
   ComplianceIntegrationHealth?: ComplianceIntegrationHealthResolvers<ContextType>;
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
@@ -2538,7 +2561,6 @@ export type Resolvers<ContextType = any> = {
   LogIntegration?: LogIntegrationResolvers<ContextType>;
   LogIntegrationHealth?: LogIntegrationHealthResolvers<ContextType>;
   LogQueryOutputQueryData?: LogQueryOutputQueryDataResolvers<ContextType>;
-  LogRow?: LogRowResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;

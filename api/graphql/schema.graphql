@@ -15,6 +15,7 @@ type Mutation {
   addLogIntegration(input: AddLogIntegrationInput!): LogIntegration!
   addPolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
   addRule(input: CreateOrModifyRuleInput!): RuleDetails
+  cancelLogQuery(input: CancelLogQueryInput!): CancelLogQueryOutput!
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteLogIntegration(id: ID!): Boolean
@@ -71,6 +72,9 @@ type Query {
 
 type Subscription {
   queryDone(userData: String!): QueryDone @aws_subscribe(mutations: ["queryDone"]) @aws_iam
+
+input CancelLogQueryInput {
+  queryId: ID!
 }
 
 input GetLogQueryInput {
@@ -331,6 +335,12 @@ type LogColumn {
 type GetLogQueryStats {
   executionTimeMilliseconds: Int!
   dataScannedBytes: Int!
+}
+
+type CancelLogQueryOutput {
+  error: Error
+  query: LogQueryOutputQueryData
+  stats: GetLogQueryStats
 }
 
 type GetLogQueryOutput {
@@ -881,4 +891,5 @@ enum LogQueryStatus {
   running
   succeeded
   failed
+  canceled
 }

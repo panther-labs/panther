@@ -43,6 +43,33 @@ const SQLEditor: React.FC = () => {
       }),
   });
 
+  // eslint-disable-next-line
+  const [cancelQuery] = useRunQuery({
+    variables: {
+      input: {
+        databaseName: selectedDatabase,
+        sql: value,
+      },
+    },
+    onCompleted: data => {
+      if (data.executeAsyncLogQuery.error) {
+        pushSnackbar({
+          variant: 'error',
+          title: "Couldn't cancel your Query",
+          description: 'Your query will continue to be executed in the background',
+        });
+      } else {
+        updateUrlParams({ queryId: null });
+      }
+    },
+    onError: () =>
+      pushSnackbar({
+        variant: 'error',
+        title: "Couldn't cancel your Query",
+        description: 'Your query will continue to be executed in the background',
+      }),
+  });
+
   // Fetch Autocomplete suggestions
   const { data: schemaData } = useLoadAllSchemaEntities({
     skip: shouldSaveData(),

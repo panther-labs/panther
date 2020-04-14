@@ -424,6 +424,44 @@ Resources:
           $util.toJson($context.result)
         #end
 
+  CancelLogQueryResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: cancelLogQuery
+      DataSourceName: !GetAtt DatabaseAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "executeAsyncQuery": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          #set ($payload = {
+            "query": {
+              "status": $context.result.status,
+              "sql": $context.result.sql
+            },
+          })
+
+          #if ($context.result.sqlError)
+            $util.qr($context.result.put("error", { "message": $context.result.sqlError }))
+          #end
+
+          #if ($context.result.stats)
+            $util.qr($payload.put("stats", $context.result.stats))
+          #end
+
+          $util.toJson($payload)
+        #end
+
   GetLogQueryResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema

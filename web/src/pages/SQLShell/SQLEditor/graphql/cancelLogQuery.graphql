@@ -1,0 +1,7 @@
+mutation CancelLogQuery($input: CancelLogQueryInput!) {
+  cancelLogQuery(input: $input) {
+    error {
+      message
+    }
+  }
+}
