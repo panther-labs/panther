@@ -144,13 +144,10 @@ func (b Build) Tools() {
 func (b Build) tools() error {
 	// cross compile so tools can be copied to other machines easily
 	buildEnvs := []map[string]string{
-		{"GOOS": "darwin", "GOARCH": "386"},
 		// darwin:arm is not compatible
 		{"GOOS": "darwin", "GOARCH": "amd64"},
-		{"GOOS": "linux", "GOARCH": "386"},
 		{"GOOS": "linux", "GOARCH": "amd64"},
 		{"GOOS": "linux", "GOARCH": "arm"},
-		{"GOOS": "windows", "GOARCH": "386"},
 		{"GOOS": "windows", "GOARCH": "amd64"},
 		{"GOOS": "windows", "GOARCH": "arm"},
 	}
