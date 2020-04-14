@@ -147,7 +147,7 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 		}
 	}()
 
-	getStatusOutput, err := api.GetQueryStatus(&input.QueryIdentifier)
+	getStatusOutput, err := api.GetQueryStatus(&input.QueryInfo)
 	if err != nil {
 		return output, err
 	}

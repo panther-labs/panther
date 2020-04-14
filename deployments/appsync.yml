@@ -1507,7 +1507,7 @@ Resources:
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: queryDone # noop that returns {queryId,workflowId} (used for subscriptions to trigger async query completion)
+      FieldName: queryDone # noop that returns {userData,queryId,workflowId} (used for subscriptions to trigger async query completion)
       DataSourceName: !GetAtt QueryDoneDataSource.Name
       RequestMappingTemplate: |
         {
@@ -1515,8 +1515,4 @@ Resources:
           "payload": $utils.toJson($context.arguments.input)
         }
       ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+        $util.toJson($context.result)
