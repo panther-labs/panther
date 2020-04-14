@@ -36,6 +36,13 @@ import (
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
 )
 
+/*
+	This file has functions to create a bucket and a Panther JSON table, populated with a small amount of data.
+	There are also functions to clean up after running the tests.
+
+	This can be used to drive Athena API related integration tests for packages that need example data.
+*/
+
 const (
 	TestBucketPrefix = "panther-athena-api-processeddata-test-"
 	TestDb           = "panther_athena_api_test_db"

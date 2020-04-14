@@ -20,7 +20,7 @@ package models
 
 // NOTE: different kinds of databases (e.g., Athena, Snowflake) will use different endpoints (lambda functions), same api.
 
-// NOTE: if a json tag is used more than once it is factored into a struct to avoid inconsistencies
+// NOTE: if a json tag _set_ is used more than once it is factored into a struct to avoid inconsistencies
 
 const (
 	QuerySucceeded = "succeeded"
@@ -130,7 +130,10 @@ type GetQueryStatusOutput struct {
 type GetQueryResultsInput struct {
 	QueryIdentifier
 	Pagination
+
 	PageSize *int64 `json:"pageSize" validate:"omitempty,gt=1,lt=1000"` // only return this many rows per call
+	// NOTE: gt=1 above to ensure there are results on the first page w/header. If PageSize = 1 then
+	// user will get no rows for the first page with Athena because Athena returns header has first row and we remove it.
 }
 
 type GetQueryResultsOutput struct {
