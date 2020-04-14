@@ -1,4 +1,5 @@
 import React from 'react';
+import useUrlParams from 'Hooks/useUrlParams';
 
 type State = {
   selectedDatabase: string | null;
@@ -6,6 +7,7 @@ type State = {
   selectedColumn: string | null;
   searchValue: string;
   globalErrorMessage: string;
+  queryId?: string | null;
 };
 
 type Action<T, P = never> = {
@@ -19,6 +21,7 @@ type SelectColumnAction = Action<'SELECT_COLUMN', { column: string }>;
 type SearchAction = Action<'SEARCH_DATABASE', { searchValue: string }>;
 type SetGlobalErrorAction = Action<'SET_ERROR', { message: string }>;
 type ResetGlobalErrorAction = Action<'RESET_ERROR'>;
+type SetQueryId = Action<'SET_QUERY_ID', { queryId: string }>;
 
 type Actions =
   | SelectDatabaseAction
@@ -26,17 +29,10 @@ type Actions =
   | SelectColumnAction
   | SearchAction
   | SetGlobalErrorAction
-  | ResetGlobalErrorAction;
+  | ResetGlobalErrorAction
+  | SetQueryId;
 
-const initialState = {
-  selectedDatabase: null,
-  selectedTable: null,
-  selectedColumn: null,
-  searchValue: '',
-  globalErrorMessage: '',
-};
-
-function reducer(state: State = initialState, action: Actions) {
+function reducer(state: State, action: Actions) {
   switch (action.type) {
     case 'SELECT_DATABASE':
       return {
@@ -61,6 +57,11 @@ function reducer(state: State = initialState, action: Actions) {
       return { ...state, globalErrorMessage: action.payload.message };
     case 'RESET_ERROR':
       return { ...state, globalErrorMessage: '' };
+    case 'SET_QUERY_ID':
+      return {
+        ...state,
+        queryId: action.payload.queryId,
+      };
     default:
       throw new Error();
   }
@@ -72,7 +73,27 @@ const SQLShellContext = React.createContext<{
 }>(undefined);
 
 export const SQLShellContextProvider: React.FC = ({ children }) => {
+  const { urlParams, updateUrlParams } = useUrlParams<
+    Pick<State, 'queryId' | 'selectedDatabase'>
+  >();
+
+  const initialState = React.useMemo(
+    () => ({
+      queryId: urlParams.queryId || null,
+      selectedDatabase: urlParams.selectedDatabase || null,
+      selectedTable: null,
+      selectedColumn: null,
+      searchValue: '',
+      globalErrorMessage: '',
+    }),
+    []
+  );
+
   const [state, dispatch] = React.useReducer<React.Reducer<State, Actions>>(reducer, initialState);
+
+  React.useEffect(() => {
+    updateUrlParams({ queryId: state.queryId, selectedDatabase: state.selectedDatabase });
+  }, [state.queryId, state.selectedDatabase, updateUrlParams]);
 
   const contextValue = React.useMemo(() => ({ state, dispatch }), [state, dispatch]);
 

@@ -4,25 +4,19 @@ import SubmitButton from 'Components/buttons/SubmitButton';
 import Editor, { Completion } from 'Components/Editor';
 import { shouldSaveData } from 'Helpers/connection';
 import { extractErrorMessage } from 'Helpers/utils';
-import useUrlParams from 'Hooks/useUrlParams';
 import { useLoadAllSchemaEntities } from './graphql/loadAllSchemaEntities.generated';
 import { useSQLShellContext } from '../SQLShellContext';
 import { useRunQuery } from './graphql/runQuery.generated';
 
 const minLines = 19;
 
-export interface LogQueryUrlParams {
-  queryId?: string;
-}
-
 const SQLEditor: React.FC = () => {
-  const { updateUrlParams } = useUrlParams<LogQueryUrlParams>();
   const [value, setValue] = React.useState('');
+  const { pushSnackbar } = useSnackbar();
   const {
     state: { selectedDatabase },
     dispatch,
   } = useSQLShellContext();
-  const { pushSnackbar } = useSnackbar();
 
   const [runQuery, { loading: isSubmittingQueryRequest }] = useRunQuery({
     variables: {
@@ -38,7 +32,7 @@ const SQLEditor: React.FC = () => {
           payload: { message: data.executeAsyncLogQuery.error.message },
         });
       } else {
-        updateUrlParams({ queryId: data.executeAsyncLogQuery.queryId });
+        dispatch({ type: 'SET_QUERY_ID', payload: { queryId: data.executeAsyncLogQuery.queryId } });
       }
     },
     onError: error =>
@@ -65,7 +59,7 @@ const SQLEditor: React.FC = () => {
           description: 'Your query will continue to be executed in the background',
         });
       } else {
-        updateUrlParams({ queryId: null });
+        dispatch({ type: 'SET_QUERY_ID', payload: { queryId: null } });
       }
     },
     onError: () =>

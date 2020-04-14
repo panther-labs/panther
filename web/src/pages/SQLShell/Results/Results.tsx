@@ -1,20 +1,21 @@
 import React from 'react';
-import useUrlParams from 'Hooks/useUrlParams';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { Box } from 'pouncejs';
 import { LogQueryStatus } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useInfiniteScroll } from 'react-infinite-scroll-hook';
 import { useGetLogQueryResults } from './graphql/getLogQueryResults.generated';
-import { LogQueryUrlParams } from '../SQLEditor';
 import { useSQLShellContext } from '../SQLShellContext';
 import ResultsTable, { ResultsTableProps } from './ResultsTable';
 
 const POLL_INTERVAL_MS = 750;
 
 const Results: React.FC = () => {
-  const { dispatch } = useSQLShellContext();
-  const { urlParams } = useUrlParams<LogQueryUrlParams>();
+  const {
+    state: { queryId },
+    dispatch,
+  } = useSQLShellContext();
+
   const {
     data,
     loading,
@@ -24,7 +25,7 @@ const Results: React.FC = () => {
     fetchMore,
     variables,
   } = useGetLogQueryResults({
-    skip: !urlParams.queryId,
+    skip: !queryId,
     // FIXME: This is a temporary hack to fix an issue that exists with Apollo. When polling,
     // apollo won't update the "error" value. By setting `notifyOnNetworkStatusChange` to `true`,
     // we get more re-renders but at least the value gets updated correctly
@@ -32,7 +33,7 @@ const Results: React.FC = () => {
     notifyOnNetworkStatusChange: true,
     variables: {
       input: {
-        queryId: urlParams.queryId,
+        queryId,
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
     },
@@ -91,7 +92,7 @@ const Results: React.FC = () => {
   }, [queryHasFailed]);
 
   let tableState: ResultsTableProps['state'];
-  if (!urlParams.queryId) {
+  if (!queryId) {
     tableState = 'initial';
   }
 
