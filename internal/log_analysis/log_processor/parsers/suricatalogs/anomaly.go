@@ -32,26 +32,26 @@ Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json
 
 //nolint:lll
 type Anomaly struct {
-	Anomaly      *AnomalyDetails    `json:"anomaly" validate:"required,dive" description:"Suricata Anomaly Anomaly"`
-	AppProto     *string            `json:"app_proto,omitempty" description:"Suricata Anomaly AppProto"`
-	CommunityID  *string            `json:"community_id,omitempty" description:"Suricata Anomaly CommunityID"`
-	DestIP       *string            `json:"dest_ip,omitempty" description:"Suricata Anomaly DestIP"`
-	DestPort     *int               `json:"dest_port,omitempty" description:"Suricata Anomaly DestPort"`
-	EventType    *string            `json:"event_type" validate:"required,eq=anomaly" description:"Suricata Anomaly EventType"`
-	FlowID       *int               `json:"flow_id,omitempty" description:"Suricata Anomaly FlowID"`
-	IcmpCode     *int               `json:"icmp_code,omitempty" description:"Suricata Anomaly IcmpCode"`
-	IcmpType     *int               `json:"icmp_type,omitempty" description:"Suricata Anomaly IcmpType"`
-	Metadata     *AnomalyMetadata   `json:"metadata,omitempty" validate:"omitempty,dive" description:"Suricata Anomaly Metadata"`
-	Packet       *string            `json:"packet,omitempty" description:"Suricata Anomaly Packet"`
-	PacketInfo   *AnomalyPacketInfo `json:"packet_info,omitempty" validate:"omitempty,dive" description:"Suricata Anomaly PacketInfo"`
-	PcapCnt      *int               `json:"pcap_cnt,omitempty" description:"Suricata Anomaly PcapCnt"`
-	PcapFilename *string            `json:"pcap_filename,omitempty" description:"Suricata Anomaly PcapFilename"`
+	Anomaly      *AnomalyDetails              `json:"anomaly" validate:"required,dive" description:"Suricata Anomaly Anomaly"`
+	AppProto     *string                      `json:"app_proto,omitempty" description:"Suricata Anomaly AppProto"`
+	CommunityID  *string                      `json:"community_id,omitempty" description:"Suricata Anomaly CommunityID"`
+	DestIP       *string                      `json:"dest_ip,omitempty" description:"Suricata Anomaly DestIP"`
+	DestPort     *int                         `json:"dest_port,omitempty" description:"Suricata Anomaly DestPort"`
+	EventType    *string                      `json:"event_type" validate:"required,eq=anomaly" description:"Suricata Anomaly EventType"`
+	FlowID       *int                         `json:"flow_id,omitempty" description:"Suricata Anomaly FlowID"`
+	IcmpCode     *int                         `json:"icmp_code,omitempty" description:"Suricata Anomaly IcmpCode"`
+	IcmpType     *int                         `json:"icmp_type,omitempty" description:"Suricata Anomaly IcmpType"`
+	Metadata     *AnomalyMetadata             `json:"metadata,omitempty" validate:"omitempty,dive" description:"Suricata Anomaly Metadata"`
+	Packet       *string                      `json:"packet,omitempty" description:"Suricata Anomaly Packet"`
+	PacketInfo   *AnomalyPacketInfo           `json:"packet_info,omitempty" validate:"omitempty,dive" description:"Suricata Anomaly PacketInfo"`
+	PcapCnt      *int                         `json:"pcap_cnt,omitempty" description:"Suricata Anomaly PcapCnt"`
+	PcapFilename *string                      `json:"pcap_filename,omitempty" description:"Suricata Anomaly PcapFilename"`
 	Proto        *numerics.Integer            `json:"proto,omitempty" description:"Suricata Anomaly Proto"`
-	SrcIP        *string            `json:"src_ip,omitempty" description:"Suricata Anomaly SrcIP"`
-	SrcPort      *int               `json:"src_port,omitempty" description:"Suricata Anomaly SrcPort"`
-	Timestamp    *timestamp.SuricataTimestamp            `json:"timestamp" validate:"required" description:"Suricata Anomaly Timestamp"`
-	TxID         *int               `json:"tx_id,omitempty" description:"Suricata Anomaly TxID"`
-	Vlan         []int              `json:"vlan,omitempty" description:"Suricata Anomaly Vlan"`
+	SrcIP        *string                      `json:"src_ip,omitempty" description:"Suricata Anomaly SrcIP"`
+	SrcPort      *int                         `json:"src_port,omitempty" description:"Suricata Anomaly SrcPort"`
+	Timestamp    *timestamp.SuricataTimestamp `json:"timestamp" validate:"required" description:"Suricata Anomaly Timestamp"`
+	TxID         *int                         `json:"tx_id,omitempty" description:"Suricata Anomaly TxID"`
+	Vlan         []int                        `json:"vlan,omitempty" description:"Suricata Anomaly Vlan"`
 
 	parsers.PantherLog
 }

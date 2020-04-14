@@ -41,6 +41,12 @@ const (
 	suricataTimestampLayout = `"2006-01-02T15:04:05.999999999Z0700"`
 )
 
+// use these functions to parse all incoming dates to ensure UTC consistency
+func Parse(layout, value string) (RFC3339, error) {
+	t, err := time.Parse(layout, value)
+	return (RFC3339)(t.UTC()), err
+}
+
 func Unix(sec int64, nsec int64) RFC3339 {
 	return (RFC3339)(time.Unix(sec, nsec).UTC())
 }
@@ -79,7 +85,7 @@ func (ts *ANSICwithTZ) UnmarshalJSON(text []byte) (err error) {
 	if err != nil {
 		return
 	}
-	*ts = (ANSICwithTZ)(t)
+	*ts = (ANSICwithTZ)(t.UTC())
 	return
 }
 
@@ -99,8 +105,8 @@ func (ts *UnixMillisecond) UnmarshalJSON(jsonBytes []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	t := time.Unix(0, value*time.Millisecond.Nanoseconds()).UTC()
-	*ts = (UnixMillisecond)(t)
+	t := time.Unix(0, value*time.Millisecond.Nanoseconds())
+	*ts = (UnixMillisecond)(t.UTC())
 	return nil
 }
 
@@ -157,7 +163,7 @@ func (ts *UnixFloat) UnmarshalJSON(jsonBytes []byte) (err error) {
 		return err
 	}
 	intPart, fracPart := math.Modf(f)
-	t := time.Unix(int64(intPart), int64(fracPart*1e9)).UTC()
-	*ts = (UnixFloat)(t)
+	t := time.Unix(int64(intPart), int64(fracPart*1e9))
+	*ts = (UnixFloat)(t.UTC())
 	return nil
 }
