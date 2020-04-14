@@ -56,6 +56,15 @@ func TestIntegrationAthenaQuery(t *testing.T) {
 	require.Equal(t, expectedResult, *rows[1].Data[0].VarCharValue)
 }
 
+func TestIntegrationAthenaQueryBadSQL(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	_, err := RunQuery(athena.New(awsSession), "panther_logs", "wwwww", nil)
+	require.Error(t, err)
+}
+
 func TestIntegrationAthenaQueryStop(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
