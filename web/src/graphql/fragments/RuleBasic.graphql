@@ -1,4 +1,4 @@
-fragment RuleTeaserFragment on RuleDetails {
+fragment RuleBasic on RuleDetails {
   id
   description
   displayName

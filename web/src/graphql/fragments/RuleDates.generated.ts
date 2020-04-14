@@ -20,23 +20,19 @@
 
 import * as Types from '../../../__generated__/schema';
 
-import { RuleTeaserFragment } from './RuleTeaserFragment.generated';
 import gql from 'graphql-tag';
 
-export type RuleDetailsFragment = Pick<
+export type RuleDates = Pick<
   Types.RuleDetails,
   'createdAt' | 'enabled' | 'dedupPeriodMinutes' | 'lastModified' | 'reference'
-> &
-  RuleTeaserFragment;
+>;
 
-export const RuleDetailsFragment = gql`
-  fragment RuleDetailsFragment on RuleDetails {
-    ...RuleTeaserFragment
+export const RuleDates = gql`
+  fragment RuleDates on RuleDetails {
     createdAt
     enabled
     dedupPeriodMinutes
     lastModified
     reference
   }
-  ${RuleTeaserFragment}
 `;

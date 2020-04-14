@@ -20,7 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { RuleTeaserFragment } from '../../../graphql/fragments/RuleTeaserFragment.generated';
+import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -29,15 +29,15 @@ export type RuleTeaserVariables = {
   input: Types.GetRuleInput;
 };
 
-export type RuleTeaser = { rule?: Types.Maybe<RuleTeaserFragment> };
+export type RuleTeaser = { rule?: Types.Maybe<RuleBasic> };
 
 export const RuleTeaserDocument = gql`
   query RuleTeaser($input: GetRuleInput!) {
     rule(input: $input) {
-      ...RuleTeaserFragment
+      ...RuleBasic
     }
   }
-  ${RuleTeaserFragment}
+  ${RuleBasic}
 `;
 
 /**

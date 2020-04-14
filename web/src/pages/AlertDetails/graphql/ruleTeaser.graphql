@@ -1,5 +1,5 @@
 query RuleTeaser($input: GetRuleInput!) {
   rule(input: $input) {
-    ...RuleTeaserFragment
+    ...RuleBasic
   }
 }

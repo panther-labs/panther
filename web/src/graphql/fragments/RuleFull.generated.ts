@@ -20,21 +20,33 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { RuleBasic } from './RuleBasic.generated';
+import { RuleDates } from './RuleDates.generated';
 import gql from 'graphql-tag';
 
-export type RuleTeaserFragment = Pick<
-  Types.RuleDetails,
-  'id' | 'description' | 'displayName' | 'logTypes' | 'runbook' | 'severity' | 'tags'
->;
+export type RuleFull = Pick<Types.RuleDetails, 'body'> & {
+  tests?: Types.Maybe<
+    Array<
+      Types.Maybe<
+        Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
+      >
+    >
+  >;
+} & RuleBasic &
+  RuleDates;
 
-export const RuleTeaserFragment = gql`
-  fragment RuleTeaserFragment on RuleDetails {
-    id
-    description
-    displayName
-    logTypes
-    runbook
-    severity
-    tags
+export const RuleFull = gql`
+  fragment RuleFull on RuleDetails {
+    ...RuleBasic
+    ...RuleDates
+    body
+    tests {
+      expectedResult
+      name
+      resource
+      resourceType
+    }
   }
+  ${RuleBasic}
+  ${RuleDates}
 `;

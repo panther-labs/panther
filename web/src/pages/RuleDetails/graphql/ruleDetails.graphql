@@ -1,6 +1,7 @@
 query RuleDetails($ruleDetailsInput: GetRuleInput!, $alertsForRuleInput: ListAlertsInput!) {
   rule(input: $ruleDetailsInput) {
-    ...RuleDetailsFragment
+    ...RuleBasic
+    ...RuleDates
   }
   alerts(input: $alertsForRuleInput) {
     alertSummaries {

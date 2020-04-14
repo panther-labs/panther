@@ -1,5 +1,5 @@
 mutation CreateRule($input: CreateOrModifyRuleInput!) {
   addRule(input: $input) {
-    ...RuleFragment
+    ...RuleFull
   }
 }

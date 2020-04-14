@@ -20,7 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { RuleFragment } from '../../../graphql/fragments/RuleFragment.generated';
+import { RuleFull } from '../../../graphql/fragments/RuleFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -29,15 +29,15 @@ export type UpdateRuleVariables = {
   input: Types.CreateOrModifyRuleInput;
 };
 
-export type UpdateRule = { updateRule?: Types.Maybe<RuleFragment> };
+export type UpdateRule = { updateRule?: Types.Maybe<RuleFull> };
 
 export const UpdateRuleDocument = gql`
   mutation UpdateRule($input: CreateOrModifyRuleInput!) {
     updateRule(input: $input) {
-      ...RuleFragment
+      ...RuleFull
     }
   }
-  ${RuleFragment}
+  ${RuleFull}
 `;
 export type UpdateRuleMutationFn = ApolloReactCommon.MutationFunction<
   UpdateRule,

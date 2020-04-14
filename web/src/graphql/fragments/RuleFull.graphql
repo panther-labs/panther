@@ -1,5 +1,6 @@
-fragment RuleFragment on RuleDetails {
-  ...RuleDetailsFragment
+fragment RuleFull on RuleDetails {
+  ...RuleBasic
+  ...RuleDates
   body
   tests {
     expectedResult
