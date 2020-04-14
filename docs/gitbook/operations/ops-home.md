@@ -35,7 +35,7 @@ executables for linux, mac (aka darwin) and windows. They can be copied/installe
 To build:
 
 ```yaml
-mage build:opstools
+mage build:tools
 ```
 
 * **requeue**: a tool to copy messages from a dead letter queue back to the originating queue.

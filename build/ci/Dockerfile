@@ -14,10 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-
-
-
 FROM buildpack-deps:stretch-scm
 
 LABEL description="An image that contains the necessary build tools to build panther"
@@ -33,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libc6-dev \
         make \
         pkg-config \
+        unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Depending on the CPU architecture of the latest stable debian stretch, pick which GO distribution
