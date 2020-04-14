@@ -52,7 +52,7 @@ Monitoring:
   AlarmSnsTopicArn: ''
 
   # Retention period for all Panther CloudWatch log groups.
-  CloudWatchLogRetentionDays: 365
+  CloudWatchLogRetentionDays: 30
 
   # Enable DEBUG logging for all Lambda functions.
   Debug: false
