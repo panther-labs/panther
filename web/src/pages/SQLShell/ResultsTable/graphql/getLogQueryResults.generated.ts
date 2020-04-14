@@ -32,6 +32,9 @@ export type GetLogQueryResults = {
   getLogQuery: {
     error?: Types.Maybe<Pick<Types.Error, 'message'>>;
     query?: Types.Maybe<Pick<Types.LogQueryOutputQueryData, 'status'>>;
+    stats?: Types.Maybe<
+      Pick<Types.GetLogQueryStats, 'executionTimeMilliseconds' | 'dataScannedBytes'>
+    >;
     results?: Types.Maybe<Array<{ columns: Array<Pick<Types.LogColumn, 'value'>> }>>;
     pageInfo: Pick<Types.PageInfo, 'hasNextPage' | 'paginationToken'>;
   };
@@ -45,6 +48,10 @@ export const GetLogQueryResultsDocument = gql`
       }
       query {
         status
+      }
+      stats {
+        executionTimeMilliseconds
+        dataScannedBytes
       }
       results {
         columns {

@@ -6,6 +6,10 @@ query GetLogQueryResults($input: GetLogQueryInput!) {
     query {
       status
     }
+    stats {
+      executionTimeMilliseconds
+      dataScannedBytes
+    }
     results {
       columns {
         value

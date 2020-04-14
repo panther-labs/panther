@@ -18,7 +18,7 @@ export interface LogQueryUrlParams {
 const SQLEditor: React.FC = () => {
   const { updateUrlParams } = useUrlParams<LogQueryUrlParams>();
   const [value, setValue] = React.useState('');
-  const { selectedDatabase } = useSQLShellContext();
+  const { selectedDatabase, setGlobalErrorMessage } = useSQLShellContext();
   const { pushSnackbar } = useSnackbar();
 
   const [runQuery, { loading: isSubmittingQueryRequest }] = useRunQuery({
@@ -28,7 +28,13 @@ const SQLEditor: React.FC = () => {
         sql: value,
       },
     },
-    onCompleted: data => updateUrlParams({ queryId: data.executeAsyncLogQuery.queryId }),
+    onCompleted: data => {
+      if (data.executeAsyncLogQuery.error) {
+        setGlobalErrorMessage(data.executeAsyncLogQuery.error.message);
+      } else {
+        updateUrlParams({ queryId: data.executeAsyncLogQuery.queryId });
+      }
+    },
     onError: error =>
       pushSnackbar({
         variant: 'error',
@@ -47,6 +53,12 @@ const SQLEditor: React.FC = () => {
         description: extractErrorMessage(error),
       }),
   });
+
+  React.useEffect(() => {
+    if (isSubmittingQueryRequest) {
+      setGlobalErrorMessage('');
+    }
+  }, [isSubmittingQueryRequest]);
 
   // Create proper completion data
   const completions = React.useMemo(() => {

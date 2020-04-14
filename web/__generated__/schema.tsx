@@ -248,6 +248,7 @@ export type ExecuteAsyncLogQueryInput = {
 export type ExecuteAsyncLogQueryOutput = {
   __typename?: 'ExecuteAsyncLogQueryOutput';
   queryId: Scalars['String'];
+  error?: Maybe<Error>;
 };
 
 export type GeneralSettings = {
@@ -294,8 +295,15 @@ export type GetLogQueryOutput = {
   __typename?: 'GetLogQueryOutput';
   error?: Maybe<Error>;
   query?: Maybe<LogQueryOutputQueryData>;
+  stats?: Maybe<GetLogQueryStats>;
   results?: Maybe<Array<LogRow>>;
   pageInfo: PageInfo;
+};
+
+export type GetLogQueryStats = {
+  __typename?: 'GetLogQueryStats';
+  executionTimeMilliseconds: Scalars['Int'];
+  dataScannedBytes: Scalars['Int'];
 };
 
 export type GetPolicyInput = {
@@ -1254,6 +1262,7 @@ export type ResolversTypes = {
   Error: ResolverTypeWrapper<Error>;
   LogQueryOutputQueryData: ResolverTypeWrapper<LogQueryOutputQueryData>;
   LogQueryStatus: LogQueryStatus;
+  GetLogQueryStats: ResolverTypeWrapper<GetLogQueryStats>;
   LogRow: ResolverTypeWrapper<LogRow>;
   LogColumn: ResolverTypeWrapper<LogColumn>;
   PageInfo: ResolverTypeWrapper<PageInfo>;
@@ -1381,6 +1390,7 @@ export type ResolversParentTypes = {
   Error: Error;
   LogQueryOutputQueryData: LogQueryOutputQueryData;
   LogQueryStatus: LogQueryStatus;
+  GetLogQueryStats: GetLogQueryStats;
   LogRow: LogRow;
   LogColumn: LogColumn;
   PageInfo: PageInfo;
@@ -1639,6 +1649,7 @@ export type ExecuteAsyncLogQueryOutputResolvers<
   ParentType extends ResolversParentTypes['ExecuteAsyncLogQueryOutput'] = ResolversParentTypes['ExecuteAsyncLogQueryOutput']
 > = {
   queryId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1658,8 +1669,18 @@ export type GetLogQueryOutputResolvers<
 > = {
   error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
   query?: Resolver<Maybe<ResolversTypes['LogQueryOutputQueryData']>, ParentType, ContextType>;
+  stats?: Resolver<Maybe<ResolversTypes['GetLogQueryStats']>, ParentType, ContextType>;
   results?: Resolver<Maybe<Array<ResolversTypes['LogRow']>>, ParentType, ContextType>;
   pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type GetLogQueryStatsResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['GetLogQueryStats'] = ResolversParentTypes['GetLogQueryStats']
+> = {
+  executionTimeMilliseconds?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  dataScannedBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -2498,6 +2519,7 @@ export type Resolvers<ContextType = any> = {
   ExecuteAsyncLogQueryOutput?: ExecuteAsyncLogQueryOutputResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
   GetLogQueryOutput?: GetLogQueryOutputResolvers<ContextType>;
+  GetLogQueryStats?: GetLogQueryStatsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
   IntegrationItemHealthStatus?: IntegrationItemHealthStatusResolvers<ContextType>;
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;

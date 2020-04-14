@@ -5,10 +5,12 @@ interface SQLShellContextValue {
   selectedTable: string | null;
   selectedColumn: string | null;
   searchValue: string;
+  globalErrorMessage: string;
   selectDatabase: (db: string) => void;
   selectTable: (table: string) => void;
   selectColumn: (column: string) => void;
   setSearchValue: (val: string) => void;
+  setGlobalErrorMessage: (val: string) => void;
 }
 
 const SQLShellContext = React.createContext<SQLShellContextValue>(undefined);
@@ -18,6 +20,7 @@ export const SQLShellContextProvider: React.FC = ({ children }) => {
   const [selectedTable, selectTable] = React.useState<string>(null);
   const [selectedColumn, selectColumn] = React.useState<string>(null);
   const [searchValue, setSearchValue] = React.useState<string>('');
+  const [globalErrorMessage, setGlobalErrorMessage] = React.useState('');
 
   const contextValue = React.useMemo(
     () => ({
@@ -29,6 +32,8 @@ export const SQLShellContextProvider: React.FC = ({ children }) => {
       selectColumn,
       searchValue,
       setSearchValue,
+      globalErrorMessage,
+      setGlobalErrorMessage,
     }),
     [
       selectedDatabase,
@@ -39,6 +44,8 @@ export const SQLShellContextProvider: React.FC = ({ children }) => {
       selectColumn,
       searchValue,
       setSearchValue,
+      globalErrorMessage,
+      setGlobalErrorMessage,
     ]
   );
 

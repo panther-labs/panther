@@ -119,6 +119,7 @@ input GetAlertInput {
 
 type ExecuteAsyncLogQueryOutput {
   queryId: String!
+  error: Error
 }
 
 type LogDatabaseTableColumn {
@@ -330,9 +331,15 @@ type LogRow {
   columns: [LogColumn!]!
 }
 
+type GetLogQueryStats {
+  executionTimeMilliseconds: Int!
+  dataScannedBytes: Int!
+}
+
 type GetLogQueryOutput {
   error: Error
   query: LogQueryOutputQueryData
+  stats: GetLogQueryStats
   results: [LogRow!]
   pageInfo: PageInfo!
 }

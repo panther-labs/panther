@@ -28,12 +28,19 @@ export type RunQueryVariables = {
   input: Types.ExecuteAsyncLogQueryInput;
 };
 
-export type RunQuery = { executeAsyncLogQuery: Pick<Types.ExecuteAsyncLogQueryOutput, 'queryId'> };
+export type RunQuery = {
+  executeAsyncLogQuery: Pick<Types.ExecuteAsyncLogQueryOutput, 'queryId'> & {
+    error?: Types.Maybe<Pick<Types.Error, 'message'>>;
+  };
+};
 
 export const RunQueryDocument = gql`
   mutation RunQuery($input: executeAsyncLogQueryInput!) {
     executeAsyncLogQuery(input: $input) {
       queryId
+      error {
+        message
+      }
     }
   }
 `;

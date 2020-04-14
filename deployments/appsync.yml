@@ -418,6 +418,9 @@ Resources:
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
+          #if ($context.result.sqlError)
+            $util.qr($context.result.put("error", { "message": $context.result.sqlError }))
+          #end
           $util.toJson($context.result)
         #end
 
@@ -454,8 +457,12 @@ Resources:
             "results": $context.result.resultsPage.rows
           })
 
-          #if ($context.result.message)
-            $util.qr($payload.put("error", { "message": $context.result.message }))
+          #if ($context.result.sqlError)
+            $util.qr($payload.put("error", { "message": $context.result.sqlError }))
+          #end
+
+          #if ($context.result.stats)
+            $util.qr($payload.put("stats", $context.result.stats))
           #end
 
           $util.toJson($payload)

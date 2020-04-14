@@ -1,5 +1,8 @@
 mutation RunQuery($input: executeAsyncLogQueryInput!) {
   executeAsyncLogQuery(input: $input) {
     queryId
+    error {
+      message
+    }
   }
 }
