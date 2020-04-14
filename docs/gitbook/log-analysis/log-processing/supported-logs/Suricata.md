@@ -24,7 +24,7 @@ Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json
 <tr><td valign=top><code>app_proto</code></td><td><code>string</code></td><td valign=top>Suricata Anomaly AppProto</td></tr>
 <tr><td valign=top><code>community_id</code></td><td><code>string</code></td><td valign=top>Suricata Anomaly CommunityID</td></tr>
 <tr><td valign=top><code>dest_ip</code></td><td><code>string</code></td><td valign=top>Suricata Anomaly DestIP</td></tr>
-<tr><td valign=top><code>dest_port</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly DestPort</td></tr>
+<tr><td valign=top><code>dest_port</code></td><td><code>int</code></td><td valign=top>Suricata Anomaly DestPort</td></tr>
 <tr><td valign=top><code><b>event_type</b></code></td><td><code>string</code></td><td valign=top>Suricata Anomaly EventType</td></tr>
 <tr><td valign=top><code>flow_id</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly FlowID</td></tr>
 <tr><td valign=top><code>icmp_code</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly IcmpCode</td></tr>
@@ -64,7 +64,7 @@ Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json
 <tr><td valign=top><code>pcap_filename</code></td><td><code>string</code></td><td valign=top>Suricata Anomaly PcapFilename</td></tr>
 <tr><td valign=top><code>proto</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly Proto</td></tr>
 <tr><td valign=top><code>src_ip</code></td><td><code>string</code></td><td valign=top>Suricata Anomaly SrcIP</td></tr>
-<tr><td valign=top><code>src_port</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly SrcPort</td></tr>
+<tr><td valign=top><code>src_port</code></td><td><code>int</code></td><td valign=top>Suricata Anomaly SrcPort</td></tr>
 <tr><td valign=top><code><b>timestamp</b></code></td><td><code>timestamp</code></td><td valign=top>Suricata Anomaly Timestamp</td></tr>
 <tr><td valign=top><code>tx_id</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly TxID</td></tr>
 <tr><td valign=top><code>vlan</code></td><td><code>{

@@ -36,7 +36,7 @@ type Anomaly struct {
 	AppProto     *string                      `json:"app_proto,omitempty" description:"Suricata Anomaly AppProto"`
 	CommunityID  *string                      `json:"community_id,omitempty" description:"Suricata Anomaly CommunityID"`
 	DestIP       *string                      `json:"dest_ip,omitempty" description:"Suricata Anomaly DestIP"`
-	DestPort     *int                         `json:"dest_port,omitempty" description:"Suricata Anomaly DestPort"`
+	DestPort     *uint16                      `json:"dest_port,omitempty" description:"Suricata Anomaly DestPort"`
 	EventType    *string                      `json:"event_type" validate:"required,eq=anomaly" description:"Suricata Anomaly EventType"`
 	FlowID       *int                         `json:"flow_id,omitempty" description:"Suricata Anomaly FlowID"`
 	IcmpCode     *int                         `json:"icmp_code,omitempty" description:"Suricata Anomaly IcmpCode"`
@@ -48,7 +48,7 @@ type Anomaly struct {
 	PcapFilename *string                      `json:"pcap_filename,omitempty" description:"Suricata Anomaly PcapFilename"`
 	Proto        *numerics.Integer            `json:"proto,omitempty" description:"Suricata Anomaly Proto"`
 	SrcIP        *string                      `json:"src_ip,omitempty" description:"Suricata Anomaly SrcIP"`
-	SrcPort      *int                         `json:"src_port,omitempty" description:"Suricata Anomaly SrcPort"`
+	SrcPort      *uint16                      `json:"src_port,omitempty" description:"Suricata Anomaly SrcPort"`
 	Timestamp    *timestamp.SuricataTimestamp `json:"timestamp" validate:"required" description:"Suricata Anomaly Timestamp"`
 	TxID         *int                         `json:"tx_id,omitempty" description:"Suricata Anomaly TxID"`
 	Vlan         []int                        `json:"vlan,omitempty" description:"Suricata Anomaly Vlan"`
