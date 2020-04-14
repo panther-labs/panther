@@ -20,7 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { GeneralSettingsFragment } from '../../../graphql/fragments/GeneralSettingsFragment.generated';
+import { GeneralSettingsFull } from '../../../graphql/fragments/GeneralSettingsFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -29,15 +29,15 @@ export type UpdateGeneralSettingsVariables = {
   input: Types.UpdateGeneralSettingsInput;
 };
 
-export type UpdateGeneralSettings = { updateGeneralSettings: GeneralSettingsFragment };
+export type UpdateGeneralSettings = { updateGeneralSettings: GeneralSettingsFull };
 
 export const UpdateGeneralSettingsDocument = gql`
   mutation UpdateGeneralSettings($input: UpdateGeneralSettingsInput!) {
     updateGeneralSettings(input: $input) {
-      ...GeneralSettingsFragment
+      ...GeneralSettingsFull
     }
   }
-  ${GeneralSettingsFragment}
+  ${GeneralSettingsFull}
 `;
 export type UpdateGeneralSettingsMutationFn = ApolloReactCommon.MutationFunction<
   UpdateGeneralSettings,

@@ -20,22 +20,22 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { GeneralSettingsFragment } from '../../../graphql/fragments/GeneralSettingsFragment.generated';
+import { GeneralSettingsFull } from '../../../graphql/fragments/GeneralSettingsFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type GetGeneralSettingsVariables = {};
 
-export type GetGeneralSettings = { generalSettings: GeneralSettingsFragment };
+export type GetGeneralSettings = { generalSettings: GeneralSettingsFull };
 
 export const GetGeneralSettingsDocument = gql`
   query GetGeneralSettings {
     generalSettings {
-      ...GeneralSettingsFragment
+      ...GeneralSettingsFull
     }
   }
-  ${GeneralSettingsFragment}
+  ${GeneralSettingsFull}
 `;
 
 /**

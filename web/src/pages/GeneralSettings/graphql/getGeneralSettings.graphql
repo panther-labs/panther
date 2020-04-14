@@ -1,5 +1,5 @@
 query GetGeneralSettings {
   generalSettings {
-    ...GeneralSettingsFragment
+    ...GeneralSettingsFull
   }
 }

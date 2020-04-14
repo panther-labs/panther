@@ -22,13 +22,13 @@ import * as Types from '../../../__generated__/schema';
 
 import gql from 'graphql-tag';
 
-export type GeneralSettingsFragment = Pick<
+export type GeneralSettingsFull = Pick<
   Types.GeneralSettings,
   'displayName' | 'email' | 'errorReportingConsent'
 >;
 
-export const GeneralSettingsFragment = gql`
-  fragment GeneralSettingsFragment on GeneralSettings {
+export const GeneralSettingsFull = gql`
+  fragment GeneralSettingsFull on GeneralSettings {
     displayName
     email
     errorReportingConsent
