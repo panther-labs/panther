@@ -1,7 +1,5 @@
 query GetGeneralSettings {
-    generalSettings {
-        displayName
-        email
-        errorReportingConsent
-    }
+  generalSettings {
+    ...GeneralSettingsFull
+  }
 }

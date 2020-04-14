@@ -21,7 +21,6 @@ package awsathena
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/pkg/errors"
@@ -31,74 +30,37 @@ const (
 	pollDelay = time.Second * 2
 )
 
-type AthenaQuery struct {
-	Client        athenaiface.AthenaAPI
-	SQL           string
-	S3ResultsPath *string // this can be nil, to use defaults
-	Database      string
-	QueryResult   *athena.GetQueryResultsOutput
-	// internal state
-	startResult *athena.StartQueryExecutionOutput
-}
-
-func NewAthenaQuery(sess *session.Session, database, sql string, s3Path *string) *AthenaQuery {
-	return &AthenaQuery{
-		Client:        athena.New(sess),
-		SQL:           sql,
-		S3ResultsPath: s3Path,
-		Database:      database,
+// RunQuery executes query, blocking until done
+func RunQuery(client athenaiface.AthenaAPI, database, sql string, s3Path *string) (*athena.GetQueryResultsOutput, error) {
+	startOutput, err := StartQuery(client, database, sql, s3Path)
+	if err != nil {
+		return nil, err
 	}
+	return WaitForResults(client, *startOutput.QueryExecutionId)
 }
 
-func (aq *AthenaQuery) Run() (err error) {
+func StartQuery(client athenaiface.AthenaAPI, database, sql string, s3Path *string) (*athena.StartQueryExecutionOutput, error) {
 	var startInput athena.StartQueryExecutionInput
-	startInput.SetQueryString(aq.SQL)
+	startInput.SetQueryString(sql)
 
 	var startContext athena.QueryExecutionContext
-	startContext.SetDatabase(aq.Database)
+	startContext.SetDatabase(database)
 	startInput.SetQueryExecutionContext(&startContext)
 
 	var resultConfig athena.ResultConfiguration
-	if aq.S3ResultsPath != nil {
-		resultConfig.SetOutputLocation(*aq.S3ResultsPath)
+	if s3Path != nil {
+		resultConfig.SetOutputLocation(*s3Path)
 	}
 	startInput.SetResultConfiguration(&resultConfig)
 
-	aq.startResult, err = aq.Client.StartQueryExecution(&startInput)
-	if err != nil {
-		err = errors.Wrapf(err, "athena failed to start query: %#v", *aq)
-	}
-	return err
+	return client.StartQueryExecution(&startInput)
 }
 
-func (aq *AthenaQuery) Wait() (err error) {
-	executionOutput, err := aq.poll()
-	if err != nil {
-		return err
-	}
-
-	if *executionOutput.QueryExecution.Status.State == athena.QueryExecutionStateSucceeded {
-		var ip athena.GetQueryResultsInput
-		ip.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
-
-		aq.QueryResult, err = aq.Client.GetQueryResults(&ip)
+func WaitForResults(client athenaiface.AthenaAPI, queryExecutionID string) (queryResult *athena.GetQueryResultsOutput, err error) {
+	isFinished := func() (executionOutput *athena.GetQueryExecutionOutput, done bool, err error) {
+		executionOutput, err = Status(client, queryExecutionID)
 		if err != nil {
-			return errors.Wrapf(err, "athena failed reading results: %#v", *aq)
-		}
-	} else {
-		return errors.Errorf("athena failed with status %s running: %#v", *executionOutput.QueryExecution.Status.State, *aq)
-	}
-
-	return nil
-}
-
-func (aq *AthenaQuery) poll() (executionOutput *athena.GetQueryExecutionOutput, err error) {
-	var executionInput athena.GetQueryExecutionInput
-	executionInput.SetQueryExecutionId(*aq.startResult.QueryExecutionId)
-	for {
-		executionOutput, err = aq.Client.GetQueryExecution(&executionInput)
-		if err != nil {
-			return nil, errors.Wrapf(err, "athena failed running: %#v", *aq)
+			return nil, true, err
 		}
 		// not athena.QueryExecutionStateRunning or athena.QueryExecutionStateQueued
 		switch *executionOutput.QueryExecution.Status.State {
@@ -106,8 +68,63 @@ func (aq *AthenaQuery) poll() (executionOutput *athena.GetQueryExecutionOutput, 
 			athena.QueryExecutionStateSucceeded,
 			athena.QueryExecutionStateFailed,
 			athena.QueryExecutionStateCancelled:
-			return
+			return executionOutput, true, nil
+		default:
+			return executionOutput, false, nil
 		}
-		time.Sleep(pollDelay)
 	}
+
+	poll := func() (*athena.GetQueryExecutionOutput, error) {
+		for {
+			executionOutput, done, err := isFinished()
+			if err != nil {
+				return nil, err
+			}
+			if done {
+				return executionOutput, nil
+			}
+			time.Sleep(pollDelay)
+		}
+	}
+
+	executionOutput, err := poll()
+	if err != nil {
+		return nil, err
+	}
+	return Results(client, *executionOutput.QueryExecution.QueryExecutionId, nil, nil)
+}
+
+func Status(client athenaiface.AthenaAPI, queryExecutionID string) (executionOutput *athena.GetQueryExecutionOutput, err error) {
+	var executionInput athena.GetQueryExecutionInput
+	executionInput.SetQueryExecutionId(queryExecutionID)
+	executionOutput, err = client.GetQueryExecution(&executionInput)
+	if err != nil {
+		return executionOutput, errors.WithStack(err)
+	}
+	return executionOutput, nil
+}
+
+func StopQuery(client athenaiface.AthenaAPI, queryExecutionID string) (executionOutput *athena.StopQueryExecutionOutput, err error) {
+	var executionInput athena.StopQueryExecutionInput
+	executionInput.SetQueryExecutionId(queryExecutionID)
+	executionOutput, err = client.StopQueryExecution(&executionInput)
+	if err != nil {
+		return executionOutput, errors.WithStack(err)
+	}
+	return executionOutput, nil
+}
+
+func Results(client athenaiface.AthenaAPI, queryID string, nextToken *string,
+	maxResults *int64) (queryResult *athena.GetQueryResultsOutput, err error) {
+
+	var ip athena.GetQueryResultsInput
+	ip.SetQueryExecutionId(queryID)
+	ip.NextToken = nextToken
+	ip.MaxResults = maxResults
+
+	queryResult, err = client.GetQueryResults(&ip)
+	if err != nil {
+		return nil, errors.Wrapf(err, "athena failed reading results for: %s", queryID)
+	}
+	return queryResult, err
 }

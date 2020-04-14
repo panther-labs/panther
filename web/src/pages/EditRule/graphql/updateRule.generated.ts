@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { RuleFull } from '../../../graphql/fragments/RuleFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,55 +29,15 @@ export type UpdateRuleVariables = {
   input: Types.CreateOrModifyRuleInput;
 };
 
-export type UpdateRule = {
-  updateRule?: Types.Maybe<
-    Pick<
-      Types.RuleDetails,
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'id'
-      | 'reference'
-      | 'logTypes'
-      | 'runbook'
-      | 'severity'
-      | 'dedupPeriodMinutes'
-      | 'tags'
-      | 'body'
-    > & {
-      tests?: Types.Maybe<
-        Array<
-          Types.Maybe<
-            Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
-          >
-        >
-      >;
-    }
-  >;
-};
+export type UpdateRule = { updateRule?: Types.Maybe<RuleFull> };
 
 export const UpdateRuleDocument = gql`
   mutation UpdateRule($input: CreateOrModifyRuleInput!) {
     updateRule(input: $input) {
-      description
-      displayName
-      enabled
-      id
-      reference
-      logTypes
-      runbook
-      severity
-      dedupPeriodMinutes
-      tags
-      body
-      tests {
-        expectedResult
-        name
-        resource
-        resourceType
-      }
+      ...RuleFull
     }
   }
+  ${RuleFull}
 `;
 export type UpdateRuleMutationFn = ApolloReactCommon.MutationFunction<
   UpdateRule,
