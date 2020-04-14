@@ -22,7 +22,7 @@ import * as Types from '../../../__generated__/schema';
 
 import gql from 'graphql-tag';
 
-export type AlertDetailsFragment = Pick<
+export type AlertDetailsFull = Pick<
   Types.AlertDetails,
   | 'alertId'
   | 'ruleId'
@@ -34,8 +34,8 @@ export type AlertDetailsFragment = Pick<
   | 'dedupString'
 >;
 
-export const AlertDetailsFragment = gql`
-  fragment AlertDetailsFragment on AlertDetails {
+export const AlertDetailsFull = gql`
+  fragment AlertDetailsFull on AlertDetails {
     alertId
     ruleId
     creationTime

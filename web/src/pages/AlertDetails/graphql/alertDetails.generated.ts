@@ -20,7 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { AlertDetailsFragment } from '../../../graphql/fragments/AlertDetailsFragment.generated';
+import { AlertDetailsFull } from '../../../graphql/fragments/AlertDetailsFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -29,15 +29,15 @@ export type AlertDetailsVariables = {
   input: Types.GetAlertInput;
 };
 
-export type AlertDetails = { alert?: Types.Maybe<AlertDetailsFragment> };
+export type AlertDetails = { alert?: Types.Maybe<AlertDetailsFull> };
 
 export const AlertDetailsDocument = gql`
   query AlertDetails($input: GetAlertInput!) {
     alert(input: $input) {
-      ...AlertDetailsFragment
+      ...AlertDetailsFull
     }
   }
-  ${AlertDetailsFragment}
+  ${AlertDetailsFull}
 `;
 
 /**

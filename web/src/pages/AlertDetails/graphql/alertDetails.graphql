@@ -1,5 +1,5 @@
 query AlertDetails($input: GetAlertInput!) {
   alert(input: $input) {
-    ...AlertDetailsFragment
+    ...AlertDetailsFull
   }
 }

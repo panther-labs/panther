@@ -1,4 +1,4 @@
-fragment AlertDetailsFragment on AlertDetails {
+fragment AlertDetailsFull on AlertDetails {
   alertId
   ruleId
   creationTime
