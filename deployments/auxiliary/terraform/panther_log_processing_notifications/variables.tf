@@ -14,23 +14,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM pantherlabs/panther-buildpack:1.1.2
+variable "aws_partition" {
+  type    = string
+  default = "aws"
+}
 
-ENV PATH=/root/.local/bin:$PATH
+variable "sns_topic_name" {
+  type        = string
+  description = "The name of the SNS topic"
+  default     = "panther-notifications-topic"
+}
 
-RUN apt-get update && \
-    apt-get -y install apt-transport-https \
-         ca-certificates \
-         curl \
-         gnupg2 \
-         software-properties-common && \
-    curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg > /tmp/dkey; apt-key add /tmp/dkey && \
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" && \
-    apt-get update && \
-    apt-get -y install docker-ce && \
-    pip3 install awscli --upgrade --user
+variable "master_account_id" {
+  type        = string
+  description = "The AWS account where you have deployed Panther"
+}
 
-RUN mkdir code
-
-WORKDIR code
-
+variable "panther_region" {
+  type        = string
+  description = "The AWS region where you have deployed Panther"
+}

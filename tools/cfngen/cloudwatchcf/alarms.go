@@ -60,26 +60,42 @@ type AlarmProperties struct {
 type MetricDimension struct {
 	Name string
 
-	// Use only one of Value or ValueRef
+	// Use only one of Value, ValueSub or ValueRef
 	Value string
 
 	valueRef *RefString
+	valueSub *SubString
 }
 
 func (m *MetricDimension) MarshalJSON() ([]byte, error) {
-	if m.valueRef == nil {
+	if m.valueRef == nil && m.valueSub == nil {
 		// Most common case - the struct can be marshaled like normal (json ignores nil valueRef)
 		return jsoniter.Marshal(*m) // dereference to avoid infinite recursion
 	}
 
-	// Otherwise, marshal a new struct where "Value" is actually a struct with the nested ref
-	return jsoniter.Marshal(&struct {
-		Name  string
-		Value RefString
-	}{
-		Name:  m.Name,
-		Value: *m.valueRef,
-	})
+	// marshal a new struct where "Value" is actually a struct with the nested ref
+	if m.valueRef != nil && m.valueSub == nil {
+		return jsoniter.Marshal(&struct {
+			Name  string
+			Value RefString
+		}{
+			Name:  m.Name,
+			Value: *m.valueRef,
+		})
+	}
+
+	// marshal a new struct where "Value" is actually a struct with the nested sub
+	if m.valueRef == nil && m.valueSub != nil {
+		return jsoniter.Marshal(&struct {
+			Name  string
+			Value SubString
+		}{
+			Name:  m.Name,
+			Value: *m.valueSub,
+		})
+	}
+
+	panic("valueRef and valueSub cannot both be set")
 }
 
 type RefString struct {
@@ -242,6 +258,8 @@ func alarmDispatchOnType(resourceType string, resource map[interface{}]interface
 		return generateDynamoDBAlarms(resource)
 	case "AWS::Serverless::Function":
 		return generateLambdaAlarms(resource, settings)
+	case "AWS::StepFunctions::StateMachine":
+		return generateSFNAlarms(resource)
 	}
 	return alarms
 }

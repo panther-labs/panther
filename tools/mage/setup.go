@@ -29,13 +29,18 @@ import (
 )
 
 const (
-	golangciVersion = "1.23.6"
-	swaggerVersion  = "0.23.0"
+	// Use the commit from the latest tagged release of https://github.com/golang/tools/releases
+	goimportsVersion = "5fc56a9" // gopls/v0.4.0
+
+	golangciVersion  = "1.23.6"
+	swaggerVersion   = "0.23.0"
+	terraformVersion = "0.12.24"
 )
 
 var (
 	setupDirectory       = filepath.Join(".", ".setup")
 	pythonVirtualEnvPath = filepath.Join(setupDirectory, "venv")
+	terraformPath        = filepath.Join(setupDirectory, "terraform")
 )
 
 // Setup Install all build and development dependencies
@@ -53,7 +58,7 @@ func Setup() {
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"go get modules", installGoModules()}
+		c <- goroutineResult{"download go modules", installGoModules()}
 	}(results)
 
 	count++
@@ -64,6 +69,11 @@ func Setup() {
 	count++
 	go func(c chan goroutineResult) {
 		c <- goroutineResult{"download golangci-lint", installGolangCiLint(env)}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"download terraform", installTerraform(env)}
 	}(results)
 
 	count++
@@ -84,10 +94,14 @@ func Setup() {
 // "go test" and "go build" will do this automatically, but putting it in the setup flow allows it
 // to happen in parallel with the rest of the downloads.
 func installGoModules() error {
-	logger.Info("setup: go get modules...")
+	logger.Info("setup: download go modules...")
 
-	// goimports is needed for formatting but won't be listed as an explicit dependency
-	return sh.Run("go", "get", "-t", "golang.org/x/tools/cmd/goimports", "./...")
+	if err := sh.Run("go", "mod", "download"); err != nil {
+		return err
+	}
+
+	// goimports is needed for formatting but isn't importable (won't be in go.mod)
+	return sh.Run("go", "get", "golang.org/x/tools/cmd/goimports@"+goimportsVersion)
 }
 
 // Download go-swagger if it hasn't been already
@@ -129,12 +143,12 @@ func installGolangCiLint(uname string) error {
 	pkg := fmt.Sprintf("golangci-lint-%s-%s-amd64", golangciVersion, strings.ToLower(uname))
 	url := fmt.Sprintf("https://github.com/golangci/golangci-lint/releases/download/v%s/%s.tar.gz",
 		golangciVersion, pkg)
-	if err := sh.RunV("curl", "-s", "-o", filepath.Join(downloadDir, "ci.tar.gz"), "-fL", url); err != nil {
+	if err := sh.Run("curl", "-s", "-o", filepath.Join(downloadDir, "ci.tar.gz"), "-fL", url); err != nil {
 		return fmt.Errorf("failed to download %s: %v", url, err)
 	}
 
 	archive := filepath.Join(downloadDir, "ci.tar.gz")
-	if err := sh.RunV("tar", "-xzvf", archive, "-C", downloadDir); err != nil {
+	if err := sh.Run("tar", "-xzf", archive, "-C", downloadDir); err != nil {
 		return fmt.Errorf("failed to extract %s: %v", archive, err)
 	}
 
@@ -146,8 +160,33 @@ func installGolangCiLint(uname string) error {
 
 	// deleting download folder
 	if err := os.RemoveAll(downloadDir); err != nil {
-		logger.Warnf("failed to remove temp folder %s", downloadDir)
+		logger.Warnf("failed to remove temp folder %s: %v", downloadDir, err)
 	}
+	return nil
+}
+
+func installTerraform(uname string) error {
+	uname = strings.ToLower(uname)
+	if output, err := sh.Output(terraformPath, "-version"); err == nil && strings.Contains(output, terraformVersion) {
+		logger.Infof("setup: %s v%s is already installed", terraformPath, terraformVersion)
+		return nil
+	}
+
+	pkg := fmt.Sprintf("terraform_%s_%s_amd64", terraformVersion, uname)
+	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/%s.zip", terraformVersion, pkg)
+	archive := filepath.Join(setupDirectory, "terraform.zip")
+	if err := sh.Run("curl", "-s", "-o", archive, "-fL", url); err != nil {
+		return fmt.Errorf("failed to download %s: %v", url, err)
+	}
+
+	if err := sh.Run("unzip", archive, "-d", setupDirectory); err != nil {
+		return fmt.Errorf("failed to unzip %s: %v", archive, err)
+	}
+
+	if err := os.Remove(archive); err != nil {
+		logger.Warnf("failed to remove %s after unpacking: %v", archive, err)
+	}
+
 	return nil
 }
 
