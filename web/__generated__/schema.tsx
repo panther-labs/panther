@@ -63,7 +63,6 @@ export type AlertSummary = {
   updateTime: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
   severity?: Maybe<Scalars['String']>;
-  dedupString: Scalars['String'];
 };
 
 export enum AnalysisTypeEnum {
@@ -1334,7 +1333,6 @@ export type AlertSummaryResolvers<
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 

@@ -137,7 +137,6 @@ type AlertSummary {
   updateTime: AWSDateTime!
   ruleId: String
   severity: String
-  dedupString: String!
 }
 
 input ListRulesInput {
