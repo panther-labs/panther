@@ -145,6 +145,9 @@ func Deploy() {
 	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
 		logger.Fatal(err)
 	}
+	if err := initializeGlobal(awsSession, outputs["AnalysisApiEndpoint"]); err != nil {
+		logger.Fatal(err)
+	}
 	if err := inviteFirstUser(awsSession); err != nil {
 		logger.Fatal(err)
 	}
@@ -575,6 +578,29 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, settin
 	}
 
 	logger.Infof("deploy: initialized with %d policies and %d rules", newPolicies, newRules)
+	return nil
+}
+
+// Install the default global helper function if it does not already exist
+func initializeGlobal(awsSession *session.Session, endpoint string) error {
+	httpClient := gatewayapi.GatewayClient(awsSession)
+	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
+		WithBasePath("/v1").WithHost(endpoint))
+
+	_, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
+		GlobalID:   defaultGlobalID,
+		HTTPClient: httpClient,
+	})
+	// Global already exists
+	if err == nil {
+		logger.Debug("deploy: global module already exists")
+		return nil
+	}
+
+	// Return errors other than 404 not found
+	if _, ok := err.(*operations.GetGlobalNotFound); !ok {
+		return fmt.Errorf("failed to get existing global file: %v", err)
+	}
 
 	// Setup the initial helper layer
 	content, err := ioutil.ReadFile(defaultGlobalLocation)

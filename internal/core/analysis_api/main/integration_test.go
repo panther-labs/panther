@@ -279,6 +279,9 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("CreatePolicyInvalid", createInvalid)
 		t.Run("CreatePolicySuccess", createSuccess)
 		t.Run("CreateRuleSuccess", createRuleSuccess)
+		// This test (and the other global tests) does trigger the layer-manager lambda to run, but since there is only
+		// support for a single global nothing changes (the version gets bumped a few times). Once multiple globals are
+		// supported, these tests can be improved to run policies and rules that rely on these imports.
 		t.Run("CreateGlobalSuccess", createGlobalSuccess)
 	})
 	if t.Failed() {
