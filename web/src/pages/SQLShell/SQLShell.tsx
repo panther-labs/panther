@@ -3,7 +3,7 @@ import { Box, Card, Grid, Text } from 'pouncejs';
 import Panel from 'Components/Panel';
 import SQLEditor from './SQLEditor';
 import Browser from './Browser';
-import ResultsTable from './ResultsTable';
+import Results from './Results';
 import { useSQLShellContext, withSQLShellContext } from './SQLShellContext';
 
 const SQLShellPage: React.FC = () => {
@@ -31,7 +31,7 @@ const SQLShellPage: React.FC = () => {
       </Grid>
       <Box mb={4} minHeight={400}>
         <Panel title="Results" size="large">
-          <ResultsTable />
+          <Results />
         </Panel>
       </Box>
     </Box>

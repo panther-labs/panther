@@ -35,7 +35,7 @@ export type GetLogQueryResults = {
     stats?: Types.Maybe<
       Pick<Types.GetLogQueryStats, 'executionTimeMilliseconds' | 'dataScannedBytes'>
     >;
-    results?: Types.Maybe<Array<{ columns: Array<Pick<Types.LogColumn, 'value'>> }>>;
+    results?: Types.Maybe<Array<Array<Pick<Types.LogColumn, 'key' | 'value'>>>>;
     pageInfo: Pick<Types.PageInfo, 'hasNextPage' | 'paginationToken'>;
   };
 };
@@ -54,9 +54,8 @@ export const GetLogQueryResultsDocument = gql`
         dataScannedBytes
       }
       results {
-        columns {
-          value
-        }
+        key
+        value
       }
       pageInfo {
         hasNextPage

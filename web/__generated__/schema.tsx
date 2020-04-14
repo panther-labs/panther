@@ -296,7 +296,7 @@ export type GetLogQueryOutput = {
   error?: Maybe<Error>;
   query?: Maybe<LogQueryOutputQueryData>;
   stats?: Maybe<GetLogQueryStats>;
-  results?: Maybe<Array<LogRow>>;
+  results?: Maybe<Array<Array<LogColumn>>>;
   pageInfo: PageInfo;
 };
 
@@ -482,6 +482,7 @@ export enum ListRulesSortFieldsEnum {
 
 export type LogColumn = {
   __typename?: 'LogColumn';
+  key: Scalars['String'];
   value?: Maybe<Scalars['String']>;
 };
 
@@ -1263,7 +1264,6 @@ export type ResolversTypes = {
   LogQueryOutputQueryData: ResolverTypeWrapper<LogQueryOutputQueryData>;
   LogQueryStatus: LogQueryStatus;
   GetLogQueryStats: ResolverTypeWrapper<GetLogQueryStats>;
-  LogRow: ResolverTypeWrapper<LogRow>;
   LogColumn: ResolverTypeWrapper<LogColumn>;
   PageInfo: ResolverTypeWrapper<PageInfo>;
   GetResourceInput: GetResourceInput;
@@ -1341,6 +1341,7 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   Subscription: ResolverTypeWrapper<{}>;
+  LogRow: ResolverTypeWrapper<LogRow>;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1391,7 +1392,6 @@ export type ResolversParentTypes = {
   LogQueryOutputQueryData: LogQueryOutputQueryData;
   LogQueryStatus: LogQueryStatus;
   GetLogQueryStats: GetLogQueryStats;
-  LogRow: LogRow;
   LogColumn: LogColumn;
   PageInfo: PageInfo;
   GetResourceInput: GetResourceInput;
@@ -1469,6 +1469,7 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   Subscription: {};
+  LogRow: LogRow;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1670,7 +1671,7 @@ export type GetLogQueryOutputResolvers<
   error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
   query?: Resolver<Maybe<ResolversTypes['LogQueryOutputQueryData']>, ParentType, ContextType>;
   stats?: Resolver<Maybe<ResolversTypes['GetLogQueryStats']>, ParentType, ContextType>;
-  results?: Resolver<Maybe<Array<ResolversTypes['LogRow']>>, ParentType, ContextType>;
+  results?: Resolver<Maybe<Array<Array<ResolversTypes['LogColumn']>>>, ParentType, ContextType>;
   pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
@@ -1783,6 +1784,7 @@ export type LogColumnResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogColumn'] = ResolversParentTypes['LogColumn']
 > = {
+  key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   value?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };

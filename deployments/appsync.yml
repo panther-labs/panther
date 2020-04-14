@@ -443,6 +443,7 @@ Resources:
       ResponseMappingTemplate: |
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+
         #else
           #set ($hasNextPage = !$util.isNull($context.result.resultsPage.paginationToken))
           #set ($payload = {
@@ -453,9 +454,22 @@ Resources:
             "pageInfo": {
               "hasNextPage": $hasNextPage,
               "paginationToken": $context.result.resultsPage.paginationToken
-            },
-            "results": $context.result.resultsPage.rows
+            }
           })
+
+          #set ($results = [])
+          #foreach($item in $context.result.resultsPage.rows)
+            #set ($rowColumns = [])
+            #foreach($column in $item.columns)
+              #set ($index = $foreach.count - 1)
+              $util.qr($rowColumns.add({
+              	"key": $context.result.columnInfo[$index].value,
+                "value": $column.value
+              }))
+            #end
+            $util.qr($results.add($rowColumns))
+          #end
+          $util.qr($payload.put("results", $results))
 
           #if ($context.result.sqlError)
             $util.qr($payload.put("error", { "message": $context.result.sqlError }))

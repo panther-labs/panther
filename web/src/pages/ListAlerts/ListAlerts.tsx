@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box, Card, Spinner } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
-import useInfiniteScroll from 'Hooks/useInfiniteScroll';
+import { useInfiniteScroll } from 'react-infinite-scroll-hook';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
@@ -40,35 +40,25 @@ const ListAlerts = () => {
 
   const alertItems = data?.alerts.alertSummaries || [];
   const lastEvaluatedKey = data?.alerts.lastEvaluatedKey || null;
-  const { infiniteRef, setHasNextPage } = useInfiniteScroll({
-    loading,
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    onLoadMore: () => {
-      // Even though we're setting hasNextPage as false when exclusiveStartKey is null
-      // the react-infinite-scroll-hook library still makes one last request before finally stopping
-      // We're adding this redundant check explicitly just to be sure
-      if (!lastEvaluatedKey) {
-        return;
-      }
 
+  const infiniteRef = useInfiniteScroll<HTMLDivElement>({
+    loading,
+    hasNextPage: !!data?.alerts?.lastEvaluatedKey,
+    checkInterval: 800, // The default is 200 which seems a bit too quick
+    onLoadMore: () => {
       fetchMore({
         variables: {
           input: { pageSize: DEFAULT_LARGE_PAGE_SIZE, exclusiveStartKey: lastEvaluatedKey },
         },
         updateQuery: (previousResult, { fetchMoreResult }) => {
-          if (!fetchMoreResult) {
-            return previousResult;
-          }
-          const newAlertSummaries = fetchMoreResult.alerts.alertSummaries;
-          const newLastEvaluatedKey = fetchMoreResult.alerts.lastEvaluatedKey;
-          if (!newLastEvaluatedKey) {
-            setHasNextPage(false); // newLastEvaluatedKey being null means there are no more items to query
-          }
           return {
             alerts: {
               ...previousResult.alerts,
-              alertSummaries: [...previousResult.alerts.alertSummaries, ...newAlertSummaries],
-              lastEvaluatedKey: newLastEvaluatedKey,
+              ...fetchMoreResult.alerts,
+              alertSummaries: [
+                ...previousResult.alerts.alertSummaries,
+                ...fetchMoreResult.alerts.alertSummaries,
+              ],
             },
           };
         },

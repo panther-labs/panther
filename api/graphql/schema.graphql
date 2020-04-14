@@ -324,11 +324,8 @@ type LogQueryOutputQueryData {
 }
 
 type LogColumn {
+  key: String!
   value: String
-}
-
-type LogRow {
-  columns: [LogColumn!]!
 }
 
 type GetLogQueryStats {
@@ -340,7 +337,7 @@ type GetLogQueryOutput {
   error: Error
   query: LogQueryOutputQueryData
   stats: GetLogQueryStats
-  results: [LogRow!]
+  results: [[LogColumn!]!]
   pageInfo: PageInfo!
 }
 
@@ -804,7 +801,7 @@ input QueryDoneInput {
   workflowId: String!
 }
 
-type QueryDone @aws_iam {
+type QueryDone {
   userData: String!
   queryId: String!
   workflowId: String!

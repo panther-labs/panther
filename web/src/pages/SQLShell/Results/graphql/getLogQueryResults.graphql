@@ -11,9 +11,8 @@ query GetLogQueryResults($input: GetLogQueryInput!) {
       dataScannedBytes
     }
     results {
-      columns {
-        value
-      }
+      key
+      value
     }
     pageInfo {
       hasNextPage
