@@ -65,7 +65,7 @@ Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json
 <tr><td valign=top><code>proto</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly Proto</td></tr>
 <tr><td valign=top><code>src_ip</code></td><td><code>string</code></td><td valign=top>Suricata Anomaly SrcIP</td></tr>
 <tr><td valign=top><code>src_port</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly SrcPort</td></tr>
-<tr><td valign=top><code><b>timestamp</b></code></td><td><code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Suricata Anomaly Timestamp</td></tr>
+<tr><td valign=top><code><b>timestamp</b></code></td><td><code>timestamp</code></td><td valign=top>Suricata Anomaly Timestamp</td></tr>
 <tr><td valign=top><code>tx_id</code></td><td><code>bigint</code></td><td valign=top>Suricata Anomaly TxID</td></tr>
 <tr><td valign=top><code>vlan</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {

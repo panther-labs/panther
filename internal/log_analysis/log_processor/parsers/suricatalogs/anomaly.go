@@ -51,7 +51,7 @@ type Anomaly struct {
 	SrcPort      *int                         `json:"src_port,omitempty" description:"Suricata Anomaly SrcPort"`
 	Timestamp    *timestamp.SuricataTimestamp `json:"timestamp" validate:"required" description:"Suricata Anomaly Timestamp"`
 	TxID         *int                         `json:"tx_id,omitempty" description:"Suricata Anomaly TxID"`
-	Vlan         []*int                        `json:"vlan,omitempty" description:"Suricata Anomaly Vlan"`
+	Vlan         []int                        `json:"vlan,omitempty" description:"Suricata Anomaly Vlan"`
 
 	parsers.PantherLog
 }
@@ -71,7 +71,7 @@ type AnomalyDetails struct {
 
 //nolint:lll
 type AnomalyMetadata struct {
-	Flowbits []*string                 `json:"flowbits,omitempty" description:"Suricata AnomalyMetadata Flowbits"`
+	Flowbits []string                 `json:"flowbits,omitempty" description:"Suricata AnomalyMetadata Flowbits"`
 	Flowints *AnomalyMetadataFlowints `json:"flowints,omitempty" validate:"omitempty,dive" description:"Suricata AnomalyMetadata Flowints"`
 }
 
