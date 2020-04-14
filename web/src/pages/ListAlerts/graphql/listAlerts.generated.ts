@@ -35,13 +35,7 @@ export type ListAlerts = {
         Types.Maybe<
           Pick<
             Types.AlertSummary,
-            | 'alertId'
-            | 'creationTime'
-            | 'eventsMatched'
-            | 'updateTime'
-            | 'ruleId'
-            | 'severity'
-            | 'dedupString'
+            'title' | 'creationTime' | 'severity' | 'alertId' | 'eventsMatched'
           >
         >
       >;
@@ -53,13 +47,11 @@ export const ListAlertsDocument = gql`
   query ListAlerts($input: ListAlertsInput) {
     alerts(input: $input) {
       alertSummaries {
-        alertId
+        title
         creationTime
-        eventsMatched
-        updateTime
-        ruleId
         severity
-        dedupString
+        alertId
+        eventsMatched
       }
       lastEvaluatedKey
     }
