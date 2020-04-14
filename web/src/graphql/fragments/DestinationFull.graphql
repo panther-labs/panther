@@ -1,4 +1,4 @@
-fragment DestinationFragment on Destination {
+fragment DestinationFull on Destination {
   createdBy
   creationTime
   displayName

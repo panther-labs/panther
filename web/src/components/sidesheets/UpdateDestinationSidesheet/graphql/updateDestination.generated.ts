@@ -20,7 +20,7 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
-import { DestinationFragment } from '../../../../graphql/fragments/DestinationFragment.generated';
+import { DestinationFull } from '../../../../graphql/fragments/DestinationFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -29,15 +29,15 @@ export type UpdateDestinationVariables = {
   input: Types.DestinationInput;
 };
 
-export type UpdateDestination = { updateDestination?: Types.Maybe<DestinationFragment> };
+export type UpdateDestination = { updateDestination?: Types.Maybe<DestinationFull> };
 
 export const UpdateDestinationDocument = gql`
   mutation UpdateDestination($input: DestinationInput!) {
     updateDestination(input: $input) {
-      ...DestinationFragment
+      ...DestinationFull
     }
   }
-  ${DestinationFragment}
+  ${DestinationFull}
 `;
 export type UpdateDestinationMutationFn = ApolloReactCommon.MutationFunction<
   UpdateDestination,

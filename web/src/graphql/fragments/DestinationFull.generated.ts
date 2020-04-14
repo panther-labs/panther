@@ -22,7 +22,7 @@ import * as Types from '../../../__generated__/schema';
 
 import gql from 'graphql-tag';
 
-export type DestinationFragment = Pick<
+export type DestinationFull = Pick<
   Types.Destination,
   | 'createdBy'
   | 'creationTime'
@@ -52,8 +52,8 @@ export type DestinationFragment = Pick<
   };
 };
 
-export const DestinationFragment = gql`
-  fragment DestinationFragment on Destination {
+export const DestinationFull = gql`
+  fragment DestinationFull on Destination {
     createdBy
     creationTime
     displayName

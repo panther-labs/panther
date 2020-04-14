@@ -1,5 +1,5 @@
 mutation UpdateDestination($input: DestinationInput!) {
   updateDestination(input: $input) {
-    ...DestinationFragment
+    ...DestinationFull
   }
 }

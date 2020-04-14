@@ -1,5 +1,5 @@
 query ListDestinationsAndDefaults {
   destinations {
-    ...DestinationFragment
+    ...DestinationFull
   }
 }

@@ -20,7 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { DestinationFragment } from '../../../graphql/fragments/DestinationFragment.generated';
+import { DestinationFull } from '../../../graphql/fragments/DestinationFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,16 +28,16 @@ import * as ApolloReactHooks from '@apollo/client';
 export type ListDestinationsAndDefaultsVariables = {};
 
 export type ListDestinationsAndDefaults = {
-  destinations?: Types.Maybe<Array<Types.Maybe<DestinationFragment>>>;
+  destinations?: Types.Maybe<Array<Types.Maybe<DestinationFull>>>;
 };
 
 export const ListDestinationsAndDefaultsDocument = gql`
   query ListDestinationsAndDefaults {
     destinations {
-      ...DestinationFragment
+      ...DestinationFull
     }
   }
-  ${DestinationFragment}
+  ${DestinationFull}
 `;
 
 /**
