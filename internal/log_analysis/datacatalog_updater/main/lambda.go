@@ -24,29 +24,11 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
-)
-
-const (
-	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
-)
-
-var (
-	glueClient glueiface.GlueAPI = glue.New(session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))))
-	// partitionPrefixCache is a cache that stores all the prefixes of the partitions we have created
-	// The cache is used to avoid attempts to create the same partitions in Glue table
-	partitionPrefixCache = make(map[string]struct{})
 )
 
 /*
@@ -55,7 +37,7 @@ var (
      2) Events that request compacted partitions be registered
 
    Operation:
-     1) S3 path from SQS is tested to see if a new Glue hourly partition needs to be created
+     1) S3 path from an SQS event is tested to see if a new Glue hourly partition needs to be created
 	     - if NO, then return
      2) Glue partition is created
      3) An async request is made to Athena API to convert the new partition to Parquet 2 HOURS FROM NOW
@@ -90,49 +72,8 @@ func handle(ctx context.Context, event DataCatalogEvent) (err error) {
 		operation.Stop().Log(err,
 			zap.Int("sqsMessageCount", len(event.Records)))
 	}()
-	err = processSQS(event.SQSEvent)
+	err = process.SQS(event.SQSEvent)
 	return err
-}
-
-func processSQS(event events.SQSEvent) error {
-	for _, record := range event.Records {
-		zap.L().Debug("processing record", zap.String("content", record.Body))
-		notification := &models.S3Notification{}
-		if err := jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
-			zap.L().Error("failed to unmarshal record", zap.Error(errors.WithStack(err)))
-			continue
-		}
-
-		if len(notification.Records) == 0 { // indications of a bug someplace
-			zap.L().Warn("no s3 event notifications in message",
-				zap.String("message", record.Body))
-			continue
-		}
-
-		for _, eventRecord := range notification.Records {
-			gluePartition, err := awsglue.GetPartitionFromS3(eventRecord.S3.Bucket.Name, eventRecord.S3.Object.Key)
-			if err != nil {
-				zap.L().Error("failed to get partition information from notification",
-					zap.Any("notification", notification), zap.Error(errors.WithStack(err)))
-				continue
-			}
-
-			// already done?
-			partitionLocation := gluePartition.GetPartitionLocation()
-			if _, ok := partitionPrefixCache[partitionLocation]; ok {
-				zap.L().Debug("partition has already been created")
-				continue
-			}
-
-			err = gluePartition.CreatePartition(glueClient)
-			if err != nil {
-				err = errors.Wrapf(err, "failed to create partition: %#v", notification)
-				return err
-			}
-			partitionPrefixCache[partitionLocation] = struct{}{} // remember
-		}
-	}
-	return nil
 }
 
 func main() {

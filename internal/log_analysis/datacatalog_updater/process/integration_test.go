@@ -1,11 +1,9 @@
-package compaction
+package process
 
 import (
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/session"
 )
 
 /**
@@ -28,14 +26,12 @@ import (
 
 var (
 	integrationTest bool
-
-	catalogSession *session.Session
 )
 
 func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
-		catalogSession = session.NewSession()
+		SessionInit()
 	}
 	os.Exit(m.Run())
 }

@@ -1,4 +1,4 @@
-package compaction
+package process
 
 import (
 	"testing"

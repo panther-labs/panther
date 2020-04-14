@@ -1,4 +1,4 @@
-package compaction
+package process
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	maxCompactionRetries = 5 // how many times we re-try compacting on error
+	// maxCompactionRetries = 5 // how many times we re-try compacting on error
 
 	ctasDatabase    = "panther_temp" // create temp tables here and delete when done
 	ctasSQLTemplate = `
@@ -48,6 +48,9 @@ func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time)
 
 	// generate CTAS sql
 
+	// generate a "tag" for the results folder, VERY IMPORTANT, this allows us to repeat without over writing results
+	// tag := uuid.New().String()
+
 	// execute CTAS through the Athena API Step Function (non-blocking)
 
 	return workflowID, nil
@@ -59,10 +62,7 @@ func generateCtasSQL(databaseName, tableType, tableName, bucketName string, colu
 	// generate name for table, by using this key it will fail if another is tried concurrently
 	tempTable = ctasDatabase + "." + databaseName + "_" + tableType + "_" + tableName + "_" + hour.Format("2006010215")
 
-	// generate a "tag" for the results folder, VERY IMPORTANT, this allows us to repeat without over writing results
-	// tag := uuid.New().String()
-
-	// list the columns
+	// collect the columns to make csv
 	selectCols := make([]string, len(columns))
 	for i := range columns {
 		selectCols[i] = *columns[i].Name
