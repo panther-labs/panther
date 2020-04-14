@@ -20,6 +20,8 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { PolicyDetailsMain } from '../../../graphql/fragments/PolicyDetailsMain.generated';
+import { PolicyDetailsExtra } from '../../../graphql/fragments/PolicyDetailsExtra.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,59 +30,17 @@ export type PolicyDetailsVariables = {
   input: Types.GetPolicyInput;
 };
 
-export type PolicyDetails = {
-  policy?: Types.Maybe<
-    Pick<
-      Types.PolicyDetails,
-      | 'autoRemediationId'
-      | 'autoRemediationParameters'
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'suppressions'
-      | 'id'
-      | 'reference'
-      | 'resourceTypes'
-      | 'runbook'
-      | 'severity'
-      | 'tags'
-      | 'body'
-    > & {
-      tests?: Types.Maybe<
-        Array<
-          Types.Maybe<
-            Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
-          >
-        >
-      >;
-    }
-  >;
-};
+export type PolicyDetails = { policy?: Types.Maybe<PolicyDetailsMain & PolicyDetailsExtra> };
 
 export const PolicyDetailsDocument = gql`
   query PolicyDetails($input: GetPolicyInput!) {
     policy(input: $input) {
-      autoRemediationId
-      autoRemediationParameters
-      description
-      displayName
-      enabled
-      suppressions
-      id
-      reference
-      resourceTypes
-      runbook
-      severity
-      tags
-      body
-      tests {
-        expectedResult
-        name
-        resource
-        resourceType
-      }
+      ...PolicyDetailsMain
+      ...PolicyDetailsExtra
     }
   }
+  ${PolicyDetailsMain}
+  ${PolicyDetailsExtra}
 `;
 
 /**
