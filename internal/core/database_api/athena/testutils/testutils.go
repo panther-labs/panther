@@ -52,10 +52,14 @@ const (
 var (
 	TestBucket string
 
-	TestYear  = "2020"
-	TestMonth = "03"
-	TestDay   = "02"
-	TestHour  = "01"
+	TestPartitionTime = time.Date(2020, 3, 2, 1, 0, 0, 0, time.UTC)
+
+	TestYear  = fmt.Sprintf("%d", TestPartitionTime.Year())
+	TestMonth = fmt.Sprintf("%01d", TestPartitionTime.Month())
+	TestDay   = fmt.Sprintf("%01d", TestPartitionTime.Day())
+	TestHour  = fmt.Sprintf("%01d", TestPartitionTime.Hour())
+
+	TestEventTime = TestPartitionTime.Format(`2006-01-02 15:04:05.000`)
 
 	TestTableColumns = []*glue.Column{
 		{
@@ -68,6 +72,11 @@ var (
 			Type:    aws.String("int"),
 			Comment: aws.String("this is a column"),
 		},
+		{
+			Name:    aws.String("p_event_time"),
+			Type:    aws.String("timestamp"),
+			Comment: aws.String("this is a panther column"),
+		},
 	}
 
 	YearPartitionName  = "year"
@@ -78,22 +87,22 @@ var (
 	TestTablePartitions = []*glue.Column{
 		{
 			Name:    aws.String(YearPartitionName),
-			Type:    aws.String("string"),
+			Type:    aws.String("int"),
 			Comment: aws.String("this is the year"),
 		},
 		{
 			Name:    aws.String(MonthPartitionName),
-			Type:    aws.String("string"),
+			Type:    aws.String("int"),
 			Comment: aws.String("this is the month"),
 		},
 		{
 			Name:    aws.String(DayPartitionName),
-			Type:    aws.String("string"),
+			Type:    aws.String("int"),
 			Comment: aws.String("this is the day"),
 		},
 		{
 			Name:    aws.String(HourPartitionName),
-			Type:    aws.String("string"),
+			Type:    aws.String("int"),
 			Comment: aws.String("this is the hour"),
 		},
 	}
@@ -101,7 +110,7 @@ var (
 	TestKey string
 
 	TestTableDataNrows   = 10
-	TestTableRowTemplate = `{"col1": %d, "col2": null}`
+	TestTableRowTemplate = `{"col1": %d, "col2": null, "p_event_time": "%s"}`
 	TestTableRows        []string
 )
 
@@ -117,7 +126,7 @@ func init() {
 	TestKey += "testdata.json"
 
 	for i := 0; i < TestTableDataNrows; i++ {
-		TestTableRows = append(TestTableRows, fmt.Sprintf(TestTableRowTemplate, i))
+		TestTableRows = append(TestTableRows, fmt.Sprintf(TestTableRowTemplate, i, TestEventTime))
 	}
 }
 
@@ -135,25 +144,30 @@ func CheckTableDetail(t *testing.T, tables []*models.TableDetail) {
 	require.Equal(t, *TestTableColumns[1].Type, tables[0].Columns[1].Type)
 	require.Equal(t, *TestTableColumns[1].Comment, *tables[0].Columns[1].Description)
 
+	// p_event_time
+	require.Equal(t, *TestTableColumns[2].Name, tables[0].Columns[2].Name)
+	require.Equal(t, *TestTableColumns[2].Type, tables[0].Columns[2].Type)
+	require.Equal(t, *TestTableColumns[2].Comment, *tables[0].Columns[2].Description)
+
 	// year
-	require.Equal(t, *TestTablePartitions[0].Name, tables[0].Columns[2].Name)
-	require.Equal(t, *TestTablePartitions[0].Type, tables[0].Columns[2].Type)
-	require.Equal(t, *TestTablePartitions[0].Comment, *tables[0].Columns[2].Description)
+	require.Equal(t, *TestTablePartitions[0].Name, tables[0].Columns[3].Name)
+	require.Equal(t, *TestTablePartitions[0].Type, tables[0].Columns[3].Type)
+	require.Equal(t, *TestTablePartitions[0].Comment, *tables[0].Columns[3].Description)
 
 	// month
-	require.Equal(t, *TestTablePartitions[1].Name, tables[0].Columns[3].Name)
-	require.Equal(t, *TestTablePartitions[1].Type, tables[0].Columns[3].Type)
-	require.Equal(t, *TestTablePartitions[1].Comment, *tables[0].Columns[3].Description)
+	require.Equal(t, *TestTablePartitions[1].Name, tables[0].Columns[4].Name)
+	require.Equal(t, *TestTablePartitions[1].Type, tables[0].Columns[4].Type)
+	require.Equal(t, *TestTablePartitions[1].Comment, *tables[0].Columns[4].Description)
 
 	// day
-	require.Equal(t, *TestTablePartitions[2].Name, tables[0].Columns[4].Name)
-	require.Equal(t, *TestTablePartitions[2].Type, tables[0].Columns[4].Type)
-	require.Equal(t, *TestTablePartitions[2].Comment, *tables[0].Columns[4].Description)
+	require.Equal(t, *TestTablePartitions[2].Name, tables[0].Columns[5].Name)
+	require.Equal(t, *TestTablePartitions[2].Type, tables[0].Columns[5].Type)
+	require.Equal(t, *TestTablePartitions[2].Comment, *tables[0].Columns[5].Description)
 
 	// hour
-	require.Equal(t, *TestTablePartitions[3].Name, tables[0].Columns[5].Name)
-	require.Equal(t, *TestTablePartitions[3].Type, tables[0].Columns[5].Type)
-	require.Equal(t, *TestTablePartitions[3].Comment, *tables[0].Columns[5].Description)
+	require.Equal(t, *TestTablePartitions[3].Name, tables[0].Columns[6].Name)
+	require.Equal(t, *TestTablePartitions[3].Type, tables[0].Columns[6].Type)
+	require.Equal(t, *TestTablePartitions[3].Comment, *tables[0].Columns[6].Description)
 }
 
 func SetupTables(t *testing.T, glueClient glueiface.GlueAPI, s3Client s3iface.S3API) {
