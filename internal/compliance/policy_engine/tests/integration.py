@@ -45,10 +45,6 @@ _INPUT = {
             {
                 'body': 'def policy(resource): return 0/0',
                 'id': 'runtime-error'
-            },
-            {
-                'body': 'import panther\ndef policy(resource): return True',
-                'id': 'import-test'
             }
         ],
     'resources':
@@ -120,7 +116,7 @@ class IntegrationTest(unittest.TestCase):
                                 }
                             ],
                         'failed': ['cloudtrail-encrypted'],
-                        'passed': ['import-test']
+                        'passed': []
                     },
                     {
                         'id': 'arn:aws:cloudtrail:123:meta',
@@ -135,7 +131,7 @@ class IntegrationTest(unittest.TestCase):
                                 }
                             ],
                         'failed': [],
-                        'passed': ['cloudtrail//!#enabled', 'import-test']
+                        'passed': ['cloudtrail//!#enabled']
                     },
                 ]
         }

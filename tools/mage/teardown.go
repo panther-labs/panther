@@ -31,6 +31,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/pkg/errors"
@@ -40,7 +41,8 @@ import (
 
 const (
 	// Upper bound on the number of s3 object versions we'll delete manually.
-	s3MaxDeletes = 10000
+	s3MaxDeletes    = 10000
+	globalLayerName = "panther-engine-globals"
 )
 
 type deleteStackResult struct {
@@ -77,6 +79,9 @@ func Teardown() {
 
 	// CFN can't delete non-empty ECR repos, so we just forcefully delete them here.
 	destroyEcrRepos(awsSession, ecrRepos)
+
+	// CFN is not used to create lambda layers, so we request the backend to handle this before tearing it down
+	destroyLambdaLayers(awsSession)
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
 	// We destroy the buckets first because after the stacks are destroyed we will lose
@@ -142,6 +147,43 @@ func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
 				continue
 			}
 			logger.Fatalf("failed to delete ECR repository: %v", err)
+		}
+	}
+}
+
+// Remove layers created for the policy and rules engines
+func destroyLambdaLayers(awsSession *session.Session) {
+	client := lambda.New(awsSession)
+	// List all the layers
+	layers, err := client.ListLayers(&lambda.ListLayersInput{})
+	if err != nil {
+		logger.Fatal("failed to list lambda layers")
+	}
+
+	// Find the layers that need to be destroyed
+	var layersToDestroy []*string
+	for _, layer := range layers.Layers {
+		if aws.StringValue(layer.LayerName) == globalLayerName {
+			layersToDestroy = append(layersToDestroy, layer.LayerName)
+		}
+	}
+
+	// Find and destroy each version of each layer that needs to be destroyed
+	for _, layer := range layersToDestroy {
+		versions, err := client.ListLayerVersions(&lambda.ListLayerVersionsInput{
+			LayerName: layer,
+		})
+		if err != nil {
+			logger.Fatal("failed to list lambda layers")
+		}
+		for _, version := range versions.LayerVersions {
+			_, err := client.DeleteLayerVersion(&lambda.DeleteLayerVersionInput{
+				LayerName:     layer,
+				VersionNumber: version.Version,
+			})
+			if err != nil {
+				logger.Fatal("failed to list lambda layers")
+			}
 		}
 	}
 }

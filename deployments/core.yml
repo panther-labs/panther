@@ -464,6 +464,7 @@ Resources:
       Description: Dispatch alerts to their specified outputs
       Environment:
         Variables:
+          DEBUG: !Ref Debug
           ALERT_QUEUE_URL: !Ref AlertQueue
           ALERT_RETRY_DURATION_MINS: !Ref AlertRetryDurationMins
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
@@ -676,7 +677,9 @@ Resources:
       Description: Manage updates to the layers on the panther python engines.
       Environment:
         Variables:
-          GLOBAL_LAYER: panther-engine-globals
+          DEBUG: !Ref Debug
+          GLOBAL_LAYER_NAME: panther-engine-globals
+          GLOBAL_LAYER_ARN: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals'
           POLICY_ENGINE: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine'
           RULE_ENGINE: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine'
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
@@ -723,8 +726,16 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: lambda:PublishLayerVersion
+              Action:
+                - lambda:PublishLayerVersion
+                - lambda:ListLayerVersions
               Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals'
+        - Id: DeleteLayerVersions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:DeleteLayerVersion
+              Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*'
         - Id: MaintainExistingLayers
           Version: 2012-10-17
           Statement:

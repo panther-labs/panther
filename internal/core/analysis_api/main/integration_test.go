@@ -257,7 +257,6 @@ func TestIntegrationAPI(t *testing.T) {
 	require.NoError(t, testutils.ClearS3Bucket(awsSession, bucketName))
 	require.NoError(t, testutils.ClearDynamoTable(awsSession, tableName))
 
-	require.NotEmpty(t, endpoint)
 	apiClient = client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
 		WithBasePath("/v1").WithHost(endpoint))
 

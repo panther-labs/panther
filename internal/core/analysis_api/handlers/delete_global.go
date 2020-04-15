@@ -34,10 +34,10 @@ func DeleteGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	if err = dynamoBatchDelete(input); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	if err = s3BatchDelete(input); err != nil {
+	if err = updateLayer(typeGlobal); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	if err = updateLayer(typeGlobal); err != nil {
+	if err = s3BatchDelete(input); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 

@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -39,7 +40,8 @@ const (
 )
 
 var (
-	globalLayerName  = aws.String(os.Getenv("GLOBAL_LAYER"))
+	globalLayerName  = aws.String(os.Getenv("GLOBAL_LAYER_NAME"))
+	globalLayerArn   = aws.String(os.Getenv("GLOBAL_LAYER_ARN"))
 	policyEngineName = aws.String(os.Getenv("POLICY_ENGINE"))
 	ruleEngineName   = aws.String(os.Getenv("RULE_ENGINE"))
 )
@@ -60,18 +62,31 @@ func UpdateLayer(analysisType string) error {
 		return err
 	}
 
-	layerArn, layerVersionArn, err := publishLayer(newLayer)
+	if newLayer == nil {
+		return removeGlobalLayer()
+	}
+
+	layerArn, layerVersion, err := publishLayer(newLayer)
 	if err != nil {
 		return err
 	}
 
+	zap.L().Debug("about to update policy engine")
 	// For policy/rule layers, only do one of these
-	err = updateLambda(policyEngineName, layerArn, layerVersionArn)
+	err = updateLambda(policyEngineName, layerArn, layerVersion)
 	if err != nil {
+		zap.L().Debug("policy engine update returned error")
 		return err
 	}
 
-	return updateLambda(ruleEngineName, layerArn, layerVersionArn)
+	zap.L().Debug("about to update rules engine")
+	err = updateLambda(ruleEngineName, layerArn, layerVersion)
+	if err != nil {
+		zap.L().Debug("rules engine update returned error")
+		return err
+	}
+
+	return consolidateLayerVersions(layerArn, layerVersion)
 }
 
 // buildLayer looks up the required analyses and from them constructs the zip archive that defines the layer
@@ -86,6 +101,11 @@ func buildLayer() ([]byte, error) {
 		HTTPClient: httpClient,
 	})
 	if err != nil {
+		if _, ok := err.(*analysisoperations.GetGlobalNotFound); ok {
+			// In this case, the global was removed entirely and so we should delete the layer. When multiple globals
+			// are supported, this will be analogous to the last global being deleted.
+			return nil, nil
+		}
 		return nil, err
 	}
 	return packageLayer(map[string]string{globalModuleName: string(global.Payload.Body)})
@@ -116,9 +136,47 @@ func packageLayer(analyses map[string]string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// removeGlobalLayer removes the global layer from policy and rule engines
+func removeGlobalLayer() error {
+	err := updateLambda(policyEngineName, globalLayerArn, nil)
+	if err != nil {
+		return err
+	}
+	err = updateLambda(ruleEngineName, globalLayerArn, nil)
+	if err != nil {
+		return err
+	}
+	return consolidateLayerVersions(globalLayerName, nil)
+}
+
+// consolidateLayerVersions deletes all versions of a layer except for the given version, in order to make sure we
+// don't go over the regional lambda limit (which layers count against)
+func consolidateLayerVersions(layerName *string, layerVersion *int64) error {
+	versions, err := lambdaClient.ListLayerVersions(&lambda.ListLayerVersionsInput{
+		LayerName: layerName,
+	})
+	if err != nil {
+		return err
+	}
+	for _, version := range versions.LayerVersions {
+		if aws.Int64Value(version.Version) == aws.Int64Value(layerVersion) {
+			continue
+		}
+		_, err := lambdaClient.DeleteLayerVersion(&lambda.DeleteLayerVersionInput{
+			LayerName:     layerName,
+			VersionNumber: version.Version,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // publishLayer takes a zip file and publishes it as a new lambda layer. It returns both the layer ARN and the layer
 // ARN with version, for simplicity's sake.
-func publishLayer(layerBody []byte) (*string, *string, error) {
+func publishLayer(layerBody []byte) (*string, *int64, error) {
 	zap.L().Debug("publishing lambda layer")
 	layer, err := lambdaClient.PublishLayerVersion(&lambda.PublishLayerVersionInput{
 		CompatibleRuntimes: []*string{aws.String(layerRuntime)},
@@ -131,13 +189,18 @@ func publishLayer(layerBody []byte) (*string, *string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	return layer.LayerArn, layer.LayerVersionArn, nil
+	return layer.LayerArn, layer.Version, nil
 }
 
 // updateLambda updates the function configuration of a given lambda to include the specified lambda layer.
 // The layer is updated to the given version if it is already present.
-func updateLambda(lambdaName, layerArn, layerVersionArn *string) error {
-	zap.L().Debug("updating lambda function with new layer", zap.String("lambda", *lambdaName), zap.String("layer", *layerVersionArn))
+func updateLambda(lambdaName, layerArn *string, layerVersion *int64) error {
+	zap.L().Debug(
+		"updating lambda function with new layer",
+		zap.String("lambda", aws.StringValue(lambdaName)),
+		zap.String("layer", aws.StringValue(layerArn)),
+		zap.Int64("version", aws.Int64Value(layerVersion)),
+	)
 	// Lambda does not let you update just one layer on a lambda, you must specify the name of each desired layer so
 	// we start by listing what layers are already present to preserve them.
 	oldLayers, err := lambdaClient.GetFunctionConfiguration(&lambda.GetFunctionConfigurationInput{
@@ -148,21 +211,31 @@ func updateLambda(lambdaName, layerArn, layerVersionArn *string) error {
 	}
 
 	// Replace the layer we want to update with the new layer
-	newLayers := make([]*string, len(oldLayers.Layers))
+	//
+	// Append the version to the ARN to get the versioned layer ARN
+	newLayerVersionArn := aws.StringValue(layerArn) + ":" + strconv.FormatInt(aws.Int64Value(layerVersion), 10)
+	zap.L().Debug("constructed newLayerVersionArn", zap.String("newLayerVersionArn", newLayerVersionArn))
+	var newLayers []*string
 	replaced := false
-	for i, layer := range oldLayers.Layers {
+	for _, layer := range oldLayers.Layers {
 		if strings.HasPrefix(*layer.Arn, *layerArn) {
-			newLayers[i] = layerVersionArn
+			if layerVersion != nil {
+				// Update operation
+				zap.L().Debug("update operations")
+				newLayers = append(newLayers, aws.String(newLayerVersionArn))
+			}
+			zap.L().Debug("found")
 			replaced = true
 		} else {
-			newLayers[i] = layer.Arn
+			zap.L().Debug("not found, appending current layer", zap.String("layer.Arn", *layer.Arn))
+			newLayers = append(newLayers, layer.Arn)
 		}
 	}
 
-	// Handle the case where we are not updating an existing layer
-	if !replaced {
+	// Handle the case where we are not updating or deleting an existing layer
+	if !replaced && layerVersion != nil {
 		zap.L().Debug("no lambda layer to replace")
-		newLayers = append(newLayers, layerVersionArn)
+		newLayers = append(newLayers, aws.String(newLayerVersionArn))
 	}
 
 	// Update the lambda function. This operation may take 1-3 seconds.
