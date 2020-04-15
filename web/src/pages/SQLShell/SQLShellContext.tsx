@@ -72,6 +72,7 @@ function reducer(state: State, action: Actions) {
         ...state,
         queryStatus: action.payload.status,
         globalErrorMessage: action.payload.status !== 'errored' ? '' : state.globalErrorMessage,
+        queryId: action.payload.status === null ? null : state.queryId,
       };
     default:
       throw new Error();
