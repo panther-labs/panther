@@ -52,7 +52,7 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 	for i, record := range event.Records{
 		messages[i] = record.Body
 	}
-	dataStreams, err := sources.ReadMessages(messages)
+	dataStreams, err := sources.ReadSnsMessages(messages)
 	if err != nil {
 		return err
 	}
