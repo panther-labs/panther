@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 AWSTemplateFormatVersion: 2010-09-09
 Description: Sample template for gathering osquery logs into S3 via Firehose
 
@@ -32,7 +33,7 @@ Resources:
         BucketARN: !GetAtt OsqueryDataBucket.Arn
         Prefix: osquery/
         BufferingHints:
-          # Data is flushed once one of the buffer hints are satisifed.
+          # Data is flushed once one of the buffer hints are satisfied.
           IntervalInSeconds: 300
           SizeInMBs: 128
         CompressionFormat: GZIP

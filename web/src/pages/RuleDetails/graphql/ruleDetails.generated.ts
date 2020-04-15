@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
+import { RuleDates } from '../../../graphql/fragments/RuleDates.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -30,23 +32,7 @@ export type RuleDetailsVariables = {
 };
 
 export type RuleDetails = {
-  rule?: Types.Maybe<
-    Pick<
-      Types.RuleDetails,
-      | 'createdAt'
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'id'
-      | 'dedupPeriodMinutes'
-      | 'lastModified'
-      | 'reference'
-      | 'logTypes'
-      | 'runbook'
-      | 'severity'
-      | 'tags'
-    >
-  >;
+  rule?: Types.Maybe<RuleBasic & RuleDates>;
   alerts?: Types.Maybe<{
     alertSummaries: Array<Types.Maybe<Pick<Types.AlertSummary, 'alertId' | 'creationTime'>>>;
   }>;
@@ -55,18 +41,8 @@ export type RuleDetails = {
 export const RuleDetailsDocument = gql`
   query RuleDetails($ruleDetailsInput: GetRuleInput!, $alertsForRuleInput: ListAlertsInput!) {
     rule(input: $ruleDetailsInput) {
-      createdAt
-      description
-      displayName
-      enabled
-      id
-      dedupPeriodMinutes
-      lastModified
-      reference
-      logTypes
-      runbook
-      severity
-      tags
+      ...RuleBasic
+      ...RuleDates
     }
     alerts(input: $alertsForRuleInput) {
       alertSummaries {
@@ -75,6 +51,8 @@ export const RuleDetailsDocument = gql`
       }
     }
   }
+  ${RuleBasic}
+  ${RuleDates}
 `;
 
 /**

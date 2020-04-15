@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,27 +29,15 @@ export type RuleTeaserVariables = {
   input: Types.GetRuleInput;
 };
 
-export type RuleTeaser = {
-  rule?: Types.Maybe<
-    Pick<
-      Types.RuleDetails,
-      'description' | 'displayName' | 'id' | 'logTypes' | 'runbook' | 'severity' | 'tags'
-    >
-  >;
-};
+export type RuleTeaser = { rule?: Types.Maybe<RuleBasic> };
 
 export const RuleTeaserDocument = gql`
   query RuleTeaser($input: GetRuleInput!) {
     rule(input: $input) {
-      description
-      displayName
-      id
-      logTypes
-      runbook
-      severity
-      tags
+      ...RuleBasic
     }
   }
+  ${RuleBasic}
 `;
 
 /**

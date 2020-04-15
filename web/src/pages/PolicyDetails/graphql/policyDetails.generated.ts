@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { PolicyDetailsMain } from '../../../graphql/fragments/PolicyDetailsMain.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -30,26 +31,7 @@ export type PolicyDetailsVariables = {
 };
 
 export type PolicyDetails = {
-  policy?: Types.Maybe<
-    Pick<
-      Types.PolicyDetails,
-      | 'autoRemediationId'
-      | 'autoRemediationParameters'
-      | 'complianceStatus'
-      | 'createdAt'
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'suppressions'
-      | 'id'
-      | 'lastModified'
-      | 'reference'
-      | 'resourceTypes'
-      | 'runbook'
-      | 'severity'
-      | 'tags'
-    >
-  >;
+  policy?: Types.Maybe<PolicyDetailsMain>;
   resourcesForPolicy?: Types.Maybe<{
     items?: Types.Maybe<
       Array<
@@ -84,21 +66,7 @@ export const PolicyDetailsDocument = gql`
     $resourcesForPolicyInput: ResourcesForPolicyInput!
   ) {
     policy(input: $policyDetailsInput) {
-      autoRemediationId
-      autoRemediationParameters
-      complianceStatus
-      createdAt
-      description
-      displayName
-      enabled
-      suppressions
-      id
-      lastModified
-      reference
-      resourceTypes
-      runbook
-      severity
-      tags
+      ...PolicyDetailsMain
     }
     resourcesForPolicy(input: $resourcesForPolicyInput) {
       items {
@@ -133,6 +101,7 @@ export const PolicyDetailsDocument = gql`
       integrationLabel
     }
   }
+  ${PolicyDetailsMain}
 `;
 
 /**

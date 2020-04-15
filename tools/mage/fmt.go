@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import (
 )
 
 var (
-	goTargets = []string{"api/lambda", "internal", "pkg", "tools", "cmd", "magefile.go"}
+	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
 	pyTargets = []string{
 		"internal/compliance/remediation_aws",
 		"internal/compliance/policy_engine",
@@ -41,24 +41,34 @@ var (
 // Fmt Format source files
 func Fmt() {
 	// Add license headers first (don't run in parallel with other formatters)
-	fmtLicense()
+	fmtLicenseAll()
 
 	results := make(chan goroutineResult)
 	count := 0
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"gofmt", gofmt(goTargets...)}
+		c <- goroutineResult{"fmt: gofmt", gofmt(goTargets...)}
 	}(results)
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"yapf", yapf(pyTargets...)}
+		c <- goroutineResult{"fmt: go mod tidy", goModTidy()}
 	}(results)
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"prettier", prettier()}
+		c <- goroutineResult{"fmt: yapf", yapf(pyTargets...)}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt: prettier", prettier("")}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt: tf", terraformFmt()}
 	}(results)
 
 	count++
@@ -71,7 +81,7 @@ func Fmt() {
 
 // Apply full go formatting to the given paths
 func gofmt(paths ...string) error {
-	logger.Info("fmt: gofmt " + strings.Join(paths, " "))
+	logger.Debug("fmt: gofmt " + strings.Join(paths, " "))
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
 	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, paths...)...); err != nil {
@@ -102,6 +112,7 @@ func gofmt(paths ...string) error {
 	if err := sh.Run("goimports", args...); err != nil {
 		return fmt.Errorf("goimports failed: %v", err)
 	}
+
 	return nil
 }
 
@@ -127,9 +138,14 @@ func removeImportNewlines(path string) error {
 	return ioutil.WriteFile(path, bytes.Join(newLines, []byte("\n")), 0644)
 }
 
+// Tidy go.mod/go.sum
+func goModTidy() error {
+	return sh.Run("go", "mod", "tidy")
+}
+
 // Apply Python formatting to the given paths
 func yapf(paths ...string) error {
-	logger.Info("fmt: python yapf " + strings.Join(paths, " "))
+	logger.Debug("fmt: python yapf " + strings.Join(paths, " "))
 	args := []string{"--in-place", "--parallel", "--recursive"}
 	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
 		return fmt.Errorf("failed to format python: %v", err)
@@ -138,10 +154,12 @@ func yapf(paths ...string) error {
 }
 
 // Apply prettier formatting to web, markdown, and yml files
-func prettier() error {
-	files := "**/*.{ts,js,tsx,md,json,yaml,yml}"
-	logger.Info("fmt: prettier " + files)
-	args := []string{"--write", files}
+func prettier(pathPattern string) error {
+	if pathPattern == "" {
+		pathPattern = "**/*.{ts,js,tsx,md,json,yaml,yml}"
+	}
+	logger.Debug("fmt: prettier " + pathPattern)
+	args := []string{"--write", pathPattern}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")
 	}
@@ -150,4 +168,10 @@ func prettier() error {
 		return fmt.Errorf("failed to format with prettier: %v", err)
 	}
 	return nil
+}
+
+// Apply Terraform formatting to aux templates
+func terraformFmt() error {
+	root := filepath.Join("deployments", "auxiliary", "terraform")
+	return sh.Run(terraformPath, "fmt", "-recursive", root)
 }

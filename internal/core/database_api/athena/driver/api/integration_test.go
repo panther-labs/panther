@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -532,6 +532,8 @@ func checkQueryResults(t *testing.T, expectedRowCount, offset int, rows []*model
 	require.Equal(t, expectedRowCount, len(rows))
 	for i := 0; i < len(rows); i++ {
 		require.Equal(t, strconv.Itoa(i+offset), rows[i].Columns[0].Value)
+		require.Equal(t, "NULL", rows[i].Columns[1].Value)
+		require.Equal(t, testutils.TestEventTime, rows[i].Columns[2].Value)
 	}
 }
 

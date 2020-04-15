@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,6 +30,8 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
+
+// Execute an Athena query via step function workflow.
 
 const (
 	stateMachineName = "panther-athena-workflow"
@@ -74,7 +76,7 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 		err = errors.Wrapf(err, "failed to start workflow execution for: %#v", input)
 		return output, err
 	}
-	output.WorkflowIdentifier.WorkflowID = *startExecutionOutput.ExecutionArn
+	output.Workflow.WorkflowID = *startExecutionOutput.ExecutionArn
 
 	return output, err
 }

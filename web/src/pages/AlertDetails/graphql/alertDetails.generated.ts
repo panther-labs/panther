@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { AlertDetailsFull } from '../../../graphql/fragments/AlertDetailsFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -28,35 +29,15 @@ export type AlertDetailsVariables = {
   input: Types.GetAlertInput;
 };
 
-export type AlertDetails = {
-  alert?: Types.Maybe<
-    Pick<
-      Types.AlertDetails,
-      | 'alertId'
-      | 'ruleId'
-      | 'creationTime'
-      | 'eventsMatched'
-      | 'updateTime'
-      | 'eventsLastEvaluatedKey'
-      | 'events'
-      | 'dedupString'
-    >
-  >;
-};
+export type AlertDetails = { alert?: Types.Maybe<AlertDetailsFull> };
 
 export const AlertDetailsDocument = gql`
   query AlertDetails($input: GetAlertInput!) {
     alert(input: $input) {
-      alertId
-      ruleId
-      creationTime
-      eventsMatched
-      updateTime
-      eventsLastEvaluatedKey
-      events
-      dedupString
+      ...AlertDetailsFull
     }
   }
+  ${AlertDetailsFull}
 `;
 
 /**

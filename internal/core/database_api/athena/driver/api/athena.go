@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/pkg/awsathena"
@@ -85,6 +86,15 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		var userID string
+		if input.UserID != nil {
+			userID = *input.UserID
+		}
+		zap.L().Info("ExecuteAsyncQuery",
+			zap.String("userId", userID),
+			zap.String("queryId", output.QueryID),
+			zap.Error(err))
 	}()
 
 	startOutput, err := awsathena.StartQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
@@ -102,7 +112,6 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 
 	output.Status = models.QueryRunning
 	output.QueryID = *startOutput.QueryExecutionId
-
 	return output, nil
 }
 
@@ -114,6 +123,10 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		zap.L().Info("GetQueryStatus",
+			zap.String("queryId", input.QueryID),
+			zap.Error(err))
 	}()
 
 	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
@@ -135,7 +148,6 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 	case models.QueryCanceled:
 		output.SQLError = "Query canceled"
 	}
-
 	return output, nil
 }
 
@@ -147,9 +159,13 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		zap.L().Info("GetQueryResults",
+			zap.String("queryId", input.QueryID),
+			zap.Error(err))
 	}()
 
-	getStatusOutput, err := api.GetQueryStatus(&input.QueryIdentifier)
+	getStatusOutput, err := api.GetQueryStatus(&input.QueryInfo)
 	if err != nil {
 		return output, err
 	}
@@ -167,7 +183,6 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 			return output, err
 		}
 	}
-
 	return output, nil
 }
 
@@ -179,6 +194,10 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		zap.L().Info("GetQueryResultsLink",
+			zap.String("queryId", input.QueryID),
+			zap.Error(err))
 	}()
 
 	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
@@ -218,7 +237,6 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 		err = errors.Errorf("failed to sign: %s,", s3path)
 		return output, err
 	}
-
 	return output, nil
 }
 
@@ -230,6 +248,10 @@ func (api API) StopQuery(input *models.StopQueryInput) (*models.StopQueryOutput,
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		zap.L().Info("StopQuery",
+			zap.String("queryId", input.QueryID),
+			zap.Error(err))
 	}()
 
 	_, err = awsathena.StopQuery(athenaClient, input.QueryID)
@@ -294,8 +316,14 @@ func collectResults(skipHeader bool, queryResult *athena.GetQueryResultsOutput, 
 		}
 		var columns []*models.Column
 		for _, col := range row.Data {
+			var value string
+			if col.VarCharValue == nil {
+				value = "NULL"
+			} else {
+				value = *col.VarCharValue
+			}
 			columns = append(columns, &models.Column{
-				Value: *col.VarCharValue,
+				Value: value,
 			})
 		}
 		output.ResultsPage.Rows = append(output.ResultsPage.Rows, &models.Row{Columns: columns})
