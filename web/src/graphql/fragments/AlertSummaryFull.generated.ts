@@ -24,7 +24,7 @@ import gql from 'graphql-tag';
 
 export type AlertSummaryFull = Pick<
   Types.AlertSummary,
-  'alertId' | 'ruleId' | 'title' | 'creationTime' | 'eventsMatched' | 'updateTime'
+  'alertId' | 'ruleId' | 'title' | 'severity' | 'creationTime' | 'eventsMatched' | 'updateTime'
 >;
 
 export const AlertSummaryFull = gql`
@@ -32,6 +32,7 @@ export const AlertSummaryFull = gql`
     alertId
     ruleId
     title
+    severity
     creationTime
     eventsMatched
     updateTime
