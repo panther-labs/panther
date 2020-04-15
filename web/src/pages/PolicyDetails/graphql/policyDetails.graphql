@@ -1,54 +1,40 @@
 query PolicyDetails(
-    $policyDetailsInput: GetPolicyInput!
-    $resourcesForPolicyInput: ResourcesForPolicyInput!
+  $policyDetailsInput: GetPolicyInput!
+  $resourcesForPolicyInput: ResourcesForPolicyInput!
 ) {
-    policy(input: $policyDetailsInput) {
-        autoRemediationId
-        autoRemediationParameters
-        complianceStatus
-        createdAt
-        description
-        displayName
-        enabled
-        suppressions
-        id
-        lastModified
-        reference
-        resourceTypes
-        runbook
-        severity
-        tags
+  policy(input: $policyDetailsInput) {
+    ...PolicyDetailsMain
+  }
+  resourcesForPolicy(input: $resourcesForPolicyInput) {
+    items {
+      errorMessage
+      integrationId
+      lastUpdated
+      policyId
+      resourceId
+      status
+      suppressed
     }
-    resourcesForPolicy(input: $resourcesForPolicyInput) {
-        items {
-            errorMessage
-            integrationId
-            lastUpdated
-            policyId
-            resourceId
-            status
-            suppressed
-        }
-        paging {
-            totalItems
-            totalPages
-            thisPage
-        }
-        totals {
-            active {
-                fail
-                pass
-                error
-            }
-            suppressed {
-                fail
-                pass
-                error
-            }
-        }
+    paging {
+      totalItems
+      totalPages
+      thisPage
     }
-    listComplianceIntegrations {
-        integrationId
-        integrationLabel
+    totals {
+      active {
+        fail
+        pass
+        error
+      }
+      suppressed {
+        fail
+        pass
+        error
+      }
     }
+  }
+  listComplianceIntegrations {
+    integrationId
+    integrationLabel
+  }
 }

@@ -1,13 +1,5 @@
 query AlertDetails($input: GetAlertInput!) {
   alert(input: $input) {
-    alertId
-    ruleId
-    title
-    creationTime
-    eventsMatched
-    updateTime
-    eventsLastEvaluatedKey
-    events
-    dedupString
+    ...AlertDetailsFull
   }
 }
