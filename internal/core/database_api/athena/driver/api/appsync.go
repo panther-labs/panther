@@ -29,6 +29,7 @@ import (
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
@@ -69,6 +70,13 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		zap.L().Info("NotifyAppSync",
+			zap.String("userData", input.UserData),
+			zap.String("queryId", input.QueryID),
+			zap.String("workflowID", input.WorkflowID),
+			zap.Error(err))
 	}()
 
 	// make sigv4 https request to appsync endpoint notifying query is complete, sending  queryId and workflowId

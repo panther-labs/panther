@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
@@ -39,6 +40,14 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		zap.L().Info("InvokeNotifyLambda",
+			zap.String("userData", input.UserData),
+			zap.String("queryId", input.QueryID),
+			zap.String("lambdaName", input.LambdaName),
+			zap.String("methodName", input.MethodName),
+			zap.Error(err))
 	}()
 
 	// these lambdas are expected to take userData, queryId and workflowId in as arguments

@@ -43,6 +43,7 @@ import (
 const (
 	printJSON = false // set to true to print json input/output (useful for sharing with frontend devs)
 
+	testUserID       = "testUserID"
 	testSQL          = `select * from ` + testutils.TestTable + ` order by col1 asc`      // tests may break w/out order by
 	badExecutingSQL  = `select * from nosuchtable`                                        // fails AFTER query starts
 	malformedSQL     = `wewewewew`                                                        // fails when query starts
@@ -135,6 +136,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	// -------- ExecuteQuery()
 
 	var executeQueryInput models.ExecuteQueryInput
+	executeQueryInput.UserID = aws.String(testUserID)
 	executeQueryInput.DatabaseName = testutils.TestDb
 	executeQueryInput.SQL = testSQL
 	executeQueryOutput, err := runExecuteQuery(useLambda, &executeQueryInput)
@@ -157,6 +159,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	// -------- ExecuteQuery() BAD SQL
 
 	var executeBadQueryInput models.ExecuteQueryInput
+	executeBadQueryInput.UserID = aws.String(testUserID)
 	executeBadQueryInput.DatabaseName = testutils.TestDb
 	executeBadQueryInput.SQL = malformedSQL
 	executeBadQueryOutput, err := runExecuteQuery(useLambda, &executeBadQueryInput)
@@ -169,6 +172,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	if useLambda { // only for lambda to test access restrictions
 		var executeDropTableInput models.ExecuteQueryInput
+		executeDropTableInput.UserID = aws.String(testUserID)
 		executeDropTableInput.DatabaseName = testutils.TestDb
 		executeDropTableInput.SQL = dropTableSQL
 		executeDropTableOutput, err := runExecuteQuery(useLambda, &executeDropTableInput)
@@ -182,6 +186,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	if useLambda { // only for lambda to test access restrictions
 		var executeCreateTableAsInput models.ExecuteQueryInput
+		executeCreateTableAsInput.UserID = aws.String(testUserID)
 		executeCreateTableAsInput.DatabaseName = testutils.TestDb
 		executeCreateTableAsInput.SQL = createTableAsSQL
 		executeCreateTableAsOutput, err := runExecuteQuery(useLambda, &executeCreateTableAsInput)
@@ -194,6 +199,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- ExecuteAsyncQuery()
 
 	var executeAsyncQueryInput models.ExecuteAsyncQueryInput
+	executeAsyncQueryInput.UserID = aws.String(testUserID)
 	executeAsyncQueryInput.DatabaseName = testutils.TestDb
 	executeAsyncQueryInput.SQL = testSQL
 	executeAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, &executeAsyncQueryInput)
@@ -266,6 +272,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	//  -------- ExecuteAsyncQuery() BAD SQL
 
 	var executeBadAsyncQueryInput models.ExecuteAsyncQueryInput
+	executeBadAsyncQueryInput.UserID = aws.String(testUserID)
 	executeBadAsyncQueryInput.DatabaseName = testutils.TestDb
 	executeBadAsyncQueryInput.SQL = badExecutingSQL
 	executeBadAsyncQueryOutput, err := runExecuteAsyncQuery(useLambda, &executeBadAsyncQueryInput)
@@ -323,7 +330,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 				- Add a subscription below and click "play" button ... you should see "Subscribed to 1 mutations" and a spinner:
 
 			       subscription integQuerySub {
-			          queryDone(userData: "testUser") {
+			          queryDone(userData: "testUserData") {
 			            userData
 			            queryId
 			            workflowId
@@ -340,7 +347,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			        {
 			          "data": {
 			           "queryDone": {
-			             "userData": "testUser",
+			             "userData": "testUserData",
 			             "queryId": "4c223d6e-a41a-418f-b97b-b01f044cbdc9",
 			             "workflowId": "arn:aws:states:us-east-2:050603629990:execution:panther-athena-workflow:cf56beb0-7493-42ae-a9fd-a024812b8eac"
 			           }
@@ -352,9 +359,10 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			     UI should use the queryId to call panther-athena-api:GetQueryResults to display results.
 	*/
 
-	userData := "testUser" // this is expected to be passed all the way through the workflow, validations will enforce
+	userData := "testUserData" // this is expected to be passed all the way through the workflow, validations will enforce
 
 	var executeAsyncQueryNotifyInput models.ExecuteAsyncQueryNotifyInput
+	executeAsyncQueryNotifyInput.UserID = aws.String(testUserID)
 	executeAsyncQueryNotifyInput.DatabaseName = testutils.TestDb
 	executeAsyncQueryNotifyInput.SQL = testSQL
 	executeAsyncQueryNotifyInput.LambdaName = "panther-athena-api"

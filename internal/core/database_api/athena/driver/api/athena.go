@@ -87,6 +87,7 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 			err = apiError(err) // lambda failed
 		}
 
+		// allows tracing queries
 		var userID string
 		if input.UserID != nil {
 			userID = *input.UserID
@@ -124,6 +125,7 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 			err = apiError(err) // lambda failed
 		}
 
+		// allows tracing queries
 		zap.L().Info("GetQueryStatus",
 			zap.String("queryId", input.QueryID),
 			zap.Error(err))
@@ -160,6 +162,7 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 			err = apiError(err) // lambda failed
 		}
 
+		// allows tracing queries
 		zap.L().Info("GetQueryResults",
 			zap.String("queryId", input.QueryID),
 			zap.Error(err))
@@ -195,6 +198,7 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 			err = apiError(err) // lambda failed
 		}
 
+		// allows tracing queries
 		zap.L().Info("GetQueryResultsLink",
 			zap.String("queryId", input.QueryID),
 			zap.Error(err))
@@ -249,6 +253,7 @@ func (api API) StopQuery(input *models.StopQueryInput) (*models.StopQueryOutput,
 			err = apiError(err) // lambda failed
 		}
 
+		// allows tracing queries
 		zap.L().Info("StopQuery",
 			zap.String("queryId", input.QueryID),
 			zap.Error(err))

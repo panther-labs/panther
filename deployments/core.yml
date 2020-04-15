@@ -765,7 +765,7 @@ Resources:
       # </cfndoc>
       DefinitionString: !Sub |
         {
-             "Comment": "Run Athena query. Parameters are: userData, delay, databaseName,sql,lambdaName,methodName",
+             "Comment": "Run Athena query. Parameters are: userId, userData, delay, databaseName, sql, lambdaName, methodName",
              "StartAt": "delay",
              "States": {
                "delay": {
@@ -781,6 +781,7 @@ Resources:
                    "FunctionName": "${AthenaApiFunction.Arn}",
                    "Payload": {
                      "executeAsyncQuery": {
+                       "userId.$": "$.userId",
                        "databaseName.$": "$.databaseName",
                        "sql.$": "$.sql"
                      }
