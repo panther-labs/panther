@@ -30,7 +30,7 @@ const columns = [
     key: 'title',
     sortable: true,
     header: 'Title',
-    flex: '0 0 200px',
+    flex: '1 0 200px',
   },
   // Date needs to be formatted properly
   {
