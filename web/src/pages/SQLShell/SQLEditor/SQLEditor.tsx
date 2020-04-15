@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, useSnackbar } from 'pouncejs';
 import Editor, { Completion } from 'Components/Editor';
 import { shouldSaveData } from 'Helpers/connection';
+import storage from 'Helpers/storage';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useLoadAllSchemaEntities } from './graphql/loadAllSchemaEntities.generated';
 import { useSQLShellContext } from '../SQLShellContext';
@@ -9,10 +10,12 @@ import { useRunQuery } from './graphql/runQuery.generated';
 import { useCancelLogQuery } from './graphql/cancelLogQuery.generated';
 import { useGetSqlForQuery } from './graphql/getSqlForQuery.generated';
 
-const minLines = 19;
+// A key to help persist sql text within the same session (resets for new sessions)
+const SQL_STORAGE_KEY = 'panther.historicalSearch.sql';
+const MIN_LINES = 19;
 
 const SQLEditor: React.FC = () => {
-  const [value, setValue] = React.useState('');
+  const [value, setValue] = React.useState(storage.session.read(SQL_STORAGE_KEY) || '');
   const { pushSnackbar } = useSnackbar();
   const {
     state: { selectedDatabase, queryStatus, queryId },
@@ -116,12 +119,18 @@ const SQLEditor: React.FC = () => {
     return [...acc];
   }, [schemaData]);
 
+  // When the component unmounts, store the last value in the session storage in case the user
+  // navigated away by mistake. This will help us restore each session next time
+  React.useEffect(() => {
+    return () => storage.session.write(SQL_STORAGE_KEY, value);
+  }, [value]);
+
   return (
     <Box>
       <Editor
-        fallback={<Box width="100%" bg="grey500" height={minLines * 19} />}
+        fallback={<Box width="100%" bg="grey500" height={MIN_LINES * 19} />}
         placeholder="Run any SQL query. For example: select * from panther_logs.aws_alb;"
-        minLines={minLines}
+        minLines={MIN_LINES}
         mode="sql"
         width="100%"
         completions={completions}

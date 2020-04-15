@@ -84,7 +84,7 @@ const typePolicies: TypePolicies = {
     fields: {
       errorReportingConsent: {
         merge(oldValue, newValue) {
-          storage.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, newValue);
+          storage.local.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, newValue);
           return newValue;
         },
       },

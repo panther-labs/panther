@@ -77,6 +77,9 @@ class Storage {
   }
 }
 
-const storage = new Storage(localStorage);
+const local = new Storage(localStorage);
+const session = new Storage(sessionStorage);
+
+const storage = { local, session };
 
 export default storage;

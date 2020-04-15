@@ -1,5 +1,10 @@
 import React from 'react';
 import useUrlParams from 'Hooks/useUrlParams';
+import storage from 'Helpers/storage';
+
+// A key to help persist the selected database in order to restore it whenever we don't have one
+// explicitly specified through the URL
+const SELECTED_DATABASE_STORAGE_KEY = 'panther.historicalSearch.selectedDatabase';
 
 type State = {
   selectedDatabase: string | null;
@@ -95,7 +100,7 @@ export const SQLShellContextProvider: React.FC = ({ children }) => {
   const initialState = React.useMemo(
     () => ({
       queryId: urlParams.queryId || null,
-      selectedDatabase: urlParams.selectedDatabase || null,
+      selectedDatabase: urlParams.selectedDatabase || storage.local.read(SELECTED_DATABASE_STORAGE_KEY) || null, // prettier-ignore
       selectedTable: null,
       selectedColumn: null,
       searchValue: '',
@@ -107,9 +112,17 @@ export const SQLShellContextProvider: React.FC = ({ children }) => {
 
   const [state, dispatch] = React.useReducer<React.Reducer<State, Actions>>(reducer, initialState);
 
+  // sync changes to `queryId` and `selectedDatabase` to the URL
   React.useEffect(() => {
     updateUrlParams({ queryId: state.queryId, selectedDatabase: state.selectedDatabase });
   }, [state.queryId, state.selectedDatabase, updateUrlParams]);
+
+  // always store the "last selected database" in the localStorage, to use it when a user
+  // "comes back". Of course if a particular `selectedDatabase` is specified in the URL, it takes
+  // precedence over the locally stored value (since it will refer to a particular query)
+  React.useEffect(() => {
+    return () => storage.local.write(SELECTED_DATABASE_STORAGE_KEY, state.selectedDatabase);
+  }, [state.selectedDatabase]);
 
   const contextValue = React.useMemo(() => ({ state, dispatch }), [state, dispatch]);
 
