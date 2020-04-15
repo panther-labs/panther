@@ -26,6 +26,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -74,6 +75,8 @@ var (
 			&fluentdsyslogs.RFC5424{}, fluentdsyslogs.RFC5424Desc),
 		(&zeeklogs.ZeekDNSParser{}).LogType(): DefaultLogParser(&zeeklogs.ZeekDNSParser{},
 			&zeeklogs.ZeekDNS{}, zeeklogs.ZeekDNSDesc),
+		(&suricatalogs.AnomalyParser{}).LogType(): DefaultLogParser(&suricatalogs.AnomalyParser{},
+			&suricatalogs.Anomaly{}, suricatalogs.AnomalyDesc),
 	}
 )
 

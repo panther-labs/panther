@@ -37,6 +37,8 @@ const (
 	ansicWithTZUnmarshalLayout = `"Mon Jan 2 15:04:05 2006 MST"` // similar to time.ANSIC but with MST
 
 	fluentdTimestampLayout = `"2006-01-02 15:04:05 -0700"`
+
+	suricataTimestampLayout = `"2006-01-02T15:04:05.999999999Z0700"`
 )
 
 // use these functions to parse all incoming dates to ensure UTC consistency
@@ -83,7 +85,7 @@ func (ts *ANSICwithTZ) UnmarshalJSON(text []byte) (err error) {
 	if err != nil {
 		return
 	}
-	*ts = (ANSICwithTZ)(t)
+	*ts = (ANSICwithTZ)(t.UTC())
 	return
 }
 
@@ -103,8 +105,8 @@ func (ts *UnixMillisecond) UnmarshalJSON(jsonBytes []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	t := time.Unix(0, value*time.Millisecond.Nanoseconds()).UTC()
-	*ts = (UnixMillisecond)(t)
+	t := time.Unix(0, value*time.Millisecond.Nanoseconds())
+	*ts = (UnixMillisecond)(t.UTC())
 	return nil
 }
 
@@ -119,11 +121,30 @@ func (ts *FluentdTimestamp) MarshalJSON() ([]byte, error) {
 }
 
 func (ts *FluentdTimestamp) UnmarshalJSON(jsonBytes []byte) (err error) {
-	t, err := Parse(fluentdTimestampLayout, string(jsonBytes))
+	t, err := time.Parse(fluentdTimestampLayout, string(jsonBytes))
 	if err != nil {
 		return
 	}
-	*ts = (FluentdTimestamp)(t)
+	*ts = (FluentdTimestamp)(t.UTC())
+	return
+}
+
+type SuricataTimestamp time.Time
+
+func (ts *SuricataTimestamp) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func (ts *SuricataTimestamp) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
+}
+
+func (ts *SuricataTimestamp) UnmarshalJSON(jsonBytes []byte) (err error) {
+	t, err := time.Parse(suricataTimestampLayout, string(jsonBytes))
+	if err != nil {
+		return
+	}
+	*ts = (SuricataTimestamp)(t.UTC())
 	return
 }
 
@@ -142,7 +163,7 @@ func (ts *UnixFloat) UnmarshalJSON(jsonBytes []byte) (err error) {
 		return err
 	}
 	intPart, fracPart := math.Modf(f)
-	t := time.Unix(int64(intPart), int64(fracPart*1e9)).UTC()
-	*ts = (UnixFloat)(t)
+	t := time.Unix(int64(intPart), int64(fracPart*1e9))
+	*ts = (UnixFloat)(t.UTC())
 	return nil
 }
