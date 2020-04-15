@@ -72,6 +72,14 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             </Box>
             <Box my={1}>
               <Label mb={1} is="div" size="small" color="grey300">
+                DEDUP STRING
+              </Label>
+              <Text size="medium" color="black">
+                {alert.dedupString}
+              </Text>
+            </Box>
+            <Box my={1}>
+              <Label mb={1} is="div" size="small" color="grey300">
                 CREATED AT
               </Label>
               <Text size="medium" color="black">
