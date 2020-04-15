@@ -35,7 +35,7 @@ export type ListAlerts = {
         Types.Maybe<
           Pick<
             Types.AlertSummary,
-            'title' | 'creationTime' | 'severity' | 'alertId' | 'eventsMatched'
+            'title' | 'creationTime' | 'updateTime' | 'severity' | 'alertId' | 'eventsMatched'
           >
         >
       >;
@@ -49,6 +49,7 @@ export const ListAlertsDocument = gql`
       alertSummaries {
         title
         creationTime
+        updateTime
         severity
         alertId
         eventsMatched

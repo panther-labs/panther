@@ -3,6 +3,7 @@ query ListAlerts($input: ListAlertsInput) {
     alertSummaries {
       title
       creationTime
+      updateTime
       severity
       alertId
       eventsMatched
