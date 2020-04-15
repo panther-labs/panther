@@ -27,6 +27,7 @@ import (
 
 const (
 	MaxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+	EventDelimiter = '\n'
 )
 
 // Session AWS Session that can be used by components of the system

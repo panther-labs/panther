@@ -110,7 +110,7 @@ func (p *Processor) run(outputChan chan *parsers.PantherLog) error {
 	stream := bufio.NewReader(p.input.Reader)
 	for {
 		var line string
-		line, err = stream.ReadString('\n')
+		line, err = stream.ReadString(common.EventDelimiter)
 		if err != nil {
 			if err == io.EOF { // we are done
 				err = nil // not really an error
