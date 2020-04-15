@@ -26,14 +26,23 @@ import { useUpdateGeneralSettingsConsents } from './graphql/updateGeneralSetting
 const AnalyticsConsentModal: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { hideModal } = useModal();
-  const [saveConsentPreferences, { data, error }] = useUpdateGeneralSettingsConsents();
-
-  React.useEffect(() => {
-    if (data) {
-      pushSnackbar({ variant: 'success', title: `Successfully updated your preferences` });
+  const [
+    saveConsentPreferences,
+    { error: updateGeneralPreferencesError },
+  ] = useUpdateGeneralSettingsConsents({
+    onCompleted: () => {
       hideModal();
-    }
-  }, [data]);
+      pushSnackbar({ variant: 'success', title: `Successfully updated your preferences` });
+    },
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) ||
+          'Failed to update your preferences due to an unknown and unpredicted error',
+      });
+    },
+  });
 
   return (
     <Modal
@@ -48,10 +57,10 @@ const AnalyticsConsentModal: React.FC = () => {
           Opt-in to occasionally provide diagnostic information for improving reliability.
           <b> All information is anonymized.</b>
         </Text>
-        {error ? (
+        {updateGeneralPreferencesError ? (
           <Alert
-            title="An error occured"
-            description={extractErrorMessage(error)}
+            title="An error occurred"
+            description={extractErrorMessage(updateGeneralPreferencesError)}
             variant="error"
           />
         ) : (
