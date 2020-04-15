@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
+import { Alert, Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
 import React from 'react';
 
 import pick from 'lodash-es/pick';
@@ -53,7 +53,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   const { hideSidesheet } = useSidesheet();
 
   // If destination object exist, handleSubmit should call updateDestination and use attributes from the destination object for form initial values
-  const [updateDestination] = useUpdateDestination({
+  const [updateDestination, { error: updateDestinationError }] = useUpdateDestination({
     onCompleted: data => {
       hideSidesheet();
       pushSnackbar({
@@ -62,7 +62,6 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
       });
     },
     onError: error => {
-      hideSidesheet();
       pushSnackbar({
         variant: 'error',
         title:
@@ -216,6 +215,18 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
         <Heading size="medium" mb={8}>
           Update {destination.outputType}
         </Heading>
+        {updateDestinationError && (
+          <Alert
+            mt={2}
+            mb={6}
+            variant="error"
+            title="Destination not updated"
+            description={
+              extractErrorMessage(updateDestinationError) ||
+              'An unknown error has occured while trying to update your destination'
+            }
+          />
+        )}
         {renderFullDestinationForm()}
       </Box>
     </SideSheet>
