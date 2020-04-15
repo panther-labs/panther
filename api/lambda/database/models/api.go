@@ -112,6 +112,7 @@ type ExecuteQueryOutput = GetQueryResultsOutput // call GetQueryResults() to pag
 type ExecuteAsyncQueryInput struct {
 	Database
 	SQLQuery
+	UserID *string `json:"userId,omitempty"`
 }
 
 type ExecuteAsyncQueryOutput struct {
