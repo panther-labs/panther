@@ -27,13 +27,19 @@ const SQLEditor: React.FC = () => {
     },
     onCompleted: data => {
       if (data.executeAsyncLogQuery.error) {
-        dispatch({ type: 'SET_ERROR', payload: { message: data.executeAsyncLogQuery.error.message } }); // prettier-ignore
+        dispatch({
+          type: 'QUERY_ERRORED',
+          payload: { message: data.executeAsyncLogQuery.error.message },
+        });
       } else {
-        dispatch({ type: 'SET_QUERY_ID', payload: { queryId: data.executeAsyncLogQuery.queryId } });
+        dispatch({
+          type: 'QUERY_RUNNING',
+          payload: { queryId: data.executeAsyncLogQuery.queryId },
+        });
       }
     },
     onError: () => {
-      dispatch({ type: 'SET_ERROR', payload: { message: "Couldn't execute your Query" } });
+      dispatch({ type: 'QUERY_ERRORED', payload: { message: "Couldn't execute your Query" } });
     },
   });
 
@@ -76,7 +82,7 @@ const SQLEditor: React.FC = () => {
   // case the `onComplete` handler of the `runQuery` will make sure to set the correct query status
   React.useEffect(() => {
     if (isProvisioningQuery) {
-      dispatch({ type: 'SET_QUERY_STATUS', payload: { status: 'provisioning' } });
+      dispatch({ type: 'QUERY_PROVISIONING' });
     }
   }, [isProvisioningQuery]);
 
@@ -85,7 +91,7 @@ const SQLEditor: React.FC = () => {
   // pristine state in order to allow the user to write a new query
   React.useEffect(() => {
     if (isCancelingQuery) {
-      dispatch({ type: 'SET_QUERY_STATUS', payload: { status: null } });
+      dispatch({ type: 'QUERY_CANCELED' });
     }
   }, [isCancelingQuery]);
 

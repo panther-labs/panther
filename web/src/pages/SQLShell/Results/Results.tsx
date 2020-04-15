@@ -75,7 +75,7 @@ const Results: React.FC = () => {
   // thus will begin querying for results
   React.useEffect(() => {
     if (queryId) {
-      dispatch({ type: 'SET_QUERY_STATUS', payload: { status: 'running' } });
+      dispatch({ type: 'QUERY_RUNNING', payload: { queryId } });
     }
   }, [queryId]);
 
@@ -91,8 +91,8 @@ const Results: React.FC = () => {
   const queryHasSucceeded = data?.getLogQuery.query.status === LogQueryStatus.Succeeded;
   React.useEffect(() => {
     if (queryHasSucceeded) {
-      dispatch({ type: 'SET_QUERY_STATUS', payload: { status: 'succeeded' } });
       stopPolling();
+      dispatch({ type: 'QUERY_SUCCEEDED' });
     }
   }, [queryHasSucceeded]);
 
@@ -101,9 +101,11 @@ const Results: React.FC = () => {
   const queryHasFailed = !!error || data?.getLogQuery?.query?.status === LogQueryStatus.Failed;
   React.useEffect(() => {
     if (queryHasFailed) {
-      const message = error ? extractErrorMessage(error) : data?.getLogQuery.error?.message;
-      dispatch({ type: 'SET_ERROR', payload: { message } });
       stopPolling();
+      dispatch({
+        type: 'QUERY_ERRORED',
+        payload: { message: error ? extractErrorMessage(error) : data?.getLogQuery.error?.message },
+      });
     }
   }, [queryHasFailed]);
 

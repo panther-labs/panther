@@ -21,20 +21,24 @@ type SelectDatabaseAction = Action<'SELECT_DATABASE', { database: string }>;
 type SelectTableAction = Action<'SELECT_TABLE', { table: string }>;
 type SelectColumnAction = Action<'SELECT_COLUMN', { column: string }>;
 type SearchAction = Action<'SEARCH_DATABASE', { searchValue: string }>;
-type SetGlobalErrorAction = Action<'SET_ERROR', { message: string }>;
-type SetQueryId = Action<'SET_QUERY_ID', { queryId: string }>;
 type SetQuerySql = Action<'SET_QUERY_SQL', { sql: string }>;
-type SetQueryStatus = Action<'SET_QUERY_STATUS', { status: State['queryStatus'] }>;
+type MarkQueryAsProvisioning = Action<'QUERY_PROVISIONING'>;
+type MarkQueryAsErrored = Action<'QUERY_ERRORED', { message: string }>;
+type MarkQueryAsRunning = Action<'QUERY_RUNNING', { queryId: string }>;
+type MarkQueryAsCanceled = Action<'QUERY_CANCELED'>;
+type MarkQueryAsSuccessful = Action<'QUERY_SUCCEEDED'>;
 
 type Actions =
   | SelectDatabaseAction
   | SelectTableAction
   | SelectColumnAction
   | SearchAction
-  | SetGlobalErrorAction
-  | SetQueryId
+  | MarkQueryAsErrored
+  | MarkQueryAsCanceled
   | SetQuerySql
-  | SetQueryStatus;
+  | MarkQueryAsProvisioning
+  | MarkQueryAsRunning
+  | MarkQueryAsSuccessful;
 
 function reducer(state: State, action: Actions) {
   switch (action.type) {
@@ -57,23 +61,27 @@ function reducer(state: State, action: Actions) {
       return { ...state, selectedColumn: action.payload.column };
     case 'SEARCH_DATABASE':
       return { ...state, searchValue: action.payload.searchValue };
-    case 'SET_ERROR':
+    case 'QUERY_ERRORED':
       return {
         ...state,
         globalErrorMessage: action.payload.message,
         queryStatus: 'errored' as const,
       };
-    case 'SET_QUERY_ID':
-      return { ...state, queryId: action.payload.queryId, queryStatus: null };
     case 'SET_QUERY_SQL':
       return { ...state, querySql: action.payload.sql };
-    case 'SET_QUERY_STATUS':
+    case 'QUERY_PROVISIONING':
+      return { ...state, queryStatus: 'provisioning' as const };
+    case 'QUERY_RUNNING':
       return {
         ...state,
-        queryStatus: action.payload.status,
-        globalErrorMessage: action.payload.status !== 'errored' ? '' : state.globalErrorMessage,
-        queryId: action.payload.status === null ? null : state.queryId,
+        queryStatus: 'running' as const,
+        queryId: action.payload.queryId,
+        globalErrorMessage: '',
       };
+    case 'QUERY_CANCELED':
+      return { ...state, queryId: null, queryStatus: null };
+    case 'QUERY_SUCCEEDED':
+      return { ...state, queryStatus: 'succeeded' as const };
     default:
       throw new Error();
   }
