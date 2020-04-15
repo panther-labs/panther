@@ -60,7 +60,8 @@ func TestGenerateParquet(t *testing.T) {
 		// testutils.RemoveTables(t, glueClient, s3Client)
 	}()
 
-	_, workflowID, err := GenerateParquet(testutils.TestDb, testutils.TestTable,
+	// execute CTAS via Athena api Step Function
+	workflowID, err := GenerateParquet(testutils.TestDb, testutils.TestTable,
 		testutils.TestBucket, testutils.TestPartitionTime)
 	require.NoError(t, err)
 
@@ -78,5 +79,5 @@ func TestGenerateParquet(t *testing.T) {
 		}
 	}
 
-	// do a query on the temp table created
+	// do a query over the parquet
 }

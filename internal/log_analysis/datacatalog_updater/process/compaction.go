@@ -50,7 +50,7 @@ FROM "%s"."%s" where year=%d and month=%d and day=%d and hour=%d order by p_even
 `
 )
 
-func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time) (tempTable, workflowID string, err error) {
+func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time) (workflowID string, err error) {
 	// get the table schema to collect the columns
 	tableInput := &glue.GetTableInput{
 		DatabaseName: aws.String(databaseName),
@@ -58,7 +58,7 @@ func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time)
 	}
 	tableOutput, err := glueClient.GetTable(tableInput)
 	if err != nil {
-		return tempTable, workflowID, errors.WithStack(err)
+		return workflowID, errors.WithStack(err)
 	}
 	columns := tableOutput.Table.StorageDescriptor.Columns
 	tableType := "logs" // FIXME: parse from Location
@@ -67,10 +67,10 @@ func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time)
 	tag := uuid.New().String()
 
 	// generate CTAS sql
-	tableName, ctasSQL := generateCtasSQL(databaseName, tableType, tableName, bucketName, columns, hour, tag)
+	ctasSQL := generateCtasSQL(databaseName, tableType, tableName, bucketName, columns, hour, tag)
 
 	// execute CTAS through the Athena API Step Function (non-blocking)
-	userData := "FIXME"
+	userData := "FIXME should be JSON"
 	var executeAsyncQueryNotifyInput models.ExecuteAsyncQueryNotifyInput
 	executeAsyncQueryNotifyInput.DatabaseName = testutils.TestDb
 	executeAsyncQueryNotifyInput.SQL = ctasSQL
@@ -85,18 +85,15 @@ func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time)
 	var executeAsyncQueryNotifyOutput *models.ExecuteAsyncQueryNotifyOutput
 	err = genericapi.Invoke(lambdaClient, "panther-athena-api", &lambdaInput, &executeAsyncQueryNotifyOutput)
 	if err != nil {
-		return tempTable, workflowID, errors.WithStack(err)
+		return workflowID, errors.WithStack(err)
 	}
 	workflowID = executeAsyncQueryNotifyOutput.WorkflowID
 
-	return tempTable, workflowID, nil
+	return workflowID, nil
 }
 
 func generateCtasSQL(databaseName, tableType, tableName, bucketName string, columns []*glue.Column,
-	hour time.Time, tag string) (tempTable, ctsaSQL string) {
-
-	// generate name for table, by using this key it will fail if another is tried concurrently
-	tempTable = ctasDatabase + "." + databaseName + "_" + tableType + "_" + tableName + "_" + hour.Format("2006010215")
+	hour time.Time, tag string) (ctsaSQL string) {
 
 	// collect the columns to make csv
 	selectCols := make([]string, len(columns))
@@ -104,10 +101,15 @@ func generateCtasSQL(databaseName, tableType, tableName, bucketName string, colu
 		selectCols[i] = *columns[i].Name
 	}
 
-	return tempTable, fmt.Sprintf(ctasSQLTemplate,
-		tempTable,
+	return fmt.Sprintf(ctasSQLTemplate,
+		generateTempTableName(databaseName, tableName, hour),
 		bucketName, tableType, tableName, hour.Year(), hour.Month(), hour.Day(), hour.Hour(), tag,
 		strings.Join(selectCols, ","),
 		databaseName, tableName, hour.Year(), hour.Month(), hour.Day(), hour.Hour(),
 	)
+}
+
+func generateTempTableName(databaseName, tableName string, hour time.Time) string {
+	// generate name for table, by using this key it will fail if another is tried concurrently
+	return ctasDatabase + "." + databaseName + "_" + tableName + "_" + hour.Format("2006010215")
 }

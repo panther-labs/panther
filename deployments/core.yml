@@ -849,30 +849,11 @@ Resources:
                },
                "succeeded": {
                  "Type": "Pass",
-                 "Next": "notify?"
+                 "Next": "notify"
                },
                "failed": {
                  "Type": "Pass",
-                 "Next": "notify?"
-               },
-               "notify?": {
-                 "Type": "Choice",
-                 "Choices": [
-                 {
-                   "Variable": "$.lambdaName",
-                   "StringEquals": "",
-                   "Next": "no"
-                 }
-                 ],
-                 "Default": "yes"
-               },
-               "yes": {
-                 "Type": "Pass",
                  "Next": "notify"
-               },
-               "no": {
-                 "Type": "Pass",
-                 "End": true
                },
                "notify": {
                  "Comment": "Call lambdaName.methodName with userData, queryId and workflowId to notify done",
