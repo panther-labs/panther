@@ -29,5 +29,5 @@ When you create or edit a role, you are shown the following screen:
 ![Role Edit 3](../.gitbook/assets/rbac-role-edit3.png)
 
 {% hint style="info" %}
-Permission changes do not take effect until the next time each user logs in.
+Permission changes do not take effect until the next login or until the user's session expires.
 {% endhint %}
