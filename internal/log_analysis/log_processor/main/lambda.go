@@ -48,11 +48,11 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
 	}()
 
-	notifications := make([]string, len(event.Records))
+	messages := make([]string, len(event.Records))
 	for i, record := range event.Records{
-		notifications[i] = record.Body
+		messages[i] = record.Body
 	}
-	dataStreams, err := sources.ReadS3Events(notifications)
+	dataStreams, err := sources.ReadMessages(messages)
 	if err != nil {
 		return err
 	}

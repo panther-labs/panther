@@ -42,12 +42,12 @@ const (
 	cloudTrailValidationMessage = "CloudTrail validation message."
 )
 
-// ReadNotifications reads incoming messages containing SNS notifications and returns a slice of DataStream items
-func ReadS3Events(events []string) (result []*common.DataStream, err error) {
-	zap.L().Debug("reading data for messages", zap.Int("numMessages", len(events)))
-	for _, event := range events {
+// ReadMessages reads incoming messages containing SNS notifications and returns a slice of DataStream items
+func ReadMessages(messages []string) (result []*common.DataStream, err error) {
+	zap.L().Debug("reading data from messages", zap.Int("numMessages", len(messages)))
+	for _, message := range messages {
 		snsNotificationMessage := &SnsNotification{}
-		if err := jsoniter.UnmarshalFromString(event, snsNotificationMessage); err != nil {
+		if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
 			return nil, err
 		}
 
