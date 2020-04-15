@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/pkg/awsathena"
@@ -85,6 +86,16 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		var userID string
+		if input.UserID != nil {
+			userID = *input.UserID
+		}
+		zap.L().Info("ExecuteAsyncQuery",
+			zap.String("userId", userID),
+			zap.String("queryId", output.QueryID),
+			zap.Error(err))
 	}()
 
 	startOutput, err := awsathena.StartQuery(athenaClient, input.DatabaseName, input.SQL, athenaS3ResultsPath)
@@ -113,6 +124,11 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		zap.L().Info("GetQueryStatus",
+			zap.String("queryId", input.QueryID),
+			zap.Error(err))
 	}()
 
 	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
@@ -145,6 +161,11 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		zap.L().Info("GetQueryResults",
+			zap.String("queryId", input.QueryID),
+			zap.Error(err))
 	}()
 
 	getStatusOutput, err := api.GetQueryStatus(&input.QueryInfo)
@@ -176,6 +197,11 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		zap.L().Info("GetQueryResultsLink",
+			zap.String("queryId", input.QueryID),
+			zap.Error(err))
 	}()
 
 	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
@@ -226,6 +252,11 @@ func (api API) StopQuery(input *models.StopQueryInput) (*models.StopQueryOutput,
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		zap.L().Info("StopQuery",
+			zap.String("queryId", input.QueryID),
+			zap.Error(err))
 	}()
 
 	_, err = awsathena.StopQuery(athenaClient, input.QueryID)
