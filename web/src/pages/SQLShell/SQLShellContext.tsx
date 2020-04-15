@@ -8,7 +8,6 @@ type State = {
   searchValue: string;
   globalErrorMessage: string;
   queryId?: string | null;
-  querySql: string;
   queryStatus: 'provisioning' | 'errored' | 'running' | 'succeeded' | null;
 };
 
@@ -21,7 +20,6 @@ type SelectDatabaseAction = Action<'SELECT_DATABASE', { database: string }>;
 type SelectTableAction = Action<'SELECT_TABLE', { table: string }>;
 type SelectColumnAction = Action<'SELECT_COLUMN', { column: string }>;
 type SearchAction = Action<'SEARCH_DATABASE', { searchValue: string }>;
-type SetQuerySql = Action<'SET_QUERY_SQL', { sql: string }>;
 type MarkQueryAsProvisioning = Action<'QUERY_PROVISIONING'>;
 type MarkQueryAsErrored = Action<'QUERY_ERRORED', { message: string }>;
 type MarkQueryAsRunning = Action<'QUERY_RUNNING', { queryId: string }>;
@@ -35,7 +33,6 @@ type Actions =
   | SearchAction
   | MarkQueryAsErrored
   | MarkQueryAsCanceled
-  | SetQuerySql
   | MarkQueryAsProvisioning
   | MarkQueryAsRunning
   | MarkQueryAsSuccessful;
@@ -67,8 +64,6 @@ function reducer(state: State, action: Actions) {
         globalErrorMessage: action.payload.message,
         queryStatus: 'errored' as const,
       };
-    case 'SET_QUERY_SQL':
-      return { ...state, querySql: action.payload.sql };
     case 'QUERY_PROVISIONING':
       return { ...state, queryStatus: 'provisioning' as const };
     case 'QUERY_RUNNING':
@@ -105,7 +100,6 @@ export const SQLShellContextProvider: React.FC = ({ children }) => {
       selectedColumn: null,
       searchValue: '',
       globalErrorMessage: '',
-      querySql: '',
       queryStatus: null,
     }),
     []

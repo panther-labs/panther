@@ -1,0 +1,7 @@
+query GetSqlForQuery($input: GetLogQueryInput!) {
+  getLogQuery(input: $input) {
+    query {
+      sql
+    }
+  }
+}

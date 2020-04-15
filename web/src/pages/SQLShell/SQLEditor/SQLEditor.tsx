@@ -7,6 +7,7 @@ import { useLoadAllSchemaEntities } from './graphql/loadAllSchemaEntities.genera
 import { useSQLShellContext } from '../SQLShellContext';
 import { useRunQuery } from './graphql/runQuery.generated';
 import { useCancelLogQuery } from './graphql/cancelLogQuery.generated';
+import { useGetSqlForQuery } from './graphql/getSqlForQuery.generated';
 
 const minLines = 19;
 
@@ -64,6 +65,25 @@ const SQLEditor: React.FC = () => {
         title: "Couldn't cancel your Query",
         description: 'It will continue to be executed in the background',
       });
+    },
+  });
+
+  // Restore SQL for query if it already existed
+  useGetSqlForQuery({
+    skip: !queryId,
+    variables: {
+      input: {
+        queryId,
+      },
+    },
+    onCompleted: data => {
+      // FIXME: Apollo has a bug and this callback gets executed even when `skip: true`. That's why
+      // we have the `&& data` check. Other than that, the `if (!value)` part is cause we don't want
+      // to override any value if the user has already started typing
+      // https://github.com/apollographql/apollo-client/issues/6122
+      if (!value && data) {
+        setValue(data.getLogQuery.query.sql);
+      }
     },
   });
 
