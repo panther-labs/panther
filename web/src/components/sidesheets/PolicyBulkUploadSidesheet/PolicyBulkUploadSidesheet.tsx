@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet, useSnackbar, Text } from 'pouncejs';
+import { Box, Heading, SideSheet, useSnackbar, Text, Alert } from 'pouncejs';
 import React from 'react';
 import SubmitButton from 'Components/buttons/SubmitButton';
 
@@ -40,7 +40,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { pushSnackbar } = useSnackbar();
   const { hideSidesheet } = useSidesheet();
-  const [bulkUploadPolicies, { loading }] = useUploadPolicies({
+  const [bulkUploadPolicies, { loading, error: uploadPoliciesError }] = useUploadPolicies({
     onCompleted: data => {
       hideSidesheet();
       pushSnackbar({
@@ -51,7 +51,6 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
       });
     },
     onError: error => {
-      hideSidesheet();
       pushSnackbar({
         variant: 'error',
         title:
@@ -133,6 +132,17 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
           hidden
           onChange={handleFileChange}
         />
+        {uploadPoliciesError && (
+          <Alert
+            variant="error"
+            title="An error has occurred"
+            description={
+              extractErrorMessage(uploadPoliciesError) ||
+              'An unknown error occurred while attempting to upload your policies'
+            }
+            mb={6}
+          />
+        )}
         <SubmitButton
           disabled={loading}
           submitting={loading}
