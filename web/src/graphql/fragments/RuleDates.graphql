@@ -1,0 +1,7 @@
+fragment RuleDates on RuleDetails {
+  createdAt
+  enabled
+  dedupPeriodMinutes
+  lastModified
+  reference
+}

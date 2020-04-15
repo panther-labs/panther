@@ -40,7 +40,25 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { pushSnackbar } = useSnackbar();
   const { hideSidesheet } = useSidesheet();
-  const [bulkUploadPolicies, { data, loading, error }] = useUploadPolicies();
+  const [bulkUploadPolicies, { loading, error: uploadPoliciesError }] = useUploadPolicies({
+    onCompleted: data => {
+      hideSidesheet();
+      pushSnackbar({
+        variant: 'success',
+        title: `Successfully uploaded ${
+          data.uploadPolicies[isPolicy ? 'totalPolicies' : 'totalRules']
+        } ${isPolicy ? 'policies' : 'rules'}`,
+      });
+    },
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) ||
+          'An unknown error occurred while attempting to upload your policies',
+      });
+    },
+  });
 
   // This is the function that gets triggered each time the user selects a new file. The event
   // is not needed since we can't read the selected file from it (we need the input reference)
@@ -80,19 +98,6 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
     });
   };
 
-  // On a successful submit, add a snackbar to inform the user
-  React.useEffect(() => {
-    if (data) {
-      hideSidesheet();
-      pushSnackbar({
-        variant: 'success',
-        title: `Successfully uploaded ${
-          data.uploadPolicies[isPolicy ? 'totalPolicies' : 'totalRules']
-        } ${isPolicy ? 'policies' : 'rules'}`,
-      });
-    }
-  }, [data]);
-
   return (
     <SideSheet open onClose={hideSidesheet}>
       <Box width={400}>
@@ -127,13 +132,13 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
           hidden
           onChange={handleFileChange}
         />
-        {error && (
+        {uploadPoliciesError && (
           <Alert
             variant="error"
             title="An error has occurred"
             description={
-              extractErrorMessage(error) ||
-              'An unknown error occured while attempting to upload your policies'
+              extractErrorMessage(uploadPoliciesError) ||
+              'An unknown error occurred while attempting to upload your policies'
             }
             mb={6}
           />

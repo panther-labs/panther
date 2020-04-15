@@ -62,6 +62,10 @@ var (
 			To:   GlueTimestampType,
 		},
 		{
+			From: reflect.TypeOf(timestamp.SuricataTimestamp{}),
+			To:   GlueTimestampType,
+		},
+		{
 			From: reflect.TypeOf(parsers.PantherAnyString{}),
 			To:   "array<string>",
 		},

@@ -1,0 +1,9 @@
+fragment PolicyTeaser on PolicySummary {
+  complianceStatus
+  lastModified
+  resourceTypes
+  severity
+  id
+  displayName
+  enabled
+}

@@ -36,7 +36,9 @@ interface UsePolicySuppressionProps {
   resourcePatterns: ResourceDetails['id'][];
 }
 const usePolicySuppression = ({ policyIds, resourcePatterns }: UsePolicySuppressionProps) => {
-  const [suppressPolicies, { data, loading, error }] = useSuppressPolicy({
+  const { pushSnackbar } = useSnackbar();
+
+  const [suppressPolicies, { loading }] = useSuppressPolicy({
     awaitRefetchQueries: true,
     refetchQueries: [
       getOperationName(ResourceDetailsDocument),
@@ -45,32 +47,20 @@ const usePolicySuppression = ({ policyIds, resourcePatterns }: UsePolicySuppress
     variables: {
       input: { policyIds, resourcePatterns },
     },
-  });
-
-  const { pushSnackbar } = useSnackbar();
-  React.useEffect(() => {
-    if (error) {
+    onCompleted: () => {
+      pushSnackbar({ variant: 'success', title: 'Suppression applied successfully' });
+    },
+    onError: error => {
       pushSnackbar({
         variant: 'error',
         title:
           extractErrorMessage(error) ||
           'Failed to apply suppression due to an unknown and unpredicted error',
       });
-    }
-  }, [error]);
+    },
+  });
 
-  React.useEffect(() => {
-    if (data) {
-      pushSnackbar({ variant: 'success', title: 'Suppression applied successfully' });
-    }
-  }, [data]);
-
-  return React.useMemo(() => ({ suppressPolicies, data, loading, error }), [
-    suppressPolicies,
-    data,
-    loading,
-    error,
-  ]);
+  return React.useMemo(() => ({ suppressPolicies, loading }), [suppressPolicies, loading]);
 };
 
 export default usePolicySuppression;

@@ -14,11 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-
-
-
-FROM pantherlabs/panther-buildpack:1.1.1
+FROM pantherlabs/panther-buildpack:1.1.2
 
 ENV PATH=/root/.local/bin:$PATH
 
