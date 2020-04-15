@@ -31,6 +31,18 @@ func DeleteGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		return badRequest(err)
 	}
 
+	/*
+		There are three separate actions here, and each one could fail in turn leading to different scenarios:
+
+		1. Dynamo delete fails. The whole process is cancelled and nothing changes, no inconsistent state. The user sees
+		an error and needs to try and delete the global again.
+		2. Layer update fails. At this point, the global has already been deleted from dynamo, but the history is still
+		present and the layer is not updated, so there is an inconsistency between what is in dynamo and what is actually
+		running. The next time any change happens to globals successfully (create, update, or delete), the layer manager
+		will re-create the whole thing and the inconsistent state will be resolved.
+		3. S3 delete fails. At this point, there is no memory of the global anywhere except in s3. Currently we're not
+		using the s3 history for anything, but if we ever do then this could become problematic then.
+	*/
 	if err = dynamoBatchDelete(input); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
