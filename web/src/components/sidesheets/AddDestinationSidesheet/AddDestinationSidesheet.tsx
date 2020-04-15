@@ -91,7 +91,6 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
               return queryData ? [addDestinationRef, ...queryData] : [addDestinationRef];
             },
           });
-          cache.gc();
         },
       });
     },
