@@ -18,7 +18,7 @@
 
 import { Breadcrumbs as PounceBreadcrumbs } from 'pouncejs';
 import * as React from 'react';
-import { isGuid, capitalize } from 'Helpers/utils';
+import { isGuid, capitalize, shortenId, isHash } from 'Helpers/utils';
 import { Link } from 'react-router-dom';
 import useRouter from 'Hooks/useRouter';
 
@@ -40,6 +40,8 @@ const widthSentinelStyles = {
   overflow: 'hidden' as const,
   textOverflow: 'ellipsis' as const,
 };
+
+const transformBreadcrumbText = item => (isHash(item.text) ? shortenId(item.text) : item.text);
 
 const Breadcrumbs: React.FC = () => {
   const {
@@ -79,7 +81,7 @@ const Breadcrumbs: React.FC = () => {
       items={fragments}
       itemRenderer={item => (
         <Link to={item.href} style={widthSentinelStyles}>
-          {item.text}
+          {transformBreadcrumbText(item)}
         </Link>
       )}
     />
