@@ -27,20 +27,14 @@ const SQLEditor: React.FC = () => {
     },
     onCompleted: data => {
       if (data.executeAsyncLogQuery.error) {
-        dispatch({
-          type: 'SET_ERROR',
-          payload: { message: data.executeAsyncLogQuery.error.message },
-        });
+        dispatch({ type: 'SET_ERROR', payload: { message: data.executeAsyncLogQuery.error.message } }); // prettier-ignore
       } else {
         dispatch({ type: 'SET_QUERY_ID', payload: { queryId: data.executeAsyncLogQuery.queryId } });
       }
     },
-    onError: error =>
-      pushSnackbar({
-        variant: 'error',
-        title: "Couldn't execute your Query",
-        description: extractErrorMessage(error),
-      }),
+    onError: () => {
+      dispatch({ type: 'SET_ERROR', payload: { message: "Couldn't execute your Query" } });
+    },
   });
 
   // eslint-disable-next-line
@@ -53,21 +47,14 @@ const SQLEditor: React.FC = () => {
     },
     onCompleted: data => {
       if (data.executeAsyncLogQuery.error) {
-        pushSnackbar({
-          variant: 'error',
-          title: "Couldn't cancel your Query",
-          description: 'Your query will continue to be executed in the background',
-        });
+        dispatch({ type: 'SET_ERROR', payload: { message: "Couldn't cancel your Query. It will continue to be executed in the background" } }); // prettier-ignore
       } else {
         dispatch({ type: 'SET_QUERY_ID', payload: { queryId: null } });
       }
     },
-    onError: () =>
-      pushSnackbar({
-        variant: 'error',
-        title: "Couldn't cancel your Query",
-        description: 'Your query will continue to be executed in the background',
-      }),
+    onError: () => {
+      dispatch({ type: 'SET_ERROR', payload: { message: "Couldn't cancel your Query. It will continue to be executed in the background" } }); // prettier-ignore
+    },
   });
 
   // Fetch Autocomplete suggestions
@@ -83,7 +70,7 @@ const SQLEditor: React.FC = () => {
 
   React.useEffect(() => {
     if (isSubmittingQueryRequest) {
-      dispatch({ type: 'RESET_ERROR' });
+      dispatch({ type: 'SET_QUERY_STATUS', payload: { status: 'provisioning' } });
     }
   }, [isSubmittingQueryRequest]);
 

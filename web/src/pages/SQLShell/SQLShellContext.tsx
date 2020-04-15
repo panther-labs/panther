@@ -8,6 +8,8 @@ type State = {
   searchValue: string;
   globalErrorMessage: string;
   queryId?: string | null;
+  querySql: string;
+  queryStatus: 'provisioning' | 'errored' | 'running' | 'succeeded' | null;
 };
 
 type Action<T, P = never> = {
@@ -20,8 +22,9 @@ type SelectTableAction = Action<'SELECT_TABLE', { table: string }>;
 type SelectColumnAction = Action<'SELECT_COLUMN', { column: string }>;
 type SearchAction = Action<'SEARCH_DATABASE', { searchValue: string }>;
 type SetGlobalErrorAction = Action<'SET_ERROR', { message: string }>;
-type ResetGlobalErrorAction = Action<'RESET_ERROR'>;
 type SetQueryId = Action<'SET_QUERY_ID', { queryId: string }>;
+type SetQuerySql = Action<'SET_QUERY_SQL', { sql: string }>;
+type SetQueryStatus = Action<'SET_QUERY_STATUS', { status: State['queryStatus'] }>;
 
 type Actions =
   | SelectDatabaseAction
@@ -29,8 +32,9 @@ type Actions =
   | SelectColumnAction
   | SearchAction
   | SetGlobalErrorAction
-  | ResetGlobalErrorAction
-  | SetQueryId;
+  | SetQueryId
+  | SetQuerySql
+  | SetQueryStatus;
 
 function reducer(state: State, action: Actions) {
   switch (action.type) {
@@ -54,13 +58,20 @@ function reducer(state: State, action: Actions) {
     case 'SEARCH_DATABASE':
       return { ...state, searchValue: action.payload.searchValue };
     case 'SET_ERROR':
-      return { ...state, globalErrorMessage: action.payload.message };
-    case 'RESET_ERROR':
-      return { ...state, globalErrorMessage: '' };
-    case 'SET_QUERY_ID':
       return {
         ...state,
-        queryId: action.payload.queryId,
+        globalErrorMessage: action.payload.message,
+        queryStatus: 'errored' as const,
+      };
+    case 'SET_QUERY_ID':
+      return { ...state, queryId: action.payload.queryId, queryStatus: null };
+    case 'SET_QUERY_SQL':
+      return { ...state, querySql: action.payload.sql };
+    case 'SET_QUERY_STATUS':
+      return {
+        ...state,
+        queryStatus: action.payload.status,
+        globalErrorMessage: action.payload.status !== 'errored' ? '' : state.globalErrorMessage,
       };
     default:
       throw new Error();
@@ -85,6 +96,8 @@ export const SQLShellContextProvider: React.FC = ({ children }) => {
       selectedColumn: null,
       searchValue: '',
       globalErrorMessage: '',
+      querySql: '',
+      queryStatus: null,
     }),
     []
   );

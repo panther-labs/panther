@@ -1,24 +1,46 @@
 import React from 'react';
-import { Box, Flex, Heading, Icon, Table } from 'pouncejs';
+import { Box, Flex, Heading, Icon, Spinner, Table } from 'pouncejs';
 import WarningImg from 'Assets/illustrations/warning.svg';
 import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
 import { GetLogQueryOutput } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
+import { useSQLShellContext } from 'Pages/SQLShell/SQLShellContext';
+import dayjs from 'dayjs';
 
 export interface ResultsTableProps {
-  state: 'hasErrored' | 'initial' | 'isFetching';
+  isFetchingMore: boolean;
   results: GetLogQueryOutput['results'];
 }
 
-const ResultsTable: React.FC<ResultsTableProps> = ({ state, results }) => {
-  if (state === 'initial') {
+const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) => {
+  const startTime = React.useRef(dayjs());
+  const {
+    state: { queryStatus },
+  } = useSQLShellContext();
+
+  const isPristine = queryStatus === null;
+  const hasErrored = queryStatus === 'errored';
+  const isProvisioning = queryStatus === 'provisioning';
+  const isRunning = queryStatus === 'running';
+
+  // Start the timer for how much time the query is running only when the status gets to "running".
+  // This is only gonna happen once since the transition from "something" to "running" can only
+  // happen once by default
+  React.useEffect(() => {
+    if (isRunning) {
+      startTime.current = dayjs();
+    }
+  }, [isRunning]);
+
+  // Original state, meaning that no query is present
+  if (isPristine) {
     return (
       <Flex
         justifyContent="center"
         alignItems="center"
         flexDirection="column"
         color="grey200"
-        my={100}
+        my={125}
       >
         <Icon size="large" type="search" />
         <Heading size="medium" my={6}>
@@ -28,7 +50,8 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ state, results }) => {
     );
   }
 
-  if (state === 'hasErrored') {
+  // Query had errors
+  if (hasErrored) {
     return (
       <Flex justifyContent="center" alignItems="center" flexDirection="column">
         <Box my={10}>
@@ -41,11 +64,33 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ state, results }) => {
     );
   }
 
-  if (!results.length) {
-    if (state === 'isFetching') {
-      return <TablePlaceholder />;
-    }
+  // Query is being submitted to the server and we are waiting to get back a `queryId` to use it
+  // to "poll" for results
+  if (isProvisioning) {
+    return (
+      <Flex justifyContent="center" alignItems="center" my={125}>
+        <Spinner size="medium" />
+        <Heading size="medium" ml={8} color="grey300">
+          Provisioning...
+        </Heading>
+      </Flex>
+    );
+  }
 
+  // Gotten back a `queryId` and we are on the polling phase, were we are waiting for results
+  if (isRunning) {
+    return (
+      <Flex justifyContent="center" alignItems="center" my={125}>
+        <Spinner size="medium" />
+        <Heading size="medium" ml={8} color="grey300">
+          Running Query... Elapsed Time: {dayjs().diff(startTime.current, 'second')}s
+        </Heading>
+      </Flex>
+    );
+  }
+
+  // We have results, but they are empty
+  if (!results.length) {
     return (
       <Flex justifyContent="center" alignItems="center" flexDirection="column">
         <Box my={10}>
@@ -72,12 +117,14 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ state, results }) => {
       header: col.key,
     })) ?? [];
 
+  // Render a table and the "fetching more" placeholder. This is different than "loading" or the
+  // "running" state. It has to be handled through a separate prop
   return (
     <Box overflowX="scroll">
       <Table items={items} columns={columns} />
-      {state === 'isFetching' && (
-        <Box mt={4}>
-          <TablePlaceholder />
+      {isFetchingMore && (
+        <Box mt={8}>
+          <TablePlaceholder rowCount={10} />
         </Box>
       )}
     </Box>
