@@ -51,8 +51,8 @@ const (
 	"MessageId": "fed763a0-4d7b-45fd-81f3-55adf2fb1841",
 	"Token": "REDACTED-c70f477b3ecc3b82cef61ec3dd5df4366666ed54f-REDACTED",
 	"TopicArn": "arn:aws:sns:us-east-1:111111111111:PantherEvents",
-	"Message": "You have chosen to subscribe to the topic arn:aws:sns:us-east-1:857418155548:PantherEvents.To confirm the subscription, visit the SubscribeURL included in this message.",
-	"SubscribeURL": "https://sns.us-east-1.amazonaws.com/?Action=ConfirmSubscription&TopicArn=arn:aws:sns:us-east-1:857418155548:PantherEvents&Token=REDACTED-c70f477b3ecc3b82cef61ec3dd5df4366666ed54f-REDACTED",
+	"Message": "You have chosen to subscribe to the topic arn:aws:sns:us-east-1:111111111111:PantherEvents.To confirm the subscription, visit the SubscribeURL included in this message.",
+	"SubscribeURL": "https://sns.us-east-1.amazonaws.com/?Action=ConfirmSubscription&TopicArn=arn:aws:sns:us-east-1:111111111111:PantherEvents&Token=REDACTED-c70f477b3ecc3b82cef61ec3dd5df4366666ed54f-REDACTED",
 	"Timestamp": "2019-07-11T22:34:49.439Z",
 	"SignatureVersion": "1",
 	"Signature": "REDACTED-GZngNiNpGCIWSlhPZU3mLvGE8D072c4op2nf75uPz/qR6AP-REDACTED",
@@ -76,7 +76,7 @@ const (
 			"principalId": "AROAIZAKJCWU7GMRGJX6E:austin_byers",
 			"arn": "arn:aws:sts::111111111111:assumed-role/PantherDevAustinAdministrator/austin_byers",
 			"accountId": "111111111111",
-			"accessKeyId": "ASIARPM7LCOWYSBK3SXF",
+			"accessKeyId": "ASIA123456789EXAMPLE",
 			"sessionContext": {
 				"attributes": {
 					"mfaAuthenticated": "true",
@@ -86,7 +86,7 @@ const (
 					"type": "Role",
 					"principalId": "AROAIZAKJCWU7GMRGJX6E",
 					"arn": "arn:aws:iam::111111111111:role/PantherDevAustinAdministrator",
-					"accountId": "101802775469",
+					"accountId": "111111111111",
 					"userName": "PantherDevAustinAdministrator"
 				}
 			}
@@ -332,9 +332,9 @@ func TestHandleUpdate(t *testing.T) {
 		"SignatureVersion": "1",
 		"SigningCertURL":   "https://sns.us-west-2.amazonaws.com/SimpleNotificationService-6aad65c2f9911b05cd53efda11f913f9.pem",
 		"Timestamp":        "2019-10-31T01:49:27.538Z",
-		"TopicArn":         "arn:aws:sns:us-west-2:857418155548:PantherEvents",
+		"TopicArn":         "arn:aws:sns:us-west-2:111111111111:PantherEvents",
 		"Type":             "Notification",
-		"UnsubscribeURL":   "https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:857418155548:PantherEvents:59e695d2-3f28-487d-a3e1-18a48441766c",
+		"UnsubscribeURL":   "https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:111111111111:PantherEvents:59e695d2-3f28-487d-a3e1-18a48441766c",
 	}
 	wrappedUpdate, err := jsoniter.MarshalToString(wrappedUpdateMap)
 	require.NoError(t, err)
