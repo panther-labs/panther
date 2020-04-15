@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Modal, Text, Box, useSnackbar } from 'pouncejs';
+import { Modal, Text, Box, useSnackbar, Alert } from 'pouncejs';
 import useModal from 'Hooks/useModal';
 import AnalyticsConsentForm from 'Components/forms/AnalyticsConsentForm';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -26,13 +26,15 @@ import { useUpdateGeneralSettingsConsents } from './graphql/updateGeneralSetting
 const AnalyticsConsentModal: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { hideModal } = useModal();
-  const [saveConsentPreferences] = useUpdateGeneralSettingsConsents({
+  const [
+    saveConsentPreferences,
+    { error: updateGeneralPreferencesError },
+  ] = useUpdateGeneralSettingsConsents({
     onCompleted: () => {
       hideModal();
       pushSnackbar({ variant: 'success', title: `Successfully updated your preferences` });
     },
     onError: error => {
-      hideModal();
       pushSnackbar({
         variant: 'error',
         title:
@@ -55,15 +57,23 @@ const AnalyticsConsentModal: React.FC = () => {
           Opt-in to occasionally provide diagnostic information for improving reliability.
           <b> All information is anonymized.</b>
         </Text>
-        <AnalyticsConsentForm
-          onSubmit={values =>
-            saveConsentPreferences({
-              variables: {
-                input: values,
-              },
-            })
-          }
-        />
+        {updateGeneralPreferencesError ? (
+          <Alert
+            title="An error occurred"
+            description={extractErrorMessage(updateGeneralPreferencesError)}
+            variant="error"
+          />
+        ) : (
+          <AnalyticsConsentForm
+            onSubmit={values =>
+              saveConsentPreferences({
+                variables: {
+                  input: values,
+                },
+              })
+            }
+          />
+        )}
       </Box>
     </Modal>
   );
