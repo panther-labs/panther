@@ -64,12 +64,25 @@ func SQS(event events.SQSEvent) error {
 				continue
 			}
 
-			err = gluePartition.CreatePartition(glueClient)
+			created, err := gluePartition.CreatePartition(glueClient)
 			if err != nil {
 				err = errors.Wrapf(err, "failed to create partition: %#v", notification)
 				return err
 			}
 			partitionPrefixCache[partitionLocation] = struct{}{} // remember
+
+			if created { // schedule conversion to Parquet
+				input := &GenerateParquetInput{
+					DatabaseName:  gluePartition.GetDatabase(),
+					TableName:     gluePartition.GetTable(),
+					BucketName:    "panther-bootstrap-historicaldata-ntazfsgrxbo6", // FIXME: pass down
+					PartitionHour: gluePartition.GetHour(),
+				}
+				_, err = GenerateParquet(input)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil

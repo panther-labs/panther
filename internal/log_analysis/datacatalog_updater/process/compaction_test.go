@@ -1,14 +1,5 @@
 package process
 
-import (
-	"testing"
-	"time"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/stretchr/testify/assert"
-)
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -27,10 +18,18 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import (
+	"testing"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/stretchr/testify/assert"
+)
+
 const (
 	testBucket   = "testBucket"
 	testDb       = "panther_logs"
-	tableType    = "logs"
 	tableName    = "aws_cloudtrail"
 	executionTag = "1234"
 )
@@ -52,6 +51,6 @@ FROM "panther_logs"."aws_cloudtrail" where year=2020 and month=4 and day=10 and 
 		{Name: aws.String("c1")},
 		{Name: aws.String("c2")},
 	}
-	sql := generateCtasSQL(testDb, tableType, tableName, testBucket, cols, refTime, executionTag)
+	sql := generateCtasSQL(testDb, tableName, testBucket, cols, refTime, executionTag)
 	assert.Equal(t, expectedSQL, sql)
 }

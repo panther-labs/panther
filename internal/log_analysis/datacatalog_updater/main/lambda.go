@@ -63,6 +63,7 @@ import (
 
 type DataCatalogEvent struct {
 	events.SQSEvent
+	process.LambdaInput
 }
 
 func handle(ctx context.Context, event DataCatalogEvent) (err error) {
@@ -72,10 +73,17 @@ func handle(ctx context.Context, event DataCatalogEvent) (err error) {
 		operation.Stop().Log(err,
 			zap.Int("sqsMessageCount", len(event.Records)))
 	}()
-	err = process.SQS(event.SQSEvent)
+
+	if event.UpdateParquetPartition != nil { // updates partition after parquet generation
+		_, err = process.UpdateParquetPartition(event.UpdateParquetPartition)
+	} else { // process notification to create partitions as needed
+		err = process.SQS(event.SQSEvent)
+	}
+
 	return err
 }
 
 func main() {
+	process.SessionInit()
 	lambda.Start(handle)
 }

@@ -485,11 +485,29 @@ Resources:
               Action:
                 - glue:GetPartition
                 - glue:CreatePartition
+                - glue:UpdatePartition
                 - glue:GetTable
               Resource:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: GlueCTASPermissions # used for CTAS in panther_temp database to delete temp tables
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:DeleteTable
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther_temp
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther_temp/*
+        - Id: AthenaCTASPermissions # allow calling Athena API to get status of CTAS queries
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
 
   ##### Rules Engine #####
   RulesEngineSnsSubscription:

@@ -159,6 +159,17 @@ func GetTableName(logType string) string {
 	return strings.ToLower(tableName)
 }
 
+func GetDataPrefix(databaseName string) string {
+	switch databaseName {
+	case LogProcessingDatabaseName:
+		return logS3Prefix
+	case RuleMatchDatabaseName:
+		return ruleMatchS3Prefix
+	default:
+		return logS3Prefix // assume logs, used for integration tests
+	}
+}
+
 // SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.
 func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Client s3iface.S3API, startDate time.Time) error {
 	// inherit StorageDescriptor from table
@@ -193,10 +204,12 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 					continue // drain channel
 				}
 
+				values := PartitionValuesFromTime(gm.timebin, update)
+
 				getPartitionInput := &glue.GetPartitionInput{
 					DatabaseName:    aws.String(gm.databaseName),
 					TableName:       aws.String(gm.tableName),
-					PartitionValues: gm.partitionValues(update),
+					PartitionValues: values,
 				}
 				getPartitionOutput, err := glueClient.GetPartition(getPartitionInput)
 				if err != nil {
@@ -209,7 +222,7 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 							failed = true
 							errChan <- err
 						} else if hasData {
-							if err = gm.createPartition(glueClient, update, tableOutput); err != nil {
+							if _, err = gm.createPartition(glueClient, update, tableOutput); err != nil {
 								failed = true
 								errChan <- err
 							}
@@ -222,7 +235,6 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 				storageDescriptor := *getPartitionOutput.Partition.StorageDescriptor // copy because we will mutate
 				storageDescriptor.Columns = columns
 				storageDescriptor.SerdeInfo = tableOutput.Table.StorageDescriptor.SerdeInfo
-				values := gm.partitionValues(update)
 				partitionInput := &glue.PartitionInput{
 					Values:            values,
 					StorageDescriptor: &storageDescriptor,
@@ -256,7 +268,7 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 	return <-errChan
 }
 
-func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) error {
+func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) (created bool, err error) {
 	// inherit StorageDescriptor from table
 	tableInput := &glue.GetTableInput{
 		DatabaseName: aws.String(gm.databaseName),
@@ -264,21 +276,23 @@ func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t tim
 	}
 	tableOutput, err := client.GetTable(tableInput)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// ensure this is a JSON table, use Contains() because there are multiple json serdes
 	if !strings.Contains(*tableOutput.Table.StorageDescriptor.SerdeInfo.SerializationLibrary, "json") {
-		return errors.Errorf("not a JSON table: %#v", *tableOutput.Table.StorageDescriptor)
+		return false, errors.Errorf("not a JSON table: %#v", *tableOutput.Table.StorageDescriptor)
 	}
 
 	return gm.createPartition(client, t, tableOutput)
 }
 
-func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Time, tableOutput *glue.GetTableOutput) error {
+func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Time,
+	tableOutput *glue.GetTableOutput) (created bool, err error) {
+
 	location, err := url.Parse(*tableOutput.Table.StorageDescriptor.Location)
 	if err != nil {
-		return errors.Wrapf(err, "Cannot parse table %s.%s s3 path: %s",
+		return false, errors.Wrapf(err, "Cannot parse table %s.%s s3 path: %s",
 			gm.DatabaseName(), gm.TableName(),
 			*tableOutput.Table.StorageDescriptor.Location)
 	}
@@ -287,7 +301,7 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 	storageDescriptor.Location = aws.String("s3://" + location.Host + "/" + gm.GetPartitionPrefix(t))
 
 	partitionInput := &glue.PartitionInput{
-		Values:            gm.partitionValues(t),
+		Values:            PartitionValuesFromTime(gm.timebin, t),
 		StorageDescriptor: &storageDescriptor,
 	}
 	input := &glue.CreatePartitionInput{
@@ -298,17 +312,17 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 	_, err = client.CreatePartition(input)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != glue.ErrCodeAlreadyExistsException {
-			return err
+			return false, err
 		}
 	}
-	return nil
+	return true, nil
 }
 
 func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Time) (output *glue.DeletePartitionOutput, err error) {
 	input := &glue.DeletePartitionInput{
 		DatabaseName:    aws.String(gm.databaseName),
 		TableName:       aws.String(gm.tableName),
-		PartitionValues: gm.partitionValues(t),
+		PartitionValues: PartitionValuesFromTime(gm.timebin, t),
 	}
 	return client.DeletePartition(input)
 }
@@ -341,16 +355,16 @@ func (gm *GlueTableMetadata) partitionHasData(client s3iface.S3API, t time.Time,
 }
 
 // Based on Timebin(), return an []*string values (used for Glue APIs)
-func (gm *GlueTableMetadata) partitionValues(t time.Time) (values []*string) {
+func PartitionValuesFromTime(timebin GlueTableTimebin, t time.Time) (values []*string) {
 	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))}
 
-	if gm.timebin >= GlueTableMonthly {
+	if timebin >= GlueTableMonthly {
 		values = append(values, aws.String(fmt.Sprintf("%02d", t.Month())))
 	}
-	if gm.timebin >= GlueTableDaily {
+	if timebin >= GlueTableDaily {
 		values = append(values, aws.String(fmt.Sprintf("%02d", t.Day())))
 	}
-	if gm.timebin >= GlueTableHourly {
+	if timebin >= GlueTableHourly {
 		values = append(values, aws.String(fmt.Sprintf("%02d", t.Hour())))
 	}
 	return

@@ -54,6 +54,10 @@ func (gp *GluePartition) GetTable() string {
 	return gp.tableName
 }
 
+func (gp *GluePartition) GetHour() time.Time {
+	return gp.hour
+}
+
 func (gp *GluePartition) GetS3Bucket() string {
 	return gp.s3Bucket
 }
@@ -104,7 +108,7 @@ type PartitionColumnInfo struct {
 }
 
 // Creates a new partition in Glue using the client provided.
-func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
+func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) (created bool, err error) {
 	return NewGlueTableMetadata(gp.datatype, gp.tableName, "", GlueTableHourly, nil).CreateJSONPartition(client, gp.hour)
 }
 

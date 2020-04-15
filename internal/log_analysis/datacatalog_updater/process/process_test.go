@@ -67,7 +67,7 @@ var (
 func TestProcessSuccess(t *testing.T) {
 	mockClient := initTest()
 
-	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Twice()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 	assert.NoError(t, SQS(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockClient.AssertExpectations(t)
@@ -77,7 +77,7 @@ func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
 	mockClient := initTest()
 
 	// We should attempt to create the partition only once. We shouldn't try to re-create it a second time
-	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Twice()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
 	// First object should invoke Glue API
@@ -94,7 +94,7 @@ func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
 	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("err")).Once()
 	// Second glue operation succeeds
-	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Twice()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
 	// First invocation fails

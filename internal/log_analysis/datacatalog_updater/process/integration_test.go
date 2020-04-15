@@ -1,20 +1,5 @@
 package process
 
-import (
-	"os"
-	"strings"
-	"testing"
-	"time"
-
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	"github.com/aws/aws-sdk-go/service/sfn"
-	"github.com/aws/aws-sdk-go/service/sfn/sfniface"
-	"github.com/stretchr/testify/require"
-
-	"github.com/panther-labs/panther/internal/core/database_api/athena/testutils"
-)
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -33,11 +18,30 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import (
+	"os"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/aws/aws-sdk-go/service/sfn"
+	"github.com/aws/aws-sdk-go/service/sfn/sfniface"
+	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/core/database_api/athena/testutils"
+	"github.com/panther-labs/panther/pkg/awsathena"
+)
+
 var (
 	integrationTest bool
 
-	sfnClient sfniface.SFNAPI
-	s3Client  s3iface.S3API
+	sfnClient    sfniface.SFNAPI
+	s3Client     s3iface.S3API
+	athenaClient athenaiface.AthenaAPI
 )
 
 func TestMain(m *testing.M) {
@@ -46,6 +50,9 @@ func TestMain(m *testing.M) {
 		SessionInit()
 		sfnClient = sfn.New(awsSession)
 		s3Client = s3.New(awsSession)
+		athenaClient = athena.New(awsSession)
+
+		ctasDelay = 0 // no delay
 	}
 	os.Exit(m.Run())
 }
@@ -57,12 +64,17 @@ func TestGenerateParquet(t *testing.T) {
 
 	testutils.SetupTables(t, glueClient, s3Client)
 	defer func() {
-		// testutils.RemoveTables(t, glueClient, s3Client)
+		testutils.RemoveTables(t, glueClient, s3Client)
 	}()
 
 	// execute CTAS via Athena api Step Function
-	workflowID, err := GenerateParquet(testutils.TestDb, testutils.TestTable,
-		testutils.TestBucket, testutils.TestPartitionTime)
+	input := &GenerateParquetInput{
+		DatabaseName:  testutils.TestDb,
+		TableName:     testutils.TestTable,
+		BucketName:    testutils.TestBucket,
+		PartitionHour: testutils.TestPartitionTime,
+	}
+	workflowID, err := GenerateParquet(input)
 	require.NoError(t, err)
 
 	// wait for workflow to finish
@@ -80,4 +92,7 @@ func TestGenerateParquet(t *testing.T) {
 	}
 
 	// do a query over the parquet
+	sqlQuery := `select * from ` + testutils.TestTable + ` order by col1 asc`
+	_, err = awsathena.RunQuery(athenaClient, testutils.TestDb, sqlQuery, nil)
+	require.NoError(t, err)
 }

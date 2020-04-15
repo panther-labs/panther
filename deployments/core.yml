@@ -691,7 +691,6 @@ Resources:
             - Effect: Allow
               Action:
                 - glue:CreateTable
-                - glue:DeleteTable
               Resource: # FIXME add condition on caller (step function)
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther_temp
