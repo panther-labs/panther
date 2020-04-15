@@ -72,7 +72,7 @@ func TestCloudTrailLogGenerateDataKey(t *testing.T) {
 		"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz")
 	expectedEvent.AppendAnyAWSAccountIds("888888888888", "777777777777")
 
-	checkCloudTrailLog(t, log, []*CloudTrail{expectedEvent})
+	checkCloudTrailLog(t, log, expectedEvent)
 }
 
 func TestCloudTrailLogDecrypt(t *testing.T) {
@@ -135,7 +135,7 @@ func TestCloudTrailLogDecrypt(t *testing.T) {
 	expectedEvent.AppendAnyAWSAccountIds("888888888888")
 	expectedEvent.AppendAnyIPAddress("1.2.3.4")
 
-	checkCloudTrailLog(t, log, []*CloudTrail{expectedEvent})
+	checkCloudTrailLog(t, log, expectedEvent)
 }
 
 func TestCloudTrailLogType(t *testing.T) {
@@ -143,13 +143,9 @@ func TestCloudTrailLogType(t *testing.T) {
 	require.Equal(t, "AWS.CloudTrail", parser.LogType())
 }
 
-func checkCloudTrailLog(t *testing.T, log string, expectedEvents []*CloudTrail) {
-	parser := &CloudTrailParser{}
-	events := parser.Parse(log)
-	require.Equal(t, len(expectedEvents), len(events))
-	for i, expectedEvent := range expectedEvents {
-		event := events[i].Event().(*CloudTrail)
-		expectedEvent.SetEvent(expectedEvent)
-		testutil.EqualPantherLog(t, expectedEvent.Log(), event.Logs())
-	}
+func checkCloudTrailLog(t *testing.T, log string, expectedEvent *CloudTrail) {
+	parser := (&CloudTrailParser{}).New()
+	result := parser.Parse(log)
+	expectedEvent.SetEvent(expectedEvent)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), result)
 }
