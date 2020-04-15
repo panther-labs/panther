@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { AlertSummaryFull } from '../../../graphql/fragments/AlertSummaryFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -31,14 +32,7 @@ export type ListAlertsVariables = {
 export type ListAlerts = {
   alerts?: Types.Maybe<
     Pick<Types.ListAlertsResponse, 'lastEvaluatedKey'> & {
-      alertSummaries: Array<
-        Types.Maybe<
-          Pick<
-            Types.AlertSummary,
-            'title' | 'creationTime' | 'updateTime' | 'severity' | 'alertId' | 'eventsMatched'
-          >
-        >
-      >;
+      alertSummaries: Array<Types.Maybe<AlertSummaryFull>>;
     }
   >;
 };
@@ -47,16 +41,12 @@ export const ListAlertsDocument = gql`
   query ListAlerts($input: ListAlertsInput) {
     alerts(input: $input) {
       alertSummaries {
-        title
-        creationTime
-        updateTime
-        severity
-        alertId
-        eventsMatched
+        ...AlertSummaryFull
       }
       lastEvaluatedKey
     }
   }
+  ${AlertSummaryFull}
 `;
 
 /**

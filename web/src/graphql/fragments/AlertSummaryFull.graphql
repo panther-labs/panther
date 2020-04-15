@@ -1,0 +1,8 @@
+fragment AlertSummaryFull on AlertSummary {
+  alertId
+  ruleId
+  title
+  creationTime
+  eventsMatched
+  updateTime
+}
