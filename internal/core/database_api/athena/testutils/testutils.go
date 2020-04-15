@@ -52,10 +52,12 @@ const (
 var (
 	TestBucket string
 
-	TestYear  = "2020"
-	TestMonth = "03"
-	TestDay   = "02"
-	TestHour  = "01"
+	TestPartitionTime = time.Date(2020, 3, 2, 1, 0, 0, 0, time.UTC)
+
+	TestYear  = fmt.Sprintf("%d", TestPartitionTime.Year())
+	TestMonth = fmt.Sprintf("%01d", TestPartitionTime.Month())
+	TestDay   = fmt.Sprintf("%01d", TestPartitionTime.Day())
+	TestHour  = fmt.Sprintf("%01d", TestPartitionTime.Hour())
 
 	TestTableColumns = []*glue.Column{
 		{
@@ -68,6 +70,11 @@ var (
 			Type:    aws.String("int"),
 			Comment: aws.String("this is a column"),
 		},
+		{
+			Name:    aws.String("p_event_time"),
+			Type:    aws.String("timestamp"),
+			Comment: aws.String("this is a panther column"),
+		},
 	}
 
 	YearPartitionName  = "year"
@@ -78,22 +85,22 @@ var (
 	TestTablePartitions = []*glue.Column{
 		{
 			Name:    aws.String(YearPartitionName),
-			Type:    aws.String("string"),
+			Type:    aws.String("int"),
 			Comment: aws.String("this is the year"),
 		},
 		{
 			Name:    aws.String(MonthPartitionName),
-			Type:    aws.String("string"),
+			Type:    aws.String("int"),
 			Comment: aws.String("this is the month"),
 		},
 		{
 			Name:    aws.String(DayPartitionName),
-			Type:    aws.String("string"),
+			Type:    aws.String("int"),
 			Comment: aws.String("this is the day"),
 		},
 		{
 			Name:    aws.String(HourPartitionName),
-			Type:    aws.String("string"),
+			Type:    aws.String("int"),
 			Comment: aws.String("this is the hour"),
 		},
 	}

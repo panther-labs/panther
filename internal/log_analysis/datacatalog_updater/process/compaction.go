@@ -23,7 +23,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/api/lambda/database/models"
+	"github.com/panther-labs/panther/internal/core/database_api/athena/testutils"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
@@ -43,21 +50,50 @@ FROM "%s"."%s" where year=%d and month=%d and day=%d and hour=%d order by p_even
 `
 )
 
-func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time) (workflowID string, err error) {
+func GenerateParquet(databaseName, tableName, bucketName string, hour time.Time) (tempTable, workflowID string, err error) {
 	// get the table schema to collect the columns
-
-	// generate CTAS sql
+	tableInput := &glue.GetTableInput{
+		DatabaseName: aws.String(databaseName),
+		Name:         aws.String(tableName),
+	}
+	tableOutput, err := glueClient.GetTable(tableInput)
+	if err != nil {
+		return tempTable, workflowID, errors.WithStack(err)
+	}
+	columns := tableOutput.Table.StorageDescriptor.Columns
+	tableType := "logs" // FIXME: parse from Location
 
 	// generate a "tag" for the results folder, VERY IMPORTANT, this allows us to repeat without over writing results
-	// tag := uuid.New().String()
+	tag := uuid.New().String()
+
+	// generate CTAS sql
+	tableName, ctasSQL := generateCtasSQL(databaseName, tableType, tableName, bucketName, columns, hour, tag)
 
 	// execute CTAS through the Athena API Step Function (non-blocking)
+	userData := "FIXME"
+	var executeAsyncQueryNotifyInput models.ExecuteAsyncQueryNotifyInput
+	executeAsyncQueryNotifyInput.DatabaseName = testutils.TestDb
+	executeAsyncQueryNotifyInput.SQL = ctasSQL
+	executeAsyncQueryNotifyInput.LambdaName = "panther-datacatalog-updater"
+	executeAsyncQueryNotifyInput.MethodName = "updateParquetPartition"
+	executeAsyncQueryNotifyInput.UserData = userData
+	var lambdaInput = struct {
+		ExecuteAsyncQueryNotify *models.ExecuteAsyncQueryNotifyInput
+	}{
+		&executeAsyncQueryNotifyInput,
+	}
+	var executeAsyncQueryNotifyOutput *models.ExecuteAsyncQueryNotifyOutput
+	err = genericapi.Invoke(lambdaClient, "panther-athena-api", &lambdaInput, &executeAsyncQueryNotifyOutput)
+	if err != nil {
+		return tempTable, workflowID, errors.WithStack(err)
+	}
+	workflowID = executeAsyncQueryNotifyOutput.WorkflowID
 
-	return workflowID, nil
+	return tempTable, workflowID, nil
 }
 
 func generateCtasSQL(databaseName, tableType, tableName, bucketName string, columns []*glue.Column,
-	hour time.Time, tag string) (tempTable, ctsa string) {
+	hour time.Time, tag string) (tempTable, ctsaSQL string) {
 
 	// generate name for table, by using this key it will fail if another is tried concurrently
 	tempTable = ctasDatabase + "." + databaseName + "_" + tableType + "_" + tableName + "_" + hour.Format("2006010215")

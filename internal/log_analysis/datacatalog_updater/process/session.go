@@ -23,6 +23,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 )
 
 const (
@@ -30,13 +32,13 @@ const (
 )
 
 var (
-	awsSession *session.Session
-	glueClient glueiface.GlueAPI
-	// lambdaClient lambdaiface.LambdaAPI
+	awsSession   *session.Session
+	glueClient   glueiface.GlueAPI
+	lambdaClient lambdaiface.LambdaAPI
 )
 
 func SessionInit() {
 	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
 	glueClient = glue.New(awsSession)
-	// lambdaClient = lambda.New(awsSession)
+	lambdaClient = lambda.New(awsSession)
 }

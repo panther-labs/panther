@@ -676,7 +676,7 @@ Resources:
                 - athena:StopQueryExecution
                 - athena:GetQuery*
               Resource: '*'
-        - Id: GluePermissions # used for all table metadata queries
+        - Id: GlueReadPermissions # used for all table metadata queries
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -685,7 +685,18 @@ Resources:
                 - glue:GetTable*
                 - glue:GetPartition*
               Resource: '*'
-        - Id: S3ResultsPermissions # athena writes results to S3
+        - Id: GlueCTASPermissions # used for CTAS into panther_temp database from Step Function
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:CreateTable
+                - glue:DeleteTable
+              Resource: # FIXME add condition on caller (step function)
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther_temp
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther_temp/*
+        - Id: S3ResultPermissions # athena writes results to S3
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -704,6 +715,16 @@ Resources:
                 - s3:List*
                 - s3:GetObject
               Resource: !Ref AthenaS3BucketARNS
+        - Id: S3CTASPermissions # CTAS writes to historical bucket
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+                - s3:PutObject
+              Resource: '*arn:aws:s3:::panther-*' # FIXME lock down
         - Id: StepsPermissions # start an async workflow that tracks the query execution
           Version: 2012-10-17
           Statement:
