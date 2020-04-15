@@ -17,10 +17,11 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Spinner } from 'pouncejs';
+import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useInfiniteScroll } from 'react-infinite-scroll-hook';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
@@ -44,7 +45,8 @@ const ListAlerts = () => {
   const infiniteRef = useInfiniteScroll<HTMLDivElement>({
     loading,
     hasNextPage: !!data?.alerts?.lastEvaluatedKey,
-    checkInterval: 800, // The default is 200 which seems a bit too quick
+    checkInterval: 600,
+    threshold: 500,
     onLoadMore: () => {
       fetchMore({
         variables: {
@@ -94,12 +96,12 @@ const ListAlerts = () => {
       <div ref={infiniteRef}>
         <Card mb={8}>
           <ListAlertsTable items={alertItems} />
+          {loading && (
+            <Box p={8}>
+              <TablePlaceholder rowCount={10} />
+            </Box>
+          )}
         </Card>
-        {loading && (
-          <Box mb={8}>
-            <Spinner size="large" margin="auto" />
-          </Box>
-        )}
       </div>
     </ErrorBoundary>
   );
