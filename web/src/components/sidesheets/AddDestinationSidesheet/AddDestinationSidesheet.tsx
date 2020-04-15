@@ -60,7 +60,6 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
       });
     },
     onError: error => {
-      hideSidesheet();
       pushSnackbar({
         variant: 'error',
         title:
