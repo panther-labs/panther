@@ -71,18 +71,14 @@ func UpdateLayer(analysisType string) error {
 		return err
 	}
 
-	zap.L().Debug("about to update policy engine")
 	// For policy/rule layers, only do one of these
 	err = updateLambda(policyEngineName, layerArn, layerVersion)
 	if err != nil {
-		zap.L().Debug("policy engine update returned error")
 		return err
 	}
 
-	zap.L().Debug("about to update rules engine")
 	err = updateLambda(ruleEngineName, layerArn, layerVersion)
 	if err != nil {
-		zap.L().Debug("rules engine update returned error")
 		return err
 	}
 
@@ -214,20 +210,16 @@ func updateLambda(lambdaName, layerArn *string, layerVersion *int64) error {
 	//
 	// Append the version to the ARN to get the versioned layer ARN
 	newLayerVersionArn := aws.StringValue(layerArn) + ":" + strconv.FormatInt(aws.Int64Value(layerVersion), 10)
-	zap.L().Debug("constructed newLayerVersionArn", zap.String("newLayerVersionArn", newLayerVersionArn))
 	var newLayers []*string
 	replaced := false
 	for _, layer := range oldLayers.Layers {
 		if strings.HasPrefix(*layer.Arn, *layerArn) {
 			if layerVersion != nil {
 				// Update operation
-				zap.L().Debug("update operations")
 				newLayers = append(newLayers, aws.String(newLayerVersionArn))
 			}
-			zap.L().Debug("found")
 			replaced = true
 		} else {
-			zap.L().Debug("not found, appending current layer", zap.String("layer.Arn", *layer.Arn))
 			newLayers = append(newLayers, layer.Arn)
 		}
 	}
