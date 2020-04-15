@@ -30,7 +30,6 @@ import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
 const ListAlerts = () => {
   const { loading, error, data, fetchMore } = useListAlerts({
-    notifyOnNetworkStatusChange: true, // Adding notifyOnNetworkStatusChange will enable 'loading' to update its status during fetchMore requests as well
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
@@ -46,7 +45,7 @@ const ListAlerts = () => {
     loading,
     hasNextPage: !!data?.alerts?.lastEvaluatedKey,
     checkInterval: 600,
-    threshold: 500,
+    threshold: 400,
     onLoadMore: () => {
       fetchMore({
         variables: {
