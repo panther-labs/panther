@@ -34,8 +34,6 @@ import (
 
 const swaggerGlob = "api/gateway/*/api.yml"
 
-var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
-
 // Build contains targets for compiling source code.
 type Build mg.Namespace
 
@@ -75,11 +73,23 @@ func (b Build) API() {
 		}
 		walk(client, handler)
 		walk(models, handler)
+
+		// Format generated files with our license header and import ordering.
+		// "swagger generate client" can embed the header, but it's simpler to keep the whole repo
+		// formatted the exact same way.
+		fmtLicense(client, models)
+		if err := gofmt(client, models); err != nil {
+			logger.Warnf("gofmt %s %s failed: %v", client, models, err)
+		}
 	}
 
 	logger.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		logger.Fatalf("graphql generation failed: %v", err)
+	}
+	fmtLicense("web/__generated__")
+	if err := prettier("web/__generated__/*"); err != nil {
+		logger.Warnf("prettier web/__generated__/ failed: %v", err)
 	}
 }
 
@@ -100,8 +110,23 @@ func (b Build) lambda() error {
 
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
+
+	// "go build" in parallel for each Lambda function.
+	//
+	// If you don't already have all go modules downloaded, this may fail because each goroutine will
+	// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
+	//
+	// Run "go mod download" or "mage setup" before building to download the go modules.
+	// If you're adding a new module, run "go get ./..." before building to fetch the new module.
+	errs := make(chan error)
 	for _, pkg := range packages {
-		if err := buildPackage(pkg); err != nil {
+		go func(pkg string, errs chan error) {
+			errs <- buildLambdaPackage(pkg)
+		}(pkg, errs)
+	}
+
+	for range packages {
+		if err := <-errs; err != nil {
 			return err
 		}
 	}
@@ -117,52 +142,19 @@ func (b Build) Tools() {
 }
 
 func (b Build) tools() error {
-	if err := buildTools("devtools", "out/bin/devtools", "cmd/devtools"); err != nil {
-		return err
-	}
-	return buildTools("opstools", "out/bin/opstools", "cmd/opstools")
-}
-
-func buildTools(tools, binDir, sourceDir string) error {
 	// cross compile so tools can be copied to other machines easily
-	archs := []string{"amd64", "386", "arm"} // yes arm, AWS is now supporting arm processors and they are cheap!
-	oses := []string{"linux", "darwin", "windows"}
-	blacklist := map[string]bool{ // incompatible combinations
-		"darwin:arm": true,
+	buildEnvs := []map[string]string{
+		// darwin:arm is not compatible
+		{"GOOS": "darwin", "GOARCH": "amd64"},
+		{"GOOS": "linux", "GOARCH": "amd64"},
+		{"GOOS": "linux", "GOARCH": "arm"},
+		{"GOOS": "windows", "GOARCH": "amd64"},
+		{"GOOS": "windows", "GOARCH": "arm"},
 	}
 
-	applyBuildEnv := func(apply func(arch, opsys, binPath string) error) error {
-		for _, arch := range archs {
-			for _, opsys := range oses {
-				if blacklist[opsys+":"+arch] {
-					continue
-				}
-
-				if err := apply(arch, opsys, filepath.Join(binDir, opsys, arch)); err != nil {
-					return err
-				}
-			}
-		}
-
-		return nil
-	}
-
-	// create the dirs
-	err := applyBuildEnv(func(arch, opsys, binPath string) error {
-		if err := os.MkdirAll(binPath, 0755); err != nil {
-			return fmt.Errorf("failed to create %s directory: %v", binPath, err)
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	logger.Infof("build:%s using %s for %s on %s",
-		tools, runtime.Version(), strings.Join(oses, ","), strings.Join(archs, ","))
-
-	// compile each app
-	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
+	count := 0
+	results := make(chan error)
+	err := filepath.Walk("cmd", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -171,26 +163,39 @@ func buildTools(tools, binDir, sourceDir string) error {
 			return nil
 		}
 
-		return applyBuildEnv(func(arch, opsys, binPath string) error {
-			app := filepath.Dir(path)
-			logger.Debugf("build:%s compiling %s for %s on %s to %s",
-				tools, filepath.Base(app), opsys, arch, binPath)
+		// Build each os/arch combination in parallel
+		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
+		for _, env := range buildEnvs {
+			count++
+			go func(env map[string]string, path string, results chan error) {
+				outDir := filepath.Join("out", "bin", filepath.Dir(path),
+					env["GOOS"], env["GOARCH"], filepath.Base(filepath.Dir(path)))
+				results <- sh.RunWith(env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+path)
+			}(env, path, results)
+		}
 
-			if err = sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
-				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
-				return fmt.Errorf("go build %s failed: %v", path, err)
-			}
-
-			return nil
-		})
+		return nil
 	})
+
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < count; i++ {
+		if err = <-results; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func buildPackage(pkg string) error {
+func buildLambdaPackage(pkg string) error {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")
 	oldInfo, statErr := os.Stat(binary)
 	oldHash, hashErr := fileMD5(binary)
+	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)

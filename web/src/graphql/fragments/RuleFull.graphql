@@ -1,0 +1,11 @@
+fragment RuleFull on RuleDetails {
+  ...RuleBasic
+  ...RuleDates
+  body
+  tests {
+    expectedResult
+    name
+    resource
+    resourceType
+  }
+}

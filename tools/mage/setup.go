@@ -29,6 +29,9 @@ import (
 )
 
 const (
+	// Use the commit from the latest tagged release of https://github.com/golang/tools/releases
+	goimportsVersion = "5fc56a9" // gopls/v0.4.0
+
 	golangciVersion  = "1.23.6"
 	swaggerVersion   = "0.23.0"
 	terraformVersion = "0.12.24"
@@ -55,7 +58,7 @@ func Setup() {
 
 	count++
 	go func(c chan goroutineResult) {
-		c <- goroutineResult{"go get modules", installGoModules()}
+		c <- goroutineResult{"download go modules", installGoModules()}
 	}(results)
 
 	count++
@@ -89,12 +92,17 @@ func Setup() {
 // Fetch all Go modules needed for tests and compilation.
 //
 // "go test" and "go build" will do this automatically, but putting it in the setup flow allows it
-// to happen in parallel with the rest of the downloads.
+// to happen in parallel with the rest of the downloads. Pre-installing modules also allows
+// us to build Lambda functions in parallel.
 func installGoModules() error {
-	logger.Info("setup: go get modules...")
+	logger.Info("setup: download go modules...")
 
-	// goimports is needed for formatting but won't be listed as an explicit dependency
-	return sh.Run("go", "get", "-t", "golang.org/x/tools/cmd/goimports", "./...")
+	if err := sh.Run("go", "mod", "download"); err != nil {
+		return err
+	}
+
+	// goimports is needed for formatting but isn't importable (won't be in go.mod)
+	return sh.Run("go", "get", "golang.org/x/tools/cmd/goimports@"+goimportsVersion)
 }
 
 // Download go-swagger if it hasn't been already
@@ -187,7 +195,11 @@ func installTerraform(uname string) error {
 func installPythonEnv() error {
 	// Create .setup/venv if it doesn't already exist
 	if info, err := os.Stat(pythonVirtualEnvPath); err == nil && info.IsDir() {
-		logger.Debugf("setup: %s already exists", pythonVirtualEnvPath)
+		if runningInCI() {
+			// If .setup/venv already exists in CI, it must have been restored from the cache.
+			logger.Info("setup: skipping pip install")
+			return nil
+		}
 	} else {
 		if err := sh.Run("python3", "-m", "venv", pythonVirtualEnvPath); err != nil {
 			return fmt.Errorf("failed to create venv %s: %v", pythonVirtualEnvPath, err)
@@ -209,6 +221,17 @@ func installPythonEnv() error {
 
 // Install npm modules
 func installNodeModules() error {
+	if _, err := os.Stat("node_modules"); err == nil && runningInCI() {
+		// In CI, if node_modules already exist, they must have been restored from the cache.
+		// Stop early (otherwise, npm install takes ~10 seconds to figure out it has nothing to do).
+		logger.Info("setup: skipping npm install")
+		return nil
+	}
+
 	logger.Info("setup: npm install...")
-	return sh.Run("npm", "i", "--no-progress", "--silent")
+	args := []string{"install", "--no-progress", "--no-audit"}
+	if !mg.Verbose() {
+		args = append(args, "--silent")
+	}
+	return sh.Run("npm", args...)
 }
