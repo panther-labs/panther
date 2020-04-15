@@ -78,23 +78,6 @@ const SQLEditor: React.FC = () => {
       }),
   });
 
-  // When `runQuery` is called set the status to "provisioning" until we get a queryId back, in which
-  // case the `onComplete` handler of the `runQuery` will make sure to set the correct query status
-  React.useEffect(() => {
-    if (isProvisioningQuery) {
-      dispatch({ type: 'QUERY_PROVISIONING' });
-    }
-  }, [isProvisioningQuery]);
-
-  // When `cancelQuery` is called set the status to "null" to simulate optimistic cancellation. In
-  // any case (regardless of whether the query was cancelled) the query status should return to a
-  // pristine state in order to allow the user to write a new query
-  React.useEffect(() => {
-    if (isCancelingQuery) {
-      dispatch({ type: 'QUERY_CANCELED' });
-    }
-  }, [isCancelingQuery]);
-
   // Create proper completion data
   const completions = React.useMemo(() => {
     const acc = new Set<Completion>();
@@ -132,7 +115,10 @@ const SQLEditor: React.FC = () => {
           color="red300"
           mt={6}
           disabled={isCancelingQuery}
-          onClick={() => cancelQuery()}
+          onClick={() => {
+            cancelQuery();
+            dispatch({ type: 'QUERY_CANCELED' });
+          }}
         >
           Cancel
         </Button>
@@ -142,7 +128,10 @@ const SQLEditor: React.FC = () => {
           variant="primary"
           mt={6}
           disabled={!value || !selectedDatabase || isProvisioningQuery}
-          onClick={() => runQuery()}
+          onClick={() => {
+            runQuery();
+            dispatch({ type: 'QUERY_PROVISIONING' });
+          }}
         >
           Run Query
         </Button>

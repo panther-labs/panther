@@ -109,6 +109,13 @@ const Results: React.FC = () => {
     }
   }, [queryHasFailed]);
 
+  const queryWasCanceled = data?.getLogQuery?.query?.status === LogQueryStatus.Canceled;
+  React.useEffect(() => {
+    if (queryWasCanceled) {
+      stopPolling();
+    }
+  }, [queryWasCanceled]);
+
   return (
     <Box innerRef={infiniteRef} height="100%">
       <ResultsTable isFetchingMore={loading} results={data?.getLogQuery?.results ?? []} />
