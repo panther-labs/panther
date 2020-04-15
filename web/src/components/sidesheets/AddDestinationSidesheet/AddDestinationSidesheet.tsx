@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Flex, Heading, Icon, IconButton, SideSheet, useSnackbar } from 'pouncejs';
+import { Alert, Box, Flex, Heading, Icon, IconButton, SideSheet, useSnackbar } from 'pouncejs';
 import React from 'react';
 
 import useSidesheet from 'Hooks/useSidesheet';
@@ -51,7 +51,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   const { hideSidesheet, showSidesheet } = useSidesheet();
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
-  const [addDestination] = useAddDestination({
+  const [addDestination, { error: addDestinationError }] = useAddDestination({
     onCompleted: data => {
       hideSidesheet();
       pushSnackbar({
@@ -229,6 +229,18 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
           </IconButton>
           <Heading size="medium">{capitalize(destinationType)} Configuration</Heading>
         </Flex>
+        {addDestinationError && (
+          <Alert
+            mt={2}
+            mb={6}
+            variant="error"
+            title="Destination not added"
+            description={
+              extractErrorMessage(addDestinationError) ||
+              "An unknown error occured and we couldn't add your new destination"
+            }
+          />
+        )}
         {renderFullDestinationForm()}
       </Box>
     </SideSheet>
