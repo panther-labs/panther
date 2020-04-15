@@ -13,11 +13,59 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
+      - restore_cache:
+          name: 'Restore cache: go modules'
+          keys:
+            - gomod2-{{ checksum "go.mod" }}
       - run:
-          name: Install dependencies
-          command: mage setup # TODO: cache these
+          # Start compiling mage in the background while other caches are restoring
+          name: Compile mage (background)
+          command: mage
+          background: true
+      - restore_cache:
+          name: 'Restore cache: npm'
+          keys:
+            - npm-{{ checksum "package-lock.json" }}
+      - restore_cache:
+          name: 'Restore cache: python env'
+          keys:
+            - venv-{{ checksum "requirements.txt" }}
+      - restore_cache:
+          name: 'Restore cache: .setup binaries'
+          keys:
+            - setup-{{ checksum "tools/mage/setup.go" }}
+
       - run:
-          name: Run all tests
+          # By this point, mage is compiled and all dependencies have been restored from the cache.
+          # "mage setup" will be a no-op unless new dependencies have been introduced.
+          name: Install new dependencies
+          command: mage setup
+
+      - save_cache:
+          name: 'Save cache: go modules'
+          key: gomod2-{{ checksum "go.mod" }}
+          paths:
+            - /go/pkg/mod
+      - save_cache:
+          name: 'Save cache: npm'
+          key: npm-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+      - save_cache:
+          name: 'Save cache: python env'
+          key: venv-{{ checksum "requirements.txt" }}
+          paths:
+            - .setup/venv
+      - save_cache:
+          name: 'Save cache: .setup binaries'
+          key: setup-{{ checksum "tools/mage/setup.go" }}
+          paths:
+            - .setup/golangci-lint
+            - .setup/swagger
+            - .setup/terraform
+
+      - run:
+          name: Run test suite
           command: mage test:ci
 
   npm_audit:

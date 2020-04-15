@@ -30,106 +30,127 @@ var (
 	expectedString        = "2019-12-15 01:01:01 +0000 UTC" // from String()
 	expectedMarshalString = `"2019-12-15 01:01:01.000000000"`
 	expectedTime          = time.Date(2019, 12, 15, 1, 1, 1, 0, time.UTC)
-	expectedUnixFloatTime = time.Date(2018, 10, 31, 16, 0, 0, 580233097, time.UTC)
-
-	jsonUnmarshalString            = `"2019-12-15T01:01:01Z"`
-	osqueryUnmarshalString         = `"Sun Dec 15 01:01:01 2019 UTC"`
-	unixMillisecondUnmarshalString = `1576371661000`
-	fluentdUnmarshalString         = `"2019-12-15 01:01:01 +0000"`
-	unixFloatUnmarshalString       = `1541001600.580233`
 )
 
-func TestTimestampRFC3339_String(t *testing.T) {
+func TestTimestampRFC3339String(t *testing.T) {
 	ts := (RFC3339)(expectedTime)
 	assert.Equal(t, expectedString, ts.String())
 }
 
-func TestTimestampRFC3339_Marshal(t *testing.T) {
+func TestTimestampRFC3339Marshal(t *testing.T) {
 	ts := (RFC3339)(expectedTime)
 	jsonTS, err := jsoniter.Marshal(&ts)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMarshalString, string(jsonTS))
 }
 
-func TestTimestampRFC3339_Unmarshal(t *testing.T) {
+func TestTimestampRFC3339Unmarshal(t *testing.T) {
+	unmarshalString := `"2019-12-15T01:01:01Z"`
 	var ts RFC3339
-	err := jsoniter.Unmarshal([]byte(jsonUnmarshalString), &ts)
+	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
 	assert.NoError(t, err)
 	assert.Equal(t, (RFC3339)(expectedTime), ts)
 }
 
-func TestTimestampANSICwithTZ_String(t *testing.T) {
+func TestTimestampANSICwithTZString(t *testing.T) {
 	ts := (ANSICwithTZ)(expectedTime)
 	assert.Equal(t, expectedString, ts.String())
 }
 
-func TestTimestampANSICwithTZ_Marshal(t *testing.T) {
+func TestTimestampANSICwithTZMarshal(t *testing.T) {
 	ts := (ANSICwithTZ)(expectedTime)
 	jsonTS, err := jsoniter.Marshal(&ts)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMarshalString, string(jsonTS))
 }
 
-func TestTimestampANSICwithTZ_Unmarshal(t *testing.T) {
+func TestTimestampANSICwithTZUnmarshal(t *testing.T) {
+	unmarshalString := `"Sun Dec 15 01:01:01 2019 UTC"`
 	var ts ANSICwithTZ
-	err := jsoniter.Unmarshal([]byte(osqueryUnmarshalString), &ts)
+	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
 	assert.NoError(t, err)
 	assert.Equal(t, (ANSICwithTZ)(expectedTime), ts)
 }
 
-func TestTimestampUnixMillisecond_String(t *testing.T) {
+func TestTimestampUnixMillisecondString(t *testing.T) {
 	ts := (UnixMillisecond)(expectedTime)
 	assert.Equal(t, expectedString, ts.String())
 }
 
-func TestTimestampUnixMillisecond_Marshal(t *testing.T) {
+func TestTimestampUnixMillisecondMarshal(t *testing.T) {
 	ts := (UnixMillisecond)(expectedTime)
 	jsonTS, err := jsoniter.Marshal(&ts)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMarshalString, string(jsonTS))
 }
 
-func TestTimestampUnixMillisecond_Unmarshal(t *testing.T) {
+func TestTimestampUnixMillisecondUnmarshal(t *testing.T) {
+	unmarshalString := `1576371661000`
 	var ts UnixMillisecond
-	err := jsoniter.Unmarshal([]byte(unixMillisecondUnmarshalString), &ts)
+	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
 	assert.NoError(t, err)
 	assert.Equal(t, (UnixMillisecond)(expectedTime), ts)
 }
 
-func TestFluentdTimestamp_String(t *testing.T) {
+func TestFluentdTimestampString(t *testing.T) {
 	ts := (FluentdTimestamp)(expectedTime)
 	assert.Equal(t, expectedString, ts.String())
 }
 
-func TestFluentdTimestamp_Marshal(t *testing.T) {
+func TestFluentdTimestampMarshal(t *testing.T) {
 	ts := (FluentdTimestamp)(expectedTime)
 	jsonTS, err := jsoniter.Marshal(&ts)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMarshalString, string(jsonTS))
 }
 
-func TestFluentdTimestamp_Unmarshal(t *testing.T) {
+func TestFluentdTimestampUnmarshal(t *testing.T) {
+	unmarshalString := `"2019-12-15 01:01:01 +0000"`
 	var ts FluentdTimestamp
-	err := jsoniter.Unmarshal([]byte(fluentdUnmarshalString), &ts)
+	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
 	assert.NoError(t, err)
 	assert.Equal(t, (FluentdTimestamp)(expectedTime), ts)
 }
 
-func TestUnixFloat_String(t *testing.T) {
+func TestUnixFloatString(t *testing.T) {
 	ts := (UnixFloat)(expectedTime)
 	assert.Equal(t, expectedString, ts.String())
 }
 
-func TestUnixFloat_Marshal(t *testing.T) {
+func TestUnixFloatMarshal(t *testing.T) {
 	ts := (UnixFloat)(expectedTime)
 	jsonTS, err := jsoniter.Marshal(&ts)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMarshalString, string(jsonTS))
 }
 
-func TestUnixFloat_Unmarshal(t *testing.T) {
+func TestUnixFloatUnmarshal(t *testing.T) {
+	unmarshalString := `1541001600.580233`
+	expectedTime := time.Date(2018, 10, 31, 16, 0, 0, 580233097, time.UTC)
 	var ts UnixFloat
-	err := jsoniter.Unmarshal([]byte(unixFloatUnmarshalString), &ts)
+	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
 	assert.NoError(t, err)
-	assert.Equal(t, (UnixFloat)(expectedUnixFloatTime), ts)
+	assert.Equal(t, (UnixFloat)(expectedTime), ts)
+}
+
+func TestSuricataString(t *testing.T) {
+	ts := (SuricataTimestamp)(expectedTime)
+	assert.Equal(t, expectedString, ts.String())
+}
+
+func TestSuricataMarshal(t *testing.T) {
+	ts := (SuricataTimestamp)(expectedTime)
+	jsonTS, err := jsoniter.Marshal(&ts)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedMarshalString, string(jsonTS))
+}
+
+func TestSuricataUnmarshal(t *testing.T) {
+	unmarshalString := `"2015-10-22T11:17:43.787396+0100"`
+	// Verify that hour has adjusted to UTC timezone
+	expectedTime := time.Date(2015, 10, 22, 10, 17, 43, 787396000, time.UTC)
+	var ts SuricataTimestamp
+	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
+	assert.NoError(t, err)
+	assert.Equal(t, (SuricataTimestamp)(expectedTime), ts)
 }
