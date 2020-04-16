@@ -36,7 +36,7 @@ const SourceConfigurationPanel: React.FC = () => {
       <Heading size="medium" m="auto" mb={2} color="grey400">
         {initialValues.integrationId ? 'Update source' : "Let's start with the basics"}
       </Heading>
-      <Text size="large" color="grey200" mb={10} is="p">
+      <Text size="large" color="grey200" mb={10} as="p">
         {initialValues.integrationId
           ? 'Feel free to make any changes to your log source'
           : 'We need to know where to get your logs from'}
@@ -81,7 +81,7 @@ const SourceConfigurationPanel: React.FC = () => {
           type="button"
           size="large"
           color="blue300"
-          is="button"
+          as="button"
           onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
           my={9}
         >

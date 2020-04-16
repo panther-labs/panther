@@ -56,7 +56,7 @@ const MfaForm: React.FC = () => {
       }
     >
       {({ handleSubmit, isValid, isSubmitting, dirty }) => (
-        <Box is="form" width={1} onSubmit={handleSubmit}>
+        <Box as="form" width={1} onSubmit={handleSubmit}>
           <Field
             autoFocus
             as={FormikTextInput}

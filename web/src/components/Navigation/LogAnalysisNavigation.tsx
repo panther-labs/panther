@@ -27,20 +27,20 @@ const LogAnalysisNavigation: React.FC = () => {
       <Heading size="medium" textAlign="center" mt={10} mb={5}>
         <b>LOG ANALYSIS</b>
       </Heading>
-      <Flex flexDirection="column" is="ul">
-        <Flex is="li" position="relative">
+      <Flex direction="column" as="ul">
+        <Flex as="li" position="relative">
           <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
           <Box position="absolute" right="10px" top="23px">
             <Badge color="blue">Coming Soon</Badge>
           </Box>
         </Flex>
-        <Flex is="li">
+        <Flex as="li">
           <NavLink icon="rule" to={urls.logAnalysis.rules.list()} label="Rules" />
         </Flex>
-        <Flex is="li">
+        <Flex as="li">
           <NavLink icon="alert" to={urls.logAnalysis.alerts.list()} label="Alerts" />
         </Flex>
-        <Flex is="li">
+        <Flex as="li">
           <NavLink icon="log-source" to={urls.logAnalysis.sources.list()} label="Sources" />
         </Flex>
       </Flex>

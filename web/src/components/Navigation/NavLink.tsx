@@ -36,12 +36,12 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
       variant="primary"
       selected={location.pathname.startsWith(to)}
       my={2}
-      is={Link}
+      as={Link}
       to={to}
       textDecoration="none"
       aria-label={label}
     >
-      <Flex alignItems="center" px={4}>
+      <Flex align="center" px={4}>
         <Icon type={icon} size="small" mr={6} />
         {label}
       </Flex>

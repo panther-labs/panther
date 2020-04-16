@@ -91,8 +91,8 @@ const SignInPage: React.FC = () => {
             <Link to={urls.account.auth.forgotPassword()}>Forgot your password?</Link>
           </Text>
           <AuthPageContainer.AltOptions>
-            <Flex alignItems="center">
-              <Text size="medium" color="grey200" is="span" mr={3}>
+            <Flex align="center">
+              <Text size="medium" color="grey200" as="span" mr={3}>
                 Don{"'"}t have an account? Talk to your admin
               </Text>
             </Flex>

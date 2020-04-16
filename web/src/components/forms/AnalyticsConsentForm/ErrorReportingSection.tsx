@@ -24,7 +24,7 @@ import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 
 const ErrorReportingSection: React.FC = () => {
   return (
-    <Flex alignItems="flex-start" mb={10}>
+    <Flex align="flex-start" mb={10}>
       <Field as={FormikCheckbox} name="errorReportingConsent" id="errorReportingConsent" />
       <Box ml={2}>
         <InputElementLabel htmlFor="errorReportingConsent">
@@ -38,7 +38,7 @@ const ErrorReportingSection: React.FC = () => {
           <Text
             color="grey300"
             size="medium"
-            is="a"
+            as="a"
             href={`${PANTHER_SCHEMA_DOCS_LINK}/security-privacy#privacy`}
             rel="noopener noreferrer"
           >

@@ -36,7 +36,7 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
     <Dropdown
       position="relative"
       trigger={
-        <IconButton is="div" variant="default" my={-2}>
+        <IconButton as="div" variant="default" my={-2}>
           <Icon type="more" size="small" />
         </IconButton>
       }

@@ -63,8 +63,8 @@ const ListLogSources = () => {
         title="Log Sources"
         size="large"
         actions={
-          <Button size="large" variant="primary" is={Link} to={urls.logAnalysis.sources.create()}>
-            <Flex alignItems="center">
+          <Button size="large" variant="primary" as={Link} to={urls.logAnalysis.sources.create()}>
+            <Flex align="center">
               <Icon type="add" size="small" mr={1} />
               Add Source
             </Flex>

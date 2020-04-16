@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Combobox, Grid, InputElementLabel, Spinner } from 'pouncejs';
+import { Alert, Box, Combobox, InputElementLabel, SimpleGrid, Spinner } from 'pouncejs';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
@@ -78,7 +78,7 @@ const PolicyFormAutoRemediationFields: React.FC = () => {
 
   return (
     <section>
-      <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={9}>
+      <SimpleGrid columns={2} spacingX={9} spacingY={2}>
         <Combobox<[string, string]>
           searchable
           label="Remediation"
@@ -91,7 +91,7 @@ const PolicyFormAutoRemediationFields: React.FC = () => {
             setAutoRemediationSelection(remediationTuple);
           }}
         />
-      </Grid>
+      </SimpleGrid>
       <Box hidden>
         <Field as={FormikTextInput} name="autoRemediationId" />
       </Box>

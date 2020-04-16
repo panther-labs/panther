@@ -59,13 +59,7 @@ function BaseRuleForm<BaseRuleFormValues extends IdValue>({
         return (
           <form onSubmit={handleSubmit}>
             {children}
-            <Flex
-              borderTop="1px solid"
-              borderColor="grey100"
-              pt={6}
-              mt={10}
-              justifyContent="flex-end"
-            >
+            <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
               <Flex>
                 <Button variant="default" size="large" onClick={history.goBack} mr={4}>
                   Cancel

@@ -40,7 +40,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       <Text size="large" color="grey500" mb={8} textAlign="center">
         {subtitle}
       </Text>
-      <Flex justifyContent="flex-end">
+      <Flex justify="flex-end">
         <Button size="large" variant="default" onClick={onClose} mr={3}>
           Cancel
         </Button>

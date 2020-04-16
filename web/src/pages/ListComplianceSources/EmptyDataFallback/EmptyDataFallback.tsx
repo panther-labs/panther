@@ -23,13 +23,7 @@ import { Link } from 'react-router-dom';
 import urls from 'Source/urls';
 
 const EmptyDataFallback: React.FC = () => (
-  <Flex
-    height="100%"
-    width="100%"
-    justifyContent="center"
-    alignItems="center"
-    flexDirection="column"
-  >
+  <Flex height="100%" width="100%" justify="center" align="center" direction="column">
     <Box m={10}>
       <img alt="Empty data illustration" src={EmptyDataImg} width="auto" height={400} />
     </Box>
@@ -39,7 +33,7 @@ const EmptyDataFallback: React.FC = () => (
     <Text size="large" color="grey200" textAlign="center" mb={10}>
       You don{"'"}t seem to have any Cloud Security sources connected to our system. <br />
     </Text>
-    <Button size="large" variant="primary" is={Link} to={urls.compliance.sources.create()}>
+    <Button size="large" variant="primary" as={Link} to={urls.compliance.sources.create()}>
       Connect an account
     </Button>
   </Flex>

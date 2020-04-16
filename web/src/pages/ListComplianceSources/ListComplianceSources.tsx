@@ -63,8 +63,8 @@ const ListComplianceSources = () => {
         title="Connected Accounts"
         size="large"
         actions={
-          <Button size="large" variant="primary" is={Link} to={urls.compliance.sources.create()}>
-            <Flex alignItems="center">
+          <Button size="large" variant="primary" as={Link} to={urls.compliance.sources.create()}>
+            <Flex align="center">
               <Icon type="add" size="small" mr={1} />
               Add Account
             </Flex>
