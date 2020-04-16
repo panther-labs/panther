@@ -55,9 +55,9 @@ var (
 	TestPartitionTime = time.Date(2020, 3, 2, 1, 0, 0, 0, time.UTC)
 
 	TestYear  = fmt.Sprintf("%d", TestPartitionTime.Year())
-	TestMonth = fmt.Sprintf("%01d", TestPartitionTime.Month())
-	TestDay   = fmt.Sprintf("%01d", TestPartitionTime.Day())
-	TestHour  = fmt.Sprintf("%01d", TestPartitionTime.Hour())
+	TestMonth = fmt.Sprintf("%02d", TestPartitionTime.Month())
+	TestDay   = fmt.Sprintf("%02d", TestPartitionTime.Day())
+	TestHour  = fmt.Sprintf("%02d", TestPartitionTime.Hour())
 
 	TestEventTime = TestPartitionTime.Format(`2006-01-02 15:04:05.000`)
 

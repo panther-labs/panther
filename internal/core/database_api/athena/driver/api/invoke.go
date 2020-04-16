@@ -45,6 +45,7 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 		zap.L().Info("InvokeNotifyLambda",
 			zap.String("userData", input.UserData),
 			zap.String("queryId", input.QueryID),
+			zap.String("workflowID", input.WorkflowID),
 			zap.String("lambdaName", input.LambdaName),
 			zap.String("methodName", input.MethodName),
 			zap.Error(err))
