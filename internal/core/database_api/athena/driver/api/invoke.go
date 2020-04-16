@@ -62,6 +62,7 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 		return output, err
 	}
 
+	// genericapi used
 	resp, err := lambdaClient.Invoke(&lambda.InvokeInput{
 		FunctionName: &input.LambdaName,
 		Payload:      []byte(fmt.Sprintf(`{ "%s": %s}`, input.MethodName, payload)), // genericapi

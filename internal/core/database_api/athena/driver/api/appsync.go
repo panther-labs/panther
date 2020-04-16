@@ -79,7 +79,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 			zap.Error(err))
 	}()
 
-	// make sigv4 https request to appsync endpoint notifying query is complete, sending  queryId and workflowId
+	// make sigv4 https request to appsync endpoint notifying query is complete, sending  userData, queryId and workflowId
 	appSyncEndpoint := os.Getenv("GRAPHQL_ENDPOINT")
 	httpClient := http.Client{}
 	signer := v4.NewSigner(awsSession.Config.Credentials)
@@ -119,6 +119,9 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		return output, err
 	}
 	defer resp.Body.Close()
+
+	output.StatusCode = resp.StatusCode
+
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
 		err = errors.Errorf("failed to POST (%d): %s", resp.StatusCode, string(respBody))

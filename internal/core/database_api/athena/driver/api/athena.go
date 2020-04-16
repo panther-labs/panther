@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	pollWait = time.Second * 4
+	pollWait = time.Second * 2
 
 	presignedLinkTimeLimit = time.Minute
 )
@@ -146,7 +146,7 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 			DataScannedBytes:          *executionStatus.QueryExecution.Statistics.DataScannedInBytes,
 		}
 	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
-		output.SQLError = "Query failed: " + *executionStatus.QueryExecution.Status.StateChangeReason
+		output.SQLError = *executionStatus.QueryExecution.Status.StateChangeReason
 	case models.QueryCanceled:
 		output.SQLError = "Query canceled"
 	}
@@ -207,6 +207,13 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
 	if err != nil {
 		return output, err
+	}
+
+	output.Status = getQueryStatus(executionStatus)
+
+	if output.Status != models.QuerySucceeded {
+		output.SQLError = "results not available"
+		return output, nil
 	}
 
 	s3path := *executionStatus.QueryExecution.ResultConfiguration.OutputLocation
@@ -306,37 +313,31 @@ func getQueryResults(client athenaiface.AthenaAPI, queryID string,
 	}
 
 	skipHeader := nextToken == nil // athena puts header in first row of first page
-	err = collectResults(skipHeader, queryResult, output)
-	if err != nil {
-		return err
-	}
+	collectResults(skipHeader, queryResult, output)
 	return nil
 }
 
-func collectResults(skipHeader bool, queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) (err error) {
+func collectResults(skipHeader bool, queryResult *athena.GetQueryResultsOutput, output *models.GetQueryResultsOutput) {
+	output.ResultsPage.Rows = make([]*models.Row, 0, len(queryResult.ResultSet.Rows)) // pre-alloc
 	for _, row := range queryResult.ResultSet.Rows {
 		if skipHeader {
 			skipHeader = false
 			continue
 		}
-		var columns []*models.Column
-		for _, col := range row.Data {
+		columns := make([]*models.Column, len(row.Data))
+		for colIndex := range row.Data {
 			var value string
+			col := row.Data[colIndex]
 			if col.VarCharValue == nil {
 				value = "NULL"
 			} else {
 				value = *col.VarCharValue
 			}
-			columns = append(columns, &models.Column{
-				Value: value,
-			})
+			columns[colIndex] = &models.Column{Value: value}
 		}
 		output.ResultsPage.Rows = append(output.ResultsPage.Rows, &models.Row{Columns: columns})
 	}
-	if err != nil {
-		return errors.WithStack(err)
-	}
+
 	output.ResultsPage.NumRows = len(output.ResultsPage.Rows)
 	output.ResultsPage.PaginationToken = queryResult.NextToken
-	return nil
 }

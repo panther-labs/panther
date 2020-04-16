@@ -61,7 +61,8 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 
 	worflowJSON, err := jsoniter.Marshal(input)
 	if err != nil {
-		return output, errors.Wrapf(err, "failed to marshal %#v", input)
+		err = errors.Wrapf(err, "failed to marshal %#v", input)
+		return output, err
 	}
 
 	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
