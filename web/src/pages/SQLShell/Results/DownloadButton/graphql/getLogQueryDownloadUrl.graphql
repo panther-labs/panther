@@ -1,0 +1,8 @@
+query GetLogQueryDownloadUrl($input: GetLogQueryInput!) {
+  getLogQueryDownloadUrl(input: $input) {
+    url
+    error {
+      message
+    }
+  }
+}

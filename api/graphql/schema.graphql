@@ -54,6 +54,7 @@ type Query {
   getLogDatabaseTable(input: GetLogDatabaseTableInput!): LogDatabaseTable
   getLogIntegrationTemplate(input: GetLogIntegrationTemplateInput!): IntegrationTemplate!
   getLogQuery(input: GetLogQueryInput!): GetLogQueryOutput!
+  getLogQueryDownloadUrl(input: GetLogQueryInput!): GetLogQueryDownloadUrlOutput!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -341,6 +342,11 @@ type CancelLogQueryOutput {
   error: Error
   query: LogQueryOutputQueryData
   stats: GetLogQueryStats
+}
+
+type GetLogQueryDownloadUrlOutput {
+  error: Error
+  url: String
 }
 
 type GetLogQueryOutput {

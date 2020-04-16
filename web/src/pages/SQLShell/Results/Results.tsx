@@ -1,7 +1,9 @@
 import React from 'react';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import Panel from 'Components/Panel';
 import { Box } from 'pouncejs';
 import { LogQueryStatus } from 'Generated/schema';
+import DownloadButton from 'Pages/SQLShell/Results/DownloadButton';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useInfiniteScroll } from 'react-infinite-scroll-hook';
 import { useGetLogQueryResults } from './graphql/getLogQueryResults.generated';
@@ -88,27 +90,28 @@ const Results: React.FC = () => {
   }, [queryNeedsPolling]);
 
   // If a server round-trip gives us a status of "succeeded", polling needs to stop
-  const queryHasSucceeded = data?.getLogQuery.query.status === LogQueryStatus.Succeeded;
+  const isQuerySuccessful = data?.getLogQuery.query.status === LogQueryStatus.Succeeded;
   React.useEffect(() => {
-    if (queryHasSucceeded) {
+    if (isQuerySuccessful) {
       stopPolling();
       dispatch({ type: 'QUERY_SUCCEEDED' });
     }
-  }, [queryHasSucceeded]);
+  }, [isQuerySuccessful]);
 
   // If a server round-trip gives us a status of "errored", polling needs to stop and we need to
   // let the user know what went wrong
-  const queryHasFailed = !!error || data?.getLogQuery?.query?.status === LogQueryStatus.Failed;
+  const hasQueryFailed = !!error || data?.getLogQuery?.query?.status === LogQueryStatus.Failed;
   React.useEffect(() => {
-    if (queryHasFailed) {
+    if (hasQueryFailed) {
       stopPolling();
       dispatch({
         type: 'QUERY_ERRORED',
         payload: { message: error ? extractErrorMessage(error) : data?.getLogQuery.error?.message },
       });
     }
-  }, [queryHasFailed]);
+  }, [hasQueryFailed]);
 
+  // If the query was canceled by the user, then we should stop polling immediately
   const queryWasCanceled = data?.getLogQuery?.query?.status === LogQueryStatus.Canceled;
   React.useEffect(() => {
     if (queryWasCanceled) {
@@ -116,10 +119,19 @@ const Results: React.FC = () => {
     }
   }, [queryWasCanceled]);
 
+  // Just because `Results` component renders a lot, we make sure to save un-necessary re-renders
+  // on the download button side of things
+  const downloadButton = React.useMemo(
+    () => <DownloadButton isQuerySuccessful={isQuerySuccessful} />,
+    [isQuerySuccessful]
+  );
+
   return (
-    <Box innerRef={infiniteRef} height="100%">
-      <ResultsTable isFetchingMore={loading} results={data?.getLogQuery?.results ?? []} />
-    </Box>
+    <Panel title="Results" size="large" actions={downloadButton}>
+      <Box innerRef={infiniteRef} height="100%">
+        <ResultsTable isFetchingMore={loading} results={data?.getLogQuery?.results ?? []} />
+      </Box>
+    </Panel>
   );
 };
 

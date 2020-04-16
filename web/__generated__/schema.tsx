@@ -296,6 +296,12 @@ export type GetLogIntegrationTemplateInput = {
   logTypes: Array<Scalars['String']>;
 };
 
+export type GetLogQueryDownloadUrlOutput = {
+  __typename?: 'GetLogQueryDownloadUrlOutput';
+  error?: Maybe<Error>;
+  url?: Maybe<Scalars['String']>;
+};
+
 export type GetLogQueryInput = {
   queryId: Scalars['ID'];
   paginationToken?: Maybe<Scalars['ID']>;
@@ -840,6 +846,7 @@ export type Query = {
   getLogDatabaseTable?: Maybe<LogDatabaseTable>;
   getLogIntegrationTemplate: IntegrationTemplate;
   getLogQuery: GetLogQueryOutput;
+  getLogQueryDownloadUrl: GetLogQueryDownloadUrlOutput;
   remediations?: Maybe<Scalars['AWSJSON']>;
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
@@ -893,6 +900,10 @@ export type QueryGetLogIntegrationTemplateArgs = {
 };
 
 export type QueryGetLogQueryArgs = {
+  input: GetLogQueryInput;
+};
+
+export type QueryGetLogQueryDownloadUrlArgs = {
   input: GetLogQueryInput;
 };
 
@@ -1278,6 +1289,7 @@ export type ResolversTypes = {
   GetLogQueryStats: ResolverTypeWrapper<GetLogQueryStats>;
   LogColumn: ResolverTypeWrapper<LogColumn>;
   PageInfo: ResolverTypeWrapper<PageInfo>;
+  GetLogQueryDownloadUrlOutput: ResolverTypeWrapper<GetLogQueryDownloadUrlOutput>;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResolverTypeWrapper<ResourceDetails>;
   ComplianceStatusEnum: ComplianceStatusEnum;
@@ -1407,6 +1419,7 @@ export type ResolversParentTypes = {
   GetLogQueryStats: GetLogQueryStats;
   LogColumn: LogColumn;
   PageInfo: PageInfo;
+  GetLogQueryDownloadUrlOutput: GetLogQueryDownloadUrlOutput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResourceDetails;
   ComplianceStatusEnum: ComplianceStatusEnum;
@@ -1685,6 +1698,15 @@ export type GeneralSettingsResolvers<
   displayName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   errorReportingConsent?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type GetLogQueryDownloadUrlOutputResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['GetLogQueryDownloadUrlOutput'] = ResolversParentTypes['GetLogQueryDownloadUrlOutput']
+> = {
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -2276,6 +2298,12 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryGetLogQueryArgs, 'input'>
   >;
+  getLogQueryDownloadUrl?: Resolver<
+    ResolversTypes['GetLogQueryDownloadUrlOutput'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetLogQueryDownloadUrlArgs, 'input'>
+  >;
   remediations?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   resource?: Resolver<
     Maybe<ResolversTypes['ResourceDetails']>,
@@ -2543,6 +2571,7 @@ export type Resolvers<ContextType = any> = {
   Error?: ErrorResolvers<ContextType>;
   ExecuteAsyncLogQueryOutput?: ExecuteAsyncLogQueryOutputResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
+  GetLogQueryDownloadUrlOutput?: GetLogQueryDownloadUrlOutputResolvers<ContextType>;
   GetLogQueryOutput?: GetLogQueryOutputResolvers<ContextType>;
   GetLogQueryStats?: GetLogQueryStatsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;

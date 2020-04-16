@@ -454,7 +454,40 @@ Resources:
           })
 
           #if ($context.result.sqlError)
-            $util.qr($context.result.put("error", { "message": $context.result.sqlError }))
+            $util.qr($payload.put("error", { "message": $context.result.sqlError }))
+          #end
+
+          #if ($context.result.stats)
+            $util.qr($payload.put("stats", $context.result.stats))
+          #end
+
+          $util.toJson($payload)
+        #end
+
+  GetLogQueryDownloadUrlResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getLogQueryDownloadUrl
+      DataSourceName: !GetAtt DatabaseAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getQueryResultsLink": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          #set ($payload = { "url": $context.result.presignedLink })
+
+          #if ($context.result.sqlError)
+            $util.qr($payload.put("error", { "message": $context.result.sqlError }))
           #end
 
           #if ($context.result.stats)
