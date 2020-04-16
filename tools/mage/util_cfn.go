@@ -20,9 +20,6 @@ package mage
 
 import (
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/magefile/mage/sh"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -31,6 +28,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/magefile/mage/sh"
+	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/tools/config"
 )

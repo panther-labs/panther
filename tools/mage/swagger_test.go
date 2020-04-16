@@ -19,13 +19,13 @@ package mage
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // Read YAML file without invoking cfn-flip (which assumes working directory is repo root)
