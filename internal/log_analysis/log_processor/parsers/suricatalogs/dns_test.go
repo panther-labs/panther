@@ -150,7 +150,7 @@ func TestDNSAnswerRefused(t *testing.T) {
 func TestDNSDetailedFormat(t *testing.T) {
 	// Example taken from https://github.com/OISF/suricata/blob/master/doc/userguide/output/eve/eve-json-format.rst#event-type-dns
 	//nolint:lll
-	log := `{"timestamp": "2015-10-22T06:33:45.364388+0000", "flow_id": 1650515353776555, "pcap_cnt": 230388, "event_type": "dns", "src_ip": "192.168.88.1", "src_port": 53, "dest_ip": "192.168.88.61", "dest_port": 949, "proto": "017", "community_id": "1:41V2KTo0JgeGFmVA0p5LUTyRyvA=", "dns": {"version": 2, "type": "answer", "id": 45444, "flags": "8180", "qr": true,"rd": true, "ra": true, "rcode": "NOERROR", "answers": [{"rrname": "suricata-ids.org", "rrtype": "A", "ttl": 10, "rdata": "192.0.78.24"},{"rrname": "suricata-ids.org", "rrtype": "A", "ttl": 10, "rdata": "192.0.78.25"}]}, "pcap_filename": "/pcaps/4SICS-GeekLounge-151022.pcap"}`
+	log := `{"timestamp": "2015-10-22T06:33:45.364388+0000", "flow_id": 1650515353776555, "pcap_cnt": 230388, "event_type": "dns", "src_ip": "192.168.88.1", "src_port": 53, "dest_ip": "192.168.88.61", "dest_port": 949, "proto": "017", "community_id": "1:41V2KTo0JgeGFmVA0p5LUTyRyvA=", "dns": {"version": 2, "type": "answer", "id": 45444, "flags": "8180", "qr": true,"rd": true, "ra": true, "rcode": "NOERROR", "answers": [{"rrname": "suricata-ids.org", "rrtype": "A", "ttl": 10, "rdata": "192.0.78.24"},{"rrname": "suricata-ids.org", "rrtype": "A", "ttl": 10, "rdata": "192.0.78.25"},{"rrname": "suricata-ids-aaaa.org", "rrtype": "AAAA", "ttl": 10, "rdata": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"},{"rrname": "suricata-ids-cname.org", "rrtype": "CNAME", "ttl": 10, "rdata": "foo.suricata-ids.org"},{"rrname": "suricata-ids-txt.org", "rrtype": "TXT", "ttl": 10, "rdata": "Test Text"},{"rrname": "suricata-ids-mx.org", "rrtype": "MX", "ttl": 10, "rdata": "mail.server"}]}, "pcap_filename": "/pcaps/4SICS-GeekLounge-151022.pcap"}`
 
 	expectedTime := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
 
@@ -187,6 +187,30 @@ func TestDNSDetailedFormat(t *testing.T) {
 					TTL:    aws.Int(10),
 					Rdata:  aws.String("192.0.78.25"),
 				},
+				{
+					Rrname: aws.String("suricata-ids-aaaa.org"),
+					Rrtype: aws.String("AAAA"),
+					TTL:    aws.Int(10),
+					Rdata:  aws.String("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+				},
+				{
+					Rrname: aws.String("suricata-ids-cname.org"),
+					Rrtype: aws.String("CNAME"),
+					TTL:    aws.Int(10),
+					Rdata:  aws.String("foo.suricata-ids.org"),
+				},
+				{
+					Rrname: aws.String("suricata-ids-txt.org"),
+					Rrtype: aws.String("TXT"),
+					TTL:    aws.Int(10),
+					Rdata:  aws.String("Test Text"),
+				},
+				{
+					Rrname: aws.String("suricata-ids-mx.org"),
+					Rrtype: aws.String("MX"),
+					TTL:    aws.Int(10),
+					Rdata:  aws.String("mail.server"),
+				},
 			},
 		},
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
@@ -196,7 +220,8 @@ func TestDNSDetailedFormat(t *testing.T) {
 	expectedEvent.AppendAnyIPAddress("192.168.88.61")
 	expectedEvent.AppendAnyIPAddress("192.0.78.24")
 	expectedEvent.AppendAnyIPAddress("192.0.78.25")
-	expectedEvent.AppendAnyDomainNames("suricata-ids.org")
+	expectedEvent.AppendAnyIPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+	expectedEvent.AppendAnyDomainNames("suricata-ids.org", "suricata-ids-aaaa.org", "suricata-ids-cname.org", "suricata-ids-txt.org", "suricata-ids-mx.org")
 	parser := (&DNSParser{}).New()
 
 	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))

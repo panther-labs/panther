@@ -19,6 +19,7 @@ package suricatalogs
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
@@ -136,8 +137,13 @@ func (event *DNS) updatePantherFields(p *DNSParser) {
 	event.AppendAnyDomainNamePtrs(event.DNS.Rrname)
 
 	for _, answer := range event.DNS.Answers {
-		event.AppendAnyIPAddressPtr(answer.Rdata)
-		event.AppendAnyDomainNamePtrs(answer.Rrname)
+		switch aws.StringValue(answer.Rrtype) {
+		case "A", "AAAA":
+			event.AppendAnyIPAddressPtr(answer.Rdata)
+			event.AppendAnyDomainNamePtrs(answer.Rrname)
+		case "CNAME", "TXT", "MX":
+			event.AppendAnyDomainNamePtrs(answer.Rrname)
+		}
 	}
 
 	if event.DNS.Grouped != nil {
