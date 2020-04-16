@@ -203,7 +203,7 @@ func generateCtasSQL(databaseName, tableName, bucketName string, columns []*glue
 	// collect the columns to make csv
 	selectCols := make([]string, len(columns))
 	for i := range columns {
-		selectCols[i] = `"` +   *columns[i].Name + `"`   // double quotes needed!
+		selectCols[i] = `"` + *columns[i].Name + `"` // double quotes needed!
 	}
 
 	return fmt.Sprintf(ctasSQLTemplate,
