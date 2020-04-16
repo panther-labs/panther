@@ -311,9 +311,10 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 	}
 	_, err = client.CreatePartition(input)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != glue.ErrCodeAlreadyExistsException {
-			return false, err
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
+				return false, nil // no error
 		}
+		return false, err
 	}
 	return true, nil
 }
