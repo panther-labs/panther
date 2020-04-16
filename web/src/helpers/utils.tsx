@@ -210,7 +210,7 @@ export const extractErrorMessage = (error: ApolloError | ErrorResponse) => {
 
   // If there are no networkErrors or graphQL errors, then show the fallback
   if (!error.graphQLErrors || !error.graphQLErrors.length) {
-    return 'A unpredicted server error has occured';
+    return 'A unpredicted server error has occurred';
   }
 
   // isolate the first GraphQL error. Currently all of our APIs return a single error. If we ever

@@ -35,11 +35,11 @@ var (
 	ExampleListKeysOutput = &kms.ListKeysOutput{
 		Keys: []*kms.KeyListEntry{
 			{
-				KeyArn: aws.String("arn:aws:kms:us-west-2:857418155548:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
+				KeyArn: aws.String("arn:aws:kms:us-west-2:111111111111:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
 				KeyId:  aws.String("188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
 			},
 			{
-				KeyArn: aws.String("arn:aws:kms:us-west-2:857418155548:key/d15a1e37-3ef7-4882-9be5-ef3a024114db"),
+				KeyArn: aws.String("arn:aws:kms:us-west-2:111111111111:key/d15a1e37-3ef7-4882-9be5-ef3a024114db"),
 				KeyId:  aws.String("d15a1e37-3ef7-4882-9be5-ef3a024114db"),
 			},
 		},
@@ -51,8 +51,8 @@ var (
 
 	ExampleDescribeKeyOutput = &kms.DescribeKeyOutput{
 		KeyMetadata: &kms.KeyMetadata{
-			AWSAccountId: aws.String("857418155548"),
-			Arn:          aws.String("arn:aws:kms:us-west-2:857418155548:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
+			AWSAccountId: aws.String("111111111111"),
+			Arn:          aws.String("arn:aws:kms:us-west-2:111111111111:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
 			CreationDate: ExampleDate,
 			Description:  aws.String("Encryption key for panther-snapshot-queue data"),
 			Enabled:      aws.Bool(true),
@@ -67,7 +67,7 @@ var (
 	ExampleDescribeKeyOutputAWSManaged = &kms.DescribeKeyOutput{
 		KeyMetadata: &kms.KeyMetadata{
 			AWSAccountId: aws.String("123456789012"),
-			Arn:          aws.String("arn:aws:kms:us-west-2:857418155548:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
+			Arn:          aws.String("arn:aws:kms:us-west-2:111111111111:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
 			CreationDate: ExampleDate,
 			Description:  aws.String("Default master key"),
 			Enabled:      aws.Bool(true),
@@ -80,7 +80,7 @@ var (
 	}
 
 	ExampleGetKeyPolicyOutput = &kms.GetKeyPolicyOutput{
-		Policy: aws.String("{\n  \"Version\" : \"2012-10-17\",\n  \"Id\" : \"auto-awslambda\",\n  \"Statement\" : [ {\n    \"Sid\" : \"Allow access through AWS Lambda for all principals in the account that are authorized to use AWS Lambda\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"*\"\n    },\n    \"Action\" : [ \"kms:Encrypt\", \"kms:Decrypt\", \"kms:ReEncrypt*\", \"kms:GenerateDataKey*\", \"kms:CreateGrant\", \"kms:DescribeKey\" ],\n    \"Resource\" : \"*\",\n    \"Condition\" : {\n      \"StringEquals\" : {\n        \"kms:CallerAccount\" : \"857418155548\",\n        \"kms:ViaService\" : \"lambda.us-west-2.amazonaws.com\"\n      }\n    }\n  }, {\n    \"Sid\" : \"Allow direct access to key metadata to the account\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"arn:aws:iam::857418155548:root\"\n    },\n    \"Action\" : \"kms:Describe*\",\n    \"Resource\" : \"*\"\n  } ]\n}"),
+		Policy: aws.String("{\n  \"Version\" : \"2012-10-17\",\n  \"Id\" : \"auto-awslambda\",\n  \"Statement\" : [ {\n    \"Sid\" : \"Allow access through AWS Lambda for all principals in the account that are authorized to use AWS Lambda\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"*\"\n    },\n    \"Action\" : [ \"kms:Encrypt\", \"kms:Decrypt\", \"kms:ReEncrypt*\", \"kms:GenerateDataKey*\", \"kms:CreateGrant\", \"kms:DescribeKey\" ],\n    \"Resource\" : \"*\",\n    \"Condition\" : {\n      \"StringEquals\" : {\n        \"kms:CallerAccount\" : \"111111111111\",\n        \"kms:ViaService\" : \"lambda.us-west-2.amazonaws.com\"\n      }\n    }\n  }, {\n    \"Sid\" : \"Allow direct access to key metadata to the account\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"arn:aws:iam::111111111111:root\"\n    },\n    \"Action\" : \"kms:Describe*\",\n    \"Resource\" : \"*\"\n  } ]\n}"),
 	}
 
 	ExampleListResourceTags = &kms.ListResourceTagsOutput{
