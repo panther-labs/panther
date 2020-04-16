@@ -16,8 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Badge, Box, Label, Text, Flex, SimpleGrid } from 'pouncejs';
-import { Link } from 'react-router-dom';
+import { Alert, Badge, Box, Label, Text, Flex, SimpleGrid, Link } from 'pouncejs';
 import urls from 'Source/urls';
 import React from 'react';
 import { AlertDetails, RuleDetails } from 'Generated/schema';
@@ -91,13 +90,15 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             RULE ORIGIN
           </Label>
-          <Text size="medium" color="black">
-            {(
-              <Link to={urls.logAnalysis.rules.details(rule.id)}>
-                {rule.displayName || rule.id}
-              </Link>
-            ) || 'No rule found'}
-          </Text>
+          {rule ? (
+            <Link color="blue300" to={urls.logAnalysis.rules.details(rule.id)}>
+              {rule.displayName || rule.id}
+            </Link>
+          ) : (
+            <Text size="medium" color="grey200">
+              No rule found
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
@@ -119,17 +120,25 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             DESCRIPTION
           </Label>
-          <Text size="medium" color={rule.description ? 'black' : 'grey200'}>
-            <Linkify>{rule.description || 'No description available'}</Linkify>
-          </Text>
+          {rule.description ? (
+            <Linkify>{rule.description}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No description available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
             RUNBOOK
           </Label>
-          <Text size="medium" color={rule.runbook ? 'black' : 'grey200'}>
-            <Linkify>{rule.runbook || 'No runbook available'}</Linkify>
-          </Text>
+          {rule.runbook ? (
+            <Linkify>{rule.runbook}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No runbook available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">

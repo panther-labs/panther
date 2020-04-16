@@ -97,9 +97,13 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             REFERENCE
           </Label>
-          <Text size="medium" color={rule.reference ? 'blue300' : 'grey200'}>
-            <Linkify>{rule.reference || 'No reference found'}</Linkify>
-          </Text>
+          {rule.reference ? (
+            <Linkify>{rule.reference}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No reference available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
@@ -121,17 +125,25 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             DESCRIPTION
           </Label>
-          <Text size="medium" color={rule.description ? 'black' : 'grey200'}>
-            <Linkify>{rule.description || 'No description available'}</Linkify>
-          </Text>
+          {rule.description ? (
+            <Linkify>{rule.description}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No description available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
             RUNBOOK
           </Label>
-          <Text size="medium" color={rule.runbook ? 'black' : 'grey200'}>
-            <Linkify>{rule.runbook || 'No runbook available'}</Linkify>
-          </Text>
+          {rule.runbook ? (
+            <Linkify>{rule.runbook}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No runbook available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">

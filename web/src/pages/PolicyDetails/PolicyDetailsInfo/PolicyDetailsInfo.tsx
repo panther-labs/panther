@@ -125,9 +125,13 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             REFERENCE
           </Label>
-          <Text size="medium" color={policy.reference ? 'blue300' : 'grey200'}>
-            <Linkify>{policy.reference || 'No reference found'}</Linkify>
-          </Text>
+          {policy.reference ? (
+            <Linkify>{policy.reference}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No reference available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
@@ -149,17 +153,25 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             DESCRIPTION
           </Label>
-          <Text size="medium" color={policy.description ? 'black' : 'grey200'}>
-            <Linkify>{policy.description || 'No description available'}</Linkify>
-          </Text>
+          {policy.description ? (
+            <Linkify>{policy.description}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No description available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
             RUNBOOK
           </Label>
-          <Text size="medium" color={policy.runbook ? 'black' : 'grey200'}>
-            <Linkify>{policy.runbook || 'No runbook available'}</Linkify>
-          </Text>
+          {policy.runbook ? (
+            <Linkify>{policy.runbook}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No runbook available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
