@@ -21,6 +21,7 @@ import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
+import { ListRulesDocument } from 'Pages/ListRules';
 import { RuleDetails } from 'Generated/schema';
 import {
   DEFAULT_DEDUP_FUNCTION,
@@ -29,8 +30,6 @@ import {
 } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import { getOperationName } from '@apollo/client/utilities';
-import { ListRulesDocument } from 'Pages/ListRules';
 import { useCreateRule } from './graphql/createRule.generated';
 
 export const initialValues: RuleDetails = {
@@ -51,7 +50,7 @@ export const initialValues: RuleDetails = {
 const CreateRulePage: React.FC = () => {
   const { history } = useRouter();
   const [createRule, { error }] = useCreateRule({
-    refetchQueries: [getOperationName(ListRulesDocument)],
+    refetchQueries: [{ query: ListRulesDocument, variables: { input: {} } }],
     onCompleted: data => history.push(urls.logAnalysis.rules.details(data.addRule.id)),
   });
 
