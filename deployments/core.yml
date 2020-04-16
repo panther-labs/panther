@@ -705,7 +705,7 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
-        - Id: S3ReadPermissions # athena reads from S3, restrict to our processed data buckets
+        - Id: S3ReadPermissions # athena reads from S3, restrict to our processed data buckets and those set by user in config
           Version: 2012-10-17
           Statement:
             - Effect: Allow

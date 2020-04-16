@@ -74,17 +74,13 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		t.Skip()
 	}
 
-	t.Log("testing direct calls from client")
-	testAthenaAPI(t, false)
-}
-
-func TestIntegrationLambdaAthenaAPI(t *testing.T) {
-	if !integrationTest {
-		t.Skip()
-	}
-
-	t.Log("testing indirect calls thru deployed lambdas")
-	testAthenaAPI(t, true)
+	// ensure we run serially, by default Go will run tests in parallel and we can't have that
+	t.Run("direct calls from client", func(t *testing.T) {
+		testAthenaAPI(t, false)
+	})
+	t.Run("indirect calls thru deployed lambdas", func(t *testing.T) {
+		testAthenaAPI(t, true)
+	})
 }
 
 func testAthenaAPI(t *testing.T, useLambda bool) {
@@ -143,8 +139,8 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.NoError(t, err)
 	assert.Equal(t, "", executeQueryOutput.QueryStatus.SQLError)
 	require.Equal(t, models.QuerySucceeded, executeQueryOutput.Status)
-	assert.Greater(t, executeQueryOutput.Stats.ExecutionTimeMilliseconds, int64(0)) // ata least something
-	assert.Greater(t, executeQueryOutput.Stats.DataScannedBytes, int64(0))          // ata least something
+	assert.Greater(t, executeQueryOutput.Stats.ExecutionTimeMilliseconds, int64(0)) // at least something
+	assert.Greater(t, executeQueryOutput.Stats.DataScannedBytes, int64(0))          // at least something
 	assert.Equal(t, len(testutils.TestTableColumns)+len(testutils.TestTablePartitions), len(executeQueryOutput.ColumnInfo))
 	for i, c := range executeQueryOutput.ColumnInfo {
 		if i < len(testutils.TestTableColumns) {
@@ -291,6 +287,16 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			break
 		}
 	}
+
+	// -------- GetQueryResultsLink() for above FAILED query
+
+	var getBadAsyncQueryResultsLinkInput models.GetQueryResultsLinkInput
+	getBadAsyncQueryResultsLinkInput.QueryID = executeBadAsyncQueryOutput.QueryID
+
+	getBadAsyncQueryResultsLinkOutput, err := runGetQueryResultsLink(useLambda, &getBadAsyncQueryResultsLinkInput)
+	require.NoError(t, err)
+	require.Equal(t, models.QueryFailed, getBadAsyncQueryResultsLinkOutput.Status)
+	assert.Equal(t, "results not available", getBadAsyncQueryResultsLinkOutput.SQLError)
 
 	//  -------- StopQuery()
 

@@ -131,7 +131,6 @@ type GetQueryStatusOutput struct {
 type GetQueryResultsInput struct {
 	QueryInfo
 	Pagination
-
 	PageSize *int64 `json:"pageSize" validate:"omitempty,gt=1,lt=1000"` // only return this many rows per call
 	// NOTE: gt=1 above to ensure there are results on the first page w/header. If PageSize = 1 then
 	// user will get no rows for the first page with Athena because Athena returns header as first row and we remove it.
@@ -159,6 +158,7 @@ type GetQueryResultsLinkInput struct {
 }
 
 type GetQueryResultsLinkOutput struct {
+	QueryStatus
 	PresignedLink string `json:"presignedLink"` // presigned s3 link to results
 }
 
