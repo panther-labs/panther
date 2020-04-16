@@ -106,6 +106,7 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } 
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
 
 function generateDocUrl(version) {
+  // Checking if a version is a proper tag
   if (version.includes('-')) {
     return PANTHER_SCHEMA_DOCS_MASTER_LINK;
   }
