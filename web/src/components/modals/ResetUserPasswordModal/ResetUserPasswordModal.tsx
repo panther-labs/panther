@@ -17,10 +17,12 @@
  */
 
 import React from 'react';
+import { useSnackbar } from 'pouncejs';
 import { User } from 'Generated/schema';
 import { ListUsersDocument } from 'Pages/Users';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import ConfirmModal from 'Components/modals/ConfirmModal';
+import useModal from 'Hooks/useModal';
 import { useResetUserPassword } from './graphql/resetUserPassword.generated';
 
 export interface ResetUserPasswordProps {
@@ -28,21 +30,35 @@ export interface ResetUserPasswordProps {
 }
 
 const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
+  const { pushSnackbar } = useSnackbar();
+  const { hideModal } = useModal();
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
-  const mutation = useResetUserPassword({
+  const [resetUserPassword, { loading }] = useResetUserPassword({
     variables: {
       id: user.id,
     },
     awaitRefetchQueries: true,
     refetchQueries: [getOperationName(ListUsersDocument)],
+    onCompleted: () => {
+      hideModal();
+      pushSnackbar({
+        variant: 'success',
+        title: `Successfully forced a password change for ${userDisplayName}`,
+      });
+    },
+    onError: () => {
+      hideModal();
+      pushSnackbar({ variant: 'error', title: `Failed to reset password for ${userDisplayName}` });
+    },
   });
+
   return (
     <ConfirmModal
-      mutation={mutation}
+      onConfirm={resetUserPassword}
+      onClose={hideModal}
+      loading={loading}
       title={`Force a password change for ${userDisplayName}`}
       subtitle={`Are you sure you want to reset password for ${userDisplayName}?`}
-      onSuccessMsg={`Successfully forced a password change for ${userDisplayName}`}
-      onErrorMsg={`Failed to reset password for ${userDisplayName}`}
     />
   );
 };

@@ -51,20 +51,23 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   const { hideSidesheet, showSidesheet } = useSidesheet();
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
-  const [
-    addDestination,
-    { data: addDestinationData, error: addDestinationError },
-  ] = useAddDestination();
-
-  React.useEffect(() => {
-    if (addDestinationData) {
+  const [addDestination, { error: addDestinationError }] = useAddDestination({
+    onCompleted: data => {
+      hideSidesheet();
       pushSnackbar({
         variant: 'success',
-        title: `Successfully added ${addDestinationData.addDestination.displayName}`,
+        title: `Successfully added ${data.addDestination.displayName}`,
       });
-      hideSidesheet();
-    }
-  }, [addDestinationData]);
+    },
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) ||
+          "An unknown error occurred and we couldn't add your new destination",
+      });
+    },
+  });
 
   // The typescript on `values` simply says that we expect to have DestinationFormValues with an
   // `outputType` that partially implements the DestinationConfigInput (we say partially since each

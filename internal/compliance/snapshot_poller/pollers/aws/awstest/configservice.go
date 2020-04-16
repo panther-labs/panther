@@ -42,7 +42,7 @@ var (
 					AllSupported:               aws.Bool(true),
 					IncludeGlobalResourceTypes: aws.Bool(true),
 				},
-				RoleARN: aws.String("arn:aws:iam::857418155548:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig"),
+				RoleARN: aws.String("arn:aws:iam::111111111111:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig"),
 			},
 		},
 	}
