@@ -27,6 +27,7 @@ import (
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
@@ -45,11 +46,23 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		var userID string
+		if input.UserID != nil {
+			userID = *input.UserID
+		}
+		zap.L().Info("ExecuteAsyncQueryNotify",
+			zap.String("userId", userID),
+			zap.String("userData", input.UserData),
+			zap.String("workflowID", output.WorkflowID),
+			zap.Error(err))
 	}()
 
 	worflowJSON, err := jsoniter.Marshal(input)
 	if err != nil {
-		return output, errors.Wrapf(err, "failed to marshal %#v", input)
+		err = errors.Wrapf(err, "failed to marshal %#v", input)
+		return output, err
 	}
 
 	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})

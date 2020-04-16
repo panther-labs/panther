@@ -29,6 +29,7 @@ import (
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 )
@@ -69,9 +70,16 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		if err != nil {
 			err = apiError(err) // lambda failed
 		}
+
+		// allows tracing queries
+		zap.L().Info("NotifyAppSync",
+			zap.String("userData", input.UserData),
+			zap.String("queryId", input.QueryID),
+			zap.String("workflowID", input.WorkflowID),
+			zap.Error(err))
 	}()
 
-	// make sigv4 https request to appsync endpoint notifying query is complete, sending  queryId and workflowId
+	// make sigv4 https request to appsync endpoint notifying query is complete, sending  userData, queryId and workflowId
 	appSyncEndpoint := os.Getenv("GRAPHQL_ENDPOINT")
 	httpClient := http.Client{}
 	signer := v4.NewSigner(awsSession.Config.Credentials)
@@ -111,6 +119,9 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 		return output, err
 	}
 	defer resp.Body.Close()
+
+	output.StatusCode = resp.StatusCode
+
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
 		err = errors.Errorf("failed to POST (%d): %s", resp.StatusCode, string(respBody))
