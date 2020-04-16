@@ -38,7 +38,7 @@ const CreateComplianceSource: React.FC = () => {
       cache.modify('ROOT_QUERY', {
         listComplianceIntegrations: (queryData, { toReference }) => {
           const addedIntegrationCacheRef = toReference(addComplianceIntegration);
-          return queryData ? [addedIntegrationCacheRef, ...queryData] : queryData;
+          return queryData ? [addedIntegrationCacheRef, ...queryData] : [addedIntegrationCacheRef];
         },
       });
     },
