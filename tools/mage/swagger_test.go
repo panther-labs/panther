@@ -19,6 +19,8 @@ package mage
  */
 
 import (
+	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"testing"
 
@@ -26,39 +28,51 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSwaggerPattern(t *testing.T) {
-	assert.False(t, swaggerPattern.MatchString(""))
-	assert.False(t, swaggerPattern.MatchString("\n      DefinitionBody: myfile.json"))
-	assert.False(t, swaggerPattern.MatchString("\n      DefinitionBody: \napi.yml"))
-	assert.False(t, swaggerPattern.MatchString("DefinitionBody: api.yml"))
+// Read YAML file without invoking cfn-flip (which assumes working directory is repo root)
+func parseTestYaml(t *testing.T, path string) map[string]interface{} {
+	contents, err := ioutil.ReadFile(path)
+	require.NoError(t, err)
 
-	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody:api.yml"))
-	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody: api/compliance.yml  "))
-	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody:    api/compliance.yml # trailing comment"))
+	var yamlResult map[string]interface{}
+	require.NoError(t, yaml.Unmarshal(contents, &yamlResult))
 
-	// Ensure spaces and comments are consumed
-	replaced := swaggerPattern.ReplaceAllString("\n      DefinitionBody: api/compliance.yml # trailing comment", "X")
-	assert.Equal(t, replaced, "X")
+	// Now we have to marshal/unmarshal with json to get rid of map[interface{}]interface{}
+	jsonBody, err := jsoniter.Marshal(&yamlResult)
+	require.NoError(t, err)
+
+	var result map[string]interface{}
+	require.NoError(t, jsoniter.Unmarshal(jsonBody, &result))
+	return result
 }
 
 func TestEmbedAPIsNoChange(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/no-api.yml")
+	cfn := parseTestYaml(t, "testdata/no-api.yml")
+	expectedMap := parseTestYaml(t, "testdata/no-api.yml")
+
+	require.NoError(t, embedAPIs(cfn))
+
+	// The mixing of map[interface{}]interface{} and map[string]interface{} makes direct comparisons hard,
+	// marshal first as yaml and then compare
+	result, err := yaml.Marshal(cfn)
+	require.NoError(t, err)
+	expected, err := yaml.Marshal(expectedMap)
 	require.NoError(t, err)
 
-	transformed, err := embedAPIs(data)
-	require.NoError(t, err)
-	assert.YAMLEq(t, string(data), string(transformed))
+	assert.YAMLEq(t, string(expected), string(result))
 }
 
 func TestEmbedAPIs(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/valid-api.yml")
+	cfn := parseTestYaml(t, "testdata/valid-api.yml")
+	expectedMap := parseTestYaml(t, "testdata/valid-api-expected-output.yml")
+
+	require.NoError(t, embedAPIs(cfn))
+
+	// The mixing of map[interface{}]interface{} and map[string]interface{} makes direct comparisons hard,
+	// marshal first as yaml and then compare
+	result, err := yaml.Marshal(cfn)
+	require.NoError(t, err)
+	expected, err := yaml.Marshal(expectedMap)
 	require.NoError(t, err)
 
-	transformed, err := embedAPIs(data)
-	require.NoError(t, err)
-
-	expected, err := ioutil.ReadFile("testdata/valid-api-expected-output.yml")
-	require.NoError(t, err)
-
-	assert.YAMLEq(t, string(expected), string(transformed))
+	assert.YAMLEq(t, string(expected), string(result))
 }
