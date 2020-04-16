@@ -74,7 +74,7 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		t.Skip()
 	}
 
-	// ensure we run serially, by default go will run tests in parallel and we can't have that
+	// ensure we run serially, by default Go will run tests in parallel and we can't have that
 	t.Run("direct calls from client", func(t *testing.T) {
 		testAthenaAPI(t, false)
 	})
