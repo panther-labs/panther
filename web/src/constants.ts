@@ -103,7 +103,16 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } 
   [SeverityEnum.Info]: 'neutral' as const,
 };
 
-export const PANTHER_SCHEMA_DOCS_LINK = 'https://runpanther.io/docs';
+export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
+
+function generateDocUrl(version) {
+  if (version.includes('-')) {
+    return PANTHER_SCHEMA_DOCS_MASTER_LINK;
+  }
+  return `${PANTHER_SCHEMA_DOCS_MASTER_LINK}/v/${version}`;
+}
+
+export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(process.env.PANTHER_VERSION);
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
 export const DEFAULT_LARGE_PAGE_SIZE = 25;
