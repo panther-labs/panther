@@ -17,8 +17,8 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Badge, Box, Button, Icon, Label, SimpleGrid, Text } from 'pouncejs';
+import { Link as RRLink } from 'react-router-dom';
+import { Badge, Box, Button, Icon, Label, SimpleGrid, Text, Link } from 'pouncejs';
 import { formatDatetime, minutesToString } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import Linkify from 'Components/Linkify';
@@ -145,17 +145,16 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           </Label>
           {rule.tags.length ? (
             rule.tags.map((tag, index) => (
-              <React.Fragment key={tag}>
-                <Text
-                  color="blue300"
-                  as={Link}
-                  to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}
-                  size="medium"
-                >
-                  {tag}
-                </Text>
+              <Link
+                key={tag}
+                fontSize={2}
+                color="blue300"
+                as={RRLink}
+                to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}
+              >
+                {tag}
                 {index !== rule.tags.length - 1 ? ', ' : null}
-              </React.Fragment>
+              </Link>
             ))
           ) : (
             <Text size="medium" color="grey200">

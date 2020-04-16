@@ -17,8 +17,8 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Badge, Box, Button, Icon, Label, SimpleGrid, Text } from 'pouncejs';
+import { Link as RRLink } from 'react-router-dom';
+import { Badge, Box, Button, Icon, Label, SimpleGrid, Text, Link } from 'pouncejs';
 import { capitalize, formatDatetime } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import Linkify from 'Components/Linkify';
@@ -173,10 +173,16 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
           </Label>
           {policy.tags.length ? (
             policy.tags.map((tag, index) => (
-              <Text size="medium" color="black" key={tag} as="span">
+              <Link
+                key={tag}
+                fontSize={2}
+                color="blue300"
+                as={RRLink}
+                to={`${urls.compliance.policies.list()}?page=1&tags[]=${tag}`}
+              >
                 {tag}
                 {index !== policy.tags.length - 1 ? ', ' : null}
-              </Text>
+              </Link>
             ))
           ) : (
             <Text size="medium" color="grey200">

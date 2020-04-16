@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, Text } from 'pouncejs';
+import { AbstractButton, Box, Heading, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -77,16 +77,14 @@ const SourceConfigurationPanel: React.FC = () => {
           aria-required
           mb={6}
         />
-        <Text
-          type="button"
-          size="large"
+        <AbstractButton
           color="blue300"
-          as="button"
           onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
-          my={9}
+          my={6}
+          py={3}
         >
           {isAdvancedConfigVisible ? 'Hide advanced configuration' : 'Show advanced configuration'}
-        </Text>
+        </AbstractButton>
         {isAdvancedConfigVisible && (
           <React.Fragment>
             <Field

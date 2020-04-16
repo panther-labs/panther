@@ -17,8 +17,8 @@
  */
 
 import React from 'react';
-import { Box, Flex, Card, Icon, Text, Heading, SimpleGrid } from 'pouncejs';
-import { Link } from 'react-router-dom';
+import { Box, Flex, Card, Icon, Text, Heading, SimpleGrid, Link } from 'pouncejs';
+import { Link as RRLink } from 'react-router-dom';
 import logo from 'Source/assets/panther-minimal-logo.svg';
 import urls from 'Source/urls';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
@@ -48,9 +48,9 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 Create users and get your team onboarded to Panther
               </Text>
-              <Text color="blue300" p={4} as={Link} to={urls.settings.users()} size="large">
+              <Link color="blue300" p={4} as={RRLink} to={urls.settings.users()}>
                 Manage Users
-              </Text>
+              </Link>
             </Flex>
             <Flex direction="column" justify="center" align="center" px={10} py={5}>
               <Icon color="grey300" type="infra-source" mb={4} size="large" />
@@ -60,15 +60,9 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 Connect AWS accounts, scan resources and detect misconfigurations
               </Text>
-              <Text
-                color="blue300"
-                p={4}
-                as={Link}
-                to={urls.compliance.sources.create()}
-                size="large"
-              >
+              <Link color="blue300" p={4} as={RRLink} to={urls.compliance.sources.create()}>
                 Onboard an AWS account
-              </Text>
+              </Link>
             </Flex>
             <Flex direction="column" justify="center" align="center" px={10} py={5}>
               <Icon color="grey300" type="log-source" mb={4} size="large" />
@@ -78,15 +72,9 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 Connect your log buckets and analyze data with rules
               </Text>
-              <Text
-                color="blue300"
-                p={4}
-                as={Link}
-                to={urls.logAnalysis.sources.create()}
-                size="large"
-              >
+              <Link color="blue300" p={4} as={RRLink} to={urls.logAnalysis.sources.create()}>
                 Connect S3 Buckets
-              </Text>
+              </Link>
             </Flex>
           </SimpleGrid>
         </Card>
@@ -101,9 +89,9 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 Add destinations so Panther can notify you of policy and rule findings
               </Text>
-              <Text color="blue300" p={4} as={Link} to={urls.settings.destinations()} size="large">
+              <Link color="blue300" p={4} as={RRLink} to={urls.settings.destinations()}>
                 Setup Destinations
-              </Text>
+              </Link>
             </Flex>
 
             <Flex direction="column" align="center" justify="center" px={10} py={5}>
@@ -114,15 +102,9 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 Create Cloud Security policies to evaluate your AWS infrastructure
               </Text>
-              <Text
-                color="blue300"
-                p={4}
-                as={Link}
-                to={urls.compliance.policies.create()}
-                size="large"
-              >
+              <Link color="blue300" p={4} as={RRLink} to={urls.compliance.policies.create()}>
                 Create a Policy
-              </Text>
+              </Link>
             </Flex>
             <Flex direction="column" align="center" justify="center" px={10} py={5}>
               <Icon color="grey300" type="rule" mb={4} size="large" />
@@ -132,15 +114,9 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 Create rules to evaluate your logs and trigger alerts on suspicious activity
               </Text>
-              <Text
-                color="blue300"
-                p={4}
-                as={Link}
-                to={urls.logAnalysis.rules.create()}
-                size="large"
-              >
+              <Link color="blue300" p={4} as={RRLink} to={urls.logAnalysis.rules.create()}>
                 Create a Rule
-              </Text>
+              </Link>
             </Flex>
           </SimpleGrid>
         </Card>
@@ -154,15 +130,9 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 View all alerts generated by rules that ran against your logs
               </Text>
-              <Text
-                color="blue300"
-                p={4}
-                as={Link}
-                to={urls.logAnalysis.alerts.list()}
-                size="large"
-              >
+              <Link color="blue300" p={4} as={RRLink} to={urls.logAnalysis.alerts.list()}>
                 View Alerts
-              </Text>
+              </Link>
             </Flex>
             <Flex direction="column" align="center" justify="center" px={10} py={5}>
               <Icon color="grey300" type="resource" mb={4} size="large" />
@@ -172,15 +142,9 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 View your AWS resources and monitor their compliance with policies
               </Text>
-              <Text
-                color="blue300"
-                p={4}
-                as={Link}
-                to={urls.compliance.resources.list()}
-                size="large"
-              >
+              <Link color="blue300" p={4} as={RRLink} to={urls.compliance.resources.list()}>
                 View Resources
-              </Text>
+              </Link>
             </Flex>
             <Flex direction="column" align="center" justify="center" px={10} py={5}>
               <Icon color="grey300" type="search" mb={4} size="large" />
@@ -190,17 +154,14 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="grey300" textAlign="center" maxWidth={250}>
                 Use AWS Athena to write complex queries against normalized log data
               </Text>
-              <Text
+              <Link
+                external
                 color="blue300"
                 p={4}
-                as="a"
-                target="_blank"
-                rel="noopener noreferrer"
                 href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/athena/`}
-                size="large"
               >
                 Launch Athena
-              </Text>
+              </Link>
             </Flex>
           </SimpleGrid>
         </Card>
@@ -222,17 +183,9 @@ const LandingPage: React.FC = () => {
             <Text size="medium" as="p" color="grey300" mb={3}>
               Learn tips and best practices on how to keep your account safe
             </Text>
-            <Text
-              color="blue300"
-              py={4}
-              as="a"
-              href="http://blog.runpanther.io/"
-              rel="noopener noreferrer"
-              target="_blank"
-              size="large"
-            >
+            <Link external color="blue300" py={4} href="http://blog.runpanther.io/">
               Visit our blog
-            </Text>
+            </Link>
           </Card>
           <Card p={9} as="article">
             <Heading size="medium" color="grey500" as="h4" mb={3}>
@@ -242,17 +195,9 @@ const LandingPage: React.FC = () => {
               Learn more about Panther and how can you best harness its power to secure your
               business
             </Text>
-            <Text
-              color="blue300"
-              py={4}
-              as="a"
-              href={PANTHER_SCHEMA_DOCS_LINK}
-              size="large"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link external color="blue300" py={4} href={PANTHER_SCHEMA_DOCS_LINK}>
               Discover Panther
-            </Text>
+            </Link>
           </Card>
           <Card p={9} as="article">
             <Heading size="medium" color="grey500" as="h4" mb={3}>
@@ -261,17 +206,9 @@ const LandingPage: React.FC = () => {
             <Text size="medium" as="p" color="grey300" mb={3}>
               Facing issues or want to learn more about Panther? Get in touch with us!
             </Text>
-            <Text
-              color="blue300"
-              py={4}
-              as="a"
-              size="large"
-              target="_blank"
-              rel="noopener noreferrer"
-              href="mailto:contact@runpanther.io"
-            >
+            <Link external color="blue300" py={4} href="mailto:contact@runpanther.io">
               Contact us
-            </Text>
+            </Link>
           </Card>
         </SimpleGrid>
       </Box>

@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field } from 'formik';
 import FormikCheckbox from 'Components/fields/Checkbox';
-import { Box, Flex, InputElementLabel, Text } from 'pouncejs';
+import { Box, Flex, InputElementLabel, Link, Text } from 'pouncejs';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 
 const ErrorReportingSection: React.FC = () => {
@@ -30,19 +30,16 @@ const ErrorReportingSection: React.FC = () => {
         <InputElementLabel htmlFor="errorReportingConsent">
           Report Web Application Errors
         </InputElementLabel>
-        <Flex>
-          <Text color="grey300" size="medium">
-            Crashes and runtime exceptions.
-          </Text>
-          &nbsp;
-          <Text
-            color="grey300"
-            size="medium"
-            as="a"
-            href={`${PANTHER_SCHEMA_DOCS_LINK}/security-privacy#privacy`}
-            rel="noopener noreferrer"
-          >
-            Read more
+        <Flex color="grey300">
+          <Text size="medium">
+            Crashes and runtime exceptions.{' '}
+            <Link
+              external
+              textDecoration="underline"
+              href={`${PANTHER_SCHEMA_DOCS_LINK}/security-privacy#privacy`}
+            >
+              Read more
+            </Link>
           </Text>
         </Flex>
       </Box>
