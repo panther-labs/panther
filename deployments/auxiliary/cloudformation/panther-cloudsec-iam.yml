@@ -228,6 +228,7 @@ Resources:
                   - ec2:CreateFlowLogs
                   - ec2:StopInstances
                   - ec2:TerminateInstances
+                  - ec2:ModifyImageAttribute
                   - guardduty:CreateDetector
                   - iam:CreateAccessKey
                   - iam:CreateServiceLinkedRole

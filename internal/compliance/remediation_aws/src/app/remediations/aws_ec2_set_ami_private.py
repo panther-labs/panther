@@ -24,7 +24,7 @@ from .remediation_base import RemediationBase
 
 @Remediation
 class AwsEc2SetAMIPrivate(RemediationBase):
-    """Remediation that makes an AMI to private"""
+    """Remediation that sets an AMI to private"""
 
     @classmethod
     def _id(cls) -> str:
@@ -36,4 +36,6 @@ class AwsEc2SetAMIPrivate(RemediationBase):
 
     @classmethod
     def _fix(cls, session: Session, resource: Dict[str, Any], parameters: Dict[str, str]) -> None:
-        session.client('ec2').modify_image_attribute(ImageId=resource['Id'], LaunchPermission={'Remove': [{'Group': 'all'}]})
+        session.client('ec2').modify_image_attribute(
+            ImageId=resource['Id'], LaunchPermission={'Remove': [{'Group': 'all'}]}
+        )
