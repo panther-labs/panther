@@ -35,7 +35,7 @@ var (
 	ExampleDescribeStacks = &cloudformation.DescribeStacksOutput{
 		Stacks: []*cloudformation.Stack{
 			{
-				StackId:     aws.String("arn:aws:cloudformation:us-west-2:857418155548:stack/iam-roles/67fc9960-556b-11e9-a978-067794494828"),
+				StackId:     aws.String("arn:aws:cloudformation:us-west-2:111111111111:stack/iam-roles/67fc9960-556b-11e9-a978-067794494828"),
 				StackName:   aws.String("iam-roles"),
 				Description: aws.String("Nick's IAM Admin role"),
 				Parameters: []*cloudformation.Parameter{
@@ -71,17 +71,17 @@ var (
 	ExampleDescribeStackResourceDrifts = &cloudformation.DescribeStackResourceDriftsOutput{
 		StackResourceDrifts: []*cloudformation.StackResourceDrift{
 			{
-				StackId:            aws.String("arn:aws:cloudformation:us-west-2:857418155548:stack/iam-roles/67fc9960-556b-11e9-a978-067794494828"),
+				StackId:            aws.String("arn:aws:cloudformation:us-west-2:111111111111:stack/iam-roles/67fc9960-556b-11e9-a978-067794494828"),
 				LogicalResourceId:  aws.String("Administrators"),
 				PhysicalResourceId: aws.String("PantherDevNickAdministrator"),
 				ResourceType:       aws.String("AWS::IAM::Role"),
-				ExpectedProperties: aws.String("{\"AssumeRolePolicyDocument\":{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Condition\":{\"Bool\":{\"aws:MultiFactorAuthPresent\":true,\"aws:SecureTransport\":true},\"NumericLessThan\":{\"aws:MultiFactorAuthAge\":28800}},\"Effect\":\"Allow\",\"Principal\":{\"AWS\":948584460855}}],\"Version\":\"2012-10-17\"},\"ManagedPolicyArns\":[\"arn:aws:iam::aws:policy/AdministratorAccess\"],\"MaxSessionDuration\":28800,\"RoleName\":\"PantherDevNickAdministrator\"}"),
-				ActualProperties:   aws.String("{\"AssumeRolePolicyDocument\":{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Condition\":{\"Bool\":{\"aws:MultiFactorAuthPresent\":true,\"aws:SecureTransport\":true},\"NumericLessThan\":{\"aws:MultiFactorAuthAge\":28800}},\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::948584460855:root\"}}],\"Version\":\"2012-10-17\"},\"ManagedPolicyArns\":[\"arn:aws:iam::aws:policy/AdministratorAccess\"],\"MaxSessionDuration\":28800,\"RoleName\":\"PantherDevNickAdministrator\"}"),
+				ExpectedProperties: aws.String("{\"AssumeRolePolicyDocument\":{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Condition\":{\"Bool\":{\"aws:MultiFactorAuthPresent\":true,\"aws:SecureTransport\":true},\"NumericLessThan\":{\"aws:MultiFactorAuthAge\":28800}},\"Effect\":\"Allow\",\"Principal\":{\"AWS\":111111111111}}],\"Version\":\"2012-10-17\"},\"ManagedPolicyArns\":[\"arn:aws:iam::aws:policy/AdministratorAccess\"],\"MaxSessionDuration\":28800,\"RoleName\":\"PantherDevNickAdministrator\"}"),
+				ActualProperties:   aws.String("{\"AssumeRolePolicyDocument\":{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Condition\":{\"Bool\":{\"aws:MultiFactorAuthPresent\":true,\"aws:SecureTransport\":true},\"NumericLessThan\":{\"aws:MultiFactorAuthAge\":28800}},\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::111111111111:root\"}}],\"Version\":\"2012-10-17\"},\"ManagedPolicyArns\":[\"arn:aws:iam::aws:policy/AdministratorAccess\"],\"MaxSessionDuration\":28800,\"RoleName\":\"PantherDevNickAdministrator\"}"),
 				PropertyDifferences: []*cloudformation.PropertyDifference{
 					{
 						PropertyPath:   aws.String("/AssumeRolePolicyDocument/Statement/0/Principal/AWS"),
-						ExpectedValue:  aws.String("948584460855"),
-						ActualValue:    aws.String("arn:aws:iam::948584460855:root"),
+						ExpectedValue:  aws.String("111111111111"),
+						ActualValue:    aws.String("arn:aws:iam::111111111111:root"),
 						DifferenceType: aws.String("NOT_EQUAL"),
 					},
 				},
@@ -96,7 +96,7 @@ var (
 	}
 
 	ExampleDescribeStackDriftDetectionStatus = &cloudformation.DescribeStackDriftDetectionStatusOutput{
-		StackId:                   aws.String("arn:aws:cloudformation:us-west-2:857418155548:stack/iam-roles/67fc9960-556b-11e9-a978-067794494828"),
+		StackId:                   aws.String("arn:aws:cloudformation:us-west-2:111111111111:stack/iam-roles/67fc9960-556b-11e9-a978-067794494828"),
 		StackDriftDetectionId:     aws.String("5115ff60-b863-11e9-bf7f-0657eb5c1e84"),
 		StackDriftStatus:          aws.String("DRIFTED"),
 		DetectionStatus:           aws.String("DETECTION_COMPLETE"),
@@ -105,7 +105,7 @@ var (
 	}
 
 	ExampleDescribeStackDriftDetectionStatusInProgress = &cloudformation.DescribeStackDriftDetectionStatusOutput{
-		StackId:                   aws.String("arn:aws:cloudformation:us-west-2:857418155548:stack/iam-roles/67fc9960-556b-11e9-a978-067794494828"),
+		StackId:                   aws.String("arn:aws:cloudformation:us-west-2:111111111111:stack/iam-roles/67fc9960-556b-11e9-a978-067794494828"),
 		StackDriftDetectionId:     aws.String("5115ff60-b863-11e9-bf7f-0657eb5c1e84"),
 		StackDriftStatus:          aws.String("DRIFTED"),
 		DetectionStatus:           aws.String("DETECTION_IN_PROGESS"),

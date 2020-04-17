@@ -34,10 +34,11 @@ type Stats struct {
 	NumBytes uint64
 }
 
-func S3Queue(sess *session.Session, account, s3path, queueName string,
+func S3Queue(sess *session.Session, account, s3path, s3region, queueName string,
 	concurrency int, limit uint64, verbose bool, stats *Stats) (err error) {
 
-	return s3Queue(s3.New(sess), sqs.New(sess), account, s3path, queueName, concurrency, limit, verbose, stats)
+	return s3Queue(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sqs.New(sess),
+		account, s3path, queueName, concurrency, limit, verbose, stats)
 }
 
 func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path, queueName string,
