@@ -473,7 +473,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			           "queryDone": {
 			             "userData": "testUserData",
 			             "queryId": "4c223d6e-a41a-418f-b97b-b01f044cbdc9",
-			             "workflowId": "arn:aws:states:us-east-2:050603629990:execution:panther-athena-workflow:cf56beb0-7493-42ae-a9fd-a024812b8eac"
+			             "workflowId": "arn:aws:states:us-east-2:0506036XXXXX:execution:panther-athena-workflow:cf56beb0-7493-42ae-a9fd-a024812b8eac"
 			           }
 			          }
 			        }

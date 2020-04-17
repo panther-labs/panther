@@ -51,7 +51,7 @@ const (
 )
 
 var (
-	// PantherDatabases  is exposed as public var to allow code to get/lookup the Panther databases
+	// PantherDatabases is exposed as public var to allow code to get/lookup the Panther databases
 	PantherDatabases = map[string]string{
 		LogProcessingDatabaseName: LogProcessingDatabaseDescription,
 		RuleMatchDatabaseName:     RuleMatchDatabaseDescription,
