@@ -169,6 +169,8 @@ func destroyLambdaLayers(awsSession *session.Session) {
 	}
 
 	// Find and destroy each version of each layer that needs to be destroyed
+
+	logger.Infof("removing %d versions of Lambda layer %s", len(layersToDestroy), globalLayerName)
 	for _, layer := range layersToDestroy {
 		versions, err := client.ListLayerVersions(&lambda.ListLayerVersionsInput{
 			LayerName: layer,

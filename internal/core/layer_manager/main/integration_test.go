@@ -30,7 +30,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,9 +55,8 @@ const (
 
 var (
 	integrationTest bool
-	awsSession      = session.Must(session.NewSession())
-	lambdaClient    = lambda.New(awsSession)
-	dynamoClient    = dynamodb.New(awsSession)
+	lambdaClient    lambdaiface.LambdaAPI
+	dynamoClient    dynamodbiface.DynamoDBAPI
 
 	// The ARN of the global layer
 	globalLayerArn *string
@@ -149,6 +150,9 @@ func setup() (err error) {
 		return err
 	}
 
+	awsSession := session.Must(session.NewSession())
+	lambdaClient = lambda.New(awsSession)
+	dynamoClient = dynamodb.New(awsSession)
 	// Clear the analysis table to remove any existing globals
 	err = testutils.ClearDynamoTable(awsSession, analysisTableName)
 	if err != nil {
