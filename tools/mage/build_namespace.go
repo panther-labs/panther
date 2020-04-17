@@ -175,7 +175,7 @@ func (b Build) tools() error {
 
 	compile := func(inputs chan *buildInput, results chan error) {
 		for input := <-inputs; input != nil; input = <-inputs {
-			outDir := filepath.Join("out", "bin", filepath.Dir(input.path),
+			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(input.path)),
 				input.env["GOOS"], input.env["GOARCH"], filepath.Base(filepath.Dir(input.path)))
 			results <- sh.RunWith(input.env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
 		}
