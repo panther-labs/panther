@@ -19,8 +19,9 @@ package mage
  */
 
 import (
+	"crypto/sha1"
 	"fmt"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
@@ -28,143 +29,252 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/magefile/mage/sh"
+	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"gopkg.in/yaml.v2"
 )
 
 const (
 	maxTemplateSize = 51200 // Max file size before CFN templates must be uploaded to S3
 
 	pollInterval = 5 * time.Second // How long to wait in between requests to the CloudFormation service
-	pollTimeout  = time.Hour       // Give up if CreateChangeSet or ExecuteChangeSet takes longer than this
 )
 
-// Deploy a CloudFormation template.
-//
-// 1) Package: Upload large assets (GraphQL schema, Lambda source, nested templates) to S3 with aws cli
-// 2) Post-processing: Fix packaged template URLs with a region-agnostic link
-// 3) Deploy: Create and execute a change set
+// Deploy a CloudFormation template, returning stack outputs.
 //
 // The bucket parameter can be empty to skip S3 packaging.
-// The stack outputs are returned to the caller, errors are considered fatal and will halt execution.
 func deployTemplate(
-	awsSession *session.Session, templatePath, bucket, stack string, params map[string]string) map[string]string {
-
-	if bucket != "" {
-		templatePath = cfnPackage(templatePath, bucket, stack)
-	}
-
-	client := cloudformation.New(awsSession)
-
-	changeID, outputs := createChangeSet(awsSession, client, templatePath, bucket, stack, params)
-	if changeID == nil {
-		return outputs
-	}
-
-	return executeChangeSet(client, changeID, stack)
-}
-
-// Upload resources to S3 and return the path to the modified CloudFormation template.
-// TODO - implement this directly to avoid the aws cli (https://github.com/panther-labs/panther/issues/136)
-func cfnPackage(templatePath, bucket, stack string) string {
-	outputDir := filepath.Dir(templatePath)
-	if !strings.HasPrefix(outputDir, "out") {
-		outputDir = filepath.Join("out", outputDir)
-	}
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		logger.Fatalf("failed to create directory %s: %v", outputDir, err)
-	}
-
-	// There is no equivalent to this command in the AWS Go SDK.
-	pkgOut := filepath.Join(outputDir, "package."+filepath.Base(templatePath))
-	args := []string{"cloudformation", "package",
-		"--output-template-file", pkgOut,
-		"--s3-bucket", bucket,
-		"--s3-prefix", stack,
-		"--template-file", templatePath,
-	}
-
-	// Discard the output unless running in verbose mode
-	logger.Infof("deploy: packaging %s assets in s3://%s", templatePath, bucket)
-	if err := sh.Run("aws", args...); err != nil {
-		logger.Fatalf("aws cloudformation package %s failed: %v", templatePath, err)
-	}
-
-	// Post-processing: fix templateURLs to be region-agnostic
-	var result []string
-	for _, line := range strings.Split(string(readFile(pkgOut)), "\n") {
-		result = append(result, fixPackageTemplateURL(line))
-	}
-
-	writeFile(pkgOut, []byte(strings.Join(result, "\n")))
-	return pkgOut
-}
-
-// Fix CloudFormation package TemplateURL issues.
-// Somewhere there is a bug that is causing the environment variables specifying region to not be properly respected
-// when constructing the template URLs while deploying to another region than the one specified in the aws config.
-//
-// I believe it is related to this issue: https://github.com/aws/aws-cli/issues/4372
-func fixPackageTemplateURL(line string) string {
-	// This code transforms:
-	// TemplateURL: https://s3.region.amazonaws.com/bucket/panther-app/1.template
-	// into:
-	// TemplateURL: https://s3.amazonaws.com/bucket/panther-app/1.template
-	// Unless that is the format the URL was already in.
-	if strings.HasPrefix(strings.TrimSpace(line), "TemplateURL: ") {
-		// Break the line down to the pieces we need
-		lineParts := strings.Split(line, "https://")
-		uriParts := strings.Split(lineParts[1], "/")
-		prefixParts := strings.Split(uriParts[0], ".")
-
-		// Check if the format is already correct
-		if prefixParts[1] == "amazonaws" {
-			return line
-		}
-
-		// Build the new URI
-		prefixParts[1] = "s3"
-		newURIPrefix := strings.Join(prefixParts[1:], ".")
-		newURIParts := append([]string{newURIPrefix}, uriParts[1:]...)
-		lineParts[1] = strings.Join(newURIParts, "/")
-		line = strings.Join(lineParts, "https://")
-	}
-
-	return line
-}
-
-// Create a CloudFormation change set, returning its name.
-//
-// If there are pending changes, the change set id and no outputs are returned.
-// Otherwise, the change set is deleted and a nil id with the stack outputs are returned.
-func createChangeSet(
 	awsSession *session.Session,
-	client *cloudformation.CloudFormation,
-	templateFile, bucket, stack string,
+	templatePath, bucket, stack string,
 	params map[string]string,
-) (*string, map[string]string) {
+) (map[string]string, error) {
 
-	// Change set type - CREATE if a new stack otherwise UPDATE
-	stackDetail, err := client.DescribeStacks(&cloudformation.DescribeStacksInput{StackName: &stack})
+	// 1) Generate final template, with large assets packaged in S3.
+	template, err := cfnPackage(awsSession, templatePath, bucket, stack)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2) If the stack already exists, wait for it to reach a steady state.
+	outputs, err := prepareStack(awsSession, stack)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3) Create a change set
 	changeSetType := "CREATE"
-	if err == nil && len(stackDetail.Stacks) > 0 {
-		// Check if the previous deployment timed out and is still going, if so continue where that left off
-		if status := *stackDetail.Stacks[0].StackStatus; strings.Contains(status, cloudformation.OperationStatusInProgress) {
-			logger.Warnf("deploy: %s already in state %s, resuming previous deployment", stack, status)
-			return stackDetail.Stacks[0].ChangeSetId, nil
-		}
+	if outputs != nil {
+		// We have outputs, so the stack must already exist
 		changeSetType = "UPDATE"
 	}
 
-	parameters := make([]*cloudformation.Parameter, 0, len(params))
+	changeID, err := createChangeSet(awsSession, bucket, stack, changeSetType, template, params)
+	if err != nil {
+		return nil, err
+	}
+	if changeID == nil {
+		// no changes - return the outputs we already had
+		return outputs, nil
+	}
+
+	// 4) Execute the change set
+	return executeChangeSet(awsSession, changeID, stack)
+}
+
+// Upload resources to S3 and return the modified CloudFormation template.
+//
+// This is similar to the "aws cloudformation package" CLI command, but our implementation
+// is more robust and performant. Differences include:
+//
+//    - We include S3 versions when possible so CFN can quickly check if an asset is identical
+//    - We rely only on asset hashes - AWS CLI will re-upload identical files with different timestamps.
+//    - AWS CLI suffers from a region bug when writing S3 URLs
+//        (possibly related to https://github.com/aws/aws-cli/issues/4372)
+//
+// Resources currently supported:
+//    - AWS::AppSync::GraphQLSchema - DefinitionS3Location
+//    - AWS::CloudFormation::Stack - TemplateURL
+//    - AWS::Serverless::Function - CodeUri
+//
+// The bucket can be empty to skip S3 packaging (e.g. for the bootstrap stack) - in that case,
+// we still parse the template and re-emit it to strip comments / extra spaces
+func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string) ([]byte, error) {
+	// TODO - first we have to recursively find nested stacks and package those
+	// TODO - Lambda CodeUri
+	cfnBody, err := parseCfnTemplate(templatePath)
+	if err != nil {
+		return nil, err
+	}
+
+	if bucket == "" {
+		// No S3 packaging - just emit the template in standard form
+		return yaml.Marshal(cfnBody)
+	}
+
+	for _, resource := range cfnBody["Resources"].(map[string]interface{}) {
+		r := resource.(map[string]interface{})
+		switch r["Type"].(string) {
+		case "AWS::AppSync::GraphQLSchema":
+			properties := r["Properties"].(map[string]interface{})
+			if path, ok := properties["DefinitionS3Location"].(string); ok && !strings.HasPrefix(path, "s3://") {
+				// This GraphQLSchema resource has a file location specified instead of S3 - upload it
+				// Path is relative to the template, but we are running here in the repo root
+				assetPath := filepath.Join(filepath.Dir(templatePath), path)
+				key, _, err := uploadAsset(awsSession, assetPath, bucket, stack)
+				if err != nil {
+					return nil, err
+				}
+				properties["DefinitionS3Location"] = fmt.Sprintf("s3://%s/%s", bucket, key)
+			}
+		}
+	}
+
+	return yaml.Marshal(cfnBody)
+}
+
+// Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
+func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (string, string, error) {
+	contents, err := ioutil.ReadFile(assetPath)
+	if err != nil {
+		return "", "", fmt.Errorf("package %s: failed to open %s: %v", stack, assetPath, err)
+	}
+
+	hash := sha1.Sum(contents)
+	s3Key := fmt.Sprintf("%s/%x", stack, hash)
+	client := s3.New(awsSession)
+	response, err := client.HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
+	if err == nil {
+		return s3Key, *response.VersionId, nil // object already exists in S3 with the same hash
+	}
+
+	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFound" {
+		// object does not exist yet - upload it!
+		response, err := uploadFileToS3(awsSession, assetPath, bucket, s3Key, nil)
+		if err != nil {
+			return "", "", fmt.Errorf("package %s: failed to upload %s: %v", stack, assetPath, err)
+		}
+		return s3Key, *response.VersionID, nil
+	}
+
+	// Some other error related to HeadObject
+	return "", "", fmt.Errorf("package %s: failed to describe s3://%s/%s: %v", stack, bucket, s3Key, err)
+}
+
+// Before a change set can be created, the stack needs to be in a steady state.
+//
+// If the stack is ROLLBACK_COMPLETE or otherwise failed to create, it will be deleted automatically.
+// If the stack is still in progress, this will wait until it finishes.
+// If the stack exists, its outputs are returned to the caller (once complete).
+func prepareStack(awsSession *session.Session, stack string) (map[string]string, error) {
+	client := cfn.New(awsSession)
+	stackDetail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: &stack})
+	if err != nil {
+		if errStackDoesNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("unable to describe stack %s: %v", stack, err)
+	}
+
+	detail := stackDetail.Stacks[0]
+	status := *detail.StackStatus
+	// See all stack status codes and exactly what they mean here:
+	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab1c15c15c17c11
+
+	// Check for bad states that require stack deletion.
+	switch status {
+	case cfn.StackStatusCreateFailed, cfn.StackStatusDeleteFailed, cfn.StackStatusReviewInProgress,
+		cfn.StackStatusRollbackComplete, cfn.StackStatusRollbackFailed, cfn.StackStatusRollbackInProgress:
+		// A stack in one of these states must be deleted before we can apply new change sets.
+		// These are caused by a failed stack creation or deletion; in either case CFN already has
+		// tried destroying existing resources or is about to. (This is *not* a failed update)
+		// Deleted stacks are retained and viewable for 90 days.
+		logger.Warnf("deleting stack %s (%s) before it can be re-deployed", stack, status)
+		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stack}); err != nil {
+			return nil, fmt.Errorf("failed to start stack %s deletion: %v", stack, err)
+		}
+
+		status = cfn.StackStatusDeleteInProgress
+	}
+
+	// Wait for any in-progress operations to finish.
+	if _, ok := inProgressStackStatus[status]; ok {
+		logger.Infof("stack %s was already %s, waiting for it to finish", stack, status)
+		detail, err = waitForStack(client, stack)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Stack is done - return its outputs.
+	switch status {
+	case cfn.StackStatusDeleteComplete:
+		return nil, nil
+	case cfn.StackStatusUpdateRollbackFailed:
+		return nil, fmt.Errorf("stack %s is %s: you must manually continue rollback or delete the stack", stack, status)
+	default:
+		return flattenStackOutputs(detail), nil
+	}
+}
+
+// Wait for the stack to reach a terminal status.
+//
+// Returns final status (DELETE_COMPLETE if the stack does not exist).
+func waitForStack(client *cfn.CloudFormation, stack string) (*cfn.Stack, error) {
+	input := &cfn.DescribeStacksInput{StackName: &stack}
+
+	for {
+		detail, err := client.DescribeStacks(input)
+		if err != nil {
+			if errStackDoesNotExist(err) {
+				// Special case - a deleted stack won't show up when describing stacks by name
+				return &cfn.Stack{
+					StackName:   &stack,
+					StackStatus: aws.String(cfn.StackStatusDeleteComplete),
+				}, nil
+			}
+
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ExpiredToken" {
+				return nil, fmt.Errorf("deploy: %s: security token expired; "+
+					"redeploy with fresh credentials to pick up where you left off. "+
+					"CloudFormation is still running in your AWS account, "+
+					"see https://console.aws.amazon.com/cloudformation", stack)
+			}
+
+			return nil, fmt.Errorf("failed to describe stack %s: %v", stack, err)
+		}
+
+		// TODO - debug log status changes?
+		status := *detail.Stacks[0].StackStatus
+		if _, ok := terminalStackStatus[status]; ok {
+			return detail.Stacks[0], nil
+		}
+
+		time.Sleep(pollInterval)
+	}
+
+	// TODO - deep inspect error message
+}
+
+// Create a CloudFormation change set, returning its id.
+//
+// If there are no changes, the change set is deleted and (nil, nil) is returned.
+func createChangeSet(
+	awsSession *session.Session,
+	bucket, stack string,
+	changeSetType string, // "CREATE" or "UPDATE"
+	template []byte,
+	params map[string]string,
+) (*string, error) {
+
+	parameters := make([]*cfn.Parameter, 0, len(params))
 	for key, val := range params {
-		parameters = append(parameters, &cloudformation.Parameter{
+		parameters = append(parameters, &cfn.Parameter{
 			ParameterKey:   aws.String(key),
 			ParameterValue: aws.String(val),
 		})
 	}
 
-	createInput := &cloudformation.CreateChangeSetInput{
+	createInput := &cfn.CreateChangeSetInput{
 		Capabilities: []*string{
 			aws.String("CAPABILITY_AUTO_EXPAND"),
 			aws.String("CAPABILITY_IAM"),
@@ -174,7 +284,7 @@ func createChangeSet(
 		ChangeSetType: &changeSetType,
 		Parameters:    parameters,
 		StackName:     &stack,
-		Tags: []*cloudformation.Tag{
+		Tags: []*cfn.Tag{
 			// Tags are propagated to every supported resource in the stack
 			{
 				Key:   aws.String("Application"),
@@ -187,115 +297,82 @@ func createChangeSet(
 		},
 	}
 
-	contents := readFile(templateFile)
-	if len(contents) <= maxTemplateSize {
-		createInput.TemplateBody = aws.String(string(contents))
-	}
-	if len(contents) >= maxTemplateSize {
-		upload, err := uploadFileToS3(awsSession, templateFile, bucket, filepath.Base(templateFile), nil)
+	if len(template) <= maxTemplateSize {
+		createInput.TemplateBody = aws.String(string(template))
+	} else {
+		// Template is too big to be uploaded directly - save to file and upload to S3
+		path := filepath.Join("out", "deployments", stack+".yml")
+		if err := ioutil.WriteFile(path, template, 0644); err != nil {
+			return nil, fmt.Errorf("faiiled to write %s: %v", path, err)
+		}
+
+		upload, err := uploadFileToS3(awsSession, path, bucket, stack+".yml", nil)
 		if err != nil {
-			logger.Fatal(err)
+			return nil, err
 		}
 		createInput.TemplateURL = &upload.Location
 	}
 
 	logger.Infof("deploy: %s CloudFormation stack %s", changeSetType, stack)
-	if _, err = client.CreateChangeSet(createInput); err != nil {
-		logger.Fatalf("failed to create change set for stack %s: %v", stack, err)
+	client := cfn.New(awsSession)
+	if _, err := client.CreateChangeSet(createInput); err != nil {
+		return nil, fmt.Errorf("failed to create change set for stack %s: %v", stack, err)
 	}
 
-	// Wait for change set creation to finish
-	describeInput := &cloudformation.DescribeChangeSetInput{
-		ChangeSetName: createInput.ChangeSetName,
-		StackName:     &stack,
-	}
-	prevStatus := ""
-	for start := time.Now(); time.Since(start) < pollTimeout; {
-		response, err := client.DescribeChangeSet(describeInput)
-		if err != nil {
-			logger.Fatalf("failed to describe change set %s for stack %s: %v",
-				*createInput.ChangeSetName, stack, err)
-		}
-
-		status := aws.StringValue(response.Status)
-		reason := aws.StringValue(response.StatusReason)
-		if status == "FAILED" && (strings.HasPrefix(reason, "The submitted information didn't contain changes") ||
-			strings.HasPrefix(reason, "No updates are to be performed")) {
-
-			logger.Debugf("deploy: stack %s is already up to date", stack)
-			_, err := client.DeleteChangeSet(&cloudformation.DeleteChangeSetInput{
-				ChangeSetName: createInput.ChangeSetName,
-				StackName:     &stack,
-			})
-			if err != nil {
-				logger.Warnf("failed to delete change set %s for stack %s: %v",
-					*createInput.ChangeSetName, stack, err)
-			}
-
-			// No changes - return the stack outputs we got earlier
-			return nil, flattenStackOutputs(stackDetail)
-		}
-
-		if status != prevStatus {
-			logger.Debugf("deploy: CreateChangeSet for stack %s is now %s", stack, status)
-			prevStatus = status
-		}
-
-		switch status {
-		case "CREATE_COMPLETE":
-			return createInput.ChangeSetName, nil // success!
-		case "FAILED":
-			logger.Fatalf("create change set for stack %s failed: %s", stack, reason)
-		default:
-			time.Sleep(pollInterval)
-		}
-	}
-
-	logger.Fatalf("create change set for stack %s failed: timeout %s", stack, pollTimeout)
-	return nil, nil // execution will never reach here
+	return waitForChangeSet(client, *createInput.ChangeSetName, stack)
 }
 
-// Execute a change set, blocking until the stack has finished updating and returning its outputs.
-func executeChangeSet(client *cloudformation.CloudFormation, changeSet *string, stack string) map[string]string {
-	_, err := client.ExecuteChangeSet(&cloudformation.ExecuteChangeSetInput{
-		ChangeSetName: changeSet,
-		StackName:     &stack,
-	})
+// Wait for the change set to finish creating.
+//
+// Returns the change set ID, or nil if it was deleted (indicating no changes).
+// Returns an error if the final status is not CREATE_COMPLETE.
+func waitForChangeSet(client *cfn.CloudFormation, changeSetName, stack string) (*string, error) {
+	input := &cfn.DescribeChangeSetInput{ChangeSetName: &changeSetName, StackName: &stack}
+	for {
+		response, err := client.DescribeChangeSet(input)
+		if err != nil {
+			return nil, fmt.Errorf("failed to describe change set %s for stack %s: %v", changeSetName, stack, err)
+		}
+
+		switch *response.Status {
+		case cfn.ChangeSetStatusCreateComplete:
+			return &changeSetName, nil // Done! Changes applied
+		case cfn.ChangeSetStatusCreatePending, cfn.ChangeSetStatusCreateInProgress:
+			time.Sleep(pollInterval)
+		case cfn.ChangeSetStatusDeleteComplete, cfn.ChangeSetStatusFailed:
+			reason := aws.StringValue(response.StatusReason)
+
+			if strings.HasPrefix(reason, "The submitted information didn't contain changes") ||
+				strings.HasPrefix(reason, "No updates are to be performed") {
+
+				// no changes needed - delete the change set
+				logger.Debugf("deploy: stack %s is already up to date", stack)
+				_, err := client.DeleteChangeSet(&cfn.DeleteChangeSetInput{ChangeSetName: &changeSetName, StackName: &stack})
+				if err != nil {
+					logger.Warnf("failed to delete change set %s for stack %s: %v", changeSetName, stack, err)
+				}
+
+				return nil, nil
+			}
+
+			// Change set failed, but not because the stack was already up to date.
+			return nil, fmt.Errorf("stack %s change set is %s: %s", stack, *response.Status, reason)
+		}
+	}
+}
+
+// Execute a change set, blocking until the stack has finished updating and then returning its outputs.
+func executeChangeSet(awsSession *session.Session, changeSet *string, stack string) (map[string]string, error) {
+	client := cfn.New(awsSession)
+	_, err := client.ExecuteChangeSet(&cfn.ExecuteChangeSetInput{ChangeSetName: changeSet, StackName: &stack})
 	if err != nil {
-		logger.Fatalf("failed to deploy stack %s: %v", stack, err)
+		return nil, fmt.Errorf("failed to execute change set for stack %s: %v", stack, err)
 	}
 
 	// Wait for change set to finish.
-	input := &cloudformation.DescribeStacksInput{StackName: &stack}
-	prevStatus := ""
-	for start := time.Now(); time.Since(start) < pollTimeout; {
-		response, err := client.DescribeStacks(input)
-		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ExpiredToken" {
-				logger.Fatal("deploy: security token expired; " +
-					"redeploy with fresh credentials to pick up where you left off. " +
-					"CloudFormation is still running in your AWS account, see https://console.aws.amazon.com/cloudformation")
-			}
-			logger.Fatalf("failed to describe stack %s: %v", stack, err)
-		}
-
-		status := *response.Stacks[0].StackStatus
-		if status != prevStatus {
-			logger.Debugf("deploy: ExecuteChangeSet for stack %s is now %s", stack, status)
-			prevStatus = status
-		}
-
-		if status == "CREATE_COMPLETE" || status == "UPDATE_COMPLETE" {
-			return flattenStackOutputs(response) // success!
-		} else if strings.Contains(status, "IN_PROGRESS") {
-			// TODO - show progress of nested stacks (e.g. % updated)
-			time.Sleep(pollInterval)
-		} else {
-			logger.Fatalf("execute change set for stack %s is %s: %s",
-				stack, status, aws.StringValue(response.Stacks[0].StackStatusReason))
-		}
+	detail, err := waitForStack(client, stack)
+	if err != nil {
+		return nil, err
 	}
-
-	logger.Fatalf("execute change set for stack %s failed: timeout %s", stack, pollTimeout)
-	return nil // execution will never reach here
+	return flattenStackOutputs(detail), nil
 }

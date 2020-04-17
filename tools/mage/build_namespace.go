@@ -149,6 +149,21 @@ func (b Build) lambda() error {
 	return nil
 }
 
+func buildLambdaPackage(pkg string) error {
+	targetDir := filepath.Join("out", "bin", pkg)
+	binary := filepath.Join(targetDir, "main")
+	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
+
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
+	}
+	if err := sh.RunWith(buildEnv, "go", "build", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
+		return fmt.Errorf("go build %s failed: %v", binary, err)
+	}
+
+	return nil
+}
+
 // Tools Compile devtools and opstools
 func (b Build) Tools() {
 	if err := b.tools(); err != nil {
@@ -220,40 +235,6 @@ func (b Build) tools() error {
 	for i := 0; i < count; i++ {
 		if err = <-results; err != nil {
 			return err
-		}
-	}
-
-	return nil
-}
-
-func buildLambdaPackage(pkg string) error {
-	targetDir := filepath.Join("out", "bin", pkg)
-	binary := filepath.Join(targetDir, "main")
-	oldInfo, statErr := os.Stat(binary)
-	oldHash, hashErr := fileMD5(binary)
-	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
-
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
-	}
-	if err := sh.RunWith(buildEnv, "go", "build", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
-		return fmt.Errorf("go build %s failed: %v", binary, err)
-	}
-
-	if statErr == nil && hashErr == nil {
-		if hash, err := fileMD5(binary); err == nil && hash == oldHash {
-			// Optimization - if the binary contents haven't changed, reset the last modified time.
-			// "aws cloudformation package" re-uploads any binary whose modification time has changed,
-			// even if the contents are identical. So this lets us skip any unmodified binaries, which can
-			// significantly reduce the total deployment time if only one or two functions changed.
-			//
-			// With 5 unmodified Lambda functions, deploy:app went from 146s => 109s with this fix.
-			logger.Debugf("%s binary unchanged, reverting timestamp", binary)
-			modTime := oldInfo.ModTime()
-			if err = os.Chtimes(binary, modTime, modTime); err != nil {
-				// Non-critical error - the build process can continue
-				logger.Warnf("failed optimization: can't revert timestamp for %s: %v", binary, err)
-			}
 		}
 	}
 

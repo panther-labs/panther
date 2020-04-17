@@ -51,6 +51,36 @@ var allStacks = []string{
 	onboardStack,
 }
 
+// CloudFormation stacks in one of these states have changes in progress.
+var inProgressStackStatus = map[string]struct{}{
+	cfn.StackStatusCreateInProgress:                        {},
+	cfn.StackStatusDeleteInProgress:                        {},
+	cfn.StackStatusReviewInProgress:                        {},
+	cfn.StackStatusRollbackInProgress:                      {},
+	cfn.StackStatusUpdateCompleteCleanupInProgress:         {},
+	cfn.StackStatusUpdateInProgress:                        {},
+	cfn.StackStatusUpdateRollbackCompleteCleanupInProgress: {},
+	cfn.StackStatusUpdateRollbackInProgress:                {},
+	cfn.StackStatusImportInProgress:                        {},
+	cfn.StackStatusImportRollbackInProgress:                {},
+}
+
+// Cloudformation stacks in one of these states will not change until a user takes action.
+var terminalStackStatus = map[string]struct{}{
+	cfn.StackStatusCreateComplete:         {},
+	cfn.StackStatusCreateFailed:           {},
+	cfn.StackStatusDeleteComplete:         {},
+	cfn.StackStatusDeleteFailed:           {},
+	cfn.StackStatusImportComplete:         {},
+	cfn.StackStatusImportRollbackComplete: {},
+	cfn.StackStatusImportRollbackFailed:   {},
+	cfn.StackStatusRollbackComplete:       {},
+	cfn.StackStatusRollbackFailed:         {},
+	cfn.StackStatusUpdateComplete:         {},
+	cfn.StackStatusUpdateRollbackComplete: {},
+	cfn.StackStatusUpdateRollbackFailed:   {},
+}
+
 // Summary of a CloudFormation resource and the stack its contained in
 type cfnResource struct {
 	Resource *cfn.StackResourceSummary
@@ -97,10 +127,9 @@ func writeCfnTemplate(cfn map[string]interface{}, path string) error {
 }
 
 // Flatten CloudFormation stack outputs into a string map.
-func flattenStackOutputs(detail *cfn.DescribeStacksOutput) map[string]string {
-	outputs := detail.Stacks[0].Outputs
-	result := make(map[string]string, len(outputs))
-	for _, output := range outputs {
+func flattenStackOutputs(stack *cfn.Stack) map[string]string {
+	result := make(map[string]string, len(stack.Outputs))
+	for _, output := range stack.Outputs {
 		result[*output.OutputKey] = *output.OutputValue
 	}
 	return result
@@ -243,5 +272,5 @@ func describeStack(cfClient *cfn.CloudFormation, stackName string) (string, map[
 		return "", nil, err
 	}
 
-	return aws.StringValue(response.Stacks[0].StackStatus), flattenStackOutputs(response), nil
+	return aws.StringValue(response.Stacks[0].StackStatus), flattenStackOutputs(response.Stacks[0]), nil
 }

@@ -136,6 +136,7 @@ func Deploy() {
 
 	// ***** Step 2: deploy remaining stacks in parallel
 	deployMainStacks(awsSession, settings, accountID, outputs)
+	logger.Fatal("stopping early") // TODO - temp
 
 	// ***** Step 3: first-time setup if needed
 	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
@@ -192,6 +193,8 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 
 	// Deploy first bootstrap stack
 	go func() {
+		defer wg.Done()
+
 		// the example yml has an empty string to make it clear it is a list, remove empty strings
 		var sanitizedLogSubscriptionArns []string
 		for _, arn := range settings.Setup.LogSubscriptions.PrincipalARNs {
@@ -211,13 +214,17 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 			"TracingMode":                settings.Monitoring.TracingMode,
 		}
 
-		outputs = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
+		var err error
+		outputs, err = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
+		if err != nil {
+			logger.Fatal(err)
+		}
 
 		// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
 		// forces SMS as a fallback option, but the SDK does not.
 		userPoolID := outputs["UserPoolId"]
 		logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
-		_, err := cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
+		_, err = cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
 			MfaConfiguration: aws.String("ON"),
 			SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
 				Enabled: aws.Bool(true),
@@ -227,8 +234,6 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 		if err != nil {
 			logger.Fatalf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
 		}
-
-		wg.Done()
 	}()
 
 	// While waiting for bootstrap, build deployment artifacts
@@ -255,7 +260,12 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	}
 
 	// Deploy second bootstrap stack and merge outputs
-	for k, v := range deployTemplate(awsSession, gatewayTemplate, sourceBucket, gatewayStack, params) {
+	gatewayOutputs, err := deployTemplate(awsSession, gatewayTemplate, sourceBucket, gatewayStack, params)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	for k, v := range gatewayOutputs {
 		if _, exists := outputs[k]; exists {
 			logger.Fatalf("output %s exists in both bootstrap stacks", k)
 		}
@@ -321,15 +331,15 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	parallelStacks := 0
 
 	// Alarms
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
-			"AppsyncId":            outputs["GraphQLApiId"],
-			"LoadBalancerFullName": outputs["LoadBalancerFullName"],
-			"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
-		})
-		result <- alarmsStack
-	}(finishedStacks)
+	//parallelStacks++
+	//go func(result chan string) {
+	//	deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
+	//		"AppsyncId":            outputs["GraphQLApiId"],
+	//		"LoadBalancerFullName": outputs["LoadBalancerFullName"],
+	//		"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
+	//	})
+	//	result <- alarmsStack
+	//}(finishedStacks)
 
 	// Appsync
 	parallelStacks++
@@ -345,53 +355,53 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		result <- appsyncStack
 	}(finishedStacks)
 
-	// Cloud security
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
-			"AnalysisApiId":         outputs["AnalysisApiId"],
-			"ComplianceApiId":       outputs["ComplianceApiId"],
-			"RemediationApiId":      outputs["RemediationApiId"],
-			"ResourcesApiId":        outputs["ResourcesApiId"],
-			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
-			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
-			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
-			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
-
-			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
-			"TracingMode":                settings.Monitoring.TracingMode,
-		})
-		result <- cloudsecStack
-	}(finishedStacks)
-
-	// Core
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
-			"AppDomainURL":           outputs["LoadBalancerUrl"],
-			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
-			"AnalysisApiId":          outputs["AnalysisApiId"],
-			"ComplianceApiId":        outputs["ComplianceApiId"],
-			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
-			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
-			"UserPoolId":             outputs["UserPoolId"],
-
-			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
-			"TracingMode":                settings.Monitoring.TracingMode,
-		})
-		result <- coreStack
-	}(finishedStacks)
-
-	// Dashboards
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, dashboardTemplate, sourceBucket, dashboardStack, nil)
-		result <- dashboardStack
-	}(finishedStacks)
+	//// Cloud security
+	//parallelStacks++
+	//go func(result chan string) {
+	//	deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
+	//		"AnalysisApiId":         outputs["AnalysisApiId"],
+	//		"ComplianceApiId":       outputs["ComplianceApiId"],
+	//		"RemediationApiId":      outputs["RemediationApiId"],
+	//		"ResourcesApiId":        outputs["ResourcesApiId"],
+	//		"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+	//		"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+	//		"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
+	//		"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+	//
+	//		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+	//		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+	//		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+	//		"TracingMode":                settings.Monitoring.TracingMode,
+	//	})
+	//	result <- cloudsecStack
+	//}(finishedStacks)
+	//
+	//// Core
+	//parallelStacks++
+	//go func(result chan string) {
+	//	deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
+	//		"AppDomainURL":           outputs["LoadBalancerUrl"],
+	//		"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
+	//		"AnalysisApiId":          outputs["AnalysisApiId"],
+	//		"ComplianceApiId":        outputs["ComplianceApiId"],
+	//		"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
+	//		"SqsKeyId":               outputs["QueueEncryptionKeyId"],
+	//		"UserPoolId":             outputs["UserPoolId"],
+	//
+	//		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+	//		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+	//		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+	//		"TracingMode":                settings.Monitoring.TracingMode,
+	//	})
+	//	result <- coreStack
+	//}(finishedStacks)
+	//
+	//// Dashboards
+	//parallelStacks++
+	//go func(result chan string) {
+	//	deployTemplate(awsSession, dashboardTemplate, sourceBucket, dashboardStack, nil)
+	//	result <- dashboardStack
+	//}(finishedStacks)
 
 	// Glue
 	parallelStacks++
@@ -400,24 +410,24 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		result <- glueStack
 	}(finishedStacks)
 
-	// Log analysis
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
-			"AnalysisApiId":         outputs["AnalysisApiId"],
-			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
-			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
-			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
-			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
-
-			"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
-			"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
-			"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
-			"TracingMode":                  settings.Monitoring.TracingMode,
-		})
-		result <- logAnalysisStack
-	}(finishedStacks)
+	//// Log analysis
+	//parallelStacks++
+	//go func(result chan string) {
+	//	deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
+	//		"AnalysisApiId":         outputs["AnalysisApiId"],
+	//		"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+	//		"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+	//		"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
+	//		"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+	//
+	//		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+	//		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
+	//		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
+	//		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
+	//		"TracingMode":                  settings.Monitoring.TracingMode,
+	//	})
+	//	result <- logAnalysisStack
+	//}(finishedStacks)
 
 	// Web server
 	parallelStacks++
@@ -432,24 +442,24 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
 	}
 
-	// Metric filters have to be deployed after all log groups have been created
-	go func(result chan string) {
-		deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
-		result <- metricFilterStack
-	}(finishedStacks)
-
-	// Onboard Panther to scan itself
-	go func(result chan string) {
-		if settings.Setup.OnboardSelf {
-			deployOnboard(awsSession, settings, accountID, outputs)
-		}
-		result <- onboardStack
-	}(finishedStacks)
-
-	// Wait for onboarding and monitoring to finish
-	for i := parallelStacks + 1; i <= parallelStacks+2; i++ {
-		logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
-	}
+	//// Metric filters have to be deployed after all log groups have been created
+	//go func(result chan string) {
+	//	deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
+	//	result <- metricFilterStack
+	//}(finishedStacks)
+	//
+	//// Onboard Panther to scan itself
+	//go func(result chan string) {
+	//	if settings.Setup.OnboardSelf {
+	//		deployOnboard(awsSession, settings, accountID, outputs)
+	//	}
+	//	result <- onboardStack
+	//}(finishedStacks)
+	//
+	//// Wait for onboarding and monitoring to finish
+	//for i := parallelStacks + 1; i <= parallelStacks+2; i++ {
+	//	logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
+	//}
 }
 
 func deployGlue(awsSession *session.Session, outputs map[string]string) {

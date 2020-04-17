@@ -78,7 +78,10 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 		"EnableGuardDuty":        strconv.FormatBool(settings.Setup.EnableGuardDuty),
 		"LogProcessingRoleLabel": genLogProcessingLabel(awsSession),
 	}
-	onboardOutputs := deployTemplate(awsSession, onboardTemplate, bootstrapOutputs["SourceBucket"], onboardStack, params)
+	onboardOutputs, err := deployTemplate(awsSession, onboardTemplate, bootstrapOutputs["SourceBucket"], onboardStack, params)
+	if err != nil {
+		logger.Fatal(err)
+	}
 	configureLogProcessingUsingAPIs(awsSession, settings, bootstrapOutputs["AuditLogsBucket"], onboardOutputs)
 }
 

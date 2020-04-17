@@ -39,7 +39,7 @@ func deployFrontend(
 	awsSession *session.Session,
 	accountID, bucket string,
 	bootstrapOutputs map[string]string,
-) map[string]string {
+) (map[string]string, error) {
 
 	// Save .env file
 	if err := godotenv.Write(
@@ -52,12 +52,12 @@ func deployFrontend(
 		},
 		awsEnvFile,
 	); err != nil {
-		logger.Fatalf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
+		return nil, fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
 	dockerImage, err := buildAndPushImageFromSource(awsSession, bootstrapOutputs["ImageRegistry"])
 	if err != nil {
-		logger.Fatal(err)
+		return nil, err
 	}
 
 	params := map[string]string{
@@ -135,7 +135,7 @@ func dockerLogin(ecrServer, username, password string) error {
 		return fmt.Errorf("failed to close password pipe: %v", err)
 	}
 
-	logger.Info("deploy: logging in to remote image repo")
+	logger.Debug("deploy: logging in to remote image repo")
 	err = sh.Run("docker", "login",
 		"-u", username,
 		"--password-stdin",
