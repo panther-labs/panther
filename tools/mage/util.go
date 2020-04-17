@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -41,6 +42,9 @@ import (
 const (
 	maxRetries = 20 // try very hard, avoid throttles
 )
+
+// For CPU-intensive operations, limit the max number of worker goroutines.
+var maxWorkers = runtime.NumCPU() - 1
 
 // Track results when executing similar tasks in parallel
 type goroutineResult struct {
