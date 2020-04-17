@@ -4,13 +4,17 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -77,6 +81,8 @@ func main() {
 		sess.Config.Region = REGION
 	}
 
+	s3Region := getS3Region(sess, *S3PATH)
+
 	if *ACCOUNT == "" {
 		identity, err := sts.New(sess).GetCallerIdentity(&sts.GetCallerIdentityInput{})
 		if err != nil {
@@ -105,7 +111,7 @@ func main() {
 			caught, stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOQ, time.Since(startTime))
 	}()
 
-	err = s3queue.S3Queue(sess, *ACCOUNT, *S3PATH, *TOQ, *CONCURRENCY, *LIMIT, *VERBOSE, stats)
+	err = s3queue.S3Queue(sess, *ACCOUNT, *S3PATH, s3Region, *TOQ, *CONCURRENCY, *LIMIT, *VERBOSE, stats)
 	if err != nil {
 		logger.Fatal(err)
 	} else {
@@ -132,4 +138,24 @@ func validateFlags() {
 		err = errors.New("-queue not set")
 		return
 	}
+}
+
+func getS3Region(sess *session.Session, s3path string) string {
+	parsedPath, err := url.Parse(s3path)
+	if err != nil {
+		logger.Fatalf("failed to find bucket region for %s: %s", s3path, err)
+	}
+
+	input := &s3.GetBucketLocationInput{Bucket: aws.String(parsedPath.Host)}
+	location, err := s3.New(sess).GetBucketLocation(input)
+	if err != nil {
+		logger.Fatalf("failed to find bucket region for %s: %s", s3path, err)
+	}
+
+	// Method may return nil if region is us-east-1,https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLocation.html
+	// and https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+	if location.LocationConstraint == nil {
+		return endpoints.UsEast1RegionID
+	}
+	return *location.LocationConstraint
 }
