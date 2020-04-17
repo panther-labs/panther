@@ -168,7 +168,7 @@ func (b Build) tools() error {
 		for _, env := range buildEnvs {
 			count++
 			go func(env map[string]string, path string, results chan error) {
-				outDir := filepath.Join("out", "bin", filepath.Dir(path),
+				outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(path)),
 					env["GOOS"], env["GOARCH"], filepath.Base(filepath.Dir(path)))
 				results <- sh.RunWith(env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+path)
 			}(env, path, results)
