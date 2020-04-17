@@ -58,7 +58,7 @@ Monitoring:
   Debug: false
 
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
-  TracingMode: ''
+  TracingMode: Active
 
 Setup:
   # List of policy/rule sets to install if the existing ruleset is empty

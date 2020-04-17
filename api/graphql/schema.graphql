@@ -24,7 +24,6 @@ type Mutation {
   deleteUser(id: ID!): Boolean
   executeAsyncLogQuery(input: executeAsyncLogQueryInput!): ExecuteAsyncLogQueryOutput!
   inviteUser(input: InviteUserInput): User!
-  queryDone(input: QueryDoneInput!): QueryDone! @aws_iam
   remediateResource(input: RemediateResourceInput!): Boolean
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
@@ -70,9 +69,6 @@ type Query {
   rules(input: ListRulesInput): ListRulesResponse
   users: [User!]!
 }
-
-type Subscription {
-  queryDone(userData: String!): QueryDone @aws_subscribe(mutations: ["queryDone"]) @aws_iam
 
 input CancelLogQueryInput {
   queryId: ID!
@@ -809,18 +805,6 @@ input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
-}
-
-input QueryDoneInput {
-  userData: String!
-  queryId: String!
-  workflowId: String!
-}
-
-type QueryDone {
-  userData: String!
-  queryId: String!
-  workflowId: String!
 }
 
 enum ComplianceStatusEnum {
