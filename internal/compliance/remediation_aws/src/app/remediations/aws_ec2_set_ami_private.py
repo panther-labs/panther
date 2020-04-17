@@ -36,6 +36,4 @@ class AwsEc2SetAMIPrivate(RemediationBase):
 
     @classmethod
     def _fix(cls, session: Session, resource: Dict[str, Any], parameters: Dict[str, str]) -> None:
-        session.client('ec2').modify_image_attribute(
-            ImageId=resource['Id'], LaunchPermission={'Remove': [{'Group': 'all'}]}
-        )
+        session.client('ec2').modify_image_attribute(ImageId=resource['Id'], LaunchPermission={'Remove': [{'Group': 'all'}]})
