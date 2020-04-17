@@ -110,6 +110,32 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.Equal(t, 1, len(getDatabasesOutput.Databases))
 	require.Equal(t, testutils.TestDb, getDatabasesOutput.Databases[0].Name)
 
+	// -------- GetDatabases() with pantherTablesOnly (should not find any)
+
+	if !useLambda { // we can only control pantherTablesOnly locally
+		pantherTablesOnly = true
+
+		// list
+		var getPantherDatabasesInput models.GetDatabasesInput
+		getPantherDatabasesOutput, err := runGetDatabases(useLambda, &getPantherDatabasesInput)
+		require.NoError(t, err)
+		foundDB = false
+		for _, db := range getPantherDatabasesOutput.Databases {
+			if db.Name == testutils.TestDb {
+				foundDB = true
+			}
+		}
+		require.False(t, foundDB) // should NOT find
+
+		// specific lookup
+		getPantherDatabasesInput.Name = aws.String(testutils.TestDb)
+		getPantherDatabasesOutput, err = runGetDatabases(useLambda, &getPantherDatabasesInput)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(getPantherDatabasesOutput.Databases))
+
+		pantherTablesOnly = false
+	}
+
 	// -------- GetTables()
 
 	var getTablesInput models.GetTablesInput
@@ -120,6 +146,21 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.Equal(t, 1, len(getTablesOutput.Tables))
 	testutils.CheckTableDetail(t, getTablesOutput.Tables)
 
+	// -------- GetTables() with pantherTablesOnly (should not find any)
+
+	if !useLambda { // we can only control pantherTablesOnly locally
+		pantherTablesOnly = true
+
+		var getPantherTablesInput models.GetTablesInput
+		getPantherTablesInput.DatabaseName = testutils.TestDb
+		getPantherTablesInput.OnlyPopulated = true
+		getPantherTablesOutput, err := runGetTables(useLambda, &getPantherTablesInput)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(getPantherTablesOutput.Tables))
+
+		pantherTablesOnly = false
+	}
+
 	// -------- GetTablesDetail()
 
 	var getTablesDetailInput models.GetTablesDetailInput
@@ -128,6 +169,21 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, &getTablesDetailInput)
 	require.NoError(t, err)
 	testutils.CheckTableDetail(t, getTablesDetailOutput.Tables)
+
+	// -------- GetTablesDetail() with pantherTablesOnly (should not find any)
+
+	if !useLambda { // we can only control pantherTablesOnly locally
+		pantherTablesOnly = true
+
+		var getPantherTablesDetailInput models.GetTablesDetailInput
+		getPantherTablesDetailInput.DatabaseName = testutils.TestDb
+		getPantherTablesDetailInput.Names = []string{testutils.TestTable}
+		getPantherTablesDetailOutput, err := runGetTablesDetail(useLambda, &getPantherTablesDetailInput)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(getPantherTablesDetailOutput.Tables))
+
+		pantherTablesOnly = false
+	}
 
 	// -------- ExecuteQuery()
 

@@ -42,6 +42,7 @@ var (
 	sfnClient           sfniface.SFNAPI
 	s3Client            s3iface.S3API
 	athenaS3ResultsPath *string
+	pantherTablesOnly   bool // if true, for Glue  APIs, only return to users tables from Panther databases
 )
 
 func SessionInit() {
@@ -55,6 +56,7 @@ func SessionInit() {
 		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"
 		athenaS3ResultsPath = &results
 	}
+	pantherTablesOnly = os.Getenv("PANTHER_TABLES_ONLY") == "true"
 }
 
 // API provides receiver methods for each route handler.

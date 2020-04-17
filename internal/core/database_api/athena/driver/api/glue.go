@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
+	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
 func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
@@ -37,6 +38,9 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 	}()
 
 	if input.Name != nil {
+		if pantherTablesOnly && awsglue.PantherDatabases[*input.Name] == "" {
+			return output, err // nothing
+		}
 		var glueOutput *glue.GetDatabaseOutput
 		glueOutput, err = glueClient.GetDatabase(&glue.GetDatabaseInput{
 			Name: input.Name,
@@ -56,6 +60,9 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 	err = glueClient.GetDatabasesPages(&glue.GetDatabasesInput{},
 		func(page *glue.GetDatabasesOutput, lastPage bool) bool {
 			for _, database := range page.DatabaseList {
+				if pantherTablesOnly && awsglue.PantherDatabases[*database.Name] == "" {
+					continue // skip
+				}
 				output.Databases = append(output.Databases, &models.NameAndDescription{
 					Name:        *database.Name,
 					Description: database.Description, // optional
@@ -76,6 +83,10 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 			err = apiError(err) // lambda failed
 		}
 	}()
+
+	if pantherTablesOnly && awsglue.PantherDatabases[input.DatabaseName] == "" {
+		return output, err // nothing
+	}
 
 	var partitionErr error
 	err = glueClient.GetTablesPages(&glue.GetTablesInput{DatabaseName: aws.String(input.DatabaseName)},
@@ -117,6 +128,10 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 			err = apiError(err) // lambda failed
 		}
 	}()
+
+	if pantherTablesOnly && awsglue.PantherDatabases[input.DatabaseName] == "" {
+		return output, err // nothing
+	}
 
 	for _, tableName := range input.Names {
 		var glueTableOutput *glue.GetTableOutput
