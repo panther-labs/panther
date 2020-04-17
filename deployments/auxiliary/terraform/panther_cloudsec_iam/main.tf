@@ -253,6 +253,7 @@ resource "aws_iam_role_policy" "panther_allow_remediative_actions" {
           "cloudtrail:UpdateTrail",
           "dynamodb:UpdateTable",
           "ec2:CreateFlowLogs",
+          "ec2:ModifyImageAttribute",
           "ec2:StopInstances",
           "ec2:TerminateInstances",
           "guardduty:CreateDetector",
