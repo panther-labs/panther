@@ -79,6 +79,8 @@ func main() {
 
 	if *REGION != "" { //override
 		sess.Config.Region = REGION
+	} else {
+		REGION = sess.Config.Region
 	}
 
 	s3Region := getS3Region(sess, *S3PATH)
@@ -96,9 +98,11 @@ func main() {
 	startTime := time.Now()
 	if *VERBOSE {
 		if *LIMIT > 0 {
-			logger.Infof("sending %d files from %s to %s", *LIMIT, *S3PATH, *TOQ)
+			logger.Infof("sending %d files from %s in %s to %s in %s",
+				LIMIT, *S3PATH, s3Region, *TOQ, *REGION)
 		} else {
-			logger.Infof("sending files from %s to %s", *S3PATH, *TOQ)
+			logger.Infof("sending files from %s in %s to %s in %s",
+				*S3PATH, s3Region, *TOQ, *REGION)
 		}
 	}
 
@@ -115,8 +119,8 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	} else {
-		logger.Infof("sent %d files (%.2fMB) to %s in %v",
-			stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOQ, time.Since(startTime))
+		logger.Infof("sent %d files (%.2fMB) to %s (%s) in %v",
+			stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOQ, *REGION, time.Since(startTime))
 	}
 }
 
