@@ -141,7 +141,12 @@ func (event *DNS) updatePantherFields(p *DNSParser) {
 		case "A", "AAAA":
 			event.AppendAnyIPAddressPtr(answer.Rdata)
 			event.AppendAnyDomainNamePtrs(answer.Rrname)
-		case "CNAME", "TXT", "MX":
+		case "CNAME", "MX":
+			event.AppendAnyDomainNamePtrs(answer.Rrname)
+			event.AppendAnyDomainNamePtrs(answer.Rdata)
+		case "PTR":
+			event.AppendAnyDomainNamePtrs(answer.Rdata)
+		case "TXT":
 			event.AppendAnyDomainNamePtrs(answer.Rrname)
 		}
 	}
@@ -154,6 +159,9 @@ func (event *DNS) updatePantherFields(p *DNSParser) {
 			event.AppendAnyIPAddress(aaaaRecord)
 		}
 		for _, cNameRecord := range event.DNS.Grouped.Cname {
+			event.AppendAnyDomainNames(cNameRecord)
+		}
+		for _, cNameRecord := range event.DNS.Grouped.Mx {
 			event.AppendAnyDomainNames(cNameRecord)
 		}
 	}

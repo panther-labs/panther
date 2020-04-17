@@ -228,11 +228,14 @@ func TestDNSDetailedFormat(t *testing.T) {
 	expectedEvent.AppendAnyIPAddress("192.0.78.25")
 	expectedEvent.AppendAnyIPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
 	expectedEvent.AppendAnyDomainNames(
+		"foo.suricata-ids.org",
 		"suricata-ids.org",
 		"suricata-ids-aaaa.org",
 		"suricata-ids-cname.org",
 		"suricata-ids-txt.org",
-		"suricata-ids-mx.org")
+		"suricata-ids-mx.org",
+		"mail.server",
+		"hostname1.example.com")
 	parser := (&DNSParser{}).New()
 
 	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
