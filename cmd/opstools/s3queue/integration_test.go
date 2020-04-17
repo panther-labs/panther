@@ -66,7 +66,7 @@ func TestIntegrationS3queue(t *testing.T) {
 	require.NoError(t, err)
 
 	stats := &Stats{}
-	err = S3Queue(awsSession, fakeAccountID, s3Path, toq, concurrency, numberOfFiles, false, stats)
+	err = S3Queue(awsSession, fakeAccountID, s3Path, s3Region, toq, concurrency, numberOfFiles, false, stats)
 	require.NoError(t, err)
 	assert.Equal(t, numberOfFiles, (int)(stats.NumFiles))
 
