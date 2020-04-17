@@ -84,7 +84,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket: aws.String("test-bucket-1"),
 		S3Prefix: aws.String("prefix/"),
-		KmsKey:   aws.String("arn:aws:kms:us-west-2:415773754570:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"),
+		KmsKey:   aws.String("arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"),
 		LogTypes: aws.StringSlice([]string{"logType1", "logType2"}),
 	})
 

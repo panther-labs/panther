@@ -69,8 +69,6 @@ func (t Test) CI() {
 		c <- goroutineResult{"build:cfn", build.cfn()}
 	}(results)
 
-	// We build tools and lambda source in parallel, but if you run into problems with Go modules,
-	// we may have to do all go compilation sequentially.
 	count++
 	go func(c chan goroutineResult) {
 		c <- goroutineResult{"build:lambda", build.lambda()}

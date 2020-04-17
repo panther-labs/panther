@@ -76,7 +76,7 @@ func TestValidateKmsKey(t *testing.T) {
 			IntegrationLabel: aws.String("Test12- "),
 			IntegrationType:  aws.String(IntegrationTypeAWS3),
 			UserID:           aws.String("cb7663c7-80ed-420b-a287-ed7dc50a0bf7"),
-			KmsKey:           aws.String("arn:aws:kms:eu-west-1:415773754570:key/7abf9aaf-0228-4c09-ae6c-c9a0c65e4894"),
+			KmsKey:           aws.String("arn:aws:kms:eu-west-1:111111111111:key/7abf9aaf-0228-4c09-ae6c-c9a0c65e4894"),
 		},
 	})
 	require.NoError(t, err)
