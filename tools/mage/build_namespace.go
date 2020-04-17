@@ -100,6 +100,13 @@ func (b Build) Lambda() {
 	}
 }
 
+// "go build" in parallel for each Lambda function.
+//
+// If you don't already have all go modules downloaded, this may fail because each goroutine will
+// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
+//
+// Run "go mod download" or "mage setup" before building to download the go modules.
+// If you're adding a new module, run "go get ./..." before building to fetch the new module.
 func (b Build) lambda() error {
 	var packages []string
 	walk("internal", func(path string, info os.FileInfo) {
@@ -111,20 +118,28 @@ func (b Build) lambda() error {
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
 
-	// "go build" in parallel for each Lambda function.
-	//
-	// If you don't already have all go modules downloaded, this may fail because each goroutine will
-	// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
-	//
-	// Run "go mod download" or "mage setup" before building to download the go modules.
-	// If you're adding a new module, run "go get ./..." before building to fetch the new module.
-	errs := make(chan error)
-	for _, pkg := range packages {
-		go func(pkg string, errs chan error) {
+	// Start worker goroutines
+	compile := func(pkgs chan string, errs chan error) {
+		for pkg := <-pkgs; pkg != ""; pkg = <-pkgs {
 			errs <- buildLambdaPackage(pkg)
-		}(pkg, errs)
+		}
 	}
 
+	pkgs := make(chan string, len(packages)+maxWorkers)
+	errs := make(chan error, len(packages))
+	for i := 0; i < maxWorkers; i++ {
+		go compile(pkgs, errs)
+	}
+
+	// Send work units
+	for _, pkg := range packages {
+		pkgs <- pkg
+	}
+	for i := 0; i < maxWorkers; i++ {
+		pkgs <- "" // poison pill to stop each worker
+	}
+
+	// Read results
 	for range packages {
 		if err := <-errs; err != nil {
 			return err
@@ -152,8 +167,28 @@ func (b Build) tools() error {
 		{"GOOS": "windows", "GOARCH": "arm"},
 	}
 
+	// Define worker goroutine
+	type buildInput struct {
+		env  map[string]string
+		path string
+	}
+
+	compile := func(inputs chan *buildInput, results chan error) {
+		for input := <-inputs; input != nil; input = <-inputs {
+			outDir := filepath.Join("out", "bin", filepath.Dir(input.path),
+				input.env["GOOS"], input.env["GOARCH"], filepath.Base(filepath.Dir(input.path)))
+			results <- sh.RunWith(input.env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
+		}
+	}
+
+	// Start worker goroutines (channel buffers are large enough for all input)
+	inputs := make(chan *buildInput, 100)
+	results := make(chan error, 100)
+	for i := 0; i < maxWorkers; i++ {
+		go compile(inputs, results)
+	}
+
 	count := 0
-	results := make(chan error)
 	err := filepath.Walk("cmd", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -167,11 +202,7 @@ func (b Build) tools() error {
 		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
 		for _, env := range buildEnvs {
 			count++
-			go func(env map[string]string, path string, results chan error) {
-				outDir := filepath.Join("out", "bin", filepath.Dir(path),
-					env["GOOS"], env["GOARCH"], filepath.Base(filepath.Dir(path)))
-				results <- sh.RunWith(env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+path)
-			}(env, path, results)
+			inputs <- &buildInput{env: env, path: path}
 		}
 
 		return nil
@@ -179,6 +210,11 @@ func (b Build) tools() error {
 
 	if err != nil {
 		return err
+	}
+
+	// Wait for results
+	for i := 0; i < maxWorkers; i++ {
+		results <- nil // send poison pill to stop each worker
 	}
 
 	for i := 0; i < count; i++ {
