@@ -6,7 +6,6 @@ scalar AWSJSON
 schema {
   query: Query
   mutation: Mutation
-  subscription: Subscription
 }
 
 type Mutation {
