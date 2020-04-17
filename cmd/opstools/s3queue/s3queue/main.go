@@ -28,8 +28,8 @@ const (
 )
 
 var (
-	REGION      = flag.String("region", "", "The AWS region (optional, defaults to session env vars) where the queues and bucket exist.")
-	ACCOUNT     = flag.String("account", "", "The AWS account id (optional, defaults to session account) where the bucket exists.")
+	REGION      = flag.String("region", "", "The Panther AWS region (optional, defaults to session env vars) where the queue exists.")
+	ACCOUNT     = flag.String("account", "", "The Panther AWS account id (optional, defaults to session account)")
 	S3PATH      = flag.String("s3path", "", "The s3 path to list (e.g., s3://<bucket>/<prefix>).")
 	CONCURRENCY = flag.Int("concurrency", 50, "The number of concurrent sqs writer go routines")
 	LIMIT       = flag.Uint64("limit", 0, "If non-zero, then limit the number of files to this number.")
@@ -140,16 +140,16 @@ func validateFlags() {
 	}
 }
 
-func getS3Region(sess *session.Session, s3path string) string {
-	parsedPath, err := url.Parse(s3path)
+func getS3Region(sess *session.Session, s3Path string) string {
+	parsedPath, err := url.Parse(s3Path)
 	if err != nil {
-		logger.Fatalf("failed to find bucket region for %s: %s", s3path, err)
+		logger.Fatalf("failed to find bucket region for provided path %s: %s", s3Path, err)
 	}
 
 	input := &s3.GetBucketLocationInput{Bucket: aws.String(parsedPath.Host)}
 	location, err := s3.New(sess).GetBucketLocation(input)
 	if err != nil {
-		logger.Fatalf("failed to find bucket region for %s: %s", s3path, err)
+		logger.Fatalf("failed to find bucket region for provided path %s: %s", s3Path, err)
 	}
 
 	// Method may return nil if region is us-east-1,https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLocation.html
