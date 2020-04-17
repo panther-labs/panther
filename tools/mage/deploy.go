@@ -396,6 +396,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+			"PantherTablesOnly":          strconv.FormatBool(settings.Setup.Athena.PantherTablesOnly),
 			"TracingMode":                settings.Monitoring.TracingMode,
 		})
 		result <- coreStack

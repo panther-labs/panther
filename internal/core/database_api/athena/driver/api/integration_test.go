@@ -37,6 +37,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
 	"github.com/panther-labs/panther/internal/core/database_api/athena/testutils"
+	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -75,15 +76,24 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 	}
 
 	// ensure we run serially, by default Go will run tests in parallel and we can't have that
-	t.Run("direct calls from client", func(t *testing.T) {
+	t.Run("direct glue calls from client", func(t *testing.T) {
+		testGlueAPI(t)
+	})
+	t.Run("indirect glue calls thru deployed lambdas", func(t *testing.T) {
+		testGlueAPILambda(t)
+	})
+
+	t.Run("direct athena calls from client", func(t *testing.T) {
 		testAthenaAPI(t, false)
 	})
-	t.Run("indirect calls thru deployed lambdas", func(t *testing.T) {
+	t.Run("indirect anthena calls thru deployed lambdas", func(t *testing.T) {
 		testAthenaAPI(t, true)
 	})
 }
 
-func testAthenaAPI(t *testing.T, useLambda bool) {
+func testGlueAPI(t *testing.T) {
+	const useLambda = false // local client testing
+
 	testutils.SetupTables(t, glueClient, s3Client)
 	defer func() {
 		testutils.RemoveTables(t, glueClient, s3Client)
@@ -101,7 +111,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			foundDB = true
 		}
 	}
-	require.True(t, foundDB)
+	assert.True(t, foundDB)
 
 	// specific lookup
 	getDatabasesInput.Name = aws.String(testutils.TestDb)
@@ -112,29 +122,27 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	// -------- GetDatabases() with pantherTablesOnly (should not find any)
 
-	if !useLambda { // we can only control pantherTablesOnly locally
-		pantherTablesOnly = true
+	pantherTablesOnly = true
 
-		// list
-		var getPantherDatabasesInput models.GetDatabasesInput
-		getPantherDatabasesOutput, err := runGetDatabases(useLambda, &getPantherDatabasesInput)
-		require.NoError(t, err)
-		foundDB = false
-		for _, db := range getPantherDatabasesOutput.Databases {
-			if db.Name == testutils.TestDb {
-				foundDB = true
-			}
+	// list
+	var getPantherDatabasesInput models.GetDatabasesInput
+	getPantherDatabasesOutput, err := runGetDatabases(useLambda, &getPantherDatabasesInput)
+	require.NoError(t, err)
+	foundDB = false
+	for _, db := range getPantherDatabasesOutput.Databases {
+		if db.Name == testutils.TestDb {
+			foundDB = true
 		}
-		require.False(t, foundDB) // should NOT find
-
-		// specific lookup
-		getPantherDatabasesInput.Name = aws.String(testutils.TestDb)
-		getPantherDatabasesOutput, err = runGetDatabases(useLambda, &getPantherDatabasesInput)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(getPantherDatabasesOutput.Databases))
-
-		pantherTablesOnly = false
 	}
+	assert.False(t, foundDB) // should NOT find
+
+	// specific lookup
+	getPantherDatabasesInput.Name = aws.String(testutils.TestDb)
+	getPantherDatabasesOutput, err = runGetDatabases(useLambda, &getPantherDatabasesInput)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(getPantherDatabasesOutput.Databases))
+
+	pantherTablesOnly = false
 
 	// -------- GetTables()
 
@@ -148,18 +156,16 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	// -------- GetTables() with pantherTablesOnly (should not find any)
 
-	if !useLambda { // we can only control pantherTablesOnly locally
-		pantherTablesOnly = true
+	pantherTablesOnly = true
 
-		var getPantherTablesInput models.GetTablesInput
-		getPantherTablesInput.DatabaseName = testutils.TestDb
-		getPantherTablesInput.OnlyPopulated = true
-		getPantherTablesOutput, err := runGetTables(useLambda, &getPantherTablesInput)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(getPantherTablesOutput.Tables))
+	var getPantherTablesInput models.GetTablesInput
+	getPantherTablesInput.DatabaseName = testutils.TestDb
+	getPantherTablesInput.OnlyPopulated = true
+	getPantherTablesOutput, err := runGetTables(useLambda, &getPantherTablesInput)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(getPantherTablesOutput.Tables))
 
-		pantherTablesOnly = false
-	}
+	pantherTablesOnly = false
 
 	// -------- GetTablesDetail()
 
@@ -172,18 +178,74 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 	// -------- GetTablesDetail() with pantherTablesOnly (should not find any)
 
-	if !useLambda { // we can only control pantherTablesOnly locally
-		pantherTablesOnly = true
+	pantherTablesOnly = true
 
-		var getPantherTablesDetailInput models.GetTablesDetailInput
-		getPantherTablesDetailInput.DatabaseName = testutils.TestDb
-		getPantherTablesDetailInput.Names = []string{testutils.TestTable}
-		getPantherTablesDetailOutput, err := runGetTablesDetail(useLambda, &getPantherTablesDetailInput)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(getPantherTablesDetailOutput.Tables))
+	var getPantherTablesDetailInput models.GetTablesDetailInput
+	getPantherTablesDetailInput.DatabaseName = testutils.TestDb
+	getPantherTablesDetailInput.Names = []string{testutils.TestTable}
+	getPantherTablesDetailOutput, err := runGetTablesDetail(useLambda, &getPantherTablesDetailInput)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(getPantherTablesDetailOutput.Tables))
 
-		pantherTablesOnly = false
+	pantherTablesOnly = false
+}
+
+func testGlueAPILambda(t *testing.T) {
+	const useLambda = true
+
+	// here we use all panther tables, since the default is to restrict to these  (presumes deployment)
+	const pantherDatabase = awsglue.LogProcessingDatabaseName
+	const pantherTable = "aws_cloudtrail"
+
+	// -------- GetDatabases()
+
+	// list
+	var getDatabasesInput models.GetDatabasesInput
+	getDatabasesOutput, err := runGetDatabases(useLambda, &getDatabasesInput)
+	require.NoError(t, err)
+	foundDB := false
+	nonPanther := false
+	for _, db := range getDatabasesOutput.Databases {
+		if db.Name == pantherDatabase {
+			foundDB = true
+		}
+		if !strings.HasPrefix(db.Name, "panther") {
+			nonPanther = true
+		}
 	}
+	assert.True(t, foundDB)
+	assert.False(t, nonPanther)
+	assert.Equal(t, len(awsglue.PantherDatabases), len(getDatabasesOutput.Databases))
+
+	// specific lookup
+	getDatabasesInput.Name = aws.String(pantherDatabase)
+	getDatabasesOutput, err = runGetDatabases(useLambda, &getDatabasesInput)
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(getDatabasesOutput.Databases))
+
+	// -------- GetTables()
+
+	var getTablesInput models.GetTablesInput
+	getTablesInput.DatabaseName = pantherDatabase
+	getTablesOutput, err := runGetTables(useLambda, &getTablesInput)
+	require.NoError(t, err)
+	assert.Greater(t, len(getTablesOutput.Tables), 0)
+
+	// -------- GetTablesDetail()
+
+	var getTablesDetailInput models.GetTablesDetailInput
+	getTablesDetailInput.DatabaseName = pantherDatabase
+	getTablesDetailInput.Names = []string{pantherTable}
+	getTablesDetailOutput, err := runGetTablesDetail(useLambda, &getTablesDetailInput)
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(getTablesDetailOutput.Tables))
+}
+
+func testAthenaAPI(t *testing.T, useLambda bool) {
+	testutils.SetupTables(t, glueClient, s3Client)
+	defer func() {
+		testutils.RemoveTables(t, glueClient, s3Client)
+	}()
 
 	// -------- ExecuteQuery()
 
