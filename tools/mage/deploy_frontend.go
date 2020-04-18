@@ -22,12 +22,15 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/joho/godotenv"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -39,6 +42,7 @@ func deployFrontend(
 	awsSession *session.Session,
 	accountID, bucket string,
 	bootstrapOutputs map[string]string,
+	settings *config.PantherConfig,
 ) map[string]string {
 
 	// Save .env file
@@ -61,11 +65,12 @@ func deployFrontend(
 	}
 
 	params := map[string]string{
-		"SubnetOneId":    bootstrapOutputs["SubnetOneId"],
-		"SubnetTwoId":    bootstrapOutputs["SubnetTwoId"],
-		"ElbTargetGroup": bootstrapOutputs["LoadBalancerTargetGroup"],
-		"SecurityGroup":  bootstrapOutputs["WebSecurityGroup"],
-		"Image":          dockerImage,
+		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
+		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
+		"ElbTargetGroup":             bootstrapOutputs["LoadBalancerTargetGroup"],
+		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
+		"Image":                      dockerImage,
+		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 	}
 	return deployTemplate(awsSession, frontendTemplate, bucket, frontendStack, params)
 }
