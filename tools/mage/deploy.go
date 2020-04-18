@@ -367,16 +367,11 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
-			"AthenaResultsBucket":    outputs["AthenaResultsBucket"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
-			"GraphQLApiEndpoint":     outputs["GraphQLApiEndpoint"],
-			"GraphQLApiId":           outputs["GraphQLApiId"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
 
-			"AthenaPantherTablesOnly":    strconv.FormatBool(settings.Setup.Athena.PantherTablesOnly),
-			"AthenaS3BucketARNS":         strings.Join(settings.Setup.Athena.S3ARNs, ","),
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
@@ -404,11 +399,16 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	go func(result chan string) {
 		deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
 			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
+			"GraphQLApiEndpoint":    outputs["GraphQLApiEndpoint"],
+			"GraphQLApiId":          outputs["GraphQLApiId"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
 			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
 
+			"AthenaPantherTablesOnly":      strconv.FormatBool(settings.Setup.Athena.PantherTablesOnly),
+			"AthenaS3BucketARNS":           strings.Join(settings.Setup.Athena.S3ARNs, ","),
 			"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
 			"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
