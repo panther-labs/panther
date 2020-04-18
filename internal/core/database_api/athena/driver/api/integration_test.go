@@ -75,23 +75,23 @@ func TestIntegrationAthenaAPI(t *testing.T) {
 		t.Skip()
 	}
 
-	// ensure we run serially, by default Go will run tests in parallel and we can't have that
-	t.Run("direct glue calls from client", func(t *testing.T) {
-		testGlueAPI(t)
-	})
-	t.Run("indirect glue calls thru deployed lambdas", func(t *testing.T) {
-		testGlueAPILambda(t)
-	})
-
-	t.Run("direct athena calls from client", func(t *testing.T) {
-		testAthenaAPI(t, false)
-	})
-	t.Run("indirect anthena calls thru deployed lambdas", func(t *testing.T) {
-		testAthenaAPI(t, true)
-	})
+	testAthenaAPI(t, false)
 }
 
-func testGlueAPI(t *testing.T) {
+func TestIntegrationAthenaAPILambda(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	testAthenaAPI(t, true)
+}
+
+func TestIntegrationGlueAPI(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	t.Log("direct glue calls from client")
 	const useLambda = false // local client testing
 
 	testutils.SetupTables(t, glueClient, s3Client)
@@ -190,7 +190,12 @@ func testGlueAPI(t *testing.T) {
 	pantherTablesOnly = false
 }
 
-func testGlueAPILambda(t *testing.T) {
+func TestIntegrationGlueAPILambda(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	t.Log("indirect glue calls thru deployed lambdas")
 	const useLambda = true
 
 	// here we use all panther tables, since the default is to restrict to these  (presumes deployment)
@@ -242,6 +247,12 @@ func testGlueAPILambda(t *testing.T) {
 }
 
 func testAthenaAPI(t *testing.T, useLambda bool) {
+	if useLambda {
+		t.Log("indirect anthena calls thru deployed lambdas")
+	} else {
+		t.Log("direct athena calls from client")
+	}
+
 	testutils.SetupTables(t, glueClient, s3Client)
 	defer func() {
 		testutils.RemoveTables(t, glueClient, s3Client)
