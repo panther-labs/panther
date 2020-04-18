@@ -28,7 +28,7 @@ import (
 )
 
 func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQueryResultsOutput, error) {
-	output := &models.GetQueryResultsOutput{}
+	var output models.GetQueryResultsOutput
 
 	var err error
 	defer func() {
@@ -44,7 +44,7 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 
 	getStatusOutput, err := api.GetQueryStatus(&input.QueryInfo)
 	if err != nil {
-		return output, err
+		return &output, err
 	}
 
 	output.GetQueryStatusOutput = *getStatusOutput
@@ -55,12 +55,12 @@ func (api API) GetQueryResults(input *models.GetQueryResultsInput) (*models.GetQ
 		if input.PaginationToken != nil { // paging thru results
 			nextToken = input.PaginationToken
 		}
-		err = getQueryResults(athenaClient, input.QueryID, output, nextToken, input.PageSize)
+		err = getQueryResults(athenaClient, input.QueryID, &output, nextToken, input.PageSize)
 		if err != nil {
-			return output, err
+			return &output, err
 		}
 	}
-	return output, nil
+	return &output, nil
 }
 
 func getQueryResults(client athenaiface.AthenaAPI, queryID string,

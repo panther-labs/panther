@@ -109,7 +109,7 @@ Setup:
   Athena:
     # Set to false if you want to see your database tables in the Panther UI SQL Shell
     PantherTablesOnly: true
-    # A list of outside of Panther S3 ARNs of buckets/prefixes that Athena is allowed to query,
+    # A list of non-Panther S3 ARNs of buckets/prefixes that Athena is allowed to query,
     # use this when PantherTablesOnly is false to allow your data to be queried.
     # For example:
     # S3ARNs:

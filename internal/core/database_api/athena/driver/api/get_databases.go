@@ -27,7 +27,7 @@ import (
 )
 
 func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
-	output := &models.GetDatabasesOutput{}
+	var output models.GetDatabasesOutput
 
 	var err error
 	defer func() {
@@ -38,7 +38,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 
 	if input.Name != nil {
 		if pantherTablesOnly && awsglue.PantherDatabases[*input.Name] == "" {
-			return output, err // nothing
+			return &output, err // nothing
 		}
 		var glueOutput *glue.GetDatabaseOutput
 		glueOutput, err = glueClient.GetDatabase(&glue.GetDatabaseInput{
@@ -46,13 +46,13 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 		})
 		if err != nil {
 			err = errors.WithStack(err)
-			return output, err
+			return &output, err
 		}
 		output.Databases = append(output.Databases, &models.NameAndDescription{
 			Name:        *glueOutput.Database.Name,
 			Description: glueOutput.Database.Description, // optional
 		})
-		return output, err
+		return &output, err
 	}
 
 	// list
@@ -70,5 +70,5 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 			return false
 		})
 
-	return output, errors.WithStack(err)
+	return &output, errors.WithStack(err)
 }

@@ -27,7 +27,7 @@ import (
 )
 
 func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQueryStatusOutput, error) {
-	output := &models.GetQueryStatusOutput{}
+	var output models.GetQueryStatusOutput
 
 	var err error
 	defer func() {
@@ -43,7 +43,7 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 
 	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
 	if err != nil {
-		return output, err
+		return &output, err
 	}
 
 	output.SQL = *executionStatus.QueryExecution.Query
@@ -60,7 +60,7 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 	case models.QueryCanceled:
 		output.SQLError = "Query canceled"
 	}
-	return output, nil
+	return &output, nil
 }
 
 func getQueryStatus(executionStatus *athena.GetQueryExecutionOutput) string {

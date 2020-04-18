@@ -28,7 +28,7 @@ import (
 )
 
 func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, error) {
-	output := &models.GetTablesOutput{}
+	var output models.GetTablesOutput
 
 	var err error
 	defer func() {
@@ -38,7 +38,7 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 	}()
 
 	if pantherTablesOnly && awsglue.PantherDatabases[input.DatabaseName] == "" {
-		return output, err // nothing
+		return &output, err // nothing
 	}
 
 	var partitionErr error
@@ -53,7 +53,7 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 						MaxResults:   aws.Int64(1),
 					})
 					if partitionErr != nil {
-						return true // stop
+						return false // stop
 					}
 					if len(gluePartitionOutput.Partitions) == 0 { // skip if no partitions
 						continue
@@ -63,11 +63,11 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 				populateTableDetailColumns(detail, table)
 				output.Tables = append(output.Tables, detail)
 			}
-			return false
+			return true
 		})
 	if partitionErr != nil {
 		err = partitionErr
 	}
 
-	return output, errors.WithStack(err)
+	return &output, errors.WithStack(err)
 }

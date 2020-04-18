@@ -117,7 +117,7 @@ func testGlueAPI(t *testing.T) {
 	getDatabasesInput.Name = aws.String(testutils.TestDb)
 	getDatabasesOutput, err = runGetDatabases(useLambda, &getDatabasesInput)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(getDatabasesOutput.Databases))
+	require.Len(t, getDatabasesOutput.Databases, 1)
 	require.Equal(t, testutils.TestDb, getDatabasesOutput.Databases[0].Name)
 
 	// -------- GetDatabases() with pantherTablesOnly (should not find any)
@@ -140,7 +140,7 @@ func testGlueAPI(t *testing.T) {
 	getPantherDatabasesInput.Name = aws.String(testutils.TestDb)
 	getPantherDatabasesOutput, err = runGetDatabases(useLambda, &getPantherDatabasesInput)
 	require.NoError(t, err)
-	assert.Equal(t, 0, len(getPantherDatabasesOutput.Databases))
+	assert.Len(t, getPantherDatabasesOutput.Databases, 0)
 
 	pantherTablesOnly = false
 
@@ -151,7 +151,7 @@ func testGlueAPI(t *testing.T) {
 	getTablesInput.OnlyPopulated = true
 	getTablesOutput, err := runGetTables(useLambda, &getTablesInput)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(getTablesOutput.Tables))
+	require.Len(t, getTablesOutput.Tables, 1)
 	testutils.CheckTableDetail(t, getTablesOutput.Tables)
 
 	// -------- GetTables() with pantherTablesOnly (should not find any)
@@ -163,7 +163,7 @@ func testGlueAPI(t *testing.T) {
 	getPantherTablesInput.OnlyPopulated = true
 	getPantherTablesOutput, err := runGetTables(useLambda, &getPantherTablesInput)
 	require.NoError(t, err)
-	assert.Equal(t, 0, len(getPantherTablesOutput.Tables))
+	assert.Len(t, getPantherTablesOutput.Tables, 0)
 
 	pantherTablesOnly = false
 
@@ -185,7 +185,7 @@ func testGlueAPI(t *testing.T) {
 	getPantherTablesDetailInput.Names = []string{testutils.TestTable}
 	getPantherTablesDetailOutput, err := runGetTablesDetail(useLambda, &getPantherTablesDetailInput)
 	require.NoError(t, err)
-	assert.Equal(t, 0, len(getPantherTablesDetailOutput.Tables))
+	assert.Empty(t, len(getPantherTablesDetailOutput.Tables))
 
 	pantherTablesOnly = false
 }
@@ -215,13 +215,13 @@ func testGlueAPILambda(t *testing.T) {
 	}
 	assert.True(t, foundDB)
 	assert.False(t, nonPanther)
-	assert.Equal(t, len(awsglue.PantherDatabases), len(getDatabasesOutput.Databases))
+	assert.Len(t, awsglue.PantherDatabases, len(getDatabasesOutput.Databases))
 
 	// specific lookup
 	getDatabasesInput.Name = aws.String(pantherDatabase)
 	getDatabasesOutput, err = runGetDatabases(useLambda, &getDatabasesInput)
 	require.NoError(t, err)
-	assert.Equal(t, 1, len(getDatabasesOutput.Databases))
+	assert.Len(t, getDatabasesOutput.Databases, 1)
 
 	// -------- GetTables()
 
@@ -238,7 +238,7 @@ func testGlueAPILambda(t *testing.T) {
 	getTablesDetailInput.Names = []string{pantherTable}
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, &getTablesDetailInput)
 	require.NoError(t, err)
-	assert.Equal(t, 1, len(getTablesDetailOutput.Tables))
+	assert.Len(t, getTablesDetailOutput.Tables, 1)
 }
 
 func testAthenaAPI(t *testing.T, useLambda bool) {
@@ -259,7 +259,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	require.Equal(t, models.QuerySucceeded, executeQueryOutput.Status)
 	assert.Greater(t, executeQueryOutput.Stats.ExecutionTimeMilliseconds, int64(0)) // at least something
 	assert.Greater(t, executeQueryOutput.Stats.DataScannedBytes, int64(0))          // at least something
-	assert.Equal(t, len(testutils.TestTableColumns)+len(testutils.TestTablePartitions), len(executeQueryOutput.ColumnInfo))
+	assert.Len(t, executeQueryOutput.ColumnInfo, len(testutils.TestTableColumns)+len(testutils.TestTablePartitions))
 	for i, c := range executeQueryOutput.ColumnInfo {
 		if i < len(testutils.TestTableColumns) {
 			assert.Equal(t, c.Value, *testutils.TestTableColumns[i].Name)
@@ -267,7 +267,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 			assert.Equal(t, c.Value, *testutils.TestTablePartitions[i-len(testutils.TestTableColumns)].Name)
 		}
 	}
-	assert.Equal(t, len(testutils.TestTableRows), len(executeQueryOutput.ResultsPage.Rows))
+	assert.Len(t, executeQueryOutput.ResultsPage.Rows, len(testutils.TestTableRows))
 	checkQueryResults(t, len(testutils.TestTableRows), 0, executeQueryOutput.ResultsPage.Rows)
 
 	// -------- ExecuteQuery() BAD SQL
@@ -346,7 +346,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 
 		// -1 because header is removed
 		expectedRowCount := int(maxRowsPerResult) - 1
-		require.Equal(t, expectedRowCount, len(getQueryResultsOutput.ResultsPage.Rows))
+		require.Len(t, getQueryResultsOutput.ResultsPage.Rows, expectedRowCount)
 		checkQueryResults(t, expectedRowCount, 0, getQueryResultsOutput.ResultsPage.Rows)
 		resultRowCount += expectedRowCount
 
@@ -360,7 +360,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 				if resultRowCount+len(getQueryResultsOutput.ResultsPage.Rows) == testutils.TestTableDataNrows {
 					expectedRowCount--
 				}
-				require.Equal(t, expectedRowCount, len(getQueryResultsOutput.ResultsPage.Rows))
+				require.Len(t, getQueryResultsOutput.ResultsPage.Rows, expectedRowCount)
 				checkQueryResults(t, expectedRowCount, resultRowCount, getQueryResultsOutput.ResultsPage.Rows)
 				resultRowCount += expectedRowCount
 			}
@@ -661,7 +661,7 @@ func runStopQuery(useLambda bool, input *models.StopQueryInput) (*models.StopQue
 }
 
 func checkQueryResults(t *testing.T, expectedRowCount, offset int, rows []*models.Row) {
-	require.Equal(t, expectedRowCount, len(rows))
+	require.Len(t, rows, expectedRowCount)
 	for i := 0; i < len(rows); i++ {
 		require.Equal(t, strconv.Itoa(i+offset), rows[i].Columns[0].Value)
 		require.Equal(t, "NULL", rows[i].Columns[1].Value)

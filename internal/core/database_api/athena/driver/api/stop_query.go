@@ -26,7 +26,7 @@ import (
 )
 
 func (api API) StopQuery(input *models.StopQueryInput) (*models.StopQueryOutput, error) {
-	output := &models.StopQueryOutput{}
+	var output models.StopQueryOutput
 
 	var err error
 	defer func() {
@@ -42,7 +42,7 @@ func (api API) StopQuery(input *models.StopQueryInput) (*models.StopQueryOutput,
 
 	_, err = awsathena.StopQuery(athenaClient, input.QueryID)
 	if err != nil {
-		return output, err
+		return &output, err
 	}
 
 	return api.GetQueryStatus(input)

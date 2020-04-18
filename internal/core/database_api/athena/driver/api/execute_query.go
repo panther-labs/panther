@@ -29,7 +29,7 @@ const (
 )
 
 func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQueryOutput, error) {
-	output := &models.ExecuteQueryOutput{}
+	var output models.ExecuteQueryOutput
 
 	var err error
 	defer func() {
@@ -43,18 +43,18 @@ func (api API) ExecuteQuery(input *models.ExecuteQueryInput) (*models.ExecuteQue
 		output.Status = models.QueryFailed
 		output.QueryStatus = executeAsyncQueryOutput.QueryStatus
 		output.SQL = input.SQL
-		return output, err
+		return &output, err
 	}
 
 	// poll
+	getQueryStatusInput := &models.GetQueryStatusInput{
+		QueryID: executeAsyncQueryOutput.QueryID,
+	}
 	for {
 		time.Sleep(pollWait)
-		getQueryStatusInput := &models.GetQueryStatusInput{
-			QueryID: executeAsyncQueryOutput.QueryID,
-		}
 		getQueryStatusOutput, err := api.GetQueryStatus(getQueryStatusInput)
 		if err != nil {
-			return output, err
+			return &output, err
 		}
 		if getQueryStatusOutput.Status != models.QueryRunning {
 			break

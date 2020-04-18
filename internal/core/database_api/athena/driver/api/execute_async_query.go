@@ -27,7 +27,7 @@ import (
 )
 
 func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.ExecuteAsyncQueryOutput, error) {
-	output := &models.ExecuteAsyncQueryOutput{}
+	var output models.ExecuteAsyncQueryOutput
 
 	var err error
 	defer func() {
@@ -53,13 +53,13 @@ func (API) ExecuteAsyncQuery(input *models.ExecuteAsyncQueryInput) (*models.Exec
 		// try to dig out the athena error if there is one
 		if athenaErr, ok := err.(*athena.InvalidRequestException); ok {
 			output.SQLError = athenaErr.Message()
-			return output, nil // no lambda err
+			return &output, nil // no lambda err
 		}
 
-		return output, err
+		return &output, err
 	}
 
 	output.Status = models.QueryRunning
 	output.QueryID = *startOutput.QueryExecutionId
-	return output, nil
+	return &output, nil
 }

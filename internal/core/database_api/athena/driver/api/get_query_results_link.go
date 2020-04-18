@@ -36,7 +36,7 @@ const (
 )
 
 func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*models.GetQueryResultsLinkOutput, error) {
-	output := &models.GetQueryResultsLinkOutput{}
+	var output models.GetQueryResultsLinkOutput
 
 	var err error
 	defer func() {
@@ -52,14 +52,14 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 
 	executionStatus, err := awsathena.Status(athenaClient, input.QueryID)
 	if err != nil {
-		return output, err
+		return &output, err
 	}
 
 	output.Status = getQueryStatus(executionStatus)
 
 	if output.Status != models.QuerySucceeded {
 		output.SQLError = "results not available"
-		return output, nil
+		return &output, nil
 	}
 
 	s3path := *executionStatus.QueryExecution.ResultConfiguration.OutputLocation
@@ -67,18 +67,18 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 	parsedPath, err := url.Parse(s3path)
 	if err != nil {
 		err = errors.Errorf("bad s3 url: %s,", err)
-		return output, err
+		return &output, err
 	}
 
 	if parsedPath.Scheme != "s3" {
 		err = errors.Errorf("not s3 protocol (expecting s3://): %s,", s3path)
-		return output, err
+		return &output, err
 	}
 
 	bucket := parsedPath.Host
 	if bucket == "" {
 		err = errors.Errorf("missing bucket: %s,", s3path)
-		return output, err
+		return &output, err
 	}
 	var key string
 	if len(parsedPath.Path) > 0 {
@@ -92,7 +92,7 @@ func (api API) GetQueryResultsLink(input *models.GetQueryResultsLinkInput) (*mod
 	output.PresignedLink, err = req.Presign(presignedLinkTimeLimit)
 	if err != nil {
 		err = errors.Errorf("failed to sign: %s,", s3path)
-		return output, err
+		return &output, err
 	}
-	return output, nil
+	return &output, nil
 }

@@ -28,7 +28,7 @@ import (
 )
 
 func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
-	output := &models.GetTablesDetailOutput{}
+	var output models.GetTablesDetailOutput
 
 	var err error
 	defer func() {
@@ -38,7 +38,7 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 	}()
 
 	if pantherTablesOnly && awsglue.PantherDatabases[input.DatabaseName] == "" {
-		return output, err // nothing
+		return &output, err // nothing
 	}
 
 	for _, tableName := range input.Names {
@@ -49,13 +49,13 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 		})
 		if err != nil {
 			err = errors.WithStack(err)
-			return output, err
+			return &output, err
 		}
 		detail := newTableDetail(input.DatabaseName, *glueTableOutput.Table.Name, glueTableOutput.Table.Description)
 		populateTableDetailColumns(detail, glueTableOutput.Table)
 		output.Tables = append(output.Tables, detail)
 	}
-	return output, nil
+	return &output, nil
 }
 
 func populateTableDetailColumns(tableDetail *models.TableDetail, glueTableData *glue.TableData) {
