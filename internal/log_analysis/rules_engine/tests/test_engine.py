@@ -37,28 +37,6 @@ class TestEngine(TestCase):
         self.assertEqual(len(engine.log_type_to_rules['log']), 1)
         self.assertEqual(engine.log_type_to_rules['log'][0].rule_id, 'rule_id')
 
-    def test_load_global_library(self) -> None:
-        analysis_api = mock.MagicMock()
-        analysis_api.get_enabled_rules.return_value = [
-            {
-                'id': 'aws_globals',
-                'resourceTypes': ['log'],
-                'body': 'def is_true():\n\treturn True',
-                'versionId': 'version'
-            }, {
-                'id': 'rule_id',
-                'resourceTypes': ['log'],
-                'body': 'from aws_globals import is_true\ndef rule(event):\n\tis_true()',
-                'versionId': 'version'
-            }
-        ]
-        engine = Engine(analysis_api)
-
-        # Should have loaded only the rule_id and used the global library
-        self.assertEqual(len(engine.log_type_to_rules), 1)
-        self.assertEqual(len(engine.log_type_to_rules['log']), 1)
-        self.assertEqual(engine.log_type_to_rules['log'][0].rule_id, 'rule_id')
-
     def test_analyse_many_rules(self) -> None:
         analysis_api = mock.MagicMock()
         analysis_api.get_enabled_rules.return_value = [
