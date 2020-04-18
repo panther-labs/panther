@@ -33,7 +33,7 @@ var (
 	ExampleDescribeLoadBalancersOutput = &elbv2.DescribeLoadBalancersOutput{
 		LoadBalancers: []*elbv2.LoadBalancer{
 			{
-				LoadBalancerArn:       aws.String("arn:aws:elasticloadbalancing:us-west-2:857418155548:loadbalancer/app/panther-test/aaaaaaaaaaaaa"),
+				LoadBalancerArn:       aws.String("arn:aws:elasticloadbalancing:us-west-2:111111111111:loadbalancer/app/panther-test/aaaaaaaaaaaaa"),
 				DNSName:               aws.String("internal-panther-test-123456789.us-west-2.elb.amazonaws.com"),
 				CanonicalHostedZoneId: aws.String("AAAAA123"),
 				CreatedTime:           ExampleDate,

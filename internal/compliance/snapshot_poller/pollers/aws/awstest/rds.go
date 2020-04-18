@@ -161,7 +161,7 @@ var (
 				PercentProgress:                  aws.Int64(100),
 				StorageType:                      aws.String("gp2"),
 				Encrypted:                        aws.Bool(false),
-				DBSnapshotArn:                    aws.String("arn:aws:rds:us-west-2:857418155548:snapshot:rds:example-instance-2019-01-01-01-01"),
+				DBSnapshotArn:                    aws.String("arn:aws:rds:us-west-2:111111111111:snapshot:rds:example-instance-2019-01-01-01-01"),
 				IAMDatabaseAuthenticationEnabled: aws.Bool(false),
 				DbiResourceId:                    aws.String("db-asdfasdfasdfasdf"),
 			},

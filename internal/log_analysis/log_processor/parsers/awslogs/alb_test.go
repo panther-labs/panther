@@ -189,7 +189,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 	//nolint:lll
 	log := `https 2018-08-26T14:17:23.186641Z app/web/09603e7dbbd08802 138.246.253.5:57185 - -1 -1 -1 400 - 25 150` +
 		` "HEAD https://web-1241004567.us-east-1.elb.amazonaws.com:443/ HTTP/1.1" "-" ECDHE-RSA-AES128-GCM-SHA256` +
-		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"
+		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"
 `
 
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
@@ -218,7 +218,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 		TargetGroupARN:         nil,
 		TraceID:                nil,
 		DomainName:             nil,
-		ChosenCertARN:          aws.String("arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
+		ChosenCertARN:          aws.String("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
 		MatchedRulePriority:    nil,
 		RequestCreationTime:    (*timestamp.RFC3339)(&expectedTime),
 		ActionsExecuted:        []string{},
@@ -230,7 +230,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyIPAddress("138.246.253.5")
-	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
+	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
 
 	checkALBLog(t, log, expectedEvent)
 }

@@ -40,7 +40,7 @@ const CreateLogSource: React.FC = () => {
       cache.modify('ROOT_QUERY', {
         listLogIntegrations: (queryData, { toReference }) => {
           const addedIntegrationCacheRef = toReference(addLogIntegration);
-          return queryData ? [addedIntegrationCacheRef, ...queryData] : queryData;
+          return queryData ? [addedIntegrationCacheRef, ...queryData] : [addedIntegrationCacheRef];
         },
       });
     },

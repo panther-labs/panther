@@ -584,7 +584,7 @@ Resources:
   PublicLoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: web-lb
+      GroupName: panther-web-lb
       GroupDescription: Access to the public facing load balancer
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -603,6 +603,8 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     DependsOn: AuditLogsBucketPolicy
     Properties:
+      # The name should have been "panther-web", but we can't change it now.
+      # Doing so would recreate the ALB with a new URL, which breaks deployments with custom domains.
       Name: web
       # <cfndoc>
       # The load balancer associated with the Panther UI.

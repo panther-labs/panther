@@ -70,7 +70,8 @@ type LogSubscriptions struct {
 }
 
 type Athena struct {
-	S3ARNs []string `yaml:"S3ARNs"`
+	PantherTablesOnly bool     `yaml:"PantherTablesOnly"`
+	S3ARNs            []string `yaml:"S3ARNs"`
 }
 
 type Web struct {

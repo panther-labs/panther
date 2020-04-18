@@ -53,6 +53,15 @@ const (
 	TempDatabaseDescription = "Holds temporary tables used for processing tasks"
 )
 
+var (
+	// PantherDatabases is exposed as public var to allow code to get/lookup the Panther databases
+	PantherDatabases = map[string]string{
+		LogProcessingDatabaseName: LogProcessingDatabaseDescription,
+		RuleMatchDatabaseName:     RuleMatchDatabaseDescription,
+		ViewsDatabaseName:         ViewsDatabaseDescription,
+	}
+)
+
 type PartitionKey struct {
 	Name string
 	Type string

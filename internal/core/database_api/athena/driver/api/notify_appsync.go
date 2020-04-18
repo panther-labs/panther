@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
@@ -63,7 +62,7 @@ type GraphQlResponse struct {
 }
 
 func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyncOutput, error) {
-	output := &models.NotifyAppSyncOutput{}
+	var output models.NotifyAppSyncOutput
 
 	var err error
 	defer func() {
@@ -80,8 +79,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	}()
 
 	// make sigv4 https request to appsync endpoint notifying query is complete, sending  userData, queryId and workflowId
-	appSyncEndpoint := os.Getenv("GRAPHQL_ENDPOINT")
-	httpClient := http.Client{}
+	var httpClient http.Client
 	signer := v4.NewSigner(awsSession.Config.Credentials)
 
 	mutation := &GraphQlQuery{
@@ -90,7 +88,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	jsonMessage, err := jsoniter.Marshal(mutation)
 	if err != nil {
 		err = errors.Wrapf(err, "json marshal failed for: %#v", input)
-		return output, err
+		return &output, err
 	}
 
 	body := bytes.NewReader(jsonMessage) // JSON envelope for graphQL
@@ -98,46 +96,41 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	req, err := http.NewRequest("POST", appSyncEndpoint, body)
 	if err != nil {
 		err = errors.Wrapf(err, "new htttp request failed for: %#v", input)
-		return output, err
+		return &output, err
 	}
 	req.Header.Add("Content-Type", "application/json")
-
-	if awsSession.Config.Region == nil {
-		err = errors.Wrapf(err, "failed to get aws region %#v", input)
-		return output, err
-	}
 
 	_, err = signer.Sign(req, body, "appsync", *awsSession.Config.Region, time.Now().UTC())
 	if err != nil {
 		err = errors.Wrapf(err, "failed to v4 sign %#v", input)
-		return output, err
+		return &output, err
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to POST %#v", req)
-		return output, err
+		return &output, err
 	}
 	defer resp.Body.Close()
 
 	output.StatusCode = resp.StatusCode
 
 	respBody, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		err = errors.Errorf("failed to POST (%d): %s", resp.StatusCode, string(respBody))
-		return output, err
+		return &output, err
 	}
 
 	graphQlResp := &GraphQlResponse{}
 	err = jsoniter.Unmarshal(respBody, graphQlResp)
 	if err != nil {
-		err = errors.Wrapf(err, "json marshal failed for: %#v", string(respBody))
-		return output, err
+		err = errors.Wrapf(err, "json unmarshal failed for: %#v", string(respBody))
+		return &output, err
 	}
 	if len(graphQlResp.Errors) > 0 {
 		err = errors.Errorf("graphQL error for %#v: %#v", input, graphQlResp)
-		return output, err
+		return &output, err
 	}
 
-	return output, nil
+	return &output, nil
 }

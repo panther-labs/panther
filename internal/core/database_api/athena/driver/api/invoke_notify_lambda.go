@@ -31,9 +31,8 @@ import (
 
 // called by Step workflow to execute callback lambda after query has finished
 func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.InvokeNotifyLambdaOutput, error) {
-	output := &models.InvokeNotifyLambdaOutput{}
-
-	*output = *input // copy input so parameters can be confirmed in caller (useful for debugging Step functions)
+	// copy input so parameters can be confirmed in caller (useful for debugging Step functions)
+	var output = *input
 
 	var err error
 	defer func() {
@@ -59,7 +58,7 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 	payload, err := jsoniter.MarshalToString(&notifyInput)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to marshal %#v", input)
-		return output, err
+		return &output, err
 	}
 
 	// genericapi used
@@ -69,12 +68,12 @@ func (API) InvokeNotifyLambda(input *models.InvokeNotifyLambdaInput) (*models.In
 	})
 	if err != nil {
 		err = errors.Wrapf(err, "failed to invoke %#v", input)
-		return output, err
+		return &output, err
 	}
 	if resp.FunctionError != nil {
 		err = errors.Errorf("%s: failed to invoke %#v", *resp.FunctionError, input)
-		return output, err
+		return &output, err
 	}
 
-	return output, nil
+	return &output, nil
 }

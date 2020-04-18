@@ -52,6 +52,11 @@ Parameters:
     Description: Cognito user pool ID
 
   # Options from config file
+  AthenaPantherTablesOnly:
+    Type: String
+    Default: true
+    Description: If true, access only Panther tables in Athena API
+    AllowedValues: [true, false]
   AthenaS3BucketARNS:
     Type: CommaDelimitedList
     Description: The list of S3 ARNs to allow read access by Athena lambda
@@ -650,9 +655,10 @@ Resources:
       Description: Executes Athena and Glue queries
       Environment:
         Variables:
-          DEBUG: !Ref Debug
           ATHENA_BUCKET: !Ref AthenaResultsBucket
+          DEBUG: !Ref Debug
           GRAPHQL_ENDPOINT: !Ref GraphQLApiEndpoint
+          PANTHER_TABLES_ONLY: !Ref AthenaPantherTablesOnly
       FunctionName: panther-athena-api
       # <cfndoc>
       # The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.

@@ -33,8 +33,6 @@ import MicrosoftTeamsDestinationForm from 'Components/forms/MicrosoftTeamsDestin
 import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
 import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
-
-import { ListDestinationsAndDefaultsDocument, ListDestinationsQueryData } from 'Pages/Destinations';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useAddDestination } from './graphql/addDestination.generated';
 
@@ -51,20 +49,23 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   const { hideSidesheet, showSidesheet } = useSidesheet();
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
-  const [
-    addDestination,
-    { data: addDestinationData, error: addDestinationError },
-  ] = useAddDestination();
-
-  React.useEffect(() => {
-    if (addDestinationData) {
+  const [addDestination, { error: addDestinationError }] = useAddDestination({
+    onCompleted: data => {
+      hideSidesheet();
       pushSnackbar({
         variant: 'success',
-        title: `Successfully added ${addDestinationData.addDestination.displayName}`,
+        title: `Successfully added ${data.addDestination.displayName}`,
       });
-      hideSidesheet();
-    }
-  }, [addDestinationData]);
+    },
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) ||
+          "An unknown error occurred and we couldn't add your new destination",
+      });
+    },
+  });
 
   // The typescript on `values` simply says that we expect to have DestinationFormValues with an
   // `outputType` that partially implements the DestinationConfigInput (we say partially since each
@@ -86,18 +87,11 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
             outputConfig,
           },
         },
-        update: (proxy, { data }) => {
-          // Read the data from our cache for this query.
-          const existingData: ListDestinationsQueryData = proxy.readQuery({
-            query: ListDestinationsAndDefaultsDocument,
-          });
-
-          // Write our data back to the cache with the new comment in it
-          proxy.writeQuery({
-            query: ListDestinationsAndDefaultsDocument,
-            data: {
-              ...existingData,
-              destinations: [data.addDestination, ...existingData.destinations],
+        update: (cache, { data: { addDestination: newDestination } }) => {
+          cache.modify('ROOT_QUERY', {
+            destinations: (queryData, { toReference }) => {
+              const addDestinationRef = toReference(newDestination);
+              return queryData ? [addDestinationRef, ...queryData] : [addDestinationRef];
             },
           });
         },

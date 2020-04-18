@@ -107,7 +107,7 @@ type ExecuteAsyncQueryNotifyOutput struct {
 // Blocking query
 type ExecuteQueryInput = ExecuteAsyncQueryInput
 
-type ExecuteQueryOutput = GetQueryResultsOutput // call GetQueryResults() to page thu results
+type ExecuteQueryOutput = GetQueryResultsOutput // call GetQueryResults() to page through results
 
 type ExecuteAsyncQueryInput struct {
 	Database

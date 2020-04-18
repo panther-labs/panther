@@ -34,8 +34,6 @@ import (
 
 const swaggerGlob = "api/gateway/*/api.yml"
 
-var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
-
 // Build contains targets for compiling source code.
 type Build mg.Namespace
 
@@ -102,6 +100,13 @@ func (b Build) Lambda() {
 	}
 }
 
+// "go build" in parallel for each Lambda function.
+//
+// If you don't already have all go modules downloaded, this may fail because each goroutine will
+// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
+//
+// Run "go mod download" or "mage setup" before building to download the go modules.
+// If you're adding a new module, run "go get ./..." before building to fetch the new module.
 func (b Build) lambda() error {
 	var packages []string
 	walk("internal", func(path string, info os.FileInfo) {
@@ -113,20 +118,28 @@ func (b Build) lambda() error {
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
 
-	// "go build" in parallel for each Lambda function.
-	//
-	// If you don't already have all go modules downloaded, this may fail because each goroutine will
-	// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
-	//
-	// Run "go mod download" or "mage setup" before building to download the go modules.
-	// If you're adding a new module, run "go get ./..." before building to fetch the new module.
-	errs := make(chan error)
-	for _, pkg := range packages {
-		go func(pkg string, errs chan error) {
-			errs <- buildPackage(pkg)
-		}(pkg, errs)
+	// Start worker goroutines
+	compile := func(pkgs chan string, errs chan error) {
+		for pkg := <-pkgs; pkg != ""; pkg = <-pkgs {
+			errs <- buildLambdaPackage(pkg)
+		}
 	}
 
+	pkgs := make(chan string, len(packages)+maxWorkers)
+	errs := make(chan error, len(packages))
+	for i := 0; i < maxWorkers; i++ {
+		go compile(pkgs, errs)
+	}
+
+	// Send work units
+	for _, pkg := range packages {
+		pkgs <- pkg
+	}
+	for i := 0; i < maxWorkers; i++ {
+		pkgs <- "" // poison pill to stop each worker
+	}
+
+	// Read results
 	for range packages {
 		if err := <-errs; err != nil {
 			return err
@@ -144,52 +157,39 @@ func (b Build) Tools() {
 }
 
 func (b Build) tools() error {
-	if err := buildTools("devtools", "out/bin/devtools", "cmd/devtools"); err != nil {
-		return err
-	}
-	return buildTools("opstools", "out/bin/opstools", "cmd/opstools")
-}
-
-func buildTools(tools, binDir, sourceDir string) error {
 	// cross compile so tools can be copied to other machines easily
-	archs := []string{"amd64", "386", "arm"} // yes arm, AWS is now supporting arm processors and they are cheap!
-	oses := []string{"linux", "darwin", "windows"}
-	blacklist := map[string]bool{ // incompatible combinations
-		"darwin:arm": true,
+	buildEnvs := []map[string]string{
+		// darwin:arm is not compatible
+		{"GOOS": "darwin", "GOARCH": "amd64"},
+		{"GOOS": "linux", "GOARCH": "amd64"},
+		{"GOOS": "linux", "GOARCH": "arm"},
+		{"GOOS": "windows", "GOARCH": "amd64"},
+		{"GOOS": "windows", "GOARCH": "arm"},
 	}
 
-	applyBuildEnv := func(apply func(arch, opsys, binPath string) error) error {
-		for _, arch := range archs {
-			for _, opsys := range oses {
-				if blacklist[opsys+":"+arch] {
-					continue
-				}
+	// Define worker goroutine
+	type buildInput struct {
+		env  map[string]string
+		path string
+	}
 
-				if err := apply(arch, opsys, filepath.Join(binDir, opsys, arch)); err != nil {
-					return err
-				}
-			}
+	compile := func(inputs chan *buildInput, results chan error) {
+		for input := <-inputs; input != nil; input = <-inputs {
+			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(input.path)),
+				input.env["GOOS"], input.env["GOARCH"], filepath.Base(filepath.Dir(input.path)))
+			results <- sh.RunWith(input.env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
 		}
-
-		return nil
 	}
 
-	// create the dirs
-	err := applyBuildEnv(func(arch, opsys, binPath string) error {
-		if err := os.MkdirAll(binPath, 0755); err != nil {
-			return fmt.Errorf("failed to create %s directory: %v", binPath, err)
-		}
-		return nil
-	})
-	if err != nil {
-		return err
+	// Start worker goroutines (channel buffers are large enough for all input)
+	inputs := make(chan *buildInput, 100)
+	results := make(chan error, 100)
+	for i := 0; i < maxWorkers; i++ {
+		go compile(inputs, results)
 	}
 
-	logger.Infof("build:%s using %s for %s on %s",
-		tools, runtime.Version(), strings.Join(oses, ","), strings.Join(archs, ","))
-
-	// compile each app
-	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
+	count := 0
+	err := filepath.Walk("cmd", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -198,26 +198,40 @@ func buildTools(tools, binDir, sourceDir string) error {
 			return nil
 		}
 
-		return applyBuildEnv(func(arch, opsys, binPath string) error {
-			app := filepath.Dir(path)
-			logger.Debugf("build:%s compiling %s for %s on %s to %s",
-				tools, filepath.Base(app), opsys, arch, binPath)
+		// Build each os/arch combination in parallel
+		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
+		for _, env := range buildEnvs {
+			count++
+			inputs <- &buildInput{env: env, path: path}
+		}
 
-			if err = sh.RunWith(map[string]string{"GOARCH": arch, "GOOS": opsys},
-				"go", "build", "-ldflags", "-s -w", "-o", binPath, "./"+app); err != nil {
-				return fmt.Errorf("go build %s failed: %v", path, err)
-			}
-
-			return nil
-		})
+		return nil
 	})
+
+	if err != nil {
+		return err
+	}
+
+	// Wait for results
+	for i := 0; i < maxWorkers; i++ {
+		results <- nil // send poison pill to stop each worker
+	}
+
+	for i := 0; i < count; i++ {
+		if err = <-results; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func buildPackage(pkg string) error {
+func buildLambdaPackage(pkg string) error {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")
 	oldInfo, statErr := os.Stat(binary)
 	oldHash, hashErr := fileMD5(binary)
+	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)

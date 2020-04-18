@@ -22,7 +22,7 @@ import * as Types from '../../../__generated__/schema';
 
 import gql from 'graphql-tag';
 
-export type DestinationFull = Pick<
+export type DestinationFull = { __typename: 'Destination' } & Pick<
   Types.Destination,
   | 'createdBy'
   | 'creationTime'
@@ -34,23 +34,23 @@ export type DestinationFull = Pick<
   | 'verificationStatus'
   | 'defaultForSeverity'
 > & {
-  outputConfig: {
-    slack?: Types.Maybe<Pick<Types.SlackConfig, 'webhookURL'>>;
-    sns?: Types.Maybe<Pick<Types.SnsConfig, 'topicArn'>>;
-    pagerDuty?: Types.Maybe<Pick<Types.PagerDutyConfig, 'integrationKey'>>;
-    github?: Types.Maybe<Pick<Types.GithubConfig, 'repoName' | 'token'>>;
-    jira?: Types.Maybe<
-      Pick<
-        Types.JiraConfig,
-        'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType'
-      >
-    >;
-    opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
-    msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
-    sqs?: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
-    asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
+    outputConfig: {
+      slack?: Types.Maybe<Pick<Types.SlackConfig, 'webhookURL'>>;
+      sns?: Types.Maybe<Pick<Types.SnsConfig, 'topicArn'>>;
+      pagerDuty?: Types.Maybe<Pick<Types.PagerDutyConfig, 'integrationKey'>>;
+      github?: Types.Maybe<Pick<Types.GithubConfig, 'repoName' | 'token'>>;
+      jira?: Types.Maybe<
+        Pick<
+          Types.JiraConfig,
+          'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType'
+        >
+      >;
+      opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
+      msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
+      sqs?: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
+      asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
+    };
   };
-};
 
 export const DestinationFull = gql`
   fragment DestinationFull on Destination {
@@ -99,5 +99,6 @@ export const DestinationFull = gql`
     }
     verificationStatus
     defaultForSeverity
+    __typename
   }
 `;
