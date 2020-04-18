@@ -375,11 +375,11 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
 
+			"AthenaPantherTablesOnly":    strconv.FormatBool(settings.Setup.Athena.PantherTablesOnly),
 			"AthenaS3BucketARNS":         strings.Join(settings.Setup.Athena.S3ARNs, ","),
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
-			"PantherTablesOnly":          strconv.FormatBool(settings.Setup.Athena.PantherTablesOnly),
 			"TracingMode":                settings.Monitoring.TracingMode,
 		})
 		result <- coreStack
