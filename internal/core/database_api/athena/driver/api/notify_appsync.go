@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
@@ -80,7 +79,6 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	}()
 
 	// make sigv4 https request to appsync endpoint notifying query is complete, sending  userData, queryId and workflowId
-	appSyncEndpoint := os.Getenv("GRAPHQL_ENDPOINT")
 	httpClient := http.Client{}
 	signer := v4.NewSigner(awsSession.Config.Credentials)
 
@@ -123,7 +121,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	output.StatusCode = resp.StatusCode
 
 	respBody, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		err = errors.Errorf("failed to POST (%d): %s", resp.StatusCode, string(respBody))
 		return output, err
 	}
@@ -131,7 +129,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 	graphQlResp := &GraphQlResponse{}
 	err = jsoniter.Unmarshal(respBody, graphQlResp)
 	if err != nil {
-		err = errors.Wrapf(err, "json marshal failed for: %#v", string(respBody))
+		err = errors.Wrapf(err, "json unmarshal failed for: %#v", string(respBody))
 		return output, err
 	}
 	if len(graphQlResp.Errors) > 0 {
