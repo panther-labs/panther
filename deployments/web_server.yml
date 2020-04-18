@@ -32,6 +32,12 @@ Parameters:
     Type: String
     Description: Web app security group ID
 
+  # Passed in from config file
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+
   # Generated in deploy process
   Image:
     Type: String
@@ -118,6 +124,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: panther-web-logs
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
 
   # The container definition for the image that runs the NodeJS server which serves our assets
   WebApplicationServerDefinition:
