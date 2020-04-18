@@ -37,7 +37,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 	}()
 
 	if input.Name != nil {
-		if pantherTablesOnly && awsglue.PantherDatabases[*input.Name] == "" {
+		if envConfig.PantherTablesOnly && awsglue.PantherDatabases[*input.Name] == "" {
 			return &output, err // nothing
 		}
 		var glueOutput *glue.GetDatabaseOutput
@@ -59,7 +59,7 @@ func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOu
 	err = glueClient.GetDatabasesPages(&glue.GetDatabasesInput{},
 		func(page *glue.GetDatabasesOutput, lastPage bool) bool {
 			for _, database := range page.DatabaseList {
-				if pantherTablesOnly && awsglue.PantherDatabases[*database.Name] == "" {
+				if envConfig.PantherTablesOnly && awsglue.PantherDatabases[*database.Name] == "" {
 					continue // skip
 				}
 				output.Databases = append(output.Databases, &models.NameAndDescription{

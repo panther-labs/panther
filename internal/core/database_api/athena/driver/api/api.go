@@ -19,8 +19,6 @@ package api
  */
 
 import (
-	"os"
-
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
@@ -32,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sfn"
 	"github.com/aws/aws-sdk-go/service/sfn/sfniface"
+	"github.com/kelseyhightower/envconfig"
 )
 
 var (
@@ -42,10 +41,15 @@ var (
 	sfnClient    sfniface.SFNAPI
 	s3Client     s3iface.S3API
 
+	envConfig           EnvConfig
 	athenaS3ResultsPath *string
-	appSyncEndpoint     string
-	pantherTablesOnly   bool // if true, for Glue  APIs, only return to users tables from Panther databases
 )
+
+type EnvConfig struct {
+	AthenaBucket      string `envconfig:"ATHENA_BUCKET"`
+	AppSyncEndpoint   string `envconfig:"GRAPHQL_ENDPOINT"`
+	PantherTablesOnly bool   `envconfig:"PANTHER_TABLES_ONLY"` // if true, only return tables from Panther databases
+}
 
 func SessionInit() {
 	awsSession = session.Must(session.NewSession())
@@ -54,12 +58,15 @@ func SessionInit() {
 	lambdaClient = lambda.New(awsSession)
 	sfnClient = sfn.New(awsSession)
 	s3Client = s3.New(awsSession)
-	if os.Getenv("ATHENA_BUCKET") != "" {
-		results := "s3://" + os.Getenv("ATHENA_BUCKET") + "/athena_api/"
+
+	err := envconfig.Process("", &envConfig)
+	if err != nil {
+		panic(err)
+	}
+	if envConfig.AthenaBucket != "" {
+		results := "s3://" + envConfig.AthenaBucket + "/athena_api/"
 		athenaS3ResultsPath = &results
 	}
-	pantherTablesOnly = os.Getenv("PANTHER_TABLES_ONLY") == "true"
-	appSyncEndpoint = os.Getenv("GRAPHQL_ENDPOINT")
 }
 
 // API provides receiver methods for each route handler.
