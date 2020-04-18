@@ -120,9 +120,9 @@ func TestIntegrationGlueAPI(t *testing.T) {
 	require.Len(t, getDatabasesOutput.Databases, 1)
 	require.Equal(t, testutils.TestDb, getDatabasesOutput.Databases[0].Name)
 
-	// -------- GetDatabases() with pantherTablesOnly (should not find any)
+	// -------- GetDatabases() with envConfig.PantherTablesOnly (should not find any)
 
-	pantherTablesOnly = true
+	envConfig.PantherTablesOnly = true
 
 	// list
 	var getPantherDatabasesInput models.GetDatabasesInput
@@ -142,7 +142,7 @@ func TestIntegrationGlueAPI(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, getPantherDatabasesOutput.Databases, 0)
 
-	pantherTablesOnly = false
+	envConfig.PantherTablesOnly = false
 
 	// -------- GetTables()
 
@@ -154,9 +154,9 @@ func TestIntegrationGlueAPI(t *testing.T) {
 	require.Len(t, getTablesOutput.Tables, 1)
 	testutils.CheckTableDetail(t, getTablesOutput.Tables)
 
-	// -------- GetTables() with pantherTablesOnly (should not find any)
+	// -------- GetTables() with envConfig.PantherTablesOnly (should not find any)
 
-	pantherTablesOnly = true
+	envConfig.PantherTablesOnly = true
 
 	var getPantherTablesInput models.GetTablesInput
 	getPantherTablesInput.DatabaseName = testutils.TestDb
@@ -165,7 +165,7 @@ func TestIntegrationGlueAPI(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, getPantherTablesOutput.Tables, 0)
 
-	pantherTablesOnly = false
+	envConfig.PantherTablesOnly = false
 
 	// -------- GetTablesDetail()
 
@@ -176,9 +176,9 @@ func TestIntegrationGlueAPI(t *testing.T) {
 	require.NoError(t, err)
 	testutils.CheckTableDetail(t, getTablesDetailOutput.Tables)
 
-	// -------- GetTablesDetail() with pantherTablesOnly (should not find any)
+	// -------- GetTablesDetail() with envConfig.PantherTablesOnly (should not find any)
 
-	pantherTablesOnly = true
+	envConfig.PantherTablesOnly = true
 
 	var getPantherTablesDetailInput models.GetTablesDetailInput
 	getPantherTablesDetailInput.DatabaseName = testutils.TestDb
@@ -187,7 +187,7 @@ func TestIntegrationGlueAPI(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, len(getPantherTablesDetailOutput.Tables))
 
-	pantherTablesOnly = false
+	envConfig.PantherTablesOnly = false
 }
 
 func TestIntegrationGlueAPILambda(t *testing.T) {

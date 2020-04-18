@@ -68,7 +68,7 @@ func TestIntegrationRequeue(t *testing.T) {
 	require.NoError(t, err)
 
 	// move them to toq
-	err = Requeue(sqsClient, fromq, toq)
+	err = Requeue(sqsClient, *awsSession.Config.Region, fromq, toq)
 	require.NoError(t, err)
 
 	// check

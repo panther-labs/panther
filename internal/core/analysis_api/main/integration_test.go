@@ -197,6 +197,12 @@ var (
 		Tests:              []*models.UnitTest{},
 		DedupPeriodMinutes: 1440,
 	}
+
+	global = &models.Global{
+		Body:        "def helper_is_true(truthy): return truthy is True\n",
+		Description: "Provides a helper function",
+		ID:          "GlobalTypeAnalysis",
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -251,7 +257,6 @@ func TestIntegrationAPI(t *testing.T) {
 	require.NoError(t, testutils.ClearS3Bucket(awsSession, bucketName))
 	require.NoError(t, testutils.ClearDynamoTable(awsSession, tableName))
 
-	require.NotEmpty(t, endpoint)
 	apiClient = client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
 		WithBasePath("/v1").WithHost(endpoint))
 
@@ -273,6 +278,10 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("CreatePolicyInvalid", createInvalid)
 		t.Run("CreatePolicySuccess", createSuccess)
 		t.Run("CreateRuleSuccess", createRuleSuccess)
+		// This test (and the other global tests) does trigger the layer-manager lambda to run, but since there is only
+		// support for a single global nothing changes (the version gets bumped a few times). Once multiple globals are
+		// supported, these tests can be improved to run policies and rules that rely on these imports.
+		t.Run("CreateGlobalSuccess", createGlobalSuccess)
 	})
 	if t.Failed() {
 		return
@@ -284,13 +293,15 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("GetVersion", getVersion)
 		t.Run("GetRule", getRule)
 		t.Run("GetRuleWrongType", getRuleWrongType)
+		t.Run("GetGlobal", getGlobal)
 	})
 
-	t.Run("ModifyPolicy", func(t *testing.T) {
+	t.Run("Modify", func(t *testing.T) {
 		t.Run("ModifyInvalid", modifyInvalid)
 		t.Run("ModifyNotFound", modifyNotFound)
 		t.Run("ModifySuccess", modifySuccess)
 		t.Run("ModifyRule", modifyRule)
+		t.Run("ModifyGlobal", modifyGlobal)
 	})
 
 	t.Run("Suppress", func(t *testing.T) {
@@ -318,10 +329,11 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("GetEnabledRules", getEnabledRules)
 	})
 
-	t.Run("DeletePolicies", func(t *testing.T) {
+	t.Run("Delete", func(t *testing.T) {
 		t.Run("DeleteInvalid", deleteInvalid)
 		t.Run("DeleteNotExists", deleteNotExists)
 		t.Run("DeleteSuccess", deleteSuccess)
+		t.Run("DeleteGlobal", deleteGlobal)
 	})
 }
 
@@ -561,6 +573,33 @@ func createRuleSuccess(t *testing.T) {
 	assert.Equal(t, rule, result.Payload)
 }
 
+func createGlobalSuccess(t *testing.T) {
+	t.Parallel()
+	result, err := apiClient.Operations.CreateGlobal(&operations.CreateGlobalParams{
+		Body: &models.UpdateGlobal{
+			Body:        global.Body,
+			Description: global.Description,
+			ID:          global.ID,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	require.NoError(t, err)
+
+	require.NoError(t, result.Payload.Validate(nil))
+	assert.NotZero(t, result.Payload.CreatedAt)
+	assert.NotZero(t, result.Payload.LastModified)
+
+	global.CreatedAt = result.Payload.CreatedAt
+	global.CreatedBy = userID
+	global.LastModified = result.Payload.LastModified
+	global.LastModifiedBy = userID
+	global.Tags = []string{} // nil was converted to empty list
+	global.VersionID = result.Payload.VersionID
+	assert.Equal(t, global, result.Payload)
+}
+
 func getNotFound(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
@@ -597,7 +636,7 @@ func getVersion(t *testing.T) {
 	assert.Equal(t, policy, result.Payload)
 }
 
-// Get a rule (instead of a policy)
+// Get a rule
 func getRule(t *testing.T) {
 	t.Parallel()
 	result, err := apiClient.Operations.GetRule(&operations.GetRuleParams{
@@ -607,6 +646,18 @@ func getRule(t *testing.T) {
 	require.NoError(t, err)
 	assert.NoError(t, result.Payload.Validate(nil))
 	assert.Equal(t, rule, result.Payload)
+}
+
+// Get a global
+func getGlobal(t *testing.T) {
+	t.Parallel()
+	result, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
+		GlobalID:   string(global.ID),
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+	assert.NoError(t, result.Payload.Validate(nil))
+	assert.Equal(t, global, result.Payload)
 }
 
 // GetRule with a policy ID returns 404 not found
@@ -686,7 +737,7 @@ func modifySuccess(t *testing.T) {
 	assert.Equal(t, policy, result.Payload)
 }
 
-// Modify a rule (instead of a policy)
+// Modify a rule
 func modifyRule(t *testing.T) {
 	t.Parallel()
 	rule.Description = "SkyNet integration"
@@ -715,6 +766,33 @@ func modifyRule(t *testing.T) {
 	rule.LastModified = result.Payload.LastModified
 	rule.VersionID = result.Payload.VersionID
 	assert.Equal(t, rule, result.Payload)
+}
+
+// Modify a global
+func modifyGlobal(t *testing.T) {
+	t.Parallel()
+	global.Description = "Now returns False"
+	global.Body = "def helper_is_true(truthy): return truthy is False\n"
+
+	result, err := apiClient.Operations.ModifyGlobal(&operations.ModifyGlobalParams{
+		Body: &models.UpdateGlobal{
+			Body:        global.Body,
+			Description: global.Description,
+			ID:          global.ID,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	require.NoError(t, err)
+
+	require.NoError(t, result.Payload.Validate(nil))
+	assert.NotZero(t, result.Payload.CreatedAt)
+	assert.NotZero(t, result.Payload.LastModified)
+
+	global.LastModified = result.Payload.LastModified
+	global.VersionID = result.Payload.VersionID
+	assert.Equal(t, global, result.Payload)
 }
 
 func suppressNotFound(t *testing.T) {
@@ -1278,4 +1356,37 @@ func deleteSuccess(t *testing.T) {
 	require.NoError(t, err)
 	expectedRuleList := &models.RuleList{Paging: emptyPaging, Rules: []*models.RuleSummary{}}
 	assert.Equal(t, expectedRuleList, ruleList.Payload)
+}
+
+func deleteGlobal(t *testing.T) {
+	t.Parallel()
+	result, err := apiClient.Operations.DeleteGlobals(&operations.DeleteGlobalsParams{
+		Body: &models.DeletePolicies{
+			Policies: []*models.DeleteEntry{
+				{
+					ID: global.ID,
+				},
+			},
+		},
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, &operations.DeleteGlobalsOK{}, result)
+
+	// Trying to retrieve the deleted policy should now return 404
+	_, err = apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
+		GlobalID:   string(global.ID),
+		HTTPClient: httpClient,
+	})
+	require.Error(t, err)
+	require.IsType(t, &operations.GetGlobalNotFound{}, err)
+
+	// But retrieving an older version will still work
+	getResult, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
+		GlobalID:   string(global.ID),
+		VersionID:  aws.String(string(global.VersionID)),
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, global, getResult.Payload)
 }

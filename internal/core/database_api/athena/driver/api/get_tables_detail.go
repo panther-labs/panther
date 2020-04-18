@@ -37,7 +37,7 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 		}
 	}()
 
-	if pantherTablesOnly && awsglue.PantherDatabases[input.DatabaseName] == "" {
+	if envConfig.PantherTablesOnly && awsglue.PantherDatabases[input.DatabaseName] == "" {
 		return &output, err // nothing
 	}
 
