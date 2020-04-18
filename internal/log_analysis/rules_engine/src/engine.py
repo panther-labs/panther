@@ -22,7 +22,7 @@ from typing import Any, Dict, List
 from . import EventMatch
 from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
-from .rule import Rule, COMMON_MODULE_RULE_ID
+from .rule import Rule
 
 _RULES_CACHE_DURATION = timedelta(minutes=5)
 
@@ -76,17 +76,6 @@ class Engine:
 
         # Clear old rules
         self.log_type_to_rules.clear()
-
-        # Importing common module. This module MAY hold code common to some rules and if it exists, it must be
-        # imported before other rules. However, the presence of this rule is optional.
-        for raw_rule in rules:
-            if raw_rule.get('id') == COMMON_MODULE_RULE_ID:
-                try:
-                    Rule(raw_rule)
-                except Exception as err:  # pylint: disable=broad-except
-                    self.logger.error('Failed to import rule %s. Error: [%s]', raw_rule.get('id'), err)
-                rules.remove(raw_rule)
-                break
 
         for raw_rule in rules:
             try:

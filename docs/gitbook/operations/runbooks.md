@@ -72,7 +72,7 @@ Lambda for CRUD actions for the alerts API.
  * Failure of this lambda will impact the Panther user interface.
 
 ## panther-alerts-queue
-This sqs q does hold alerts to be delivery to user configured destinations.
+This sqs queue holds alerts to be delivered to user configured destinations.
 
  Failure Impact
  * Failure of this sqs q will impact delivery of alerts to output destinations.
@@ -93,14 +93,14 @@ This ddb table holds the policies applied by the `panther-rules-engine` lambda a
  * The Panther user interface could be impacted.
 
 ## panther-analysis-api
-The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
-
-## panther-analysis-api
 This lambda implements the analysis API which is responsible for
  policies/rules from being created, updated, and deleted.
 
  Failure Impact
  * Failure of this lambda will prevent policies/rules from being created, updated, deleted. Additionally, policies and rules will stop being evaluated by the policy/rules engines.
+
+## panther-analysis-api
+The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
 
 ## panther-athena-api
 The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
@@ -206,6 +206,26 @@ This sqs queue receives S3 notifications
 This is the dead letter queue for the `panther-input-data-notifications-queue`.
  Items are in this queue due to a failure of the `panther-log-processor` lambda.
  When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
+ the Panther tool `requeue`.
+
+## panther-layer-manager
+This lambda manages updates to the lambda layers attached to the Panther policy and rule engines.
+
+ Failure Impact
+ * Failure of this lambda will prevent users from updating global helper functions.
+ * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue`.
+
+## panther-layer-manager-queue
+This sqs queue is used to communicate layer update requests to the layer manager function.
+
+ Failure Impact
+ * Failure of this sqs queue will prevent users from updating the globals layer.
+ * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered, one event should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue` and the rest should be purged.
+
+## panther-layer-manager-queue-dlq
+This is the dead letter queue for the `panther-layer-manager-queue`.
+ Items are in this queue due to a failure of the `panther-layer-manager` lambda.
+ When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using
  the Panther tool `requeue`.
 
 ## panther-log-alert-dedup
@@ -325,14 +345,14 @@ This table holds descriptions of the AWS resources in all accounts being monitor
  * The Panther user interface could be impacted.
 
 ## panther-resources-api
-The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
-
-## panther-resources-api
 The `panther-resources-api` lambda implements the resources API.
 
  Failure Impact
  * Infrastructure scans may be impacted when updating resources.
  * The Panther user interface for display of resources.
+
+## panther-resources-api
+The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
 
 ## panther-resources-queue
 This sqs queue has events from recently changed infrastructure.
