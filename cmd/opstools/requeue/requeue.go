@@ -16,19 +16,19 @@ const (
 	visibilityTimeoutSeconds = 2 * waitTimeSeconds
 )
 
-func Requeue(sqsClient sqsiface.SQSAPI, fromQueueName, toQueueName string) error {
+func Requeue(sqsClient sqsiface.SQSAPI, region, fromQueueName, toQueueName string) error {
 	fromQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &fromQueueName,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "cannot get source queue url for %s", fromQueueName)
+		return errors.Wrapf(err, "cannot find source queue %s in region %s", fromQueueName, region)
 	}
 
 	toQueueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &toQueueName,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "cannot get destination queue url for %s", toQueueName)
+		return errors.Wrapf(err, "cannot find destination queue %s in region %s", toQueueName, region)
 	}
 
 	log.Printf("Moving messages from %s to %s", fromQueueName, toQueueName)

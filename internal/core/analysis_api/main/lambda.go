@@ -40,9 +40,15 @@ var methodHandlers = map[string]gatewayapi.RequestHandler{
 	"GET /rule/list":    handlers.ListRules,
 	"POST /rule/update": handlers.ModifyRule,
 
+	// Globals only
+	"GET /global":         handlers.GetGlobal,
+	"POST /global":        handlers.CreateGlobal,
+	"POST /global/update": handlers.ModifyGlobal,
+	"POST /global/delete": handlers.DeleteGlobal,
+
 	// Rules and Policies
 	"POST /delete": handlers.DeletePolicies,
-	"GET /enabled": handlers.GetEnabledPolicies,
+	"GET /enabled": handlers.GetEnabledAnalyses,
 	"POST /test":   handlers.TestPolicy,
 }
 

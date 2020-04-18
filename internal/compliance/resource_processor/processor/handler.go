@@ -46,10 +46,7 @@ import (
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
-const (
-	defaultDelaySeconds = 30
-	globalPolicy        = "aws_globals"
-)
+const defaultDelaySeconds = 30
 
 // Map policy/resource ID to the instance of the object
 type policyMap map[string]*analysismodels.EnabledPolicy
@@ -149,15 +146,6 @@ func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error
 			Suppressions:  policy.Suppressions,
 			VersionID:     policy.VersionID,
 		},
-	}
-
-	// lookup the global file in case this policy needs it
-	globalFile, err := getGlobalPolicy()
-	if err != nil {
-		return err
-	}
-	if globalFile != nil {
-		policies[globalPolicy] = globalFile
 	}
 
 	// Analyze each page of resources
