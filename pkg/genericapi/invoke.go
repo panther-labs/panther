@@ -56,7 +56,7 @@ func Invoke(
 		return &InternalError{Message: "jsoniter.Marshal(input) failed: " + err.Error()}
 	}
 
-	zap.L().Debug(
+	zap.L().Info(
 		"invoking Lambda function", zap.String("name", function), zap.Int("bytes", len(payload)))
 	response, err := client.Invoke(
 		&lambda.InvokeInput{FunctionName: aws.String(function), Payload: payload})
