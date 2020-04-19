@@ -799,7 +799,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: lambda:InvokeFunction
-                Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
+                Resource: !GetAtt AthenaApiFunction.Arn
 
   AthenaQueryStateMachine:
     Type: AWS::StepFunctions::StateMachine
