@@ -366,9 +366,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Core
 	parallelStacks++
 	go func(result chan string) {
-		// add in the internal panther buckets
-		settings.Setup.Athena.S3ARNs = append(settings.Setup.Athena.S3ARNs, "arn:aws:s3:::panther-*-processeddata-*")
-
 		deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
@@ -413,8 +410,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
 			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
 
-			"AthenaPantherTablesOnly":      strconv.FormatBool(settings.Setup.Athena.PantherTablesOnly),
-			"AthenaS3BucketARNS":           strings.Join(settings.Setup.Athena.S3ARNs, ","),
 			"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
 			"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
