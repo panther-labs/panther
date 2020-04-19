@@ -54,13 +54,12 @@ func TestRFC3164(t *testing.T) {
 
 func TestRFC3164WithoutPriority(t *testing.T) {
 	// nolint:lll
-	log := `{"host":"ip-172-31-91-66","ident":"systemd-timesyncd","pid":"565","message":"Network configuration changed, trying to establish connection.","tag":"syslog.cron.info","time":"2020-03-23 16:14:06 +0000"}`
+	log := `{"host":"ip-172-31-91-66","ident":"systemd-timesyncd","message":"Network configuration changed, trying to establish connection.","tag":"syslog.cron.info","time":"2020-03-23 16:14:06 +0000"}`
 
 	expectedTime := time.Date(2020, 3, 23, 16, 14, 6, 0, time.UTC)
 	expectedEvent := &RFC3164{
 		Hostname:  aws.String("ip-172-31-91-66"),
 		Ident:     aws.String("systemd-timesyncd"),
-		ProcID:    (*numerics.Integer)(aws.Int(565)),
 		Message:   aws.String("Network configuration changed, trying to establish connection."),
 		Tag:       aws.String("syslog.cron.info"),
 		Timestamp: (*timestamp.FluentdTimestamp)(&expectedTime),
