@@ -39,6 +39,10 @@ const (
 	pollTimeout  = time.Hour       // Give up if CreateChangeSet or ExecuteChangeSet takes longer than this
 )
 
+var (
+	gitVersion string // set in deployPrecheck()
+)
+
 // Deploy a CloudFormation template.
 //
 // 1) Package: Upload large assets (GraphQL schema, Lambda source, nested templates) to S3 with aws cli
@@ -179,6 +183,10 @@ func createChangeSet(
 			{
 				Key:   aws.String("Application"),
 				Value: aws.String("Panther"),
+			},
+			{
+				Key:   aws.String("PantherVersion"),
+				Value: &gitVersion,
 			},
 			{
 				Key:   aws.String("Stack"),
