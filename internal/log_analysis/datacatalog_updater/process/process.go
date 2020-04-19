@@ -75,7 +75,6 @@ func SQS(event events.SQSEvent) error {
 				input := &GenerateParquetInput{
 					DatabaseName:  gluePartition.GetDatabase(),
 					TableName:     gluePartition.GetTable(),
-					BucketName:    "panther-bootstrap-historicaldata-ntazfsgrxbo6", // FIXME: pass down
 					PartitionHour: gluePartition.GetHour(),
 				}
 				_, err = GenerateParquet(input)

@@ -79,7 +79,6 @@ type UpdateParquetPartitionOutput struct {
 type GenerateParquetInput struct {
 	DatabaseName  string
 	TableName     string
-	BucketName    string
 	PartitionHour time.Time
 	FailureCount  int // FIXME: add retries
 }
@@ -96,7 +95,7 @@ func GenerateParquet(input *GenerateParquetInput) (workflowID string, err error)
 	tag := uuid.New().String()
 
 	// generate CTAS sql
-	ctasSQL := generateCtasSQL(input.DatabaseName, input.TableName, input.BucketName, columns, input.PartitionHour, tag)
+	ctasSQL := generateCtasSQL(input.DatabaseName, input.TableName, envConfig.HistoricalDataBucket, columns, input.PartitionHour, tag)
 
 	// generate userData as JSON from inputs so we can update partition when done the Parquet generation in UpdateParquetPartition()
 	userData, err := jsoniter.Marshal(input)

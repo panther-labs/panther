@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -107,8 +108,9 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	gm.databaseName = testDb
 
 	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
-	err = gm.CreateJSONPartition(glueClient, refTime)
+	created, err := gm.CreateJSONPartition(glueClient, refTime)
 	require.NoError(t, err)
+	assert.True(t, created)
 	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Equal(t, expectedPath, *partitionLocation)
 

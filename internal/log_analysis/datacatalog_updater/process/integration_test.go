@@ -67,11 +67,12 @@ func TestGenerateParquet(t *testing.T) {
 		testutils.RemoveTables(t, glueClient, s3Client)
 	}()
 
+	envConfig.HistoricalDataBucket = testutils.TestBucket
+
 	// execute CTAS via Athena api Step Function
 	input := &GenerateParquetInput{
 		DatabaseName:  testutils.TestDb,
 		TableName:     testutils.TestTable,
-		BucketName:    testutils.TestBucket,
 		PartitionHour: testutils.TestPartitionTime,
 	}
 	workflowID, err := GenerateParquet(input)

@@ -478,6 +478,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
+          HISTORICAL_DATA_BUCKET: panther-bootstrap-historicaldata-1whn5c04uls5s # FIXME pass down
       Events:
         Queue:
           Type: SQS

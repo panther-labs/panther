@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/kelseyhightower/envconfig"
 )
 
 const (
@@ -35,10 +36,21 @@ var (
 	awsSession   *session.Session
 	glueClient   glueiface.GlueAPI
 	lambdaClient lambdaiface.LambdaAPI
+
+	envConfig EnvConfig
 )
+
+type EnvConfig struct {
+	HistoricalDataBucket string `envconfig:"HISTORICAL_DATA_BUCKET"`
+}
 
 func SessionInit() {
 	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
 	glueClient = glue.New(awsSession)
 	lambdaClient = lambda.New(awsSession)
+
+	err := envconfig.Process("", &envConfig)
+	if err != nil {
+		panic(err)
+	}
 }

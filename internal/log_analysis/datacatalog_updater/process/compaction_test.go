@@ -44,7 +44,7 @@ with (
 )
 as 
 select 
-c1,c2
+"c1","c2"
 FROM "panther_logs"."aws_cloudtrail" where year=2020 and month=4 and day=10 and hour=5 order by p_event_time
 `
 	cols := []*glue.Column{
