@@ -49,6 +49,7 @@ func TestRFC3164(t *testing.T) {
 	expectedRFC3164.PantherLogType = aws.String("Fluentd.Syslog3164")
 	expectedRFC3164.AppendAnyDomainNamePtrs(expectedRFC3164.Hostname)
 	expectedRFC3164.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+
 	checkRFC3164(t, log, expectedRFC3164)
 }
 
@@ -69,6 +70,30 @@ func TestRFC3164WithoutPriority(t *testing.T) {
 	expectedEvent.PantherLogType = aws.String("Fluentd.Syslog3164")
 	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+
+	checkRFC3164(t, log, expectedEvent)
+}
+
+func TestRFC3164SSHMessage(t *testing.T) {
+	// nolint:lll
+	log := `{"host":"ip-172-31-33-197","ident":"sshd","pid":"5433","message":"Accepted publickey for ubuntu from 150.18.226.10 port 54717 ssh2: RSA SHA256:u...","tag":"syslog.auth.info","time":"2020-04-19 20:20:05 +0000"}`
+
+	expectedTime := time.Date(2020, 4, 19, 20, 20, 5, 0, time.UTC)
+	expectedEvent := &RFC3164{
+		Hostname:  aws.String("ip-172-31-33-197"),
+		Ident:     aws.String("sshd"),
+		ProcID:    (*numerics.Integer)(aws.Int(5433)),
+		Message:   aws.String("Accepted publickey for ubuntu from 150.18.226.10 port 54717 ssh2: RSA SHA256:u..."),
+		Tag:       aws.String("syslog.auth.info"),
+		Timestamp: (*timestamp.FluentdTimestamp)(&expectedTime),
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("Fluentd.Syslog3164")
+	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
+	expectedEvent.AppendAnyIPAddressInFieldPtr(expectedEvent.Message)
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+
 	checkRFC3164(t, log, expectedEvent)
 }
 

@@ -140,6 +140,21 @@ func TestSetCoreFieldsNilEventTime(t *testing.T) {
 	require.Equal(t, expectedEvent, event)
 }
 
+func TestAppendAnyIPsInField(t *testing.T) {
+	event := PantherLog{}
+	require.True(t, event.AppendAnyIPAddressInFieldPtr(aws.String("connection established from 192.168.1.1")))
+	require.True(t, event.AppendAnyIPAddressInField("Accepted publickey for ubuntu from 192.168.1.2 port 54717 ssh2"))
+	require.False(t, event.AppendAnyIPAddressInField("connection established"))
+
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			"192.168.1.1": {},
+			"192.168.1.2": {},
+		},
+	}
+	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+}
+
 func TestAppendAnyIPV4(t *testing.T) {
 	event := PantherLog{}
 	require.True(t, event.AppendAnyIPAddressPtr(aws.String("192.168.1.1")))
