@@ -32,6 +32,9 @@ Parameters:
   GraphQLApiId:
     Type: String
     Description: The id of the Appsync GraphQL Endpoint
+  HistoricalDataBucket:
+    Type: String
+    Description: S3 bucket name for compacted log data
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -51,9 +54,6 @@ Parameters:
     Default: true
     Description: If true, access only Panther tables in Athena API
     AllowedValues: [true, false]
-  AthenaS3BucketARNS:
-    Type: CommaDelimitedList
-    Description: The list of S3 ARNs to allow read access by Athena lambda
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -478,7 +478,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          HISTORICAL_DATA_BUCKET: panther-bootstrap-historicaldata-1whn5c04uls5s # FIXME pass down
+          HISTORICAL_DATA_BUCKET: !Ref HistoricalDataBucket
       Events:
         Queue:
           Type: SQS
@@ -762,7 +762,7 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
-        - Id: S3ReadPermissions # athena reads from S3, restrict to our processed data buckets and those set by user in config
+        - Id: PantherS3ReadPermissions # athena reads from S3, restrict to our processed data buckets
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -770,7 +770,12 @@ Resources:
                 - s3:GetBucketLocation
                 - s3:List*
                 - s3:GetObject
-              Resource: !Ref AthenaS3BucketARNS
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
+                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}/logs/*
+                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}/rules/*
+                - arn:aws:s3:::panther-athena-api-processeddata-test-* # used for integration tests
         - Id: StepsPermissions # start an async workflow that tracks the query execution
           Version: 2012-10-17
           Statement:
@@ -794,6 +799,18 @@ Resources:
               Action:
                 - appsync:GraphQL
               Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:apis/${GraphQLApiId}/types/Mutation/fields/queryDone
+        - Id: CTASWritePermissions # athena writes results to S3 for Parquet generation
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+                - s3:PutObject
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}/logs/*
+                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}/rules/*
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup

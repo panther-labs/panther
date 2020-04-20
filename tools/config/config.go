@@ -57,7 +57,6 @@ type Setup struct {
 	InitialAnalysisSets []string         `yaml:"InitialAnalysisSets"`
 	LogRetention        LogRetention     `yaml:"LogRetention"`
 	LogSubscriptions    LogSubscriptions `yaml:"LogSubscriptions"`
-	Athena              Athena           `yaml:"Athena"`
 }
 
 type LogRetention struct {
@@ -67,11 +66,6 @@ type LogRetention struct {
 
 type LogSubscriptions struct {
 	PrincipalARNs []string `yaml:"PrincipalARNs"`
-}
-
-type Athena struct {
-	PantherTablesOnly bool     `yaml:"PantherTablesOnly"`
-	S3ARNs            []string `yaml:"S3ARNs"`
 }
 
 type Web struct {
