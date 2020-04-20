@@ -61,7 +61,7 @@ FROM "%s"."%s" where year=%d and month=%d and day=%d and hour=%d order by p_even
 )
 
 var (
-	ctasDelay = time.Duration(0) // FIXME: put back: time.Hour * 2 // how long to wait to convert partition
+	ctasDelay = time.Hour * 2 // how long to wait to convert partition
 )
 
 // LambdaInput is the collection of all possible args to the Lambda function used with the genericapi
