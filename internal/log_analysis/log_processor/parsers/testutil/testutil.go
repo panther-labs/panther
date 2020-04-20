@@ -57,3 +57,17 @@ func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*
 
 	require.JSONEq(t, expectedJSON, eventJSON)
 }
+
+func CheckPantherParser(t *testing.T, log string, parser parsers.LogParser, expect *parsers.PantherLog, expectMore ...*parsers.PantherLog) {
+	t.Helper()
+	p := parser.New()
+	results := p.Parse(log)
+	require.NotNil(t, results)
+	// Prepend the required log arg to more
+	expectMore = append([]*parsers.PantherLog{expect}, expectMore...)
+	require.Equal(t, len(expectMore), len(results), "Invalid number of pather logs produced by parser")
+	for i, result := range results {
+		expect := expectMore[i]
+		testutil.EqualPantherLog(t, expect, []*parsers.PantherLog{result})
+	}
+}
