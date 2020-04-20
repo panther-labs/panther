@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	ipRegex, _ = regexp.Compile(`(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])`)
+	ipv4Regex  = regexp.MustCompile(`(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])`)
 	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 )
 
@@ -148,8 +148,8 @@ func (pl *PantherLog) AppendAnyIPAddressInFieldPtr(value *string) bool {
 // AppendAnyIPAddressInField extracts all IPs from the value using a regexp
 func (pl *PantherLog) AppendAnyIPAddressInField(value string) bool {
 	result := false
-	matchedIPs := ipRegex.FindAllString(value, -1)
-	for _, match := range matchedIPs{
+	matchedIPs := ipv4Regex.FindAllString(value, -1)
+	for _, match := range matchedIPs {
 		result = result || pl.AppendAnyIPAddress(match)
 	}
 	return result
