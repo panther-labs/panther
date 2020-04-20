@@ -147,17 +147,12 @@ func (pl *PantherLog) AppendAnyIPAddressInFieldPtr(value *string) bool {
 
 // AppendAnyIPAddressInField extracts all IPs from the value using a regexp
 func (pl *PantherLog) AppendAnyIPAddressInField(value string) bool {
-	matchedIPs := ipRegex.FindAll([]byte(value), -1)
-	if len(matchedIPs) > 0 {
-		if pl.PantherAnyIPAddresses == nil { // lazy create
-			pl.PantherAnyIPAddresses = NewPantherAnyString()
-		}
-		for _, match := range matchedIPs {
-			AppendAnyString(pl.PantherAnyIPAddresses, string(match))
-		}
-		return true
+	result := false
+	matchedIPs := ipRegex.FindAllString(value, -1)
+	for _, match := range matchedIPs{
+		result = result || pl.AppendAnyIPAddress(match)
 	}
-	return false
+	return result
 }
 
 func (pl *PantherLog) AppendAnyIPAddress(value string) bool {
