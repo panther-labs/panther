@@ -278,6 +278,7 @@ func waitForStack(client *cfn.CloudFormation, stack string) (*cfn.Stack, error) 
 		time.Sleep(pollInterval)
 	}
 
+	// TODO - when updating, stop early if you see UPDATE_ROLLBACK_IN_PROGRESS?
 	// TODO - deep inspect error message
 }
 
@@ -323,16 +324,16 @@ func createChangeSet(
 		},
 	}
 
+	// Always save the final template to help with troubleshooting a failed deployment.
+	path := filepath.Join("out", "deployments", stack+".yml")
+	if err := ioutil.WriteFile(path, template, 0644); err != nil {
+		return nil, fmt.Errorf("faiiled to write %s: %v", path, err)
+	}
+
 	if len(template) <= maxTemplateSize {
 		createInput.SetTemplateBody(string(template))
 	} else {
-		// Template is too big to be uploaded directly - save to file and upload to S3
-		path := filepath.Join("out", "deployments", stack+".yml")
-		if err := ioutil.WriteFile(path, template, 0644); err != nil {
-			return nil, fmt.Errorf("faiiled to write %s: %v", path, err)
-		}
-
-		// Upload to S3 (only if it doesn't already exist)
+		// Upload to S3 (if it doesn't already exist)
 		key, _, err := uploadAsset(awsSession, path, bucket, stack)
 		if err != nil {
 			return nil, err
@@ -402,5 +403,12 @@ func executeChangeSet(awsSession *session.Session, changeSet *string, stack stri
 	if err != nil {
 		return nil, err
 	}
+
+	status := *detail.StackStatus
+	if status != cfn.StackStatusCreateComplete && status != cfn.StackStatusUpdateComplete {
+		// TODO - more error context here
+		return nil, fmt.Errorf("stack %s failed: %s: %s", stack, status, aws.StringValue(detail.StackStatusReason))
+	}
+
 	return flattenStackOutputs(detail), nil
 }

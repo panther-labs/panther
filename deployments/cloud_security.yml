@@ -85,7 +85,7 @@ Resources:
       # * Failure of this sqs queue will impact delivery of alerts to output destinations.
       # * Failed events will go into the `panther-alert-processor-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       KmsMasterKeyId: !Ref SqsKeyId
       VisibilityTimeout: 60 # Should match lambda timeout
       RedrivePolicy:
@@ -102,7 +102,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
   AlertProcessorLogGroup:
@@ -271,7 +271,7 @@ Resources:
   EventQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 86400 # 24 hours
+      MessageRetentionPeriod: '86400' # 24 hours
       QueueName: panther-aws-events-queue
       # <cfndoc>
       # This sqs q receives CloudTrail events delivered by CloudWatch events
@@ -293,7 +293,7 @@ Resources:
   EventDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       QueueName: panther-aws-events-queue-dlq
       # <cfndoc>
       # This is the dead letter queue for the `panther-aws-events-queue`.
@@ -537,7 +537,7 @@ Resources:
       # * Failure of this sqs queue will impact the remediation of policy violations.
       # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       KmsMasterKeyId: !Ref SqsKeyId
       VisibilityTimeout: 120 # Should match lambda
       RedrivePolicy:
@@ -554,7 +554,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-remediation-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
   RemediationApiFunction:
@@ -827,7 +827,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       KmsMasterKeyId: !Ref SqsKeyId
-      MessageRetentionPeriod: 86400 # 24 hours
+      MessageRetentionPeriod: '86400' # 24 hours
       QueueName: panther-resources-queue
       # <cfndoc>
       # This sqs queue has events from recently changed infrastructure.
@@ -845,7 +845,7 @@ Resources:
   ResourcesDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       QueueName: panther-resources-queue-dlq
       # <cfndoc>
       # The dead letter queue for the `panther-resources-queue`.
@@ -1013,7 +1013,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-snapshot-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
   PollerFunction:
