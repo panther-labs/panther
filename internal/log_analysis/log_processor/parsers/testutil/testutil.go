@@ -30,7 +30,8 @@ import (
 )
 
 // used by log parsers to validate records
-func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*parsers.PantherLog) {
+func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*parsers.PantherLog, parseErr error) {
+	require.NoError(t, parseErr)
 	require.Equal(t, 1, len(events))
 	event := events[0]
 	require.NotNil(t, event)

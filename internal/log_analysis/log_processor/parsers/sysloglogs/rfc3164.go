@@ -24,7 +24,6 @@ import (
 
 	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/rfc3164"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -66,16 +65,16 @@ func (p *RFC3164Parser) New() parsers.LogParser {
 	}
 }
 
+var _ parsers.LogParser = (*RFC3164Parser)(nil)
+
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC3164Parser) Parse(log string) []*parsers.PantherLog {
+func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLog, error) {
 	if p.parser == nil {
-		zap.L().Debug("failed to parse log", zap.Error(errors.New("parser can not be nil")))
-		return nil
+		return nil, errors.New("nil parser")
 	}
 	msg, err := p.parser.Parse([]byte(log))
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 	internalRFC3164 := msg.(*rfc3164.SyslogMessage)
 
@@ -94,11 +93,10 @@ func (p *RFC3164Parser) Parse(log string) []*parsers.PantherLog {
 	externalRFC3164.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(externalRFC3164); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return externalRFC3164.Logs()
+	return externalRFC3164.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

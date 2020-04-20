@@ -67,13 +67,15 @@ type mockParser struct {
 	mock.Mock
 }
 
-func (m *mockParser) Parse(log string) []*parsers.PantherLog {
+var _ parsers.LogParser = (*mockParser)(nil)
+
+func (m *mockParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	args := m.Called(log)
 	result := args.Get(0)
 	if result == nil {
-		return nil
+		return nil, nil
 	}
-	return result.([]*parsers.PantherLog)
+	return result.([]*parsers.PantherLog), nil
 }
 
 func (m *mockParser) LogType() string {

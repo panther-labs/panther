@@ -38,13 +38,13 @@ func (m *mockParser) New() parsers.LogParser {
 	return m // pass through (not stateful)
 }
 
-func (m *mockParser) Parse(log string) []*parsers.PantherLog {
+func (m *mockParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	args := m.Called(log)
 	result := args.Get(0)
 	if result == nil {
-		return nil
+		return nil, nil
 	}
-	return result.([]*parsers.PantherLog)
+	return result.([]*parsers.PantherLog), nil
 }
 
 func (m *mockParser) LogType() string {
