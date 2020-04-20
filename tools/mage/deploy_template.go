@@ -19,7 +19,7 @@ package mage
  */
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" // nolint: gosec
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -32,6 +32,8 @@ import (
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/pkg/shutil"
 )
 
 const (
@@ -73,7 +75,7 @@ func deployTemplate(
 		return nil, err
 	}
 	if changeID == nil {
-		// no changes - return the outputs we already had
+		// No changes - return the outputs we already had
 		return outputs, nil
 	}
 
@@ -100,7 +102,6 @@ func deployTemplate(
 // we still parse the template and re-emit it to strip comments / extra spaces
 func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string) ([]byte, error) {
 	// TODO - first we have to recursively find nested stacks and package those
-	// TODO - Lambda CodeUri
 	cfnBody, err := parseCfnTemplate(templatePath)
 	if err != nil {
 		return nil, err
@@ -111,6 +112,7 @@ func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string)
 		return yaml.Marshal(cfnBody)
 	}
 
+	logger.Debugf("deploy: packaging %s assets", templatePath)
 	for _, resource := range cfnBody["Resources"].(map[string]interface{}) {
 		r := resource.(map[string]interface{})
 		switch r["Type"].(string) {
@@ -126,6 +128,29 @@ func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string)
 				}
 				properties["DefinitionS3Location"] = fmt.Sprintf("s3://%s/%s", bucket, key)
 			}
+
+		case "AWS::Serverless::Function":
+			properties := r["Properties"].(map[string]interface{})
+			if path, ok := properties["CodeUri"].(string); ok && !strings.HasPrefix(path, "s3://") {
+				// This CodeUri resource has a file location specified instead of S3 - upload it
+				// Path is relative to the template, but we are running here in the repo root
+				assetPath := filepath.Join(filepath.Dir(templatePath), path)
+
+				zipPath := filepath.Join("out", "deployments", "zip", properties["FunctionName"].(string)+".zip")
+				if err = shutil.ZipDirectory(assetPath, zipPath, false); err != nil {
+					return nil, fmt.Errorf("failed to zip %s: %v", assetPath, err)
+				}
+
+				key, version, err := uploadAsset(awsSession, zipPath, bucket, stack)
+				if err != nil {
+					return nil, err
+				}
+				properties["CodeUri"] = map[string]interface{}{
+					"Bucket":  bucket,
+					"Key":     key,
+					"Version": version,
+				}
+			}
 		}
 	}
 
@@ -139,7 +164,8 @@ func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (
 		return "", "", fmt.Errorf("package %s: failed to open %s: %v", stack, assetPath, err)
 	}
 
-	hash := sha1.Sum(contents)
+	// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
+	hash := sha1.Sum(contents) // nolint: gosec
 	s3Key := fmt.Sprintf("%s/%x", stack, hash)
 	client := s3.New(awsSession)
 	response, err := client.HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
@@ -186,7 +212,7 @@ func prepareStack(awsSession *session.Session, stack string) (map[string]string,
 		cfn.StackStatusRollbackComplete, cfn.StackStatusRollbackFailed, cfn.StackStatusRollbackInProgress:
 		// A stack in one of these states must be deleted before we can apply new change sets.
 		// These are caused by a failed stack creation or deletion; in either case CFN already has
-		// tried destroying existing resources or is about to. (This is *not* a failed update)
+		// tried destroying existing resources or is about to. (This is *not* a failed update.)
 		// Deleted stacks are retained and viewable for 90 days.
 		logger.Warnf("deleting stack %s (%s) before it can be re-deployed", stack, status)
 		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stack}); err != nil {
@@ -298,7 +324,7 @@ func createChangeSet(
 	}
 
 	if len(template) <= maxTemplateSize {
-		createInput.TemplateBody = aws.String(string(template))
+		createInput.SetTemplateBody(string(template))
 	} else {
 		// Template is too big to be uploaded directly - save to file and upload to S3
 		path := filepath.Join("out", "deployments", stack+".yml")
@@ -306,11 +332,13 @@ func createChangeSet(
 			return nil, fmt.Errorf("faiiled to write %s: %v", path, err)
 		}
 
-		upload, err := uploadFileToS3(awsSession, path, bucket, stack+".yml", nil)
+		// Upload to S3 (only if it doesn't already exist)
+		key, _, err := uploadAsset(awsSession, path, bucket, stack)
 		if err != nil {
 			return nil, err
 		}
-		createInput.TemplateURL = &upload.Location
+		// https://s3.amazonaws.com/panther-bootstrap-source-59k5v24w3dkn/panther-cw-alarms/7be8e66f0a53d515ac6780bc80ec725f.template
+		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key))
 	}
 
 	logger.Infof("deploy: %s CloudFormation stack %s", changeSetType, stack)

@@ -96,16 +96,19 @@ func parseCfnTemplate(path string) (map[string]interface{}, error) {
 	}
 
 	// The Go yaml parser doesn't understand short-form functions.
-	// So we first use cfn-flip to flip the .yml to .json
-	jsonPath := filepath.Join("out", filepath.Base(path)+".json")
-	if err := sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {
-		return nil, fmt.Errorf("failed to flip %s to json: %v", path, err)
+	// So we first use cfn-flip to flip the .yml to .jon
+	if strings.ToLower(filepath.Ext(path)) != ".json" {
+		jsonPath := filepath.Join("out", filepath.Base(path)+".json")
+		if err := sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {
+			return nil, fmt.Errorf("failed to flip %s to json: %v", path, err)
+		}
+		defer os.Remove(jsonPath)
+		path = jsonPath
 	}
-	defer os.Remove(jsonPath)
 
-	contents, err := ioutil.ReadFile(jsonPath)
+	contents, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %v", jsonPath, err)
+		return nil, fmt.Errorf("failed to read %s: %v", path, err)
 	}
 
 	var result map[string]interface{}

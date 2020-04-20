@@ -313,7 +313,7 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	// └ python/policyuniverse-VERSION.dist-info/
 	//
 	// https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
-	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile); err != nil {
+	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile, false); err != nil {
 		logger.Fatalf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
 	}
 
@@ -332,9 +332,9 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 //
 // nolint: funlen
 func deployMainStacks(awsSession *session.Session, settings *config.PantherConfig, accountID string, outputs map[string]string) {
-	finishedStacks := make(chan string)
 	sourceBucket := outputs["SourceBucket"]
-	parallelStacks := 0
+	results := make(chan goroutineResult)
+	count := 0
 
 	// Alarms
 	//parallelStacks++
@@ -348,9 +348,9 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	//}(finishedStacks)
 
 	// Appsync
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, appsyncTemplate, sourceBucket, appsyncStack, map[string]string{
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, appsyncTemplate, sourceBucket, appsyncStack, map[string]string{
 			"ApiId":          outputs["GraphQLApiId"],
 			"ServiceRole":    outputs["AppsyncServiceRoleArn"],
 			"AnalysisApi":    "https://" + outputs["AnalysisApiEndpoint"],
@@ -358,95 +358,91 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"RemediationApi": "https://" + outputs["RemediationApiEndpoint"],
 			"ResourcesApi":   "https://" + outputs["ResourcesApiEndpoint"],
 		})
-		result <- appsyncStack
-	}(finishedStacks)
+		c <- goroutineResult{summary: appsyncStack, err: err}
+	}(results)
 
-	//// Cloud security
-	//parallelStacks++
-	//go func(result chan string) {
-	//	deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
-	//		"AnalysisApiId":         outputs["AnalysisApiId"],
-	//		"ComplianceApiId":       outputs["ComplianceApiId"],
-	//		"RemediationApiId":      outputs["RemediationApiId"],
-	//		"ResourcesApiId":        outputs["ResourcesApiId"],
-	//		"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
-	//		"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
-	//		"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
-	//		"SqsKeyId":              outputs["QueueEncryptionKeyId"],
-	//
-	//		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-	//		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-	//		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
-	//		"TracingMode":                settings.Monitoring.TracingMode,
-	//	})
-	//	result <- cloudsecStack
-	//}(finishedStacks)
-	//
-	//// Core
-	//parallelStacks++
-	//go func(result chan string) {
-	//	deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
-	//		"AppDomainURL":           outputs["LoadBalancerUrl"],
-	//		"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
-	//		"AnalysisApiId":          outputs["AnalysisApiId"],
-	//		"ComplianceApiId":        outputs["ComplianceApiId"],
-	//		"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
-	//		"SqsKeyId":               outputs["QueueEncryptionKeyId"],
-	//		"UserPoolId":             outputs["UserPoolId"],
-	//
-	//		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-	//		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-	//		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
-	//		"TracingMode":                settings.Monitoring.TracingMode,
-	//	})
-	//	result <- coreStack
-	//}(finishedStacks)
-	//
-	//// Dashboards
-	//parallelStacks++
-	//go func(result chan string) {
-	//	deployTemplate(awsSession, dashboardTemplate, sourceBucket, dashboardStack, nil)
-	//	result <- dashboardStack
-	//}(finishedStacks)
+	// Cloud security
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
+			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"ComplianceApiId":       outputs["ComplianceApiId"],
+			"RemediationApiId":      outputs["RemediationApiId"],
+			"ResourcesApiId":        outputs["ResourcesApiId"],
+			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
+			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+
+			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+			"TracingMode":                settings.Monitoring.TracingMode,
+		})
+		c <- goroutineResult{summary: cloudsecStack, err: err}
+	}(results)
+
+	// Core
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
+			"AppDomainURL":           outputs["LoadBalancerUrl"],
+			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
+			"AnalysisApiId":          outputs["AnalysisApiId"],
+			"ComplianceApiId":        outputs["ComplianceApiId"],
+			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
+			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
+			"UserPoolId":             outputs["UserPoolId"],
+
+			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+			"TracingMode":                settings.Monitoring.TracingMode,
+		})
+		c <- goroutineResult{summary: coreStack, err: err}
+	}(results)
+
+	// Dashboards
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, dashboardTemplate, sourceBucket, dashboardStack, nil)
+		c <- goroutineResult{summary: dashboardStack, err: err}
+	}(results)
 
 	// Glue
-	parallelStacks++
-	go func(result chan string) {
-		deployGlue(awsSession, outputs)
-		result <- glueStack
-	}(finishedStacks)
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: glueStack, err: deployGlue(awsSession, outputs)}
+	}(results)
 
-	//// Log analysis
-	//parallelStacks++
-	//go func(result chan string) {
-	//	deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
-	//		"AnalysisApiId":         outputs["AnalysisApiId"],
-	//		"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
-	//		"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
-	//		"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
-	//		"SqsKeyId":              outputs["QueueEncryptionKeyId"],
-	//
-	//		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-	//		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
-	//		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
-	//		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
-	//		"TracingMode":                  settings.Monitoring.TracingMode,
-	//	})
-	//	result <- logAnalysisStack
-	//}(finishedStacks)
+	// Log analysis
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
+			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
+			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+
+			"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+			"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
+			"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
+			"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
+			"TracingMode":                  settings.Monitoring.TracingMode,
+		})
+		c <- goroutineResult{summary: logAnalysisStack, err: err}
+	}(results)
 
 	// Web server
-	parallelStacks++
-	go func(result chan string) {
-		deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
-		result <- frontendStack
-	}(finishedStacks)
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
+		c <- goroutineResult{summary: frontendStack, err: err}
+	}(results)
 
 	// Wait for stacks to finish
-	// There will be two stacks (onboarding + monitoring) after this one
-	for i := 1; i <= parallelStacks; i++ {
-		logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
-	}
+	logResults(results, "deploy", count)
 
 	//// Metric filters have to be deployed after all log groups have been created
 	//go func(result chan string) {
@@ -468,20 +464,25 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	//}
 }
 
-func deployGlue(awsSession *session.Session, outputs map[string]string) {
-	deployTemplate(awsSession, glueTemplate, outputs["SourceBucket"], glueStack, map[string]string{
+func deployGlue(awsSession *session.Session, outputs map[string]string) error {
+	_, err := deployTemplate(awsSession, glueTemplate, outputs["SourceBucket"], glueStack, map[string]string{
 		"ProcessedDataBucket": outputs["ProcessedDataBucket"],
 	})
+	if err != nil {
+		return err
+	}
 
 	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
 	const workgroup = "primary"
 	athenaBucket := outputs["AthenaResultsBucket"]
 	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, athenaBucket); err != nil {
-		logger.Fatalf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
+		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
 	}
 	if err := athenaviews.CreateOrReplaceViews(athenaBucket); err != nil {
-		logger.Fatalf("failed to create/replace athena views for %s bucket: %v", athenaBucket, err)
+		return fmt.Errorf("failed to create/replace athena views for %s bucket: %v", athenaBucket, err)
 	}
+
+	return nil
 }
 
 // If the users list is empty (e.g. on the initial deploy), create the first user.

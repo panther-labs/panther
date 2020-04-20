@@ -53,7 +53,9 @@ func (t Glue) Update() {
 		logger.Fatalf("stack %s is not in a deployable state: %s", bootstrapStack, status)
 	}
 
-	deployGlue(awsSession, outputs)
+	if err = deployGlue(awsSession, outputs); err != nil {
+		logger.Fatal(err)
+	}
 }
 
 // Sync Sync glue table partitions after schema change
