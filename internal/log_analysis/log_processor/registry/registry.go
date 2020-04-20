@@ -23,6 +23,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
@@ -77,6 +78,20 @@ var (
 			&zeeklogs.ZeekDNS{}, zeeklogs.ZeekDNSDesc),
 		(&suricatalogs.AnomalyParser{}).LogType(): DefaultLogParser(&suricatalogs.AnomalyParser{},
 			&suricatalogs.Anomaly{}, suricatalogs.AnomalyDesc),
+		(&gitlablogs.APIParser{}).LogType(): DefaultLogParser(&gitlablogs.APIParser{},
+			&gitlablogs.API{}, gitlablogs.APIDesc),
+		(&gitlablogs.RailsParser{}).LogType(): DefaultLogParser(&gitlablogs.RailsParser{},
+			&gitlablogs.Rails{}, gitlablogs.RailsDesc),
+		(&gitlablogs.IntegrationsParser{}).LogType(): DefaultLogParser(&gitlablogs.IntegrationsParser{},
+			&gitlablogs.Integrations{}, gitlablogs.IntegrationsDesc),
+		(&gitlablogs.GitParser{}).LogType(): DefaultLogParser(&gitlablogs.GitParser{},
+			&gitlablogs.Git{}, gitlablogs.GitDesc),
+		(&gitlablogs.AuditParser{}).LogType(): DefaultLogParser(&gitlablogs.AuditParser{},
+			&gitlablogs.Audit{}, gitlablogs.AuditDesc),
+		(&gitlablogs.ExceptionsParser{}).LogType(): DefaultLogParser(&gitlablogs.ExceptionsParser{},
+			&gitlablogs.Exceptions{}, gitlablogs.ExceptionsDesc),
+		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
+			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
 	}
 )
 
