@@ -153,7 +153,7 @@ func (pl *PantherLog) AppendAnyIPAddressInField(value string) bool {
 		return false
 	}
 	for _, match := range matchedIPs {
-		if pl.AppendAnyIPAddress(match) == false {
+		if !pl.AppendAnyIPAddress(match) {
 			return false
 		}
 	}
