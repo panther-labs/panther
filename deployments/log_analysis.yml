@@ -817,7 +817,7 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource:
-                - arn:aws:s3:::panther-bootstrap-historicaldata-* # FIXME !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}*
+                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}*
                 - arn:aws:s3:::panther-datacatalog-updater-test-* # used for integration tests
 
   AthenaApiLogGroup:
