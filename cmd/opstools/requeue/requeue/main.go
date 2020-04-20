@@ -50,7 +50,7 @@ func main() {
 
 	validateFlags()
 
-	err = requeue.Requeue(sqs.New(sess), *FROMQ, *TOQ)
+	err = requeue.Requeue(sqs.New(sess), *sess.Config.Region, *FROMQ, *TOQ)
 	if err != nil {
 		log.Fatal(err)
 	}
