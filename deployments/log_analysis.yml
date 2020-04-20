@@ -749,8 +749,7 @@ Resources:
                 - s3:List*
                 - s3:GetObject
               Resource:
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
                 - arn:aws:s3:::panther-athena-api-processeddata-test-* # used for integration tests
         - Id: StepsPermissions # start an async workflow that tracks the query execution
           Version: 2012-10-17
