@@ -103,3 +103,177 @@ Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
 </table>
 
+##Suricata.DNS
+Suricata parser for the DNS event type in the EVE JSON output.
+Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#dns
+<table>
+<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
+<tr><td valign=top><code>community_id</code></td><td><code>string</code></td><td valign=top>Suricata DNS CommunityID</td></tr>
+<tr><td valign=top><code><b>dns</b></code></td><td><code>"DNSDetailsAnswers":{
+<br>&nbsp;&nbsp;"rdata": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"rrname": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"rrtype": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"ttl": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;}
+<br>}<br><br>"DNSDetailsAuthorities":{
+<br>&nbsp;&nbsp;"rrname": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"rrtype": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"ttl": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;}
+<br>}<br><br>"DNSDetailsGrouped":{
+<br>&nbsp;&nbsp;"A": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"AAAA": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"CNAME": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"MX": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"PTR": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"TXT": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;}
+<br>}<br><br>{
+<br>&nbsp;&nbsp;"aa": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "boolean"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"answers": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "DNSDetailsAnswers"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"authorities": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "DNSDetailsAuthorities"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"flags": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"grouped": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"$ref": "DNSDetailsGrouped"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"id": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"qr": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "boolean"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"ra": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "boolean"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"rcode": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"rd": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "boolean"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"rrname": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"rdata": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"rrtype": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"ttl": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"tx_id": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"version": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;}
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Suricata DNS DNS</td></tr>
+<tr><td valign=top><code><b>dest_ip</b></code></td><td><code>string</code></td><td valign=top>Suricata DNS DestIP</td></tr>
+<tr><td valign=top><code>dest_port</code></td><td><code>int</code></td><td valign=top>Suricata DNS DestPort</td></tr>
+<tr><td valign=top><code><b>event_type</b></code></td><td><code>string</code></td><td valign=top>Suricata DNS EventType</td></tr>
+<tr><td valign=top><code>flow_id</code></td><td><code>bigint</code></td><td valign=top>Suricata DNS FlowID</td></tr>
+<tr><td valign=top><code>pcap_cnt</code></td><td><code>bigint</code></td><td valign=top>Suricata DNS PcapCnt</td></tr>
+<tr><td valign=top><code>pcap_filename</code></td><td><code>string</code></td><td valign=top>Suricata DNS PcapFilename</td></tr>
+<tr><td valign=top><code><b>proto</b></code></td><td><code>bigint</code></td><td valign=top>Suricata DNS Proto</td></tr>
+<tr><td valign=top><code><b>src_ip</b></code></td><td><code>string</code></td><td valign=top>Suricata DNS SrcIP</td></tr>
+<tr><td valign=top><code>src_port</code></td><td><code>int</code></td><td valign=top>Suricata DNS SrcPort</td></tr>
+<tr><td valign=top><code><b>timestamp</b></code></td><td><code>timestamp</code></td><td valign=top>Suricata DNS Timestamp</td></tr>
+<tr><td valign=top><code>vlan</code></td><td><code>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Suricata DNS Vlan</td></tr>
+<tr><td valign=top><code><b>p_log_type</b></code></td><td><code>string</code></td><td valign=top>Panther added field with type of log</td></tr>
+<tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
+<tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
+<tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
+<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top><code>p_any_domain_names</code></td><td><code>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>{
+<br>&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"type": "array"
+<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+</table>
+
