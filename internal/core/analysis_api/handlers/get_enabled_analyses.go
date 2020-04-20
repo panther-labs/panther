@@ -32,8 +32,8 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// GetEnabledPolicies fetches all enabled policies from an organization for backend processing.
-func GetEnabledPolicies(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+// GetEnabledAnalyses fetches all enabled policies or rules.
+func GetEnabledAnalyses(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	analysisType, err := parseAnalysisType(request)
 	if err != nil {
 		return badRequest(err)
@@ -77,7 +77,7 @@ func buildEnabledScan(ruleType string) (*dynamodb.ScanInput, error) {
 	filter := expression.Equal(expression.Name("enabled"), expression.Value(true))
 	filter = filter.And(expression.Equal(expression.Name("type"), expression.Value(ruleType)))
 	projection := expression.NamesList(
-		// does not include unit tests, last modified, org id, reference, tags, etc
+		// does not include unit tests, last modified, reference, tags, etc
 		expression.Name("body"),
 		expression.Name("id"),
 		expression.Name("resourceTypes"),

@@ -306,6 +306,23 @@ BackendParameterValues:
   PythonLayerVersionArn: 'arn:aws:lambda:us-east-2:123456789012:layer:my-layer:3'
 ```
 
+## Reusable Code
+
+Often, you may find yourself repeating the same logic over and over again when writing policies. A common pattern in programming is to extract this repeated code out into helper functions, which is something we support in Panther with the `global` analysis type. Currently, each deployment can have exactly one `global` analysis type, which can define functions and variables that can be imported and used by your policies. 
+
+To make use of this `global`, simply add `import panther` to your policy code and then you can use the helper functions defined there as if it were any other python library. For example:
+
+```python
+import panther
+
+def policy(resource):
+    bucket_name = panther.get_s3_arn_by_name(resource['bucket'])
+    bucket = panther.resource_lookup(bucket_name)
+    return bucket['EncryptionRules'] is not None
+```
+
+This policy first makes use of a function named `get_s3_arn_by_name` to convert an s3 bucket name into an s3 bucket ARN. Secondly, this policy makes use of a function named `resource_lookup` which communicates with the Panther backend to lookup the body of a different resource than the one being evaluated based on it's ARN. This allows the contents of one resource to be used in the evaluation of another resource. Both of these functions (and a few others) are deployed as part of the default out of the box `global` when a new Panther deployment is completed. Modifying this `global` is currently only supported via the `panther_analysis_tool`, with UI support coming soon.
+
 ## Policy Writing Tips
 
 ### Constructing test resources

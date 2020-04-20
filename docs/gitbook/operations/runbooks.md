@@ -27,19 +27,19 @@ This lambda dispatches alerts to their specified outputs (destinations).
  * Failed events will go into the `panther-alerts-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alerts-queue` using the Panther tool `requeue`.
 
 ## panther-alert-forwarder
-The `panther-alert-forwarder` ddb table is updated conditionally when new policies have a violation
- or a time limit has been exceeded.
-
- Failure Impact
- * Processing of alerts could be slowed or stopped if there are errors/throttles.
-
-## panther-alert-forwarder
 The `panther-alert-forwarder` lambda reads from the ddb stream for the table `panther-alert-forwarder`
  and sends them to the `panther-alerts-queue` sqs queue.
 
  Failure Impact
  * Failure of this lambda will stop delivery of alerts to destinations.
  * There will be no data loss until events are purged from the ddb stream (24 hours).
+
+## panther-alert-forwarder
+The `panther-alert-forwarder` ddb table is updated conditionally when new policies have a violation
+ or a time limit has been exceeded.
+
+ Failure Impact
+ * Processing of alerts could be slowed or stopped if there are errors/throttles.
 
 ## panther-alert-processor
 This lambda reads events from the `panther-alert-processor-queue`
@@ -72,7 +72,7 @@ Lambda for CRUD actions for the alerts API.
  * Failure of this lambda will impact the Panther user interface.
 
 ## panther-alerts-queue
-This sqs q does hold alerts to be delivery to user configured destinations.
+This sqs queue holds alerts to be delivered to user configured destinations.
 
  Failure Impact
  * Failure of this sqs q will impact delivery of alerts to output destinations.
@@ -93,14 +93,14 @@ This ddb table holds the policies applied by the `panther-rules-engine` lambda a
  * The Panther user interface could be impacted.
 
 ## panther-analysis-api
+The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+
+## panther-analysis-api
 This lambda implements the analysis API which is responsible for
  policies/rules from being created, updated, and deleted.
 
  Failure Impact
  * Failure of this lambda will prevent policies/rules from being created, updated, deleted. Additionally, policies and rules will stop being evaluated by the policy/rules engines.
-
-## panther-analysis-api
-The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
 
 ## panther-auditlog-processing
 The panther-auditlog-processing topic is used to send s3 notifications to log processing
@@ -196,6 +196,26 @@ This is the dead letter queue for the `panther-input-data-notifications-queue`.
  When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
  the Panther tool `requeue`.
 
+## panther-layer-manager
+This lambda manages updates to the lambda layers attached to the Panther policy and rule engines.
+
+ Failure Impact
+ * Failure of this lambda will prevent users from updating global helper functions.
+ * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue`.
+
+## panther-layer-manager-queue
+This sqs queue is used to communicate layer update requests to the layer manager function.
+
+ Failure Impact
+ * Failure of this sqs queue will prevent users from updating the globals layer.
+ * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered, one event should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue` and the rest should be purged.
+
+## panther-layer-manager-queue-dlq
+This is the dead letter queue for the `panther-layer-manager-queue`.
+ Items are in this queue due to a failure of the `panther-layer-manager` lambda.
+ When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using
+ the Panther tool `requeue`.
+
 ## panther-log-alert-dedup
 The `panther-rules-engine` lambda manages this table and it is used to
  deduplicate of alerts. The `panther-log-alert-forwarder` reads the ddb stream from this table.
@@ -265,13 +285,13 @@ This lambda executes the user-defined policies against infrastructure events.
 This topic triggers the log analysis flow
 
 ## panther-remediation-api
+The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
+
+## panther-remediation-api
 The `panther-remediation-api` lambda triggers AWS remediations.
 
  Failure Impact
  * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
-
-## panther-remediation-api
-The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
 
 ## panther-remediation-processor
 The `panther-remediation-processor` lambda processes queued remediations
@@ -313,14 +333,14 @@ This table holds descriptions of the AWS resources in all accounts being monitor
  * The Panther user interface could be impacted.
 
 ## panther-resources-api
+The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
+
+## panther-resources-api
 The `panther-resources-api` lambda implements the resources API.
 
  Failure Impact
  * Infrastructure scans may be impacted when updating resources.
  * The Panther user interface for display of resources.
-
-## panther-resources-api
-The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
 
 ## panther-resources-queue
 This sqs queue has events from recently changed infrastructure.

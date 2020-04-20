@@ -51,6 +51,14 @@ parameters: # Parameters shared across multiple methods
     type: string
     pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
+  globalId:
+    name: globalId
+    in: query
+    description: Unique ASCII global identifier
+    required: true
+    type: string
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
   type:
     name: type
     in: query
@@ -60,6 +68,7 @@ parameters: # Parameters shared across multiple methods
     enum:
       - POLICY
       - RULE
+      - GLOBAL
 
   versionId:
     name: versionId
@@ -69,6 +78,71 @@ parameters: # Parameters shared across multiple methods
     pattern: '[a-zA-Z\._0-9]{32}'
 
 paths:
+  /global:
+    # The UI global detail shows all details for an individual global.
+    #
+    # Example: GET /global? globalId=panther
+    #
+    # Response: {
+    #     "body":                      "def policy(resource): return True",
+    #     "createdAt":                 "2019-08-26T00:00:00.000Z",
+    #     "createdBy":                 "5f54cf4a-ec56-44c2-83bc-8b742600f307",
+    #     "description":               "This policy is always compliant",
+    #     "id":                        "BucketEncryptionEnabled",
+    #     "lastModified":              "2019-08-26T00:00:00.000Z",
+    #     "lastModifiedBy":            "5f54cf4a-ec56-44c2-83bc-8b742600f307",
+    #     "tags":                      [],
+    #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
+    # }
+    get:
+      operationId: GetGlobal
+      summary: Get global details
+      parameters:
+        - $ref: '#/parameters/globalId'
+        - $ref: '#/parameters/versionId'
+
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Global'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Global does not exist
+        500:
+          description: Internal server error
+
+    # When users create a new global, the frontend uses this endpoint.
+    #
+    # This is almost identical to updating a global, except the globalId must not already exist.
+    #
+    # Example: (see ModifyGlobal)
+    post:
+      operationId: CreateGlobal
+      summary: Create a new global module
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateGlobal'
+      responses:
+        201:
+          description: Global created successfully
+          schema:
+            $ref: '#/definitions/Global'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        409:
+          description: Global with the given ID already exists
+        500:
+          description: Internal server error
+
   /policy:
     # The UI policy detail shows all details for an individual policy.
     #
@@ -216,6 +290,27 @@ paths:
     post:
       operationId: DeletePolicies
       summary: Delete one or more policies/rules
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/DeletePolicies'
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+  /global/delete:
+    # Same as DeletePolicies, but for a global module
+    post:
+      operationId: DeleteGlobals
+      summary: Delete one or more globals
       parameters:
         - name: body
           in: body
@@ -553,6 +648,31 @@ paths:
         500:
           description: Internal server error
 
+  /global/update:
+    # Same as UpdatePolicy, but for a global module
+    post:
+      operationId: ModifyGlobal
+      summary: Modify an existing global
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateGlobal'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Global'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Global not found
+        500:
+          description: Internal server error
+
   /upload:
     # Upload base64-encoded zipfile contents with multiple policies/rules for a single org.
     #
@@ -725,6 +845,7 @@ definitions:
   AnalysisType:
     type: string
     enum:
+      - GLOBAL
       - POLICY
       - RULE
 
@@ -978,6 +1099,57 @@ definitions:
     required:
       - policyIds
       - resourcePatterns
+
+  ##### Create/Modify/Update Globals #####
+  Global:
+    type: object
+    properties:
+      body:
+        $ref: '#/definitions/body'
+      createdAt:
+        $ref: '#/definitions/modifyTime'
+      createdBy:
+        $ref: '#/definitions/userId'
+      description:
+        $ref: '#/definitions/description'
+      id:
+        $ref: '#/definitions/id'
+      lastModified:
+        $ref: '#/definitions/modifyTime'
+      lastModifiedBy:
+        $ref: '#/definitions/userId'
+      tags:
+        $ref: '#/definitions/tags'
+      versionId:
+        $ref: '#/definitions/versionId'
+    required:
+      - body
+      - createdAt
+      - createdBy
+      - description
+      - id
+      - lastModified
+      - lastModifiedBy
+      - tags
+      - versionId
+
+  UpdateGlobal:
+    type: object
+    properties:
+      body:
+        $ref: '#/definitions/body'
+      description:
+        $ref: '#/definitions/description'
+      id:
+        $ref: '#/definitions/id'
+      tags:
+        $ref: '#/definitions/tags'
+      userId:
+        $ref: '#/definitions/userId'
+    required:
+      - body # is this needed if someone just wants to update the meta data?
+      - id
+      - userId
 
   ##### Create/Modify/Update Rules (Log Analysis) #####
   Rule:
