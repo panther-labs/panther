@@ -159,7 +159,9 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 
 		item.CreatedAt = oldItem.CreatedAt
 		item.CreatedBy = oldItem.CreatedBy
-		changeType = updatedItem
+		if itemUpdated(oldItem, item) {
+			changeType = updatedItem
+		}
 	}
 
 	item.LastModified = models.ModifyTime(time.Now())
@@ -194,6 +196,51 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		// entire API call as a failure.
 	}
 	return changeType, nil
+}
+
+// itemUpdated checks if ANY field has been changed between the old and new item. Only used to inform users whether the
+// result of a BulkUpload operation actually changed something or not.
+//
+// DO NOT use this for situations the items MUST be exactly equal, this is a "good enough" approximation for the
+// purpose it serves, which is informing users that their bulk operation did or did not change something. Some fields
+// are not checked, and some are not checked adequately (e.g. test bodies)
+func itemUpdated(oldItem, newItem *tableItem) bool {
+	itemsEqual := oldItem.AutoRemediationID == newItem.AutoRemediationID && oldItem.Body == newItem.Body &&
+		oldItem.Description == newItem.Description && oldItem.DisplayName == newItem.DisplayName &&
+		oldItem.Enabled == newItem.Enabled && oldItem.Reference == newItem.Reference &&
+		oldItem.Runbook == newItem.Runbook && oldItem.Severity == newItem.Severity &&
+		oldItem.DedupPeriodMinutes == newItem.DedupPeriodMinutes &&
+		setEquality(oldItem.ResourceTypes, newItem.ResourceTypes) &&
+		setEquality(oldItem.Suppressions, newItem.Suppressions) && setEquality(oldItem.Tags, newItem.Tags) &&
+		len(oldItem.AutoRemediationParameters) == len(newItem.AutoRemediationParameters) &&
+		len(oldItem.Tests) == len(newItem.Tests)
+
+	if itemsEqual {
+		// Check AutoRemediationParameters for equality (we can't compare maps with ==)
+		for key, value := range oldItem.AutoRemediationParameters {
+			if newValue, ok := newItem.AutoRemediationParameters[key]; !ok || newValue != value {
+				// Something changed, so this item has been updated
+				return true
+			}
+		}
+		// Check Tests for equality
+		oldTests := make(map[models.TestName]*models.UnitTest)
+		for _, test := range oldItem.Tests {
+			oldTests[test.Name] = test
+		}
+		for _, newTest := range newItem.Tests {
+			oldTest, ok := oldTests[newTest.Name]
+			// The test Resource gets sorted by Dynamo in some fashion that is hard to replicate without converting
+			// the whole string to a struct, so we just check if they're approximately equal
+			if !ok || oldTest.ResourceType != newTest.ResourceType || oldTest.ExpectedResult != newTest.ExpectedResult {
+				// Something changed, so this item has been updated
+				return true
+			}
+		}
+	}
+
+	// If they're the same, the item wasn't really updated
+	return !itemsEqual
 }
 
 // Sort a slice of strings ignoring case when possible
