@@ -46,9 +46,9 @@ var (
 )
 
 type EnvConfig struct {
-	AthenaBucket      string `envconfig:"ATHENA_BUCKET"`
-	AppSyncEndpoint   string `envconfig:"GRAPHQL_ENDPOINT"`
-	PantherTablesOnly bool   `envconfig:"PANTHER_TABLES_ONLY"` // if true, only return tables from Panther databases
+	AthenaBucket      string `default:"" split_words:"true"`
+	GraphqlEndpoint   string `required:"true" split_words:"true"`
+	PantherTablesOnly bool   `default:"false" split_words:"true"` // if true, only return tables from Panther databases
 }
 
 func SessionInit() {

@@ -63,6 +63,7 @@ var (
 func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
+		os.Setenv("GRAPHQL_ENDPOINT", "placeholder, this is required")
 		SessionInit()
 		lambdaClient = lambda.New(awsSession)
 		s3Client = s3.New(awsSession)
@@ -319,6 +320,18 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		require.Equal(t, models.QueryFailed, executeCreateTableAsOutput.Status)
 		assert.True(t, strings.Contains(executeCreateTableAsOutput.SQLError, "Insufficient permissions"))
 		assert.Equal(t, createTableAsSQL, executeCreateTableAsOutput.SQL)
+	}
+
+	// -------- ExecuteQuery() Panther table
+
+	if useLambda { // only for lambda to test s3 read permissions on panther data
+		var executeCreateTableAsInput models.ExecuteQueryInput
+		executeCreateTableAsInput.UserID = aws.String(testUserID)
+		executeCreateTableAsInput.DatabaseName = "panther_logs"
+		executeCreateTableAsInput.SQL = "select count(1) from aws_s3serveraccess"
+		executeCreateTableAsOutput, err := runExecuteQuery(useLambda, &executeCreateTableAsInput)
+		require.NoError(t, err)
+		require.Equal(t, models.QuerySucceeded, executeCreateTableAsOutput.Status)
 	}
 
 	//  -------- ExecuteAsyncQuery()

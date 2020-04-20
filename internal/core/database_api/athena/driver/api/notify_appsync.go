@@ -93,7 +93,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 
 	body := bytes.NewReader(jsonMessage) // JSON envelope for graphQL
 
-	req, err := http.NewRequest("POST", envConfig.AppSyncEndpoint, body)
+	req, err := http.NewRequest("POST", envConfig.GraphqlEndpoint, body)
 	if err != nil {
 		err = errors.Wrapf(err, "new htttp request failed for: %#v", input)
 		return &output, err
