@@ -155,6 +155,23 @@ func TestAppendAnyIPsInField(t *testing.T) {
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
 
+func TestAppendAnyIPsInFieldMultiple(t *testing.T) {
+	event := PantherLog{}
+	require.True(t, event.AppendAnyIPAddressInFieldPtr(aws.String("connection established from 206.206.199.127 to 186.28.188.20")))
+	require.True(t, event.AppendAnyIPAddressInField("Accepted publickey from 221.19.216.201 to 229.12.27.176 port 54717"))
+	require.False(t, event.AppendAnyIPAddressInField("connection established"))
+
+	expectedAny := &PantherAnyString{
+		set: map[string]struct{}{
+			"206.206.199.127": {},
+			"186.28.188.20":   {},
+			"221.19.216.201":  {},
+			"229.12.27.176":   {},
+		},
+	}
+	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+}
+
 func TestAppendAnyIPV4(t *testing.T) {
 	event := PantherLog{}
 	require.True(t, event.AppendAnyIPAddressPtr(aws.String("192.168.1.1")))
