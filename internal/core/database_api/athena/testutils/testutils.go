@@ -178,9 +178,7 @@ func SetupTables(t *testing.T, glueClient glueiface.GlueAPI, s3Client s3iface.S3
 func AddTables(t *testing.T, glueClient glueiface.GlueAPI, s3Client s3iface.S3API) {
 	var err error
 
-	bucketInput := &s3.CreateBucketInput{Bucket: aws.String(TestBucket)}
-	_, err = s3Client.CreateBucket(bucketInput)
-	require.NoError(t, err)
+	CreateBucket(t, s3Client, TestBucket)
 
 	dbInput := &glue.CreateDatabaseInput{
 		DatabaseInput: &glue.DatabaseInput{
@@ -256,6 +254,12 @@ func RemoveTables(t *testing.T, glueClient glueiface.GlueAPI, s3Client s3iface.S
 	glueClient.DeleteDatabase(dbInput) // nolint (errcheck)
 
 	RemoveBucket(s3Client, TestBucket)
+}
+
+func CreateBucket(t *testing.T, client s3iface.S3API, bucketName string) {
+	bucketInput := &s3.CreateBucketInput{Bucket: aws.String(bucketName)}
+	_, err := client.CreateBucket(bucketInput)
+	require.NoError(t, err)
 }
 
 func RemoveBucket(client s3iface.S3API, bucketName string) {

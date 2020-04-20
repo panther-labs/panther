@@ -73,9 +73,10 @@ func SQS(event events.SQSEvent) error {
 
 			if created { // schedule conversion to Parquet
 				input := &GenerateParquetInput{
-					DatabaseName:  gluePartition.GetDatabase(),
-					TableName:     gluePartition.GetTable(),
-					PartitionHour: gluePartition.GetHour(),
+					DatabaseName:         gluePartition.GetDatabase(),
+					TableName:            gluePartition.GetTable(),
+					HistoricalBucketName: envConfig.HistoricalDataBucket,
+					PartitionHour:        gluePartition.GetHour(),
 				}
 				_, err = GenerateParquet(input)
 				if err != nil {

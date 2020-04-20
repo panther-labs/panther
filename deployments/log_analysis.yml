@@ -762,7 +762,7 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
-        - Id: PantherS3ReadPermissions # athena reads from S3, restrict to our processed data buckets
+        - Id: PantherProcessedDataReadPermissions # athena reads from S3, restrict to our processed data buckets
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -773,8 +773,6 @@ Resources:
               Resource:
                 - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
                 - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
-                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}/logs/*
-                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}/rules/*
                 - arn:aws:s3:::panther-athena-api-processeddata-test-* # used for integration tests
         - Id: StepsPermissions # start an async workflow that tracks the query execution
           Version: 2012-10-17
@@ -799,7 +797,17 @@ Resources:
               Action:
                 - appsync:GraphQL
               Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:apis/${GraphQLApiId}/types/Mutation/fields/queryDone
-        - Id: CTASWritePermissions # athena writes results to S3 for Parquet generation
+        - Id: GlueCTASPermissions # used for CTAS in panther_temp database to create temp tables
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:CreateTable
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther_temp
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther_temp/*
+        - Id: PantherHistoricalDataPermissions # allow reads for queries and writes for Parquet generation
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -809,8 +817,8 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource:
-                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}/logs/*
-                - !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}/rules/*
+                - arn:aws:s3:::panther-bootstrap-historicaldata-* # FIXME !Sub arn:${AWS::Partition}:s3:::${HistoricalDataBucket}*
+                - arn:aws:s3:::panther-datacatalog-updater-test-* # used for integration tests
 
   AthenaApiLogGroup:
     Type: AWS::Logs::LogGroup

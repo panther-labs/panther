@@ -61,7 +61,7 @@ FROM "%s"."%s" where year=%d and month=%d and day=%d and hour=%d order by p_even
 )
 
 var (
-	ctasDelay = time.Hour * 2 // how long to wait to convert partition
+	ctasDelay = time.Duration(0) // FIXME: put back: time.Hour * 2 // how long to wait to convert partition
 )
 
 // LambdaInput is the collection of all possible args to the Lambda function used with the genericapi
@@ -77,10 +77,11 @@ type UpdateParquetPartitionOutput struct {
 }
 
 type GenerateParquetInput struct {
-	DatabaseName  string
-	TableName     string
-	PartitionHour time.Time
-	FailureCount  int // FIXME: add retries
+	DatabaseName         string
+	TableName            string
+	HistoricalBucketName string
+	PartitionHour        time.Time
+	FailureCount         int // FIXME: add retries
 }
 
 func GenerateParquet(input *GenerateParquetInput) (workflowID string, err error) {
@@ -95,7 +96,7 @@ func GenerateParquet(input *GenerateParquetInput) (workflowID string, err error)
 	tag := uuid.New().String()
 
 	// generate CTAS sql
-	ctasSQL := generateCtasSQL(input.DatabaseName, input.TableName, envConfig.HistoricalDataBucket, columns, input.PartitionHour, tag)
+	ctasSQL := generateCtasSQL(input.DatabaseName, input.TableName, input.HistoricalBucketName, columns, input.PartitionHour, tag)
 
 	// generate userData as JSON from inputs so we can update partition when done the Parquet generation in UpdateParquetPartition()
 	userData, err := jsoniter.Marshal(input)

@@ -36,12 +36,18 @@ import (
 	"github.com/panther-labs/panther/pkg/awsathena"
 )
 
+const (
+	TestHistoricalBucketPrefix = "panther-datacatalog-updater-test-"
+)
+
 var (
 	integrationTest bool
 
 	sfnClient    sfniface.SFNAPI
 	s3Client     s3iface.S3API
 	athenaClient athenaiface.AthenaAPI
+
+	TestHistoricalBucket string
 )
 
 func TestMain(m *testing.M) {
@@ -53,6 +59,8 @@ func TestMain(m *testing.M) {
 		athenaClient = athena.New(awsSession)
 
 		ctasDelay = 0 // no delay
+
+		TestHistoricalBucket = TestHistoricalBucketPrefix + time.Now().Format("20060102150405")
 	}
 	os.Exit(m.Run())
 }
@@ -63,17 +71,20 @@ func TestGenerateParquet(t *testing.T) {
 	}
 
 	testutils.SetupTables(t, glueClient, s3Client)
+	testutils.CreateBucket(t, s3Client, TestHistoricalBucket)
 	defer func() {
 		testutils.RemoveTables(t, glueClient, s3Client)
+		testutils.RemoveBucket(s3Client, TestHistoricalBucket)
 	}()
 
 	envConfig.HistoricalDataBucket = testutils.TestBucket
 
 	// execute CTAS via Athena api Step Function
 	input := &GenerateParquetInput{
-		DatabaseName:  testutils.TestDb,
-		TableName:     testutils.TestTable,
-		PartitionHour: testutils.TestPartitionTime,
+		DatabaseName:         testutils.TestDb,
+		TableName:            testutils.TestTable,
+		HistoricalBucketName: TestHistoricalBucket,
+		PartitionHour:        testutils.TestPartitionTime,
 	}
 	workflowID, err := GenerateParquet(input)
 	require.NoError(t, err)
