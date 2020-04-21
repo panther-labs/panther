@@ -168,6 +168,15 @@ func createChangeSet(
 		})
 	}
 
+	// tag with major version
+	var pantherVersion string
+	gitVersionParts := strings.Split(gitVersion, "-")
+	if len(gitVersionParts) > 1 {
+		pantherVersion = gitVersionParts[0]
+	} else {
+		pantherVersion = gitVersion
+	}
+
 	createInput := &cloudformation.CreateChangeSetInput{
 		Capabilities: []*string{
 			aws.String("CAPABILITY_AUTO_EXPAND"),
@@ -186,7 +195,7 @@ func createChangeSet(
 			},
 			{
 				Key:   aws.String("PantherVersion"),
-				Value: &gitVersion,
+				Value: &pantherVersion,
 			},
 			{
 				Key:   aws.String("Stack"),
