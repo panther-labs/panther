@@ -18,6 +18,7 @@
 
 import { SeverityEnum } from 'Generated/schema';
 import { BadgeProps } from 'pouncejs';
+import { getStableVersion } from 'Helpers/utils';
 
 export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');
 
@@ -80,17 +81,26 @@ export const LOG_TYPES = [
   'AWS.ALB',
   'AWS.AuroraMySQLAudit',
   'AWS.CloudTrail',
-  'Fluentd.Syslog3164',
-  'Fluentd.Syslog5424',
+  'AWS.CloudTrailInsight',
   'AWS.GuardDuty',
   'AWS.S3ServerAccess',
   'AWS.VPCFlow',
+  'Fluentd.Syslog3164',
+  'Fluentd.Syslog5424',
+  'GitLab.API',
+  'GitLab.Audit',
+  'GitLab.Exceptions',
+  'GitLab.Git',
+  'GitLab.Integrations',
+  'GitLab.Rails',
   'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
   'Osquery.Snapshot',
   'Osquery.Status',
   'OSSEC.EventInfo',
+  'Suricata.Anomaly',
+  'Suricata.DNS',
   'Syslog.RFC3164',
   'Syslog.RFC5424',
 ] as const;
@@ -103,7 +113,11 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } 
   [SeverityEnum.Info]: 'neutral' as const,
 };
 
-export const PANTHER_SCHEMA_DOCS_LINK = 'https://runpanther.io/docs';
+export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
+
+export const PANTHER_SCHEMA_DOCS_LINK = `${PANTHER_SCHEMA_DOCS_MASTER_LINK}/v/${getStableVersion(
+  process.env.PANTHER_VERSION
+)}`;
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
 export const DEFAULT_LARGE_PAGE_SIZE = 25;

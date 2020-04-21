@@ -220,7 +220,7 @@ Resources:
         #end
 
   DeleteUserResolver:
-    Type: 'AWS::AppSync::Resolver'
+    Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
@@ -245,7 +245,7 @@ Resources:
         #end
 
   ListUsersResolver:
-    Type: 'AWS::AppSync::Resolver'
+    Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
@@ -268,7 +268,7 @@ Resources:
         #end
 
   InviteUserResolver:
-    Type: 'AWS::AppSync::Resolver'
+    Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
