@@ -181,6 +181,16 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "alxarch",
+      "name": "Alexandros Sigalas",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/445794?v=4",
+      "profile": "https://github.com/alxarch",
+      "contributions": [
+        "code",
+        "security"
+      ]
     }
   ],
   "contributorsPerLine": 7,
