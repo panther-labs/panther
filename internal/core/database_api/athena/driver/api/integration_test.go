@@ -482,7 +482,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		getQueryStatusOutput, err := runGetQueryStatus(useLambda, &getQueryStatusInput)
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
-			require.Equal(t, models.QueryCanceled, getQueryStatusOutput.Status)
+			require.Equal(t, models.QueryCancelled, getQueryStatusOutput.Status)
 			assert.Equal(t, getQueryStatusOutput.SQLError, "Query canceled")
 			assert.Equal(t, testSQL, getQueryStatusOutput.SQL)
 			break

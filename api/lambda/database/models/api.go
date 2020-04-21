@@ -26,7 +26,7 @@ const (
 	QuerySucceeded = "succeeded"
 	QueryFailed    = "failed"
 	QueryRunning   = "running"
-	QueryCanceled  = "canceled"
+	QueryCancelled = "cancelled"
 )
 
 // LambdaInput is the collection of all possible args to the Lambda function.
