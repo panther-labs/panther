@@ -103,12 +103,6 @@ export const LOG_TYPES = [
   'Suricata.DNS',
   'Syslog.RFC3164',
   'Syslog.RFC5424',
-  'GitLab.Rails',
-  'GitLab.API',
-  'GitLab.Audit',
-  'GitLab.Integrations',
-  'GitLab.Exceptions',
-  'GitLab.Git',
 ] as const;
 
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
