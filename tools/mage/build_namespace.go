@@ -39,16 +39,22 @@ type Build mg.Namespace
 
 // API Generate API source files from GraphQL + Swagger
 func (b Build) API() {
+	if err := b.api(); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func (b Build) api() error {
 	specs, err := filepath.Glob(swaggerGlob)
 	if err != nil {
-		logger.Fatalf("failed to glob %s: %v", swaggerGlob, err)
+		return fmt.Errorf("failed to glob %s: %v", swaggerGlob, err)
 	}
 
 	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
 
 	cmd := filepath.Join(setupDirectory, "swagger")
 	if _, err = os.Stat(cmd); err != nil {
-		logger.Fatalf("%s not found (%v): run 'mage setup'", cmd, err)
+		return fmt.Errorf("%s not found (%v): run 'mage setup'", cmd, err)
 	}
 
 	for _, spec := range specs {
@@ -58,7 +64,7 @@ func (b Build) API() {
 
 		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models}
 		if err := sh.Run(cmd, args...); err != nil {
-			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
+			return fmt.Errorf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
 
 		// If an API model is removed, "swagger generate" will leave the Go file in place.
@@ -85,12 +91,14 @@ func (b Build) API() {
 
 	logger.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
-		logger.Fatalf("graphql generation failed: %v", err)
+		return fmt.Errorf("graphql generation failed: %v", err)
 	}
 	fmtLicense("web/__generated__")
 	if err := prettier("web/__generated__/*"); err != nil {
 		logger.Warnf("prettier web/__generated__/ failed: %v", err)
 	}
+
+	return nil
 }
 
 // Lambda Compile Go Lambda function source

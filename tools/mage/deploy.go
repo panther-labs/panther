@@ -28,7 +28,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -194,64 +193,81 @@ func deployPrecheck(awsRegion string) {
 // Returns combined outputs from bootstrap stacks.
 func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[string]string {
 	var outputs map[string]string
-	var wg sync.WaitGroup
-	wg.Add(1)
 
-	// Deploy first bootstrap stack
-	go func() {
-		defer wg.Done()
+	results := make(chan goroutineResult)
+	count := 0
 
-		// the example yml has an empty string to make it clear it is a list, remove empty strings
-		var sanitizedLogSubscriptionArns []string
-		for _, arn := range settings.Setup.LogSubscriptions.PrincipalARNs {
-			if arn == "" {
-				continue
-			}
-			sanitizedLogSubscriptionArns = append(sanitizedLogSubscriptionArns, arn)
-		}
-
-		params := map[string]string{
-			"LogSubscriptionPrincipals":  strings.Join(sanitizedLogSubscriptionArns, ","),
-			"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
-			"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
-			"CertificateArn":             certificateArn(awsSession, settings),
-			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"CustomDomain":               settings.Web.CustomDomain,
-			"TracingMode":                settings.Monitoring.TracingMode,
-		}
-
+	// Deploy bootstrap stacks
+	count++
+	go func(c chan goroutineResult) {
 		var err error
-		outputs, err = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
-		if err != nil {
-			logger.Fatal(err)
-		}
+		outputs, err = deployBoostrapStacks(awsSession, settings)
+		c <- goroutineResult{summary: "bootstrap: stacks", err: err}
+	}(results)
 
-		// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
-		// forces SMS as a fallback option, but the SDK does not.
-		userPoolID := outputs["UserPoolId"]
-		logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
-		_, err = cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
-			MfaConfiguration: aws.String("ON"),
-			SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
-				Enabled: aws.Bool(true),
-			},
-			UserPoolId: &userPoolID,
-		})
-		if err != nil {
-			logger.Fatalf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
+	// Compile Lambda functions
+	count++
+	go func(c chan goroutineResult) {
+		var err error
+		if err = build.api(); err == nil {
+			err = build.lambda()
 		}
-	}()
+		c <- goroutineResult{summary: "bootstrap: compile source", err: err}
+	}(results)
 
-	// While waiting for bootstrap, build deployment artifacts
-	build.API()
-	build.Cfn()
-	build.Lambda()
-	wg.Wait()
+	logResults(results, "deploy: bootstrap", count)
+	return outputs
+}
+
+// Deploy bootstrap and bootstrap-gateway and merge their outputs
+func deployBoostrapStacks(awsSession *session.Session, settings *config.PantherConfig) (map[string]string, error) {
+	// the example yml has an empty string to make it clear it is a list, remove empty strings
+	var sanitizedLogSubscriptionArns []string
+	for _, arn := range settings.Setup.LogSubscriptions.PrincipalARNs {
+		if arn == "" {
+			continue
+		}
+		sanitizedLogSubscriptionArns = append(sanitizedLogSubscriptionArns, arn)
+	}
+
+	params := map[string]string{
+		"LogSubscriptionPrincipals":  strings.Join(sanitizedLogSubscriptionArns, ","),
+		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
+		"CertificateArn":             certificateArn(awsSession, settings),
+		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomDomain":               settings.Web.CustomDomain,
+		"TracingMode":                settings.Monitoring.TracingMode,
+	}
+
+	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
+	// forces SMS as a fallback option, but the SDK does not.
+	userPoolID := outputs["UserPoolId"]
+	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
+	_, err = cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
+		MfaConfiguration: aws.String("ON"),
+		SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
+			Enabled: aws.Bool(true),
+		},
+		UserPoolId: &userPoolID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
+	}
+
+	if err := build.cfn(); err != nil {
+		return nil, err
+	}
 
 	// Now that the S3 buckets are in place and swagger specs are embedded, we can deploy the second
 	// bootstrap stack (API gateways and the Python layer).
 	sourceBucket := outputs["SourceBucket"]
-	params := map[string]string{
+	params = map[string]string{
 		"TracingEnabled": strconv.FormatBool(settings.Monitoring.TracingMode != ""),
 	}
 
@@ -268,17 +284,17 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	// Deploy second bootstrap stack and merge outputs
 	gatewayOutputs, err := deployTemplate(awsSession, gatewayTemplate, sourceBucket, gatewayStack, params)
 	if err != nil {
-		logger.Fatal(err)
+		return nil, err
 	}
 
 	for k, v := range gatewayOutputs {
 		if _, exists := outputs[k]; exists {
-			logger.Fatalf("output %s exists in both bootstrap stacks", k)
+			return nil, fmt.Errorf("output %s exists in both bootstrap stacks", k)
 		}
 		outputs[k] = v
 	}
 
-	return outputs
+	return outputs, nil
 }
 
 // Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
