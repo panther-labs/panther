@@ -184,20 +184,10 @@ func createChangeSet(
 		ChangeSetType: &changeSetType,
 		Parameters:    parameters,
 		StackName:     &stack,
-		Tags: []*cloudformation.Tag{
-			// Tags are propagated to every supported resource in the stack
-			{
-				Key:   aws.String("Application"),
-				Value: aws.String("Panther"),
-			},
-			{
-				Key:   aws.String("PantherVersion"),
-				Value: &pantherVersion,
-			},
-			{
-				Key:   aws.String("Stack"),
-				Value: &stack,
-			},
+		Tags: []*cloudformation.Tag{ // Tags are propagated to every supported resource in the stack
+			{Key: aws.String("Application"), Value: aws.String("Panther")},
+			{Key: aws.String("PantherVersion"), Value: &pantherVersion},
+			{Key: aws.String("Stack"), Value: &stack},
 		},
 	}
 
