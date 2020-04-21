@@ -90,6 +90,8 @@ var (
 			&gitlablogs.Audit{}, gitlablogs.AuditDesc),
 		(&gitlablogs.ExceptionsParser{}).LogType(): DefaultLogParser(&gitlablogs.ExceptionsParser{},
 			&gitlablogs.Exceptions{}, gitlablogs.ExceptionsDesc),
+		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
+			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
 	}
 )
 

@@ -10,7 +10,7 @@ Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log
 <tr><td valign=top><code>pri</code></td><td><code>smallint</code></td><td valign=top>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
 <tr><td valign=top><code><b>host</b></code></td><td><code>string</code></td><td valign=top>Hostname identifies the machine that originally sent the syslog message.</td></tr>
 <tr><td valign=top><code><b>ident</b></code></td><td><code>string</code></td><td valign=top>Appname identifies the device or application that originated the syslog message.</td></tr>
-<tr><td valign=top><code><b>pid</b></code></td><td><code>bigint</code></td><td valign=top>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
+<tr><td valign=top><code>pid</code></td><td><code>bigint</code></td><td valign=top>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
 <tr><td valign=top><code><b>message</b></code></td><td><code>string</code></td><td valign=top>Message contains free-form text that provides information about the event.</td></tr>
 <tr><td valign=top><code><b>time</b></code></td><td><code>timestamp</code></td><td valign=top>Timestamp of the syslog message in UTC.</td></tr>
 <tr><td valign=top><code><b>tag</b></code></td><td><code>string</code></td><td valign=top>Tag of the syslog message</td></tr>

@@ -115,8 +115,6 @@ func TestGitLabRailsException(t *testing.T) {
 }`
 
 	expectedTime := time.Date(2019, 11, 14, 13, 12, 46, int(156*time.Millisecond), time.UTC)
-	strTime := expectedTime.Format(time.RFC3339Nano)
-	_ = strTime
 	expectedEvent := &Rails{
 		Time:             (*timestamp.RFC3339)(&expectedTime),
 		Method:           aws.String("GET"),

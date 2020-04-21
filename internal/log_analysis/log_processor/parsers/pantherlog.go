@@ -20,6 +20,7 @@ package parsers
 
 import (
 	"net"
+	"regexp"
 	"sort"
 
 	jsoniter "github.com/json-iterator/go"
@@ -32,6 +33,7 @@ const (
 )
 
 var (
+	ipv4Regex  = regexp.MustCompile(`(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])*`)
 	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 )
 
@@ -126,12 +128,36 @@ func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339
 	pl.PantherParseTime = &parseTime
 }
 
-// Will return true if the IP address was successfully appended, false if the value was not an IP
+// AppendAnyIPAddressPtr returns true if the IP address was successfully appended,
+// otherwise false if the value was not an IP
 func (pl *PantherLog) AppendAnyIPAddressPtr(value *string) bool {
 	if value == nil {
 		return false
 	}
 	return pl.AppendAnyIPAddress(*value)
+}
+
+// AppendAnyIPAddressInFieldPtr makes sure the value passed is not nil before
+// passing into AppendAnyIPAddressInField
+func (pl *PantherLog) AppendAnyIPAddressInFieldPtr(value *string) bool {
+	if value == nil {
+		return false
+	}
+	return pl.AppendAnyIPAddressInField(*value)
+}
+
+// AppendAnyIPAddressInField extracts all IPs from the value using a regexp
+func (pl *PantherLog) AppendAnyIPAddressInField(value string) bool {
+	matchedIPs := ipv4Regex.FindAllString(value, -1)
+	if len(matchedIPs) == 0 {
+		return false
+	}
+	for _, match := range matchedIPs {
+		if !pl.AppendAnyIPAddress(match) {
+			return false
+		}
+	}
+	return true
 }
 
 func (pl *PantherLog) AppendAnyIPAddress(value string) bool {
