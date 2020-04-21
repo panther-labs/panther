@@ -704,12 +704,13 @@ Resources:
         AwsRegion: !Ref AWS::Region
         UserPoolId: !Ref UserPool
         DefaultAction: ALLOW
-      LogConfig: !If
-        - EnableDebug
-        - ExcludeVerboseContent: TRUE
-          CloudWatchLogsRoleArn: !GetAtt AppsyncServiceRole.Arn
-          FieldLogLevel: ALL
-        - !Ref AWS::NoValue
+      LogConfig:
+        CloudWatchLogsRoleArn: !GetAtt AppsyncServiceRole.Arn
+        FieldLogLevel: ALL
+        ExcludeVerboseContent: !If
+          - EnableDebug
+          - FALSE
+          - TRUE
       XrayEnabled: !If [TracingEnabled, True, !Ref 'AWS::NoValue']
 
   AppsyncLogGroup:
