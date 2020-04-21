@@ -244,7 +244,17 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 	getTablesDetailInput.Names = []string{pantherTable}
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, &getTablesDetailInput)
 	require.NoError(t, err)
-	assert.Len(t, getTablesDetailOutput.Tables, 1)
+	require.Len(t, getTablesDetailOutput.Tables, 1)
+	// check that we are getting the mapped column names, we expect: "mapping.useragent": "userAgent"
+	mappedColumnName := "userAgent" // notice camel case
+	foundMappedColumn := false
+	for _, col := range getTablesDetailOutput.Tables[0].Columns {
+		if col.Name == mappedColumnName {
+			foundMappedColumn = true
+			break
+		}
+	}
+	assert.True(t, foundMappedColumn)
 }
 
 func testAthenaAPI(t *testing.T, useLambda bool) {
