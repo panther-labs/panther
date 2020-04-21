@@ -161,16 +161,3 @@ func TestCloudTrailInsightLogType(t *testing.T) {
 	parser := &CloudTrailInsightParser{}
 	require.Equal(t, "AWS.CloudTrailInsight", parser.LogType())
 }
-
-// func CheckJSONEqual(t *testing.T, expect interface{}, actual interface{}, msgAndArgs ...interface{}) {
-// 	t.Helper()
-// 	ex, err := json.Marshal(expect)
-// 	if err != nil {
-// 		t.Fatalf("Failed to serialize to JSON %q", err)
-// 	}
-// 	ac, err := json.Marshal(actual)
-// 	if err != nil {
-// 		t.Fatalf("Failed to serialize to JSON %q", err)
-// 	}
-// 	require.JSONEq(t, string(ex), string(ac), msgAndArgs...)
-// }
