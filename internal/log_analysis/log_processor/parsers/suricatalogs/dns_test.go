@@ -61,8 +61,8 @@ func TestDNSQuery(t *testing.T) {
 	expectedEvent.AppendAnyIPAddress("8.8.8.8")
 	expectedEvent.AppendAnyDomainNames("localhost")
 	parser := (&DNSParser{}).New()
-
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
 
 func TestDNSAnswerNoError(t *testing.T) {
@@ -104,7 +104,8 @@ func TestDNSAnswerNoError(t *testing.T) {
 	expectedEvent.AppendAnyDomainNames("twitter.com")
 	parser := (&DNSParser{}).New()
 
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
 
 func TestDNSAnswerRefused(t *testing.T) {
@@ -143,8 +144,8 @@ func TestDNSAnswerRefused(t *testing.T) {
 	expectedEvent.AppendAnyIPAddress("192.168.88.61")
 	expectedEvent.AppendAnyDomainNames("time.nist.gov")
 	parser := (&DNSParser{}).New()
-
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
 
 func TestDNSDetailedFormat(t *testing.T) {
@@ -238,7 +239,8 @@ func TestDNSDetailedFormat(t *testing.T) {
 		"hostname1.example.com")
 	parser := (&DNSParser{}).New()
 
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
 
 func TestDNSGroupedFormat(t *testing.T) {
@@ -282,8 +284,8 @@ func TestDNSGroupedFormat(t *testing.T) {
 	expectedEvent.AppendAnyIPAddress("192.0.78.25")
 	expectedEvent.AppendAnyDomainNames("suricata-ids.org")
 	parser := (&DNSParser{}).New()
-
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
 
 func TestDNSType(t *testing.T) {

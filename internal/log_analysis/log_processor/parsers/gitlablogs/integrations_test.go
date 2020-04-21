@@ -95,5 +95,6 @@ func checkIntegrations(t *testing.T, log string, expectedEvent *Integrations) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := (&IntegrationsParser{}).New()
 
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
