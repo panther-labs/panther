@@ -21,6 +21,7 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -79,9 +80,11 @@ const (
 	onboardTemplate      = "deployments/onboard.yml"
 
 	// Python layer
-	layerSourceDir   = "out/pip/analysis/python"
-	layerZipfile     = "out/layer.zip"
-	layerS3ObjectKey = "layers/python-analysis.zip"
+	layerSourceDir        = "out/pip/analysis/python"
+	layerZipfile          = "out/layer.zip"
+	layerS3ObjectKey      = "layers/python-analysis.zip"
+	defaultGlobalID       = "panther"
+	defaultGlobalLocation = "internal/compliance/policy_engine/src/helpers.py"
 
 	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
@@ -141,6 +144,9 @@ func Deploy() {
 	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
 		logger.Fatal(err)
 	}
+	if err := initializeGlobal(awsSession, outputs["AnalysisApiEndpoint"]); err != nil {
+		logger.Fatal(err)
+	}
 	if err := inviteFirstUser(awsSession); err != nil {
 		logger.Fatal(err)
 	}
@@ -192,17 +198,8 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 
 	// Deploy first bootstrap stack
 	go func() {
-		// the example yml has an empty string to make it clear it is a list, remove empty strings
-		var sanitizedLogSubscriptionArns []string
-		for _, arn := range settings.Setup.LogSubscriptions.PrincipalARNs {
-			if arn == "" {
-				continue
-			}
-			sanitizedLogSubscriptionArns = append(sanitizedLogSubscriptionArns, arn)
-		}
-
 		params := map[string]string{
-			"LogSubscriptionPrincipals":  strings.Join(sanitizedLogSubscriptionArns, ","),
+			"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 			"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 			"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
 			"CertificateArn":             certificateArn(awsSession, settings),
@@ -369,30 +366,15 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Core
 	parallelStacks++
 	go func(result chan string) {
-		// the example yml has an empty string to make it clear it is a list, remove empty strings
-		var sanitizedAthenaS3Arns []string
-		for _, arn := range settings.Setup.Athena.S3ARNs {
-			if arn == "" {
-				continue
-			}
-			sanitizedAthenaS3Arns = append(sanitizedAthenaS3Arns, arn)
-		}
-		// add in the panther buckets
-		sanitizedAthenaS3Arns = append(sanitizedAthenaS3Arns, "arn:aws:s3:::panther-*-processeddata-*")
-
 		deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
-			"AthenaResultsBucket":    outputs["AthenaResultsBucket"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
-			"GraphQLApiEndpoint":     outputs["GraphQLApiEndpoint"],
-			"GraphQLApiId":           outputs["GraphQLApiId"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
 
-			"AthenaS3BucketARNS":         strings.Join(sanitizedAthenaS3Arns, ","),
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
@@ -420,6 +402,9 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	go func(result chan string) {
 		deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
 			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
+			"GraphQLApiEndpoint":    outputs["GraphQLApiEndpoint"],
+			"GraphQLApiId":          outputs["GraphQLApiId"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
@@ -437,7 +422,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Web server
 	parallelStacks++
 	go func(result chan string) {
-		deployFrontend(awsSession, accountID, sourceBucket, outputs)
+		deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
 		result <- frontendStack
 	}(finishedStacks)
 
@@ -586,5 +571,50 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, settin
 	}
 
 	logger.Infof("deploy: initialized with %d policies and %d rules", newPolicies, newRules)
+	return nil
+}
+
+// Install the default global helper function if it does not already exist
+func initializeGlobal(awsSession *session.Session, endpoint string) error {
+	httpClient := gatewayapi.GatewayClient(awsSession)
+	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
+		WithBasePath("/v1").WithHost(endpoint))
+
+	_, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
+		GlobalID:   defaultGlobalID,
+		HTTPClient: httpClient,
+	})
+	// Global already exists
+	if err == nil {
+		logger.Debug("deploy: global module already exists")
+		return nil
+	}
+
+	// Return errors other than 404 not found
+	if _, ok := err.(*operations.GetGlobalNotFound); !ok {
+		return fmt.Errorf("failed to get existing global file: %v", err)
+	}
+
+	// Setup the initial helper layer
+	content, err := ioutil.ReadFile(defaultGlobalLocation)
+	if err != nil {
+		return fmt.Errorf("failed to read default globals file: %v", err)
+	}
+
+	logger.Infof("deploy: uploading initial global helper module")
+	_, err = apiClient.Operations.CreateGlobal(&operations.CreateGlobalParams{
+		Body: &analysismodels.UpdateGlobal{
+			Body:        analysismodels.Body(string(content)),
+			Description: "A set of default helper functions.",
+			ID:          defaultGlobalID,
+			UserID:      mageUserID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to upload default globals file: %v", err)
+	}
+
 	return nil
 }

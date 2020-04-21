@@ -29,18 +29,9 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: Analysis API gateway ID
-  AthenaResultsBucket:
-    Type: String
-    Description: Bucket created to hold Athena results
   ComplianceApiId:
     Type: String
     Description: Compliance API gateway ID
-  GraphQLApiEndpoint:
-    Type: String
-    Description: The URL to the Appsync GraphQL Endpoint
-  GraphQLApiId:
-    Type: String
-    Description: The id of the Appsync GraphQL Endpoint
   OutputsKeyId:
     Type: String
     Description: KMS key for encrypting alert outputs
@@ -52,9 +43,6 @@ Parameters:
     Description: Cognito user pool ID
 
   # Options from config file
-  AthenaS3BucketARNS:
-    Type: CommaDelimitedList
-    Description: The list of S3 ARNs to allow read access by Athena lambda
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -237,6 +225,7 @@ Resources:
           COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           COMPLIANCE_API_PATH: v1
           DEBUG: !Ref Debug
+          LAYER_MANAGER_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-layer-manager-queue
           POLICY_ENGINE: panther-policy-engine
           RULES_ENGINE: panther-rules-engine
           RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources-queue
@@ -303,6 +292,12 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: PublishToLayerManagerQueue
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sqs:SendMessage
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-layer-manager-queue
 
   AnalysisApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -436,7 +431,7 @@ Resources:
     Properties:
       QueueName: panther-alerts-queue
       # <cfndoc>
-      # This sqs q does hold alerts to be delivery to user configured destinations.
+      # This sqs queue holds alerts to be delivered to user configured destinations.
       #
       # Failure Impact
       # * Failure of this sqs q will impact delivery of alerts to output destinations.
@@ -469,6 +464,7 @@ Resources:
       Description: Dispatch alerts to their specified outputs
       Environment:
         Variables:
+          DEBUG: !Ref Debug
           ALERT_QUEUE_URL: !Ref AlertQueue
           ALERT_RETRY_DURATION_MINS: !Ref AlertRetryDurationMins
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
@@ -642,217 +638,130 @@ Resources:
       LogGroupName: /aws/lambda/panther-source-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
-  ##### Athena API #####
-  AthenaApiFunction:
+  ##### Layer Management #####
+  LayerQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-layer-manager-queue
+      # <cfndoc>
+      # This sqs queue is used to communicate layer update requests to the layer manager function.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will prevent users from updating the globals layer.
+      # * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered, one event should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue` and the rest should be purged.
+      # </cfndoc>
+      MessageRetentionPeriod: 86400 # 24 hours
+      KmsMasterKeyId: !Ref SqsKeyId
+      VisibilityTimeout: 60 # Should match lambda timeout
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt LayerDLQ.Arn
+        maxReceiveCount: 10
+
+  LayerDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-layer-manager-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-layer-manager-queue`.
+      # Items are in this queue due to a failure of the `panther-layer-manager` lambda.
+      # When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      VisibilityTimeout: 60
+
+  LayerManagerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/database_api/athena/driver/main
-      Description: Executes Athena and Glue queries
+      CodeUri: ../out/bin/internal/core/layer_manager/main
+      Description: Manage updates to the layers on the panther python engines.
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          ATHENA_BUCKET: !Ref AthenaResultsBucket
-          GRAPHQL_ENDPOINT: !Ref GraphQLApiEndpoint
-      FunctionName: panther-athena-api
+          GLOBAL_LAYER_NAME: panther-engine-globals
+          GLOBAL_LAYER_ARN: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals'
+          POLICY_ENGINE: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine'
+          RULE_ENGINE: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine'
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+      Events:
+        LayerQueue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt LayerQueue.Arn
+            BatchSize: 10
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      FunctionName: panther-layer-manager
       # <cfndoc>
-      # The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
+      # This lambda manages updates to the lambda layers attached to the Panther policy and rule engines.
       #
       # Failure Impact
-      # * Failure of this lambda will stop the Panther UI from doing Athena queries.
+      # * Failure of this lambda will prevent users from updating global helper functions.
+      # * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: 512
       Runtime: go1.x
-      Timeout: 900 # we want this as long as possible
+      Timeout: 60
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
-        - Id: AthenaPermissions
+        - Id: GetAnalyses
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/global
+        - Id: ManageEngines
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
-                - athena:StartQueryExecution
-                - athena:StopQueryExecution
-                - athena:GetQuery*
+                - lambda:GetFunctionConfiguration
+                - lambda:UpdateFunctionConfiguration
+              Resource:
+                - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine'
+                - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine'
+        - Id: PublishLayer
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:PublishLayerVersion
+                - lambda:ListLayerVersions
+              Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals'
+        - Id: DeleteLayerVersions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:DeleteLayerVersion
+              Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*'
+        - Id: MaintainExistingLayers
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:GetLayerVersion
               Resource: '*'
-        - Id: GluePermissions # used for all table metadata queries
+        - Id: DecryptLayerMessages
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
-                - glue:GetDatabase*
-                - glue:GetTable*
-                - glue:GetPartition*
-              Resource: '*'
-        - Id: S3ResultsPermissions # athena writes results to S3
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: ReceiveAndDeleteMessages
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action:
-                - s3:GetBucketLocation
-                - s3:List*
-                - s3:GetObject
-                - s3:PutObject
-              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
-        - Id: S3ReadPermissions # athena reads from S3, restrict to our processed data buckets and those set by user in config
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - s3:GetBucketLocation
-                - s3:List*
-                - s3:GetObject
-              Resource: !Ref AthenaS3BucketARNS
-        - Id: StepsPermissions # start an async workflow that tracks the query execution
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - states:StartExecution
-              Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
-        - Id: InvokePantherLambdas # allow calling other panther lambdas
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - lambda:InvokeFunction
-              Resource: # list lambdas that can be called below
-                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
-        - Id: CallAppSync # allow calling appsync mutation 'queryDone()' for notify support
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - appsync:GraphQL
-              Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:apis/${GraphQLApiId}/types/Mutation/fields/queryDone
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: !GetAtt LayerQueue.Arn
 
-  AthenaApiLogGroup:
+  LayerManagerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/lambda/panther-athena-api
+      LogGroupName: /aws/lambda/panther-layer-manager
       RetentionInDays: !Ref CloudWatchLogRetentionDays
-
-  AthenaStepFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Description: Role used by Step Functions to run Athena queries
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action: sts:AssumeRole
-            Principal:
-              Service: !Sub states.${AWS::Region}.amazonaws.com
-      Policies:
-        - PolicyName: InvokeAthenaLambda
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: lambda:InvokeFunction
-                Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
-
-  AthenaQueryStateMachine:
-    Type: AWS::StepFunctions::StateMachine
-    Properties:
-      StateMachineName: panther-athena-workflow
-      # <cfndoc>
-      # The `panther-athena-workflow` is a Step Functions state machine used execute Athena queries and notify callers when done.
-      #
-      # Failure Impact
-      # * Failure of this state machine will stop the Panther UI from doing Athena queries.
-      # </cfndoc>
-      DefinitionString: !Sub |
-        {
-             "Comment": "Run Athena query. Parameters are: userId, userData, delay, databaseName, sql, lambdaName, methodName",
-             "StartAt": "delay",
-             "States": {
-               "delay": {
-                "Comment": "Configurable delay to start",
-                "Type": "Wait",
-                "SecondsPath": "$.delaySeconds",
-                "Next": "query"
-               },
-               "query": {
-                 "Type": "Task",
-                 "Resource": "arn:aws:states:::lambda:invoke",
-                 "Parameters": {
-                   "FunctionName": "${AthenaApiFunction.Arn}",
-                   "Payload": {
-                     "executeAsyncQuery": {
-                       "userId.$": "$.userId",
-                       "databaseName.$": "$.databaseName",
-                       "sql.$": "$.sql"
-                     }
-                   }
-                 },
-                 "ResultPath": "$.queryResults",
-                 "Next": "status"
-               },
-               "running (wait)": {
-                 "Comment": "Pause to allow query to run.",
-                 "Type": "Wait",
-                 "Seconds": 2,
-                 "Next": "status"
-               },
-               "status": {
-                 "Type": "Task",
-                 "Resource": "arn:aws:states:::lambda:invoke",
-                 "Parameters": {
-                   "FunctionName": "${AthenaApiFunction.Arn}",
-                   "Payload": {
-                     "getQueryStatus": {
-                       "queryId.$": "$.queryResults.Payload.queryId"
-                     }
-                   }
-                 },
-                 "ResultPath": "$.queryStatus",
-                 "Next": "done?"
-               },
-               "done?": {
-                 "Type": "Choice",
-                 "Choices": [
-                 {
-                   "Variable": "$.queryStatus.Payload.status",
-                   "StringEquals": "succeeded",
-                   "Next": "succeeded"
-                 },
-                 {
-                   "Variable": "$.queryStatus.Payload.status",
-                   "StringEquals": "failed",
-                   "Next": "failed"
-                 }
-                 ],
-                 "Default": "running (wait)"
-               },
-               "succeeded": {
-                 "Type": "Pass",
-                 "Next": "notify"
-               },
-               "failed": {
-                 "Type": "Pass",
-                 "Next": "notify"
-               },
-               "notify": {
-                 "Comment": "Call lambdaName.methodName with userData, queryId and workflowId to notify done",
-                 "Type": "Task",
-                 "Resource": "arn:aws:states:::lambda:invoke",
-                 "Parameters": {
-                   "FunctionName": "${AthenaApiFunction.Arn}",
-                   "Payload": {
-                     "invokeNotifyLambda": {
-                       "userData.$": "$.userData",
-                       "queryId.$": "$.queryResults.Payload.queryId",
-                       "workflowId.$": "$$.Execution.Id",
-                       "lambdaName.$": "$.lambdaName",
-                       "methodName.$": "$.methodName"
-                     }
-                   }
-                 },
-                 "ResultPath": "$.notifyOutput",
-                 "End": true
-               }
-             }
-        }
-      RoleArn: !GetAtt AthenaStepFunctionRole.Arn

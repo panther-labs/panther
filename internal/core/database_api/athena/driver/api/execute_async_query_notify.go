@@ -39,7 +39,7 @@ const (
 )
 
 func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (*models.ExecuteAsyncQueryNotifyOutput, error) {
-	output := &models.ExecuteAsyncQueryNotifyOutput{}
+	var output models.ExecuteAsyncQueryNotifyOutput
 
 	var err error
 	defer func() {
@@ -62,18 +62,18 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 	worflowJSON, err := jsoniter.Marshal(input)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to marshal %#v", input)
-		return output, err
+		return &output, err
 	}
 
 	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil || identity.Account == nil {
 		err = errors.Wrapf(err, "failed to get identity %#v", input)
-		return output, err
+		return &output, err
 	}
 
 	if awsSession.Config.Region == nil {
 		err = errors.Wrapf(err, "failed to get aws region %#v", input)
-		return output, err
+		return &output, err
 	}
 
 	stateMachineARN := fmt.Sprintf("arn:aws:states:%s:%s:stateMachine:%s",
@@ -87,9 +87,9 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 	startExecutionOutput, err := sfnClient.StartExecution(startExecutionInput)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to start workflow execution for: %#v", input)
-		return output, err
+		return &output, err
 	}
 	output.Workflow.WorkflowID = *startExecutionOutput.ExecutionArn
 
-	return output, err
+	return &output, err
 }

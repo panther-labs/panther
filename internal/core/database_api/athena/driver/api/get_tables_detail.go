@@ -24,92 +24,11 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/database/models"
+	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
-func (API) GetDatabases(input *models.GetDatabasesInput) (*models.GetDatabasesOutput, error) {
-	output := &models.GetDatabasesOutput{}
-
-	var err error
-	defer func() {
-		if err != nil {
-			err = apiError(err) // lambda failed
-		}
-	}()
-
-	if input.Name != nil {
-		var glueOutput *glue.GetDatabaseOutput
-		glueOutput, err = glueClient.GetDatabase(&glue.GetDatabaseInput{
-			Name: input.Name,
-		})
-		if err != nil {
-			err = errors.WithStack(err)
-			return output, err
-		}
-		output.Databases = append(output.Databases, &models.NameAndDescription{
-			Name:        *glueOutput.Database.Name,
-			Description: glueOutput.Database.Description, // optional
-		})
-		return output, err
-	}
-
-	// list
-	err = glueClient.GetDatabasesPages(&glue.GetDatabasesInput{},
-		func(page *glue.GetDatabasesOutput, lastPage bool) bool {
-			for _, database := range page.DatabaseList {
-				output.Databases = append(output.Databases, &models.NameAndDescription{
-					Name:        *database.Name,
-					Description: database.Description, // optional
-				})
-			}
-			return false
-		})
-
-	return output, errors.WithStack(err)
-}
-
-func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, error) {
-	output := &models.GetTablesOutput{}
-
-	var err error
-	defer func() {
-		if err != nil {
-			err = apiError(err) // lambda failed
-		}
-	}()
-
-	var partitionErr error
-	err = glueClient.GetTablesPages(&glue.GetTablesInput{DatabaseName: aws.String(input.DatabaseName)},
-		func(page *glue.GetTablesOutput, lastPage bool) bool {
-			for _, table := range page.TableList {
-				if input.OnlyPopulated { // check there is at least 1 partition
-					var gluePartitionOutput *glue.GetPartitionsOutput
-					gluePartitionOutput, partitionErr = glueClient.GetPartitions(&glue.GetPartitionsInput{
-						DatabaseName: aws.String(input.DatabaseName),
-						TableName:    table.Name,
-						MaxResults:   aws.Int64(1),
-					})
-					if partitionErr != nil {
-						return true // stop
-					}
-					if len(gluePartitionOutput.Partitions) == 0 { // skip if no partitions
-						continue
-					}
-				}
-				detail := newTableDetail(input.DatabaseName, *table.Name, table.Description)
-				populateTableDetailColumns(detail, table)
-				output.Tables = append(output.Tables, detail)
-			}
-			return false
-		})
-	if partitionErr != nil {
-		err = partitionErr
-	}
-
-	return output, errors.WithStack(err)
-}
-
 func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTablesDetailOutput, error) {
-	output := &models.GetTablesDetailOutput{}
+	var output models.GetTablesDetailOutput
 
 	var err error
 	defer func() {
@@ -117,6 +36,10 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 			err = apiError(err) // lambda failed
 		}
 	}()
+
+	if envConfig.PantherTablesOnly && awsglue.PantherDatabases[input.DatabaseName] == "" {
+		return &output, err // nothing
+	}
 
 	for _, tableName := range input.Names {
 		var glueTableOutput *glue.GetTableOutput
@@ -126,13 +49,13 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 		})
 		if err != nil {
 			err = errors.WithStack(err)
-			return output, err
+			return &output, err
 		}
 		detail := newTableDetail(input.DatabaseName, *glueTableOutput.Table.Name, glueTableOutput.Table.Description)
 		populateTableDetailColumns(detail, glueTableOutput.Table)
 		output.Tables = append(output.Tables, detail)
 	}
-	return output, nil
+	return &output, nil
 }
 
 func populateTableDetailColumns(tableDetail *models.TableDetail, glueTableData *glue.TableData) {
