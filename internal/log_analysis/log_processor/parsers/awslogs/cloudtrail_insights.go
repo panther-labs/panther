@@ -56,7 +56,7 @@ type InsightDetails struct {
 	State          *string         `json:"state" validate:"required" description:" Shows whether the event represents the start or end of the insight (the start or end of unusual activity). Values are Start or End."`
 	EventSource    *string         `json:"eventSource" validate:"required" description:"The AWS API for which unusual activity was detected."`
 	EventName      *string         `json:"eventName" validate:"required" description:"The AWS API for which unusual activity was detected."`
-	InsightType    *string         `json:"insightType" validate:"eq=AwsCloudTrailInsight" description:"The type of Insights event. Value is ApiCallRateInsight. "`
+	InsightType    *string         `json:"insightType" validate:"required" description:"The type of Insights event. Value is ApiCallRateInsight. "`
 	InsightContext *InsightContext `json:"insightContext,omitempty" description:"Data about the rate of calls that triggered the Insights event compared to the normal rate of calls to the subject API per minute. "`
 }
 

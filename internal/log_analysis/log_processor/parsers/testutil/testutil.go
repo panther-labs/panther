@@ -68,6 +68,6 @@ func CheckPantherParser(t *testing.T, log string, parser parsers.LogParser, expe
 	require.Equal(t, len(expectMore), len(results), "Invalid number of pather logs produced by parser")
 	for i, result := range results {
 		expect := expectMore[i]
-		testutil.EqualPantherLog(t, expect, []*parsers.PantherLog{result})
+		EqualPantherLog(t, expect, []*parsers.PantherLog{result})
 	}
 }
