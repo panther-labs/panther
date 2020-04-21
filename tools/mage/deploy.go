@@ -214,6 +214,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 			"CertificateArn":             certificateArn(awsSession, settings),
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"CustomDomain":               settings.Web.CustomDomain,
+			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 			"TracingMode":                settings.Monitoring.TracingMode,
 		}
 
