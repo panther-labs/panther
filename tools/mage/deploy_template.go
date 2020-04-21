@@ -20,6 +20,7 @@ package mage
 
 import (
 	"crypto/sha1" // nolint: gosec
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -249,7 +250,7 @@ func prepareStack(awsSession *session.Session, stack string) (map[string]string,
 
 	// Wait for any in-progress operations to finish.
 	if _, ok := inProgressStackStatus[status]; ok {
-		logger.Infof("stack %s was already %s, waiting for it to finish", stack, status)
+		logger.Warnf("stack %s is %s, waiting for it to finish before applying changes", stack, status)
 		detail, err = waitForStack(client, stack)
 		if err != nil {
 			return nil, err
@@ -257,6 +258,7 @@ func prepareStack(awsSession *session.Session, stack string) (map[string]string,
 	}
 
 	// Stack is done - return its outputs.
+	status = *detail.StackStatus // status may have changed if we had to wait
 	switch status {
 	case cfn.StackStatusDeleteComplete:
 		return nil, nil
@@ -294,7 +296,6 @@ func waitForStack(client *cfn.CloudFormation, stack string) (*cfn.Stack, error) 
 			return nil, fmt.Errorf("failed to describe stack %s: %v", stack, err)
 		}
 
-		// TODO - debug log status changes?
 		status := *detail.Stacks[0].StackStatus
 		if _, ok := terminalStackStatus[status]; ok {
 			return detail.Stacks[0], nil
@@ -302,9 +303,6 @@ func waitForStack(client *cfn.CloudFormation, stack string) (*cfn.Stack, error) 
 
 		time.Sleep(pollInterval)
 	}
-
-	// TODO - when updating, stop early if you see UPDATE_ROLLBACK_IN_PROGRESS?
-	// TODO - deep inspect error message
 }
 
 // Create a CloudFormation change set, returning its id.
@@ -367,7 +365,7 @@ func createChangeSet(
 		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key))
 	}
 
-	logger.Infof("deploy: %s CloudFormation stack %s", changeSetType, stack)
+	logger.Infof("deploy: %s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
 	client := cfn.New(awsSession)
 	if _, err := client.CreateChangeSet(createInput); err != nil {
 		return nil, fmt.Errorf("failed to create change set for stack %s: %v", stack, err)
@@ -418,6 +416,7 @@ func waitForChangeSet(client *cfn.CloudFormation, changeSetName, stack string) (
 // Execute a change set, blocking until the stack has finished updating and then returning its outputs.
 func executeChangeSet(awsSession *session.Session, changeSet *string, stack string) (map[string]string, error) {
 	client := cfn.New(awsSession)
+	start := time.Now()
 	_, err := client.ExecuteChangeSet(&cfn.ExecuteChangeSetInput{ChangeSetName: changeSet, StackName: &stack})
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute change set for stack %s: %v", stack, err)
@@ -431,8 +430,8 @@ func executeChangeSet(awsSession *session.Session, changeSet *string, stack stri
 
 	status := *detail.StackStatus
 	if status != cfn.StackStatusCreateComplete && status != cfn.StackStatusUpdateComplete {
-		// TODO - more error context here
-		return nil, fmt.Errorf("stack %s failed: %s: %s", stack, status, aws.StringValue(detail.StackStatusReason))
+		logResourceFailures(client, &stack, start)
+		return nil, errors.New(status) // stack name added by caller
 	}
 
 	return flattenStackOutputs(detail), nil

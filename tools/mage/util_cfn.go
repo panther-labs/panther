@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -166,7 +167,7 @@ func walkPantherStacks(client *cfn.CloudFormation, handler func(cfnResource)) er
 	return nil
 }
 
-// Recursively list resources for a single Panther stack.
+// List resources for a single Panther stack, recursively enumerating nested stacks as well.
 //
 // The stackID can be the stack name or arn and the stack must be tagged with "Application:Panther"
 func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(cfnResource)) error {
@@ -222,6 +223,61 @@ func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(
 	}
 
 	return nil
+}
+
+// Log failed resources from the stack's event history.
+//
+// Use this after a stack create/update fails to understand why the stack failed.
+// Events from nested stacks which failed are enumerated as well.
+func logResourceFailures(client *cfn.CloudFormation, stackID *string, start time.Time) {
+	input := &cfn.DescribeStackEventsInput{StackName: stackID}
+	failedStatus := map[string]struct{}{
+		cfn.ResourceStatusCreateFailed: {},
+		cfn.ResourceStatusDeleteFailed: {},
+		cfn.ResourceStatusUpdateFailed: {},
+	}
+
+	// Events are listed in reverse chronological order (most recent first)
+	err := client.DescribeStackEventsPages(input, func(page *cfn.DescribeStackEventsOutput, isLast bool) bool {
+		for _, event := range page.StackEvents {
+			if (*event.Timestamp).Before(start) {
+				// Found the beginning of the events we care about: stop here
+				return false
+			}
+
+			status := *event.ResourceStatus
+			if _, ok := failedStatus[status]; !ok {
+				continue
+			}
+
+			resourceType := *event.ResourceType
+			logicalID, physicalID := *event.LogicalResourceId, *event.PhysicalResourceId
+			if resourceType == "AWS::CloudFormation::Stack" && logicalID != *stackID && physicalID != *stackID {
+				// If a nested stack failed, describe those events as well
+				logResourceFailures(client, event.PhysicalResourceId, start)
+			}
+
+			reason := aws.StringValue(event.ResourceStatusReason)
+			if reason == "Resource update cancelled" || reason == "Resource creation cancelled" {
+				continue
+			}
+
+			stackName := *stackID
+			if strings.HasPrefix(stackName, "arn") {
+				// The stackID is the full arn (i.e. a nested stack), for example:
+				//   arn:aws:cloudformation:us-west-2:111122223333:stack/panther-cw-alarms-BootstrapAlarms-1JFSJVDA48SZI/uuid
+				// Pull out just the stack name to make it easier to read
+				stackName = strings.Split(stackName, "/")[1]
+			}
+			logger.Errorf("stack %s: %s %s %s: %s", stackName, resourceType, logicalID, status, reason)
+		}
+
+		return true // keep paging
+	})
+
+	if err != nil {
+		logger.Warnf("failed to list stack events for %s: %v", *stackID, err)
+	}
 }
 
 // Returns true if the given error is from describing a stack that doesn't exist.
