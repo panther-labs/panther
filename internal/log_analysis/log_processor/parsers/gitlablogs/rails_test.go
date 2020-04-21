@@ -162,6 +162,7 @@ func TestGitLabRailsType(t *testing.T) {
 func checkGitLabRails(t *testing.T, log string, expectedEvent *Rails) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := (&RailsParser{}).New()
+	events, err := parser.Parse(log)
 
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

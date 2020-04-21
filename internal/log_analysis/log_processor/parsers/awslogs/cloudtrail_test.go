@@ -145,7 +145,7 @@ func TestCloudTrailLogType(t *testing.T) {
 
 func checkCloudTrailLog(t *testing.T, log string, expectedEvent *CloudTrail) {
 	parser := (&CloudTrailParser{}).New()
-	result := parser.Parse(log)
 	expectedEvent.SetEvent(expectedEvent)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), result)
+	result, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), result, err)
 }

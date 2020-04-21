@@ -20,7 +20,6 @@ package osseclogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -117,28 +116,28 @@ type Decoder struct {
 // EventInfoParser parses OSSEC EventInfo alerts in the JSON format
 type EventInfoParser struct{}
 
+var _ parsers.LogParser = (*EventInfoParser)(nil)
+
 func (p *EventInfoParser) New() parsers.LogParser {
 	return &EventInfoParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *EventInfoParser) Parse(log string) []*parsers.PantherLog {
+func (p *EventInfoParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	eventInfo := &EventInfo{}
 
 	err := jsoniter.UnmarshalFromString(log, eventInfo)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	eventInfo.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(eventInfo); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return eventInfo.Logs()
+	return eventInfo.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

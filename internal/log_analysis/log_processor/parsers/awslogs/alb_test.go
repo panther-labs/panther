@@ -243,5 +243,6 @@ func TestAlbLogType(t *testing.T) {
 func checkALBLog(t *testing.T, log string, expectedEvent *ALB) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := (&ALBParser{}).New() // important to call New() to initialize reader
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

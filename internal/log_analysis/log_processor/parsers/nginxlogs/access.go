@@ -20,9 +20,8 @@ package nginxlogs
 
 import (
 	"encoding/csv"
+	"errors"
 	"strings"
-
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -56,37 +55,38 @@ type Access struct {
 // AccessParser parses Nginx Access logs in 'combined' log format
 type AccessParser struct{}
 
+var _ parsers.LogParser = (*AccessParser)(nil)
+
 func (p *AccessParser) New() parsers.LogParser {
 	return &AccessParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AccessParser) Parse(log string) []*parsers.PantherLog {
+func (p *AccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	reader := csv.NewReader(strings.NewReader(log))
 	// Separator between fields is the empty space
-	reader.Comma = ' '
+	reader.Comma = ' ' // NOTE: [nginxlogs]
 
 	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
-		zap.L().Debug("failed to parse log (no records found)")
-		return nil
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return nil, errors.New("no records")
 	}
 
 	// parser should only receive 1 line at a time
 	if len(records) > 1 {
-		zap.L().Debug("failed to parse log (parser expected one log line)")
-		return nil
+		return nil, errors.New("multiple log records")
 	}
 	record := records[0]
 
 	if len(record) != accessNumberOfColumns {
-		zap.L().Debug("failed to parse log (wrong number of columns)")
-		return nil
+		return nil, errors.New("wrong number of columns")
 	}
 
 	if record[1] != accessUserIdentifier {
-		zap.L().Debug("failed to parse log (user identifier should always be '-')")
-		return nil
+		return nil, errors.New("invalid user identifier")
 	}
 
 	// The time in the logs is represented as [06/Feb/2019:00:00:38 +0000]
@@ -94,8 +94,7 @@ func (p *AccessParser) Parse(log string) []*parsers.PantherLog {
 	// We concatenate these fields before trying to parse them
 	parsedTime, err := timestamp.Parse(accessTimestampFormatTimeLocal, record[3]+record[4])
 	if err != nil {
-		zap.L().Debug("failed to parse time")
-		return nil
+		return nil, err
 	}
 
 	event := &Access{
@@ -112,11 +111,10 @@ func (p *AccessParser) Parse(log string) []*parsers.PantherLog {
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

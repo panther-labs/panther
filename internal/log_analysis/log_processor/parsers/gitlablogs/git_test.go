@@ -60,6 +60,6 @@ func TestGitType(t *testing.T) {
 func checkGit(t *testing.T, log string, expectedEvent *Git) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := (&GitParser{}).New()
-
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
