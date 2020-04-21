@@ -274,9 +274,9 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	assert.Len(t, executeQueryOutput.ColumnInfo, len(testutils.TestTableColumns)+len(testutils.TestTablePartitions))
 	for i, c := range executeQueryOutput.ColumnInfo {
 		if i < len(testutils.TestTableColumns) {
-			assert.Equal(t, c.Value, *testutils.TestTableColumns[i].Name)
+			assert.Equal(t, *c.Value, *testutils.TestTableColumns[i].Name)
 		} else { // partitions
-			assert.Equal(t, c.Value, *testutils.TestTablePartitions[i-len(testutils.TestTableColumns)].Name)
+			assert.Equal(t, *c.Value, *testutils.TestTablePartitions[i-len(testutils.TestTableColumns)].Name)
 		}
 	}
 	assert.Len(t, executeQueryOutput.ResultsPage.Rows, len(testutils.TestTableRows))
@@ -687,9 +687,9 @@ func runStopQuery(useLambda bool, input *models.StopQueryInput) (*models.StopQue
 func checkQueryResults(t *testing.T, expectedRowCount, offset int, rows []*models.Row) {
 	require.Len(t, rows, expectedRowCount)
 	for i := 0; i < len(rows); i++ {
-		require.Equal(t, strconv.Itoa(i+offset), rows[i].Columns[0].Value)
-		require.Equal(t, "NULL", rows[i].Columns[1].Value)
-		require.Equal(t, testutils.TestEventTime, rows[i].Columns[2].Value)
+		require.Equal(t, strconv.Itoa(i+offset), *rows[i].Columns[0].Value)
+		require.Equal(t, (*string)(nil), rows[i].Columns[1].Value)
+		require.Equal(t, testutils.TestEventTime, *rows[i].Columns[2].Value)
 	}
 }
 

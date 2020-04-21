@@ -215,7 +215,7 @@ type Row struct {
 }
 
 type Column struct {
-	Value string  `json:"value" validate:"required"`
+	Value *string `json:"value"` // NULL values are nil
 	Type  *string `json:"type,omitempty"`
 }
 
