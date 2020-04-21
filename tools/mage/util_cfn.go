@@ -96,7 +96,7 @@ func parseCfnTemplate(path string) (map[string]interface{}, error) {
 	}
 
 	// The Go yaml parser doesn't understand short-form functions.
-	// So we first use cfn-flip to flip the .yml to .jon
+	// So we first use cfn-flip to flip .yml to .json
 	if strings.ToLower(filepath.Ext(path)) != ".json" {
 		jsonPath := filepath.Join("out", filepath.Base(path)+".json")
 		if err := sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {

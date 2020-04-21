@@ -101,7 +101,6 @@ func deployTemplate(
 // The bucket can be empty to skip S3 packaging (e.g. for the bootstrap stack) - in that case,
 // we still parse the template and re-emit it to strip comments / extra spaces
 func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string) ([]byte, error) {
-	// TODO - first we have to recursively find nested stacks and package those
 	cfnBody, err := parseCfnTemplate(templatePath)
 	if err != nil {
 		return nil, err
@@ -116,11 +115,12 @@ func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string)
 	for _, resource := range cfnBody["Resources"].(map[string]interface{}) {
 		r := resource.(map[string]interface{})
 		switch r["Type"].(string) {
+		// Note: filepaths are relative to the template, but mage is running from the repo root
+
 		case "AWS::AppSync::GraphQLSchema":
 			properties := r["Properties"].(map[string]interface{})
 			if path, ok := properties["DefinitionS3Location"].(string); ok && !strings.HasPrefix(path, "s3://") {
 				// This GraphQLSchema resource has a file location specified instead of S3 - upload it
-				// Path is relative to the template, but we are running here in the repo root
 				assetPath := filepath.Join(filepath.Dir(templatePath), path)
 				key, _, err := uploadAsset(awsSession, assetPath, bucket, stack)
 				if err != nil {
@@ -129,11 +129,36 @@ func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string)
 				properties["DefinitionS3Location"] = fmt.Sprintf("s3://%s/%s", bucket, key)
 			}
 
+		case "AWS::CloudFormation::Stack":
+			properties := r["Properties"].(map[string]interface{})
+			if path, ok := properties["TemplateURL"].(string); ok && !strings.HasPrefix(path, "https://") {
+				// This TemplateURL resource has a file location instead of S3 - package it
+
+				// Recursively package nested template assets
+				nestedTemplatePath := filepath.Join(filepath.Dir(templatePath), path)
+				body, err := cfnPackage(awsSession, nestedTemplatePath, bucket, stack)
+				if err != nil {
+					return nil, err
+				}
+
+				// Save the final nested template locally and upload to S3
+				savePath := filepath.Join("out", "deployments",
+					fmt.Sprintf("%s-nested-%s.yml", stack, filepath.Base(path)))
+				if err = ioutil.WriteFile(savePath, body, 0644); err != nil {
+					return nil, fmt.Errorf("failed to save %s: %v", savePath, err)
+				}
+
+				key, _, err := uploadAsset(awsSession, savePath, bucket, stack)
+				if err != nil {
+					return nil, err
+				}
+				properties["TemplateURL"] = fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key)
+			}
+
 		case "AWS::Serverless::Function":
 			properties := r["Properties"].(map[string]interface{})
 			if path, ok := properties["CodeUri"].(string); ok && !strings.HasPrefix(path, "s3://") {
 				// This CodeUri resource has a file location specified instead of S3 - upload it
-				// Path is relative to the template, but we are running here in the repo root
 				assetPath := filepath.Join(filepath.Dir(templatePath), path)
 
 				zipPath := filepath.Join("out", "deployments", "zip", properties["FunctionName"].(string)+".zip")

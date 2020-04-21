@@ -138,7 +138,6 @@ func Deploy() {
 
 	// ***** Step 2: deploy remaining stacks in parallel
 	deployMainStacks(awsSession, settings, accountID, outputs)
-	logger.Fatal("stopping early") // TODO - temp
 
 	// ***** Step 3: first-time setup if needed
 	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
@@ -215,7 +214,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 		c <- goroutineResult{summary: "bootstrap: compile source", err: err}
 	}(results)
 
-	logResults(results, "deploy: bootstrap", count)
+	logResults(results, "deploy: bootstrap", 1, count, count)
 	return outputs
 }
 
@@ -353,15 +352,15 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	count := 0
 
 	// Alarms
-	//parallelStacks++
-	//go func(result chan string) {
-	//	deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
-	//		"AppsyncId":            outputs["GraphQLApiId"],
-	//		"LoadBalancerFullName": outputs["LoadBalancerFullName"],
-	//		"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
-	//	})
-	//	result <- alarmsStack
-	//}(finishedStacks)
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
+			"AppsyncId":            outputs["GraphQLApiId"],
+			"LoadBalancerFullName": outputs["LoadBalancerFullName"],
+			"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
+		})
+		c <- goroutineResult{summary: alarmsStack, err: err}
+	}(results)
 
 	// Appsync
 	count++
@@ -457,27 +456,28 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		c <- goroutineResult{summary: frontendStack, err: err}
 	}(results)
 
-	// Wait for stacks to finish
-	logResults(results, "deploy", count)
+	// Wait for stacks to finish.
+	// There will be two stacks after this one (metric filters + onboarding)
+	logResults(results, "deploy", 1, count, count+2)
 
-	//// Metric filters have to be deployed after all log groups have been created
-	//go func(result chan string) {
-	//	deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
-	//	result <- metricFilterStack
-	//}(finishedStacks)
-	//
-	//// Onboard Panther to scan itself
-	//go func(result chan string) {
-	//	if settings.Setup.OnboardSelf {
-	//		deployOnboard(awsSession, settings, accountID, outputs)
-	//	}
-	//	result <- onboardStack
-	//}(finishedStacks)
-	//
-	//// Wait for onboarding and monitoring to finish
-	//for i := parallelStacks + 1; i <= parallelStacks+2; i++ {
-	//	logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
-	//}
+	// Metric filters have to be deployed after all log groups have been created
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
+		c <- goroutineResult{summary: metricFilterStack, err: err}
+	}(results)
+
+	// Onboard Panther to scan itself
+	go func(c chan goroutineResult) {
+		var err error
+		if settings.Setup.OnboardSelf {
+			err = deployOnboard(awsSession, settings, accountID, outputs)
+		}
+		c <- goroutineResult{summary: onboardStack, err: err}
+	}(results)
+
+	// Log stack results, counting where the last parallel group left off to give the illusion of
+	// one continuous deploy progress tracker.
+	logResults(results, "deploy", count+1, count+2, count+2)
 }
 
 func deployGlue(awsSession *session.Session, outputs map[string]string) error {

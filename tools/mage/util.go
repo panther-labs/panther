@@ -54,15 +54,22 @@ type goroutineResult struct {
 
 // Wait for the given number of goroutines to finish, logging results as they come in.
 //
+// This can be invoked multiple times to track progress over many parallel chunks of work:
+//   "start" is the first message number to show in the output
+//   "end" is the last message number to show in the output
+//   "total" is the total number of tasks (across all invocations)
+//
+// This will consume exactly (end - start) + 1 messages in the channel.
+//
 // Logs a fatal message at the end if there were any errors.
-func logResults(results chan goroutineResult, command string, count int) {
+func logResults(results chan goroutineResult, command string, start, end, total int) {
 	var erroredTasks []string
-	for i := 1; i <= count; i++ {
+	for i := start; i <= end; i++ {
 		r := <-results
 		if r.err == nil {
-			logger.Infof("    √ %s finished (%d/%d)", r.summary, i, count)
+			logger.Infof("    √ %s finished (%d/%d)", r.summary, i, total)
 		} else {
-			logger.Errorf("    X %s failed (%d/%d): %v", r.summary, i, count, r.err)
+			logger.Errorf("    X %s failed (%d/%d): %v", r.summary, i, total, r.err)
 			erroredTasks = append(erroredTasks, r.summary)
 		}
 	}

@@ -140,7 +140,6 @@ func dockerLogin(ecrServer, username, password string) error {
 		return fmt.Errorf("failed to close password pipe: %v", err)
 	}
 
-	logger.Debug("deploy: logging in to remote image repo")
 	err = sh.Run("docker", "login",
 		"-u", username,
 		"--password-stdin",

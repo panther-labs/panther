@@ -129,7 +129,7 @@ func (t Test) CI() {
 		c <- goroutineResult{"terraform validate", testTfValidate()}
 	}(results)
 
-	logResults(results, "test:ci", count)
+	logResults(results, "test:ci", 1, count, count)
 }
 
 // Format source files and build APIs and check for changes.
@@ -174,7 +174,14 @@ func testCfnLint() error {
 		}
 	})
 
-	return sh.RunV(pythonLibPath("cfn-lint"), templates...)
+	// cfn-lint will complain:
+	//   E3012 Property Resources/SnapshotDLQ/Properties/MessageRetentionPeriod should be of type Integer
+	//
+	// But if we keep them integers, yaml marshaling converts large integers to scientific notation,
+	// which CFN does not understand. So we force string values to serialize them correctly.
+	args := []string{"-x", "E3012:strict=false", "--"}
+	args = append(args, templates...)
+	return sh.RunV(pythonLibPath("cfn-lint"), args...)
 }
 
 func testGoUnit() error {
