@@ -191,5 +191,6 @@ func TestRFC3164Type(t *testing.T) {
 
 func checkRFC3164(t *testing.T, log string, expectedEvent *RFC3164) {
 	expectedEvent.SetEvent(expectedEvent)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parserRFC3164.Parse(log))
+	logs, err := parserRFC3164.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), logs, err)
 }

@@ -20,7 +20,6 @@ package osquerylogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -49,26 +48,26 @@ type Snapshot struct { // FIXME: field descriptions need updating!
 // SnapshotParser parses OsQuery snapshot logs
 type SnapshotParser struct{}
 
+var _ parsers.LogParser = (*SnapshotParser)(nil)
+
 func (p *SnapshotParser) New() parsers.LogParser {
 	return &SnapshotParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *SnapshotParser) Parse(log string) []*parsers.PantherLog {
+func (p *SnapshotParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &Snapshot{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("failed to unmarshal log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
