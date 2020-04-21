@@ -70,6 +70,7 @@ func TestIntegrations(t *testing.T) {
 }`
 
 	expectedTime := time.Date(2018, 9, 6, 17, 15, 16, int(365*time.Millisecond), time.UTC)
+
 	expectedEvent := &Integrations{
 		Severity:     aws.String("INFO"),
 		Time:         (*timestamp.RFC3339)(&expectedTime),

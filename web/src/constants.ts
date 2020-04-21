@@ -81,6 +81,7 @@ export const LOG_TYPES = [
   'AWS.ALB',
   'AWS.AuroraMySQLAudit',
   'AWS.CloudTrail',
+  'AWS.CloudTrailInsight',
   'AWS.GuardDuty',
   'AWS.S3ServerAccess',
   'AWS.VPCFlow',
