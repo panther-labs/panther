@@ -46,8 +46,6 @@ func TestAuditParser(t *testing.T) {
 	}`
 
 	expectedTime := time.Date(2018, 10, 17, 17, 38, 22, int(523*time.Millisecond), time.UTC)
-	strTime := expectedTime.Format(time.RFC3339Nano)
-	_ = strTime
 	expectedEvent := &Audit{
 		Severity:      aws.String("INFO"),
 		Time:          (*timestamp.RFC3339)(&expectedTime),

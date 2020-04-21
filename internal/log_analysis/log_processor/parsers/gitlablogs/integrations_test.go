@@ -42,8 +42,6 @@ func TestIntegrationsError(t *testing.T) {
 }`
 
 	expectedTime := time.Date(2018, 9, 6, 14, 56, 20, int(439*time.Millisecond), time.UTC)
-	strTime := expectedTime.Format(time.RFC3339Nano)
-	_ = strTime
 	expectedEvent := &Integrations{
 		Severity:     aws.String("ERROR"),
 		Time:         (*timestamp.RFC3339)(&expectedTime),
@@ -72,8 +70,6 @@ func TestIntegrations(t *testing.T) {
 }`
 
 	expectedTime := time.Date(2018, 9, 6, 17, 15, 16, int(365*time.Millisecond), time.UTC)
-	strTime := expectedTime.Format(time.RFC3339Nano)
-	_ = strTime
 	expectedEvent := &Integrations{
 		Severity:     aws.String("INFO"),
 		Time:         (*timestamp.RFC3339)(&expectedTime),

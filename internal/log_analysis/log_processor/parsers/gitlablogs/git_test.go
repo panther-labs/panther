@@ -39,8 +39,6 @@ func TestGitParser(t *testing.T) {
 	}`
 
 	expectedTime := time.Date(2019, 7, 19, 22, 16, 12, int(528*time.Millisecond), time.UTC)
-	strTime := expectedTime.Format(time.RFC3339Nano)
-	_ = strTime
 	expectedEvent := &Git{
 		Severity:      aws.String("ERROR"),
 		Time:          (*timestamp.RFC3339)(&expectedTime),

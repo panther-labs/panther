@@ -57,8 +57,6 @@ func TestExceptionsParser(t *testing.T) {
 	}`
 
 	expectedTime := time.Date(2019, 12, 17, 11, 49, 29, int(485*time.Millisecond), time.UTC)
-	strTime := expectedTime.Format(time.RFC3339Nano)
-	_ = strTime
 	expectedEvent := &Exceptions{
 		Severity:      aws.String("ERROR"),
 		Time:          (*timestamp.RFC3339)(&expectedTime),

@@ -28,6 +28,7 @@
 * [Supported Logs]()
   * [AWS](log-analysis/log-processing/supported-logs/AWS.md)
   * [Fluentd](log-analysis/log-processing/supported-logs/Fluentd.md)
+  * [GitLab](log-analysis/log-processing/supported-logs/GitLab.md)
   * [Nginx](log-analysis/log-processing/supported-logs/Nginx.md)
   * [Osquery](log-analysis/log-processing/supported-logs/Osquery.md)
   * [OSSEC](log-analysis/log-processing/supported-logs/OSSEC.md)
