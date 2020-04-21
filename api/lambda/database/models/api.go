@@ -31,18 +31,30 @@ const (
 
 // LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
-	ExecuteAsyncQuery       *ExecuteAsyncQueryInput       `json:"executeAsyncQuery"`
-	ExecuteAsyncQueryNotify *ExecuteAsyncQueryNotifyInput `json:"executeAsyncQueryNotify"` // uses Step functions
-	ExecuteQuery            *ExecuteQueryInput            `json:"executeQuery"`
-	GetDatabases            *GetDatabasesInput            `json:"getDatabases"`
-	GetQueryResults         *GetQueryResultsInput         `json:"getQueryResults"`
-	GetQueryResultsLink     *GetQueryResultsLinkInput     `json:"getQueryResultsLink"`
-	GetQueryStatus          *GetQueryStatusInput          `json:"getQueryStatus"`
-	GetTables               *GetTablesInput               `json:"getTables"`
-	GetTablesDetail         *GetTablesDetailInput         `json:"getTablesDetail"`
-	InvokeNotifyLambda      *InvokeNotifyLambdaInput      `json:"invokeNotifyLambda"`
-	NotifyAppSync           *NotifyAppSyncInput           `json:"notifyAppSync"`
-	StopQuery               *StopQueryInput               `json:"stopQuery"`
+	// run a query, returning immediately with an id for the running query
+	ExecuteAsyncQuery *ExecuteAsyncQueryInput `json:"executeAsyncQuery"`
+	// run a query, returning immediately with an id for the step function running the query (will invoke lambda callback when done)
+	ExecuteAsyncQueryNotify *ExecuteAsyncQueryNotifyInput `json:"executeAsyncQueryNotify"`
+	// run a query, waiting for results
+	ExecuteQuery *ExecuteQueryInput `json:"executeQuery"`
+	// list databases
+	GetDatabases *GetDatabasesInput `json:"getDatabases"`
+	// given a query id, return paged results
+	GetQueryResults *GetQueryResultsInput `json:"getQueryResults"`
+	// given a query id, return a presigned s3 link to the results
+	GetQueryResultsLink *GetQueryResultsLinkInput `json:"getQueryResultsLink"`
+	// given a query id, return the status of the query
+	GetQueryStatus *GetQueryStatusInput `json:"getQueryStatus"`
+	// given a database, list tables
+	GetTables *GetTablesInput `json:"getTables"`
+	// given a database and list of tables, return tables
+	GetTablesDetail *GetTablesDetailInput `json:"getTablesDetail"`
+	// given a lambda and method, execute callback for step function
+	InvokeNotifyLambda *InvokeNotifyLambdaInput `json:"invokeNotifyLambda"`
+	// used as a callback lambda, will notify appsync that a UI query is complete
+	NotifyAppSync *NotifyAppSyncInput `json:"notifyAppSync"`
+	// given a query id, cancel query
+	StopQuery *StopQueryInput `json:"stopQuery"`
 }
 
 type GetDatabasesInput struct {

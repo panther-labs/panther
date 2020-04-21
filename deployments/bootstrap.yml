@@ -695,7 +695,7 @@ Resources:
       # </cfndoc>
       AuthenticationType: AMAZON_COGNITO_USER_POOLS
       AdditionalAuthenticationProviders:
-        - AuthenticationType: AWS_IAM # used for lambda callbacks
+        - AuthenticationType: AWS_IAM # this is used for lambda callbacks to AppSync (e.g., to signal Athena query completion)
       UserPoolConfig:
         AwsRegion: !Ref AWS::Region
         UserPoolId: !Ref UserPool
