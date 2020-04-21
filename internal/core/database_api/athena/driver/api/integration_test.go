@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sfn"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -42,6 +43,8 @@ import (
 )
 
 const (
+	stateMachineName = "panther-athena-workflow"
+
 	printJSON = false // set to true to print json input/output (useful for sharing with frontend devs)
 
 	testUserID       = "testUserID"
@@ -64,9 +67,18 @@ func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
 		os.Setenv("GRAPHQL_ENDPOINT", "placeholder, this is required")
+		os.Setenv("ATHENA_STATEMACHINE_ARN", "placeholder, this is required")
 		SessionInit()
 		lambdaClient = lambda.New(awsSession)
 		s3Client = s3.New(awsSession)
+
+		// get the ARN for the statemachine
+		identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+		if err != nil || identity.Account == nil {
+			panic("failed to get identity")
+		}
+		envConfig.AthenaStatemachineARN = fmt.Sprintf("arn:aws:states:%s:%s:stateMachine:%s",
+			*awsSession.Config.Region, *identity.Account, stateMachineName)
 	}
 	os.Exit(m.Run())
 }

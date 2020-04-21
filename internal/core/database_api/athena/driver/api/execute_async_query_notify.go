@@ -19,11 +19,8 @@ package api
  */
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sfn"
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -33,10 +30,6 @@ import (
 )
 
 // Execute an Athena query via step function workflow.
-
-const (
-	stateMachineName = "panther-athena-workflow"
-)
 
 func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (*models.ExecuteAsyncQueryNotifyOutput, error) {
 	var output models.ExecuteAsyncQueryNotifyOutput
@@ -65,24 +58,10 @@ func (API) ExecuteAsyncQueryNotify(input *models.ExecuteAsyncQueryNotifyInput) (
 		return &output, err
 	}
 
-	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil || identity.Account == nil {
-		err = errors.Wrapf(err, "failed to get identity %#v", input)
-		return &output, err
-	}
-
-	if awsSession.Config.Region == nil {
-		err = errors.Wrapf(err, "failed to get aws region %#v", input)
-		return &output, err
-	}
-
-	stateMachineARN := fmt.Sprintf("arn:aws:states:%s:%s:stateMachine:%s",
-		*awsSession.Config.Region, *identity.Account, stateMachineName)
-
 	startExecutionInput := &sfn.StartExecutionInput{
 		Input:           aws.String(string(worflowJSON)),
 		Name:            aws.String(uuid.New().String()),
-		StateMachineArn: &stateMachineARN,
+		StateMachineArn: &envConfig.AthenaStatemachineARN,
 	}
 	startExecutionOutput, err := sfnClient.StartExecution(startExecutionInput)
 	if err != nil {
