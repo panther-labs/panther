@@ -168,13 +168,10 @@ func createChangeSet(
 		})
 	}
 
-	// tag with major version
-	var pantherVersion string
-	gitVersionParts := strings.Split(gitVersion, "-")
-	if len(gitVersionParts) > 1 {
-		pantherVersion = gitVersionParts[0]
-	} else {
-		pantherVersion = gitVersion
+	// add version tag to all objects ("untagged" if not set)
+	pantherVersion := gitVersion
+	if pantherVersion == "" {
+		pantherVersion = "untagged"
 	}
 
 	createInput := &cloudformation.CreateChangeSetInput{
