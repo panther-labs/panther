@@ -19,10 +19,9 @@ package awslogs
  */
 
 import (
+	"errors"
 	"strconv"
 	"strings"
-
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
@@ -59,6 +58,8 @@ type AuroraMySQLAuditParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 }
 
+var _ parsers.LogParser = (*AuroraMySQLAuditParser)(nil)
+
 func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
 	return &AuroraMySQLAuditParser{
 		CSVReader: csvstream.NewStreamingCSVReader(),
@@ -66,21 +67,19 @@ func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuroraMySQLAuditParser) Parse(log string) []*parsers.PantherLog {
+func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
-		zap.L().Debug("failed to parse the log as csv")
-		return nil
+		return nil, err
 	}
 
 	if len(record) < auroraMySQLAuditMinNumberOfColumns {
-		zap.L().Debug("failed to parse the log as csv (wrong number of columns)")
-		return nil
+		return nil, errors.New("invalid number of columns")
 	}
 
 	timestampUnixMillis, err := strconv.ParseInt(record[0], 0, 64)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	// If there are ',' in the "object" field, CSV reader will split it to multiple fields
@@ -105,11 +104,10 @@ func (p *AuroraMySQLAuditParser) Parse(log string) []*parsers.PantherLog {
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

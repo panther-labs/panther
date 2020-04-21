@@ -472,7 +472,7 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	if err != nil {
 		logger.Fatalf("failed to batch delete objects: %v", err)
 	}
-	time.Sleep(time.Second / 4) // short pause since S3 is eventually consistent to avoid next call from failing
+	time.Sleep(time.Second * 2) // short pause since S3 is eventually consistent to avoid next call from failing
 	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
 		logger.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
 	}
