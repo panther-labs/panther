@@ -41,10 +41,11 @@ func (m *mockParser) New() parsers.LogParser {
 func (m *mockParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	args := m.Called(log)
 	result := args.Get(0)
+	err := args.Error(1)
 	if result == nil {
-		return nil, nil
+		return nil, err
 	}
-	return result.([]*parsers.PantherLog), nil
+	return result.([]*parsers.PantherLog), err
 }
 
 func (m *mockParser) LogType() string {
