@@ -101,12 +101,6 @@ Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 </table>
 
 ##Suricata.DNS
@@ -281,11 +275,5 @@ Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 </table>
 

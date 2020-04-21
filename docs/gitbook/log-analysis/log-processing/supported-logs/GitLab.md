@@ -66,12 +66,6 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 </table>
 
 ##GitLab.Audit
@@ -119,12 +113,6 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 </table>
 
 ##GitLab.Exceptions
@@ -201,12 +189,6 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlo
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 </table>
 
 ##GitLab.Git
@@ -246,12 +228,6 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 </table>
 
 ##GitLab.Integrations
@@ -295,12 +271,6 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#integrations_json
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 </table>
 
 ##GitLab.Rails
@@ -377,11 +347,5 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlo
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 </table>
 

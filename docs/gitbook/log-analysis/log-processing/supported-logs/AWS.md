@@ -69,12 +69,6 @@ Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/l
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 <tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
@@ -144,12 +138,6 @@ Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMy
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 <tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
@@ -324,12 +312,6 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudt
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 <tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
@@ -430,12 +412,6 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudt
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 <tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
@@ -541,12 +517,6 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudt
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 <tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
@@ -656,12 +626,6 @@ See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 <tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
@@ -751,12 +715,6 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/AmazonS3/
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 <tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
@@ -837,12 +795,6 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/vpc/lates
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"type": "array"
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of hashes of any algorithm associated with the row</td></tr>
 <tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>{
 <br>&nbsp;&nbsp;"items": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"

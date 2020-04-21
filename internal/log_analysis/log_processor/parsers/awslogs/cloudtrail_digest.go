@@ -99,9 +99,9 @@ func (event *CloudTrailDigest) updatePantherFields(p *CloudTrailDigestParser) {
 	// Use end time as it's the time the digest was actually delivered
 	event.SetCoreFields(p.LogType(), event.DigestEndTime, event)
 	event.AppendAnyAWSAccountIdPtrs(event.AWSAccountID)
-	event.AppendAnyHashesPtr(event.PreviousDigestHashValue)
-	for i := range event.LogFiles {
-		lf := &event.LogFiles[i]
-		event.AppendAnyHashesPtr(lf.HashValue)
-	}
+	// event.AppendAnyHashesPtr(event.PreviousDigestHashValue)
+	// for i := range event.LogFiles {
+	// 	lf := &event.LogFiles[i]
+	// 	event.AppendAnyHashesPtr(lf.HashValue)
+	// }
 }
