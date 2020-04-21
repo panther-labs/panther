@@ -26,6 +26,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
+// CloudTrailDigestDesc describes a cloud trail digest log
+// nolint:lll
 var CloudTrailDigestDesc = `AWSCloudTrailDigest contains the names of the log files that were delivered to your Amazon S3 bucket during the last hour, the hash values for those log files, and the signature of the previous digest file. 
 Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-digest-file-structure.html`
 
@@ -42,7 +44,8 @@ type CloudTrailDigest struct {
 	PreviousDigestS3Object      *string                   `json:"previousDigestS3Object,omitempty" description:"The Amazon S3 object key (that is, the Amazon S3 bucket location) of the previous digest file."`
 	PreviousDigestHashValue     *string                   `json:"previousDigestHashValue,omitempty" description:"The hexadecimal encoded hash value of the uncompressed contents of the previous digest file."`
 	PreviousDigestHashAlgorithm *string                   `json:"previousDigestHashAlgorithm,omitempty" description:"The name of the hash algorithm that was used to hash the previous digest file."`
-	PublicKeyFingerprint        *string                   `json:"publicKeyFingerprint" validate:"required" description:"The hexadecimal encoded fingerprint of the public key that matches the private key used to sign this digest file."`
+	PreviousDigestSignature     *string                   `json:"previousDigestSignature,omitempty" description:"The hexadecimal encoded signature of the previous digest file."`
+	DigestPublicKeyFingerprint  *string                   `json:"digestPublicKeyFingerprint" validate:"required" description:"The hexadecimal encoded fingerprint of the public key that matches the private key used to sign this digest file."`
 	DigestSignatureAlgorithm    *string                   `json:"digestSignatureAlgorithm" validate:"required" description:"The algorithm used to sign the digest file."`
 	LogFiles                    []CloudTrailDigestLogFile `json:"logFiles" validate:"required,min=1" description:"Log files delivered in this digest"`
 
@@ -52,10 +55,12 @@ type CloudTrailDigest struct {
 
 // nolint:lll
 type CloudTrailDigestLogFile struct {
-	S3Bucket      *string `json:"s3Bucket" validate:"required" description:"The name of the Amazon S3 bucket for the log file."`
-	S3Object      *string `json:"s3Object" validate:"required" description:"The Amazon S3 object key of the current log file."`
-	HashValue     *string `json:"hashValue" validate:"required" description:"The hexadecimal encoded hash value of the uncompressed log file content."`
-	HashAlgorithm *string `json:"hashAlgorithm" validate:"required" description:"The hash algorithm used to hash the log file."`
+	S3Bucket        *string            `json:"s3Bucket" validate:"required" description:"The name of the Amazon S3 bucket for the log file."`
+	S3Object        *string            `json:"s3Object" validate:"required" description:"The Amazon S3 object key of the current log file."`
+	HashValue       *string            `json:"hashValue" validate:"required" description:"The hexadecimal encoded hash value of the uncompressed log file content."`
+	HashAlgorithm   *string            `json:"hashAlgorithm" validate:"required" description:"The hash algorithm used to hash the log file."`
+	NewestEventTime *timestamp.RFC3339 `json:"newestEventTime" validate:"required" description:"The UTC time of the most recent event among the events in the log file."`
+	OldestEventTime *timestamp.RFC3339 `json:"oldestEventTime" validate:"required" description:"The UTC time of the oldest event among the events in the log file."`
 }
 
 type CloudTrailDigestParser struct{}
@@ -91,7 +96,12 @@ func (p *CloudTrailDigestParser) LogType() string {
 }
 
 func (event *CloudTrailDigest) updatePantherFields(p *CloudTrailDigestParser) {
-	event.SetCoreFields(p.LogType(), event.DigestStartTime, event)
-
+	// Use end time as it's the time the digest was actually delivered
+	event.SetCoreFields(p.LogType(), event.DigestEndTime, event)
 	event.AppendAnyAWSAccountIdPtrs(event.AWSAccountID)
+	event.AppendAnyHashesPtr(event.PreviousDigestHashValue)
+	for i := range event.LogFiles {
+		lf := &event.LogFiles[i]
+		event.AppendAnyHashesPtr(lf.HashValue)
+	}
 }
