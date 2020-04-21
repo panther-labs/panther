@@ -145,7 +145,8 @@ func checkVPCFlowLog(t *testing.T, header, log string, expectedEvent *VPCFlow) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := (&VPCFlowParser{}).New() // important to call New() to initialize reader
 	noevents, noerr := parser.Parse(header)
-	require.Nil(t, noevents, "Header parsing should not return events")
+	require.Empty(t, noevents, "Header parsing should not return events")
+	require.NotNil(t, noevents, "Header parsing should return empty events")
 	require.NoError(t, noerr, "Header parsing should not return an error")
 	events, err := parser.Parse(log)
 	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
