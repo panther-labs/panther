@@ -19,35 +19,20 @@ package mage
  */
 
 import (
-	"io/ioutil"
 	"testing"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
-// Read YAML file without invoking cfn-flip (which assumes working directory is repo root)
-func parseTestYaml(t *testing.T, path string) map[string]interface{} {
-	contents, err := ioutil.ReadFile(path)
-	require.NoError(t, err)
-
-	var yamlResult map[string]interface{}
-	require.NoError(t, yaml.Unmarshal(contents, &yamlResult))
-
-	// Now we have to marshal/unmarshal with json to get rid of map[interface{}]interface{}
-	jsonBody, err := jsoniter.Marshal(&yamlResult)
-	require.NoError(t, err)
-
-	var result map[string]interface{}
-	require.NoError(t, jsoniter.Unmarshal(jsonBody, &result))
-	return result
-}
-
 func TestEmbedAPIsNoChange(t *testing.T) {
-	cfn := parseTestYaml(t, "testdata/no-api.yml")
-	expectedMap := parseTestYaml(t, "testdata/no-api.yml")
+	cfn, err := cfnparse.ParseTemplate("testdata/no-api.yml")
+	require.NoError(t, err)
+	expectedMap, err := cfnparse.ParseTemplate("testdata/no-api.yml")
+	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
 
@@ -62,8 +47,10 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 }
 
 func TestEmbedAPIs(t *testing.T) {
-	cfn := parseTestYaml(t, "testdata/valid-api.yml")
-	expectedMap := parseTestYaml(t, "testdata/valid-api-expected-output.yml")
+	cfn, err := cfnparse.ParseTemplate("testdata/valid-api.yml")
+	require.NoError(t, err)
+	expectedMap, err := cfnparse.ParseTemplate("testdata/valid-api-expected-output.yml")
+	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
 

@@ -29,7 +29,7 @@ type LambdaAlarm struct {
 	lambdaName string
 }
 
-func NewLambdaAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) *LambdaAlarm {
+func NewLambdaAlarm(alarmType, metricName, message string, resource map[string]interface{}) *LambdaAlarm {
 	const (
 		metricDimension = "FunctionName"
 		metricNamespace = "AWS/Lambda"
@@ -49,7 +49,7 @@ type LambdaMetricFilterAlarm struct {
 	LambdaAlarm
 }
 
-func NewLambdaMetricFilterAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) *LambdaMetricFilterAlarm {
+func NewLambdaMetricFilterAlarm(alarmType, metricName, message string, resource map[string]interface{}) *LambdaMetricFilterAlarm {
 	alarm := &LambdaMetricFilterAlarm{
 		LambdaAlarm: *NewLambdaAlarm(alarmType, "", message, resource),
 	}
@@ -57,7 +57,7 @@ func NewLambdaMetricFilterAlarm(alarmType, metricName, message string, resource 
 	return alarm
 }
 
-func generateLambdaAlarms(resource map[interface{}]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
+func generateLambdaAlarms(resource map[string]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
 	// errors
 	alarms = append(alarms, NewLambdaAlarm("LambdaErrors", "Errors",
 		"is failing", resource).SumCountThreshold(0, 60*5))
@@ -80,7 +80,6 @@ func generateLambdaAlarms(resource map[interface{}]interface{}, settings *config
 	const memorySizeKey = "MemorySize"
 	var lambdaMem float32
 	// special case for panther-log-processor because it uses !Ref to allow user to set size: read from config file
-	// https://github.com/panther-labs/panther/issues/435
 	const pantherLogProcessorLambda = "panther-log-processor"
 	if getResourceProperty("FunctionName", resource) == pantherLogProcessorLambda {
 		lambdaMem = (float32)(settings.Infra.LogProcessorLambdaMemorySize)

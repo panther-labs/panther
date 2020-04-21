@@ -20,8 +20,6 @@ package mage
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,9 +27,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/magefile/mage/sh"
-	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/tools/config"
 )
@@ -86,48 +81,6 @@ var terminalStackStatus = map[string]struct{}{
 type cfnResource struct {
 	Resource *cfn.StackResourceSummary
 	Stack    *cfn.Stack
-}
-
-// Parse a CloudFormation template, returning a json map.
-//
-// Short-form functions like "!If" and "!Sub" will be replaced with "Fn::" objects.
-func parseCfnTemplate(path string) (map[string]interface{}, error) {
-	if err := os.MkdirAll("out", 0755); err != nil {
-		return nil, err
-	}
-
-	// The Go yaml parser doesn't understand short-form functions.
-	// So we first use cfn-flip to flip .yml to .json
-	if strings.ToLower(filepath.Ext(path)) != ".json" {
-		jsonPath := filepath.Join("out", filepath.Base(path)+".json")
-		if err := sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {
-			return nil, fmt.Errorf("failed to flip %s to json: %v", path, err)
-		}
-		defer os.Remove(jsonPath)
-		path = jsonPath
-	}
-
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %v", path, err)
-	}
-
-	var result map[string]interface{}
-	return result, jsoniter.Unmarshal(contents, &result)
-}
-
-// Save the CloudFormation structure as a .yml file.
-func writeCfnTemplate(cfn map[string]interface{}, path string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
-	}
-
-	contents, err := yaml.Marshal(cfn)
-	if err != nil {
-		return fmt.Errorf("yaml marshal failed: %v", err)
-	}
-
-	return ioutil.WriteFile(path, contents, 0644)
 }
 
 // Flatten CloudFormation stack outputs into a string map.

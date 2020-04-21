@@ -35,6 +35,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
 const (
@@ -102,7 +103,7 @@ func deployTemplate(
 // The bucket can be empty to skip S3 packaging (e.g. for the bootstrap stack) - in that case,
 // we still parse the template and re-emit it to strip comments / extra spaces
 func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string) ([]byte, error) {
-	cfnBody, err := parseCfnTemplate(templatePath)
+	cfnBody, err := cfnparse.ParseTemplate(templatePath)
 	if err != nil {
 		return nil, err
 	}
