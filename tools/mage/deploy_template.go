@@ -362,7 +362,6 @@ func createChangeSet(
 		if err != nil {
 			return nil, err
 		}
-		// https://s3.amazonaws.com/panther-bootstrap-source-59k5v24w3dkn/panther-cw-alarms/7be8e66f0a53d515ac6780bc80ec725f.template
 		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key))
 	}
 
