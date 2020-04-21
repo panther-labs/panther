@@ -21,6 +21,7 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -79,9 +80,11 @@ const (
 	onboardTemplate      = "deployments/onboard.yml"
 
 	// Python layer
-	layerSourceDir   = "out/pip/analysis/python"
-	layerZipfile     = "out/layer.zip"
-	layerS3ObjectKey = "layers/python-analysis.zip"
+	layerSourceDir        = "out/pip/analysis/python"
+	layerZipfile          = "out/layer.zip"
+	layerS3ObjectKey      = "layers/python-analysis.zip"
+	defaultGlobalID       = "panther"
+	defaultGlobalLocation = "internal/compliance/policy_engine/src/helpers.py"
 
 	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
@@ -139,6 +142,9 @@ func Deploy() {
 
 	// ***** Step 3: first-time setup if needed
 	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
+		logger.Fatal(err)
+	}
+	if err := initializeGlobal(awsSession, outputs["AnalysisApiEndpoint"]); err != nil {
 		logger.Fatal(err)
 	}
 	if err := inviteFirstUser(awsSession); err != nil {
@@ -422,7 +428,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Web server
 	parallelStacks++
 	go func(result chan string) {
-		deployFrontend(awsSession, accountID, sourceBucket, outputs)
+		deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
 		result <- frontendStack
 	}(finishedStacks)
 
@@ -571,5 +577,50 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, settin
 	}
 
 	logger.Infof("deploy: initialized with %d policies and %d rules", newPolicies, newRules)
+	return nil
+}
+
+// Install the default global helper function if it does not already exist
+func initializeGlobal(awsSession *session.Session, endpoint string) error {
+	httpClient := gatewayapi.GatewayClient(awsSession)
+	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
+		WithBasePath("/v1").WithHost(endpoint))
+
+	_, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
+		GlobalID:   defaultGlobalID,
+		HTTPClient: httpClient,
+	})
+	// Global already exists
+	if err == nil {
+		logger.Debug("deploy: global module already exists")
+		return nil
+	}
+
+	// Return errors other than 404 not found
+	if _, ok := err.(*operations.GetGlobalNotFound); !ok {
+		return fmt.Errorf("failed to get existing global file: %v", err)
+	}
+
+	// Setup the initial helper layer
+	content, err := ioutil.ReadFile(defaultGlobalLocation)
+	if err != nil {
+		return fmt.Errorf("failed to read default globals file: %v", err)
+	}
+
+	logger.Infof("deploy: uploading initial global helper module")
+	_, err = apiClient.Operations.CreateGlobal(&operations.CreateGlobalParams{
+		Body: &analysismodels.UpdateGlobal{
+			Body:        analysismodels.Body(string(content)),
+			Description: "A set of default helper functions.",
+			ID:          defaultGlobalID,
+			UserID:      mageUserID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to upload default globals file: %v", err)
+	}
+
 	return nil
 }

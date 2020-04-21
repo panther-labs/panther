@@ -53,8 +53,6 @@ func TestGitLabAPI(t *testing.T) {
 }`
 
 	expectedTime := time.Date(2018, 10, 29, 12, 49, 42, int(123*time.Millisecond), time.UTC)
-	strTime := expectedTime.Format(time.RFC3339Nano)
-	_ = strTime
 	expectedEvent := &API{
 		Time:     (*timestamp.RFC3339)(&expectedTime),
 		Severity: aws.String("INFO"),
