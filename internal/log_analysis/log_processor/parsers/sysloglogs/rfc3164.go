@@ -114,4 +114,6 @@ func (event *RFC3164) updatePantherFields(p *RFC3164Parser) {
 	if !event.AppendAnyIPAddressPtr(event.Hostname) {
 		event.AppendAnyDomainNamePtrs(event.Hostname)
 	}
+
+	event.AppendAnyIPAddressInFieldPtr(event.Message)
 }
