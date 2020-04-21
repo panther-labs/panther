@@ -241,6 +241,17 @@ func prepareStack(awsSession *session.Session, stack string) (map[string]string,
 		// These are caused by a failed stack creation or deletion; in either case CFN already has
 		// tried destroying existing resources or is about to. (This is *not* a failed update.)
 		// Deleted stacks are retained and viewable for 90 days.
+
+		if stack == bootstrapStack {
+			// If the very first stack failed to create, we need to do a full teardown before trying again.
+			// Otherwise, there may be orphaned S3 buckets and an ACM cert that will never be used.
+			logger.Warnf("the very first %s stack never created successfully (%s):"+
+				" running 'mage teardown' to fully remove orphaned resources before trying again",
+				bootstrapStack, status)
+			Teardown()
+			return nil, nil
+		}
+
 		logger.Warnf("deleting stack %s (%s) before it can be re-deployed", stack, status)
 		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stack}); err != nil {
 			return nil, fmt.Errorf("failed to start stack %s deletion: %v", stack, err)
@@ -258,7 +269,7 @@ func prepareStack(awsSession *session.Session, stack string) (map[string]string,
 		}
 	}
 
-	// Stack is done - return its outputs.
+	// Stack is stable - return its outputs
 	status = *detail.StackStatus // status may have changed if we had to wait
 	switch status {
 	case cfn.StackStatusDeleteComplete:

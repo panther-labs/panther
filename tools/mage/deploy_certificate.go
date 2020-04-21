@@ -35,7 +35,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
+	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/iam"
 
 	"github.com/panther-labs/panther/tools/config"
@@ -60,25 +60,24 @@ func certificateArn(awsSession *session.Session, settings *config.PantherConfig)
 		return settings.Web.CertificateArn
 	}
 
-	_, outputs, err := describeStack(cloudformation.New(awsSession), bootstrapStack)
-	if err == nil {
-		// The bootstrap stack already exists
-		// CFN makes us re-specify the parameter if it already had a non-default value.
-		arn := outputs["CertificateArn"]
-		if arn == "" {
-			logger.Fatalf("output CertificateArn from stack %s is blank", bootstrapStack)
-		}
-		return arn
+	// If the bootstrap stack already exists, we need the stack outputs to know what cert arn to use.
+	// CFN makes us re-specify the parameter if it already had a non-default value.
+	stack, err := waitForStack(cfn.New(awsSession), bootstrapStack)
+	if err != nil {
+		// If the stack doesn't exist yet, its reported status will be DELETE_COMPLETE (not an error)
+		logger.Fatal(err)
 	}
 
-	if errStackDoesNotExist(err) {
-		// The stack doesn't exist yet - upload a new certificate
+	status := *stack.StackStatus
+	if status == cfn.StackStatusCreateFailed || status == cfn.StackStatusDeleteComplete ||
+		status == cfn.StackStatusDeleteFailed || status == cfn.StackStatusRollbackComplete ||
+		status == cfn.StackStatusRollbackFailed {
+
+		// In these cases, the stack has never deployed successfully (its outputs are blank) - upload a new cert
 		return uploadLocalCertificate(awsSession)
 	}
 
-	// Some other error describing the bootstrap stack
-	logger.Fatal(err)
-	return "n/a" // unreachable code
+	return flattenStackOutputs(stack)["CertificateArn"]
 }
 
 // Upload a local self-signed TLS certificate to ACM. Only needs to happen once per installation
