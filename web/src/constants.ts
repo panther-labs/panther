@@ -18,6 +18,7 @@
 
 import { SeverityEnum } from 'Generated/schema';
 import { BadgeProps } from 'pouncejs';
+import { getStableVersion } from 'Helpers/utils';
 
 export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');
 
@@ -105,15 +106,9 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } 
 
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
 
-function generateDocUrl(version) {
-  // Checking if a version is a proper tag
-  if (version.includes('-')) {
-    return PANTHER_SCHEMA_DOCS_MASTER_LINK;
-  }
-  return `${PANTHER_SCHEMA_DOCS_MASTER_LINK}/v/${version}`;
-}
-
-export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(process.env.PANTHER_VERSION);
+export const PANTHER_SCHEMA_DOCS_LINK = `${PANTHER_SCHEMA_DOCS_MASTER_LINK}/v/${getStableVersion(
+  process.env.PANTHER_VERSION
+)}`;
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
 export const DEFAULT_LARGE_PAGE_SIZE = 25;
