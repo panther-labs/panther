@@ -25,7 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -132,7 +131,9 @@ func TestVpcFlowLogNoData(t *testing.T) {
 
 func TestVpcFlowLogHeader(t *testing.T) {
 	parser := &VPCFlowParser{}
-	require.Equal(t, []*parsers.PantherLog{}, parser.Parse(vpcFlowDefaultHeader))
+	events, err := parser.Parse(vpcFlowDefaultHeader)
+	require.NoError(t, err)
+	require.Empty(t, events)
 }
 
 func TestVpcFlowLogType(t *testing.T) {
@@ -143,6 +144,10 @@ func TestVpcFlowLogType(t *testing.T) {
 func checkVPCFlowLog(t *testing.T, header, log string, expectedEvent *VPCFlow) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := (&VPCFlowParser{}).New() // important to call New() to initialize reader
-	parser.Parse(header)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	noevents, noerr := parser.Parse(header)
+	require.Empty(t, noevents, "Header parsing should not return events")
+	require.NotNil(t, noevents, "Header parsing should return empty events")
+	require.NoError(t, noerr, "Header parsing should not return an error")
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

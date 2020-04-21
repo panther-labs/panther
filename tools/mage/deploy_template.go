@@ -44,6 +44,10 @@ const (
 	pollInterval = 5 * time.Second // How long to wait in between requests to the CloudFormation service
 )
 
+var (
+	gitVersion string // set in deployPrecheck()
+)
+
 // Deploy a CloudFormation template, returning stack outputs.
 //
 // The bucket parameter can be empty to skip S3 packaging.
@@ -336,6 +340,12 @@ func createChangeSet(
 		})
 	}
 
+	// add version tag to all objects ("untagged" if not set)
+	pantherVersion := gitVersion
+	if pantherVersion == "" {
+		pantherVersion = "untagged"
+	}
+
 	createInput := &cfn.CreateChangeSetInput{
 		Capabilities: []*string{
 			aws.String("CAPABILITY_AUTO_EXPAND"),
@@ -346,16 +356,10 @@ func createChangeSet(
 		ChangeSetType: &changeSetType,
 		Parameters:    parameters,
 		StackName:     &stack,
-		Tags: []*cfn.Tag{
-			// Tags are propagated to every supported resource in the stack
-			{
-				Key:   aws.String("Application"),
-				Value: aws.String("Panther"),
-			},
-			{
-				Key:   aws.String("Stack"),
-				Value: &stack,
-			},
+		Tags: []*cfn.Tag{ // Tags are propagated to every supported resource in the stack
+			{Key: aws.String("Application"), Value: aws.String("Panther")},
+			{Key: aws.String("PantherVersion"), Value: &pantherVersion},
+			{Key: aws.String("Stack"), Value: &stack},
 		},
 	}
 

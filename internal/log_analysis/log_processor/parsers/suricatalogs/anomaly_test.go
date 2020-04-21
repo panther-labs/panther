@@ -62,8 +62,8 @@ func TestAnomaly(t *testing.T) {
 	expectedEvent.AppendAnyIPAddress("192.168.2.22")
 
 	parser := (&AnomalyParser{}).New()
-	events := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events)
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
 
 func TestAnomalyType(t *testing.T) {

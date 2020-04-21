@@ -20,7 +20,6 @@ package osquerylogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -52,17 +51,18 @@ type Differential struct { // FIXME: field descriptions need updating!
 // DifferentialParser parses OsQuery Differential logs
 type DifferentialParser struct{}
 
+var _ parsers.LogParser = (*DifferentialParser)(nil)
+
 func (p *DifferentialParser) New() parsers.LogParser {
 	return &DifferentialParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *DifferentialParser) Parse(log string) []*parsers.PantherLog {
+func (p *DifferentialParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &Differential{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("failed to unmarshal log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	// Populating LogType with LogTypeInput value
@@ -74,11 +74,10 @@ func (p *DifferentialParser) Parse(log string) []*parsers.PantherLog {
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

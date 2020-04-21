@@ -83,8 +83,9 @@ func TestRFC5424TypeType(t *testing.T) {
 	require.Equal(t, "Fluentd.Syslog5424", parser.LogType())
 }
 
-func checkRFC5424(t *testing.T, log string, expectedRFC5424 *RFC5424) {
-	expectedRFC5424.SetEvent(expectedRFC5424)
+func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
+	expectedEvent.SetEvent(expectedEvent)
 	parser := &RFC5424Parser{}
-	testutil.EqualPantherLog(t, expectedRFC5424.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
