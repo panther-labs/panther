@@ -19,6 +19,7 @@ package awslogs
  */
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -73,7 +74,7 @@ func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLog, error
 	}
 
 	if len(record) < auroraMySQLAuditMinNumberOfColumns {
-		return nil, err
+		return nil, errors.New("invalid number of columns")
 	}
 
 	timestampUnixMillis, err := strconv.ParseInt(record[0], 0, 64)

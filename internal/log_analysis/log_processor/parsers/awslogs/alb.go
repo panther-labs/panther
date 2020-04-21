@@ -95,7 +95,7 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	}
 
 	if len(record) < albMinNumberOfColumns {
-		return nil, err
+		return nil, errors.New("invalid number of columns")
 	}
 
 	timeStamp, err := timestamp.Parse(time.RFC3339Nano, record[1])
