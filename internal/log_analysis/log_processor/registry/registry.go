@@ -94,7 +94,6 @@ var (
 			&awslogs.CloudTrailInsight{}, awslogs.CloudTrailInsightDesc),
 		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
 			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
-
 	}
 )
 
