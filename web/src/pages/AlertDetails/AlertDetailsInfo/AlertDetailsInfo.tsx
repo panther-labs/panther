@@ -24,6 +24,7 @@ import Linkify from 'Components/Linkify';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
 import Panel from 'Components/Panel';
+import { Link as RRLink } from 'react-router-dom';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails;
@@ -123,7 +124,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             RULE ORIGIN
           </Label>
           {rule ? (
-            <Link color="blue300" to={urls.logAnalysis.rules.details(rule.id)}>
+            <Link color="blue300" as={RRLink} to={urls.logAnalysis.rules.details(rule.id)}>
               {rule.displayName || rule.id}
             </Link>
           ) : (
