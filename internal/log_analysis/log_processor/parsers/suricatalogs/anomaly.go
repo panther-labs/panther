@@ -20,7 +20,6 @@ package suricatalogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -86,28 +85,28 @@ type AnomalyMetadataFlowints struct {
 // AnomalyParser parses Suricata Anomaly alerts in the JSON format
 type AnomalyParser struct{}
 
+var _ parsers.LogParser = (*AnomalyParser)(nil)
+
 func (p *AnomalyParser) New() parsers.LogParser {
 	return &AnomalyParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AnomalyParser) Parse(log string) []*parsers.PantherLog {
+func (p *AnomalyParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &Anomaly{}
 
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

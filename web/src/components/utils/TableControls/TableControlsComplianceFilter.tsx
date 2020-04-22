@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Text, TextProps, theme } from 'pouncejs';
+import { AbstractButton, Text, TextProps, theme } from 'pouncejs';
 
 interface TableControlsComplianceFilterProps extends Omit<TextProps, 'size'> {
   text: string;
@@ -34,20 +34,18 @@ const TableControlsComplianceFilter: React.FC<TableControlsComplianceFilterProps
   ...rest
 }) => {
   return (
-    <Text
+    <AbstractButton
       {...rest}
-      size="medium"
       p={2}
       color="grey300"
-      is="button"
       borderRadius="medium"
       backgroundColor={isActive ? 'grey50' : undefined}
     >
       {text}{' '}
-      <Text size="medium" color={countColor} is="span">
+      <Text size="medium" color={countColor} as="span">
         {count}
       </Text>
-    </Text>
+    </AbstractButton>
   );
 };
 

@@ -205,7 +205,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   return (
     <SideSheet open onClose={hideSidesheet}>
       <Box width={465}>
-        <Flex mb={8} alignItems="center" mt={-2}>
+        <Flex mb={8} align="center" mt={-2}>
           <IconButton
             mr={4}
             variant="default"

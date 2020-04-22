@@ -5,8 +5,7 @@ query RuleDetails($ruleDetailsInput: GetRuleInput!, $alertsForRuleInput: ListAle
   }
   alerts(input: $alertsForRuleInput) {
     alertSummaries {
-      alertId
-      creationTime
+      ...AlertSummaryFull
     }
   }
 }

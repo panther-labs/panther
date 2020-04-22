@@ -20,7 +20,6 @@ package awslogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -73,21 +72,19 @@ func (p *CloudTrailDigestParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailDigestParser) Parse(log string) []*parsers.PantherLog {
+func (p *CloudTrailDigestParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &CloudTrailDigest{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("Failed to parse JSON", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("Failed to validate struct", zap.Error(err))
-		return nil
+		return nil, err
 	}
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

@@ -16,24 +16,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import WarningImg from 'Assets/illustrations/warning.svg';
-import { Box, Flex, Heading, Text } from 'pouncejs';
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
-const LogAnalysisOverview: React.FC = () => {
-  return (
-    <Flex height="100%" width="100%" justify="center" align="center" direction="column">
-      <Box m={10}>
-        <img alt="Construction works" src={WarningImg} width="auto" height={400} />
-      </Box>
-      <Heading size="medium" color="grey400" mb={6}>
-        Log analysis overview is not available
-      </Heading>
-      <Text size="large" color="grey200" textAlign="center" mb={10}>
-        We are currently developing this page and will release it in the near future
-      </Text>
-    </Flex>
-  );
-};
+import * as Types from '../../../__generated__/schema';
 
-export default LogAnalysisOverview;
+import gql from 'graphql-tag';
+
+export type AlertSummaryFull = Pick<
+  Types.AlertSummary,
+  'alertId' | 'ruleId' | 'title' | 'severity' | 'creationTime' | 'eventsMatched' | 'updateTime'
+>;
+
+export const AlertSummaryFull = gql`
+  fragment AlertSummaryFull on AlertSummary {
+    alertId
+    ruleId
+    title
+    severity
+    creationTime
+    eventsMatched
+    updateTime
+  }
+`;

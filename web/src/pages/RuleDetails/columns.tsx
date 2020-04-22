@@ -21,22 +21,45 @@
 import React from 'react';
 import { Text, TableProps } from 'pouncejs';
 import { AlertSummary } from 'Generated/schema';
-import { formatDatetime } from 'Helpers/utils';
+import { formatDatetime, shortenId } from 'Helpers/utils';
 
 // The columns that the associated table will show
 const columns = [
   // The name is the `id` of the alert
   {
-    key: 'alertId',
-    header: 'Alert',
-    flex: '2 0 450px',
+    key: 'title',
+    sortable: true,
+    header: 'Title',
+    flex: '1 0 200px',
   },
-
   {
     key: 'creationTime',
     header: 'Created At',
-    flex: '1 0 250px',
+    flex: '1 0 200px',
     renderCell: ({ creationTime }) => <Text size="medium">{formatDatetime(creationTime)}</Text>,
+  },
+  {
+    key: 'alertId',
+    sortable: true,
+    header: 'Alert ID',
+    flex: '0 0 200px',
+    renderCell: ({ alertId }) => <Text size="medium">{shortenId(alertId)}</Text>,
+  },
+
+  {
+    key: 'eventsMatched',
+    sortable: true,
+    header: 'Events Count',
+    flex: '1 0 50px',
+  },
+
+  // Date needs to be formatted properly
+  {
+    key: 'lastModified',
+    sortable: true,
+    header: 'Last Matched At',
+    flex: '0 0 200px',
+    renderCell: ({ updateTime }) => <Text size="medium">{formatDatetime(updateTime)}</Text>,
   },
 ] as TableProps<AlertSummary>['columns'];
 

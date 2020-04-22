@@ -75,6 +75,6 @@ func TestZeekDNSType(t *testing.T) {
 func checkZeekDNS(t *testing.T, log string, expectedEvent *ZeekDNS) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := &ZeekDNSParser{}
-
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	logs, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), logs, err)
 }
