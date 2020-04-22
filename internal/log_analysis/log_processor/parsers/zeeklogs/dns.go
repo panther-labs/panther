@@ -20,7 +20,6 @@ package zeeklogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -66,28 +65,28 @@ type ZeekDNS struct {
 // ZeekDNSParser parses zeek dns logs
 type ZeekDNSParser struct{}
 
+var _ parsers.LogParser = (*ZeekDNSParser)(nil)
+
 func (p *ZeekDNSParser) New() parsers.LogParser {
 	return &ZeekDNSParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ZeekDNSParser) Parse(log string) []*parsers.PantherLog {
+func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	zeekDNS := &ZeekDNS{}
 
 	err := jsoniter.UnmarshalFromString(log, zeekDNS)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	zeekDNS.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(zeekDNS); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return zeekDNS.Logs()
+	return zeekDNS.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

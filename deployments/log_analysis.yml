@@ -717,6 +717,7 @@ Resources:
       Environment:
         Variables:
           ATHENA_BUCKET: !Ref AthenaResultsBucket
+          ATHENA_STATEMACHINE_ARN: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
           DEBUG: !Ref Debug
           GRAPHQL_ENDPOINT: !Ref GraphQLApiEndpoint
           PANTHER_TABLES_ONLY: !Ref AthenaPantherTablesOnly

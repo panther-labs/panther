@@ -115,7 +115,7 @@ func (API) NotifyAppSync(input *models.NotifyAppSyncInput) (*models.NotifyAppSyn
 
 	output.StatusCode = resp.StatusCode
 
-	respBody, _ := ioutil.ReadAll(resp.Body)
+	respBody, _ := ioutil.ReadAll(resp.Body) // used for error messages below to add context
 	if resp.StatusCode != http.StatusOK {
 		err = errors.Errorf("failed to POST (%d): %s", resp.StatusCode, string(respBody))
 		return &output, err

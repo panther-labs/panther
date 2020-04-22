@@ -57,7 +57,7 @@ func (API) GetQueryStatus(input *models.GetQueryStatusInput) (*models.GetQuerySt
 		}
 	case models.QueryFailed: // lambda succeeded BUT query failed (could be for many reasons)
 		output.SQLError = *executionStatus.QueryExecution.Status.StateChangeReason
-	case models.QueryCanceled:
+	case models.QueryCancelled:
 		output.SQLError = "Query canceled"
 	}
 	return &output, nil
@@ -74,7 +74,7 @@ func getQueryStatus(executionStatus *athena.GetQueryExecutionOutput) string {
 		return models.QueryFailed
 	case
 		athena.QueryExecutionStateCancelled:
-		return models.QueryCanceled
+		return models.QueryCancelled
 	case
 		// still going
 		athena.QueryExecutionStateRunning,

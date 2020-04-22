@@ -74,7 +74,7 @@ func getQueryResults(client athenaiface.AthenaAPI, queryID string,
 	// header with types
 	for _, columnInfo := range queryResult.ResultSet.ResultSetMetadata.ColumnInfo {
 		output.ColumnInfo = append(output.ColumnInfo, &models.Column{
-			Value: *columnInfo.Name,
+			Value: columnInfo.Name,
 			Type:  columnInfo.Type,
 		})
 	}
@@ -93,14 +93,7 @@ func collectResults(skipHeader bool, queryResult *athena.GetQueryResultsOutput, 
 		}
 		columns := make([]*models.Column, len(row.Data))
 		for colIndex := range row.Data {
-			var value string
-			col := row.Data[colIndex]
-			if col.VarCharValue == nil {
-				value = "NULL"
-			} else {
-				value = *col.VarCharValue
-			}
-			columns[colIndex] = &models.Column{Value: value}
+			columns[colIndex] = &models.Column{Value: row.Data[colIndex].VarCharValue}
 		}
 		output.ResultsPage.Rows = append(output.ResultsPage.Rows, &models.Row{Columns: columns})
 	}

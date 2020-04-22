@@ -46,9 +46,10 @@ var (
 )
 
 type EnvConfig struct {
-	AthenaBucket      string `default:"" split_words:"true"`
-	GraphqlEndpoint   string `required:"true" split_words:"true"`
-	PantherTablesOnly bool   `default:"false" split_words:"true"` // if true, only return tables from Panther databases
+	AthenaStatemachineARN string `required:"true" split_words:"true"`
+	AthenaBucket          string `default:"" split_words:"true"`
+	GraphqlEndpoint       string `required:"true" split_words:"true"`
+	PantherTablesOnly     bool   `default:"false" split_words:"true"` // if true, only return tables from Panther databases
 }
 
 func SessionInit() {

@@ -19,6 +19,7 @@ package classification
  */
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -38,13 +39,14 @@ func (m *mockParser) New() parsers.LogParser {
 	return m // pass through (not stateful)
 }
 
-func (m *mockParser) Parse(log string) []*parsers.PantherLog {
+func (m *mockParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	args := m.Called(log)
 	result := args.Get(0)
+	err := args.Error(1)
 	if result == nil {
-		return nil
+		return nil, err
 	}
-	return result.([]*parsers.PantherLog)
+	return result.([]*parsers.PantherLog), err
 }
 
 func (m *mockParser) LogType() string {
@@ -76,11 +78,11 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	failingParser1 := &mockParser{}
 	failingParser2 := &mockParser{}
 
-	succeedingParser.On("Parse", mock.Anything).Return([]*parsers.PantherLog{{}})
+	succeedingParser.On("Parse", mock.Anything).Return([]*parsers.PantherLog{{}}, nil)
 	succeedingParser.On("LogType").Return("success")
-	failingParser1.On("Parse", mock.Anything).Return(nil)
+	failingParser1.On("Parse", mock.Anything).Return(nil, errors.New("fail1"))
 	failingParser1.On("LogType").Return("failure1")
-	failingParser2.On("Parse", mock.Anything).Return(nil)
+	failingParser2.On("Parse", mock.Anything).Return(nil, errors.New("fail2"))
 	failingParser2.On("LogType").Return("failure2")
 
 	availableParsers := []*registry.LogParserMetadata{

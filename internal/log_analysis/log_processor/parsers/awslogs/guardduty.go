@@ -20,7 +20,6 @@ package awslogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -67,26 +66,26 @@ type GuardDutyService struct {
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type GuardDutyParser struct{}
 
+var _ parsers.LogParser = (*GuardDutyParser)(nil)
+
 func (p *GuardDutyParser) New() parsers.LogParser {
 	return &GuardDutyParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *GuardDutyParser) Parse(log string) []*parsers.PantherLog {
+func (p *GuardDutyParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &GuardDuty{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

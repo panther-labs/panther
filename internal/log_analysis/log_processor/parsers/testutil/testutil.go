@@ -30,7 +30,8 @@ import (
 )
 
 // used by log parsers to validate records
-func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*parsers.PantherLog) {
+func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*parsers.PantherLog, parseErr error) {
+	require.NoError(t, parseErr)
 	require.Equal(t, 1, len(events))
 	event := events[0]
 	require.NotNil(t, event)
@@ -56,4 +57,19 @@ func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*
 	require.NoError(t, err)
 
 	require.JSONEq(t, expectedJSON, eventJSON)
+}
+
+func CheckPantherParser(t *testing.T, log string, parser parsers.LogParser, expect *parsers.PantherLog, expectMore ...*parsers.PantherLog) {
+	t.Helper()
+	p := parser.New()
+	results, err := p.Parse(log)
+	require.NoError(t, err)
+	require.NotNil(t, results)
+	// Prepend the required log arg to more
+	expectMore = append([]*parsers.PantherLog{expect}, expectMore...)
+	require.Equal(t, len(expectMore), len(results), "Invalid number of pather logs produced by parser")
+	for i, result := range results {
+		expect := expectMore[i]
+		EqualPantherLog(t, expect, []*parsers.PantherLog{result}, nil)
+	}
 }

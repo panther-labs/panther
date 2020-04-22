@@ -19,10 +19,9 @@ package awslogs
  */
 
 import (
+	"errors"
 	"strings"
 	"time"
-
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
@@ -77,6 +76,8 @@ type ALBParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 }
 
+var _ parsers.LogParser = (*ALBParser)(nil)
+
 func (p *ALBParser) New() parsers.LogParser {
 	reader := csvstream.NewStreamingCSVReader()
 	// non-default settings
@@ -87,28 +88,24 @@ func (p *ALBParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ALBParser) Parse(log string) []*parsers.PantherLog {
+func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
-		zap.L().Debug("failed to parse the log as csv")
-		return nil
+		return nil, err
 	}
 
 	if len(record) < albMinNumberOfColumns {
-		zap.L().Debug("failed to parse the log as csv (wrong number of columns)")
-		return nil
+		return nil, errors.New("invalid number of columns")
 	}
 
 	timeStamp, err := timestamp.Parse(time.RFC3339Nano, record[1])
 	if err != nil {
-		zap.L().Debug("failed to parse time", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	requestCreationTime, err := timestamp.Parse(time.RFC3339Nano, record[21])
 	if err != nil {
-		zap.L().Debug("failed to parse requestCreationTime", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	var clientIPPort, targetIPPort []string
@@ -124,8 +121,7 @@ func (p *ALBParser) Parse(log string) []*parsers.PantherLog {
 	requestItems := strings.Split(record[12], " ")
 
 	if len(requestItems) != 3 {
-		zap.L().Debug("failed to parse request", zap.Error(err))
-		return nil
+		return nil, errors.New("invalid record")
 	}
 
 	event := &ALB{
@@ -163,11 +159,10 @@ func (p *ALBParser) Parse(log string) []*parsers.PantherLog {
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

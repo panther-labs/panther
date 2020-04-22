@@ -59,14 +59,32 @@ func (API) GetTablesDetail(input *models.GetTablesDetailInput) (*models.GetTable
 }
 
 func populateTableDetailColumns(tableDetail *models.TableDetail, glueTableData *glue.TableData) {
+	columnMap := getColumnMap(glueTableData)
+	lookupColumnMapping := func(col *string) string { // use mapped name if it can be found
+		if col == nil {
+			return ""
+		}
+		if mappedCol, found := columnMap["mapping."+*col]; found { // e.g: "mapping.srcaddr": "srcAddr"
+			return *mappedCol
+		}
+		return *col
+	}
 	for _, column := range glueTableData.StorageDescriptor.Columns {
 		tableDetail.Columns = append(tableDetail.Columns,
-			newTableColumn(aws.StringValue(column.Name), aws.StringValue(column.Type), column.Comment))
+			newTableColumn(lookupColumnMapping(column.Name), aws.StringValue(column.Type), column.Comment))
 	}
 	for _, column := range glueTableData.PartitionKeys {
 		tableDetail.Columns = append(tableDetail.Columns,
-			newTableColumn(aws.StringValue(column.Name), aws.StringValue(column.Type), column.Comment))
+			newTableColumn(lookupColumnMapping(column.Name), aws.StringValue(column.Type), column.Comment))
 	}
+}
+
+// tables can have a mapping table of column name to JSON attr, if present use that for column names
+func getColumnMap(glueTableData *glue.TableData) map[string]*string {
+	if glueTableData.StorageDescriptor.SerdeInfo != nil && glueTableData.StorageDescriptor.SerdeInfo.Parameters != nil {
+		return glueTableData.StorageDescriptor.SerdeInfo.Parameters
+	}
+	return make(map[string]*string)
 }
 
 // wrap complex constructors to make code more readable above
