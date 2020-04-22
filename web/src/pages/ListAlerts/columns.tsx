@@ -19,11 +19,11 @@
 /* eslint-disable react/display-name */
 
 import React from 'react';
-import { Badge, TableProps, Text } from 'pouncejs';
+import { Badge, TableProps, Text, Link } from 'pouncejs';
 import { AlertSummary } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
 import urls from 'Source/urls';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 
 // The columns that the associated table will show
@@ -34,7 +34,7 @@ const columns = [
     header: 'Rule ID',
     flex: '0 0 200px',
     renderCell: item => (
-      <Link to={urls.logAnalysis.alerts.details(item.alertId)}>
+      <Link as={RRLink} to={urls.logAnalysis.alerts.details(item.alertId)}>
         <Text size="medium">{item.ruleId}</Text>
       </Link>
     ),
