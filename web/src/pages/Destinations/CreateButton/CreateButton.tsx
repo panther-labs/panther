@@ -34,7 +34,7 @@ const DestinationCreateButton: React.FC = () => {
         })
       }
     >
-      <Flex alignItems="center">
+      <Flex align="center">
         <Icon type="add" size="small" mr={1} />
         Add Destination
       </Flex>

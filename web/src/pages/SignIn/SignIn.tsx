@@ -17,9 +17,9 @@
  */
 
 import React from 'react';
-import { Flex, Text } from 'pouncejs';
+import { Flex, Text, Link } from 'pouncejs';
 import urls from 'Source/urls';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import Banner from 'Assets/sign-in-banner.jpg';
 import SetPasswordForm from 'Components/forms/SetPasswordForm';
@@ -87,12 +87,14 @@ const SignInPage: React.FC = () => {
         <AuthPageContainer banner={Banner}>
           <AuthPageContainer.Caption title="Sign in" subtitle="to continue to Panther" />
           <SignInForm />
-          <Text mt={10} size="large" color="grey200" textAlign="center">
-            <Link to={urls.account.auth.forgotPassword()}>Forgot your password?</Link>
-          </Text>
+          <Flex justify="center" mt={6}>
+            <Link as={RRLink} p={4} color="grey200" to={urls.account.auth.forgotPassword()}>
+              Forgot your password?
+            </Link>
+          </Flex>
           <AuthPageContainer.AltOptions>
-            <Flex alignItems="center">
-              <Text size="medium" color="grey200" is="span" mr={3}>
+            <Flex align="center">
+              <Text size="medium" color="grey200" as="span" mr={3}>
                 Don{"'"}t have an account? Talk to your admin
               </Text>
             </Flex>

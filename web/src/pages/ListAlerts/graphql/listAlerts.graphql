@@ -1,13 +1,7 @@
 query ListAlerts($input: ListAlertsInput) {
   alerts(input: $input) {
     alertSummaries {
-      alertId
-      creationTime
-      eventsMatched
-      updateTime
-      ruleId
-      severity
-      dedupString
+      ...AlertSummaryFull
     }
     lastEvaluatedKey
   }

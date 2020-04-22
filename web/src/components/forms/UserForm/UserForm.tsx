@@ -73,7 +73,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
               aria-required
               mb={3}
             />
-            <Flex mb={6} justifyContent="space-between">
+            <Flex mb={6} justify="space-between">
               <Field
                 as={FormikTextInput}
                 label="First Name"
@@ -89,13 +89,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
                 aria-required
               />
             </Flex>
-            <Flex
-              borderTop="1px solid"
-              borderColor="grey100"
-              pt={6}
-              mt={10}
-              justifyContent="flex-end"
-            >
+            <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
               <SubmitButton
                 submitting={isSubmitting}
                 disabled={!dirty || !isValid || isSubmitting}

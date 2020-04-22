@@ -65,7 +65,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
       onSubmit={onSubmit}
       validationSchema={validationSchema}
     >
-      <Box is="article">
+      <Box as="article">
         <ErrorBoundary>
           <BaseRuleFormCoreFields type="policy" />
         </ErrorBoundary>
@@ -73,7 +73,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
           <PolicyFormTestFields />
         </ErrorBoundary>
       </Box>
-      <Box is="article" mt={10}>
+      <Box as="article" mt={10}>
         <Heading size="medium" pb={8} borderBottom="1px solid" borderColor="grey100">
           Auto Remediation Settings
         </Heading>

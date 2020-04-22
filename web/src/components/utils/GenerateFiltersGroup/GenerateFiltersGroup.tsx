@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Formik, Field } from 'formik';
-import { Grid, Button } from 'pouncejs';
+import { Button, SimpleGrid } from 'pouncejs';
 import mapValues from 'lodash-es/mapValues';
 import map from 'lodash-es/map';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -94,7 +94,7 @@ function GenerateFiltersGroup<T extends { [key: string]: any }>({
     <Formik<T> initialValues={initialValuesWithDefaults} onSubmit={onSubmit}>
       {({ handleSubmit, setValues, submitForm, resetForm }) => (
         <form onSubmit={handleSubmit}>
-          <Grid gridTemplateColumns="repeat(3, 1fr)" gridGap={6} mb={8}>
+          <SimpleGrid columns={3} spacing={6} mb={8}>
             {map(filters, (filterData, filterName) => (
               <Field
                 key={filterName}
@@ -103,7 +103,7 @@ function GenerateFiltersGroup<T extends { [key: string]: any }>({
                 {...filterData.props}
               />
             ))}
-          </Grid>
+          </SimpleGrid>
           <Button type="submit" size="large" variant="primary" mr={4}>
             Apply
           </Button>

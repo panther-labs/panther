@@ -96,7 +96,7 @@ export const SelectDestinationSidesheet: React.FC = () => {
             triage
           </Text>
         </Box>
-        <Flex justifyContent="space-between" flexWrap="wrap">
+        <Flex justify="space-between" flexWrap="wrap">
           {destinationConfigs.map(destinationConfig => (
             <Box width={224} mb={4} key={destinationConfig.title}>
               <DestinationCard

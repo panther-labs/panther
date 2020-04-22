@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, Flex, IconButton } from 'pouncejs';
 import urls from 'Source/urls';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
@@ -60,10 +60,10 @@ const Navigation = () => {
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
   const isSecondaryNavigationActive = secondaryNav !== null;
   return (
-    <Flex is="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
-      <Flex flexDirection="column" width={70} height="100%" boxShadow="dark150">
-        <Flex justifyContent="center" pt={7} pb={2}>
-          <IconButton variant="primary" is={Link} to="/">
+    <Flex as="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
+      <Flex direction="column" width={70} height="100%" boxShadow="dark150">
+        <Flex justify="center" pt={7} pb={2}>
+          <IconButton variant="primary" as={RRLink} to="/">
             <img
               src={PantherIcon}
               alt="Panther logo"
@@ -73,14 +73,8 @@ const Navigation = () => {
             />
           </IconButton>
         </Flex>
-        <Flex
-          flexDirection="column"
-          justifyContent="center"
-          alignItems="center"
-          is="ul"
-          flex="1 0 auto"
-        >
-          <Box is="li">
+        <Flex direction="column" justify="center" align="center" as="ul" flex="1 0 auto">
+          <Box as="li">
             <NavIconButton
               active={isComplianceNavigationActive}
               icon="cloud-security"
@@ -90,7 +84,7 @@ const Navigation = () => {
               }
             />
           </Box>
-          <Box is="li" mb="auto">
+          <Box as="li" mb="auto">
             <NavIconButton
               active={isLogAnalysisNavigationActive}
               icon="log-analysis"
@@ -100,18 +94,18 @@ const Navigation = () => {
               }
             />
           </Box>
-          <Box is="li" mt="auto">
+          <Box as="li" mt="auto">
             <NavIconButton
               active={false}
               icon="docs"
-              is="a"
+              as="a"
               href={PANTHER_SCHEMA_DOCS_LINK}
               target="_blank"
               rel="noopener noreferrer"
               tooltipLabel="Documentation"
             />
           </Box>
-          <Box is="li">
+          <Box as="li">
             <NavIconButton
               active={isSettingsNavigationActive}
               icon="settings"

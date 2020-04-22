@@ -121,6 +121,7 @@ type LogIntegrationHealth {
 type AlertDetails {
   alertId: ID!
   ruleId: ID
+  title: String!
   creationTime: AWSDateTime!
   updateTime: AWSDateTime!
   eventsMatched: Int!
@@ -138,10 +139,10 @@ type AlertSummary {
   alertId: String!
   creationTime: AWSDateTime!
   eventsMatched: Int!
+  title: String!
   updateTime: AWSDateTime!
   ruleId: String
   severity: String
-  dedupString: String!
 }
 
 input ListRulesInput {

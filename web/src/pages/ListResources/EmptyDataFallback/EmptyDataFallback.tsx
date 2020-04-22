@@ -20,11 +20,11 @@ import React from 'react';
 import { Box, Button, Flex, Heading, Text } from 'pouncejs';
 import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
 import urls from 'Source/urls';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 
 const ListResourcesPageEmptyDataFallback: React.FC = () => {
   return (
-    <Flex justifyContent="center" alignItems="center" flexDirection="column">
+    <Flex justify="center" align="center" direction="column">
       <Box my={10}>
         <img alt="Black Canvas Illustration" src={BlankCanvasImg} width="auto" height={300} />
       </Box>
@@ -34,7 +34,7 @@ const ListResourcesPageEmptyDataFallback: React.FC = () => {
       <Text size="large" color="grey200" textAlign="center" mb={10}>
         You don{"'"}t have any resources connected to your Panther account
       </Text>
-      <Button size="large" variant="primary" to={urls.compliance.sources.create()} is={Link}>
+      <Button size="large" variant="primary" to={urls.compliance.sources.create()} as={RRLink}>
         Get started
       </Button>
     </Flex>

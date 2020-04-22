@@ -32,6 +32,8 @@ export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
 export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('[^\\d\\sA-Za-z]');
 
+export const CHECK_IF_HASH_REGEX = new RegExp('[a-f0-9]{32}');
+
 export const DEFAULT_POLICY_FUNCTION =
   'def policy(resource):\n\t# Return False if the resource is non-compliant, which will trigger alerts/remediation.\n\treturn True';
 

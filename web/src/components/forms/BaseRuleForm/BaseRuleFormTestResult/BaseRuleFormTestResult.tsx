@@ -39,9 +39,9 @@ interface BaseRuleFormTestResultProps {
 }
 
 const BaseRuleFormTestResult: React.FC<BaseRuleFormTestResultProps> = ({ testName, status }) => (
-  <Flex alignItems="center">
+  <Flex align="center">
     <Card bg={mapTestStatusToColor[status]} mr={2} width={50} py={1}>
-      <Label size="small" color="white" mx="auto" is="div" textAlign="center">
+      <Label size="small" color="white" mx="auto" as="div" textAlign="center">
         {status}
       </Label>
     </Card>

@@ -75,7 +75,7 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
       }
     >
       {({ isValid, handleSubmit, isSubmitting, status, dirty }) => (
-        <Box is="form" width={1} onSubmit={handleSubmit}>
+        <Box as="form" width={1} onSubmit={handleSubmit}>
           {status && (
             <Alert variant="error" title={status.title} description={status.message} mb={6} />
           )}

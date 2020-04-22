@@ -30,8 +30,8 @@ const Header = () => {
   const userButton = React.useMemo(
     () => (
       <Box flex="0 0 auto">
-        <Button size="small" variant="default" my="auto" is="div">
-          <Flex alignItems="center">
+        <Button size="small" variant="default" my="auto" as="div">
+          <Flex align="center">
             <Icon
               type="user"
               size="small"

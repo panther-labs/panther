@@ -27,7 +27,7 @@ const SubmitButton: React.FC<Omit<ButtonProps, 'size' | 'variant'> & { submittin
 }) => (
   <Button {...rest} type="submit" size="large" variant="primary" disabled={disabled}>
     {submitting ? (
-      <Flex alignItems="center" justifyContent="center">
+      <Flex align="center" justify="center">
         <Spinner size="small" mr={2} />
         {children}
       </Flex>
