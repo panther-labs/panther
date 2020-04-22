@@ -135,7 +135,7 @@ Resources:
             Resource:
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/panther-*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/Panther*
-              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*"
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
           - Effect: Allow
             Action: kms:*
             Resource:
