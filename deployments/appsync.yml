@@ -159,6 +159,14 @@ Resources:
             SigningServiceName: execute-api
         Endpoint: !Ref RemediationApi
 
+  #  QueryDoneDataSource:
+  #    Type: AWS::AppSync::DataSource
+  #    Properties:
+  #      ApiId: !Ref ApiId
+  #      Name: PantherQueryDone
+  #      Type: NONE
+  #      ServiceRoleArn: !Ref ServiceRole
+
   ########## Resolvers ##########
 
   ResetUserPasswordResolver:
@@ -1492,3 +1500,19 @@ Resources:
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
+
+#  QueryDoneResolver:
+#    Type: AWS::AppSync::Resolver
+#    DependsOn: GraphQLSchema
+#    Properties:
+#      ApiId: !Ref ApiId
+#      TypeName: Mutation
+#      FieldName: queryDone # noop that returns {userData,queryId,workflowId} (used for subscriptions to trigger async query completion)
+#      DataSourceName: !GetAtt QueryDoneDataSource.Name
+#      RequestMappingTemplate: |
+#        {
+#          "version" : "2017-02-28",
+#          "payload": $utils.toJson($context.arguments.input)
+#        }
+#      ResponseMappingTemplate: |
+#        $util.toJson($context.result)

@@ -484,6 +484,7 @@ export type Mutation = {
   deleteRule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
+  /** queryDone(input: QueryDoneInput!): QueryDone! @aws_iam */
   remediateResource?: Maybe<Scalars['Boolean']>;
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
@@ -800,12 +801,6 @@ export type QueryRuleArgs = {
 
 export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
-};
-
-export type QueryDoneInput = {
-  userData: Scalars['String'];
-  queryId: Scalars['String'];
-  workflowId: Scalars['String'];
 };
 
 export type RemediateResourceInput = {
@@ -1190,7 +1185,6 @@ export type ResolversTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
-  QueryDoneInput: QueryDoneInput;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1301,7 +1295,6 @@ export type ResolversParentTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
-  QueryDoneInput: QueryDoneInput;
   AccountTypeEnum: AccountTypeEnum;
 };
 
