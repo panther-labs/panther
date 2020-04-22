@@ -93,5 +93,6 @@ func TestGitLabAPIType(t *testing.T) {
 func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := (&APIParser{}).New()
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

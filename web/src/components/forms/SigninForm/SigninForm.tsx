@@ -60,7 +60,7 @@ const SignInForm: React.FC = () => {
       }
     >
       {({ handleSubmit, isSubmitting, isValid, dirty }) => (
-        <Box width={1} is="form" onSubmit={handleSubmit}>
+        <Box width={1} as="form" onSubmit={handleSubmit}>
           <Field
             as={FormikTextInput}
             label="Email"

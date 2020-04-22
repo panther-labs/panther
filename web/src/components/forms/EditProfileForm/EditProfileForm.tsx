@@ -65,7 +65,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
       }
     >
       {({ handleSubmit, status, isSubmitting, isValid, dirty }) => (
-        <Box is="form" onSubmit={handleSubmit}>
+        <Box as="form" onSubmit={handleSubmit}>
           {status && (
             <Alert variant="error" title={status.title} description={status.message} mb={6} />
           )}
@@ -79,7 +79,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
             readonly
             mb={3}
           />
-          <Flex mb={6} justifyContent="space-between">
+          <Flex mb={6} justify="space-between">
             <Field
               as={FormikTextInput}
               label="First Name"

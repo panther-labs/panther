@@ -20,7 +20,6 @@ package gitlablogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -73,29 +72,29 @@ type QueryParam struct {
 // RailsParser parses gitlab rails logs
 type RailsParser struct{}
 
+var _ parsers.LogParser = (*RailsParser)(nil)
+
 // New creates a new parser
 func (p *RailsParser) New() parsers.LogParser {
 	return &RailsParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RailsParser) Parse(log string) []*parsers.PantherLog {
+func (p *RailsParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	gitlabRails := Rails{}
 
 	err := jsoniter.UnmarshalFromString(log, &gitlabRails)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	gitlabRails.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(gitlabRails); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return gitlabRails.Logs()
+	return gitlabRails.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

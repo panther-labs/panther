@@ -34,14 +34,7 @@ const SuccessPanel: React.FC = () => {
   }, []);
 
   return (
-    <Flex
-      justifyContent="center"
-      alignItems="center"
-      flexDirection="column"
-      my={190}
-      mx="auto"
-      width={350}
-    >
+    <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={350}>
       <Heading size="medium" m="auto" mb={5} color="grey400">
         Almost done!
       </Heading>

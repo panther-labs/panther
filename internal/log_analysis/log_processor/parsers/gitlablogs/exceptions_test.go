@@ -97,6 +97,6 @@ func checkExceptions(t *testing.T, log string, expectedEvent *Exceptions) {
 	t.Helper()
 	expectedEvent.SetEvent(expectedEvent)
 	parser := &ExceptionsParser{}
-
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

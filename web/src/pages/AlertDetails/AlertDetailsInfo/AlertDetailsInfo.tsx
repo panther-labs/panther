@@ -16,8 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Badge, Box, Grid, Label, Text, Flex } from 'pouncejs';
-import { Link } from 'react-router-dom';
+import { Alert, Badge, Box, Label, Text, Flex, SimpleGrid, Link } from 'pouncejs';
 import urls from 'Source/urls';
 import React from 'react';
 import { AlertDetails, RuleDetails } from 'Generated/schema';
@@ -42,9 +41,9 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           mb={6}
         />
         <Panel size="large" title="Alert Details">
-          <Grid gridTemplateColumns="repeat(3, 1fr)" gridGap={6}>
+          <SimpleGrid columns={3} spacing={6}>
             <Box my={1}>
-              <Label mb={1} is="div" size="small" color="grey300">
+              <Label mb={1} as="div" size="small" color="grey300">
                 TITLE
               </Label>
               <Text size="medium" color="black">
@@ -52,7 +51,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               </Text>
             </Box>
             <Box my={1}>
-              <Label mb={1} is="div" size="small" color="grey300">
+              <Label mb={1} as="div" size="small" color="grey300">
                 FULL ALERT ID
               </Label>
               <Text size="medium" color="black">
@@ -60,10 +59,10 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               </Text>
             </Box>
             <Box my={1}>
-              <Label mb={1} is="div" size="small" color="grey300">
+              <Label mb={1} as="div" size="small" color="grey300">
                 RULE ORIGIN
               </Label>
-              <Flex alignItems="center">
+              <Flex align="center">
                 <Text size="medium" color="black" mr={3}>
                   {alert.ruleId}
                 </Text>
@@ -71,7 +70,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               </Flex>
             </Box>
             <Box my={1}>
-              <Label mb={1} is="div" size="small" color="grey300">
+              <Label mb={1} as="div" size="small" color="grey300">
                 DEDUP STRING
               </Label>
               <Text size="medium" color="black">
@@ -79,7 +78,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               </Text>
             </Box>
             <Box my={1}>
-              <Label mb={1} is="div" size="small" color="grey300">
+              <Label mb={1} as="div" size="small" color="grey300">
                 CREATED AT
               </Label>
               <Text size="medium" color="black">
@@ -87,14 +86,14 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               </Text>
             </Box>
             <Box my={1}>
-              <Label mb={1} is="div" size="small" color="grey300">
+              <Label mb={1} as="div" size="small" color="grey300">
                 LAST MATCHED AT
               </Label>
               <Text size="medium" color="black">
                 {formatDatetime(alert.updateTime)}
               </Text>
             </Box>
-          </Grid>
+          </SimpleGrid>
         </Panel>
       </Box>
     );
@@ -102,9 +101,9 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
 
   return (
     <Panel size="large" title="Alert Details">
-      <Grid gridTemplateColumns="repeat(3, 1fr)" gridGap={6}>
+      <SimpleGrid columns={3} spacing={6}>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             TITLE
           </Label>
           <Text size="medium" color="black">
@@ -112,7 +111,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           </Text>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             FULL ALERT ID
           </Label>
           <Text size="medium" color="black">
@@ -120,19 +119,21 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           </Text>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             RULE ORIGIN
           </Label>
-          <Text size="medium" color="black">
-            {(
-              <Link to={urls.logAnalysis.rules.details(rule.id)}>
-                {rule.displayName || rule.id}
-              </Link>
-            ) || 'No rule found'}
-          </Text>
+          {rule ? (
+            <Link color="blue300" to={urls.logAnalysis.rules.details(rule.id)}>
+              {rule.displayName || rule.id}
+            </Link>
+          ) : (
+            <Text size="medium" color="grey200">
+              No rule found
+            </Text>
+          )}
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             LOG TYPES
           </Label>
           {rule.logTypes.length ? (
@@ -148,34 +149,42 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           )}
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             DESCRIPTION
           </Label>
-          <Text size="medium" color={rule.description ? 'black' : 'grey200'}>
-            <Linkify>{rule.description || 'No description available'}</Linkify>
-          </Text>
+          {rule.description ? (
+            <Linkify>{rule.description}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No description available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             RUNBOOK
           </Label>
-          <Text size="medium" color={rule.runbook ? 'black' : 'grey200'}>
-            <Linkify>{rule.runbook || 'No runbook available'}</Linkify>
-          </Text>
+          {rule.runbook ? (
+            <Linkify>{rule.runbook}</Linkify>
+          ) : (
+            <Text size="medium" color="grey200">
+              No runbook available
+            </Text>
+          )}
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             SEVERITY
           </Label>
           <Badge color={SEVERITY_COLOR_MAP[rule.severity]}>{rule.severity}</Badge>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             TAGS
           </Label>
           {rule.tags.length ? (
             rule.tags.map((tag, index) => (
-              <Text size="medium" color="black" key={tag} is="span">
+              <Text size="medium" color="black" key={tag} as="span">
                 {tag}
                 {index !== rule.tags.length - 1 ? ', ' : null}
               </Text>
@@ -187,7 +196,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           )}
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             DEDUP STRING
           </Label>
           <Text size="medium" color="black">
@@ -195,7 +204,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           </Text>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             CREATED AT
           </Label>
           <Text size="medium" color="black">
@@ -203,14 +212,14 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           </Text>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             LAST MATCHED AT
           </Label>
           <Text size="medium" color="black">
             {formatDatetime(alert.updateTime)}
           </Text>
         </Box>
-      </Grid>
+      </SimpleGrid>
     </Panel>
   );
 };

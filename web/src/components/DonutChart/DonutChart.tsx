@@ -108,7 +108,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ data, renderLabel }) => {
     })();
   }, []);
 
-  return <Box innerRef={container} width="100%" height="100%" />;
+  return <Box ref={container} width="100%" height="100%" />;
 };
 
 export default React.memo(DonutChart);

@@ -17,28 +17,22 @@
  */
 
 import React from 'react';
-import { Box, Grid, Flex } from 'pouncejs';
+import { Box, Flex, SimpleGrid } from 'pouncejs';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import CirclePlaceholder from 'Components/CirclePlaceholder';
 import DonutChartWrapper from '../DonutChartWrapper';
 
 const ChartPlaceholder: React.FC = () => (
-  <Flex height="100%" alignItems="center" justifyContent="center">
+  <Flex height="100%" align="center" justify="center">
     <CirclePlaceholder size={150} />
   </Flex>
 );
 
 const ComplianceOverviewPageSkeleton: React.FC = () => {
   return (
-    <Box is="article" mb={6}>
-      <Grid
-        gridTemplateColumns="repeat(4, 1fr)"
-        gridRowGap={3}
-        gridColumnGap={3}
-        is="section"
-        mb={3}
-      >
+    <Box as="article" mb={6}>
+      <SimpleGrid columns={4} spacing={3} as="section" mb={3}>
         <DonutChartWrapper title="Policy Severity" icon="policy">
           <ChartPlaceholder />
         </DonutChartWrapper>
@@ -51,15 +45,15 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
         <DonutChartWrapper title="Resource Health" icon="resource">
           <ChartPlaceholder />
         </DonutChartWrapper>
-      </Grid>
-      <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={3}>
+      </SimpleGrid>
+      <SimpleGrid columns={2} spacingX={3} spacingY={2}>
         <Panel title="Top Failing Policies" size="small">
           <TablePlaceholder />
         </Panel>
         <Panel title="Top Failing Resources" size="small">
           <TablePlaceholder />
         </Panel>
-      </Grid>
+      </SimpleGrid>
     </Box>
   );
 };

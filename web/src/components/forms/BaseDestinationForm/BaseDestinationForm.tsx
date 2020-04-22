@@ -130,7 +130,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
               .map(severity => (
                 <Field name="defaultForSeverity" key={severity}>
                   {() => (
-                    <Flex alignItems="center">
+                    <Flex align="center">
                       <Field
                         as={FormikCheckbox}
                         name={`defaultForSeverity.${severity}`}

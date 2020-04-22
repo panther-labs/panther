@@ -60,6 +60,11 @@ Parameters:
     Type: String
     Description: Enable XRay tracing on GraphQL queries & mutations
     Default: ''
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    Default: false
+    AllowedValues: [true, false]
 
 Mappings:
   SubnetConfig:
@@ -123,6 +128,7 @@ Conditions:
   ExternalAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, '']]
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
+  EnableDebug: !Equals [!Ref Debug, true]
 
 Resources:
   ########## S3 Buckets ##########
@@ -701,6 +707,10 @@ Resources:
       LogConfig:
         CloudWatchLogsRoleArn: !GetAtt AppsyncServiceRole.Arn
         FieldLogLevel: ALL
+        ExcludeVerboseContent: !If
+          - EnableDebug
+          - FALSE
+          - TRUE
       XrayEnabled: !If [TracingEnabled, True, !Ref 'AWS::NoValue']
 
   AppsyncLogGroup:

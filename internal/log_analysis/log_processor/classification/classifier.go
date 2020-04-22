@@ -89,7 +89,13 @@ func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []*parsers
 			parsedEvents = nil // return indicator that parse failed
 		}
 	}()
-	parsedEvents = parser.Parse(log)
+	parsedEvents, err := parser.Parse(log)
+	if err != nil {
+		zap.L().Debug("parser failed",
+			zap.String("parser", parser.LogType()),
+			zap.Error(err))
+		return nil
+	}
 	return parsedEvents
 }
 

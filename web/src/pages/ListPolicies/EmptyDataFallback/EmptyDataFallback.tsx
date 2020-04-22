@@ -23,7 +23,7 @@ import PolicyCreateButton from '../CreateButton';
 
 const ListPoliciesPageEmptyDataFallback: React.FC = () => {
   return (
-    <Flex justifyContent="center" alignItems="center" flexDirection="column">
+    <Flex justify="center" align="center" direction="column">
       <Box my={10}>
         <img alt="Empty Notepad Illustration" src={EmptyNotepadImg} width="auto" height={300} />
       </Box>

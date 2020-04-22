@@ -104,7 +104,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
         <Heading size="medium" mb={8}>
           Upload {isPolicy ? 'Policies' : 'Rules'}
         </Heading>
-        <Text size="large" color="grey300" mb={8} is="p">
+        <Text size="large" color="grey300" mb={8} as="p">
           Sometimes you don{"'"}t have the luxury of creating {isPolicy ? 'policies' : 'rules'}{' '}
           one-by-one through our lovely editor page. Not to worry, as a way to speed things up, we
           also accept a single Base64-encoded zipfile containing all of your policies.

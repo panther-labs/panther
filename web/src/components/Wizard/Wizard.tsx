@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, IconProps, Icon, Label, Grid, ProgressBar, Theme } from 'pouncejs';
+import { Box, Flex, IconProps, Icon, Label, ProgressBar, Theme, SimpleGrid } from 'pouncejs';
 import { WizardContext } from './WizardContext';
 
 export interface WizardStepProps {
@@ -66,7 +66,7 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
   );
 
   return (
-    <Box is="article" width={1}>
+    <Box as="article" width={1}>
       <Box position="relative" mb={6}>
         <Box
           position="absolute"
@@ -76,7 +76,7 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
         >
           <ProgressBar progressColor="green200" progress={currentStepIndex / (steps.length - 1)} />
         </Box>
-        <Grid is="ul" gridTemplateColumns={`repeat(${steps.length}, 1fr)`} width={1} zIndex={2}>
+        <SimpleGrid as="ul" columns={steps.length} width={1} zIndex={2}>
           {steps.map((step, index) => {
             const isComplete = currentStepIndex > index || currentStepIndex === steps.length - 1;
 
@@ -90,20 +90,20 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
 
             return (
               <Flex
-                is="li"
-                justifyContent="center"
-                alignItems="center"
-                flexDirection="column"
+                as="li"
+                justify="center"
+                align="center"
+                direction="column"
                 key={step.props.title}
                 zIndex={2}
               >
-                <Label is="h3" size="large" color={labelColor} mb={2}>
+                <Label as="h3" size="large" color={labelColor} mb={2}>
                   {index + 1}. {step.props.title}
                 </Label>
                 <Flex
                   borderRadius="circle"
-                  justifyContent="center"
-                  alignItems="center"
+                  justify="center"
+                  align="center"
                   width={40}
                   height={40}
                   backgroundColor={isComplete ? 'green200' : 'grey50'}
@@ -117,7 +117,7 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
               </Flex>
             );
           })}
-        </Grid>
+        </SimpleGrid>
       </Box>
       <Box>
         <WizardContext.Provider value={contextValue}>

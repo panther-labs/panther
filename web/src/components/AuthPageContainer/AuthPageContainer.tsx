@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Grid, Box, Text, Heading, Label } from 'pouncejs';
+import { Flex, Box, Text, Heading, Label, SimpleGrid } from 'pouncejs';
 import PantherLogoWhite from 'Assets/panther-icon--white.svg';
 
 interface AuthPageContainerComposition {
@@ -34,7 +34,7 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
   banner,
 }) => {
   return (
-    <Grid gridTemplateColumns="repeat(3, 1fr)" height="100vh">
+    <SimpleGrid columns={3} height="100vh">
       <Box gridColumn="1/2" position="relative">
         <img
           src={banner}
@@ -47,14 +47,14 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
           position="absolute"
           top="0"
           left="0"
-          alignItems="center"
+          align="center"
           py={150}
           width="100%"
           height="100%"
-          flexDirection="column"
+          direction="column"
         >
           <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
-          <Flex flexDirection="column" alignItems="center" justifyContent="center" m="auto">
+          <Flex direction="column" align="center" justify="center" m="auto">
             <Label size="medium" mb={5} color="white" textAlign="center">
               Panther Community Edition
             </Label>
@@ -67,10 +67,10 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
           </Flex>
         </Flex>
       </Box>
-      <Flex gridColumn="2/4" justifyContent="center" alignItems="center">
+      <Flex gridColumn="2/4" justify="center" align="center">
         <Box width={460}>{children}</Box>
       </Flex>
-    </Grid>
+    </SimpleGrid>
   );
 };
 
@@ -79,11 +79,11 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
  */
 const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ title, subtitle }) => (
   <Box mb={8}>
-    <Heading is="h1" size="medium" color="grey400">
+    <Heading as="h1" size="medium" color="grey400">
       {title}
     </Heading>
     {subtitle && (
-      <Text is="p" size="large" color="grey200" mt={2}>
+      <Text as="p" size="large" color="grey200" mt={2}>
         {subtitle}
       </Text>
     )}

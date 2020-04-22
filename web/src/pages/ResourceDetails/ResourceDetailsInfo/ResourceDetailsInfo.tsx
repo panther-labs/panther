@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Grid, Label, Text } from 'pouncejs';
+import { Box, Label, SimpleGrid, Text } from 'pouncejs';
 import Panel from 'Components/Panel';
 import { capitalize, formatDatetime } from 'Helpers/utils';
 import { ComplianceStatusEnum, ComplianceIntegration, ResourceDetails } from 'Generated/schema';
@@ -29,9 +29,9 @@ interface ResourceDetailsInfoProps {
 const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) => {
   return (
     <Panel size="large" title="Resource Details">
-      <Grid gridTemplateColumns="repeat(3, 1fr)" gridGap={6}>
+      <SimpleGrid columns={3} spacing={6}>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             ID
           </Label>
           <Text size="medium" color="black">
@@ -39,7 +39,7 @@ const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) =
           </Text>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             TYPE
           </Label>
           <Text size="medium" color="black">
@@ -47,7 +47,7 @@ const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) =
           </Text>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             SOURCE
           </Label>
           <Text size="medium" color="black">
@@ -55,7 +55,7 @@ const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) =
           </Text>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             STATUS
           </Label>
           <Text
@@ -66,14 +66,14 @@ const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) =
           </Text>
         </Box>
         <Box my={1}>
-          <Label mb={1} is="div" size="small" color="grey300">
+          <Label mb={1} as="div" size="small" color="grey300">
             LAST MODIFIED
           </Label>
           <Text size="medium" color="black">
             {formatDatetime(resource.lastModified)}
           </Text>
         </Box>
-      </Grid>
+      </SimpleGrid>
     </Panel>
   );
 };

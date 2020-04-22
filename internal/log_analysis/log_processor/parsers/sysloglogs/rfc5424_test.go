@@ -249,5 +249,6 @@ func TestRFC5424Type(t *testing.T) {
 
 func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
 	expectedEvent.SetEvent(expectedEvent)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parserRFC5424.Parse(log))
+	logs, err := parserRFC5424.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), logs, err)
 }
