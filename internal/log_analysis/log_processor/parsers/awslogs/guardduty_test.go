@@ -174,7 +174,9 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 func TestGuardDutyLogMissingRequiredField(t *testing.T) {
 	log := `{"schemaVersion":"2.0","region":"eu-west-1","partition":"aws"}`
 	parser := &GuardDutyParser{}
-	require.Nil(t, parser.Parse(log))
+	events, err := parser.Parse(log)
+	require.Error(t, err)
+	require.Nil(t, events)
 }
 
 func TestGuardDutyLogType(t *testing.T) {
@@ -185,5 +187,6 @@ func TestGuardDutyLogType(t *testing.T) {
 func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := &GuardDutyParser{}
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

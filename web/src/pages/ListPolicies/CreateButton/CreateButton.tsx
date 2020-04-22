@@ -31,7 +31,7 @@ const CreateButton: React.FC = () => {
     <Dropdown
       width={1}
       trigger={
-        <Button size="large" variant="primary" is="div">
+        <Button size="large" variant="primary" as="div">
           <Flex>
             <Icon type="add" size="small" mr={2} />
             Create new

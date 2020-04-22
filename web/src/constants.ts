@@ -18,7 +18,7 @@
 
 import { SeverityEnum } from 'Generated/schema';
 import { BadgeProps } from 'pouncejs';
-import { getStableVersion } from 'Helpers/utils';
+import { generateDocUrl } from 'Helpers/utils';
 
 export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');
 
@@ -31,6 +31,8 @@ export const SOURCE_LABEL_REGEX = new RegExp('^[a-zA-Z0-9- ]+$');
 export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
 export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('[^\\d\\sA-Za-z]');
+
+export const CHECK_IF_HASH_REGEX = new RegExp('[a-f0-9]{32}');
 
 export const DEFAULT_POLICY_FUNCTION =
   'def policy(resource):\n\t# Return False if the resource is non-compliant, which will trigger alerts/remediation.\n\treturn True';
@@ -115,9 +117,10 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } 
 
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
 
-export const PANTHER_SCHEMA_DOCS_LINK = `${PANTHER_SCHEMA_DOCS_MASTER_LINK}/v/${getStableVersion(
+export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(
+  PANTHER_SCHEMA_DOCS_MASTER_LINK,
   process.env.PANTHER_VERSION
-)}`;
+);
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
 export const DEFAULT_LARGE_PAGE_SIZE = 25;

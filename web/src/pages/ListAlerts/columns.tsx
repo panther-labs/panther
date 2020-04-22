@@ -21,42 +21,31 @@
 import React from 'react';
 import { Badge, TableProps, Text } from 'pouncejs';
 import { AlertSummary } from 'Generated/schema';
-import { formatDatetime } from 'Helpers/utils';
-import urls from 'Source/urls';
-import { Link } from 'react-router-dom';
+import { formatDatetime, shortenId } from 'Helpers/utils';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 
 // The columns that the associated table will show
 const columns = [
   {
-    key: 'ruleId',
+    key: 'title',
     sortable: true,
-    header: 'Rule ID',
-    flex: '0 0 200px',
-    renderCell: item => (
-      <Link to={urls.logAnalysis.alerts.details(item.alertId)}>
-        <Text size="medium">{item.ruleId}</Text>
-      </Link>
-    ),
+    header: 'Title',
+    flex: '1 0 200px',
   },
+  // Date needs to be formatted properly
   {
-    key: 'dedupString',
+    key: 'createdAt',
     sortable: true,
-    header: 'Dedup String',
+    header: 'Created At',
     flex: '0 0 200px',
-  },
-  {
-    key: 'eventsMatched',
-    sortable: true,
-    header: 'Events Count',
-    flex: '1 0 50px',
+    renderCell: ({ creationTime }) => <Text size="medium">{formatDatetime(creationTime)}</Text>,
   },
 
   // Render badges to showcase severity
   {
     key: 'severity',
     sortable: true,
-    flex: '1 0 100px',
+    flex: '0 0 150px',
     header: 'Severity',
     renderCell: ({ severity }) => {
       if (!severity) {
@@ -70,14 +59,21 @@ const columns = [
     },
   },
 
-  // Date needs to be formatted properly
   {
-    key: 'createdAt',
+    key: 'alertId',
     sortable: true,
-    header: 'Created At',
+    header: 'Alert ID',
     flex: '0 0 200px',
-    renderCell: ({ creationTime }) => <Text size="medium">{formatDatetime(creationTime)}</Text>,
+    renderCell: ({ alertId }) => <Text size="medium">{shortenId(alertId)}</Text>,
   },
+
+  {
+    key: 'eventsMatched',
+    sortable: true,
+    header: 'Events Count',
+    flex: '1 0 50px',
+  },
+
   // Date needs to be formatted properly
   {
     key: 'lastModified',

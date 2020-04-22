@@ -105,7 +105,7 @@
     "history": "^4.10.1",
     "linkifyjs": "^2.1.9",
     "lodash-es": "^4.17.15",
-    "pouncejs": "^0.13.7",
+    "pouncejs": "^0.14.3",
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
     "react": "^16.12.0",

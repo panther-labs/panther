@@ -160,7 +160,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                       mb={4}
                       minWidth={250}
                     >
-                      <Flex alignItems="center">
+                      <Flex align="center">
                         {test.name}
                         <Box ml="auto" mr={0} pl={3} onClick={e => handleTestRemoval(e, index)}>
                           <Icon type="remove" size="large" color="grey300" />
@@ -176,7 +176,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                       mb={4}
                       onClick={handleTestAddition}
                     >
-                      <Flex alignItems="center">
+                      <Flex align="center">
                         <Icon size="small" type="add" mr={2} />
                         Create {!testsCount ? 'your first' : ''} test
                       </Flex>
@@ -186,7 +186,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                 {testsCount > 0 && (
                   <TabPanel selected aria-labelledby={tests[activeTabIndex].name}>
                     <Flex
-                      justifyContent="space-around"
+                      justify="space-around"
                       py={3}
                       borderTop="1px solid"
                       borderBottom="1px solid"
@@ -215,7 +215,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                         />
                       </Flex>
                       <Box>
-                        <Flex justifyContent="space-between" width={225}>
+                        <Flex justify="space-between" width={225}>
                           <InputElementLabel htmlFor="expected-result-true">
                             Evaluate to True
                           </InputElementLabel>
@@ -226,7 +226,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                             value={true}
                           />
                         </Flex>
-                        <Flex justifyContent="space-between" width={225}>
+                        <Flex justify="space-between" width={225}>
                           <InputElementLabel htmlFor="expected-result-false">
                             Evaluate to False
                           </InputElementLabel>
@@ -274,7 +274,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                         mr={4}
                         onClick={() => runTests([tests[activeTabIndex]])}
                       >
-                        <Flex alignItems="center">
+                        <Flex align="center">
                           <Icon type="play" size="small" mr={2} />
                           Run Test
                         </Flex>
@@ -285,7 +285,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                         size="large"
                         onClick={() => runTests(tests)}
                       >
-                        <Flex alignItems="center">
+                        <Flex align="center">
                           <Icon type="play-all" size="small" mr={2} />
                           Run All
                         </Flex>

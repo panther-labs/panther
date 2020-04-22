@@ -29,7 +29,7 @@ interface ItemCardProps {
 const DestinationCard: React.FunctionComponent<ItemCardProps> = ({ logo, title, onClick }) => (
   <Card
     width={1}
-    is="button"
+    as="button"
     onClick={onClick}
     css={css`
       cursor: pointer;

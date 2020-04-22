@@ -20,7 +20,6 @@ package gitlablogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -50,29 +49,29 @@ type Integrations struct {
 // IntegrationsParser parses gitlab integration logs
 type IntegrationsParser struct{}
 
+var _ parsers.LogParser = (*IntegrationsParser)(nil)
+
 // New creates a new parser
 func (p *IntegrationsParser) New() parsers.LogParser {
 	return &IntegrationsParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *IntegrationsParser) Parse(log string) []*parsers.PantherLog {
+func (p *IntegrationsParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	gitlabIntegrations := Integrations{}
 
 	err := jsoniter.UnmarshalFromString(log, &gitlabIntegrations)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	gitlabIntegrations.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(gitlabIntegrations); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return gitlabIntegrations.Logs()
+	return gitlabIntegrations.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

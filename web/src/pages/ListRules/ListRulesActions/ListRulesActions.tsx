@@ -107,7 +107,7 @@ const ListRulesActions: React.FC = () => {
 
   return (
     <React.Fragment>
-      <Flex justifyContent="flex-end" mb={6}>
+      <Flex justify="flex-end" mb={6}>
         <Box position="relative" mr={5}>
           <Button
             size="large"

@@ -28,14 +28,14 @@ const UsersPage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Flex justifyContent="flex-end">
+      <Flex justify="flex-end">
         <Button
           size="large"
           variant="primary"
           onClick={() => showSidesheet({ sidesheet: SIDESHEETS.USER_INVITATION })}
           mb={8}
         >
-          <Flex alignItems="center">
+          <Flex align="center">
             <Icon type="add-user" size="small" mr={2} />
             Invite User
           </Flex>

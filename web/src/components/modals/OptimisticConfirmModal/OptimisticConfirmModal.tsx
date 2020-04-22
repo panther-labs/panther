@@ -45,7 +45,7 @@ const OptimisticConfirmModal: React.FC<OptimisticConfirmModalProps> = ({
         {subtitle}
       </Text>
 
-      <Flex justifyContent="flex-end">
+      <Flex justify="flex-end">
         <Button size="large" variant="default" onClick={hideModal} mr={3}>
           Cancel
         </Button>

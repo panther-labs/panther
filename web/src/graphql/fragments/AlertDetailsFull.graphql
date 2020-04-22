@@ -1,6 +1,7 @@
 fragment AlertDetailsFull on AlertDetails {
   alertId
   ruleId
+  title
   creationTime
   eventsMatched
   updateTime

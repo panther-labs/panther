@@ -20,7 +20,6 @@ package awslogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -117,17 +116,18 @@ type CloudTrailSessionContextWebIDFederationData struct {
 // CloudTrailParser parses CloudTrail logs
 type CloudTrailParser struct{}
 
+var _ parsers.LogParser = (*CloudTrailParser)(nil)
+
 func (p *CloudTrailParser) New() parsers.LogParser {
 	return &CloudTrailParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) Parse(log string) []*parsers.PantherLog {
+func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	cloudTrailRecords := &CloudTrailRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailRecords)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	for _, event := range cloudTrailRecords.Records {
@@ -135,14 +135,13 @@ func (p *CloudTrailParser) Parse(log string) []*parsers.PantherLog {
 	}
 
 	if err := parsers.Validator.Struct(cloudTrailRecords); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 	result := make([]*parsers.PantherLog, len(cloudTrailRecords.Records))
 	for i, event := range cloudTrailRecords.Records {
 		result[i] = event.Log()
 	}
-	return result
+	return result, nil
 }
 
 // LogType returns the log type supported by this parser
