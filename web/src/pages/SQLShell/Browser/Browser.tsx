@@ -15,7 +15,7 @@ const Browser: React.FC = () => {
   return (
     <Card height={507} is="aside" overflow="hidden">
       <ErrorBoundary>
-        <Flex flexDirection="column" height="100%">
+        <Flex direction="column" height="100%">
           <Box is="header" p={6}>
             <Box mb={4} is="section">
               <DatabaseSelector />

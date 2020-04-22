@@ -53,7 +53,7 @@ const ColumnListItem: React.FC<ColumnListItemProps> = ({
           }
         `}
       >
-        <Flex alignItems="center">
+        <Flex align="center">
           {name}
           <Text
             is="span"

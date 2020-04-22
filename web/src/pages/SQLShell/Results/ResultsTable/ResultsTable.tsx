@@ -35,13 +35,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
   // Original state, meaning that no query is present
   if (isPristine) {
     return (
-      <Flex
-        justifyContent="center"
-        alignItems="center"
-        flexDirection="column"
-        color="grey200"
-        my={125}
-      >
+      <Flex justify="center" align="center" direction="column" color="grey200" my={125}>
         <Icon size="large" type="search" />
         <Heading size="medium" my={6}>
           Write a query to see results
@@ -53,7 +47,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
   // Query had errors
   if (hasErrored) {
     return (
-      <Flex justifyContent="center" alignItems="center" flexDirection="column">
+      <Flex justify="center" align="center" direction="column">
         <Box my={10}>
           <img alt="Road works Illustration" src={WarningImg} width="auto" height={200} />
         </Box>
@@ -68,7 +62,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
   // to "poll" for results
   if (isProvisioning) {
     return (
-      <Flex justifyContent="center" alignItems="center" my={125}>
+      <Flex justify="center" align="center" my={125}>
         <Spinner size="medium" />
         <Heading size="medium" ml={8} color="grey300">
           Provisioning...
@@ -80,7 +74,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
   // Gotten back a `queryId` and we are on the polling phase, were we are waiting for results
   if (isRunning) {
     return (
-      <Flex justifyContent="center" alignItems="center" my={125}>
+      <Flex justify="center" align="center" my={125}>
         <Spinner size="medium" />
         <Heading size="medium" ml={8} color="grey300">
           Running Query... Elapsed Time: {dayjs().diff(startTime.current, 'second')}s
@@ -92,7 +86,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
   // We have results, but they are empty
   if (!results.length) {
     return (
-      <Flex justifyContent="center" alignItems="center" flexDirection="column">
+      <Flex justify="center" align="center" direction="column">
         <Box my={10}>
           <img alt="Black Canvas Illustration" src={BlankCanvasImg} width="auto" height={150} />
         </Box>

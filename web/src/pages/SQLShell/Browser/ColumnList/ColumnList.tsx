@@ -27,7 +27,7 @@ const ColumnList: React.FC = () => {
 
   return (
     <React.Fragment>
-      <Flex alignItems="center" mx={2} is="li">
+      <Flex align="center" mx={2} is="li">
         <IconButton
           variant="default"
           onClick={() => dispatch({ type: 'SELECT_TABLE', payload: { table: null } })}

@@ -25,7 +25,7 @@ const SQLShellPage: React.FC = () => {
           {globalErrorMessage}
         </Text>
       )}
-      <Grid gridGap={4} gridTemplateColumns="1fr 3fr" mb={4}>
+      <Grid gap={4} templateColumns="1fr 3fr" mb={4}>
         <Browser />
         <Card p={9}>
           <SQLEditor />
