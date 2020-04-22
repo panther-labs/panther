@@ -1,21 +1,3 @@
-/**
- * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 export type Maybe<T> = T | null;
 export type RequireFields<T, K extends keyof T> = { [X in Exclude<keyof T, K>]?: T[X] } &
@@ -502,7 +484,6 @@ export type Mutation = {
   deleteRule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
-  queryDone: QueryDone;
   remediateResource?: Maybe<Scalars['Boolean']>;
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
@@ -563,10 +544,6 @@ export type MutationDeleteUserArgs = {
 
 export type MutationInviteUserArgs = {
   input?: Maybe<InviteUserInput>;
-};
-
-export type MutationQueryDoneArgs = {
-  input: QueryDoneInput;
 };
 
 export type MutationRemediateResourceArgs = {
@@ -957,15 +934,6 @@ export type SqsConfigInput = {
   queueUrl: Scalars['String'];
 };
 
-export type Subscription = {
-  __typename?: 'Subscription';
-  queryDone?: Maybe<QueryDone>;
-};
-
-export type SubscriptionQueryDoneArgs = {
-  userData: Scalars['String'];
-};
-
 export type SuppressPoliciesInput = {
   policyIds: Array<Maybe<Scalars['ID']>>;
   resourcePatterns: Array<Maybe<Scalars['String']>>;
@@ -1217,8 +1185,6 @@ export type ResolversTypes = {
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
   InviteUserInput: InviteUserInput;
-  QueryDoneInput: QueryDoneInput;
-  QueryDone: ResolverTypeWrapper<QueryDone>;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
@@ -1231,7 +1197,8 @@ export type ResolversTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
-  Subscription: ResolverTypeWrapper<{}>;
+  QueryDoneInput: QueryDoneInput;
+  QueryDone: ResolverTypeWrapper<QueryDone>;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1330,8 +1297,6 @@ export type ResolversParentTypes = {
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
   InviteUserInput: InviteUserInput;
-  QueryDoneInput: QueryDoneInput;
-  QueryDone: QueryDone;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
@@ -1344,7 +1309,8 @@ export type ResolversParentTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
-  Subscription: {};
+  QueryDoneInput: QueryDoneInput;
+  QueryDone: QueryDone;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1733,12 +1699,6 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationInviteUserArgs, never>
-  >;
-  queryDone?: Resolver<
-    ResolversTypes['QueryDone'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationQueryDoneArgs, 'input'>
   >;
   remediateResource?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
@@ -2195,19 +2155,6 @@ export type SqsConfigResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
-export type SubscriptionResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']
-> = {
-  queryDone?: SubscriptionResolver<
-    Maybe<ResolversTypes['QueryDone']>,
-    'queryDone',
-    ParentType,
-    ContextType,
-    RequireFields<SubscriptionQueryDoneArgs, 'userData'>
-  >;
-};
-
 export type TestPolicyResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestPolicyResponse'] = ResolversParentTypes['TestPolicyResponse']
@@ -2298,7 +2245,6 @@ export type Resolvers<ContextType = any> = {
   SlackConfig?: SlackConfigResolvers<ContextType>;
   SnsConfig?: SnsConfigResolvers<ContextType>;
   SqsConfig?: SqsConfigResolvers<ContextType>;
-  Subscription?: SubscriptionResolvers<ContextType>;
   TestPolicyResponse?: TestPolicyResponseResolvers<ContextType>;
   UploadPoliciesResponse?: UploadPoliciesResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
