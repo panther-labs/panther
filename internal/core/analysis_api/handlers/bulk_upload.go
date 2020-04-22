@@ -109,21 +109,22 @@ func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 			continue
 		}
 
-		if result.item.Type == typePolicy {
+		switch result.item.Type {
+		case typePolicy:
 			*counts.TotalPolicies++
 			if result.changeType == newItem {
 				*counts.NewPolicies++
 			} else if result.changeType == updatedItem {
 				*counts.ModifiedPolicies++
 			}
-		} else if result.item.Type == typeRule {
+		case typeRule:
 			*counts.TotalRules++
 			if result.changeType == newItem {
 				*counts.NewRules++
 			} else if result.changeType == updatedItem {
 				*counts.ModifiedRules++
 			}
-		} else {
+		case typeGlobal:
 			*counts.TotalGlobals++
 			if result.changeType == newItem {
 				*counts.NewGlobals++

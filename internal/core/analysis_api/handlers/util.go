@@ -21,12 +21,14 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
@@ -202,9 +204,9 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 // result of a BulkUpload operation actually changed something or not.
 //
 // DO NOT use this for situations the items MUST be exactly equal, this is a "good enough" approximation for the
-// purpose it serves, which is informing users that their bulk operation did or did not change something. Some fields
-// are not checked, and some are not checked adequately (e.g. test bodies)
+// purpose it serves, which is informing users that their bulk operation did or did not change something.
 func itemUpdated(oldItem, newItem *tableItem) bool {
+	zap.L().Debug("determining if item was updated", zap.Any("oldItem", oldItem), zap.Any("newItem", newItem))
 	itemsEqual := oldItem.AutoRemediationID == newItem.AutoRemediationID && oldItem.Body == newItem.Body &&
 		oldItem.Description == newItem.Description && oldItem.DisplayName == newItem.DisplayName &&
 		oldItem.Enabled == newItem.Enabled && oldItem.Reference == newItem.Reference &&
@@ -215,31 +217,70 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 		len(oldItem.AutoRemediationParameters) == len(newItem.AutoRemediationParameters) &&
 		len(oldItem.Tests) == len(newItem.Tests)
 
-	if itemsEqual {
-		// Check AutoRemediationParameters for equality (we can't compare maps with ==)
-		for key, value := range oldItem.AutoRemediationParameters {
-			if newValue, ok := newItem.AutoRemediationParameters[key]; !ok || newValue != value {
-				// Something changed, so this item has been updated
+	if !itemsEqual {
+		zap.L().Debug("fast return")
+		return true
+	}
+
+	// Check AutoRemediationParameters for equality (we can't compare maps with ==)
+	for key, value := range oldItem.AutoRemediationParameters {
+		if newValue, ok := newItem.AutoRemediationParameters[key]; !ok || newValue != value {
+			zap.L().Debug("auto remediations different")
+			// Something changed, so this item has been updated
+			return true
+		}
+	}
+	// Check Tests for equality
+	oldTests := make(map[models.TestName]*models.UnitTest)
+	for _, test := range oldItem.Tests {
+		oldTests[test.Name] = test
+	}
+	for _, newTest := range newItem.Tests {
+		oldTest, ok := oldTests[newTest.Name]
+		// First check if the meta data of the test is equal
+		if !ok || oldTest.ResourceType != newTest.ResourceType || oldTest.ExpectedResult != newTest.ExpectedResult {
+			zap.L().Debug("test meta data different")
+			// Something changed, so this item has been updated
+			return true
+		}
+
+		// The resource is a string that consists of valid JSON, and represents a test case. At some point in the
+		// processing pipeline, it gets converted into a struct then back into a JSON string. Because of this, the
+		// resource that the user uploads and the actual resource stored in dynamo may be different string
+		// representations of the same JSON object. In order to compare them then, we have to unmarshal them into a
+		// consistent format.
+		var oldResource, newResource map[string]interface{}
+		if err := jsoniter.UnmarshalFromString(string(oldTest.Resource), &oldResource); err != nil {
+			// It is possible someone uploaded bad JSON in this test, it is not the responsibility of this test to
+			// report that. Just do a raw string comparison.
+			zap.L().Debug("old test failed to unmarshal")
+			if oldTest.Resource != newTest.Resource {
+				zap.L().Debug("old & new not equal")
 				return true
 			}
+			continue
 		}
-		// Check Tests for equality
-		oldTests := make(map[models.TestName]*models.UnitTest)
-		for _, test := range oldItem.Tests {
-			oldTests[test.Name] = test
-		}
-		for _, newTest := range newItem.Tests {
-			oldTest, ok := oldTests[newTest.Name]
-			// The test Resource gets sorted by Dynamo in some fashion that is hard to replicate without converting
-			// the whole string to a struct, so we just check if they're approximately equal
-			if !ok || oldTest.ResourceType != newTest.ResourceType || oldTest.ExpectedResult != newTest.ExpectedResult {
-				// Something changed, so this item has been updated
+		if err := jsoniter.UnmarshalFromString(string(newTest.Resource), &newResource); err != nil {
+			zap.L().Debug("new test failed to unmarshal")
+			if oldTest.Resource != newTest.Resource {
+				zap.L().Debug("old & new not equal")
 				return true
 			}
+			continue
+		}
+
+		if !reflect.DeepEqual(oldResource, newResource) {
+			zap.L().Debug("not deep equal", zap.Any("old", oldResource), zap.Any("new", newResource))
+			return true
 		}
 	}
 
 	// If they're the same, the item wasn't really updated
+	if !itemsEqual {
+		zap.L().Debug("items not equal")
+	} else {
+		zap.L().Debug("items equal")
+	}
 	return !itemsEqual
 }
 
