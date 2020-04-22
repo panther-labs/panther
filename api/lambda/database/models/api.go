@@ -68,7 +68,7 @@ type GetDatabasesOutput struct {
 
 type GetTablesInput struct {
 	Database
-	OnlyPopulated bool `json:"onlyPopulated,omitempty"` // if true, only return table containing data
+	UnPopulatedTables bool `json:"unPopulated,omitempty"` // if true, return tables that have no data
 }
 
 // NOTE: we will assume this is small an not paginate

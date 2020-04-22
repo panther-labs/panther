@@ -45,7 +45,7 @@ func (API) GetTables(input *models.GetTablesInput) (*models.GetTablesOutput, err
 	err = glueClient.GetTablesPages(&glue.GetTablesInput{DatabaseName: aws.String(input.DatabaseName)},
 		func(page *glue.GetTablesOutput, lastPage bool) bool {
 			for _, table := range page.TableList {
-				if input.OnlyPopulated { // check there is at least 1 partition
+				if !input.UnPopulatedTables { // check there is at least 1 partition
 					var gluePartitionOutput *glue.GetPartitionsOutput
 					gluePartitionOutput, partitionErr = glueClient.GetPartitions(&glue.GetPartitionsInput{
 						DatabaseName: aws.String(input.DatabaseName),

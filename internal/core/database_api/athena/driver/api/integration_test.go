@@ -161,7 +161,6 @@ func TestIntegrationGlueAPI(t *testing.T) {
 
 	var getTablesInput models.GetTablesInput
 	getTablesInput.DatabaseName = testutils.TestDb
-	getTablesInput.OnlyPopulated = true
 	getTablesOutput, err := runGetTables(useLambda, &getTablesInput)
 	require.NoError(t, err)
 	require.Len(t, getTablesOutput.Tables, 1)
@@ -173,7 +172,6 @@ func TestIntegrationGlueAPI(t *testing.T) {
 
 	var getPantherTablesInput models.GetTablesInput
 	getPantherTablesInput.DatabaseName = testutils.TestDb
-	getPantherTablesInput.OnlyPopulated = true
 	getPantherTablesOutput, err := runGetTables(useLambda, &getPantherTablesInput)
 	require.NoError(t, err)
 	assert.Len(t, getPantherTablesOutput.Tables, 0)
@@ -245,6 +243,7 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 
 	var getTablesInput models.GetTablesInput
 	getTablesInput.DatabaseName = pantherDatabase
+	getTablesInput.UnPopulatedTables = true
 	getTablesOutput, err := runGetTables(useLambda, &getTablesInput)
 	require.NoError(t, err)
 	assert.Greater(t, len(getTablesOutput.Tables), 0)
@@ -254,6 +253,7 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 	var getTablesDetailInput models.GetTablesDetailInput
 	getTablesDetailInput.DatabaseName = pantherDatabase
 	getTablesDetailInput.Names = []string{pantherTable}
+	getTablesInput.UnPopulatedTables = true
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, &getTablesDetailInput)
 	require.NoError(t, err)
 	require.Len(t, getTablesDetailOutput.Tables, 1)
