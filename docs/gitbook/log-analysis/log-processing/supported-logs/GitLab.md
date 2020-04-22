@@ -233,7 +233,6 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog
 ##GitLab.Integrations
 GitLab log with information about integrations activities such as Jira, Asana, and Irker services.
 Reference: https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog
-
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>severity</b></code></td><td><code>string</code></td><td valign=top>The log level</td></tr>
