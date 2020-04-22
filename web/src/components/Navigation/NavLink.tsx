@@ -19,7 +19,7 @@
 import { Flex, Icon, IconButtonProps, IconProps, MenuItem } from 'pouncejs';
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 
 type NavLinkProps = Omit<IconButtonProps, 'variant'> & {
   icon: IconProps['type'];
@@ -36,7 +36,7 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
       variant="primary"
       selected={location.pathname.startsWith(to)}
       my={2}
-      as={Link}
+      as={RRLink}
       to={to}
       textDecoration="none"
       aria-label={label}

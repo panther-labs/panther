@@ -45,7 +45,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             size="large"
             variant="default"
             mr={4}
-            as={Link}
+            as={RRLink}
             to={urls.logAnalysis.rules.edit(rule.id)}
           >
             Edit

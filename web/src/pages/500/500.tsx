@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Button, Flex, Heading, Text } from 'pouncejs';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import WarningImg from 'Assets/illustrations/warning.svg';
 
 const Page500: React.FC = () => {
@@ -44,7 +44,7 @@ const Page500: React.FC = () => {
         This would normally be an internal server error, but we are fully serverless. Feel free to
         laugh.
       </Text>
-      <Button size="small" variant="default" as={Link} to="/">
+      <Button size="small" variant="default" as={RRLink} to="/">
         Back to somewhere stable
       </Button>
     </Flex>

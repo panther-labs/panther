@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, Button, Flex, Heading, Text } from 'pouncejs';
 import EmptyDataImg from 'Assets/illustrations/empty-box.svg';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 
 const ComplianceEmptyDataFallback: React.FC = () => (
@@ -34,7 +34,7 @@ const ComplianceEmptyDataFallback: React.FC = () => (
       You don{"'"}t seem to have any Cloud Security sources connected to our system. <br />
       When you do, a high level overview of your system{"'"}s health will appear here.
     </Text>
-    <Button size="large" variant="primary" as={Link} to={urls.compliance.sources.create()}>
+    <Button size="large" variant="primary" as={RRLink} to={urls.compliance.sources.create()}>
       Add your first source
     </Button>
   </Flex>

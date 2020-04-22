@@ -46,7 +46,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
             size="large"
             variant="default"
             mr={4}
-            as={Link}
+            as={RRLink}
             to={urls.compliance.policies.edit(policy.id)}
           >
             Edit

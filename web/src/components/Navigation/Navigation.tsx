@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, Flex, IconButton } from 'pouncejs';
 import urls from 'Source/urls';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
@@ -63,7 +63,7 @@ const Navigation = () => {
     <Flex as="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
       <Flex direction="column" width={70} height="100%" boxShadow="dark150">
         <Flex justify="center" pt={7} pb={2}>
-          <IconButton variant="primary" as={Link} to="/">
+          <IconButton variant="primary" as={RRLink} to="/">
             <img
               src={PantherIcon}
               alt="Panther logo"

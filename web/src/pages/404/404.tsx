@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Flex, Heading, Text, Button, Box } from 'pouncejs';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import NotFoundImg from 'Assets/illustrations/not-found.svg';
 
 const Page404: React.FC = () => {
@@ -43,7 +43,7 @@ const Page404: React.FC = () => {
       <Text size="large" color="grey200" as="p" mb={10}>
         ( You definitely are though )
       </Text>
-      <Button size="small" variant="default" as={Link} to="/">
+      <Button size="small" variant="default" as={RRLink} to="/">
         Back to Home
       </Button>
     </Flex>

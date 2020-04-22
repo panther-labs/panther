@@ -21,7 +21,7 @@ import AuthPageContainer from 'Components/AuthPageContainer';
 import ForgotPasswordForm from 'Components/forms/ForgotPasswordForm';
 import { Button, Flex, Text } from 'pouncejs';
 import urls from 'Source/urls';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import React from 'react';
 
 interface EmailStatusState {
@@ -51,7 +51,7 @@ const ForgotPasswordPage: React.FC = () => {
           <Button
             size="small"
             variant="default"
-            as={Link}
+            as={RRLink}
             to={urls.account.auth.signIn()}
             style={{ textDecoration: 'none' }}
           >
