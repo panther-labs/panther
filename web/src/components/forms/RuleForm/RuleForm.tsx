@@ -63,7 +63,7 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
       onSubmit={onSubmit}
       validationSchema={validationSchema}
     >
-      <Box is="article">
+      <Box as="article">
         <ErrorBoundary>
           <BaseRuleFormCoreFields type="rule" />
         </ErrorBoundary>

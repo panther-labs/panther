@@ -33,7 +33,7 @@ const SourceConfigurationPanel: React.FC = () => {
       <Heading size="medium" m="auto" mb={2} color="grey400">
         {initialValues.integrationId ? 'Update source' : 'First things first'}
       </Heading>
-      <Text size="large" color="grey200" mb={10} is="p">
+      <Text size="large" color="grey200" mb={10} as="p">
         {initialValues.integrationId
           ? 'Feel free to make any changes to your Cloud Security source'
           : "Let's configure your Cloud Security Source"}
@@ -57,13 +57,13 @@ const SourceConfigurationPanel: React.FC = () => {
           mb={6}
         />
         <Box ml={-2}>
-          <Flex alignItems="flex-start" mb={6}>
+          <Flex align="flex-start" mb={6}>
             <Field as={FormikCheckbox} name="cweEnabled" id="cweEnabled" />
             <Box ml={2}>
               <InputElementLabel htmlFor="cweEnabled">
                 Real-Time AWS Resource Scans
               </InputElementLabel>
-              <Text color="grey300" size="medium" is="p">
+              <Text color="grey300" size="medium" as="p">
                 Configure Panther to monitor all AWS resource changes in real-time through
                 CloudWatch Events.{' '}
                 <a
@@ -76,13 +76,13 @@ const SourceConfigurationPanel: React.FC = () => {
               </Text>
             </Box>
           </Flex>
-          <Flex alignItems="flex-start" mb={6}>
+          <Flex align="flex-start" mb={6}>
             <Field as={FormikCheckbox} name="remediationEnabled" id="remediationEnabled" />
             <Box ml={2}>
               <InputElementLabel htmlFor="remediationEnabled">
                 AWS Automatic Remediations
               </InputElementLabel>
-              <Text color="grey300" size="medium" is="p">
+              <Text color="grey300" size="medium" as="p">
                 Allow Panther to fix misconfigured infrastructure as soon as it is detected.{' '}
                 <a
                   target="_blank"

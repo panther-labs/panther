@@ -70,6 +70,7 @@ func TestIntegrations(t *testing.T) {
 }`
 
 	expectedTime := time.Date(2018, 9, 6, 17, 15, 16, int(365*time.Millisecond), time.UTC)
+
 	expectedEvent := &Integrations{
 		Severity:     aws.String("INFO"),
 		Time:         (*timestamp.RFC3339)(&expectedTime),
@@ -94,5 +95,6 @@ func checkIntegrations(t *testing.T, log string, expectedEvent *Integrations) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := (&IntegrationsParser{}).New()
 
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

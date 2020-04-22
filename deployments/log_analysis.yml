@@ -23,6 +23,15 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
+  AthenaResultsBucket:
+    Type: String
+    Description: Bucket created to hold Athena results
+  GraphQLApiEndpoint:
+    Type: String
+    Description: The URL to the Appsync GraphQL Endpoint
+  GraphQLApiId:
+    Type: String
+    Description: The id of the Appsync GraphQL Endpoint
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -37,6 +46,11 @@ Parameters:
     Description: KMS key ID for SQS encryption
 
   # Passed in from config file
+  AthenaPantherTablesOnly:
+    Type: String
+    Default: true
+    Description: If true, access only Panther tables in Athena API
+    AllowedValues: [true, false]
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -671,3 +685,222 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
+
+  ##### Athena API #####
+  AthenaApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/core/database_api/athena/driver/main
+      Description: Executes Athena and Glue queries
+      Environment:
+        Variables:
+          ATHENA_BUCKET: !Ref AthenaResultsBucket
+          ATHENA_STATEMACHINE_ARN: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
+          DEBUG: !Ref Debug
+          GRAPHQL_ENDPOINT: !Ref GraphQLApiEndpoint
+          PANTHER_TABLES_ONLY: !Ref AthenaPantherTablesOnly
+      FunctionName: panther-athena-api
+      # <cfndoc>
+      # The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
+      #
+      # Failure Impact
+      # * Failure of this lambda will stop the Panther UI from doing Athena queries.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 900 # we want this as long as possible
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: AthenaPermissions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:GetQuery*
+              Resource: '*'
+        - Id: GluePermissions # used for all table metadata queries
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:GetDatabase*
+                - glue:GetTable*
+                - glue:GetPartition*
+              Resource: '*'
+        - Id: S3ResultsPermissions # athena writes results to S3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+                - s3:PutObject
+              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
+        - Id: PantherS3ReadPermissions # athena reads from S3, restrict to our processed data buckets
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+                - arn:aws:s3:::panther-athena-api-processeddata-test-* # used for integration tests
+        - Id: StepsPermissions # start an async workflow that tracks the query execution
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - states:StartExecution
+              Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
+        - Id: InvokePantherLambdas # allow calling other panther lambdas
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource: # list lambdas that can be called below
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
+        - Id: CallAppSync # allow calling appsync mutation 'queryDone()' for notify support
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - appsync:GraphQL
+              Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:apis/${GraphQLApiId}/types/Mutation/fields/queryDone
+
+  AthenaApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-athena-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AthenaStepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role used by Step Functions to run Athena queries
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: !Sub states.${AWS::Region}.amazonaws.com
+      Policies:
+        - PolicyName: InvokeAthenaLambda
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt AthenaApiFunction.Arn
+
+  AthenaQueryStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: panther-athena-workflow
+      # <cfndoc>
+      # The `panther-athena-workflow` is a Step Functions state machine used execute Athena queries and notify callers when done.
+      #
+      # Failure Impact
+      # * Failure of this state machine will stop the Panther UI from doing Athena queries.
+      # </cfndoc>
+      DefinitionString: !Sub |
+        {
+             "Comment": "Run Athena query. Parameters are: userId, userData, delay, databaseName, sql, lambdaName, methodName",
+             "StartAt": "delay",
+             "States": {
+               "delay": {
+                "Comment": "Configurable delay to start",
+                "Type": "Wait",
+                "SecondsPath": "$.delaySeconds",
+                "Next": "query"
+               },
+               "query": {
+                 "Type": "Task",
+                 "Resource": "arn:aws:states:::lambda:invoke",
+                 "Parameters": {
+                   "FunctionName": "${AthenaApiFunction.Arn}",
+                   "Payload": {
+                     "executeAsyncQuery": {
+                       "userId.$": "$.userId",
+                       "databaseName.$": "$.databaseName",
+                       "sql.$": "$.sql"
+                     }
+                   }
+                 },
+                 "ResultPath": "$.queryResults",
+                 "Next": "status"
+               },
+               "running (wait)": {
+                 "Comment": "Pause to allow query to run.",
+                 "Type": "Wait",
+                 "Seconds": 2,
+                 "Next": "status"
+               },
+               "status": {
+                 "Type": "Task",
+                 "Resource": "arn:aws:states:::lambda:invoke",
+                 "Parameters": {
+                   "FunctionName": "${AthenaApiFunction.Arn}",
+                   "Payload": {
+                     "getQueryStatus": {
+                       "queryId.$": "$.queryResults.Payload.queryId"
+                     }
+                   }
+                 },
+                 "ResultPath": "$.queryStatus",
+                 "Next": "done?"
+               },
+               "done?": {
+                 "Type": "Choice",
+                 "Choices": [
+                 {
+                   "Variable": "$.queryStatus.Payload.status",
+                   "StringEquals": "succeeded",
+                   "Next": "succeeded"
+                 },
+                 {
+                   "Variable": "$.queryStatus.Payload.status",
+                   "StringEquals": "failed",
+                   "Next": "failed"
+                 }
+                 ],
+                 "Default": "running (wait)"
+               },
+               "succeeded": {
+                 "Type": "Pass",
+                 "Next": "notify"
+               },
+               "failed": {
+                 "Type": "Pass",
+                 "Next": "notify"
+               },
+               "notify": {
+                 "Comment": "Call lambdaName.methodName with userData, queryId and workflowId to notify done",
+                 "Type": "Task",
+                 "Resource": "arn:aws:states:::lambda:invoke",
+                 "Parameters": {
+                   "FunctionName": "${AthenaApiFunction.Arn}",
+                   "Payload": {
+                     "invokeNotifyLambda": {
+                       "userData.$": "$.userData",
+                       "queryId.$": "$.queryResults.Payload.queryId",
+                       "workflowId.$": "$$.Execution.Id",
+                       "lambdaName.$": "$.lambdaName",
+                       "methodName.$": "$.methodName"
+                     }
+                   }
+                 },
+                 "ResultPath": "$.notifyOutput",
+                 "End": true
+               }
+             }
+        }
+      RoleArn: !GetAtt AthenaStepFunctionRole.Arn

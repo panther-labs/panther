@@ -21,19 +21,24 @@ import { AlertSummary } from 'Generated/schema';
 import { generateEnumerationColumn } from 'Helpers/utils';
 import { Table } from 'pouncejs';
 import columns from 'Pages/ListAlerts/columns';
+import urls from 'Source/urls';
+import useRouter from 'Hooks/useRouter';
 
 interface ListAlertsTableProps {
-  items?: Partial<AlertSummary>[];
+  items?: AlertSummary[];
   enumerationStartIndex?: number;
 }
 
 const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
+  const { history } = useRouter();
+
   const enumeratedColumns = [generateEnumerationColumn(0), ...columns];
   return (
-    <Table<Partial<AlertSummary>>
+    <Table<AlertSummary>
       columns={enumeratedColumns}
       getItemKey={alert => alert.alertId}
       items={items}
+      onSelect={alert => history.push(urls.logAnalysis.alerts.details(alert.alertId))}
     />
   );
 };

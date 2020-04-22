@@ -21,7 +21,7 @@ import { LogIntegrationDetails } from 'Source/graphql/fragments/LogIntegrationDe
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { Alert, Box, Button, Card, Flex, Icon, Table } from 'pouncejs';
 import Panel from 'Components/Panel';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -63,8 +63,8 @@ const ListLogSources = () => {
         title="Log Sources"
         size="large"
         actions={
-          <Button size="large" variant="primary" is={Link} to={urls.logAnalysis.sources.create()}>
-            <Flex alignItems="center">
+          <Button size="large" variant="primary" as={RRLink} to={urls.logAnalysis.sources.create()}>
+            <Flex align="center">
               <Icon type="add" size="small" mr={1} />
               Add Source
             </Flex>

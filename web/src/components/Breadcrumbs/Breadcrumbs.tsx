@@ -16,30 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Breadcrumbs as PounceBreadcrumbs } from 'pouncejs';
+import { Box, Breadcrumbs as PounceBreadcrumbs } from 'pouncejs';
 import * as React from 'react';
-import { isGuid, capitalize } from 'Helpers/utils';
-import { Link } from 'react-router-dom';
+import { isGuid, capitalize, shortenId, isHash } from 'Helpers/utils';
+import { Link as RRLink } from 'react-router-dom';
 import useRouter from 'Hooks/useRouter';
 
-// @HELP_WANTED
-// resource names can get super big. We wanna guard against that. Normally we would just say
-// that the name should be truncated to the width it fits in, but there is a problem in our case.
-// What happens if we go to "/policies/<BIG_TEXT>/edit"? You would be seeing
-// "/policies/<BIG_TEXT....>" and you would never be able to see that last part of the breadcrumbs
-// that contains the word "edit". To guard against that, we are saying that the biggest breacrumb
-// will be a fixed amount of px so that there is *always* space for some other stuff. This is a
-// *hardcoded behaviour* meant to guard us against the resource & policy details pages and the number
-// assigned to `maxWidth` is special so thaat it can cover our possible breadcrumb combinations when
-// a breadcrumb contains a resourceID or a policyID within it. I can't think of any other solution
-// that can fit our usecase that doesn't involve complex JS calculations, so please help out
-const widthSentinelStyles = {
-  display: 'block',
-  maxWidth: '450px',
-  whiteSpace: 'nowrap' as const,
-  overflow: 'hidden' as const,
-  textOverflow: 'ellipsis' as const,
-};
+const transformBreadcrumbText = text => (isHash(text) ? shortenId(text) : text);
 
 const Breadcrumbs: React.FC = () => {
   const {
@@ -78,9 +61,9 @@ const Breadcrumbs: React.FC = () => {
     <PounceBreadcrumbs
       items={fragments}
       itemRenderer={item => (
-        <Link to={item.href} style={widthSentinelStyles}>
-          {item.text}
-        </Link>
+        <Box as={RRLink} to={item.href} display="block" maxWidth="450px" truncated>
+          {transformBreadcrumbText(item.text)}
+        </Box>
       )}
     />
   );

@@ -27,14 +27,14 @@ const SettingsNavigation: React.FC = () => {
       <Heading size="medium" textAlign="center" mt={10} mb={5}>
         <b>SETTINGS</b>
       </Heading>
-      <Flex flexDirection="column" is="ul">
-        <Flex is="li">
+      <Flex direction="column" as="ul">
+        <Flex as="li">
           <NavLink icon="settings-alt" to={urls.settings.general()} label="General" />
         </Flex>
-        <Flex is="li">
+        <Flex as="li">
           <NavLink icon="organization" to={urls.settings.users()} label="Users" />
         </Flex>
-        <Flex is="li">
+        <Flex as="li">
           <NavLink icon="output" to={urls.settings.destinations()} label="Destinations" />
         </Flex>
       </Flex>

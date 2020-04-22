@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { InputElementLabel, Grid, Flex, Box, InputElementErrorLabel, Text } from 'pouncejs';
+import { InputElementLabel, Flex, Box, InputElementErrorLabel, Text, SimpleGrid } from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
 import { capitalize, minutesToString } from 'Helpers/utils';
 import FormikTextArea from 'Components/fields/TextArea';
@@ -78,16 +78,16 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
 
   return (
     <section>
-      <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={9}>
+      <SimpleGrid columns={2} spacingX={9} spacingY={2}>
         <Box>
-          <Flex justifyContent="space-between">
-            <Flex alignItems="center">
+          <Flex justify="space-between">
+            <Flex align="center">
               <InputElementLabel htmlFor="enabled" mr={6}>
                 Enabled
               </InputElementLabel>
               <Field as={FormikSwitch} name="enabled" />
             </Flex>
-            <Flex alignItems="center">
+            <Flex align="center">
               <InputElementLabel htmlFor="severity" mr={6}>
                 * Severity
               </InputElementLabel>
@@ -188,7 +188,7 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
             />
           </React.Fragment>
         )}
-      </Grid>
+      </SimpleGrid>
       <Box my={6}>
         <InputElementLabel htmlFor="enabled">{`* ${capitalize(type)} Function`}</InputElementLabel>
         <Field

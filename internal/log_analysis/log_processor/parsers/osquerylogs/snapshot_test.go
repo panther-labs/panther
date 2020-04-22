@@ -68,5 +68,6 @@ func TestOsQuerySnapshotLogType(t *testing.T) {
 func checkOsQuerySnapshotLog(t *testing.T, log string, expectedEvent *Snapshot) {
 	expectedEvent.SetEvent(expectedEvent)
 	parser := &SnapshotParser{}
-	testutil.EqualPantherLog(t, expectedEvent.Log(), parser.Parse(log))
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

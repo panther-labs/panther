@@ -23,7 +23,7 @@ import RuleCreateButton from '../CreateButton';
 
 const ListRulesPageEmptyDataFallback: React.FC = () => {
   return (
-    <Flex justifyContent="center" alignItems="center" flexDirection="column">
+    <Flex justify="center" align="center" direction="column">
       <Box my={10}>
         <img alt="Empty Notepad illustration" src={EmptyNotepadImg} width="auto" height={300} />
       </Box>

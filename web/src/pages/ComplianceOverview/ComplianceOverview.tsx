@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Grid, Table, Alert } from 'pouncejs';
+import { Box, Table, Alert, SimpleGrid } from 'pouncejs';
 import Panel from 'Components/Panel';
 import urls from 'Source/urls';
 import useRouter from 'Hooks/useRouter';
@@ -62,14 +62,8 @@ const ComplianceOverview: React.FC = () => {
   }
 
   return (
-    <Box is="article" mb={6}>
-      <Grid
-        gridTemplateColumns="repeat(4, 1fr)"
-        gridRowGap={3}
-        gridColumnGap={3}
-        is="section"
-        mb={3}
-      >
+    <Box as="article" mb={6}>
+      <SimpleGrid columns={4} spacing={3} as="section" mb={3}>
         <DonutChartWrapper title="Policy Severity" icon="policy">
           <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
         </DonutChartWrapper>
@@ -82,8 +76,8 @@ const ComplianceOverview: React.FC = () => {
         <DonutChartWrapper title="Resource Health" icon="resource">
           <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
         </DonutChartWrapper>
-      </Grid>
-      <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={3}>
+      </SimpleGrid>
+      <SimpleGrid columns={2} spacingX={3} spacingY={2}>
         <Panel title="Top Failing Policies" size="small">
           <Box m={-6}>
             <ErrorBoundary>
@@ -108,7 +102,7 @@ const ComplianceOverview: React.FC = () => {
             </ErrorBoundary>
           </Box>
         </Panel>
-      </Grid>
+      </SimpleGrid>
     </Box>
   );
 };

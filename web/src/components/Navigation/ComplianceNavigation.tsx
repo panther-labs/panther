@@ -27,17 +27,17 @@ const ComplianceNavigation: React.FC = () => {
       <Heading size="medium" textAlign="center" mt={10} mb={5}>
         <b>CLOUD SECURITY</b>
       </Heading>
-      <Flex flexDirection="column" is="ul">
-        <Flex is="li">
+      <Flex direction="column" as="ul">
+        <Flex as="li">
           <NavLink icon="dashboard-alt" to={urls.compliance.overview()} label="Overview" />
         </Flex>
-        <Flex is="li">
+        <Flex as="li">
           <NavLink icon="policy" to={urls.compliance.policies.list()} label="Policies" />
         </Flex>
-        <Flex is="li">
+        <Flex as="li">
           <NavLink icon="resource" to={urls.compliance.resources.list()} label="Resources" />
         </Flex>
-        <Flex is="li">
+        <Flex as="li">
           <NavLink icon="infra-source" to={urls.compliance.sources.list()} label="Sources" />
         </Flex>
       </Flex>

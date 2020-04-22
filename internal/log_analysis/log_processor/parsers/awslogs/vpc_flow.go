@@ -19,6 +19,7 @@ package awslogs
  */
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -68,6 +69,8 @@ type VPCFlowParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 	columnMap map[int]string // column position to header name
 }
+
+var _ parsers.LogParser = (*VPCFlowParser)(nil)
 
 func (p *VPCFlowParser) New() parsers.LogParser {
 	reader := csvstream.NewStreamingCSVReader()
@@ -133,18 +136,17 @@ var (
 )
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *VPCFlowParser) Parse(log string) []*parsers.PantherLog {
+func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	if p.columnMap == nil { // must be first log line in file
 		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
-			return []*parsers.PantherLog{}
+			return []*parsers.PantherLog{}, nil
 		}
-		return nil
+		return nil, errors.New("invalid header")
 	}
 
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
-		zap.L().Debug("failed to parse the log as csv")
-		return nil
+		return nil, err
 	}
 
 	event := p.populateEvent(record) // parser should only receive 1 line at a time
@@ -152,11 +154,10 @@ func (p *VPCFlowParser) Parse(log string) []*parsers.PantherLog {
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
