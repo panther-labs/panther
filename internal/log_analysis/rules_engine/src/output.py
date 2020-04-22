@@ -170,6 +170,8 @@ def _s3_put_object_notification(bucket: str, key: str, byte_size: int) -> Dict[s
 
     This needs to have a shape of an S3 event notification:
             https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+
+    All elements should be populated (at least with dummy data) to pass schema validation by consumers.
     """
     return {
         'Records':
@@ -177,16 +179,36 @@ def _s3_put_object_notification(bucket: str, key: str, byte_size: int) -> Dict[s
                 {
                     'eventVersion': '2.0',
                     'eventSource': 'aws:s3',
+                    'awsRegion': '',
+                    'eventTime': '0001-01-01T00:00:00Z',
                     'eventName': 'ObjectCreated:Put',
-                    's3': {
-                        'bucket': {
-                            'name': bucket
-                        },
-                        'object': {
-                            'key': key,
-                            'size': byte_size
+                    'userIdentity': {
+                        'principalId': ''
+                    },
+                    'requestParameters': {
+                        'sourceIPAddress': ''
+                    },
+                    'responseElements': None,
+                    's3':
+                        {
+                            's3SchemaVersion': '',
+                            'configurationId': '',
+                            'bucket': {
+                                'name': bucket,
+                                'ownerIdentity': {
+                                    'principalId': ''
+                                },
+                                'arn': ''
+                            },
+                            'object': {
+                                'key': key,
+                                'size': byte_size,
+                                'urlDecodedKey': '',
+                                'versionId': '',
+                                'eTag': '',
+                                'sequencer': ''
+                            }
                         }
-                    }
                 }
             ]
     }

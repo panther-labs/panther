@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Text, Box, Heading, Spinner } from 'pouncejs';
+import { Text, Box, Heading, Spinner, Link } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
@@ -65,17 +65,16 @@ const StackDeployment: React.FC = () => {
 
     const { stackName } = data.getComplianceIntegrationTemplate;
     const downloadTemplateLink = (
-      <Text size="large" color="blue300" is="span">
-        <a
-          href="#"
-          title="Download Cloudformation template"
-          download={`${stackName}.yml`}
-          ref={downloadRef}
-          onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-        >
-          Download template
-        </a>
-      </Text>
+      <Link
+        color="blue300"
+        href="#"
+        title="Download Cloudformation template"
+        download={`${stackName}.yml`}
+        ref={downloadRef}
+        onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+      >
+        Download template
+      </Link>
     );
 
     if (!initialValues.integrationId) {
@@ -90,22 +89,19 @@ const StackDeployment: React.FC = () => {
 
       return (
         <React.Fragment>
-          <Text size="large" color="grey200" is="p" mt={2} mb={2}>
+          <Text size="large" color="grey200" as="p" mt={2} mb={2}>
             The quickest way to do it, is through the AWS console
           </Text>
-          <Text
-            size="large"
+          <Link
+            external
             color="blue300"
-            is="a"
-            target="_blank"
-            rel="noopener noreferrer"
             title="Launch Cloudformation console"
             href={cfnConsoleLink}
             onClick={() => setStatus({ cfnTemplateDownloaded: true })}
           >
             Launch stack
-          </Text>
-          <Text size="large" color="grey200" is="p" mt={10} mb={2}>
+          </Link>
+          <Text size="large" color="grey200" as="p" mt={10} mb={2}>
             Alternatively, you can download it and deploy it through the AWS CLI with the stack name{' '}
             <b>{stackName}</b>
           </Text>
@@ -116,37 +112,34 @@ const StackDeployment: React.FC = () => {
 
     return (
       <React.Fragment>
-        <Box is="ol">
-          <Text size="large" is="li" color="grey200" mb={3}>
+        <Box as="ol">
+          <Text size="large" as="li" color="grey200" mb={3}>
             1. {downloadTemplateLink}
           </Text>
-          <Text size="large" is="li" color="grey200" mb={3}>
+          <Text size="large" as="li" color="grey200" mb={3}>
             2. Log into your
-            <Text
+            <Link
+              external
               ml={1}
-              size="large"
               color="blue300"
-              is="a"
-              target="_blank"
-              rel="noopener noreferrer"
               title="Launch Cloudformation console"
               href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
             >
               Cloudformation console
-            </Text>{' '}
+            </Link>{' '}
             of the account <b>{values.awsAccountId}</b>
           </Text>
-          <Text size="large" is="li" color="grey200" mb={3}>
+          <Text size="large" as="li" color="grey200" mb={3}>
             3. Find the stack <b>{stackName}</b>
           </Text>
-          <Text size="large" is="li" color="grey200" mb={3}>
+          <Text size="large" as="li" color="grey200" mb={3}>
             4. Press <b>Update</b>, choose <b>Replace current template</b>
           </Text>
-          <Text size="large" is="li" color="grey200" mb={3}>
+          <Text size="large" as="li" color="grey200" mb={3}>
             5. Press <b>Next</b> and finally click on <b>Update</b>
           </Text>
         </Box>
-        <Text size="large" color="grey200" is="p" mt={10} mb={2}>
+        <Text size="large" color="grey200" as="p" mt={10} mb={2}>
           Alternatively, you can update your stack through the AWS CLI
         </Text>
       </React.Fragment>
@@ -158,7 +151,7 @@ const StackDeployment: React.FC = () => {
       <Heading size="medium" m="auto" mb={2} color="grey400">
         Deploy your configured stack
       </Heading>
-      <Text size="large" color="grey200" is="p" mb={10}>
+      <Text size="large" color="grey200" as="p" mb={10}>
         To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
         <b>{values.awsAccountId}</b>.{' '}
         {!initialValues.integrationId

@@ -59,7 +59,7 @@ const ListDestinations = () => {
 
   return (
     <Box mb={6}>
-      <Flex justifyContent="flex-end">
+      <Flex justify="flex-end">
         <DestinationCreateButton />
       </Flex>
       <Card>

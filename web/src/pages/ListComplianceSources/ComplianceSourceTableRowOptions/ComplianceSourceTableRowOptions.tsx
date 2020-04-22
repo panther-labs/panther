@@ -37,7 +37,7 @@ const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsP
   return (
     <Dropdown
       trigger={
-        <IconButton is="div" variant="default" my={-2}>
+        <IconButton as="div" variant="default" my={-2}>
           <Icon type="more" size="small" />
         </IconButton>
       }

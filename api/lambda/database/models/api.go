@@ -29,7 +29,7 @@ const (
 	QueryCancelled = "cancelled"
 )
 
-// LambdaInput is the collection of all possible args to the Lambda function used with the genericapi
+// LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
 	// run a query, returning immediately with an id for the running query
 	ExecuteAsyncQuery *ExecuteAsyncQueryInput `json:"executeAsyncQuery"`

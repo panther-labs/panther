@@ -31,8 +31,8 @@ const TableControlsPagination: React.FC<TableControlsPagination> = ({
   totalPages,
 }) => {
   return (
-    <Flex alignItems="center" justifyContent="center">
-      <Flex mr={9} alignItems="center">
+    <Flex align="center" justify="center">
+      <Flex mr={9} align="center">
         <IconButton variant="default" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
           <Icon size="large" type="chevron-left" />
         </IconButton>

@@ -31,6 +31,7 @@ import {
   INCLUDE_LOWERCASE_REGEX,
   INCLUDE_SPECIAL_CHAR_REGEX,
   INCLUDE_UPPERCASE_REGEX,
+  CHECK_IF_HASH_REGEX,
 } from 'Source/constants';
 import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
@@ -100,6 +101,12 @@ export const formatDatetime = (datetime: string) => {
     `YYYY-MM-DD HH:mm G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`
   );
 };
+
+/** Slice text to 7 characters, mostly used for hashIds */
+export const shortenId = (id: string) => id.slice(0, 7);
+
+/** Checking if string is a proper hash */
+export const isHash = (str: string) => CHECK_IF_HASH_REGEX.test(str);
 
 /** Converts minutes integer to representative string i.e. 15 -> 15min,  120 -> 2h */
 export const minutesToString = (minutes: number) =>
