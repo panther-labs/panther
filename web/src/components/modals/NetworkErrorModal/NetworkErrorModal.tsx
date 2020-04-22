@@ -32,7 +32,7 @@ const NetworkErrorModal: React.FC = () => {
           <br />
           That{"'"}s the most likely scenario anyway...
         </Text>
-        <Flex justifyContent="center" mb={5}>
+        <Flex justify="center" mb={5}>
           <SubmitButton submitting disabled>
             Reconnecting
           </SubmitButton>

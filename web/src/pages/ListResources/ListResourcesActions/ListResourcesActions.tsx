@@ -147,7 +147,7 @@ const ListResourcesActions: React.FC = () => {
   return (
     <React.Fragment>
       {error && <Alert variant="error" title="Failed to fetch available sources" discardable />}
-      <Flex justifyContent="flex-end" mb={6} position="relative">
+      <Flex justify="flex-end" mb={6} position="relative">
         <Button
           size="large"
           variant="default"

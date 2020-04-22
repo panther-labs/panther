@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sfn"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -42,6 +43,8 @@ import (
 )
 
 const (
+	stateMachineName = "panther-athena-workflow"
+
 	printJSON = false // set to true to print json input/output (useful for sharing with frontend devs)
 
 	testUserID       = "testUserID"
@@ -64,9 +67,18 @@ func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
 		os.Setenv("GRAPHQL_ENDPOINT", "placeholder, this is required")
+		os.Setenv("ATHENA_STATEMACHINE_ARN", "placeholder, this is required")
 		SessionInit()
 		lambdaClient = lambda.New(awsSession)
 		s3Client = s3.New(awsSession)
+
+		// get the ARN for the statemachine
+		identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+		if err != nil || identity.Account == nil {
+			panic("failed to get identity")
+		}
+		envConfig.AthenaStatemachineARN = fmt.Sprintf("arn:aws:states:%s:%s:stateMachine:%s",
+			*awsSession.Config.Region, *identity.Account, stateMachineName)
 	}
 	os.Exit(m.Run())
 }
@@ -149,7 +161,6 @@ func TestIntegrationGlueAPI(t *testing.T) {
 
 	var getTablesInput models.GetTablesInput
 	getTablesInput.DatabaseName = testutils.TestDb
-	getTablesInput.OnlyPopulated = true
 	getTablesOutput, err := runGetTables(useLambda, &getTablesInput)
 	require.NoError(t, err)
 	require.Len(t, getTablesOutput.Tables, 1)
@@ -161,7 +172,6 @@ func TestIntegrationGlueAPI(t *testing.T) {
 
 	var getPantherTablesInput models.GetTablesInput
 	getPantherTablesInput.DatabaseName = testutils.TestDb
-	getPantherTablesInput.OnlyPopulated = true
 	getPantherTablesOutput, err := runGetTables(useLambda, &getPantherTablesInput)
 	require.NoError(t, err)
 	assert.Len(t, getPantherTablesOutput.Tables, 0)
@@ -203,6 +213,8 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 	const pantherDatabase = awsglue.LogProcessingDatabaseName
 	const pantherTable = "aws_cloudtrail"
 
+	includePopulatedTablesOnly := false // these tables may not be populated but we want to list
+
 	// -------- GetDatabases()
 
 	// list
@@ -233,6 +245,7 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 
 	var getTablesInput models.GetTablesInput
 	getTablesInput.DatabaseName = pantherDatabase
+	getTablesInput.IncludePopulatedTablesOnly = &includePopulatedTablesOnly
 	getTablesOutput, err := runGetTables(useLambda, &getTablesInput)
 	require.NoError(t, err)
 	assert.Greater(t, len(getTablesOutput.Tables), 0)
@@ -242,9 +255,20 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 	var getTablesDetailInput models.GetTablesDetailInput
 	getTablesDetailInput.DatabaseName = pantherDatabase
 	getTablesDetailInput.Names = []string{pantherTable}
+	getTablesInput.IncludePopulatedTablesOnly = &includePopulatedTablesOnly
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, &getTablesDetailInput)
 	require.NoError(t, err)
-	assert.Len(t, getTablesDetailOutput.Tables, 1)
+	require.Len(t, getTablesDetailOutput.Tables, 1)
+	// check that we are getting the mapped column names, we expect: "mapping.useragent": "userAgent"
+	mappedColumnName := "userAgent" // notice camel case
+	foundMappedColumn := false
+	for _, col := range getTablesDetailOutput.Tables[0].Columns {
+		if col.Name == mappedColumnName {
+			foundMappedColumn = true
+			break
+		}
+	}
+	assert.True(t, foundMappedColumn)
 }
 
 func testAthenaAPI(t *testing.T, useLambda bool) {
@@ -274,9 +298,9 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	assert.Len(t, executeQueryOutput.ColumnInfo, len(testutils.TestTableColumns)+len(testutils.TestTablePartitions))
 	for i, c := range executeQueryOutput.ColumnInfo {
 		if i < len(testutils.TestTableColumns) {
-			assert.Equal(t, c.Value, *testutils.TestTableColumns[i].Name)
+			assert.Equal(t, *c.Value, *testutils.TestTableColumns[i].Name)
 		} else { // partitions
-			assert.Equal(t, c.Value, *testutils.TestTablePartitions[i-len(testutils.TestTableColumns)].Name)
+			assert.Equal(t, *c.Value, *testutils.TestTablePartitions[i-len(testutils.TestTableColumns)].Name)
 		}
 	}
 	assert.Len(t, executeQueryOutput.ResultsPage.Rows, len(testutils.TestTableRows))
@@ -460,7 +484,7 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 		getQueryStatusOutput, err := runGetQueryStatus(useLambda, &getQueryStatusInput)
 		require.NoError(t, err)
 		if getQueryStatusOutput.Status != models.QueryRunning {
-			require.Equal(t, models.QueryCanceled, getQueryStatusOutput.Status)
+			require.Equal(t, models.QueryCancelled, getQueryStatusOutput.Status)
 			assert.Equal(t, getQueryStatusOutput.SQLError, "Query canceled")
 			assert.Equal(t, testSQL, getQueryStatusOutput.SQL)
 			break
@@ -687,9 +711,9 @@ func runStopQuery(useLambda bool, input *models.StopQueryInput) (*models.StopQue
 func checkQueryResults(t *testing.T, expectedRowCount, offset int, rows []*models.Row) {
 	require.Len(t, rows, expectedRowCount)
 	for i := 0; i < len(rows); i++ {
-		require.Equal(t, strconv.Itoa(i+offset), rows[i].Columns[0].Value)
-		require.Equal(t, "NULL", rows[i].Columns[1].Value)
-		require.Equal(t, testutils.TestEventTime, rows[i].Columns[2].Value)
+		require.Equal(t, strconv.Itoa(i+offset), *rows[i].Columns[0].Value)
+		require.Equal(t, (*string)(nil), rows[i].Columns[1].Value)
+		require.Equal(t, testutils.TestEventTime, *rows[i].Columns[2].Value)
 	}
 }
 

@@ -63,6 +63,7 @@ export type AlertDetails = {
   __typename?: 'AlertDetails';
   alertId: Scalars['ID'];
   ruleId?: Maybe<Scalars['ID']>;
+  title: Scalars['String'];
   creationTime: Scalars['AWSDateTime'];
   updateTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
@@ -76,10 +77,10 @@ export type AlertSummary = {
   alertId: Scalars['String'];
   creationTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
+  title: Scalars['String'];
   updateTime: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
   severity?: Maybe<Scalars['String']>;
-  dedupString: Scalars['String'];
 };
 
 export enum AnalysisTypeEnum {
@@ -1500,6 +1501,7 @@ export type AlertDetailsResolvers<
 > = {
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -1516,10 +1518,10 @@ export type AlertSummaryResolvers<
   alertId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 

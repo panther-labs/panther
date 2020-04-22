@@ -33,7 +33,7 @@ interface WizardPanelWrapperComposition {
 
 const WizardPanelWrapper: React.FC & WizardPanelWrapperComposition = ({ children }) => {
   return (
-    <Flex minHeight={550} flexDirection="column">
+    <Flex minHeight={550} direction="column">
       {children}
     </Flex>
   );
@@ -48,7 +48,7 @@ const WizardPanelWrapperContent: React.FC = ({ children }) => {
 };
 
 const WizardPanelWrapperActions: React.FC = ({ children }) => {
-  return <Flex justifyContent="flex-end">{children}</Flex>;
+  return <Flex justify="flex-end">{children}</Flex>;
 };
 
 const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {

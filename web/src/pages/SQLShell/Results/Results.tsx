@@ -43,7 +43,7 @@ const Results: React.FC = () => {
 
   // Hook to handle the fetching of more items when we scroll close to the end
   // TODO: implement through IntersectionObserver for better performance
-  const infiniteRef = useInfiniteScroll({
+  const infiniteRef = useInfiniteScroll<HTMLDivElement>({
     loading,
     hasNextPage: data?.getLogQuery?.pageInfo?.hasNextPage,
     checkInterval: 600,
@@ -128,7 +128,7 @@ const Results: React.FC = () => {
 
   return (
     <Panel title="Results" size="large" actions={downloadButton}>
-      <Box innerRef={infiniteRef} height="100%">
+      <Box ref={infiniteRef} height="100%">
         <ResultsTable isFetchingMore={loading} results={data?.getLogQuery?.results ?? []} />
       </Box>
     </Panel>
