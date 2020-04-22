@@ -802,13 +802,6 @@ export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
 };
 
-export type QueryDone = {
-  __typename?: 'QueryDone';
-  userData: Scalars['String'];
-  queryId: Scalars['String'];
-  workflowId: Scalars['String'];
-};
-
 export type QueryDoneInput = {
   userData: Scalars['String'];
   queryId: Scalars['String'];
@@ -1198,7 +1191,6 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   QueryDoneInput: QueryDoneInput;
-  QueryDone: ResolverTypeWrapper<QueryDone>;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1310,7 +1302,6 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   QueryDoneInput: QueryDoneInput;
-  QueryDone: QueryDone;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -2026,16 +2017,6 @@ export type QueryResolvers<
   users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
 };
 
-export type QueryDoneResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['QueryDone'] = ResolversParentTypes['QueryDone']
-> = {
-  userData?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  queryId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  workflowId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
-};
-
 export type ResourceDetailsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ResourceDetails'] = ResolversParentTypes['ResourceDetails']
@@ -2235,7 +2216,6 @@ export type Resolvers<ContextType = any> = {
   PolicyUnitTest?: PolicyUnitTestResolvers<ContextType>;
   PolicyUnitTestError?: PolicyUnitTestErrorResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
-  QueryDone?: QueryDoneResolvers<ContextType>;
   ResourceDetails?: ResourceDetailsResolvers<ContextType>;
   ResourceSummary?: ResourceSummaryResolvers<ContextType>;
   RuleDetails?: RuleDetailsResolvers<ContextType>;

@@ -719,12 +719,6 @@ input QueryDoneInput {
   workflowId: String!
 }
 
-type QueryDone @aws_iam {
-  userData: String!
-  queryId: String!
-  workflowId: String!
-}
-
 enum ComplianceStatusEnum {
   ERROR
   FAIL
