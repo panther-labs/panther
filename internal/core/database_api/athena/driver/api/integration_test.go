@@ -135,11 +135,16 @@ var (
 	             ResponseMappingTemplate: |
 	               $util.toJson($context.result)
 
-	  3. Run: mage deploy
+	  3. Edit deployments/bootstrap.yml, add to GraphQLApi:
 
-	  4. Set variable 'subscriptionTest' to true below
+	     AdditionalAuthenticationProviders:
+	        - AuthenticationType: AWS_IAM # this is used for lambda callbacks to AppSync (e.g., to signal Athena query completion)
 
-	  5. Follow instructions in the integration test below on verifying working subscriptions.
+	  4. Run: mage deploy
+
+	  5. Set variable 'subscriptionTest' to true below
+
+	  6. Follow instructions in the integration test below on verifying working subscriptions.
 
 	  We hope to implement the use of subscriptions in the UI in the near future which has many benefits.
 
