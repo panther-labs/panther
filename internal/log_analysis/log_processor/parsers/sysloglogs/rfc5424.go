@@ -23,7 +23,6 @@ import (
 
 	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/rfc5424"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -55,6 +54,8 @@ type RFC5424Parser struct {
 	parser syslog.Machine
 }
 
+var _ parsers.LogParser = (*RFC5424Parser)(nil)
+
 // New returns an initialized LogParser for Syslog RFC5424 logs
 func (p *RFC5424Parser) New() parsers.LogParser {
 	return &RFC5424Parser{
@@ -63,15 +64,13 @@ func (p *RFC5424Parser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC5424Parser) Parse(log string) []*parsers.PantherLog {
+func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLog, error) {
 	if p.parser == nil {
-		zap.L().Debug("failed to parse log", zap.Error(errors.New("parser can not be nil")))
-		return nil
+		return nil, errors.New("parser can not be nil")
 	}
 	msg, err := p.parser.Parse([]byte(log))
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 	internalRFC5424 := msg.(*rfc5424.SyslogMessage)
 
@@ -92,11 +91,10 @@ func (p *RFC5424Parser) Parse(log string) []*parsers.PantherLog {
 	externalRFC5424.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(externalRFC5424); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return externalRFC5424.Logs()
+	return externalRFC5424.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

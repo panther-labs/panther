@@ -21,7 +21,6 @@ package suricatalogs
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -99,28 +98,28 @@ type DNSDetailsAuthorities struct {
 // DNSParser parses Suricata DNS alerts in the JSON format
 type DNSParser struct{}
 
+var _ parsers.LogParser = (*DNSParser)(nil)
+
 func (p *DNSParser) New() parsers.LogParser {
 	return &DNSParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *DNSParser) Parse(log string) []*parsers.PantherLog {
+func (p *DNSParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &DNS{}
 
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser

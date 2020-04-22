@@ -53,25 +53,27 @@ type BatchDiffResults struct {
 // BatchParser parses OsQuery Batch logs
 type BatchParser struct{}
 
+var _ parsers.LogParser = (*BatchParser)(nil)
+
 func (p *BatchParser) New() parsers.LogParser {
 	return &BatchParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *BatchParser) Parse(log string) []*parsers.PantherLog {
+func (p *BatchParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &Batch{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return event.Logs()
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
