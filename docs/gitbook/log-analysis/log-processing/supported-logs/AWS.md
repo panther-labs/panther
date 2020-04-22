@@ -348,8 +348,8 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudt
 <tr><td valign=top><code><b>digestEndTime</b></code></td><td><code>timestamp</code></td><td valign=top>The ending UTC time range that the digest file covers, taking as a reference the time in which log files have been delivered by CloudTrail.</td></tr>
 <tr><td valign=top><code><b>digestS3Bucket</b></code></td><td><code>string</code></td><td valign=top>The name of the Amazon S3 bucket to which the current digest file has been delivered.</td></tr>
 <tr><td valign=top><code><b>digestS3Object</b></code></td><td><code>string</code></td><td valign=top>The Amazon S3 object key (that is, the Amazon S3 bucket location) of the current digest file.</td></tr>
-<tr><td valign=top><code><b>newestEventTime</b></code></td><td><code>timestamp</code></td><td valign=top>The UTC time of the most recent event among all of the events in the log files in the digest.</td></tr>
-<tr><td valign=top><code><b>oldestEventTime</b></code></td><td><code>timestamp</code></td><td valign=top>The UTC time of the oldest event among all of the events in the log files in the digest.</td></tr>
+<tr><td valign=top><code>newestEventTime</code></td><td><code>timestamp</code></td><td valign=top>The UTC time of the most recent event among all of the events in the log files in the digest.</td></tr>
+<tr><td valign=top><code>oldestEventTime</code></td><td><code>timestamp</code></td><td valign=top>The UTC time of the oldest event among all of the events in the log files in the digest.</td></tr>
 <tr><td valign=top><code>previousDigestS3Bucket</code></td><td><code>string</code></td><td valign=top>The Amazon S3 bucket to which the previous digest file was delivered.</td></tr>
 <tr><td valign=top><code>previousDigestS3Object</code></td><td><code>string</code></td><td valign=top>The Amazon S3 object key (that is, the Amazon S3 bucket location) of the previous digest file.</td></tr>
 <tr><td valign=top><code>previousDigestHashValue</code></td><td><code>string</code></td><td valign=top>The hexadecimal encoded hash value of the uncompressed contents of the previous digest file.</td></tr>

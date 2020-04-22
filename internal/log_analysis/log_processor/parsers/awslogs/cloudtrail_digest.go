@@ -37,8 +37,8 @@ type CloudTrailDigest struct {
 	DigestEndTime               *timestamp.RFC3339        `json:"digestEndTime" validate:"required" description:"The ending UTC time range that the digest file covers, taking as a reference the time in which log files have been delivered by CloudTrail."`
 	DigestS3Bucket              *string                   `json:"digestS3Bucket" validate:"required" description:"The name of the Amazon S3 bucket to which the current digest file has been delivered."`
 	DigestS3Object              *string                   `json:"digestS3Object" validate:"required" description:"The Amazon S3 object key (that is, the Amazon S3 bucket location) of the current digest file."`
-	NewestEventTime             *timestamp.RFC3339        `json:"newestEventTime" validate:"required" description:"The UTC time of the most recent event among all of the events in the log files in the digest."`
-	OldestEventTime             *timestamp.RFC3339        `json:"oldestEventTime" validate:"required" description:"The UTC time of the oldest event among all of the events in the log files in the digest. "`
+	NewestEventTime             *timestamp.RFC3339        `json:"newestEventTime,omitempty" description:"The UTC time of the most recent event among all of the events in the log files in the digest."`
+	OldestEventTime             *timestamp.RFC3339        `json:"oldestEventTime,omitempty" description:"The UTC time of the oldest event among all of the events in the log files in the digest. "`
 	PreviousDigestS3Bucket      *string                   `json:"previousDigestS3Bucket,omitempty" description:"The Amazon S3 bucket to which the previous digest file was delivered."`
 	PreviousDigestS3Object      *string                   `json:"previousDigestS3Object,omitempty" description:"The Amazon S3 object key (that is, the Amazon S3 bucket location) of the previous digest file."`
 	PreviousDigestHashValue     *string                   `json:"previousDigestHashValue,omitempty" description:"The hexadecimal encoded hash value of the uncompressed contents of the previous digest file."`
@@ -46,7 +46,7 @@ type CloudTrailDigest struct {
 	PreviousDigestSignature     *string                   `json:"previousDigestSignature,omitempty" description:"The hexadecimal encoded signature of the previous digest file."`
 	DigestPublicKeyFingerprint  *string                   `json:"digestPublicKeyFingerprint" validate:"required" description:"The hexadecimal encoded fingerprint of the public key that matches the private key used to sign this digest file."`
 	DigestSignatureAlgorithm    *string                   `json:"digestSignatureAlgorithm" validate:"required" description:"The algorithm used to sign the digest file."`
-	LogFiles                    []CloudTrailDigestLogFile `json:"logFiles" validate:"required,min=1" description:"Log files delivered in this digest"`
+	LogFiles                    []CloudTrailDigestLogFile `json:"logFiles" validate:"required,min=0" description:"Log files delivered in this digest"`
 
 	// NOTE: added to end of struct to allow expansion later
 	AWSPantherLog

@@ -101,6 +101,58 @@ func TestCloudTrailDigestParser(t *testing.T) {
 	expectedEvent.SetEvent(expectedEvent)
 	testutil.CheckPantherParser(t, log, &CloudTrailDigestParser{}, expectedEvent.Log())
 }
+func TestCloudTrailDigestParserFirstRecord(t *testing.T) {
+	//nolint:lll
+	log := `{
+		"awsAccountId": "123456789012",
+		"digestStartTime": "2020-04-21T12:28:23Z",
+		"digestEndTime": "2020-04-21T13:28:23Z",
+		"digestS3Bucket": "cloudtrail-test-eu-west-1",
+		"digestS3Object": "AWSLogs/123456789012/CloudTrail-Digest/eu-west-1/2020/04/21/123456789012_CloudTrail-Digest_eu-west-1_TestTrail_eu-west-1_20200421T132823Z.json.gz",
+		"digestPublicKeyFingerprint": "f0249abde0f55218ac45bd3750055109",
+		"digestSignatureAlgorithm": "SHA256withRSA",
+		"newestEventTime": null,
+		"oldestEventTime": null,
+		"previousDigestS3Bucket": null,
+		"previousDigestS3Object": null,
+		"previousDigestHashValue": null,
+		"previousDigestHashAlgorithm": null,
+		"previousDigestSignature": null,
+		"logFiles": []
+	}`
+
+	expectedDateStart := time.Date(2020, 4, 21, 12, 28, 23, 0, time.UTC)
+	expectedDateEnd := time.Date(2020, 4, 21, 13, 28, 23, 0, time.UTC)
+	// nolint:lll
+	expectedEvent := &CloudTrailDigest{
+		AWSAccountID:                aws.String("123456789012"),
+		DigestStartTime:             (*timestamp.RFC3339)(&expectedDateStart),
+		DigestEndTime:               (*timestamp.RFC3339)(&expectedDateEnd),
+		DigestS3Bucket:              aws.String("cloudtrail-test-eu-west-1"),
+		DigestS3Object:              aws.String("AWSLogs/123456789012/CloudTrail-Digest/eu-west-1/2020/04/21/123456789012_CloudTrail-Digest_eu-west-1_TestTrail_eu-west-1_20200421T132823Z.json.gz"),
+		DigestPublicKeyFingerprint:  aws.String("f0249abde0f55218ac45bd3750055109"),
+		DigestSignatureAlgorithm:    aws.String("SHA256withRSA"),
+		NewestEventTime:             (*timestamp.RFC3339)(nil),
+		OldestEventTime:             (*timestamp.RFC3339)(nil),
+		PreviousDigestS3Bucket:      nil,
+		PreviousDigestS3Object:      nil,
+		PreviousDigestHashValue:     nil,
+		PreviousDigestHashAlgorithm: nil,
+		PreviousDigestSignature:     nil,
+		LogFiles:                    []CloudTrailDigestLogFile{},
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.CloudTrailDigest")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDateEnd)
+	expectedEvent.AppendAnyAWSAccountIds("123456789012")
+	// expectedEvent.AppendAnyHashes(
+	// 	"97fb791cf91ffc440d274f8190dbdd9aa09c34432aba82739df18b6d3c13df2d",
+	// 	"9bb6196fc6b84d6f075a56548feca262bd99ba3c2de41b618e5b6e22c1fc71f6",
+	// )
+	expectedEvent.SetEvent(expectedEvent)
+	testutil.CheckPantherParser(t, log, &CloudTrailDigestParser{}, expectedEvent.Log())
+}
 
 func TestCloudTrailDigestLogType(t *testing.T) {
 	parser := &CloudTrailDigestParser{}
