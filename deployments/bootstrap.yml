@@ -103,6 +103,8 @@ Mappings:
       ARN: arn:aws:iam::582318560864:root
     ap-northeast-2:
       ARN: arn:aws:iam::600734575887:root
+    ap-northeast-3:
+      ARN: arn:aws:iam::383597477331:root
     ap-southeast-1:
       ARN: arn:aws:iam::114774131450:root
     ap-southeast-2:
