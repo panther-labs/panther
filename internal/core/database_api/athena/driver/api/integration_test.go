@@ -213,6 +213,8 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 	const pantherDatabase = awsglue.LogProcessingDatabaseName
 	const pantherTable = "aws_cloudtrail"
 
+	includePopulatedTablesOnly := false // these tables may not be populated but we want to list
+
 	// -------- GetDatabases()
 
 	// list
@@ -243,7 +245,7 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 
 	var getTablesInput models.GetTablesInput
 	getTablesInput.DatabaseName = pantherDatabase
-	getTablesInput.UnPopulatedTables = true
+	getTablesInput.IncludePopulatedTablesOnly = &includePopulatedTablesOnly
 	getTablesOutput, err := runGetTables(useLambda, &getTablesInput)
 	require.NoError(t, err)
 	assert.Greater(t, len(getTablesOutput.Tables), 0)
@@ -253,7 +255,7 @@ func TestIntegrationGlueAPILambda(t *testing.T) {
 	var getTablesDetailInput models.GetTablesDetailInput
 	getTablesDetailInput.DatabaseName = pantherDatabase
 	getTablesDetailInput.Names = []string{pantherTable}
-	getTablesInput.UnPopulatedTables = true
+	getTablesInput.IncludePopulatedTablesOnly = &includePopulatedTablesOnly
 	getTablesDetailOutput, err := runGetTablesDetail(useLambda, &getTablesDetailInput)
 	require.NoError(t, err)
 	require.Len(t, getTablesDetailOutput.Tables, 1)
