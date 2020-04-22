@@ -56,6 +56,96 @@ const (
 )
 
 var (
+	/*
+	  GraphQL subscriptions are fully supported by this api, however, the Panther frontend is not ready
+	  with a web socket implementation to receive notifications when a query is completed. The GraphQL
+	  and CloudFormation configuration has been removed from the Panther deployment until the frontend
+	  has this implemented.
+
+	  The below instructions explain how to configure GraphQL and CloudFormation to enable subscriptions for
+	  completed queries and run integration tests.
+
+	  1. Edit api/graphql/schema.graphql:
+
+	     a) Add to the 'schema' section a Subscription declaration , it should look like:
+
+	           schema {
+	              query: Query
+	              mutation: Mutation
+	              subscription: Subscription                                 # add this line
+	           }
+
+	     b) Add a 'queryDone' to the 'Mutation' section:
+
+	          ...
+	          inviteUser(input: InviteUserInput): User!
+	          queryDone(input: QueryDoneInput!): QueryDone! @aws_iam         # add this line
+	          remediateResource(input: RemediateResourceInput!): Boolean
+	          ...
+
+	     c) Add a subscription type:
+
+	          type Subscription {
+	              queryDone(userData: String!): QueryDone @aws_subscribe(mutations: ["queryDone"]) @aws_iam
+	          }
+
+	      d) Add a QueryDoneInput input:
+
+	          input QueryDoneInput {
+	              userData: String!
+	              queryId: String!
+	              workflowId: String!
+	          }
+
+	      e) Add a QueryDoneInput type:
+
+	          type QueryDone @aws_iam {
+	             userData: String!
+	             queryId: String!
+	             workflowId: String!
+	          }
+
+	  2. Edit deployments/appsync.yml
+
+	      a) Add this resource:
+
+	         QueryDoneDataSource:
+	            Type: AWS::AppSync::DataSource
+	            Properties:
+	              ApiId: !Ref ApiId
+	              Name: PantherQueryDone
+	              Type: NONE
+	              ServiceRoleArn: !Ref ServiceRole
+
+	      b) Add this resolver:
+
+	         QueryDoneResolver:
+	           Type: AWS::AppSync::Resolver
+	           DependsOn: GraphQLSchema
+	           Properties:
+	             ApiId: !Ref ApiId
+	             TypeName: Mutation
+	             FieldName: queryDone # noop that returns {userData,queryId,workflowId}
+	             DataSourceName: !GetAtt QueryDoneDataSource.Name
+	             RequestMappingTemplate: |
+	               {
+	                "version" : "2017-02-28",
+	                "payload": $utils.toJson($context.arguments.input)
+	               }
+	             ResponseMappingTemplate: |
+	               $util.toJson($context.result)
+
+	  3. Run: mage deploy
+
+	  4. Set variable 'subscriptionTest' to true below
+
+	  5. Follow instructions in the integration test below on verifying working subscriptions.
+
+	  We hope to implement the use of subscriptions in the UI in the near future which has many benefits.
+
+	*/
+	subscriptionTest bool
+
 	integrationTest bool
 
 	api = API{}
@@ -492,6 +582,10 @@ func testAthenaAPI(t *testing.T, useLambda bool) {
 	}
 
 	//  -------- ExecuteAsyncQueryNotify()
+
+	if !subscriptionTest { // see comment above where this var is declared explaining this control.
+		return
+	}
 
 	/*
 				See: https://aws.amazon.com/premiumsupport/knowledge-center/appsync-notify-subscribers-real-time/
