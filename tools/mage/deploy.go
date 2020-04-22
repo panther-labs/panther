@@ -132,7 +132,7 @@ func Deploy() {
 		logger.Fatalf("failed to get caller identity: %v", err)
 	}
 	accountID := *identity.Account
-	logger.Infof("deploy: deploying Panther to account %s (%s)", accountID, *awsSession.Config.Region)
+	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
 	// ***** Step 1: bootstrap stacks and build artifacts
 	outputs := bootstrap(awsSession, settings)
@@ -177,14 +177,15 @@ func deployPrecheck(awsRegion string) {
 		logger.Fatalf("swagger is not available (%v): try 'mage setup'", err)
 	}
 
-	// Warn if not deploying a tagged release
-	output, err := sh.Output("git", "describe", "--tags")
+	// Set global gitVersion, warn if not deploying a tagged release
+	var err error
+	gitVersion, err = sh.Output("git", "describe", "--tags")
 	if err != nil {
 		logger.Fatalf("git describe failed: %v", err)
 	}
-	// The output is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
-	if strings.Contains(output, "-") {
-		logger.Warnf("%s is not a tagged release, proceed at your own risk", output)
+	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
+	if strings.Contains(gitVersion, "-") {
+		logger.Warnf("%s is not a tagged release, proceed at your own risk", gitVersion)
 	}
 }
 
@@ -214,6 +215,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 			"CertificateArn":             certificateArn(awsSession, settings),
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"CustomDomain":               settings.Web.CustomDomain,
+			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 			"TracingMode":                settings.Monitoring.TracingMode,
 		}
 

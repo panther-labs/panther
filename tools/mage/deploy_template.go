@@ -39,6 +39,10 @@ const (
 	pollTimeout  = time.Hour       // Give up if CreateChangeSet or ExecuteChangeSet takes longer than this
 )
 
+var (
+	gitVersion string // set in deployPrecheck()
+)
+
 // Deploy a CloudFormation template.
 //
 // 1) Package: Upload large assets (GraphQL schema, Lambda source, nested templates) to S3 with aws cli
@@ -164,6 +168,12 @@ func createChangeSet(
 		})
 	}
 
+	// add version tag to all objects ("untagged" if not set)
+	pantherVersion := gitVersion
+	if pantherVersion == "" {
+		pantherVersion = "untagged"
+	}
+
 	createInput := &cloudformation.CreateChangeSetInput{
 		Capabilities: []*string{
 			aws.String("CAPABILITY_AUTO_EXPAND"),
@@ -174,16 +184,10 @@ func createChangeSet(
 		ChangeSetType: &changeSetType,
 		Parameters:    parameters,
 		StackName:     &stack,
-		Tags: []*cloudformation.Tag{
-			// Tags are propagated to every supported resource in the stack
-			{
-				Key:   aws.String("Application"),
-				Value: aws.String("Panther"),
-			},
-			{
-				Key:   aws.String("Stack"),
-				Value: &stack,
-			},
+		Tags: []*cloudformation.Tag{ // Tags are propagated to every supported resource in the stack
+			{Key: aws.String("Application"), Value: aws.String("Panther")},
+			{Key: aws.String("PantherVersion"), Value: &pantherVersion},
+			{Key: aws.String("Stack"), Value: &stack},
 		},
 	}
 

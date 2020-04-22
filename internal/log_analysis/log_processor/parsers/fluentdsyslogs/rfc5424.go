@@ -20,7 +20,6 @@ package fluentdsyslogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -48,28 +47,28 @@ type RFC5424 struct {
 // RFC5424Parser parses fluentd syslog logs in the RFC5424 format
 type RFC5424Parser struct{}
 
+var _ parsers.LogParser = (*RFC5424Parser)(nil)
+
 func (p *RFC5424Parser) New() parsers.LogParser {
 	return &RFC5424Parser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC5424Parser) Parse(log string) []*parsers.PantherLog {
+func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLog, error) {
 	rfc5424 := &RFC5424{}
 
 	err := jsoniter.UnmarshalFromString(log, rfc5424)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	rfc5424.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(rfc5424); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return rfc5424.Logs()
+	return rfc5424.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
