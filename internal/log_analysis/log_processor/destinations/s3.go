@@ -121,7 +121,7 @@ type S3Destination struct {
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 // The sendData() method is called as go routine to allow processing to continue and hide network latency.
-func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
+func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.PantherLogJSON, errChan chan error) {
 	// used to flush expired buffers
 	flushExpired := time.NewTicker(destination.maxDuration)
 	defer flushExpired.Stop()
@@ -161,16 +161,16 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 		default: // makes select non-blocking
 		}
 
-		data, err := jsoniter.Marshal(event.Event())
-		if err != nil {
-			failed = true
-			errChan <- errors.Wrap(err, "failed to marshall log parser event for S3")
-			continue
-		}
+		// data, err := jsoniter.Marshal(event.Event())
+		// if err != nil {
+		// 	failed = true
+		// 	errChan <- errors.Wrap(err, "failed to marshall log parser event for S3")
+		// 	continue
+		// }
 
 		buffer := bufferSet.getBuffer(event)
 
-		err = bufferSet.addEvent(buffer, data)
+		err := bufferSet.addEvent(buffer, event.JSON)
 		if err != nil {
 			failed = true
 			errChan <- err
@@ -318,9 +318,9 @@ func newS3EventBufferSet() *s3EventBufferSet {
 	}
 }
 
-func (bs *s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
+func (bs *s3EventBufferSet) getBuffer(event *parsers.PantherLogJSON) *s3EventBuffer {
 	// bin by hour (this is our partition size)
-	hour := (time.Time)(*event.PantherEventTime).Truncate(time.Hour)
+	hour := event.EventTime.Truncate(time.Hour)
 
 	logTypeToBuffer, ok := bs.set[hour]
 	if !ok {
@@ -328,7 +328,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer 
 		bs.set[hour] = logTypeToBuffer
 	}
 
-	logType := *event.PantherLogType
+	logType := event.LogType
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
 		buffer = newS3EventBuffer(logType, hour)

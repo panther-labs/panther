@@ -19,6 +19,8 @@ package gitlablogs
  */
 
 import (
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -67,6 +69,15 @@ type API struct {
 // APIParser parses gitlab rails logs
 type APIParser struct{}
 
+var _ parsers.PantherEventer = (*API)(nil)
+
+func (event *API) PantherEvent() (string, time.Time, []parsers.PantherField) {
+	return TypeAPI, event.Time.UTC(), []parsers.PantherField{
+		parsers.IPAddress(event.RemoteIP),
+	}
+
+}
+
 var _ parsers.LogParser = (*APIParser)(nil)
 
 // New creates a new parser
@@ -75,7 +86,7 @@ func (p *APIParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *APIParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *APIParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	gitlabAPI := API{}
 
 	err := jsoniter.UnmarshalFromString(log, &gitlabAPI)
@@ -83,7 +94,7 @@ func (p *APIParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		return nil, err
 	}
 
-	gitlabAPI.updatePantherFields(p)
+	gitlabAPI.SetEvent(&gitlabAPI)
 
 	if err := parsers.Validator.Struct(gitlabAPI); err != nil {
 		return nil, err
@@ -95,9 +106,4 @@ func (p *APIParser) Parse(log string) ([]*parsers.PantherLog, error) {
 // LogType returns the log type supported by this parser
 func (p *APIParser) LogType() string {
 	return TypeAPI
-}
-
-func (event *API) updatePantherFields(p *APIParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
-	event.AppendAnyIPAddressPtr(event.RemoteIP)
 }

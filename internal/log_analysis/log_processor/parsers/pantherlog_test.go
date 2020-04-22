@@ -29,6 +29,58 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
+type TestEvent struct {
+	Ts       time.Time `json:"ts"`
+	RemoteIP string    `json:"remote_ip,omitempty"`
+}
+
+var _ PantherEventer = (*TestEvent)(nil)
+
+func (e *TestEvent) PantherEvent() (string, time.Time, []PantherField) {
+	return "test", e.Ts, []PantherField{
+		{Kind: KindIPAddress, Value: e.RemoteIP},
+	}
+}
+
+type PantherLog2 struct {
+	PantherEventer      interface{}
+	PantherEventTime    time.Time `json:"p_event_time"`
+	PantherLogType      string    `json:"p_log_type"`
+	PantherAnyIPAddress []string  `json:"p_any_ip_address,omitempty`
+}
+
+func NewPantherLog2(event PantherEventer) *PantherLog2 {
+	typ, ts, fields := event.PantherEvent()
+	p := PantherLog2{
+		PantherEventer:   event,
+		PantherEventTime: ts,
+		PantherLogType:   typ,
+	}
+	for i := range fields {
+		field := &fields[i]
+		switch field.Kind {
+		case KindIPAddress:
+			p.PantherAnyIPAddress = append(p.PantherAnyIPAddress, field.Value)
+		}
+	}
+	return &p
+
+}
+
+func TestPantherLog(t *testing.T) {
+	testEvent := TestEvent{
+		Ts:       time.Now(),
+		RemoteIP: "127.0.0.1",
+	}
+
+	any := NewPantherLog2(&testEvent)
+	data, err := jsoniter.Marshal(any)
+	if err != nil {
+		t.Fatalf("Failed to serialize log %s", err)
+	}
+	t.Errorf("%s", data)
+
+}
 func TestAnyStringMarshal(t *testing.T) {
 	var any PantherAnyString
 

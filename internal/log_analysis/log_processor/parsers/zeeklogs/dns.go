@@ -19,6 +19,9 @@ package zeeklogs
  */
 
 import (
+	"net"
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -62,6 +65,8 @@ type ZeekDNS struct {
 	parsers.PantherLog
 }
 
+var _ parsers.PantherEventer = (*ZeekDNS)(nil)
+
 // ZeekDNSParser parses zeek dns logs
 type ZeekDNSParser struct{}
 
@@ -72,7 +77,7 @@ func (p *ZeekDNSParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	zeekDNS := &ZeekDNS{}
 
 	err := jsoniter.UnmarshalFromString(log, zeekDNS)
@@ -80,7 +85,7 @@ func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		return nil, err
 	}
 
-	zeekDNS.updatePantherFields(p)
+	zeekDNS.SetEvent(zeekDNS)
 
 	if err := parsers.Validator.Struct(zeekDNS); err != nil {
 		return nil, err
@@ -89,27 +94,32 @@ func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	return zeekDNS.Logs(), nil
 }
 
+const TypeDNS = "Zeek.DNS"
+
 // LogType returns the log type supported by this parser
 func (p *ZeekDNSParser) LogType() string {
-	return "Zeek.DNS"
+	return TypeDNS
 }
 
-func (event *ZeekDNS) updatePantherFields(p *ZeekDNSParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Ts), event)
-
-	event.AppendAnyIPAddressPtr(event.IDOrigH)
-	event.AppendAnyIPAddressPtr(event.IDRespH)
+func (event *ZeekDNS) PantherEvent() (typ string, ts time.Time, fields []parsers.PantherField) {
+	typ = TypeDNS
+	ts = event.Ts.UTC()
+	fields = append(fields,
+		parsers.IPAddress(event.IDOrigH),
+		parsers.IPAddress(event.IDRespH),
+	)
 
 	if event.QType != nil && (*event.QType == aQueryType || *event.QType == aaaaQueryType) {
 		if event.Query != nil {
-			event.AppendAnyDomainNames(*event.Query)
+			fields = append(fields, parsers.DomainName(event.Query))
 		}
 	}
 
 	for _, answer := range event.Answers {
 		// Answer might be IP or Domain name
-		if !event.AppendAnyIPAddress(answer) {
-			event.AppendAnyDomainNames(answer)
+		if net.ParseIP(answer) == nil {
+			fields = append(fields, parsers.DomainName(&answer))
 		}
 	}
+	return
 }

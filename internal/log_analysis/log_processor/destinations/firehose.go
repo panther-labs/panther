@@ -25,7 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -46,23 +45,23 @@ type FirehoseDestination struct {
 // It continuously reads events from outputChannel, groups them in batches per log type
 // and sends them to the appropriate Kinesis FIrehose. If the method encounters an error
 // it stops reading from the outputChannel and writes an error to the errorChannel
-func (destination *FirehoseDestination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
+func (destination *FirehoseDestination) SendEvents(parsedEventChannel chan *parsers.PantherLogJSON, errChan chan error) {
 	logtypeToRecords := make(map[string]*recordBatch)
 	eventsProcessed := 0
 	zap.L().Info("starting to read events from channel")
 	for event := range parsedEventChannel {
 		eventsProcessed++
-		data, err := jsoniter.Marshal(event.Event)
-		if err != nil {
-			zap.L().Warn("failed to marshall event", zap.Error(err))
-			errChan <- err
-			continue
-		}
+		// data, err := jsoniter.Marshal(event.Event)
+		// if err != nil {
+		// 	zap.L().Warn("failed to marshall event", zap.Error(err))
+		// 	errChan <- err
+		// 	continue
+		// }
 		currentRecord := &firehose.Record{
-			Data: data,
+			Data: event.JSON,
 		}
 
-		logType := *event.PantherLogType
+		logType := event.LogType
 		records, ok := logtypeToRecords[logType]
 		if !ok {
 			records = &recordBatch{}

@@ -60,6 +60,12 @@ type RFC3339 time.Time
 func (ts *RFC3339) String() string {
 	return (*time.Time)(ts).UTC().String() // ensure UTC
 }
+func (ts *RFC3339) UTC() time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return (*(*time.Time)(ts)).UTC() // ensure UTC
+}
 
 func (ts *RFC3339) MarshalJSON() ([]byte, error) {
 	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
@@ -153,6 +159,12 @@ type UnixFloat time.Time
 
 func (ts *UnixFloat) String() string {
 	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+func (ts *UnixFloat) UTC() time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return (*(*time.Time)(ts)).UTC()
 }
 func (ts *UnixFloat) MarshalJSON() ([]byte, error) {
 	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC

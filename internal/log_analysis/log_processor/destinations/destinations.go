@@ -33,7 +33,7 @@ import (
 
 // Destination defines the interface that all Destinations should follow
 type Destination interface {
-	SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error)
+	SendEvents(parsedEventChannel chan *parsers.PantherLogJSON, errChan chan error)
 }
 
 // CreateDestination the method returns the appropriate Destination based on configuration

@@ -19,6 +19,8 @@ package gitlablogs
  */
 
 import (
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -54,6 +56,12 @@ type Audit struct {
 // AuditParser parses gitlab rails logs
 type AuditParser struct{}
 
+var _ parsers.PantherEventer = (*Audit)(nil)
+
+func (audit *Audit) PantherEvent() (string, time.Time, []parsers.PantherField) {
+	return TypeAudit, time.Time(*audit.Time), nil
+}
+
 var _ parsers.LogParser = (*AuditParser)(nil)
 
 // New creates a new parser
@@ -62,15 +70,14 @@ func (p *AuditParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuditParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *AuditParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	gitlabAudit := Audit{}
 
 	err := jsoniter.UnmarshalFromString(log, &gitlabAudit)
 	if err != nil {
 		return nil, err
 	}
-
-	gitlabAudit.updatePantherFields(p)
+	gitlabAudit.SetEvent(&gitlabAudit)
 
 	if err := parsers.Validator.Struct(gitlabAudit); err != nil {
 		return nil, err

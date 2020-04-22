@@ -22,6 +22,7 @@ import (
 	"net"
 	"regexp"
 	"sort"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -55,6 +56,12 @@ type PantherLog struct {
 	PantherAnyDomainNames *PantherAnyString `json:"p_any_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
 	PantherAnySHA1Hashes  *PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
 	PantherAnyMD5Hashes   *PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
+}
+
+type PantherLogJSON struct {
+	LogType   string
+	EventTime time.Time
+	JSON      []byte
 }
 
 type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
@@ -101,17 +108,114 @@ func (pl *PantherLog) Event() interface{} {
 
 // SetEvent set  event data, used for testing
 func (pl *PantherLog) SetEvent(event interface{}) {
-	pl.event = event
+	if e, ok := event.(PantherEventer); ok {
+		typ, ts, fields := e.PantherEvent()
+		pl.SetCoreFields(typ, (*timestamp.RFC3339)(&ts), event)
+		pl.SetFields(fields...)
+	} else {
+		pl.event = event
+	}
 }
 
 // Log returns pointer to self, used when composed
-func (pl *PantherLog) Log() *PantherLog {
-	return pl
+func (pl *PantherLog) Log() *PantherLogJSON {
+	data, _ := jsoniter.Marshal(pl.Event())
+	return &PantherLogJSON{
+		LogType:   *pl.PantherLogType,
+		EventTime: pl.PantherEventTime.UTC(),
+		JSON:      data,
+	}
 }
 
 // Logs returns a slice with pointer to self, used when composed
-func (pl *PantherLog) Logs() []*PantherLog {
-	return []*PantherLog{pl}
+func (pl *PantherLog) Logs() []*PantherLogJSON {
+	return []*PantherLogJSON{pl.Log()}
+}
+
+type PantherFieldKind int
+
+const (
+	_ PantherFieldKind = iota
+	KindIPAddress
+	KindDomainName
+	KindMD5Hash
+	KindSHA1Hash
+)
+
+type PantherField struct {
+	Kind  PantherFieldKind
+	Value string
+}
+
+func strValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func SHA1Hash(hash *string) PantherField {
+	return PantherField{
+		Kind:  KindSHA1Hash,
+		Value: strValue(hash),
+	}
+}
+func MD5Hash(hash *string) PantherField {
+	return PantherField{
+		Kind:  KindMD5Hash,
+		Value: strValue(hash),
+	}
+}
+func DomainName(name *string) PantherField {
+	return PantherField{
+		Kind:  KindDomainName,
+		Value: strValue(name),
+	}
+}
+func IPAddress(addr *string) PantherField {
+	return PantherField{
+		Kind:  KindIPAddress,
+		Value: strValue(addr),
+	}
+}
+
+type PantherEventer interface {
+	PantherEvent() (logType string, timestamp time.Time, fields []PantherField)
+}
+
+func (pl *PantherLog) SetFields(fields ...PantherField) {
+	for i := range fields {
+		field := &fields[i]
+		if field.Value == "" {
+			continue
+		}
+		switch field.Kind {
+		case KindIPAddress:
+			pl.AppendAnyIPAddress(field.Value)
+		case KindMD5Hash:
+			pl.AppendAnyMD5Hashes(field.Value)
+		case KindSHA1Hash:
+			pl.AppendAnySHA1Hashes(field.Value)
+		case KindDomainName:
+			pl.AppendAnyDomainNames(field.Value)
+		}
+	}
+}
+func PantherLogEvent(event PantherEventer) PantherLog {
+	parseTime := timestamp.Now()
+	logType, eventTime, fields := event.PantherEvent()
+	if eventTime.IsZero() {
+		eventTime = time.Time(parseTime)
+	}
+	rowID := rowCounter.NewRowID()
+	pl := PantherLog{
+		PantherRowID:     &rowID,
+		PantherLogType:   &logType,
+		PantherEventTime: (*timestamp.RFC3339)(&eventTime),
+		PantherParseTime: &parseTime,
+	}
+	pl.SetFields(fields...)
+	return pl
 }
 
 func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339, event interface{}) {
@@ -121,7 +225,7 @@ func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339
 		eventTime = &parseTime
 	}
 	rowID := rowCounter.NewRowID()
-	pl.event = event
+	// pl.event = event
 	pl.PantherRowID = &rowID
 	pl.PantherLogType = &logType
 	pl.PantherEventTime = eventTime

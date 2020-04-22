@@ -69,7 +69,7 @@ func CheckPantherParser(t *testing.T, log string, parser parsers.LogParser, expe
 	expectMore = append([]*parsers.PantherLog{expect}, expectMore...)
 	require.Equal(t, len(expectMore), len(results), "Invalid number of pather logs produced by parser")
 	for i, result := range results {
-		expect := expectMore[i]
-		EqualPantherLog(t, expect, []*parsers.PantherLog{result}, nil)
+		expect := expectMore[i].Log()
+		require.Equal(t, expect, result, nil)
 	}
 }
