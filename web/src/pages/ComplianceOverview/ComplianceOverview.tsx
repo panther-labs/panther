@@ -17,15 +17,14 @@
  */
 
 import React from 'react';
-import { Box, Table, Alert, SimpleGrid } from 'pouncejs';
+import { Box, Table, Alert, SimpleGrid, Label, Link } from 'pouncejs';
 import Panel from 'Components/Panel';
 import urls from 'Source/urls';
-import useRouter from 'Hooks/useRouter';
-import { PolicySummary, ResourceSummary } from 'Generated/schema';
+import { Link as RRLink } from 'react-router-dom';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import SeverityBadge from 'Components/SeverityBadge';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useGetOrganizationStats } from './graphql/getOrganizationStats.generated';
-import { topFailingPoliciesColumns, topFailingResourcesColumns } from './columns';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
 import ResourcesByPlatformChart from './ResourcesByPlatformChart';
@@ -34,11 +33,7 @@ import DonutChartWrapper from './DonutChartWrapper';
 import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
 import ComplianceOverviewPageSkeleton from './Skeleton';
 
-export type TopFailingPolicy = Pick<PolicySummary, 'id' | 'severity'>;
-export type TopFailingResource = Pick<ResourceSummary, 'id'>;
-
 const ComplianceOverview: React.FC = () => {
-  const { history } = useRouter();
   const { data, loading, error } = useGetOrganizationStats({
     fetchPolicy: 'cache-and-network',
   });
@@ -81,24 +76,72 @@ const ComplianceOverview: React.FC = () => {
         <Panel title="Top Failing Policies" size="small">
           <Box m={-6}>
             <ErrorBoundary>
-              <Table<TopFailingPolicy>
-                columns={topFailingPoliciesColumns}
-                items={data.organizationStats.topFailingPolicies}
-                getItemKey={policy => policy.id}
-                onSelect={policy => history.push(urls.compliance.policies.details(policy.id))}
-              />
+              <Table>
+                <Table.Head>
+                  <Table.Row>
+                    <Table.HeaderCell />
+                    <Table.HeaderCell>Policy</Table.HeaderCell>
+                    <Table.HeaderCell>Severity</Table.HeaderCell>
+                  </Table.Row>
+                </Table.Head>
+                <Table.Body>
+                  {data.organizationStats.topFailingPolicies.map((policy, index) => (
+                    <Table.Row key={policy.id}>
+                      <Table.Cell>
+                        <Label size="medium">{index + 1}</Label>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Link
+                          as={RRLink}
+                          to={urls.compliance.policies.details(policy.id)}
+                          py={4}
+                          pr={4}
+                        >
+                          {policy.id}
+                        </Link>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Box m={-1}>
+                          <SeverityBadge severity={policy.severity} />
+                        </Box>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
             </ErrorBoundary>
           </Box>
         </Panel>
         <Panel title="Top Failing Resources" size="small">
           <Box m={-6}>
             <ErrorBoundary>
-              <Table<TopFailingResource>
-                columns={topFailingResourcesColumns}
-                items={data.organizationStats.topFailingResources}
-                getItemKey={resource => resource.id}
-                onSelect={resource => history.push(urls.compliance.resources.details(resource.id))}
-              />
+              <Table>
+                <Table.Head>
+                  <Table.Row>
+                    <Table.HeaderCell />
+                    <Table.HeaderCell>Resource</Table.HeaderCell>
+                  </Table.Row>
+                </Table.Head>
+                <Table.Body>
+                  {data.organizationStats.topFailingResources.map((resource, index) => (
+                    <Table.Row key={resource.id}>
+                      <Table.Cell>
+                        <Label size="medium">{index + 1}</Label>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Link
+                          as={RRLink}
+                          to={urls.compliance.resources.details(resource.id)}
+                          py={4}
+                          pr={4}
+                        >
+                          {resource.id}
+                        </Link>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
             </ErrorBoundary>
           </Box>
         </Panel>
