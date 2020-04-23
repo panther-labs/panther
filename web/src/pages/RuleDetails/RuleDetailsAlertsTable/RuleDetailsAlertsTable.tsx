@@ -29,7 +29,7 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
               <Label size="medium">{index + 1}</Label>
             </Table.Cell>
             <Table.Cell maxWidth={450} truncated title={alert.title}>
-              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)}>
+              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
                 {alert.title}
               </Link>
             </Table.Cell>

@@ -17,37 +17,97 @@
  */
 
 import React from 'react';
-import { ComplianceItem } from 'Generated/schema';
-import { Table, TableProps } from 'pouncejs';
+import { ComplianceStatusEnum } from 'Generated/schema';
+import { Box, Flex, Label, Link, Table, Tooltip } from 'pouncejs';
 import urls from 'Source/urls';
-import useRouter from 'Hooks/useRouter';
-import { generateEnumerationColumn } from 'Helpers/utils';
+import { capitalize } from 'Helpers/utils';
+import { Link as RRLink } from 'react-router-dom';
+import SeverityBadge from 'Components/SeverityBadge';
+import { ResourceDetails } from 'Pages/ResourceDetails';
+import RemediationButton from 'Components/buttons/RemediationButton/RemediationButton';
+import SuppressButton from 'Components/buttons/SuppressButton/SuppressButton';
 
 interface ResourcesDetailsTableProps {
-  items?: ComplianceItem[];
-  columns: TableProps<ComplianceItem>['columns'];
+  policies?: ResourceDetails['policiesForResource']['items'];
   enumerationStartIndex: number;
 }
 
 const ResourcesDetailsTable: React.FC<ResourcesDetailsTableProps> = ({
   enumerationStartIndex,
-  items,
-  columns,
+  policies,
 }) => {
-  const { history } = useRouter();
-
-  // prepend an extra enumeration column
-  const enumeratedColumns = [generateEnumerationColumn(enumerationStartIndex), ...columns];
-
   return (
-    <Table<ComplianceItem>
-      columns={enumeratedColumns}
-      getItemKey={complianceItem => complianceItem.policyId}
-      items={items}
-      onSelect={complianceItem =>
-        history.push(urls.compliance.policies.details(complianceItem.policyId))
-      }
-    />
+    <Table>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell />
+          <Table.HeaderCell>Policy</Table.HeaderCell>
+          <Table.HeaderCell>Status</Table.HeaderCell>
+          <Table.HeaderCell>Severity</Table.HeaderCell>
+          <Table.HeaderCell />
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {policies.map((policy, index) => (
+          <Table.Row key={policy.policyId}>
+            <Table.Cell>
+              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
+            </Table.Cell>
+            <Table.Cell maxWidth={450} truncated title={policy.policyId}>
+              <Link
+                as={RRLink}
+                to={urls.compliance.policies.details(policy.policyId)}
+                py={4}
+                pr={4}
+              >
+                {policy.policyId}
+              </Link>
+            </Table.Cell>
+            <Table.Cell color={policy.status === ComplianceStatusEnum.Pass ? 'green300' : 'red300'}>
+              {policy.errorMessage ? (
+                <Tooltip
+                  positioning="down"
+                  content={<Label size="medium">{policy.errorMessage}</Label>}
+                >
+                  {`${capitalize(policy.status.toLowerCase())} *`}
+                </Tooltip>
+              ) : (
+                capitalize(policy.status.toLowerCase())
+              )}
+            </Table.Cell>
+            <Table.Cell>
+              <Box m={-1}>
+                <SeverityBadge severity={policy.policySeverity} />
+              </Box>
+            </Table.Cell>
+            <Table.Cell width={250}>
+              <Flex my={-4} justify="flex-end">
+                {policy.status !== ComplianceStatusEnum.Pass && (
+                  <Box mr={4}>
+                    <RemediationButton
+                      buttonVariant="default"
+                      policyId={policy.policyId}
+                      resourceId={policy.resourceId}
+                    />
+                  </Box>
+                )}
+                {!policy.suppressed ? (
+                  <SuppressButton
+                    buttonVariant="default"
+                    policyIds={[policy.policyId]}
+                    resourcePatterns={[policy.resourceId]}
+                  />
+                ) : (
+                  <Label color="orange300" size="medium">
+                    IGNORED
+                  </Label>
+                )}
+              </Flex>
+            </Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 
