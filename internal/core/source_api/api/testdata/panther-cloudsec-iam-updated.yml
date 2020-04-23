@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM roles for an account being scanned by Panther.
 
 Metadata:
-  Version: v1.0.0
+  Version: v1.0.1
 
 Mappings:
   # DO NOT EDIT PantherParameters section. Panther application relies on the exact format (including comments)
@@ -85,7 +85,7 @@ Resources:
       RoleName: !If # DO NOT CHANGE! backend.yml CF depends on this name
         - GeneratedTemplate
         - !Sub
-          - 'PantherAuditRole-${Mapping}'
+          - PantherAuditRole-${Mapping}
           - Mapping: !FindInMap [PantherParameters, MasterAccountRegion, Value]
         - !Sub PantherAuditRole-${MasterAccountRegion}
       Description: The Panther master account assumes this role for read-only security scanning
@@ -163,7 +163,7 @@ Resources:
       RoleName: !If # DO NOT CHANGE! backend.yml CF depends on this name
         - GeneratedTemplate
         - !Sub
-          - 'PantherCloudFormationStackSetExecutionRole-${Mapping}'
+          - PantherCloudFormationStackSetExecutionRole-${Mapping}
           - Mapping: !FindInMap [PantherParameters, MasterAccountRegion, Value]
         - !Sub PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion}
       Description: CloudFormation assumes this role to execute a stack set
@@ -208,7 +208,7 @@ Resources:
       RoleName: !If # DO NOT CHANGE! backend.yml CF depends on this name
         - GeneratedTemplate
         - !Sub
-          - 'PantherRemediationRole-${Mapping}'
+          - PantherRemediationRole-${Mapping}
           - Mapping: !FindInMap [PantherParameters, MasterAccountRegion, Value]
         - !Sub PantherRemediationRole-${MasterAccountRegion}
       Description: The Panther master account assumes this role for automatic remediation of policy violations
