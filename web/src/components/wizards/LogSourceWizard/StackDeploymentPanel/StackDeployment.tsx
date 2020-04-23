@@ -28,7 +28,7 @@ const StackDeployment: React.FC = () => {
   const { data, loading, error } = useGetLogCfnTemplate({
     variables: {
       input: {
-        awsAccountId: values.awsAccountId,
+        awsAccountId: process.env.AWS_ACCOUNT_ID,
         integrationLabel: values.integrationLabel,
         s3Bucket: values.s3Bucket,
         logTypes: values.logTypes,
