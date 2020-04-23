@@ -6,7 +6,6 @@ scalar AWSJSON
 schema {
   query: Query
   mutation: Mutation
-  subscription: Subscription
 }
 
 type Mutation {
@@ -22,7 +21,6 @@ type Mutation {
   deleteRule(input: DeleteRuleInput!): Boolean
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
-  queryDone(input: QueryDoneInput!): QueryDone! @aws_iam
   remediateResource(input: RemediateResourceInput!): Boolean
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
@@ -62,10 +60,6 @@ type Query {
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   users: [User!]!
-}
-
-type Subscription {
-  queryDone(userData: String!): QueryDone @aws_subscribe(mutations: ["queryDone"]) @aws_iam
 }
 
 input GetComplianceIntegrationTemplateInput {
@@ -717,18 +711,6 @@ input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
-}
-
-input QueryDoneInput {
-  userData: String!
-  queryId: String!
-  workflowId: String!
-}
-
-type QueryDone @aws_iam {
-  userData: String!
-  queryId: String!
-  workflowId: String!
 }
 
 enum ComplianceStatusEnum {

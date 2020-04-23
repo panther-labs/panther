@@ -86,7 +86,7 @@ To update your deployment of Panther, follow the steps below:
 
 1. Checkout the latest release:
    1. `git fetch origin master`
-   2. `git checkout tags/v1.0.1`
+   2. `git checkout tags/v1.1.0`
 2. Clean the existing build artifacts: `mage clean`
 3. Deploy the latest application changes: `mage deploy`
 

@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.0.0
+  Version: v1.1.0
 
 Resources:
   DeploymentRole:
@@ -73,16 +73,19 @@ Resources:
               - logs:*
               - sns:List*
               - sqs:List*
+              - states:CreateStateMachine
+              - states:TagResource
+              - states:UntagResource
             Resource: '*'
           - Effect: Allow
             Action: cloudformation:*
             Resource:
-              - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/panther-*
-              - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stackset/panther-*
-              - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/panther-*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stackset/panther-*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless-2016-10-31
           - Effect: Allow
             Action: dynamodb:*
-            Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-*
+            Resource: !Sub arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/panther-*
           - Effect: Allow
             Action:
               - ec2:AssociateRouteTable
@@ -123,33 +126,39 @@ Resources:
             Resource: '*'
           - Effect: Allow
             Action: ecr:*
-            Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/panther-*
+            Resource: !Sub arn:${AWS::Partition}:ecr:*:${AWS::AccountId}:repository/panther-*
           - Effect: Allow
             Action: execute-api:Invoke
-            Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:*
+            Resource: !Sub arn:${AWS::Partition}:execute-api:*:${AWS::AccountId}:*
           - Effect: Allow
             Action: iam:*
             Resource:
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/panther-*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/Panther*
-              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*"
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
           - Effect: Allow
             Action: kms:*
             Resource:
-              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:alias/panther-*
-              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/*
+              - !Sub arn:${AWS::Partition}:kms:*:${AWS::AccountId}:alias/panther-*
+              - !Sub arn:${AWS::Partition}:kms:*:${AWS::AccountId}:key/*
           - Effect: Allow
             Action: lambda:*
             Resource:
-              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:event-source-mapping:*
-              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-*
-              - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-*
+              - !Sub arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:event-source-mapping:*
+              - !Sub arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:function:panther-*
+              - !Sub arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:layer:panther-*
           - Effect: Allow
             Action: s3:*
             Resource: !Sub arn:${AWS::Partition}:s3:::panther-*
           - Effect: Allow
             Action: sns:*
-            Resource: !Sub arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:panther-*
+            Resource: !Sub arn:${AWS::Partition}:sns:*:${AWS::AccountId}:panther-*
           - Effect: Allow
             Action: sqs:*
-            Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-*
+            Resource: !Sub arn:${AWS::Partition}:sqs:*:${AWS::AccountId}:panther-*
+          - Effect: Allow
+            Action: states:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:states:*:${AWS::AccountId}:activity:panther-*
+              - !Sub arn:${AWS::Partition}:states:*:${AWS::AccountId}:execution:panther-*:*
+              - !Sub arn:${AWS::Partition}:states:*:${AWS::AccountId}:stateMachine:panther-*

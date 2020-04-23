@@ -86,8 +86,10 @@ func handleGet(request *events.APIGatewayProxyRequest, codeType string) *events.
 		}
 		return gatewayapi.MarshalResponse(item.Policy(status.Status), http.StatusOK)
 	}
-
-	return gatewayapi.MarshalResponse(item.Rule(), http.StatusOK)
+	if codeType == typeRule {
+		return gatewayapi.MarshalResponse(item.Rule(), http.StatusOK)
+	}
+	return gatewayapi.MarshalResponse(item.Global(), http.StatusOK)
 }
 
 // Parse GET parameters for GetPolicy and GetRule

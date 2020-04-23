@@ -249,13 +249,13 @@ export const copyTextToClipboard = (text: string) => {
   }
 };
 
-// Function that given an version always return the stable version i.e "v1.0.1-abc" return "v1.0.1"
+// Extracts stable version from git tag, i.e "v1.0.1-abc" returns "v1.0.1"
 export const getStableVersion = (version: string) =>
   version.indexOf('-') > 0 ? version.substring(0, version.indexOf('-')) : version;
 
 export const generateDocUrl = (baseUrl: string, version: string) => {
   if (version) {
-    return `${baseUrl}/v/${getStableVersion(version)}`;
+    return `${baseUrl}/v/${getStableVersion(version)}-docs`;
   }
   return baseUrl;
 };

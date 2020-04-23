@@ -1042,6 +1042,15 @@ definitions:
       modifiedRules:
         type: integer
         minimum: 0
+      totalGlobals:
+        type: integer
+        minimum: 0
+      newGlobals:
+        type: integer
+        minimum: 0
+      modifiedGlobals:
+        type: integer
+        minimum: 0
     required:
       - totalPolicies
       - newPolicies
@@ -1049,6 +1058,9 @@ definitions:
       - totalRules
       - newRules
       - modifiedRules
+      - totalGlobals
+      - newGlobals
+      - modifiedGlobals
 
   ##### TestPolicy #####
   TestPolicy:
