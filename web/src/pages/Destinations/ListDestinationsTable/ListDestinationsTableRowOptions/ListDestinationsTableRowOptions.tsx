@@ -18,51 +18,45 @@
 
 import React from 'react';
 import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
-import { User } from 'Generated/schema';
+import useSidesheet from 'Hooks/useSidesheet';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import useSidesheet from 'Hooks/useSidesheet';
+import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 
-interface ListUsersTableRowOptionsProps {
-  user: User;
+interface ListDestinationsTableRowOptionsProps {
+  destination: DestinationFull;
 }
 
-const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ user }) => {
+const ListDestinationsTableRowOptions: React.FC<ListDestinationsTableRowOptionsProps> = ({
+  destination,
+}) => {
   const { showModal } = useModal();
   const { showSidesheet } = useSidesheet();
 
   return (
     <Dropdown
-      position="relative"
       trigger={
-        <IconButton as="div" variant="default" my={-4}>
+        <IconButton as="div" variant="default" my={-2}>
           <Icon type="more" size="small" />
         </IconButton>
       }
     >
       <Dropdown.Item
-        onSelect={() => showSidesheet({ sidesheet: SIDESHEETS.EDIT_USER, props: { user } })}
-      >
-        <MenuItem variant="default">Edit Profile</MenuItem>
-      </Dropdown.Item>
-      <Dropdown.Item
         onSelect={() =>
-          showModal({
-            modal: MODALS.RESET_USER_PASS,
-            props: { user },
+          showSidesheet({
+            sidesheet: SIDESHEETS.UPDATE_DESTINATION,
+            props: { destination },
           })
         }
       >
-        {user.status !== 'FORCE_CHANGE_PASSWORD' && (
-          <MenuItem variant="default">Force password reset</MenuItem>
-        )}
+        <MenuItem variant="default">Edit</MenuItem>
       </Dropdown.Item>
       <Dropdown.Item
         onSelect={() =>
           showModal({
-            modal: MODALS.DELETE_USER,
-            props: { user },
+            modal: MODALS.DELETE_DESTINATION,
+            props: { destination },
           })
         }
       >
@@ -72,4 +66,4 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
   );
 };
 
-export default React.memo(ListUsersTableRowOptions);
+export default React.memo(ListDestinationsTableRowOptions);

@@ -1,19 +1,13 @@
 import React from 'react';
-import { Dropdown, Icon, IconButton, Label, MenuItem, SimpleGrid, Table } from 'pouncejs';
+import { Label, SimpleGrid, Table } from 'pouncejs';
 import SeverityBadge from 'Components/SeverityBadge';
 import { formatDatetime } from 'Helpers/utils';
-import useModal from 'Hooks/useModal';
-import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import { MODALS } from 'Components/utils/Modal';
-import { ListDestinationsAndDefaults } from '../graphql/listDestinationsAndDefaults.generated';
+import { ListDestinationsAndDefaults } from 'Pages/Destinations';
+import ListDestinationsTableRowOptionsProps from './ListDestinationsTableRowOptions';
 
 type ListDestinationsTableProps = Pick<ListDestinationsAndDefaults, 'destinations'>;
 
 const ListDestinationsTable: React.FC<ListDestinationsTableProps> = ({ destinations }) => {
-  const { showModal } = useModal();
-  const { showSidesheet } = useSidesheet();
-
   return (
     <Table>
       <Table.Head>
@@ -48,34 +42,7 @@ const ListDestinationsTable: React.FC<ListDestinationsTableProps> = ({ destinati
             </Table.Cell>
             <Table.Cell>{formatDatetime(destination.creationTime)}</Table.Cell>
             <Table.Cell>
-              <Dropdown
-                trigger={
-                  <IconButton as="div" variant="default" my={-4}>
-                    <Icon type="more" size="small" />
-                  </IconButton>
-                }
-              >
-                <Dropdown.Item
-                  onSelect={() =>
-                    showSidesheet({
-                      sidesheet: SIDESHEETS.UPDATE_DESTINATION,
-                      props: { destination },
-                    })
-                  }
-                >
-                  <MenuItem variant="default">Edit</MenuItem>
-                </Dropdown.Item>
-                <Dropdown.Item
-                  onSelect={() =>
-                    showModal({
-                      modal: MODALS.DELETE_DESTINATION,
-                      props: { destination },
-                    })
-                  }
-                >
-                  <MenuItem variant="default">Delete</MenuItem>
-                </Dropdown.Item>
-              </Dropdown>
+              <ListDestinationsTableRowOptionsProps destination={destination} />
             </Table.Cell>
           </Table.Row>
         ))}

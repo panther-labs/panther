@@ -17,76 +17,49 @@
  */
 
 import React from 'react';
-import { Alert, Card, Label, Table } from 'pouncejs';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { extractErrorMessage } from 'Helpers/utils';
+import { Label, Table } from 'pouncejs';
 import dayjs from 'dayjs';
-import ListUsersTableRowOptions from '../ListUsersTableRowOptions';
-import { useListUsers } from './graphql/listUsers.generated';
+import { ListUsers } from 'Pages/Users/ListUsers/graphql/listUsers.generated';
+import ListUsersTableRowOptions from './ListUsersTableRowOptions';
 
-const ListUsersTable = () => {
-  const { loading, error, data } = useListUsers({
-    fetchPolicy: 'cache-and-network',
-  });
+type ListUsersTableProps = Pick<ListUsers, 'users'>;
 
-  if (loading && !data) {
-    return (
-      <Card p={9}>
-        <TablePlaceholder />
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert
-        variant="error"
-        title="Couldn't load users"
-        description={
-          extractErrorMessage(error) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
-    );
-  }
-
+const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
   return (
-    <Card>
-      <Table>
-        <Table.Head>
-          <Table.Row>
-            <Table.HeaderCell />
-            <Table.HeaderCell>Name</Table.HeaderCell>
-            <Table.HeaderCell>Email</Table.HeaderCell>
-            <Table.HeaderCell>Role</Table.HeaderCell>
-            <Table.HeaderCell>Invited At</Table.HeaderCell>
-            <Table.HeaderCell>Status</Table.HeaderCell>
-            <Table.HeaderCell />
+    <Table>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell />
+          <Table.HeaderCell>Name</Table.HeaderCell>
+          <Table.HeaderCell>Email</Table.HeaderCell>
+          <Table.HeaderCell>Role</Table.HeaderCell>
+          <Table.HeaderCell>Invited At</Table.HeaderCell>
+          <Table.HeaderCell>Status</Table.HeaderCell>
+          <Table.HeaderCell />
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {users.map((user, index) => (
+          <Table.Row key={user.id}>
+            <Table.Cell>
+              <Label size="medium">{index + 1}</Label>
+            </Table.Cell>
+            <Table.Cell>
+              {user.givenName} {user.familyName}
+            </Table.Cell>
+            <Table.Cell>{user.email}</Table.Cell>
+            <Table.Cell>Admin</Table.Cell>
+            <Table.Cell>
+              {dayjs(user.createdAt * 1000).format('MM/DD/YYYY, HH:mm G[M]TZZ')}
+            </Table.Cell>
+            <Table.Cell>{user.status}</Table.Cell>
+            <Table.Cell>
+              <ListUsersTableRowOptions user={user} />
+            </Table.Cell>
           </Table.Row>
-        </Table.Head>
-        <Table.Body>
-          {data.users.map((user, index) => (
-            <Table.Row key={user.id}>
-              <Table.Cell>
-                <Label size="medium">{index + 1}</Label>
-              </Table.Cell>
-              <Table.Cell>
-                {user.givenName} {user.familyName}
-              </Table.Cell>
-              <Table.Cell>{user.email}</Table.Cell>
-              <Table.Cell>Admin</Table.Cell>
-              <Table.Cell>
-                {dayjs(user.createdAt * 1000).format('MM/DD/YYYY, HH:mm G[M]TZZ')}
-              </Table.Cell>
-              <Table.Cell>{user.status}</Table.Cell>
-              <Table.Cell>
-                <ListUsersTableRowOptions user={user} />
-              </Table.Cell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table>
-    </Card>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 
