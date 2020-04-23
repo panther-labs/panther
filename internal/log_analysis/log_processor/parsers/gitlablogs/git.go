@@ -19,7 +19,7 @@ package gitlablogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
+	"time"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -38,8 +38,6 @@ type Git struct {
 	Time          *timestamp.RFC3339 `json:"time" validate:"required" description:"The event timestamp"`
 	CorrelationID *string            `json:"correlation_id,omitempty" description:"Unique id across logs"`
 	Message       *string            `json:"message" validate:"required" description:"The error message from git"`
-
-	parsers.PantherLog
 }
 
 // GitParser parses gitlab rails logs
@@ -53,21 +51,8 @@ func (p *GitParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *GitParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	gitlabGit := Git{}
-
-	err := jsoniter.UnmarshalFromString(log, &gitlabGit)
-	if err != nil {
-		return nil, err
-	}
-
-	gitlabGit.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(gitlabGit); err != nil {
-		return nil, err
-	}
-
-	return gitlabGit.Logs(), nil
+func (p *GitParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&Git{}, log)
 }
 
 // LogType returns the log type supported by this parser
@@ -75,6 +60,6 @@ func (p *GitParser) LogType() string {
 	return TypeGit
 }
 
-func (event *Git) updatePantherFields(p *GitParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
+func (event *Git) PantherEvent() (string, time.Time, []parsers.PantherField) {
+	return TypeGit, event.Time.UTC(), nil
 }

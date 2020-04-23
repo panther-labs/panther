@@ -21,8 +21,6 @@ package gitlablogs
 import (
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -49,18 +47,12 @@ type Audit struct {
 	TargetID      *int64             `json:"target_id" validate:"required" description:"Target id of the modified setting"`
 	TargetType    *string            `json:"target_type" validate:"required" description:"Target type of the modified setting"`
 	TargetDetails *string            `json:"target_details" validate:"required" description:"Details of the target of the modified setting"`
-
-	parsers.PantherLog
 }
 
 // AuditParser parses gitlab rails logs
 type AuditParser struct{}
 
 var _ parsers.PantherEventer = (*Audit)(nil)
-
-func (audit *Audit) PantherEvent() (string, time.Time, []parsers.PantherField) {
-	return TypeAudit, time.Time(*audit.Time), nil
-}
 
 var _ parsers.LogParser = (*AuditParser)(nil)
 
@@ -71,19 +63,7 @@ func (p *AuditParser) New() parsers.LogParser {
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *AuditParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
-	gitlabAudit := Audit{}
-
-	err := jsoniter.UnmarshalFromString(log, &gitlabAudit)
-	if err != nil {
-		return nil, err
-	}
-	gitlabAudit.SetEvent(&gitlabAudit)
-
-	if err := parsers.Validator.Struct(gitlabAudit); err != nil {
-		return nil, err
-	}
-
-	return gitlabAudit.Logs(), nil
+	return parsers.QuickParseJSON(&Audit{}, log)
 }
 
 // LogType returns the log type supported by this parser
@@ -91,6 +71,6 @@ func (p *AuditParser) LogType() string {
 	return TypeAudit
 }
 
-func (event *Audit) updatePantherFields(p *AuditParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
+func (event *Audit) PantherEvent() (string, time.Time, []parsers.PantherField) {
+	return TypeAudit, event.Time.UTC(), nil
 }

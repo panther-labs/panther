@@ -22,8 +22,6 @@ import (
 	"net"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -62,7 +60,6 @@ type ZeekDNS struct {
 	Answers    []string             `json:"answers,omitempty" description:"The set of resource descriptions in the query answer."`
 	TTLs       []float64            `json:"TTLs,omitempty" description:"The caching intervals (measured in seconds) of the associated RRs described by the answers field."`
 	Rejected   *bool                `json:"rejected,omitempty" description:"The DNS query was rejected by the server."`
-	parsers.PantherLog
 }
 
 var _ parsers.PantherEventer = (*ZeekDNS)(nil)
@@ -79,19 +76,7 @@ func (p *ZeekDNSParser) New() parsers.LogParser {
 // Parse returns the parsed events or nil if parsing failed
 func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	zeekDNS := &ZeekDNS{}
-
-	err := jsoniter.UnmarshalFromString(log, zeekDNS)
-	if err != nil {
-		return nil, err
-	}
-
-	zeekDNS.SetEvent(zeekDNS)
-
-	if err := parsers.Validator.Struct(zeekDNS); err != nil {
-		return nil, err
-	}
-
-	return zeekDNS.Logs(), nil
+	return parsers.QuickParseJSON(zeekDNS, log)
 }
 
 const TypeDNS = "Zeek.DNS"

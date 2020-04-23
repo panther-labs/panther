@@ -19,7 +19,9 @@ package parsers
  */
 
 import (
+	"fmt"
 	"net"
+	"reflect"
 	"regexp"
 	"sort"
 	"time"
@@ -43,7 +45,7 @@ var (
 //       See https://github.com/awsdocs/amazon-athena-user-guide/blob/master/doc_source/updates-and-partitions.md
 // nolint(lll)
 type PantherLog struct {
-	event interface{} // points to event that encapsulates this  as interface{} so we can serialize full event.
+	// event interface{} // points to event that encapsulates this  as interface{} so we can serialize full event.
 
 	//  required
 	PantherLogType   *string            `json:"p_log_type,omitempty" validate:"required" description:"Panther added field with type of log"`
@@ -62,6 +64,26 @@ type PantherLogJSON struct {
 	LogType   string
 	EventTime time.Time
 	JSON      []byte
+}
+
+// var (
+// 	typPantherLog = reflect.TypeOf(PantherLog{})
+// )
+
+func NewPantherLog(logType string, tm time.Time, fields ...PantherField) *PantherLog {
+	now := time.Now()
+	if tm.IsZero() {
+		tm = now
+	}
+	rowID := rowCounter.NewRowID()
+	p := PantherLog{
+		PantherRowID:     &rowID,
+		PantherLogType:   &logType,
+		PantherEventTime: (*timestamp.RFC3339)(&tm),
+		PantherParseTime: (*timestamp.RFC3339)(&now),
+	}
+	p.SetFields(fields...)
+	return &p
 }
 
 type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
@@ -101,36 +123,36 @@ func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
 	return nil
 }
 
-// Event returns event data, used when composed
-func (pl *PantherLog) Event() interface{} {
-	return pl.event
-}
+// // Event returns event data, used when composed
+// func (pl *PantherLog) Event() interface{} {
+// 	return pl.event
+// }
 
-// SetEvent set  event data, used for testing
-func (pl *PantherLog) SetEvent(event interface{}) {
-	if e, ok := event.(PantherEventer); ok {
-		typ, ts, fields := e.PantherEvent()
-		pl.SetCoreFields(typ, (*timestamp.RFC3339)(&ts), event)
-		pl.SetFields(fields...)
-	} else {
-		pl.event = event
-	}
-}
+// // SetEvent set  event data, used for testing
+// func (pl *PantherLog) SetEvent(event interface{}) {
+// 	if e, ok := event.(PantherEventer); ok {
+// 		typ, ts, fields := e.PantherEvent()
+// 		pl.SetCoreFields(typ, (*timestamp.RFC3339)(&ts), event)
+// 		pl.SetFields(fields...)
+// 	} else {
+// 		pl.event = event
+// 	}
+// }
 
-// Log returns pointer to self, used when composed
-func (pl *PantherLog) Log() *PantherLogJSON {
-	data, _ := jsoniter.Marshal(pl.Event())
-	return &PantherLogJSON{
-		LogType:   *pl.PantherLogType,
-		EventTime: pl.PantherEventTime.UTC(),
-		JSON:      data,
-	}
-}
+// // Log returns pointer to self, used when composed
+// func (pl *PantherLog) Log() *PantherLogJSON {
+// 	data, _ := jsoniter.Marshal(pl.Event())
+// 	return &PantherLogJSON{
+// 		LogType:   *pl.PantherLogType,
+// 		EventTime: pl.PantherEventTime.UTC(),
+// 		JSON:      data,
+// 	}
+// }
 
-// Logs returns a slice with pointer to self, used when composed
-func (pl *PantherLog) Logs() []*PantherLogJSON {
-	return []*PantherLogJSON{pl.Log()}
-}
+// // Logs returns a slice with pointer to self, used when composed
+// func (pl *PantherLog) Logs() []*PantherLogJSON {
+// 	return []*PantherLogJSON{pl.Log()}
+// }
 
 type PantherFieldKind int
 
@@ -331,4 +353,110 @@ func AppendAnyString(any *PantherAnyString, values ...string) {
 		}
 		any.set[v] = struct{}{} // new
 	}
+}
+
+func QuickParseJSON(event PantherEventer, src string) ([]*PantherLogJSON, error) {
+	if err := jsoniter.UnmarshalFromString(src, event); err != nil {
+		return nil, err
+	}
+	return PackEvents(event)
+}
+
+func PackEvents(events ...PantherEventer) ([]*PantherLogJSON, error) {
+	packedEvents := make([]*PantherLogJSON, 0, len(events))
+	for _, event := range events {
+		if event == nil {
+			continue
+		}
+		packed, err := RepackJSON(event)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to pack event: %s", err)
+		}
+		packedEvents = append(packedEvents, packed)
+	}
+	return packedEvents, nil
+}
+
+func ComposeStruct(values ...interface{}) (reflect.Value, error) {
+	fields := make([]reflect.StructField, 0, len(values))
+	fieldValues := make([]reflect.Value, 0, len(values))
+	for _, x := range values {
+		if x == nil {
+			continue
+		}
+		value := reflect.Indirect(reflect.ValueOf(x))
+		typ := value.Type()
+		if typ.Kind() != reflect.Struct {
+			continue
+		}
+		name := typ.Name()
+		for i := range fields {
+			if fields[i].Name == name {
+				return reflect.Value{}, fmt.Errorf("Failed to compose struct: Multiple fields of type %s", typ)
+			}
+		}
+		fieldValues = append(fieldValues, value)
+		fields = append(fields, reflect.StructField{
+			Anonymous: true,
+			Index:     []int{len(fields)},
+			Name:      name,
+			Type:      typ,
+		})
+	}
+	dynType := reflect.StructOf(fields)
+	dynValue := reflect.New(dynType)
+	for i, value := range fieldValues {
+		dynValue.Elem().Field(i).Set(value)
+	}
+	return dynValue, nil
+}
+
+func RepackJSON(event PantherEventer) (*PantherLogJSON, error) {
+	if event == nil {
+		return nil, fmt.Errorf("Nil event")
+	}
+	if err := Validator.Struct(event); err != nil {
+		return nil, err
+	}
+	logType, tm, pantherFields := event.PantherEvent()
+	// eventValue := reflect.Indirect(reflect.ValueOf(event))
+	// if eventValue.Kind() != reflect.Struct {
+	// 	return nil, fmt.Errorf("Invalid event value %s", eventValue.Type())
+	// }
+	p := NewPantherLog(logType, tm, pantherFields...)
+	if err := Validator.Struct(p); err != nil {
+		return nil, err
+	}
+	tmp, err := ComposeStruct(event, p)
+
+	// fields := []reflect.StructField{
+	// 	{
+	// 		Name:      eventValue.Type().Name(),
+	// 		Anonymous: true,
+	// 		Type:      eventValue.Type(),
+	// 		Index:     []int{0},
+	// 	},
+	// 	{
+	// 		Name:      "PantherLog",
+	// 		Anonymous: true,
+	// 		Index:     []int{1},
+	// 		Type:      typPantherLog,
+	// 	},
+	// }
+	// typComposedEvent := reflect.StructOf(fields)
+	// composedEvent := reflect.New(typComposedEvent)
+	// composedEvent.Elem().Field(0).Set(eventValue)
+	// composedEvent.Elem().Field(1).Set(reflect.ValueOf(p))
+	// x := composedEvent.Interface()
+	// data, err := json.Marshal(x)
+	data, err := jsoniter.Marshal(tmp.Interface())
+	if err != nil {
+		return nil, err
+	}
+	return &PantherLogJSON{
+		LogType:   logType,
+		EventTime: tm,
+		JSON:      data,
+	}, nil
+
 }

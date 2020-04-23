@@ -60,20 +60,10 @@ func TestAuditParser(t *testing.T) {
 		TargetType:    aws.String("Project"),
 		TargetDetails: aws.String("namespace2/project2"),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Audit")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkAudit(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeAudit, expectedTime)
+	testutil.CheckPantherParserJSON(t, log, &AuditParser{}, expectedEvent)
 }
 func TestAuditType(t *testing.T) {
 	parser := (&AuditParser{}).New()
 	require.Equal(t, "GitLab.Audit", parser.LogType())
-}
-
-func checkAudit(t *testing.T, log string, expectedEvent *Audit) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := (&AuditParser{}).New()
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

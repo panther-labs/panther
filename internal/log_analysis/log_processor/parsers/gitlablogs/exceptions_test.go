@@ -82,21 +82,11 @@ func TestExceptionsParser(t *testing.T) {
 			"lib/gitlab/import_export/relation_factory.rb:345:in 'find_or_create_object!'",
 		},
 	}
+	testutil.CheckPantherEvent(t, expectedEvent, TypeExceptions, expectedTime)
+	testutil.CheckPantherParserJSON(t, log, &ExceptionsParser{}, expectedEvent)
 
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Exceptions")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkExceptions(t, log, expectedEvent)
 }
 func TestExceptionsType(t *testing.T) {
 	parser := (&ExceptionsParser{}).New()
-	require.Equal(t, "GitLab.Exceptions", parser.LogType())
-}
-
-func checkExceptions(t *testing.T, log string, expectedEvent *Exceptions) {
-	t.Helper()
-	expectedEvent.SetEvent(expectedEvent)
-	parser := &ExceptionsParser{}
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	require.Equal(t, TypeExceptions, parser.LogType())
 }

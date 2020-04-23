@@ -21,8 +21,6 @@ package gitlablogs
 import (
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -56,14 +54,6 @@ type API struct {
 	GitalyCalls    *int               `json:"gitaly_calls,omitempty" description:"Total number of calls made to Gitaly"`
 	GitalyDuration *float32           `json:"gitaly_duration,omitempty" description:"Total time taken by Gitaly calls"`
 	QueueDuration  *float32           `json:"queue_duration,omitempty" description:"Total time that the request was queued inside GitLab Workhorse"`
-	// TODO: Check if API logs behave the same as Rails logs when an exception occurs
-	// CorrelationID      *string      `json:"correlation_id,omitempty" description:"Request unique id across logs"`
-	// CPUSeconds         *float64     `json:"cpu_s,omitempty" description:"CPU seconds"` // TODO: Check what this field information is about
-	// ExceptionClass     *string      `json:"exception.class,omitempty" description:"Class name of the exception that occurred"`
-	// ExceptionMessage   *string      `json:"exception.message,omitempty" description:"Message of the exception that occurred"`
-	// ExceptionBacktrace []*string    `json:"exception.backtrace,omitempty" description:"Stack trace of the exception that occurred"`
-
-	parsers.PantherLog
 }
 
 // APIParser parses gitlab rails logs
@@ -87,20 +77,7 @@ func (p *APIParser) New() parsers.LogParser {
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *APIParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
-	gitlabAPI := API{}
-
-	err := jsoniter.UnmarshalFromString(log, &gitlabAPI)
-	if err != nil {
-		return nil, err
-	}
-
-	gitlabAPI.SetEvent(&gitlabAPI)
-
-	if err := parsers.Validator.Struct(gitlabAPI); err != nil {
-		return nil, err
-	}
-
-	return gitlabAPI.Logs(), nil
+	return parsers.QuickParseJSON(&API{}, log)
 }
 
 // LogType returns the log type supported by this parser

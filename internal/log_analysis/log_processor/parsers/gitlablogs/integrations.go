@@ -19,7 +19,7 @@ package gitlablogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
+	"time"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -42,9 +42,9 @@ type Integrations struct {
 	Message      *string            `json:"message" validate:"required" description:"The log message from the service"`
 	ClientURL    *string            `json:"client_url" validate:"required" description:"The client url of the service"`
 	Error        *string            `json:"error,omitempty" description:"The error name if an error has occurred"`
-
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*Integrations)(nil)
 
 // IntegrationsParser parses gitlab integration logs
 type IntegrationsParser struct{}
@@ -57,21 +57,8 @@ func (p *IntegrationsParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *IntegrationsParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	gitlabIntegrations := Integrations{}
-
-	err := jsoniter.UnmarshalFromString(log, &gitlabIntegrations)
-	if err != nil {
-		return nil, err
-	}
-
-	gitlabIntegrations.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(gitlabIntegrations); err != nil {
-		return nil, err
-	}
-
-	return gitlabIntegrations.Logs(), nil
+func (p *IntegrationsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&Integrations{}, log)
 }
 
 // LogType returns the log type supported by this parser
@@ -79,6 +66,6 @@ func (p *IntegrationsParser) LogType() string {
 	return TypeIntegrations
 }
 
-func (event *Integrations) updatePantherFields(p *IntegrationsParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
+func (event *Integrations) PantherEvent() (string, time.Time, []parsers.PantherField) {
+	return TypeIntegrations, event.Time.UTC(), nil
 }

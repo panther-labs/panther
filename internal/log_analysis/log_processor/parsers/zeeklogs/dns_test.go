@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -56,25 +57,16 @@ func TestZeekDNS(t *testing.T) {
 		TTLs:      []float64{60.0},
 		Rejected:  aws.Bool(false),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Zeek.DNS")
-	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.IDOrigH)
-	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.IDRespH)
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Query)
-	expectedEvent.AppendAnyDomainNames(expectedEvent.Answers[0])
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkZeekDNS(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, "Zeek.DNS", expectedTime,
+		parsers.IPAddress(expectedEvent.IDOrigH),
+		parsers.IPAddress(expectedEvent.IDRespH),
+		parsers.DomainName(expectedEvent.Query),
+		parsers.DomainName(&expectedEvent.Answers[0]),
+	)
+	testutil.CheckPantherParserJSON(t, log, &ZeekDNSParser{}, expectedEvent)
 }
 
 func TestZeekDNSType(t *testing.T) {
 	parser := &ZeekDNSParser{}
 	require.Equal(t, "Zeek.DNS", parser.LogType())
-}
-
-func checkZeekDNS(t *testing.T, log string, expectedEvent *ZeekDNS) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := &ZeekDNSParser{}
-	logs, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), logs, err)
 }

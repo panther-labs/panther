@@ -19,7 +19,7 @@ package gitlablogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
+	"time"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -59,9 +59,9 @@ type Rails struct {
 	ExceptionClass     *string            `json:"exception.class,omitempty" description:"Class name of the exception that occurred"`
 	ExceptionMessage   *string            `json:"exception.message,omitempty" description:"Message of the exception that occurred"`
 	ExceptionBacktrace []string           `json:"exception.backtrace,omitempty" description:"Stack trace of the exception that occurred"`
-
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*Rails)(nil)
 
 // QueryParam is an HTTP query param as logged by LogRage
 type QueryParam struct {
@@ -80,21 +80,8 @@ func (p *RailsParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RailsParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	gitlabRails := Rails{}
-
-	err := jsoniter.UnmarshalFromString(log, &gitlabRails)
-	if err != nil {
-		return nil, err
-	}
-
-	gitlabRails.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(gitlabRails); err != nil {
-		return nil, err
-	}
-
-	return gitlabRails.Logs(), nil
+func (p *RailsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&Rails{}, log)
 }
 
 // LogType returns the log type supported by this parser
@@ -102,7 +89,8 @@ func (p *RailsParser) LogType() string {
 	return TypeRails
 }
 
-func (event *Rails) updatePantherFields(p *RailsParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
-	event.AppendAnyIPAddressPtr(event.RemoteIP)
+func (event *Rails) PantherEvent() (string, time.Time, []parsers.PantherField) {
+	return TypeRails, event.Time.UTC(), []parsers.PantherField{
+		parsers.IPAddress(event.RemoteIP),
+	}
 }

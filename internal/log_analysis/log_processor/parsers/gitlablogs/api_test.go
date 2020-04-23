@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -78,21 +79,17 @@ func TestGitLabAPI(t *testing.T) {
 		GitalyDuration: aws.Float32(5.36),
 		QueueDuration:  aws.Float32(100.31),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.API")
-	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.RemoteIP)
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkGitLabAPI(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeAPI, expectedTime, parsers.IPAddress(expectedEvent.RemoteIP))
+	testutil.CheckPantherParserJSON(t, log, &APIParser{}, expectedEvent)
 }
 func TestGitLabAPIType(t *testing.T) {
 	parser := (&APIParser{}).New()
-	require.Equal(t, "GitLab.API", parser.LogType())
+	require.Equal(t, TypeAPI, parser.LogType())
 }
 
-func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := (&APIParser{}).New()
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
-}
+// func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {
+// 	expectedEvent.SetEvent(expectedEvent)
+// 	parser := (&APIParser{}).New()
+// 	events, err := parser.Parse(log)
+// 	testutil.EqualPantherLog(t, &expectedEvent.PantherLog, events, err)
+// }

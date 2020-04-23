@@ -46,20 +46,10 @@ func TestGitParser(t *testing.T) {
 		CorrelationID: aws.String("FeGxww5Hj64"),
 		Message:       aws.String("Command failed [1]: /usr/bin/git --git-dir=/Users/vsizov/gitlab-development-kit/gitlab/tmp/tests/gitlab-satellites/group184/gitlabhq/.git --work-tree=/Users/vsizov/gitlab-development-kit/gitlab/tmp/tests/gitlab-satellites/group184/gitlabhq merge --no-ff -mMerge branch 'feature_conflict' into 'feature' source/feature_conflict\n\nerror: failed to push some refs to '/Users/vsizov/gitlab-development-kit/repositories/gitlabhq/gitlab_git.git'"),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Git")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkGit(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeGit, expectedTime)
+	testutil.CheckPantherParserJSON(t, log, &GitParser{}, expectedEvent)
 }
 func TestGitType(t *testing.T) {
 	parser := (&GitParser{}).New()
-	require.Equal(t, "GitLab.Git", parser.LogType())
-}
-
-func checkGit(t *testing.T, log string, expectedEvent *Git) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := (&GitParser{}).New()
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	require.Equal(t, TypeGit, parser.LogType())
 }

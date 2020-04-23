@@ -53,10 +53,8 @@ func TestIntegrationsError(t *testing.T) {
 		Error:        aws.String("execution expired"),
 	}
 
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Integrations")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkIntegrations(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeIntegrations, expectedTime)
+	testutil.CheckPantherParserJSON(t, log, &IntegrationsParser{}, expectedEvent)
 }
 func TestIntegrations(t *testing.T) {
 	log := `{
@@ -80,21 +78,10 @@ func TestIntegrations(t *testing.T) {
 		Message:      aws.String("Successfully posted"),
 		ClientURL:    aws.String("http://jira.example.com"),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Integrations")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkIntegrations(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeIntegrations, expectedTime)
+	testutil.CheckPantherParserJSON(t, log, &IntegrationsParser{}, expectedEvent)
 }
 func TestGitLabIntegrationsType(t *testing.T) {
 	parser := (&IntegrationsParser{}).New()
 	require.Equal(t, "GitLab.Integrations", parser.LogType())
-}
-
-func checkIntegrations(t *testing.T, log string, expectedEvent *Integrations) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := (&IntegrationsParser{}).New()
-
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

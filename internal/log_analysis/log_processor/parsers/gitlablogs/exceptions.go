@@ -19,7 +19,7 @@ package gitlablogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
+	"time"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -45,8 +45,6 @@ type Exceptions struct {
 	ExceptionClass     *string            `json:"exception.class" validate:"required" description:"Class name of the exception that occurred"`
 	ExceptionMessage   *string            `json:"exception.message" validate:"required" description:"Message of the exception that occurred"`
 	ExceptionBacktrace []string           `json:"exception.backtrace,omitempty" description:"Stack trace of the exception that occurred"`
-
-	parsers.PantherLog
 }
 
 // ExtraServer has info about the server an exception occurred
@@ -79,21 +77,8 @@ func (p *ExceptionsParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ExceptionsParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	gitlabExceptions := Exceptions{}
-
-	err := jsoniter.UnmarshalFromString(log, &gitlabExceptions)
-	if err != nil {
-		return nil, err
-	}
-
-	gitlabExceptions.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(gitlabExceptions); err != nil {
-		return nil, err
-	}
-
-	return gitlabExceptions.Logs(), nil
+func (p *ExceptionsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&Exceptions{}, log)
 }
 
 // LogType returns the log type supported by this parser
@@ -101,6 +86,6 @@ func (p *ExceptionsParser) LogType() string {
 	return TypeExceptions
 }
 
-func (event *Exceptions) updatePantherFields(p *ExceptionsParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
+func (event *Exceptions) PantherEvent() (string, time.Time, []parsers.PantherField) {
+	return TypeExceptions, event.Time.UTC(), nil
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -74,11 +75,8 @@ func TestGitLabRails(t *testing.T) {
 		QueueDuration:  aws.Float32(112.47),
 	}
 
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Rails")
-	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.RemoteIP)
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkGitLabRails(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRails, expectedTime, parsers.IPAddress(expectedEvent.RemoteIP))
+	testutil.CheckPantherParserJSON(t, log, &RailsParser{}, expectedEvent)
 }
 func TestGitLabRailsException(t *testing.T) {
 	log := `{
@@ -147,22 +145,10 @@ func TestGitLabRailsException(t *testing.T) {
 			"ee/lib/gitlab/jira/middleware.rb:19:in 'call'",
 		},
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Rails")
-	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.RemoteIP)
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkGitLabRails(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRails, expectedTime, parsers.IPAddress(expectedEvent.RemoteIP))
+	testutil.CheckPantherParserJSON(t, log, &RailsParser{}, expectedEvent)
 }
 func TestGitLabRailsType(t *testing.T) {
 	parser := (&RailsParser{}).New()
 	require.Equal(t, "GitLab.Rails", parser.LogType())
-}
-
-func checkGitLabRails(t *testing.T, log string, expectedEvent *Rails) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := (&RailsParser{}).New()
-	events, err := parser.Parse(log)
-
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }
