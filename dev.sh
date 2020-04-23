@@ -17,4 +17,4 @@ docker run \
     -e AWS_REGION=$(if [ -z "$AWS_REGION" ]; then echo $AWS_DEFAULT_REGION; else echo $AWS_REGION; fi) \
     -it \
     --rm \
-    pantherlabs/panther-development-pack:1.1.1
+    pantherlabs/panther-development-pack:1.1.2
