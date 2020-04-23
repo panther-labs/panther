@@ -26,7 +26,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -60,26 +59,17 @@ func (b Build) API() {
 	for _, spec := range specs {
 		dir := filepath.Dir(spec)
 		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
-		start := time.Now().UTC()
 
 		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models}
 		if err := sh.Run(cmd, args...); err != nil {
 			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
 
+		// TODO - delete unused models
 		// If an API model is removed, "swagger generate" will leave the Go file in place.
-		// So we walk the generated directories and remove anything swagger didn't just write.
-		deleteUnmodified := func(path string, info os.FileInfo) {
-			if !info.IsDir() && info.ModTime().Before(start) {
-				logger.Debugf("%s unmodified by swagger: removing", path)
-				if err := os.Remove(path); err != nil {
-					logger.Warnf("failed to remove deleted model %s: %v", path, err)
-				}
-			}
-		}
-
-		walk(client, deleteUnmodified)
-		walk(models, deleteUnmodified)
+		// We tried to remove generated files based on timestamp, but that had issues in Docker.
+		// We tried removing the client/ and models/ every time, but mage itself depends on some of these.
+		// For now, developers just need to manually remove unused swagger models.
 
 		// There is a bug in "swagger generate" which can lead to incorrect import paths.
 		// To reproduce: comment out this section, clone to /tmp and "mage build:api" - note the diffs.
