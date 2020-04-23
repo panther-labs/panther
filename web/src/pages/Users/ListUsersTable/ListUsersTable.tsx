@@ -17,16 +17,12 @@
  */
 
 import React from 'react';
-import { User } from 'Generated/schema';
-import { Alert, Card, Table } from 'pouncejs';
-import columns from 'Pages/Users/columns';
-
+import { Alert, Card, Label, Table } from 'pouncejs';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
+import dayjs from 'dayjs';
+import ListUsersTableRowOptions from '../ListUsersTableRowOptions';
 import { useListUsers } from './graphql/listUsers.generated';
-
-// This is done so we can benefit from React.memo
-const getUserItemKey = (item: User) => item.id;
 
 const ListUsersTable = () => {
   const { loading, error, data } = useListUsers({
@@ -56,7 +52,40 @@ const ListUsersTable = () => {
 
   return (
     <Card>
-      <Table<User> columns={columns} getItemKey={getUserItemKey} items={data.users} />
+      <Table>
+        <Table.Head>
+          <Table.Row>
+            <Table.HeaderCell />
+            <Table.HeaderCell>Name</Table.HeaderCell>
+            <Table.HeaderCell>Email</Table.HeaderCell>
+            <Table.HeaderCell>Role</Table.HeaderCell>
+            <Table.HeaderCell>Invited At</Table.HeaderCell>
+            <Table.HeaderCell>Status</Table.HeaderCell>
+            <Table.HeaderCell />
+          </Table.Row>
+        </Table.Head>
+        <Table.Body>
+          {data.users.map((user, index) => (
+            <Table.Row key={user.id}>
+              <Table.Cell>
+                <Label size="medium">{index + 1}</Label>
+              </Table.Cell>
+              <Table.Cell>
+                {user.givenName} {user.familyName}
+              </Table.Cell>
+              <Table.Cell>{user.email}</Table.Cell>
+              <Table.Cell>Admin</Table.Cell>
+              <Table.Cell>
+                {dayjs(user.createdAt * 1000).format('MM/DD/YYYY, HH:mm G[M]TZZ')}
+              </Table.Cell>
+              <Table.Cell>{user.status}</Table.Cell>
+              <Table.Cell>
+                <ListUsersTableRowOptions user={user} />
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
     </Card>
   );
 };
