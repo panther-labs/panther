@@ -94,10 +94,10 @@ func TestCloudTrailDigestParser(t *testing.T) {
 	expectedEvent.PantherLogType = aws.String("AWS.CloudTrailDigest")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDateEnd)
 	expectedEvent.AppendAnyAWSAccountIds("111122223333")
-	// expectedEvent.AppendAnyHashes(
-	// 	"97fb791cf91ffc440d274f8190dbdd9aa09c34432aba82739df18b6d3c13df2d",
-	// 	"9bb6196fc6b84d6f075a56548feca262bd99ba3c2de41b618e5b6e22c1fc71f6",
-	// )
+	expectedEvent.AppendAnySHA256Hashes(
+		"97fb791cf91ffc440d274f8190dbdd9aa09c34432aba82739df18b6d3c13df2d",
+		"9bb6196fc6b84d6f075a56548feca262bd99ba3c2de41b618e5b6e22c1fc71f6",
+	)
 	expectedEvent.SetEvent(expectedEvent)
 	testutil.CheckPantherParser(t, log, &CloudTrailDigestParser{}, expectedEvent.Log())
 }
@@ -146,10 +146,6 @@ func TestCloudTrailDigestParserFirstRecord(t *testing.T) {
 	expectedEvent.PantherLogType = aws.String("AWS.CloudTrailDigest")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDateEnd)
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
-	// expectedEvent.AppendAnyHashes(
-	// 	"97fb791cf91ffc440d274f8190dbdd9aa09c34432aba82739df18b6d3c13df2d",
-	// 	"9bb6196fc6b84d6f075a56548feca262bd99ba3c2de41b618e5b6e22c1fc71f6",
-	// )
 	expectedEvent.SetEvent(expectedEvent)
 	testutil.CheckPantherParser(t, log, &CloudTrailDigestParser{}, expectedEvent.Log())
 }
