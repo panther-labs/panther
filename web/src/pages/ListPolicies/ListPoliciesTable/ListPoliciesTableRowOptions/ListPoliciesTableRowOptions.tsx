@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Dropdown, Icon, IconButton, MenuItem, Box } from 'pouncejs';
+import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import { PolicySummary } from 'Generated/schema';
 import urls from 'Source/urls';
@@ -32,36 +32,28 @@ const ListPoliciesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = 
   const { history } = useRouter();
   const { showModal } = useModal();
 
-  // @HELP_WANTED
-  // The wrapping `<Box>` is needed because of a special reason. You see, the trigger of this
-  // Dropdown is added on each row of a table whose rows are clickable. Thus we don't wanna trigger
-  // a click on the row each time the Dropdown trigger is clicked. If we had added the
-  // `stopPropagation()` on the trigger itself, then the Dropdown wouldn't open.
-  // We perhaps can find a better solution to his problem
   return (
-    <Box onClick={e => e.stopPropagation()}>
-      <Dropdown
-        trigger={
-          <IconButton as="div" variant="default" my={-4}>
-            <Icon type="more" size="small" />
-          </IconButton>
+    <Dropdown
+      trigger={
+        <IconButton as="div" variant="default" my={-4}>
+          <Icon type="more" size="small" />
+        </IconButton>
+      }
+    >
+      <Dropdown.Item onSelect={() => history.push(urls.compliance.policies.edit(policy.id))}>
+        <MenuItem variant="default">Edit</MenuItem>
+      </Dropdown.Item>
+      <Dropdown.Item
+        onSelect={() =>
+          showModal({
+            modal: MODALS.DELETE_POLICY,
+            props: { policy },
+          })
         }
       >
-        <Dropdown.Item onSelect={() => history.push(urls.compliance.policies.edit(policy.id))}>
-          <MenuItem variant="default">Edit</MenuItem>
-        </Dropdown.Item>
-        <Dropdown.Item
-          onSelect={() =>
-            showModal({
-              modal: MODALS.DELETE_POLICY,
-              props: { policy },
-            })
-          }
-        >
-          <MenuItem variant="default">Delete</MenuItem>
-        </Dropdown.Item>
-      </Dropdown>
-    </Box>
+        <MenuItem variant="default">Delete</MenuItem>
+      </Dropdown.Item>
+    </Dropdown>
   );
 };
 

@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { formatDatetime, shortenId } from 'Helpers/utils';
-import { Label, Link, Table } from 'pouncejs';
+import { Box, Label, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
@@ -55,7 +55,9 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
             </Table.Cell>
             <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell>
-              {alert.severity ? <SeverityBadge severity={alert.severity} /> : 'N/A'}
+              <Box my={-1}>
+                {alert.severity ? <SeverityBadge severity={alert.severity} /> : 'Not available'}
+              </Box>
             </Table.Cell>
             <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
             <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
