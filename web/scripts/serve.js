@@ -42,10 +42,6 @@ const addHeaders = (req, res, next) => {
   res.header('X-Frame-Options', 'SAMEORIGIN');
   res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.header('X-Content-Type-Options', 'nosniff');
-  /*
-    Unsafe-inline is not recommended for neither css or scripts and we should convert tem
-    https://stackoverflow.com/questions/17766817/refused-to-apply-inline-style-because-it-violates-the-following-content-security
-   */
   res.header(
     'Content-Security-Policy',
     "default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self' *.amazonaws.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; base-uri 'self';form-action 'self'"
