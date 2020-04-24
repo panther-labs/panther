@@ -111,7 +111,7 @@ func StreamEvents(startTime time.Time, event events.SQSEvent) (sqsMessageCount i
 	}()
 
 	// process streamChan until closed (blocks)
-	err = Process(streamChan, destinations.CreateDestination())
+	err = process(streamChan, destinations.CreateDestination(), NewProcessor)
 	if err != nil { // prefer Process() error to readEventError
 		return sqsMessageCount, err
 	}
