@@ -19,6 +19,7 @@ package numerics
  */
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -33,11 +34,14 @@ func (i *Integer) String() string {
 	return strconv.Itoa((int)(*i))
 }
 
+// FIXME: `nil` is not valid JSON data is this intended?
 func (i *Integer) MarshalJSON() ([]byte, error) {
 	return ([]byte)(i.String()), nil
 }
 
+// FIXME: unmarshalling to a nil target fails silently here, this is a weird behavior probably not intentional
 func (i *Integer) UnmarshalJSON(jsonBytes []byte) (err error) {
+	// FIXME: The strings.Trim call accepts invalid JSON input (ie `"42""``) as shown in the corresponding test case
 	parsedInt, err := strconv.Atoi(strings.Trim((string)(jsonBytes), `"`)) // remove quotes, to int
 	if err == nil && i != nil {
 		*i = (Integer)(parsedInt)
@@ -46,3 +50,42 @@ func (i *Integer) UnmarshalJSON(jsonBytes []byte) (err error) {
 }
 
 // add others below as we need them
+
+type Int64 int64
+
+func (i *Int64) String() string {
+	if i == nil {
+		return ""
+	}
+	return strconv.FormatInt((int64)(*i), 10)
+}
+
+func (i *Int64) MarshalJSON() ([]byte, error) {
+	if i == nil {
+		return []byte(`null`), nil
+	}
+	return strconv.AppendInt(nil, (int64)(*i), 10), nil
+}
+
+func unquoteJSON(data []byte) []byte {
+	if len(data) > 1 && data[0] == '"' {
+		data = data[1:]
+		if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '"' {
+			return data[:n]
+		}
+	}
+	return data
+}
+
+func (i *Int64) UnmarshalJSON(data []byte) error {
+	if i == nil {
+		return fmt.Errorf("nil target")
+	}
+	data = unquoteJSON(data)
+	n, err := strconv.ParseInt(string(data), 10, 64)
+	if err != nil {
+		return err
+	}
+	*i = Int64(n)
+	return nil
+}
