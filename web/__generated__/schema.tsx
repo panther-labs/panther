@@ -80,7 +80,7 @@ export type AlertSummary = {
   title: Scalars['String'];
   updateTime: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
-  severity?: Maybe<Scalars['String']>;
+  severity?: Maybe<SeverityEnum>;
 };
 
 export enum AnalysisTypeEnum {
@@ -1108,6 +1108,7 @@ export type ResolversTypes = {
   ListAlertsInput: ListAlertsInput;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
+  SeverityEnum: SeverityEnum;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1121,7 +1122,6 @@ export type ResolversTypes = {
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
-  SeverityEnum: SeverityEnum;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
@@ -1218,6 +1218,7 @@ export type ResolversParentTypes = {
   ListAlertsInput: ListAlertsInput;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
+  SeverityEnum: SeverityEnum;
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -1231,7 +1232,6 @@ export type ResolversParentTypes = {
   OpsgenieConfig: OpsgenieConfig;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
-  SeverityEnum: SeverityEnum;
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
@@ -1350,7 +1350,7 @@ export type AlertSummaryResolvers<
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  severity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 

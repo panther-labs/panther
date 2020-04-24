@@ -71,11 +71,7 @@ const RemediationButton: React.FC<RemediationButtonProps> = ({
     <Button
       size="small"
       variant={buttonVariant}
-      onClick={e => {
-        // Table row is clickable, we don't want to navigate away
-        e.stopPropagation();
-        remediateResource();
-      }}
+      onClick={() => remediateResource()}
       disabled={remediationInProgress}
     >
       Remediate

@@ -17,21 +17,18 @@
  */
 
 import React from 'react';
+import { Alert, Card } from 'pouncejs';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Card, Flex, Icon } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
-import Panel from 'Components/Panel';
-import { Link as RRLink } from 'react-router-dom';
-import urls from 'Source/urls';
-import ErrorBoundary from 'Components/ErrorBoundary';
-import { useListComplianceSources } from './graphql/listComplianceSources.generated';
-import EmptyDataFallback from './EmptyDataFallback';
-import ComplianceSourceTable from './ComplianceSourceTable';
+import { useListUsers } from './graphql/listUsers.generated';
+import ListUsersTable from '../ListUsersTable';
 
-const ListComplianceSources = () => {
-  const { loading, error, data } = useListComplianceSources();
+const ListUsers = () => {
+  const { loading, error, data } = useListUsers({
+    fetchPolicy: 'cache-and-network',
+  });
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <Card p={9}>
         <TablePlaceholder />
@@ -43,7 +40,7 @@ const ListComplianceSources = () => {
     return (
       <Alert
         variant="error"
-        title="Couldn't load your sources"
+        title="Couldn't load users"
         description={
           extractErrorMessage(error) ||
           'There was an error when performing your request, please contact support@runpanther.io'
@@ -52,30 +49,11 @@ const ListComplianceSources = () => {
     );
   }
 
-  if (!data.listComplianceIntegrations.length) {
-    return <EmptyDataFallback />;
-  }
-
   return (
-    <Box mb={6}>
-      <Panel
-        title="Connected Accounts"
-        size="large"
-        actions={
-          <Button size="large" variant="primary" as={RRLink} to={urls.compliance.sources.create()}>
-            <Flex align="center">
-              <Icon type="add" size="small" mr={1} />
-              Add Account
-            </Flex>
-          </Button>
-        }
-      >
-        <ErrorBoundary>
-          <ComplianceSourceTable sources={data.listComplianceIntegrations} />
-        </ErrorBoundary>
-      </Panel>
-    </Box>
+    <Card>
+      <ListUsersTable users={data.users} />
+    </Card>
   );
 };
 
-export default ListComplianceSources;
+export default ListUsers;

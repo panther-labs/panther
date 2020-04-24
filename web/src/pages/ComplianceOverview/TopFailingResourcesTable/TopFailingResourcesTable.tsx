@@ -16,45 +16,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { Label, Link, Table } from 'pouncejs';
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
 import React from 'react';
-import { Label, Table } from 'pouncejs';
-import dayjs from 'dayjs';
-import { ListUsers } from 'Pages/Users/ListUsers/graphql/listUsers.generated';
-import ListUsersTableRowOptions from './ListUsersTableRowOptions';
+import { GetOrganizationStats } from 'Pages/ComplianceOverview/graphql/getOrganizationStats.generated';
 
-type ListUsersTableProps = Pick<ListUsers, 'users'>;
+interface TopFailingResourcesTableProps {
+  resources: GetOrganizationStats['organizationStats']['topFailingResources'];
+}
 
-const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
+const TopFailingResourcesTable: React.FC<TopFailingResourcesTableProps> = ({ resources }) => {
   return (
     <Table>
       <Table.Head>
         <Table.Row>
           <Table.HeaderCell />
-          <Table.HeaderCell>Name</Table.HeaderCell>
-          <Table.HeaderCell>Email</Table.HeaderCell>
-          <Table.HeaderCell>Role</Table.HeaderCell>
-          <Table.HeaderCell>Invited At</Table.HeaderCell>
-          <Table.HeaderCell>Status</Table.HeaderCell>
-          <Table.HeaderCell />
+          <Table.HeaderCell>Resource</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {users.map((user, index) => (
-          <Table.Row key={user.id}>
+        {resources.map((resource, index) => (
+          <Table.Row key={resource.id}>
             <Table.Cell>
               <Label size="medium">{index + 1}</Label>
             </Table.Cell>
             <Table.Cell>
-              {user.givenName} {user.familyName}
-            </Table.Cell>
-            <Table.Cell>{user.email}</Table.Cell>
-            <Table.Cell>Admin</Table.Cell>
-            <Table.Cell>
-              {dayjs(user.createdAt * 1000).format('MM/DD/YYYY, HH:mm G[M]TZZ')}
-            </Table.Cell>
-            <Table.Cell>{user.status}</Table.Cell>
-            <Table.Cell>
-              <ListUsersTableRowOptions user={user} />
+              <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>
+                {resource.id}
+              </Link>
             </Table.Cell>
           </Table.Row>
         ))}
@@ -63,4 +53,4 @@ const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
   );
 };
 
-export default React.memo(ListUsersTable);
+export default TopFailingResourcesTable;

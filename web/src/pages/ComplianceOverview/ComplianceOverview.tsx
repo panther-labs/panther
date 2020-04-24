@@ -17,15 +17,11 @@
  */
 
 import React from 'react';
-import { Box, Table, Alert, SimpleGrid } from 'pouncejs';
+import { Box, Alert, SimpleGrid } from 'pouncejs';
 import Panel from 'Components/Panel';
-import urls from 'Source/urls';
-import useRouter from 'Hooks/useRouter';
-import { PolicySummary, ResourceSummary } from 'Generated/schema';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useGetOrganizationStats } from './graphql/getOrganizationStats.generated';
-import { topFailingPoliciesColumns, topFailingResourcesColumns } from './columns';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
 import ResourcesByPlatformChart from './ResourcesByPlatformChart';
@@ -33,12 +29,10 @@ import ResourcesByStatusChart from './ResourcesByStatusChart';
 import DonutChartWrapper from './DonutChartWrapper';
 import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
 import ComplianceOverviewPageSkeleton from './Skeleton';
-
-export type TopFailingPolicy = Pick<PolicySummary, 'id' | 'severity'>;
-export type TopFailingResource = Pick<ResourceSummary, 'id'>;
+import TopFailingPoliciesTable from './TopFailingPoliciesTable';
+import TopFailingResourcesTable from './TopFailingResourcesTable';
 
 const ComplianceOverview: React.FC = () => {
-  const { history } = useRouter();
   const { data, loading, error } = useGetOrganizationStats({
     fetchPolicy: 'cache-and-network',
   });
@@ -81,24 +75,14 @@ const ComplianceOverview: React.FC = () => {
         <Panel title="Top Failing Policies" size="small">
           <Box m={-6}>
             <ErrorBoundary>
-              <Table<TopFailingPolicy>
-                columns={topFailingPoliciesColumns}
-                items={data.organizationStats.topFailingPolicies}
-                getItemKey={policy => policy.id}
-                onSelect={policy => history.push(urls.compliance.policies.details(policy.id))}
-              />
+              <TopFailingPoliciesTable policies={data.organizationStats.topFailingPolicies} />
             </ErrorBoundary>
           </Box>
         </Panel>
         <Panel title="Top Failing Resources" size="small">
           <Box m={-6}>
             <ErrorBoundary>
-              <Table<TopFailingResource>
-                columns={topFailingResourcesColumns}
-                items={data.organizationStats.topFailingResources}
-                getItemKey={resource => resource.id}
-                onSelect={resource => history.push(urls.compliance.resources.details(resource.id))}
-              />
+              <TopFailingResourcesTable resources={data.organizationStats.topFailingResources} />
             </ErrorBoundary>
           </Box>
         </Panel>
