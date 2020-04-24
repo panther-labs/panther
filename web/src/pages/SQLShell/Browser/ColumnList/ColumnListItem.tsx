@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box, Flex, Text, useTheme } from 'pouncejs';
-import { css } from '@emotion/react';
+import { AbstractButton, Box, PseudoBox, Text } from 'pouncejs';
 
 interface ColumnListItemProps {
   isSelected: boolean;
@@ -19,8 +18,6 @@ const ColumnListItem: React.FC<ColumnListItemProps> = ({
   description,
   onClick,
 }) => {
-  const theme = useTheme();
-
   let columnNameColor;
   let columnTypeColor;
   if (isSelected || isPristine) {
@@ -33,46 +30,28 @@ const ColumnListItem: React.FC<ColumnListItemProps> = ({
 
   return (
     <Box as="li" key={name} mx={6}>
-      <Text
-        width="100%"
-        p={2}
-        size="medium"
-        color={columnNameColor}
-        as="button"
-        cursor="pointer"
-        outline="none"
-        textAlign="left"
-        onClick={() => onClick(name)}
-        css={css`
-          &:hover {
-            color: ${theme.colors.grey500};
-
-            span {
-              color: ${theme.colors.grey200};
-            }
-          }
-        `}
-      >
-        <Flex align="center">
-          {name}
-          <Text
-            as="span"
-            fontStyle="italic"
-            size="medium"
-            fontWeight="bold"
-            ml={1}
-            title={type}
-            color={columnTypeColor}
-          >
+      <AbstractButton p={2} outline="none" textAlign="left" onClick={() => onClick(name)}>
+        <PseudoBox
+          color={columnNameColor}
+          _hover={{
+            color: 'grey500',
+            // @ts-ignore
+            i: { color: 'grey200' },
+          }}
+        >
+          <Text size="medium" as="span">
+            {name}
+          </Text>
+          <Text as="i" size="medium" fontWeight="bold" ml={1} title={type} color={columnTypeColor}>
             ({type})
           </Text>
-        </Flex>
-        {isSelected && (
-          <Text size="small" color="grey500" mt={2} as="p">
-            {description || 'No description available'}
-          </Text>
-        )}
-      </Text>
+          {isSelected && (
+            <Text size="small" color="grey500" mt={2} as="p">
+              {description || 'No description available'}
+            </Text>
+          )}
+        </PseudoBox>
+      </AbstractButton>
     </Box>
   );
 };

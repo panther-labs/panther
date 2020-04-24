@@ -1,6 +1,5 @@
-import { Box, Text, useTheme } from 'pouncejs';
+import { AbstractButton, PseudoBox, Text } from 'pouncejs';
 import React from 'react';
-import { css } from '@emotion/react';
 
 interface TableListItemProps {
   name: string;
@@ -8,42 +7,32 @@ interface TableListItemProps {
 }
 
 const TableListItem: React.FC<TableListItemProps> = ({ name, onClick }) => {
-  const theme = useTheme();
   return (
-    <Box
+    <PseudoBox
       as="li"
       key={name}
       borderTop="1px solid"
       borderColor="grey50"
       mx={6}
-      borderRadius="medium"
-      css={css`
-        &:hover {
-          background-color: ${theme.colors.grey50};
-
-          &,
-          & + * {
-            border-color: ${theme.colors.grey50};
-          }
-        }
-      `}
+      _hover={{
+        borderRadius: 'medium',
+        backgroundColor: 'grey50',
+      }}
     >
-      <Text
+      <AbstractButton
         px={2}
         py={3}
         width="100%"
-        size="medium"
-        color="grey500"
-        as="button"
-        cursor="pointer"
         outline="none"
         textAlign="left"
         onClick={() => onClick(name)}
         backgroundColor="transparent"
       >
-        {name}
-      </Text>
-    </Box>
+        <Text size="medium" color="grey500">
+          {name}
+        </Text>
+      </AbstractButton>
+    </PseudoBox>
   );
 };
 
