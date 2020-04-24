@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Label, Table } from 'pouncejs';
+import { Box, Flex, Label, Table } from 'pouncejs';
 import { ListLogSources } from 'Pages/ListLogSources';
 import LogSourceHealthIcon from './LogSourceHealthIcon';
 import LogSourceTableRowOptionsProps from './LogSourceTableRowOptions';
@@ -19,7 +19,7 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
           <Table.HeaderCell>Log Types</Table.HeaderCell>
           <Table.HeaderCell>S3 Bucket</Table.HeaderCell>
           <Table.HeaderCell>S3 Objects Prefix</Table.HeaderCell>
-          <Table.HeaderCell>Healthy</Table.HeaderCell>
+          <Table.HeaderCell align="center">Healthy</Table.HeaderCell>
           <Table.HeaderCell />
         </Table.Row>
       </Table.Head>
@@ -39,7 +39,9 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
             <Table.Cell>{source.s3Bucket}</Table.Cell>
             <Table.Cell>{source.s3Prefix || 'None'}</Table.Cell>
             <Table.Cell>
-              <LogSourceHealthIcon logSourceHealth={source.health} />
+              <Flex justify="center">
+                <LogSourceHealthIcon logSourceHealth={source.health} />
+              </Flex>
             </Table.Cell>
             <Table.Cell>
               <LogSourceTableRowOptionsProps source={source} />
