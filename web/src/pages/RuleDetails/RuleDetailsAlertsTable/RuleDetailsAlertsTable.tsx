@@ -17,18 +17,17 @@
  */
 
 import React from 'react';
-import { formatDatetime, shortenId } from 'Helpers/utils';
-import { Box, Label, Link, Table } from 'pouncejs';
-import urls from 'Source/urls';
+import { Label, Link, Table } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
-import SeverityBadge from 'Components/SeverityBadge';
-import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
+import urls from 'Source/urls';
+import { formatDatetime, shortenId } from 'Helpers/utils';
+import { RuleDetails } from '../graphql/ruleDetails.generated';
 
-type ListAlertsTableProps = {
-  items: ListAlerts['alerts']['alertSummaries'];
-};
+interface RuleDetailsAlertsTableProps {
+  alerts: RuleDetails['alerts']['alertSummaries'];
+}
 
-const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
+const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts }) => {
   return (
     <Table>
       <Table.Head>
@@ -36,29 +35,23 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
           <Table.HeaderCell />
           <Table.HeaderCell>Title</Table.HeaderCell>
           <Table.HeaderCell>Created At</Table.HeaderCell>
-          <Table.HeaderCell>Severity</Table.HeaderCell>
           <Table.HeaderCell>Alert ID</Table.HeaderCell>
           <Table.HeaderCell align="right">Events</Table.HeaderCell>
           <Table.HeaderCell>Last Matched At</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map((alert, index) => (
+        {alerts.map((alert, index) => (
           <Table.Row key={alert.alertId}>
             <Table.Cell>
               <Label size="medium">{index + 1}</Label>
             </Table.Cell>
-            <Table.Cell maxWidth={400} truncated title={alert.title}>
+            <Table.Cell maxWidth={450} truncated title={alert.title}>
               <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
                 {alert.title}
               </Link>
             </Table.Cell>
             <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
-            <Table.Cell>
-              <Box my={-1}>
-                {alert.severity ? <SeverityBadge severity={alert.severity} /> : 'Not available'}
-              </Box>
-            </Table.Cell>
             <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
             <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
             <Table.Cell>{formatDatetime(alert.updateTime)}</Table.Cell>
@@ -69,4 +62,4 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
   );
 };
 
-export default React.memo(ListAlertsTable);
+export default RuleDetailsAlertsTable;

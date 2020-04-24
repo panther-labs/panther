@@ -44,13 +44,17 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
    when this is fixed we should revert it: https://github.com/apollographql/apollo-client/issues/5790
    */
   const { data } = useListUsers();
-  const userEmails = data.users.map(u => u.email);
+  // When we edit a user we want to exclude its email from the validation schema
+  // When we create a user, initialValues.id is undefined and no user is filtered
+  const existingUsers = data.users.filter(user => user.id !== initialValues.id);
+
+  const usersEmails = existingUsers.map(u => u.email);
 
   const validationSchema = Yup.object().shape({
     email: Yup.string()
       .email('Must be a valid email')
       .required('Email is required')
-      .notOneOf(userEmails, 'Email already in use'),
+      .notOneOf(usersEmails, 'Email already in use'),
     familyName: Yup.string().required('Last name is required'),
     givenName: Yup.string().required('First name is required'),
   });

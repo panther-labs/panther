@@ -19,20 +19,17 @@
 import React from 'react';
 
 import useRouter from 'Hooks/useRouter';
-import { AlertSummary } from 'Generated/schema';
-import { Alert, Box, Table } from 'pouncejs';
-import RuleDetailsInfo from 'Pages/RuleDetails/RuleDetailsInfo';
+import { Alert, Box } from 'pouncejs';
 import Panel from 'Components/Panel';
-import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import columns from './columns';
 import RuleDetailsPageSkeleton from './Skeleton';
+import RuleDetailsInfo from './RuleDetailsInfo';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
+import RuleDetailsAlertsTable from './RuleDetailsAlertsTable';
 
 const RuleDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
-  const { history } = useRouter();
   const { error, data, loading } = useRuleDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -71,12 +68,7 @@ const RuleDetailsPage = () => {
       <Box mt={2} mb={6}>
         <Panel size="large" title="Alerts">
           <ErrorBoundary>
-            <Table<Partial<AlertSummary>>
-              columns={columns}
-              getItemKey={alert => alert.alertId}
-              items={data.alerts.alertSummaries}
-              onSelect={alert => history.push(urls.logAnalysis.alerts.details(alert.alertId))}
-            />
+            <RuleDetailsAlertsTable alerts={data.alerts.alertSummaries} />
           </ErrorBoundary>
         </Panel>
       </Box>
