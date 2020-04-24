@@ -27,9 +27,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
@@ -44,18 +42,13 @@ func handle(ctx context.Context, event events.SQSEvent) error {
 
 func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error) {
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
+
+	sqsMessageCount := 0
+
 	defer func() {
-		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
+		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	messages := make([]string, len(event.Records))
-	for i, record := range event.Records {
-		messages[i] = record.Body
-	}
-	dataStreams, err := sources.ReadSnsMessages(messages)
-	if err != nil {
-		return err
-	}
-	err = processor.Process(dataStreams, destinations.CreateDestination())
+	sqsMessageCount, err = processor.StreamEvents(operation.StartTime, event)
 	return err
 }

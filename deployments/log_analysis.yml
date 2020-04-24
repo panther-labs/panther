@@ -270,7 +270,7 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: 360 # Should match lambda
+      VisibilityTimeout: 900 # Should match log processor lambda
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
         maxReceiveCount: 10
@@ -310,7 +310,8 @@ Resources:
       #
       # Failure Impact
       # * Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
-      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
+      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be
+      # * re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
       # * There is the possibility of duplicate data ingested if the failures had partial results.
       # </cfndoc>
       Description: Downloads security logs from S3 for Panther analysis
@@ -319,12 +320,15 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: !Ref LogProcessorLambdaMemorySize
       Runtime: go1.x
-      Timeout: 360
+      Timeout: 900 # needs to match q visibility timeout!
+      ReservedConcurrentExecutions: 20 # FIXME: pass this in from panther_config.yml
       Environment:
         Variables:
           DEBUG: !Ref Debug
           S3_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
+          SQS_QUEUE_URL: !Ref LogProcessorQueue
+          TIME_LIMIT_SEC: '900' # pass down to lambda (odd this is not part of standard env vars)
       Events:
         Queue:
           Type: SQS
@@ -621,7 +625,7 @@ Resources:
           S3_BUCKET: !Ref ProcessedDataBucket
           NOTIFICATIONS_TOPIC: !Ref ProcessedDataTopicArn
           ALERTS_DEDUP_TABLE: !Ref AlertsDedup
-      MemorySize: 512
+      MemorySize: !Ref LogProcessorLambdaMemorySize # keep this the same as log processor since it has to read the output files
       Events:
         Queue:
           Type: SQS
