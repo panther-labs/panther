@@ -27,7 +27,7 @@ const ColumnList: React.FC = () => {
 
   return (
     <React.Fragment>
-      <Flex align="center" mx={2} is="li">
+      <Flex align="center" mx={2} as="li">
         <IconButton
           variant="default"
           onClick={() => dispatch({ type: 'SELECT_TABLE', payload: { table: null } })}
@@ -38,7 +38,7 @@ const ColumnList: React.FC = () => {
           {selectedTable}
         </Text>
       </Flex>
-      <Box overflowY="scroll" is="ul" py={2} height="100%">
+      <Box overflowY="scroll" as="ul" py={2} height="100%">
         {data?.getLogDatabaseTable?.columns
           .filter(({ name }) => name.includes(searchValue))
           .map(({ name, type, description }) => {

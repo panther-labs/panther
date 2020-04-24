@@ -36,8 +36,8 @@ const HistoricalSearchNavigation: React.FC = () => {
       <Heading size="medium" textAlign="center" mt={10} mb={5}>
         <b>HISTORICAL SEARCH</b>
       </Heading>
-      <Flex direction="column" is="ul">
-        <Flex is="li">
+      <Flex direction="column" as="ul">
+        <Flex as="li">
           <NavLink icon="search" to={urls.historicalSearch.sqlShell()} label="SQL Shell" />
         </Flex>
       </Flex>

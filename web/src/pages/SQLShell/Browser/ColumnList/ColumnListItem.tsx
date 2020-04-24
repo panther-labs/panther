@@ -32,13 +32,13 @@ const ColumnListItem: React.FC<ColumnListItemProps> = ({
   }
 
   return (
-    <Box is="li" key={name} mx={6}>
+    <Box as="li" key={name} mx={6}>
       <Text
         width="100%"
         p={2}
         size="medium"
         color={columnNameColor}
-        is="button"
+        as="button"
         cursor="pointer"
         outline="none"
         textAlign="left"
@@ -56,7 +56,7 @@ const ColumnListItem: React.FC<ColumnListItemProps> = ({
         <Flex align="center">
           {name}
           <Text
-            is="span"
+            as="span"
             fontStyle="italic"
             size="medium"
             fontWeight="bold"
@@ -68,7 +68,7 @@ const ColumnListItem: React.FC<ColumnListItemProps> = ({
           </Text>
         </Flex>
         {isSelected && (
-          <Text size="small" color="grey500" mt={2} is="p">
+          <Text size="small" color="grey500" mt={2} as="p">
             {description || 'No description available'}
           </Text>
         )}

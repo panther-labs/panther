@@ -11,7 +11,7 @@ const TableListItem: React.FC<TableListItemProps> = ({ name, onClick }) => {
   const theme = useTheme();
   return (
     <Box
-      is="li"
+      as="li"
       key={name}
       borderTop="1px solid"
       borderColor="grey50"
@@ -34,7 +34,7 @@ const TableListItem: React.FC<TableListItemProps> = ({ name, onClick }) => {
         width="100%"
         size="medium"
         color="grey500"
-        is="button"
+        as="button"
         cursor="pointer"
         outline="none"
         textAlign="left"

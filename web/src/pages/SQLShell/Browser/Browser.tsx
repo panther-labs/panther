@@ -13,14 +13,14 @@ const Browser: React.FC = () => {
   } = useSQLShellContext();
 
   return (
-    <Card height={507} is="aside" overflow="hidden">
+    <Card height={507} as="aside" overflow="hidden">
       <ErrorBoundary>
         <Flex direction="column" height="100%">
-          <Box is="header" p={6}>
-            <Box mb={4} is="section">
+          <Box as="header" p={6}>
+            <Box mb={4} as="section">
               <DatabaseSelector />
             </Box>
-            <Box is="section">
+            <Box as="section">
               <Search />
             </Box>
           </Box>

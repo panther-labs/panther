@@ -16,7 +16,7 @@ const SQLShellPage: React.FC = () => {
         <Text
           size="large"
           color="red300"
-          is="p"
+          as="p"
           textAlign="center"
           backgroundColor="red50"
           p={6}

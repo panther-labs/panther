@@ -38,7 +38,7 @@ const TableList: React.FC = () => {
   }
 
   return (
-    <Box overflowY="scroll" is="ul" py={2} height="100%">
+    <Box overflowY="scroll" as="ul" py={2} height="100%">
       {data?.getLogDatabase.tables
         .filter(({ name }) => name.includes(searchValue))
         .map(({ name }) => (
