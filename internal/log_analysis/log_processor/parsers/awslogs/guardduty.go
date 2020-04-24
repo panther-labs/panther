@@ -19,6 +19,8 @@ package awslogs
  */
 
 import (
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -46,10 +48,11 @@ type GuardDuty struct {
 	Title         *string              `json:"title" validate:"required" description:"A short description of the finding."`
 	Description   *string              `json:"description" validate:"required" description:"A long description of the finding."`
 	Service       *GuardDutyService    `json:"service" validate:"required" description:"Additional information about the affected service."`
-
-	// NOTE: added to end of struct to allow expansion later
-	AWSPantherLog
 }
+
+var _ parsers.PantherEventer = (*GuardDuty)(nil)
+
+const TypeGuardDuty = "AWS.GuardDuty"
 
 type GuardDutyService struct {
 	AdditionalInfo *jsoniter.RawMessage `json:"additionalInfo"`
@@ -73,38 +76,28 @@ func (p *GuardDutyParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *GuardDutyParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *GuardDutyParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	event := &GuardDuty{}
-	err := jsoniter.UnmarshalFromString(log, event)
-	if err != nil {
-		return nil, err
-	}
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-	return event.Logs(), nil
+	return parsers.QuickParseJSON(event, log)
 }
 
 // LogType returns the log type supported by this parser
 func (p *GuardDutyParser) LogType() string {
-	return "AWS.GuardDuty"
+	return TypeGuardDuty
 }
-
-func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
-	event.SetCoreFields(p.LogType(), event.UpdatedAt, event)
-
-	// structured (parsed) fields
-	event.AppendAnyAWSARNPtrs(event.Arn)
-	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
-
+func (event *GuardDuty) PantherEvent() (typ string, tm time.Time, fields []parsers.PantherField) {
+	typ = TypeGuardDuty
+	tm = event.CreatedAt.UTC()
 	// polymorphic (unparsed) fields
-	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
+	awsExtractor := &AWSExtractor{}
+	awsExtractor.AppendP(KindAWSARN, event.Arn)
+	awsExtractor.AppendP(KindAWSAccountID, event.AccountID)
 	extract.Extract(event.Resource, awsExtractor)
 	if event.Service != nil {
 		extract.Extract(event.Service.AdditionalInfo, awsExtractor)
 		extract.Extract(event.Service.Action, awsExtractor)
+		fields = append(fields, awsExtractor.Fields...)
 	}
+	return
+
 }

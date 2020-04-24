@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -59,10 +60,9 @@ type VPCFlow struct { // NOTE: since fields are customizable by users, the only 
 	Type          *string `json:"trafficType,omitempty" description:"The type of traffic: IPv4, IPv6, or EFA."`
 	PacketSrcAddr *string `json:"pktSrcAddr,omitempty" description:"The packet-level (original) source IP address of the traffic. Use this field with the srcaddr field to distinguish between the IP address of an intermediate layer through which traffic flows, and the original source IP address of the traffic. For example, when traffic flows through a network interface for a NAT gateway, or where the IP address of a pod in Amazon EKS is different from the IP address of the network interface of the instance node on which the pod is running."`
 	PacketDstAddr *string `json:"pktDstAddr,omitempty" description:"The packet-level (original) destination IP address for the traffic. Use this field with the dstaddr field to distinguish between the IP address of an intermediate layer through which traffic flows, and the final destination IP address of the traffic. For example, when traffic flows through a network interface for a NAT gateway, or where the IP address of a pod in Amazon EKS is different from the IP address of the network interface of the instance node on which the pod is running."`
-
-	// NOTE: added to end of struct to allow expansion later
-	AWSPantherLog
 }
+
+var _ parsers.PantherEventer = (*VPCFlow)(nil)
 
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type VPCFlowParser struct {
@@ -136,10 +136,10 @@ var (
 )
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	if p.columnMap == nil { // must be first log line in file
 		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
-			return []*parsers.PantherLog{}, nil
+			return []*parsers.PantherLogJSON{}, nil
 		}
 		return nil, errors.New("invalid header")
 	}
@@ -150,19 +150,16 @@ func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	}
 
 	event := p.populateEvent(record) // parser should only receive 1 line at a time
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
+	out, err := parsers.RepackJSON(event)
+	if err != nil {
 		return nil, err
 	}
-
-	return event.Logs(), nil
+	return []*parsers.PantherLogJSON{out}, nil
 }
 
 // LogType returns the log type supported by this parser
 func (p *VPCFlowParser) LogType() string {
-	return "AWS.VPCFlow"
+	return TypeVPCFlow
 }
 
 func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
@@ -263,12 +260,15 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 	return event
 }
 
-func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
-	event.SetCoreFields(p.LogType(), event.Start, event)
-	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
-	event.AppendAnyAWSInstanceIdPtrs(event.InstanceID)
-	event.AppendAnyIPAddressPtr(event.SrcAddr)
-	event.AppendAnyIPAddressPtr(event.DstAddr)
-	event.AppendAnyIPAddressPtr(event.PacketSrcAddr)
-	event.AppendAnyIPAddressPtr(event.PacketDstAddr)
+const TypeVPCFlow = "AWS.VPCFlow"
+
+func (event *VPCFlow) PantherEvent() (typ string, tm time.Time, fields []parsers.PantherField) {
+	return TypeVPCFlow, event.Start.UTC(), []parsers.PantherField{
+		KindAWSAccountID.FieldP(event.AccountID),
+		KindAWSInstanceID.FieldP(event.InstanceID),
+		parsers.KindIPAddress.FieldP(event.SrcAddr),
+		parsers.KindIPAddress.FieldP(event.DstAddr),
+		parsers.KindIPAddress.FieldP(event.PacketSrcAddr),
+		parsers.KindIPAddress.FieldP(event.PacketDstAddr),
+	}
 }

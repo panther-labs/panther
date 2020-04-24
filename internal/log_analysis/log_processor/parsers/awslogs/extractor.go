@@ -22,16 +22,13 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/tidwall/gjson"
 )
 
 // extracts useful AWS features that can be detected generically (w/context)
 type AWSExtractor struct {
-	pl *AWSPantherLog
-}
-
-func NewAWSExtractor(pl *AWSPantherLog) *AWSExtractor {
-	return &AWSExtractor{pl: pl}
+	parsers.PantherFields
 }
 
 func (e *AWSExtractor) Extract(key, value gjson.Result) {
@@ -49,9 +46,9 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 		*/
 		parsedARN, err := arn.Parse(value.Str)
 		if err == nil {
-			e.pl.AppendAnyAWSARNs(value.Str)
+			e.Append(KindAWSARN, value.Str)
 			if len(parsedARN.AccountID) == 12 {
-				e.pl.AppendAnyAWSAccountIds(parsedARN.AccountID)
+				e.Append(KindAWSAccountID, parsedARN.AccountID)
 			}
 			// instanceId: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policy-structure.html#EC2_ARN_Format
 			if strings.HasPrefix(parsedARN.Resource, "instance/") {
@@ -59,7 +56,7 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 				if slashIndex < len(parsedARN.Resource)-2 { // not if ends in "/"
 					instanceID := parsedARN.Resource[slashIndex+1:]
 					if strings.HasPrefix(instanceID, "i-") {
-						e.pl.AppendAnyAWSInstanceIds(instanceID)
+						e.Append(KindAWSInstanceID, instanceID)
 					}
 				}
 			}
@@ -70,14 +67,14 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 	// key based matching (not exact)
 	if key.Str == "instanceId" || strings.HasSuffix(key.Str, "InstanceId") {
 		if strings.HasPrefix(value.Str, "i-") {
-			e.pl.AppendAnyAWSInstanceIds(value.Str)
+			e.Append(KindAWSInstanceID, value.Str)
 		}
 		return
 	}
 
 	if key.Str == "accountId" || strings.HasSuffix(key.Str, "AccountId") {
 		if len(value.Str) == 12 { // account ids are always 12 digits
-			e.pl.AppendAnyAWSAccountIds(value.Str)
+			e.Append(KindAWSAccountID, value.Str)
 		}
 		return
 	}
@@ -90,7 +87,8 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 				tagKey := tagListValue.Get("key")
 				tagValue := tagListValue.Get("value")
 				if tagKey.Exists() && tagValue.Exists() {
-					e.pl.AppendAnyAWSTags(tagKey.Str + ":" + tagValue.Str)
+					tag := tagKey.Str + ":" + tagValue.Str
+					e.Append(KindAWSTag, tag)
 				}
 				return true
 			})
@@ -99,7 +97,7 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 	case "ipv6Addresses": // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		if value.IsArray() {
 			value.ForEach(func(v6ListKey, v6ListValue gjson.Result) bool {
-				e.pl.AppendAnyIPAddress(v6ListValue.Str)
+				e.AppendIP(v6ListValue.Str)
 				return true
 			})
 		}
@@ -108,12 +106,12 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 		"publicIp",         // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		"privateIpAddress", // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		"ipAddressV4":      // found in GuardDuty findings
-		e.pl.AppendAnyIPAddress(value.Str)
+		e.AppendIP(value.Str)
 
 	case
 		"publicDnsName",  // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		"privateDnsName", // found in instanceDetails in CloudTrail and GuardDuty (perhaps others)
 		"domain":         // found in GuardDuty findings
-		e.pl.AppendAnyDomainNames(value.Str)
+		e.Append(parsers.KindDomainName, value.Str)
 	}
 }

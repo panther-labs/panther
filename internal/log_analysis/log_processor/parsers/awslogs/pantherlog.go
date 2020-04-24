@@ -18,7 +18,11 @@ package awslogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+import (
+	"time"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
 
 // nolint(lll)
 type AWSPantherLog struct {
@@ -28,6 +32,42 @@ type AWSPantherLog struct {
 	PantherAnyAWSInstanceIds *parsers.PantherAnyString `json:"p_any_aws_instance_ids,omitempty" description:"Panther added field with collection of aws instance ids associated with the row"`
 	PantherAnyAWSARNs        *parsers.PantherAnyString `json:"p_any_aws_arns,omitempty" description:"Panther added field with collection of aws arns associated with the row"`
 	PantherAnyAWSTags        *parsers.PantherAnyString `json:"p_any_aws_tags,omitempty" description:"Panther added field with collection of aws tags associated with the row"`
+}
+
+const (
+	_ parsers.PantherFieldKind = iota + 999
+	KindAWSARN
+	KindAWSAccountID
+	KindAWSInstanceID
+	KindAWSTag
+)
+
+func init() {
+	parsers.RegisterPantherLogPrefix("AWS", func(typ string, tm time.Time, fields ...parsers.PantherField) interface{} {
+		p := parsers.NewPantherLog(typ, tm)
+		ap := AWSPantherLog{
+			PantherLog: *p,
+		}
+		ap.SetFields(fields...)
+		return &ap
+	})
+}
+
+func (pl *AWSPantherLog) SetFields(fields ...parsers.PantherField) {
+	for _, field := range fields {
+		switch field.Kind {
+		case KindAWSARN:
+			pl.AppendAnyAWSARNs(field.Value)
+		case KindAWSAccountID:
+			pl.AppendAnyAWSAccountIds(field.Value)
+		case KindAWSInstanceID:
+			pl.AppendAnyAWSInstanceIds(field.Value)
+		case KindAWSTag:
+			pl.AppendAnyAWSTags(field.Value)
+		default:
+			pl.PantherLog.SetFields(field)
+		}
+	}
 }
 
 func (pl *AWSPantherLog) AppendAnyAWSAccountIdPtrs(values ...*string) { // nolint

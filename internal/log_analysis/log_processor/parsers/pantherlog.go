@@ -24,6 +24,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -167,6 +168,39 @@ const (
 type PantherField struct {
 	Kind  PantherFieldKind
 	Value string
+}
+type PantherFields struct {
+	Fields []PantherField
+}
+
+func (pfs *PantherFields) AppendIP(addr string) {
+	if net.ParseIP(addr) != nil {
+		pfs.Fields = append(pfs.Fields, KindDomainName.Field(addr))
+	}
+}
+
+func (pfs *PantherFields) Append(kind PantherFieldKind, values ...string) {
+	for _, value := range values {
+		pfs.Fields = append(pfs.Fields, kind.Field(value))
+	}
+}
+func (pfs *PantherFields) AppendP(kind PantherFieldKind, values ...*string) {
+	for _, value := range values {
+		pfs.Fields = append(pfs.Fields, kind.FieldP(value))
+	}
+}
+
+func (kind PantherFieldKind) Field(value string) PantherField {
+	return PantherField{
+		Kind:  kind,
+		Value: value,
+	}
+}
+func (kind PantherFieldKind) FieldP(value *string) PantherField {
+	return PantherField{
+		Kind:  kind,
+		Value: strValue(value),
+	}
 }
 
 func strValue(s *string) string {
@@ -362,6 +396,20 @@ func QuickParseJSON(event PantherEventer, src string) ([]*PantherLogJSON, error)
 	return PackEvents(event)
 }
 
+func PackEventsCustom(events ...PantherEventer) ([]*PantherLogJSON, error) {
+	packedEvents := make([]*PantherLogJSON, 0, len(events))
+	for _, event := range events {
+		if event == nil {
+			continue
+		}
+		packed, err := RepackJSON(event)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to pack event: %s", err)
+		}
+		packedEvents = append(packedEvents, packed)
+	}
+	return packedEvents, nil
+}
 func PackEvents(events ...PantherEventer) ([]*PantherLogJSON, error) {
 	packedEvents := make([]*PantherLogJSON, 0, len(events))
 	for _, event := range events {
@@ -411,6 +459,26 @@ func ComposeStruct(values ...interface{}) (reflect.Value, error) {
 	return dynValue, nil
 }
 
+var pantherLogRegistry = map[string]PantherLogFactory{}
+
+// RegisterPantherLogPrefix registers custom panther log types for a log type prefix
+//
+// The function is *not* thread safe and it's meant to be called in an `init()` block
+func RegisterPantherLogPrefix(name string, factory PantherLogFactory) {
+	if _, duplicate := pantherLogRegistry[name]; duplicate {
+		panic("pantherlog already registered")
+	}
+	pantherLogRegistry[name] = factory
+}
+
+func init() {
+	RegisterPantherLogPrefix("default", func(typ string, tm time.Time, fields ...PantherField) interface{} {
+		return NewPantherLog(typ, tm, fields...)
+	})
+}
+
+type PantherLogFactory func(logType string, tm time.Time, fields ...PantherField) interface{}
+
 func RepackJSON(event PantherEventer) (*PantherLogJSON, error) {
 	if event == nil {
 		return nil, fmt.Errorf("Nil event")
@@ -423,7 +491,12 @@ func RepackJSON(event PantherEventer) (*PantherLogJSON, error) {
 	// if eventValue.Kind() != reflect.Struct {
 	// 	return nil, fmt.Errorf("Invalid event value %s", eventValue.Type())
 	// }
-	p := NewPantherLog(logType, tm, pantherFields...)
+	prefix := LogTypePrefix(logType)
+	factory, ok := pantherLogRegistry[prefix]
+	if !ok {
+		factory = pantherLogRegistry["default"]
+	}
+	p := factory(logType, tm, pantherFields...)
 	if err := Validator.Struct(p); err != nil {
 		return nil, err
 	}
@@ -459,4 +532,11 @@ func RepackJSON(event PantherEventer) (*PantherLogJSON, error) {
 		JSON:      data,
 	}, nil
 
+}
+
+func LogTypePrefix(logType string) string {
+	if pos := strings.IndexByte(logType, '.'); 0 <= pos && pos < len(logType) {
+		return logType[:pos]
+	}
+	return ""
 }

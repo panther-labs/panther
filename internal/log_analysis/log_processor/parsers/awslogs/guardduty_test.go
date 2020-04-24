@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -62,16 +63,12 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 			Count:          aws.Int(20),
 		},
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.GuardDuty")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
-	expectedEvent.AppendAnyIPAddress("198.51.100.0")
-	expectedEvent.AppendAnyAWSAccountIds("123456789012")
-	// nolint(lll)
-	expectedEvent.AppendAnyAWSARNs("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b")
-
-	checkGuardDutyLog(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeGuardDuty, expectedDate,
+		parsers.KindIPAddress.Field("198.51.100.0"),
+		KindAWSAccountID.Field("123456789012"),
+		KindAWSARN.Field("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &GuardDutyParser{}, expectedEvent)
 }
 
 func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
@@ -79,7 +76,7 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 	log := `{"schemaVersion":"2.0","accountId":"123456789012","region":"eu-west-1","partition":"aws","id":"96b7c4e9781a57ad76e82080578d7d56","arn":"arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56","type":"Trojan:EC2/DGADomainRequest.B","resource":{"resourceType":"Instance","instanceDetails":{"instanceId":"i-99999999","instanceType":"m3.xlarge","launchTime":"2018-08-26T14:17:23Z","instanceState":"running","availabilityZone":"GeneratedFindingInstaceAvailabilityZone","imageId":"ami-99999999","imageDescription":"GeneratedFindingInstaceImageDescription"}},"service":{"serviceName":"guardduty","detectorId":"b2b7c4e8df224d1b74bece34cc2cf1d5","action":{"actionType":"DNS_REQUEST","dnsRequestAction":{"domain":"GeneratedFindingDomainName","protocol":"0","blocked":true}},"resourceRole":"ACTOR","additionalInfo":{"domain":"GeneratedFindingAdditionalDomainName","sample":true},"eventFirstSeen":"2018-08-26T14:17:23.000Z","eventLastSeen":"2018-08-26T14:17:23.000Z","archived":false,"count":18},"severity":8,"createdAt":"2018-08-26T14:17:23.000Z","updatedAt":"2018-08-26T14:17:23.000Z","title":"DGA domain name queried by EC2 instance i-99999999.","description":"EC2 instance i-99999999 is querying algorithmically generated domains. Such domains are commonly used by malware and could be an indication of a compromised EC2 instance."}`
 
 	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
-	expectedEvent := &GuardDuty{
+	event := &GuardDuty{
 		SchemaVersion: aws.String("2.0"),
 		AccountID:     aws.String("123456789012"),
 		Region:        aws.String("eu-west-1"),
@@ -107,17 +104,15 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 			Count:          aws.Int(18),
 		},
 	}
+	testutil.CheckPantherEvent(t, event, TypeGuardDuty, expectedDate,
+		KindAWSInstanceID.Field("i-99999999"),
+		KindAWSAccountID.Field("123456789012"),
+		parsers.KindDomainName.Field("GeneratedFindingDomainName"),
+		parsers.KindDomainName.Field("GeneratedFindingAdditionalDomainName"),
+		KindAWSARN.Field("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &GuardDutyParser{}, event)
 
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.GuardDuty")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
-	expectedEvent.AppendAnyAWSInstanceIds("i-99999999")
-	expectedEvent.AppendAnyAWSAccountIds("123456789012")
-	expectedEvent.AppendAnyDomainNames("GeneratedFindingDomainName", "GeneratedFindingAdditionalDomainName")
-	// nolint(lll)
-	expectedEvent.AppendAnyAWSARNs("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56") // nolint(lll)
-
-	checkGuardDutyLog(t, log, expectedEvent)
 }
 
 func TestGuardDutyLogSSHBruteForce(t *testing.T) {
@@ -153,22 +148,20 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 			Count:          aws.Int(3),
 		},
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.GuardDuty")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
-	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a")
-	expectedEvent.AppendAnyAWSAccountIds("123456789012")
-	expectedEvent.AppendAnyIPAddress("54.152.215.140")
-	expectedEvent.AppendAnyIPAddress("151.80.19.228")
-	expectedEvent.AppendAnyIPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
-	expectedEvent.AppendAnyIPAddress("172.31.81.237")
-	expectedEvent.AppendAnyAWSTags("tag1:val1")
-	expectedEvent.AppendAnyDomainNames("ec2-54-152-215-140.compute-1.amazonaws.com", "ip-172-31-81-237.ec2.internal")
-	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:instance-profile/EC2Dev",
-		"arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e")
-
-	checkGuardDutyLog(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeGuardDuty, expectedDate,
+		KindAWSInstanceID.Field("i-081de1d7604b11e4a"),
+		KindAWSAccountID.Field("123456789012"),
+		parsers.KindIPAddress.Field("54.152.215.140"),
+		parsers.KindIPAddress.Field("151.80.19.228"),
+		parsers.KindIPAddress.Field("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+		parsers.KindIPAddress.Field("172.31.81.237"),
+		KindAWSTag.Field("tag1:val1"),
+		parsers.KindDomainName.Field("ec2-54-152-215-140.compute-1.amazonaws.com"),
+		parsers.KindDomainName.Field("ip-172-31-81-237.ec2.internal"),
+		KindAWSARN.Field("arn:aws:iam::123456789012:instance-profile/EC2Dev"),
+		KindAWSARN.Field("arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &GuardDutyParser{}, expectedEvent)
 }
 
 func TestGuardDutyLogMissingRequiredField(t *testing.T) {
@@ -181,12 +174,5 @@ func TestGuardDutyLogMissingRequiredField(t *testing.T) {
 
 func TestGuardDutyLogType(t *testing.T) {
 	parser := &GuardDutyParser{}
-	require.Equal(t, "AWS.GuardDuty", parser.LogType())
-}
-
-func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := &GuardDutyParser{}
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	require.Equal(t, TypeGuardDuty, parser.LogType())
 }
