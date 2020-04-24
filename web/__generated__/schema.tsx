@@ -1,21 +1,3 @@
-/**
- * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 export type Maybe<T> = T | null;
 export type RequireFields<T, K extends keyof T> = { [X in Exclude<keyof T, K>]?: T[X] } &
@@ -331,6 +313,7 @@ export type GetLogQueryOutput = {
   __typename?: 'GetLogQueryOutput';
   error?: Maybe<Error>;
   query?: Maybe<LogQueryOutputQueryData>;
+  totalCount?: Maybe<Scalars['Int']>;
   stats?: Maybe<GetLogQueryStats>;
   results?: Maybe<Array<Array<LogColumn>>>;
   pageInfo: PageInfo;
@@ -1703,6 +1686,7 @@ export type GetLogQueryOutputResolvers<
 > = {
   error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
   query?: Resolver<Maybe<ResolversTypes['LogQueryOutputQueryData']>, ParentType, ContextType>;
+  totalCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   stats?: Resolver<Maybe<ResolversTypes['GetLogQueryStats']>, ParentType, ContextType>;
   results?: Resolver<Maybe<Array<Array<ResolversTypes['LogColumn']>>>, ParentType, ContextType>;
   pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;

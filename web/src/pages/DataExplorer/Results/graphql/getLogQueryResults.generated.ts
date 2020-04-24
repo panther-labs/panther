@@ -29,7 +29,7 @@ export type GetLogQueryResultsVariables = {
 };
 
 export type GetLogQueryResults = {
-  getLogQuery: {
+  getLogQuery: Pick<Types.GetLogQueryOutput, 'totalCount'> & {
     error?: Types.Maybe<Pick<Types.Error, 'message'>>;
     query?: Types.Maybe<Pick<Types.LogQueryOutputQueryData, 'status'>>;
     stats?: Types.Maybe<
@@ -43,6 +43,7 @@ export type GetLogQueryResults = {
 export const GetLogQueryResultsDocument = gql`
   query GetLogQueryResults($input: GetLogQueryInput!) {
     getLogQuery(input: $input) {
+      totalCount
       error {
         message
       }

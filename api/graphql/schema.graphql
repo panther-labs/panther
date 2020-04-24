@@ -348,6 +348,7 @@ type GetLogQueryDownloadUrlOutput {
 type GetLogQueryOutput {
   error: Error
   query: LogQueryOutputQueryData
+  totalCount: Int
   stats: GetLogQueryStats
   results: [[LogColumn!]!]
   pageInfo: PageInfo!

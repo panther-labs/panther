@@ -126,10 +126,16 @@ const Results: React.FC = () => {
     [isQuerySuccessful]
   );
 
+  const totalCount = data?.getLogQuery?.totalCount;
+  const results = data?.getLogQuery?.results ?? [];
   return (
-    <Panel title="Results" size="large" actions={downloadButton}>
+    <Panel
+      title={`Results${totalCount ? ` (${totalCount})` : ''}`}
+      size="large"
+      actions={downloadButton}
+    >
       <Box ref={infiniteRef} height="100%">
-        <ResultsTable isFetchingMore={loading} results={data?.getLogQuery?.results ?? []} />
+        <ResultsTable isFetchingMore={loading} results={results} />
       </Box>
     </Panel>
   );
