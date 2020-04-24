@@ -97,8 +97,7 @@ func (event *CloudTrailDigest) updatePantherFields(p *CloudTrailDigestParser) {
 	event.SetCoreFields(p.LogType(), event.DigestEndTime, event)
 	event.AppendAnyAWSAccountIdPtrs(event.AWSAccountID)
 	event.AppendAnySHA256HashesPtr(event.PreviousDigestHashValue)
-	for i := range event.LogFiles {
-		lf := &event.LogFiles[i]
-		event.AppendAnySHA256HashesPtr(lf.HashValue)
+	for _, logFile := range event.LogFiles {
+		event.AppendAnySHA256HashesPtr(logFile.HashValue)
 	}
 }

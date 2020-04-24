@@ -232,21 +232,6 @@ func (pl *PantherLog) AppendAnySHA256HashesPtr(values ...*string) {
 	}
 }
 
-// func (pl *PantherLog) AppendAnyHashes(values ...string) {
-// 	if pl.PantherAnyHashes == nil { // lazy create
-// 		pl.PantherAnyHashes = NewPantherAnyString()
-// 	}
-// 	AppendAnyString(pl.PantherAnyHashes, values...)
-// }
-
-// func (pl *PantherLog) AppendAnyHashesPtr(values ...*string) {
-// 	for _, value := range values {
-// 		if value != nil {
-// 			pl.AppendAnyHashes(*value)
-// 		}
-// 	}
-// }
-
 func AppendAnyString(any *PantherAnyString, values ...string) {
 	// add new if not present
 	for _, v := range values {
