@@ -99,7 +99,7 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
             </Table.Cell>
             <Table.Cell maxWidth={450} wrapText="wrap">
               <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
-                {rule.id}
+                {rule.displayName || rule.id}
               </Link>
             </Table.Cell>
             <Table.Cell maxWidth={225} truncated>
