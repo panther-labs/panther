@@ -17,7 +17,6 @@
  */
 
 import dayjs from 'dayjs';
-import * as React from 'react';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
@@ -35,7 +34,6 @@ import {
 } from 'Source/constants';
 import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
-import { Box, ColumnProps, Label } from 'pouncejs';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
 
@@ -68,23 +66,6 @@ export const isGuid = (str: string) =>
  * caps the first letter of a string
  */
 export const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
-
-/* eslint-disable react/display-name */
-export const generateEnumerationColumn = (startIndex = 0) => {
-  const enumerationColumn: ColumnProps<{}> = {
-    key: 'enumeration',
-    flex: '0 1 auto',
-    renderColumnHeader: () => <Box ml={2} width={20} />,
-    renderCell: (item: any, index: number) => (
-      <Label size="medium" ml={2} minWidth={20}>
-        {startIndex + index + 1}
-      </Label>
-    ),
-  };
-
-  return enumerationColumn;
-};
-/* eslint-enable react/display-name */
 
 /**
  * Given a server-received DateTime string, creates a proper display text for it. We manually

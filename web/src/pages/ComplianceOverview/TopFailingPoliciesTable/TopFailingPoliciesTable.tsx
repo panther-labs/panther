@@ -16,45 +16,42 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { Box, Label, Link, Table } from 'pouncejs';
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
+import SeverityBadge from 'Components/SeverityBadge';
 import React from 'react';
-import { Label, Table } from 'pouncejs';
-import dayjs from 'dayjs';
-import { ListUsers } from 'Pages/Users/ListUsers/graphql/listUsers.generated';
-import ListUsersTableRowOptions from './ListUsersTableRowOptions';
+import { GetOrganizationStats } from 'Pages/ComplianceOverview/graphql/getOrganizationStats.generated';
 
-type ListUsersTableProps = Pick<ListUsers, 'users'>;
+interface TopFailingPoliciesTableProps {
+  policies: GetOrganizationStats['organizationStats']['topFailingPolicies'];
+}
 
-const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
+const TopFailingPoliciesTable: React.FC<TopFailingPoliciesTableProps> = ({ policies }) => {
   return (
     <Table>
       <Table.Head>
         <Table.Row>
           <Table.HeaderCell />
-          <Table.HeaderCell>Name</Table.HeaderCell>
-          <Table.HeaderCell>Email</Table.HeaderCell>
-          <Table.HeaderCell>Role</Table.HeaderCell>
-          <Table.HeaderCell>Invited At</Table.HeaderCell>
-          <Table.HeaderCell>Status</Table.HeaderCell>
-          <Table.HeaderCell />
+          <Table.HeaderCell>Policy</Table.HeaderCell>
+          <Table.HeaderCell>Severity</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {users.map((user, index) => (
-          <Table.Row key={user.id}>
+        {policies.map((policy, index) => (
+          <Table.Row key={policy.id}>
             <Table.Cell>
               <Label size="medium">{index + 1}</Label>
             </Table.Cell>
             <Table.Cell>
-              {user.givenName} {user.familyName}
+              <Link as={RRLink} to={urls.compliance.policies.details(policy.id)} py={4} pr={4}>
+                {policy.id}
+              </Link>
             </Table.Cell>
-            <Table.Cell>{user.email}</Table.Cell>
-            <Table.Cell>Admin</Table.Cell>
             <Table.Cell>
-              {dayjs(user.createdAt * 1000).format('MM/DD/YYYY, HH:mm G[M]TZZ')}
-            </Table.Cell>
-            <Table.Cell>{user.status}</Table.Cell>
-            <Table.Cell>
-              <ListUsersTableRowOptions user={user} />
+              <Box m={-1}>
+                <SeverityBadge severity={policy.severity} />
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}
@@ -63,4 +60,4 @@ const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
   );
 };
 
-export default React.memo(ListUsersTable);
+export default TopFailingPoliciesTable;
