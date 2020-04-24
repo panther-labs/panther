@@ -104,18 +104,30 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
     cols.reduce((acc, col) => ({ ...acc, [col.key]: col.value }), {})
   );
 
-  // Dynamically create column headers and keys.
-  const columns =
-    results[0]?.map(col => ({
-      key: col.key,
-      header: col.key,
-    })) ?? [];
-
   // Render a table and the "fetching more" placeholder. This is different than "loading" or the
   // "running" state. It has to be handled through a separate prop
   return (
     <Box overflowX="scroll">
-      <Table items={items} columns={columns} />
+      <Table size="small">
+        <Table.Head>
+          <Table.Row>
+            {Object.keys(items[0] ?? {}).map(key => (
+              <Table.HeaderCell key={key}>{key}</Table.HeaderCell>
+            ))}
+          </Table.Row>
+        </Table.Head>
+        <Table.Body>
+          {items.map((item, index) => (
+            <Table.Row key={index}>
+              {Object.values(item).map(val => (
+                <Table.Cell key={`${index}-${val}`} wrapText="nowrap">
+                  {val}
+                </Table.Cell>
+              ))}
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
       {isFetchingMore && (
         <Box mt={8}>
           <TablePlaceholder rowCount={10} />
