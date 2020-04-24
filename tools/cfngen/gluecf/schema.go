@@ -244,7 +244,38 @@ func toGlueType(t reflect.Type) (glueType string) {
 	case "uint64":
 		glueType = "bigint" // Athena doesn't have an unsigned integer type
 	default:
-		panic("Cannot map " + t.String())
+		// Handle enums and named types.
+		// FIXME: [athena-schema] Probably best to replace the string-based comparison with `reflect.Kind` to allow custom enum values
+		switch t.Kind() {
+		case reflect.String:
+			glueType = "string"
+		case reflect.Int:
+			// int is problematic due to definition (at least 32bits ...)
+			switch strconv.IntSize {
+			case 32:
+				glueType = "int"
+			case 64:
+				glueType = "bigint"
+			default:
+				panic(fmt.Sprintf("Size of native int unexpected: %d", strconv.IntSize))
+			}
+		case reflect.Int32, reflect.Uint16:
+			glueType = "int"
+		case reflect.Int64, reflect.Uint64, reflect.Uint32:
+			glueType = "bigint"
+		case reflect.Float32:
+			glueType = "float"
+		case reflect.Float64:
+			glueType = "double"
+		case reflect.Int8:
+			glueType = "tinyint"
+		case reflect.Uint8, reflect.Int16:
+			glueType = "smallint"
+		case reflect.Interface:
+			glueType = "string"
+		default:
+			panic("Cannot map " + t.String())
+		}
 	}
 
 	return glueType

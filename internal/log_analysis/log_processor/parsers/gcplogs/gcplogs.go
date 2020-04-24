@@ -1,6 +1,26 @@
 package gcplogs
 
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import (
+	"strings"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -10,7 +30,7 @@ import (
 // nolint:lll
 type LogEntry struct {
 	LogName          *string                 `json:"logName" validate:"required" description:"The resource name of the log to which this log entry belongs."`
-	Severity         LogSeverity             `json:"severity,omitempty" description:"The severity of the log entry. The default value is LogSeverity.DEFAULT."`
+	Severity         *LogSeverity            `json:"severity,omitempty" description:"The severity of the log entry. The default value is LogSeverity.DEFAULT."`
 	InsertID         *string                 `json:"insertId,omitempty" description:"A unique identifier for the log entry."`
 	Resource         MonitoredResource       `json:"resource" validate:"required" description:"The monitored resource that produced this log entry."`
 	Timestamp        *timestamp.RFC3339      `json:"timestamp,omitempty" description:"The time the event described by the log entry occurred."`
@@ -22,6 +42,20 @@ type LogEntry struct {
 	SpanID           *string                 `json:"spanId,omitempty" description:"The span ID within the trace associated with the log entry."`
 	TraceSampled     *bool                   `json:"traceSampled,omitempty" description:"The sampling decision of the trace associated with the log entry."`
 	SourceLocation   *LogEntrySourceLocation `json:"sourceLocation,omitempty" description:"Source code location information associated with the log entry, if any."`
+}
+
+func (entry *LogEntry) LogID() string {
+	if entry == nil {
+		return ""
+	}
+	if entry.LogName == nil {
+		return ""
+	}
+	name := *entry.LogName
+	if pos := strings.LastIndexByte(name, '/'); 0 <= pos && pos < len(name) {
+		return name[pos+1:]
+	}
+	return ""
 }
 
 type MonitoredResource struct {

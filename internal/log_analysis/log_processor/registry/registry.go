@@ -23,6 +23,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gcplogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
@@ -94,6 +95,21 @@ var (
 			&awslogs.CloudTrailInsight{}, awslogs.CloudTrailInsightDesc),
 		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
 			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
+		gcplogs.TypeAuditLogActivity: DefaultLogParser(
+			gcplogs.NewAuditLogActivityParser(),
+			&gcplogs.LogEntryAuditLog{},
+			gcplogs.AuditLogActivityDesc,
+		),
+		gcplogs.TypeAuditLogSystem: DefaultLogParser(
+			gcplogs.NewAuditLogSystemParser(),
+			&gcplogs.LogEntryAuditLog{},
+			gcplogs.AuditLogSystemDesc,
+		),
+		gcplogs.TypeAuditLogData: DefaultLogParser(
+			gcplogs.NewAuditLogDataParser(),
+			&gcplogs.LogEntryAuditLog{},
+			gcplogs.AuditLogDataDesc,
+		),
 	}
 )
 
