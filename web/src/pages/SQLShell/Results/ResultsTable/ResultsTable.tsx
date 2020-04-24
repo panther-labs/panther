@@ -6,6 +6,7 @@ import { GetLogQueryOutput } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { useSQLShellContext } from 'Pages/SQLShell/SQLShellContext';
 import dayjs from 'dayjs';
+import { isNumber } from 'Helpers/utils';
 
 export interface ResultsTableProps {
   isFetchingMore: boolean;
@@ -97,13 +98,6 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
     );
   }
 
-  // Converts list of lists of {key,value} to a single flattened list with all column keys
-  // merged into a single object. I.e. [[{key: 'x', value: '1 },{key: 'y', value: '2 }]]
-  // would become [{ x: '1', y: '2'}]
-  const items = results.map(cols =>
-    cols.reduce((acc, col) => ({ ...acc, [col.key]: col.value }), {})
-  );
-
   // Render a table and the "fetching more" placeholder. This is different than "loading" or the
   // "running" state. It has to be handled through a separate prop
   return (
@@ -111,17 +105,23 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
       <Table size="small">
         <Table.Head>
           <Table.Row>
-            {Object.keys(items[0] ?? {}).map(key => (
-              <Table.HeaderCell key={key}>{key}</Table.HeaderCell>
+            {results[0].map(col => (
+              <Table.HeaderCell key={col.key} align={isNumber(col.value) ? 'right' : 'left'}>
+                {col.key}
+              </Table.HeaderCell>
             ))}
           </Table.Row>
         </Table.Head>
         <Table.Body>
-          {items.map((item, index) => (
+          {results.map((row, index) => (
             <Table.Row key={index}>
-              {Object.values(item).map(val => (
-                <Table.Cell key={`${index}-${val}`} wrapText="nowrap">
-                  {val}
+              {row.map(col => (
+                <Table.Cell
+                  key={`${index}-${col.value}`}
+                  wrapText="nowrap"
+                  align={isNumber(col.value) ? 'right' : 'left'}
+                >
+                  {col.value}
                 </Table.Cell>
               ))}
             </Table.Row>
