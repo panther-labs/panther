@@ -89,7 +89,7 @@
     "webpack-manifest-plugin": "^2.2.0"
   },
   "dependencies": {
-    "@apollo/client": "^3.0.0-beta.31",
+    "@apollo/client": "3.0.0-beta.41",
     "@sentry/browser": "^5.12.1",
     "apollo-link-error": "^1.1.12",
     "aws-amplify": "^2.2.2",
