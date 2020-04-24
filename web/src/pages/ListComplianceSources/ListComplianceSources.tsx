@@ -17,17 +17,16 @@
  */
 
 import React from 'react';
-import { ComplianceIntegration } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Card, Flex, Icon, Table } from 'pouncejs';
+import { Alert, Box, Button, Card, Flex, Icon } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import columns from './columns';
 import { useListComplianceSources } from './graphql/listComplianceSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
+import ComplianceSourceTable from './ComplianceSourceTable';
 
 const ListComplianceSources = () => {
   const { loading, error, data } = useListComplianceSources();
@@ -72,11 +71,7 @@ const ListComplianceSources = () => {
         }
       >
         <ErrorBoundary>
-          <Table<ComplianceIntegration>
-            items={data.listComplianceIntegrations}
-            getItemKey={item => item.integrationId}
-            columns={columns}
-          />
+          <ComplianceSourceTable sources={data.listComplianceIntegrations} />
         </ErrorBoundary>
       </Panel>
     </Box>

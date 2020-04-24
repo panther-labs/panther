@@ -70,6 +70,9 @@ resource "aws_iam_policy" "deployment" {
           "logs:*",
           "sns:List*",
           "sqs:List*",
+          "states:CreateStateMachine",
+          "states:TagResource",
+          "states:UntagResource",
         ],
         Resource : "*"
       },
@@ -77,15 +80,15 @@ resource "aws_iam_policy" "deployment" {
         Effect : "Allow",
         Action : "cloudformation:*",
         Resource : [
-          "arn:${var.aws_partition}:cloudformation:${var.aws_region}:${var.aws_account_id}:stack/panther-*",
-          "arn:${var.aws_partition}:cloudformation:${var.aws_region}:${var.aws_account_id}:stackset/panther-*",
-          "arn:${var.aws_partition}:cloudformation:${var.aws_region}:aws:transform/Serverless-2016-10-31",
+          "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stack/panther-*",
+          "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stackset/panther-*",
+          "arn:${var.aws_partition}:cloudformation:*:aws:transform/Serverless-2016-10-31",
         ]
       },
       {
         Effect : "Allow",
         Action : "dynamodb:*",
-        Resource : "arn:${var.aws_partition}:dynamodb:${var.aws_region}:${var.aws_account_id}:table/panther-*"
+        Resource : "arn:${var.aws_partition}:dynamodb:*:${var.aws_account_id}:table/panther-*"
       },
       {
         Effect : "Allow",
@@ -131,12 +134,12 @@ resource "aws_iam_policy" "deployment" {
       {
         Effect : "Allow",
         Action : "ecr:*",
-        Resource : "arn:${var.aws_partition}:ecr:${var.aws_region}:${var.aws_account_id}:repository/panther-*"
+        Resource : "arn:${var.aws_partition}:ecr:*:${var.aws_account_id}:repository/panther-*"
       },
       {
         Effect : "Allow",
         Action : "execute-api:Invoke",
-        Resource : "arn:${var.aws_partition}:execute-api:${var.aws_region}:${var.aws_account_id}:*"
+        Resource : "arn:${var.aws_partition}:execute-api:*:${var.aws_account_id}:*"
       },
       {
         Effect : "Allow",
@@ -151,17 +154,17 @@ resource "aws_iam_policy" "deployment" {
         Effect : "Allow",
         Action : "kms:*",
         Resource : [
-          "arn:${var.aws_partition}:kms:${var.aws_region}:${var.aws_account_id}:alias/panther-*",
-          "arn:${var.aws_partition}:kms:${var.aws_region}:${var.aws_account_id}:key/*"
+          "arn:${var.aws_partition}:kms:*:${var.aws_account_id}:alias/panther-*",
+          "arn:${var.aws_partition}:kms:*:${var.aws_account_id}:key/*"
         ]
       },
       {
         Effect : "Allow",
         Action : "lambda:*",
         Resource : [
-          "arn:${var.aws_partition}:lambda:${var.aws_region}:${var.aws_account_id}:event-source-mapping:*",
-          "arn:${var.aws_partition}:lambda:${var.aws_region}:${var.aws_account_id}:function:panther-*",
-          "arn:${var.aws_partition}:lambda:${var.aws_region}:${var.aws_account_id}:layer:panther-*",
+          "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:event-source-mapping:*",
+          "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:function:panther-*",
+          "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:layer:panther-*",
         ]
       },
       {
@@ -172,12 +175,21 @@ resource "aws_iam_policy" "deployment" {
       {
         Effect : "Allow",
         Action : "sns:*",
-        Resource : "arn:${var.aws_partition}:sns:${var.aws_region}:${var.aws_account_id}:panther-*",
+        Resource : "arn:${var.aws_partition}:sns:*:${var.aws_account_id}:panther-*",
       },
       {
         Effect : "Allow",
         Action : "sqs:*",
-        Resource : "arn:${var.aws_partition}:sqs:${var.aws_region}:${var.aws_account_id}:panther-*",
+        Resource : "arn:${var.aws_partition}:sqs:*:${var.aws_account_id}:panther-*",
+      },
+      {
+        Effect : "Allow",
+        Action : "states:*",
+        Resource : [
+          "arn:${var.aws_partition}:states:*:${var.aws_account_id}:activity:panther-*",
+          "arn:${var.aws_partition}:states:*:${var.aws_account_id}:execution:panther-*:*",
+          "arn:${var.aws_partition}:states:*:${var.aws_account_id}:stateMachine:panther-*",
+        ]
       }
     ]
   })

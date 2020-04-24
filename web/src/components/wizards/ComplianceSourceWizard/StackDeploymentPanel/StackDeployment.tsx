@@ -28,7 +28,7 @@ const StackDeployment: React.FC = () => {
   const { data, loading, error } = useGetComplianceCfnTemplate({
     variables: {
       input: {
-        awsAccountId: values.awsAccountId,
+        awsAccountId: process.env.AWS_ACCOUNT_ID,
         integrationLabel: values.integrationLabel,
         remediationEnabled: values.remediationEnabled,
         cweEnabled: values.cweEnabled,

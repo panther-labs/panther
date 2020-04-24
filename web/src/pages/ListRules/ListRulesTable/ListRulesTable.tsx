@@ -17,20 +17,17 @@
  */
 
 import React from 'react';
-import {
-  ListRulesInput,
-  ListRulesSortFieldsEnum,
-  RuleSummary,
-  SortDirEnum,
-} from 'Generated/schema';
-import { generateEnumerationColumn } from 'Helpers/utils';
-import { Table } from 'pouncejs';
-import columns from 'Pages/ListRules/columns';
+import { ListRulesInput, ListRulesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
+import { formatDatetime } from 'Helpers/utils';
+import { Box, Flex, Icon, Label, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
-import useRouter from 'Hooks/useRouter';
+import { Link as RRLink } from 'react-router-dom';
+import SeverityBadge from 'Components/SeverityBadge';
+import { ListRules } from 'Pages/ListRules';
+import ListRulesTableRowOptions from './ListRulesTableRowOptions';
 
 interface ListRulesTableProps {
-  items?: RuleSummary[];
+  items?: ListRules['rules']['rules'];
   sortBy: ListRulesSortFieldsEnum;
   sortDir: SortDirEnum;
   onSort: (params: Partial<ListRulesInput>) => void;
@@ -44,8 +41,6 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
   sortDir,
   enumerationStartIndex,
 }) => {
-  const { history } = useRouter();
-
   const handleSort = (selectedKey: ListRulesSortFieldsEnum) => {
     if (sortBy === selectedKey) {
       onSort({
@@ -57,18 +52,87 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
     }
   };
 
-  const enumeratedColumns = [generateEnumerationColumn(enumerationStartIndex), ...columns];
-
   return (
-    <Table<RuleSummary>
-      columns={enumeratedColumns}
-      getItemKey={rule => rule.id}
-      items={items}
-      onSort={handleSort}
-      sortDir={sortDir}
-      sortKey={sortBy}
-      onSelect={rule => history.push(urls.logAnalysis.rules.details(rule.id))}
-    />
+    <Table>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell />
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListRulesSortFieldsEnum.Id)}
+            sortDir={sortBy === ListRulesSortFieldsEnum.Id ? sortDir : false}
+          >
+            Rule
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListRulesSortFieldsEnum.LogTypes)}
+            sortDir={sortBy === ListRulesSortFieldsEnum.LogTypes ? sortDir : false}
+          >
+            Log Types
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell
+            align="center"
+            onClick={() => handleSort(ListRulesSortFieldsEnum.Enabled)}
+            sortDir={sortBy === ListRulesSortFieldsEnum.Enabled ? sortDir : false}
+          >
+            Enabled
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListRulesSortFieldsEnum.Severity)}
+            sortDir={sortBy === ListRulesSortFieldsEnum.Severity ? sortDir : false}
+          >
+            Severity
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListRulesSortFieldsEnum.LastModified)}
+            sortDir={sortBy === ListRulesSortFieldsEnum.LastModified ? sortDir : false}
+          >
+            Last Modified
+          </Table.SortableHeaderCell>
+          <Table.HeaderCell />
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {items.map((rule, index) => (
+          <Table.Row key={rule.id}>
+            <Table.Cell>
+              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
+            </Table.Cell>
+            <Table.Cell maxWidth={450} wrapText="wrap">
+              <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
+                {rule.displayName || rule.id}
+              </Link>
+            </Table.Cell>
+            <Table.Cell maxWidth={225} truncated>
+              {rule.logTypes.length
+                ? rule.logTypes.map(logType => (
+                    <React.Fragment key={logType}>
+                      {logType} <br />
+                    </React.Fragment>
+                  ))
+                : 'All resources'}
+            </Table.Cell>
+            <Table.Cell align="center">
+              <Flex justify="center">
+                {rule.enabled ? (
+                  <Icon type="check" color="green300" size="small" />
+                ) : (
+                  <Icon type="close" color="red300" size="small" />
+                )}
+              </Flex>
+            </Table.Cell>
+            <Table.Cell>
+              <Box my={-1}>
+                <SeverityBadge severity={rule.severity} />
+              </Box>
+            </Table.Cell>
+            <Table.Cell>{formatDatetime(rule.lastModified)}</Table.Cell>
+            <Table.Cell>
+              <ListRulesTableRowOptions rule={rule} />
+            </Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 

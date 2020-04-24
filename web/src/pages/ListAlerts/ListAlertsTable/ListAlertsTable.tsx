@@ -17,29 +17,55 @@
  */
 
 import React from 'react';
-import { AlertSummary } from 'Generated/schema';
-import { generateEnumerationColumn } from 'Helpers/utils';
-import { Table } from 'pouncejs';
-import columns from 'Pages/ListAlerts/columns';
+import { formatDatetime, shortenId } from 'Helpers/utils';
+import { Box, Label, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
-import useRouter from 'Hooks/useRouter';
+import { Link as RRLink } from 'react-router-dom';
+import SeverityBadge from 'Components/SeverityBadge';
+import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 
-interface ListAlertsTableProps {
-  items?: AlertSummary[];
-  enumerationStartIndex?: number;
-}
+type ListAlertsTableProps = {
+  items: ListAlerts['alerts']['alertSummaries'];
+};
 
 const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
-  const { history } = useRouter();
-
-  const enumeratedColumns = [generateEnumerationColumn(0), ...columns];
   return (
-    <Table<AlertSummary>
-      columns={enumeratedColumns}
-      getItemKey={alert => alert.alertId}
-      items={items}
-      onSelect={alert => history.push(urls.logAnalysis.alerts.details(alert.alertId))}
-    />
+    <Table>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell />
+          <Table.HeaderCell>Title</Table.HeaderCell>
+          <Table.HeaderCell>Created At</Table.HeaderCell>
+          <Table.HeaderCell>Severity</Table.HeaderCell>
+          <Table.HeaderCell>Alert ID</Table.HeaderCell>
+          <Table.HeaderCell align="right">Events</Table.HeaderCell>
+          <Table.HeaderCell>Last Matched At</Table.HeaderCell>
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {items.map((alert, index) => (
+          <Table.Row key={alert.alertId}>
+            <Table.Cell>
+              <Label size="medium">{index + 1}</Label>
+            </Table.Cell>
+            <Table.Cell maxWidth={400} truncated title={alert.title}>
+              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
+                {alert.title}
+              </Link>
+            </Table.Cell>
+            <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
+            <Table.Cell>
+              <Box my={-1}>
+                {alert.severity ? <SeverityBadge severity={alert.severity} /> : 'Not available'}
+              </Box>
+            </Table.Cell>
+            <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
+            <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
+            <Table.Cell>{formatDatetime(alert.updateTime)}</Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 
