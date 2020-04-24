@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, useSnackbar } from 'pouncejs';
-import { useSQLShellContext } from 'Pages/SQLShell/SQLShellContext';
+import { useDataExplorerContext } from 'Pages/DataExplorer/DataExplorerContext';
 import { useGetLogQueryDownloadUrlLazyQuery } from './graphql/getLogQueryDownloadUrl.generated';
 
 interface DownloadButtonProps {
@@ -10,7 +10,7 @@ interface DownloadButtonProps {
 const DownloadButton: React.FC<DownloadButtonProps> = ({ isQuerySuccessful }) => {
   const {
     state: { queryId },
-  } = useSQLShellContext();
+  } = useDataExplorerContext();
   const { pushSnackbar } = useSnackbar();
   const [getDownloadUrl, { loading }] = useGetLogQueryDownloadUrlLazyQuery({
     variables: {

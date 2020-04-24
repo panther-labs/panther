@@ -27,17 +27,17 @@ import NavIconButton from './NavIconButton';
 import SettingsNavigation from './SettingsNavigation';
 import ComplianceNavigation from './ComplianceNavigation';
 import LogAnalysisNavigation from './LogAnalysisNavigation';
-import HistoricalSearchNavigation from './HistoricalSearchNavigation';
+import DataAnalyticsNavigation from './DataAnalyticsNavigation';
 
 const COMPLIANCE_NAV_KEY = 'compliance';
 const LOG_ANALYSIS_NAV_KEY = 'logAnalysis';
 const SETTINGS_NAV_KEY = 'settings';
-const HISTORICAL_SEARCH_NAV_KEY = 'historical';
+const DATA_ANALYTICS_NAV_KEY = 'dataAnalytics';
 type NavKeys =
   | typeof COMPLIANCE_NAV_KEY
   | typeof LOG_ANALYSIS_NAV_KEY
   | typeof SETTINGS_NAV_KEY
-  | typeof HISTORICAL_SEARCH_NAV_KEY;
+  | typeof DATA_ANALYTICS_NAV_KEY;
 
 const Navigation = () => {
   const {
@@ -64,7 +64,7 @@ const Navigation = () => {
   const isComplianceNavigationActive = secondaryNav === COMPLIANCE_NAV_KEY;
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
-  const isHistoricalSearchNavigationActive = secondaryNav === HISTORICAL_SEARCH_NAV_KEY;
+  const isDataAnalyticsNavigationActive = secondaryNav === DATA_ANALYTICS_NAV_KEY;
   const isSecondaryNavigationActive = secondaryNav !== null;
   return (
     <Flex as="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
@@ -103,13 +103,11 @@ const Navigation = () => {
           </Box>
           <Box as="li" mb="auto">
             <NavIconButton
-              active={isHistoricalSearchNavigationActive}
+              active={isDataAnalyticsNavigationActive}
               icon="search"
-              tooltipLabel="Historical Search"
+              tooltipLabel="Data Analytics"
               onClick={() =>
-                setSecondaryNav(
-                  isHistoricalSearchNavigationActive ? null : HISTORICAL_SEARCH_NAV_KEY
-                )
+                setSecondaryNav(isDataAnalyticsNavigationActive ? null : DATA_ANALYTICS_NAV_KEY)
               }
             />
           </Box>
@@ -139,7 +137,7 @@ const Navigation = () => {
           {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
           {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
           {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
-          {secondaryNav === HISTORICAL_SEARCH_NAV_KEY && <HistoricalSearchNavigation />}
+          {secondaryNav === DATA_ANALYTICS_NAV_KEY && <DataAnalyticsNavigation />}
         </Box>
       )}
     </Flex>

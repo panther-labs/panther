@@ -2,14 +2,14 @@ import React from 'react';
 import { Combobox, useSnackbar } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useListLogDatabases } from './graphql/listLogDatabases.generated';
-import { useSQLShellContext } from '../../SQLShellContext';
+import { useDataExplorerContext } from '../../DataExplorerContext';
 
 const DatabaseSelector: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const {
     state: { selectedDatabase },
     dispatch,
-  } = useSQLShellContext();
+  } = useDataExplorerContext();
 
   const { data } = useListLogDatabases({
     onError: error =>

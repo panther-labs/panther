@@ -4,7 +4,7 @@ import WarningImg from 'Assets/illustrations/warning.svg';
 import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
 import { GetLogQueryOutput } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { useSQLShellContext } from 'Pages/SQLShell/SQLShellContext';
+import { useDataExplorerContext } from 'Pages/DataExplorer/DataExplorerContext';
 import dayjs from 'dayjs';
 import { isNumber } from 'Helpers/utils';
 
@@ -17,7 +17,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
   const startTime = React.useRef(dayjs());
   const {
     state: { queryStatus },
-  } = useSQLShellContext();
+  } = useDataExplorerContext();
 
   const isPristine = queryStatus === null;
   const hasErrored = queryStatus === 'errored';

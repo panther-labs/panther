@@ -3,12 +3,12 @@ import { Box, Card, Grid, Text } from 'pouncejs';
 import SQLEditor from './SQLEditor';
 import Browser from './Browser';
 import Results from './Results';
-import { useSQLShellContext, withSQLShellContext } from './SQLShellContext';
+import { useDataExplorerContext, withDataExplorerContext } from './DataExplorerContext';
 
-const SQLShellPage: React.FC = () => {
+const DataExplorerPage: React.FC = () => {
   const {
     state: { globalErrorMessage },
-  } = useSQLShellContext();
+  } = useDataExplorerContext();
 
   return (
     <Box>
@@ -38,4 +38,4 @@ const SQLShellPage: React.FC = () => {
   );
 };
 
-export default withSQLShellContext(SQLShellPage);
+export default withDataExplorerContext(DataExplorerPage);

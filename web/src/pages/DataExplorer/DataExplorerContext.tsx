@@ -4,7 +4,7 @@ import storage from 'Helpers/storage';
 
 // A key to help persist the selected database in order to restore it whenever we don't have one
 // explicitly specified through the URL
-const SELECTED_DATABASE_STORAGE_KEY = 'panther.historicalSearch.selectedDatabase';
+const SELECTED_DATABASE_STORAGE_KEY = 'panther.dataAnalytics.dataExplorer.selectedDatabase';
 
 type State = {
   selectedDatabase: string | null;
@@ -87,12 +87,12 @@ function reducer(state: State, action: Actions) {
   }
 }
 
-const SQLShellContext = React.createContext<{
+const DataExplorerContext = React.createContext<{
   state: State;
   dispatch: (action: Actions) => void;
 }>(undefined);
 
-export const SQLShellContextProvider: React.FC = ({ children }) => {
+export const DataExplorerContextProvider: React.FC = ({ children }) => {
   const { urlParams, updateUrlParams } = useUrlParams<
     Pick<State, 'queryId' | 'selectedDatabase'>
   >();
@@ -126,13 +126,15 @@ export const SQLShellContextProvider: React.FC = ({ children }) => {
 
   const contextValue = React.useMemo(() => ({ state, dispatch }), [state, dispatch]);
 
-  return <SQLShellContext.Provider value={contextValue}>{children}</SQLShellContext.Provider>;
+  return (
+    <DataExplorerContext.Provider value={contextValue}>{children}</DataExplorerContext.Provider>
+  );
 };
 
-export const useSQLShellContext = () => React.useContext(SQLShellContext);
+export const useDataExplorerContext = () => React.useContext(DataExplorerContext);
 
-export const withSQLShellContext = (Component: React.FC) => props => (
-  <SQLShellContextProvider>
+export const withDataExplorerContext = (Component: React.FC) => props => (
+  <DataExplorerContextProvider>
     <Component {...props} />
-  </SQLShellContextProvider>
+  </DataExplorerContextProvider>
 );

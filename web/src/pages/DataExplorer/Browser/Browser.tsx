@@ -3,14 +3,14 @@ import { Box, Card, Flex, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import TableList from './TableList';
 import DatabaseSelector from './DatabaseSelector';
-import { useSQLShellContext } from '../SQLShellContext';
+import { useDataExplorerContext } from '../DataExplorerContext';
 import ColumnList from './ColumnList';
 import Search from './Search';
 
 const Browser: React.FC = () => {
   const {
     state: { selectedDatabase, selectedTable },
-  } = useSQLShellContext();
+  } = useDataExplorerContext();
 
   return (
     <Card height={507} as="aside" overflow="hidden">

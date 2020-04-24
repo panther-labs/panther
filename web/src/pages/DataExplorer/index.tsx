@@ -1,2 +1,2 @@
-export { default } from './SQLShell';
+export { default } from './DataExplorer';
 export { useListLogDatabases } from './Browser';

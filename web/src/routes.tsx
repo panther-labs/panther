@@ -52,7 +52,7 @@ import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
 import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import EditLogSourcePage from 'Pages/EditLogSource';
 import PromptController from 'Components/utils/PromptController';
-import SQLShellPage from 'Pages/SQLShell';
+import DataExplorerPage from 'Pages/DataExplorer';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -161,10 +161,14 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 /******************** LOG ANALYSIS ******************************/
                 <Redirect
                   exact
-                  from={urls.historicalSearch.home()}
-                  to={urls.historicalSearch.sqlShell()}
+                  from={urls.dataAnalytics.home()}
+                  to={urls.dataAnalytics.dataExplorer()}
                 />
-                <Route exact path={urls.historicalSearch.sqlShell()} component={SQLShellPage} />
+                <Route
+                  exact
+                  path={urls.dataAnalytics.dataExplorer()}
+                  component={DataExplorerPage}
+                />
                 /******************** SETTINGS ******************************/
                 <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />

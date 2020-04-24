@@ -18,15 +18,15 @@
 
 import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
-import { useListLogDatabases } from 'Pages/SQLShell';
+import { useListLogDatabases } from 'Pages/DataExplorer';
 import urls from 'Source/urls';
 import NavLink from './NavLink';
 
-const HistoricalSearchNavigation: React.FC = () => {
-  // We expect that oftentimes the user will go to the historical data if the historical search
+const DataAnalyticsNavigation: React.FC = () => {
+  // We expect that oftentimes the user will go to data explorer if the data analytics
   // menu was opened.
   //
-  // As an optimization, prefetch a list of database names as soon as the historical search menu
+  // As an optimization, prefetch a list of database names as soon as the data analytics menu
   // is opened. This will make the related lambda hot (if it was cold) and will minimize the
   //  perceived delay from the user's standpoint
   useListLogDatabases();
@@ -34,15 +34,15 @@ const HistoricalSearchNavigation: React.FC = () => {
   return (
     <Box>
       <Heading size="medium" textAlign="center" mt={10} mb={5}>
-        <b>HISTORICAL SEARCH</b>
+        <b>DATA ANALYTICS</b>
       </Heading>
       <Flex direction="column" as="ul">
         <Flex as="li">
-          <NavLink icon="search" to={urls.historicalSearch.sqlShell()} label="SQL Shell" />
+          <NavLink icon="search" to={urls.dataAnalytics.dataExplorer()} label="Data Explorer" />
         </Flex>
       </Flex>
     </Box>
   );
 };
 
-export default HistoricalSearchNavigation;
+export default DataAnalyticsNavigation;

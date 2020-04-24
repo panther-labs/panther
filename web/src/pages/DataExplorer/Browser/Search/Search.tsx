@@ -1,12 +1,12 @@
 import React from 'react';
 import { TextInput } from 'pouncejs';
-import { useSQLShellContext } from '../../SQLShellContext';
+import { useDataExplorerContext } from '../../DataExplorerContext';
 
 const Search: React.FC = () => {
   const {
     state: { searchValue, selectedDatabase },
     dispatch,
-  } = useSQLShellContext();
+  } = useDataExplorerContext();
 
   return (
     <TextInput

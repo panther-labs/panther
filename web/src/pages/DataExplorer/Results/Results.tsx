@@ -3,11 +3,11 @@ import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import Panel from 'Components/Panel';
 import { Box } from 'pouncejs';
 import { LogQueryStatus } from 'Generated/schema';
-import DownloadButton from 'Pages/SQLShell/Results/DownloadButton';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useInfiniteScroll } from 'react-infinite-scroll-hook';
 import { useGetLogQueryResults } from './graphql/getLogQueryResults.generated';
-import { useSQLShellContext } from '../SQLShellContext';
+import { useDataExplorerContext } from '../DataExplorerContext';
+import DownloadButton from './DownloadButton';
 import ResultsTable from './ResultsTable';
 
 const POLL_INTERVAL_MS = 750;
@@ -16,7 +16,7 @@ const Results: React.FC = () => {
   const {
     state: { queryId },
     dispatch,
-  } = useSQLShellContext();
+  } = useDataExplorerContext();
 
   const {
     data,

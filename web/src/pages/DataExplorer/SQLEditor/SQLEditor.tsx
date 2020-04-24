@@ -5,13 +5,13 @@ import { shouldSaveData } from 'Helpers/connection';
 import storage from 'Helpers/storage';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useLoadAllSchemaEntities } from './graphql/loadAllSchemaEntities.generated';
-import { useSQLShellContext } from '../SQLShellContext';
+import { useDataExplorerContext } from '../DataExplorerContext';
 import { useRunQuery } from './graphql/runQuery.generated';
 import { useCancelLogQuery } from './graphql/cancelLogQuery.generated';
 import { useGetSqlForQuery } from './graphql/getSqlForQuery.generated';
 
 // A key to help persist sql text within the same session (resets for new sessions)
-const SQL_STORAGE_KEY = 'panther.historicalSearch.sql';
+const SQL_STORAGE_KEY = 'panther.dataAnalytics.dataExplorer.sql';
 const MIN_LINES = 19;
 
 const SQLEditor: React.FC = () => {
@@ -20,7 +20,7 @@ const SQLEditor: React.FC = () => {
   const {
     state: { selectedDatabase, queryStatus, queryId },
     dispatch,
-  } = useSQLShellContext();
+  } = useDataExplorerContext();
 
   const [runQuery, { loading: isProvisioningQuery }] = useRunQuery({
     variables: {
