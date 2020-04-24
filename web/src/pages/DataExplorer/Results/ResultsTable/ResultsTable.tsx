@@ -121,7 +121,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
                   wrapText="nowrap"
                   align={isNumber(col.value) ? 'right' : 'left'}
                 >
-                  {col.value}
+                  {col.value === null ? 'NULL' : col.value}
                 </Table.Cell>
               ))}
             </Table.Row>
