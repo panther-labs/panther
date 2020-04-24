@@ -113,11 +113,11 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
           </Table.Row>
         </Table.Head>
         <Table.Body>
-          {results.map((row, index) => (
-            <Table.Row key={index}>
-              {row.map(col => (
+          {results.map((row, rowIndex) => (
+            <Table.Row key={rowIndex}>
+              {row.map((col, colIndex) => (
                 <Table.Cell
-                  key={`${index}-${col.value}`}
+                  key={`${rowIndex}-${colIndex}`}
                   wrapText="nowrap"
                   align={isNumber(col.value) ? 'right' : 'left'}
                 >
