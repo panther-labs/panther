@@ -74,19 +74,19 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
           >
             Resource Types
           </Table.SortableHeaderCell>
-          <Table.HeaderCell
+          <Table.SortableHeaderCell
             align="center"
             onClick={() => handleSort(ListPoliciesSortFieldsEnum.Enabled)}
             sortDir={sortBy === ListPoliciesSortFieldsEnum.Enabled ? sortDir : false}
           >
             Enabled
-          </Table.HeaderCell>
-          <Table.HeaderCell
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell
             onClick={() => handleSort(ListPoliciesSortFieldsEnum.Severity)}
             sortDir={sortBy === ListPoliciesSortFieldsEnum.Severity ? sortDir : false}
           >
             Severity
-          </Table.HeaderCell>
+          </Table.SortableHeaderCell>
           <Table.SortableHeaderCell
             align="center"
             onClick={() => handleSort(ListPoliciesSortFieldsEnum.ComplianceStatus)}
