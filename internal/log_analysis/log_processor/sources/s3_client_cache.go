@@ -26,8 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	lru "github.com/hashicorp/golang-lru"
@@ -70,8 +68,6 @@ var (
 	sourceCache = &sourceCacheStruct{
 		cacheUpdateTime: time.Unix(0, 0),
 	}
-
-	lambdaClient lambdaiface.LambdaAPI = lambda.New(common.Session)
 
 	//used to simplify mocking during testing
 	newCredentialsFunc = stscreds.NewCredentials
@@ -175,7 +171,7 @@ func getRoleArn(s3Object *S3ObjectInfo) (*string, error) {
 			},
 		}
 		var output []*models.SourceIntegration
-		err := genericapi.Invoke(lambdaClient, sourceAPIFunctionName, input, &output)
+		err := genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, &output)
 		if err != nil {
 			return nil, err
 		}

@@ -76,6 +76,17 @@ func init() {
 	memUsedAtStartupMB = (int)(memStats.Sys/(bytesPerMB)) + 1
 }
 
+func CreateS3Destination() Destination {
+	return &S3Destination{
+		s3Uploader:          s3manager.NewUploader(common.Session),
+		snsClient:           common.SnsClient,
+		s3Bucket:            common.Config.ProcessedDataBucket,
+		snsTopicArn:         common.Config.SnsTopicARN,
+		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
+		maxDuration:         maxDuration,
+	}
+}
+
 // the largest we let total size of compressed output buffers get before calling sendData() to write to S3 in bytes
 // NOTE: this presumes processing 1 file at a time
 func maxS3BufferMemUsageBytes(lambdaSizeMB int) uint64 {

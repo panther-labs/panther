@@ -62,6 +62,10 @@ func generateLambdaAlarms(resource map[interface{}]interface{}, settings *config
 	alarms = append(alarms, NewLambdaAlarm("LambdaErrors", "Errors",
 		"is failing", resource).SumCountThreshold(0, 60*5))
 
+	// throttles
+	alarms = append(alarms, NewLambdaAlarm("LambdaThrottles", "Throttles",
+		"is being throttled", resource).SumCountThreshold(5, 60*5) /* tolerate a few throttles before alarming */)
+
 	// errors from metric filter (application logs)
 	// NOTE: it is important to not set units because the metric filter values have no units
 	alarms = append(alarms, NewLambdaMetricFilterAlarm("LambdaApplicationErrors", lambdaErrorsMetricFilterName,

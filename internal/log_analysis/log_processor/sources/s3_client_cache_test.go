@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -52,7 +53,7 @@ func TestGetS3Client(t *testing.T) {
 	// resetting cache
 	sourceCache.cacheUpdateTime = time.Unix(0, 0)
 	lambdaMock := &testutils.LambdaMock{}
-	lambdaClient = lambdaMock
+	common.LambdaClient = lambdaMock
 
 	s3Mock := &testutils.S3Mock{}
 	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
@@ -92,7 +93,7 @@ func TestGetS3ClientUnknownBucket(t *testing.T) {
 	// resetting cache
 	sourceCache.cacheUpdateTime = time.Unix(0, 0)
 	lambdaMock := &testutils.LambdaMock{}
-	lambdaClient = lambdaMock
+	common.LambdaClient = lambdaMock
 
 	s3Mock := &testutils.S3Mock{}
 	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
@@ -129,7 +130,7 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 	// resetting cache
 	sourceCache.cacheUpdateTime = time.Unix(0, 0)
 	lambdaMock := &testutils.LambdaMock{}
-	lambdaClient = lambdaMock
+	common.LambdaClient = lambdaMock
 
 	s3Mock := &testutils.S3Mock{}
 	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {

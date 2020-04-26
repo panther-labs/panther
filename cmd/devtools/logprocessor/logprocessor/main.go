@@ -95,7 +95,7 @@ func main() {
 	}
 	zap.ReplaceGlobals(logger)
 
-	err = processor.Process(streamChan, destinations.CreateDestination())
+	err = processor.Process(streamChan, destinations.CreateS3Destination())
 	if err != nil {
 		log.Fatal(err)
 	}

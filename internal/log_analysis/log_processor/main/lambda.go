@@ -24,7 +24,6 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/aws/aws-sdk-go/service/sqs"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
@@ -33,6 +32,7 @@ import (
 )
 
 func main() {
+	common.SessionInit()
 	lambda.Start(handle)
 }
 
@@ -44,12 +44,12 @@ func handle(ctx context.Context, event events.SQSEvent) error {
 func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error) {
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
-	sqsMessageCount := 0
+	var sqsMessageCount int
 
 	defer func() {
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	sqsMessageCount, err = processor.StreamEvents(sqs.New(common.Session), operation.StartTime, event)
+	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, operation.StartTime, event)
 	return err
 }

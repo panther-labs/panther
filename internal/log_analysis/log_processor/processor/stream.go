@@ -19,7 +19,6 @@ package processor
  */
 
 import (
-	"os"
 	"strconv"
 	"time"
 
@@ -45,20 +44,8 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 
 	streamChan := make(chan *common.DataStream, 20) // small buffer to get concurrency
 
-	// maximum run time for lambda
-	lambdaTimeLimitSec, err := strconv.Atoi(os.Getenv("TIME_LIMIT_SEC"))
-	if err != nil {
-		err = errors.Wrapf(err, "cannot get env var TIME_LIMIT_SEC")
-		return sqsMessageCount, err
-	}
 	const timeLimitScalar = 0.8 // runtime should be shorter than lambda timeout to make room to flush buffers
-	timeLimit := time.Second * time.Duration(float32(lambdaTimeLimitSec)*timeLimitScalar)
-
-	queueURL := os.Getenv("SQS_QUEUE_URL")
-	if queueURL == "" {
-		err = errors.Errorf("cannot get env var SQS_QUEUE_URL")
-		return sqsMessageCount, err
-	}
+	timeLimit := time.Second * time.Duration(float32(common.Config.TimeLimitSec)*timeLimitScalar)
 
 	var sqsResponses []*sqs.ReceiveMessageOutput // accumulate responses for delete at the end
 
@@ -85,7 +72,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 
 			// keep reading from SQS to avoid lambda calls and maximize output aggregation
 			var receiveMessageOutput *sqs.ReceiveMessageOutput
-			receiveMessageOutput, readEventError = readSqsMessages(sqsClient, queueURL, sqsResponses, lambdaTimeLimitSec)
+			receiveMessageOutput, readEventError = readSqsMessages(sqsClient, sqsResponses)
 			if readEventError != nil {
 				return
 			}
@@ -111,7 +98,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 	}()
 
 	// process streamChan until closed (blocks)
-	err = processFunc(streamChan, destinations.CreateDestination())
+	err = processFunc(streamChan, destinations.CreateS3Destination())
 	if err != nil { // prefer Process() error to readEventError
 		return sqsMessageCount, err
 	}
@@ -120,13 +107,13 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 	}
 
 	// delete messages from sqs q on success
-	return sqsMessageCount, deleteSqsMessages(sqsClient, queueURL, sqsResponses)
+	return sqsMessageCount, deleteSqsMessages(sqsClient, sqsResponses)
 }
 
-func readSqsMessages(sqsClient sqsiface.SQSAPI, queueURL string,
-	sqsResponses []*sqs.ReceiveMessageOutput, lambdaTimeLimitSec int) (receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
+func readSqsMessages(sqsClient sqsiface.SQSAPI, sqsResponses []*sqs.ReceiveMessageOutput) (
+	receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
 
-	// scale delay based on load estimate from sqsResponses
+	// scale delay based on load estimate from sqsResponses, user very high load we will have 0 delay
 	const waitTimeSecondsThreshold = 10
 	var waitTimeSeconds int64
 	if len(sqsResponses) <= waitTimeSecondsThreshold { // linearly scale down sqs wait as we get repeated events
@@ -136,18 +123,18 @@ func readSqsMessages(sqsClient sqsiface.SQSAPI, queueURL string,
 	receiveMessageOutput, err = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(waitTimeSeconds),
 		MaxNumberOfMessages: aws.Int64(10), // max size allowed
-		VisibilityTimeout:   aws.Int64(int64(lambdaTimeLimitSec)),
-		QueueUrl:            &queueURL,
+		VisibilityTimeout:   aws.Int64(int64(common.Config.TimeLimitSec)),
+		QueueUrl:            &common.Config.SqsQueueURL,
 	})
 	if err != nil {
-		err = errors.Wrapf(err, "failure reading messages from %s", queueURL)
+		err = errors.Wrapf(err, "failure reading messages from %s", common.Config.SqsQueueURL)
 		return
 	}
 
 	return receiveMessageOutput, err
 }
 
-func deleteSqsMessages(sqsClient sqsiface.SQSAPI, queueURL string, sqsResponses []*sqs.ReceiveMessageOutput) (err error) {
+func deleteSqsMessages(sqsClient sqsiface.SQSAPI, sqsResponses []*sqs.ReceiveMessageOutput) (err error) {
 	for _, sqsResponse := range sqsResponses {
 		var deleteMessageBatchRequestEntries []*sqs.DeleteMessageBatchRequestEntry
 		for index, msg := range sqsResponse.Messages {
@@ -159,10 +146,10 @@ func deleteSqsMessages(sqsClient sqsiface.SQSAPI, queueURL string, sqsResponses 
 
 		_, err = sqsClient.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
 			Entries:  deleteMessageBatchRequestEntries,
-			QueueUrl: &queueURL,
+			QueueUrl: &common.Config.SqsQueueURL,
 		})
 		if err != nil {
-			err = errors.Wrapf(err, "failure deleting messages from %s", queueURL)
+			err = errors.Wrapf(err, "failure deleting messages from %s", common.Config.SqsQueueURL)
 			return err
 		}
 	}

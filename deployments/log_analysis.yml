@@ -321,14 +321,13 @@ Resources:
       MemorySize: !Ref LogProcessorLambdaMemorySize
       Runtime: go1.x
       Timeout: 900 # needs to match q visibility timeout!
-      ReservedConcurrentExecutions: 20 # FIXME: pass this in from panther_config.yml
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          S3_BUCKET: !Ref ProcessedDataBucket
+          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
           SQS_QUEUE_URL: !Ref LogProcessorQueue
-          TIME_LIMIT_SEC: '900' # pass down to lambda (odd this is not part of standard env vars)
+          TIME_LIMIT_SEC: '900' # pass down Timeout to lambda (odd this is not part of standard env vars)
       Events:
         Queue:
           Type: SQS
