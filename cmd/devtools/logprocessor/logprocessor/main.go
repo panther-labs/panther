@@ -70,6 +70,7 @@ func main() {
 	streamChan := make(chan *common.DataStream, 1)
 	dataStream := &common.DataStream{Reader: gzipReader, LogType: LOGTYPE}
 	streamChan <- dataStream
+	close(streamChan)
 
 	if *CPUPROFILE != "" {
 		f, err := os.Create(*CPUPROFILE)

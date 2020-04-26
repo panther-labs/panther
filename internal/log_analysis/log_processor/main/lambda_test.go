@@ -40,6 +40,7 @@ func mockLogger() *observer.ObservedLogs {
 }
 
 func TestProcessOpLog(t *testing.T) {
+	common.Config.AwsLambdaFunctionMemorySize = 1024
 	logs := mockLogger()
 	functionName := "myfunction"
 	lc := lambdacontext.LambdaContext{

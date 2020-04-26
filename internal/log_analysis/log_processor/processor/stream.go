@@ -39,19 +39,24 @@ const (
 
 // reads lambda event, then continues to read events from sqs q
 func StreamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.SQSEvent) (sqsMessageCount int, err error) {
-	return streamEvents(sqsClient, startTime, event, Process)
+	return streamEvents(sqsClient, startTime, event, Process, sources.ReadSnsMessages)
 }
 
-// entry point for unit testing
+// entry point for unit testing, pass in read/process functions
 func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.SQSEvent,
-	processFunc func(chan *common.DataStream, destinations.Destination) error) (sqsMessageCount int, err error) {
+	processFunc func(chan *common.DataStream, destinations.Destination) error,
+	readSnsMessagesFunc func([]string) ([]*common.DataStream, error)) (int, error) {
+
+	// these cannot be named return vars because it would cause a data race
+	var sqsMessageCount int
+	var err error
 
 	streamChan := make(chan *common.DataStream, 20) // use small buffer to pipeline events
 	processingTimeLimit := time.Second * time.Duration(float32(common.Config.TimeLimitSec)*processingTimeLimitScalar)
 
 	var sqsResponses []*sqs.ReceiveMessageOutput // accumulate responses for delete at the end
 
-	var readEventError error // below go routine closes over this for errors
+	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors
 	go func() {
 		defer close(streamChan) // done reading messages, this will cause processFunc() to return
 
@@ -61,9 +66,9 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 			sqsMessageCount++
 			eventMessages[i] = record.Body
 		}
-		dataStreams, err := sources.ReadSnsMessages(eventMessages)
+		dataStreams, err := readSnsMessagesFunc(eventMessages)
 		if err != nil {
-			readEventError = err
+			readEventErrorChan <- err
 			return
 		}
 
@@ -74,9 +79,9 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 			}
 
 			// keep reading from SQS to maximize output aggregation
-			var receiveMessageOutput *sqs.ReceiveMessageOutput
-			receiveMessageOutput, readEventError = readSqsMessages(sqsClient, sqsResponses)
-			if readEventError != nil {
+			receiveMessageOutput, err := readSqsMessages(sqsClient, sqsResponses)
+			if err != nil {
+				readEventErrorChan <- err
 				return
 			}
 
@@ -93,8 +98,9 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 				sqsMessageCount++
 				eventMessages[i] = *message.Body
 			}
-			dataStreams, readEventError = sources.ReadSnsMessages(eventMessages)
-			if readEventError != nil {
+			dataStreams, err = readSnsMessagesFunc(eventMessages)
+			if err != nil {
+				readEventErrorChan <- err
 				return
 			}
 		}
@@ -103,10 +109,12 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 	// process streamChan until closed (blocks)
 	err = processFunc(streamChan, destinations.CreateS3Destination())
 	if err != nil { // prefer Process() error to readEventError
-		return sqsMessageCount, err
+		return 0, err
 	}
+	close(readEventErrorChan)
+	readEventError := <-readEventErrorChan
 	if readEventError != nil {
-		return sqsMessageCount, readEventError
+		return 0, readEventError
 	}
 
 	// delete messages from sqs q on success

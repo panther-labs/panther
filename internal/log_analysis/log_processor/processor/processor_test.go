@@ -104,6 +104,7 @@ func TestProcess(t *testing.T) {
 	newProcessorFunc := func(*common.DataStream) *Processor { return p }
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
+	close(streamChan)
 	err := process(streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 	require.Equal(t, testLogEvents, destination.nEvents)
@@ -127,6 +128,7 @@ func TestProcessDataStreamError(t *testing.T) {
 	newProcessorFunc := func(*common.DataStream) *Processor { return p }
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
+	close(streamChan)
 	err := process(streamChan, destination, newProcessorFunc)
 	require.Error(t, err)
 
@@ -205,6 +207,7 @@ func TestProcessDestinationError(t *testing.T) {
 	newProcessorFunc := func(*common.DataStream) *Processor { return p }
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
+	close(streamChan)
 	err := process(streamChan, destination, newProcessorFunc)
 	require.Error(t, err)
 }
@@ -257,6 +260,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 	newProcessorFunc := func(*common.DataStream) *Processor { return p }
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
+	close(streamChan)
 	err := process(streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 

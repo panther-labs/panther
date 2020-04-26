@@ -72,6 +72,11 @@ func TestGetS3Client(t *testing.T) {
 	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
+	newCredentialsFunc =
+		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
+			return &credentials.Credentials{}
+		}
+
 	s3Object := &S3ObjectInfo{
 		S3Bucket:    "test-bucket",
 		S3ObjectKey: "prefix/key",

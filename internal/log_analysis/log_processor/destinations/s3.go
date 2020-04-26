@@ -58,11 +58,13 @@ const (
 
 	maxDuration = 5 * time.Minute //  maximum time to hold an s3 buffer in memory
 
-	bytesPerMB           = 1024 * 1024
-	maxS3BufferSizeBytes = 50 * bytesPerMB // the largest we let any single buffer get
+	bytesPerMB                  = 1024 * 1024
+	defaultMaxS3BufferSizeBytes = 50 * bytesPerMB
 )
 
 var (
+	maxS3BufferSizeBytes = defaultMaxS3BufferSizeBytes // the largest we let any single buffer get (var so we can set in tests)
+
 	newLineDelimiter = []byte("\n")
 
 	parserRegistry registry.Interface = registry.AvailableParsers() // initialize
@@ -78,7 +80,7 @@ func init() {
 
 func CreateS3Destination() Destination {
 	return &S3Destination{
-		s3Uploader:          s3manager.NewUploader(common.Session),
+		s3Uploader:          common.S3Uploader,
 		snsClient:           common.SnsClient,
 		s3Bucket:            common.Config.ProcessedDataBucket,
 		snsTopicArn:         common.Config.SnsTopicARN,
