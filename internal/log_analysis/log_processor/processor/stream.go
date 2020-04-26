@@ -124,11 +124,15 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 func readSqsMessages(sqsClient sqsiface.SQSAPI, sqsResponses []*sqs.ReceiveMessageOutput) (
 	receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
 
-	// linearly scale delay based on load estimate from len(sqsResponses), under very high load we will have 0 delay
+	const waitTimeSecondsInitial = 20 // the first wait is long, this handles slow trickles (20 is max for sqs)
+	// after the first wait, linearly scale delay based on load estimate from len(sqsResponses), under very high load we will have 0 delay
 	const waitTimeSecondsThreshold = 10
-	var waitTimeSeconds = int64(waitTimeSecondsThreshold - len(sqsResponses))
-	if waitTimeSeconds < 0 { // exceeded threshold, clip to 0, maximum throughput
-		waitTimeSeconds = 0
+	var waitTimeSeconds int64 = waitTimeSecondsInitial
+	if len(sqsResponses) > 0 {
+		waitTimeSeconds = int64(waitTimeSecondsThreshold - len(sqsResponses))
+		if waitTimeSeconds < 0 { // exceeded threshold, clip to 0, maximum throughput
+			waitTimeSeconds = 0
+		}
 	}
 
 	receiveMessageOutput, err = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
