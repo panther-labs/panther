@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
@@ -49,6 +50,6 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	sqsMessageCount, err = processor.StreamEvents(operation.StartTime, event)
+	sqsMessageCount, err = processor.StreamEvents(sqs.New(common.Session), operation.StartTime, event)
 	return err
 }

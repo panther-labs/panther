@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
@@ -34,7 +35,14 @@ import (
 )
 
 // reads lambda event, then continues to read events from sqs q
-func StreamEvents(startTime time.Time, event events.SQSEvent) (sqsMessageCount int, err error) {
+func StreamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.SQSEvent) (sqsMessageCount int, err error) {
+	return streamEvents(sqsClient, startTime, event, Process)
+}
+
+// entry point for unit testing
+func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.SQSEvent,
+	processFunc func(chan *common.DataStream, destinations.Destination) error) (sqsMessageCount int, err error) {
+
 	streamChan := make(chan *common.DataStream, 20) // small buffer to get concurrency
 
 	// maximum run time for lambda
@@ -52,15 +60,13 @@ func StreamEvents(startTime time.Time, event events.SQSEvent) (sqsMessageCount i
 		return sqsMessageCount, err
 	}
 
-	sqsClient := sqs.New(common.Session)
-
 	var sqsResponses []*sqs.ReceiveMessageOutput // accumulate responses for delete at the end
 
-	var readEventError error
+	var readEventError error // below go routine closes over this for error
 	go func() {
 		defer close(streamChan) // done reading messages
 
-		// collect first set of messages from the lambda call, lambda handles delete of these
+		// extract first set of messages from the lambda call, lambda handles delete of these
 		eventMessages := make([]string, len(event.Records))
 		for i, record := range event.Records {
 			sqsMessageCount++
@@ -79,14 +85,8 @@ func StreamEvents(startTime time.Time, event events.SQSEvent) (sqsMessageCount i
 
 			// keep reading from SQS to avoid lambda calls and maximize output aggregation
 			var receiveMessageOutput *sqs.ReceiveMessageOutput
-			receiveMessageOutput, readEventError = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
-				WaitTimeSeconds:     aws.Int64(15), // wait a bit for more messages
-				MaxNumberOfMessages: aws.Int64(10), // max size allowed
-				VisibilityTimeout:   aws.Int64(int64(lambdaTimeLimitSec)),
-				QueueUrl:            &queueURL,
-			})
+			receiveMessageOutput, readEventError = readSqsMessages(sqsClient, queueURL, sqsResponses, lambdaTimeLimitSec)
 			if readEventError != nil {
-				readEventError = errors.Wrapf(err, "failure reading messages from %s", queueURL)
 				return
 			}
 
@@ -94,10 +94,10 @@ func StreamEvents(startTime time.Time, event events.SQSEvent) (sqsMessageCount i
 				break
 			}
 
-			// remember so we can delete
+			// remember so we can delete when done
 			sqsResponses = append(sqsResponses, receiveMessageOutput)
 
-			// extract
+			// extract from sqs
 			eventMessages := make([]string, len(receiveMessageOutput.Messages))
 			for i, message := range receiveMessageOutput.Messages {
 				sqsMessageCount++
@@ -111,7 +111,7 @@ func StreamEvents(startTime time.Time, event events.SQSEvent) (sqsMessageCount i
 	}()
 
 	// process streamChan until closed (blocks)
-	err = process(streamChan, destinations.CreateDestination(), NewProcessor)
+	err = processFunc(streamChan, destinations.CreateDestination())
 	if err != nil { // prefer Process() error to readEventError
 		return sqsMessageCount, err
 	}
@@ -119,7 +119,35 @@ func StreamEvents(startTime time.Time, event events.SQSEvent) (sqsMessageCount i
 		return sqsMessageCount, readEventError
 	}
 
-	// delete messages from sqs q
+	// delete messages from sqs q on success
+	return sqsMessageCount, deleteSqsMessages(sqsClient, queueURL, sqsResponses)
+}
+
+func readSqsMessages(sqsClient sqsiface.SQSAPI, queueURL string,
+	sqsResponses []*sqs.ReceiveMessageOutput, lambdaTimeLimitSec int) (receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
+
+	// scale delay based on load estimate from sqsResponses
+	const waitTimeSecondsThreshold = 10
+	var waitTimeSeconds int64
+	if len(sqsResponses) <= waitTimeSecondsThreshold { // linearly scale down sqs wait as we get repeated events
+		waitTimeSeconds = int64(waitTimeSecondsThreshold - len(sqsResponses))
+	}
+
+	receiveMessageOutput, err = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
+		WaitTimeSeconds:     aws.Int64(waitTimeSeconds),
+		MaxNumberOfMessages: aws.Int64(10), // max size allowed
+		VisibilityTimeout:   aws.Int64(int64(lambdaTimeLimitSec)),
+		QueueUrl:            &queueURL,
+	})
+	if err != nil {
+		err = errors.Wrapf(err, "failure reading messages from %s", queueURL)
+		return
+	}
+
+	return receiveMessageOutput, err
+}
+
+func deleteSqsMessages(sqsClient sqsiface.SQSAPI, queueURL string, sqsResponses []*sqs.ReceiveMessageOutput) (err error) {
 	for _, sqsResponse := range sqsResponses {
 		var deleteMessageBatchRequestEntries []*sqs.DeleteMessageBatchRequestEntry
 		for index, msg := range sqsResponse.Messages {
@@ -135,9 +163,8 @@ func StreamEvents(startTime time.Time, event events.SQSEvent) (sqsMessageCount i
 		})
 		if err != nil {
 			err = errors.Wrapf(err, "failure deleting messages from %s", queueURL)
-			return sqsMessageCount, err
+			return err
 		}
 	}
-
-	return sqsMessageCount, err
+	return err
 }
