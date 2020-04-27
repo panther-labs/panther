@@ -19,10 +19,8 @@ package gcplogs
  */
 
 import (
-	"fmt"
-	"time"
-
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -35,84 +33,58 @@ type LogEntryAuditLog struct {
 	parsers.PantherLog
 }
 
-const TypeAuditLogActivity = "GCP.AuditLogActivity"
-const TypeAuditLogData = "GCP.AuditLogDataAccess"
-const TypeAuditLogSystem = "GCP.AuditLogSystemEvent"
+const (
+	TypeAuditLog = "GCP.AuditLog"
 
-// nolint:lll
-const AuditLogActivityDesc = `Admin Activity audit logs contain log entries for API calls or other administrative actions that modify the configuration or metadata of resources.
-Reference: https://cloud.google.com/logging/docs/audit#admin-activity
+	// nolint:lll
+	AuditLogDesc = `Cloud Audit Logs maintains three audit logs for each Google Cloud project, folder, and organization: Admin Activity, Data Access, and System Event.
+Google Cloud services write audit log entries to these logs to help you answer the questions of "who did what, where, and when?" within your Google Cloud resources.
+
+Reference: https://cloud.google.com/logging/docs/audit
 `
+	AuditLogActivityLogID = "cloudaudit.googleapis.com%2Factivity"
+	AuditLogDataLogID     = "cloudaudit.googleapis.com%2Fdata_access"
+	AuditLogSystemLogID   = "cloudaudit.googleapis.com%2Fsystem_event"
+)
 
-// nolint:lll
-const AuditLogSystemDesc = `System Event audit logs contain log entries for Google Cloud administrative actions that modify the configuration of resources.
-Reference: https://cloud.google.com/logging/docs/audit#system-event
-`
+type AuditLogParser struct{}
 
-// nolint:lll
-const AuditLogDataDesc = `Data Access audit logs contain API calls that read the configuration or metadata of resources, as well as user-driven API calls that create, modify, or read user-provided resource data.
-Reference: https://cloud.google.com/logging/docs/audit#data-access
-`
+var _ parsers.LogParser = (*AuditLogParser)(nil)
 
-type AuditLogActivityParser struct{}
-type AuditLogSystemParser struct{}
-type AuditLogDataParser struct{}
-
-const AuditLogActivityLogID = "cloudaudit.googleapis.com%2Factivity"
-const AuditLogDataLogID = "cloudaudit.googleapis.com%2Fdata_access"
-const AuditLogSystemLogID = "cloudaudit.googleapis.com%2Fsystem_event"
-
-var _ parsers.LogParser = (*auditLogParser)(nil)
-
-func NewAuditLogActivityParser() parsers.LogParser {
-	return &auditLogParser{
-		Type:  TypeAuditLogActivity,
-		LogID: AuditLogActivityLogID,
-	}
-}
-func NewAuditLogSystemParser() parsers.LogParser {
-	return &auditLogParser{
-		Type:  TypeAuditLogSystem,
-		LogID: AuditLogSystemLogID,
-	}
-}
-func NewAuditLogDataParser() parsers.LogParser {
-	return &auditLogParser{
-		Type:  TypeAuditLogData,
-		LogID: AuditLogDataLogID,
-	}
+func NewAuditLogParser() parsers.LogParser {
+	return &AuditLogParser{}
 }
 
-// LogType implements parsers.LogParser interface
-func (p *auditLogParser) LogType() string {
-	return p.Type
+func (p *AuditLogParser) LogType() string {
+	return TypeAuditLog
 }
 
 // New creates a new log parser instance
-func (p *auditLogParser) New() parsers.LogParser {
-	pp := *p
-	return &pp
-}
-
-type auditLogParser struct {
-	LogID string
-	Type  string
+func (p *AuditLogParser) New() parsers.LogParser {
+	return &AuditLogParser{}
 }
 
 // Parse implements parsers.LogParser interface
-func (p *auditLogParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *AuditLogParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	entry := LogEntryAuditLog{}
 	if err := jsoniter.UnmarshalFromString(log, &entry); err != nil {
 		return nil, err
 	}
-	if id := entry.LogID(); id != p.LogID {
-		return nil, fmt.Errorf("invalid LogID %q != %q", id, p.LogID)
+	switch id := entry.LogID(); id {
+	case AuditLogActivityLogID, AuditLogDataLogID, AuditLogSystemLogID:
+	default:
+		return nil, errors.Errorf("invalid LogID %q != %s", id, []string{
+			AuditLogActivityLogID,
+			AuditLogDataLogID,
+			AuditLogSystemLogID,
+		})
 	}
 	ts := entry.Timestamp
-	if ts == nil || ((*time.Time)(ts)).IsZero() {
+	if ts == nil {
+		// Fallback to ReceiveTimestamp which is a required field to get a timestamp hopefully closer to the actual event timestamp.
 		ts = entry.ReceiveTimestamp
 	}
-	entry.SetCoreFields(p.Type, ts, &entry)
+	entry.SetCoreFields(TypeAuditLog, ts, &entry)
 	if entry.HTTPRequest != nil {
 		entry.AppendAnyIPAddressPtr(entry.HTTPRequest.RemoteIP)
 	}

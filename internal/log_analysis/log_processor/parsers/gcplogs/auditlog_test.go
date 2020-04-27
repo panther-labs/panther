@@ -28,7 +28,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-func TestAuditLogParser(t *testing.T) {
+func TestAuditLogParserActivity(t *testing.T) {
 	log := `{
 		"protoPayload": {
 			"@type": "type.googleapis.com/google.cloud.audit.AuditLog",
@@ -134,7 +134,7 @@ func TestAuditLogParser(t *testing.T) {
 		},
 	}
 
-	entry.SetCoreFields(TypeAuditLogActivity, entry.Timestamp, entry)
+	entry.SetCoreFields(TypeAuditLog, entry.Timestamp, entry)
 	entry.AppendAnyIPAddress("35.238.150.117")
-	testutil.CheckPantherParser(t, log, NewAuditLogActivityParser(), &entry.PantherLog)
+	testutil.CheckPantherParser(t, log, NewAuditLogParser(), &entry.PantherLog)
 }

@@ -24,7 +24,6 @@ package destinations
 import (
 	"bytes"
 	"compress/gzip"
-	"errors"
 	"io/ioutil"
 	"strings"
 	"sync"
@@ -37,6 +36,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

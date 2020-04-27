@@ -19,9 +19,10 @@ package numerics
  */
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // this is an int that is read from JSON as either a string or int
@@ -79,7 +80,7 @@ func unquoteJSON(data []byte) []byte {
 
 func (i *Int64) UnmarshalJSON(data []byte) error {
 	if i == nil {
-		return fmt.Errorf("nil target")
+		return errors.Errorf("nil target")
 	}
 	data = unquoteJSON(data)
 	n, err := strconv.ParseInt(string(data), 10, 64)

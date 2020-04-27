@@ -44,6 +44,9 @@ type LogEntry struct {
 	SourceLocation   *LogEntrySourceLocation `json:"sourceLocation,omitempty" description:"Source code location information associated with the log entry, if any."`
 }
 
+// LogID extracts the log ID from a `LogName` field.
+// GCP logs are aggregated and use log id to differentiate different log types.
+// A log ID is URL encoded is always the trailing path segment of a LogName.
 func (entry *LogEntry) LogID() string {
 	if entry == nil {
 		return ""
@@ -52,6 +55,7 @@ func (entry *LogEntry) LogID() string {
 		return ""
 	}
 	name := *entry.LogName
+	// Find the last path segment in a LogName
 	if pos := strings.LastIndexByte(name, '/'); 0 <= pos && pos < len(name) {
 		return name[pos+1:]
 	}

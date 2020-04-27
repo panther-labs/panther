@@ -95,20 +95,10 @@ var (
 			&awslogs.CloudTrailInsight{}, awslogs.CloudTrailInsightDesc),
 		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
 			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
-		gcplogs.TypeAuditLogActivity: DefaultLogParser(
-			gcplogs.NewAuditLogActivityParser(),
+		gcplogs.TypeAuditLog: DefaultLogParser(
+			gcplogs.NewAuditLogParser(),
 			&gcplogs.LogEntryAuditLog{},
-			gcplogs.AuditLogActivityDesc,
-		),
-		gcplogs.TypeAuditLogSystem: DefaultLogParser(
-			gcplogs.NewAuditLogSystemParser(),
-			&gcplogs.LogEntryAuditLog{},
-			gcplogs.AuditLogSystemDesc,
-		),
-		gcplogs.TypeAuditLogData: DefaultLogParser(
-			gcplogs.NewAuditLogDataParser(),
-			&gcplogs.LogEntryAuditLog{},
-			gcplogs.AuditLogDataDesc,
+			gcplogs.AuditLogDesc,
 		),
 	}
 )
