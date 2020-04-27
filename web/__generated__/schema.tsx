@@ -313,7 +313,6 @@ export type GetLogQueryOutput = {
   __typename?: 'GetLogQueryOutput';
   error?: Maybe<Error>;
   query?: Maybe<LogQueryOutputQueryData>;
-  totalCount?: Maybe<Scalars['Int']>;
   stats?: Maybe<GetLogQueryStats>;
   results?: Maybe<Array<Array<LogColumn>>>;
   pageInfo: PageInfo;
@@ -1686,7 +1685,6 @@ export type GetLogQueryOutputResolvers<
 > = {
   error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
   query?: Resolver<Maybe<ResolversTypes['LogQueryOutputQueryData']>, ParentType, ContextType>;
-  totalCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   stats?: Resolver<Maybe<ResolversTypes['GetLogQueryStats']>, ParentType, ContextType>;
   results?: Resolver<Maybe<Array<Array<ResolversTypes['LogColumn']>>>, ParentType, ContextType>;
   pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;

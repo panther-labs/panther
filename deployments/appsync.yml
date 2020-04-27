@@ -516,7 +516,6 @@ Resources:
               "status": $context.result.status,
               "sql": $context.result.sql
             },
-            "totalCount": $context.result.resultsPage.numRows,
             "pageInfo": {
               "hasNextPage": $hasNextPage,
               "paginationToken": $context.result.resultsPage.paginationToken

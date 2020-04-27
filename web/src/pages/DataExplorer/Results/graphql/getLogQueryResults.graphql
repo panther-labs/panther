@@ -1,6 +1,5 @@
 query GetLogQueryResults($input: GetLogQueryInput!) {
   getLogQuery(input: $input) {
-    totalCount
     error {
       message
     }

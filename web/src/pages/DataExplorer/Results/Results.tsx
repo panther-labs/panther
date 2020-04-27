@@ -128,14 +128,9 @@ const Results: React.FC = () => {
     [isQuerySuccessful]
   );
 
-  const totalCount = data?.getLogQuery?.totalCount;
   const results = data?.getLogQuery?.results ?? [];
   return (
-    <Panel
-      title={`Results${totalCount ? ` (${totalCount})` : ''}`}
-      size="large"
-      actions={downloadButton}
-    >
+    <Panel title="Results" size="large" actions={downloadButton}>
       <Box overflow="scroll" height={400} willChange="scroll">
         <ResultsTable results={results} resultContainerRef={infiniteRef} />
         {results.length > 0 && loading && (
