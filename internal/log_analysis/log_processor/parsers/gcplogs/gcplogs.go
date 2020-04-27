@@ -30,7 +30,7 @@ import (
 // nolint:lll
 type LogEntry struct {
 	LogName          *string                 `json:"logName" validate:"required" description:"The resource name of the log to which this log entry belongs."`
-	Severity         *LogSeverity            `json:"severity,omitempty" description:"The severity of the log entry. The default value is LogSeverity.DEFAULT."`
+	Severity         *int                    `json:"severity,omitempty" description:"The severity of the log entry. The default value is LogSeverity.DEFAULT."`
 	InsertID         *string                 `json:"insertId,omitempty" description:"A unique identifier for the log entry."`
 	Resource         MonitoredResource       `json:"resource" validate:"required" description:"The monitored resource that produced this log entry."`
 	Timestamp        *timestamp.RFC3339      `json:"timestamp,omitempty" description:"The time the event described by the log entry occurred."`
@@ -76,20 +76,6 @@ type LogEntryOperation struct {
 	First    *bool   `json:"first,omitempty" description:"This is the first entry in an operation"`
 	Last     *bool   `json:"last,omitempty" description:"This is the last entry in an operation"`
 }
-
-type LogSeverity int
-
-const (
-	SeverityDefault   LogSeverity = 0
-	SeverityDebug     LogSeverity = 100
-	SeverityInfo      LogSeverity = 200
-	SeverityNotice    LogSeverity = 300
-	SeverityWarning   LogSeverity = 400
-	SeverityError     LogSeverity = 500
-	SeverityCritical  LogSeverity = 600
-	SeverityAlert     LogSeverity = 700
-	SeverityEmergency LogSeverity = 800
-)
 
 // nolint:lll
 type HTTPRequest struct {
