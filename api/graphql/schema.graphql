@@ -136,7 +136,7 @@ type AlertSummary {
   title: String!
   updateTime: AWSDateTime!
   ruleId: String
-  severity: String
+  severity: SeverityEnum
 }
 
 input ListRulesInput {

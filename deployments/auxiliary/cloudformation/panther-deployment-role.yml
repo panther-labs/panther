@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.1.0
+  Version: v1.1.1
 
 Resources:
   DeploymentRole:
@@ -133,6 +133,8 @@ Resources:
           - Effect: Allow
             Action: iam:*
             Resource:
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/AWSServiceRole*
+              - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/panther-*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/Panther*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*

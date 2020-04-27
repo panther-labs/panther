@@ -17,47 +17,49 @@
  */
 
 import React from 'react';
-import { User } from 'Generated/schema';
-import { Alert, Card, Table } from 'pouncejs';
-import columns from 'Pages/Users/columns';
+import { Label, Table } from 'pouncejs';
+import dayjs from 'dayjs';
+import { ListUsers } from 'Pages/Users/ListUsers/graphql/listUsers.generated';
+import ListUsersTableRowOptions from './ListUsersTableRowOptions';
 
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { extractErrorMessage } from 'Helpers/utils';
-import { useListUsers } from './graphql/listUsers.generated';
+type ListUsersTableProps = Pick<ListUsers, 'users'>;
 
-// This is done so we can benefit from React.memo
-const getUserItemKey = (item: User) => item.id;
-
-const ListUsersTable = () => {
-  const { loading, error, data } = useListUsers({
-    fetchPolicy: 'cache-and-network',
-  });
-
-  if (loading && !data) {
-    return (
-      <Card p={9}>
-        <TablePlaceholder />
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert
-        variant="error"
-        title="Couldn't load users"
-        description={
-          extractErrorMessage(error) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
-    );
-  }
-
+const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
   return (
-    <Card>
-      <Table<User> columns={columns} getItemKey={getUserItemKey} items={data.users} />
-    </Card>
+    <Table>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell />
+          <Table.HeaderCell>Name</Table.HeaderCell>
+          <Table.HeaderCell>Email</Table.HeaderCell>
+          <Table.HeaderCell>Role</Table.HeaderCell>
+          <Table.HeaderCell>Invited At</Table.HeaderCell>
+          <Table.HeaderCell>Status</Table.HeaderCell>
+          <Table.HeaderCell />
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {users.map((user, index) => (
+          <Table.Row key={user.id}>
+            <Table.Cell>
+              <Label size="medium">{index + 1}</Label>
+            </Table.Cell>
+            <Table.Cell>
+              {user.givenName} {user.familyName}
+            </Table.Cell>
+            <Table.Cell>{user.email}</Table.Cell>
+            <Table.Cell>Admin</Table.Cell>
+            <Table.Cell>
+              {dayjs(user.createdAt * 1000).format('MM/DD/YYYY, HH:mm G[M]TZZ')}
+            </Table.Cell>
+            <Table.Cell>{user.status}</Table.Cell>
+            <Table.Cell>
+              <ListUsersTableRowOptions user={user} />
+            </Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 

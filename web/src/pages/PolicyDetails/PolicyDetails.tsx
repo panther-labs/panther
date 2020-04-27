@@ -37,7 +37,6 @@ import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination
 import ErrorBoundary from 'Components/ErrorBoundary';
 import PolicyDetailsTable from './PolicyDetailsTable';
 import PolicyDetailsInfo from './PolicyDetailsInfo';
-import columns from './columns';
 import PolicyDetailsPageSkeleton from './Skeleton';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
 
@@ -163,7 +162,6 @@ const PolicyDetailsPage = () => {
           <ErrorBoundary>
             <PolicyDetailsTable
               items={enhancedResources}
-              columns={columns}
               enumerationStartIndex={(pagingData.thisPage - 1) * DEFAULT_SMALL_PAGE_SIZE}
             />
           </ErrorBoundary>
