@@ -56,7 +56,8 @@ const (
 
 	messageAttributeDataType = "String"
 
-	maxDuration = 5 * time.Minute //  maximum time to hold an s3 buffer in memory
+	//  maximum time to hold an s3 buffer in memory (controls latency of rules engine which processes this output
+	maxDuration = 2 * time.Minute
 
 	bytesPerMB                  = 1024 * 1024
 	defaultMaxS3BufferSizeBytes = 50 * bytesPerMB

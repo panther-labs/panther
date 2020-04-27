@@ -44,7 +44,7 @@ const (
 
 var (
 	// how many time to read nothing in a row before stopping lambda (var for tests)
-	maxContiguousEmptyReads = 10 // this has a consequence of making the min processing time sqsWaitTimeSeconds*maxContiguousEmptyReads
+	maxContiguousEmptyReads = 3 // this has a consequence of making the min processing time sqsWaitTimeSeconds*maxContiguousEmptyReads
 )
 
 // reads lambda event, then continues to read events from sqs q
