@@ -38,7 +38,7 @@ func TestGenerateAlarms(t *testing.T) {
 
 	const expectedFile = "./testdata/generated_test_alarms.json"
 	// uncomment to write new expected file
-	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
+	//require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
 
 	expected, err := ioutil.ReadFile(expectedFile)
 	require.NoError(t, err)
