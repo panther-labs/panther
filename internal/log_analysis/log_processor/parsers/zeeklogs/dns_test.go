@@ -64,10 +64,11 @@ func TestZeekDNS(t *testing.T) {
 		parsers.DomainName(aws.StringValue(event.Query)),
 		parsers.DomainName(event.Answers[0]),
 	)
+
 	testutil.CheckPantherParserJSON(t, log, &ZeekDNSParser{}, event)
 }
 
 func TestZeekDNSType(t *testing.T) {
 	parser := &ZeekDNSParser{}
-	require.Equal(t, "Zeek.DNS", parser.LogType())
+	require.Equal(t, TypeDNS, parser.LogType())
 }

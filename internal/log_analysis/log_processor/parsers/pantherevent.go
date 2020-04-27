@@ -68,7 +68,7 @@ type PantherEventer interface {
 
 // Sort sorts the event Fields by kind, value ascending order
 func (event *PantherEvent) Sort() {
-	sort.Slice(event.Fields, func(i, j int) bool {
+	sort.SliceStable(event.Fields, func(i, j int) bool {
 		a := &event.Fields[i]
 		b := &event.Fields[j]
 		if a.Kind == b.Kind {

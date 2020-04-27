@@ -73,8 +73,7 @@ func (p *ZeekDNSParser) New() parsers.LogParser {
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
-	zeekDNS := &ZeekDNS{}
-	return parsers.QuickParseJSON(zeekDNS, log)
+	return parsers.QuickParseJSON(&ZeekDNS{}, log)
 }
 
 const TypeDNS = "Zeek.DNS"
@@ -85,19 +84,18 @@ func (p *ZeekDNSParser) LogType() string {
 }
 
 func (event *ZeekDNS) PantherEvent() *parsers.PantherEvent {
-	p := parsers.NewEvent(TypeDNS, event.Ts.UTC(),
-		parsers.IPAddress(aws.StringValue(event.IDOrigH)),
-		parsers.IPAddress(aws.StringValue(event.IDRespH)),
-	)
+	e := parsers.NewEvent(TypeDNS, event.Ts.UTC())
+	e.AppendDomainOrIP(aws.StringValue(event.IDOrigH))
+	e.AppendDomainOrIP(aws.StringValue(event.IDRespH))
 	if event.QType != nil && (*event.QType == aQueryType || *event.QType == aaaaQueryType) {
 		if event.Query != nil {
-			p.AppendDomain(*event.Query)
+			e.AppendDomain(*event.Query)
 		}
 	}
 
 	for _, answer := range event.Answers {
 		// Answer might be IP or Domain name
-		p.AppendIP(answer)
+		e.AppendDomainOrIP(answer)
 	}
-	return p
+	return e
 }

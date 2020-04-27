@@ -82,7 +82,7 @@ func CheckPantherEvent(t *testing.T, src parsers.PantherEventer, logType string,
 	// Sort fields so events can be checked for equality
 	actual.Sort()
 	expect.Sort()
-	require.Equal(t, src.PantherEvent(), expect, actual)
+	require.Equal(t, actual, expect, actual)
 }
 func CheckPantherParserJSON(t *testing.T, log string, parser parsers.LogParser, expect ...parsers.PantherEventer) {
 	t.Helper()
