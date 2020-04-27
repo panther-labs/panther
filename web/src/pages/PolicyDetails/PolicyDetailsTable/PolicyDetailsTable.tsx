@@ -17,39 +17,95 @@
  */
 
 import React from 'react';
-import { ComplianceItem, ComplianceIntegration } from 'Generated/schema';
-import { Table, TableProps } from 'pouncejs';
+import { ComplianceItem, ComplianceIntegration, ComplianceStatusEnum } from 'Generated/schema';
+import { Box, Flex, Label, Link, Table, Tooltip } from 'pouncejs';
 import urls from 'Source/urls';
-import useRouter from 'Hooks/useRouter';
-import { generateEnumerationColumn } from 'Helpers/utils';
-
-type EnhancedComplianceItem = ComplianceItem & Pick<ComplianceIntegration, 'integrationLabel'>;
+import { capitalize, formatDatetime } from 'Helpers/utils';
+import { Link as RRLink } from 'react-router-dom';
+import RemediationButton from 'Components/buttons/RemediationButton/RemediationButton';
+import SuppressButton from 'Components/buttons/SuppressButton/SuppressButton';
 
 interface PolicyDetailsTableProps {
-  items?: EnhancedComplianceItem[];
-  columns: TableProps<EnhancedComplianceItem>['columns'];
+  items?: (ComplianceItem & Pick<ComplianceIntegration, 'integrationLabel'>)[];
   enumerationStartIndex: number;
 }
 
 const PolicyDetailsTable: React.FC<PolicyDetailsTableProps> = ({
   items,
-  columns,
   enumerationStartIndex,
 }) => {
-  const { history } = useRouter();
-
-  // prepend an extra enumeration column
-  const enumeratedColumns = [generateEnumerationColumn(enumerationStartIndex), ...columns];
-
   return (
-    <Table<EnhancedComplianceItem>
-      columns={enumeratedColumns}
-      getItemKey={complianceItem => complianceItem.resourceId}
-      items={items}
-      onSelect={complianceItem =>
-        history.push(urls.compliance.resources.details(complianceItem.resourceId))
-      }
-    />
+    <Table>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell />
+          <Table.HeaderCell>Resource</Table.HeaderCell>
+          <Table.HeaderCell>Status</Table.HeaderCell>
+          <Table.HeaderCell>Source</Table.HeaderCell>
+          <Table.HeaderCell>Last Updated</Table.HeaderCell>
+          <Table.HeaderCell />
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {items.map((resource, index) => (
+          <Table.Row key={resource.resourceId}>
+            <Table.Cell>
+              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
+            </Table.Cell>
+            <Table.Cell maxWidth={450} truncated title={resource.resourceId}>
+              <Link
+                as={RRLink}
+                to={urls.compliance.resources.details(resource.resourceId)}
+                py={4}
+                pr={4}
+              >
+                {resource.resourceId}
+              </Link>
+            </Table.Cell>
+            <Table.Cell
+              color={resource.status === ComplianceStatusEnum.Pass ? 'green300' : 'red300'}
+            >
+              {resource.errorMessage ? (
+                <Tooltip
+                  positioning="down"
+                  content={<Label size="medium">{resource.errorMessage}</Label>}
+                >
+                  {`${capitalize(resource.status.toLowerCase())} *`}
+                </Tooltip>
+              ) : (
+                capitalize(resource.status.toLowerCase())
+              )}
+            </Table.Cell>
+            <Table.Cell>{resource.integrationLabel}</Table.Cell>
+            <Table.Cell>{formatDatetime(resource.lastUpdated)}</Table.Cell>
+            <Table.Cell width={250}>
+              <Flex my={-4} justify="flex-end">
+                {resource.status !== ComplianceStatusEnum.Pass && (
+                  <Box mr={4}>
+                    <RemediationButton
+                      buttonVariant="default"
+                      policyId={resource.policyId}
+                      resourceId={resource.resourceId}
+                    />
+                  </Box>
+                )}
+                {!resource.suppressed ? (
+                  <SuppressButton
+                    buttonVariant="default"
+                    policyIds={[resource.policyId]}
+                    resourcePatterns={[resource.resourceId]}
+                  />
+                ) : (
+                  <Label color="orange300" size="medium">
+                    IGNORED
+                  </Label>
+                )}
+              </Flex>
+            </Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 

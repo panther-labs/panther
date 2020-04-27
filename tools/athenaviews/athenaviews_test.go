@@ -66,7 +66,7 @@ func TestGenerateViewAllLogsFail(t *testing.T) {
 
 func TestGenerateLogsViewsFail(t *testing.T) {
 	// no tables
-	_, err := generateLogViews([]*awsglue.GlueTableMetadata{})
+	_, err := GenerateLogViews([]*awsglue.GlueTableMetadata{})
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "no tables"))
 }
