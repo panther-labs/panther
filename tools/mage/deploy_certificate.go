@@ -35,7 +35,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
-	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/iam"
 
 	"github.com/panther-labs/panther/tools/config"
@@ -52,24 +51,17 @@ const (
 // Returns the certificate arn for the bootstrap stack. One of:
 //
 // 1) The settings file, if it's specified
-// 2) The bootstrap stack, if it already exists
+// 2) The bootstrap stack output (existingCertArn)
 // 3) Uploading an ACM or IAM cert
-func certificateArn(awsSession *session.Session, settings *config.PantherConfig) string {
+func certificateArn(awsSession *session.Session, settings *config.PantherConfig, existingCertArn string) string {
 	if settings.Web.CertificateArn != "" {
-		// Always use the value in the settings file, if it exists
+		// Always use the value in the settings file first, if it exists
 		return settings.Web.CertificateArn
 	}
 
-	// If the bootstrap stack already exists, we need the stack outputs to know what cert arn to use.
-	// CFN makes us re-specify the parameter if it already had a non-default value.
-	stack, err := waitForStack(cfn.New(awsSession), bootstrapStack, "")
-	if err != nil {
-		// If the stack doesn't exist yet, its reported status will be DELETE_COMPLETE (not an error)
-		logger.Fatal(err)
-	}
-
-	if arn := flattenStackOutputs(stack)["CertificateArn"]; arn != "" {
-		return arn
+	// If the bootstrap stack already exists and has a certificate arn, use that
+	if existingCertArn != "" {
+		return existingCertArn
 	}
 
 	// If the stack outputs are blank, it never deployed successfully - upload a new cert

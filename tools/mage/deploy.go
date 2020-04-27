@@ -197,11 +197,20 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	results := make(chan goroutineResult)
 	count := 0
 
+	// If the bootstrap stack is ROLLBACK_COMPLETE or similar, we need to do a full teardown.
+	// Check for that now, instead of waiting until the actual deployTemplate() call:
+	//    - teardown can get user confirmation without other log messages running in parallel
+	//    - bootstrap stack needs to be stable before we read its outputs to find the certificate arn
+	oldBootstrapOutputs, err := prepareStack(awsSession, bootstrapStack)
+	if err != nil && !errStackDoesNotExist(err) {
+		logger.Fatal(err)
+	}
+
 	// Deploy bootstrap stacks
 	count++
 	go func(c chan goroutineResult) {
 		var err error
-		outputs, err = deployBoostrapStacks(awsSession, settings)
+		outputs, err = deployBoostrapStacks(awsSession, settings, oldBootstrapOutputs["CertificateArn"])
 		c <- goroutineResult{summary: "bootstrap: stacks", err: err}
 	}(results)
 
@@ -220,12 +229,17 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 }
 
 // Deploy bootstrap and bootstrap-gateway and merge their outputs
-func deployBoostrapStacks(awsSession *session.Session, settings *config.PantherConfig) (map[string]string, error) {
+func deployBoostrapStacks(
+	awsSession *session.Session,
+	settings *config.PantherConfig,
+	existingCertArn string,
+) (map[string]string, error) {
+
 	params := map[string]string{
 		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
-		"CertificateArn":             certificateArn(awsSession, settings),
+		"CertificateArn":             certificateArn(awsSession, settings, existingCertArn),
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomDomain":               settings.Web.CustomDomain,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
