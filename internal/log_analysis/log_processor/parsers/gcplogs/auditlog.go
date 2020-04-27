@@ -87,9 +87,10 @@ func (p *AuditLogParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	entry.SetCoreFields(TypeAuditLog, ts, &entry)
 	if entry.HTTPRequest != nil {
 		entry.AppendAnyIPAddressPtr(entry.HTTPRequest.RemoteIP)
+		entry.AppendAnyIPAddressPtr(entry.HTTPRequest.ServerIP)
 	}
 	if meta := entry.Payload.RequestMetadata; meta != nil {
-		entry.AppendAnyIPAddressPtr(entry.Payload.RequestMetadata.CallerIP)
+		entry.AppendAnyIPAddressPtr(meta.CallerIP)
 	}
 	if err := parsers.Validator.Struct(entry); err != nil {
 		return nil, err
