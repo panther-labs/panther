@@ -20,11 +20,12 @@ package mage
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -51,28 +52,52 @@ func (b Build) API() {
 		logger.Fatalf("%s not found (%v): run 'mage setup'", cmd, err)
 	}
 
+	// This import has to be fixed, see below
+	clientImport := regexp.MustCompile(
+		`"github.com/panther-labs/panther/api/gateway/[a-z]+/client/operations"`)
+
 	for _, spec := range specs {
 		dir := filepath.Dir(spec)
 		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
-		start := time.Now().UTC()
 
 		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models}
 		if err := sh.Run(cmd, args...); err != nil {
 			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
 		}
 
+		// TODO - delete unused models
 		// If an API model is removed, "swagger generate" will leave the Go file in place.
-		// So we walk the generated directories and remove anything swagger didn't just write.
-		handler := func(path string, info os.FileInfo) {
-			if !info.IsDir() && info.ModTime().Before(start) {
-				logger.Debugf("%s unmodified by swagger: removing", path)
-				if err := os.Remove(path); err != nil {
-					logger.Warnf("failed to remove deleted model %s: %v", path, err)
-				}
+		// We tried to remove generated files based on timestamp, but that had issues in Docker.
+		// We tried removing the client/ and models/ every time, but mage itself depends on some of these.
+		// For now, developers just need to manually remove unused swagger models.
+
+		// There is a bug in "swagger generate" which can lead to incorrect import paths.
+		// To reproduce: comment out this section, clone to /tmp and "mage build:api" - note the diffs.
+		// The most reliable workaround has been to just rewrite the import ourselves.
+		//
+		// For example, in api/gateway/remediation/client/panther_remediation_client.go:
+		//     import "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+		// should be
+		//     import "github.com/panther-labs/panther/api/gateway/remediation/client/operations"
+		walk(client, func(path string, info os.FileInfo) {
+			if info.IsDir() || filepath.Ext(path) != ".go" {
+				return
 			}
-		}
-		walk(client, handler)
-		walk(models, handler)
+
+			body, err := ioutil.ReadFile(path)
+			if err != nil {
+				logger.Fatalf("failed to open %s: %v", path, err)
+			}
+
+			correctImport := fmt.Sprintf(
+				`"github.com/panther-labs/panther/api/gateway/%s/client/operations"`,
+				filepath.Base(filepath.Dir(filepath.Dir(path))))
+
+			newBody := clientImport.ReplaceAll(body, []byte(correctImport))
+			if err := ioutil.WriteFile(path, newBody, info.Mode()); err != nil {
+				logger.Fatalf("failed to rewrite %s: %v", path, err)
+			}
+		})
 
 		// Format generated files with our license header and import ordering.
 		// "swagger generate client" can embed the header, but it's simpler to keep the whole repo

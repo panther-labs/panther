@@ -647,6 +647,7 @@ Resources:
       LoadBalancerArn: !Ref PublicLoadBalancer
       Port: 443
       Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
 
   # Create a rule on the load balancer for routing traffic to the target group
   LoadBalancerRule:

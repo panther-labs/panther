@@ -18,17 +18,17 @@
 
 import React from 'react';
 import {
-  ListResourcesSortFieldsEnum,
+  ComplianceIntegration,
+  ComplianceStatusEnum,
   ListResourcesInput,
+  ListResourcesSortFieldsEnum,
   ResourceSummary,
   SortDirEnum,
-  ComplianceIntegration,
 } from 'Generated/schema';
-import { generateEnumerationColumn } from 'Helpers/utils';
-import { Table } from 'pouncejs';
-import useRouter from 'Hooks/useRouter';
+import { capitalize, formatDatetime } from 'Helpers/utils';
+import { Label, Link, Table, Tooltip } from 'pouncejs';
 import urls from 'Source/urls';
-import columns from '../columns';
+import { Link as RRLink } from 'react-router-dom';
 
 interface ListResourcesTableProps {
   items?: Array<ResourceSummary & Pick<ComplianceIntegration, 'integrationLabel'>>;
@@ -45,8 +45,6 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
   sortDir,
   enumerationStartIndex,
 }) => {
-  const { history } = useRouter();
-
   const handleSort = (selectedKey: ListResourcesSortFieldsEnum) => {
     if (sortBy === selectedKey) {
       onSort({
@@ -58,18 +56,77 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
     }
   };
 
-  const enumeratedColumns = [generateEnumerationColumn(enumerationStartIndex), ...columns];
-
   return (
-    <Table<ResourceSummary & Pick<ComplianceIntegration, 'integrationLabel'>>
-      columns={enumeratedColumns}
-      getItemKey={resource => resource.id}
-      items={items}
-      onSort={handleSort}
-      sortDir={sortDir}
-      sortKey={sortBy}
-      onSelect={resource => history.push(urls.compliance.resources.details(resource.id))}
-    />
+    <Table>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell />
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListResourcesSortFieldsEnum.Id)}
+            sortDir={sortBy === ListResourcesSortFieldsEnum.Id ? sortDir : false}
+          >
+            Resource
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListResourcesSortFieldsEnum.Type)}
+            sortDir={sortBy === ListResourcesSortFieldsEnum.Type ? sortDir : false}
+          >
+            Type
+          </Table.SortableHeaderCell>
+          <Table.HeaderCell>Source</Table.HeaderCell>
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListResourcesSortFieldsEnum.ComplianceStatus)}
+            sortDir={sortBy === ListResourcesSortFieldsEnum.ComplianceStatus ? sortDir : false}
+          >
+            Status
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListResourcesSortFieldsEnum.LastModified)}
+            sortDir={sortBy === ListResourcesSortFieldsEnum.LastModified ? sortDir : false}
+          >
+            Last Modified
+          </Table.SortableHeaderCell>
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {items.map((resource, index) => (
+          <Table.Row key={resource.id}>
+            <Table.Cell>
+              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
+            </Table.Cell>
+            <Table.Cell maxWidth={450} wrapText="wrap">
+              <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>
+                {resource.id}
+              </Link>
+            </Table.Cell>
+            <Table.Cell>{resource.type}</Table.Cell>
+            <Table.Cell>{resource.integrationLabel}</Table.Cell>
+            <Table.Cell
+              color={
+                resource.complianceStatus === ComplianceStatusEnum.Pass ? 'green300' : 'red300'
+              }
+            >
+              {resource.complianceStatus === ComplianceStatusEnum.Error ? (
+                <Tooltip
+                  positioning="down"
+                  content={
+                    <Label size="medium">
+                      Some policies have raised an exception when evaluating this resource. Find out
+                      more in the resource{"'"}s page
+                    </Label>
+                  }
+                >
+                  {`${capitalize(resource.complianceStatus.toLowerCase())} *`}
+                </Tooltip>
+              ) : (
+                capitalize(resource.complianceStatus.toLowerCase())
+              )}
+            </Table.Cell>
+            <Table.Cell>{formatDatetime(resource.lastModified)}</Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 

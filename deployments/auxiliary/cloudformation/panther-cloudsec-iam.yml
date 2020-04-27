@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM roles for an account being scanned by Panther.
 
 Metadata:
-  Version: v1.0.0
+  Version: v1.0.1
 
 Mappings:
   # DO NOT EDIT PantherParameters section. Panther application relies on the exact format (including comments)
@@ -82,7 +82,12 @@ Resources:
   AuditRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub PantherAuditRole-${MasterAccountRegion} # DO NOT CHANGE! backend.yml CF depends on this name
+      RoleName: !If # DO NOT CHANGE! backend.yml CF depends on this name
+        - GeneratedTemplate
+        - !Sub
+          - PantherAuditRole-${Mapping}
+          - Mapping: !FindInMap [PantherParameters, MasterAccountRegion, Value]
+        - !Sub PantherAuditRole-${MasterAccountRegion}
       Description: The Panther master account assumes this role for read-only security scanning
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -155,7 +160,12 @@ Resources:
     Condition: EnableCloudWatchEvent
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion} # DO NOT CHANGE!
+      RoleName: !If # DO NOT CHANGE! backend.yml CF depends on this name
+        - GeneratedTemplate
+        - !Sub
+          - PantherCloudFormationStackSetExecutionRole-${Mapping}
+          - Mapping: !FindInMap [PantherParameters, MasterAccountRegion, Value]
+        - !Sub PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion}
       Description: CloudFormation assumes this role to execute a stack set
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -195,7 +205,12 @@ Resources:
     Condition: EnableAutoRemediation
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub PantherRemediationRole-${MasterAccountRegion} # DO NOT CHANGE! backend.yml CF depends on this name
+      RoleName: !If # DO NOT CHANGE! backend.yml CF depends on this name
+        - GeneratedTemplate
+        - !Sub
+          - PantherRemediationRole-${Mapping}
+          - Mapping: !FindInMap [PantherParameters, MasterAccountRegion, Value]
+        - !Sub PantherRemediationRole-${MasterAccountRegion}
       Description: The Panther master account assumes this role for automatic remediation of policy violations
       MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:

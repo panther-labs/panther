@@ -29,7 +29,7 @@ Get started with 3 quick steps!
 Clone the latest release of [Panther](https://github.com/panther-labs/panther):
 
 ```bash
-git clone https://github.com/panther-labs/panther --depth 1 --branch v1.1.0
+git clone https://github.com/panther-labs/panther --depth 1 --branch v1.1.1
 cd panther
 ```
 

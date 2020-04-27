@@ -145,6 +145,8 @@ resource "aws_iam_policy" "deployment" {
         Effect : "Allow",
         Action : "iam:*",
         Resource : [
+          "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/AWSServiceRole*",
+          "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/aws-service-role/*",
           "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/panther-*",
           "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/Panther-*",
           "arn:${var.aws_partition}:iam::${var.aws_account_id}:server-certificate/panther/*"
