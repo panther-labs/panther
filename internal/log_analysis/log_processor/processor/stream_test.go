@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/assert"
@@ -150,6 +151,22 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 	assert.Equal(t, "processError", err.Error()) // expect the processError NOT readEventError
 }
 
+func TestStreamEventsReceiveSQSError(t *testing.T) {
+	initTest()
+
+	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
+	// this one fails
+	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{},
+		fmt.Errorf("receiveError")).Once()
+
+	sqsMessageCount, err := streamEvents(streamTestSqsClient, streamTestTime, streamTestLambdaEvent,
+		noopProcessorFunc, noopReadSnsMessagesFunc)
+	assert.Error(t, err)
+	assert.Equal(t, 0, sqsMessageCount)
+	assert.Equal(t, "failure receiving messages from https://fakesqsurl: receiveError", err.Error())
+	streamTestSqsClient.AssertExpectations(t)
+}
+
 func TestStreamEventsDeleteSQSError(t *testing.T) {
 	initTest()
 
@@ -164,6 +181,25 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, len(streamTestLambdaEvent.Records)+len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
 	assert.Equal(t, "failure deleting messages from https://fakesqsurl: deleteError", err.Error())
+	streamTestSqsClient.AssertExpectations(t)
+}
+
+func TestStreamEventsSQSOverLimitError(t *testing.T) {
+	// lambda events and sqs events
+	initTest()
+
+	// on an over limit error, just stop processing (deletes messages processed from sqs queue)
+
+	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
+	// this one has overlimit error , which breaks the loop
+	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{},
+		awserr.New(sqs.ErrCodeOverLimit, "", fmt.Errorf(sqs.ErrCodeOverLimit))).Once()
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
+
+	sqsMessageCount, err := streamEvents(streamTestSqsClient, streamTestTime, streamTestLambdaEvent,
+		noopProcessorFunc, noopReadSnsMessagesFunc)
+	require.NoError(t, err)
+	assert.Equal(t, len(streamTestLambdaEvent.Records)+len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
 	streamTestSqsClient.AssertExpectations(t)
 }
 

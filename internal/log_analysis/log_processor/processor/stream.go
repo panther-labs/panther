@@ -24,9 +24,11 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
@@ -80,29 +82,38 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 			return
 		}
 
-		numberConitguousEmptyReads := 0 // count continuous empty reads
+		numberContiguousEmptyReads := 0 // count contiguous empty reads
 
-		// continue to read until either there are no sqs messages or we have exceeded the processing time limit
+		// continue to read until either there are no sqs messages for a time or we have exceeded the processing time limit
 		for time.Since(startTime) < processingTimeLimit {
 			for _, dataStream := range dataStreams {
 				streamChan <- dataStream
 			}
 
 			// keep reading from SQS to maximize output aggregation
-			receiveMessageOutput, err := readSqsMessages(sqsClient)
+			overLimit, receiveMessageOutput, err := readSqsMessages(sqsClient)
 			if err != nil {
 				readEventErrorChan <- err
 				return
 			}
 
+			// just stop processing if the queue has too many requests in flight (and delete from queue)
+			// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html
+			if overLimit {
+				zap.L().Warn("sqs queue has too many messages in-flight, stopping reading new messages and finishing processing",
+					zap.String("guidance", "considering increasing the size of the log processor lambda in panther_config.yml"),
+					zap.String("queueURL", common.Config.SqsQueueURL))
+				break
+			}
+
 			if len(receiveMessageOutput.Messages) == 0 {
-				numberConitguousEmptyReads++
-				if numberConitguousEmptyReads > maxContiguousEmptyReads {
+				numberContiguousEmptyReads++
+				if numberContiguousEmptyReads >= maxContiguousEmptyReads {
 					break
 				}
 				continue
 			}
-			numberConitguousEmptyReads = 0 // reset
+			numberContiguousEmptyReads = 0 // reset
 
 			// remember so we can delete when done
 			sqsResponses = append(sqsResponses, receiveMessageOutput)
@@ -136,7 +147,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 	return sqsMessageCount, deleteSqsMessages(sqsClient, sqsResponses)
 }
 
-func readSqsMessages(sqsClient sqsiface.SQSAPI) (receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
+func readSqsMessages(sqsClient sqsiface.SQSAPI) (overLimit bool, receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
 	receiveMessageOutput, err = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(sqsWaitTimeSeconds),
 		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize), // max size allowed
@@ -144,11 +155,15 @@ func readSqsMessages(sqsClient sqsiface.SQSAPI) (receiveMessageOutput *sqs.Recei
 		QueueUrl:            &common.Config.SqsQueueURL,
 	})
 	if err != nil {
-		err = errors.Wrapf(err, "failure reading messages from %s", common.Config.SqsQueueURL)
-		return receiveMessageOutput, err
+		// in this case we just tell caller, no error
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == sqs.ErrCodeOverLimit {
+			return true, receiveMessageOutput, nil
+		}
+		err = errors.Wrapf(err, "failure receiving messages from %s", common.Config.SqsQueueURL)
+		return false, receiveMessageOutput, err
 	}
 
-	return receiveMessageOutput, err
+	return false, receiveMessageOutput, err
 }
 
 func deleteSqsMessages(sqsClient sqsiface.SQSAPI, sqsResponses []*sqs.ReceiveMessageOutput) (err error) {
