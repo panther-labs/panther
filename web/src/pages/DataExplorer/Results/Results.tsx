@@ -77,7 +77,7 @@ const Results: React.FC = () => {
   // When we change a `queryId` by having a new query provisioned from the backend, then we
   // change the status to running (since the `useGetLogQueryResults` will have `skip: false` and
   // thus will begin querying for results
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (queryId) {
       dispatch({ type: 'QUERY_RUNNING', payload: { queryId } });
     }
@@ -93,10 +93,10 @@ const Results: React.FC = () => {
 
   // If a server round-trip gives us a status of "succeeded", polling needs to stop
   const isQuerySuccessful = data?.getLogQuery?.query?.status === LogQueryStatus.Succeeded;
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (isQuerySuccessful) {
-      stopPolling();
       dispatch({ type: 'QUERY_SUCCEEDED' });
+      stopPolling();
     }
   }, [isQuerySuccessful]);
 
@@ -105,11 +105,11 @@ const Results: React.FC = () => {
   const hasQueryFailed = !!error || data?.getLogQuery?.query?.status === LogQueryStatus.Failed;
   React.useEffect(() => {
     if (hasQueryFailed) {
-      stopPolling();
       dispatch({
         type: 'QUERY_ERRORED',
         payload: { message: error ? extractErrorMessage(error) : data?.getLogQuery.error?.message },
       });
+      stopPolling();
     }
   }, [hasQueryFailed]);
 
