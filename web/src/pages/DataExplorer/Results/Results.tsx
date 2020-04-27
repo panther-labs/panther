@@ -34,6 +34,7 @@ const Results: React.FC = () => {
     // we get more re-renders but at least the value gets updated correctly
     // https://github.com/apollographql/apollo-client/issues/5531
     notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'no-cache',
     variables: {
       input: {
         queryId,
@@ -83,7 +84,7 @@ const Results: React.FC = () => {
   }, [queryId]);
 
   // If the 1st round-trip for results gives us a status of "running", polling needs to start.
-  const queryNeedsPolling = data?.getLogQuery.query.status === LogQueryStatus.Running;
+  const queryNeedsPolling = data?.getLogQuery?.query?.status === LogQueryStatus.Running;
   React.useEffect(() => {
     if (queryNeedsPolling) {
       startPolling(POLL_INTERVAL_MS);
@@ -91,7 +92,7 @@ const Results: React.FC = () => {
   }, [queryNeedsPolling]);
 
   // If a server round-trip gives us a status of "succeeded", polling needs to stop
-  const isQuerySuccessful = data?.getLogQuery.query.status === LogQueryStatus.Succeeded;
+  const isQuerySuccessful = data?.getLogQuery?.query?.status === LogQueryStatus.Succeeded;
   React.useEffect(() => {
     if (isQuerySuccessful) {
       stopPolling();

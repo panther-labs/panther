@@ -57,7 +57,7 @@ const SQLEditor: React.FC = () => {
       if (data.cancelLogQuery.error) {
         pushSnackbar({
           variant: 'error',
-          title: "Couldn't cancel your Query",
+          title: "Couldn't cancel your query",
           description: data.cancelLogQuery.error.message,
         });
       }
@@ -65,7 +65,7 @@ const SQLEditor: React.FC = () => {
     onError: () => {
       pushSnackbar({
         variant: 'error',
-        title: "Couldn't cancel your Query",
+        title: "Couldn't cancel your query",
         description: 'It will continue to be executed in the background',
       });
     },

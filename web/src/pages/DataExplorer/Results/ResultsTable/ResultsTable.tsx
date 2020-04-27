@@ -4,7 +4,6 @@ import WarningImg from 'Assets/illustrations/warning.svg';
 import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
 import { GetLogQueryOutput } from 'Generated/schema';
 import { useDataExplorerContext } from 'Pages/DataExplorer/DataExplorerContext';
-import dayjs from 'dayjs';
 import { isNumber } from 'Helpers/utils';
 
 export interface ResultsTableProps {
@@ -13,7 +12,7 @@ export interface ResultsTableProps {
 }
 
 const ResultsTable: React.FC<ResultsTableProps> = ({ results, resultContainerRef }) => {
-  const startTime = React.useRef(dayjs());
+  const [timeElapsed, setTimeElapsed] = React.useState(0);
   const {
     state: { queryStatus },
   } = useDataExplorerContext();
@@ -26,11 +25,20 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results, resultContainerRef
   // Start the timer for how much time the query is running only when the status gets to "running".
   // This is only gonna happen once since the transition from "something" to "running" can only
   // happen once by default
+  // eslint-disable-next-line consistent-return
   React.useEffect(() => {
     if (isRunning) {
-      startTime.current = dayjs();
+      const refreshRate = 1000;
+      const interval = setInterval(() => {
+        setTimeElapsed(timeElapsed + refreshRate);
+      }, refreshRate);
+
+      return () => clearInterval(interval);
+      // eslint-disable-next-line no-else-return
+    } else {
+      setTimeElapsed(0);
     }
-  }, [isRunning]);
+  }, [isRunning, timeElapsed]);
 
   // Original state, meaning that no query is present
   if (isPristine) {
@@ -77,7 +85,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results, resultContainerRef
       <Flex justify="center" align="center" my={125}>
         <Spinner size="medium" />
         <Heading size="medium" ml={8} color="grey300">
-          Running Query... Elapsed Time: {dayjs().diff(startTime.current, 'second')}s
+          Running Query... Elapsed Time: {timeElapsed / 1000}s
         </Heading>
       </Flex>
     );
