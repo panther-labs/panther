@@ -35,6 +35,14 @@ import (
 
 const (
 	processingTimeLimitScalar = 0.8 // the processing runtime should be shorter than lambda timeout to make room to flush buffers
+
+	sqsMaxBatchSize    = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
+	sqsWaitTimeSeconds = 20 // long wait, this handles slow event trickles (20 is max for sqs, can't find an sqs constant to refer to)
+)
+
+var (
+	// how many time to read nothing in a row before stopping lambda (var for tests)
+	maxContiguousEmptyReads = 10 // this has a consequence of making the min processing time sqsWaitTimeSeconds*maxContiguousEmptyReads
 )
 
 // reads lambda event, then continues to read events from sqs q
@@ -72,6 +80,8 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 			return
 		}
 
+		numberConitguousEmptyReads := 0 // count continuous empty reads
+
 		// continue to read until either there are no sqs messages or we have exceeded the processing time limit
 		for time.Since(startTime) < processingTimeLimit {
 			for _, dataStream := range dataStreams {
@@ -79,15 +89,20 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 			}
 
 			// keep reading from SQS to maximize output aggregation
-			receiveMessageOutput, err := readSqsMessages(sqsClient, sqsResponses)
+			receiveMessageOutput, err := readSqsMessages(sqsClient)
 			if err != nil {
 				readEventErrorChan <- err
 				return
 			}
 
-			if len(receiveMessageOutput.Messages) == 0 { // no more work to do
-				break
+			if len(receiveMessageOutput.Messages) == 0 {
+				numberConitguousEmptyReads++
+				if numberConitguousEmptyReads > maxContiguousEmptyReads {
+					break
+				}
+				continue
 			}
+			numberConitguousEmptyReads = 0 // reset
 
 			// remember so we can delete when done
 			sqsResponses = append(sqsResponses, receiveMessageOutput)
@@ -121,23 +136,10 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 	return sqsMessageCount, deleteSqsMessages(sqsClient, sqsResponses)
 }
 
-func readSqsMessages(sqsClient sqsiface.SQSAPI, sqsResponses []*sqs.ReceiveMessageOutput) (
-	receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
-
-	const waitTimeSecondsInitial = 20 // the first wait is long, this handles slow trickles (20 is max for sqs)
-	// after the first wait, linearly scale delay based on load estimate from len(sqsResponses), under very high load we will have 0 delay
-	const waitTimeSecondsThreshold = 10
-	var waitTimeSeconds int64 = waitTimeSecondsInitial
-	if len(sqsResponses) > 0 {
-		waitTimeSeconds = int64(waitTimeSecondsThreshold - len(sqsResponses))
-		if waitTimeSeconds < 0 { // exceeded threshold, clip to 0, maximum throughput
-			waitTimeSeconds = 0
-		}
-	}
-
+func readSqsMessages(sqsClient sqsiface.SQSAPI) (receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
 	receiveMessageOutput, err = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
-		WaitTimeSeconds:     &waitTimeSeconds,
-		MaxNumberOfMessages: aws.Int64(10), // max size allowed
+		WaitTimeSeconds:     aws.Int64(sqsWaitTimeSeconds),
+		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize), // max size allowed
 		VisibilityTimeout:   &common.Config.TimeLimitSec,
 		QueueUrl:            &common.Config.SqsQueueURL,
 	})
@@ -158,7 +160,6 @@ func deleteSqsMessages(sqsClient sqsiface.SQSAPI, sqsResponses []*sqs.ReceiveMes
 				ReceiptHandle: msg.ReceiptHandle,
 			})
 		}
-
 		_, err = sqsClient.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
 			Entries:  deleteMessageBatchRequestEntries,
 			QueueUrl: &common.Config.SqsQueueURL,

@@ -173,6 +173,7 @@ func initTest() {
 	common.Config.SqsQueueURL = "https://fakesqsurl"
 	streamTestSqsClient = &mockSQS{}
 	streamTestTime = time.Now()
+	maxContiguousEmptyReads = 0
 }
 
 func noopProcessorFunc(streamChan chan *common.DataStream, dest destinations.Destination) error {
