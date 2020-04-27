@@ -173,6 +173,7 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 	// this one has no messages, which breaks the loop
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
+	// this one fails
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{},
 		fmt.Errorf("deleteError")).Once()
 
@@ -220,6 +221,7 @@ func noopProcessorFunc(streamChan chan *common.DataStream, dest destinations.Des
 	return nil
 }
 
+// simulates error processing the data in a file
 func failProcessorFunc(streamChan chan *common.DataStream, dest destinations.Destination) error {
 	return fmt.Errorf("processError")
 }
@@ -228,6 +230,7 @@ func noopReadSnsMessagesFunc(messages []string) ([]*common.DataStream, error) {
 	return make([]*common.DataStream, len(messages)), nil
 }
 
+// simulated error parsing sqs message or reading s3 object
 func failReadSnsMessagesFunc(messages []string) ([]*common.DataStream, error) {
 	return nil, fmt.Errorf("readEventError")
 }

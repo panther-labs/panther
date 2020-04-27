@@ -43,8 +43,8 @@ const (
 )
 
 var (
-	// how many time to read nothing in a row before stopping lambda (var for tests)
-	maxContiguousEmptyReads = 9 // this has a consequence of making the min processing time sqsWaitTimeSeconds*maxContiguousEmptyReads
+	// how many times to read nothing in a row before stopping lambda (var for tests)
+	maxContiguousEmptyReads = 10 // this has a consequence of making the min lambda time sqsWaitTimeSeconds*maxContiguousEmptyReads
 )
 
 // reads lambda event, then continues to read events from sqs q
@@ -82,7 +82,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 			return
 		}
 
-		numberContiguousEmptyReads := 0 // count contiguous empty reads
+		numberContiguousEmptyReads := 0 // count contiguous empty sqs reads
 
 		// continue to read until either there are no sqs messages for a time or we have exceeded the processing time limit
 		for time.Since(startTime) < processingTimeLimit {
@@ -113,7 +113,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 				}
 				continue
 			}
-			numberContiguousEmptyReads = 0 // reset
+			numberContiguousEmptyReads = 0 // reset, messages read
 
 			// remember so we can delete when done
 			sqsResponses = append(sqsResponses, receiveMessageOutput)
@@ -149,13 +149,13 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 
 func readSqsMessages(sqsClient sqsiface.SQSAPI) (overLimit bool, receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
 	receiveMessageOutput, err = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
-		WaitTimeSeconds:     aws.Int64(sqsWaitTimeSeconds),
-		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize), // max size allowed
+		WaitTimeSeconds:     aws.Int64(sqsWaitTimeSeconds), // wait this long UNLESS MaxNumberOfMessages read
+		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),    // max size allowed
 		VisibilityTimeout:   &common.Config.TimeLimitSec,
 		QueueUrl:            &common.Config.SqsQueueURL,
 	})
 	if err != nil {
-		// in this case we just tell caller, no error
+		// in the case of sqs.ErrCodeOverLimit we just tell caller, no error
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == sqs.ErrCodeOverLimit {
 			return true, receiveMessageOutput, nil
 		}
