@@ -4,6 +4,14 @@ Panther is a collection of serverless applications deployed within your AWS acco
 
 The sections below provide guidance on how to extend Panther to meet your individual needs.
 
+## Architecture Diagram
+
+This diagram provides an overview of the core components of Panther, and how they are connected.
+
+![High level architecture diagram](.gitbook/assets/high-level-arch-diagram.png)
+
+This diagram has been simplified to just the core components of Panther. For a slightly more detailed architecture diagram, see the bottom of this page.
+
 ## Environment
 
 You can use the Docker environment from the [quick start](quick-start.md#deployment) instructions for development. However, it's faster to compile and test the code locally.
@@ -105,3 +113,23 @@ Since the majority of Panther is written in Go, the repo follows the standard [G
 | [**pkg**](https://github.com/panther-labs/panther/tree/master/pkg)  | Standalone Go libraries that could be directly imported by other projects |
 | [**tools**](https://github.com/panther-labs/panther/tree/master/tools)  | Magefile source and other build infrastructure  |
 | [**web**](https://github.com/panther-labs/panther/tree/master/web)   | Source for the Panther web application  |
+
+## Additional Diagrams
+
+Here are some additional diagrams to supplement the high level architecture diagram above.
+
+### Detailed architecture diagram
+
+Here is a slightly more detailed version of essentially the same architecture diagram as above.
+
+![Architecture diagram](.gitbook/assets/detailed-arch-diagram.png)
+
+While more detailed than the overview above, this diagram also simplifies some implementation details for clarity. For example, the majority of lambdas are not invoking each other directly but instead communicating via SQS Queues or DynamoDB streams. 
+
+### Data flow diagram
+
+This diagram focuses on where and how your data is being stored and processed, as opposed to which systems are interacting and why.
+
+![Data flow diagram](.gitbook/assets/data-flow-diagram.png)
+
+It is important to note here (as the legend says) that the arrows are indicating the direction that data is being transferred, as opposed to the previous diagrams where arrows are indicating the direction that communication is being initiated from.
