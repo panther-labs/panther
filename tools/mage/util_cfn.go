@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -47,37 +48,7 @@ var allStacks = []string{
 	onboardStack,
 }
 
-// CloudFormation stacks in one of these states have changes in progress.
-var inProgressStackStatus = map[string]struct{}{
-	cfn.StackStatusCreateInProgress:                        {},
-	cfn.StackStatusDeleteInProgress:                        {},
-	cfn.StackStatusReviewInProgress:                        {},
-	cfn.StackStatusRollbackInProgress:                      {},
-	cfn.StackStatusUpdateCompleteCleanupInProgress:         {},
-	cfn.StackStatusUpdateInProgress:                        {},
-	cfn.StackStatusUpdateRollbackCompleteCleanupInProgress: {},
-	cfn.StackStatusUpdateRollbackInProgress:                {},
-	cfn.StackStatusImportInProgress:                        {},
-	cfn.StackStatusImportRollbackInProgress:                {},
-}
-
-// Cloudformation stacks in one of these states will not change until a user takes action.
-var terminalStackStatus = map[string]struct{}{
-	cfn.StackStatusCreateComplete:         {},
-	cfn.StackStatusCreateFailed:           {},
-	cfn.StackStatusDeleteComplete:         {},
-	cfn.StackStatusDeleteFailed:           {},
-	cfn.StackStatusImportComplete:         {},
-	cfn.StackStatusImportRollbackComplete: {},
-	cfn.StackStatusImportRollbackFailed:   {},
-	cfn.StackStatusRollbackComplete:       {},
-	cfn.StackStatusRollbackFailed:         {},
-	cfn.StackStatusUpdateComplete:         {},
-	cfn.StackStatusUpdateRollbackComplete: {},
-	cfn.StackStatusUpdateRollbackFailed:   {},
-}
-
-// Summary of a CloudFormation resource and the stack its contained in
+// Summary of a CloudFormation resource and its parent stack
 type cfnResource struct {
 	Resource *cfn.StackResourceSummary
 	Stack    *cfn.Stack
@@ -107,6 +78,109 @@ func cfnFiles() []string {
 		}
 	}
 	return result
+}
+
+// Wait for the stack to reach a terminal status and then return its details.
+//
+// 1) Keep waiting while stack status is inProgress
+// 2) If stack status is successStatus, return stack details
+// 3) If stack status is neither success nor inProgress, log failing resources and return an error
+//
+// This allows us to report errors to the user immediately, e.g. an "UPDATE_ROLLBACK_IN_PROGRESS"
+// is considered a failed update - we don't have to wait until the stack is finished before finding
+// and logging the errors.
+//
+// successStatus and inProgress can be omitted to wait for any terminal status.
+//
+// If the stack does not exist, we report its status as DELETE_COMPLETE
+func waitForStack(client *cfn.CloudFormation, stackName, successStatus string, inProgress ...string) (*cfn.Stack, error) {
+	// See all stack status codes and exactly what they mean here:
+	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html
+
+	var allowedInProgress map[string]struct{}
+	if len(inProgress) > 0 {
+		allowedInProgress = make(map[string]struct{}, len(inProgress))
+		for _, state := range inProgress {
+			allowedInProgress[state] = struct{}{}
+		}
+	} else {
+		// All IN_PROGRESS states are allowed with the exception of REVIEW_IN_PROGRESS.
+		//
+		// REVIEW_IN_PROGRESS means the stack doesn't actually exist yet;
+		// there is a change set that was created but never applied - we would be waiting forever.
+		allowedInProgress = map[string]struct{}{
+			cfn.StackStatusCreateInProgress:                        {},
+			cfn.StackStatusDeleteInProgress:                        {},
+			cfn.StackStatusRollbackInProgress:                      {},
+			cfn.StackStatusUpdateCompleteCleanupInProgress:         {},
+			cfn.StackStatusUpdateInProgress:                        {},
+			cfn.StackStatusUpdateRollbackCompleteCleanupInProgress: {},
+			cfn.StackStatusUpdateRollbackInProgress:                {},
+			cfn.StackStatusImportInProgress:                        {},
+			cfn.StackStatusImportRollbackInProgress:                {},
+		}
+	}
+
+	var stack *cfn.Stack
+	start := time.Now()
+	lastUserMessage := start
+
+	// Wait until the stack is no longer in an expected IN_PROGRESS state
+	for {
+		detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: &stackName})
+		if errStackDoesNotExist(err) {
+			// Special case - a deleted stack won't show up when describing stacks by name
+			stack = &cfn.Stack{StackName: &stackName, StackStatus: aws.String(cfn.StackStatusDeleteComplete)}
+			break
+		}
+
+		if err != nil {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ExpiredToken" {
+				return nil, fmt.Errorf("deploy: %s: security token expired; "+
+					"redeploy with fresh credentials to pick up where you left off. "+
+					"CloudFormation is still running in your AWS account, "+
+					"see https://console.aws.amazon.com/cloudformation", stackName)
+			}
+
+			return nil, fmt.Errorf("failed to describe stack %s: %v", stackName, err)
+		}
+
+		stack = detail.Stacks[0]
+		if _, inSet := allowedInProgress[*stack.StackStatus]; !inSet {
+			break
+		}
+
+		// Show the stack status every few minutes
+		if time.Since(lastUserMessage) > 2*time.Minute {
+			logger.Infof("    ... %s is still %s (%s)", stackName, *stack.StackStatus,
+				time.Since(start).Round(time.Second).String())
+			lastUserMessage = time.Now()
+		}
+
+		time.Sleep(pollInterval)
+	}
+
+	// Done waiting
+	if successStatus == "" || *stack.StackStatus == successStatus {
+		return stack, nil
+	}
+
+	// Error - stack entered an invalid state
+	logResourceFailures(client, &stackName, start)
+	return nil, errors.New(*stack.StackStatus)
+}
+
+func waitForStackCreate(client *cfn.CloudFormation, stackName string) (*cfn.Stack, error) {
+	return waitForStack(client, stackName, cfn.StackStatusCreateComplete, cfn.StackStatusCreateInProgress)
+}
+
+func waitForStackDelete(client *cfn.CloudFormation, stackName string) (*cfn.Stack, error) {
+	return waitForStack(client, stackName, cfn.StackStatusDeleteComplete, cfn.StackStatusDeleteInProgress)
+}
+
+func waitForStackUpdate(client *cfn.CloudFormation, stackName string) (*cfn.Stack, error) {
+	return waitForStack(client, stackName, cfn.StackStatusUpdateComplete,
+		cfn.StackStatusUpdateInProgress, cfn.StackStatusUpdateCompleteCleanupInProgress)
 }
 
 // Traverse all Panther CFN resources (across all stacks) and apply the given handler.
@@ -180,7 +254,7 @@ func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(
 
 // Log failed resources from the stack's event history.
 //
-// Use this after a stack create/update fails to understand why the stack failed.
+// Use this after a stack create/update/delete fails to understand why the stack failed.
 // Events from nested stacks which failed are enumerated as well.
 func logResourceFailures(client *cfn.CloudFormation, stackID *string, start time.Time) {
 	input := &cfn.DescribeStackEventsInput{StackName: stackID}

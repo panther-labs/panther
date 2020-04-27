@@ -207,6 +207,7 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 			return
 		}
 
+		// TODO - may not need this since our waiter already reports failures
 		logger.Errorf("    - %s failed to delete: %v", result.stackName, result.err)
 		_ = walkPantherStack(client, &result.stackName, func(summary cfnResource) {
 			r := summary.Resource
@@ -372,16 +373,8 @@ func deleteStack(client *cloudformation.CloudFormation, stack *string, results c
 		return
 	}
 
-	if err := client.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{StackName: stack}); err != nil {
-		// The stack never reached DELETE_COMPLETE status, the caller will find out why
-		results <- deleteStackResult{
-			stackName: *stack,
-			err:       fmt.Errorf("status != %s", cloudformation.ResourceStatusDeleteComplete),
-		}
-		return
-	}
-
-	results <- deleteStackResult{stackName: *stack}
+	_, err := waitForStackDelete(client, *stack)
+	results <- deleteStackResult{stackName: *stack, err: err}
 }
 
 // Delete all objects in the given S3 buckets and then remove them.

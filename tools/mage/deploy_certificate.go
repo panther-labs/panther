@@ -62,22 +62,18 @@ func certificateArn(awsSession *session.Session, settings *config.PantherConfig)
 
 	// If the bootstrap stack already exists, we need the stack outputs to know what cert arn to use.
 	// CFN makes us re-specify the parameter if it already had a non-default value.
-	stack, err := waitForStack(cfn.New(awsSession), bootstrapStack)
+	stack, err := waitForStack(cfn.New(awsSession), bootstrapStack, "")
 	if err != nil {
 		// If the stack doesn't exist yet, its reported status will be DELETE_COMPLETE (not an error)
 		logger.Fatal(err)
 	}
 
-	status := *stack.StackStatus
-	if status == cfn.StackStatusCreateFailed || status == cfn.StackStatusDeleteComplete ||
-		status == cfn.StackStatusDeleteFailed || status == cfn.StackStatusRollbackComplete ||
-		status == cfn.StackStatusRollbackFailed {
-
-		// In these cases, the stack has never deployed successfully (its outputs are blank) - upload a new cert
-		return uploadLocalCertificate(awsSession)
+	if arn := flattenStackOutputs(stack)["CertificateArn"]; arn != "" {
+		return arn
 	}
 
-	return flattenStackOutputs(stack)["CertificateArn"]
+	// If the stack outputs are blank, it never deployed successfully - upload a new cert
+	return uploadLocalCertificate(awsSession)
 }
 
 // Upload a local self-signed TLS certificate to ACM. Only needs to happen once per installation

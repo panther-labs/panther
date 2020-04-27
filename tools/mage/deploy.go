@@ -321,7 +321,7 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	// └ python/policyuniverse-VERSION.dist-info/
 	//
 	// https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
-	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile, false); err != nil {
+	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile, true); err != nil {
 		logger.Fatalf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
 	}
 

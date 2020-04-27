@@ -20,7 +20,6 @@ package mage
 
 import (
 	"crypto/sha1" // nolint: gosec
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -86,7 +85,7 @@ func deployTemplate(
 	}
 
 	// 4) Execute the change set
-	return executeChangeSet(awsSession, changeID, stack)
+	return executeChangeSet(awsSession, changeID, changeSetType, stack)
 }
 
 // Upload resources to S3 and return the modified CloudFormation template.
@@ -95,7 +94,7 @@ func deployTemplate(
 // is more robust and performant. Differences include:
 //
 //    - We include S3 versions when possible so CFN can quickly check if an asset is identical
-//    - We rely only on asset hashes - AWS CLI will re-upload identical files with different timestamps.
+//    - We generate zipfiles with hashes that do not depend on timestamps
 //    - AWS CLI suffers from a region bug when writing S3 URLs
 //        (possibly related to https://github.com/aws/aws-cli/issues/4372)
 //
@@ -104,8 +103,8 @@ func deployTemplate(
 //    - AWS::CloudFormation::Stack - TemplateURL
 //    - AWS::Serverless::Function - CodeUri
 //
-// The bucket can be empty to skip S3 packaging (e.g. for the bootstrap stack) - in that case,
-// we still parse the template and re-emit it to strip comments / extra spaces
+// The bucket parameter can be "" to skip S3 packaging (e.g. for the bootstrap stack) -
+// in that case, we still parse the template and re-emit it to strip comments / extra spaces
 func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string) ([]byte, error) {
 	cfnBody, err := cfnparse.ParseTemplate(templatePath)
 	if err != nil {
@@ -222,103 +221,51 @@ func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (
 // If the stack is ROLLBACK_COMPLETE or otherwise failed to create, it will be deleted automatically.
 // If the stack is still in progress, this will wait until it finishes.
 // If the stack exists, its outputs are returned to the caller (once complete).
-func prepareStack(awsSession *session.Session, stack string) (map[string]string, error) {
+func prepareStack(awsSession *session.Session, stackName string) (map[string]string, error) {
 	client := cfn.New(awsSession)
-	stackDetail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: &stack})
+
+	// Wait for the stack to reach a terminal state
+	stack, err := waitForStack(client, stackName, "")
 	if err != nil {
-		if errStackDoesNotExist(err) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("unable to describe stack %s: %v", stack, err)
+		return nil, err
 	}
 
-	detail := stackDetail.Stacks[0]
-	status := *detail.StackStatus
-	// See all stack status codes and exactly what they mean here:
-	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab1c15c15c17c11
-
-	// Check for bad states that require stack deletion.
+	status := *stack.StackStatus
 	switch status {
+	case cfn.StackStatusDeleteComplete:
+		return nil, nil
+
+	case cfn.StackStatusUpdateRollbackFailed:
+		return nil, fmt.Errorf(
+			"stack %s is %s: you must manually continue rollback or delete the stack", stackName, status)
+
 	case cfn.StackStatusCreateFailed, cfn.StackStatusDeleteFailed, cfn.StackStatusReviewInProgress,
-		cfn.StackStatusRollbackComplete, cfn.StackStatusRollbackFailed, cfn.StackStatusRollbackInProgress:
+		cfn.StackStatusRollbackComplete, cfn.StackStatusRollbackFailed:
 		// A stack in one of these states must be deleted before we can apply new change sets.
 		// These are caused by a failed stack creation or deletion; in either case CFN already has
 		// tried destroying existing resources or is about to. (This is *not* a failed update.)
-		// Deleted stacks are retained and viewable for 90 days.
+		// Deleted stacks are retained and viewable in the AWS CloudFormation console for 90 days.
 
-		if stack == bootstrapStack {
+		if stackName == bootstrapStack {
 			// If the very first stack failed to create, we need to do a full teardown before trying again.
 			// Otherwise, there may be orphaned S3 buckets and an ACM cert that will never be used.
-			logger.Warnf("the very first %s stack never created successfully (%s):"+
-				" running 'mage teardown' to fully remove orphaned resources before trying again",
-				bootstrapStack, status)
+			// TODO - certificate here is destroyed by teardown
+			logger.Warnf("The very first %s stack never created successfully (%s)", bootstrapStack, status)
+			logger.Warnf("Running 'mage teardown' to fully remove orphaned resources before trying again")
 			Teardown()
 			return nil, nil
 		}
 
-		logger.Warnf("deleting stack %s (%s) before it can be re-deployed", stack, status)
-		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stack}); err != nil {
-			return nil, fmt.Errorf("failed to start stack %s deletion: %v", stack, err)
+		logger.Warnf("deleting stack %s (%s) before it can be re-deployed", stackName, status)
+		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stackName}); err != nil {
+			return nil, fmt.Errorf("failed to start stack %s deletion: %v", stackName, err)
 		}
-
-		status = cfn.StackStatusDeleteInProgress
-	}
-
-	// Wait for any in-progress operations to finish.
-	if _, ok := inProgressStackStatus[status]; ok {
-		logger.Warnf("stack %s is %s, waiting for it to finish before applying changes", stack, status)
-		detail, err = waitForStack(client, stack)
-		if err != nil {
+		if _, err := waitForStackDelete(client, stackName); err != nil {
 			return nil, err
 		}
 	}
 
-	// Stack is stable - return its outputs
-	status = *detail.StackStatus // status may have changed if we had to wait
-	switch status {
-	case cfn.StackStatusDeleteComplete:
-		return nil, nil
-	case cfn.StackStatusUpdateRollbackFailed:
-		return nil, fmt.Errorf("stack %s is %s: you must manually continue rollback or delete the stack", stack, status)
-	default:
-		return flattenStackOutputs(detail), nil
-	}
-}
-
-// Wait for the stack to reach a terminal status.
-//
-// Returns final status (DELETE_COMPLETE if the stack does not exist).
-func waitForStack(client *cfn.CloudFormation, stack string) (*cfn.Stack, error) {
-	input := &cfn.DescribeStacksInput{StackName: &stack}
-
-	for {
-		detail, err := client.DescribeStacks(input)
-		if err != nil {
-			if errStackDoesNotExist(err) {
-				// Special case - a deleted stack won't show up when describing stacks by name
-				return &cfn.Stack{
-					StackName:   &stack,
-					StackStatus: aws.String(cfn.StackStatusDeleteComplete),
-				}, nil
-			}
-
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ExpiredToken" {
-				return nil, fmt.Errorf("deploy: %s: security token expired; "+
-					"redeploy with fresh credentials to pick up where you left off. "+
-					"CloudFormation is still running in your AWS account, "+
-					"see https://console.aws.amazon.com/cloudformation", stack)
-			}
-
-			return nil, fmt.Errorf("failed to describe stack %s: %v", stack, err)
-		}
-
-		status := *detail.Stacks[0].StackStatus
-		if _, ok := terminalStackStatus[status]; ok {
-			return detail.Stacks[0], nil
-		}
-
-		time.Sleep(pollInterval)
-	}
+	return flattenStackOutputs(stack), nil
 }
 
 // Create a CloudFormation change set, returning its id.
@@ -429,25 +376,23 @@ func waitForChangeSet(client *cfn.CloudFormation, changeSetName, stack string) (
 }
 
 // Execute a change set, blocking until the stack has finished updating and then returning its outputs.
-func executeChangeSet(awsSession *session.Session, changeSet *string, stack string) (map[string]string, error) {
+func executeChangeSet(awsSession *session.Session, changeSet *string, changeSetType string, stackName string) (map[string]string, error) {
 	client := cfn.New(awsSession)
-	start := time.Now()
-	_, err := client.ExecuteChangeSet(&cfn.ExecuteChangeSetInput{ChangeSetName: changeSet, StackName: &stack})
+	_, err := client.ExecuteChangeSet(&cfn.ExecuteChangeSetInput{ChangeSetName: changeSet, StackName: &stackName})
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute change set for stack %s: %v", stack, err)
+		return nil, fmt.Errorf("failed to execute change set for stack %s: %v", stackName, err)
 	}
 
 	// Wait for change set to finish.
-	detail, err := waitForStack(client, stack)
+	var stack *cfn.Stack
+	if changeSetType == "CREATE" {
+		stack, err = waitForStackCreate(client, stackName)
+	} else {
+		stack, err = waitForStackUpdate(client, stackName)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	status := *detail.StackStatus
-	if status != cfn.StackStatusCreateComplete && status != cfn.StackStatusUpdateComplete {
-		logResourceFailures(client, &stack, start)
-		return nil, errors.New(status) // stack name added by caller
-	}
-
-	return flattenStackOutputs(detail), nil
+	return flattenStackOutputs(stack), nil
 }
