@@ -5,7 +5,7 @@ with your other data sources in Snowflake.
 
 Integrating Panther with Snowflake enables Panther data to be used in your Business Intelligence
 tools to make dashboards tailored to you operations.  In addition you can join Panther data (e.g., Panther alerts)
-to your business data enabling assessment your security posture with respect to your organization.
+to your business data, enabling assessment of your security posture with respect to your organization.
 For example, you can tally alerts by organizational division (e.g., Human Resources) or by 
 infrastructure (e.g., Development, Test, Production).
 
