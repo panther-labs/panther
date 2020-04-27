@@ -14,7 +14,7 @@ Panther uses [Snowpipe](https://docs.snowflake.com/en/user-guide/data-load-snowp
 ## Configuration
 
 In order to configure Panther, you need to get the `SNOWFLAKE_IAM_USER` from Snowflake. In a 
-Snowflake SQL shell execute the below sql, replacing `myaccoutid` with your AWS account id
+Snowflake SQL shell execute the below sql, replacing `myaccountid` with your AWS account id
 and `myaccountregion` with the account's region:
 ```sql
 select system$get_aws_sns_iam_policy('arn:aws:sns:myaccountregion:myaccountid:panther-processed-data-notifications');
