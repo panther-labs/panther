@@ -20,7 +20,6 @@ package numerics
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -35,32 +34,62 @@ func (i *Integer) String() string {
 	return strconv.Itoa((int)(*i))
 }
 
-// FIXME: `nil` is not valid JSON data is this intended?
+// MarshalJSON implements json.Marshaler interface
 func (i *Integer) MarshalJSON() ([]byte, error) {
-	return ([]byte)(i.String()), nil
-}
-
-// FIXME: unmarshalling to a nil target fails silently here, this is a weird behavior probably not intentional
-func (i *Integer) UnmarshalJSON(jsonBytes []byte) (err error) {
-	// FIXME: The strings.Trim call accepts invalid JSON input (ie `"42""``) as shown in the corresponding test case
-	parsedInt, err := strconv.Atoi(strings.Trim((string)(jsonBytes), `"`)) // remove quotes, to int
-	if err == nil && i != nil {
-		*i = (Integer)(parsedInt)
+	if i == nil {
+		return []byte(`null`), nil
 	}
-	return err
+	return strconv.AppendInt(nil, (int64)(*i), 10), nil
 }
 
-// add others below as we need them
+// Overflow limits for integers regardless of platform isize
+// Reference: https://stackoverflow.com/a/39571615
+const (
+	MinUint uint = 0 // binary: all zeroes
 
+	// Perform a bitwise NOT to change every bit from 0 to 1
+	MaxUint = ^MinUint // binary: all ones
+
+	// Shift the binary number to the right (i.e. divide by two)
+	// to change the high bit to 0
+	MaxInt = int(MaxUint >> 1) // binary: all ones except high bit
+
+	// Perform another bitwise NOT to change the high bit to 1 and
+	// all other bits to 0
+	MinInt = ^MaxInt // binary: all zeroes except high bit
+)
+
+// UnmarshalJSON implements json.Unmarshaler interface
+func (i *Integer) UnmarshalJSON(data []byte) (err error) {
+	if i == nil {
+		return errors.Errorf("nil target")
+	}
+	data = unquoteJSON(data)
+	n, err := strconv.ParseInt(string(data), 10, 64)
+	if err != nil {
+		return err
+	}
+	if n > int64(MaxInt) {
+		return errors.Errorf("integer overflow")
+	}
+	if n < int64(MinInt) {
+		return errors.Errorf("integer underflow")
+	}
+	*i = Integer(int(n))
+	return nil
+}
+
+// Int64 decodes from both string and number json values
 type Int64 int64
 
 func (i *Int64) String() string {
 	if i == nil {
-		return ""
+		return "nil"
 	}
 	return strconv.FormatInt((int64)(*i), 10)
 }
 
+// MarshalJSON implements json.Marshaler interface
 func (i *Int64) MarshalJSON() ([]byte, error) {
 	if i == nil {
 		return []byte(`null`), nil
@@ -78,6 +107,7 @@ func unquoteJSON(data []byte) []byte {
 	return data
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface
 func (i *Int64) UnmarshalJSON(data []byte) error {
 	if i == nil {
 		return errors.Errorf("nil target")

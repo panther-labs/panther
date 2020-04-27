@@ -39,9 +39,13 @@ func TestInteger(t *testing.T) {
 	assert.Equal(t, (Integer)(321), i)
 
 	// quotes
-	err = i.UnmarshalJSON(([]byte)(`"321""`))
+	err = i.UnmarshalJSON(([]byte)(`"321"`))
 	require.NoError(t, err)
 	assert.Equal(t, (Integer)(321), i)
+
+	// invalid quotes
+	err = i.UnmarshalJSON(([]byte)(`"321""`))
+	require.Error(t, err)
 
 	// not an int
 	err = i.UnmarshalJSON(([]byte)(`foo`))
@@ -52,10 +56,10 @@ func TestInteger(t *testing.T) {
 
 	jsonString, err = nilInt.MarshalJSON()
 	require.NoError(t, err)
-	assert.Equal(t, "nil", (string)(jsonString))
+	assert.Equal(t, "null", (string)(jsonString))
 
 	err = nilInt.UnmarshalJSON(([]byte)("321"))
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Equal(t, (*Integer)(nil), nilInt)
 }
 
@@ -82,7 +86,7 @@ func TestInt64(t *testing.T) {
 	require.Error(t, err)
 
 	var nilInt *Int64
-	assert.Equal(t, "", nilInt.String())
+	assert.Equal(t, "nil", nilInt.String())
 
 	jsonString, err = nilInt.MarshalJSON()
 	require.NoError(t, err)
