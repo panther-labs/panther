@@ -19,6 +19,7 @@ package awslogs
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -61,9 +62,11 @@ type CloudTrail struct {
 	UserIdentity        *CloudTrailUserIdentity `json:"userIdentity,omitempty" validate:"required" description:"Information about the user that made a request."`
 	VPCEndpointID       *string                 `json:"vpcEndpointId,omitempty" description:"Identifies the VPC endpoint in which requests were made from a VPC to another AWS service, such as Amazon S3."`
 
-	// NOTE: added to end of struct to allow expansion later
-	AWSPantherLog
+	// // NOTE: added to end of struct to allow expansion later
+	// AWSPantherLog
 }
+
+var _ parsers.PantherEventer = (*CloudTrail)(nil)
 
 // CloudTrailResources are the AWS resources used in the API call.
 type CloudTrailResources struct {
@@ -123,57 +126,49 @@ func (p *CloudTrailParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	cloudTrailRecords := &CloudTrailRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailRecords)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, event := range cloudTrailRecords.Records {
-		event.updatePantherFields(p)
-	}
-
-	if err := parsers.Validator.Struct(cloudTrailRecords); err != nil {
-		return nil, err
-	}
-	result := make([]*parsers.PantherLog, len(cloudTrailRecords.Records))
+	events := make([]parsers.PantherEventer, len(cloudTrailRecords.Records))
 	for i, event := range cloudTrailRecords.Records {
-		result[i] = event.Log()
+		events[i] = event
 	}
-	return result, nil
+	return parsers.PackEvents(events...)
 }
 
 // LogType returns the log type supported by this parser
 func (p *CloudTrailParser) LogType() string {
-	return "AWS.CloudTrail"
+	return TypeCloudTrail
 }
 
-func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
-	event.SetCoreFields(p.LogType(), event.EventTime, event)
+const TypeCloudTrail = "AWS.CloudTrail"
 
-	// structured (parsed) fields
-	event.AppendAnyIPAddressPtr(event.SourceIPAddress)
-	event.AppendAnyAWSAccountIdPtrs(event.RecipientAccountID)
-
+func (event *CloudTrail) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeCloudTrail, event.EventTime.UTC(),
+		parsers.DomainName(aws.StringValue(event.SourceIPAddress)),
+		KindAWSAccountID.Field(aws.StringValue(event.RecipientAccountID)),
+	)
 	for _, resource := range event.Resources {
-		event.AppendAnyAWSARNPtrs(resource.ARN)
-		event.AppendAnyAWSAccountIdPtrs(resource.AccountID)
+		e.Append(KindAWSARN, aws.StringValue(resource.ARN))
+		e.Append(KindAWSAccountID, aws.StringValue(resource.AccountID))
 	}
-	if event.UserIdentity != nil {
-		event.AppendAnyAWSAccountIdPtrs(event.UserIdentity.AccountID)
-		event.AppendAnyAWSARNPtrs(event.UserIdentity.ARN)
+	if user := event.UserIdentity; user != nil {
+		e.Append(KindAWSARN, aws.StringValue(user.ARN))
+		e.Append(KindAWSAccountID, aws.StringValue(user.AccountID))
 
-		if event.UserIdentity.SessionContext != nil {
-			if event.UserIdentity.SessionContext.SessionIssuer != nil {
-				event.AppendAnyAWSAccountIdPtrs(event.UserIdentity.SessionContext.SessionIssuer.AccountID)
-				event.AppendAnyAWSARNPtrs(event.UserIdentity.SessionContext.SessionIssuer.Arn)
+		if ctx := user.SessionContext; ctx != nil {
+			if issuer := ctx.SessionIssuer; issuer != nil {
+				e.Append(KindAWSARN, aws.StringValue(issuer.Arn))
+				e.Append(KindAWSAccountID, aws.StringValue(issuer.AccountID))
 			}
 		}
 	}
 
 	// polymorphic (unparsed) fields
-	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
+	awsExtractor := &AWSExtractor{PantherEvent: e}
 	extract.Extract(event.AdditionalEventData, awsExtractor)
 	extract.Extract(event.RequestParameters, awsExtractor)
 	extract.Extract(event.ResponseElements, awsExtractor)
@@ -184,4 +179,5 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 
 		extract.Extract(event.UserIdentity.SessionContext.WebIDFederationData.Attributes, awsExtractor)
 	}
+	return e
 }

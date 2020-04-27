@@ -66,10 +66,9 @@ type ALB struct {
 	ActionsExecuted        []string           `json:"actionsExecuted,omitempty" description:"The actions taken when processing the request. This value is a comma-separated list that can include the values described in Actions Taken. If no action was taken, such as for a malformed request, this value is set to NULL."`
 	RedirectURL            *string            `json:"redirectUrl,omitempty" description:"The URL of the redirect target for the location header of the HTTP response. If no redirect actions were taken, this value is set to NULL."`
 	ErrorReason            *string            `json:"errorReason,omitempty" description:"The error reason code. If the request failed, this is one of the error codes described in Error Reason Codes. If the actions taken do not include an authenticate action or the target is not a Lambda function, this value is set to NULL."`
-
-	// NOTE: added to end of struct to allow expansion later
-	AWSPantherLog
 }
+
+var _ parsers.PantherEventer = (*ALB)(nil)
 
 // ALBParser parses AWS Application Load Balancer logs
 type ALBParser struct {
@@ -88,7 +87,7 @@ func (p *ALBParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *ALBParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
 		return nil, err
@@ -155,25 +154,20 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		RedirectURL:            parsers.CsvStringToPointer(record[23]),
 		ErrorReason:            parsers.CsvStringToPointer(record[24]),
 	}
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-
-	return event.Logs(), nil
+	return parsers.PackEvents(event)
 }
 
 // LogType returns the log type supported by this parser
 func (p *ALBParser) LogType() string {
-	return "AWS.ALB"
+	return TypeALB
 }
 
-func (event *ALB) updatePantherFields(p *ALBParser) {
-	event.SetCoreFields(p.LogType(), event.Timestamp, event)
-	event.AppendAnyIPAddressPtr(event.ClientIP)
-	event.AppendAnyIPAddressPtr(event.TargetIP)
-	event.AppendAnyDomainNamePtrs(event.DomainName)
-	event.AppendAnyAWSARNPtrs(event.ChosenCertARN, event.TargetGroupARN)
+const TypeALB = "AWS.ALB"
+
+func (event *ALB) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeALB, event.Timestamp.UTC())
+	e.AppendP(parsers.KindIPAddress, event.ClientIP, event.TargetIP)
+	e.AppendP(parsers.KindDomainName, event.DomainName)
+	e.AppendP(KindAWSARN, event.ChosenCertARN, event.TargetGroupARN)
+	return e
 }

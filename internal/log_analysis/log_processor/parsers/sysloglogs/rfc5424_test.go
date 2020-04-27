@@ -24,8 +24,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zaptest"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -35,7 +33,7 @@ import (
 var parserRFC5424 parsers.LogParser
 
 func TestRFC5424(t *testing.T) {
-	zap.ReplaceGlobals(zaptest.NewLogger(t))
+	// zap.ReplaceGlobals(zaptest.NewLogger(t))
 	syslogRFC5424 := &RFC5424Parser{}
 	parserRFC5424 = syslogRFC5424.New()
 
@@ -51,14 +49,17 @@ func testRFC5424Version4(t *testing.T) {
 	//nolint:lll
 	log := `<165>4 2018-10-11T22:14:15.003Z mymach.it e - 1 [ex@32473 iut="3"] An application event log entry...`
 
-	expectedTime, _ := time.Parse(time.RFC3339, "2018-10-11T22:14:15.003Z")
+	tm, err := time.Parse(time.RFC3339, "2018-10-11T22:14:15.003Z")
+	if err != nil {
+		t.Fatalf("invalid timestamp %q", err)
+	}
 
-	expectedEvent := &RFC5424{
+	event := &RFC5424{
 		Priority:  aws.Uint8(165),
 		Facility:  aws.Uint8(20),
 		Severity:  aws.Uint8(5),
 		Version:   aws.Uint16(4),
-		Timestamp: (*timestamp.RFC3339)(&expectedTime),
+		Timestamp: (*timestamp.RFC3339)(&tm),
 		Hostname:  aws.String("mymach.it"),
 		Appname:   aws.String("e"),
 		ProcID:    nil,
@@ -71,20 +72,17 @@ func testRFC5424Version4(t *testing.T) {
 		},
 	}
 
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC5424(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeRFC5424, tm,
+		parsers.DomainName(aws.StringValue(event.Hostname)),
+	)
+	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, event)
 }
 
 func testRFC5424NoTimestmap(t *testing.T) {
 	//nolint:lll
 	log := `<165>4 - mymach.it e - 1 [ex@32473 iut="3"] An application event log entry...`
 
-	expectedEvent := &RFC5424{
+	event := &RFC5424{
 		Priority:  aws.Uint8(165),
 		Facility:  aws.Uint8(20),
 		Severity:  aws.Uint8(5),
@@ -101,28 +99,22 @@ func testRFC5424NoTimestmap(t *testing.T) {
 			},
 		},
 	}
-
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
-	expectedEvent.PantherEventTime = nil
-
-	checkRFC5424(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeRFC5424, time.Time{}, parsers.DomainName(aws.StringValue(event.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, event)
 }
 
 func testRFC5424NoStructuredDataNoProcID(t *testing.T) {
 	//nolint:lll
 	log := `<34>1 2003-10-11T22:14:15.003Z mymachine.example.com su - ID47 - BOM'su root' failed for lonvick on /dev/pts/8`
 
-	expectedTime, _ := time.Parse(time.RFC3339, "2003-10-11T22:14:15.003Z")
+	tm, _ := time.Parse(time.RFC3339, "2003-10-11T22:14:15.003Z")
 
-	expectedEvent := &RFC5424{
+	event := &RFC5424{
 		Priority:       aws.Uint8(34),
 		Facility:       aws.Uint8(4),
 		Severity:       aws.Uint8(2),
 		Version:        aws.Uint16(1),
-		Timestamp:      (*timestamp.RFC3339)(&expectedTime),
+		Timestamp:      (*timestamp.RFC3339)(&tm),
 		Hostname:       aws.String("mymachine.example.com"),
 		Appname:        aws.String("su"),
 		ProcID:         nil,
@@ -130,14 +122,8 @@ func testRFC5424NoStructuredDataNoProcID(t *testing.T) {
 		Message:        aws.String("BOM'su root' failed for lonvick on /dev/pts/8"),
 		StructuredData: nil,
 	}
-
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC5424(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeRFC5424, tm, parsers.DomainName(aws.StringValue(event.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, event)
 }
 
 func testRFC5424NoStructuredDataNoMsgID(t *testing.T) {
@@ -160,13 +146,8 @@ func testRFC5424NoStructuredDataNoMsgID(t *testing.T) {
 		StructuredData: nil,
 	}
 
-	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC5424(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC5424, expectedTime, parsers.IPAddress(aws.StringValue(expectedEvent.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, expectedEvent)
 }
 
 func testRFC5424WithStructuredData(t *testing.T) {
@@ -195,13 +176,8 @@ func testRFC5424WithStructuredData(t *testing.T) {
 		},
 	}
 
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC5424(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC5424, expectedTime, parsers.DomainName(aws.StringValue(expectedEvent.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, expectedEvent)
 }
 
 func testRFC5424StructuredDataOnly(t *testing.T) {
@@ -232,23 +208,11 @@ func testRFC5424StructuredDataOnly(t *testing.T) {
 			},
 		},
 	}
-
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC5424")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC5424(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC5424, expectedTime, parsers.DomainName(aws.StringValue(expectedEvent.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, expectedEvent)
 }
 
 func TestRFC5424Type(t *testing.T) {
 	parser := &RFC5424Parser{}
-	require.Equal(t, "Syslog.RFC5424", parser.LogType())
-}
-
-func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
-	expectedEvent.SetEvent(expectedEvent)
-	logs, err := parserRFC5424.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), logs, err)
+	require.Equal(t, TypeRFC5424, parser.LogType())
 }

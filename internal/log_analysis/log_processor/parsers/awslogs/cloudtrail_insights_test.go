@@ -89,11 +89,11 @@ func TestCloudTrailInsightParser(t *testing.T) {
 		]
 	}`
 
-	expectedDateStart := time.Date(2019, 10, 17, 10, 5, 0, 0, time.UTC)
-	expectedDateEnd := time.Date(2019, 10, 17, 10, 13, 0, 0, time.UTC)
-	expectedEventStart := &CloudTrailInsight{
+	tmStart := time.Date(2019, 10, 17, 10, 5, 0, 0, time.UTC)
+	tmEnd := time.Date(2019, 10, 17, 10, 13, 0, 0, time.UTC)
+	eventStart := &CloudTrailInsight{
 		EventVersion:       aws.String("1.07"),
-		EventTime:          (*timestamp.RFC3339)(&expectedDateStart),
+		EventTime:          (*timestamp.RFC3339)(&tmStart),
 		AWSRegion:          aws.String("us-east-1"),
 		EventID:            aws.String("aab985f2-3a56-48cc-a8a5-e0af77606f5f"),
 		EventType:          aws.String("AwsCloudTrailInsight"),
@@ -117,9 +117,9 @@ func TestCloudTrailInsightParser(t *testing.T) {
 		},
 		EventCategory: aws.String("Insight"),
 	}
-	expectedEventEnd := &CloudTrailInsight{
+	eventEnd := &CloudTrailInsight{
 		EventVersion:       aws.String("1.07"),
-		EventTime:          (*timestamp.RFC3339)(&expectedDateEnd),
+		EventTime:          (*timestamp.RFC3339)(&tmEnd),
 		AWSRegion:          aws.String("us-east-1"),
 		EventID:            aws.String("ce7b8ac1-3f89-4dae-8d2a-6560e32f591a"),
 		EventType:          aws.String("AwsCloudTrailInsight"),
@@ -144,17 +144,13 @@ func TestCloudTrailInsightParser(t *testing.T) {
 		},
 		EventCategory: aws.String("Insight"),
 	}
-
-	// panther fields
-	expectedEventStart.PantherLogType = aws.String("AWS.CloudTrailInsight")
-	expectedEventStart.PantherEventTime = (*timestamp.RFC3339)(&expectedDateStart)
-	expectedEventStart.AppendAnyAWSAccountIds("123456789012")
-	expectedEventEnd.PantherLogType = aws.String("AWS.CloudTrailInsight")
-	expectedEventEnd.PantherEventTime = (*timestamp.RFC3339)(&expectedDateEnd)
-	expectedEventEnd.AppendAnyAWSAccountIds("123456789012")
-	expectedEventEnd.SetEvent(expectedEventEnd)
-	expectedEventStart.SetEvent(expectedEventStart)
-	testutil.CheckPantherParser(t, log, &CloudTrailInsightParser{}, expectedEventStart.Log(), expectedEventEnd.Log())
+	testutil.CheckPantherEvent(t, eventStart, TypeCloudTrailInsight, tmStart,
+		KindAWSAccountID.Field("123456789012"),
+	)
+	testutil.CheckPantherEvent(t, eventEnd, TypeCloudTrailInsight, tmEnd,
+		KindAWSAccountID.Field("123456789012"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &CloudTrailInsightParser{}, eventStart, eventEnd)
 }
 
 func TestCloudTrailInsightLogType(t *testing.T) {

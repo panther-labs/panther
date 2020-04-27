@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -35,9 +36,9 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 		"'select `user_id` as `userId`, `address`, `type`, `access`, `ordinal`, `token`, `verified`, `organization_id` as `organizationId`, `expires_at` as `expiresAt`, `created_at` as `createdAt`, `updated_at` as `updatedAt` " +
 		"from `address_verification` where `ordinal` = \\'primary\\' and `access` = \\'public\\' and `type` = \\'phoneNumber\\' and `verified` = true and `user_id` = \\'12345678-8a3b-4d3f-96a7-19cc4c58c25d\\'',0"
 
-	expectedTime := time.Unix(1572546356, 975302000).UTC()
-	expectedEvent := &AuroraMySQLAudit{
-		Timestamp:    (*timestamp.RFC3339)(&expectedTime),
+	tm := time.Unix(1572546356, 975302000).UTC()
+	event := &AuroraMySQLAudit{
+		Timestamp:    (*timestamp.RFC3339)(&tm),
 		ServerHost:   aws.String("db-instance-name"),
 		Username:     aws.String("someuser"),
 		Host:         aws.String("10.0.143.147"),
@@ -49,24 +50,15 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 		Object:  aws.String("'select `user_id` as `userId`, `address`, `type`, `access`, `ordinal`, `token`, `verified`, `organization_id` as `organizationId`, `expires_at` as `expiresAt`, `created_at` as `createdAt`, `updated_at` as `updatedAt` from `address_verification` where `ordinal` = \\'primary\\' and `access` = \\'public\\' and `type` = \\'phoneNumber\\' and `verified` = true and `user_id` = \\'12345678-8a3b-4d3f-96a7-19cc4c58c25d\\''"),
 		RetCode: aws.Int(0),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.AuroraMySQLAudit")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddress("10.0.143.147")
-	expectedEvent.AppendAnyDomainNames("db-instance-name")
-
-	checkAuroraMysqlAuditLogLog(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeAuroraMySQLAudit, tm,
+		parsers.KindIPAddress.Field("10.0.143.147"),
+		parsers.KindDomainName.Field("10.0.143.147"),
+		parsers.KindDomainName.Field("db-instance-name"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &AuroraMySQLAuditParser{}, event)
 }
 
 func TestAuroraMysqlAuditLogType(t *testing.T) {
 	parser := &AuroraMySQLAuditParser{}
-	require.Equal(t, "AWS.AuroraMySQLAudit", parser.LogType())
-}
-
-func checkAuroraMysqlAuditLogLog(t *testing.T, log string, expectedEvent *AuroraMySQLAudit) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := (&AuroraMySQLAuditParser{}).New() // important to call New() to initialize reader
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	require.Equal(t, TypeAuroraMySQLAudit, parser.LogType())
 }

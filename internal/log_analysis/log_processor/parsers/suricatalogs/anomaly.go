@@ -19,8 +19,7 @@ package suricatalogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -51,8 +50,6 @@ type Anomaly struct {
 	Timestamp    *timestamp.SuricataTimestamp `json:"timestamp" validate:"required" description:"Suricata Anomaly Timestamp"`
 	TxID         *int                         `json:"tx_id,omitempty" description:"Suricata Anomaly TxID"`
 	Vlan         []int                        `json:"vlan,omitempty" description:"Suricata Anomaly Vlan"`
-
-	parsers.PantherLog
 }
 
 //nolint:lll
@@ -92,30 +89,21 @@ func (p *AnomalyParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AnomalyParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *AnomalyParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	event := &Anomaly{}
-
-	err := jsoniter.UnmarshalFromString(log, event)
-	if err != nil {
-		return nil, err
-	}
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-
-	return event.Logs(), nil
+	return parsers.QuickParseJSON(event, log)
 }
 
 // LogType returns the log type supported by this parser
 func (p *AnomalyParser) LogType() string {
-	return "Suricata.Anomaly"
+	return TypeAnomaly
 }
 
-func (event *Anomaly) updatePantherFields(p *AnomalyParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp), event)
-	event.AppendAnyIPAddressPtr(event.SrcIP)
-	event.AppendAnyIPAddressPtr(event.DestIP)
+const TypeAnomaly = "Suricata.Anomaly"
+
+func (event *Anomaly) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeAnomaly, event.Timestamp.UTC(),
+		parsers.IPAddress(aws.StringValue(event.SrcIP)),
+		parsers.IPAddress(aws.StringValue(event.DestIP)),
+	)
 }

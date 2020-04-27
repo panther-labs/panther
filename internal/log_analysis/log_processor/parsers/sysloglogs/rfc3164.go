@@ -43,10 +43,9 @@ type RFC3164 struct {
 	ProcID    *string            `json:"procid,omitempty" description:"ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting."`
 	MsgID     *string            `json:"msgid,omitempty" description:"MsgID identifies the type of message. For example, a firewall might use the MsgID 'TCPIN' for incoming TCP traffic."`
 	Message   *string            `json:"message,omitempty" description:"Message contains free-form text that provides information about the event."`
-
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*RFC3164)(nil)
 
 // RFC3164Parser parses Syslog logs in the RFC3164 format
 type RFC3164Parser struct {
@@ -68,7 +67,7 @@ func (p *RFC3164Parser) New() parsers.LogParser {
 var _ parsers.LogParser = (*RFC3164Parser)(nil)
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	if p.parser == nil {
 		return nil, errors.New("nil parser")
 	}
@@ -90,28 +89,29 @@ func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLog, error) {
 		Message:   internalRFC3164.Message,
 	}
 
-	externalRFC3164.updatePantherFields(p)
-
 	if err := parsers.Validator.Struct(externalRFC3164); err != nil {
 		return nil, err
 	}
-
-	return externalRFC3164.Logs(), nil
+	return parsers.PackEvents(externalRFC3164)
 }
 
 // LogType returns the log type supported by this parser
 func (p *RFC3164Parser) LogType() string {
-	return "Syslog.RFC3164"
+	return TypeRFC3164
 }
 
-func (event *RFC3164) updatePantherFields(p *RFC3164Parser) {
-	event.SetCoreFields(p.LogType(), event.Timestamp, event)
+const TypeRFC3164 = "Syslog.RFC3164"
 
-	// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
-	// add as a domain name. https://tools.ietf.org/html/rfc3164#section-6.2.4
-	if !event.AppendAnyIPAddressPtr(event.Hostname) {
-		event.AppendAnyDomainNamePtrs(event.Hostname)
+func (event *RFC3164) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeRFC3164, event.Timestamp.UTC())
+	if event.Message != nil {
+		e.AppendIP(*event.Message)
 	}
-
-	event.AppendAnyIPAddressInFieldPtr(event.Message)
+	if event.Hostname != nil {
+		e.AppendDomainOrIP(*event.Hostname)
+	}
+	if event.Message != nil {
+		e.AppendIP(*event.Message)
+	}
+	return e
 }

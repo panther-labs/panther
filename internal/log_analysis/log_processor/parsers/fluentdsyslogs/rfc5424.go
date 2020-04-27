@@ -19,12 +19,12 @@ package fluentdsyslogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
+
+const TypeRFC5424 = "Fluentd.Syslog5424"
 
 var RFC5424Desc = `Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)
 Reference: https://docs.fluentd.org/parser/syslog#rfc5424-log`
@@ -40,9 +40,9 @@ type RFC5424 struct {
 	Message   *string                     `json:"message,omitempty" validate:"required" description:"Message contains free-form text that provides information about the event."`
 	Timestamp *timestamp.FluentdTimestamp `json:"time,omitempty" validate:"required" description:"Timestamp of the syslog message in UTC."`
 	Tag       *string                     `json:"tag,omitempty" validate:"required" description:"Tag of the syslog message"`
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*RFC5424)(nil)
 
 // RFC5424Parser parses fluentd syslog logs in the RFC5424 format
 type RFC5424Parser struct{}
@@ -54,36 +54,24 @@ func (p *RFC5424Parser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLog, error) {
-	rfc5424 := &RFC5424{}
-
-	err := jsoniter.UnmarshalFromString(log, rfc5424)
-	if err != nil {
-		return nil, err
-	}
-
-	rfc5424.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(rfc5424); err != nil {
-		return nil, err
-	}
-
-	return rfc5424.Logs(), nil
+func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&RFC5424{}, log)
 }
 
 // LogType returns the log type supported by this parser
 func (p *RFC5424Parser) LogType() string {
-	return "Fluentd.Syslog5424"
+	return TypeRFC5424
 }
 
-func (event *RFC5424) updatePantherFields(p *RFC5424Parser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp), event)
-
+func (event *RFC5424) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeRFC5424, event.Timestamp.UTC())
 	// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
 	// add as a domain name. https://tools.ietf.org/html/rfc5424#section-6.2.4
-	if !event.AppendAnyIPAddressPtr(event.Hostname) {
-		event.AppendAnyDomainNamePtrs(event.Hostname)
+	if event.Hostname != nil {
+		e.AppendDomainOrIP(*event.Hostname)
 	}
-
-	event.AppendAnyIPAddressInFieldPtr(event.Message)
+	if event.Message != nil {
+		e.AppendIP(*event.Message)
+	}
+	return e
 }

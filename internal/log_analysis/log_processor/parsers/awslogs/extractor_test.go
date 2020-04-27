@@ -24,11 +24,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
 func TestAWSExtractor(t *testing.T) {
-	event := AWSPantherLog{}
 	// add interesting fragments as new extractions are implemented
 	json := (jsoniter.RawMessage)(`
 {
@@ -123,23 +123,29 @@ func TestAWSExtractor(t *testing.T) {
 
 }
 `)
-
-	expectedEvent := AWSPantherLog{}
-	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:instance-profile/EC2Dev",
+	event := &parsers.PantherEvent{}
+	event.Append(KindAWSARN, "arn:aws:iam::123456789012:instance-profile/EC2Dev",
 		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
 		"arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
 		"arn:aws:ec2:region:111122223333:instance/")
-	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a", "i-0072230f74b3a798e" /* from ARN */)
-	expectedEvent.AppendAnyAWSAccountIds("123456789012", "888888888888" /* from ARN */, "111122223333" /* from ARN */)
-	expectedEvent.AppendAnyIPAddress("54.152.215.140")
-	expectedEvent.AppendAnyIPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
-	expectedEvent.AppendAnyIPAddress("172.31.81.237")
-	expectedEvent.AppendAnyIPAddress("151.80.19.228")
-	expectedEvent.AppendAnyAWSTags("tag1:val1")
-	expectedEvent.AppendAnyDomainNames("ec2-54-152-215-140.compute-1.amazonaws.com", "GeneratedFindingDomainName",
-		"ip-172-31-81-237.ec2.internal")
+	event.Append(KindAWSInstanceID, "i-081de1d7604b11e4a", "i-0072230f74b3a798e" /* from ARN */)
+	event.Append(KindAWSAccountID, "123456789012", "888888888888" /* from ARN */, "111122223333" /* from ARN */)
+	event.Append(parsers.KindIPAddress, "54.152.215.140",
+		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+		"172.31.81.237",
+		"151.80.19.228",
+	)
+	event.Append(KindAWSTag, "tag1:val1")
+	event.Append(parsers.KindDomainName,
+		"ec2-54-152-215-140.compute-1.amazonaws.com",
+		"GeneratedFindingDomainName",
+		"ip-172-31-81-237.ec2.internal",
+	)
 
-	extract.Extract(&json, NewAWSExtractor(&event))
+	ext := &AWSExtractor{PantherEvent: &parsers.PantherEvent{}}
 
-	require.Equal(t, expectedEvent, event)
+	extract.Extract(&json, ext)
+	ext.Sort()
+	event.Sort()
+	require.Equal(t, event, ext.PantherEvent)
 }

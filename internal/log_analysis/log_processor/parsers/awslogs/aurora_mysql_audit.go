@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -48,10 +49,9 @@ type AuroraMySQLAudit struct {
 	Database     *string            `json:"database,omitempty" description:"The active database, as set by the USE command."`
 	Object       *string            `json:"object,omitempty" description:"For QUERY events, this value indicates the executed query. For TABLE events, it indicates the table name."`
 	RetCode      *int               `json:"retCode,omitempty" description:"The return code of the logged operation."`
-
-	// NOTE: added to end of struct to allow expansion later
-	AWSPantherLog
 }
+
+var _ parsers.PantherEventer = (*AuroraMySQLAudit)(nil)
 
 // AuroraMySQLAuditParser parses AWS Aurora MySQL Audit logs
 type AuroraMySQLAuditParser struct {
@@ -67,7 +67,7 @@ func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
 		return nil, err
@@ -101,22 +101,24 @@ func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLog, error
 		RetCode:      parsers.CsvStringToIntPointer(record[len(record)-1]),
 	}
 
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
+	packed, err := parsers.RepackJSON(event)
+	if err != nil {
 		return nil, err
 	}
+	return []*parsers.PantherLogJSON{packed}, nil
 
-	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
 func (p *AuroraMySQLAuditParser) LogType() string {
-	return "AWS.AuroraMySQLAudit"
+	return TypeAuroraMySQLAudit
 }
 
-func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {
-	event.SetCoreFields(p.LogType(), event.Timestamp, event)
-	event.AppendAnyIPAddressPtr(event.Host)
-	event.AppendAnyDomainNamePtrs(event.ServerHost)
+const TypeAuroraMySQLAudit = "AWS.AuroraMySQLAudit"
+
+func (event *AuroraMySQLAudit) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeAuroraMySQLAudit, event.Timestamp.UTC(),
+		parsers.IPAddress(aws.StringValue(event.Host)),
+		parsers.DomainName(aws.StringValue(event.ServerHost)),
+	)
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -34,10 +35,10 @@ func TestDNSQuery(t *testing.T) {
 	//nolint:lll
 	log := `{"timestamp": "2015-10-22T06:31:06.520370+0000", "flow_id": 188564141437106, "pcap_cnt": 229108, "event_type": "dns", "src_ip": "192.168.89.2", "src_port": 27864, "dest_ip": "8.8.8.8", "dest_port": 53, "proto": "017", "community_id": "1:2lDamoPjfWU3FGYJXWeXwZwtza4=", "dns": {"type": "query", "id": 62705, "rrname": "localhost", "rrtype": "A", "tx_id": 0}, "pcap_filename": "/pcaps/4SICS-GeekLounge-151022.pcap"}`
 
-	expectedTime := time.Date(2015, 10, 22, 6, 31, 6, 520370000, time.UTC)
+	tm := time.Date(2015, 10, 22, 6, 31, 6, 520370000, time.UTC)
 
-	expectedEvent := &DNS{
-		Timestamp:   (*timestamp.SuricataTimestamp)(&expectedTime),
+	event := &DNS{
+		Timestamp:   (*timestamp.SuricataTimestamp)(&tm),
 		FlowID:      aws.Int(188564141437106),
 		PcapCnt:     aws.Int(229108),
 		EventType:   aws.String("dns"),
@@ -56,23 +57,22 @@ func TestDNSQuery(t *testing.T) {
 		},
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
-	expectedEvent.SetCoreFields("Suricata.DNS", (*timestamp.RFC3339)(&expectedTime), expectedEvent)
-	expectedEvent.AppendAnyIPAddress("192.168.89.2")
-	expectedEvent.AppendAnyIPAddress("8.8.8.8")
-	expectedEvent.AppendAnyDomainNames("localhost")
-	parser := (&DNSParser{}).New()
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
+		parsers.IPAddress(("192.168.89.2")),
+		parsers.IPAddress(("8.8.8.8")),
+		parsers.DomainName(("localhost")),
+	)
+	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
 }
 
 func TestDNSAnswerNoError(t *testing.T) {
 	//nolint:lll
 	log := `{"timestamp": "2015-10-22T06:33:45.364388+0000", "flow_id": 1650515353776555, "pcap_cnt": 230388, "event_type": "dns", "src_ip": "192.168.88.1", "src_port": 53, "dest_ip": "192.168.88.61", "dest_port": 949, "proto": "017", "community_id": "1:41V2KTo0JgeGFmVA0p5LUTyRyvA=", "dns": {"type": "answer", "id":16000, "flags":"8180", "qr":true, "rd":true,"ra":true, "rcode":"NOERROR","rrname": "twitter.com", "rrtype":"A", "ttl":8,"rdata": "199.16.156.6"}, "pcap_filename": "/pcaps/4SICS-GeekLounge-151022.pcap"}`
 
-	expectedTime := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
+	tm := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
 
-	expectedEvent := &DNS{
-		Timestamp:   (*timestamp.SuricataTimestamp)(&expectedTime),
+	event := &DNS{
+		Timestamp:   (*timestamp.SuricataTimestamp)(&tm),
 		FlowID:      aws.Int(1650515353776555),
 		PcapCnt:     aws.Int(230388),
 		EventType:   aws.String("dns"),
@@ -97,25 +97,23 @@ func TestDNSAnswerNoError(t *testing.T) {
 		},
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
-	expectedEvent.SetCoreFields("Suricata.DNS", (*timestamp.RFC3339)(&expectedTime), expectedEvent)
-	expectedEvent.AppendAnyIPAddress("192.168.88.1")
-	expectedEvent.AppendAnyIPAddress("192.168.88.61")
-	expectedEvent.AppendAnyIPAddress("199.16.156.6")
-	expectedEvent.AppendAnyDomainNames("twitter.com")
-	parser := (&DNSParser{}).New()
-
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
+		parsers.IPAddress(("192.168.88.1")),
+		parsers.IPAddress(("192.168.88.61")),
+		parsers.IPAddress(("199.16.156.6")),
+		parsers.DomainName(("twitter.com")),
+	)
+	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
 }
 
 func TestDNSAnswerRefused(t *testing.T) {
 	//nolint:lll
 	log := `{"timestamp": "2015-10-22T06:33:45.364388+0000", "flow_id": 1650515353776555, "pcap_cnt": 230388, "event_type": "dns", "src_ip": "192.168.88.1", "src_port": 53, "dest_ip": "192.168.88.61", "dest_port": 949, "proto": "017", "community_id": "1:41V2KTo0JgeGFmVA0p5LUTyRyvA=", "dns": {"version": 2, "type": "answer", "id": 48966, "flags": "8185", "qr": true, "rd": true, "ra": true, "rrname": "time.nist.gov", "rrtype": "A", "rcode": "REFUSED"}, "pcap_filename": "/pcaps/4SICS-GeekLounge-151022.pcap"}`
 
-	expectedTime := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
+	tm := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
 
-	expectedEvent := &DNS{
-		Timestamp:   (*timestamp.SuricataTimestamp)(&expectedTime),
+	event := &DNS{
+		Timestamp:   (*timestamp.SuricataTimestamp)(&tm),
 		FlowID:      aws.Int(1650515353776555),
 		PcapCnt:     aws.Int(230388),
 		EventType:   aws.String("dns"),
@@ -139,13 +137,12 @@ func TestDNSAnswerRefused(t *testing.T) {
 		},
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
-	expectedEvent.SetCoreFields("Suricata.DNS", (*timestamp.RFC3339)(&expectedTime), expectedEvent)
-	expectedEvent.AppendAnyIPAddress("192.168.88.1")
-	expectedEvent.AppendAnyIPAddress("192.168.88.61")
-	expectedEvent.AppendAnyDomainNames("time.nist.gov")
-	parser := (&DNSParser{}).New()
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
+		parsers.IPAddress("192.168.88.1"),
+		parsers.IPAddress("192.168.88.61"),
+		parsers.DomainName("time.nist.gov"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
 }
 
 func TestDNSDetailedFormat(t *testing.T) {
@@ -153,10 +150,10 @@ func TestDNSDetailedFormat(t *testing.T) {
 	//nolint:lll
 	log := `{"timestamp": "2015-10-22T06:33:45.364388+0000", "flow_id": 1650515353776555, "pcap_cnt": 230388, "event_type": "dns", "src_ip": "192.168.88.1", "src_port": 53, "dest_ip": "192.168.88.61", "dest_port": 949, "proto": "017", "community_id": "1:41V2KTo0JgeGFmVA0p5LUTyRyvA=", "dns": {"version": 2, "type": "answer", "id": 45444, "flags": "8180", "qr": true,"rd": true, "ra": true, "rcode": "NOERROR", "answers": [{"rrname": "suricata-ids.org", "rrtype": "A", "ttl": 10, "rdata": "192.0.78.24"},{"rrname": "suricata-ids.org", "rrtype": "A", "ttl": 10, "rdata": "192.0.78.25"},{"rrname": "suricata-ids-aaaa.org", "rrtype": "AAAA", "ttl": 10, "rdata": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"},{"rrname": "suricata-ids-cname.org", "rrtype": "CNAME", "ttl": 10, "rdata": "foo.suricata-ids.org"},{"rrname": "suricata-ids-txt.org", "rrtype": "TXT", "ttl": 10, "rdata": "Test Text"},{"rrname": "suricata-ids-mx.org", "rrtype": "MX", "ttl": 10, "rdata": "mail.server"},{"rrname": "1.0.168.192.in-addr.arpa", "rrtype": "PTR", "ttl": 10, "rdata": "hostname1.example.com"}]}, "pcap_filename": "/pcaps/4SICS-GeekLounge-151022.pcap"}`
 
-	expectedTime := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
+	tm := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
 
-	expectedEvent := &DNS{
-		Timestamp:   (*timestamp.SuricataTimestamp)(&expectedTime),
+	event := &DNS{
+		Timestamp:   (*timestamp.SuricataTimestamp)(&tm),
 		FlowID:      aws.Int(1650515353776555),
 		PcapCnt:     aws.Int(230388),
 		EventType:   aws.String("dns"),
@@ -222,25 +219,22 @@ func TestDNSDetailedFormat(t *testing.T) {
 		},
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
-	expectedEvent.SetCoreFields("Suricata.DNS", (*timestamp.RFC3339)(&expectedTime), expectedEvent)
-	expectedEvent.AppendAnyIPAddress("192.168.88.1")
-	expectedEvent.AppendAnyIPAddress("192.168.88.61")
-	expectedEvent.AppendAnyIPAddress("192.0.78.24")
-	expectedEvent.AppendAnyIPAddress("192.0.78.25")
-	expectedEvent.AppendAnyIPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
-	expectedEvent.AppendAnyDomainNames(
-		"foo.suricata-ids.org",
-		"suricata-ids.org",
-		"suricata-ids-aaaa.org",
-		"suricata-ids-cname.org",
-		"suricata-ids-txt.org",
-		"suricata-ids-mx.org",
-		"mail.server",
-		"hostname1.example.com")
-	parser := (&DNSParser{}).New()
-
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
+		parsers.IPAddress("192.168.88.1"),
+		parsers.IPAddress("192.168.88.61"),
+		parsers.IPAddress("192.0.78.24"),
+		parsers.IPAddress("192.0.78.25"),
+		parsers.IPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+		parsers.DomainName("foo.suricata-ids.org"),
+		parsers.DomainName("suricata-ids.org"),
+		parsers.DomainName("suricata-ids-aaaa.org"),
+		parsers.DomainName("suricata-ids-cname.org"),
+		parsers.DomainName("suricata-ids-txt.org"),
+		parsers.DomainName("suricata-ids-mx.org"),
+		parsers.DomainName("mail.server"),
+		parsers.DomainName("hostname1.example.com"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
 }
 
 func TestDNSGroupedFormat(t *testing.T) {
@@ -248,10 +242,10 @@ func TestDNSGroupedFormat(t *testing.T) {
 	//nolint:lll
 	log := `{"timestamp": "2015-10-22T06:33:45.364388+0000", "flow_id": 1650515353776555, "pcap_cnt": 230388, "event_type": "dns", "src_ip": "192.168.88.1", "src_port": 53, "dest_ip": "192.168.88.61", "dest_port": 949, "proto": "017", "community_id": "1:41V2KTo0JgeGFmVA0p5LUTyRyvA=", "dns": {"version": 2, "type": "answer", "id": 18523, "flags": "8180", "qr": true,"rd": true, "ra": true, "rcode": "NOERROR", "grouped": {"A": ["192.0.78.24", "192.0.78.25"], "CNAME": ["suricata-ids.org"]}}, "pcap_filename": "/pcaps/4SICS-GeekLounge-151022.pcap"}`
 
-	expectedTime := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
+	tm := time.Date(2015, 10, 22, 6, 33, 45, 364388000, time.UTC)
 
-	expectedEvent := &DNS{
-		Timestamp:   (*timestamp.SuricataTimestamp)(&expectedTime),
+	event := &DNS{
+		Timestamp:   (*timestamp.SuricataTimestamp)(&tm),
 		FlowID:      aws.Int(1650515353776555),
 		PcapCnt:     aws.Int(230388),
 		EventType:   aws.String("dns"),
@@ -277,18 +271,18 @@ func TestDNSGroupedFormat(t *testing.T) {
 		},
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
-	expectedEvent.SetCoreFields("Suricata.DNS", (*timestamp.RFC3339)(&expectedTime), expectedEvent)
-	expectedEvent.AppendAnyIPAddress("192.168.88.1")
-	expectedEvent.AppendAnyIPAddress("192.168.88.61")
-	expectedEvent.AppendAnyIPAddress("192.0.78.24")
-	expectedEvent.AppendAnyIPAddress("192.0.78.25")
-	expectedEvent.AppendAnyDomainNames("suricata-ids.org")
-	parser := (&DNSParser{}).New()
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+
+	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
+		parsers.IPAddress("192.168.88.1"),
+		parsers.IPAddress("192.168.88.61"),
+		parsers.IPAddress("192.0.78.24"),
+		parsers.IPAddress("192.0.78.25"),
+		parsers.DomainName("suricata-ids.org"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
 }
 
 func TestDNSType(t *testing.T) {
 	parser := &DNSParser{}
-	require.Equal(t, "Suricata.DNS", parser.LogType())
+	require.Equal(t, TypeDNS, parser.LogType())
 }

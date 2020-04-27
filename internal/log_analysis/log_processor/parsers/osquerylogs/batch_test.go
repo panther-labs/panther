@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -34,9 +35,9 @@ func TestBatchLog(t *testing.T) {
 	//nolint:lll
 	log := `{"diffResults": {"added": [ { "name": "osqueryd", "path": "/usr/local/bin/osqueryd", "pid": "97830" } ],"removed": [ { "name": "osqueryd", "path": "/usr/local/bin/osqueryd", "pid": "97650" } ] },"name": "processes", "hostname": "hostname.local", "calendarTime": "Tue Nov 5 06:08:26 2018 UTC","unixTime": "1412123850", "epoch": "314159265", "counter": "1" }`
 
-	expectedTime := time.Unix(1541398106, 0).UTC()
-	expectedEvent := &Batch{
-		CalendarTime: (*timestamp.ANSICwithTZ)(&expectedTime),
+	tm := time.Unix(1541398106, 0).UTC()
+	event := &Batch{
+		CalendarTime: (*timestamp.ANSICwithTZ)(&tm),
 		Name:         aws.String("processes"),
 		Epoch:        (*numerics.Integer)(aws.Int(314159265)),
 		Hostname:     aws.String(("hostname.local")),
@@ -59,23 +60,13 @@ func TestBatchLog(t *testing.T) {
 			},
 		},
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Osquery.Batch")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyDomainNames("hostname.local")
-
-	checkOsQueryBatcLog(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeBatch, tm,
+		parsers.DomainName("hostname.local"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &BatchParser{}, event)
 }
 
 func TestOsQueryBatchLogType(t *testing.T) {
 	parser := &BatchParser{}
-	require.Equal(t, "Osquery.Batch", parser.LogType())
-}
-
-func checkOsQueryBatcLog(t *testing.T, log string, expectedEvent *Batch) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := &BatchParser{}
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	require.Equal(t, TypeBatch, parser.LogType())
 }

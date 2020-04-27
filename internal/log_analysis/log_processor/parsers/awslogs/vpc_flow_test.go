@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -37,54 +38,51 @@ const (
 func TestStandardVpcFlowLog(t *testing.T) {
 	log := "2 348372346321 eni-00184058652e5a320 52.119.169.95 172.31.20.31 443 48316 6 19 7119 1573642242 1573642284 ACCEPT OK extra-data-should-not-break" // nolint:lll
 
-	expectedStartTime := time.Unix(1573642242, 0).UTC()
-	expectedEndTime := time.Unix(1573642284, 0).UTC()
-	expectedEvent := &VPCFlow{
+	tmStart := time.Unix(1573642242, 0).UTC()
+	tmEnd := time.Unix(1573642284, 0).UTC()
+	event := &VPCFlow{
 		Action:      aws.String("ACCEPT"),
 		AccountID:   aws.String("348372346321"),
 		Bytes:       aws.Int(7119),
 		DstAddr:     aws.String("172.31.20.31"),
 		DstPort:     aws.Int(48316),
-		End:         (*timestamp.RFC3339)(&expectedEndTime),
+		End:         (*timestamp.RFC3339)(&tmEnd),
 		InterfaceID: aws.String("eni-00184058652e5a320"),
 		LogStatus:   aws.String("OK"),
 		Packets:     aws.Int(19),
 		Protocol:    aws.Int(6),
 		SrcAddr:     aws.String("52.119.169.95"),
 		SrcPort:     aws.Int(443),
-		Start:       (*timestamp.RFC3339)(&expectedStartTime),
+		Start:       (*timestamp.RFC3339)(&tmStart),
 		Version:     aws.Int(2),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
-	expectedEvent.AppendAnyIPAddress("172.31.20.31")
-	expectedEvent.AppendAnyIPAddress("52.119.169.95")
-	expectedEvent.AppendAnyAWSAccountIds("348372346321")
-
-	checkVPCFlowLog(t, vpcFlowDefaultHeader, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeVPCFlow, tmStart,
+		parsers.IPAddress("172.31.20.31"),
+		parsers.IPAddress("52.119.169.95"),
+		KindAWSAccountID.Field("348372346321"),
+	)
+	checkVPCFlowParser(t, string(vpcFlowDefaultHeader), log, event)
 }
 
 func TestExtendedVpcFlowLog(t *testing.T) {
 	log := "3 348372346321 eni-00184058652e5a320 52.119.169.95 172.31.20.31 443 48316 6 19 7119 1573642242 1573642284 ACCEPT OK vpc-4a486c30 subnet-48998e66 i-038407d32b0f38c60 0 IPv4 76.198.154.105 172.31.88.3 extra-data-should-not-break" // nolint:lll
 
-	expectedStartTime := time.Unix(1573642242, 0).UTC()
-	expectedEndTime := time.Unix(1573642284, 0).UTC()
-	expectedEvent := &VPCFlow{
+	tmStart := time.Unix(1573642242, 0).UTC()
+	tmEnd := time.Unix(1573642284, 0).UTC()
+	event := &VPCFlow{
 		Action:      aws.String("ACCEPT"),
 		AccountID:   aws.String("348372346321"),
 		Bytes:       aws.Int(7119),
 		DstAddr:     aws.String("172.31.20.31"),
 		DstPort:     aws.Int(48316),
-		End:         (*timestamp.RFC3339)(&expectedEndTime),
+		End:         (*timestamp.RFC3339)(&tmEnd),
 		InterfaceID: aws.String("eni-00184058652e5a320"),
 		LogStatus:   aws.String("OK"),
 		Packets:     aws.Int(19),
 		Protocol:    aws.Int(6),
 		SrcAddr:     aws.String("52.119.169.95"),
 		SrcPort:     aws.Int(443),
-		Start:       (*timestamp.RFC3339)(&expectedStartTime),
+		Start:       (*timestamp.RFC3339)(&tmStart),
 		Version:     aws.Int(3),
 
 		VpcID:         aws.String("vpc-4a486c30"),
@@ -95,38 +93,33 @@ func TestExtendedVpcFlowLog(t *testing.T) {
 		PacketSrcAddr: aws.String("76.198.154.105"),
 		PacketDstAddr: aws.String("172.31.88.3"),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
-	expectedEvent.AppendAnyIPAddress("172.31.20.31")
-	expectedEvent.AppendAnyIPAddress("52.119.169.95")
-	expectedEvent.AppendAnyIPAddress("76.198.154.105")
-	expectedEvent.AppendAnyIPAddress("172.31.88.3")
-	expectedEvent.AppendAnyAWSAccountIds("348372346321")
-	expectedEvent.AppendAnyAWSInstanceIds("i-038407d32b0f38c60")
-
-	checkVPCFlowLog(t, vpcFlowExtendedHeader, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeVPCFlow, tmStart,
+		parsers.IPAddress("172.31.20.31"),
+		parsers.IPAddress("52.119.169.95"),
+		parsers.IPAddress("76.198.154.105"),
+		parsers.IPAddress("172.31.88.3"),
+		KindAWSAccountID.Field("348372346321"),
+		KindAWSAccountID.Field("i-038407d32b0f38c60"),
+	)
+	checkVPCFlowParser(t, string(vpcFlowExtendedHeader), log, event)
 }
 
 func TestVpcFlowLogNoData(t *testing.T) {
 	log := "2 unknown eni-0608192d5c498fbcd - - - - - - - 1538696170 1538696308 - NODATA"
 
-	expectedStartTime := time.Unix(1538696170, 0).UTC()
-	expectedEndTime := time.Unix(1538696308, 0).UTC()
-	expectedEvent := &VPCFlow{
+	tmStart := time.Unix(1538696170, 0).UTC()
+	tmEnd := time.Unix(1538696308, 0).UTC()
+	event := &VPCFlow{
 		Version:     aws.Int(2),
 		InterfaceID: aws.String("eni-0608192d5c498fbcd"),
-		Start:       (*timestamp.RFC3339)(&expectedStartTime),
-		End:         (*timestamp.RFC3339)(&expectedEndTime),
+		Start:       (*timestamp.RFC3339)(&tmStart),
+		End:         (*timestamp.RFC3339)(&tmEnd),
 		LogStatus:   aws.String("NODATA"),
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
-
-	checkVPCFlowLog(t, vpcFlowDefaultHeader, log, expectedEvent)
+	parser := (&VPCFlowParser{}).New()
+	parser.Parse(vpcFlowDefaultHeader)
+	testutil.CheckPantherEvent(t, event, TypeVPCFlow, tmStart)
+	checkVPCFlowParser(t, string(vpcFlowDefaultHeader), log, event)
 }
 
 func TestVpcFlowLogHeader(t *testing.T) {
@@ -135,19 +128,24 @@ func TestVpcFlowLogHeader(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, events)
 }
+func TestVpcFlowLogHeaderExtended(t *testing.T) {
+	parser := &VPCFlowParser{}
+	events, err := parser.Parse(vpcFlowDefaultHeader)
+	require.NoError(t, err)
+	require.Empty(t, events)
+}
 
 func TestVpcFlowLogType(t *testing.T) {
 	parser := &VPCFlowParser{}
-	require.Equal(t, "AWS.VPCFlow", parser.LogType())
+	require.Equal(t, TypeVPCFlow, parser.LogType())
 }
 
-func checkVPCFlowLog(t *testing.T, header, log string, expectedEvent *VPCFlow) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := (&VPCFlowParser{}).New() // important to call New() to initialize reader
-	noevents, noerr := parser.Parse(header)
-	require.Empty(t, noevents, "Header parsing should not return events")
-	require.NotNil(t, noevents, "Header parsing should return empty events")
-	require.NoError(t, noerr, "Header parsing should not return an error")
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+func checkVPCFlowParser(t *testing.T, header, log string, events ...parsers.PantherEventer) {
+	t.Helper()
+	parser := &VPCFlowParser{}
+	headerEvents, err := parser.Parse(header)
+	require.NoError(t, err, "Header parsing should not return an error")
+	require.NotNil(t, headerEvents, "Header parsing should return empty events")
+	require.Empty(t, headerEvents, "Header parsing should return empty events")
+	testutil.CheckPantherParserJSON(t, log, parser, events...)
 }

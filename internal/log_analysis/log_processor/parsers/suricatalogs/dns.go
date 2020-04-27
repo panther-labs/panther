@@ -20,12 +20,13 @@ package suricatalogs
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
+
+const TypeDNS = `Suricata.DNS`
 
 var DNSDesc = `Suricata parser for the DNS event type in the EVE JSON output.
 Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#dns`
@@ -45,9 +46,9 @@ type DNS struct {
 	SrcPort      *uint16                      `json:"src_port,omitempty" description:"Suricata DNS SrcPort"`
 	Timestamp    *timestamp.SuricataTimestamp `json:"timestamp" validate:"required" description:"Suricata DNS Timestamp"`
 	Vlan         []int                        `json:"vlan,omitempty" description:"Suricata DNS Vlan"`
-
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*DNS)(nil)
 
 //nolint:lll
 type DNSDetails struct {
@@ -105,63 +106,49 @@ func (p *DNSParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *DNSParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *DNSParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	event := &DNS{}
-
-	err := jsoniter.UnmarshalFromString(log, event)
-	if err != nil {
-		return nil, err
-	}
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-
-	return event.Logs(), nil
+	return parsers.QuickParseJSON(event, log)
 }
 
 // LogType returns the log type supported by this parser
 func (p *DNSParser) LogType() string {
-	return "Suricata.DNS"
+	return TypeDNS
 }
 
-func (event *DNS) updatePantherFields(p *DNSParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp), event)
-	event.AppendAnyIPAddressPtr(event.SrcIP)
-	event.AppendAnyIPAddressPtr(event.DestIP)
-
-	event.AppendAnyIPAddressPtr(event.DNS.RData)
-	event.AppendAnyDomainNamePtrs(event.DNS.Rrname)
-
+func (event *DNS) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeDNS, event.Timestamp.UTC(),
+		parsers.IPAddress(aws.StringValue(event.SrcIP)),
+		parsers.IPAddress(aws.StringValue(event.DestIP)),
+		parsers.IPAddress(aws.StringValue(event.DNS.Rrname)),
+	)
 	for _, answer := range event.DNS.Answers {
 		switch aws.StringValue(answer.Rrtype) {
 		case "A", "AAAA":
-			event.AppendAnyIPAddressPtr(answer.Rdata)
-			event.AppendAnyDomainNamePtrs(answer.Rrname)
+			e.AppendIP(aws.StringValue(answer.Rdata))
+			e.AppendIP(aws.StringValue(answer.Rrname))
 		case "CNAME", "MX":
-			event.AppendAnyDomainNamePtrs(answer.Rrname)
-			event.AppendAnyDomainNamePtrs(answer.Rdata)
+			e.AppendDomain(aws.StringValue(answer.Rrname))
 		case "PTR":
-			event.AppendAnyDomainNamePtrs(answer.Rdata)
+			e.AppendDomain(aws.StringValue(answer.Rdata))
 		case "TXT":
-			event.AppendAnyDomainNamePtrs(answer.Rrname)
+			e.AppendDomain(aws.StringValue(answer.Rrname))
 		}
 	}
-
 	if event.DNS.Grouped != nil {
 		for _, aRecord := range event.DNS.Grouped.A {
-			event.AppendAnyIPAddress(aRecord)
+			e.AppendIP(aRecord)
 		}
 		for _, aaaaRecord := range event.DNS.Grouped.Aaaa {
-			event.AppendAnyIPAddress(aaaaRecord)
+			e.AppendIP(aaaaRecord)
 		}
 		for _, cNameRecord := range event.DNS.Grouped.Cname {
-			event.AppendAnyDomainNames(cNameRecord)
+			e.AppendDomain(cNameRecord)
 		}
 		for _, cNameRecord := range event.DNS.Grouped.Mx {
-			event.AppendAnyDomainNames(cNameRecord)
+			e.AppendDomain(cNameRecord)
 		}
 	}
+	return e
+
 }

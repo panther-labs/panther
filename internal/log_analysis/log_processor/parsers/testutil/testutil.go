@@ -75,12 +75,14 @@ import (
 // 	}
 // }
 
-func CheckPantherEvent(t *testing.T, event parsers.PantherEventer, typ string, tm time.Time, fields ...parsers.PantherField) {
+func CheckPantherEvent(t *testing.T, src parsers.PantherEventer, logType string, tm time.Time, fields ...parsers.PantherField) {
 	t.Helper()
-	actualTyp, actualTm, actualFields := event.PantherEvent()
-	require.Equal(t, typ, actualTyp)
-	require.Equal(t, tm, actualTm)
-	require.Equal(t, fields, actualFields)
+	actual := src.PantherEvent()
+	expect := parsers.NewEvent(logType, tm, fields...)
+	// Sort fields so events can be checked for equality
+	actual.Sort()
+	expect.Sort()
+	require.Equal(t, src.PantherEvent(), expect, actual)
 }
 func CheckPantherParserJSON(t *testing.T, log string, parser parsers.LogParser, expect ...parsers.PantherEventer) {
 	t.Helper()

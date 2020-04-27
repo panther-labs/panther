@@ -75,7 +75,7 @@ func TestGitLabRails(t *testing.T) {
 		QueueDuration:  aws.Float32(112.47),
 	}
 
-	testutil.CheckPantherEvent(t, expectedEvent, TypeRails, expectedTime, parsers.IPAddress(expectedEvent.RemoteIP))
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRails, expectedTime, parsers.IPAddress("18.245.0.1"))
 	testutil.CheckPantherParserJSON(t, log, &RailsParser{}, expectedEvent)
 }
 func TestGitLabRailsException(t *testing.T) {
@@ -145,7 +145,7 @@ func TestGitLabRailsException(t *testing.T) {
 			"ee/lib/gitlab/jira/middleware.rb:19:in 'call'",
 		},
 	}
-	testutil.CheckPantherEvent(t, expectedEvent, TypeRails, expectedTime, parsers.IPAddress(expectedEvent.RemoteIP))
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRails, expectedTime, parsers.IPAddress("127.0.0.1"))
 	testutil.CheckPantherParserJSON(t, log, &RailsParser{}, expectedEvent)
 }
 func TestGitLabRailsType(t *testing.T) {

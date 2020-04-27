@@ -23,11 +23,13 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const (
+	TypeAccess            = "Nginx.Access"
 	accessNumberOfColumns = 10
 	// User Identifier field - the second field in the logs - is always '-' for Nginx Access
 	accessUserIdentifier           = "-"
@@ -47,10 +49,9 @@ type Access struct {
 	BodyBytesSent *int               `json:"bodyBytesSent,omitempty" description:"The size of the object returned to the client, measured in bytes."`
 	HTTPReferer   *string            `json:"httpReferer,omitempty" description:"The HTTP referrer if any."`
 	HTTPUserAgent *string            `json:"httpUserAgent,omitempty" description:"The agent the user used when making the request."`
-
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*Access)(nil)
 
 // AccessParser parses Nginx Access logs in 'combined' log format
 type AccessParser struct{}
@@ -62,7 +63,7 @@ func (p *AccessParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *AccessParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	reader := csv.NewReader(strings.NewReader(log))
 	// Separator between fields is the empty space
 	reader.Comma = ' ' // NOTE: [nginxlogs]
@@ -107,22 +108,16 @@ func (p *AccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		HTTPReferer:   parsers.CsvStringToPointer(record[8]),
 		HTTPUserAgent: parsers.CsvStringToPointer(record[9]),
 	}
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-
-	return event.Logs(), nil
+	return parsers.PackEvents(event)
 }
 
 // LogType returns the log type supported by this parser
 func (p *AccessParser) LogType() string {
-	return "Nginx.Access"
+	return TypeAccess
 }
 
-func (event *Access) updatePantherFields(p *AccessParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
-	event.AppendAnyIPAddressPtr(event.RemoteAddress)
+func (event *Access) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeAccess, event.Time.UTC(),
+		parsers.IPAddress(aws.StringValue(event.RemoteAddress)),
+	)
 }

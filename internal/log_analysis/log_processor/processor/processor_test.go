@@ -63,8 +63,8 @@ type testLog struct {
 	logTime time.Time
 }
 
-func (tlog *testLog) PantherEvent() (string, time.Time, []parsers.PantherField) {
-	return testLogType, tlog.logTime, nil
+func (tlog *testLog) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(testLogType, tlog.logTime)
 }
 
 func newTestLog() *parsers.PantherLogJSON {

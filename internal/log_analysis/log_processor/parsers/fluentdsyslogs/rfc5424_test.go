@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -34,8 +35,8 @@ func TestRFC5424(t *testing.T) {
 	// nolint:lll
 	log := `{"pri": 16, "host": "192.168.0.1", "ident": "fluentd", "pid": "11111", "msgid": "ID24224", "extradata": "[exampleSDID@20224 iut=\"3\" eventSource=\"Application\" eventID=\"11211\"]","message": "[error] Syslog test", "tag":"syslog.authpriv.info","time":"2020-03-23 16:14:06 +0000"}`
 
-	expectedTime := time.Date(2020, 3, 23, 16, 14, 6, 0, time.UTC)
-	expectedRFC5424 := &RFC5424{
+	tm := time.Date(2020, 3, 23, 16, 14, 6, 0, time.UTC)
+	event := &RFC5424{
 		Priority:  aws.Uint8(16),
 		Hostname:  aws.String("192.168.0.1"),
 		Ident:     aws.String("fluentd"),
@@ -44,22 +45,21 @@ func TestRFC5424(t *testing.T) {
 		ExtraData: aws.String("[exampleSDID@20224 iut=\"3\" eventSource=\"Application\" eventID=\"11211\"]"),
 		Message:   aws.String("[error] Syslog test"),
 		Tag:       aws.String("syslog.authpriv.info"),
-		Timestamp: (*timestamp.FluentdTimestamp)(&expectedTime),
+		Timestamp: (*timestamp.FluentdTimestamp)(&tm),
 	}
 
-	// panther fields
-	expectedRFC5424.PantherLogType = aws.String("Fluentd.Syslog5424")
-	expectedRFC5424.AppendAnyIPAddressPtr(expectedRFC5424.Hostname)
-	expectedRFC5424.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkRFC5424(t, log, expectedRFC5424)
+	testutil.CheckPantherEvent(t, event, TypeRFC5424, tm,
+		parsers.IPAddress("192.168.0.1"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, event)
 }
 
 func TestRFC5424Domain(t *testing.T) {
 	// nolint:lll
 	log := `{"pri": 16, "host": "ip-192-168-0-1", "ident": "fluentd", "pid": "11111", "msgid": "ID24224", "extradata": "[exampleSDID@20224 iut=\"3\" eventSource=\"Application\" eventID=\"11211\"]","message": "[error] Syslog test", "tag":"syslog.authpriv.info","time":"2020-03-23 16:14:06 +0000"}`
 
-	expectedTime := time.Date(2020, 3, 23, 16, 14, 6, 0, time.UTC)
-	expectedRFC5424 := &RFC5424{
+	tm := time.Date(2020, 3, 23, 16, 14, 6, 0, time.UTC)
+	event := &RFC5424{
 		Priority:  aws.Uint8(16),
 		Hostname:  aws.String("ip-192-168-0-1"),
 		Ident:     aws.String("fluentd"),
@@ -68,24 +68,15 @@ func TestRFC5424Domain(t *testing.T) {
 		ExtraData: aws.String("[exampleSDID@20224 iut=\"3\" eventSource=\"Application\" eventID=\"11211\"]"),
 		Message:   aws.String("[error] Syslog test"),
 		Tag:       aws.String("syslog.authpriv.info"),
-		Timestamp: (*timestamp.FluentdTimestamp)(&expectedTime),
+		Timestamp: (*timestamp.FluentdTimestamp)(&tm),
 	}
-
-	// panther fields
-	expectedRFC5424.PantherLogType = aws.String("Fluentd.Syslog5424")
-	expectedRFC5424.AppendAnyDomainNamePtrs(expectedRFC5424.Hostname)
-	expectedRFC5424.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	checkRFC5424(t, log, expectedRFC5424)
+	testutil.CheckPantherEvent(t, event, TypeRFC5424, tm,
+		parsers.DomainName("ip-192-168-0-1"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, event)
 }
 
 func TestRFC5424TypeType(t *testing.T) {
 	parser := &RFC5424Parser{}
-	require.Equal(t, "Fluentd.Syslog5424", parser.LogType())
-}
-
-func checkRFC5424(t *testing.T, log string, expectedEvent *RFC5424) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := &RFC5424Parser{}
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	require.Equal(t, TypeRFC5424, parser.LogType())
 }

@@ -19,8 +19,7 @@ package awslogs
  */
 
 import (
-	"time"
-
+	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -85,19 +84,19 @@ func (p *GuardDutyParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 func (p *GuardDutyParser) LogType() string {
 	return TypeGuardDuty
 }
-func (event *GuardDuty) PantherEvent() (typ string, tm time.Time, fields []parsers.PantherField) {
-	typ = TypeGuardDuty
-	tm = event.CreatedAt.UTC()
+func (event *GuardDuty) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeGuardDuty, event.CreatedAt.UTC(),
+		KindAWSARN.Field(aws.StringValue(event.Arn)),
+		KindAWSAccountID.Field(aws.StringValue(event.AccountID)),
+	)
+
 	// polymorphic (unparsed) fields
-	awsExtractor := &AWSExtractor{}
-	awsExtractor.AppendP(KindAWSARN, event.Arn)
-	awsExtractor.AppendP(KindAWSAccountID, event.AccountID)
+	awsExtractor := &AWSExtractor{PantherEvent: e}
 	extract.Extract(event.Resource, awsExtractor)
 	if event.Service != nil {
 		extract.Extract(event.Service.AdditionalInfo, awsExtractor)
 		extract.Extract(event.Service.Action, awsExtractor)
-		fields = append(fields, awsExtractor.Fields...)
 	}
-	return
+	return e
 
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -34,10 +35,10 @@ func TestStatusLog(t *testing.T) {
 	//nolint:lll
 	log := `{"hostIdentifier":"jacks-mbp.lan","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","unixTime":"1535731040","severity":"0","filename":"scheduler.cpp","line":"83","message":"Executing scheduled query pack_incident-response_arp_cache: select * from arp_cache;","version":"3.2.6","decorations":{"host_uuid":"37821E12-CC8A-5AA3-A90C-FAB28A5BF8F9","username":"user"},"log_type":"status"}`
 
-	expectedTime := time.Unix(1541398106, 0).UTC()
-	expectedEvent := &Status{
+	tm := time.Unix(1541398106, 0).UTC()
+	event := &Status{
 		HostIdentifier: aws.String("jacks-mbp.lan"),
-		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
+		CalendarTime:   (*timestamp.ANSICwithTZ)(&tm),
 		UnixTime:       (*numerics.Integer)(aws.Int(1535731040)),
 		Severity:       (*numerics.Integer)(aws.Int(0)),
 		Filename:       aws.String("scheduler.cpp"),
@@ -50,23 +51,20 @@ func TestStatusLog(t *testing.T) {
 			"username":  "user",
 		},
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Osquery.Status")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyDomainNames("jacks-mbp.lan")
-
-	checkOsQueryStatusLog(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeStatus, tm,
+		parsers.DomainName("jacks-mbp.lan"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &StatusParser{}, event)
 }
 
 func TestStatusLogNoLogType(t *testing.T) {
 	//nolint:lll
 	log := `{"hostIdentifier":"jaguar.local","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","unixTime":"1535731040","severity":"0","filename":"tls.cpp","line":"253","message":"TLS/HTTPS POST request to URI: https://fleet.runpanther.tools:443/api/v1/osquery/log","version":"4.1.2","decorations":{"host_uuid":"97D8254F-7D98-56AE-91DB-924545EFXXXX","hostname":"jaguar.local"}}`
 
-	expectedTime := time.Unix(1541398106, 0).UTC()
-	expectedEvent := &Status{
+	tm := time.Unix(1541398106, 0).UTC()
+	event := &Status{
 		HostIdentifier: aws.String("jaguar.local"),
-		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
+		CalendarTime:   (*timestamp.ANSICwithTZ)(&tm),
 		UnixTime:       (*numerics.Integer)(aws.Int(1535731040)),
 		Severity:       (*numerics.Integer)(aws.Int(0)),
 		Filename:       aws.String("tls.cpp"),
@@ -78,23 +76,13 @@ func TestStatusLogNoLogType(t *testing.T) {
 			"hostname":  "jaguar.local",
 		},
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Osquery.Status")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyDomainNames("jaguar.local")
-
-	checkOsQueryStatusLog(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeStatus, tm,
+		parsers.DomainName("jaguar.local"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &StatusParser{}, event)
 }
 
 func TestOsQueryStatusLogType(t *testing.T) {
 	parser := &StatusParser{}
-	require.Equal(t, "Osquery.Status", parser.LogType())
-}
-
-func checkOsQueryStatusLog(t *testing.T, log string, expectedEvent *Status) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := &StatusParser{}
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	require.Equal(t, TypeStatus, parser.LogType())
 }

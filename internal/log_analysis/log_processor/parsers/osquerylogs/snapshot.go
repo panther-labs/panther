@@ -19,8 +19,7 @@ package osquerylogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -40,10 +39,9 @@ type Snapshot struct { // FIXME: field descriptions need updating!
 	Name           *string                `json:"name,omitempty" validate:"required" description:"Name"`
 	Snapshot       []map[string]string    `json:"snapshot,omitempty" validate:"required" description:"Snapshot"`
 	UnixTime       *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
-
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*Snapshot)(nil)
 
 // SnapshotParser parses OsQuery snapshot logs
 type SnapshotParser struct{}
@@ -55,27 +53,19 @@ func (p *SnapshotParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *SnapshotParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	event := &Snapshot{}
-	err := jsoniter.UnmarshalFromString(log, event)
-	if err != nil {
-		return nil, err
-	}
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-	return event.Logs(), nil
+func (p *SnapshotParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&Snapshot{}, log)
 }
 
 // LogType returns the log type supported by this parser
 func (p *SnapshotParser) LogType() string {
-	return "Osquery.Snapshot"
+	return TypeSnapshot
 }
 
-func (event *Snapshot) updatePantherFields(p *SnapshotParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
-	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
+const TypeSnapshot = "Osquery.Snapshot"
+
+func (event *Snapshot) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeSnapshot, event.CalendarTime.UTC(),
+		parsers.DomainName(aws.StringValue(event.HostIdentifier)),
+	)
 }

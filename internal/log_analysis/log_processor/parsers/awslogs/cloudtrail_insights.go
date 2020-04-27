@@ -46,9 +46,11 @@ type CloudTrailInsight struct {
 	InsightDetails     *InsightDetails    `json:"insightDetails" validate:"required" description:" Shows information about the underlying triggers of an Insights event, such as event source, statistics, API name, and whether the event is the start or end of the Insights event."`
 	EventCategory      *string            `json:"eventCategory" validate:"required,eq=Insight" description:"Shows the event category that is used in LookupEvents calls. In Insights events, the value is insight."`
 
-	// NOTE: added to end of struct to allow expansion later
-	AWSPantherLog
+	// // NOTE: added to end of struct to allow expansion later
+	// AWSPantherLog
 }
+
+var _ parsers.PantherEventer = (*CloudTrailInsight)(nil)
 
 // nolint:lll
 type InsightDetails struct {
@@ -86,34 +88,36 @@ func (p *CloudTrailInsightParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailInsightParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *CloudTrailInsightParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	cloudTrailInsightRecords := &CloudTrailInsightRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailInsightRecords)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, event := range cloudTrailInsightRecords.Records {
-		event.updatePantherFields(p)
-	}
-
 	if err := parsers.Validator.Struct(cloudTrailInsightRecords); err != nil {
 		return nil, err
 	}
-	result := make([]*parsers.PantherLog, len(cloudTrailInsightRecords.Records))
+
+	result := make([]*parsers.PantherLogJSON, len(cloudTrailInsightRecords.Records))
 	for i, event := range cloudTrailInsightRecords.Records {
-		result[i] = event.Log()
+		r, err := parsers.RepackJSON(event)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = r
 	}
 	return result, nil
 }
 
 // LogType returns the log type supported by this parser
 func (p *CloudTrailInsightParser) LogType() string {
-	return "AWS.CloudTrailInsight"
+	return TypeCloudTrailInsight
 }
 
-func (event *CloudTrailInsight) updatePantherFields(p *CloudTrailInsightParser) {
-	event.SetCoreFields(p.LogType(), event.EventTime, event)
+const TypeCloudTrailInsight = "AWS.CloudTrailInsight"
 
-	event.AppendAnyAWSAccountIdPtrs(event.RecipientAccountID)
+func (event *CloudTrailInsight) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeCloudTrailInsight, event.EventTime.UTC())
+	e.AppendP(KindAWSAccountID, event.RecipientAccountID)
+	return e
 }

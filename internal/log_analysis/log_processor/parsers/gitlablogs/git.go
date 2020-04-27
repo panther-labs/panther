@@ -19,8 +19,6 @@ package gitlablogs
  */
 
 import (
-	"time"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -60,6 +58,6 @@ func (p *GitParser) LogType() string {
 	return TypeGit
 }
 
-func (event *Git) PantherEvent() (string, time.Time, []parsers.PantherField) {
-	return TypeGit, event.Time.UTC(), nil
+func (event *Git) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeGit, event.Time.UTC())
 }

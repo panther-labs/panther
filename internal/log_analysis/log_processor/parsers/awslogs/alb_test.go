@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -35,11 +36,11 @@ func TestHTTPLog(t *testing.T) {
 		"\"curl/7.46.0\" - - arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067 " +
 		"\"Root=1-58337262-36d228ad5d99923122bbe354\" \"-\" \"-\" 0 2018-08-26T14:17:23.186641Z \"forward\" \"-\" \"-\""
 
-	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	tm := time.Unix(1535293043, 186641000).UTC()
 
-	expectedEvent := &ALB{
+	event := &ALB{
 		Type:                   aws.String("http"),
-		Timestamp:              (*timestamp.RFC3339)(&expectedTime),
+		Timestamp:              (*timestamp.RFC3339)(&tm),
 		ELB:                    aws.String("app/my-loadbalancer/50dc6c495c0c9188"),
 		ClientIP:               aws.String("192.168.131.39"),
 		ClientPort:             aws.Int(2817),
@@ -63,20 +64,17 @@ func TestHTTPLog(t *testing.T) {
 		DomainName:             nil,
 		ChosenCertARN:          nil,
 		MatchedRulePriority:    aws.Int(0),
-		RequestCreationTime:    (*timestamp.RFC3339)(&expectedTime),
+		RequestCreationTime:    (*timestamp.RFC3339)(&tm),
 		ActionsExecuted:        []string{"forward"},
 		RedirectURL:            nil,
 		ErrorReason:            nil,
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.ALB")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddress("192.168.131.39")
-	expectedEvent.AppendAnyIPAddress("10.0.0.1")
-	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
-
-	checkALBLog(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeALB, tm,
+		parsers.KindIPAddress.Field("192.168.131.39"),
+		parsers.KindIPAddress.Field("10.0.0.1"),
+		KindAWSARN.Field("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &ALBParser{}, event)
 }
 
 func TestHTTPSLog(t *testing.T) {
@@ -87,11 +85,11 @@ func TestHTTPSLog(t *testing.T) {
 		"\"arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012\" " +
 		"1 2018-08-26T14:17:23.186641Z \"authenticate,forward\" \"-\" \"-\""
 
-	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	tm := time.Unix(1535293043, 186641000).UTC()
 
-	expectedEvent := &ALB{
+	event := &ALB{
 		Type:                   aws.String("https"),
-		Timestamp:              (*timestamp.RFC3339)(&expectedTime),
+		Timestamp:              (*timestamp.RFC3339)(&tm),
 		ELB:                    aws.String("app/my-loadbalancer/50dc6c495c0c9188"),
 		ClientIP:               aws.String("192.168.131.39"),
 		ClientPort:             aws.Int(2817),
@@ -115,22 +113,19 @@ func TestHTTPSLog(t *testing.T) {
 		DomainName:             aws.String("www.example.com"),
 		ChosenCertARN:          aws.String("arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012"),
 		MatchedRulePriority:    aws.Int(1),
-		RequestCreationTime:    (*timestamp.RFC3339)(&expectedTime),
+		RequestCreationTime:    (*timestamp.RFC3339)(&tm),
 		ActionsExecuted:        []string{"authenticate", "forward"},
 		RedirectURL:            nil,
 		ErrorReason:            nil,
 	}
+	testutil.CheckPantherEvent(t, event, TypeALB, tm,
+		parsers.KindIPAddress.Field("192.168.131.39"),
+		parsers.KindIPAddress.Field("10.0.0.1"),
+		parsers.KindDomainName.Field("www.example.com"),
+		KindAWSARN.Field("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &ALBParser{}, event)
 
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.ALB")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddress("192.168.131.39")
-	expectedEvent.AppendAnyIPAddress("10.0.0.1")
-	expectedEvent.AppendAnyDomainNames("www.example.com")
-	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067",
-		"arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012")
-
-	checkALBLog(t, log, expectedEvent)
 }
 
 func TestHTTP2Log(t *testing.T) {
@@ -141,11 +136,11 @@ func TestHTTP2Log(t *testing.T) {
 		"\"Root=1-58337327-72bd00b0343d75b906739c42\" \"-\" \"-\" 1 2018-08-26T14:17:23.186641Z " +
 		"\"redirect\" \"https://example.com:80/\" \"-\""
 
-	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	tm := time.Unix(1535293043, 186641000).UTC()
 
-	expectedEvent := &ALB{
+	event := &ALB{
 		Type:                   aws.String("h2"),
-		Timestamp:              (*timestamp.RFC3339)(&expectedTime),
+		Timestamp:              (*timestamp.RFC3339)(&tm),
 		ELB:                    aws.String("app/my-loadbalancer/50dc6c495c0c9188"),
 		ClientIP:               aws.String("10.0.1.252"),
 		ClientPort:             aws.Int(48160),
@@ -169,20 +164,18 @@ func TestHTTP2Log(t *testing.T) {
 		DomainName:             nil,
 		ChosenCertARN:          nil,
 		MatchedRulePriority:    aws.Int(1),
-		RequestCreationTime:    (*timestamp.RFC3339)(&expectedTime),
+		RequestCreationTime:    (*timestamp.RFC3339)(&tm),
 		ActionsExecuted:        []string{"redirect"},
 		RedirectURL:            aws.String("https://example.com:80/"),
 		ErrorReason:            nil,
 	}
+	testutil.CheckPantherEvent(t, event, TypeALB, tm,
+		parsers.KindIPAddress.Field("10.0.1.252"),
+		parsers.KindIPAddress.Field("10.0.0.66"),
+		KindAWSARN.Field("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+	)
 
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.ALB")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddress("10.0.1.252")
-	expectedEvent.AppendAnyIPAddress("10.0.0.66")
-	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
-
-	checkALBLog(t, log, expectedEvent)
+	testutil.CheckPantherParserJSON(t, log, &ALBParser{}, event)
 }
 
 func TestHTTPSNoTarget(t *testing.T) {
@@ -192,11 +185,11 @@ func TestHTTPSNoTarget(t *testing.T) {
 		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"
 `
 
-	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	tm := time.Unix(1535293043, 186641000).UTC()
 
-	expectedEvent := &ALB{
+	event := &ALB{
 		Type:                   aws.String("https"),
-		Timestamp:              (*timestamp.RFC3339)(&expectedTime),
+		Timestamp:              (*timestamp.RFC3339)(&tm),
 		ELB:                    aws.String("app/web/09603e7dbbd08802"),
 		ClientIP:               aws.String("138.246.253.5"),
 		ClientPort:             aws.Int(57185),
@@ -220,29 +213,19 @@ func TestHTTPSNoTarget(t *testing.T) {
 		DomainName:             nil,
 		ChosenCertARN:          aws.String("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
 		MatchedRulePriority:    nil,
-		RequestCreationTime:    (*timestamp.RFC3339)(&expectedTime),
+		RequestCreationTime:    (*timestamp.RFC3339)(&tm),
 		ActionsExecuted:        []string{},
 		RedirectURL:            nil,
 		ErrorReason:            nil,
 	}
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("AWS.ALB")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddress("138.246.253.5")
-	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
-
-	checkALBLog(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, event, TypeALB, tm,
+		parsers.KindIPAddress.Field("138.246.253.5"),
+		KindAWSARN.Field("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
+	)
+	testutil.CheckPantherParserJSON(t, log, &ALBParser{}, event)
 }
 
 func TestAlbLogType(t *testing.T) {
 	parser := &ALBParser{}
-	require.Equal(t, "AWS.ALB", parser.LogType())
-}
-
-func checkALBLog(t *testing.T, log string, expectedEvent *ALB) {
-	expectedEvent.SetEvent(expectedEvent)
-	parser := (&ALBParser{}).New() // important to call New() to initialize reader
-	events, err := parser.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	require.Equal(t, TypeALB, parser.LogType())
 }

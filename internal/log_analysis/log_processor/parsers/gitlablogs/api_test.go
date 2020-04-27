@@ -79,7 +79,7 @@ func TestGitLabAPI(t *testing.T) {
 		GitalyDuration: aws.Float32(5.36),
 		QueueDuration:  aws.Float32(100.31),
 	}
-	testutil.CheckPantherEvent(t, expectedEvent, TypeAPI, expectedTime, parsers.IPAddress(expectedEvent.RemoteIP))
+	testutil.CheckPantherEvent(t, expectedEvent, TypeAPI, expectedTime, parsers.IPAddress("::1"))
 	testutil.CheckPantherParserJSON(t, log, &APIParser{}, expectedEvent)
 }
 func TestGitLabAPIType(t *testing.T) {

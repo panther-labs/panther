@@ -81,6 +81,12 @@ type ANSICwithTZ time.Time
 func (ts *ANSICwithTZ) String() string {
 	return (*time.Time)(ts).UTC().String() // ensure UTC
 }
+func (ts *ANSICwithTZ) UTC() time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return (*time.Time)(ts).UTC()
+}
 
 func (ts *ANSICwithTZ) MarshalJSON() ([]byte, error) {
 	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
@@ -100,6 +106,12 @@ type UnixMillisecond time.Time
 
 func (ts *UnixMillisecond) String() string {
 	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+func (ts *UnixMillisecond) UTC() time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return (*time.Time)(ts).UTC() // ensure UTC
 }
 
 func (ts *UnixMillisecond) MarshalJSON() ([]byte, error) {
@@ -122,6 +134,13 @@ func (ts *FluentdTimestamp) String() string {
 	return (*time.Time)(ts).UTC().String() // ensure UTC
 }
 
+func (ts *FluentdTimestamp) UTC() time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return (*time.Time)(ts).UTC() // ensure UTC
+}
+
 func (ts *FluentdTimestamp) MarshalJSON() ([]byte, error) {
 	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
 }
@@ -139,6 +158,13 @@ type SuricataTimestamp time.Time
 
 func (ts *SuricataTimestamp) String() string {
 	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func (ts *SuricataTimestamp) UTC() time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return (*time.Time)(ts).UTC() // ensure UTC
 }
 
 func (ts *SuricataTimestamp) MarshalJSON() ([]byte, error) {

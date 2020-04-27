@@ -19,12 +19,12 @@ package osquerylogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
+
+const TypeBatch = "Osquery.Batch"
 
 var BatchDesc = `Batch contains all the data included in OsQuery batch logs
 Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/`
@@ -39,10 +39,9 @@ type Batch struct { // FIXME: field descriptions need updating!
 	Hostname     *string                `json:"hostname,omitempty"  validate:"required" description:"Hostname"`
 	Name         *string                `json:"name,omitempty"  validate:"required" description:"Name"`
 	UnixTime     *numerics.Integer      `json:"unixTime,omitempty"  validate:"required" description:"Unix epoch"`
-
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*Batch)(nil)
 
 // OsqueryBatchDiffResults contains diff data for OsQuery batch results
 type BatchDiffResults struct {
@@ -60,28 +59,17 @@ func (p *BatchParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *BatchParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	event := &Batch{}
-	err := jsoniter.UnmarshalFromString(log, event)
-	if err != nil {
-		return nil, err
-	}
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-
-	return event.Logs(), nil
+func (p *BatchParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&Batch{}, log)
 }
 
 // LogType returns the log type supported by this parser
 func (p *BatchParser) LogType() string {
-	return "Osquery.Batch"
+	return TypeBatch
 }
 
-func (event *Batch) updatePantherFields(p *BatchParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
-	event.AppendAnyDomainNamePtrs(event.Hostname)
+func (event *Batch) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeBatch, event.CalendarTime.UTC(),
+		parsers.DomainName(*event.Hostname),
+	)
 }

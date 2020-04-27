@@ -34,9 +34,9 @@ func TestZeekDNS(t *testing.T) {
 	// nolint:lll
 	log := `{"ts":1541001600.580233,"uid":"CpR9AY39cUCZ0t5qq6","id.orig_h":"172.16.2.16","id.orig_p":43720,"id.resp_h":"172.16.0.2","id.resp_p":53,"proto":"udp","trans_id":27282,"query":"16.2.16.172.in-addr.arpa", "qtype":1,"rcode":0,"rcode_name":"NOERROR","AA":false,"TC":false,"RD":false,"RA":true,"Z":0,"answers":["ip-172-16-2-16.us-west-2.compute.internal"],"TTLs":[60.0],"rejected":false}`
 
-	expectedTime := time.Date(2018, 10, 31, 16, 0, 0, 580233097, time.UTC)
-	expectedEvent := &ZeekDNS{
-		Ts:        (*timestamp.UnixFloat)(&expectedTime),
+	tm := time.Date(2018, 10, 31, 16, 0, 0, 580233097, time.UTC)
+	event := &ZeekDNS{
+		Ts:        (*timestamp.UnixFloat)(&tm),
 		UID:       aws.String("CpR9AY39cUCZ0t5qq6"),
 		IDOrigH:   aws.String("172.16.2.16"),
 		IDOrigP:   aws.Uint16(43720),
@@ -57,13 +57,14 @@ func TestZeekDNS(t *testing.T) {
 		TTLs:      []float64{60.0},
 		Rejected:  aws.Bool(false),
 	}
-	testutil.CheckPantherEvent(t, expectedEvent, "Zeek.DNS", expectedTime,
-		parsers.IPAddress(expectedEvent.IDOrigH),
-		parsers.IPAddress(expectedEvent.IDRespH),
-		parsers.DomainName(expectedEvent.Query),
-		parsers.DomainName(&expectedEvent.Answers[0]),
+
+	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
+		parsers.IPAddress(aws.StringValue(event.IDOrigH)),
+		parsers.IPAddress(aws.StringValue(event.IDRespH)),
+		parsers.DomainName(aws.StringValue(event.Query)),
+		parsers.DomainName(event.Answers[0]),
 	)
-	testutil.CheckPantherParserJSON(t, log, &ZeekDNSParser{}, expectedEvent)
+	testutil.CheckPantherParserJSON(t, log, &ZeekDNSParser{}, event)
 }
 
 func TestZeekDNSType(t *testing.T) {

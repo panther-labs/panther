@@ -22,10 +22,13 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
+
+const TypeS3ServerAccess = "AWS.S3ServerAccess"
 
 var S3ServerAccessDesc = `S3ServerAccess is an AWS S3 Access Log.
 Log format & samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html`
@@ -61,10 +64,9 @@ type S3ServerAccess struct {
 	HostHeader         *string            `json:"hostheader,omitempty" description:"The endpoint used to connect to Amazon S3."`
 	TLSVersion         *string            `json:"tlsVersion,omitempty" description:"The Transport Layer Security (TLS) version negotiated by the client. The value is one of following: TLSv1, TLSv1.1, TLSv1.2; or NULL if TLS wasn't used."`
 	AdditionalFields   []string           `json:"additionalFields,omitempty" description:"The remaining columns in the record as an array."`
-
-	// NOTE: added to end of struct to allow expansion later
-	AWSPantherLog
 }
+
+var _ parsers.PantherEventer = (*S3ServerAccess)(nil)
 
 // S3ServerAccessParser parses AWS S3 Server Access logs
 type S3ServerAccessParser struct {
@@ -84,7 +86,7 @@ func (p *S3ServerAccessParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
 		return nil, err
@@ -134,25 +136,20 @@ func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLog, error) 
 		TLSVersion:         parsers.CsvStringToPointer(record[24]),
 		AdditionalFields:   additionalFields,
 	}
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-
-	return event.Logs(), nil
+	return parsers.PackEvents(event)
 }
 
 // LogType returns the log type supported by this parser
 func (p *S3ServerAccessParser) LogType() string {
-	return "AWS.S3ServerAccess"
+	return TypeS3ServerAccess
 }
 
-func (event *S3ServerAccess) updatePantherFields(p *S3ServerAccessParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
-	event.AppendAnyIPAddressPtr(event.RemoteIP)
+func (event *S3ServerAccess) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeS3ServerAccess, event.Time.UTC(),
+		parsers.IPAddress(aws.StringValue(event.RemoteIP)),
+	)
 	if event.Requester != nil && strings.HasPrefix(*event.Requester, "arn:") {
-		event.AppendAnyAWSARNs(*event.Requester)
+		e.Fields = append(e.Fields, KindAWSARN.Field(*event.Requester))
 	}
+	return e
 }

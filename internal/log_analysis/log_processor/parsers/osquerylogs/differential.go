@@ -19,12 +19,13 @@ package osquerylogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
+
+const TypeDifferential = "Osquery.Differential"
 
 var DifferentialDesc = `Differential contains all the data included in OsQuery differential logs
 Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
@@ -43,10 +44,9 @@ type Differential struct { // FIXME: field descriptions need updating!
 	Name                 *string                `json:"name,omitempty" validate:"required" description:"Name"`
 	UnixTime             *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
 	LogNumericsAsNumbers *bool                  `json:"logNumericsAsNumbers,omitempty,string" description:"LogNumericsAsNumbers"`
-
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*Differential)(nil)
 
 // DifferentialParser parses OsQuery Differential logs
 type DifferentialParser struct{}
@@ -58,37 +58,24 @@ func (p *DifferentialParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *DifferentialParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	event := &Differential{}
-	err := jsoniter.UnmarshalFromString(log, event)
-	if err != nil {
-		return nil, err
-	}
-
+func (p *DifferentialParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&Differential{}, log)
 	// Populating LogType with LogTypeInput value
 	// This is needed because we want the JSON field with key `log_type` to be marshalled
 	// with key `logtype`
-	event.LogType = event.LogUnderscoreType
-	event.LogUnderscoreType = nil
-
-	event.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-
-	return event.Logs(), nil
+	// event.LogType = event.LogUnderscoreType
+	// event.LogUnderscoreType = nil
 }
 
 // LogType returns the log type supported by this parser
 func (p *DifferentialParser) LogType() string {
-	return "Osquery.Differential"
+	return TypeDifferential
 }
 
-func (event *Differential) updatePantherFields(p *DifferentialParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
-	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
-
-	event.AppendAnyIPAddress(event.Columns["local_address"])
-	event.AppendAnyIPAddress(event.Columns["remote_address"])
+func (event *Differential) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeDifferential, event.CalendarTime.UTC(),
+		parsers.DomainName(aws.StringValue(event.HostIdentifier)),
+		parsers.IPAddress(event.Columns["local_address"]),
+		parsers.IPAddress(event.Columns["remote_address"]),
+	)
 }

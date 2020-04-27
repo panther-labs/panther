@@ -19,9 +19,7 @@ package zeeklogs
  */
 
 import (
-	"net"
-	"time"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -86,25 +84,20 @@ func (p *ZeekDNSParser) LogType() string {
 	return TypeDNS
 }
 
-func (event *ZeekDNS) PantherEvent() (typ string, ts time.Time, fields []parsers.PantherField) {
-	typ = TypeDNS
-	ts = event.Ts.UTC()
-	fields = append(fields,
-		parsers.IPAddress(event.IDOrigH),
-		parsers.IPAddress(event.IDRespH),
+func (event *ZeekDNS) PantherEvent() *parsers.PantherEvent {
+	p := parsers.NewEvent(TypeDNS, event.Ts.UTC(),
+		parsers.IPAddress(aws.StringValue(event.IDOrigH)),
+		parsers.IPAddress(aws.StringValue(event.IDRespH)),
 	)
-
 	if event.QType != nil && (*event.QType == aQueryType || *event.QType == aaaaQueryType) {
 		if event.Query != nil {
-			fields = append(fields, parsers.DomainName(event.Query))
+			p.AppendDomain(*event.Query)
 		}
 	}
 
 	for _, answer := range event.Answers {
 		// Answer might be IP or Domain name
-		if net.ParseIP(answer) == nil {
-			fields = append(fields, parsers.DomainName(&answer))
-		}
+		p.AppendIP(answer)
 	}
-	return
+	return p
 }

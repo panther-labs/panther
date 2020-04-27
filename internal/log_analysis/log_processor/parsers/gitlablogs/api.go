@@ -19,8 +19,7 @@ package gitlablogs
  */
 
 import (
-	"time"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -61,10 +60,10 @@ type APIParser struct{}
 
 var _ parsers.PantherEventer = (*API)(nil)
 
-func (event *API) PantherEvent() (string, time.Time, []parsers.PantherField) {
-	return TypeAPI, event.Time.UTC(), []parsers.PantherField{
-		parsers.IPAddress(event.RemoteIP),
-	}
+func (event *API) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeAudit, event.Time.UTC(),
+		parsers.IPAddress(aws.StringValue(event.RemoteIP)),
+	)
 
 }
 

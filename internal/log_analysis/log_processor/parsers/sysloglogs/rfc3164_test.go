@@ -24,8 +24,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zaptest"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -35,7 +33,7 @@ import (
 var parserRFC3164 parsers.LogParser
 
 func TestRFC3164(t *testing.T) {
-	zap.ReplaceGlobals(zaptest.NewLogger(t))
+	// zap.ReplaceGlobals(zaptest.NewLogger(t))
 	syslogRFC3164 := &RFC3164Parser{}
 	parserRFC3164 = syslogRFC3164.New()
 
@@ -63,14 +61,8 @@ func testRFC3164Simple(t *testing.T) {
 		MsgID:     nil,
 		Message:   aws.String("Test"),
 	}
-
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC3164(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(), parsers.DomainName(aws.StringValue(expectedEvent.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC3164Parser{}, expectedEvent)
 }
 
 func testRFC3164WithRFC3339Timestamp(t *testing.T) {
@@ -90,14 +82,9 @@ func testRFC3164WithRFC3339Timestamp(t *testing.T) {
 		MsgID:     nil,
 		Message:   aws.String("Test"),
 	}
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(), parsers.DomainName(aws.StringValue(expectedEvent.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC3164Parser{}, expectedEvent)
 
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC3164(t, log, expectedEvent)
 }
 
 // Example1 from https://tools.ietf.org/html/rfc3164#section-5.4
@@ -118,14 +105,8 @@ func testRFC3164Example1(t *testing.T) {
 		MsgID:     nil,
 		Message:   aws.String("'su root' failed for lonvick on /dev/pts/8"),
 	}
-
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC3164(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(), parsers.DomainName(aws.StringValue(expectedEvent.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC3164Parser{}, expectedEvent)
 }
 
 // Example2 from https://tools.ietf.org/html/rfc3164#section-5.4
@@ -147,13 +128,8 @@ func testRFC3164Example2(t *testing.T) {
 		Message:   aws.String("Use the BFG!"),
 	}
 
-	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC3164(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(), parsers.IPAddress(aws.StringValue(expectedEvent.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC3164Parser{}, expectedEvent)
 }
 
 // Example3 from https://tools.ietf.org/html/rfc3164#section-5.4
@@ -175,22 +151,11 @@ func testRFC3164Example3(t *testing.T) {
 		Message:   aws.String("1987 mymachine myproc[10]: %% It's time to make the do-nuts %%"),
 	}
 
-	expectedEvent.AppendAnyDomainNamePtrs(expectedEvent.Hostname)
-
-	// panther fields
-	expectedEvent.PantherLogType = aws.String("Syslog.RFC3164")
-	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-
-	checkRFC3164(t, log, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(), parsers.DomainName(aws.StringValue(expectedEvent.Hostname)))
+	testutil.CheckPantherParserJSON(t, log, &RFC3164Parser{}, expectedEvent)
 }
 
 func TestRFC3164Type(t *testing.T) {
 	parser := &RFC3164Parser{}
-	require.Equal(t, "Syslog.RFC3164", parser.LogType())
-}
-
-func checkRFC3164(t *testing.T, log string, expectedEvent *RFC3164) {
-	expectedEvent.SetEvent(expectedEvent)
-	logs, err := parserRFC3164.Parse(log)
-	testutil.EqualPantherLog(t, expectedEvent.Log(), logs, err)
+	require.Equal(t, TypeRFC3164, parser.LogType())
 }

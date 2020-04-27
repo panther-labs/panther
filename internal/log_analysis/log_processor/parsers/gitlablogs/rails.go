@@ -19,8 +19,7 @@ package gitlablogs
  */
 
 import (
-	"time"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -89,8 +88,8 @@ func (p *RailsParser) LogType() string {
 	return TypeRails
 }
 
-func (event *Rails) PantherEvent() (string, time.Time, []parsers.PantherField) {
-	return TypeRails, event.Time.UTC(), []parsers.PantherField{
-		parsers.IPAddress(event.RemoteIP),
-	}
+func (event *Rails) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeRails, event.Time.UTC(),
+		parsers.IPAddress(aws.StringValue(event.RemoteIP)),
+	)
 }

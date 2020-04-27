@@ -20,6 +20,7 @@ package sysloglogs
 
 import (
 	"errors"
+	"net"
 
 	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/rfc5424"
@@ -44,10 +45,9 @@ type RFC5424 struct {
 	MsgID          *string                       `json:"msgid,omitempty" description:"MsgID identifies the type of message. For example, a firewall might use the MsgID 'TCPIN' for incoming TCP traffic."`
 	StructuredData *map[string]map[string]string `json:"structured_data,omitempty" description:"StructuredData provides a mechanism to express information in a well defined and easily parsable format."`
 	Message        *string                       `json:"message,omitempty" description:"Message contains free-form text that provides information about the event."`
-
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*RFC5424)(nil)
 
 // RFC5424Parser parses Syslog logs in the RFC5424 format
 type RFC5424Parser struct {
@@ -64,7 +64,7 @@ func (p *RFC5424Parser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLog, error) {
+func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	if p.parser == nil {
 		return nil, errors.New("parser can not be nil")
 	}
@@ -73,7 +73,6 @@ func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLog, error) {
 		return nil, err
 	}
 	internalRFC5424 := msg.(*rfc5424.SyslogMessage)
-
 	externalRFC5424 := &RFC5424{
 		Priority:       internalRFC5424.Priority,
 		Facility:       internalRFC5424.Facility,
@@ -88,28 +87,27 @@ func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLog, error) {
 		Message:        internalRFC5424.Message,
 	}
 
-	externalRFC5424.updatePantherFields(p)
-
 	if err := parsers.Validator.Struct(externalRFC5424); err != nil {
 		return nil, err
 	}
-
-	return externalRFC5424.Logs(), nil
+	return parsers.PackEvents(externalRFC5424)
 }
 
 // LogType returns the log type supported by this parser
 func (p *RFC5424Parser) LogType() string {
-	return "Syslog.RFC5424"
+	return TypeRFC5424
 }
 
-func (event *RFC5424) updatePantherFields(p *RFC5424Parser) {
-	event.SetCoreFields(p.LogType(), event.Timestamp, event)
+const TypeRFC5424 = "Syslog.RFC5424"
 
-	// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
-	// add as a domain name. https://tools.ietf.org/html/rfc5424#section-6.2.4
-	if !event.AppendAnyIPAddressPtr(event.Hostname) {
-		event.AppendAnyDomainNamePtrs(event.Hostname)
+func (event *RFC5424) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeRFC5424, event.Timestamp.UTC())
+	if host := event.Hostname; host != nil {
+		if net.ParseIP(*host) == nil {
+			e.Append(parsers.KindDomainName, *host)
+		} else {
+			e.Append(parsers.KindIPAddress, *host)
+		}
 	}
-
-	event.AppendAnyIPAddressInFieldPtr(event.Message)
+	return e
 }

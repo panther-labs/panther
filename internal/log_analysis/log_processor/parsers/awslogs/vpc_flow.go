@@ -23,14 +23,16 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
+
+const TypeVPCFlow = "AWS.VPCFlow"
 
 var VPCFlowDesc = `VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.
 Log format & samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html`
@@ -150,11 +152,7 @@ func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	}
 
 	event := p.populateEvent(record) // parser should only receive 1 line at a time
-	out, err := parsers.RepackJSON(event)
-	if err != nil {
-		return nil, err
-	}
-	return []*parsers.PantherLogJSON{out}, nil
+	return parsers.PackEvents(event)
 }
 
 // LogType returns the log type supported by this parser
@@ -260,15 +258,13 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 	return event
 }
 
-const TypeVPCFlow = "AWS.VPCFlow"
-
-func (event *VPCFlow) PantherEvent() (typ string, tm time.Time, fields []parsers.PantherField) {
-	return TypeVPCFlow, event.Start.UTC(), []parsers.PantherField{
-		KindAWSAccountID.FieldP(event.AccountID),
-		KindAWSInstanceID.FieldP(event.InstanceID),
-		parsers.KindIPAddress.FieldP(event.SrcAddr),
-		parsers.KindIPAddress.FieldP(event.DstAddr),
-		parsers.KindIPAddress.FieldP(event.PacketSrcAddr),
-		parsers.KindIPAddress.FieldP(event.PacketDstAddr),
-	}
+func (event *VPCFlow) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeVPCFlow, event.Start.UTC(),
+		KindAWSAccountID.Field(aws.StringValue(event.AccountID)),
+		KindAWSInstanceID.Field(aws.StringValue(event.InstanceID)),
+		parsers.IPAddress(aws.StringValue(event.SrcAddr)),
+		parsers.IPAddress(aws.StringValue(event.DstAddr)),
+		parsers.IPAddress(aws.StringValue(event.PacketSrcAddr)),
+		parsers.IPAddress(aws.StringValue(event.PacketDstAddr)),
+	)
 }

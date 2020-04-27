@@ -28,7 +28,7 @@ import (
 
 // extracts useful AWS features that can be detected generically (w/context)
 type AWSExtractor struct {
-	parsers.PantherFields
+	*parsers.PantherEvent
 }
 
 func (e *AWSExtractor) Extract(key, value gjson.Result) {

@@ -19,8 +19,7 @@ package osquerylogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -42,10 +41,9 @@ type Status struct { // FIXME: field descriptions need updating!
 	Severity          *numerics.Integer      `json:"severity,omitempty" validate:"required" description:"Severity"`
 	UnixTime          *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
 	Version           *string                `json:"version,omitempty" validate:"required" description:"Version"`
-
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*Status)(nil)
 
 // StatusParser parses OsQuery Status logs
 type StatusParser struct{}
@@ -57,33 +55,37 @@ func (p *StatusParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *StatusParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	event := &Status{}
-	err := jsoniter.UnmarshalFromString(log, event)
-	if err != nil {
-		return nil, err
-	}
+func (p *StatusParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&Status{}, log)
+	// event := &Status{}
+	// err := jsoniter.UnmarshalFromString(log, event)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// Populating LogType with LogTypeInput value
-	// This is needed because we want the JSON field with key `log_type` to be marshalled
-	// with key `logtype`
-	event.LogType = event.LogUnderscoreType
-	event.LogUnderscoreType = nil
+	// // Populating LogType with LogTypeInput value
+	// // This is needed because we want the JSON field with key `log_type` to be marshalled
+	// // with key `logtype`
+	// event.LogType = event.LogUnderscoreType
+	// event.LogUnderscoreType = nil
 
-	event.updatePantherFields(p)
+	// event.updatePantherFields(p)
 
-	if err := parsers.Validator.Struct(event); err != nil {
-		return nil, err
-	}
-	return event.Logs(), nil
+	// if err := parsers.Validator.Struct(event); err != nil {
+	// 	return nil, err
+	// }
+	// return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
 func (p *StatusParser) LogType() string {
-	return "Osquery.Status"
+	return TypeStatus
 }
 
-func (event *Status) updatePantherFields(p *StatusParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
-	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
+const TypeStatus = "Osquery.Status"
+
+func (event *Status) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeStatus, event.CalendarTime.UTC(),
+		parsers.DomainName(aws.StringValue(event.HostIdentifier)),
+	)
 }

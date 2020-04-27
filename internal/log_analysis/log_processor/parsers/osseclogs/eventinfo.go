@@ -19,11 +19,13 @@ package osseclogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
+	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
+
+const TypeEventInfo = "OSSEC.EventInfo"
 
 var EventInfoDesc = `OSSEC EventInfo alert parser. Currently only JSON output is supported.
 Reference: https://www.ossec.net/docs/docs/formats/alerts.html`
@@ -66,10 +68,9 @@ type EventInfo struct {
 
 	// Deliberately omitted because duplicate case insensitive keys cause problems in Athena
 	// TimestampString    *string                    `json:"timestamp,omitempty" description:"TimestampString"`
-
-	// NOTE: added to end of struct to allow expansion later
-	parsers.PantherLog
 }
+
+var _ parsers.PantherEventer = (*EventInfo)(nil)
 
 // nolint:lll
 type Rule struct {
@@ -123,34 +124,30 @@ func (p *EventInfoParser) New() parsers.LogParser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *EventInfoParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	eventInfo := &EventInfo{}
-
-	err := jsoniter.UnmarshalFromString(log, eventInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	eventInfo.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(eventInfo); err != nil {
-		return nil, err
-	}
-
-	return eventInfo.Logs(), nil
+func (p *EventInfoParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+	return parsers.QuickParseJSON(&EventInfo{}, log)
 }
 
 // LogType returns the log type supported by this parser
 func (p *EventInfoParser) LogType() string {
-	return "OSSEC.EventInfo"
+	return TypeEventInfo
 }
 
-func (event *EventInfo) updatePantherFields(p *EventInfoParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp), event)
-	event.AppendAnyIPAddressPtr(event.SrcIP)
-	event.AppendAnyIPAddressPtr(event.DstIP)
-	if event.SyscheckFile != nil {
-		event.AppendAnyMD5HashPtrs(event.SyscheckFile.MD5Before, event.SyscheckFile.MD5After)
-		event.AppendAnySHA1HashPtrs(event.SyscheckFile.SHA1Before, event.SyscheckFile.SHA1After)
+func (event *EventInfo) PantherEvent() *parsers.PantherEvent {
+	e := parsers.NewEvent(TypeEventInfo, event.Timestamp.UTC())
+	if event.SrcIP != nil {
+		e.AppendIP(*event.SrcIP)
 	}
+	if event.DstIP != nil {
+		e.AppendIP(*event.DstIP)
+	}
+	if f := event.SyscheckFile; f != nil {
+		e.Fields = append(e.Fields,
+			parsers.MD5Hash(aws.StringValue(f.MD5Before)),
+			parsers.MD5Hash(aws.StringValue(f.MD5After)),
+			parsers.SHA1Hash(aws.StringValue(f.SHA1Before)),
+			parsers.SHA1Hash(aws.StringValue(f.SHA1After)),
+		)
+	}
+	return e
 }
