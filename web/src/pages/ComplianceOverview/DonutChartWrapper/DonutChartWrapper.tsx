@@ -27,9 +27,9 @@ interface DonutChartWrapperProps {
 
 const DonutChartWrapper: React.FC<DonutChartWrapperProps> = ({ children, title, icon }) => (
   <Card p={6} height={340}>
-    <Flex alignItems="center" is="header" mb={6} color="grey500">
+    <Flex align="center" as="header" mb={6} color="grey500">
       <Icon size="small" type={icon} mr={4} />
-      <Label size="large" is="h4">
+      <Label size="large" as="h4">
         {title}
       </Label>
     </Flex>

@@ -38,11 +38,7 @@ const SuppressButton: React.FC<SuppressButtonProps> = ({
     <Button
       size="small"
       variant={buttonVariant}
-      onClick={e => {
-        // Table row is clickable, we don't want to navigate away
-        e.stopPropagation();
-        suppressPolicies();
-      }}
+      onClick={() => suppressPolicies()}
       disabled={loading}
     >
       Ignore

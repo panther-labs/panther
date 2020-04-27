@@ -31,7 +31,7 @@ const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ runn
     // @ts-ignore
     <Box bg="#FEF5ED" p={5}>
       {running && (
-        <Label size="medium" is="p">
+        <Label size="medium" as="p">
           Running your tests...
         </Label>
       )}
@@ -50,7 +50,7 @@ const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ runn
           {results.testsErrored.map(({ name: testName, errorMessage }) => (
             <Box key={testName} mb={1}>
               <PolicyFormTestResult testName={testName} status={ComplianceStatusEnum.Error} />
-              <Label size="small" is="pre" color={mapTestStatusToColor[ComplianceStatusEnum.Error]}>
+              <Label size="small" as="pre" color={mapTestStatusToColor[ComplianceStatusEnum.Error]}>
                 {errorMessage}
               </Label>
             </Box>

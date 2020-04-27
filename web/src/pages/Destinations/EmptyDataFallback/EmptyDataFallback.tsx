@@ -23,13 +23,7 @@ import DestinationCreateButton from '../CreateButton';
 
 const DestinationsPageEmptyDataFallback: React.FC = () => {
   return (
-    <Flex
-      height="100%"
-      width="100%"
-      justifyContent="center"
-      alignItems="center"
-      flexDirection="column"
-    >
+    <Flex height="100%" width="100%" justify="center" align="center" direction="column">
       <Box m={10}>
         <img alt="Mobile & Envelope illustration" src={DestinationImg} width="auto" height={350} />
       </Box>

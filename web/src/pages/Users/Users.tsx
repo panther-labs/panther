@@ -18,31 +18,31 @@
 
 import React from 'react';
 import { Box, Button, Flex, Icon } from 'pouncejs';
-import ListUsersTable from 'Pages/Users/ListUsersTable';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import ListUsers from './ListUsers';
 
 const UsersPage: React.FC = () => {
   const { showSidesheet } = useSidesheet();
 
   return (
     <Box mb={6}>
-      <Flex justifyContent="flex-end">
+      <Flex justify="flex-end">
         <Button
           size="large"
           variant="primary"
           onClick={() => showSidesheet({ sidesheet: SIDESHEETS.USER_INVITATION })}
           mb={8}
         >
-          <Flex alignItems="center">
+          <Flex align="center">
             <Icon type="add-user" size="small" mr={2} />
             Invite User
           </Flex>
         </Button>
       </Flex>
       <ErrorBoundary>
-        <ListUsersTable />
+        <ListUsers />
       </ErrorBoundary>
     </Box>
   );

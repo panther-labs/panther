@@ -22,6 +22,7 @@ import * as Types from '../../../../__generated__/schema';
 
 import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
 import { RuleDates } from '../../../graphql/fragments/RuleDates.generated';
+import { AlertSummaryFull } from '../../../graphql/fragments/AlertSummaryFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -33,9 +34,7 @@ export type RuleDetailsVariables = {
 
 export type RuleDetails = {
   rule?: Types.Maybe<RuleBasic & RuleDates>;
-  alerts?: Types.Maybe<{
-    alertSummaries: Array<Types.Maybe<Pick<Types.AlertSummary, 'alertId' | 'creationTime'>>>;
-  }>;
+  alerts?: Types.Maybe<{ alertSummaries: Array<Types.Maybe<AlertSummaryFull>> }>;
 };
 
 export const RuleDetailsDocument = gql`
@@ -46,13 +45,13 @@ export const RuleDetailsDocument = gql`
     }
     alerts(input: $alertsForRuleInput) {
       alertSummaries {
-        alertId
-        creationTime
+        ...AlertSummaryFull
       }
     }
   }
   ${RuleBasic}
   ${RuleDates}
+  ${AlertSummaryFull}
 `;
 
 /**

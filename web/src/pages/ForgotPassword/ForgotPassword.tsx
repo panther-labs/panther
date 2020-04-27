@@ -21,7 +21,7 @@ import AuthPageContainer from 'Components/AuthPageContainer';
 import ForgotPasswordForm from 'Components/forms/ForgotPasswordForm';
 import { Button, Flex, Text } from 'pouncejs';
 import urls from 'Source/urls';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import React from 'react';
 
 interface EmailStatusState {
@@ -37,21 +37,21 @@ const ForgotPasswordPage: React.FC = () => {
         subtitle="We'll help you reset your password and get back on track."
       />
       <ForgotPasswordForm />
-      <Text size="small" color="grey200" mt={8} is="p" textAlign="center">
+      <Text size="small" color="grey200" mt={8} as="p" textAlign="center">
         <i>
           By clicking the button above you will receive an email with instructions on how to reset
           your password
         </i>
       </Text>
       <AuthPageContainer.AltOptions>
-        <Flex alignItems="center">
-          <Text size="medium" color="grey200" is="span" mr={3}>
+        <Flex align="center">
+          <Text size="medium" color="grey200" as="span" mr={3}>
             Remembered it all of a sudden?
           </Text>
           <Button
             size="small"
             variant="default"
-            is={Link}
+            as={RRLink}
             to={urls.account.auth.signIn()}
             style={{ textDecoration: 'none' }}
           >

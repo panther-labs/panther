@@ -17,19 +17,14 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex, Table } from 'pouncejs';
+import { Alert, Box, Card, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { Destination } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useListDestinationsAndDefaults } from './graphql/listDestinationsAndDefaults.generated';
-import columns from './columns';
 import DestinationsPageSkeleton from './Skeleton';
 import DestinationsPageEmptyDataFallback from './EmptyDataFallback';
 import DestinationCreateButton from './CreateButton';
-
-export interface ListDestinationsQueryData {
-  destinations: Destination[];
-}
+import ListDestinationsTable from './ListDestinationsTable';
 
 const ListDestinations = () => {
   const { loading, error, data } = useListDestinationsAndDefaults({
@@ -59,16 +54,12 @@ const ListDestinations = () => {
 
   return (
     <Box mb={6}>
-      <Flex justifyContent="flex-end">
+      <Flex justify="flex-end">
         <DestinationCreateButton />
       </Flex>
       <Card>
         <ErrorBoundary>
-          <Table<Destination>
-            items={data.destinations}
-            getItemKey={item => item.outputId}
-            columns={columns}
-          />
+          <ListDestinationsTable destinations={data.destinations} />
         </ErrorBoundary>
       </Card>
     </Box>

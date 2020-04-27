@@ -17,17 +17,16 @@
  */
 
 import React from 'react';
-import { LogIntegrationDetails } from 'Source/graphql/fragments/LogIntegrationDetails.generated';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Card, Flex, Icon, Table } from 'pouncejs';
+import { Alert, Box, Button, Card, Flex, Icon } from 'pouncejs';
 import Panel from 'Components/Panel';
-import { Link } from 'react-router-dom';
+import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useListLogSources } from './graphql/listLogSources.generated';
-import columns from './columns';
 import EmptyDataFallback from './EmptyDataFallback';
+import LogSourceTable from './LogSourceTable';
 
 const ListLogSources = () => {
   const { loading, error, data } = useListLogSources();
@@ -63,8 +62,8 @@ const ListLogSources = () => {
         title="Log Sources"
         size="large"
         actions={
-          <Button size="large" variant="primary" is={Link} to={urls.logAnalysis.sources.create()}>
-            <Flex alignItems="center">
+          <Button size="large" variant="primary" as={RRLink} to={urls.logAnalysis.sources.create()}>
+            <Flex align="center">
               <Icon type="add" size="small" mr={1} />
               Add Source
             </Flex>
@@ -72,11 +71,7 @@ const ListLogSources = () => {
         }
       >
         <ErrorBoundary>
-          <Table<LogIntegrationDetails>
-            items={data.listLogIntegrations}
-            getItemKey={item => item.integrationId}
-            columns={columns}
-          />
+          <LogSourceTable sources={data.listLogIntegrations} />
         </ErrorBoundary>
       </Panel>
     </Box>

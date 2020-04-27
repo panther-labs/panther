@@ -221,17 +221,8 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 
 // Deploy bootstrap and bootstrap-gateway and merge their outputs
 func deployBoostrapStacks(awsSession *session.Session, settings *config.PantherConfig) (map[string]string, error) {
-	// the example yml has an empty string to make it clear it is a list, remove empty strings
-	var sanitizedLogSubscriptionArns []string
-	for _, arn := range settings.Setup.LogSubscriptions.PrincipalARNs {
-		if arn == "" {
-			continue
-		}
-		sanitizedLogSubscriptionArns = append(sanitizedLogSubscriptionArns, arn)
-	}
-
 	params := map[string]string{
-		"LogSubscriptionPrincipals":  strings.Join(sanitizedLogSubscriptionArns, ","),
+		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
 		"CertificateArn":             certificateArn(awsSession, settings),
@@ -437,6 +428,9 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
 			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
+			"GraphQLApiEndpoint":    outputs["GraphQLApiEndpoint"],
+			"GraphQLApiId":          outputs["GraphQLApiId"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],

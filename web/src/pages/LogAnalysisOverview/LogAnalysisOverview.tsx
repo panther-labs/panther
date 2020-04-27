@@ -22,13 +22,7 @@ import { Box, Flex, Heading, Text } from 'pouncejs';
 
 const LogAnalysisOverview: React.FC = () => {
   return (
-    <Flex
-      height="100%"
-      width="100%"
-      justifyContent="center"
-      alignItems="center"
-      flexDirection="column"
-    >
+    <Flex height="100%" width="100%" justify="center" align="center" direction="column">
       <Box m={10}>
         <img alt="Construction works" src={WarningImg} width="auto" height={400} />
       </Box>

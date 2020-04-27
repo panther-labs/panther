@@ -42,7 +42,7 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 		return errors.Wrap(err, "CreateOrReplaceViews() failed")
 	}
 	s3Path := "s3://" + athenaResultsBucket + "/athena/"
-	sqlStatements, err := generateLogViews(registry.AvailableTables())
+	sqlStatements, err := GenerateLogViews(registry.AvailableTables())
 	if err != nil {
 		return err
 	}
@@ -55,10 +55,10 @@ func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
 	return err
 }
 
-// generateLogViews creates useful Athena views in the panther views database
-func generateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []string, err error) {
+// GenerateLogViews creates useful Athena views in the panther views database
+func GenerateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []string, err error) {
 	if len(tables) == 0 {
-		return nil, errors.New("no tables specified for generateLogViews()")
+		return nil, errors.New("no tables specified for GenerateLogViews()")
 	}
 	sqlStatement, err := generateViewAllLogs(tables)
 	if err != nil {

@@ -17,15 +17,11 @@
  */
 
 import React from 'react';
-import { Box, Grid, Table, Alert } from 'pouncejs';
+import { Box, Alert, SimpleGrid } from 'pouncejs';
 import Panel from 'Components/Panel';
-import urls from 'Source/urls';
-import useRouter from 'Hooks/useRouter';
-import { PolicySummary, ResourceSummary } from 'Generated/schema';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useGetOrganizationStats } from './graphql/getOrganizationStats.generated';
-import { topFailingPoliciesColumns, topFailingResourcesColumns } from './columns';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
 import ResourcesByPlatformChart from './ResourcesByPlatformChart';
@@ -33,12 +29,10 @@ import ResourcesByStatusChart from './ResourcesByStatusChart';
 import DonutChartWrapper from './DonutChartWrapper';
 import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
 import ComplianceOverviewPageSkeleton from './Skeleton';
-
-export type TopFailingPolicy = Pick<PolicySummary, 'id' | 'severity'>;
-export type TopFailingResource = Pick<ResourceSummary, 'id'>;
+import TopFailingPoliciesTable from './TopFailingPoliciesTable';
+import TopFailingResourcesTable from './TopFailingResourcesTable';
 
 const ComplianceOverview: React.FC = () => {
-  const { history } = useRouter();
   const { data, loading, error } = useGetOrganizationStats({
     fetchPolicy: 'cache-and-network',
   });
@@ -62,14 +56,8 @@ const ComplianceOverview: React.FC = () => {
   }
 
   return (
-    <Box is="article" mb={6}>
-      <Grid
-        gridTemplateColumns="repeat(4, 1fr)"
-        gridRowGap={3}
-        gridColumnGap={3}
-        is="section"
-        mb={3}
-      >
+    <Box as="article" mb={6}>
+      <SimpleGrid columns={4} spacing={3} as="section" mb={3}>
         <DonutChartWrapper title="Policy Severity" icon="policy">
           <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
         </DonutChartWrapper>
@@ -82,33 +70,23 @@ const ComplianceOverview: React.FC = () => {
         <DonutChartWrapper title="Resource Health" icon="resource">
           <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
         </DonutChartWrapper>
-      </Grid>
-      <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={3}>
+      </SimpleGrid>
+      <SimpleGrid columns={2} spacingX={3} spacingY={2}>
         <Panel title="Top Failing Policies" size="small">
           <Box m={-6}>
             <ErrorBoundary>
-              <Table<TopFailingPolicy>
-                columns={topFailingPoliciesColumns}
-                items={data.organizationStats.topFailingPolicies}
-                getItemKey={policy => policy.id}
-                onSelect={policy => history.push(urls.compliance.policies.details(policy.id))}
-              />
+              <TopFailingPoliciesTable policies={data.organizationStats.topFailingPolicies} />
             </ErrorBoundary>
           </Box>
         </Panel>
         <Panel title="Top Failing Resources" size="small">
           <Box m={-6}>
             <ErrorBoundary>
-              <Table<TopFailingResource>
-                columns={topFailingResourcesColumns}
-                items={data.organizationStats.topFailingResources}
-                getItemKey={resource => resource.id}
-                onSelect={resource => history.push(urls.compliance.resources.details(resource.id))}
-              />
+              <TopFailingResourcesTable resources={data.organizationStats.topFailingResources} />
             </ErrorBoundary>
           </Box>
         </Panel>
-      </Grid>
+      </SimpleGrid>
     </Box>
   );
 };

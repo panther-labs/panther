@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, Text } from 'pouncejs';
+import { AbstractButton, Box, Heading, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -36,7 +36,7 @@ const SourceConfigurationPanel: React.FC = () => {
       <Heading size="medium" m="auto" mb={2} color="grey400">
         {initialValues.integrationId ? 'Update source' : "Let's start with the basics"}
       </Heading>
-      <Text size="large" color="grey200" mb={10} is="p">
+      <Text size="large" color="grey200" mb={10} as="p">
         {initialValues.integrationId
           ? 'Feel free to make any changes to your log source'
           : 'We need to know where to get your logs from'}
@@ -77,16 +77,14 @@ const SourceConfigurationPanel: React.FC = () => {
           aria-required
           mb={6}
         />
-        <Text
-          type="button"
-          size="large"
+        <AbstractButton
           color="blue300"
-          is="button"
           onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
-          my={9}
+          my={6}
+          py={3}
         >
           {isAdvancedConfigVisible ? 'Hide advanced configuration' : 'Show advanced configuration'}
-        </Text>
+        </AbstractButton>
         {isAdvancedConfigVisible && (
           <React.Fragment>
             <Field

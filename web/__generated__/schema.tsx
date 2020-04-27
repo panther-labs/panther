@@ -63,6 +63,7 @@ export type AlertDetails = {
   __typename?: 'AlertDetails';
   alertId: Scalars['ID'];
   ruleId?: Maybe<Scalars['ID']>;
+  title: Scalars['String'];
   creationTime: Scalars['AWSDateTime'];
   updateTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
@@ -76,10 +77,10 @@ export type AlertSummary = {
   alertId: Scalars['String'];
   creationTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
+  title: Scalars['String'];
   updateTime: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
-  severity?: Maybe<Scalars['String']>;
-  dedupString: Scalars['String'];
+  severity?: Maybe<SeverityEnum>;
 };
 
 export enum AnalysisTypeEnum {
@@ -1107,6 +1108,7 @@ export type ResolversTypes = {
   ListAlertsInput: ListAlertsInput;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
+  SeverityEnum: SeverityEnum;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1120,7 +1122,6 @@ export type ResolversTypes = {
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
-  SeverityEnum: SeverityEnum;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
@@ -1217,6 +1218,7 @@ export type ResolversParentTypes = {
   ListAlertsInput: ListAlertsInput;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
+  SeverityEnum: SeverityEnum;
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -1230,7 +1232,6 @@ export type ResolversParentTypes = {
   OpsgenieConfig: OpsgenieConfig;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
-  SeverityEnum: SeverityEnum;
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
@@ -1329,6 +1330,7 @@ export type AlertDetailsResolvers<
 > = {
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -1345,10 +1347,10 @@ export type AlertSummaryResolvers<
   alertId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  severity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 

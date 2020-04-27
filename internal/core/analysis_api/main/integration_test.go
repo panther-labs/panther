@@ -869,6 +869,10 @@ func bulkUploadSuccess(t *testing.T) {
 		ModifiedRules: aws.Int64(0),
 		NewRules:      aws.Int64(0),
 		TotalRules:    aws.Int64(0),
+
+		ModifiedGlobals: aws.Int64(0),
+		NewGlobals:      aws.Int64(0),
+		TotalGlobals:    aws.Int64(0),
 	}
 	assert.Equal(t, expected, result.Payload)
 
