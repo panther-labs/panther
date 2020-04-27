@@ -149,8 +149,8 @@ func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string)
 				// Save the final nested template locally and upload to S3
 				savePath := filepath.Join("out", "deployments",
 					fmt.Sprintf("%s-nested-%s.yml", stack, filepath.Base(path)))
-				if err = ioutil.WriteFile(savePath, body, 0644); err != nil {
-					return nil, fmt.Errorf("failed to save %s: %v", savePath, err)
+				if err = writeFile(savePath, body); err != nil {
+					return nil, err
 				}
 
 				key, _, err := uploadAsset(awsSession, savePath, bucket, stack)
@@ -312,8 +312,8 @@ func createChangeSet(
 
 	// Always save the final template to help with troubleshooting a failed deployment.
 	path := filepath.Join("out", "deployments", stack+".yml")
-	if err := ioutil.WriteFile(path, template, 0644); err != nil {
-		return nil, fmt.Errorf("faiiled to write %s: %v", path, err)
+	if err := writeFile(path, template); err != nil {
+		return nil, err
 	}
 
 	if len(template) <= maxTemplateSize {

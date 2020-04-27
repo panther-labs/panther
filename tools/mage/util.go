@@ -102,11 +102,21 @@ func readFile(path string) []byte {
 	return contents
 }
 
-// Wrapper around ioutil.WriteFile, logging errors as fatal.
-func writeFile(path string, data []byte) {
-	if err := ioutil.WriteFile(path, data, 0644); err != nil {
-		logger.Fatalf("failed to write %s: %v", path, err)
+// Wrapper around ioutil.WriteFile, creating the parent directories if needed.
+func writeFile(path string, data []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}
+
+	var permissions os.FileMode = 0644
+	if strings.HasSuffix(path, ".key") || strings.HasSuffix(path, ".crt") {
+		permissions = certFilePermissions
+	}
+
+	if err := ioutil.WriteFile(path, data, permissions); err != nil {
+		return fmt.Errorf("failed to write file %s: %v", path, err)
+	}
+	return nil
 }
 
 // Build the AWS session from the environment or a credentials file.

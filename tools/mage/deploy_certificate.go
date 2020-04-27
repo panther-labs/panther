@@ -26,7 +26,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"time"
@@ -150,18 +149,13 @@ func generateKeys() error {
 		return fmt.Errorf("x509 cert creation failed: %v", err)
 	}
 
-	// Create the keys directory if it does not already exist
-	if err = os.MkdirAll(keysDirectory, certFilePermissions); err != nil {
-		return fmt.Errorf("failed to create keys directory %s: %v", keysDirectory, err)
-	}
-
 	// PEM encode the certificate and write it to disk
 	var certBuffer bytes.Buffer
 	if err = pem.Encode(&certBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}); err != nil {
 		return fmt.Errorf("cert encoding failed: %v", err)
 	}
-	if err = ioutil.WriteFile(certificateFile, certBuffer.Bytes(), certFilePermissions); err != nil {
-		return fmt.Errorf("failed to save cert %s: %v", certificateFile, err)
+	if err = writeFile(certificateFile, certBuffer.Bytes()); err != nil {
+		return err
 	}
 
 	// PEM Encode the private key and write it to disk
@@ -170,11 +164,7 @@ func generateKeys() error {
 	if err != nil {
 		return fmt.Errorf("key encoding failed: %v", err)
 	}
-	if err = ioutil.WriteFile(privateKeyFile, keyBuffer.Bytes(), certFilePermissions); err != nil {
-		return fmt.Errorf("failed to save key %s: %v", privateKeyFile, err)
-	}
-
-	return nil
+	return writeFile(privateKeyFile, keyBuffer.Bytes())
 }
 
 // uploadIAMCertificate creates an IAM certificate resource and returns its ARN
