@@ -1,9 +1,9 @@
 import React from 'react';
-import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import Panel from 'Components/Panel';
-import { Box } from 'pouncejs';
 import { LogQueryStatus } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
+import { Box } from 'pouncejs';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import { useInfiniteScroll } from 'react-infinite-scroll-hook';
 import { useGetLogQueryResults } from './graphql/getLogQueryResults.generated';
 import { useDataExplorerContext } from '../DataExplorerContext';
@@ -11,6 +11,7 @@ import DownloadButton from './DownloadButton';
 import ResultsTable from './ResultsTable';
 
 const POLL_INTERVAL_MS = 750;
+const RESULTS_PER_PAGE = 100;
 
 const Results: React.FC = () => {
   const {
@@ -36,7 +37,7 @@ const Results: React.FC = () => {
     variables: {
       input: {
         queryId,
-        pageSize: DEFAULT_LARGE_PAGE_SIZE,
+        pageSize: RESULTS_PER_PAGE,
       },
     },
   });
@@ -134,8 +135,13 @@ const Results: React.FC = () => {
       size="large"
       actions={downloadButton}
     >
-      <Box ref={infiniteRef} height="100%">
-        <ResultsTable isFetchingMore={loading} results={results} />
+      <Box overflow="scroll" height={400} willChange="scroll">
+        <ResultsTable results={results} resultContainerRef={infiniteRef} />
+        {results.length > 0 && loading && (
+          <Box mt={4}>
+            <TablePlaceholder rowCount={10} rowHeight={6} />
+          </Box>
+        )}
       </Box>
     </Panel>
   );

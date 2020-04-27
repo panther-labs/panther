@@ -3,17 +3,16 @@ import { Box, Flex, Heading, Icon, Spinner, Table } from 'pouncejs';
 import WarningImg from 'Assets/illustrations/warning.svg';
 import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
 import { GetLogQueryOutput } from 'Generated/schema';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import { useDataExplorerContext } from 'Pages/DataExplorer/DataExplorerContext';
 import dayjs from 'dayjs';
 import { isNumber } from 'Helpers/utils';
 
 export interface ResultsTableProps {
-  isFetchingMore: boolean;
   results: GetLogQueryOutput['results'];
+  resultContainerRef: React.Ref<HTMLElement>;
 }
 
-const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) => {
+const ResultsTable: React.FC<ResultsTableProps> = ({ results, resultContainerRef }) => {
   const startTime = React.useRef(dayjs());
   const {
     state: { queryStatus },
@@ -101,39 +100,32 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ isFetchingMore, results }) 
   // Render a table and the "fetching more" placeholder. This is different than "loading" or the
   // "running" state. It has to be handled through a separate prop
   return (
-    <Box overflowX="scroll">
-      <Table size="small">
-        <Table.Head>
-          <Table.Row>
-            {results[0].map(col => (
-              <Table.HeaderCell key={col.key} align={isNumber(col.value) ? 'right' : 'left'}>
-                {col.key}
-              </Table.HeaderCell>
+    <Table size="small" stickyHeader>
+      <Table.Head>
+        <Table.Row>
+          {results[0].map(col => (
+            <Table.HeaderCell key={col.key} align={isNumber(col.value) ? 'right' : 'left'}>
+              {col.key}
+            </Table.HeaderCell>
+          ))}
+        </Table.Row>
+      </Table.Head>
+      <Table.Body ref={resultContainerRef}>
+        {results.map((row, rowIndex) => (
+          <Table.Row key={rowIndex}>
+            {row.map((col, colIndex) => (
+              <Table.Cell
+                key={`${rowIndex}-${colIndex}`}
+                wrapText="nowrap"
+                align={isNumber(col.value) ? 'right' : 'left'}
+              >
+                {col.value === null ? 'NULL' : col.value}
+              </Table.Cell>
             ))}
           </Table.Row>
-        </Table.Head>
-        <Table.Body>
-          {results.map((row, rowIndex) => (
-            <Table.Row key={rowIndex}>
-              {row.map((col, colIndex) => (
-                <Table.Cell
-                  key={`${rowIndex}-${colIndex}`}
-                  wrapText="nowrap"
-                  align={isNumber(col.value) ? 'right' : 'left'}
-                >
-                  {col.value === null ? 'NULL' : col.value}
-                </Table.Cell>
-              ))}
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table>
-      {isFetchingMore && (
-        <Box mt={8}>
-          <TablePlaceholder rowCount={10} />
-        </Box>
-      )}
-    </Box>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 
