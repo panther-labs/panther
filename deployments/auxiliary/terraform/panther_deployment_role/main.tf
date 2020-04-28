@@ -91,7 +91,7 @@ resource "aws_iam_policy" "deployment" {
           "ec2:RevokeSecurityGroupIngress",
           "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
           "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
-          "elasticloadbalancing:*"
+          "elasticloadbalancing:*",
           "ecr:GetAuthorizationToken",
           "ecs:*",
           "events:*",
