@@ -129,7 +129,7 @@ const Results: React.FC = () => {
   const hasNextPage = data?.getLogQuery?.pageInfo?.hasNextPage;
   return (
     <Panel title="Results" size="large" actions={downloadButton}>
-      <Box overflow="scroll" height={400} willChange="scroll">
+      <Box overflow="scroll" minHeight={400} maxHeight="calc(100vh - 900px)" willChange="scroll">
         <ResultsTable results={results} />
         {hasNextPage && (
           <Box mt={4} ref={sentinelRef}>
