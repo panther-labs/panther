@@ -68,7 +68,7 @@ const ListAlerts = () => {
   });
 
   if (loading && !data) {
-    return <ListAlertsPageSkeleton/>;
+    return <ListAlertsPageSkeleton />;
   }
 
   if (error) {
@@ -86,7 +86,7 @@ const ListAlerts = () => {
   }
 
   if (!alertItems.length) {
-    return <ListAlertsPageEmptyDataFallback/>;
+    return <ListAlertsPageEmptyDataFallback />;
   }
 
   //  Check how many active filters exist by checking how many columns keys exist in the URL
@@ -94,10 +94,10 @@ const ListAlerts = () => {
     <ErrorBoundary>
       <div ref={infiniteRef}>
         <Card mb={8}>
-          <ListAlertsTable items={alertItems}/>
+          <ListAlertsTable items={alertItems} />
           {loading && (
             <Box p={8}>
-              <TablePlaceholder rowCount={10}/>
+              <TablePlaceholder rowCount={10} />
             </Box>
           )}
         </Card>
