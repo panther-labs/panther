@@ -1,7 +1,7 @@
 package analysis
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,13 +31,17 @@ type Config struct {
 	Enabled                   bool              `yaml:"Enabled"`
 	Filename                  string            `yaml:"Filename"`
 	PolicyID                  string            `yaml:"PolicyID"`
+	RuleID                    string            `yaml:"RuleID"`
+	GlobalID                  string            `yaml:"GlobalID"`
 	ResourceTypes             []string          `yaml:"ResourceTypes"`
+	LogTypes                  []string          `yaml:"LogTypes"`
 	Reference                 string            `yaml:"Reference"`
 	Runbook                   string            `yaml:"Runbook"`
 	Severity                  string            `yaml:"Severity"`
 	Suppressions              []string          `yaml:"Suppressions"`
 	Tags                      []string          `yaml:"Tags"`
 	Tests                     []Test            `yaml:"Tests"`
+	DedupPeriodMinutes        int               `yaml:"DedupPeriodMinutes"`
 }
 
 // Test is a unit test definition when parsing policies in a bulk upload.
@@ -45,5 +49,7 @@ type Test struct {
 	ExpectedResult bool        `yaml:"ExpectedResult"`
 	Name           string      `yaml:"Name"`
 	Resource       interface{} `yaml:"Resource"`
+	Log            interface{} `yaml:"Log"`
 	ResourceType   string      `yaml:"ResourceType"`
+	LogType        string      `yaml:"LogType"`
 }

@@ -1,7 +1,7 @@
 package awstest
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ var (
 	ExampleDescribeLoadBalancersOutput = &elbv2.DescribeLoadBalancersOutput{
 		LoadBalancers: []*elbv2.LoadBalancer{
 			{
-				LoadBalancerArn:       aws.String("arn:aws:elasticloadbalancing:us-west-2:857418155548:loadbalancer/app/panther-test/aaaaaaaaaaaaa"),
+				LoadBalancerArn:       aws.String("arn:aws:elasticloadbalancing:us-west-2:111111111111:loadbalancer/app/panther-test/aaaaaaaaaaaaa"),
 				DNSName:               aws.String("internal-panther-test-123456789.us-west-2.elb.amazonaws.com"),
 				CanonicalHostedZoneId: aws.String("AAAAA123"),
 				CreatedTime:           ExampleDate,

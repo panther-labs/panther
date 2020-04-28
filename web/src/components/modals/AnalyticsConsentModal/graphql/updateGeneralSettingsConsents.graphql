@@ -1,0 +1,6 @@
+mutation UpdateGeneralSettingsConsents($input: UpdateGeneralSettingsInput!) {
+    updateGeneralSettings(input: $input) {
+        email
+        errorReportingConsent
+    }
+}

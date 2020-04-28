@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,8 +39,18 @@ var (
 )
 
 func setupCloudTrailClient(sess *session.Session, cfg *aws.Config) interface{} {
-	cfg.MaxRetries = aws.Int(MaxRetries)
 	return cloudtrail.New(sess, cfg)
+}
+
+func getCloudTrailClient(pollerResourceInput *awsmodels.ResourcePollerInput,
+	region string) (cloudtrailiface.CloudTrailAPI, error) {
+
+	client, err := getClient(pollerResourceInput, CloudTrailClientFunc, "cloudtrail", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(cloudtrailiface.CloudTrailAPI), nil
 }
 
 // PollCloudTrailTrail polls a single CloudTrail trail resource
@@ -48,18 +58,22 @@ func PollCloudTrailTrail(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "cloudtrail", resourceARN.Region).(cloudtrailiface.CloudTrailAPI)
-	trail := getTrail(client, scanRequest.ResourceID)
+	ctClient, err := getCloudTrailClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildCloudTrailSnapshot(client, trail, aws.String(resourceARN.Region))
+	trail := getTrail(ctClient, scanRequest.ResourceID)
+
+	snapshot := buildCloudTrailSnapshot(ctClient, trail, aws.String(resourceARN.Region))
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
-	return snapshot
+	return snapshot, nil
 }
 
 // getTrail returns the specified cloudtrail
@@ -223,13 +237,10 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "cloudtrail") {
 		zap.L().Debug("building CloudTrail snapshots", zap.String("region", *regionID))
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
-		creds, err := AssumeRoleFunc(pollerInput, sess)
+		cloudTrailSvc, err := getCloudTrailClient(pollerInput, *regionID)
 		if err != nil {
-			return nil, err
+			continue // error is logged in getClient()
 		}
-
-		cloudTrailSvc := CloudTrailClientFunc(sess, &aws.Config{Credentials: creds}).(cloudtrailiface.CloudTrailAPI)
 
 		// Build the list of all CloudTrails for the given region
 		regionTrails := buildCloudTrails(cloudTrailSvc, regionID)

@@ -1,0 +1,12 @@
+query ListPolicies($input: ListPoliciesInput) {
+  policies(input: $input) {
+    policies {
+      ...PolicyTeaser
+    }
+    paging {
+      totalPages
+      thisPage
+      totalItems
+    }
+  }
+}

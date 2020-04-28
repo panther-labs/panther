@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -47,7 +47,7 @@ type writeResult struct {
 	err        error
 }
 
-// BulkUpload uploads multiple policies from a zipfile.
+// BulkUpload uploads multiple analysis items from a zipfile.
 func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	input, err := parseBulkUpload(request)
 	if err != nil {
@@ -84,6 +84,10 @@ func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		ModifiedRules: aws.Int64(0),
 		NewRules:      aws.Int64(0),
 		TotalRules:    aws.Int64(0),
+
+		ModifiedGlobals: aws.Int64(0),
+		NewGlobals:      aws.Int64(0),
+		TotalGlobals:    aws.Int64(0),
 	}
 
 	var response *events.APIGatewayProxyResponse
@@ -105,19 +109,27 @@ func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 			continue
 		}
 
-		if result.item.Type == typePolicy {
+		switch result.item.Type {
+		case typePolicy:
 			*counts.TotalPolicies++
 			if result.changeType == newItem {
 				*counts.NewPolicies++
 			} else if result.changeType == updatedItem {
 				*counts.ModifiedPolicies++
 			}
-		} else {
+		case typeRule:
 			*counts.TotalRules++
 			if result.changeType == newItem {
 				*counts.NewRules++
 			} else if result.changeType == updatedItem {
 				*counts.ModifiedRules++
+			}
+		case typeGlobal:
+			*counts.TotalGlobals++
+			if result.changeType == newItem {
+				*counts.NewGlobals++
+			} else if result.changeType == updatedItem {
+				*counts.ModifiedGlobals++
 			}
 		}
 	}
@@ -192,7 +204,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 		}
 
 		// Map the Config struct fields over to the fields we need to store in Dynamo
-		policy := tableItem{
+		analysisItem := tableItem{
 			AutoRemediationID:         models.AutoRemediationID(config.AutoRemediationID),
 			AutoRemediationParameters: models.AutoRemediationParameters(config.AutoRemediationParameters),
 
@@ -204,7 +216,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Enabled:       models.Enabled(config.Enabled),
 			ID:            models.ID(config.PolicyID),
 			Reference:     models.Reference(config.Reference),
-			ResourceTypes: models.TypeSet(config.ResourceTypes),
+			ResourceTypes: config.ResourceTypes,
 			Runbook:       models.Runbook(config.Runbook),
 			Severity:      models.Severity(strings.ToUpper(config.Severity)),
 			Suppressions:  models.Suppressions(config.Suppressions),
@@ -213,24 +225,25 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Type:          strings.ToUpper(config.AnalysisType),
 		}
 
+		typeNormalizeTableItem(&analysisItem, config)
+
 		for i, test := range config.Tests {
-			resource, err := jsoniter.MarshalToString(test.Resource)
+			// A test can specify a resource and a resource type or a log and a log type.
+			// By convention, log and log type are used for rules and resource and resource type are used for policies.
+			if test.Resource == nil {
+				analysisItem.Tests[i], err = buildRuleTest(test)
+			} else {
+				analysisItem.Tests[i], err = buildPolicyTest(test)
+			}
 			if err != nil {
 				return nil, err
 			}
-
-			policy.Tests[i] = &models.UnitTest{
-				ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
-				Name:           models.TestName(test.Name),
-				Resource:       models.TestResource(resource),
-				ResourceType:   models.TestResourceType(test.ResourceType),
-			}
 		}
 
-		if _, exists := result[policy.ID]; exists {
-			return nil, fmt.Errorf("multiple policy specs with ID %s", policy.ID)
+		if _, exists := result[analysisItem.ID]; exists {
+			return nil, fmt.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
 		}
-		result[policy.ID] = &policy
+		result[analysisItem.ID] = &analysisItem
 	}
 
 	// Finish each policy by adding its body and then validate it
@@ -248,6 +261,62 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 	return result, nil
 }
 
+// typeNormalizeTableItem handles special cases that depend on a table item's analysis type
+func typeNormalizeTableItem(item *tableItem, config analysis.Config) {
+	if item.Type == string(models.AnalysisTypeRULE) {
+		// If there is no value set, default to 60 minutes
+		if config.DedupPeriodMinutes == 0 {
+			item.DedupPeriodMinutes = defaultDedupPeriodMinutes
+		} else {
+			item.DedupPeriodMinutes = models.DedupPeriodMinutes(config.DedupPeriodMinutes)
+		}
+
+		// These "syntax sugar" re-mappings are to make managing rules from the CLI more intuitive
+		if config.PolicyID == "" {
+			item.ID = models.ID(config.RuleID)
+		}
+		if len(config.ResourceTypes) == 0 {
+			item.ResourceTypes = config.LogTypes
+		}
+	}
+
+	if item.Type == string(models.AnalysisTypeGLOBAL) {
+		item.ID = models.ID(config.GlobalID)
+		// Support non-ID'd globals as the 'panther' global
+		if item.ID == "" {
+			item.ID = "panther"
+		}
+	}
+}
+
+func buildRuleTest(test analysis.Test) (*models.UnitTest, error) {
+	log, err := jsoniter.MarshalToString(test.Log)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.UnitTest{
+		ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
+		Name:           models.TestName(test.Name),
+		Resource:       models.TestResource(log),
+		ResourceType:   models.TestResourceType(test.LogType),
+	}, nil
+}
+
+func buildPolicyTest(test analysis.Test) (*models.UnitTest, error) {
+	resource, err := jsoniter.MarshalToString(test.Resource)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.UnitTest{
+		ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
+		Name:           models.TestName(test.Name),
+		Resource:       models.TestResource(resource),
+		ResourceType:   models.TestResourceType(test.ResourceType),
+	}, nil
+}
+
 func readZipFile(zf *zip.File) ([]byte, error) {
 	f, err := zf.Open()
 	if err != nil {
@@ -263,8 +332,12 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 
 // Ensure that the uploaded policy is valid according to the API spec for a Policy
 func validateUploadedPolicy(item *tableItem, userID models.UserID) error {
-	if item.Type != typePolicy && item.Type != typeRule {
+	if item.Type != typePolicy && item.Type != typeRule && item.Type != typeGlobal {
 		return fmt.Errorf("policy ID %s is invalid: unknown analysis type %s", item.ID, item.Type)
+	}
+
+	if item.Type == typeGlobal {
+		item.Severity = models.SeverityINFO
 	}
 
 	policy := item.Policy(models.ComplianceStatusPASS) // Convert to the external Policy model for validation

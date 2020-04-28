@@ -3,7 +3,7 @@
 package models
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,10 +24,11 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // Suppressed True if this resource is ignored/suppressed by this specific policy. Suppressed resources are still analyzed and reported, but do not trigger alerts/remediations.
+//
 //
 // swagger:model suppressed
 type Suppressed bool

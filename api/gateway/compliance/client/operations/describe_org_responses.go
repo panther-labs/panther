@@ -3,7 +3,7 @@
 package operations
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,9 +28,9 @@ import (
 	"io"
 
 	"github.com/go-openapi/runtime"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 
-	models "github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/gateway/compliance/models"
 )
 
 // DescribeOrgReader is a Reader for the DescribeOrg structure.

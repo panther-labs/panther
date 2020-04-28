@@ -2,7 +2,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,15 +20,19 @@ package api
  */
 
 import (
+	"os"
+
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
+	"github.com/panther-labs/panther/internal/core/users_api/cognito"
 )
 
 // The API has receiver methods for each of the handlers.
 type API struct{}
 
 var (
-	awsSession              = session.Must(session.NewSession())
-	userGateway gateway.API = gateway.New(awsSession)
+	awsSession               = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
+	appDomainURL             = os.Getenv("APP_DOMAIN_URL")
+	userGateway  cognito.API = cognito.New(awsSession, os.Getenv("USER_POOL_ID"))
 )

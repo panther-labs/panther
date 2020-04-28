@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,17 +17,33 @@
  */
 
 import { ApolloClient, ApolloLink, createHttpLink, InMemoryCache } from '@apollo/client';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { getOperationName, getMainDefinition } from '@apollo/client/utilities/graphql/getFromAST';
+import { OperationDefinitionNode } from 'graphql';
 import { History } from 'history';
 import { createAuthLink, AUTH_TYPE } from 'aws-appsync-auth-link';
 import { ErrorResponse, onError } from 'apollo-link-error';
 import Auth from '@aws-amplify/auth';
-import { LocationErrorState } from 'Components/utils/api-error-fallback';
-import { LIST_REMEDIATIONS } from 'Components/forms/policy-form/policy-form-auto-remediation-fields';
+import { LocationErrorState } from 'Components/utils/ApiErrorFallback';
+import { ListRemediationsDocument } from 'Components/forms/PolicyForm';
 import { logError } from 'Helpers/loggers';
-import { RULE_TEASER } from 'Pages/alert-details';
+import { RuleTeaserDocument } from 'Pages/AlertDetails';
 import Storage from 'Helpers/storage';
 import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
+
+/**
+ * A link to strip `__typename` from mutations params. Useful when you extend the same values you
+ * received from a query, and submit them as variables to a mutation
+ * https://github.com/apollographql/apollo-client/issues/1913#issuecomment-425281027
+ */
+const cleanParamsLink = new ApolloLink((operation, forward) => {
+  const def = getMainDefinition(operation.query) as OperationDefinitionNode;
+  if (def && def.operation === 'mutation') {
+    const omitTypename = (key, value) => (key === '__typename' ? undefined : value);
+    // eslint-disable-next-line no-param-reassign
+    operation.variables = JSON.parse(JSON.stringify(operation.variables), omitTypename);
+  }
+  return forward(operation);
+});
 
 /**
  * A link to react to GraphQL and/or network errors
@@ -36,8 +52,8 @@ const createErrorLink = (history: History<LocationErrorState>) => {
   // Define the operations that won't trigger any handler actions or be logged anywhere (those can
   // still be handled by the component independently)
   const silentFailingOperations = [
-    getOperationName(LIST_REMEDIATIONS),
-    getOperationName(RULE_TEASER),
+    getOperationName(ListRemediationsDocument),
+    getOperationName(RuleTeaserDocument),
   ];
 
   return (onError(({ graphQLErrors, networkError, operation }: ErrorResponse) => {
@@ -85,9 +101,25 @@ const authLink = (createAuthLink({
  */
 const createApolloClient = (history: History<LocationErrorState>) =>
   new ApolloClient({
-    link: ApolloLink.from([createErrorLink(history), authLink, httpLink]),
+    link: ApolloLink.from([cleanParamsLink, createErrorLink(history), authLink, httpLink]),
     cache: new InMemoryCache({
       typePolicies: {
+        Query: {
+          fields: {
+            getComplianceIntegration(existingData, { args, toReference }) {
+              return (
+                existingData ||
+                toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
+              );
+            },
+            getLogIntegration(existingData, { args, toReference }) {
+              return (
+                existingData ||
+                toReference({ __typename: 'LogIntegration', integrationId: args.id })
+              );
+            },
+          },
+        },
         Destination: {
           keyFields: ['outputId'],
         },
@@ -97,7 +129,10 @@ const createApolloClient = (history: History<LocationErrorState>) =>
         AlertSummary: {
           keyFields: ['alertId'],
         },
-        Integration: {
+        ComplianceIntegration: {
+          keyFields: ['integrationId'],
+        },
+        LogIntegration: {
           keyFields: ['integrationId'],
         },
         GeneralSettings: {

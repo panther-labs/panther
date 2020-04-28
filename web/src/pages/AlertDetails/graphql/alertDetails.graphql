@@ -1,0 +1,5 @@
+query AlertDetails($input: GetAlertInput!) {
+  alert(input: $input) {
+    ...AlertDetailsFull
+  }
+}

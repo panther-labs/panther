@@ -1,0 +1,3 @@
+mutation DeleteLogSource($id: ID!) {
+  deleteLogIntegration(id: $id)
+}

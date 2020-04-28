@@ -1,7 +1,7 @@
 package cloudwatchcf
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,9 +26,7 @@ type APIGatewayAlarm struct {
 	Alarm
 }
 
-func NewAPIGatewayAlarm(alarmType, metricName, message string, resource map[interface{}]interface{},
-	config *Config) (alarm *APIGatewayAlarm) {
-
+func NewAPIGatewayAlarm(alarmType, metricName, message string, resource map[string]interface{}) (alarm *APIGatewayAlarm) {
 	const (
 		metricDimension = "Name"
 		metricNamespace = "AWS/ApiGateway"
@@ -36,30 +34,25 @@ func NewAPIGatewayAlarm(alarmType, metricName, message string, resource map[inte
 	apiGatewayName := getResourceProperty(metricDimension, resource)
 	alarmName := AlarmName(alarmType, apiGatewayName)
 	alarm = &APIGatewayAlarm{
-		Alarm: *NewAlarm(alarmName,
-			fmt.Sprintf("ApiGateway %s %s. See: %s#%s", apiGatewayName, message, documentationURL, apiGatewayName),
-			config.snsTopicArn),
+		Alarm: *NewAlarm(apiGatewayName, alarmName,
+			fmt.Sprintf("ApiGateway %s %s. See: %s#%s", apiGatewayName, message, documentationURL, apiGatewayName)),
 	}
 	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: apiGatewayName}})
 	return alarm
 }
 
-func generateAPIGatewayAlarms(resource map[interface{}]interface{}, config *Config) (alarms []*Alarm) {
+func generateAPIGatewayAlarms(resource map[string]interface{}) (alarms []*Alarm) {
 	// NOTE: error metrics appear to have no units
 
 	// server errors
 	alarms = append(alarms, NewAPIGatewayAlarm("ApiGatewayServerError", "5XXError",
-		"is failing", resource, config).SumNoUnitsThreshold(0, 60*5))
+		"is failing", resource).SumNoUnitsThreshold(0, 60*5))
 
 	// client errors are used for signalling internally so we do not alarm on them
 
-	// latency
-	alarms = append(alarms, NewAPIGatewayAlarm("ApiGatewayHighLatency", "Latency",
-		"is experience high latency", resource, config).MaxMillisecondsThreshold(1000, 60).EvaluationPeriods(5))
-
 	// integration latency
 	alarms = append(alarms, NewAPIGatewayAlarm("ApiGatewayHighIntegationLatency", "IntegrationLatency",
-		"is experience high integration latency", resource, config).MaxMillisecondsThreshold(1000, 60).EvaluationPeriods(5))
+		"is experiencing high integration latency", resource).MaxMillisecondsThreshold(1000, 60).EvaluationPeriods(5))
 
 	return alarms
 }

@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -52,7 +53,7 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.AuroraMySQLAudit")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("10.0.143.147")
+	expectedEvent.AppendAnyIPAddress("10.0.143.147")
 	expectedEvent.AppendAnyDomainNames("db-instance-name")
 
 	checkAuroraMysqlAuditLogLog(t, log, expectedEvent)
@@ -64,14 +65,8 @@ func TestAuroraMysqlAuditLogType(t *testing.T) {
 }
 
 func checkAuroraMysqlAuditLogLog(t *testing.T, log string, expectedEvent *AuroraMySQLAudit) {
-	parser := &AuroraMySQLAuditParser{}
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*AuroraMySQLAudit)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	require.Equal(t, expectedEvent, event)
+	expectedEvent.SetEvent(expectedEvent)
+	parser := (&AuroraMySQLAuditParser{}).New() // important to call New() to initialize reader
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

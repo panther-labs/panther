@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import collections
 import gzip
 import json
@@ -26,14 +27,14 @@ from typing import Dict, List, Optional
 
 import boto3
 
-from . import AlertInfo, EventMatch, OutputNotification
-from .alert_merger import update_get_alert_info
+from . import AlertInfo, EventMatch, OutputGroupingKey
+from .alert_merger import MatchingGroupInfo, update_get_alert_info
 from .logging import get_logger
 
-_KEY_FORMAT = 'rules/{}/year={}/month={}/day={}/hour={}/rule_id={}/{}-{}.gz'
+_KEY_FORMAT = 'rules/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
 # Maximum number of events in an S3 object
 _MAX_BYTES_IN_MEMORY = 100000000
-_S3_KEY_DATE_FORMAT = '%Y%m%d%H%M%S'
+_S3_KEY_DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 _DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f000'
 _S3_BUCKET = os.environ['S3_BUCKET']
 _SNS_TOPIC_ARN = os.environ['NOTIFICATIONS_TOPIC']
@@ -54,18 +55,6 @@ class EventCommonFields:
     p_alert_update_time: str
 
 
-@dataclass(frozen=True, eq=True)
-class BufferKey:
-    """Class representing the key for internal buffer"""
-    rule_id: str
-    log_type: str
-    dedup: str
-
-    def table_name(self) -> str:
-        """ Output the name of the Glue table name for this log type"""
-        return self.log_type.lower().replace('.', '_')
-
-
 @dataclass
 class BufferValue:
     """Class representing the value of the internal buffer"""
@@ -77,14 +66,14 @@ class MatchedEventsBuffer:
     """Buffer containing the matched events"""
 
     def __init__(self) -> None:
-        self.data: Dict[BufferKey, BufferValue] = collections.defaultdict()
+        self.data: Dict[OutputGroupingKey, BufferValue] = collections.defaultdict()
         self.bytes_in_memory = 0
         self.max_bytes = _MAX_BYTES_IN_MEMORY
         self.total_events = 0
 
     def add_event(self, match: EventMatch) -> None:
         """Adds a matched event to the buffer"""
-        key = BufferKey(match.rule_id, match.log_type, match.dedup)
+        key = OutputGroupingKey(match.rule_id, match.log_type, match.dedup)
         # Getting estimation of struct size in memory
         size = sys.getsizeof(match)
 
@@ -102,7 +91,7 @@ class MatchedEventsBuffer:
         if self.bytes_in_memory > self.max_bytes:
             _LOGGER.debug('data reached size threshold')
             max_size = 0
-            key_to_remove: Optional[BufferKey]
+            key_to_remove: Optional[OutputGroupingKey]
             for key, value in self.data.items():
                 if value.size_in_bytes > max_size:
                     max_size = value.size_in_bytes
@@ -125,8 +114,20 @@ class MatchedEventsBuffer:
         self.total_events = 0
 
 
-def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> None:
-    alert_info = update_get_alert_info(time, len(events), key.rule_id, key.dedup)
+def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch]) -> None:
+    # 'version', 'title', 'dedup_period' of a rule might differ if the rule was modified
+    # while the rules engine was running. We pick the first encountered set of values.
+    group_info = MatchingGroupInfo(
+        rule_id=key.rule_id,
+        rule_version=events[0].rule_version,
+        log_type=key.log_type,
+        dedup=key.dedup,
+        dedup_period_mins=events[0].dedup_period_mins,
+        num_matches=len(events),
+        title=events[0].title,
+        processing_time=time
+    )
+    alert_info = update_get_alert_info(group_info)
     data_stream = BytesIO()
     writer = gzip.GzipFile(fileobj=data_stream, mode='wb')
     for event in events:
@@ -145,24 +146,72 @@ def _write_to_s3(time: datetime, key: BufferKey, events: List[EventMatch]) -> No
     _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
     # Send notification to SNS topic
-    notification = OutputNotification(s3Bucket=_S3_BUCKET, s3ObjectKey=object_key, events=len(events), bytes=byte_size, id=key.rule_id)
+    notification = _s3_put_object_notification(_S3_BUCKET, object_key, byte_size)
 
-    # MessageAttributes are required so that subscribers to SNS topic
-    # can filter events in the subscription
+    # MessageAttributes are required so that subscribers to SNS topic can filter events in the subscription
     _SNS_CLIENT.publish(
         TopicArn=_SNS_TOPIC_ARN,
-        Message=json.dumps(asdict(notification)),
+        Message=json.dumps(notification),
         MessageAttributes={
             'type': {
                 'DataType': 'String',
-                'StringValue': notification.type
+                'StringValue': 'RuleMatches'
             },
             'id': {
                 'DataType': 'String',
-                'StringValue': notification.id
+                'StringValue': key.rule_id
             }
         }
     )
+
+
+def _s3_put_object_notification(bucket: str, key: str, byte_size: int) -> Dict[str, list]:
+    """The notification that will be sent to the SNS topic when we create a new object in S3.
+
+    This needs to have a shape of an S3 event notification:
+            https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+
+    All elements should be populated (at least with dummy data) to pass schema validation by consumers.
+    """
+    return {
+        'Records':
+            [
+                {
+                    'eventVersion': '2.0',
+                    'eventSource': 'aws:s3',
+                    'awsRegion': '',
+                    'eventTime': '0001-01-01T00:00:00Z',
+                    'eventName': 'ObjectCreated:Put',
+                    'userIdentity': {
+                        'principalId': ''
+                    },
+                    'requestParameters': {
+                        'sourceIPAddress': ''
+                    },
+                    'responseElements': None,
+                    's3':
+                        {
+                            's3SchemaVersion': '',
+                            'configurationId': '',
+                            'bucket': {
+                                'name': bucket,
+                                'ownerIdentity': {
+                                    'principalId': ''
+                                },
+                                'arn': ''
+                            },
+                            'object': {
+                                'key': key,
+                                'size': byte_size,
+                                'urlDecodedKey': '',
+                                'versionId': '',
+                                'eTag': '',
+                                'sequencer': ''
+                            }
+                        }
+                }
+            ]
+    }
 
 
 def _serialize_event(match: EventMatch, alert_info: AlertInfo) -> bytes:

@@ -3,7 +3,7 @@
 package models
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,14 +25,20 @@ package models
 
 import (
 	"github.com/go-openapi/errors"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // BulkUploadResult bulk upload result
+//
 // swagger:model BulkUploadResult
 type BulkUploadResult struct {
+
+	// modified globals
+	// Required: true
+	// Minimum: 0
+	ModifiedGlobals *int64 `json:"modifiedGlobals"`
 
 	// modified policies
 	// Required: true
@@ -44,6 +50,11 @@ type BulkUploadResult struct {
 	// Minimum: 0
 	ModifiedRules *int64 `json:"modifiedRules"`
 
+	// new globals
+	// Required: true
+	// Minimum: 0
+	NewGlobals *int64 `json:"newGlobals"`
+
 	// new policies
 	// Required: true
 	// Minimum: 0
@@ -53,6 +64,11 @@ type BulkUploadResult struct {
 	// Required: true
 	// Minimum: 0
 	NewRules *int64 `json:"newRules"`
+
+	// total globals
+	// Required: true
+	// Minimum: 0
+	TotalGlobals *int64 `json:"totalGlobals"`
 
 	// total policies
 	// Required: true
@@ -69,6 +85,10 @@ type BulkUploadResult struct {
 func (m *BulkUploadResult) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateModifiedGlobals(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateModifiedPolicies(formats); err != nil {
 		res = append(res, err)
 	}
@@ -77,11 +97,19 @@ func (m *BulkUploadResult) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateNewGlobals(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateNewPolicies(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateNewRules(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalGlobals(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -96,6 +124,19 @@ func (m *BulkUploadResult) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *BulkUploadResult) validateModifiedGlobals(formats strfmt.Registry) error {
+
+	if err := validate.Required("modifiedGlobals", "body", m.ModifiedGlobals); err != nil {
+		return err
+	}
+
+	if err := validate.MinimumInt("modifiedGlobals", "body", int64(*m.ModifiedGlobals), 0, false); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -125,6 +166,19 @@ func (m *BulkUploadResult) validateModifiedRules(formats strfmt.Registry) error 
 	return nil
 }
 
+func (m *BulkUploadResult) validateNewGlobals(formats strfmt.Registry) error {
+
+	if err := validate.Required("newGlobals", "body", m.NewGlobals); err != nil {
+		return err
+	}
+
+	if err := validate.MinimumInt("newGlobals", "body", int64(*m.NewGlobals), 0, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *BulkUploadResult) validateNewPolicies(formats strfmt.Registry) error {
 
 	if err := validate.Required("newPolicies", "body", m.NewPolicies); err != nil {
@@ -145,6 +199,19 @@ func (m *BulkUploadResult) validateNewRules(formats strfmt.Registry) error {
 	}
 
 	if err := validate.MinimumInt("newRules", "body", int64(*m.NewRules), 0, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *BulkUploadResult) validateTotalGlobals(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalGlobals", "body", m.TotalGlobals); err != nil {
+		return err
+	}
+
+	if err := validate.MinimumInt("totalGlobals", "body", int64(*m.TotalGlobals), 0, false); err != nil {
 		return err
 	}
 

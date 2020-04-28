@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,24 +38,30 @@ func classifyKMS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			(Delete/Import)KeyMaterial
 			(Retire/Revoke)Grant
 	*/
-	case "CancelKeyDeletion", "CreateGrant", "CreateKey", "DisableKey", "DisableKeyRotation", "EnableKey",
-		"EnableKeyRotation", "PutKeyPolicy", "ScheduleKeyDeletion", "TagResource", "UntagResource",
-		"UpdateAlias", "UpdateKeyDescription":
-		keyARN = detail.Get("resources").Array()[0].Get("ARN").Str
-	case "CreateAlias", "DeleteAlias":
-		resources := detail.Get("resources").Array()
-		for _, resource := range resources {
-			resourceARN, err := arn.Parse(resource.Get("ARN").Str)
-			if err != nil {
-				zap.L().Error("kms: unable to extract ARN", zap.String("eventName", metadata.eventName))
-				return nil
-			}
-			if strings.HasPrefix(resourceARN.Resource, "key/") {
-				keyARN = resourceARN.String()
-			}
-		}
+	case "CancelKeyDeletion",
+		"CreateAlias",
+		"CreateGrant",
+		"CreateKey",
+		"DeleteKey",
+		"DeleteAlias",
+		"DisableKey",
+		"DisableKeyRotation",
+		"EnableKey",
+		"EnableKeyRotation",
+		"PutKeyPolicy",
+		"ScheduleKeyDeletion",
+		"TagResource",
+		"UntagResource",
+		"UpdateAlias",
+		"UpdateKeyDescription":
+		keyARN = getKeyARN(detail)
 	default:
 		zap.L().Warn("kms: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		return nil
+	}
+
+	if keyARN == "" {
+		zap.L().Warn("kms: missing arn", zap.String("eventName", metadata.eventName), zap.Any("detail", detail))
 		return nil
 	}
 
@@ -66,4 +72,16 @@ func classifyKMS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		ResourceID:   keyARN,
 		ResourceType: schemas.KmsKeySchema,
 	}}
+}
+
+func getKeyARN(detail gjson.Result) (keyARN string) {
+	resources := detail.Get("resources").Array()
+	for _, resource := range resources {
+		resourceARN, err := arn.Parse(resource.Get("arn").Str)
+		if err == nil && strings.HasPrefix(resourceARN.Resource, "key/") {
+			keyARN = resourceARN.String()
+			break
+		}
+	}
+	return keyARN
 }

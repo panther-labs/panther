@@ -1,19 +1,21 @@
 package awsglue
 
 /**
- * Copyright 2020 Panther Labs Inc
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 import (
@@ -23,16 +25,20 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
 const (
-	testBucket = "panther_glue_test_bucket"
-	testDb     = "panther_glue_test_db"
-	testTable  = "panther_glue_test_table"
+	testBucket       = "panther-public-cloudformation-templates" // this is a public Panther bucket with CF files we can use to list
+	testBucketRegion = "us-west-2"                               // region of above bucket
+	testDb           = "panther_glue_test_db"
+	testTable        = "panther_glue_test_table"
 )
 
 type testEvent struct {
@@ -43,6 +49,7 @@ var (
 	integrationTest bool
 	awsSession      *session.Session
 	glueClient      *glue.Glue
+	s3Client        *s3.S3
 
 	columns = []*glue.Column{
 		{
@@ -74,8 +81,9 @@ var (
 func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
-		awsSession = session.Must(session.NewSession())
+		awsSession = session.Must(session.NewSession(aws.NewConfig().WithRegion(testBucketRegion)))
 		glueClient = glue.New(awsSession)
+		s3Client = s3.New(awsSession)
 	}
 	os.Exit(m.Run())
 }
@@ -94,32 +102,28 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 		removeTables(t)
 	}()
 
-	gm, err := NewGlueMetadata(LogS3Prefix, testDb, testTable, "test table", GlueTableHourly, false, &testEvent{})
-	require.NoError(t, err)
+	gm := NewGlueTableMetadata(models.LogData, testTable, "test table", GlueTableHourly, &testEvent{})
+	// overwriting default database
+	gm.databaseName = testDb
 
 	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
 	err = gm.CreateJSONPartition(glueClient, refTime)
 	require.NoError(t, err)
+	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	require.Equal(t, expectedPath, *partitionLocation)
 
-	// do it again, should fail
-	err = gm.CreateJSONPartition(glueClient, refTime)
-	require.Error(t, err)
-
-	partitionInfo, err := gm.GetPartition(glueClient, refTime)
-	require.NoError(t, err)
-	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
-
-	// sync it (which does a delete and re-create)
-	err = gm.SyncPartition(glueClient, refTime)
-	require.NoError(t, err)
-	assert.Equal(t, expectedPath, *partitionInfo.Partition.StorageDescriptor.Location)
-
-	_, err = gm.DeletePartition(glueClient, refTime)
+	// sync it (which does an update of schema)
+	var startDate time.Time // default unset
+	err = gm.SyncPartitions(glueClient, s3Client, startDate)
 	require.NoError(t, err)
 
-	// ensure deleted
-	_, err = gm.GetPartition(glueClient, refTime)
-	require.Error(t, err)
+	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	require.Equal(t, expectedPath, *partitionLocation)
+
+	_, err = gm.deletePartition(glueClient, refTime)
+	require.NoError(t, err)
+	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	require.Nil(t, partitionLocation)
 }
 
 func setupTables(t *testing.T) {
@@ -176,4 +180,18 @@ func removeTables(t *testing.T) {
 		Name: aws.String(testDb),
 	}
 	glueClient.DeleteDatabase(dbInput) // nolint (errcheck)
+}
+
+// Fetches the location of a partition. Return nil it the partition doesn't exist
+func getPartitionLocation(t *testing.T, partitionValues []string) *string {
+	response, err := glueClient.GetPartition(&glue.GetPartitionInput{
+		DatabaseName:    aws.String(testDb),
+		PartitionValues: aws.StringSlice(partitionValues),
+		TableName:       aws.String(testTable),
+	})
+	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+		return nil
+	}
+	require.NoError(t, err)
+	return response.Partition.StorageDescriptor.Location
 }

@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
+	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
 )
 
 // How many resources (with attributes) we can request in a single page.
@@ -35,7 +36,7 @@ const resourcePageSize = 2000
 func getResources(resourceTypes []string, pageno int64) (resourceMap, int64, error) {
 	result := make(resourceMap)
 
-	zap.L().Info("listing resources from resources-api",
+	zap.L().Debug("listing resources from resources-api",
 		zap.Int64("pageNo", pageno),
 		zap.Int("pageSize", resourcePageSize),
 		zap.Strings("resourceTypes", resourceTypes),
@@ -58,4 +59,21 @@ func getResources(resourceTypes []string, pageno int64) (resourceMap, int64, err
 		result[string(resource.ID)] = resource
 	}
 	return result, *page.Payload.Paging.TotalPages, nil
+}
+
+func getResource(resourceID string) (*resourcemodels.Resource, error) {
+	zap.L().Debug("getting resource from resources-api",
+		zap.String("resourceID", resourceID),
+	)
+
+	resource, err := resourceClient.Operations.GetResource(&operations.GetResourceParams{
+		ResourceID: resourceID,
+		HTTPClient: httpClient,
+	})
+	if err != nil {
+		zap.L().Error("failed to get resource", zap.Error(err), zap.String("resourceID", resourceID))
+		return nil, err
+	}
+
+	return resource.Payload, nil
 }

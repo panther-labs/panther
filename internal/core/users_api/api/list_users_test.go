@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,44 +23,33 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
+	"github.com/panther-labs/panther/internal/core/users_api/cognito"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-type mockGatewayListUsersClient struct {
-	gateway.API
-	listUserGatewayErr bool
-}
-
-func (m *mockGatewayListUsersClient) ListUsers() ([]*models.User, error) {
-	if m.listUserGatewayErr {
-		return nil, &genericapi.AWSError{}
-	}
-
-	return []*models.User{
-		{
-			GivenName:  aws.String("Joe"),
-			FamilyName: aws.String("Blow"),
-			ID:         aws.String("user123"),
-			Email:      aws.String("joe@blow.com"),
-			CreatedAt:  aws.Int64(1545442826),
-			Status:     aws.String("CONFIRMED"),
-		},
-	}, nil
-}
-
 func TestListUsersGatewayErr(t *testing.T) {
-	userGateway = &mockGatewayListUsersClient{listUserGatewayErr: true}
+	mockGateway := &cognito.MockUserGateway{}
+	userGateway = mockGateway
+	mockGateway.On("ListUsers", &models.ListUsersInput{}).Return(
+		([]*models.User)(nil), &genericapi.AWSError{})
+
 	result, err := (API{}).ListUsers(&models.ListUsersInput{})
 	assert.Nil(t, result)
 	assert.Error(t, err)
+	mockGateway.AssertExpectations(t)
 }
 
-func TestListUsersHandle(t *testing.T) {
-	userGateway = &mockGatewayListUsersClient{}
+func TestListUsers(t *testing.T) {
+	mockGateway := &cognito.MockUserGateway{}
+	userGateway = mockGateway
+	users := []*models.User{{ID: aws.String("test-user-id")}}
+	mockGateway.On("ListUsers", &models.ListUsersInput{}).Return(users, nil)
+
 	result, err := (API{}).ListUsers(&models.ListUsersInput{})
-	assert.NotNil(t, result)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	assert.Equal(t, &models.ListUsersOutput{Users: users}, result)
+	mockGateway.AssertExpectations(t)
 }

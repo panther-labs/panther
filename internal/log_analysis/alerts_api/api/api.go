@@ -2,7 +2,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,35 +20,35 @@ package api
  */
 
 import (
-	"net/http"
+	"encoding/base64"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // API has all of the handlers as receiver methods.
 type API struct{}
 
 var (
-	env            envConfig
-	awsSession     *session.Session
-	httpClient     *http.Client
-	policiesClient *client.PantherAnalysis
-	alertsDB       table.API
+	env        envConfig
+	awsSession *session.Session
+	alertsDB   table.API
+	s3Client   s3iface.S3API
 )
 
 type envConfig struct {
-	AnalysisAPIHost string `required:"true" split_words:"true"`
-	AnalysisAPIPath string `required:"true" split_words:"true"`
-	AlertsTableName string `required:"true" split_words:"true"`
-	RuleIndexName   string `required:"true" split_words:"true"`
-	TimeIndexName   string `required:"true" split_words:"true"`
-	EventsTableName string `required:"true" split_words:"true"`
+	AnalysisAPIHost     string `required:"true" split_words:"true"`
+	AnalysisAPIPath     string `required:"true" split_words:"true"`
+	AlertsTableName     string `required:"true" split_words:"true"`
+	RuleIndexName       string `required:"true" split_words:"true"`
+	TimeIndexName       string `required:"true" split_words:"true"`
+	ProcessedDataBucket string `required:"true" split_words:"true"`
 }
 
 // Setup parses the environment and builds the AWS and http clients.
@@ -56,18 +56,46 @@ func Setup() {
 	envconfig.MustProcess("", &env)
 
 	awsSession = session.Must(session.NewSession())
-
-	httpClient = gatewayapi.GatewayClient(awsSession)
-	policiesClient = client.NewHTTPClientWithConfig(
-		nil, client.DefaultTransportConfig().
-			WithHost(env.AnalysisAPIHost).
-			WithBasePath("/"+env.AnalysisAPIPath))
-
 	alertsDB = &table.AlertsTable{
 		AlertsTableName:                    env.AlertsTableName,
 		Client:                             dynamodb.New(awsSession),
-		EventsTableName:                    env.EventsTableName,
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
+	s3Client = s3.New(awsSession)
+}
+
+// Token used for paginating through the events in an alert
+type EventPaginationToken struct {
+	LogTypeToToken map[string]*LogTypeToken `json:"logTypeToToken"`
+}
+
+// Token used for paginating in the events of a specific log type
+type LogTypeToken struct {
+	S3ObjectKey string `json:"s3ObjectKey"`
+	EventIndex  int    `json:"eventIndex"`
+}
+
+func newPaginationToken() *EventPaginationToken {
+	return &EventPaginationToken{LogTypeToToken: make(map[string]*LogTypeToken)}
+}
+
+func (t *EventPaginationToken) encode() (string, error) {
+	marshaled, err := jsoniter.Marshal(t)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(marshaled), nil
+}
+
+func decodePaginationToken(token string) (*EventPaginationToken, error) {
+	unmarshaled, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return nil, err
+	}
+	result := &EventPaginationToken{}
+	if err = jsoniter.Unmarshal(unmarshaled, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

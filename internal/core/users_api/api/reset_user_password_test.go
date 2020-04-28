@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,36 +23,32 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
+	"github.com/panther-labs/panther/internal/core/users_api/cognito"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-type mockGatewayResetUserPasswordClient struct {
-	gateway.API
-	gatewayErr bool
-}
-
-func (m *mockGatewayResetUserPasswordClient) ResetUserPassword(*string) error {
-	if m.gatewayErr {
-		return &genericapi.AWSError{}
-	}
-	return nil
-}
-
 func TestResetUserPasswordGatewayErr(t *testing.T) {
-	userGateway = &mockGatewayResetUserPasswordClient{gatewayErr: true}
-	input := &models.ResetUserPasswordInput{
-		ID: aws.String("user123"),
-	}
-	assert.Error(t, (API{}).ResetUserPassword(input))
+	mockGateway := &cognito.MockUserGateway{}
+	userGateway = mockGateway
+	userID := aws.String("test-id")
+	mockGateway.On("ResetUserPassword", userID).Return(&genericapi.AWSError{})
+
+	result, err := (API{}).ResetUserPassword(&models.ResetUserPasswordInput{ID: userID})
+	assert.Nil(t, result)
+	assert.Error(t, err)
+	mockGateway.AssertExpectations(t)
 }
 
-func TestResetUserPasswordHandle(t *testing.T) {
-	userGateway = &mockGatewayResetUserPasswordClient{}
-	input := &models.ResetUserPasswordInput{
-		ID: aws.String("user123"),
-	}
-	assert.NoError(t, (API{}).ResetUserPassword(input))
+func TestResetUserPassword(t *testing.T) {
+	mockGateway := &cognito.MockUserGateway{}
+	userGateway = mockGateway
+	mockGateway.On("ResetUserPassword", userID).Return(nil)
+
+	result, err := (API{}).ResetUserPassword(&models.ResetUserPasswordInput{ID: userID})
+	require.NoError(t, err)
+	assert.Equal(t, &models.ResetUserPasswordOutput{ID: userID}, result)
+	mockGateway.AssertExpectations(t)
 }

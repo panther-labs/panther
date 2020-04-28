@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,86 +23,30 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/internal/core/users_api/cognito"
 )
 
-var input = &models.InviteUserInput{
+var inviteInput = &models.InviteUserInput{
 	GivenName:  aws.String("Joe"),
 	Email:      aws.String("joe.blow@panther.io"),
 	FamilyName: aws.String("Blow"),
 }
 var userID = aws.String("1234-5678-9012")
 
-func TestInviteUserCreateErr(t *testing.T) {
-	// create an instance of our test objects
-	mockGateway := &gateway.MockUserGateway{}
-	// replace the global variables with our mock objects
+func TestInviteUser(t *testing.T) {
+	mockGateway := &cognito.MockUserGateway{}
 	userGateway = mockGateway
 
-	// setup gateway expectations
-	mockGateway.On("CreateUser", &gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-	}).Return(aws.String(""), &genericapi.AWSError{})
+	mockGateway.On("CreateUser", inviteInput).Return(&models.User{ID: userID}, nil)
 
 	// call the code we are testing
-	result, err := (API{}).InviteUser(input)
+	result, err := (API{}).InviteUser(inviteInput)
 
 	// assert that the expectations were met
+	require.NoError(t, err)
 	mockGateway.AssertExpectations(t)
-	assert.Nil(t, result)
-	assert.Error(t, err)
-	assert.IsType(t, err, &genericapi.AWSError{})
-}
-
-func TestInviteUserDeleteErr(t *testing.T) {
-	// create an instance of our test objects
-	mockGateway := &gateway.MockUserGateway{}
-	// replace the global variables with our mock objects
-	userGateway = mockGateway
-
-	// setup expectations
-	mockGateway.On("CreateUser", &gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-	}).Return(aws.String(""), &genericapi.AWSError{})
-
-	// call the code we are testing
-	result, err := (API{}).InviteUser(input)
-
-	// assert that the expectations were met
-	mockGateway.AssertExpectations(t)
-	assert.Nil(t, result)
-	assert.Error(t, err)
-	assert.IsType(t, err, &genericapi.AWSError{})
-}
-
-func TestInviteUserHandle(t *testing.T) {
-	// create an instance of our test objects
-	mockGateway := &gateway.MockUserGateway{}
-	// replace the global variables with our mock objects
-	userGateway = mockGateway
-
-	// setup gateway expectations
-	mockGateway.On("CreateUser", &gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-	}).Return(userID, nil)
-
-	// call the code we are testing
-	result, err := (API{}).InviteUser(input)
-
-	// assert that the expectations were met
-	mockGateway.AssertExpectations(t)
-	assert.NotNil(t, result)
-	assert.Equal(t, result, &models.InviteUserOutput{
-		ID: userID,
-	})
-	assert.NoError(t, err)
+	assert.Equal(t, userID, result.ID)
 }

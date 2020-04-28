@@ -1,0 +1,5 @@
+query GetGeneralSettings {
+  generalSettings {
+    ...GeneralSettingsFull
+  }
+}

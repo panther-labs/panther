@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 	"go.uber.org/zap"
@@ -41,23 +40,27 @@ func PollIAMRole(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "iam", defaultRegion).(iamiface.IAMAPI)
+	iamClient, err := getIAMClient(pollerResourceInput, defaultRegion)
+	if err != nil {
+		return nil, err
+	}
+
 	// The event processor sometimes includes resource paths for IAM resources, and sometimes does
 	// not (depending on whether that information is available in CloudTrail). This extracts just
 	// the actual resource name from the ARN.
 	resourceSplit := strings.Split(resourceARN.Resource, "/")
-	role := getRole(client, aws.String(resourceSplit[len(resourceSplit)-1]))
+	role := getRole(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
 
-	snapshot := BuildIAMRoleSnapshot(client, role)
+	snapshot := BuildIAMRoleSnapshot(iamClient, role)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	// Set the correct ResourceID in case the event processor sent it without the path.
 	scanRequest.ResourceID = snapshot.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getRole returns a specific IAM role
@@ -202,13 +205,10 @@ func BuildIAMRoleSnapshot(iamSvc iamiface.IAMAPI, role *iam.Role) *awsmodels.IAM
 // PollIAMRoles generates a snapshot for each IAM Role.
 func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
 	zap.L().Debug("starting IAM Role resource poller")
-	sess := session.Must(session.NewSession(&aws.Config{}))
-	creds, err := AssumeRoleFunc(pollerInput, sess)
+	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err
+		return nil, err // error is logged in getClient()
 	}
-
-	iamSvc := IAMClientFunc(sess, &aws.Config{Credentials: creds}).(iamiface.IAMAPI)
 
 	// List all IAM Roles in the account
 	roles := listRoles(iamSvc)

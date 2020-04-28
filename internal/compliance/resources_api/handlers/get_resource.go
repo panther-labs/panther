@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -49,6 +49,7 @@ func GetResource(request *events.APIGatewayProxyRequest) *events.APIGatewayProxy
 	}
 
 	if len(response.Item) == 0 {
+		zap.L().Debug("could not find resource", zap.String("resourceID", string(resourceID)))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
 	}
 

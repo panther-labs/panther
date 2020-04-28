@@ -2,7 +2,7 @@
 package cfngen
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -45,8 +45,8 @@ type Sub struct {
 // Represents CF Parameter
 type Parameter struct {
 	Type          string
-	Default       interface{} `json:",omitempty"`
-	Description   string
+	Default       interface{}   `json:",omitempty"`
+	Description   string        `json:",omitempty"`
 	AllowedValues []interface{} `json:",omitempty"`
 	MinValue      interface{}   `json:",omitempty"`
 	MaxValue      interface{}   `json:",omitempty"`
@@ -101,8 +101,8 @@ func NewTemplate(description string, parameters map[string]interface{}, resource
 	return
 }
 
-// Re-map characters not allowed in CF names consistently (CF resources must be alphanum)
-var sanitizeResourceName = regexp.MustCompile(`([^[:alpha:]])`)
+// Re-map characters not allowed in CF names consistently (CF resources must be alphanumeric)
+var sanitizeResourceName = regexp.MustCompile(`([^[:alnum:]])`)
 
 func SanitizeResourceName(name string) string {
 	return sanitizeResourceName.ReplaceAllString(name, "")

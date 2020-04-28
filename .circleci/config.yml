@@ -4,49 +4,81 @@ version: 2.1
 executors:
   panther-buildpack:
     docker:
-      - image: pantherlabs/panther-buildpack:1.0.1
-
-# Set of re-usable commands to be used across different jobs
-commands:
-  setup_backend:
-    steps:
-      - checkout
-      - run:
-          name: Install Go and Python libraries
-          command: mage setup:go setup:python
-      - run:
-          name: Install prettier for CloudFormation formatting
-          command: npm install prettier
-
-  setup_frontend:
-    steps:
-      - checkout
-      - run:
-          name: Install JS dependencies
-          command: mage setup:web
+      - image: pantherlabs/panther-buildpack:1.1.2
 
 # The pool of jobs that that our CI will be able to run
 jobs:
-  validate_frontend:
-    executor: panther-buildpack
-    steps:
-      - setup_frontend
-      - run:
-          name: Lint and audit web source
-          command: mage test:web
-
-  validate_backend:
+  mage_test_ci:
     executor: panther-buildpack
     resource_class: xlarge
     steps:
-      - setup_backend
+      - checkout
+      - restore_cache:
+          name: 'Restore cache: go modules'
+          keys:
+            - gomod2-{{ checksum "go.mod" }}
       - run:
-          name: Lint and test the backend infrastructure
-          command: mage test:cfn test:go test:python
+          # Start compiling mage in the background while other caches are restoring
+          name: Compile mage (background)
+          command: mage
+          background: true
+      - restore_cache:
+          name: 'Restore cache: npm'
+          keys:
+            - npm-{{ checksum "package-lock.json" }}
+      - restore_cache:
+          name: 'Restore cache: python env'
+          keys:
+            - venv-{{ checksum "requirements.txt" }}
+      - restore_cache:
+          name: 'Restore cache: .setup binaries'
+          keys:
+            - setup-{{ checksum "tools/mage/setup.go" }}
+
+      - run:
+          # By this point, mage is compiled and all dependencies have been restored from the cache.
+          # "mage setup" will be a no-op unless new dependencies have been introduced.
+          name: Install new dependencies
+          command: mage setup
+
+      - save_cache:
+          name: 'Save cache: go modules'
+          key: gomod2-{{ checksum "go.mod" }}
+          paths:
+            - /go/pkg/mod
+      - save_cache:
+          name: 'Save cache: npm'
+          key: npm-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+      - save_cache:
+          name: 'Save cache: python env'
+          key: venv-{{ checksum "requirements.txt" }}
+          paths:
+            - .setup/venv
+      - save_cache:
+          name: 'Save cache: .setup binaries'
+          key: setup-{{ checksum "tools/mage/setup.go" }}
+          paths:
+            - .setup/golangci-lint
+            - .setup/swagger
+            - .setup/terraform
+
+      - run:
+          name: Run test suite
+          command: mage test:ci
+
+  npm_audit:
+    executor: panther-buildpack
+    steps:
+      - checkout
+      - run:
+          name: Audit NPM packages
+          command: npm audit # does not require installing packages first
 
 workflows:
   version: 2
   pipeline:
     jobs:
-      - validate_frontend
-      - validate_backend
+      - mage_test_ci
+      - npm_audit

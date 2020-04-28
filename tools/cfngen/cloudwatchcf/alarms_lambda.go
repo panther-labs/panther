@@ -1,7 +1,7 @@
 package cloudwatchcf
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,8 @@ package cloudwatchcf
 
 import (
 	"fmt"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 type LambdaAlarm struct {
@@ -27,19 +29,16 @@ type LambdaAlarm struct {
 	lambdaName string
 }
 
-func NewLambdaAlarm(alarmType, metricName, message string, resource map[interface{}]interface{},
-	config *Config) (alarm *LambdaAlarm) {
-
+func NewLambdaAlarm(alarmType, metricName, message string, resource map[string]interface{}) *LambdaAlarm {
 	const (
 		metricDimension = "FunctionName"
 		metricNamespace = "AWS/Lambda"
 	)
 	lambdaName := getResourceProperty(metricDimension, resource)
 	alarmName := AlarmName(alarmType, lambdaName)
-	alarm = &LambdaAlarm{
-		Alarm: *NewAlarm(alarmName,
-			fmt.Sprintf("Lambda %s %s. See: %s#%s", lambdaName, message, documentationURL, lambdaName),
-			config.snsTopicArn),
+	alarm := &LambdaAlarm{
+		Alarm: *NewAlarm(lambdaName, alarmName,
+			fmt.Sprintf("Lambda %s %s. See: %s#%s", lambdaName, message, documentationURL, lambdaName)),
 		lambdaName: lambdaName,
 	}
 	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: alarm.lambdaName}})
@@ -50,44 +49,50 @@ type LambdaMetricFilterAlarm struct {
 	LambdaAlarm
 }
 
-func NewLambdaMetricFilterAlarm(alarmType, metricName, message string, resource map[interface{}]interface{},
-	config *Config) (alarm *LambdaMetricFilterAlarm) {
-
-	alarm = &LambdaMetricFilterAlarm{
-		LambdaAlarm: *NewLambdaAlarm(alarmType, "", message, resource, config),
+func NewLambdaMetricFilterAlarm(alarmType, metricName, message string, resource map[string]interface{}) *LambdaMetricFilterAlarm {
+	alarm := &LambdaMetricFilterAlarm{
+		LambdaAlarm: *NewLambdaAlarm(alarmType, "", message, resource),
 	}
 	alarm.Alarm.Metric(metricFilterNamespace, LambdaMetricFilterName(alarm.lambdaName, metricName), []MetricDimension{})
 	return alarm
 }
 
-func generateLambdaAlarms(resource map[interface{}]interface{}, config *Config) (alarms []*Alarm) {
-	// errors
-	alarms = append(alarms, NewLambdaAlarm("LambdaErrors", "Errors",
-		"is failing", resource, config).SumCountThreshold(0, 60*5))
-
+func generateLambdaAlarms(resource map[string]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
 	// throttles
 	alarms = append(alarms, NewLambdaAlarm("LambdaThrottles", "Throttles",
-		"is being throttled", resource, config).SumCountThreshold(5, 60*5) /* tolerate a few throttles before alarming */)
+		"is being throttled", resource).SumCountThreshold(5, 60*5) /* tolerate a few throttles before alarming */)
+
+	// errors
+	alarms = append(alarms, NewLambdaAlarm("LambdaErrors", "Errors",
+		"is failing", resource).SumCountThreshold(0, 60*5).EvaluationPeriods(2))
 
 	// errors from metric filter (application logs)
 	// NOTE: it is important to not set units because the metric filter values have no units
 	alarms = append(alarms, NewLambdaMetricFilterAlarm("LambdaApplicationErrors", lambdaErrorsMetricFilterName,
-		"is failing", resource, config).SumNoUnitsThreshold(0, 60*5))
+		"is failing", resource).SumNoUnitsThreshold(0, 60*5).EvaluationPeriods(2))
 
 	// warns from metric filter (application logs)
 	// NOTE: it is important to not set units because the metric filter values have no units
 	alarms = append(alarms, NewLambdaMetricFilterAlarm("LambdaApplicationWarns", lambdaWarnsMetricFilterName,
-		"is warning", resource, config).SumNoUnitsThreshold(5, 60*5) /* tolerate a few warnings before alarming */)
+		"is warning", resource).SumNoUnitsThreshold(25, 60*5) /* tolerate a few warnings before alarming */)
 
 	// high water mark memory warning from metric filter
 	const memorySizeKey = "MemorySize"
-	lambdaMem := getResourceFloat32Property(memorySizeKey, resource)
+	var lambdaMem float32
+	// special case for panther-log-processor because it uses !Ref to allow user to set size: read from config file
+	const pantherLogProcessorLambda = "panther-log-processor"
+	if getResourceProperty("FunctionName", resource) == pantherLogProcessorLambda {
+		lambdaMem = (float32)(settings.Infra.LogProcessorLambdaMemorySize)
+	} else {
+		lambdaMem = getResourceFloat32Property(memorySizeKey, resource)
+	}
+
 	const highMemThreshold float32 = 0.9
 	highMemMessage := fmt.Sprintf("is using more than %d%% of available memory (%dMB)", (int)(highMemThreshold*100.0), (int)(lambdaMem))
 	// NOTE: it is important to not set units because the metric filter values have no units
 	alarms = append(alarms, NewLambdaMetricFilterAlarm("LambdaHighMemoryWarn", lambdaMemoryMetricFilterName,
 		// 15 min sustained duration
-		highMemMessage, resource, config).MaxNoUnitsThreshold(lambdaMem*highMemThreshold, 60*5).EvaluationPeriods(3))
+		highMemMessage, resource).MaxNoUnitsThreshold(lambdaMem*highMemThreshold, 60*5).EvaluationPeriods(3))
 
 	// high water mark execution time warning from standard metric
 	const timeoutKey = "Timeout"
@@ -98,7 +103,7 @@ func generateLambdaAlarms(resource map[interface{}]interface{}, config *Config) 
 		(int)(highTimeThreshold*100.0), (int)(lambdaTimeout))
 	alarms = append(alarms, NewLambdaAlarm("LambdaHighExecutionTimeWarn", "Duration",
 		// 15 min sustained duration
-		timeOutMessage, resource, config).MaxMillisecondsThreshold(lambdaTimeout*highTimeThreshold, 60*5).EvaluationPeriods(3))
+		timeOutMessage, resource).MaxMillisecondsThreshold(lambdaTimeout*highTimeThreshold, 60*5).EvaluationPeriods(3))
 
 	return alarms
 }

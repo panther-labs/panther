@@ -1,7 +1,7 @@
 package scheduler
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,12 +27,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
-	snapshotapi "github.com/panther-labs/panther/internal/compliance/snapshot_api/api"
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	snapshotapi "github.com/panther-labs/panther/internal/core/source_api/api"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-const snapshotAPIFunctionName = "panther-snapshot-api"
+const sourceAPIFunctionName = "panther-source-api"
 
 var (
 	sess                               = session.Must(session.NewSession())
@@ -69,7 +69,7 @@ func PollAndIssueNewScans() error {
 func getEnabledIntegrations() (integrations []*models.SourceIntegration, err error) {
 	err = genericapi.Invoke(
 		lambdaClient,
-		snapshotAPIFunctionName,
+		sourceAPIFunctionName,
 		&models.LambdaInput{ListIntegrations: &models.ListIntegrationsInput{
 			IntegrationType: aws.String("aws-scan"),
 		}},

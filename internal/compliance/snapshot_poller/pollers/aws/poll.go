@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,18 +19,11 @@ package aws
  */
 
 import (
+	"fmt"
 	"os"
-	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/aws/aws-sdk-go/service/sts/stsiface"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -46,37 +39,16 @@ type resourcePoller struct {
 	resourcePoller awsmodels.ResourcePoller
 }
 
-const (
-	pantherAuditRoleID = "PantherAuditRole"
-)
-
 var (
-	// AssumeRoleFunc is the function to return valid AWS credentials.
-	AssumeRoleFunc = AssumeRole
-	// AssumeRoleProviderFunc is the default function to setup the assume role provider.
-	AssumeRoleProviderFunc = assumeRoleProvider
-
-	// The amount of time credentials are valid for.
-	assumeRoleDuration = 15 * time.Minute
-	// Allows the credentials to trigger refreshing prior to the credentials actually expiring.
-	assumeRoleExpiryWindow = 5 * time.Second
-
-	// CredentialCache maps the integrationID to its assumed role credentials.
-	// The AssumeRole function will also check if the credential is expired before updating the cache.
-	CredentialCache = make(map[string]*credentials.Credentials)
-
 	// Default region to use when building clients for the individual resource poller
-	defaultRegion = "us-west-2"
-
-	// STSClientFunc is the setup function for the STS client.
-	STSClientFunc = setupSTSClient
+	defaultRegion = endpoints.UsWest2RegionID
 
 	auditRoleName = os.Getenv("AUDIT_ROLE_NAME")
 
 	// IndividualARNResourcePollers maps resource types to their corresponding individual polling
 	// functions for resources whose ID is their ARN.
 	IndividualARNResourcePollers = map[string]func(
-		input *awsmodels.ResourcePollerInput, arn arn.ARN, entry *pollermodels.ScanEntry) interface{}{
+		input *awsmodels.ResourcePollerInput, arn arn.ARN, entry *pollermodels.ScanEntry) (interface{}, error){
 		awsmodels.AcmCertificateSchema:      PollACMCertificate,
 		awsmodels.CloudFormationStackSchema: PollCloudFormationStack,
 		awsmodels.CloudTrailSchema:          PollCloudTrailTrail,
@@ -107,7 +79,7 @@ var (
 	// IndividualResourcePollers maps resource types to their corresponding individual polling
 	// functions for resources whose ID is not their ARN.
 	IndividualResourcePollers = map[string]func(
-		input *awsmodels.ResourcePollerInput, id *utils.ParsedResourceID, entry *pollermodels.ScanEntry) interface{}{
+		input *awsmodels.ResourcePollerInput, id *utils.ParsedResourceID, entry *pollermodels.ScanEntry) (interface{}, error){
 		awsmodels.ConfigServiceSchema:  PollConfigService,
 		awsmodels.GuardDutySchema:      PollGuardDutyDetector,
 		awsmodels.PasswordPolicySchema: PollPasswordPolicyResource,
@@ -146,76 +118,6 @@ var (
 	}
 )
 
-// assumeRoleProvider configures the AssumeRole provider parameters to pass into STS.
-func assumeRoleProvider() func(p *stscreds.AssumeRoleProvider) {
-	return func(p *stscreds.AssumeRoleProvider) {
-		p.Duration = assumeRoleDuration
-		p.ExpiryWindow = assumeRoleExpiryWindow
-	}
-}
-
-func setupSTSClient(sess *session.Session, cfg *aws.Config) stsiface.STSAPI {
-	return sts.New(sess, cfg)
-}
-
-func verifyAssumedCreds(creds *credentials.Credentials) error {
-	svc := STSClientFunc(
-		session.Must(session.NewSession()),
-		&aws.Config{Credentials: creds},
-	)
-	_, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case "AccessDenied":
-				return aerr
-			default:
-				utils.LogAWSError("sts.AssumeRole", err)
-			}
-		}
-	}
-
-	return nil
-}
-
-// AssumeRole assumes an IAM role associated with an AWS Snapshot Integration.
-func AssumeRole(
-	pollerInput *awsmodels.ResourcePollerInput,
-	sess *session.Session,
-) (*credentials.Credentials, error) {
-
-	if pollerInput.AuthSource == nil {
-		panic("must pass non-nil authSource to AssumeRole")
-	}
-
-	if sess == nil {
-		sess = session.Must(session.NewSession())
-	}
-
-	// Check if the integration credentials are cached.
-	creds, exist := CredentialCache[*pollerInput.AuthSource]
-	if exist {
-		if !creds.IsExpired() {
-			zap.L().Debug("using cached credentials")
-			return creds, nil
-		}
-	}
-
-	zap.L().Info("assuming role", zap.String("roleArn", *pollerInput.AuthSource))
-	creds = stscreds.NewCredentials(
-		sess,
-		*pollerInput.AuthSource,
-		AssumeRoleProviderFunc(),
-	)
-	err := verifyAssumedCreds(creds)
-	if err != nil {
-		return nil, errors.New("AWS IAM Role could not be assumed")
-	}
-
-	CredentialCache[*pollerInput.AuthSource] = creds
-	return creds, nil
-}
-
 // Poll coordinates AWS generatedEvents gathering across all relevant resources for compliance monitoring.
 func Poll(scanRequest *pollermodels.ScanEntry) (
 	generatedEvents []*resourcesapimodels.AddResourceEntry, err error) {
@@ -225,14 +127,13 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// Build the audit role manually
-	// 	Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole
-	var auditRoleARN string
+	// 	Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole-($REGION)
 	if len(auditRoleName) == 0 {
-		// Default value
-		auditRoleARN = "arn:aws:iam::" + *scanRequest.AWSAccountID + ":role/" + pantherAuditRoleID
-	} else {
-		auditRoleARN = "arn:aws:iam::" + *scanRequest.AWSAccountID + ":role/" + auditRoleName
+		return nil, errors.New("no audit role configured")
 	}
+	auditRoleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s",
+		*scanRequest.AWSAccountID, auditRoleName) // the auditRole name is for form: PantherAuditRole-($REGION)
+
 	zap.L().Debug("constructed audit role", zap.String("role", auditRoleARN))
 
 	// Extract the role ARN to construct various ResourceIDs.
@@ -272,22 +173,15 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		}
 	}
 
-	// Get the list of active regions to scan
-	sess := session.Must(session.NewSession(&aws.Config{}))
-
-	var creds *credentials.Credentials
-	creds, err = AssumeRoleFunc(pollerResourceInput, sess)
+	ec2Client, err := getEC2Client(pollerResourceInput, defaultRegion)
 	if err != nil {
-		zap.L().Error("unable to assume role to make DescribeRegions call")
-		return
+		return nil, err // getClient() logs error
 	}
 
-	regions := utils.GetRegions(
-		EC2ClientFunc(sess, &aws.Config{Credentials: creds}).(ec2iface.EC2API),
-	)
+	regions := utils.GetRegions(ec2Client)
 	if regions == nil {
 		zap.L().Info("no valid regions to scan")
-		return
+		return nil, nil
 	}
 	pollerResourceInput.Regions = regions
 
@@ -356,7 +250,10 @@ func singleResourceScan(
 	if pollFunction, ok := IndividualResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is not an ARN
 		parsedResourceID := utils.ParseResourceID(*scanRequest.ResourceID)
-		resource = pollFunction(pollerInput, parsedResourceID, scanRequest)
+		resource, err = pollFunction(pollerInput, parsedResourceID, scanRequest)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
+		}
 	} else if pollFunction, ok := IndividualARNResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is an ARN
 		resourceARN, err := arn.Parse(*scanRequest.ResourceID)
@@ -366,7 +263,10 @@ func singleResourceScan(
 			)
 			return nil, err
 		}
-		resource = pollFunction(pollerInput, resourceARN, scanRequest)
+		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
+		}
 	}
 
 	if resource == nil {

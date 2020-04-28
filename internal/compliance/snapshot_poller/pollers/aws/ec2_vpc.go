@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -38,8 +39,16 @@ import (
 var EC2ClientFunc = setupEC2Client
 
 func setupEC2Client(sess *session.Session, cfg *aws.Config) interface{} {
-	cfg.MaxRetries = aws.Int(MaxRetries)
 	return ec2.New(sess, cfg)
+}
+
+func getEC2Client(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (ec2iface.EC2API, error) {
+	client, err := getClient(pollerResourceInput, EC2ClientFunc, "ec2", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(ec2iface.EC2API), nil
 }
 
 // PollEC2VPC polls a single EC2 VPC resource
@@ -47,21 +56,25 @@ func PollEC2VPC(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "ec2", resourceARN.Region).(ec2iface.EC2API)
+	ec2Client, err := getEC2Client(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	vpcID := strings.Replace(resourceARN.Resource, "vpc/", "", 1)
-	vpc := getVPC(client, aws.String(vpcID))
+	vpc := getVPC(ec2Client, aws.String(vpcID))
 
-	snapshot := buildEc2VpcSnapshot(client, vpc)
+	snapshot := buildEc2VpcSnapshot(ec2Client, vpc)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getVPC returns a specific EC2 VPC
@@ -108,8 +121,8 @@ func describeRouteTables(ec2Svc ec2iface.EC2API, vpcID *string) (routeTables []*
 }
 
 // describeVpcs describes all VPCs for a given region
-func describeVpcs(ec2Svc ec2iface.EC2API) (vpcs []*ec2.Vpc) {
-	err := ec2Svc.DescribeVpcsPages(
+func describeVpcs(ec2Svc ec2iface.EC2API) (vpcs []*ec2.Vpc, err error) {
+	err = ec2Svc.DescribeVpcsPages(
 		&ec2.DescribeVpcsInput{},
 		func(page *ec2.DescribeVpcsOutput, lastPage bool) bool {
 			vpcs = append(vpcs, page.Vpcs...)
@@ -117,7 +130,7 @@ func describeVpcs(ec2Svc ec2iface.EC2API) (vpcs []*ec2.Vpc) {
 		})
 
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeVpcsPages", err)
+		return nil, errors.Wrap(err, "EC2.DescribeVpcsPages")
 	}
 	return
 }
@@ -237,16 +250,16 @@ func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
 		zap.L().Debug("building EC2 VPC snapshots", zap.String("region", *regionID))
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
-		creds, err := AssumeRoleFunc(pollerInput, sess)
+		ec2Svc, err := getEC2Client(pollerInput, *regionID)
 		if err != nil {
-			return nil, err
+			return nil, err // error is logged in getClient()
 		}
 
-		ec2Svc := EC2ClientFunc(sess, &aws.Config{Credentials: creds}).(ec2iface.EC2API)
-
 		// Start with generating a list of all VPCs
-		vpcs := describeVpcs(ec2Svc)
+		vpcs, err := describeVpcs(ec2Svc)
+		if err != nil {
+			return nil, errors.Wrapf(err, "PollEc2Vpcs(%#v) in region %s", *pollerInput, *regionID)
+		}
 		if len(vpcs) == 0 {
 			zap.L().Debug("no EC2 VPCs found", zap.String("region", *regionID))
 			continue

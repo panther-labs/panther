@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,8 +35,9 @@ import (
 )
 
 const (
-	typePolicy       = "POLICY"
-	typeRule         = "RULE"
+	typePolicy       = string(models.AnalysisTypePOLICY)
+	typeGlobal       = string(models.AnalysisTypeGLOBAL)
+	typeRule         = string(models.AnalysisTypeRULE)
 	maxDynamoBackoff = 30 * time.Second
 )
 
@@ -65,6 +66,7 @@ type tableItem struct {
 	Tags                      models.Tags                      `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
 	Tests                     []*models.UnitTest               `json:"tests,omitempty"`
 	VersionID                 models.VersionID                 `json:"versionId,omitempty"`
+	DedupPeriodMinutes        models.DedupPeriodMinutes        `json:"dedupPeriodMinutes,omitempty"`
 
 	// Logic type (policy or rule)
 	Type string `json:"type"`
@@ -142,21 +144,40 @@ func (r *tableItem) PolicySummary(status models.ComplianceStatus) *models.Policy
 func (r *tableItem) Rule() *models.Rule {
 	r.normalize()
 	result := &models.Rule{
+		Body:               r.Body,
+		CreatedAt:          r.CreatedAt,
+		CreatedBy:          r.CreatedBy,
+		Description:        r.Description,
+		DisplayName:        r.DisplayName,
+		Enabled:            r.Enabled,
+		ID:                 r.ID,
+		LastModified:       r.LastModified,
+		LastModifiedBy:     r.LastModifiedBy,
+		LogTypes:           r.ResourceTypes,
+		Reference:          r.Reference,
+		Runbook:            r.Runbook,
+		Severity:           r.Severity,
+		Tags:               r.Tags,
+		Tests:              r.Tests,
+		VersionID:          r.VersionID,
+		DedupPeriodMinutes: r.DedupPeriodMinutes,
+	}
+	gatewayapi.ReplaceMapSliceNils(result)
+	return result
+}
+
+// Global converts a Dynamo row into a Global external model.
+func (r *tableItem) Global() *models.Global {
+	r.normalize()
+	result := &models.Global{
 		Body:           r.Body,
 		CreatedAt:      r.CreatedAt,
 		CreatedBy:      r.CreatedBy,
 		Description:    r.Description,
-		DisplayName:    r.DisplayName,
-		Enabled:        r.Enabled,
 		ID:             r.ID,
 		LastModified:   r.LastModified,
 		LastModifiedBy: r.LastModifiedBy,
-		LogTypes:       r.ResourceTypes,
-		Reference:      r.Reference,
-		Runbook:        r.Runbook,
-		Severity:       r.Severity,
 		Tags:           r.Tags,
-		Tests:          r.Tests,
 		VersionID:      r.VersionID,
 	}
 	gatewayapi.ReplaceMapSliceNils(result)

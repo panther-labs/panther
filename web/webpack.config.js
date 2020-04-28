@@ -1,18 +1,21 @@
 /**
- * Copyright 2020 Panther Labs Inc
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 /* eslint-disable prefer-object-spread */
 
 const path = require('path');
@@ -154,13 +157,31 @@ module.exports = {
         },
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
-        use: ['file-loader', 'image-webpack-loader'],
-        enforce: 'pre',
+        test: /\.(jpe?g|png|gif)$/,
+        loader: 'url-loader',
+        options: {
+          limit: 10 * 1024,
+        },
       },
       {
-        test: /\.hbs$/,
-        loader: 'handlebars-loader',
+        test: /\.svg$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'svg-url-loader',
+            options: {
+              limit: 10 * 1024,
+              noquotes: true,
+            },
+          },
+          {
+            loader: 'svgo-loader',
+            options: {
+              plugins: [{ removeTitle: true }, { mergePaths: true }],
+              multipass: true,
+            },
+          },
+        ],
       },
     ],
   },
@@ -198,7 +219,7 @@ module.exports = {
         {
           from: path.resolve(__dirname, 'public'),
           to: path.resolve(__dirname, 'dist'),
-          ignore: ['*.hbs'],
+          ignore: ['*.ejs'],
         },
       ]),
     // Add scripts to the final HTML
@@ -207,9 +228,12 @@ module.exports = {
         {},
         {
           inject: true,
-          template: path.resolve(__dirname, 'public/index.hbs'),
+          template: path.resolve(__dirname, 'public/index.ejs'),
           filename: './index.html',
-          templateParameters: process.env,
+          templateParameters: {
+            GRAPHQL_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
+            AWS_REGION: process.env.AWS_REGION,
+          },
         },
         // If we are in production, we make sure to also minify the HTML
         isEnvProduction
@@ -265,7 +289,7 @@ module.exports = {
       async: isEnvDevelopment,
       useTypescriptIncrementalApi: true,
       checkSyntacticErrors: true,
-      tsconfig: path.resolve(__dirname, '../tsconfig.json'),
+      tsconfig: path.resolve(__dirname, './tsconfig.json'),
       reportFiles: [
         '**',
         '!**/__tests__/**',

@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -45,7 +45,12 @@ func GetRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResp
 	return handleGet(request, typeRule)
 }
 
-// Handle GET request for GetPolicy and GetRule
+// GetRule retrieves a rule from Dynamo or S3.
+func GetGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+	return handleGet(request, typeGlobal)
+}
+
+// Handle GET request for GetPolicy, GetRule, and GetGlobal
 func handleGet(request *events.APIGatewayProxyRequest, codeType string) *events.APIGatewayProxyResponse {
 	input, err := parseGet(request, codeType)
 	if err != nil {
@@ -81,8 +86,10 @@ func handleGet(request *events.APIGatewayProxyRequest, codeType string) *events.
 		}
 		return gatewayapi.MarshalResponse(item.Policy(status.Status), http.StatusOK)
 	}
-
-	return gatewayapi.MarshalResponse(item.Rule(), http.StatusOK)
+	if codeType == typeRule {
+		return gatewayapi.MarshalResponse(item.Rule(), http.StatusOK)
+	}
+	return gatewayapi.MarshalResponse(item.Global(), http.StatusOK)
 }
 
 // Parse GET parameters for GetPolicy and GetRule
@@ -94,6 +101,8 @@ func parseGet(request *events.APIGatewayProxyRequest, codeType string) (*getPara
 	idKey := "policyId"
 	if codeType == typeRule {
 		idKey = "ruleId"
+	} else if codeType == typeGlobal {
+		idKey = "globalId"
 	}
 	id, err := url.QueryUnescape(request.QueryStringParameters[idKey])
 	if err != nil {

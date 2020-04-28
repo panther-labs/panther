@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,6 @@ package aws
  */
 
 import (
-	"errors"
 	"strings"
 	"time"
 
@@ -30,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface"
 	"github.com/cenkalti/backoff"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -52,8 +52,18 @@ var (
 )
 
 func setupCloudFormationClient(sess *session.Session, cfg *aws.Config) interface{} {
-	cfg.MaxRetries = aws.Int(MaxRetries)
 	return cloudformation.New(sess, cfg)
+}
+
+func getCloudFormationClient(pollerResourceInput *awsmodels.ResourcePollerInput,
+	region string) (cloudformationiface.CloudFormationAPI, error) {
+
+	client, err := getClient(pollerResourceInput, CloudFormationClientFunc, "cloudformation", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(cloudformationiface.CloudFormationAPI), nil
 }
 
 // PollCloudFormationStack polls a single CloudFormation stack resource
@@ -61,9 +71,13 @@ func PollCloudFormationStack(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "cloudformation", resourceARN.Region).(cloudformationiface.CloudFormationAPI)
+	cfClient, err := getCloudFormationClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
 	// Although CloudFormation API calls may take either an ARN or name in most cases, we must use
 	// the name here as we do not always get the full ARN from the event processor, we may be missing
 	// the 'additional identifiers' portion. This can lead to problems differentiating between live
@@ -75,7 +89,7 @@ func PollCloudFormationStack(
 	// Split out the stack name from any additional modifiers, and just keep the actual name
 	stackName := strings.Split(resource, "/")[0]
 
-	driftID, err := detectStackDrift(client, aws.String(stackName))
+	driftID, err := detectStackDrift(cfClient, aws.String(stackName))
 	if err != nil {
 		if err.Error() == requeueRequiredError {
 			utils.Requeue(pollermodels.ScanMsg{
@@ -84,24 +98,24 @@ func PollCloudFormationStack(
 				},
 			}, driftDetectionRequeueDelaySeconds)
 		}
-		return nil
+		return nil, nil
 	}
 
 	if driftID != nil {
-		waitForStackDriftDetection(client, driftID)
+		waitForStackDriftDetection(cfClient, driftID)
 	}
 
-	stack := getStack(client, stackName)
+	stack := getStack(cfClient, stackName)
 
-	snapshot := buildCloudFormationStackSnapshot(client, stack)
+	snapshot := buildCloudFormationStackSnapshot(cfClient, stack)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	// We need to do this in case the resourceID passed in was missing the additional identifiers
 	scanRequest.ResourceID = snapshot.ARN
-	return snapshot
+	return snapshot, nil
 }
 
 // getStack returns a specific CloudFormation stack
@@ -125,17 +139,17 @@ func getStack(svc cloudformationiface.CloudFormationAPI, stackName string) *clou
 }
 
 // describeStacks returns all CloudFormation stacks in the account
-func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI) (stacks []*cloudformation.Stack) {
-	err := cloudformationSvc.DescribeStacksPages(&cloudformation.DescribeStacksInput{},
+func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI) (stacks []*cloudformation.Stack, err error) {
+	err = cloudformationSvc.DescribeStacksPages(&cloudformation.DescribeStacksInput{},
 		func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
 			stacks = append(stacks, page.Stacks...)
 			return true
 		})
 
 	if err != nil {
-		utils.LogAWSError("CloudFormation.DescribeStacksPages", err)
+		return nil, errors.Wrap(err, "CloudFormation.DescribeStacksPages")
 	}
-	return
+	return stacks, nil
 }
 
 // detectStackDrift initiates the stack drift detection process, which may take several minutes to complete
@@ -260,16 +274,16 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 	cloudformationStackSnapshots := make(map[string]*awsmodels.CloudFormationStack)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "cloudformation") {
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
-		creds, err := AssumeRoleFunc(pollerInput, sess)
+		cloudformationSvc, err := getCloudFormationClient(pollerInput, *regionID)
 		if err != nil {
-			return nil, err
+			return nil, err // error is logged in getClient()
 		}
 
-		var cloudformationSvc = CloudFormationClientFunc(sess, &aws.Config{Credentials: creds}).(cloudformationiface.CloudFormationAPI)
-
 		// Start with generating a list of all stacks
-		stacks := describeStacks(cloudformationSvc)
+		stacks, err := describeStacks(cloudformationSvc)
+		if err != nil {
+			return nil, errors.Wrapf(err, "PollCloudFormationStacks(%#v) in region %s", *pollerInput, *regionID)
+		}
 		if len(stacks) == 0 {
 			zap.L().Debug("no CloudFormation stacks found", zap.String("region", *regionID))
 			continue
@@ -321,7 +335,10 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 		}
 
 		// Now that the stacks have their full drift information, describe them again
-		updatedStacks := describeStacks(cloudformationSvc)
+		updatedStacks, err := describeStacks(cloudformationSvc)
+		if err != nil {
+			return nil, errors.Wrapf(err, "PollCloudFormationStacks(%#v) in region %s", *pollerInput, *regionID)
+		}
 
 		// Build the stack snapshots
 		for _, stack := range updatedStacks {

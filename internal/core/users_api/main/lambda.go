@@ -1,7 +1,7 @@
 package main
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ package main
 import (
 	"context"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
@@ -31,9 +32,20 @@ import (
 
 var router = genericapi.NewRouter("api", "users", models.Validator(), &api.API{})
 
-func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
+// The users-api also handles custom Cognito triggers
+type lambdaInput struct {
+	models.LambdaInput
+	events.CognitoEventUserPoolsCustomMessage
+}
+
+func lambdaHandler(ctx context.Context, input *lambdaInput) (interface{}, error) {
 	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(input)
+
+	if input.TriggerSource != "" {
+		return api.CognitoTrigger(&input.CognitoEventUserPoolsCustomMessage)
+	}
+
+	return router.Handle(&input.LambdaInput)
 }
 
 func main() {

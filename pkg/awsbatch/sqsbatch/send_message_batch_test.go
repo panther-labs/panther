@@ -1,19 +1,21 @@
 package sqsbatch
 
 /**
- * Copyright 2020 Panther Labs Inc
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 import (
@@ -42,7 +44,7 @@ func (m *mockSQS) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendM
 		return nil, m.err
 	}
 
-	if len(input.GoString()) > maxBytes {
+	if len(input.GoString()) > maxMessageBytes {
 		return nil, errors.New(sqs.ErrCodeBatchRequestTooLong)
 	}
 
@@ -53,7 +55,10 @@ func (m *mockSQS) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendM
 			result.Successful = append(result.Successful, &sqs.SendMessageBatchResultEntry{Id: entry.Id})
 		} else {
 			// All other records fail
-			result.Failed = append(result.Failed, &sqs.BatchResultErrorEntry{Id: entry.Id})
+			result.Failed = append(result.Failed, &sqs.BatchResultErrorEntry{
+				Id:      entry.Id,
+				Message: aws.String("test error"),
+			})
 		}
 	}
 
@@ -72,21 +77,27 @@ func testInput() *sqs.SendMessageBatchInput {
 
 func TestSendMessageBatch(t *testing.T) {
 	client := &mockSQS{}
-	assert.NoError(t, SendMessageBatch(client, 5*time.Second, testInput()))
+	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
+	assert.NoError(t, err)
+	assert.Empty(t, failures)
 	assert.Equal(t, 1, client.callCount)
 }
 
 // Unprocessed items are retried
 func TestSendMessageBatchBackoff(t *testing.T) {
 	client := &mockSQS{unprocessedItems: true}
-	assert.NoError(t, SendMessageBatch(client, 5*time.Second, testInput()))
+	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
+	assert.NoError(t, err)
+	assert.Empty(t, failures)
 	assert.Equal(t, 2, client.callCount)
 }
 
 // Client errors are not retried
 func TestSendMessageBatchPermanentError(t *testing.T) {
 	client := &mockSQS{err: errors.New("permanent")}
-	assert.Error(t, SendMessageBatch(client, 5*time.Second, testInput()))
+	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
+	assert.Error(t, err)
+	assert.Len(t, failures, 2)
 	assert.Equal(t, 1, client.callCount)
 }
 
@@ -115,7 +126,9 @@ func TestSendMessageBatchLargePagination(t *testing.T) {
 		QueueUrl: aws.String("test-queue-url"),
 	}
 
-	assert.NoError(t, SendMessageBatch(client, 5*time.Second, input))
+	failures, err := SendMessageBatch(client, 5*time.Second, input)
+	assert.NoError(t, err)
+	assert.Empty(t, failures)
 	assert.Equal(t, 2, client.callCount)
 }
 
@@ -137,7 +150,10 @@ func TestSendMessageBatchLargePaginationError(t *testing.T) {
 		QueueUrl: aws.String("test-queue-url"),
 	}
 
-	assert.Error(t, SendMessageBatch(client, 5*time.Second, input))
+	failures, err := SendMessageBatch(client, 5*time.Second, input)
+	assert.Error(t, err)
+	assert.Equal(t, sqs.ErrCodeBatchRequestTooLong, err.Error())
+	assert.Len(t, failures, 1)
 	assert.Equal(t, 2, client.callCount)
 }
 
@@ -150,6 +166,8 @@ func TestSendMessageBatchPagination(t *testing.T) {
 	}
 	input := &sqs.SendMessageBatchInput{Entries: entries}
 
-	assert.NoError(t, SendMessageBatch(client, 5*time.Second, input))
+	failures, err := SendMessageBatch(client, 5*time.Second, input)
+	assert.NoError(t, err)
+	assert.Empty(t, failures)
 	assert.Equal(t, 3, client.callCount)
 }

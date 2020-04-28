@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -64,7 +64,6 @@ func TestEC2BuildAmiSnapshot(t *testing.T) {
 func TestEC2PollAmis(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Amis(&awsmodels.ResourcePollerInput{
@@ -82,7 +81,6 @@ func TestEC2PollAmis(t *testing.T) {
 func TestEC2PollAmiError(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Amis(&awsmodels.ResourcePollerInput{
@@ -93,6 +91,6 @@ func TestEC2PollAmiError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Empty(t, resources)
 }

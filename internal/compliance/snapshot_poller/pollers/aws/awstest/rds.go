@@ -1,7 +1,7 @@
 package awstest
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -161,7 +161,7 @@ var (
 				PercentProgress:                  aws.Int64(100),
 				StorageType:                      aws.String("gp2"),
 				Encrypted:                        aws.Bool(false),
-				DBSnapshotArn:                    aws.String("arn:aws:rds:us-west-2:857418155548:snapshot:rds:example-instance-2019-01-01-01-01"),
+				DBSnapshotArn:                    aws.String("arn:aws:rds:us-west-2:111111111111:snapshot:rds:example-instance-2019-01-01-01-01"),
 				IAMDatabaseAuthenticationEnabled: aws.Bool(false),
 				DbiResourceId:                    aws.String("db-asdfasdfasdfasdf"),
 			},

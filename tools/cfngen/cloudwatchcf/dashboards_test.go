@@ -1,7 +1,7 @@
 package cloudwatchcf
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,6 @@ import (
 )
 
 func TestDashboards(t *testing.T) {
-	awsRegion := "eu-west-1"
 	name := "TestDashboard"
 	dashboardJSON := `
 {
@@ -37,17 +36,17 @@ func TestDashboards(t *testing.T) {
 	expectedDashboardJSON := `
 {
 "some-dashboard_parameter": "foo",
-"region": "eu-west-1",
+"region": "${AWS::Region}",
 }
 `
 	expectedDashboard := &Dashboard{
 		Type: "AWS::CloudWatch::Dashboard",
 		Properties: DashboardProperties{
-			DashboardName: name + "-" + awsRegion,
-			DashboardBody: expectedDashboardJSON,
+			DashboardName: SubString{name + "-${AWS::Region}"},
+			DashboardBody: SubString{expectedDashboardJSON},
 		},
 	}
 
-	dashboard := NewDashboard(awsRegion, name, dashboardJSON)
+	dashboard := NewDashboard(name, dashboardJSON)
 	require.Equal(t, expectedDashboard, dashboard)
 }

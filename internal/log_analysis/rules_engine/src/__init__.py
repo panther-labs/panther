@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class EventMatch:
     """Represents an event that matched a rule"""
@@ -25,7 +27,9 @@ class EventMatch:
     rule_version: str
     log_type: str
     dedup: str
+    dedup_period_mins: int
     event: Dict[str, Any]
+    title: Optional[str] = None
 
 
 @dataclass
@@ -36,16 +40,13 @@ class AlertInfo:
     alert_update_time: datetime
 
 
-# pylint: disable=invalid-name
-@dataclass
-class OutputNotification:
-    """The notification that will be send to the SNS topic when we create a new object in S3.
+@dataclass(frozen=True, eq=True)
+class OutputGroupingKey:
+    """Class representing the keys used for grouping output events to files"""
+    rule_id: str
+    log_type: str
+    dedup: str
 
-    This class will be serialized to JSON, thus following camelCase rather than snake_case
-    """
-    s3Bucket: str
-    s3ObjectKey: str
-    events: int
-    bytes: int
-    id: str
-    type: str = 'RuleOutput'
+    def table_name(self) -> str:
+        """ Output the name of the Glue table name for this log type"""
+        return self.log_type.lower().replace('.', '_')

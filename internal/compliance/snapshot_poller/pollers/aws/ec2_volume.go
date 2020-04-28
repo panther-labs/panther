@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"go.uber.org/zap"
@@ -39,20 +38,24 @@ import (
 func PollEC2Volume(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
-	scanRequest *pollermodels.ScanEntry) interface{} {
+	scanRequest *pollermodels.ScanEntry) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "ec2", resourceARN.Region).(ec2iface.EC2API)
+	ec2Client, err := getEC2Client(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	volumeID := strings.Replace(resourceARN.Resource, "volume/", "", 1)
-	volume := getVolume(client, aws.String(volumeID))
-	snapshot := buildEc2VolumeSnapshot(client, volume)
+	volume := getVolume(ec2Client, aws.String(volumeID))
+	snapshot := buildEc2VolumeSnapshot(ec2Client, volume)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.ARN = scanRequest.ResourceID
-	return snapshot
+	return snapshot, nil
 }
 
 // getVolume returns a specific EC2 volume
@@ -176,13 +179,10 @@ func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 	ec2VolumeSnapshots := make(map[string]*awsmodels.Ec2Volume)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
-		creds, err := AssumeRoleFunc(pollerInput, sess)
+		ec2Svc, err := getEC2Client(pollerInput, *regionID)
 		if err != nil {
-			return nil, err
+			return nil, err // error is logged in getClient()
 		}
-
-		ec2Svc := EC2ClientFunc(sess, &aws.Config{Credentials: creds}).(ec2iface.EC2API)
 
 		// Start with generating a list of all volumes
 		volumes := describeVolumes(ec2Svc)

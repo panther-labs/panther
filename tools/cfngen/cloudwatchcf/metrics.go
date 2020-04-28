@@ -1,7 +1,7 @@
 package cloudwatchcf
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@ package cloudwatchcf
 
 import (
 	"github.com/panther-labs/panther/tools/cfngen"
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
@@ -94,20 +95,15 @@ func LambdaMetricFilterName(lambdaName, metricName string) string {
 
 // GenerateMetrics will read the CF in yml files in the cfDirs, and generate CF for CloudWatch metric filters for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateMetrics(cfDirs ...string) ([]byte, error) {
+func GenerateMetrics(cfFiles ...string) ([]byte, error) {
 	var metricFilters []*MetricFilter
 
-	for _, cfDir := range cfDirs {
-		err := walkYamlFiles(cfDir, func(path string) (err error) {
-			fileMetricFilters, err := generateMetricFilters(path)
-			if err == nil {
-				metricFilters = append(metricFilters, fileMetricFilters...)
-			}
-			return err
-		})
+	for _, path := range cfFiles {
+		fileMetricFilters, err := generateMetricFilters(path)
 		if err != nil {
 			return nil, err
 		}
+		metricFilters = append(metricFilters, fileMetricFilters...)
 	}
 
 	resources := make(map[string]interface{})
@@ -120,12 +116,12 @@ func GenerateMetrics(cfDirs ...string) ([]byte, error) {
 }
 
 func generateMetricFilters(fileName string) (metricFilters []*MetricFilter, err error) {
-	yamlObj, err := readYaml(fileName)
+	jsonObj, err := cfnparse.ParseTemplate(fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	walkYamlMap(yamlObj, func(resourceType string, resource map[interface{}]interface{}) {
+	walkJSONMap(jsonObj, func(resourceType string, resource map[string]interface{}) {
 		metricFilters = append(metricFilters, metricFilterDispatchOnType(resourceType, resource)...)
 	})
 
@@ -133,7 +129,7 @@ func generateMetricFilters(fileName string) (metricFilters []*MetricFilter, err 
 }
 
 // dispatch on "Type" to create specific metric filters
-func metricFilterDispatchOnType(resourceType string, resource map[interface{}]interface{}) (metricFilters []*MetricFilter) {
+func metricFilterDispatchOnType(resourceType string, resource map[string]interface{}) (metricFilters []*MetricFilter) {
 	switch resourceType { // could be a map of key -> func if this gets long
 	case "AWS::Serverless::Function":
 		return generateLambdaMetricFilters(resource)

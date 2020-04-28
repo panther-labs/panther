@@ -1,7 +1,7 @@
 package classification
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -46,11 +46,9 @@ type ClassifierResult struct {
 	// Events contains the parsed events
 	// If the classification process was not successful and the log is from an
 	// unsupported type, this will be nil
-	Events []interface{}
+	Events []*parsers.PantherLog
 	// LogType is the identified type of the log
 	LogType *string
-	// Line that was classified and parsed
-	LogLine string
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
@@ -81,18 +79,23 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []interface{}) {
+func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []*parsers.PantherLog) {
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Error("parser panic",
+			zap.L().Debug("parser panic",
 				zap.String("parser", parser.LogType()),
 				zap.Error(fmt.Errorf("%v", r)),
-				zap.String("stacktrace", string(debug.Stack())),
-				zap.String("log", log))
+				zap.String("stacktrace", string(debug.Stack())))
 			parsedEvents = nil // return indicator that parse failed
 		}
 	}()
-	parsedEvents = parser.Parse(log)
+	parsedEvents, err := parser.Parse(log)
+	if err != nil {
+		zap.L().Debug("parser failed",
+			zap.String("parser", parser.LogType()),
+			zap.Error(err))
+		return nil
+	}
 	return parsedEvents
 }
 
@@ -109,7 +112,6 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 
 	// update aggregate stats
 	defer func() {
-		result.LogLine = log // set here to get "cleaned" version
 		c.stats.ClassifyTimeMicroseconds = uint64(time.Since(startClassify).Microseconds())
 		c.stats.BytesProcessedCount += uint64(len(log))
 		c.stats.LogLineCount++

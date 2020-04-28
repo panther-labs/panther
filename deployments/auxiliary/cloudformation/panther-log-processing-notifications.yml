@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -98,7 +98,7 @@ Resources:
   Subscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !Sub arn:${AWS::Partition}:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications
+      Endpoint: !Sub arn:${AWS::Partition}:sqs:${PantherRegion}:${MasterAccountId}:panther-input-data-notifications-queue
       Protocol: sqs
       RawMessageDelivery: false
       TopicArn: !Ref Topic

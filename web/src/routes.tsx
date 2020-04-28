@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,37 +18,40 @@
 
 import React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
-import ListPoliciesPage from 'Pages/list-policies';
-import OverviewPage from 'Pages/compliance-overview';
-import ListResourcesPage from 'Pages/list-resources';
-import ResourceDetailsPage from 'Pages/resource-details';
-import PolicyDetailsPage from 'Pages/policy-details';
-import GeneralSettingsPage from 'Pages/general-settings';
-import SignInPage from 'Pages/sign-in';
-import DestinationsPage from 'Pages/destinations';
-import UsersPage from 'Pages/users';
-import RuleDetailsPage from 'Pages/rule-details';
-import ListRulesPage from 'Pages/list-rules';
-import EditRulePage from 'Pages/edit-rule';
-import CreateRulePage from 'Pages/create-rule';
-import AlertDetailsPage from 'Pages/alert-details';
-import EditPolicyPage from 'Pages/edit-policy';
-import CreatePolicyPage from 'Pages/create-policy';
-import ListAlertsPage from 'Pages/list-alerts';
-import Layout from 'Components/layout';
-import CreateComplianceSourcePage from 'Pages/create-compliance-source';
-import CreateLogSourcePage from 'Pages/create-log-source';
-import ListComplianceSourcesPagee from 'Pages/list-compliance-sources';
-import ListLogSourcesPage from 'Pages/list-log-sources';
+import ListPoliciesPage from 'Pages/ListPolicies';
+import OverviewPage from 'Pages/ComplianceOverview';
+import ListResourcesPage from 'Pages/ListResources';
+import ResourceDetailsPage from 'Pages/ResourceDetails';
+import PolicyDetailsPage from 'Pages/PolicyDetails';
+import GeneralSettingsPage from 'Pages/GeneralSettings';
+import SignInPage from 'Pages/SignIn';
+import DestinationsPage from 'Pages/Destinations';
+import UsersPage from 'Pages/Users';
+import RuleDetailsPage from 'Pages/RuleDetails';
+import LandingPage from 'Pages/Landing';
+import ListRulesPage from 'Pages/ListRules';
+import EditRulePage from 'Pages/EditRule';
+import CreateRulePage from 'Pages/CreateRule';
+import AlertDetailsPage from 'Pages/AlertDetails';
+import EditPolicyPage from 'Pages/EditPolicy';
+import CreatePolicyPage from 'Pages/CreatePolicy';
+import ListAlertsPage from 'Pages/ListAlerts';
+import Layout from 'Components/Layout';
+import CreateComplianceSourcePage from 'Pages/CreateComplianceSource';
+import CreateLogSourcePage from 'Pages/CreateLogSource';
+import ListComplianceSourcesPage from 'Pages/ListComplianceSources';
+import ListLogSourcesPage from 'Pages/ListLogSources';
 import urls from 'Source/urls';
-import GuardedRoute from 'Components/guarded-route';
-import ForgotPasswordPage from 'Pages/forgot-password';
-import ForgotPasswordConfirmPage from 'Pages/forgot-password-confirm';
-import ErrorBoundary from 'Components/error-boundary';
+import GuardedRoute from 'Components/GuardedRoute';
+import ForgotPasswordPage from 'Pages/ForgotPassword';
+import ForgotPasswordConfirmPage from 'Pages/ForgotPasswordConfirm';
+import ErrorBoundary from 'Components/ErrorBoundary';
 import Page404 from 'Pages/404';
-import APIErrorFallback from 'Components/utils/api-error-fallback';
-import LogAnalysisOverview from 'Pages/log-analysis-overview';
-import PromptController from 'Components/utils/prompt-controller';
+import APIErrorFallback from 'Components/utils/ApiErrorFallback';
+import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
+import EditComplianceSourcePage from 'Pages/EditComplianceSource';
+import EditLogSourcePage from 'Pages/EditLogSource';
+import PromptController from 'Components/utils/PromptController';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -77,8 +80,8 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
           <ErrorBoundary>
             <APIErrorFallback>
               <Switch>
+                <Route exact path="/" component={LandingPage} />
                 /******************** COMPLIANCE ******************************/
-                <Redirect exact from="/" to={urls.compliance.overview()} />
                 <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
                 <Route exact path={urls.compliance.overview()} component={OverviewPage} />
                 <Route exact path={urls.compliance.policies.list()} component={ListPoliciesPage} />
@@ -110,12 +113,17 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Route
                   exact
                   path={urls.compliance.sources.list()}
-                  component={ListComplianceSourcesPagee}
+                  component={ListComplianceSourcesPage}
                 />
                 <Route
                   exact
                   path={urls.compliance.sources.create()}
                   component={CreateComplianceSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.compliance.sources.edit(':id')}
+                  component={EditComplianceSourcePage}
                 />
                 /******************** LOG ANALYSIS ******************************/
                 <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />
@@ -144,7 +152,13 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.logAnalysis.sources.create()}
                   component={CreateLogSourcePage}
                 />
+                <Route
+                  exact
+                  path={urls.logAnalysis.sources.edit(':id')}
+                  component={EditLogSourcePage}
+                />
                 /******************** SETTINGS ******************************/
+                <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
                 <Route exact path={urls.settings.destinations()} component={DestinationsPage} />

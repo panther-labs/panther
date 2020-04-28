@@ -1,7 +1,7 @@
 package dashboards
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,11 +37,11 @@ The methodology for adding dashboards is to:
 */
 
 // Dashboards returns all the declared dashboards
-func Dashboards(awsRegion string) (dashboards []*cloudwatchcf.Dashboard) {
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherOverview", overviewJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherInfrastructure", infraJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherAlertProcessing", alertsJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherRemediation", remediationJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard(awsRegion, "PantherLogProcessing", logProcessingJSON))
+func Dashboards() (dashboards []*cloudwatchcf.Dashboard) {
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherOverview", overviewJSON))
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherCloudSecurity", infraJSON))
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherAlertProcessing", alertsJSON))
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherRemediation", remediationJSON))
+	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherLogAnalysis", logProcessingJSON))
 	return dashboards
 }

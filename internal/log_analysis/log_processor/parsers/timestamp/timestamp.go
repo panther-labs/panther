@@ -1,7 +1,7 @@
 package timestamp
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@ package timestamp
  */
 
 import (
+	"math"
 	"strconv"
 	"time"
 )
@@ -34,6 +35,10 @@ const (
 	jsonMarshalLayout = `"2006-01-02 15:04:05.000000000"`
 
 	ansicWithTZUnmarshalLayout = `"Mon Jan 2 15:04:05 2006 MST"` // similar to time.ANSIC but with MST
+
+	fluentdTimestampLayout = `"2006-01-02 15:04:05 -0700"`
+
+	suricataTimestampLayout = `"2006-01-02T15:04:05.999999999Z0700"`
 )
 
 // use these functions to parse all incoming dates to ensure UTC consistency
@@ -44,6 +49,10 @@ func Parse(layout, value string) (RFC3339, error) {
 
 func Unix(sec int64, nsec int64) RFC3339 {
 	return (RFC3339)(time.Unix(sec, nsec).UTC())
+}
+
+func Now() RFC3339 {
+	return (RFC3339)(time.Now().UTC())
 }
 
 type RFC3339 time.Time
@@ -76,7 +85,7 @@ func (ts *ANSICwithTZ) UnmarshalJSON(text []byte) (err error) {
 	if err != nil {
 		return
 	}
-	*ts = (ANSICwithTZ)(t)
+	*ts = (ANSICwithTZ)(t.UTC())
 	return
 }
 
@@ -96,7 +105,65 @@ func (ts *UnixMillisecond) UnmarshalJSON(jsonBytes []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	t := time.Unix(0, value*time.Millisecond.Nanoseconds()).UTC()
-	*ts = (UnixMillisecond)(t)
+	t := time.Unix(0, value*time.Millisecond.Nanoseconds())
+	*ts = (UnixMillisecond)(t.UTC())
+	return nil
+}
+
+type FluentdTimestamp time.Time
+
+func (ts *FluentdTimestamp) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func (ts *FluentdTimestamp) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
+}
+
+func (ts *FluentdTimestamp) UnmarshalJSON(jsonBytes []byte) (err error) {
+	t, err := time.Parse(fluentdTimestampLayout, string(jsonBytes))
+	if err != nil {
+		return
+	}
+	*ts = (FluentdTimestamp)(t.UTC())
+	return
+}
+
+type SuricataTimestamp time.Time
+
+func (ts *SuricataTimestamp) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func (ts *SuricataTimestamp) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
+}
+
+func (ts *SuricataTimestamp) UnmarshalJSON(jsonBytes []byte) (err error) {
+	t, err := time.Parse(suricataTimestampLayout, string(jsonBytes))
+	if err != nil {
+		return
+	}
+	*ts = (SuricataTimestamp)(t.UTC())
+	return
+}
+
+// UnixFloat for JSON timestamps that are in unix seconds + fractions of a second
+type UnixFloat time.Time
+
+func (ts *UnixFloat) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+func (ts *UnixFloat) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
+}
+func (ts *UnixFloat) UnmarshalJSON(jsonBytes []byte) (err error) {
+	f, err := strconv.ParseFloat(string(jsonBytes), 64)
+	if err != nil {
+		return err
+	}
+	intPart, fracPart := math.Modf(f)
+	t := time.Unix(int64(intPart), int64(fracPart*1e9))
+	*ts = (UnixFloat)(t.UTC())
 	return nil
 }

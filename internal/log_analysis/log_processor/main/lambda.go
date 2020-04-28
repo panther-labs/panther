@@ -1,7 +1,7 @@
 package main
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -48,12 +48,11 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
 	}()
 
-	// this is not likely to happen in production but needed to avoid opening sessions in tests w/no events
-	if len(event.Records) == 0 {
-		return err
+	messages := make([]string, len(event.Records))
+	for i, record := range event.Records {
+		messages[i] = record.Body
 	}
-
-	dataStreams, err := sources.ReadSQSMessages(event.Records)
+	dataStreams, err := sources.ReadSnsMessages(messages)
 	if err != nil {
 		return err
 	}

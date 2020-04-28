@@ -1,7 +1,7 @@
 package sources
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -42,12 +42,12 @@ const (
 	cloudTrailValidationMessage = "CloudTrail validation message."
 )
 
-// ReadSQSMessages reads incoming messages containing SNS notifications and returns a slice of DataStream items
-func ReadSQSMessages(messages []events.SQSMessage) (result []*common.DataStream, err error) {
-	zap.L().Debug("reading data for messages", zap.Int("numMessages", len(messages)))
+// ReadSnsMessages reads incoming messages containing SNS notifications and returns a slice of DataStream items
+func ReadSnsMessages(messages []string) (result []*common.DataStream, err error) {
+	zap.L().Debug("reading data from messages", zap.Int("numMessages", len(messages)))
 	for _, message := range messages {
 		snsNotificationMessage := &SnsNotification{}
-		if err := jsoniter.UnmarshalFromString(message.Body, snsNotificationMessage); err != nil {
+		if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
 			return nil, err
 		}
 
@@ -103,7 +103,7 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 	}
 	for _, s3Object := range s3Objects {
 		var dataStream *common.DataStream
-		dataStream, err = readS3Object(s3Object, notification.TopicArn)
+		dataStream, err = readS3Object(s3Object)
 		if err != nil {
 			return
 		}
@@ -112,7 +112,7 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 	return result, err
 }
 
-func readS3Object(s3Object *S3ObjectInfo, topicArn string) (dataStream *common.DataStream, err error) {
+func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {
 	operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
 	defer func() {
 		operation.Stop()
@@ -122,7 +122,7 @@ func readS3Object(s3Object *S3ObjectInfo, topicArn string) (dataStream *common.D
 			zap.String("key", s3Object.S3ObjectKey))
 	}()
 
-	s3Client, err := getS3Client(s3Object.S3Bucket, topicArn)
+	s3Client, err := getS3Client(s3Object)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)

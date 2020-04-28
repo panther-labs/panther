@@ -1,0 +1,5 @@
+mutation UpdateDestination($input: DestinationInput!) {
+  updateDestination(input: $input) {
+    ...DestinationFull
+  }
+}

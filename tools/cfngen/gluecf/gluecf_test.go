@@ -1,7 +1,7 @@
 package gluecf
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,11 +19,13 @@ package gluecf
  */
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
@@ -40,22 +42,18 @@ type commonFields struct {
 }
 
 func TestTablesCloudFormation(t *testing.T) {
-	expectedFile := "testdata/gluecf.json.cf"
-
 	// use simple consistent reference set of parsers
-	table, err := awsglue.NewGlueMetadata(awsglue.LogS3Prefix, awsglue.LogProcessingDatabaseName, "dummy", "dummy",
-		awsglue.GlueTableHourly, false, &dummyParserEvent{})
-	require.NoError(t, err)
-	tables := []*awsglue.GlueMetadata{table}
+	table := awsglue.NewGlueTableMetadata(models.LogData, "Log.Type", "dummy", awsglue.GlueTableHourly, &dummyParserEvent{})
+	tables := []*awsglue.GlueTableMetadata{table}
 
 	cf, err := GenerateTables(tables)
 	require.NoError(t, err)
 
-	// uncomment to make a new expected file
-	// writeTestFile(cf, expectedFile)
+	const expectedFile = "testdata/gluecf.json.cf"
+	// uncomment to write new expected file
+	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
 
-	expectedOutput, err := readTestFile(expectedFile)
+	expected, err := ioutil.ReadFile(expectedFile)
 	require.NoError(t, err)
-
-	assert.Equal(t, expectedOutput, cf)
+	assert.JSONEq(t, string(expected), string(cf))
 }

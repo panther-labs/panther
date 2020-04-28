@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,45 +19,47 @@ package mage
  */
 
 import (
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
-func TestSwaggerPattern(t *testing.T) {
-	assert.False(t, swaggerPattern.MatchString(""))
-	assert.False(t, swaggerPattern.MatchString("\n      DefinitionBody: myfile.json"))
-	assert.False(t, swaggerPattern.MatchString("\n      DefinitionBody: \napi.yml"))
-	assert.False(t, swaggerPattern.MatchString("DefinitionBody: api.yml"))
-
-	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody:api.yml"))
-	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody: api/compliance.yml  "))
-	assert.True(t, swaggerPattern.MatchString("\n      DefinitionBody:    api/compliance.yml # trailing comment"))
-
-	// Ensure spaces and comments are consumed
-	replaced := swaggerPattern.ReplaceAllString("\n      DefinitionBody: api/compliance.yml # trailing comment", "X")
-	assert.Equal(t, replaced, "X")
-}
-
 func TestEmbedAPIsNoChange(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/no-api.yml")
+	cfn, err := cfnparse.ParseTemplate("testdata/no-api.yml")
+	require.NoError(t, err)
+	expectedMap, err := cfnparse.ParseTemplate("testdata/no-api.yml")
 	require.NoError(t, err)
 
-	transformed, err := embedAPIs(data)
+	require.NoError(t, embedAPIs(cfn))
+
+	// The mixing of map[interface{}]interface{} and map[string]interface{} makes direct comparisons hard,
+	// marshal first as yaml and then compare
+	result, err := yaml.Marshal(cfn)
 	require.NoError(t, err)
-	assert.Nil(t, transformed) // no changes - nil is returned
+	expected, err := yaml.Marshal(expectedMap)
+	require.NoError(t, err)
+
+	assert.YAMLEq(t, string(expected), string(result))
 }
 
 func TestEmbedAPIs(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/valid-api.yml")
+	cfn, err := cfnparse.ParseTemplate("testdata/valid-api.yml")
+	require.NoError(t, err)
+	expectedMap, err := cfnparse.ParseTemplate("testdata/valid-api-expected-output.yml")
 	require.NoError(t, err)
 
-	transformed, err := embedAPIs(data)
+	require.NoError(t, embedAPIs(cfn))
+
+	// The mixing of map[interface{}]interface{} and map[string]interface{} makes direct comparisons hard,
+	// marshal first as yaml and then compare
+	result, err := yaml.Marshal(cfn)
+	require.NoError(t, err)
+	expected, err := yaml.Marshal(expectedMap)
 	require.NoError(t, err)
 
-	expected, err := ioutil.ReadFile("testdata/valid-api-expected-output.yml")
-	require.NoError(t, err)
-	assert.Equal(t, string(expected), string(transformed))
+	assert.YAMLEq(t, string(expected), string(result))
 }

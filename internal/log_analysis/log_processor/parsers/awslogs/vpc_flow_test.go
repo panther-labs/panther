@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -58,7 +59,8 @@ func TestStandardVpcFlowLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
-	expectedEvent.AppendAnyIPAddresses("172.31.20.31", "52.119.169.95")
+	expectedEvent.AppendAnyIPAddress("172.31.20.31")
+	expectedEvent.AppendAnyIPAddress("52.119.169.95")
 	expectedEvent.AppendAnyAWSAccountIds("348372346321")
 
 	checkVPCFlowLog(t, vpcFlowDefaultHeader, log, expectedEvent)
@@ -97,7 +99,10 @@ func TestExtendedVpcFlowLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.VPCFlow")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedStartTime)
-	expectedEvent.AppendAnyIPAddresses("172.31.20.31", "52.119.169.95", "76.198.154.105", "172.31.88.3")
+	expectedEvent.AppendAnyIPAddress("172.31.20.31")
+	expectedEvent.AppendAnyIPAddress("52.119.169.95")
+	expectedEvent.AppendAnyIPAddress("76.198.154.105")
+	expectedEvent.AppendAnyIPAddress("172.31.88.3")
 	expectedEvent.AppendAnyAWSAccountIds("348372346321")
 	expectedEvent.AppendAnyAWSInstanceIds("i-038407d32b0f38c60")
 
@@ -126,7 +131,9 @@ func TestVpcFlowLogNoData(t *testing.T) {
 
 func TestVpcFlowLogHeader(t *testing.T) {
 	parser := &VPCFlowParser{}
-	require.Equal(t, []interface{}{}, parser.Parse(vpcFlowDefaultHeader))
+	events, err := parser.Parse(vpcFlowDefaultHeader)
+	require.NoError(t, err)
+	require.Empty(t, events)
 }
 
 func TestVpcFlowLogType(t *testing.T) {
@@ -135,15 +142,12 @@ func TestVpcFlowLogType(t *testing.T) {
 }
 
 func checkVPCFlowLog(t *testing.T, header, log string, expectedEvent *VPCFlow) {
-	parser := &VPCFlowParser{}
-	parser.Parse(header)
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*VPCFlow)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	require.Equal(t, expectedEvent, event)
+	expectedEvent.SetEvent(expectedEvent)
+	parser := (&VPCFlowParser{}).New() // important to call New() to initialize reader
+	noevents, noerr := parser.Parse(header)
+	require.Empty(t, noevents, "Header parsing should not return events")
+	require.NotNil(t, noevents, "Header parsing should return empty events")
+	require.NoError(t, noerr, "Header parsing should not return an error")
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

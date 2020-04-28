@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,14 +35,16 @@ import (
 func TestEC2DescribeVpcs(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeVpcsPages"})
 
-	out := describeVpcs(mockSvc)
+	out, err := describeVpcs(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestEC2DescribeVpcsError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeVpcsPages"})
 
-	out := describeVpcs(mockSvc)
+	out, err := describeVpcs(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -115,7 +117,6 @@ func TestEC2BuildVpcSnapshot(t *testing.T) {
 func TestEC2PollVpcs(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Vpcs(&awsmodels.ResourcePollerInput{
@@ -138,7 +139,6 @@ func TestEC2PollVpcs(t *testing.T) {
 func TestEC2PollVpcsError(t *testing.T) {
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, err := PollEc2Vpcs(&awsmodels.ResourcePollerInput{
@@ -149,6 +149,6 @@ func TestEC2PollVpcsError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Empty(t, resources)
 }

@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,15 +17,13 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Template with two embedded api bodies
-
 Resources:
   FirstApi:
     Type: AWS::Serverless::Api
     Properties:
-      # preceding comment
       DefinitionBody:
         consumes:
-        - application/json
+          - application/json
         definitions:
           ComplianceStatus:
             type: object
@@ -45,35 +43,34 @@ Resources:
             get:
               operationId: GetStatus
               parameters:
-              - $ref: '#/parameters/policyId'
+                - $ref: '#/parameters/policyId'
               responses:
-                "200":
+                '200':
                   description: OK
                   schema:
                     $ref: '#/definitions/ComplianceStatus'
               security:
-              - sigv4: []
+                - sigv4: []
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 passthroughBehavior: never
                 type: aws_proxy
                 uri:
-                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${TestHandlerFunction}/invocations
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-test-api/invocations
               x-amazon-apigateway-request-validator: validate-all
         produces:
-        - application/json
+          - application/json
         schemes:
-        - https
+          - https
         securityDefinitions:
           sigv4:
             in: header
             name: Authorization
             type: apiKey
             x-amazon-apigateway-authtype: awsSigv4
-        swagger: "2.0"
+        swagger: '2.0'
         x-amazon-apigateway-request-validators:
           validate-all:
             validateRequestBody: true
             validateRequestParameters: true
-      # trailing comment
       Name: first-api

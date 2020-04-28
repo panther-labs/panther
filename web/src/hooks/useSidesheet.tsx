@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 /* A hook for getting access to the context value */
 import React from 'react';
-import { SidesheetContext } from 'Components/utils/sidesheet-context';
+import { SidesheetContext } from 'Components/utils/Sidesheet';
 
 const useSidesheet = () => React.useContext(SidesheetContext);
 

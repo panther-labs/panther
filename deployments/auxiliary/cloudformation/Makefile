@@ -12,5 +12,5 @@ upload-single:
 	if [[ $$version != "" ]]; then \
 		aws s3 cp $(template) s3://$(bucket)/$$templateDisplayName/$$version/template.yml --acl public-read; \
 	fi; \
-	aws s3 cp $(template) s3://$(bucket)/$$templateDisplayName/latest/template.yml --acl public-read; \
+	aws s3 cp $(template) s3://$(bucket)/$$templateDisplayName/latest/template.yml --acl public-read;
 

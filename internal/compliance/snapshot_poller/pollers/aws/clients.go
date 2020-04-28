@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,15 +19,35 @@ package aws
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"go.uber.org/zap"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 
-const MaxRetries = 6
+const (
+	// The amount of time credentials are valid
+	assumeRoleDuration = time.Hour
+	// retries on default session
+	maxRetries = 6
+
+	// error message for failure
+	clientErrMessage = "failed to get service client"
+)
+
+var (
+	snapshotPollerSession = session.Must(session.NewSession(&aws.Config{MaxRetries: aws.Int(maxRetries)}))
+
+	// assumeRoleFunc is the function to return valid AWS credentials.
+	assumeRoleFunc         = assumeRole
+	verifyAssumedCredsFunc = verifyAssumedCreds
+)
 
 // Key used for the client cache to neatly encapsulate an integration, service, and region
 type clientKey struct {
@@ -43,31 +63,11 @@ type cachedClient struct {
 
 var clientCache = make(map[clientKey]cachedClient)
 
-// Functions used to build clients, keyed by service
-var clientFuncs = map[string]func(session2 *session.Session, config *aws.Config) interface{}{
-	"acm":                    AcmClientFunc,
-	"applicationautoscaling": ApplicationAutoScalingClientFunc,
-	"cloudformation":         CloudFormationClientFunc,
-	"cloudtrail":             CloudTrailClientFunc,
-	"cloudwatchlogs":         CloudWatchLogsClientFunc,
-	"configservice":          ConfigServiceClientFunc,
-	"dynamodb":               DynamoDBClientFunc,
-	"ec2":                    EC2ClientFunc,
-	"ecs":                    EcsClientFunc,
-	"elbv2":                  Elbv2ClientFunc,
-	"guardduty":              GuardDutyClientFunc,
-	"iam":                    IAMClientFunc,
-	"kms":                    KmsClientFunc,
-	"lambda":                 LambdaClientFunc,
-	"rds":                    RDSClientFunc,
-	"redshift":               RedshiftClientFunc,
-	"s3":                     S3ClientFunc,
-	"waf":                    WafClientFunc,
-	"waf-regional":           WafRegionalClientFunc,
-}
-
 // getClient returns a valid client for a given integration, service, and region using caching.
-func getClient(pollerInput *awsmodels.ResourcePollerInput, service string, region string) interface{} {
+func getClient(pollerInput *awsmodels.ResourcePollerInput,
+	clientFunc func(session *session.Session, config *aws.Config) interface{},
+	service string, region string) (interface{}, error) {
+
 	cacheKey := clientKey{
 		IntegrationID: *pollerInput.IntegrationID,
 		Service:       service,
@@ -78,34 +78,63 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput, service string, regio
 	if cachedClient, exists := clientCache[cacheKey]; exists {
 		if !cachedClient.Credentials.IsExpired() {
 			if cachedClient.Client != nil {
-				return cachedClient.Client
+				return cachedClient.Client, nil
 			}
-			zap.L().Warn("nil client was cached", zap.Any("cache key", cacheKey))
+			zap.L().Debug("expired client was cached", zap.Any("cache key", cacheKey))
 		}
 	}
 
 	// Build a new client on cache miss OR if the client in the cache has expired credentials
-
-	// Build the new session and credentials
-	sess := session.Must(session.NewSession(&aws.Config{Region: aws.String(region)}))
-	creds, err := AssumeRoleFunc(pollerInput, sess)
+	creds := assumeRoleFunc(pollerInput, snapshotPollerSession, region)
+	err := verifyAssumedCredsFunc(creds, region)
 	if err != nil {
-		zap.L().Error("unable to assume role to build client cache", zap.Error(err))
-		return nil
+		zap.L().Error(clientErrMessage,
+			zap.Error(err),
+			zap.String("service", service),
+			zap.String("region", region),
+			zap.Any("pollerInput", *pollerInput))
+		return nil, err
+	}
+	client := clientFunc(snapshotPollerSession, &aws.Config{
+		Credentials: creds,
+		Region:      &region,
+	})
+	clientCache[cacheKey] = cachedClient{
+		Client:      client,
+		Credentials: creds,
+	}
+	return client, nil
+}
+
+//  assumes an IAM role associated with an AWS Snapshot Integration.
+func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Session, region string) *credentials.Credentials {
+	zap.L().Debug("assuming role", zap.String("roleArn", *pollerInput.AuthSource))
+
+	if pollerInput.AuthSource == nil {
+		panic("must pass non-nil authSource to AssumeRole")
 	}
 
-	// Build the new client and cache it with the credentials used to build it
-	if clientFunc, ok := clientFuncs[service]; ok {
-		client := clientFunc(sess, &aws.Config{Credentials: creds})
-		clientCache[cacheKey] = cachedClient{
-			Client:      client,
-			Credentials: creds,
-		}
-		return client
-	}
-
-	zap.L().Error("cannot build client for unsupported service",
-		zap.String("service", service),
+	creds := stscreds.NewCredentials(
+		sess.Copy(&aws.Config{
+			Region: &region, // this makes it work with regional endpoints
+		}),
+		*pollerInput.AuthSource,
+		func(p *stscreds.AssumeRoleProvider) {
+			p.Duration = assumeRoleDuration
+		},
 	)
-	return nil
+
+	return creds
+}
+
+func verifyAssumedCreds(creds *credentials.Credentials, region string) error {
+	svc := sts.New(
+		snapshotPollerSession,
+		&aws.Config{
+			Credentials: creds,
+			Region:      &region,
+		},
+	)
+	_, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	return err
 }

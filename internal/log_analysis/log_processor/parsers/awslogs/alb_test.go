@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -71,7 +72,8 @@ func TestHTTPLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("192.168.131.39", "10.0.0.1")
+	expectedEvent.AppendAnyIPAddress("192.168.131.39")
+	expectedEvent.AppendAnyIPAddress("10.0.0.1")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
 
 	checkALBLog(t, log, expectedEvent)
@@ -122,7 +124,8 @@ func TestHTTPSLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("192.168.131.39", "10.0.0.1")
+	expectedEvent.AppendAnyIPAddress("192.168.131.39")
+	expectedEvent.AppendAnyIPAddress("10.0.0.1")
 	expectedEvent.AppendAnyDomainNames("www.example.com")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067",
 		"arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012")
@@ -175,7 +178,8 @@ func TestHTTP2Log(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("10.0.1.252", "10.0.0.66")
+	expectedEvent.AppendAnyIPAddress("10.0.1.252")
+	expectedEvent.AppendAnyIPAddress("10.0.0.66")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067")
 
 	checkALBLog(t, log, expectedEvent)
@@ -185,7 +189,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 	//nolint:lll
 	log := `https 2018-08-26T14:17:23.186641Z app/web/09603e7dbbd08802 138.246.253.5:57185 - -1 -1 -1 400 - 25 150` +
 		` "HEAD https://web-1241004567.us-east-1.elb.amazonaws.com:443/ HTTP/1.1" "-" ECDHE-RSA-AES128-GCM-SHA256` +
-		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"
+		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"
 `
 
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
@@ -214,7 +218,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 		TargetGroupARN:         nil,
 		TraceID:                nil,
 		DomainName:             nil,
-		ChosenCertARN:          aws.String("arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
+		ChosenCertARN:          aws.String("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
 		MatchedRulePriority:    nil,
 		RequestCreationTime:    (*timestamp.RFC3339)(&expectedTime),
 		ActionsExecuted:        []string{},
@@ -225,8 +229,8 @@ func TestHTTPSNoTarget(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.ALB")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("138.246.253.5")
-	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:050603629990:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
+	expectedEvent.AppendAnyIPAddress("138.246.253.5")
+	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
 
 	checkALBLog(t, log, expectedEvent)
 }
@@ -237,14 +241,8 @@ func TestAlbLogType(t *testing.T) {
 }
 
 func checkALBLog(t *testing.T, log string, expectedEvent *ALB) {
-	parser := &ALBParser{}
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*ALB)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	require.Equal(t, expectedEvent, event)
+	expectedEvent.SetEvent(expectedEvent)
+	parser := (&ALBParser{}).New() // important to call New() to initialize reader
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

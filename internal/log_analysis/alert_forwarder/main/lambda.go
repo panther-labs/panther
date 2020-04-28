@@ -1,7 +1,7 @@
 package main
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,6 +32,11 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+func init() {
+	// Required only once per Lambda container
+	forwarder.Setup()
+}
+
 func main() {
 	lambda.Start(handle)
 }
@@ -47,16 +52,32 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 		operation.Stop().Log(err, zap.Int("messageCount", len(event.Records)))
 	}()
 
+	// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
 	for _, record := range event.Records {
-		event, err := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
-		if err != nil {
+		oldAlertDedupEvent, unmarshalErr := forwarder.FromDynamodDBAttribute(record.Change.OldImage)
+		if unmarshalErr != nil {
 			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
 			// continuing since there is nothing we can do here
 			continue
 		}
-		// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
-		if err = forwarder.Process(event); err != nil {
-			return errors.Wrap(err, "encountered issue while handling event")
+
+		newAlertDedupEvent, unmarshalErr := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
+		if unmarshalErr != nil {
+			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
+			// continuing since there is nothing we can do here
+			continue
+		}
+
+		if newAlertDedupEvent == nil {
+			// This can happen only if someone manually deleted entries from DDB
+			// It shouldn't happen under normal operation - only if someone altered the DDB manually.
+			// We can skip these records since there is nothing we can do in this scenario
+			operation.LogWarn(errors.New("skipping deleted record"))
+			continue
+		}
+
+		if err = forwarder.Handle(oldAlertDedupEvent, newAlertDedupEvent); err != nil {
+			return errors.Wrap(err, "encountered issue while handling deduplication event")
 		}
 	}
 	return nil

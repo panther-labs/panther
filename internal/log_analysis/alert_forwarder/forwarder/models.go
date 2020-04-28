@@ -1,7 +1,7 @@
 package forwarder
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,28 +22,62 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
+)
+
+const (
+	alertTablePartitionKey        = "id"
+	alertTableLogTypesAttribute   = "logTypes"
+	alertTableEventCountAttribute = "eventCount"
+	alertTableUpdateTimeAttribute = "updateTime"
 )
 
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
 	RuleID              string    `dynamodbav:"ruleId,string"`
+	RuleVersion         string    `dynamodbav:"ruleVersion,string"`
 	DeduplicationString string    `dynamodbav:"dedup,string"`
-	AlertCount          int64     `dynamodbav:"-"` // Not storing this field in DDB
 	CreationTime        time.Time `dynamodbav:"creationTime,string"`
 	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
 	EventCount          int64     `dynamodbav:"eventCount,number"`
+	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
+	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
+	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
 type Alert struct {
-	ID            string `dynamodbav:"id,string"`
-	TimePartition string `dynamodbav:"timePartition,string"`
+	ID              string  `dynamodbav:"id,string"`
+	TimePartition   string  `dynamodbav:"timePartition,string"`
+	Severity        string  `dynamodbav:"severity,string"`
+	RuleDisplayName *string `dynamodbav:"ruleDisplayName,string"`
+	Title           string  `dynamodbav:"title,string"` // The alert title. It will be the Python-generated title or a default one if
+	// no Python-generated title is available.
 	AlertDedupEvent
 }
 
-func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*AlertDedupEvent, error) {
+func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (event *AlertDedupEvent, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = errors.Wrap(err, "panicked while getting alert dedup event")
+			}
+		}
+	}()
+
+	if input == nil {
+		return nil, nil
+	}
+
 	ruleID, err := getAttribute("ruleId", input)
+	if err != nil {
+		return nil, err
+	}
+
+	ruleVersion, err := getAttribute("ruleVersion", input)
 	if err != nil {
 		return nil, err
 	}
@@ -73,14 +107,27 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (*Al
 		return nil, err
 	}
 
-	return &AlertDedupEvent{
+	logTypes, err := getAttribute("logTypes", input)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &AlertDedupEvent{
 		RuleID:              ruleID.String(),
+		RuleVersion:         ruleVersion.String(),
 		DeduplicationString: deduplicationString.String(),
 		AlertCount:          alertCount,
 		CreationTime:        time.Unix(alertCreationEpoch, 0).UTC(),
 		UpdateTime:          time.Unix(alertUpdateEpoch, 0).UTC(),
 		EventCount:          eventCount,
-	}, nil
+		LogTypes:            logTypes.StringSet(),
+	}
+
+	generatedTitle := getOptionalAttribute("title", input)
+	if generatedTitle != nil {
+		result.GeneratedTitle = aws.String(generatedTitle.String())
+	}
+	return result, nil
 }
 
 func getIntegerAttribute(key string, input map[string]events.DynamoDBAttributeValue) (int64, error) {
@@ -101,4 +148,12 @@ func getAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue)
 		return events.DynamoDBAttributeValue{}, errors.Errorf("could not find '%s' attribute", key)
 	}
 	return attributeValue, nil
+}
+
+func getOptionalAttribute(key string, inputMap map[string]events.DynamoDBAttributeValue) *events.DynamoDBAttributeValue {
+	attributeValue, ok := inputMap[key]
+	if !ok {
+		return nil
+	}
+	return &attributeValue
 }

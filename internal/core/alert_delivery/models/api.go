@@ -1,7 +1,7 @@
 package models
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -61,4 +61,7 @@ type Alert struct {
 
 	// Type specifies if an alert is for a policy or a rule
 	Type *string `json:"type,omitempty" validate:"omitempty,oneof=RULE POLICY"`
+
+	// Title is the optional title for the alert
+	Title *string `json:"title,omitempty"`
 }

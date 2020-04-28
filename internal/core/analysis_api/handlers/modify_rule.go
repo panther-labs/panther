@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,18 +35,19 @@ func ModifyRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 	}
 
 	item := &tableItem{
-		Body:          input.Body,
-		Description:   input.Description,
-		DisplayName:   input.DisplayName,
-		Enabled:       input.Enabled,
-		ID:            input.ID,
-		Reference:     input.Reference,
-		ResourceTypes: input.LogTypes,
-		Runbook:       input.Runbook,
-		Severity:      input.Severity,
-		Tags:          input.Tags,
-		Tests:         input.Tests,
-		Type:          typeRule,
+		Body:               input.Body,
+		Description:        input.Description,
+		DisplayName:        input.DisplayName,
+		Enabled:            input.Enabled,
+		ID:                 input.ID,
+		Reference:          input.Reference,
+		ResourceTypes:      input.LogTypes,
+		Runbook:            input.Runbook,
+		Severity:           input.Severity,
+		Tags:               input.Tags,
+		Tests:              input.Tests,
+		Type:               typeRule,
+		DedupPeriodMinutes: input.DedupPeriodMinutes,
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(true)); err != nil {

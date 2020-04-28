@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,9 +23,9 @@ import (
 	"strings"
 )
 
-// Clean Remove auto-generated build artifacts
+// Clean Remove dev libraries and build/test artifacts
 func Clean() {
-	paths := []string{"out", "internal/core/analysis_api/main/bulk_upload.zip"} // paths to remove
+	paths := []string{setupDirectory, "node_modules", "out", "internal/core/analysis_api/main/bulk_upload.zip"}
 
 	// Remove __pycache__ folders
 	for _, target := range pyTargets {

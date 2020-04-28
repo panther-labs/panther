@@ -3,7 +3,7 @@
 package client
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ package client
 import (
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 )
@@ -73,9 +73,7 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *PantherAna
 
 	cli := new(PantherAnalysis)
 	cli.Transport = transport
-
 	cli.Operations = operations.New(transport, formats)
-
 	return cli
 }
 
@@ -120,7 +118,7 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // PantherAnalysis is a client for panther analysis
 type PantherAnalysis struct {
-	Operations *operations.Client
+	Operations operations.ClientService
 
 	Transport runtime.ClientTransport
 }
@@ -128,7 +126,5 @@ type PantherAnalysis struct {
 // SetTransport changes the transport on the client and all its subresources
 func (c *PantherAnalysis) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
-
 	c.Operations.SetTransport(transport)
-
 }

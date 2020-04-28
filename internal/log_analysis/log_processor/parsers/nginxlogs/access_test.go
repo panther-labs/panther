@@ -1,7 +1,7 @@
 package nginxlogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -47,7 +48,7 @@ func TestAccessLog(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Nginx.Access")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
+	expectedEvent.AppendAnyIPAddress("180.76.15.143")
 
 	checkAccessLog(t, log, expectedEvent)
 }
@@ -70,7 +71,7 @@ func TestAccessLogWithoutReferer(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("Nginx.Access")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
-	expectedEvent.AppendAnyIPAddresses("180.76.15.143")
+	expectedEvent.AppendAnyIPAddress("180.76.15.143")
 
 	checkAccessLog(t, log, expectedEvent)
 }
@@ -81,14 +82,8 @@ func TestAccessLogType(t *testing.T) {
 }
 
 func checkAccessLog(t *testing.T, log string, expectedEvent *Access) {
+	expectedEvent.SetEvent(expectedEvent)
 	parser := &AccessParser{}
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*Access)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	require.Equal(t, expectedEvent, event)
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

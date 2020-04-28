@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,9 +24,5 @@ import (
 
 // GetUser calls userGateway to get user information.
 func (API) GetUser(input *models.GetUserInput) (*models.GetUserOutput, error) {
-	user, err := userGateway.GetUser(input.ID)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
+	return userGateway.GetUser(input.ID)
 }

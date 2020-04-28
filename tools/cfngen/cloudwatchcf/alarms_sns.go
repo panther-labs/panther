@@ -1,7 +1,7 @@
 package cloudwatchcf
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,28 +26,28 @@ type SNSAlarm struct {
 	Alarm
 }
 
-func NewSNSAlarm(alarmType, metricName, message string, resource map[interface{}]interface{},
-	config *Config) (alarm *SNSAlarm) {
-
+func NewSNSAlarm(alarmType, metricName, message string, resource map[string]interface{}) *SNSAlarm {
 	const (
 		metricDimension = "TopicName"
 		metricNamespace = "AWS/SNS"
 	)
 	topicName := getResourceProperty(metricDimension, resource)
 	alarmName := AlarmName(alarmType, topicName)
-	alarm = &SNSAlarm{
-		Alarm: *NewAlarm(alarmName,
-			fmt.Sprintf("SNS topic %s %s. See: %s#%s", topicName, message, documentationURL, topicName),
-			config.snsTopicArn),
+	alarm := &SNSAlarm{
+		Alarm: *NewAlarm(topicName, alarmName,
+			fmt.Sprintf("SNS topic %s %s. See: %s#%s", topicName, message, documentationURL, topicName)),
 	}
 	alarm.Alarm.Metric(metricNamespace, metricName, []MetricDimension{{Name: metricDimension, Value: topicName}})
 	return alarm
 }
 
-func generateSNSAlarms(resource map[interface{}]interface{}, config *Config) (alarms []*Alarm) {
-	// errors
-	alarms = append(alarms, NewSNSAlarm("SNSError", "NumberOfNotificationsFailed", "is failing",
-		resource, config).SumCountThreshold(0, 60*5))
-
-	return alarms
+func generateSNSAlarms(resource map[string]interface{}) []*Alarm {
+	return []*Alarm{
+		NewSNSAlarm(
+			"SNSError",
+			"NumberOfNotificationsFailed",
+			"is failing",
+			resource,
+		).SumCountThreshold(0, 60*5),
+	}
 }

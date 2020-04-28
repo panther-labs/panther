@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -87,7 +87,6 @@ func TestRedshiftCLusterBuildSnapshotErrors(t *testing.T) {
 func TestRedshiftClusterPoller(t *testing.T) {
 	awstest.MockRedshiftForSetup = awstest.BuildMockRedshiftSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	RedshiftClientFunc = awstest.SetupMockRedshift
 
 	resources, err := PollRedshiftClusters(&awsmodels.ResourcePollerInput{
@@ -111,7 +110,6 @@ func TestRedshiftClusterPoller(t *testing.T) {
 func TestRedshiftClusterPollerError(t *testing.T) {
 	awstest.MockRedshiftForSetup = awstest.BuildMockRedshiftSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	RedshiftClientFunc = awstest.SetupMockRedshift
 
 	resources, err := PollRDSInstances(&awsmodels.ResourcePollerInput{

@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,9 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
@@ -48,6 +50,21 @@ func TestEcsClusterDescribe(t *testing.T) {
 	out, err := describeCluster(mockSvc, awstest.ExampleClusterArn)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
+}
+
+func TestEcsClusterDescribeDoesNotExist(t *testing.T) {
+	mockSvc := &awstest.MockEcs{}
+	mockSvc.On("DescribeClusters", mock.Anything).
+		Return(
+			&ecs.DescribeClustersOutput{
+				Clusters: nil,
+			},
+			nil,
+		)
+
+	out, err := describeCluster(mockSvc, awstest.ExampleClusterArn)
+	require.NoError(t, err)
+	assert.Nil(t, out)
 }
 
 func TestEcsClusterDescribeError(t *testing.T) {
@@ -84,7 +101,6 @@ func TestEcsClusterBuildSnapshotErrors(t *testing.T) {
 func TestEcsClusterPoller(t *testing.T) {
 	awstest.MockEcsForSetup = awstest.BuildMockEcsSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EcsClientFunc = awstest.SetupMockEcs
 
 	resources, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
@@ -103,7 +119,6 @@ func TestEcsClusterPoller(t *testing.T) {
 func TestEcsClusterPollerError(t *testing.T) {
 	awstest.MockEcsForSetup = awstest.BuildMockEcsSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	EcsClientFunc = awstest.SetupMockEcs
 
 	resources, err := PollEcsClusters(&awsmodels.ResourcePollerInput{

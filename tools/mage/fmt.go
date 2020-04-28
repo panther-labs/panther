@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,10 @@ package mage
 
 import (
 	"bytes"
+	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/magefile/mage/mg"
@@ -28,7 +31,7 @@ import (
 )
 
 var (
-	goTargets = []string{"api", "internal", "pkg", "tools", "magefile.go"}
+	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
 	pyTargets = []string{
 		"internal/compliance/remediation_aws",
 		"internal/compliance/policy_engine",
@@ -37,61 +40,84 @@ var (
 
 // Fmt Format source files
 func Fmt() {
-	fmtLicense()
-	gofmt(".", goTargets...)
+	// Add license headers first (don't run in parallel with other formatters)
+	fmtLicenseAll()
 
-	// python
-	logger.Info("fmt: python yapf " + strings.Join(pyTargets, " "))
-	args := []string{"--in-place", "--parallel", "--recursive"}
-	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
-		logger.Fatalf("failed to format python: %v", err)
-	}
+	results := make(chan goroutineResult)
+	count := 0
 
-	// prettier (cloudformation)
-	logger.Info("fmt: prettier")
-	args = []string{"--write", "deployments/**.yml"}
-	if !mg.Verbose() {
-		args = append(args, "--loglevel", "error")
-	}
-	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format deployments/**.yml: %v", err)
-	}
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt: gofmt", gofmt(goTargets...)}
+	}(results)
 
-	// prettier (web)
-	args = []string{"--write", "{web/src/**,web/__generated__,.}/*.{ts,js,tsx,md,json,yml}"}
-	if !mg.Verbose() {
-		args = append(args, "--loglevel", "error")
-	}
-	if err := sh.Run(nodePath("prettier"), args...); err != nil {
-		logger.Fatalf("failed to format {web/src/**,.}: %v", err)
-	}
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt: go mod tidy", goModTidy()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt: yapf", yapf(pyTargets...)}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt: prettier", prettier("")}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"fmt: tf", terraformFmt()}
+	}(results)
+
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{"docs", doc()}
+	}(results)
+
+	logResults(results, "fmt", 1, count, count)
 }
 
-// Apply full go formatting to the given paths, which share the common root.
-func gofmt(root string, paths ...string) {
-	logger.Info("fmt: gofmt " + strings.Join(paths, " "))
+// Apply full go formatting to the given paths
+func gofmt(paths ...string) error {
+	logger.Debug("fmt: gofmt " + strings.Join(paths, " "))
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
-	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, goTargets...)...); err != nil {
-		logger.Fatalf("gofmt failed: %v", err)
+	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, paths...)...); err != nil {
+		return fmt.Errorf("gofmt failed: %v", err)
 	}
 
 	// 2) Remove empty newlines from import groups
-	walk(root, func(path string, info os.FileInfo) {
-		if !info.IsDir() && strings.HasSuffix(path, ".go") {
-			removeImportNewlines(path)
+	for _, root := range paths {
+		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return fmt.Errorf("stat %s: %v", path, err)
+			}
+
+			if !info.IsDir() && strings.HasSuffix(path, ".go") {
+				if err := removeImportNewlines(path); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-	})
+	}
 
 	// 3) Goimports to group imports into 3 sections
-	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, goTargets...)
+	args := append([]string{"-w", "-local=github.com/panther-labs/panther"}, paths...)
 	if err := sh.Run("goimports", args...); err != nil {
-		logger.Fatalf("goimports failed: %v", err)
+		return fmt.Errorf("goimports failed: %v", err)
 	}
+
+	return nil
 }
 
 // Remove empty newlines from formatted import groups so goimports will correctly group them.
-func removeImportNewlines(path string) {
+func removeImportNewlines(path string) error {
 	var newLines [][]byte
 	inImport := false
 	for _, line := range bytes.Split(readFile(path), []byte("\n")) {
@@ -109,5 +135,43 @@ func removeImportNewlines(path string) {
 		newLines = append(newLines, line)
 	}
 
-	writeFile(path, bytes.Join(newLines, []byte("\n")))
+	return ioutil.WriteFile(path, bytes.Join(newLines, []byte("\n")), 0644)
+}
+
+// Tidy go.mod/go.sum
+func goModTidy() error {
+	return sh.Run("go", "mod", "tidy")
+}
+
+// Apply Python formatting to the given paths
+func yapf(paths ...string) error {
+	logger.Debug("fmt: python yapf " + strings.Join(paths, " "))
+	args := []string{"--in-place", "--parallel", "--recursive"}
+	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
+		return fmt.Errorf("failed to format python: %v", err)
+	}
+	return nil
+}
+
+// Apply prettier formatting to web, markdown, and yml files
+func prettier(pathPattern string) error {
+	if pathPattern == "" {
+		pathPattern = "**/*.{ts,js,tsx,md,json,yaml,yml}"
+	}
+	logger.Debug("fmt: prettier " + pathPattern)
+	args := []string{"--write", pathPattern}
+	if !mg.Verbose() {
+		args = append(args, "--loglevel", "error")
+	}
+
+	if err := sh.Run(nodePath("prettier"), args...); err != nil {
+		return fmt.Errorf("failed to format with prettier: %v", err)
+	}
+	return nil
+}
+
+// Apply Terraform formatting to aux templates
+func terraformFmt() error {
+	root := filepath.Join("deployments", "auxiliary", "terraform")
+	return sh.Run(terraformPath, "fmt", "-recursive", root)
 }

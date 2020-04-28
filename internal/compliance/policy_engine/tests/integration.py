@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -45,15 +45,6 @@ _INPUT = {
             {
                 'body': 'def policy(resource): return 0/0',
                 'id': 'runtime-error'
-            },
-            {
-                'body': 'import aws_globals\ndef policy(resource): return aws_globals.GLOBAL_TRUE',
-                'id': 'import-test'
-            },
-            {
-                'body': 'GLOBAL_TRUE=True\ndef policy(resource): return True',
-                'id': 'aws_globals',
-                'resourceTypes': ['AWS.Dummy.Type']
             }
         ],
     'resources':
@@ -125,7 +116,7 @@ class IntegrationTest(unittest.TestCase):
                                 }
                             ],
                         'failed': ['cloudtrail-encrypted'],
-                        'passed': ['import-test']
+                        'passed': []
                     },
                     {
                         'id': 'arn:aws:cloudtrail:123:meta',
@@ -140,7 +131,7 @@ class IntegrationTest(unittest.TestCase):
                                 }
                             ],
                         'failed': [],
-                        'passed': ['cloudtrail//!#enabled', 'import-test']
+                        'passed': ['cloudtrail//!#enabled']
                     },
                 ]
         }

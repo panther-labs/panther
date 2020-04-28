@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,51 +23,30 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/internal/core/users_api/cognito"
 )
 
-var removeUserInput = &models.RemoveUserInput{
-	ID: aws.String("user123"),
-}
+func TestRemoveUser(t *testing.T) {
+	userID := aws.String("user-remove")
+	otherUserID := aws.String("user-other")
 
-func TestRemoveUserCognitoErr(t *testing.T) {
-	// create an instance of our test objects
-	mockGateway := &gateway.MockUserGateway{}
-	// replace the global variables with our mock objects
+	mockGateway := &cognito.MockUserGateway{}
 	userGateway = mockGateway
+	mockGateway.On("ListUsers", &models.ListUsersInput{}).Return(
+		[]*models.User{
+			{ID: userID},
+			{ID: otherUserID},
+		},
+		nil,
+	)
 
-	mockGateway.On("ListUsers").Return(make([]*models.User, 3), nil)
-	mockGateway.On("DeleteUser", removeUserInput.ID).Return(&genericapi.AWSError{})
+	mockGateway.On("DeleteUser", userID).Return(nil)
 
-	err := (API{}).RemoveUser(removeUserInput)
-	assert.Error(t, err)
-	assert.IsType(t, err, &genericapi.AWSError{})
-
-	mockGateway.AssertExpectations(t)
-}
-
-func TestRemoveLastUser(t *testing.T) {
-	mockGateway := &gateway.MockUserGateway{}
-	userGateway = mockGateway
-
-	mockGateway.On("ListUsers").Return(make([]*models.User, 1), nil)
-
-	err := (API{}).RemoveUser(removeUserInput)
-	assert.Error(t, err)
-	assert.IsType(t, err, &genericapi.InUseError{})
-	mockGateway.AssertExpectations(t)
-}
-
-func TestRemoveUserHandle(t *testing.T) {
-	mockGateway := &gateway.MockUserGateway{}
-	userGateway = mockGateway
-
-	mockGateway.On("ListUsers").Return(make([]*models.User, 3), nil)
-	mockGateway.On("DeleteUser", removeUserInput.ID).Return(nil)
-
-	assert.NoError(t, (API{}).RemoveUser(removeUserInput))
+	result, err := API{}.RemoveUser(&models.RemoveUserInput{ID: userID})
+	require.NoError(t, err)
+	assert.Equal(t, &models.RemoveUserOutput{ID: userID}, result)
 	mockGateway.AssertExpectations(t)
 }

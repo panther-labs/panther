@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,41 +23,25 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/internal/core/users_api/cognito"
 )
 
-type mockGatewayGetUserClient struct {
-	gateway.API
-	getUserGatewayErr bool
-}
-
-func (m *mockGatewayGetUserClient) GetUser(id *string) (*models.User, error) {
-	if m.getUserGatewayErr {
-		return nil, &genericapi.AWSError{}
-	}
-	return &models.User{
-		GivenName:  aws.String("Joe"),
-		FamilyName: aws.String("Blow"),
-		ID:         id,
-		Email:      aws.String("joe@blow.com"),
-		CreatedAt:  aws.Int64(1545442826),
-		Status:     aws.String("CONFIRMED"),
-	}, nil
-}
-
-func TestGetUserGatewayErr(t *testing.T) {
-	userGateway = &mockGatewayGetUserClient{getUserGatewayErr: true}
-	result, err := (API{}).GetUser(&models.GetUserInput{})
-	assert.Nil(t, result)
-	assert.Error(t, err)
-}
-
 func TestGetUserHandle(t *testing.T) {
-	userGateway = &mockGatewayGetUserClient{}
-	result, err := (API{}).GetUser(&models.GetUserInput{})
-	assert.NotNil(t, result)
-	assert.NoError(t, err)
+	mockGateway := &cognito.MockUserGateway{}
+	userGateway = mockGateway
+	userID := aws.String("test-user-id")
+	user := &models.User{
+		GivenName:  aws.String("Panther"),
+		FamilyName: aws.String("Labs"),
+		ID:         userID,
+	}
+	mockGateway.On("GetUser", userID).Return(user, nil)
+
+	result, err := (API{}).GetUser(&models.GetUserInput{ID: userID})
+	require.NoError(t, err)
+	assert.Equal(t, user, result)
+	mockGateway.AssertExpectations(t)
 }

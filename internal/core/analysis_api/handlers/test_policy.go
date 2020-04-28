@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -50,7 +50,7 @@ func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 
 	var results *enginemodels.PolicyEngineOutput
 	// Build the policy engine request
-	if input.AnalysisType == "RULE" {
+	if input.AnalysisType == models.AnalysisTypeRULE {
 		ruleResults, errResponse := getRuleResults(input)
 		if errResponse != nil {
 			return errResponse
@@ -137,7 +137,7 @@ func getRuleResults(input *models.TestPolicy) (*enginemodels.RulesEngineOutput, 
 		// Unmarshal event into object form
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
-			return nil, badRequest(errors.Wrapf(err, "tests[%d].event is not valid jsons", i))
+			return nil, badRequest(errors.Wrapf(err, "tests[%d].event is not valid json", i))
 		}
 
 		inputEvents[i] = enginemodels.Event{
@@ -161,13 +161,12 @@ func getRuleResults(input *models.TestPolicy) (*enginemodels.RulesEngineOutput, 
 
 	// Send the request to the rule-engine
 	var rulesEngineResults *enginemodels.RulesEngineOutput
-	client := lambda.New(awsSession)
 	payload, err := jsoniter.Marshal(&testRequest)
 	if err != nil {
 		zap.L().Error("failed to marshal RuleEngineInput", zap.Error(err))
 		return nil, &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	response, err := client.Invoke(&lambda.InvokeInput{FunctionName: &env.RulesEngine, Payload: payload})
+	response, err := lambdaClient.Invoke(&lambda.InvokeInput{FunctionName: &env.RulesEngine, Payload: payload})
 
 	// Handle invocation failures and lambda errors
 	if err != nil || response.FunctionError != nil {
@@ -215,13 +214,12 @@ func getPolicyResults(input *models.TestPolicy) (*enginemodels.PolicyEngineOutpu
 
 	// Send the request to the policy-engine
 	var policyEngineResults *enginemodels.PolicyEngineOutput
-	client := lambda.New(awsSession)
 	payload, err := jsoniter.Marshal(&testRequest)
 	if err != nil {
 		zap.L().Error("failed to marshal PolicyEngineInput", zap.Error(err))
 		return nil, &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	response, err := client.Invoke(&lambda.InvokeInput{FunctionName: &env.PolicyEngine, Payload: payload})
+	response, err := lambdaClient.Invoke(&lambda.InvokeInput{FunctionName: &env.PolicyEngine, Payload: payload})
 
 	// Handle invocation failures and lambda errors
 	if err != nil || response.FunctionError != nil {

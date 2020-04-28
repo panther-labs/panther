@@ -3,7 +3,7 @@
 package models
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,15 +27,19 @@ import (
 	"encoding/json"
 
 	"github.com/go-openapi/errors"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
 // AnalysisType analysis type
+//
 // swagger:model AnalysisType
 type AnalysisType string
 
 const (
+
+	// AnalysisTypeGLOBAL captures enum value "GLOBAL"
+	AnalysisTypeGLOBAL AnalysisType = "GLOBAL"
 
 	// AnalysisTypePOLICY captures enum value "POLICY"
 	AnalysisTypePOLICY AnalysisType = "POLICY"
@@ -49,7 +53,7 @@ var analysisTypeEnum []interface{}
 
 func init() {
 	var res []AnalysisType
-	if err := json.Unmarshal([]byte(`["POLICY","RULE"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["GLOBAL","POLICY","RULE"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

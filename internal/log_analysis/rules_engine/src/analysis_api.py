@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,9 +14,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import json
 import os
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -37,7 +36,7 @@ class AnalysisAPIClient:
         analysis_api_path = os.environ['ANALYSIS_API_PATH']
         self.url = 'https://' + analysis_api_fqdn + '/' + analysis_api_path
 
-    def get_enabled_rules(self) -> List[Dict[str, str]]:
+    def get_enabled_rules(self) -> List[Dict[str, Any]]:
         """Gets information for all enabled rules."""
         request = AWSRequest(method='GET', url=self.url + '/enabled', params={'type': 'RULE'})
         self.signer.add_auth(request)
@@ -45,5 +44,4 @@ class AnalysisAPIClient:
 
         response = requests.get(prepped_request.url, headers=prepped_request.headers)
         response.raise_for_status()
-        parsed_response = json.loads(response.text)
-        return parsed_response['policies']
+        return response.json()['policies']

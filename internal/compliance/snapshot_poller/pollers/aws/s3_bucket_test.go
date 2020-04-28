@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,9 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
@@ -162,6 +164,22 @@ func TestS3GetBucketLocation(t *testing.T) {
 	assert.NotEmpty(t, out)
 }
 
+// Specifically test for buckets located in the us-east-1 region
+func TestS3GetBucketLocationVirginia(t *testing.T) {
+	mockSvc := &awstest.MockS3{}
+	mockSvc.On("GetBucketLocation", mock.Anything).
+		Return(
+			&s3.GetBucketLocationOutput{
+				LocationConstraint: nil,
+			},
+			nil,
+		)
+
+	out := getBucketLocation(mockSvc, awstest.ExampleBucketName)
+	assert.Equal(t, "us-east-1", *out)
+	assert.NotEmpty(t, out)
+}
+
 func TestS3GetBucketLocationError(t *testing.T) {
 	mockSvc := awstest.BuildMockS3SvcError([]string{"GetBucketLocation"})
 
@@ -220,7 +238,6 @@ func TestS3GetBucketLifecycleConfigurationError(t *testing.T) {
 func TestS3BucketPoller(t *testing.T) {
 	awstest.MockS3ForSetup = awstest.BuildMockS3SvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	S3ClientFunc = awstest.SetupMockS3
 
 	resources, err := PollS3Buckets(&awsmodels.ResourcePollerInput{
@@ -239,7 +256,6 @@ func TestS3BucketPoller(t *testing.T) {
 func TestS3BucketPollerError(t *testing.T) {
 	awstest.MockS3ForSetup = awstest.BuildMockS3SvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	S3ClientFunc = awstest.SetupMockS3
 
 	resources, err := PollS3Buckets(&awsmodels.ResourcePollerInput{

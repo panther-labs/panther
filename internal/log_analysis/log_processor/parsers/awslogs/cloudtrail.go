@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,10 +19,7 @@ package awslogs
  */
 
 import (
-	"strings"
-
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -119,17 +116,18 @@ type CloudTrailSessionContextWebIDFederationData struct {
 // CloudTrailParser parses CloudTrail logs
 type CloudTrailParser struct{}
 
+var _ parsers.LogParser = (*CloudTrailParser)(nil)
+
 func (p *CloudTrailParser) New() parsers.LogParser {
 	return &CloudTrailParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) Parse(log string) []interface{} {
+func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	cloudTrailRecords := &CloudTrailRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailRecords)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	for _, event := range cloudTrailRecords.Records {
@@ -137,14 +135,13 @@ func (p *CloudTrailParser) Parse(log string) []interface{} {
 	}
 
 	if err := parsers.Validator.Struct(cloudTrailRecords); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
-	result := make([]interface{}, len(cloudTrailRecords.Records))
-	for i, record := range cloudTrailRecords.Records {
-		result[i] = record
+	result := make([]*parsers.PantherLog, len(cloudTrailRecords.Records))
+	for i, event := range cloudTrailRecords.Records {
+		result[i] = event.Log()
 	}
-	return result
+	return result, nil
 }
 
 // LogType returns the log type supported by this parser
@@ -153,12 +150,11 @@ func (p *CloudTrailParser) LogType() string {
 }
 
 func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.EventTime)
+	event.SetCoreFields(p.LogType(), event.EventTime, event)
 
 	// structured (parsed) fields
-	if event.SourceIPAddress != nil && !strings.HasSuffix(*event.SourceIPAddress, "amazonaws.com") {
-		event.AppendAnyIPAddresses(*event.SourceIPAddress)
-	}
+	event.AppendAnyIPAddressPtr(event.SourceIPAddress)
+	event.AppendAnyAWSAccountIdPtrs(event.RecipientAccountID)
 
 	for _, resource := range event.Resources {
 		event.AppendAnyAWSARNPtrs(resource.ARN)
@@ -182,7 +178,10 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 	extract.Extract(event.RequestParameters, awsExtractor)
 	extract.Extract(event.ResponseElements, awsExtractor)
 	extract.Extract(event.ServiceEventDetails, awsExtractor)
-	if event.UserIdentity.SessionContext != nil && event.UserIdentity.SessionContext.WebIDFederationData != nil {
+	if event.UserIdentity != nil &&
+		event.UserIdentity.SessionContext != nil &&
+		event.UserIdentity.SessionContext.WebIDFederationData != nil {
+
 		extract.Extract(event.UserIdentity.SessionContext.WebIDFederationData.Attributes, awsExtractor)
 	}
 }

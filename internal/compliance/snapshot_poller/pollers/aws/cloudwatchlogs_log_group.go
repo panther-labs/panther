@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -40,17 +41,30 @@ var (
 )
 
 func setupCloudWatchLogsClient(sess *session.Session, cfg *aws.Config) interface{} {
-	cfg.MaxRetries = aws.Int(MaxRetries)
 	return cloudwatchlogs.New(sess, cfg)
+}
+
+func getCloudWatchLogsClient(pollerResourceInput *awsmodels.ResourcePollerInput,
+	region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+
+	client, err := getClient(pollerResourceInput, CloudWatchLogsClientFunc, "cloudwatchlogs", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(cloudwatchlogsiface.CloudWatchLogsAPI), nil
 }
 
 // PollCloudWatchLogsLogGroup polls a single CloudWatchLogs LogGroup resource
 func PollCloudWatchLogsLogGroup(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
-	scanRequest *pollermodels.ScanEntry) (resource interface{}) {
+	scanRequest *pollermodels.ScanEntry) (resource interface{}, err error) {
 
-	client := getClient(pollerResourceInput, "cloudwatchlogs", resourceARN.Region).(cloudwatchlogsiface.CloudWatchLogsAPI)
+	cwClient, err := getCloudWatchLogsClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
 
 	// See PollCloudFormationStack for a detailed reasoning behind these actions
 	// Get just the resource portion of the ARN, drop the resource type prefix
@@ -58,15 +72,15 @@ func PollCloudWatchLogsLogGroup(
 
 	// Split out the log group name from any additional modifiers
 	lgName := strings.Split(lgResource, ":")[0]
-	logGroup := getLogGroup(client, aws.String(lgName))
-	snapshot := buildCloudWatchLogsLogGroupSnapshot(client, logGroup)
+	logGroup := getLogGroup(cwClient, aws.String(lgName))
+	snapshot := buildCloudWatchLogsLogGroupSnapshot(cwClient, logGroup)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	scanRequest.ResourceID = snapshot.ARN
-	return snapshot
+	return snapshot, nil
 }
 
 // getLogGroup returns a specific cloudwatch logs log group
@@ -92,14 +106,14 @@ func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName *string
 }
 
 // describeLogGroups returns all Log Groups in the account
-func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI) (logGroups []*cloudwatchlogs.LogGroup) {
-	err := cloudwatchLogsSvc.DescribeLogGroupsPages(&cloudwatchlogs.DescribeLogGroupsInput{},
+func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI) (logGroups []*cloudwatchlogs.LogGroup, err error) {
+	err = cloudwatchLogsSvc.DescribeLogGroupsPages(&cloudwatchlogs.DescribeLogGroupsInput{},
 		func(page *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
 			logGroups = append(logGroups, page.LogGroups...)
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("CloudWatchLogs.DescribeLogGroups", err)
+		return nil, errors.Wrap(err, "CloudWatchLogs.DescribeLogGroups")
 	}
 	return
 }
@@ -150,16 +164,16 @@ func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]
 	logGroupSnapshots := make(map[string]*awsmodels.CloudWatchLogsLogGroup)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "logs") {
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
-		creds, err := AssumeRoleFunc(pollerInput, sess)
+		cloudwatchLogGroupSvc, err := getCloudWatchLogsClient(pollerInput, *regionID)
 		if err != nil {
-			return nil, err
+			return nil, err // error is logged in getClient()
 		}
 
-		var cloudwatchLogGroupSvc = CloudWatchLogsClientFunc(sess, &aws.Config{Credentials: creds}).(cloudwatchlogsiface.CloudWatchLogsAPI)
-
 		// Start with generating a list of all log groups
-		logGroups := describeLogGroups(cloudwatchLogGroupSvc)
+		logGroups, err := describeLogGroups(cloudwatchLogGroupSvc)
+		if err != nil {
+			return nil, errors.Wrapf(err, "PollCloudWatchLogsLogGroups(%#v) in region %s", *pollerInput, *regionID)
+		}
 		if len(logGroups) == 0 {
 			zap.L().Debug("no CloudWatchLogs LogGroups found", zap.String("region", *regionID))
 			continue

@@ -3,7 +3,7 @@
 package operations
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,11 +27,11 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new operations API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -43,8 +43,23 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientService is the interface for Client methods
+type ClientService interface {
+	AddResources(params *AddResourcesParams) (*AddResourcesCreated, error)
+
+	DeleteResources(params *DeleteResourcesParams) (*DeleteResourcesOK, error)
+
+	GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK, error)
+
+	GetResource(params *GetResourceParams) (*GetResourceOK, error)
+
+	ListResources(params *ListResourcesParams) (*ListResourcesOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-AddResources adds or replace resources across one or more accounts
+  AddResources adds or replace resources across one or more accounts
 */
 func (a *Client) AddResources(params *AddResourcesParams) (*AddResourcesCreated, error) {
 	// TODO: Validate the params before sending
@@ -78,7 +93,7 @@ func (a *Client) AddResources(params *AddResourcesParams) (*AddResourcesCreated,
 }
 
 /*
-DeleteResources deletes resources across multiple accounts
+  DeleteResources deletes resources across multiple accounts
 */
 func (a *Client) DeleteResources(params *DeleteResourcesParams) (*DeleteResourcesOK, error) {
 	// TODO: Validate the params before sending
@@ -112,7 +127,7 @@ func (a *Client) DeleteResources(params *DeleteResourcesParams) (*DeleteResource
 }
 
 /*
-GetOrgOverview gets an overview of the resources in an organization
+  GetOrgOverview gets an overview of the resources in an organization
 */
 func (a *Client) GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK, error) {
 	// TODO: Validate the params before sending
@@ -146,7 +161,7 @@ func (a *Client) GetOrgOverview(params *GetOrgOverviewParams) (*GetOrgOverviewOK
 }
 
 /*
-GetResource gets resource details
+  GetResource gets resource details
 */
 func (a *Client) GetResource(params *GetResourceParams) (*GetResourceOK, error) {
 	// TODO: Validate the params before sending
@@ -180,7 +195,7 @@ func (a *Client) GetResource(params *GetResourceParams) (*GetResourceOK, error) 
 }
 
 /*
-ListResources lists resources for a customer account
+  ListResources lists resources for a customer account
 */
 func (a *Client) ListResources(params *ListResourcesParams) (*ListResourcesOK, error) {
 	// TODO: Validate the params before sending
@@ -210,40 +225,6 @@ func (a *Client) ListResources(params *ListResourcesParams) (*ListResourcesOK, e
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for ListResources: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-ModifyResource modifies some properties of an existing resource
-*/
-func (a *Client) ModifyResource(params *ModifyResourceParams) (*ModifyResourceOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewModifyResourceParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "ModifyResource",
-		Method:             "PATCH",
-		PathPattern:        "/resource",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"https"},
-		Params:             params,
-		Reader:             &ModifyResourceReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*ModifyResourceOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ModifyResource: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

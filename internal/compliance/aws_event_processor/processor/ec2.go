@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -382,7 +382,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			ResourceType: aws.Ec2VpcSchema,
 		}}
 	default:
-		zap.L().Info("ec2: unknown API call, making a guess...")
+		zap.L().Debug("ec2: unknown API call, making a guess...")
 		// Give it the old college try, grabbing a bad resource ID here is a minor overhead for the
 		// poller and should impose no risk. We can review the correct guesses in the logs and add
 		// them to the right place as appropriate.
@@ -407,7 +407,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			break
 		}
 		if id := detail.Get("*.vpcId").Str; id != "" {
-			ec2Type = aws.Ec2VolumeSchema
+			ec2Type = aws.Ec2VpcSchema
 			ec2ARN.Resource = "vpc/" + id
 			break
 		}

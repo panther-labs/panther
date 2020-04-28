@@ -1,7 +1,7 @@
 package awstest
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,10 +26,8 @@ import (
 )
 
 // AssumeRoleMock generates a set of fake credentials for testing.
-func AssumeRoleMock(
-	pollerInput *awsmodels.ResourcePollerInput,
-	sess *session.Session,
-) (*credentials.Credentials, error) {
+func AssumeRoleMock(pollerInput *awsmodels.ResourcePollerInput, sess *session.Session,
+	region string) *credentials.Credentials {
 
-	return &credentials.Credentials{}, nil
+	return &credentials.Credentials{}
 }

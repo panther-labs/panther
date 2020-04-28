@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,99 +20,127 @@ package mage
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"strings"
-	"time"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
-	"github.com/magefile/mage/target"
 
-	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const swaggerGlob = "api/gateway/*/api.yml"
 
-var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
-
 // Build contains targets for compiling source code.
 type Build mg.Namespace
 
-// API Generate Go client/models from Swagger specs in api/
+// API Generate API source files from GraphQL + Swagger
 func (b Build) API() {
-	specs, err := filepath.Glob(swaggerGlob)
-	if err != nil {
-		logger.Fatalf("failed to glob %s: %v", swaggerGlob, err)
-	}
-
-	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
-	for _, spec := range specs {
-		rebuild, err := apiNeedsRebuilt(spec)
-		if err == nil && !rebuild {
-			logger.Debugf("build:api: %s is up to date", spec)
-			continue
-		}
-
-		dir := filepath.Dir(spec)
-		start := time.Now().UTC()
-		args := []string{"generate", "client", "-q", "-t", dir, "-f", spec}
-		cmd := filepath.Join(setupDirectory, "swagger")
-		if _, err = os.Stat(cmd); err != nil {
-			logger.Fatalf("%s not found (%v): run 'mage setup:all'", cmd, err)
-		}
-
-		if err := sh.Run(cmd, args...); err != nil {
-			logger.Fatalf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
-		}
-
-		// If an API model is removed, "swagger generate" will leave the Go file in place.
-		// So we walk the generated directories and remove anything swagger didn't just write.
-		handler := func(path string, info os.FileInfo) {
-			if !info.IsDir() && info.ModTime().Before(start) {
-				logger.Debugf("%s unmodified by swagger: removing", path)
-				if err := os.Remove(path); err != nil {
-					logger.Warnf("failed to remove deleted model %s: %v", path, err)
-				}
-			}
-		}
-		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
-		walk(client, handler)
-		walk(models, handler)
-
-		// Add license and our formatting standard to the generated SDK.
-		fmtLicenseGroup(agplSource, client, models)
-		gofmt(dir, client, models)
+	if err := b.api(); err != nil {
+		logger.Fatal(err)
 	}
 }
 
-// Returns true if the generated client + models are older than the given client spec
-func apiNeedsRebuilt(spec string) (bool, error) {
-	clientNeedsUpdate, err := target.Dir(path.Join(path.Dir(spec), "client"), spec)
+func (b Build) api() error {
+	specs, err := filepath.Glob(swaggerGlob)
 	if err != nil {
-		return true, err
+		return fmt.Errorf("failed to glob %s: %v", swaggerGlob, err)
 	}
 
-	modelsNeedUpdate, err := target.Dir(path.Join(path.Dir(spec), "models"), spec)
-	if err != nil {
-		return true, err
+	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
+
+	cmd := filepath.Join(setupDirectory, "swagger")
+	if _, err = os.Stat(cmd); err != nil {
+		return fmt.Errorf("%s not found (%v): run 'mage setup'", cmd, err)
 	}
 
-	return clientNeedsUpdate || modelsNeedUpdate, nil
+	// This import has to be fixed, see below
+	clientImport := regexp.MustCompile(
+		`"github.com/panther-labs/panther/api/gateway/[a-z]+/client/operations"`)
+
+	for _, spec := range specs {
+		dir := filepath.Dir(spec)
+		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
+
+		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models}
+		if err := sh.Run(cmd, args...); err != nil {
+			return fmt.Errorf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
+		}
+
+		// TODO - delete unused models
+		// If an API model is removed, "swagger generate" will leave the Go file in place.
+		// We tried to remove generated files based on timestamp, but that had issues in Docker.
+		// We tried removing the client/ and models/ every time, but mage itself depends on some of these.
+		// For now, developers just need to manually remove unused swagger models.
+
+		// There is a bug in "swagger generate" which can lead to incorrect import paths.
+		// To reproduce: comment out this section, clone to /tmp and "mage build:api" - note the diffs.
+		// The most reliable workaround has been to just rewrite the import ourselves.
+		//
+		// For example, in api/gateway/remediation/client/panther_remediation_client.go:
+		//     import "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+		// should be
+		//     import "github.com/panther-labs/panther/api/gateway/remediation/client/operations"
+		walk(client, func(path string, info os.FileInfo) {
+			if info.IsDir() || filepath.Ext(path) != ".go" {
+				return
+			}
+
+			body, err := ioutil.ReadFile(path)
+			if err != nil {
+				logger.Fatalf("failed to open %s: %v", path, err)
+			}
+
+			correctImport := fmt.Sprintf(
+				`"github.com/panther-labs/panther/api/gateway/%s/client/operations"`,
+				filepath.Base(filepath.Dir(filepath.Dir(path))))
+
+			newBody := clientImport.ReplaceAll(body, []byte(correctImport))
+			if err := ioutil.WriteFile(path, newBody, info.Mode()); err != nil {
+				logger.Fatalf("failed to rewrite %s: %v", path, err)
+			}
+		})
+
+		// Format generated files with our license header and import ordering.
+		// "swagger generate client" can embed the header, but it's simpler to keep the whole repo
+		// formatted the exact same way.
+		fmtLicense(client, models)
+		if err := gofmt(client, models); err != nil {
+			logger.Warnf("gofmt %s %s failed: %v", client, models, err)
+		}
+	}
+
+	logger.Info("build:api: generating web typescript from graphql")
+	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
+		return fmt.Errorf("graphql generation failed: %v", err)
+	}
+	fmtLicense("web/__generated__")
+	if err := prettier("web/__generated__/*"); err != nil {
+		logger.Warnf("prettier web/__generated__/ failed: %v", err)
+	}
+
+	return nil
 }
 
 // Lambda Compile Go Lambda function source
 func (b Build) Lambda() {
-	modified, err := target.Dir("out/bin/internal", "api", "internal", "pkg")
-	if err == nil && !modified {
-		// The source folders are older than all the compiled binaries - nothing has changed
-		logger.Info("build:lambda: up to date")
-		return
+	if err := b.lambda(); err != nil {
+		logger.Fatal(err)
 	}
+}
 
-	mg.Deps(b.API)
-
+// "go build" in parallel for each Lambda function.
+//
+// If you don't already have all go modules downloaded, this may fail because each goroutine will
+// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
+//
+// Run "go mod download" or "mage setup" before building to download the go modules.
+// If you're adding a new module, run "go get ./..." before building to fetch the new module.
+func (b Build) lambda() error {
 	var packages []string
 	walk("internal", func(path string, info os.FileInfo) {
 		if info.IsDir() && strings.HasSuffix(path, "main") {
@@ -120,19 +148,44 @@ func (b Build) Lambda() {
 		}
 	})
 
-	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main)", len(packages))
-	for _, pkg := range packages {
-		if err := buildPackage(pkg); err != nil {
-			logger.Fatal(err)
+	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
+		len(packages), runtime.Version())
+
+	// Start worker goroutines
+	compile := func(pkgs chan string, errs chan error) {
+		for pkg := <-pkgs; pkg != ""; pkg = <-pkgs {
+			errs <- buildLambdaPackage(pkg)
 		}
 	}
+
+	pkgs := make(chan string, len(packages)+maxWorkers)
+	errs := make(chan error, len(packages))
+	for i := 0; i < maxWorkers; i++ {
+		go compile(pkgs, errs)
+	}
+
+	// Send work units
+	for _, pkg := range packages {
+		pkgs <- pkg
+	}
+	for i := 0; i < maxWorkers; i++ {
+		pkgs <- "" // poison pill to stop each worker
+	}
+
+	// Read results
+	for range packages {
+		if err := <-errs; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func buildPackage(pkg string) error {
+func buildLambdaPackage(pkg string) error {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")
-	oldInfo, statErr := os.Stat(binary)
-	oldHash, hashErr := shutil.SHA256(binary)
+	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
@@ -141,21 +194,115 @@ func buildPackage(pkg string) error {
 		return fmt.Errorf("go build %s failed: %v", binary, err)
 	}
 
-	if statErr == nil && hashErr == nil {
-		if hash, err := shutil.SHA256(binary); err == nil && hash == oldHash {
-			// Optimization - if the binary contents haven't changed, reset the last modified time.
-			// "aws cloudformation package" re-uploads any binary whose modification time has changed,
-			// even if the contents are identical. So this lets us skip any unmodified binaries, which can
-			// significantly reduce the total deployment time if only one or two functions changed.
-			//
-			// With 5 unmodified Lambda functions, deploy:app went from 146s => 109s with this fix.
-			logger.Debugf("%s binary unchanged, reverting timestamp", binary)
-			modTime := oldInfo.ModTime()
-			if err = os.Chtimes(binary, modTime, modTime); err != nil {
-				// Non-critical error - the build process can continue
-				logger.Warnf("failed optimization: can't revert timestamp for %s: %v", binary, err)
-			}
+	return nil
+}
+
+// Tools Compile devtools and opstools
+func (b Build) Tools() {
+	if err := b.tools(); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func (b Build) tools() error {
+	// cross compile so tools can be copied to other machines easily
+	buildEnvs := []map[string]string{
+		// darwin:arm is not compatible
+		{"GOOS": "darwin", "GOARCH": "amd64"},
+		{"GOOS": "linux", "GOARCH": "amd64"},
+		{"GOOS": "linux", "GOARCH": "arm"},
+		{"GOOS": "windows", "GOARCH": "amd64"},
+		{"GOOS": "windows", "GOARCH": "arm"},
+	}
+
+	// Define worker goroutine
+	type buildInput struct {
+		env  map[string]string
+		path string
+	}
+
+	compile := func(inputs chan *buildInput, results chan error) {
+		for input := <-inputs; input != nil; input = <-inputs {
+			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(input.path)),
+				input.env["GOOS"], input.env["GOARCH"], filepath.Base(filepath.Dir(input.path)))
+			results <- sh.RunWith(input.env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
 		}
+	}
+
+	// Start worker goroutines (channel buffers are large enough for all input)
+	inputs := make(chan *buildInput, 100)
+	results := make(chan error, 100)
+	for i := 0; i < maxWorkers; i++ {
+		go compile(inputs, results)
+	}
+
+	count := 0
+	err := filepath.Walk("cmd", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() || filepath.Base(path) != "main.go" {
+			return nil
+		}
+
+		// Build each os/arch combination in parallel
+		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
+		for _, env := range buildEnvs {
+			count++
+			inputs <- &buildInput{env: env, path: path}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// Wait for results
+	for i := 0; i < maxWorkers; i++ {
+		results <- nil // send poison pill to stop each worker
+	}
+
+	for i := 0; i < count; i++ {
+		if err = <-results; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Generate CloudFormation templates in out/deployments folder
+func (b Build) Cfn() {
+	if err := b.cfn(); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func (b Build) cfn() error {
+	if err := embedAPISpec(); err != nil {
+		return err
+	}
+
+	if err := generateGlueTables(); err != nil {
+		return err
+	}
+
+	settings, err := config.Settings()
+	if err != nil {
+		return err
+	}
+
+	if err := generateAlarms(settings); err != nil {
+		return err
+	}
+	if err := generateDashboards(); err != nil {
+		return err
+	}
+	if err := generateMetrics(); err != nil {
+		return err
 	}
 
 	return nil

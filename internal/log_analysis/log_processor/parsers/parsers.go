@@ -1,7 +1,7 @@
 package parsers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,8 @@ type LogParser interface {
 	LogType() string
 
 	// Parse attempts to parse the provided log line
-	// If the provided log is not of the supported type the method returns nil
-	Parse(log string) []interface{}
+	// If the provided log is not of the supported type the method returns nil and an error
+	Parse(log string) ([]*PantherLog, error)
 
 	// New returns a new instance of the log parser, used like a factory method for stateful parsers
 	New() LogParser

@@ -1,7 +1,7 @@
 package awstest
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -74,7 +74,7 @@ func (s *MockSTS) GetCallerIdentity(
 // This can be overridden to return errors, etc.
 var MockSTSClient = &MockSTS{}
 
-// STSAssumeRoleProviderMock is used to override the AssumeRoleProviderFunc in testing.
+// STSAssumeRoleProviderMock is used to override the assumeRoleProviderFunc in testing.
 func STSAssumeRoleProviderMock() func(p *stscreds.AssumeRoleProvider) {
 	return func(p *stscreds.AssumeRoleProvider) {
 		p.Client = MockSTSClient

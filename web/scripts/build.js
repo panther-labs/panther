@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  */
 
 const { spawn } = require('child_process');
-const { loadDotEnvVars, getPantherDeploymentVersion } = require('./utils');
+const { loadDotEnvVars, getPantherDeploymentVersion, validateRequiredEnv } = require('./utils');
 
 // Mark the Node environment as production in order to load the webpack configuration
 process.env.NODE_ENV = 'production';
@@ -31,4 +31,7 @@ loadDotEnvVars('web/.env.sentry');
 // Add all the aws-related ENV vars to process.env
 loadDotEnvVars('out/.env.aws');
 
-spawn('node_modules/.bin/webpack', { stdio: 'inherit' });
+// Make sure that the min required ENV vars are present in the system
+validateRequiredEnv();
+
+spawn('node_modules/.bin/webpack', ['--config', 'web/webpack.config.js'], { stdio: 'inherit' });

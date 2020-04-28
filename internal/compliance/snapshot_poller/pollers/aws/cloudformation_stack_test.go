@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,14 +31,16 @@ import (
 func TestCloudFormationStackDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvc([]string{"DescribeStacksPages"})
 
-	out := describeStacks(mockSvc)
+	out, err := describeStacks(mockSvc)
+	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestCloudFormationStackDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcError([]string{"DescribeStacksPages"})
 
-	out := describeStacks(mockSvc)
+	out, err := describeStacks(mockSvc)
+	require.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -99,7 +101,6 @@ func TestCloudFormationStackBuildSnapshotError(t *testing.T) {
 func TestCloudFormationStackPoller(t *testing.T) {
 	awstest.MockCloudFormationForSetup = awstest.BuildMockCloudFormationSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	CloudFormationClientFunc = awstest.SetupMockCloudFormation
 
 	resources, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{
@@ -118,7 +119,6 @@ func TestCloudFormationStackPoller(t *testing.T) {
 func TestCloudFormationStackPollerError(t *testing.T) {
 	awstest.MockCloudFormationForSetup = awstest.BuildMockCloudFormationSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	CloudFormationClientFunc = awstest.SetupMockCloudFormation
 
 	resources, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{
@@ -129,7 +129,7 @@ func TestCloudFormationStackPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
@@ -140,7 +140,6 @@ func TestCloudFormationStackDescribeDriftDetectionStatusInProgress(t *testing.T)
 	defer func() { awstest.StackDriftDetectionInProgress = false }()
 	awstest.MockCloudFormationForSetup = awstest.BuildMockCloudFormationSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	CloudFormationClientFunc = awstest.SetupMockCloudFormation
 
 	resources, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{

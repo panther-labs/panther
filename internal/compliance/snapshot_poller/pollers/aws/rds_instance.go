@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,8 +38,16 @@ var (
 )
 
 func setupRDSClient(sess *session.Session, cfg *aws.Config) interface{} {
-	cfg.MaxRetries = aws.Int(MaxRetries)
 	return rds.New(sess, cfg)
+}
+
+func getRDSClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (rdsiface.RDSAPI, error) {
+	client, err := getClient(pollerResourceInput, RDSClientFunc, "rds", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(rdsiface.RDSAPI), nil
 }
 
 // PollRDSInstance polls a single RDS DB Instance resource
@@ -47,18 +55,22 @@ func PollRDSInstance(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "rds", resourceARN.Region).(rdsiface.RDSAPI)
-	rdsInstance := getRDSInstance(client, scanRequest.ResourceID)
+	rdsClient, err := getRDSClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildRDSInstanceSnapshot(client, rdsInstance)
+	rdsInstance := getRDSInstance(rdsClient, scanRequest.ResourceID)
+
+	snapshot := buildRDSInstanceSnapshot(rdsClient, rdsInstance)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
-	return snapshot
+	return snapshot, nil
 }
 
 // getRDSInstance returns a specific RDS instance
@@ -234,13 +246,10 @@ func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 
 	regions := utils.GetServiceRegions(pollerInput.Regions, "rds")
 	for _, regionID := range regions {
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
-		creds, err := AssumeRoleFunc(pollerInput, sess)
+		rdsSvc, err := getRDSClient(pollerInput, *regionID)
 		if err != nil {
-			return nil, err
+			return nil, err // error is logged in getClient()
 		}
-
-		rdsSvc := RDSClientFunc(sess, &aws.Config{Credentials: creds}).(rdsiface.RDSAPI)
 
 		// Start with generating a list of all instances
 		instances := describeDBInstances(rdsSvc)

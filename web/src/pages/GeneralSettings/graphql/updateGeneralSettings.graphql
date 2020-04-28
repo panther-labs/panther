@@ -1,0 +1,5 @@
+mutation UpdateGeneralSettings($input: UpdateGeneralSettingsInput!) {
+  updateGeneralSettings(input: $input) {
+    ...GeneralSettingsFull
+  }
+}

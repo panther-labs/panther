@@ -1,7 +1,7 @@
 package apihandlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import (
 
 // GetRemediations returns the list of remediations available for an organization
 func GetRemediations(_ *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	zap.L().Info("getting list of remediations")
+	zap.L().Debug("getting list of remediations")
 	// TODO - differentiate between different error types
 	remediations, err := invoker.GetRemediations()
 	if err != nil {

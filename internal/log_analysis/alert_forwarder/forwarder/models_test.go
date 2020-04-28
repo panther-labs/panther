@@ -1,7 +1,7 @@
 package forwarder
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,17 +23,21 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 )
 
 func TestConvertAttribute(t *testing.T) {
 	expectedAlertDedup := &AlertDedupEvent{
 		RuleID:              "testRuleId",
+		RuleVersion:         "testRuleVersion",
 		DeduplicationString: "testDedup",
 		AlertCount:          10,
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
 		UpdateTime:          time.Unix(1582285280, 0).UTC(),
 		EventCount:          100,
+		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
+		GeneratedTitle:      aws.String("test title"),
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())
@@ -41,9 +45,42 @@ func TestConvertAttribute(t *testing.T) {
 	require.Equal(t, expectedAlertDedup, alertDedupEvent)
 }
 
+func TestConvertNilValue(t *testing.T) {
+	alertDedupEvent, err := FromDynamodDBAttribute(nil)
+	require.NoError(t, err)
+	require.Nil(t, alertDedupEvent)
+}
+
+func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
+	expectedAlertDedup := &AlertDedupEvent{
+		RuleID:              "testRuleId",
+		RuleVersion:         "testRuleVersion",
+		DeduplicationString: "testDedup",
+		AlertCount:          10,
+		CreationTime:        time.Unix(1582285279, 0).UTC(),
+		UpdateTime:          time.Unix(1582285280, 0).UTC(),
+		EventCount:          100,
+		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
+	}
+
+	ddbItem := getNewTestCase()
+	delete(ddbItem, "title")
+	alertDedupEvent, err := FromDynamodDBAttribute(ddbItem)
+	require.NoError(t, err)
+	require.Equal(t, expectedAlertDedup, alertDedupEvent)
+}
+
 func TestMissingRuleId(t *testing.T) {
 	testInput := getNewTestCase()
 	delete(testInput, "ruleId")
+	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
+	require.Nil(t, alertDedupEvent)
+	require.Error(t, err)
+}
+
+func TestMissingRuleVersion(t *testing.T) {
+	testInput := getNewTestCase()
+	delete(testInput, "ruleVersion")
 	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
 	require.Nil(t, alertDedupEvent)
 	require.Error(t, err)
@@ -81,9 +118,9 @@ func TestMissingAlertUpdateTime(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestMissingEventCount(t *testing.T) {
+func TestMissingLogTypes(t *testing.T) {
 	testInput := getNewTestCase()
-	delete(testInput, "eventCount")
+	delete(testInput, "logTypes")
 	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
 	require.Nil(t, alertDedupEvent)
 	require.Error(t, err)
@@ -97,13 +134,24 @@ func TestInvalidInteger(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestInvalidTypeShouldntPanic(t *testing.T) {
+	testInput := getNewTestCase()
+	testInput["alertCreationTime"] = events.NewStringAttribute("string")
+	alertDedupEvent, err := FromDynamodDBAttribute(testInput)
+	require.Nil(t, alertDedupEvent)
+	require.Error(t, err)
+}
+
 func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 	return map[string]events.DynamoDBAttributeValue{
 		"ruleId":            events.NewStringAttribute("testRuleId"),
+		"ruleVersion":       events.NewStringAttribute("testRuleVersion"),
 		"dedup":             events.NewStringAttribute("testDedup"),
 		"alertCount":        events.NewNumberAttribute("10"),
 		"alertCreationTime": events.NewNumberAttribute("1582285279"),
 		"alertUpdateTime":   events.NewNumberAttribute("1582285280"),
 		"eventCount":        events.NewNumberAttribute("100"),
+		"logTypes":          events.NewStringSetAttribute([]string{"Log.Type.1", "Log.Type.2"}),
+		"title":             events.NewStringAttribute("test title"),
 	}
 }

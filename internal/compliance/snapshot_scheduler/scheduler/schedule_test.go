@@ -1,7 +1,7 @@
 package scheduler
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
 //
@@ -67,7 +67,7 @@ func getTestInvokeInput() *lambda.InvokeInput {
 	}
 
 	return &lambda.InvokeInput{
-		FunctionName: aws.String("panther-snapshot-api"),
+		FunctionName: aws.String("panther-source-api"),
 		Payload:      payload,
 	}
 }
@@ -97,7 +97,6 @@ var (
 				IntegrationLabel: aws.String("ProdAWS"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
-				ScanEnabled:      aws.Bool(true),
 			},
 			SourceIntegrationStatus: &models.SourceIntegrationStatus{
 				ScanStatus: aws.String("ok"),
@@ -113,7 +112,6 @@ var (
 				IntegrationLabel: aws.String("TestAWS"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(30),
-				ScanEnabled:      aws.Bool(true),
 			},
 			SourceIntegrationStatus: &models.SourceIntegrationStatus{
 				ScanStatus: aws.String("ok"),
@@ -130,7 +128,6 @@ var (
 				IntegrationLabel: aws.String("TestAWS"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(30),
-				ScanEnabled:      aws.Bool(true),
 			},
 		},
 		// An integration with a scan in progress, started 20 minutes ago.
@@ -140,7 +137,6 @@ var (
 				IntegrationLabel: aws.String("Staging AWS Account"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
-				ScanEnabled:      aws.Bool(true),
 			},
 			SourceIntegrationStatus: &models.SourceIntegrationStatus{
 				ScanStatus: aws.String("scanning"),
@@ -156,7 +152,6 @@ var (
 				IntegrationLabel: aws.String("Development AWS Account"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
-				ScanEnabled:      aws.Bool(true),
 			},
 			SourceIntegrationStatus: &models.SourceIntegrationStatus{
 				ScanStatus: aws.String("scanning"),

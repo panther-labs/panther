@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,23 +17,13 @@
  */
 
 import React from 'react';
-import { PolicyDetails, SuppressPoliciesInput, ResourceDetails } from 'Generated/schema';
-import { useMutation, gql } from '@apollo/client';
+import { PolicyDetails, ResourceDetails } from 'Generated/schema';
 import { useSnackbar } from 'pouncejs';
-import { RESOURCE_DETAILS } from 'Pages/resource-details';
-import { POLICY_DETAILS } from 'Pages/policy-details';
+import { ResourceDetailsDocument } from 'Pages/ResourceDetails';
+import { PolicyDetailsDocument } from 'Pages/PolicyDetails';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
-
-const SUPPRESS_POLICIES = gql`
-  mutation SuppressPolicy($input: SuppressPoliciesInput!) {
-    suppressPolicies(input: $input)
-  }
-`;
-
-interface ApolloMutationInput {
-  input: SuppressPoliciesInput;
-}
+import { useSuppressPolicy } from './graphql/suppressPolicy.generated';
 
 interface UsePolicySuppressionProps {
   /** A list of IDs whose corresponding policies should receive the suppression */
@@ -46,41 +36,31 @@ interface UsePolicySuppressionProps {
   resourcePatterns: ResourceDetails['id'][];
 }
 const usePolicySuppression = ({ policyIds, resourcePatterns }: UsePolicySuppressionProps) => {
-  const [suppressPolicies, { data, loading, error }] = useMutation<boolean, ApolloMutationInput>(
-    SUPPRESS_POLICIES,
-    {
-      awaitRefetchQueries: true,
-      refetchQueries: [getOperationName(RESOURCE_DETAILS), getOperationName(POLICY_DETAILS)],
-      variables: {
-        input: { policyIds, resourcePatterns },
-      },
-    }
-  );
-
   const { pushSnackbar } = useSnackbar();
-  React.useEffect(() => {
-    if (error) {
+
+  const [suppressPolicies, { loading }] = useSuppressPolicy({
+    awaitRefetchQueries: true,
+    refetchQueries: [
+      getOperationName(ResourceDetailsDocument),
+      getOperationName(PolicyDetailsDocument),
+    ],
+    variables: {
+      input: { policyIds, resourcePatterns },
+    },
+    onCompleted: () => {
+      pushSnackbar({ variant: 'success', title: 'Suppression applied successfully' });
+    },
+    onError: error => {
       pushSnackbar({
         variant: 'error',
         title:
           extractErrorMessage(error) ||
           'Failed to apply suppression due to an unknown and unpredicted error',
       });
-    }
-  }, [error]);
+    },
+  });
 
-  React.useEffect(() => {
-    if (data) {
-      pushSnackbar({ variant: 'success', title: 'Suppression applied successfully' });
-    }
-  }, [data]);
-
-  return React.useMemo(() => ({ suppressPolicies, data, loading, error }), [
-    suppressPolicies,
-    data,
-    loading,
-    error,
-  ]);
+  return React.useMemo(() => ({ suppressPolicies, loading }), [suppressPolicies, loading]);
 };
 
 export default usePolicySuppression;

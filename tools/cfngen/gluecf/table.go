@@ -1,7 +1,7 @@
 package gluecf
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,12 @@ package gluecf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import (
+	"fmt"
+	"reflect"
+	"strings"
+)
+
 // Generate CF for a gluecf table: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-glue-table.html
 
 // Below structs match CF structure
@@ -25,9 +31,11 @@ package gluecf
 // NOTE: the use of type interface{} allows strings and structs (e.g., cfngen.Ref{} and cfngen.Sub{} )
 
 type Column struct {
-	Name    string
-	Type    string
-	Comment string `json:",omitempty"`
+	Name     string
+	Type     string              // this is the Glue type
+	Comment  string              `json:",omitempty"`
+	Required bool                `json:"-"` // do NOT serialize! Not used for Glue CF (used for doc).
+	Field    reflect.StructField `json:"-"` // do NOT serialize! Not used for Glue CF (used for doc).
 }
 
 type SerdeInfo struct {
@@ -116,15 +124,22 @@ func NewParquetTable(input *NewTableInput) (db *Table) {
 }
 
 func NewJSONLTable(input *NewTableInput) (db *Table) {
+	descriptorParameters := map[string]interface{}{
+		"serialization.format": "1",
+		"case.insensitive":     "false", // Need to be case sensitive to deal with columns that have same name but different casing
+	}
+
+	// Adding mapping for column names. This is required when columns are case sensitive
+	for _, column := range input.Columns {
+		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(column.Name))] = column.Name
+	}
+
 	sd := &StorageDescriptor{
 		InputFormat:  "org.apache.hadoop.mapred.TextInputFormat",
 		OutputFormat: "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
 		SerdeInfo: SerdeInfo{
 			SerializationLibrary: "org.openx.data.jsonserde.JsonSerDe",
-			Parameters: map[string]interface{}{
-				"serialization.format": "1",
-				"case.insensitive":     "TRUE", // treat as lower case
-			},
+			Parameters:           descriptorParameters,
 		},
 		Location: input.Location,
 		Columns:  input.Columns,

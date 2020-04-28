@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ Resources:
   CloudFormationStackSetAdminRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: PantherCloudFormationStackSetAdminRole
+      RoleName: !Sub PantherCloudFormationStackSetAdminRole-${AWS::Region} # DO NOT CHANGE! set in mage deploy
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -41,7 +41,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sts:AssumeRole
-                Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole
+                Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${AWS::Region}
 
 Outputs:
   CloudFormationStackSetAdminRoleArn:

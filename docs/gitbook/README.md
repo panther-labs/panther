@@ -1,58 +1,53 @@
----
-description: >-
-  This page offers an overview of Panther, its use-cases, and powerful
-  capabilities designed to address a wide range of cloud security challenges and
-  combat current and emerging threats.
----
-
 # Home
 
-## What is Panther
+Panther detects threats with log data, improves cloud security posture, and powers investigations with a robust data warehouse.
 
-Panther is a powerful, open-source, cloud-native SIEM designed to be:
+![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
 
-- **Scalable:** Built on serverless technologies for cost and operational efficiency at scale
-- **Fast**: Near real-time rules analysis, alerting, and remediation
-- **Flexible:** Python-based detections and alerting support for PagerDuty, Slack, MS Teams, and more
-- **Integrated:** Reduce the amount of tools needed to run your security team
-- **Automated:** Stop threat hunting manually and quickly deploy with infrastructure as code
-- **Secure:** Least-privilege and encrypted infrastructure that you control
+Its main components are:
 
-Panther's use-cases include:
+* [Log Analysis](log-analysis/log-processing/README.md) for collecting, parsing, and analyzing security data
+* [Cloud Security](policies/scanning/README.md) identifying misconfigurations in AWS accounts and improving security posture
+* [Historical Search](historical-search/README.md) for analytics on normalized log data, generated alerts, and common indicators
 
-- **Log Analysis:** Centralize and analyze log data with Rules for threats and suspicious activity
-- **Incident Response:** Perform historical queries with SQL over long-term data for analytics, log correlation, and forensics
-- **Cloud Security:** Detect misconfigured cloud infrastructure and enforce best practices
-- **Auto Remediation:** Automatically correct non-compliance infrastructure
+## Benefits
 
-The following diagram offers a high-level overview of Panther's architecture:
+- Built on serverless technologies for high scale at low cost
+- Python-based real-time detections
+- SQL-based historical queries
+- Low-latency alerting and remediation
+- Simple deployments using infrastructure as code
+- Secure, least-privilege, and encrypted infrastructure deployed within your AWS account
 
-![High-Level Architecture](.gitbook/assets/high-level-diagram.png)
+## Use Cases
 
-### Log Analysis
+Teams use Panther for:
 
-Panther offers an intuitive way to detect suspicious activity by using **Rules**.
+|         Use Case         | Description                                                                               |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+|  Continuous Monitoring   | Analyze logs in real-time and identify suspicious activity that could indicate a breach   |
+|       Alert Triage       | Pivot across all of your security data to understand the full context of an alert         |
+|      Searching IOCs      | Quickly search for matches against IOCs using standardized data fields                    |
+| Securing Cloud Resources | Identify misconfigurations, achieve compliance, and model security best practices in code |
 
-Each Rule evaluates to a given log type and contains metadata to help analysts understand its purpose and how to respond.
+## Concepts
 
-![Rule Settings](.gitbook/assets/rule-example-1%20%281%29.png)
+|         Term         | Meaning                                                                               |
+| :----------------------: | ----------------------------------------------------------------------------------------- |
+| Event   | A normalized log from sources such as CloudTrail, Osquery, or Suricata   |
+| Rule       | A Python function to detect suspicious activity         |
+| Alert   | A notification to the team when a policy has failed or a rule has triggered  |
+| Policy | A Python function representing the desired secure state of a resource |
+| Resource      | A cloud entity, such as an IAM user, virtual machine, or data bucket                    |
 
-Python code can be written and tested in the browser to analyze logs:
+## Get Started!
 
-![Rule Function Body](.gitbook/assets/rule-example-2%20%281%29.png)
+To get set up with Panther, continue to the [quick start](quick-start.md)!
 
-### Cloud Security
+## Enterprise
 
-Panther also offers a feature to detect misconfigured AWS resources.
+For teams needing 24x7 support, advanced analysis packs (PCI, MITRE ATT&CK), RBAC, and SSO, please reach out to us at `contact@runpanther.io` to learn more about Panther Enterprise.
 
-Each entity within an AWS account is defined as a **Resource**. Each Resource has a set of attributes that can be referenced in a Policy. The following screenshot shows how Panther lets you monitor all your Resources, Attributes, and Policies from a single pane of glass:
+### Hosted
 
-![Resource Details](.gitbook/assets/resource-detail-policies-2019-09-12.png)
-
-You can also easily search your **Resources** by using filters such as Type, Source, Status, or Name:
-
-![Resource Search](.gitbook/assets/resource-search-2019-09-12.png)
-
-### Getting Started
-
-To get set up with Panther, continue with [Quick Start](quick-start.md) on the next page.
+For teams that need Panther hosted in single-tenant SaaS environment, please reach out to us at `contact@runpanther.io`.

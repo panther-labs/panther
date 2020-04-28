@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -46,8 +46,16 @@ var (
 )
 
 func setupKmsClient(sess *session.Session, cfg *aws.Config) interface{} {
-	cfg.MaxRetries = aws.Int(MaxRetries)
 	return kms.New(sess, cfg)
+}
+
+func getKMSClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (kmsiface.KMSAPI, error) {
+	client, err := getClient(pollerResourceInput, KmsClientFunc, "kms", region)
+	if err != nil {
+		return nil, err // error is logged in getClient()
+	}
+
+	return client.(kmsiface.KMSAPI), nil
 }
 
 // PollKMSKey polls a single KMS Key resource
@@ -55,9 +63,13 @@ func PollKMSKey(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
 	resourceARN arn.ARN,
 	scanRequest *pollermodels.ScanEntry,
-) interface{} {
+) (interface{}, error) {
 
-	client := getClient(pollerResourceInput, "kms", resourceARN.Region).(kmsiface.KMSAPI)
+	client, err := getKMSClient(pollerResourceInput, resourceARN.Region)
+	if err != nil {
+		return nil, err
+	}
+
 	keyID := strings.Replace(resourceARN.Resource, "key/", "", 1)
 	key := &kms.KeyListEntry{
 		KeyId:  aws.String(keyID),
@@ -66,11 +78,11 @@ func PollKMSKey(
 
 	snapshot := buildKmsKeySnapshot(client, key)
 	if snapshot == nil {
-		return nil
+		return nil, nil
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
-	return snapshot
+	return snapshot, nil
 }
 
 // listKeys returns a list of all keys in the account
@@ -212,13 +224,10 @@ func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 	kmsKeySnapshots := make(map[string]*awsmodels.KmsKey)
 
 	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "kms") {
-		sess := session.Must(session.NewSession(&aws.Config{Region: regionID}))
-		creds, err := AssumeRoleFunc(pollerInput, sess)
+		kmsSvc, err := getKMSClient(pollerInput, *regionID)
 		if err != nil {
-			return nil, err
+			return nil, err // error is logged in getClient()
 		}
-
-		kmsSvc := KmsClientFunc(sess, &aws.Config{Credentials: creds}).(kmsiface.KMSAPI)
 
 		// Start with generating a list of all keys
 		keys := listKeys(kmsSvc)

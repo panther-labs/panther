@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,10 +26,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,27 +35,42 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/iam"
+
+	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
-	keysDirectory        = "keys"
-	certificateFile      = keysDirectory + "/panther-tls-public.crt"
-	privateKeyFile       = keysDirectory + "/panther-tls-private.key"
-	keyLength            = 2048
-	certFilePermissions  = 0700
-	certificateOutputKey = "WebApplicationCertificateArn"
+	keysDirectory       = "keys"
+	certificateFile     = keysDirectory + "/panther-tls-public.crt"
+	privateKeyFile      = keysDirectory + "/panther-tls-private.key"
+	keyLength           = 2048
+	certFilePermissions = 0700
 )
+
+// Returns the certificate arn for the bootstrap stack. One of:
+//
+// 1) The settings file, if it's specified
+// 2) The bootstrap stack output (existingCertArn)
+// 3) Uploading an ACM or IAM cert
+func certificateArn(awsSession *session.Session, settings *config.PantherConfig, existingCertArn string) string {
+	if settings.Web.CertificateArn != "" {
+		// Always use the value in the settings file first, if it exists
+		return settings.Web.CertificateArn
+	}
+
+	// If the bootstrap stack already exists and has a certificate arn, use that
+	if existingCertArn != "" {
+		return existingCertArn
+	}
+
+	// If the stack outputs are blank, it never deployed successfully - upload a new cert
+	return uploadLocalCertificate(awsSession)
+}
 
 // Upload a local self-signed TLS certificate to ACM. Only needs to happen once per installation
 //
 // In regions/partitions where ACM is not supported, we fall back to IAM certificate management.
 func uploadLocalCertificate(awsSession *session.Session) string {
-	// Check if certificate has already been uploaded
-	if certArn := getExistingCertificate(awsSession); certArn != nil {
-		logger.Debugf("deploy: load balancer certificate %s already exists", *certArn)
-		return *certArn
-	}
-
 	// Ensure the certificate and key file exist. If not, create them.
 	_, certErr := os.Stat(certificateFile)
 	_, keyErr := os.Stat(privateKeyFile)
@@ -90,26 +103,18 @@ func uploadLocalCertificate(awsSession *session.Session) string {
 			},
 		},
 	})
+
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "LimitExceededException" {
+				logger.Warn("deploy: ACM certificate import limit reached, falling back to IAM for certificate management")
+				return uploadIAMCertificate(awsSession)
+			}
+		}
 		logger.Fatalf("ACM certificate import failed: %v", err)
 	}
 
 	return *output.CertificateArn
-}
-
-// getExistingCertificate checks to see if there is already an ACM/IAM certificate configured
-func getExistingCertificate(awsSession *session.Session) *string {
-	outputs, err := getStackOutputs(awsSession, backendStack)
-	if err != nil {
-		if strings.Contains(err.Error(), "Stack with id "+backendStack+" does not exist") {
-			return nil
-		}
-		logger.Fatal(err)
-	}
-	if arn, ok := outputs[certificateOutputKey]; ok {
-		return &arn
-	}
-	return nil
 }
 
 // generateKeys generates the self signed private key and certificate for HTTPS access to the web application
@@ -144,18 +149,13 @@ func generateKeys() error {
 		return fmt.Errorf("x509 cert creation failed: %v", err)
 	}
 
-	// Create the keys directory if it does not already exist
-	if err = os.MkdirAll(keysDirectory, certFilePermissions); err != nil {
-		return fmt.Errorf("failed to create keys directory %s: %v", keysDirectory, err)
-	}
-
 	// PEM encode the certificate and write it to disk
 	var certBuffer bytes.Buffer
 	if err = pem.Encode(&certBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}); err != nil {
 		return fmt.Errorf("cert encoding failed: %v", err)
 	}
-	if err = ioutil.WriteFile(certificateFile, certBuffer.Bytes(), certFilePermissions); err != nil {
-		return fmt.Errorf("failed to save cert %s: %v", certificateFile, err)
+	if err = writeFile(certificateFile, certBuffer.Bytes()); err != nil {
+		return err
 	}
 
 	// PEM Encode the private key and write it to disk
@@ -164,11 +164,7 @@ func generateKeys() error {
 	if err != nil {
 		return fmt.Errorf("key encoding failed: %v", err)
 	}
-	if err = ioutil.WriteFile(privateKeyFile, keyBuffer.Bytes(), certFilePermissions); err != nil {
-		return fmt.Errorf("failed to save key %s: %v", privateKeyFile, err)
-	}
-
-	return nil
+	return writeFile(privateKeyFile, keyBuffer.Bytes())
 }
 
 // uploadIAMCertificate creates an IAM certificate resource and returns its ARN
@@ -176,6 +172,7 @@ func uploadIAMCertificate(awsSession *session.Session) string {
 	certName := "PantherCertificate-" + time.Now().Format("2006-01-02T15-04-05")
 	input := &iam.UploadServerCertificateInput{
 		CertificateBody:       aws.String(string(readFile(certificateFile))),
+		Path:                  aws.String("/panther/" + *awsSession.Config.Region + "/"),
 		PrivateKey:            aws.String(string(readFile(privateKeyFile))),
 		ServerCertificateName: aws.String(certName),
 	}

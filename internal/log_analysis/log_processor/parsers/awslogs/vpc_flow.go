@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ package awslogs
  */
 
 import (
-	"encoding/csv"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,6 +27,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -65,11 +66,19 @@ type VPCFlow struct { // NOTE: since fields are customizable by users, the only 
 
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type VPCFlowParser struct {
+	CSVReader *csvstream.StreamingCSVReader
 	columnMap map[int]string // column position to header name
 }
 
+var _ parsers.LogParser = (*VPCFlowParser)(nil)
+
 func (p *VPCFlowParser) New() parsers.LogParser {
-	return &VPCFlowParser{}
+	reader := csvstream.NewStreamingCSVReader()
+	// non-default settings
+	reader.CVSReader.Comma = ' '
+	return &VPCFlowParser{
+		CSVReader: reader,
+	}
 }
 
 const (
@@ -127,33 +136,28 @@ var (
 )
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *VPCFlowParser) Parse(log string) []interface{} {
+func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	if p.columnMap == nil { // must be first log line in file
 		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
-			return []interface{}{}
+			return []*parsers.PantherLog{}, nil
 		}
-		return nil
+		return nil, errors.New("invalid header")
 	}
 
-	reader := csv.NewReader(strings.NewReader(log))
-	reader.Comma = ' '
-
-	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
-		zap.L().Debug("failed to parse the log as csv")
-		return nil
+	record, err := p.CSVReader.Parse(log)
+	if err != nil {
+		return nil, err
 	}
 
-	event := p.populateEvent(records[0]) // parser should only receive 1 line at a time
+	event := p.populateEvent(record) // parser should only receive 1 line at a time
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return []interface{}{event}
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
@@ -260,8 +264,11 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 }
 
 func (event *VPCFlow) updatePantherFields(p *VPCFlowParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Start)
+	event.SetCoreFields(p.LogType(), event.Start, event)
 	event.AppendAnyAWSAccountIdPtrs(event.AccountID)
 	event.AppendAnyAWSInstanceIdPtrs(event.InstanceID)
-	event.AppendAnyIPAddressPtrs(event.SrcAddr, event.DstAddr, event.PacketSrcAddr, event.PacketDstAddr)
+	event.AppendAnyIPAddressPtr(event.SrcAddr)
+	event.AppendAnyIPAddressPtr(event.DstAddr)
+	event.AppendAnyIPAddressPtr(event.PacketSrcAddr)
+	event.AppendAnyIPAddressPtr(event.PacketDstAddr)
 }

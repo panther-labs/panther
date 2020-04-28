@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,6 +34,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/resources/models"
+	proccessormodels "github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
@@ -92,11 +93,50 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		Entries:  sqsEntries,
 		QueueUrl: &env.ResourcesQueueURL,
 	}
-	if err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, sqsInput); err != nil {
+	if failures, err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, sqsInput); err != nil {
+		if err.Error() == sqs.ErrCodeBatchRequestTooLong {
+			// send too big messages as DynamoDB keys to be looked up
+			return handleBigMessages(failures, input)
+		}
 		zap.L().Error("sqsbatch.SendMessageBatch failed", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
+	return &events.APIGatewayProxyResponse{StatusCode: http.StatusCreated}
+}
+
+func handleBigMessages(bigMessages []*sqs.SendMessageBatchRequestEntry, input *models.AddResources) *events.APIGatewayProxyResponse {
+	sqsRetries := make([]*sqs.SendMessageBatchRequestEntry, len(bigMessages))
+	for i, message := range bigMessages {
+		// The SQS message ID of each message is it's index in the original request, so we can find the corresponding
+		// original index (and thus the original request) by converting the message ID back to an integer
+		inputIndex, err := strconv.Atoi(*message.Id)
+		if err != nil {
+			// Since we create this ID, this should never happen.
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
+
+		// Lookup the ID of the resource based on the original input and wrap it in a struct to pass along
+		lookupRequest := proccessormodels.ResourceLookup{ID: string(input.Resources[inputIndex].ID)}
+		body, err := jsoniter.MarshalToString(lookupRequest)
+		if err != nil {
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
+		sqsRetries[i] = &sqs.SendMessageBatchRequestEntry{
+			Id:          aws.String(strconv.Itoa(i)),
+			MessageBody: aws.String(body),
+		}
+	}
+
+	sqsInput := &sqs.SendMessageBatchInput{
+		Entries:  sqsRetries,
+		QueueUrl: &env.ResourcesQueueURL,
+	}
+
+	if _, err := sqsbatch.SendMessageBatch(sqsClient, maxBackoff, sqsInput); err != nil {
+		zap.L().Error("sqsbatch.SendMessageBatch failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusCreated}
 }
 

@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,13 +19,12 @@ package awslogs
  */
 
 import (
-	"encoding/csv"
+	"errors"
 	"strconv"
 	"strings"
 
-	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -55,31 +54,32 @@ type AuroraMySQLAudit struct {
 }
 
 // AuroraMySQLAuditParser parses AWS Aurora MySQL Audit logs
-type AuroraMySQLAuditParser struct{}
+type AuroraMySQLAuditParser struct {
+	CSVReader *csvstream.StreamingCSVReader
+}
+
+var _ parsers.LogParser = (*AuroraMySQLAuditParser)(nil)
 
 func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
-	return &AuroraMySQLAuditParser{}
+	return &AuroraMySQLAuditParser{
+		CSVReader: csvstream.NewStreamingCSVReader(),
+	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
-	reader := csv.NewReader(strings.NewReader(log))
-	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
-		zap.L().Debug("failed to parse the log as csv")
-		return nil
+func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLog, error) {
+	record, err := p.CSVReader.Parse(log)
+	if err != nil {
+		return nil, err
 	}
 
-	// parser should only receive 1 line at a time
-	record := records[0]
 	if len(record) < auroraMySQLAuditMinNumberOfColumns {
-		zap.L().Debug("failed to parse the log as csv (wrong number of columns)")
-		return nil
+		return nil, errors.New("invalid number of columns")
 	}
 
 	timestampUnixMillis, err := strconv.ParseInt(record[0], 0, 64)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	// If there are ',' in the "object" field, CSV reader will split it to multiple fields
@@ -104,11 +104,10 @@ func (p *AuroraMySQLAuditParser) Parse(log string) []interface{} {
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return []interface{}{event}
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
@@ -117,7 +116,7 @@ func (p *AuroraMySQLAuditParser) LogType() string {
 }
 
 func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Timestamp)
-	event.AppendAnyIPAddressPtrs(event.Host)
+	event.SetCoreFields(p.LogType(), event.Timestamp, event)
+	event.AppendAnyIPAddressPtr(event.Host)
 	event.AppendAnyDomainNamePtrs(event.ServerHost)
 }

@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,38 +23,21 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/internal/core/users_api/cognito"
 )
 
-type mockGatewayUpdateUserClient struct {
-	gateway.API
-	updateErr bool
-}
+func TestUpdateUser(t *testing.T) {
+	mockGateway := &cognito.MockUserGateway{}
+	userGateway = mockGateway
+	input := &models.UpdateUserInput{ID: aws.String("user-id")}
+	mockGateway.On("UpdateUser", input).Return(nil)
+	mockGateway.On("GetUser", input.ID).Return(
+		&models.User{ID: aws.String("user-id")}, nil)
 
-func (m *mockGatewayUpdateUserClient) UpdateUser(*gateway.UpdateUserInput) error {
-	if m.updateErr {
-		return &genericapi.AWSError{}
-	}
-	return nil
-}
-
-func TestUpdateUserGatewayErr(t *testing.T) {
-	userGateway = &mockGatewayUpdateUserClient{updateErr: true}
-	input := &models.UpdateUserInput{
-		GivenName: aws.String("Richie"),
-		ID:        aws.String("user123"),
-	}
-	assert.Error(t, (API{}).UpdateUser(input))
-}
-
-func TestUpdateUserHandle(t *testing.T) {
-	userGateway = &mockGatewayUpdateUserClient{}
-	input := &models.UpdateUserInput{
-		GivenName: aws.String("Richie"),
-		ID:        aws.String("user123"),
-	}
-	assert.NoError(t, (API{}).UpdateUser(input))
+	result, err := (API{}).UpdateUser(input)
+	require.NoError(t, err)
+	assert.NotNil(t, result)
 }

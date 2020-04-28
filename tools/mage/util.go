@@ -1,7 +1,7 @@
 package mage
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,16 +26,58 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	jsoniter "github.com/json-iterator/go"
 )
+
+const (
+	maxRetries = 20 // try very hard, avoid throttles
+)
+
+// For CPU-intensive operations, limit the max number of worker goroutines.
+var maxWorkers = runtime.NumCPU() - 1
+
+// Track results when executing similar tasks in parallel
+type goroutineResult struct {
+	summary string
+	err     error
+}
+
+// Wait for the given number of goroutines to finish, logging results as they come in.
+//
+// This can be invoked multiple times to track progress over many parallel chunks of work:
+//   "start" is the first message number to show in the output
+//   "end" is the last message number to show in the output
+//   "total" is the total number of tasks (across all invocations)
+//
+// This will consume exactly (end - start) + 1 messages in the channel.
+//
+// Logs a fatal message at the end if there were any errors.
+func logResults(results chan goroutineResult, command string, start, end, total int) {
+	var erroredTasks []string
+	for i := start; i <= end; i++ {
+		r := <-results
+		if r.err == nil {
+			logger.Infof("    √ %s finished (%d/%d)", r.summary, i, total)
+		} else {
+			logger.Errorf("    X %s failed (%d/%d): %v", r.summary, i, total, r.err)
+			erroredTasks = append(erroredTasks, r.summary)
+		}
+	}
+
+	if len(erroredTasks) > 0 {
+		logger.Fatalf("%s failed: %s", command, strings.Join(erroredTasks, ", "))
+	}
+}
 
 // Wrapper around filepath.Walk, logging errors as fatal.
 func walk(root string, handler func(string, os.FileInfo)) {
@@ -60,16 +102,26 @@ func readFile(path string) []byte {
 	return contents
 }
 
-// Wrapper around ioutil.WriteFile, logging errors as fatal.
-func writeFile(path string, data []byte) {
-	if err := ioutil.WriteFile(path, data, 0644); err != nil {
-		logger.Fatalf("failed to write %s: %v", path, err)
+// Wrapper around ioutil.WriteFile, creating the parent directories if needed.
+func writeFile(path string, data []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}
+
+	var permissions os.FileMode = 0644
+	if strings.HasSuffix(path, ".key") || strings.HasSuffix(path, ".crt") {
+		permissions = certFilePermissions
+	}
+
+	if err := ioutil.WriteFile(path, data, permissions); err != nil {
+		return fmt.Errorf("failed to write file %s: %v", path, err)
+	}
+	return nil
 }
 
 // Build the AWS session from the environment or a credentials file.
 func getSession() (*session.Session, error) {
-	awsSession, err := session.NewSession()
+	awsSession, err := session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS session: %v", err)
 	}
@@ -93,32 +145,8 @@ func getSession() (*session.Session, error) {
 	return awsSession, nil
 }
 
-// Get CloudFormation stack outputs as a map.
-func getStackOutputs(awsSession *session.Session, name string) (map[string]string, error) {
-	cfnClient := cloudformation.New(awsSession)
-	input := &cloudformation.DescribeStacksInput{StackName: &name}
-	response, err := cfnClient.DescribeStacks(input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe stack %s: %v", name, err)
-	}
-
-	return flattenStackOutputs(response), nil
-}
-
-// Flatten CloudFormation stack outputs into a string map.
-func flattenStackOutputs(detail *cloudformation.DescribeStacksOutput) map[string]string {
-	outputs := detail.Stacks[0].Outputs
-	result := make(map[string]string, len(outputs))
-	for _, output := range outputs {
-		result[*output.OutputKey] = *output.OutputValue
-	}
-	return result
-}
-
 // Upload a local file to S3.
-func uploadFileToS3(
-	awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
-
+func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %v", path, err)
@@ -202,6 +230,23 @@ func emailValidator(email string) error {
 	return errors.New("invalid email: must be at least 4 characters and contain '@' and '.'")
 }
 
+func regexValidator(text string) error {
+	if _, err := regexp.Compile(text); err != nil {
+		return fmt.Errorf("invalid regex: %v", err)
+	}
+	return nil
+}
+
+func dateValidator(text string) error {
+	if len(text) == 0 { // allow no date
+		return nil
+	}
+	if _, err := time.Parse("2006-01-02", text); err != nil {
+		return fmt.Errorf("invalid date: %v", err)
+	}
+	return nil
+}
+
 // Download a file in memory.
 func download(url string) ([]byte, error) {
 	logger.Debug("GET " + url)
@@ -219,8 +264,8 @@ func download(url string) ([]byte, error) {
 	return body, nil
 }
 
-// isRunningInCI returns true if the mage command is running inside the CI environment
-func isRunningInCI() bool {
+// runningInCI returns true if the mage command is running inside the CI environment
+func runningInCI() bool {
 	return os.Getenv("CI") != ""
 }
 

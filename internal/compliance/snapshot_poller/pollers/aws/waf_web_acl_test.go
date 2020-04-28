@@ -1,7 +1,7 @@
 package aws
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -211,7 +211,6 @@ func TestWafWebAclsPoller(t *testing.T) {
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAll()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
@@ -232,7 +231,6 @@ func TestWafWebAclsPollerError(t *testing.T) {
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAllError()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
@@ -254,7 +252,6 @@ func TestWafRegionalWebAclsPoller(t *testing.T) {
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAll()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAll()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
@@ -275,7 +272,6 @@ func TestWafRegionalWebAclsPollerError(t *testing.T) {
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAllError()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAllError()
 
-	AssumeRoleFunc = awstest.AssumeRoleMock
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 

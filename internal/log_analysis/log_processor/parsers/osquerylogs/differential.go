@@ -1,7 +1,7 @@
 package osquerylogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@ package osquerylogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -32,16 +32,16 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 // nolint:lll
 type Differential struct { // FIXME: field descriptions need updating!
 	Action               *string                `json:"action,omitempty" validate:"required" description:"Action"`
-	CalendarTime         *timestamp.ANSICwithTZ `json:"calendartime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	CalendarTime         *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
 	Columns              map[string]string      `json:"columns,omitempty" validate:"required" description:"Columns"`
-	Counter              *int                   `json:"counter,omitempty,string" description:"Counter"`
+	Counter              *numerics.Integer      `json:"counter,omitempty" description:"Counter"`
 	Decorations          map[string]string      `json:"decorations,omitempty" description:"Decorations"`
-	Epoch                *int                   `json:"epoch,omitempty,string" validate:"required" description:"Epoch"`
+	Epoch                *numerics.Integer      `json:"epoch,omitempty" validate:"required" description:"Epoch"`
 	HostIdentifier       *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
-	LogType              *string                `json:"logType,omitempty" validate:"required,eq=result" description:"LogType"`
+	LogType              *string                `json:"logType,omitempty"  description:"LogType"`
 	LogUnderscoreType    *string                `json:"log_type,omitempty" description:"LogUnderscoreType"`
 	Name                 *string                `json:"name,omitempty" validate:"required" description:"Name"`
-	UnixTime             *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
+	UnixTime             *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
 	LogNumericsAsNumbers *bool                  `json:"logNumericsAsNumbers,omitempty,string" description:"LogNumericsAsNumbers"`
 
 	// NOTE: added to end of struct to allow expansion later
@@ -51,17 +51,18 @@ type Differential struct { // FIXME: field descriptions need updating!
 // DifferentialParser parses OsQuery Differential logs
 type DifferentialParser struct{}
 
+var _ parsers.LogParser = (*DifferentialParser)(nil)
+
 func (p *DifferentialParser) New() parsers.LogParser {
 	return &DifferentialParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *DifferentialParser) Parse(log string) []interface{} {
+func (p *DifferentialParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &Differential{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("failed to unmarshal log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	// Populating LogType with LogTypeInput value
@@ -73,11 +74,10 @@ func (p *DifferentialParser) Parse(log string) []interface{} {
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return []interface{}{event}
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
@@ -86,8 +86,9 @@ func (p *DifferentialParser) LogType() string {
 }
 
 func (event *Differential) updatePantherFields(p *DifferentialParser) {
-	if event.CalendarTime != nil {
-		event.SetCoreFields(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
-	}
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
+
+	event.AppendAnyIPAddress(event.Columns["local_address"])
+	event.AppendAnyIPAddress(event.Columns["remote_address"])
 }

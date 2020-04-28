@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,12 +19,11 @@ package awslogs
  */
 
 import (
-	"encoding/csv"
+	"errors"
 	"strings"
 
-	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -68,29 +67,31 @@ type S3ServerAccess struct {
 }
 
 // S3ServerAccessParser parses AWS S3 Server Access logs
-type S3ServerAccessParser struct{}
+type S3ServerAccessParser struct {
+	CSVReader *csvstream.StreamingCSVReader
+}
+
+var _ parsers.LogParser = (*S3ServerAccessParser)(nil)
 
 func (p *S3ServerAccessParser) New() parsers.LogParser {
-	return &S3ServerAccessParser{}
+	reader := csvstream.NewStreamingCSVReader()
+	// non-default settings
+	reader.CVSReader.Comma = ' '
+	reader.CVSReader.LazyQuotes = true
+	return &S3ServerAccessParser{
+		CSVReader: reader,
+	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *S3ServerAccessParser) Parse(log string) []interface{} {
-	reader := csv.NewReader(strings.NewReader(log))
-	reader.LazyQuotes = true
-	reader.Comma = ' '
-
-	records, err := reader.ReadAll()
-	if len(records) == 0 || err != nil {
-		zap.L().Debug("failed to parse the log as csv")
-		return nil
+func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
+	record, err := p.CSVReader.Parse(log)
+	if err != nil {
+		return nil, err
 	}
 
-	// parser should only receive 1 line at a time
-	record := records[0]
 	if len(record) < s3ServerAccessMinNumberOfColumns {
-		zap.L().Debug("failed to parse the log as csv (wrong number of columns)")
-		return nil
+		return nil, errors.New("wrong number of columns")
 	}
 
 	// The time in the logs is represented as [06/Feb/2019:00:00:38 +0000]
@@ -98,8 +99,7 @@ func (p *S3ServerAccessParser) Parse(log string) []interface{} {
 	// We concatenate these fields before trying to parse them
 	parsedTime, err := timestamp.Parse("[2/Jan/2006:15:04:05-0700]", record[2]+record[3])
 	if err != nil {
-		zap.L().Debug("failed to parse timestamp log as csv")
-		return nil
+		return nil, err
 	}
 
 	var additionalFields []string = nil
@@ -138,11 +138,10 @@ func (p *S3ServerAccessParser) Parse(log string) []interface{} {
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return []interface{}{event}
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
@@ -151,8 +150,8 @@ func (p *S3ServerAccessParser) LogType() string {
 }
 
 func (event *S3ServerAccess) updatePantherFields(p *S3ServerAccessParser) {
-	event.SetCoreFieldsPtr(p.LogType(), event.Time)
-	event.AppendAnyIPAddressPtrs(event.RemoteIP)
+	event.SetCoreFields(p.LogType(), event.Time, event)
+	event.AppendAnyIPAddressPtr(event.RemoteIP)
 	if event.Requester != nil && strings.HasPrefix(*event.Requester, "arn:") {
 		event.AppendAnyAWSARNs(*event.Requester)
 	}

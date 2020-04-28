@@ -3,7 +3,7 @@
 package models
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,12 +25,13 @@ package models
 
 import (
 	"github.com/go-openapi/errors"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
 
 // Rule rule
+//
 // swagger:model Rule
 type Rule struct {
 
@@ -46,6 +47,10 @@ type Rule struct {
 	// created by
 	// Required: true
 	CreatedBy UserID `json:"createdBy"`
+
+	// dedup period minutes
+	// Required: true
+	DedupPeriodMinutes DedupPeriodMinutes `json:"dedupPeriodMinutes"`
 
 	// description
 	// Required: true
@@ -114,6 +119,10 @@ func (m *Rule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCreatedBy(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDedupPeriodMinutes(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -204,6 +213,18 @@ func (m *Rule) validateCreatedBy(formats strfmt.Registry) error {
 	if err := m.CreatedBy.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("createdBy")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Rule) validateDedupPeriodMinutes(formats strfmt.Registry) error {
+
+	if err := m.DedupPeriodMinutes.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("dedupPeriodMinutes")
 		}
 		return err
 	}

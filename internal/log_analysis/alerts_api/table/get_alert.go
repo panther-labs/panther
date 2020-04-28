@@ -1,7 +1,7 @@
 package table
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,25 +23,22 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
 // GetAlert retrieve a AlertItem from DDB
-func (table *AlertsTable) GetAlert(alertID *string) (*models.AlertItem, error) {
+func (table *AlertsTable) GetAlert(alertID *string) (*AlertItem, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			AlertIDKey: {S: alertID},
 		},
 		TableName: aws.String(table.AlertsTableName),
 	}
-
 	ddbResult, err := table.Client.GetItem(input)
 	if err != nil {
 		return nil, errors.Wrap(err, "GetItem() failed for: "+*alertID)
 	}
 
-	alertItem := &models.AlertItem{}
+	alertItem := &AlertItem{}
 	if err = dynamodbattribute.UnmarshalMap(ddbResult.Item, alertItem); err != nil {
 		return nil, errors.Wrap(err, "UnmarshalMap() failed for: "+*alertID)
 	}

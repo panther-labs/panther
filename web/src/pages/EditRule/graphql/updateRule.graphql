@@ -1,0 +1,5 @@
+mutation UpdateRule($input: CreateOrModifyRuleInput!) {
+  updateRule(input: $input) {
+    ...RuleFull
+  }
+}

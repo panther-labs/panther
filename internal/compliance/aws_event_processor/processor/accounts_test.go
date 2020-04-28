@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
 var (
@@ -43,7 +43,6 @@ var (
 				IntegrationID:    aws.String("45c378a7-2e36-4b12-8e16-2d3c49ff1371"),
 				IntegrationLabel: aws.String("ProdAWS"),
 				IntegrationType:  aws.String("aws-scan"),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 			},
 		},
@@ -55,7 +54,6 @@ var (
 				IntegrationID:    aws.String("ebb4d69f-177b-4eff-a7a6-9251fdc72d21"),
 				IntegrationLabel: aws.String("TestAWS"),
 				IntegrationType:  aws.String("aws-scan"),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 			},
 		},
@@ -70,7 +68,6 @@ var (
 				IntegrationID:    aws.String("45c378a7-2e36-4b12-8e16-2d3c49ff1371"),
 				IntegrationLabel: aws.String("ProdAWS"),
 				IntegrationType:  aws.String("aws-scan"),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 			},
 		},
@@ -82,7 +79,6 @@ var (
 				IntegrationID:    aws.String("ebb4d69f-177b-4eff-a7a6-9251fdc72d21"),
 				IntegrationLabel: aws.String("TestAWS"),
 				IntegrationType:  aws.String("aws-scan"),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 			},
 		},
@@ -97,7 +93,6 @@ var (
 				IntegrationID:    aws.String("45c378a7-2e36-4b12-8e16-2d3c49ff1371"),
 				IntegrationLabel: aws.String("ProdAWS"),
 				IntegrationType:  aws.String("aws-scan"),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 			},
 		},
@@ -109,7 +104,6 @@ var (
 				IntegrationID:    aws.String("ebb4d69f-177b-4eff-a7a6-9251fdc72d21"),
 				IntegrationLabel: aws.String("StageAWS"),
 				IntegrationType:  aws.String("aws-scan"),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(60),
 			},
 		},
@@ -121,7 +115,6 @@ var (
 				IntegrationID:    aws.String("ce521962-1f30-4cdf-9c38-03be54fe5672"),
 				IntegrationLabel: aws.String("ProdAWS"),
 				IntegrationType:  aws.String("aws-scan"),
-				ScanEnabled:      aws.Bool(true),
 				ScanIntervalMins: aws.Int(720),
 			},
 		},
@@ -164,7 +157,7 @@ func getTestInvokeInput() *lambda.InvokeInput {
 	}
 
 	return &lambda.InvokeInput{
-		FunctionName: aws.String("panther-snapshot-api"),
+		FunctionName: aws.String("panther-source-api"),
 		Payload:      payload,
 	}
 }

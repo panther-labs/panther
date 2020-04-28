@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -81,14 +81,59 @@ func TestHandleEventWithAlert(t *testing.T) {
 		Suppressed:     false,
 	}
 
-	policyResponse := &analysismodels.Policy{}
+	policyResponse := &analysismodels.Policy{
+		AutoRemediationID: "test-autoremediation-id",
+	}
 
 	// mock call to compliance-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(complianceResponse, http.StatusOK), nil).Once()
-	// mock call to policy-api
+	// mock call to analysis-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policyResponse, http.StatusOK), nil).Once()
 	// mock call to remediate-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse("", http.StatusOK), nil).Once()
+	mockDdbClient.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
+
+	require.NoError(t, Handle(input))
+
+	// Verifying request to fetch compliance information
+	httpRequest := mockRoundTripper.Calls[0].Arguments[0].(*http.Request)
+	assert.Equal(t, "policyId=test-policy&resourceId=test-resource", httpRequest.URL.RawQuery)
+
+	mockDdbClient.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
+}
+
+func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
+	mockDdbClient := &mockDdbClient{}
+	ddbClient = mockDdbClient
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient = &http.Client{Transport: mockRoundTripper}
+
+	input := &models.ComplianceNotification{
+		ResourceID:      aws.String("test-resource"),
+		PolicyID:        aws.String("test-policy"),
+		PolicyVersionID: aws.String("test-version"),
+		ShouldAlert:     aws.Bool(true),
+	}
+
+	complianceResponse := &compliancemodels.ComplianceStatus{
+		LastUpdated:    compliancemodels.LastUpdated(time.Now()),
+		PolicyID:       "test-policy",
+		PolicySeverity: "INFO",
+		ResourceID:     "test-resource",
+		ResourceType:   "AWS.S3.Test",
+		Status:         compliancemodels.StatusFAIL,
+		Suppressed:     false,
+	}
+
+	policyResponse := &analysismodels.Policy{} // no AutoRemediationID
+
+	// mock call to compliance-api
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(complianceResponse, http.StatusOK), nil).Once()
+	// mock call to analysis-api
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policyResponse, http.StatusOK), nil).Once()
+	// should NOT call remediation api!
+
 	mockDdbClient.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
 
 	require.NoError(t, Handle(input))
@@ -124,12 +169,8 @@ func TestHandleEventWithoutAlert(t *testing.T) {
 		Suppressed:     false,
 	}
 
-	policyResponse := &analysismodels.Policy{}
-
 	// mock call to compliance-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(complianceResponse, http.StatusOK), nil).Once()
-	// mock call to policy-api
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policyResponse, http.StatusOK), nil).Once()
 
 	require.NoError(t, Handle(input))
 

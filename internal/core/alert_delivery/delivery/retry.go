@@ -1,7 +1,7 @@
 package delivery
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -65,7 +65,7 @@ func retry(alerts []*models.Alert) {
 		}
 	}
 
-	if err := sqsbatch.SendMessageBatch(getSQSClient(), maxSQSBackoff, input); err != nil {
+	if _, err := sqsbatch.SendMessageBatch(getSQSClient(), maxSQSBackoff, input); err != nil {
 		zap.L().Error("unable to retry failed alerts", zap.Error(err))
 	}
 }

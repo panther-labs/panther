@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 
 import { SeverityEnum } from 'Generated/schema';
 import { BadgeProps } from 'pouncejs';
+import { generateDocUrl } from 'Helpers/utils';
 
 export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');
 
@@ -25,14 +26,25 @@ export const INCLUDE_DIGITS_REGEX = new RegExp('(?=.*[0-9])');
 
 export const INCLUDE_LOWERCASE_REGEX = new RegExp('(?=.*[a-z])');
 
+export const SOURCE_LABEL_REGEX = new RegExp('^[a-zA-Z0-9- ]+$');
+
 export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
-export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('(?=.*[!@#\\$%\\^&\\*;:,.<>?/])');
+export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('[^\\d\\sA-Za-z]');
+
+export const CHECK_IF_HASH_REGEX = new RegExp('[a-f0-9]{32}');
 
 export const DEFAULT_POLICY_FUNCTION =
-  'def policy(resource):\n\t# Write your code here.\n\treturn True';
+  'def policy(resource):\n\t# Return False if the resource is non-compliant, which will trigger alerts/remediation.\n\treturn True';
 
-export const DEFAULT_RULE_FUNCTION = 'def rule(event):\n\t# Write your code here.\n\treturn False';
+export const DEFAULT_RULE_FUNCTION =
+  'def rule(event):\n\t# Return True to match the log event and trigger an alert.\n\treturn False';
+
+export const DEFAULT_TITLE_FUNCTION =
+  "def title(event):\n\t# (Optional) Return a string which will be shown as the alert title.\n\treturn ''";
+
+export const DEFAULT_DEDUP_FUNCTION =
+  "def dedup(event):\n\t# (Optional) Return a string which will de-duplicate similar alerts.\n\treturn ''";
 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
@@ -71,15 +83,29 @@ export const LOG_TYPES = [
   'AWS.ALB',
   'AWS.AuroraMySQLAudit',
   'AWS.CloudTrail',
+  'AWS.CloudTrailDigest',
+  'AWS.CloudTrailInsight',
   'AWS.GuardDuty',
   'AWS.S3ServerAccess',
   'AWS.VPCFlow',
+  'Fluentd.Syslog3164',
+  'Fluentd.Syslog5424',
+  'GitLab.API',
+  'GitLab.Audit',
+  'GitLab.Exceptions',
+  'GitLab.Git',
+  'GitLab.Integrations',
+  'GitLab.Rails',
   'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
   'Osquery.Snapshot',
   'Osquery.Status',
   'OSSEC.EventInfo',
+  'Suricata.Anomaly',
+  'Suricata.DNS',
+  'Syslog.RFC3164',
+  'Syslog.RFC5424',
 ] as const;
 
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
@@ -90,7 +116,12 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } 
   [SeverityEnum.Info]: 'neutral' as const,
 };
 
-export const PANTHER_SCHEMA_DOCS_LINK = 'https://docs.runpanther.io';
+export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
+
+export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(
+  PANTHER_SCHEMA_DOCS_MASTER_LINK,
+  process.env.PANTHER_VERSION
+);
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
 export const DEFAULT_LARGE_PAGE_SIZE = 25;
@@ -98,8 +129,3 @@ export const DEFAULT_LARGE_PAGE_SIZE = 25;
 // The key under which User-related data will be stored in the storage
 export const USER_INFO_STORAGE_KEY = 'panther.user.info';
 export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.errorReportingConsent';
-
-export enum INTEGRATION_TYPES {
-  AWS_LOGS = 'aws-s3',
-  AWS_INFRA = 'aws-scan',
-}

@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,16 +26,17 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/snapshot/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
-	cweAccountTimeout       = 15 * time.Minute
-	refreshInterval         = 2 * time.Minute
-	snapshotAPIFunctionName = "panther-snapshot-api"
+	cweAccountTimeout     = 15 * time.Minute
+	refreshInterval       = 2 * time.Minute
+	sourceAPIFunctionName = "panther-source-api"
 )
 
 var (
@@ -50,7 +51,7 @@ var (
 	// Setup the clients to talk to the Snapshot API
 	sess                               = session.Must(session.NewSession())
 	lambdaClient lambdaiface.LambdaAPI = lambda.New(sess)
-	s3Svc                              = s3.New(sess)
+	s3Svc        s3iface.S3API         = s3.New(sess)
 )
 
 func resetAccountCache() {
@@ -83,7 +84,7 @@ func refreshAccounts() error {
 		},
 	}
 	var output []*models.SourceIntegration
-	err := genericapi.Invoke(lambdaClient, snapshotAPIFunctionName, input, &output)
+	err := genericapi.Invoke(lambdaClient, sourceAPIFunctionName, input, &output)
 	if err != nil {
 		return err
 	}

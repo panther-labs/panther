@@ -1,7 +1,7 @@
 package osquerylogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -31,13 +32,13 @@ Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/`
 // nolint:lll
 type Batch struct { // FIXME: field descriptions need updating!
 	CalendarTime *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
-	Counter      *int                   `json:"counter,omitempty,string"  validate:"required" description:"Counter"`
+	Counter      *numerics.Integer      `json:"counter,omitempty"  validate:"required" description:"Counter"`
 	Decorations  map[string]string      `json:"decorations,omitempty" description:"Decorations"`
 	DiffResults  *BatchDiffResults      `json:"diffResults,omitempty" validate:"required" description:"Computed differences."`
-	Epoch        *int                   `json:"epoch,omitempty,string"  validate:"required" description:"Epoch"`
+	Epoch        *numerics.Integer      `json:"epoch,omitempty"  validate:"required" description:"Epoch"`
 	Hostname     *string                `json:"hostname,omitempty"  validate:"required" description:"Hostname"`
 	Name         *string                `json:"name,omitempty"  validate:"required" description:"Name"`
-	UnixTime     *int                   `json:"unixTime,omitempty,string"  validate:"required" description:"Unix epoch"`
+	UnixTime     *numerics.Integer      `json:"unixTime,omitempty"  validate:"required" description:"Unix epoch"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
@@ -52,24 +53,27 @@ type BatchDiffResults struct {
 // BatchParser parses OsQuery Batch logs
 type BatchParser struct{}
 
+var _ parsers.LogParser = (*BatchParser)(nil)
+
 func (p *BatchParser) New() parsers.LogParser {
 	return &BatchParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *BatchParser) Parse(log string) []interface{} {
+func (p *BatchParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &Batch{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		return nil
+		return nil, err
 	}
-	return []interface{}{event}
+
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
@@ -78,8 +82,6 @@ func (p *BatchParser) LogType() string {
 }
 
 func (event *Batch) updatePantherFields(p *BatchParser) {
-	if event.CalendarTime != nil {
-		event.SetCoreFields(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
-	}
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.Hostname)
 }

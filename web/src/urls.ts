@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AlertDetails, PolicyDetails, ResourceDetails, RuleDetails } from 'Generated/schema';
+import {
+  AlertDetails,
+  ComplianceIntegration,
+  LogIntegration,
+  PolicyDetails,
+  ResourceDetails,
+  RuleDetails,
+} from 'Generated/schema';
 
 // Typical URL encoding, allowing colons (:) to be present in the URL. Colons are safe.
 // https://stackoverflow.com/questions/14872629/uriencode-and-colon
@@ -40,6 +47,8 @@ const urls = {
     sources: {
       list: () => `${urls.compliance.home()}sources/`,
       create: () => `${urls.compliance.sources.list()}new/`,
+      edit: (id: ComplianceIntegration['integrationId']) =>
+        `${urls.compliance.sources.list()}${id}/edit/`,
     },
   },
   logAnalysis: {
@@ -58,13 +67,15 @@ const urls = {
     sources: {
       list: () => `${urls.logAnalysis.home()}sources/`,
       create: () => `${urls.logAnalysis.sources.list()}new/`,
+      edit: (id: LogIntegration['integrationId']) =>
+        `${urls.logAnalysis.sources.list()}${id}/edit/`,
     },
   },
   settings: {
-    overview: () => `/settings/`,
-    general: () => `${urls.settings.overview()}general`,
-    users: () => `${urls.settings.overview()}users`,
-    destinations: () => `${urls.settings.overview()}destinations`,
+    home: () => '/settings/',
+    general: () => `${urls.settings.home()}general/`,
+    users: () => `${urls.settings.home()}users/`,
+    destinations: () => `${urls.settings.home()}destinations/`,
   },
   account: {
     auth: {

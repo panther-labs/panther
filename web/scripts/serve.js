@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,6 +35,26 @@ const getCacheControlForFile = filepath => {
 
   return 'no-cache';
 };
+
+const addHeaders = (req, res, next) => {
+  res.header('X-Powered-by', 'N/A');
+  res.header('X-XSS-Protection', '1; mode=block');
+  res.header('X-Frame-Options', 'SAMEORIGIN');
+  res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header(
+    'Content-Security-Policy',
+    "default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self' *.amazonaws.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; base-uri 'self';form-action 'self'"
+  );
+  res.header('Referrer-Policy', 'no-referrer');
+  res.header(
+    'Feature-Policy',
+    "accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'none'; battery 'none'; camera 'none'; geolocation 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'; midi 'none"
+  );
+  next();
+};
+
+app.use('*', addHeaders);
 
 // allow static assets to be served from the /dist folder
 app.use(

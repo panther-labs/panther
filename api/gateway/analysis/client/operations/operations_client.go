@@ -3,7 +3,7 @@
 package operations
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,11 +27,11 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new operations API client.
-func New(transport runtime.ClientTransport, formats strfmt.Registry) *Client {
+func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
 }
 
@@ -43,8 +43,47 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
+// ClientService is the interface for Client methods
+type ClientService interface {
+	BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error)
+
+	CreateGlobal(params *CreateGlobalParams) (*CreateGlobalCreated, error)
+
+	CreatePolicy(params *CreatePolicyParams) (*CreatePolicyCreated, error)
+
+	CreateRule(params *CreateRuleParams) (*CreateRuleCreated, error)
+
+	DeleteGlobals(params *DeleteGlobalsParams) (*DeleteGlobalsOK, error)
+
+	DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK, error)
+
+	GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabledPoliciesOK, error)
+
+	GetGlobal(params *GetGlobalParams) (*GetGlobalOK, error)
+
+	GetPolicy(params *GetPolicyParams) (*GetPolicyOK, error)
+
+	GetRule(params *GetRuleParams) (*GetRuleOK, error)
+
+	ListPolicies(params *ListPoliciesParams) (*ListPoliciesOK, error)
+
+	ListRules(params *ListRulesParams) (*ListRulesOK, error)
+
+	ModifyGlobal(params *ModifyGlobalParams) (*ModifyGlobalOK, error)
+
+	ModifyPolicy(params *ModifyPolicyParams) (*ModifyPolicyOK, error)
+
+	ModifyRule(params *ModifyRuleParams) (*ModifyRuleOK, error)
+
+	Suppress(params *SuppressParams) (*SuppressOK, error)
+
+	TestPolicy(params *TestPolicyParams) (*TestPolicyOK, error)
+
+	SetTransport(transport runtime.ClientTransport)
+}
+
 /*
-BulkUpload uploads a zipfile containing a bundle of policies
+  BulkUpload uploads a zipfile containing a bundle of policies
 */
 func (a *Client) BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error) {
 	// TODO: Validate the params before sending
@@ -78,7 +117,41 @@ func (a *Client) BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error) {
 }
 
 /*
-CreatePolicy creates a new compliance policy
+  CreateGlobal creates a new global module
+*/
+func (a *Client) CreateGlobal(params *CreateGlobalParams) (*CreateGlobalCreated, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewCreateGlobalParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "CreateGlobal",
+		Method:             "POST",
+		PathPattern:        "/global",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &CreateGlobalReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*CreateGlobalCreated)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for CreateGlobal: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  CreatePolicy creates a new compliance policy
 */
 func (a *Client) CreatePolicy(params *CreatePolicyParams) (*CreatePolicyCreated, error) {
 	// TODO: Validate the params before sending
@@ -112,7 +185,7 @@ func (a *Client) CreatePolicy(params *CreatePolicyParams) (*CreatePolicyCreated,
 }
 
 /*
-CreateRule creates a new log analysis rule
+  CreateRule creates a new log analysis rule
 */
 func (a *Client) CreateRule(params *CreateRuleParams) (*CreateRuleCreated, error) {
 	// TODO: Validate the params before sending
@@ -146,7 +219,41 @@ func (a *Client) CreateRule(params *CreateRuleParams) (*CreateRuleCreated, error
 }
 
 /*
-DeletePolicies deletes one or more policies rules
+  DeleteGlobals deletes one or more globals
+*/
+func (a *Client) DeleteGlobals(params *DeleteGlobalsParams) (*DeleteGlobalsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteGlobalsParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "DeleteGlobals",
+		Method:             "POST",
+		PathPattern:        "/global/delete",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &DeleteGlobalsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteGlobalsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for DeleteGlobals: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  DeletePolicies deletes one or more policies rules
 */
 func (a *Client) DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK, error) {
 	// TODO: Validate the params before sending
@@ -180,7 +287,7 @@ func (a *Client) DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK
 }
 
 /*
-GetEnabledPolicies lists all enabled rules policies for a customer account for backend processing
+  GetEnabledPolicies lists all enabled rules policies for a customer account for backend processing
 */
 func (a *Client) GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabledPoliciesOK, error) {
 	// TODO: Validate the params before sending
@@ -214,7 +321,41 @@ func (a *Client) GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabl
 }
 
 /*
-GetPolicy gets policy details
+  GetGlobal gets global details
+*/
+func (a *Client) GetGlobal(params *GetGlobalParams) (*GetGlobalOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetGlobalParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "GetGlobal",
+		Method:             "GET",
+		PathPattern:        "/global",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &GetGlobalReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetGlobalOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetGlobal: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  GetPolicy gets policy details
 */
 func (a *Client) GetPolicy(params *GetPolicyParams) (*GetPolicyOK, error) {
 	// TODO: Validate the params before sending
@@ -248,7 +389,7 @@ func (a *Client) GetPolicy(params *GetPolicyParams) (*GetPolicyOK, error) {
 }
 
 /*
-GetRule gets rule details
+  GetRule gets rule details
 */
 func (a *Client) GetRule(params *GetRuleParams) (*GetRuleOK, error) {
 	// TODO: Validate the params before sending
@@ -282,7 +423,7 @@ func (a *Client) GetRule(params *GetRuleParams) (*GetRuleOK, error) {
 }
 
 /*
-ListPolicies pages through policies in a customer s account
+  ListPolicies pages through policies in a customer s account
 */
 func (a *Client) ListPolicies(params *ListPoliciesParams) (*ListPoliciesOK, error) {
 	// TODO: Validate the params before sending
@@ -316,7 +457,7 @@ func (a *Client) ListPolicies(params *ListPoliciesParams) (*ListPoliciesOK, erro
 }
 
 /*
-ListRules pages through rules in a customer s account
+  ListRules pages through rules in a customer s account
 */
 func (a *Client) ListRules(params *ListRulesParams) (*ListRulesOK, error) {
 	// TODO: Validate the params before sending
@@ -350,7 +491,41 @@ func (a *Client) ListRules(params *ListRulesParams) (*ListRulesOK, error) {
 }
 
 /*
-ModifyPolicy modifies an existing policy
+  ModifyGlobal modifies an existing global
+*/
+func (a *Client) ModifyGlobal(params *ModifyGlobalParams) (*ModifyGlobalOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewModifyGlobalParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "ModifyGlobal",
+		Method:             "POST",
+		PathPattern:        "/global/update",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &ModifyGlobalReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ModifyGlobalOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for ModifyGlobal: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  ModifyPolicy modifies an existing policy
 */
 func (a *Client) ModifyPolicy(params *ModifyPolicyParams) (*ModifyPolicyOK, error) {
 	// TODO: Validate the params before sending
@@ -384,7 +559,7 @@ func (a *Client) ModifyPolicy(params *ModifyPolicyParams) (*ModifyPolicyOK, erro
 }
 
 /*
-ModifyRule modifies an existing rule
+  ModifyRule modifies an existing rule
 */
 func (a *Client) ModifyRule(params *ModifyRuleParams) (*ModifyRuleOK, error) {
 	// TODO: Validate the params before sending
@@ -418,7 +593,7 @@ func (a *Client) ModifyRule(params *ModifyRuleParams) (*ModifyRuleOK, error) {
 }
 
 /*
-Suppress suppresses resource patterns across one or more policies
+  Suppress suppresses resource patterns across one or more policies
 */
 func (a *Client) Suppress(params *SuppressParams) (*SuppressOK, error) {
 	// TODO: Validate the params before sending
@@ -452,7 +627,7 @@ func (a *Client) Suppress(params *SuppressParams) (*SuppressOK, error) {
 }
 
 /*
-TestPolicy tests a policy against a set of unit tests
+  TestPolicy tests a policy against a set of unit tests
 */
 func (a *Client) TestPolicy(params *TestPolicyParams) (*TestPolicyOK, error) {
 	// TODO: Validate the params before sending

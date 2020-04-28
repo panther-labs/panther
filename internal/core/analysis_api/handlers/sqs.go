@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
@@ -39,5 +40,14 @@ func queuePolicy(policy *tableItem) error {
 		zap.String("resourceQueueURL", env.ResourceQueueURL))
 	_, err = sqsClient.SendMessage(
 		&sqs.SendMessageInput{MessageBody: &body, QueueUrl: &env.ResourceQueueURL})
+	return err
+}
+
+// updateLayer sends a message to the layer manager lambda indicating a layer of a certain type needs to be re-built
+func updateLayer(analysisType string) error {
+	_, err := sqsClient.SendMessage(&sqs.SendMessageInput{
+		MessageBody: aws.String(analysisType),
+		QueueUrl:    aws.String(env.LayerManagerQueueURL),
+	})
 	return err
 }

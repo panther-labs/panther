@@ -20,7 +20,7 @@
   }
  }
 },
-  "pantherlogsdummy": {
+  "pantherlogslogtype": {
  "Type": "AWS::Glue::Table",
  "Properties": {
   "CatalogId": {
@@ -31,18 +31,22 @@
   },
   "TableInput": {
    "TableType": "EXTERNAL_TABLE",
-   "Name": "dummy",
+   "Name": "log_type",
    "Description": "dummy",
    "StorageDescriptor": {
     "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
     "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
     "Location": {
-     "Fn::Sub": "s3://${ProcessedDataBucket}/logs/dummy/"
+     "Fn::Sub": "s3://${ProcessedDataBucket}/logs/log_type/"
     },
     "SerdeInfo": {
      "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
      "Parameters": {
-      "case.insensitive": "TRUE",
+      "case.insensitive": "false",
+      "mapping.anniversary": "Anniversary",
+      "mapping.dob": "DOB",
+      "mapping.firstname": "FirstName",
+      "mapping.lastname": "LastName",
       "serialization.format": "1"
      }
     },
@@ -106,7 +110,7 @@
   }
  }
 },
-  "pantherrulematchesdummy": {
+  "pantherrulematcheslogtype": {
  "Type": "AWS::Glue::Table",
  "Properties": {
   "CatalogId": {
@@ -117,18 +121,26 @@
   },
   "TableInput": {
    "TableType": "EXTERNAL_TABLE",
-   "Name": "dummy",
+   "Name": "log_type",
    "Description": "dummy",
    "StorageDescriptor": {
     "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
     "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
     "Location": {
-     "Fn::Sub": "s3://${ProcessedDataBucket}/rules/dummy/"
+     "Fn::Sub": "s3://${ProcessedDataBucket}/rules/log_type/"
     },
     "SerdeInfo": {
      "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
      "Parameters": {
-      "case.insensitive": "TRUE",
+      "case.insensitive": "false",
+      "mapping.anniversary": "Anniversary",
+      "mapping.dob": "DOB",
+      "mapping.firstname": "FirstName",
+      "mapping.lastname": "LastName",
+      "mapping.p_alert_creation_time": "p_alert_creation_time",
+      "mapping.p_alert_id": "p_alert_id",
+      "mapping.p_alert_update_time": "p_alert_update_time",
+      "mapping.p_rule_id": "p_rule_id",
       "serialization.format": "1"
      }
     },

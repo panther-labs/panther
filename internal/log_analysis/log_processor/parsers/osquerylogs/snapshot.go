@@ -1,7 +1,7 @@
 package osquerylogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@ package osquerylogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -33,13 +33,13 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 type Snapshot struct { // FIXME: field descriptions need updating!
 	Action         *string                `json:"action,omitempty" validate:"required,eq=snapshot" description:"Action"`
 	CalendarTime   *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
-	Counter        *int                   `json:"counter,omitempty,string" validate:"required" description:"Counter"`
+	Counter        *numerics.Integer      `json:"counter,omitempty" validate:"required" description:"Counter"`
 	Decorations    map[string]string      `json:"decorations,omitempty" description:"Decorations"`
-	Epoch          *int                   `json:"epoch,omitempty,string" validate:"required" description:"Epoch"`
+	Epoch          *numerics.Integer      `json:"epoch,omitempty" validate:"required" description:"Epoch"`
 	HostIdentifier *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
 	Name           *string                `json:"name,omitempty" validate:"required" description:"Name"`
 	Snapshot       []map[string]string    `json:"snapshot,omitempty" validate:"required" description:"Snapshot"`
-	UnixTime       *int                   `json:"unixTime,omitempty,string" validate:"required" description:"UnixTime"`
+	UnixTime       *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
@@ -48,26 +48,26 @@ type Snapshot struct { // FIXME: field descriptions need updating!
 // SnapshotParser parses OsQuery snapshot logs
 type SnapshotParser struct{}
 
+var _ parsers.LogParser = (*SnapshotParser)(nil)
+
 func (p *SnapshotParser) New() parsers.LogParser {
 	return &SnapshotParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *SnapshotParser) Parse(log string) []interface{} {
+func (p *SnapshotParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	event := &Snapshot{}
 	err := jsoniter.UnmarshalFromString(log, event)
 	if err != nil {
-		zap.L().Debug("failed to unmarshal log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	event.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(event); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
-	return []interface{}{event}
+	return event.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
@@ -76,8 +76,6 @@ func (p *SnapshotParser) LogType() string {
 }
 
 func (event *Snapshot) updatePantherFields(p *SnapshotParser) {
-	if event.CalendarTime != nil {
-		event.SetCoreFields(p.LogType(), timestamp.RFC3339(*event.CalendarTime))
-	}
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.CalendarTime), event)
 	event.AppendAnyDomainNamePtrs(event.HostIdentifier)
 }

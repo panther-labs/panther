@@ -1,7 +1,7 @@
 package main
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -52,7 +52,7 @@ func reporterHandler(ctx context.Context, event events.DynamoDBEvent) (err error
 
 	for _, record := range event.Records {
 		if record.Change.NewImage == nil {
-			operation.LogWarn(errors.New("Skipping records"))
+			zap.L().Debug("Skipping record", zap.Any("record", record))
 			continue
 		}
 		var alert models.Alert

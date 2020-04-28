@@ -1,0 +1,6 @@
+mutation AddComplianceSource($input: AddComplianceIntegrationInput!) {
+  addComplianceIntegration(input: $input) {
+    ...ComplianceIntegrationDetails
+    __typename
+  }
+}

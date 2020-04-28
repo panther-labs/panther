@@ -1,7 +1,7 @@
 package osseclogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,6 @@ package osseclogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -117,28 +116,28 @@ type Decoder struct {
 // EventInfoParser parses OSSEC EventInfo alerts in the JSON format
 type EventInfoParser struct{}
 
+var _ parsers.LogParser = (*EventInfoParser)(nil)
+
 func (p *EventInfoParser) New() parsers.LogParser {
 	return &EventInfoParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *EventInfoParser) Parse(log string) []interface{} {
+func (p *EventInfoParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	eventInfo := &EventInfo{}
 
 	err := jsoniter.UnmarshalFromString(log, eventInfo)
 	if err != nil {
-		zap.L().Debug("failed to parse log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	eventInfo.updatePantherFields(p)
 
 	if err := parsers.Validator.Struct(eventInfo); err != nil {
-		zap.L().Debug("failed to validate log", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
-	return []interface{}{eventInfo}
+	return eventInfo.Logs(), nil
 }
 
 // LogType returns the log type supported by this parser
@@ -147,8 +146,9 @@ func (p *EventInfoParser) LogType() string {
 }
 
 func (event *EventInfo) updatePantherFields(p *EventInfoParser) {
-	event.SetCoreFieldsPtr(p.LogType(), (*timestamp.RFC3339)(event.Timestamp))
-	event.AppendAnyIPAddressPtrs(event.SrcIP, event.DstIP)
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Timestamp), event)
+	event.AppendAnyIPAddressPtr(event.SrcIP)
+	event.AppendAnyIPAddressPtr(event.DstIP)
 	if event.SyscheckFile != nil {
 		event.AppendAnyMD5HashPtrs(event.SyscheckFile.MD5Before, event.SyscheckFile.MD5After)
 		event.AppendAnySHA1HashPtrs(event.SyscheckFile.SHA1Before, event.SyscheckFile.SHA1After)

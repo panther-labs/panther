@@ -3,7 +3,7 @@
 package operations
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,17 +31,14 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 )
 
 // NewGetEnabledPoliciesParams creates a new GetEnabledPoliciesParams object
 // with the default values initialized.
 func NewGetEnabledPoliciesParams() *GetEnabledPoliciesParams {
-	var (
-		typeVarDefault = string("policy")
-	)
+	var ()
 	return &GetEnabledPoliciesParams{
-		Type: &typeVarDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -50,11 +47,8 @@ func NewGetEnabledPoliciesParams() *GetEnabledPoliciesParams {
 // NewGetEnabledPoliciesParamsWithTimeout creates a new GetEnabledPoliciesParams object
 // with the default values initialized, and the ability to set a timeout on a request
 func NewGetEnabledPoliciesParamsWithTimeout(timeout time.Duration) *GetEnabledPoliciesParams {
-	var (
-		typeVarDefault = string("policy")
-	)
+	var ()
 	return &GetEnabledPoliciesParams{
-		Type: &typeVarDefault,
 
 		timeout: timeout,
 	}
@@ -63,11 +57,8 @@ func NewGetEnabledPoliciesParamsWithTimeout(timeout time.Duration) *GetEnabledPo
 // NewGetEnabledPoliciesParamsWithContext creates a new GetEnabledPoliciesParams object
 // with the default values initialized, and the ability to set a context for a request
 func NewGetEnabledPoliciesParamsWithContext(ctx context.Context) *GetEnabledPoliciesParams {
-	var (
-		typeDefault = string("policy")
-	)
+	var ()
 	return &GetEnabledPoliciesParams{
-		Type: &typeDefault,
 
 		Context: ctx,
 	}
@@ -76,11 +67,8 @@ func NewGetEnabledPoliciesParamsWithContext(ctx context.Context) *GetEnabledPoli
 // NewGetEnabledPoliciesParamsWithHTTPClient creates a new GetEnabledPoliciesParams object
 // with the default values initialized, and the ability to set a custom HTTPClient for a request
 func NewGetEnabledPoliciesParamsWithHTTPClient(client *http.Client) *GetEnabledPoliciesParams {
-	var (
-		typeDefault = string("policy")
-	)
+	var ()
 	return &GetEnabledPoliciesParams{
-		Type:       &typeDefault,
 		HTTPClient: client,
 	}
 }
@@ -94,7 +82,7 @@ type GetEnabledPoliciesParams struct {
 	  Type of analysis logic to retrieve
 
 	*/
-	Type *string
+	Type string
 
 	timeout    time.Duration
 	Context    context.Context
@@ -135,13 +123,13 @@ func (o *GetEnabledPoliciesParams) SetHTTPClient(client *http.Client) {
 }
 
 // WithType adds the typeVar to the get enabled policies params
-func (o *GetEnabledPoliciesParams) WithType(typeVar *string) *GetEnabledPoliciesParams {
+func (o *GetEnabledPoliciesParams) WithType(typeVar string) *GetEnabledPoliciesParams {
 	o.SetType(typeVar)
 	return o
 }
 
 // SetType adds the type to the get enabled policies params
-func (o *GetEnabledPoliciesParams) SetType(typeVar *string) {
+func (o *GetEnabledPoliciesParams) SetType(typeVar string) {
 	o.Type = typeVar
 }
 
@@ -153,20 +141,13 @@ func (o *GetEnabledPoliciesParams) WriteToRequest(r runtime.ClientRequest, reg s
 	}
 	var res []error
 
-	if o.Type != nil {
-
-		// query param type
-		var qrType string
-		if o.Type != nil {
-			qrType = *o.Type
+	// query param type
+	qrType := o.Type
+	qType := qrType
+	if qType != "" {
+		if err := r.SetQueryParam("type", qType); err != nil {
+			return err
 		}
-		qType := qrType
-		if qType != "" {
-			if err := r.SetQueryParam("type", qType); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	if len(res) > 0 {

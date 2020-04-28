@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ import json
 from gzip import GzipFile
 from io import TextIOWrapper
 from timeit import default_timer
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
 
@@ -28,7 +28,6 @@ from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
 from .output import MatchedEventsBuffer
 from .rule import Rule
-from .sqs import send_to_sqs
 
 _S3_CLIENT = boto3.client('s3')
 _LOGGER = get_logger()
@@ -44,37 +43,52 @@ def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Optional[Dict[
     return None
 
 
-def direct_analysis(event: Dict[str, Any]) -> Dict[str, Any]:
+def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluates a single rule against a set of events, and returns the results. Currently used for testing policies directly.
     """
     # Since this is used for testing single rules, it should only ever have one rule
-    if len(event['rules']) != 1:
-        raise RuntimeError('exactly one rule expected, found {}'.format(len(event['rules'])))
+    if len(request['rules']) != 1:
+        raise RuntimeError('exactly one rule expected, found {}'.format(len(request['rules'])))
 
-    raw_rule = event['rules'][0]
-    test_rule = Rule(rule_id=raw_rule['id'], rule_body=raw_rule['body'])
-    results: Dict[str, Any] = {'events': []}
-    for single_event in event['events']:
+    raw_rule = request['rules'][0]
+    # The rule during direct invocation doesn't have a version
+    raw_rule['versionId'] = 'default'
+    rule_exception: Optional[Exception] = None
+    try:
+        test_rule = Rule(raw_rule)
+    except Exception as err:  # pylint: disable=broad-except
+        rule_exception = err
+
+    response: Dict[str, Any] = {'events': []}
+    for event in request['events']:
         result = {
-            'id': single_event['id'],
+            'id': event['id'],
             'matched': [],
             'notMatched': [],
             'errored': [],
         }
-        rule_result = test_rule.run(single_event['data'])
-        if rule_result.exception:
+        if rule_exception:
             result['errored'] = [{
                 'id': raw_rule['id'],
-                'message': str(rule_result.exception),
+                'message': str(rule_exception),
             }]
-        elif rule_result.matched:
-            result['matched'] = [raw_rule['id']]
-        else:
-            result['notMatched'] = [raw_rule['id']]
+            # If rule was invalid, no need to try to run it
 
-        results['events'].append(result)
-    return results
+        else:
+            rule_result = test_rule.run(event['data'])
+            if rule_result.exception:
+                result['errored'] = [{
+                    'id': raw_rule['id'],
+                    'message': str(rule_result.exception),
+                }]
+            elif rule_result.matched:
+                result['matched'] = [raw_rule['id']]
+            else:
+                result['notMatched'] = [raw_rule['id']]
+
+        response['events'].append(result)
+    return response
 
 
 # pylint: disable=too-many-locals
@@ -82,18 +96,8 @@ def log_analysis(event: Dict[str, Any]) -> None:
     """Runs log analysis"""
 
     start = default_timer()
-
-    # Dictionary containing mapping from log type to list of TextIOWrapper's
-    log_type_to_data: Dict[str, List[TextIOWrapper]] = collections.defaultdict(list)
-    for record in event['Records']:
-        record_body = json.loads(record['body'])
-        bucket = record_body['s3Bucket']
-        object_key = record_body['s3ObjectKey']
-        _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
-        log_type_to_data[record_body['id']].append(_load_contents(bucket, object_key))
-
-    # List containing tuple of (rule_id, event) for matched events
-    matched: List = []
+    log_type_to_data = _load_event(event)
+    matches = 0
     output_buffer = MatchedEventsBuffer()
     for log_type, data_streams in log_type_to_data.items():
         for data_stream in data_streams:
@@ -105,22 +109,37 @@ def log_analysis(event: Dict[str, Any]) -> None:
                     continue
 
                 for analysis_result in _RULES_ENGINE.analyze(log_type, json_data):
+                    matches += 1
                     output_buffer.add_event(analysis_result)
-                    # Appends the events to queue of events that will be sent through SQS
-                    matched.append((analysis_result.rule_id, data))
-
-    if len(matched) > 0:
-        _LOGGER.info("sending %d matches", len(matched))
-        send_to_sqs(matched)
-    else:
-        _LOGGER.info("no matches found")
     output_buffer.flush()
     end = default_timer()
-    _LOGGER.info("Matched %d events in %s seconds", len(matched), end - start)
+    _LOGGER.info("Matched %d events in %s seconds", matches, end - start)
 
 
-# Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all
-# contents of S3 object in memory
+# Reads lambda events wrapping s3 notifications, returns dictionary containing mapping from log type to list of TextIOWrapper's
+def _load_event(event: Dict[str, Any]) -> Dict[str, List[TextIOWrapper]]:
+    log_type_to_data: Dict[str, List[TextIOWrapper]] = collections.defaultdict(list)
+    for record in event['Records']:
+        record_body = json.loads(record['body'])
+        log_type = record['messageAttributes']['id']['stringValue']  # id attr holds log type
+        for bucket, object_key in _load_s3_notifications(record_body['Records']):
+            _LOGGER.debug("loading object from S3, bucket [%s], key [%s]", bucket, object_key)
+            log_type_to_data[log_type].append(_load_contents(bucket, object_key))
+    return log_type_to_data
+
+
+# Reads S3 notifications and returns tuples of (bucket, key)
+def _load_s3_notifications(records: List[Dict[str, Any]]) -> List[Tuple[str, str]]:
+    events: List[Tuple[str, str]] = []
+    for s3event in records:
+        # https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+        bucket = s3event['s3']['bucket']['name']
+        object_key = s3event['s3']['object']['key']
+        events.append((bucket, object_key))
+    return events
+
+
+# Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all contents of S3 object in memory
 def _load_contents(bucket: str, key: str) -> TextIOWrapper:
     response = _S3_CLIENT.get_object(Bucket=bucket, Key=key)
     gzipped = GzipFile(None, 'rb', fileobj=response['Body'])

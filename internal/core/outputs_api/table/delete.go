@@ -1,7 +1,7 @@
 package table
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -49,7 +49,7 @@ func (table *OutputsTable) DeleteOutput(outputID *string) error {
 	if err != nil {
 		aerr, ok := err.(awserr.Error)
 		if ok && aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-			return &genericapi.DoesNotExistError{Message: "outputId=" + *outputID}
+			return &genericapi.DoesNotExistError{Message: "outputId=" + *outputID + " does not exist"}
 		}
 		return &genericapi.AWSError{Method: "dynamodb.DeleteItem", Err: err}
 	}

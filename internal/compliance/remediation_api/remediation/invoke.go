@@ -1,7 +1,7 @@
 package remediation
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -59,6 +59,8 @@ var (
 			WithBasePath(resourcesServicePath).
 			WithHost(resourcesServiceHostname)
 	resourcesClient = resourcesclient.NewHTTPClientWithConfig(nil, resourcesConfig)
+
+	ErrNotFound = errors.New("Remediation not associated with policy")
 )
 
 // Remediate will invoke remediation action in an AWS account
@@ -73,9 +75,7 @@ func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateRes
 	}
 
 	if policy.AutoRemediationID == "" {
-		zap.L().Debug("There is no remediation configured for this policy",
-			zap.Any("policyId", remediation.PolicyID))
-		return nil
+		return ErrNotFound
 	}
 
 	resource, err := getResource(string(remediation.ResourceID))

@@ -1,7 +1,7 @@
 package api
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,20 +20,9 @@ package api
 
 import (
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/core/users_api/gateway"
 )
 
 // InviteUser adds a new user to the Cognito user pool.
 func (API) InviteUser(input *models.InviteUserInput) (*models.InviteUserOutput, error) {
-	// Create user in Cognito
-	id, err := userGateway.CreateUser(&gateway.CreateUserInput{
-		GivenName:  input.GivenName,
-		FamilyName: input.FamilyName,
-		Email:      input.Email,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.InviteUserOutput{ID: id}, nil
+	return userGateway.CreateUser(input)
 }

@@ -1,7 +1,7 @@
 package osquerylogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -36,11 +38,11 @@ func TestSnapshotLog(t *testing.T) {
 	expectedEvent := &Snapshot{
 		Action:         aws.String("snapshot"),
 		Name:           aws.String("process_snapshot"),
-		Epoch:          aws.Int(314159265),
+		Epoch:          (*numerics.Integer)(aws.Int(314159265)),
 		HostIdentifier: aws.String(("hostname.local")),
-		UnixTime:       aws.Int(1462228052),
+		UnixTime:       (*numerics.Integer)(aws.Int(1462228052)),
 		CalendarTime:   (*timestamp.ANSICwithTZ)(&expectedTime),
-		Counter:        aws.Int(1),
+		Counter:        (*numerics.Integer)(aws.Int(1)),
 		Snapshot: []map[string]string{
 			{
 				"parent": "0",
@@ -64,14 +66,8 @@ func TestOsQuerySnapshotLogType(t *testing.T) {
 }
 
 func checkOsQuerySnapshotLog(t *testing.T, log string, expectedEvent *Snapshot) {
+	expectedEvent.SetEvent(expectedEvent)
 	parser := &SnapshotParser{}
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*Snapshot)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	require.Equal(t, expectedEvent, event)
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

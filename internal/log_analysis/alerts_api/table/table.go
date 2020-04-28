@@ -2,7 +2,7 @@
 package table
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,27 +20,24 @@ package table
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-
-	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
 const (
-	RuleIDKey        = "ruleId"
-	AlertIDKey       = "alertId"
-	TimePartitionKey = "timePartition"
-	CreationTimeKey  = "creationTime"
-	EventHashKey     = "eventHash"
-	EventKey         = "event"
+	RuleIDKey          = "ruleId"
+	AlertIDKey         = "id"
+	TimePartitionKey   = "timePartition"
+	TimePartitionValue = "defaultPartition"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
-	GetAlert(*string) (*models.AlertItem, error)
-	GetEvent([]byte) (*string, error)
-	ListByRule(string, *string, *int) ([]*models.AlertItem, *string, error)
-	ListAll(*string, *int) ([]*models.AlertItem, *string, error)
+	GetAlert(*string) (*AlertItem, error)
+	ListByRule(string, *string, *int) ([]*AlertItem, *string, error)
+	ListAll(*string, *int) ([]*AlertItem, *string, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.
@@ -48,7 +45,6 @@ type AlertsTable struct {
 	AlertsTableName                    string
 	RuleIDCreationTimeIndexName        string
 	TimePartitionCreationTimeIndexName string
-	EventsTableName                    string
 	Client                             dynamodbiface.DynamoDBAPI
 }
 
@@ -57,3 +53,18 @@ var _ API = (*AlertsTable)(nil)
 
 // DynamoItem is a type alias for the item format expected by the Dynamo SDK.
 type DynamoItem = map[string]*dynamodb.AttributeValue
+
+// AlertItem is a DDB representation of an Alert
+type AlertItem struct {
+	AlertID         string    `json:"id"`
+	RuleID          string    `json:"ruleId"`
+	RuleVersion     string    `json:"ruleVersion"`
+	RuleDisplayName *string   `json:"ruleDisplayName"`
+	Title           *string   `json:"title"`
+	DedupString     string    `json:"dedup"`
+	CreationTime    time.Time `json:"creationTime"`
+	UpdateTime      time.Time `json:"updateTime"`
+	Severity        string    `json:"severity"`
+	EventCount      int       `json:"eventCount"`
+	LogTypes        []string  `json:"logTypes"`
+}

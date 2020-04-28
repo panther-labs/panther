@@ -3,7 +3,7 @@
 package models
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,16 +25,20 @@ package models
 
 import (
 	"github.com/go-openapi/errors"
-	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // EnabledPolicy enabled policy
+//
 // swagger:model EnabledPolicy
 type EnabledPolicy struct {
 
 	// body
 	Body Body `json:"body,omitempty"`
+
+	// dedup period minutes
+	DedupPeriodMinutes DedupPeriodMinutes `json:"dedupPeriodMinutes,omitempty"`
 
 	// id
 	ID ID `json:"id,omitempty"`
@@ -57,6 +61,10 @@ func (m *EnabledPolicy) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateBody(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDedupPeriodMinutes(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -95,6 +103,22 @@ func (m *EnabledPolicy) validateBody(formats strfmt.Registry) error {
 	if err := m.Body.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("body")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *EnabledPolicy) validateDedupPeriodMinutes(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.DedupPeriodMinutes) { // not required
+		return nil
+	}
+
+	if err := m.DedupPeriodMinutes.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("dedupPeriodMinutes")
 		}
 		return err
 	}

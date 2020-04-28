@@ -1,7 +1,7 @@
 package outputs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -116,6 +116,9 @@ func generateDetailedAlertMessage(alert *alertmodels.Alert) string {
 }
 
 func generateAlertTitle(alert *alertmodels.Alert) string {
+	if alert.Title != nil {
+		return "New Alert: " + *alert.Title
+	}
 	if aws.StringValue(alert.Type) == alertmodels.RuleType {
 		return "New Alert: " + getDisplayName(alert)
 	}

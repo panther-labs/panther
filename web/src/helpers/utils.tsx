@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,16 +17,12 @@
  */
 
 import dayjs from 'dayjs';
-import * as React from 'react';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
-  ComplianceItem,
+  ComplianceIntegration,
   ComplianceStatusCounts,
-  Integration,
   OrganizationReportBySeverity,
-  ResourceDetails,
-  ResourceSummary,
   ScannedResources,
 } from 'Generated/schema';
 import {
@@ -34,10 +30,10 @@ import {
   INCLUDE_LOWERCASE_REGEX,
   INCLUDE_SPECIAL_CHAR_REGEX,
   INCLUDE_UPPERCASE_REGEX,
+  CHECK_IF_HASH_REGEX,
 } from 'Source/constants';
 import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
-import { Box, ColumnProps, Label } from 'pouncejs';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
 
@@ -71,23 +67,6 @@ export const isGuid = (str: string) =>
  */
 export const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
-/* eslint-disable react/display-name */
-export const generateEnumerationColumn = (startIndex = 0) => {
-  const enumerationColumn: ColumnProps<{}> = {
-    key: 'enumeration',
-    flex: '0 1 auto',
-    renderColumnHeader: () => <Box ml={2} width={20} />,
-    renderCell: (item: any, index: number) => (
-      <Label size="medium" ml={2} minWidth={20}>
-        {startIndex + index + 1}
-      </Label>
-    ),
-  };
-
-  return enumerationColumn;
-};
-/* eslint-enable react/display-name */
-
 /**
  * Given a server-received DateTime string, creates a proper display text for it. We manually
  * calculate the offset cause there is no available format-string that can display the UTC offset
@@ -104,10 +83,23 @@ export const formatDatetime = (datetime: string) => {
   );
 };
 
+/** Slice text to 7 characters, mostly used for hashIds */
+export const shortenId = (id: string) => id.slice(0, 7);
+
+/** Checking if string is a proper hash */
+export const isHash = (str: string) => CHECK_IF_HASH_REGEX.test(str);
+
+/** Converts minutes integer to representative string i.e. 15 -> 15min,  120 -> 2h */
+export const minutesToString = (minutes: number) =>
+  minutes < 60 ? `${minutes}min` : `${minutes / 60}h`;
+
 /** Converts any value of the object that is an array to a comma-separated string */
 export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
   mapValues(obj, v => (Array.isArray(v) ? v.join(',') : v));
 
+/** URI encoding for specified fields in object */
+export const encodeParams = (obj: { [key: string]: any }, fields: [string]) =>
+  mapValues(obj, (v, key) => (fields.includes(key) ? encodeURIComponent(v) : v));
 /**
  * makes sure that it properly formats a JSON struct in order to be properly displayed within the
  * editor
@@ -120,28 +112,14 @@ export const formatJSON = (code: { [key: string]: number | string }) =>
 /**
  * Extends the resource by adding an `integrationLabel` field. We define two overloads for this
  * function
- * @param resource A resource
+ * @param resource A resource that can be of type ResourceDetails, ResourceSummary or ComplianceItem
  * @param integrations A list of integrations with at least (integrationId & integrationType)
  */
 
-function extendResourceWithIntLabel(
-  resource: ResourceSummary,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
-): ResourceSummary & Pick<Integration, 'integrationLabel'>;
-
-function extendResourceWithIntLabel(
-  resource: ResourceDetails,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
-): ResourceDetails & Pick<Integration, 'integrationLabel'>;
-
-function extendResourceWithIntLabel(
-  resource: ComplianceItem,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
-): ComplianceItem & Pick<Integration, 'integrationLabel'>;
-
-function extendResourceWithIntLabel(
-  resource: any,
-  integrations: (Partial<Integration> & Pick<Integration, 'integrationId' | 'integrationLabel'>)[]
+export function extendResourceWithIntegrationLabel<T extends { integrationId?: string }>(
+  resource: T,
+  integrations: (Partial<ComplianceIntegration> &
+    Pick<ComplianceIntegration, 'integrationId' | 'integrationLabel'>)[]
 ) {
   const matchingIntegration = integrations.find(i => i.integrationId === resource.integrationId);
   return {
@@ -149,8 +127,6 @@ function extendResourceWithIntLabel(
     integrationLabel: matchingIntegration?.integrationLabel || 'Cannot find account',
   };
 }
-
-export const extendResourceWithIntegrationLabel = extendResourceWithIntLabel;
 
 /**
  * sums up the total number of items based on the active/suppresed count breakdown that the API
@@ -220,7 +196,7 @@ export const extractErrorMessage = (error: ApolloError | ErrorResponse) => {
 
   // If there are no networkErrors or graphQL errors, then show the fallback
   if (!error.graphQLErrors || !error.graphQLErrors.length) {
-    return 'A unpredicted server error has occured';
+    return 'A unpredicted server error has occurred';
   }
 
   // isolate the first GraphQL error. Currently all of our APIs return a single error. If we ever
@@ -254,4 +230,17 @@ export const copyTextToClipboard = (text: string) => {
   }
 };
 
+// Extracts stable version from git tag, i.e "v1.0.1-abc" returns "v1.0.1"
+export const getStableVersion = (version: string) =>
+  version.indexOf('-') > 0 ? version.substring(0, version.indexOf('-')) : version;
+
+export const generateDocUrl = (baseUrl: string, version: string) => {
+  if (version) {
+    return `${baseUrl}/v/${getStableVersion(version)}-docs`;
+  }
+  return baseUrl;
+};
+
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
+
+export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();

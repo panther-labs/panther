@@ -1,7 +1,7 @@
 package gluecf
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,11 +25,16 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/tools/cfngen"
 )
+
+// Glue tables typ for timestamps that we will re-map Go times
+const GlueTimestampType = "timestamp"
 
 var (
 	CatalogIDRef = cfngen.Ref{Ref: "AWS::AccountId"} // macro expand to accountId for CF
@@ -38,15 +43,27 @@ var (
 	GlueMappings = []CustomMapping{
 		{
 			From: reflect.TypeOf(timestamp.RFC3339{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(timestamp.ANSICwithTZ{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
-			To:   awsglue.GlueTimestampType,
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.FluentdTimestamp{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.UnixFloat{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.SuricataTimestamp{}),
+			To:   GlueTimestampType,
 		},
 		{
 			From: reflect.TypeOf(parsers.PantherAnyString{}),
@@ -55,6 +72,10 @@ var (
 		{
 			From: reflect.TypeOf(jsoniter.RawMessage{}),
 			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(numerics.Integer)),
+			To:   "bigint",
 		},
 	}
 
@@ -84,7 +105,7 @@ var (
 )
 
 // Output CloudFormation for all 'tables'
-func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
+func GenerateTables(tables []*awsglue.GlueTableMetadata) (cf []byte, err error) {
 	const bucketParam = "ProcessedDataBucket"
 	parameters := make(map[string]interface{})
 	parameters[bucketParam] = &cfngen.Parameter{
@@ -117,8 +138,8 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 		},
 	}
 
-	addTable := func(t *awsglue.GlueMetadata, extraColumns ...Column) {
-		location := cfngen.Sub{Sub: "s3://${" + bucketParam + "}/" + t.S3Prefix()}
+	addTable := func(t *awsglue.GlueTableMetadata, extraColumns ...Column) {
+		location := cfngen.Sub{Sub: "s3://${" + bucketParam + "}/" + t.Prefix()}
 
 		columns := InferJSONColumns(t.EventStruct(), GlueMappings...)
 		columns = append(columns, extraColumns...)
@@ -136,17 +157,19 @@ func GenerateTables(tables []*awsglue.GlueMetadata) (cf []byte, err error) {
 	}
 
 	// add tables for all parsers, and matching tables for rule matches
-	for _, t := range tables {
-		addTable(t)
+	for _, table := range tables {
+		addTable(table)
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		// add a matching table for rule matches, add the columns that the rules engine appends
-		addTable(t.Clone(awsglue.RuleMatchS3Prefix, awsglue.RuleMatchDatabaseName), RuleMatchColumns...)
+		addTable(ruleTable, RuleMatchColumns...)
 	}
 
 	// generate CF using cfngen
 	return cfngen.NewTemplate("Panther Glue Resources", parameters, resources, outputs).CloudFormation()
 }
 
-func getPartitionKeys(t *awsglue.GlueMetadata) (partitions []Column) {
+func getPartitionKeys(t *awsglue.GlueTableMetadata) (partitions []Column) {
 	for _, partition := range t.PartitionKeys() {
 		partitions = append(partitions, Column{
 			Name:    partition.Name,

@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -65,7 +66,7 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.GuardDuty")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
-	expectedEvent.AppendAnyIPAddresses("198.51.100.0")
+	expectedEvent.AppendAnyIPAddress("198.51.100.0")
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
 	// nolint(lll)
 	expectedEvent.AppendAnyAWSARNs("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b")
@@ -158,8 +159,10 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
 	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a")
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
-	expectedEvent.AppendAnyIPAddresses("54.152.215.140",
-		"151.80.19.228", "2001:0db8:85a3:0000:0000:8a2e:0370:7334", "172.31.81.237")
+	expectedEvent.AppendAnyIPAddress("54.152.215.140")
+	expectedEvent.AppendAnyIPAddress("151.80.19.228")
+	expectedEvent.AppendAnyIPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+	expectedEvent.AppendAnyIPAddress("172.31.81.237")
 	expectedEvent.AppendAnyAWSTags("tag1:val1")
 	expectedEvent.AppendAnyDomainNames("ec2-54-152-215-140.compute-1.amazonaws.com", "ip-172-31-81-237.ec2.internal")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:instance-profile/EC2Dev",
@@ -171,7 +174,9 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 func TestGuardDutyLogMissingRequiredField(t *testing.T) {
 	log := `{"schemaVersion":"2.0","region":"eu-west-1","partition":"aws"}`
 	parser := &GuardDutyParser{}
-	require.Nil(t, parser.Parse(log))
+	events, err := parser.Parse(log)
+	require.Error(t, err)
+	require.Nil(t, events)
 }
 
 func TestGuardDutyLogType(t *testing.T) {
@@ -180,14 +185,8 @@ func TestGuardDutyLogType(t *testing.T) {
 }
 
 func checkGuardDutyLog(t *testing.T, log string, expectedEvent *GuardDuty) {
+	expectedEvent.SetEvent(expectedEvent)
 	parser := &GuardDutyParser{}
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*GuardDuty)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	require.Equal(t, expectedEvent, event)
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

@@ -1,0 +1,11 @@
+query RuleDetails($ruleDetailsInput: GetRuleInput!, $alertsForRuleInput: ListAlertsInput!) {
+  rule(input: $ruleDetailsInput) {
+    ...RuleBasic
+    ...RuleDates
+  }
+  alerts(input: $alertsForRuleInput) {
+    alertSummaries {
+      ...AlertSummaryFull
+    }
+  }
+}

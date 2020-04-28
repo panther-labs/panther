@@ -1,7 +1,7 @@
 package dashboards
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ package dashboards
 // nolint:lll
 var remediationJSON = `
 {
-    "start": "-P1D",
+    "start": "-PT1H",
     "widgets": [
         {
             "type": "log",
@@ -30,7 +30,7 @@ var remediationJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-remediation-processor' | SOURCE '/aws/lambda/panther-remediation-api' | SOURCE '/aws/lambda/panther-aws-remediation' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc",
+                "query": "SOURCE '/aws/lambda/panther-remediation-processor' | SOURCE '/aws/lambda/panther-remediation-api' | SOURCE '/aws/lambda/panther-aws-remediation' | filter @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-east-1",
                 "stacked": false,
                 "title": "Most Recent 20 Errors and Warnings",

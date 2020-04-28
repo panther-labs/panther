@@ -1,0 +1,8 @@
+query ListAlerts($input: ListAlertsInput) {
+  alerts(input: $input) {
+    alertSummaries {
+      ...AlertSummaryFull
+    }
+    lastEvaluatedKey
+  }
+}

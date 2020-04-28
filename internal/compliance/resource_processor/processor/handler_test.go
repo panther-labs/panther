@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,10 +21,63 @@ package processor
 import (
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	"github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 )
+
+func TestParseQueueMsgResource(t *testing.T) {
+	resourceIn := &resourcemodels.Resource{
+		Attributes: "{}",
+		Type:       "Test.Resource",
+	}
+	body, _ := jsoniter.MarshalToString(resourceIn)
+
+	resourceOut, policy, lookup := parseQueueMsg(body)
+	assert.Equal(t, resourceIn, resourceOut)
+	assert.Nil(t, policy)
+	assert.Nil(t, lookup)
+}
+
+func TestParseQueueMsgPolicy(t *testing.T) {
+	policyIn := &analysismodels.Policy{
+		Body: "def policy(resource):\nreturn True",
+		ID:   "TestPolicy",
+	}
+	body, _ := jsoniter.MarshalToString(policyIn)
+
+	resource, policyOut, lookup := parseQueueMsg(body)
+	assert.Nil(t, resource)
+	assert.Equal(t, policyIn, policyOut)
+	assert.Nil(t, lookup)
+}
+
+func TestParseQueueMsgLookup(t *testing.T) {
+	lookupIn := &models.ResourceLookup{
+		ID: "TestLookup",
+	}
+	body, _ := jsoniter.MarshalToString(lookupIn)
+	resource, policy, lookupOut := parseQueueMsg(body)
+	assert.Nil(t, resource)
+	assert.Nil(t, policy)
+	assert.Equal(t, &lookupIn.ID, lookupOut)
+}
+
+func TestParseQueueMsgMissingFields(t *testing.T) {
+	resourceIn := &resourcemodels.Resource{
+		Attributes: "{}",
+		// Type is a required field
+	}
+	body, _ := jsoniter.MarshalToString(resourceIn)
+
+	resourceOut, policy, lookup := parseQueueMsg(body)
+	assert.Nil(t, resourceOut)
+	assert.Nil(t, policy)
+	assert.Nil(t, lookup)
+}
 
 func TestIsSuppressed(t *testing.T) {
 	resourceID := "prod.panther.us-west-2/device"

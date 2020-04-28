@@ -1,0 +1,5 @@
+query ListDestinationsAndDefaults {
+  destinations {
+    ...DestinationFull
+  }
+}

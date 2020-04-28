@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -124,47 +124,6 @@ func setEquality(first, second []string) bool {
 	return true
 }
 
-// Rewrite test resource json in alphabetical order.
-func standardizeTests(p *models.Policy) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	for _, test := range p.Tests {
-		var data map[string]interface{}
-		if err := json.UnmarshalFromString(string(test.Resource), &data); err != nil {
-			return err
-		}
-		normalized, err := json.MarshalToString(&data)
-		if err != nil {
-			return err
-		}
-		test.Resource = models.TestResource(normalized)
-	}
-
-	return nil
-}
-
-// Returns true if the two policies are logically equivalent.
-func policiesEqual(first, second *tableItem) (bool, error) {
-	p1, p2 := first.Policy(""), second.Policy("")
-	p1.CreatedAt = p2.CreatedAt
-	p1.CreatedBy = p2.CreatedBy
-	p1.LastModified = p2.LastModified
-	p1.LastModifiedBy = p2.LastModifiedBy
-	p1.VersionID = p2.VersionID
-
-	// Test resources are json strings which may not be serialized in the same order
-	if err := standardizeTests(p1); err != nil {
-		zap.L().Warn("failed to marshal/unmarshal test json", zap.Error(err))
-		return false, err
-	}
-	if err := standardizeTests(p2); err != nil {
-		zap.L().Warn("failed to marshal/unmarshal test json", zap.Error(err))
-		return false, err
-	}
-
-	return reflect.DeepEqual(p1, p2), nil
-}
-
 // Create/update a policy or rule.
 //
 // The following fields are set automatically (need not be set by the caller):
@@ -200,17 +159,11 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 			return changeType, errWrongType
 		}
 
-		if equal, err := policiesEqual(oldItem, item); equal && err != nil {
-			zap.L().Info("no changes necessary",
-				zap.String("policyId", string(item.ID)))
-			return changeType, nil
-		}
-		// If there was an error evaluating equality, just assume they are not equal and continue
-		// with the update as normal.
-
 		item.CreatedAt = oldItem.CreatedAt
 		item.CreatedBy = oldItem.CreatedBy
-		changeType = updatedItem
+		if itemUpdated(oldItem, item) {
+			changeType = updatedItem
+		}
 	}
 
 	item.LastModified = models.ModifyTime(time.Now())
@@ -230,6 +183,13 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		return changeType, nil
 	}
 
+	if item.Type == typeGlobal {
+		// When policies and rules are also managed by globals, this can be moved out of the if statement,
+		// although at that point it may be desirable to move this to the caller function so as to only make the call
+		// once for BulkUpload.
+		return changeType, updateLayer(item.Type)
+	}
+
 	// Updated policies may require changes to the compliance status.
 	if err := updateComplianceStatus(oldItem, item); err != nil {
 		zap.L().Error("item update successful but failed to update compliance status", zap.Error(err))
@@ -238,6 +198,76 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		// entire API call as a failure.
 	}
 	return changeType, nil
+}
+
+// itemUpdated checks if ANY field has been changed between the old and new item. Only used to inform users whether the
+// result of a BulkUpload operation actually changed something or not.
+//
+// DO NOT use this for situations the items MUST be exactly equal, this is a "good enough" approximation for the
+// purpose it serves, which is informing users that their bulk operation did or did not change something.
+func itemUpdated(oldItem, newItem *tableItem) bool {
+	itemsEqual := oldItem.AutoRemediationID == newItem.AutoRemediationID && oldItem.Body == newItem.Body &&
+		oldItem.Description == newItem.Description && oldItem.DisplayName == newItem.DisplayName &&
+		oldItem.Enabled == newItem.Enabled && oldItem.Reference == newItem.Reference &&
+		oldItem.Runbook == newItem.Runbook && oldItem.Severity == newItem.Severity &&
+		oldItem.DedupPeriodMinutes == newItem.DedupPeriodMinutes &&
+		setEquality(oldItem.ResourceTypes, newItem.ResourceTypes) &&
+		setEquality(oldItem.Suppressions, newItem.Suppressions) && setEquality(oldItem.Tags, newItem.Tags) &&
+		len(oldItem.AutoRemediationParameters) == len(newItem.AutoRemediationParameters) &&
+		len(oldItem.Tests) == len(newItem.Tests)
+
+	if !itemsEqual {
+		return true
+	}
+
+	// Check AutoRemediationParameters for equality (we can't compare maps with ==)
+	for key, value := range oldItem.AutoRemediationParameters {
+		if newValue, ok := newItem.AutoRemediationParameters[key]; !ok || newValue != value {
+			// Something changed, so this item has been updated
+			return true
+		}
+	}
+	// Check Tests for equality
+	oldTests := make(map[models.TestName]*models.UnitTest)
+	for _, test := range oldItem.Tests {
+		oldTests[test.Name] = test
+	}
+	for _, newTest := range newItem.Tests {
+		oldTest, ok := oldTests[newTest.Name]
+		// First check if the meta data of the test is equal
+		if !ok || oldTest.ResourceType != newTest.ResourceType || oldTest.ExpectedResult != newTest.ExpectedResult {
+			// Something changed, so this item has been updated
+			return true
+		}
+
+		// The resource is a string that consists of valid JSON, and represents a test case. At some point in the
+		// processing pipeline, it gets converted into a struct then back into a JSON string. Because of this, the
+		// resource that the user uploads and the actual resource stored in dynamo may be different string
+		// representations of the same JSON object. In order to compare them then, we have to unmarshal them into a
+		// consistent format.
+		var oldResource, newResource map[string]interface{}
+		if err := jsoniter.UnmarshalFromString(string(oldTest.Resource), &oldResource); err != nil {
+			// It is possible someone uploaded bad JSON in this test, it is not the responsibility of this test to
+			// report that. Just do a raw string comparison.
+			if oldTest.Resource != newTest.Resource {
+				return true
+			}
+			continue
+		}
+		if err := jsoniter.UnmarshalFromString(string(newTest.Resource), &newResource); err != nil {
+			if oldTest.Resource != newTest.Resource {
+				return true
+			}
+			continue
+		}
+
+		if !reflect.DeepEqual(oldResource, newResource) {
+			return true
+		}
+	}
+
+	// If they're the same, the item wasn't really updated
+	return !itemsEqual
 }
 
 // Sort a slice of strings ignoring case when possible

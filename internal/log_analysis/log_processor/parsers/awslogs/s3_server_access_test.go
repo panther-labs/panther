@@ -1,7 +1,7 @@
 package awslogs
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -57,7 +58,7 @@ func TestS3AccessLogGetHttpOk(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
-	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
+	expectedEvent.AppendAnyIPAddress("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
 }
@@ -92,7 +93,7 @@ func TestS3AccessLogGetHttpNotFound(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
-	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
+	expectedEvent.AppendAnyIPAddress("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
 }
@@ -128,7 +129,7 @@ func TestS3AccessLogPutHttpOK(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
-	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
+	expectedEvent.AppendAnyIPAddress("192.0.2.3")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:sts::123456789012:assumed-role/PantherLogProcessingRole/1579693334126446707")
 
 	checkS3AccessLog(t, log, expectedEvent)
@@ -166,7 +167,7 @@ func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
 	// panther fields
 	expectedEvent.PantherLogType = aws.String("AWS.S3ServerAccess")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&date)
-	expectedEvent.AppendAnyIPAddresses("192.0.2.3")
+	expectedEvent.AppendAnyIPAddress("192.0.2.3")
 
 	checkS3AccessLog(t, log, expectedEvent)
 }
@@ -202,14 +203,8 @@ func TestS3ServerAccessLogType(t *testing.T) {
 }
 
 func checkS3AccessLog(t *testing.T, log string, expectedEvent *S3ServerAccess) {
-	parser := &S3ServerAccessParser{}
-	events := parser.Parse(log)
-	require.Equal(t, 1, len(events))
-	event := events[0].(*S3ServerAccess)
-
-	// rowid changes each time
-	require.Greater(t, len(*event.PantherRowID), 0) // ensure something is there.
-	expectedEvent.PantherRowID = event.PantherRowID
-
-	require.Equal(t, expectedEvent, event)
+	expectedEvent.SetEvent(expectedEvent)
+	parser := (&S3ServerAccessParser{}).New() // important to call New() to initialize reader
+	events, err := parser.Parse(log)
+	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
 }

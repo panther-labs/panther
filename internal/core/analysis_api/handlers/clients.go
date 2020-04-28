@@ -1,7 +1,7 @@
 package handlers
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -41,19 +43,21 @@ var (
 	dynamoClient dynamodbiface.DynamoDBAPI
 	s3Client     s3iface.S3API
 	sqsClient    sqsiface.SQSAPI
+	lambdaClient lambdaiface.LambdaAPI
 
 	httpClient       *http.Client
 	complianceClient *complianceapi.PantherCompliance
 )
 
 type envConfig struct {
-	Bucket            string `required:"true" split_words:"true"`
-	ComplianceAPIHost string `required:"true" split_words:"true"`
-	ComplianceAPIPath string `required:"true" split_words:"true"`
-	RulesEngine       string `required:"true" split_words:"true"`
-	PolicyEngine      string `required:"true" split_words:"true"`
-	ResourceQueueURL  string `required:"true" split_words:"true"`
-	Table             string `required:"true" split_words:"true"`
+	Bucket               string `required:"true" split_words:"true"`
+	ComplianceAPIHost    string `required:"true" split_words:"true"`
+	ComplianceAPIPath    string `required:"true" split_words:"true"`
+	LayerManagerQueueURL string `required:"true" split_words:"true"`
+	RulesEngine          string `required:"true" split_words:"true"`
+	PolicyEngine         string `required:"true" split_words:"true"`
+	ResourceQueueURL     string `required:"true" split_words:"true"`
+	Table                string `required:"true" split_words:"true"`
 }
 
 // Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
@@ -65,6 +69,7 @@ func Setup() {
 	dynamoClient = dynamodb.New(awsSession)
 	s3Client = s3.New(awsSession)
 	sqsClient = sqs.New(awsSession)
+	lambdaClient = lambda.New(awsSession)
 
 	httpClient = gatewayapi.GatewayClient(awsSession)
 	complianceClient = complianceapi.NewHTTPClientWithConfig(
