@@ -8,10 +8,9 @@ import { isNumber } from 'Helpers/utils';
 
 export interface ResultsTableProps {
   results: GetLogQueryOutput['results'];
-  resultContainerRef: React.Ref<HTMLElement>;
 }
 
-const ResultsTable: React.FC<ResultsTableProps> = ({ results, resultContainerRef }) => {
+const ResultsTable: React.FC<ResultsTableProps> = ({ results }) => {
   const [timeElapsed, setTimeElapsed] = React.useState(0);
   const {
     state: { queryStatus },
@@ -118,7 +117,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results, resultContainerRef
           ))}
         </Table.Row>
       </Table.Head>
-      <Table.Body ref={resultContainerRef}>
+      <Table.Body>
         {results.map((row, rowIndex) => (
           <Table.Row key={rowIndex}>
             {row.map((col, colIndex) => (

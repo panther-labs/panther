@@ -4,7 +4,7 @@ import { LogQueryStatus } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import { Box } from 'pouncejs';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { useInfiniteScroll } from 'react-infinite-scroll-hook';
+import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import { useGetLogQueryResults } from './graphql/getLogQueryResults.generated';
 import { useDataExplorerContext } from '../DataExplorerContext';
 import DownloadButton from './DownloadButton';
@@ -43,11 +43,9 @@ const Results: React.FC = () => {
   });
 
   // Hook to handle the fetching of more items when we scroll close to the end
-  // TODO: implement through IntersectionObserver for better performance
-  const infiniteRef = useInfiniteScroll<HTMLDivElement>({
+  const { sentinelRef } = useInfiniteScroll<HTMLElement>({
     loading,
-    hasNextPage: data?.getLogQuery?.pageInfo?.hasNextPage,
-    checkInterval: 600,
+    scrollContainer: 'parent',
     threshold: 500,
     onLoadMore: () => {
       fetchMore({
@@ -128,12 +126,13 @@ const Results: React.FC = () => {
   );
 
   const results = data?.getLogQuery?.results ?? [];
+  const hasNextPage = data?.getLogQuery?.pageInfo?.hasNextPage;
   return (
     <Panel title="Results" size="large" actions={downloadButton}>
       <Box overflow="scroll" height={400} willChange="scroll">
-        <ResultsTable results={results} resultContainerRef={infiniteRef} />
-        {results.length > 0 && loading && (
-          <Box mt={4}>
+        <ResultsTable results={results} />
+        {hasNextPage && (
+          <Box mt={4} ref={sentinelRef}>
             <TablePlaceholder rowCount={10} rowHeight={6} />
           </Box>
         )}
