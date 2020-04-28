@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.1.1
+  Version: v1.1.2
 
 Resources:
   DeploymentRole:
@@ -116,12 +116,13 @@ Resources:
             Resource: '*'
           - Effect: Allow
             Action: # permissions for handling self-onboarding CloudTrail
+              - cloudtrail:AddTags
               - cloudtrail:DeleteTrail
+              - cloudtrail:PutEventSelectors
               - cloudtrail:StartLogging
               - cloudtrail:StopLogging
-              - cloudtrail:AddTags
-            Resource:
-              - !Sub arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/panther-cloudtrail-${AWS::Region}
+              - cloudtrail:UpdateTrail
+            Resource: !Sub arn:${AWS::Partition}:cloudtrail:*:${AWS::AccountId}:trail/panther-cloudtrail-*
           - Effect: Allow
             Action: cloudformation:*
             Resource:
