@@ -19,6 +19,7 @@ package processor
  */
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -31,6 +32,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
@@ -169,19 +173,46 @@ func TestStreamEventsReceiveSQSError(t *testing.T) {
 func TestStreamEventsDeleteSQSError(t *testing.T) {
 	initTest()
 
+	logs := mockLogger()
+
 	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesAboveThreshold, nil).Once()
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 	// this one is below threshold, which breaks the loop
 	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesBelowThreshold, nil).Once()
 	// this one fails
-	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{},
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{
+		Failed:     []*sqs.BatchResultErrorEntry{{}},
+		Successful: []*sqs.DeleteMessageBatchResultEntry{},
+	},
 		fmt.Errorf("deleteError")).Once()
 
 	sqsMessageCount, err := streamEvents(streamTestSqsClient, streamTestDeadline, streamTestLambdaEvent,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
-	assert.Error(t, err)
+
+	// keep sure we get error logging
+	actualLogs := logs.AllUntimed()
+	expectedLogs := []observer.LoggedEntry{
+		{
+			Entry: zapcore.Entry{
+				Level:   zapcore.ErrorLevel,
+				Message: "failure deleting sqs messages",
+			},
+			Context: []zapcore.Field{
+				zap.String("guidance", "failed messages will be reprocessed"),
+				zap.String("queueURL", common.Config.SqsQueueURL),
+				zap.Int("numberOfFailedMessages", 1),
+				zap.Int("numberOfSuccessfulMessages", 0),
+				zap.Error(errors.New("deleteError")),
+			},
+		},
+	}
+
+	assert.NoError(t, err) // this does not cause failure of the lambda
 	assert.Equal(t, len(streamTestLambdaEvent.Records)+len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
-	assert.Equal(t, "failure deleting messages from https://fakesqsurl: deleteError", err.Error())
+	assert.Equal(t, len(expectedLogs), len(actualLogs))
+	for i := range expectedLogs {
+		assertLogEqual(t, expectedLogs[i], actualLogs[i])
+	}
 	streamTestSqsClient.AssertExpectations(t)
 }
 

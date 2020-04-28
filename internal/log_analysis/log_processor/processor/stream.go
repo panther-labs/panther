@@ -149,8 +149,9 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 		return 0, readEventError
 	}
 
-	// delete messages from sqs q on success
-	return sqsMessageCount, deleteSqsMessages(sqsClient, messageReceiptSets)
+	// delete messages from sqs q on success (best effort)
+	deleteSqsMessages(sqsClient, messageReceiptSets)
+	return sqsMessageCount, nil
 }
 
 func lambdaDataStreams(event events.SQSEvent,
@@ -200,7 +201,7 @@ func readSqsMessages(sqsClient sqsiface.SQSAPI) (messages []*sqs.Message, messag
 	return receiveMessageOutput.Messages, messageReceipts, false, err
 }
 
-func deleteSqsMessages(sqsClient sqsiface.SQSAPI, messageReceiptSets messageReceiptSet) (err error) {
+func deleteSqsMessages(sqsClient sqsiface.SQSAPI, messageReceiptSets messageReceiptSet) {
 	for _, messageReceipts := range messageReceiptSets {
 		var deleteMessageBatchRequestEntries []*sqs.DeleteMessageBatchRequestEntry
 		for index, msg := range messageReceipts {
@@ -209,16 +210,20 @@ func deleteSqsMessages(sqsClient sqsiface.SQSAPI, messageReceiptSets messageRece
 				ReceiptHandle: msg,
 			})
 		}
-		_, err = sqsClient.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
+		// NOTE: this is a best effort, and we log any errors. Failed deleted messages will be re-processed
+		deleteMessageBatchOutput, err := sqsClient.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
 			Entries:  deleteMessageBatchRequestEntries,
 			QueueUrl: &common.Config.SqsQueueURL,
 		})
 		if err != nil {
-			err = errors.Wrapf(err, "failure deleting messages from %s", common.Config.SqsQueueURL)
-			return err
+			zap.L().Error("failure deleting sqs messages",
+				zap.String("guidance", "failed messages will be reprocessed"),
+				zap.String("queueURL", common.Config.SqsQueueURL),
+				zap.Int("numberOfFailedMessages", len(deleteMessageBatchOutput.Failed)),
+				zap.Int("numberOfSuccessfulMessages", len(deleteMessageBatchOutput.Successful)),
+				zap.Error(err))
 		}
 	}
-	return err
 }
 
 func queueDepth(sqsClient sqsiface.SQSAPI) (numberOfQueuedMessages int, err error) {
