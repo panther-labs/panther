@@ -76,6 +76,7 @@ const StackDeployment: React.FC = () => {
         `&param_S3Bucket=${values.s3Bucket}` +
         `&param_S3Prefix=${values.s3Prefix}` +
         `&param_KmsKey=${values.kmsKey}`;
+      const onboardingDocsLink = `https://docs.runpanther.io/log-processing#sns-notification-setup`;
 
       return (
         <React.Fragment>
@@ -105,6 +106,13 @@ const StackDeployment: React.FC = () => {
           >
             Download template
           </Link>
+          <Text size="large" color="grey200" as="p" mt={2} mb={2}>
+            After deploying this new infrastructure, follow the steps{' '}
+            <Link external color="blue300" title="SNS Notification Setup" href={onboardingDocsLink}>
+              here
+            </Link>{' '}
+            to complete the log source onboarding.
+          </Text>
         </React.Fragment>
       );
     }
