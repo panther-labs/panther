@@ -129,6 +129,7 @@ interface RefetchUserInfoParams {
   onSuccess?: () => void;
   onError?: (err: AuthError) => void;
 }
+
 /*
   We intentionaly use `undefined` and `null` in the interface below to showcase the possible values
  */
@@ -156,7 +157,7 @@ const AuthContext = React.createContext<AuthContextValue>(undefined);
 // say optimistically as the token may have expired by the time they revisit. This will be handled
 // in the Amplify, since the `isAuthenticated` flag just decides which screens to show.
 const previousUserSessionExists = Boolean(
-  storage.read(
+  storage.local.read(
     `CognitoIdentityServiceProvider.${process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
   )
 );
@@ -184,7 +185,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     // if no user is present, attempt to return data from the stored session. This is true when
     // the request to get the cognito `authUser` is in flight and hasn't returned yet
     if (isAuthenticated) {
-      return storage.read<UserInfo>(USER_INFO_STORAGE_KEY);
+      return storage.local.read<UserInfo>(USER_INFO_STORAGE_KEY);
     }
 
     // if no prev session exists and the user is not logged-in, then there is no userInfo
@@ -198,9 +199,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    */
   React.useEffect(() => {
     if (userInfo) {
-      storage.write(USER_INFO_STORAGE_KEY, userInfo);
+      storage.local.write(USER_INFO_STORAGE_KEY, userInfo);
     } else {
-      storage.delete(USER_INFO_STORAGE_KEY);
+      storage.local.delete(USER_INFO_STORAGE_KEY);
     }
   }, [userInfo]);
 
@@ -210,7 +211,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    *
    */
   const signIn = React.useCallback(
-    async ({ email, password, onSuccess = () => {}, onError = () => {} }: SignInParams) => {
+    async ({
+             email, password, onSuccess = () => {
+      }, onError = () => {
+      }
+           }: SignInParams) => {
       try {
         const signedInUser = await Auth.signIn(email, password);
 
@@ -233,7 +238,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    *
    */
   const signOut = React.useCallback(
-    ({ global = false, onSuccess = () => {}, onError = () => {} }: SignOutParams = {}) => {
+    ({
+       global = false, onSuccess = () => {
+      }, onError = () => {
+      }
+     }: SignOutParams = {}) => {
       return Auth.signOut({ global })
         .then(onSuccess)
         .catch(onError)
@@ -253,7 +262,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    *
    */
   const confirmSignIn = React.useCallback(
-    async ({ mfaCode, onSuccess = () => {}, onError = () => {} }: ConfirmSignInParams) => {
+    async ({
+             mfaCode, onSuccess = () => {
+      }, onError = () => {
+      }
+           }: ConfirmSignInParams) => {
       try {
         await Auth.confirmSignIn(authUser, mfaCode, 'SOFTWARE_TOKEN_MFA');
 
@@ -276,7 +289,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    *
    */
   const verifyTotpSetup = React.useCallback(
-    async ({ mfaCode, onSuccess = () => {}, onError = () => {} }: VerifyTotpSetupParams) => {
+    async ({
+             mfaCode, onSuccess = () => {
+      }, onError = () => {
+      }
+           }: VerifyTotpSetupParams) => {
       try {
         await Auth.verifyTotpToken(authUser, mfaCode);
         await Auth.setPreferredMFA(authUser, 'TOTP');
@@ -299,7 +316,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    *
    */
   const updateUserInfo = React.useCallback(
-    async ({ newAttributes, onSuccess = () => {}, onError = () => {} }: UpdateUserInfoParams) => {
+    async ({
+             newAttributes, onSuccess = () => {
+      }, onError = () => {
+      }
+           }: UpdateUserInfoParams) => {
       try {
         await Auth.updateUserAttributes(authUser, newAttributes);
         const updatedUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
@@ -325,7 +346,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    *
    */
   const setNewPassword = React.useCallback(
-    async ({ newPassword, onSuccess = () => {}, onError = () => {} }: SetNewPasswordParams) => {
+    async ({
+             newPassword, onSuccess = () => {
+      }, onError = () => {
+      }
+           }: SetNewPasswordParams) => {
       try {
         const userWithUpdatedPassword = await Auth.completeNewPassword(authUser, newPassword, {});
 
@@ -354,11 +379,13 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    */
   const changePassword = React.useCallback(
     async ({
-      oldPassword,
-      newPassword,
-      onSuccess = () => {},
-      onError = () => {},
-    }: ChangePasswordParams) => {
+             oldPassword,
+             newPassword,
+             onSuccess = () => {
+             },
+             onError = () => {
+             },
+           }: ChangePasswordParams) => {
       try {
         await Auth.changePassword(authUser, oldPassword, newPassword);
 
@@ -379,12 +406,14 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    */
   const resetPassword = React.useCallback(
     async ({
-      email,
-      token,
-      newPassword,
-      onSuccess = () => {},
-      onError = () => {},
-    }: ResetPasswordParams) => {
+             email,
+             token,
+             newPassword,
+             onSuccess = () => {
+             },
+             onError = () => {
+             },
+           }: ResetPasswordParams) => {
       try {
         await Auth.forgotPasswordSubmit(email, token, newPassword);
 
@@ -402,7 +431,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    * a link to reset his password
    */
   const forgotPassword = React.useCallback(
-    async ({ email, onSuccess = () => {}, onError = () => {} }: ForgotPasswordParams) => {
+    async ({
+             email, onSuccess = () => {
+      }, onError = () => {
+      }
+           }: ForgotPasswordParams) => {
       try {
         await Auth.forgotPassword(email);
 
@@ -419,7 +452,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    * A method to refetch user info in order to update state when a user edits self
    */
   const refetchUserInfo = React.useCallback(
-    async ({ onSuccess = () => {}, onError = () => {} }: RefetchUserInfoParams = {}) => {
+    async ({
+             onSuccess = () => {
+             }, onError = () => {
+      }
+           }: RefetchUserInfoParams = {}) => {
       try {
         const currentUserInfo = await Auth.currentAuthenticatedUser({ bypassCache: true });
         setAuthUser(currentUserInfo);

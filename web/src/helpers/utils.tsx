@@ -37,6 +37,8 @@ import sum from 'lodash-es/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
 
+export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
 // Generate a new secret code that contains metadata of issuer and user email
 export const formatSecretCode = (code: string, email: string): string => {
   const issuer = 'Panther';
