@@ -81,7 +81,7 @@ const StackDeployment: React.FC = () => {
       return (
         <React.Fragment>
           <Text size="large" color="grey200" as="p" mt={2} mb={2}>
-            The quickest way to do it, is through the AWS console
+            The quickest way to do it is through the AWS console
           </Text>
           <Link
             external
@@ -106,7 +106,7 @@ const StackDeployment: React.FC = () => {
           >
             Download template
           </Link>
-          <Text size="large" color="grey200" as="p" mt={2} mb={2}>
+          <Text size="large" color="grey200" as="p" mt={10} mb={2}>
             After deploying this new infrastructure, follow the steps{' '}
             <Link external color="blue300" title="SNS Notification Setup" href={onboardingDocsLink}>
               here
