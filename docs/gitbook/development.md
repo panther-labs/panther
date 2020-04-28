@@ -10,7 +10,7 @@ This diagram provides an overview of the core components of Panther, and how the
 
 ![High level architecture diagram](.gitbook/assets/high-level-arch-diagram.png)
 
-This diagram has been simplified to just the core components of Panther. For a slightly more detailed architecture diagram, see the bottom of this page.
+For a more detailed architecture diagram, see the bottom of this page.
 
 ## Environment
 
@@ -116,20 +116,21 @@ Since the majority of Panther is written in Go, the repo follows the standard [G
 
 ## Additional Diagrams
 
-Here are some additional diagrams to supplement the high level architecture diagram above.
+The diagrams below can be used to understand Panther's architecture at a deeper level and provide insight into data flows.
 
-### Detailed architecture diagram
+### Detailed Architecture Diagram
 
-Here is a slightly more detailed version of essentially the same architecture diagram as above.
+This diagram provides additional detail to the high-level diagram above:
 
 ![Architecture diagram](.gitbook/assets/detailed-arch-diagram.png)
 
 While more detailed than the overview above, this diagram also simplifies some implementation details for clarity. For example, the majority of lambdas are not invoking each other directly but instead communicating via SQS Queues or DynamoDB streams. 
 
-### Data flow diagram
+### Data Flow Diagram
 
-This diagram focuses on where and how your data is being stored and processed, as opposed to which systems are interacting and why.
+This diagram shows where and how your data is stored and processed:
 
 ![Data flow diagram](.gitbook/assets/data-flow-diagram.png)
 
-It is important to note here (as the legend says) that the arrows are indicating the direction that data is being transferred, as opposed to the previous diagrams where arrows are indicating the direction that communication is being initiated from.
+The above arrows indicate the direction in which data is transferred, as opposed to the previous diagrams where arrows are indicating the direction that communication is being initiated.
+
