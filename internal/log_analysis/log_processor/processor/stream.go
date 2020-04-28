@@ -38,9 +38,9 @@ import (
 const (
 	processingTimeLimitScalar = 0.8 // the processing runtime should be shorter than lambda timeout to make room to flush buffers
 
-	sqsMaxBatchSize       = 10  // max messages per read for SQS (can't find an sqs constant to refer to)
-	sqsWaitTimeSeconds    = 20  //  note: 20 is max for sqs
-	sqsQueueSizeThreshold = 100 // above this will trigger reading from the queue directly to improve aggregation
+	sqsMaxBatchSize       = 10              // max messages per read for SQS (can't find an sqs constant to refer to)
+	sqsWaitTimeSeconds    = 20              //  note: 20 is max for sqs
+	sqsQueueSizeThreshold = sqsMaxBatchSize // above this will trigger reading from the queue directly to improve aggregation
 )
 
 // reads lambda event, then continues to read events from sqs q

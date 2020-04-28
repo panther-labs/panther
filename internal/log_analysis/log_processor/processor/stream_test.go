@@ -70,7 +70,7 @@ var (
 	}
 	streamTestMessagesBelowThreshold = &sqs.GetQueueAttributesOutput{
 		Attributes: map[string]*string{
-			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("10"),
+			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("0"),
 		},
 	}
 )
