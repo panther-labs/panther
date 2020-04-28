@@ -11,7 +11,7 @@ import DownloadButton from './DownloadButton';
 import ResultsTable from './ResultsTable';
 
 const POLL_INTERVAL_MS = 750;
-const RESULTS_PER_PAGE = 100;
+const RESULTS_PER_PAGE = 50;
 
 const Results: React.FC = () => {
   const {
