@@ -38,13 +38,9 @@ import (
 const (
 	processingTimeLimitScalar = 0.8 // the processing runtime should be shorter than lambda timeout to make room to flush buffers
 
-	sqsMaxBatchSize    = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
-	sqsWaitTimeSeconds = 20 // long wait, this handles slow event trickles (20 is max for sqs, can't find an sqs constant to refer to)
-)
-
-var (
-	// how many times to read nothing in a row before stopping lambda (var for tests)
-	maxContiguousEmptyReads = 10 // this has a consequence of making the min lambda time sqsWaitTimeSeconds*maxContiguousEmptyReads
+	sqsMaxBatchSize       = 10  // max messages per read for SQS (can't find an sqs constant to refer to)
+	sqsWaitTimeSeconds    = 20  //  note: 20 is max for sqs
+	sqsQueueSizeThreshold = 100 // above this will trigger reading from the queue directly to improve aggregation
 )
 
 // reads lambda event, then continues to read events from sqs q
@@ -82,12 +78,20 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 			return
 		}
 
-		numberContiguousEmptyReads := 0 // count contiguous empty sqs reads
-
 		// continue to read until either there are no sqs messages for a time or we have exceeded the processing time limit
 		for time.Since(startTime) < processingTimeLimit {
 			for _, dataStream := range dataStreams {
 				streamChan <- dataStream
+			}
+
+			// under low load we do not read from the sqs queue
+			numberOfQueuedMessages, err := queueDepth(sqsClient)
+			if err != nil {
+				readEventErrorChan <- err
+				return
+			}
+			if numberOfQueuedMessages <= sqsQueueSizeThreshold {
+				break
 			}
 
 			// keep reading from SQS to maximize output aggregation
@@ -106,14 +110,9 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 				break
 			}
 
-			if len(receiveMessageOutput.Messages) == 0 {
-				numberContiguousEmptyReads++
-				if numberContiguousEmptyReads >= maxContiguousEmptyReads {
-					break
-				}
-				continue
+			if len(receiveMessageOutput.Messages) == 0 { // no more work
+				break
 			}
-			numberContiguousEmptyReads = 0 // reset, messages read
 
 			// remember so we can delete when done
 			sqsResponses = append(sqsResponses, receiveMessageOutput)
@@ -185,4 +184,29 @@ func deleteSqsMessages(sqsClient sqsiface.SQSAPI, sqsResponses []*sqs.ReceiveMes
 		}
 	}
 	return err
+}
+
+func queueDepth(sqsClient sqsiface.SQSAPI) (numberOfQueuedMessages int, err error) {
+	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
+		AttributeNames: []*string{aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages)},
+		QueueUrl:       &common.Config.SqsQueueURL,
+	}
+	getQueueAttributesOutput, err := sqsClient.GetQueueAttributes(getQueueAttributesInput)
+	if err != nil {
+		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
+		return 0, err
+	}
+	approximateNumberOfMessages := getQueueAttributesOutput.Attributes[sqs.QueueAttributeNameApproximateNumberOfMessages]
+	if approximateNumberOfMessages == nil {
+		err = errors.Errorf("failure getting %s count from %s",
+			sqs.QueueAttributeNameApproximateNumberOfMessages, common.Config.SqsQueueURL)
+		return 0, err
+	}
+	numberOfQueuedMessages, err = strconv.Atoi(*approximateNumberOfMessages)
+	if err != nil {
+		err = errors.Wrapf(err, "failure reading %s (%s) count from %s",
+			sqs.QueueAttributeNameApproximateNumberOfMessages, *approximateNumberOfMessages, common.Config.SqsQueueURL)
+		return 0, err
+	}
+	return numberOfQueuedMessages, err
 }

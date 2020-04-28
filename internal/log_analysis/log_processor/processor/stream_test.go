@@ -62,15 +62,27 @@ var (
 			},
 		},
 	}
+
+	streamTestMessagesAboveThreshold = &sqs.GetQueueAttributesOutput{
+		Attributes: map[string]*string{
+			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("200"),
+		},
+	}
+	streamTestMessagesBelowThreshold = &sqs.GetQueueAttributesOutput{
+		Attributes: map[string]*string{
+			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("10"),
+		},
+	}
 )
 
 func TestStreamEventsLambdaPlusSQS(t *testing.T) {
 	// lambda events and sqs events
 	initTest()
 
+	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesAboveThreshold, nil).Once()
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
-	// this one has no messages, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
+	// this one is below threshold, which breaks the loop
+	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesBelowThreshold, nil).Once()
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
 	sqsMessageCount, err := streamEvents(streamTestSqsClient, streamTestTime, streamTestLambdaEvent,
@@ -85,7 +97,7 @@ func TestStreamEventsOnlyLambda(t *testing.T) {
 	initTest()
 
 	// this one has no messages, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesBelowThreshold, nil).Once()
 
 	sqsMessageCount, err := streamEvents(streamTestSqsClient, streamTestTime, streamTestLambdaEvent,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
@@ -110,11 +122,6 @@ func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
 func TestStreamEventsReadEventError(t *testing.T) {
 	initTest()
 
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil)
-	// this one has no messages, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil)
-	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil)
-
 	_, err := streamEvents(streamTestSqsClient, streamTestTime, streamTestLambdaEvent,
 		noopProcessorFunc, failReadSnsMessagesFunc)
 	require.Error(t, err)
@@ -126,11 +133,6 @@ func TestStreamEventsProcessError(t *testing.T) {
 
 	common.Config.TimeLimitSec = 0 // ensure sqs reading go routine exits quickly to avoid data races between tests
 
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil)
-	// this one has no messages, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil)
-	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil)
-
 	_, err := streamEvents(streamTestSqsClient, streamTestTime, streamTestLambdaEvent,
 		failProcessorFunc, noopReadSnsMessagesFunc)
 	require.Error(t, err)
@@ -139,11 +141,6 @@ func TestStreamEventsProcessError(t *testing.T) {
 
 func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 	initTest()
-
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil)
-	// this one has no messages, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil)
-	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil)
 
 	_, err := streamEvents(streamTestSqsClient, streamTestTime, streamTestLambdaEvent,
 		failProcessorFunc, failReadSnsMessagesFunc)
@@ -154,7 +151,7 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 func TestStreamEventsReceiveSQSError(t *testing.T) {
 	initTest()
 
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesAboveThreshold, nil).Once()
 	// this one fails
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{},
 		fmt.Errorf("receiveError")).Once()
@@ -170,9 +167,10 @@ func TestStreamEventsReceiveSQSError(t *testing.T) {
 func TestStreamEventsDeleteSQSError(t *testing.T) {
 	initTest()
 
+	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesAboveThreshold, nil).Once()
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
-	// this one has no messages, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
+	// this one is below threshold, which breaks the loop
+	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesBelowThreshold, nil).Once()
 	// this one fails
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{},
 		fmt.Errorf("deleteError")).Once()
@@ -191,16 +189,15 @@ func TestStreamEventsSQSOverLimitError(t *testing.T) {
 
 	// on an over limit error, just stop processing (deletes messages processed from sqs queue)
 
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesAboveThreshold, nil).Once()
 	// this one has overlimit error , which breaks the loop
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{},
 		awserr.New(sqs.ErrCodeOverLimit, "", fmt.Errorf(sqs.ErrCodeOverLimit))).Once()
-	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
 	sqsMessageCount, err := streamEvents(streamTestSqsClient, streamTestTime, streamTestLambdaEvent,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
-	assert.Equal(t, len(streamTestLambdaEvent.Records)+len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
+	assert.Equal(t, len(streamTestLambdaEvent.Records), sqsMessageCount)
 	streamTestSqsClient.AssertExpectations(t)
 }
 
@@ -210,7 +207,6 @@ func initTest() {
 	common.Config.SqsQueueURL = "https://fakesqsurl"
 	streamTestSqsClient = &mockSQS{}
 	streamTestTime = time.Now()
-	maxContiguousEmptyReads = 0
 }
 
 func noopProcessorFunc(streamChan chan *common.DataStream, dest destinations.Destination) error {
@@ -248,4 +244,9 @@ func (m *mockSQS) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.D
 func (m *mockSQS) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
+}
+
+func (m *mockSQS) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.GetQueueAttributesOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
 }
