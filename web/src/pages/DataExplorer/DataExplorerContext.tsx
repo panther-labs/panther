@@ -70,7 +70,7 @@ function reducer(state: State, action: Actions) {
         queryStatus: 'errored' as const,
       };
     case 'QUERY_PROVISIONING':
-      return { ...state, queryStatus: 'provisioning' as const };
+      return { ...state, queryStatus: 'provisioning' as const, queryId: null };
     case 'QUERY_RUNNING':
       return {
         ...state,
