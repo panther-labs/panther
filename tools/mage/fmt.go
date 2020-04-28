@@ -76,7 +76,7 @@ func Fmt() {
 		c <- goroutineResult{"docs", doc()}
 	}(results)
 
-	logResults(results, "fmt", count)
+	logResults(results, "fmt", 1, count, count)
 }
 
 // Apply full go formatting to the given paths

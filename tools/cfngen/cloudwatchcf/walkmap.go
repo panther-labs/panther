@@ -18,55 +18,21 @@ package cloudwatchcf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"io/ioutil"
-	"os"
-
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
-)
-
-type YamlDispatcher func(resourceType string, resource map[interface{}]interface{})
+type JSONDispatcher func(resourceType string, resource map[string]interface{})
 
 // walk the tree, apply dispatcher on each resource based on Type
-func walkYamlMap(yamlObj interface{}, dispatcher YamlDispatcher) {
+func walkJSONMap(yamlObj interface{}, dispatcher JSONDispatcher) {
 	switch objVal := yamlObj.(type) {
-	case map[interface{}]interface{}:
+	case map[string]interface{}:
 		for k, v := range objVal {
-			switch keyVal := k.(type) {
-			case string:
-				switch keyVal {
-				case "Type":
-					switch valVal := v.(type) {
-					case string:
-						dispatcher(valVal, objVal)
-					}
-				}
-				walkYamlMap(v, dispatcher)
+			if k == "Type" {
+				dispatcher(v.(string), objVal)
 			}
+			walkJSONMap(v, dispatcher)
 		}
 	case []interface{}:
 		for i := range objVal {
-			walkYamlMap(objVal[i], dispatcher)
+			walkJSONMap(objVal[i], dispatcher)
 		}
 	}
-}
-
-func readYaml(fileName string) (yamlObj interface{}, err error) {
-	fh, err := os.Open(fileName)
-	if err != nil {
-		return nil, errors.Wrap(err, fileName)
-	}
-
-	inputCf, err := ioutil.ReadAll(fh)
-	if err != nil {
-		return nil, errors.Wrap(err, fileName)
-	}
-
-	err = yaml.Unmarshal(inputCf, &yamlObj)
-	if err != nil {
-		return nil, errors.Wrap(err, fileName)
-	}
-
-	return yamlObj, nil
 }

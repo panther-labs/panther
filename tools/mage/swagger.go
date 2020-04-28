@@ -20,63 +20,54 @@ package mage
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
 const (
 	apiTemplate         = "deployments/bootstrap_gateway.yml"
 	apiEmbeddedTemplate = "out/deployments/embedded.bootstrap_gateway.yml"
-
-	pantherLambdaKey = "x-panther-lambda-handler" // top-level key in Swagger file
-	space8           = "        "
+	pantherLambdaKey    = "x-panther-lambda-handler" // top-level key in Swagger file
 )
-
-// Match "DefinitionBody: api/myspec.yml  # possible comment"
-var swaggerPattern = regexp.MustCompile(`\n {6}DefinitionBody:[ \t]*[\w./]+\.yml[ \t]*(#.+)?`)
 
 // Embed swagger specs into the API gateway template, saving it to out/deployments.
 func embedAPISpec() error {
-	cfn := readFile(apiTemplate)
-
-	newCfn, err := embedAPIs(cfn)
+	cfn, err := cfnparse.ParseTemplate(apiTemplate)
 	if err != nil {
 		return err
 	}
 
-	// Save the new file
-	if err := os.MkdirAll(filepath.Dir(apiEmbeddedTemplate), 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(apiEmbeddedTemplate), err)
+	if err = embedAPIs(cfn); err != nil {
+		return err
 	}
 
 	logger.Debugf("deploy: transformed %s => %s with embedded APIs", apiTemplate, apiEmbeddedTemplate)
-	writeFile(apiEmbeddedTemplate, newCfn)
-	return nil
+	return cfnparse.WriteTemplate(cfn, apiEmbeddedTemplate)
 }
 
 // Transform a single CloudFormation template by embedding Swagger definitions.
-func embedAPIs(cfn []byte) ([]byte, error) {
-	var err error
-
-	cfn = swaggerPattern.ReplaceAllFunc(cfn, func(match []byte) []byte {
-		strMatch := strings.TrimSpace(string(match))
-		apiFilename := strings.Split(strMatch, " ")[1]
-
-		var body *string
-		body, err = loadSwagger(apiFilename)
-		if err != nil {
-			return nil // stop here and the top-level err will be returned
+func embedAPIs(cfn map[string]interface{}) error {
+	for _, resource := range cfn["Resources"].(map[string]interface{}) {
+		obj := resource.(map[string]interface{})
+		if obj["Type"].(string) != "AWS::Serverless::Api" {
+			continue
 		}
 
-		return []byte("\n      DefinitionBody:\n" + *body)
-	})
+		properties := obj["Properties"].(map[string]interface{})
+		apiPath := properties["DefinitionBody"].(string)
+		body, err := loadSwagger(apiPath)
+		if err != nil {
+			return err
+		}
 
-	return cfn, err
+		properties["DefinitionBody"] = body
+	}
+
+	return nil
 }
 
 // Load and transform a Swagger api.yml file for embedding in CloudFormation.
@@ -84,7 +75,7 @@ func embedAPIs(cfn []byte) ([]byte, error) {
 // This is required so we can interpolate the Region and AccountID - API gateway needs to know
 // the ARN of the Lambda function being invoked for each endpoint. The interpolation does not work
 // if we just reference a swagger file in S3 - the api spec must be embedded into the CloudFormation itself.
-func loadSwagger(filename string) (*string, error) {
+func loadSwagger(filename string) (map[string]interface{}, error) {
 	var apiBody map[string]interface{}
 	if err := yaml.Unmarshal(readFile(filename), &apiBody); err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %v", filename, err)
@@ -148,12 +139,5 @@ func loadSwagger(filename string) (*string, error) {
 		}
 	}
 
-	newBody, err := yaml.Marshal(apiBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal swagger-embedded yaml: %v", err)
-	}
-
-	// Add spaces for the correct indentation when embedding.
-	result := space8 + strings.ReplaceAll(strings.TrimSpace(string(newBody)), "\n", "\n"+space8)
-	return &result, nil
+	return apiBody, nil
 }

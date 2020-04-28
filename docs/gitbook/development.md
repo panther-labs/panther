@@ -32,14 +32,6 @@ Add go tools to your environment:
 export GOPATH=$HOME/go PATH=$PATH:$GOPATH/bin
 ```
 
-Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html), which usually works best with the [bundled installer](https://docs.aws.amazon.com/cli/latest/userguide/install-bundle.html):
-
-```bash
-curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-unzip awscli-bundle.zip
-sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-```
-
 Install [Docker](https://docs.docker.com/install/) and make sure the daemon is running in the background.
 
 Install [Mage](https://magefile.org/#installation):
@@ -95,7 +87,7 @@ To update your deployment of Panther, follow the steps below:
 1. Checkout the latest release:
    1. `git fetch origin master`
    2. `git checkout tags/v1.1.1`
-2. Clean the existing build artifacts: `mage clean`
+2. Clean the existing build artifacts and install the latest dependencies: `mage clean setup`
 3. Deploy the latest application changes: `mage deploy`
 
 ## Repo Layout

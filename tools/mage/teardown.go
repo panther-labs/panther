@@ -198,28 +198,17 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	// Define a common routine for processing stack delete results
 	var errCount int
 	handleResult := func(result deleteStackResult) {
-		if result.err == nil {
-			if strings.Contains(result.stackName, "skipped") {
-				logger.Infof("    √ %s", result.stackName)
-			} else {
-				logger.Infof("    √ %s successfully deleted", result.stackName)
-			}
+		if result.err != nil {
+			logger.Errorf("    - %s failed to delete: %v", result.stackName, result.err)
+			errCount++
 			return
 		}
 
-		logger.Errorf("    - %s failed to delete: %v", result.stackName, result.err)
-		_ = walkPantherStack(client, &result.stackName, func(summary cfnResource) {
-			r := summary.Resource
-			if aws.StringValue(r.ResourceStatus) == "DELETE_FAILED" {
-				logger.Errorf("        %s DELETE_FAILED: %s %s: %s",
-					aws.StringValue(r.LogicalResourceId),
-					aws.StringValue(r.ResourceType),
-					aws.StringValue(r.PhysicalResourceId),
-					aws.StringValue(r.ResourceStatusReason),
-				)
-			}
-		})
-		errCount++
+		if strings.Contains(result.stackName, "skipped") {
+			logger.Infof("    √ %s", result.stackName)
+		} else {
+			logger.Infof("    √ %s successfully deleted", result.stackName)
+		}
 	}
 
 	// The stackset must be deleted before the StackSetExecutionRole and the StackSetAdminRole
@@ -265,7 +254,7 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	}
 
 	if errCount > 0 {
-		return fmt.Errorf("%d stacks failed to delete", errCount)
+		return fmt.Errorf("%d stack(s) failed to delete", errCount)
 	}
 	return nil
 }
@@ -372,16 +361,8 @@ func deleteStack(client *cloudformation.CloudFormation, stack *string, results c
 		return
 	}
 
-	if err := client.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{StackName: stack}); err != nil {
-		// The stack never reached DELETE_COMPLETE status, the caller will find out why
-		results <- deleteStackResult{
-			stackName: *stack,
-			err:       fmt.Errorf("status != %s", cloudformation.ResourceStatusDeleteComplete),
-		}
-		return
-	}
-
-	results <- deleteStackResult{stackName: *stack}
+	_, err := waitForStackDelete(client, *stack)
+	results <- deleteStackResult{stackName: *stack, err: err}
 }
 
 // Delete all objects in the given S3 buckets and then remove them.
@@ -396,6 +377,10 @@ func destroyPantherBuckets(awsSession *session.Session, bucketNames []*string) {
 //
 // Or, if there are too many objects to delete directly, set a 1-day expiration lifecycle policy instead.
 func removeBucket(client *s3.S3, bucketName *string) {
+	if bucketName == nil {
+		return // name can be nil if the bucket was deleted externally
+	}
+
 	input := &s3.ListObjectVersionsInput{Bucket: bucketName}
 	var objectVersions []*s3.ObjectIdentifier
 

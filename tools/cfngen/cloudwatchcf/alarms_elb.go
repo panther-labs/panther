@@ -29,7 +29,7 @@ type ApplicationELB struct {
 	Alarm
 }
 
-func NewApplicationELBAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) *ApplicationELB {
+func NewApplicationELBAlarm(alarmType, metricName, message string, resource map[string]interface{}) *ApplicationELB {
 	const (
 		metricDimension = "LoadBalancer"
 		metricNamespace = "AWS/ApplicationELB"
@@ -45,7 +45,7 @@ func NewApplicationELBAlarm(alarmType, metricName, message string, resource map[
 	return alarm
 }
 
-func generateApplicationELBAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
+func generateApplicationELBAlarms(resource map[string]interface{}) (alarms []*Alarm) {
 	// NOTE: these metrics appear to have no units
 
 	// target 4XX errors are important as they may indicate issues with the application

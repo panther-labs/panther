@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -51,14 +52,24 @@ func genLogProcessingLabel(awsSession *session.Session) string {
 }
 
 // onboard Panther to monitor Panther account
-func deployOnboard(awsSession *session.Session, settings *config.PantherConfig, accountID string, bootstrapOutputs map[string]string) {
-	deployOnboardTemplate(awsSession, settings, bootstrapOutputs)
+func deployOnboard(
+	awsSession *session.Session,
+	settings *config.PantherConfig,
+	accountID string,
+	bootstrapOutputs map[string]string,
+) error {
+
+	if err := deployOnboardTemplate(awsSession, settings, bootstrapOutputs); err != nil {
+		return err
+	}
 	// registerPantherAccount MUST follow the CloudSec roles being deployed
-	registerPantherAccount(awsSession, settings, accountID, bootstrapOutputs["AuditLogsBucket"])
-	deployRealTimeStackSet(awsSession, accountID)
+	if err := registerPantherAccount(awsSession, settings, accountID, bootstrapOutputs["AuditLogsBucket"]); err != nil {
+		return err
+	}
+	return deployRealTimeStackSet(awsSession, accountID)
 }
 
-func deployOnboardTemplate(awsSession *session.Session, settings *config.PantherConfig, bootstrapOutputs map[string]string) {
+func deployOnboardTemplate(awsSession *session.Session, settings *config.PantherConfig, bootstrapOutputs map[string]string) error {
 	if settings.Setup.EnableCloudTrail {
 		logger.Info("deploy: enabling CloudTrail in Panther account (see panther_config.yml)")
 	}
@@ -67,7 +78,11 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 	}
 
 	// GD is account wide, not regional. Test if some other region has already enabled GD.
-	if guardDutyEnabledOutsidePanther(awsSession, settings) {
+	enabled, err := guardDutyEnabledOutsidePanther(awsSession, settings)
+	if err != nil {
+		return err
+	}
+	if enabled {
 		logger.Info("deploy: Guard Duty is already enabled for this account (not by Panther)")
 		settings.Setup.EnableGuardDuty = false
 	}
@@ -78,11 +93,14 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 		"EnableGuardDuty":        strconv.FormatBool(settings.Setup.EnableGuardDuty),
 		"LogProcessingRoleLabel": genLogProcessingLabel(awsSession),
 	}
-	onboardOutputs := deployTemplate(awsSession, onboardTemplate, bootstrapOutputs["SourceBucket"], onboardStack, params)
-	configureLogProcessingUsingAPIs(awsSession, settings, bootstrapOutputs["AuditLogsBucket"], onboardOutputs)
+	onboardOutputs, err := deployTemplate(awsSession, onboardTemplate, bootstrapOutputs["SourceBucket"], onboardStack, params)
+	if err != nil {
+		return err
+	}
+	return configureLogProcessingUsingAPIs(awsSession, settings, bootstrapOutputs["AuditLogsBucket"], onboardOutputs)
 }
 
-func registerPantherAccount(awsSession *session.Session, settings *config.PantherConfig, accountID, auditLogsBucket string) {
+func registerPantherAccount(awsSession *session.Session, settings *config.PantherConfig, accountID, auditLogsBucket string) error {
 	logger.Infof("deploy: registering account %s with Panther for monitoring", accountID)
 
 	// avoid alarms/errors and check first if the integrations exist
@@ -93,7 +111,7 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 		&models.ListIntegrationsInput{},
 	}
 	if err := invokeLambda(awsSession, "panther-source-api", listInput, &listOutput); err != nil {
-		logger.Fatalf("error calling lambda to register account: %v", err)
+		return fmt.Errorf("error calling lambda to register account: %v", err)
 	}
 
 	// Check if registered. Technically this is not needed (PutIntegration will just fail) BUT when PutIntegration
@@ -132,7 +150,7 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 		if err := invokeLambda(awsSession, "panther-source-api", input, nil); err != nil &&
 			!strings.Contains(err.Error(), "already onboarded") {
 
-			logger.Fatalf("error calling lambda to register account for cloud security: %v", err)
+			return fmt.Errorf("error calling lambda to register account for cloud security: %v", err)
 		}
 		logger.Infof("deploy: account %s registered for cloud security", accountID)
 	}
@@ -165,14 +183,16 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 		if err := invokeLambda(awsSession, "panther-source-api", input, nil); err != nil &&
 			!strings.Contains(err.Error(), "already onboarded") {
 
-			logger.Fatalf("error calling lambda to register account for log processing: %v", err)
+			return fmt.Errorf("error calling lambda to register account for log processing: %v", err)
 		}
 		logger.Infof("deploy: account %s registered for log processing", accountID)
 	}
+
+	return nil
 }
 
 // see: https://docs.runpanther.io/policies/scanning/real-time-events
-func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string) {
+func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string) error {
 	logger.Info("deploy: enabling real time infrastructure monitoring with Panther")
 	cfClient := cloudformation.New(awsSession)
 
@@ -208,7 +228,7 @@ func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string
 	}
 	_, err := cfClient.CreateStackSet(stackSetInput)
 	if err != nil && !alreadyExists(err) {
-		logger.Fatalf("error creating real time stack set: %v", err)
+		return fmt.Errorf("error creating real time stack set: %v", err)
 	}
 
 	stackSetInstancesInput := &cloudformation.CreateStackInstancesInput{
@@ -224,15 +244,19 @@ func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string
 	}
 	_, err = cfClient.CreateStackInstances(stackSetInstancesInput)
 	if err != nil && !alreadyExists(err) {
-		logger.Fatalf("error creating real time stack instance: %v", err)
+		return fmt.Errorf("error creating real time stack instance: %v", err)
 	}
+
+	return nil
 }
 
 func configureLogProcessingUsingAPIs(
-	awsSession *session.Session, settings *config.PantherConfig, auditLogsBucket string, onboardOutputs map[string]string) {
+	awsSession *session.Session, settings *config.PantherConfig, auditLogsBucket string, onboardOutputs map[string]string) error {
 
 	// currently GuardDuty does not support this in CF
-	configureLogProcessingGuardDuty(awsSession, settings, auditLogsBucket, onboardOutputs)
+	if err := configureLogProcessingGuardDuty(awsSession, settings, auditLogsBucket, onboardOutputs); err != nil {
+		return err
+	}
 
 	// configure notifications on the audit bucket, cannot be done via CF
 	topicArn := onboardOutputs["LogProcessingTopicArn"]
@@ -253,41 +277,42 @@ func configureLogProcessingUsingAPIs(
 	}
 	_, err := s3Client.PutBucketNotificationConfiguration(input)
 	if err != nil {
-		logger.Fatalf("failed to add s3 notifications to %s from %s: %v", auditLogsBucket, topicArn, err)
+		return fmt.Errorf("failed to add s3 notifications to %s from %s: %v", auditLogsBucket, topicArn, err)
 	}
+	return nil
 }
 
-func guardDutyEnabledOutsidePanther(awsSession *session.Session, settings *config.PantherConfig) bool {
+func guardDutyEnabledOutsidePanther(awsSession *session.Session, settings *config.PantherConfig) (bool, error) {
 	if !settings.Setup.EnableGuardDuty {
-		return false
+		return false, nil
 	}
 	gdClient := guardduty.New(awsSession)
 	input := &guardduty.ListDetectorsInput{}
 	output, err := gdClient.ListDetectors(input)
 	if err != nil {
-		logger.Fatalf("deploy: unable to check guard duty: %v", err)
+		return false, fmt.Errorf("deploy: unable to check guard duty: %v", err)
 	}
 	if len(output.DetectorIds) != 1 {
-		return false // we only make 1
+		return false, nil // we only make 1
 	}
 
 	// we need to check that it is THIS region's stack the enabled it
 	_, onboardOutput, err := describeStack(cloudformation.New(awsSession), onboardStack)
 	if err != nil {
 		if errStackDoesNotExist(err) {
-			return true // not deployed anything yet in this region BUT it is enabled, must be another deployment
+			return true, nil // not deployed anything yet in this region BUT it is enabled, must be another deployment
 		}
-		logger.Fatalf("deploy: cannot check stack %s: %v", onboardStack, err)
+		return false, fmt.Errorf("deploy: cannot check stack %s: %v", onboardStack, err)
 	}
 	// if my stack has no reference, then it must have been enabled by another deployment
-	return onboardOutput["GuardDutyDetectorId"] == ""
+	return onboardOutput["GuardDutyDetectorId"] == "", nil
 }
 
 func configureLogProcessingGuardDuty(
-	awsSession *session.Session, settings *config.PantherConfig, auditLogsBucket string, onboardOutputs map[string]string) {
+	awsSession *session.Session, settings *config.PantherConfig, auditLogsBucket string, onboardOutputs map[string]string) error {
 
 	if !settings.Setup.EnableGuardDuty {
-		return
+		return nil
 	}
 	gdClient := guardduty.New(awsSession)
 	publishInput := &guardduty.CreatePublishingDestinationInput{
@@ -300,8 +325,9 @@ func configureLogProcessingGuardDuty(
 	}
 	_, err := gdClient.CreatePublishingDestination(publishInput)
 	if err != nil && !strings.Contains(err.Error(), "already exists") {
-		logger.Fatalf("failed to configure Guard Duty detector %s to use bucket %s with kms key %s: %v",
+		return fmt.Errorf("failed to configure Guard Duty detector %s to use bucket %s with kms key %s: %v",
 			onboardOutputs["GuardDutyDetectorId"], auditLogsBucket,
 			onboardOutputs["GuardDutyKmsKeyArn"], err)
 	}
+	return nil
 }

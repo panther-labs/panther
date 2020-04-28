@@ -20,6 +20,7 @@ package cloudwatchcf
 
 import (
 	"github.com/panther-labs/panther/tools/cfngen"
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
@@ -115,12 +116,12 @@ func GenerateMetrics(cfFiles ...string) ([]byte, error) {
 }
 
 func generateMetricFilters(fileName string) (metricFilters []*MetricFilter, err error) {
-	yamlObj, err := readYaml(fileName)
+	jsonObj, err := cfnparse.ParseTemplate(fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	walkYamlMap(yamlObj, func(resourceType string, resource map[interface{}]interface{}) {
+	walkJSONMap(jsonObj, func(resourceType string, resource map[string]interface{}) {
 		metricFilters = append(metricFilters, metricFilterDispatchOnType(resourceType, resource)...)
 	})
 
@@ -128,7 +129,7 @@ func generateMetricFilters(fileName string) (metricFilters []*MetricFilter, err 
 }
 
 // dispatch on "Type" to create specific metric filters
-func metricFilterDispatchOnType(resourceType string, resource map[interface{}]interface{}) (metricFilters []*MetricFilter) {
+func metricFilterDispatchOnType(resourceType string, resource map[string]interface{}) (metricFilters []*MetricFilter) {
 	switch resourceType { // could be a map of key -> func if this gets long
 	case "AWS::Serverless::Function":
 		return generateLambdaMetricFilters(resource)
