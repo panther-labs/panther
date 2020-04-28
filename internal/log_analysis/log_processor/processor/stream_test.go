@@ -58,7 +58,8 @@ var (
 	streamTestReceiveMessageOutput = &sqs.ReceiveMessageOutput{
 		Messages: []*sqs.Message{
 			{
-				Body: aws.String(snsMessage),
+				Body:          aws.String(snsMessage),
+				ReceiptHandle: aws.String("testMessageHandle"),
 			},
 		},
 	}
