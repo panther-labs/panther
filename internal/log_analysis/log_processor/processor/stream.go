@@ -59,7 +59,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 	var sqsMessageCount int
 	var err error
 
-	streamChan := make(chan *common.DataStream, 20) // use small buffer to pipeline events
+	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	processingDeadlineTime := deadlineTime.Add(-time.Duration(float32(time.Since(deadlineTime)) * processingTimeLimitScalar))
 
 	var messageReceiptSets messageReceiptSet // accumulate message receipts for delete at the end
@@ -85,19 +85,19 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 		}
 
 		// continue to read until either there are no sqs messages or we have exceeded the processing time limit
-		for time.Since(processingDeadlineTime) < 0 { // deadline is in future, will be positive once passed
+		for isProcessingTimeRemaining(processingDeadlineTime) {
 			// under low load we do not read from the sqs queue and just exit
 			numberOfQueuedMessages, err := queueDepth(sqsClient)
 			if err != nil {
 				readEventErrorChan <- err
 				return
 			}
-			if numberOfQueuedMessages <= sqsQueueSizeThreshold {
+			if numberOfQueuedMessages < sqsQueueSizeThreshold {
 				break
 			}
 
 			// keep reading from SQS to maximize output aggregation
-			receiveMessageOutput, messageReceipts, overLimit, err := readSqsMessages(sqsClient)
+			messages, messageReceipts, overLimit, err := readSqsMessages(sqsClient)
 			if err != nil {
 				readEventErrorChan <- err
 				return
@@ -112,7 +112,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 				break
 			}
 
-			if len(messageReceipts) == 0 { // no more work
+			if len(messages) == 0 { // no more work
 				break
 			}
 
@@ -120,7 +120,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			messageReceiptSets = append(messageReceiptSets, messageReceipts)
 
 			// extract from sqs read responses
-			dataStreams, err = sqsDataStreams(receiveMessageOutput, readSnsMessagesFunc)
+			dataStreams, err = sqsDataStreams(messages, readSnsMessagesFunc)
 			if err != nil {
 				readEventErrorChan <- err
 				return
@@ -158,20 +158,22 @@ func lambdaDataStreams(event events.SQSEvent,
 	return readSnsMessagesFunc(eventMessages)
 }
 
-func sqsDataStreams(receiveMessageOutput *sqs.ReceiveMessageOutput,
+func isProcessingTimeRemaining(deadline time.Time) bool {
+	return time.Since(deadline) < 0 // deadline is in future, will be positive once passed
+}
+
+func sqsDataStreams(messages []*sqs.Message,
 	readSnsMessagesFunc func([]string) ([]*common.DataStream, error)) ([]*common.DataStream, error) {
 
-	eventMessages := make([]string, len(receiveMessageOutput.Messages))
-	for i, message := range receiveMessageOutput.Messages {
+	eventMessages := make([]string, len(messages))
+	for i, message := range messages {
 		eventMessages[i] = *message.Body
 	}
 	return readSnsMessagesFunc(eventMessages)
 }
 
-func readSqsMessages(sqsClient sqsiface.SQSAPI) (receiveMessageOutput *sqs.ReceiveMessageOutput,
-	messageReceipts []*string, overLimit bool, err error) {
-
-	receiveMessageOutput, err = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
+func readSqsMessages(sqsClient sqsiface.SQSAPI) (messages []*sqs.Message, messageReceipts []*string, overLimit bool, err error) {
+	receiveMessageOutput, err := sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(sqsWaitTimeSeconds), // wait this long UNLESS MaxNumberOfMessages read
 		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),    // max size allowed
 		QueueUrl:            &common.Config.SqsQueueURL,
@@ -190,7 +192,7 @@ func readSqsMessages(sqsClient sqsiface.SQSAPI) (receiveMessageOutput *sqs.Recei
 		messageReceipts[i] = receiveMessageOutput.Messages[i].ReceiptHandle
 	}
 
-	return receiveMessageOutput, messageReceipts, false, err
+	return receiveMessageOutput.Messages, messageReceipts, false, err
 }
 
 func deleteSqsMessages(sqsClient sqsiface.SQSAPI, messageReceiptSets messageReceiptSet) (err error) {
