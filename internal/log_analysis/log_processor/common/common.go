@@ -58,7 +58,7 @@ type EnvConfig struct {
 	TimeLimitSec                int64  `required:"true" split_words:"true"`
 }
 
-func SessionInit() {
+func Setup() {
 	Session = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(MaxRetries)))
 	LambdaClient = lambda.New(Session)
 	S3Uploader = s3manager.NewUploader(Session)

@@ -32,7 +32,7 @@ import (
 )
 
 func main() {
-	common.SessionInit()
+	common.Setup()
 	lambda.Start(handle)
 }
 
