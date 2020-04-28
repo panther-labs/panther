@@ -4,6 +4,14 @@ Panther is a collection of serverless applications deployed within your AWS acco
 
 The sections below provide guidance on how to extend Panther to meet your individual needs.
 
+## Architecture Diagram
+
+This diagram provides an overview of the core components of Panther, and how they are connected.
+
+![High level architecture diagram](.gitbook/assets/high-level-arch-diagram.png)
+
+For a more detailed architecture diagram, see the bottom of this page.
+
 ## Environment
 
 You can use the Docker environment from the [quick start](quick-start.md#deployment) instructions for development. However, it's faster to compile and test the code locally.
@@ -97,3 +105,24 @@ Since the majority of Panther is written in Go, the repo follows the standard [G
 | [**pkg**](https://github.com/panther-labs/panther/tree/master/pkg)  | Standalone Go libraries that could be directly imported by other projects |
 | [**tools**](https://github.com/panther-labs/panther/tree/master/tools)  | Magefile source and other build infrastructure  |
 | [**web**](https://github.com/panther-labs/panther/tree/master/web)   | Source for the Panther web application  |
+
+## Additional Diagrams
+
+The diagrams below can be used to understand Panther's architecture at a deeper level and provide insight into data flows.
+
+### Detailed Architecture Diagram
+
+This diagram provides additional detail to the high-level diagram above:
+
+![Architecture diagram](.gitbook/assets/detailed-arch-diagram.png)
+
+While more detailed than the overview above, this diagram also simplifies some implementation details for clarity. For example, the majority of lambdas are not invoking each other directly but instead communicating via SQS Queues or DynamoDB streams. 
+
+### Data Flow Diagram
+
+This diagram shows where and how your data is stored and processed:
+
+![Data flow diagram](.gitbook/assets/data-flow-diagram.png)
+
+The above arrows indicate the direction in which data is transferred, as opposed to the previous diagrams where arrows are indicating the direction that communication is being initiated.
+
