@@ -21,6 +21,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"html"
 	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -71,7 +72,7 @@ func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*ev
 	}
 
 	event.Response.EmailMessage = fmt.Sprintf(passwordResetTemplate,
-		givenName,
+		html.EscapeString(givenName),
 		appDomainURL,
 		event.Request.CodeParameter,
 		url.QueryEscape(email),
