@@ -34,7 +34,6 @@ const Results: React.FC = () => {
     // we get more re-renders but at least the value gets updated correctly
     // https://github.com/apollographql/apollo-client/issues/5531
     notifyOnNetworkStatusChange: true,
-    fetchPolicy: 'no-cache',
     variables: {
       input: {
         queryId,
