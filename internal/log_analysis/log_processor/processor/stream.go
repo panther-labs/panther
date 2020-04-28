@@ -62,28 +62,28 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 
 	var sqsResponses []*sqs.ReceiveMessageOutput // accumulate responses for delete at the end
 
-	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors
+	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer 
 	go func() {
-		defer close(streamChan) // done reading messages, this will cause processFunc() to return
+		defer func() {
+			close(streamChan)         // done reading messages, this will cause processFunc() to return
+			close(readEventErrorChan) // no more writes on err chan
+		}()
 
 		// extract first set of messages from the lambda call, lambda handles delete of these
-		eventMessages := make([]string, len(event.Records))
-		for i, record := range event.Records {
-			sqsMessageCount++
-			eventMessages[i] = record.Body
-		}
-		dataStreams, err := readSnsMessagesFunc(eventMessages)
+		dataStreams, err := lambdaDataStreams(event, readSnsMessagesFunc)
 		if err != nil {
 			readEventErrorChan <- err
 			return
 		}
 
-		// continue to read until either there are no sqs messages or we have exceeded the processing time limit
-		for time.Since(processingDeadlineTime) < 0 {
-			for _, dataStream := range dataStreams {
-				streamChan <- dataStream
-			}
+		// process lambda events
+		sqsMessageCount += len(dataStreams)
+		for _, dataStream := range dataStreams {
+			streamChan <- dataStream
+		}
 
+		// continue to read until either there are no sqs messages or we have exceeded the processing time limit
+		for time.Since(processingDeadlineTime) < 0 { // deadline is in future, will be positive once passed
 			// under low load we do not read from the sqs queue
 			numberOfQueuedMessages, err := queueDepth(sqsClient)
 			if err != nil {
@@ -117,16 +117,17 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			// remember so we can delete when done
 			sqsResponses = append(sqsResponses, receiveMessageOutput)
 
-			// extract from sqs read response
-			eventMessages := make([]string, len(receiveMessageOutput.Messages))
-			for i, message := range receiveMessageOutput.Messages {
-				sqsMessageCount++
-				eventMessages[i] = *message.Body
-			}
-			dataStreams, err = readSnsMessagesFunc(eventMessages)
+			// extract from sqs read responses
+			dataStreams, err = sqsDataStreams(receiveMessageOutput, readSnsMessagesFunc)
 			if err != nil {
 				readEventErrorChan <- err
 				return
+			}
+
+			// process sqs messages
+			sqsMessageCount += len(dataStreams)
+			for _, dataStream := range dataStreams {
+				streamChan <- dataStream
 			}
 		}
 	}()
@@ -136,7 +137,6 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 	if err != nil { // prefer Process() error to readEventError
 		return 0, err
 	}
-	close(readEventErrorChan)
 	readEventError := <-readEventErrorChan
 	if readEventError != nil {
 		return 0, readEventError
@@ -144,6 +144,26 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 
 	// delete messages from sqs q on success
 	return sqsMessageCount, deleteSqsMessages(sqsClient, sqsResponses)
+}
+
+func lambdaDataStreams(event events.SQSEvent,
+	readSnsMessagesFunc func([]string) ([]*common.DataStream, error)) ([]*common.DataStream, error) {
+
+	eventMessages := make([]string, len(event.Records))
+	for i, record := range event.Records {
+		eventMessages[i] = record.Body
+	}
+	return readSnsMessagesFunc(eventMessages)
+}
+
+func sqsDataStreams(receiveMessageOutput *sqs.ReceiveMessageOutput,
+	readSnsMessagesFunc func([]string) ([]*common.DataStream, error)) ([]*common.DataStream, error) {
+
+	eventMessages := make([]string, len(receiveMessageOutput.Messages))
+	for i, message := range receiveMessageOutput.Messages {
+		eventMessages[i] = *message.Body
+	}
+	return readSnsMessagesFunc(eventMessages)
 }
 
 func readSqsMessages(sqsClient sqsiface.SQSAPI) (overLimit bool, receiveMessageOutput *sqs.ReceiveMessageOutput, err error) {
