@@ -202,27 +202,59 @@ func readSqsMessages(sqsClient sqsiface.SQSAPI) (messages []*sqs.Message, messag
 }
 
 func deleteSqsMessages(sqsClient sqsiface.SQSAPI, messageReceiptSets messageReceiptSet) {
-	for _, messageReceipts := range messageReceiptSets {
-		var deleteMessageBatchRequestEntries []*sqs.DeleteMessageBatchRequestEntry
-		for index, msg := range messageReceipts {
-			deleteMessageBatchRequestEntries = append(deleteMessageBatchRequestEntries, &sqs.DeleteMessageBatchRequestEntry{
-				Id:            aws.String(strconv.Itoa(index)),
-				ReceiptHandle: msg,
-			})
+	messageReceiptChan := make(chan *string, sqsMaxBatchSize)
+	go func() {
+		for _, messageReceipts := range messageReceiptSets {
+			for _, messageReceipt := range messageReceipts {
+				messageReceiptChan <- messageReceipt
+			}
 		}
-		// NOTE: this is a best effort, and we log any errors. Failed deleted messages will be re-processed
-		deleteMessageBatchOutput, err := sqsClient.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
-			Entries:  deleteMessageBatchRequestEntries,
-			QueueUrl: &common.Config.SqsQueueURL,
-		})
-		if err != nil {
-			zap.L().Error("failure deleting sqs messages",
-				zap.String("guidance", "failed messages will be reprocessed"),
-				zap.String("queueURL", common.Config.SqsQueueURL),
-				zap.Int("numberOfFailedMessages", len(deleteMessageBatchOutput.Failed)),
-				zap.Int("numberOfSuccessfulMessages", len(deleteMessageBatchOutput.Successful)),
-				zap.Error(err))
+		close(messageReceiptChan) // tells streamDeleteSqsMessages() we are done
+	}()
+
+	streamDeleteSqsMessages(sqsClient, messageReceiptChan) // blocks until done
+}
+
+func streamDeleteSqsMessages(sqsClient sqsiface.SQSAPI, messageReceiptChan chan *string) {
+	// pre-allocate space
+	deleteMessageBatchRequestEntries := make([]*sqs.DeleteMessageBatchRequestEntry, sqsMaxBatchSize)
+	batchCounter := 0
+	for i := range deleteMessageBatchRequestEntries {
+		deleteMessageBatchRequestEntries[i] = &sqs.DeleteMessageBatchRequestEntry{
+			Id: aws.String(strconv.Itoa(i)), // preset ids within batch
 		}
+	}
+
+	for messageReceipt := range messageReceiptChan {
+		deleteMessageBatchRequestEntries = deleteMessageBatchRequestEntries[:batchCounter+1] // extend
+		deleteMessageBatchRequestEntries[batchCounter].ReceiptHandle = messageReceipt        // set
+		batchCounter++
+		if batchCounter == sqsMaxBatchSize {
+			batchDeleteSqsMessages(sqsClient, deleteMessageBatchRequestEntries)
+			// reset
+			batchCounter = 0
+			deleteMessageBatchRequestEntries = deleteMessageBatchRequestEntries[:0]
+		}
+	}
+	// the rest
+	if batchCounter > 0 {
+		batchDeleteSqsMessages(sqsClient, deleteMessageBatchRequestEntries)
+	}
+}
+
+func batchDeleteSqsMessages(sqsClient sqsiface.SQSAPI, deleteMessageBatchRequestEntries []*sqs.DeleteMessageBatchRequestEntry) {
+	// NOTE: this is a best effort, and we log any errors. Failed deleted messages will be re-processed
+	deleteMessageBatchOutput, err := sqsClient.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
+		Entries:  deleteMessageBatchRequestEntries,
+		QueueUrl: &common.Config.SqsQueueURL,
+	})
+	if err != nil {
+		zap.L().Error("failure deleting sqs messages",
+			zap.String("guidance", "failed messages will be reprocessed"),
+			zap.String("queueURL", common.Config.SqsQueueURL),
+			zap.Int("numberOfFailedMessages", len(deleteMessageBatchOutput.Failed)),
+			zap.Int("numberOfSuccessfulMessages", len(deleteMessageBatchOutput.Successful)),
+			zap.Error(err))
 	}
 }
 

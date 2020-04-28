@@ -183,8 +183,7 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{
 		Failed:     []*sqs.BatchResultErrorEntry{{}},
 		Successful: []*sqs.DeleteMessageBatchResultEntry{},
-	},
-		fmt.Errorf("deleteError")).Once()
+	}, fmt.Errorf("deleteError")).Once()
 
 	sqsMessageCount, err := streamEvents(streamTestSqsClient, streamTestDeadline, streamTestLambdaEvent,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
@@ -231,6 +230,66 @@ func TestStreamEventsSQSOverLimitError(t *testing.T) {
 		noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
 	assert.Equal(t, len(streamTestLambdaEvent.Records), sqsMessageCount)
+	streamTestSqsClient.AssertExpectations(t)
+}
+
+func TestStreamSQSBatchDelete(t *testing.T) {
+	// 1 event, 1 batch
+	initTest()
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
+	deleteSqsMessages(streamTestSqsClient, [][]*string{
+		make([]*string, 1),
+	})
+	streamTestSqsClient.AssertExpectations(t)
+
+	// 5 events, 1 batch
+	initTest()
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
+	deleteSqsMessages(streamTestSqsClient, [][]*string{
+		make([]*string, 5),
+	})
+	streamTestSqsClient.AssertExpectations(t)
+
+	// 10 events, 1 batch
+	initTest()
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
+	deleteSqsMessages(streamTestSqsClient, [][]*string{
+		make([]*string, 10),
+	})
+	streamTestSqsClient.AssertExpectations(t)
+
+	// 10 events, 1 batch, 2 sets
+	initTest()
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
+	deleteSqsMessages(streamTestSqsClient, [][]*string{
+		make([]*string, 5),
+		make([]*string, 5),
+	})
+	streamTestSqsClient.AssertExpectations(t)
+
+	// 11 events, 2 batches
+	initTest()
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Times(2)
+	deleteSqsMessages(streamTestSqsClient, [][]*string{
+		make([]*string, 11),
+	})
+	streamTestSqsClient.AssertExpectations(t)
+
+	// 11 events, 2 batches, 2 sets
+	initTest()
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Times(2)
+	deleteSqsMessages(streamTestSqsClient, [][]*string{
+		make([]*string, 10),
+		make([]*string, 1),
+	})
+	streamTestSqsClient.AssertExpectations(t)
+
+	// 100 events, 10 batches
+	initTest()
+	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Times(10)
+	deleteSqsMessages(streamTestSqsClient, [][]*string{
+		make([]*string, 100),
+	})
 	streamTestSqsClient.AssertExpectations(t)
 }
 
