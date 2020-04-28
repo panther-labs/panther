@@ -43,7 +43,12 @@ const (
 	sqsQueueSizeThreshold = sqsMaxBatchSize // above this will trigger reading from the queue directly to improve aggregation
 )
 
-// reads lambda event, then continues to read events from sqs q
+/*
+StreamEvents acts as an interface to aggregate sqs messages to avoid many small S3 files being created under load.
+The function will attempt to read more messages from the queue when the queue has messages. Under load
+the lambda will continue to read events and maximally aggregate data to produce fewer, bigger files.
+Fewer, bigger files makes Athena queries much faster.
+*/
 func StreamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event events.SQSEvent) (sqsMessageCount int, err error) {
 	return streamEvents(sqsClient, deadlineTime, event, Process, sources.ReadSnsMessages)
 }
@@ -53,7 +58,7 @@ type messageReceiptSet = [][]*string
 // entry point for unit testing, pass in read/process functions
 func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event events.SQSEvent,
 	processFunc func(chan *common.DataStream, destinations.Destination) error,
-	readSnsMessagesFunc func([]string) ([]*common.DataStream, error)) (int, error) {
+	generateDataStreamsFunc func([]string) ([]*common.DataStream, error)) (int, error) {
 
 	// these cannot be named return vars because it would cause a data race
 	var sqsMessageCount int
@@ -72,7 +77,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 		}()
 
 		// extract first set of messages from the lambda call, lambda handles delete of these
-		dataStreams, err := lambdaDataStreams(event, readSnsMessagesFunc)
+		dataStreams, err := lambdaDataStreams(event, generateDataStreamsFunc)
 		if err != nil {
 			readEventErrorChan <- err
 			return
@@ -120,7 +125,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			messageReceiptSets = append(messageReceiptSets, messageReceipts)
 
 			// extract from sqs read responses
-			dataStreams, err = sqsDataStreams(messages, readSnsMessagesFunc)
+			dataStreams, err = sqsDataStreams(messages, generateDataStreamsFunc)
 			if err != nil {
 				readEventErrorChan <- err
 				return
