@@ -44,12 +44,12 @@ const (
 )
 
 // reads lambda event, then continues to read events from sqs q
-func StreamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.SQSEvent) (sqsMessageCount int, err error) {
-	return streamEvents(sqsClient, startTime, event, Process, sources.ReadSnsMessages)
+func StreamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event events.SQSEvent) (sqsMessageCount int, err error) {
+	return streamEvents(sqsClient, deadlineTime, event, Process, sources.ReadSnsMessages)
 }
 
 // entry point for unit testing, pass in read/process functions
-func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.SQSEvent,
+func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event events.SQSEvent,
 	processFunc func(chan *common.DataStream, destinations.Destination) error,
 	readSnsMessagesFunc func([]string) ([]*common.DataStream, error)) (int, error) {
 
@@ -58,7 +58,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 	var err error
 
 	streamChan := make(chan *common.DataStream, 20) // use small buffer to pipeline events
-	processingTimeLimit := time.Second * time.Duration(float32(common.Config.TimeLimitSec)*processingTimeLimitScalar)
+	processingDeadlineTime := deadlineTime.Add(-time.Duration(float32(time.Since(deadlineTime)) * processingTimeLimitScalar))
 
 	var sqsResponses []*sqs.ReceiveMessageOutput // accumulate responses for delete at the end
 
@@ -78,8 +78,8 @@ func streamEvents(sqsClient sqsiface.SQSAPI, startTime time.Time, event events.S
 			return
 		}
 
-		// continue to read until either there are no sqs messages for a time or we have exceeded the processing time limit
-		for time.Since(startTime) < processingTimeLimit {
+		// continue to read until either there are no sqs messages or we have exceeded the processing time limit
+		for time.Since(processingDeadlineTime) < 0 {
 			for _, dataStream := range dataStreams {
 				streamChan <- dataStream
 			}
@@ -150,7 +150,6 @@ func readSqsMessages(sqsClient sqsiface.SQSAPI) (overLimit bool, receiveMessageO
 	receiveMessageOutput, err = sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(sqsWaitTimeSeconds), // wait this long UNLESS MaxNumberOfMessages read
 		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),    // max size allowed
-		VisibilityTimeout:   &common.Config.TimeLimitSec,
 		QueueUrl:            &common.Config.SqsQueueURL,
 	})
 	if err != nil {

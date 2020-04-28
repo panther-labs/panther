@@ -55,7 +55,6 @@ type EnvConfig struct {
 	ProcessedDataBucket         string `required:"true" split_words:"true"`
 	SqsQueueURL                 string `required:"true" split_words:"true"`
 	SnsTopicARN                 string `required:"true" split_words:"true"`
-	TimeLimitSec                int64  `required:"true" split_words:"true"`
 }
 
 func Setup() {

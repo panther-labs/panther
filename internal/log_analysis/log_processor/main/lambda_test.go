@@ -20,6 +20,7 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -46,7 +47,7 @@ func TestProcessOpLog(t *testing.T) {
 	lc := lambdacontext.LambdaContext{
 		InvokedFunctionArn: functionName,
 	}
-	err := process(&lc, events.SQSEvent{
+	err := process(&lc, time.Now(), events.SQSEvent{
 		Records: []events.SQSMessage{}, // empty, should do no work
 	})
 	require.NoError(t, err)

@@ -20,6 +20,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -38,10 +39,11 @@ func main() {
 
 func handle(ctx context.Context, event events.SQSEvent) error {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
-	return process(lc, event)
+	deadline, _ := ctx.Deadline()
+	return process(lc, deadline, event)
 }
 
-func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error) {
+func process(lc *lambdacontext.LambdaContext, deadline time.Time, event events.SQSEvent) (err error) {
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
 	var sqsMessageCount int
@@ -50,6 +52,6 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, operation.StartTime, event)
+	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, deadline, event)
 	return err
 }
