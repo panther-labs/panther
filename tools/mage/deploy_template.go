@@ -249,7 +249,6 @@ func prepareStack(awsSession *session.Session, stackName string) (map[string]str
 		if stackName == bootstrapStack {
 			// If the very first stack failed to create, we need to do a full teardown before trying again.
 			// Otherwise, there may be orphaned S3 buckets and an ACM cert that will never be used.
-			// TODO - certificate here is destroyed by teardown
 			logger.Warnf("The very first %s stack never created successfully (%s)", bootstrapStack, status)
 			logger.Warnf("Running 'mage teardown' to fully remove orphaned resources before trying again")
 			Teardown()
