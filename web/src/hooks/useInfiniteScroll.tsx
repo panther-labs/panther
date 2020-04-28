@@ -24,12 +24,10 @@ function useInfiniteScroll<T extends Element>({
     entries => {
       entries.forEach(entry => {
         if (
-          // part of it is in viewport
-          entry.intersectionRatio > 0 &&
-          // is continuously coming into viewport (i.e. it's not in the "leaving" phase)
+          // is coming into viewport (i.e. it's not in the "leaving" phase)
           entry.isIntersecting &&
           // we approached it while scrolling downwards (not upwards)
-          prevY.current > entry.boundingClientRect.y &&
+          prevY.current >= entry.boundingClientRect.y &&
           // we are not already loading more
           !loading
         ) {
@@ -53,7 +51,7 @@ function useInfiniteScroll<T extends Element>({
       const observer = new IntersectionObserver(callback, {
         root: scrollContainer === 'window' ? null : sentinelNode.parentElement,
         threshold: 0,
-        rootMargin: `0px 0px ${0}px 0px`,
+        rootMargin: `0px 0px ${threshold}px 0px`,
       });
       observer.observe(sentinelNode);
 

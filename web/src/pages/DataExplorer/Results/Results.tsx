@@ -3,6 +3,7 @@ import Panel from 'Components/Panel';
 import { LogQueryStatus } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import { Box } from 'pouncejs';
+import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import { useGetLogQueryResults } from './graphql/getLogQueryResults.generated';
@@ -11,7 +12,6 @@ import DownloadButton from './DownloadButton';
 import ResultsTable from './ResultsTable';
 
 const POLL_INTERVAL_MS = 750;
-const RESULTS_PER_PAGE = 50;
 
 const Results: React.FC = () => {
   const {
@@ -29,15 +29,27 @@ const Results: React.FC = () => {
     variables,
   } = useGetLogQueryResults({
     skip: !queryId,
-    // FIXME: This is a temporary hack to fix an issue that exists with Apollo. When polling,
-    // apollo won't update the "error" value. By setting `notifyOnNetworkStatusChange` to `true`,
+    // FIXME: `notifyOnNetworkStatusChange: true` is hack to fix an issue that exists with Apollo.
+    // When polling, apollo won't update the "error" value. By setting this value to `true`,
     // we get more re-renders but at least the value gets updated correctly
     // https://github.com/apollographql/apollo-client/issues/5531
+
+    // FIXME: We should add `fetchPolicy: 'no-cache'` since cache read/write take too long
+    // Unfortunately, the "fetch more" doesn't currently work when specifying `no-cache` and thus
+    // we are bound by slow read/writes when the results are "big". There is pending ticket to allow
+    // to bypass cache, thus increasing performance
+    // https://github.com/apollographql/apollo-client/issues/5239
+
+    // FIXME: `data` contents are referentially  different after every `fetchMore` invocation
+    // There is bug where when running fetchMore and `updateQuery`, all the items in a list get
+    // different references. This forces React to re-render all the query results every time new
+    // paginated items get fetched from the server
+    // https://github.com/apollographql/apollo-client/issues/6202
     notifyOnNetworkStatusChange: true,
     variables: {
       input: {
         queryId,
-        pageSize: RESULTS_PER_PAGE,
+        pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
     },
   });
