@@ -61,19 +61,6 @@ const typePolicies: TypePolicies = {
           existingData || toReference({ __typename: 'LogIntegration', integrationId: args.id })
         );
       },
-      getLogDatabase(existingData, { args, toReference }) {
-        return existingData || toReference({ __typename: 'LogDatabase', name: args.name });
-      },
-      getLogDatabaseTable(existingData, { args, toReference }) {
-        return (
-          existingData ||
-          toReference({
-            __typename: 'LogDatabaseTable',
-            name: args.input.name,
-            databaseName: args.input.databaseName,
-          })
-        );
-      },
     },
   },
   Destination: {
@@ -90,12 +77,6 @@ const typePolicies: TypePolicies = {
   },
   LogIntegration: {
     keyFields: ['integrationId'],
-  },
-  LogDatabase: {
-    keyFields: ['name'],
-  },
-  LogDatabaseTable: {
-    keyFields: ['name', 'databaseName'],
   },
   GeneralSettings: {
     keyFields: ['email'],
