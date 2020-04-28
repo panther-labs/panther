@@ -71,6 +71,7 @@ func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*ev
 		return nil, errors.New("email attribute not found")
 	}
 
+	// IMPORTANT! html.EscapeString for any user-defined fields to prevent an injection attack
 	event.Response.EmailMessage = fmt.Sprintf(passwordResetTemplate,
 		html.EscapeString(givenName),
 		appDomainURL,
