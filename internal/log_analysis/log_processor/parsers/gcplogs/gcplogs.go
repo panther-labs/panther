@@ -79,17 +79,16 @@ type LogEntryOperation struct {
 
 // nolint:lll
 type HTTPRequest struct {
-	RequestMethod *string         `json:"requestMethod" validate:"required" description:"The request HTTP method."`
-	RequestURL    *string         `json:"requestURL" validate:"required" description:"The scheme (http, https), the host name, the path and the query portion of the URL that was requested."`
-	RequestSize   *numerics.Int64 `json:"requestSize" validate:"required" description:"The size of the HTTP request message in bytes, including the request headers and the request body."`
-	Status        *int16          `json:"status" validate:"required" description:"The response HTTP status code"`
-	ResponseSize  *numerics.Int64 `json:"responseSize" validate:"required" description:"The size of the HTTP response message sent back to the client, in bytes, including the response headers and the response body."`
-	UserAgent     *string         `json:"userAgent" validate:"required" description:"The user agent sent by the client."`
-	RemoteIP      *string         `json:"remoteIP" validate:"required" description:"The IP address (IPv4 or IPv6) of the client that issued the HTTP request."`
-	ServerIP      *string         `json:"serverIP" validate:"required" description:"The IP address (IPv4 or IPv6) of the origin server that the request was sent to."`
-	Referer       *string         `json:"referer" validate:"required" description:"The referer URL of the request"`
-	// FIXME Parse duration?
-	Latency        *string         `json:"latency" validate:"required" description:"The request processing latency in seconds on the server, from the time the request was received until the response was sent."`
+	RequestMethod  *string         `json:"requestMethod" validate:"required" description:"The request HTTP method."`
+	RequestURL     *string         `json:"requestURL" validate:"required" description:"The scheme (http, https), the host name, the path and the query portion of the URL that was requested."`
+	RequestSize    *numerics.Int64 `json:"requestSize,omitempty" description:"The size of the HTTP request message in bytes, including the request headers and the request body."`
+	Status         *int16          `json:"status" validate:"required" description:"The response HTTP status code"`
+	ResponseSize   *numerics.Int64 `json:"responseSize,omitempty" description:"The size of the HTTP response message sent back to the client, in bytes, including the response headers and the response body."`
+	UserAgent      *string         `json:"userAgent,omitempty"  description:"The user agent sent by the client."`
+	RemoteIP       *string         `json:"remoteIP,omitempty"  description:"The IP address (IPv4 or IPv6) of the client that issued the HTTP request."`
+	ServerIP       *string         `json:"serverIP,omitempty"  description:"The IP address (IPv4 or IPv6) of the origin server that the request was sent to."`
+	Referer        *string         `json:"referer,omitempty" description:"The referer URL of the request"`
+	Latency        *string         `json:"latency,omitempty" description:"The request processing latency in seconds on the server, from the time the request was received until the response was sent."`
 	CacheLookup    *bool           `json:"cacheLookup,omitempty"  description:"Whether or not a cache lookup was attempted."`
 	CacheHit       *bool           `json:"cacheHit,omitempty"  description:"Whether or not an entity was served from cache (with or without validation)."`
 	CacheValidated *bool           `json:"cacheValidatedWithOriginServer,omitempty" description:"Whether or not an entity was served from cache (with or without validation)."`
