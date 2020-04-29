@@ -62,6 +62,7 @@ func (entry *LogEntry) LogID() string {
 	return ""
 }
 
+// nolint:lll
 type MonitoredResource struct {
 	Type   *string `json:"type" validate:"required" description:"Type of resource that produced this log entry"`
 	Labels Labels  `json:"labels" validate:"required" description:"Labels describing the resource"`

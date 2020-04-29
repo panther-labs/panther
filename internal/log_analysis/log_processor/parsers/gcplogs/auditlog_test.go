@@ -218,8 +218,8 @@ func TestAuditLogParserSystemEvent(t *testing.T) {
 			},
 			MethodName: aws.String("compute.instances.migrateOnHostMaintenance"),
 			RequestMetadata: &RequestMetadata{
-				RequestAttributes:     &RequestAttributes{},
-				DestinationAttributes: &Peer{},
+				RequestAttributes:     jsoniter.RawMessage(`{}`),
+				DestinationAttributes: jsoniter.RawMessage(`{}`),
 			},
 			ResourceName: aws.String("projects/project-id/zones/us-central1-f/instances/gke-cluster-default-pool-7dff1419-8v1j"),
 			ServiceName:  aws.String("compute.googleapis.com"),

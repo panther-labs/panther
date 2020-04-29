@@ -11,7 +11,7 @@ Reference: https://cloud.google.com/logging/docs/audit
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>logName</b></code></td><td><code>string</code></td><td valign=top>The resource name of the log to which this log entry belongs.</td></tr>
-<tr><td valign=top><code>severity</code></td><td><code>bigint</code></td><td valign=top>The severity of the log entry. The default value is LogSeverity.DEFAULT.</td></tr>
+<tr><td valign=top><code>severity</code></td><td><code>string</code></td><td valign=top>The severity of the log entry. The default value is LogSeverity.DEFAULT.</td></tr>
 <tr><td valign=top><code>insertId</code></td><td><code>string</code></td><td valign=top>A unique identifier for the log entry.</td></tr>
 <tr><td valign=top><code><b>resource</b></code></td><td><code>{
 <br>&nbsp;&nbsp;"type": {
@@ -134,6 +134,21 @@ Reference: https://cloud.google.com/logging/docs/audit
 <br>&nbsp;&nbsp;},
 <br>&nbsp;&nbsp;"callerSuppliedUserAgent": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"callerNetwork": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"requestAttributes": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
+<br>&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;"destinationAttributes": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"items": {
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "integer"
+<br>&nbsp;&nbsp;&nbsp;&nbsp;},
+<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "array"
 <br>&nbsp;&nbsp;}
 <br>}<br><br>"Status":{
 <br>&nbsp;&nbsp;"code": {
