@@ -844,7 +844,7 @@ func bulkUploadInvalid(t *testing.T) {
 func bulkUploadSuccess(t *testing.T) {
 	t.Parallel()
 
-	require.NoError(t, shutil.ZipDirectory(policiesRoot, policiesZipLocation))
+	require.NoError(t, shutil.ZipDirectory(policiesRoot, policiesZipLocation, true))
 	zipFile, err := os.Open(policiesZipLocation)
 	require.NoError(t, err)
 	content, err := ioutil.ReadAll(bufio.NewReader(zipFile))

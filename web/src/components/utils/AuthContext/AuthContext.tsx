@@ -129,6 +129,7 @@ interface RefetchUserInfoParams {
   onSuccess?: () => void;
   onError?: (err: AuthError) => void;
 }
+
 /*
   We intentionaly use `undefined` and `null` in the interface below to showcase the possible values
  */
@@ -156,7 +157,7 @@ const AuthContext = React.createContext<AuthContextValue>(undefined);
 // say optimistically as the token may have expired by the time they revisit. This will be handled
 // in the Amplify, since the `isAuthenticated` flag just decides which screens to show.
 const previousUserSessionExists = Boolean(
-  storage.read(
+  storage.local.read(
     `CognitoIdentityServiceProvider.${process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
   )
 );
@@ -184,7 +185,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     // if no user is present, attempt to return data from the stored session. This is true when
     // the request to get the cognito `authUser` is in flight and hasn't returned yet
     if (isAuthenticated) {
-      return storage.read<UserInfo>(USER_INFO_STORAGE_KEY);
+      return storage.local.read<UserInfo>(USER_INFO_STORAGE_KEY);
     }
 
     // if no prev session exists and the user is not logged-in, then there is no userInfo
@@ -198,9 +199,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    */
   React.useEffect(() => {
     if (userInfo) {
-      storage.write(USER_INFO_STORAGE_KEY, userInfo);
+      storage.local.write(USER_INFO_STORAGE_KEY, userInfo);
     } else {
-      storage.delete(USER_INFO_STORAGE_KEY);
+      storage.local.delete(USER_INFO_STORAGE_KEY);
     }
   }, [userInfo]);
 

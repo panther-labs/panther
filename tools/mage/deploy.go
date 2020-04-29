@@ -28,7 +28,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -194,52 +193,87 @@ func deployPrecheck(awsRegion string) {
 // Returns combined outputs from bootstrap stacks.
 func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[string]string {
 	var outputs map[string]string
-	var wg sync.WaitGroup
-	wg.Add(1)
 
-	// Deploy first bootstrap stack
-	go func() {
-		params := map[string]string{
-			"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
-			"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
-			"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
-			"CertificateArn":             certificateArn(awsSession, settings),
-			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"CustomDomain":               settings.Web.CustomDomain,
-			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-			"TracingMode":                settings.Monitoring.TracingMode,
+	results := make(chan goroutineResult)
+	count := 0
+
+	// If the bootstrap stack is ROLLBACK_COMPLETE or similar, we need to do a full teardown.
+	// Check for that now, instead of waiting until the actual deployTemplate() call:
+	//    - teardown can get user confirmation without other log messages running in parallel
+	//    - bootstrap stack needs to be stable before we read its outputs to find the certificate arn
+	oldBootstrapOutputs, err := prepareStack(awsSession, bootstrapStack)
+	if err != nil && !errStackDoesNotExist(err) {
+		logger.Fatal(err)
+	}
+
+	// Deploy bootstrap stacks
+	count++
+	go func(c chan goroutineResult) {
+		var err error
+		outputs, err = deployBoostrapStacks(awsSession, settings, oldBootstrapOutputs["CertificateArn"])
+		c <- goroutineResult{summary: "bootstrap: stacks", err: err}
+	}(results)
+
+	// Compile Lambda functions
+	count++
+	go func(c chan goroutineResult) {
+		var err error
+		if err = build.api(); err == nil {
+			err = build.lambda()
 		}
+		c <- goroutineResult{summary: "bootstrap: compile source", err: err}
+	}(results)
 
-		outputs = deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
+	logResults(results, "deploy: bootstrap", 1, count, count)
+	return outputs
+}
 
-		// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
-		// forces SMS as a fallback option, but the SDK does not.
-		userPoolID := outputs["UserPoolId"]
-		logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
-		_, err := cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
-			MfaConfiguration: aws.String("ON"),
-			SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
-				Enabled: aws.Bool(true),
-			},
-			UserPoolId: &userPoolID,
-		})
-		if err != nil {
-			logger.Fatalf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
-		}
+// Deploy bootstrap and bootstrap-gateway and merge their outputs
+func deployBoostrapStacks(
+	awsSession *session.Session,
+	settings *config.PantherConfig,
+	existingCertArn string,
+) (map[string]string, error) {
 
-		wg.Done()
-	}()
+	params := map[string]string{
+		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
+		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
+		"CertificateArn":             certificateArn(awsSession, settings, existingCertArn),
+		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomDomain":               settings.Web.CustomDomain,
+		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+		"TracingMode":                settings.Monitoring.TracingMode,
+	}
 
-	// While waiting for bootstrap, build deployment artifacts
-	build.API()
-	build.Cfn()
-	build.Lambda()
-	wg.Wait()
+	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
+	// forces SMS as a fallback option, but the SDK does not.
+	userPoolID := outputs["UserPoolId"]
+	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
+	_, err = cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
+		MfaConfiguration: aws.String("ON"),
+		SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
+			Enabled: aws.Bool(true),
+		},
+		UserPoolId: &userPoolID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
+	}
+
+	if err := build.cfn(); err != nil {
+		return nil, err
+	}
 
 	// Now that the S3 buckets are in place and swagger specs are embedded, we can deploy the second
 	// bootstrap stack (API gateways and the Python layer).
 	sourceBucket := outputs["SourceBucket"]
-	params := map[string]string{
+	params = map[string]string{
 		"TracingEnabled": strconv.FormatBool(settings.Monitoring.TracingMode != ""),
 	}
 
@@ -254,14 +288,19 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	}
 
 	// Deploy second bootstrap stack and merge outputs
-	for k, v := range deployTemplate(awsSession, gatewayTemplate, sourceBucket, gatewayStack, params) {
+	gatewayOutputs, err := deployTemplate(awsSession, gatewayTemplate, sourceBucket, gatewayStack, params)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range gatewayOutputs {
 		if _, exists := outputs[k]; exists {
-			logger.Fatalf("output %s exists in both bootstrap stacks", k)
+			return nil, fmt.Errorf("output %s exists in both bootstrap stacks", k)
 		}
 		outputs[k] = v
 	}
 
-	return outputs
+	return outputs, nil
 }
 
 // Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
@@ -296,7 +335,7 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	// └ python/policyuniverse-VERSION.dist-info/
 	//
 	// https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
-	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile); err != nil {
+	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile, true); err != nil {
 		logger.Fatalf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
 	}
 
@@ -315,25 +354,25 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 //
 // nolint: funlen
 func deployMainStacks(awsSession *session.Session, settings *config.PantherConfig, accountID string, outputs map[string]string) {
-	finishedStacks := make(chan string)
 	sourceBucket := outputs["SourceBucket"]
-	parallelStacks := 0
+	results := make(chan goroutineResult)
+	count := 0
 
 	// Alarms
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
 			"AppsyncId":            outputs["GraphQLApiId"],
 			"LoadBalancerFullName": outputs["LoadBalancerFullName"],
 			"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
 		})
-		result <- alarmsStack
-	}(finishedStacks)
+		c <- goroutineResult{summary: alarmsStack, err: err}
+	}(results)
 
 	// Appsync
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, appsyncTemplate, sourceBucket, appsyncStack, map[string]string{
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, appsyncTemplate, sourceBucket, appsyncStack, map[string]string{
 			"ApiId":          outputs["GraphQLApiId"],
 			"ServiceRole":    outputs["AppsyncServiceRoleArn"],
 			"AnalysisApi":    "https://" + outputs["AnalysisApiEndpoint"],
@@ -341,13 +380,13 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"RemediationApi": "https://" + outputs["RemediationApiEndpoint"],
 			"ResourcesApi":   "https://" + outputs["ResourcesApiEndpoint"],
 		})
-		result <- appsyncStack
-	}(finishedStacks)
+		c <- goroutineResult{summary: appsyncStack, err: err}
+	}(results)
 
 	// Cloud security
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
 			"AnalysisApiId":         outputs["AnalysisApiId"],
 			"ComplianceApiId":       outputs["ComplianceApiId"],
 			"RemediationApiId":      outputs["RemediationApiId"],
@@ -362,13 +401,13 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 			"TracingMode":                settings.Monitoring.TracingMode,
 		})
-		result <- cloudsecStack
-	}(finishedStacks)
+		c <- goroutineResult{summary: cloudsecStack, err: err}
+	}(results)
 
 	// Core
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
@@ -382,27 +421,26 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 			"TracingMode":                settings.Monitoring.TracingMode,
 		})
-		result <- coreStack
-	}(finishedStacks)
+		c <- goroutineResult{summary: coreStack, err: err}
+	}(results)
 
 	// Dashboards
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, dashboardTemplate, sourceBucket, dashboardStack, nil)
-		result <- dashboardStack
-	}(finishedStacks)
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, dashboardTemplate, sourceBucket, dashboardStack, nil)
+		c <- goroutineResult{summary: dashboardStack, err: err}
+	}(results)
 
 	// Glue
-	parallelStacks++
-	go func(result chan string) {
-		deployGlue(awsSession, outputs)
-		result <- glueStack
-	}(finishedStacks)
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: glueStack, err: deployGlue(awsSession, outputs)}
+	}(results)
 
 	// Log analysis
-	parallelStacks++
-	go func(result chan string) {
-		deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
 			"AnalysisApiId":         outputs["AnalysisApiId"],
 			"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
 			"GraphQLApiEndpoint":    outputs["GraphQLApiEndpoint"],
@@ -418,56 +456,59 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
 			"TracingMode":                  settings.Monitoring.TracingMode,
 		})
-		result <- logAnalysisStack
-	}(finishedStacks)
+		c <- goroutineResult{summary: logAnalysisStack, err: err}
+	}(results)
 
 	// Web server
-	parallelStacks++
-	go func(result chan string) {
-		deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
-		result <- frontendStack
-	}(finishedStacks)
+	count++
+	go func(c chan goroutineResult) {
+		_, err := deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
+		c <- goroutineResult{summary: frontendStack, err: err}
+	}(results)
 
-	// Wait for stacks to finish
-	// There will be two stacks (onboarding + monitoring) after this one
-	for i := 1; i <= parallelStacks; i++ {
-		logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
-	}
+	// Wait for stacks to finish.
+	// There will be two stacks after this one (metric filters + onboarding)
+	logResults(results, "deploy", 1, count, count+2)
 
 	// Metric filters have to be deployed after all log groups have been created
-	go func(result chan string) {
-		deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
-		result <- metricFilterStack
-	}(finishedStacks)
+	go func(c chan goroutineResult) {
+		_, err := deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
+		c <- goroutineResult{summary: metricFilterStack, err: err}
+	}(results)
 
 	// Onboard Panther to scan itself
-	go func(result chan string) {
+	go func(c chan goroutineResult) {
+		var err error
 		if settings.Setup.OnboardSelf {
-			deployOnboard(awsSession, settings, accountID, outputs)
+			err = deployOnboard(awsSession, settings, accountID, outputs)
 		}
-		result <- onboardStack
-	}(finishedStacks)
+		c <- goroutineResult{summary: onboardStack, err: err}
+	}(results)
 
-	// Wait for onboarding and monitoring to finish
-	for i := parallelStacks + 1; i <= parallelStacks+2; i++ {
-		logger.Infof("    √ stack %s finished (%d/%d)", <-finishedStacks, i, parallelStacks+2)
-	}
+	// Log stack results, counting where the last parallel group left off to give the illusion of
+	// one continuous deploy progress tracker.
+	logResults(results, "deploy", count+1, count+2, count+2)
 }
 
-func deployGlue(awsSession *session.Session, outputs map[string]string) {
-	deployTemplate(awsSession, glueTemplate, outputs["SourceBucket"], glueStack, map[string]string{
+func deployGlue(awsSession *session.Session, outputs map[string]string) error {
+	_, err := deployTemplate(awsSession, glueTemplate, outputs["SourceBucket"], glueStack, map[string]string{
 		"ProcessedDataBucket": outputs["ProcessedDataBucket"],
 	})
+	if err != nil {
+		return err
+	}
 
 	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
 	const workgroup = "primary"
 	athenaBucket := outputs["AthenaResultsBucket"]
 	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, athenaBucket); err != nil {
-		logger.Fatalf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
+		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
 	}
 	if err := athenaviews.CreateOrReplaceViews(athenaBucket); err != nil {
-		logger.Fatalf("failed to create/replace athena views for %s bucket: %v", athenaBucket, err)
+		return fmt.Errorf("failed to create/replace athena views for %s bucket: %v", athenaBucket, err)
 	}
+
+	return nil
 }
 
 // If the users list is empty (e.g. on the initial deploy), create the first user.

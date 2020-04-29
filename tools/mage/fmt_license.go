@@ -93,7 +93,9 @@ func licenseModifier(path string, modifier func(string) string) {
 	contents := string(readFile(path))
 	newContents := modifier(contents)
 	if newContents != contents {
-		writeFile(path, []byte(newContents))
+		if err := writeFile(path, []byte(newContents)); err != nil {
+			logger.Fatal(err)
+		}
 	}
 }
 

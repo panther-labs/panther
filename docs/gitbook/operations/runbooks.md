@@ -100,7 +100,7 @@ This lambda implements the analysis API which is responsible for
  * Failure of this lambda will prevent policies/rules from being created, updated, deleted. Additionally, policies and rules will stop being evaluated by the policy/rules engines.
 
 ## panther-analysis-api
-The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+The `panther-analysis-api` API Gateway calls the `panther-analysis-api` lambda.
 
 ## panther-athena-api
 The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.

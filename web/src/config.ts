@@ -46,17 +46,3 @@ Yup.addMethod(Yup.array, 'unique', function method(this, message = 'No duplicate
     return true;
   });
 });
-
-/*
-  This is a needed override. By default Ace Editor inherits the font-family of the page, a.k.a.
-  Roboto in our case. Problem is that Roboto is not a monofont so essentially each letter has a
-  different width. We need to make sure that the editor gets the font family from its own theme
-  and not fallback to the global one. This line down below does it.
- */
-const style = document.createElement('style');
-style.innerHTML = `
-  .ace_editor * {
-    font-family: inherit !important;
-  }
-`;
-document.head.appendChild(style);

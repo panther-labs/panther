@@ -26,7 +26,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"time"
@@ -35,7 +34,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/iam"
 
 	"github.com/panther-labs/panther/tools/config"
@@ -52,33 +50,21 @@ const (
 // Returns the certificate arn for the bootstrap stack. One of:
 //
 // 1) The settings file, if it's specified
-// 2) The bootstrap stack, if it already exists
+// 2) The bootstrap stack output (existingCertArn)
 // 3) Uploading an ACM or IAM cert
-func certificateArn(awsSession *session.Session, settings *config.PantherConfig) string {
+func certificateArn(awsSession *session.Session, settings *config.PantherConfig, existingCertArn string) string {
 	if settings.Web.CertificateArn != "" {
-		// Always use the value in the settings file, if it exists
+		// Always use the value in the settings file first, if it exists
 		return settings.Web.CertificateArn
 	}
 
-	_, outputs, err := describeStack(cloudformation.New(awsSession), bootstrapStack)
-	if err == nil {
-		// The bootstrap stack already exists
-		// CFN makes us re-specify the parameter if it already had a non-default value.
-		arn := outputs["CertificateArn"]
-		if arn == "" {
-			logger.Fatalf("output CertificateArn from stack %s is blank", bootstrapStack)
-		}
-		return arn
+	// If the bootstrap stack already exists and has a certificate arn, use that
+	if existingCertArn != "" {
+		return existingCertArn
 	}
 
-	if errStackDoesNotExist(err) {
-		// The stack doesn't exist yet - upload a new certificate
-		return uploadLocalCertificate(awsSession)
-	}
-
-	// Some other error describing the bootstrap stack
-	logger.Fatal(err)
-	return "n/a" // unreachable code
+	// If the stack outputs are blank, it never deployed successfully - upload a new cert
+	return uploadLocalCertificate(awsSession)
 }
 
 // Upload a local self-signed TLS certificate to ACM. Only needs to happen once per installation
@@ -163,18 +149,13 @@ func generateKeys() error {
 		return fmt.Errorf("x509 cert creation failed: %v", err)
 	}
 
-	// Create the keys directory if it does not already exist
-	if err = os.MkdirAll(keysDirectory, certFilePermissions); err != nil {
-		return fmt.Errorf("failed to create keys directory %s: %v", keysDirectory, err)
-	}
-
 	// PEM encode the certificate and write it to disk
 	var certBuffer bytes.Buffer
 	if err = pem.Encode(&certBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}); err != nil {
 		return fmt.Errorf("cert encoding failed: %v", err)
 	}
-	if err = ioutil.WriteFile(certificateFile, certBuffer.Bytes(), certFilePermissions); err != nil {
-		return fmt.Errorf("failed to save cert %s: %v", certificateFile, err)
+	if err = writeFile(certificateFile, certBuffer.Bytes()); err != nil {
+		return err
 	}
 
 	// PEM Encode the private key and write it to disk
@@ -183,11 +164,7 @@ func generateKeys() error {
 	if err != nil {
 		return fmt.Errorf("key encoding failed: %v", err)
 	}
-	if err = ioutil.WriteFile(privateKeyFile, keyBuffer.Bytes(), certFilePermissions); err != nil {
-		return fmt.Errorf("failed to save key %s: %v", privateKeyFile, err)
-	}
-
-	return nil
+	return writeFile(privateKeyFile, keyBuffer.Bytes())
 }
 
 // uploadIAMCertificate creates an IAM certificate resource and returns its ARN

@@ -92,6 +92,8 @@ var (
 			&gitlablogs.Exceptions{}, gitlablogs.ExceptionsDesc),
 		(&awslogs.CloudTrailInsightParser{}).LogType(): DefaultLogParser(&awslogs.CloudTrailInsightParser{},
 			&awslogs.CloudTrailInsight{}, awslogs.CloudTrailInsightDesc),
+		(&awslogs.CloudTrailDigestParser{}).LogType(): DefaultLogParser(&awslogs.CloudTrailDigestParser{},
+			&awslogs.CloudTrailDigest{}, awslogs.CloudTrailDigestDesc),
 		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
 			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
 	}

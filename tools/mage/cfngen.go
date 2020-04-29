@@ -20,7 +20,6 @@ package mage
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -34,17 +33,6 @@ import (
 
 // Generate Glue tables for log processor output as CloudFormation
 func generateGlueTables() error {
-	outDir := filepath.Dir(glueTemplate)
-	if err := os.MkdirAll(outDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
-	}
-
-	glueCfFile, err := os.Create(glueTemplate)
-	if err != nil {
-		return fmt.Errorf("failed to create file %s: %v", glueTemplate, err)
-	}
-	defer glueCfFile.Close()
-
 	tableResources := registry.AvailableTables()
 	logger.Debugf("deploy: cfngen: loaded %d glue tables", len(tableResources))
 	cf, err := gluecf.GenerateTables(tableResources)
@@ -52,26 +40,11 @@ func generateGlueTables() error {
 		return fmt.Errorf("failed to generate Glue Data Catalog CloudFormation template: %v", err)
 	}
 
-	if _, err = glueCfFile.Write(cf); err != nil {
-		return fmt.Errorf("failed to write file %s: %v", glueTemplate, err)
-	}
-	return nil
+	return writeFile(glueTemplate, cf)
 }
 
 // Generate CloudWatch dashboards as CloudFormation
 func generateDashboards() error {
-	outDir := filepath.Join("out", "deployments", "monitoring")
-	if err := os.MkdirAll(outDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
-	}
-	dashboardsCfFileName := filepath.Join(outDir, "dashboards.json")
-
-	dashboardsCfFile, err := os.Create(dashboardsCfFileName)
-	if err != nil {
-		return fmt.Errorf("failed to create file %s: %v", dashboardsCfFileName, err)
-	}
-	defer dashboardsCfFile.Close()
-
 	dashboardResources := dashboards.Dashboards()
 	logger.Debugf("deploy: cfngen: loaded %d dashboards", len(dashboardResources))
 	cf, err := cloudwatchcf.GenerateDashboards(dashboardResources)
@@ -79,20 +52,13 @@ func generateDashboards() error {
 		return fmt.Errorf("failed to generate dashboard CloudFormation template: %v", err)
 	}
 
-	if _, err = dashboardsCfFile.Write(cf); err != nil {
-		return fmt.Errorf("failed to write file %s: %v", dashboardsCfFileName, err)
-	}
-	return nil
+	return writeFile(filepath.Join("out", "deployments", "monitoring", "dashboards.json"), cf)
 }
 
 // Generate CloudWatch alarms as CloudFormation
 func generateAlarms(settings *config.PantherConfig) error {
 	var alarms []*cloudwatchcf.Alarm
-
 	outDir := filepath.Join("out", "deployments", "monitoring")
-	if err := os.MkdirAll(outDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
-	}
 
 	// loop over deployment CF files generating alarms for each
 	for _, cfFile := range cfnFiles() {
@@ -113,14 +79,9 @@ func generateAlarms(settings *config.PantherConfig) error {
 		alarms = append(alarms, fileAlarms...) // save for validation
 
 		// write cf to file
-		alarmsCfFile, err := os.Create(alarmsCfFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to create file %s: %v", alarmsCfFilePath, err)
+		if err := writeFile(alarmsCfFilePath, cf); err != nil {
+			return err
 		}
-		if _, err = alarmsCfFile.Write(cf); err != nil {
-			return fmt.Errorf("failed to write file %s: %v", alarmsCfFilePath, err)
-		}
-		alarmsCfFile.Close()
 	}
 
 	// confirm all alarms generated are documented by cfndoc tags
@@ -154,25 +115,10 @@ func resourceDocumentation() (resourceLookup map[string]struct{}) {
 
 // Generate CloudWatch metrics as CloudFormation
 func generateMetrics() error {
-	outDir := filepath.Join("out", "deployments", "monitoring")
-	if err := os.MkdirAll(outDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
-	}
-	metricsCfFileName := filepath.Join(outDir, "metrics.json")
-
-	metricsCfFile, err := os.Create(metricsCfFileName)
-	if err != nil {
-		return fmt.Errorf("failed to create file %s: %v", metricsCfFileName, err)
-	}
-	defer metricsCfFile.Close()
-
 	cf, err := cloudwatchcf.GenerateMetrics(cfnFiles()...)
 	if err != nil {
 		return fmt.Errorf("failed to generate metrics CloudFormation template: %v", err)
 	}
 
-	if _, err = metricsCfFile.Write(cf); err != nil {
-		return fmt.Errorf("failed to write file %s: %v", metricsCfFileName, err)
-	}
-	return nil
+	return writeFile(filepath.Join("out", "deployments", "monitoring", "metrics.json"), cf)
 }

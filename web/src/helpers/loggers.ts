@@ -18,7 +18,7 @@
 
 import { ErrorResponse } from 'apollo-link-error';
 import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
-import Storage from 'Helpers/storage';
+import storage from 'Helpers/storage';
 import { Operation } from '@apollo/client';
 
 interface ErrorData {
@@ -42,7 +42,7 @@ export const logError = (error: Error | ErrorResponse, { operation, extras }: Er
   // If he user hasn't  allowed us, then don't report the error
   // For information on how does this value ended up in the Storage (and how it syncs itself with
   // the latest updates), see /web/src/client.ts
-  if (Storage.read<boolean>(ERROR_REPORTING_CONSENT_STORAGE_KEY) !== true) {
+  if (storage.local.read<boolean>(ERROR_REPORTING_CONSENT_STORAGE_KEY) !== true) {
     return;
   }
 
