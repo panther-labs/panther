@@ -97,16 +97,6 @@ func (i *Int64) MarshalJSON() ([]byte, error) {
 	return strconv.AppendInt(nil, (int64)(*i), 10), nil
 }
 
-func unquoteJSON(data []byte) []byte {
-	if len(data) > 1 && data[0] == '"' {
-		data = data[1:]
-		if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '"' {
-			return data[:n]
-		}
-	}
-	return data
-}
-
 // UnmarshalJSON implements json.Unmarshaler interface
 func (i *Int64) UnmarshalJSON(data []byte) error {
 	if i == nil {
@@ -119,4 +109,14 @@ func (i *Int64) UnmarshalJSON(data []byte) error {
 	}
 	*i = Int64(n)
 	return nil
+}
+
+func unquoteJSON(data []byte) []byte {
+	if len(data) > 1 && data[0] == '"' {
+		data = data[1:]
+		if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '"' {
+			return data[:n]
+		}
+	}
+	return data
 }

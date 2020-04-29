@@ -61,6 +61,17 @@ func TestInteger(t *testing.T) {
 	err = nilInt.UnmarshalJSON(([]byte)("321"))
 	require.Error(t, err)
 	assert.Equal(t, (*Integer)(nil), nilInt)
+
+	{
+		var i Integer
+		err := i.UnmarshalJSON([]byte("9223372036854775808"))
+		require.Error(t, err, "Should overflow")
+	}
+	{
+		var i Integer
+		err := i.UnmarshalJSON([]byte("-9223372036854775809"))
+		require.Error(t, err, "Should underflow")
+	}
 }
 
 func TestInt64(t *testing.T) {
