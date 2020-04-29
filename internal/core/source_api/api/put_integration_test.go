@@ -115,7 +115,7 @@ func generateMockSQSBatchInputOutput(integration *models.SourceIntegrationMetada
 // Unit Tests
 
 func TestAddToSnapshotQueue(t *testing.T) {
-	snapshotPollersQueueURL = "test-url"
+	env.SnapshotPollersQueueURL = "test-url"
 	testIntegration := &models.SourceIntegrationMetadata{
 		AWSAccountID:     aws.String(testAccountID),
 		CreatedAtTime:    aws.Time(time.Time{}),
@@ -145,7 +145,7 @@ func TestPutIntegration(t *testing.T) {
 	mockSQS := &mockSQSClient{}
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	sqsClient = mockSQS
-	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
@@ -166,7 +166,7 @@ func TestPutLogIntegrationExists(t *testing.T) {
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	sqsClient = mockSQS
 
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
@@ -197,7 +197,7 @@ func TestPutCloudSecIntegrationExists(t *testing.T) {
 	mockSQS := &mockSQSClient{}
 	sqsClient = mockSQS
 
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
@@ -262,7 +262,7 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 			UserID:           aws.String(testUserID),
 		},
 	}
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			TestErr: true,
 		},
@@ -295,7 +295,7 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 			UserID:           aws.String(testUserID),
 		},
 	}
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			TestErr: true,
 		},
@@ -319,15 +319,15 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 }
 
 func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
-	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	mockSQS := &mockSQSClient{}
 	sqsClient = mockSQS
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(logProcessorQueueURL),
+		QueueUrl:       aws.String(env.LogProcessorQueueURL),
 	}
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{})
 	mockSQS.On("GetQueueAttributes", expectedGetQueueAttributesInput).
@@ -335,7 +335,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	expectedAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(logProcessorQueueURL),
+		QueueUrl:   aws.String(env.LogProcessorQueueURL),
 	}
 	mockSQS.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
@@ -354,10 +354,10 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 }
 
 func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
-	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	mockSQS := &mockSQSClient{}
 	sqsClient = mockSQS
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{}, errors.New("error"))
 

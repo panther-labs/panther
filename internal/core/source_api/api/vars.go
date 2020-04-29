@@ -19,26 +19,53 @@ package api
  */
 
 import (
-	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
+	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 )
 
-var (
-	db                                      = ddb.New(tableName)
-	sess                                    = session.Must(session.NewSession())
-	sqsClient               sqsiface.SQSAPI = sqs.New(sess)
-	maxElapsedTime                          = 5 * time.Second
-	snapshotPollersQueueURL                 = os.Getenv("SNAPSHOT_POLLERS_QUEUE_URL")
-	logProcessorQueueURL                    = os.Getenv("LOG_PROCESSOR_QUEUE_URL")
-	logProcessorQueueArn                    = os.Getenv("LOG_PROCESSOR_QUEUE_ARN")
-	tableName                               = os.Getenv("TABLE_NAME")
+const (
+	maxElapsedTime       = 5 * time.Second
+	templateBucketRegion = endpoints.UsWest2RegionID
 )
+
+var (
+	env        envConfig
+	awsSession *session.Session
+
+	dynamoClient     *ddb.DDB
+	sqsClient        sqsiface.SQSAPI
+	templateS3Client s3iface.S3API
+)
+
+type envConfig struct {
+	SnapshotPollersQueueURL string `required:"true" split_words:"true"`
+	LogProcessorQueueURL    string `required:"true" split_words:"true"`
+	LogProcessorQueueArn    string `required:"true" split_words:"true"`
+	TableName               string `required:"true" split_words:"true"`
+}
+
+// Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
+// All required environment variables must be present or this function will panic.
+func Setup() {
+	envconfig.MustProcess("", &env)
+
+	awsSession = session.Must(session.NewSession())
+	dynamoClient = ddb.New(env.TableName)
+	sqsClient = sqs.New(awsSession)
+	templateS3Client = s3.New(awsSession, &aws.Config{
+		Region: aws.String(templateBucketRegion),
+	})
+}
 
 // API provides receiver methods for each route handler.
 type API struct{}

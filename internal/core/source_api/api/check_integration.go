@@ -65,14 +65,14 @@ func checkAwsScanIntegration(input *models.CheckIntegrationInput) *models.Source
 		IntegrationType: aws.StringValue(input.IntegrationType),
 	}
 	_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
-		*input.AWSAccountID, *sess.Config.Region))
+		*input.AWSAccountID, *awsSession.Config.Region))
 	if aws.BoolValue(input.EnableCWESetup) {
 		_, out.CWERoleStatus = getCredentialsWithStatus(fmt.Sprintf(cweRoleFormat,
-			*input.AWSAccountID, *sess.Config.Region))
+			*input.AWSAccountID, *awsSession.Config.Region))
 	}
 	if aws.BoolValue(input.EnableRemediation) {
 		_, out.RemediationRoleStatus = getCredentialsWithStatus(fmt.Sprintf(remediationRoleFormat,
-			*input.AWSAccountID, *sess.Config.Region))
+			*input.AWSAccountID, *awsSession.Config.Region))
 	}
 	return out
 }
@@ -99,7 +99,7 @@ func checkKey(roleCredentials *credentials.Credentials, key *string) models.Sour
 			Healthy: aws.Bool(true),
 		}
 	}
-	kmsClient := kms.New(sess, &aws.Config{Credentials: roleCredentials})
+	kmsClient := kms.New(awsSession, &aws.Config{Credentials: roleCredentials})
 
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
 	if err != nil {
@@ -123,7 +123,7 @@ func checkKey(roleCredentials *credentials.Credentials, key *string) models.Sour
 }
 
 func checkBucket(roleCredentials *credentials.Credentials, bucket *string) models.SourceIntegrationItemStatus {
-	s3Client := s3.New(sess, &aws.Config{Credentials: roleCredentials})
+	s3Client := s3.New(awsSession, &aws.Config{Credentials: roleCredentials})
 
 	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucket})
 	if err != nil {
@@ -142,12 +142,12 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	zap.L().Debug("checking role", zap.String("roleArn", roleARN))
 	// Setup new credentials with the role
 	roleCredentials := stscreds.NewCredentials(
-		sess,
+		awsSession,
 		roleARN,
 	)
 
 	// Use the role to make sure it's good
-	stsClient := sts.New(sess, aws.NewConfig().WithCredentials(roleCredentials))
+	stsClient := sts.New(awsSession, aws.NewConfig().WithCredentials(roleCredentials))
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{

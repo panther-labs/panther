@@ -63,10 +63,11 @@ func (client *mockDDBClient) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutp
 
 func TestDeleteIntegrationItem(t *testing.T) {
 	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
+	mockClient.On("GetItem", mock.Anything).
+		Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: aws.String(testIntegrationID),
@@ -78,15 +79,16 @@ func TestDeleteIntegrationItem(t *testing.T) {
 
 func TestDeleteLogIntegration(t *testing.T) {
 	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
 	sqsClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(logProcessorQueueURL),
+		QueueUrl:       aws.String(env.LogProcessorQueueURL),
 	}
 
 	scanResult := &dynamodb.ScanOutput{
@@ -105,7 +107,7 @@ func TestDeleteLogIntegration(t *testing.T) {
 	expectedAttributes := generateQueueAttributeOutput(t, []string{})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(logProcessorQueueURL),
+		QueueUrl:   aws.String(env.LogProcessorQueueURL),
 	}
 	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
@@ -122,11 +124,11 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 	// but another source for that account exists. In that case we
 	// should remove the SQS permissions for that account
 	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
 	sqsClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	additionLogSourceEntry := generateDDBAttributes(models.IntegrationTypeAWS3)
 	additionLogSourceEntry["integrationId"] = &dynamodb.AttributeValue{
@@ -156,7 +158,7 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 
 func TestDeleteIntegrationItemError(t *testing.T) {
 	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockErr := awserr.New(
 		"ErrCodeInternalServerError",
@@ -175,15 +177,15 @@ func TestDeleteIntegrationItemError(t *testing.T) {
 }
 func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
 	sqsClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(logProcessorQueueURL),
+		QueueUrl:       aws.String(env.LogProcessorQueueURL),
 	}
 
 	scanResult := &dynamodb.ScanOutput{
@@ -201,7 +203,7 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 	expectedAttributes := generateQueueAttributeOutput(t, []string{})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(logProcessorQueueURL),
+		QueueUrl:   aws.String(env.LogProcessorQueueURL),
 	}
 	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
@@ -215,7 +217,7 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 
 func TestDeleteIntegrationItemDoesNotExist(t *testing.T) {
 	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockClient.On("GetItem", mock.Anything).Return(&dynamodb.GetItemOutput{}, nil)
 
@@ -230,11 +232,11 @@ func TestDeleteIntegrationItemDoesNotExist(t *testing.T) {
 
 func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
 	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
 	sqsClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	scanResult := &dynamodb.ScanOutput{
 		Items: []map[string]*dynamodb.AttributeValue{
@@ -264,11 +266,11 @@ func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
 	zap.ReplaceGlobals(zap.New(core))
 
 	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
 	sqsClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	scanResult := &dynamodb.ScanOutput{
 		Items: []map[string]*dynamodb.AttributeValue{
@@ -320,7 +322,7 @@ func generateQueueAttributeOutput(t *testing.T, accountIDs []string) map[string]
 				Effect:    "Allow",
 				Principal: map[string]string{"AWS": "*"},
 				Action:    "sqs:SendMessage",
-				Resource:  logProcessorQueueArn,
+				Resource:  env.LogProcessorQueueArn,
 				Condition: map[string]interface{}{
 					"ArnLike": map[string]string{
 						"aws:SourceArn": fmt.Sprintf("arn:aws:sns:*:%s:*", accountID),

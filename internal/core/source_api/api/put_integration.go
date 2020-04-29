@@ -101,7 +101,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	newIntegration := generateNewIntegration(input)
 
 	// Batch write to DynamoDB
-	if err = db.PutSourceIntegration(newIntegration); err != nil {
+	if err = dynamoClient.PutSourceIntegration(newIntegration); err != nil {
 		err = errors.Wrap(err, "Failed to store source integration in DDB")
 		return nil, putIntegrationInternalError
 	}
@@ -189,14 +189,14 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 
 	zap.L().Info(
 		"scheduling new scans",
-		zap.String("queueUrl", snapshotPollersQueueURL),
+		zap.String("queueUrl", env.SnapshotPollersQueueURL),
 		zap.Int("count", len(sqsEntries)),
 	)
 
 	// Batch send all the messages to SQS
 	_, err := sqsbatch.SendMessageBatch(sqsClient, maxElapsedTime, &sqs.SendMessageBatchInput{
 		Entries:  sqsEntries,
-		QueueUrl: &snapshotPollersQueueURL,
+		QueueUrl: &env.SnapshotPollersQueueURL,
 	})
 	return err
 }

@@ -48,7 +48,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 	}()
 
 	var integration *models.SourceIntegrationMetadata
-	integration, err = db.GetIntegration(input.IntegrationID)
+	integration, err = dynamoClient.GetIntegration(input.IntegrationID)
 	if err != nil {
 		errMsg := "failed to get integration"
 		err = errors.Wrap(err, errMsg)
@@ -64,7 +64,10 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 	}
 
 	if *integration.IntegrationType == models.IntegrationTypeAWS3 {
-		existingIntegrations, err := db.ScanIntegrations(&models.ListIntegrationsInput{IntegrationType: aws.String(models.IntegrationTypeAWS3)})
+		existingIntegrations, err := dynamoClient.ScanIntegrations(
+			&models.ListIntegrationsInput{
+				IntegrationType: aws.String(models.IntegrationTypeAWS3),
+			})
 		if err != nil {
 			return deleteIntegrationInternalError
 		}
@@ -92,7 +95,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		}
 	}
 
-	err = db.DeleteIntegrationItem(input)
+	err = dynamoClient.DeleteIntegrationItem(input)
 	if err != nil {
 		return deleteIntegrationInternalError
 	}
