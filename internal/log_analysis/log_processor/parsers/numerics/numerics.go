@@ -42,39 +42,18 @@ func (i *Integer) MarshalJSON() ([]byte, error) {
 	return strconv.AppendInt(nil, (int64)(*i), 10), nil
 }
 
-// Overflow limits for integers regardless of platform isize
-// Reference: https://stackoverflow.com/a/39571615
-const (
-	MinUint uint = 0 // binary: all zeroes
-
-	// Perform a bitwise NOT to change every bit from 0 to 1
-	MaxUint = ^MinUint // binary: all ones
-
-	// Shift the binary number to the right (i.e. divide by two)
-	// to change the high bit to 0
-	MaxInt = int(MaxUint >> 1) // binary: all ones except high bit
-
-	// Perform another bitwise NOT to change the high bit to 1 and
-	// all other bits to 0
-	MinInt = ^MaxInt // binary: all zeroes except high bit
-)
-
 // UnmarshalJSON implements json.Unmarshaler interface
 func (i *Integer) UnmarshalJSON(data []byte) (err error) {
 	if i == nil {
 		return errors.Errorf("nil target")
 	}
 	data = unquoteJSON(data)
-	n, err := strconv.ParseInt(string(data), 10, 64)
+	// Detect over/underflow errors in `strconv`
+	n, err := strconv.ParseInt(string(data), 10, strconv.IntSize)
 	if err != nil {
 		return err
 	}
-	if n > int64(MaxInt) {
-		return errors.Errorf("integer overflow")
-	}
-	if n < int64(MinInt) {
-		return errors.Errorf("integer underflow")
-	}
+	// Safely cast `int64` to `int` since `ParseInt` has checked for overflow
 	*i = Integer(int(n))
 	return nil
 }
