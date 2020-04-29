@@ -107,7 +107,7 @@ func getQueuePolicy() (*SqsPolicy, error) {
 		AttributeNames: aws.StringSlice([]string{policyAttributeName}),
 		QueueUrl:       aws.String(logProcessorQueueURL),
 	}
-	attributes, err := SQSClient.GetQueueAttributes(getAttributesInput)
+	attributes, err := sqsClient.GetQueueAttributes(getAttributesInput)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get queue attributes")
 	}
@@ -151,7 +151,7 @@ func setQueuePolicy(policy *SqsPolicy) error {
 		},
 	}
 
-	_, err := SQSClient.SetQueueAttributes(setAttributesInput)
+	_, err := sqsClient.SetQueueAttributes(setAttributesInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to set queue attributes")
 	}

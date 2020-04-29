@@ -81,7 +81,7 @@ func TestDeleteLogIntegration(t *testing.T) {
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
+	sqsClient = mockSqs
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
@@ -125,7 +125,7 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
+	sqsClient = mockSqs
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	additionLogSourceEntry := generateDDBAttributes(models.IntegrationTypeAWS3)
@@ -178,7 +178,7 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
+	sqsClient = mockSqs
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
@@ -233,7 +233,7 @@ func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
+	sqsClient = mockSqs
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	scanResult := &dynamodb.ScanOutput{
@@ -267,7 +267,7 @@ func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
 	db = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
+	sqsClient = mockSqs
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	scanResult := &dynamodb.ScanOutput{

@@ -132,7 +132,7 @@ func TestAddToSnapshotQueue(t *testing.T) {
 	mockSQS := &mockSQSClient{}
 	// It's non trivial to mock when the order of a slice is not promised
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(sqsOut, nil)
-	SQSClient = mockSQS
+	sqsClient = mockSQS
 
 	err = ScanAllResources([]*models.SourceIntegrationMetadata{testIntegration})
 
@@ -144,7 +144,7 @@ func TestAddToSnapshotQueue(t *testing.T) {
 func TestPutIntegration(t *testing.T) {
 	mockSQS := &mockSQSClient{}
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
-	SQSClient = mockSQS
+	sqsClient = mockSQS
 	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
@@ -164,7 +164,7 @@ func TestPutIntegration(t *testing.T) {
 func TestPutLogIntegrationExists(t *testing.T) {
 	mockSQS := &mockSQSClient{}
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
-	SQSClient = mockSQS
+	sqsClient = mockSQS
 
 	db = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
@@ -195,7 +195,7 @@ func TestPutLogIntegrationExists(t *testing.T) {
 
 func TestPutCloudSecIntegrationExists(t *testing.T) {
 	mockSQS := &mockSQSClient{}
-	SQSClient = mockSQS
+	sqsClient = mockSQS
 
 	db = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
@@ -270,7 +270,7 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 	}
 
 	mockSQS := &mockSQSClient{}
-	SQSClient = mockSQS
+	sqsClient = mockSQS
 	mockSQS.On("AddPermission", mock.Anything).Return(&sqs.AddPermissionOutput{}, nil)
 	// RemoveRermission will be called to remove the permission that was added previously
 	// This is done as part of rollback process to bring the system in a consistent state
@@ -303,7 +303,7 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 	}
 
 	mockSQS := &mockSQSClient{}
-	SQSClient = mockSQS
+	sqsClient = mockSQS
 	mockSQS.On("AddPermission", mock.Anything).Return(&sqs.AddPermissionOutput{}, nil)
 	// RemoveRermission will be called to remove the permission that was added previously
 	// This is done as part of rollback process to bring the system in a consistent state
@@ -321,7 +321,7 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	mockSQS := &mockSQSClient{}
-	SQSClient = mockSQS
+	sqsClient = mockSQS
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
@@ -356,7 +356,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	db = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	mockSQS := &mockSQSClient{}
-	SQSClient = mockSQS
+	sqsClient = mockSQS
 	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{}, errors.New("error"))

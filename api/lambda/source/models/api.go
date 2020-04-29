@@ -43,7 +43,7 @@ type LambdaInput struct {
 
 // CheckIntegrationInput is used to check the health of a potential configuration.
 type CheckIntegrationInput struct {
-	AWSAccountID     *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	AWSAccountID     *string `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
 	IntegrationType  *string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
 	IntegrationLabel *string `json:"integrationLabel" validate:"required,integrationLabel"`
 
@@ -69,7 +69,7 @@ type PutIntegrationInput struct {
 
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
-	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
 	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel"`
 	IntegrationType    *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`

@@ -51,9 +51,11 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 	integration, err = db.GetIntegration(input.IntegrationID)
 	if err != nil {
 		errMsg := "failed to get integration"
+		err = errors.Wrap(err, errMsg)
+
 		zap.L().Error(errMsg,
 			zap.String("integrationId", *input.IntegrationID),
-			zap.Error(errors.Wrap(err, errMsg)))
+			zap.Error(err))
 		return deleteIntegrationInternalError
 	}
 
@@ -89,6 +91,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 			integrationForDeletePermissions = integration
 		}
 	}
+
 	err = db.DeleteIntegrationItem(input)
 	if err != nil {
 		return deleteIntegrationInternalError

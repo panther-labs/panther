@@ -32,7 +32,7 @@ import (
 var (
 	db                                      = ddb.New(tableName)
 	sess                                    = session.Must(session.NewSession())
-	SQSClient               sqsiface.SQSAPI = sqs.New(sess)
+	sqsClient               sqsiface.SQSAPI = sqs.New(sess)
 	maxElapsedTime                          = 5 * time.Second
 	snapshotPollersQueueURL                 = os.Getenv("SNAPSHOT_POLLERS_QUEUE_URL")
 	logProcessorQueueURL                    = os.Getenv("LOG_PROCESSOR_QUEUE_URL")

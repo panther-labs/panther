@@ -194,7 +194,7 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 	)
 
 	// Batch send all the messages to SQS
-	_, err := sqsbatch.SendMessageBatch(SQSClient, maxElapsedTime, &sqs.SendMessageBatchInput{
+	_, err := sqsbatch.SendMessageBatch(sqsClient, maxElapsedTime, &sqs.SendMessageBatchInput{
 		Entries:  sqsEntries,
 		QueueUrl: &snapshotPollersQueueURL,
 	})
