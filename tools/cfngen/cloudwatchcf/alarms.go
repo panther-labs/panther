@@ -25,6 +25,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/tools/cfngen"
+	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -229,12 +230,12 @@ func GenerateAlarms(settings *config.PantherConfig, cfFiles ...string) ([]*Alarm
 }
 
 func generateAlarms(fileName string, settings *config.PantherConfig) (alarms []*Alarm, err error) {
-	yamlObj, err := readYaml(fileName)
+	obj, err := cfnparse.ParseTemplate(fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	walkYamlMap(yamlObj, func(resourceType string, resource map[interface{}]interface{}) {
+	walkJSONMap(obj, func(resourceType string, resource map[string]interface{}) {
 		alarms = append(alarms, alarmDispatchOnType(resourceType, resource, settings)...)
 	})
 
@@ -242,7 +243,7 @@ func generateAlarms(fileName string, settings *config.PantherConfig) (alarms []*
 }
 
 // dispatch on "Type" to create specific alarms
-func alarmDispatchOnType(resourceType string, resource map[interface{}]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
+func alarmDispatchOnType(resourceType string, resource map[string]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
 	switch resourceType { // this could be a map of key -> func if this gets long
 	case "AWS::SNS::Topic":
 		return generateSNSAlarms(resource)

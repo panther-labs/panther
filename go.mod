@@ -25,6 +25,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/tidwall/gjson v1.6.0
 	go.uber.org/zap v1.14.1
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/tools v0.0.0-20200407144507-5fc56a9a2104 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0

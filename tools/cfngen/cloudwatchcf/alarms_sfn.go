@@ -24,7 +24,7 @@ type SFNAlarm struct {
 	Alarm
 }
 
-func NewSFNAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) *SFNAlarm {
+func NewSFNAlarm(alarmType, metricName, message string, resource map[string]interface{}) *SFNAlarm {
 	const (
 		metricDimension = "StateMachineArn"
 		metricNamespace = "AWS/States"
@@ -45,7 +45,7 @@ func NewSFNAlarm(alarmType, metricName, message string, resource map[interface{}
 	return alarm
 }
 
-func generateSFNAlarms(resource map[interface{}]interface{}) []*Alarm {
+func generateSFNAlarms(resource map[string]interface{}) []*Alarm {
 	return []*Alarm{
 		NewSFNAlarm(
 			"SFNError",

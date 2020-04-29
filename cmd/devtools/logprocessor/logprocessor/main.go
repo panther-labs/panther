@@ -25,6 +25,8 @@ Profiles can then be visualized with the pprof tool: go tool pprof cpu.prof
 var (
 	BUCKET     = flag.String("bucket", "", "The bucket to write to.")
 	TOPICARN   = flag.String("topic", "", "The arn for log processor notifications")
+	QUEUEURL   = flag.String("queue", "", "The url of the input queue")
+	TIMEOUT    = flag.Int("timeout", 900, "timeout in sec")
 	FILE       = flag.String("file", "", "The file to process (assumed to be gzipped).")
 	LOGTYPE    = flag.String("logtype", "", "The logType.")
 	MEMORYSIZE = flag.Int("lambdaSize", 1024, "The memory size of the lambda")
@@ -44,10 +46,15 @@ func main() {
 	if *TOPICARN == "" {
 		log.Fatal("-topic not set")
 	}
+	if *QUEUEURL == "" {
+		log.Fatal("-queue not set")
+	}
 
 	os.Setenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", strconv.Itoa(*MEMORYSIZE))
 	os.Setenv("S3_BUCKET", *BUCKET)
 	os.Setenv("SNS_TOPIC_ARN", *TOPICARN)
+	os.Setenv("SQS_QUEUE_URL", *QUEUEURL)
+	os.Setenv("TIME_LIMIT_SEC", strconv.Itoa(*TIMEOUT))
 
 	log.Printf("cores: %d", runtime.NumCPU())
 	log.Printf("input %s", *FILE)
@@ -60,7 +67,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	dataStreams := []*common.DataStream{{Reader: gzipReader, LogType: LOGTYPE}}
+	streamChan := make(chan *common.DataStream, 1)
+	dataStream := &common.DataStream{Reader: gzipReader, LogType: LOGTYPE}
+	streamChan <- dataStream
+	close(streamChan)
 
 	if *CPUPROFILE != "" {
 		f, err := os.Create(*CPUPROFILE)
@@ -86,7 +96,7 @@ func main() {
 	}
 	zap.ReplaceGlobals(logger)
 
-	err = processor.Process(dataStreams, destinations.CreateDestination())
+	err = processor.Process(streamChan, destinations.CreateS3Destination())
 	if err != nil {
 		log.Fatal(err)
 	}

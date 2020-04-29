@@ -52,15 +52,14 @@ var (
 
 // Process orchestrates the tasks of parsing logs, classification, normalization
 // and forwarding the logs to the appropriate destination. Any errors will cause Lambda invocation to fail
-func Process(dataStreams []*common.DataStream, destination destinations.Destination) error {
+func Process(dataStreams chan *common.DataStream, destination destinations.Destination) error {
 	return process(dataStreams, destination, NewProcessor)
 }
 
 // entry point to allow customizing processor for testing
-func process(dataStreams []*common.DataStream, destination destinations.Destination,
+func process(dataStreams chan *common.DataStream, destination destinations.Destination,
 	newProcessorFunc func(*common.DataStream) *Processor) error {
 
-	zap.L().Debug("processing data streams", zap.Int("numDataStreams", len(dataStreams)))
 	parsedEventChannel := make(chan *parsers.PantherLog, ParsedEventBufferSize)
 	errorChannel := make(chan error)
 
@@ -83,7 +82,7 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 	}()
 
 	// it is important to process the streams serially to manage memory!
-	for _, dataStream := range dataStreams {
+	for dataStream := range dataStreams {
 		processor := newProcessorFunc(dataStream)
 		err := processor.run(parsedEventChannel)
 		if err != nil {

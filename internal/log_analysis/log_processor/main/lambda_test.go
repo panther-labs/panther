@@ -20,6 +20,7 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -40,12 +41,13 @@ func mockLogger() *observer.ObservedLogs {
 }
 
 func TestProcessOpLog(t *testing.T) {
+	common.Config.AwsLambdaFunctionMemorySize = 1024
 	logs := mockLogger()
 	functionName := "myfunction"
 	lc := lambdacontext.LambdaContext{
 		InvokedFunctionArn: functionName,
 	}
-	err := process(&lc, events.SQSEvent{
+	err := process(&lc, time.Now(), events.SQSEvent{
 		Records: []events.SQSMessage{}, // empty, should do no work
 	})
 	require.NoError(t, err)

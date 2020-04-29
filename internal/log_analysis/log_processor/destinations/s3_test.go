@@ -42,6 +42,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
@@ -116,15 +117,6 @@ func newTestEvent(logType string, eventTime timestamp.RFC3339) *parsers.PantherL
 	return &te.PantherLog
 }
 
-// sized at max single buffer size
-func newBigTestEvent() *parsers.PantherLog {
-	te := &testEvent{
-		Data: (string)(make([]byte, maxS3BufferSizeBytes)),
-	}
-	te.SetCoreFields(testLogType, &refTime, te)
-	return &te.PantherLog
-}
-
 func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
@@ -162,6 +154,8 @@ var testRegistry = NewTestRegistry()
 
 func initTest() {
 	parserRegistry = testRegistry // re-bind as interface
+	common.Config.AwsLambdaFunctionMemorySize = 1024
+	maxS3BufferSizeBytes = defaultMaxS3BufferSizeBytes
 }
 
 type testS3Destination struct {
@@ -234,7 +228,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	// Verifying Sns Publish payload
 	publishInput := destination.mockSns.Calls[0].Arguments.Get(0).(*sns.PublishInput)
 	expectedS3Notification := models.NewS3ObjectPutNotification(destination.s3Bucket, *uploadInput.Key,
-		len(marshaledEvent)+len("\n"))
+		len(expectedBytes))
 
 	marshaledExpectedS3Notification, _ := jsoniter.MarshalToString(expectedS3Notification)
 	expectedSnsPublishInput := &sns.PublishInput{
@@ -262,10 +256,7 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 
 	testEvent := newSimpleTestEvent()
 
-	// This is the size of a single event
-	// We expect this to cause the S3Destination to create two objects in S3
-	marshaledEvent, _ := jsoniter.Marshal(testEvent.Event)
-	destination.maxBufferedMemBytes = uint64(len(marshaledEvent)) + 1
+	destination.maxBufferedMemBytes = 0 // this will cause each event to trigger a send
 
 	// wire it up
 	registerMockParser(testLogType, testEvent)
@@ -291,9 +282,9 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *parsers.PantherLog, 2)
 
-	testEvent := newBigTestEvent()
+	testEvent := newSimpleTestEvent()
 
-	destination.maxBufferedMemBytes = 2 * maxS3BufferSizeBytes // set so we will not hit this limit, should hit single buffer
+	maxS3BufferSizeBytes = 0 // this will cause each event to trigger a send
 
 	// wire it up
 	registerMockParser(testLogType, testEvent)

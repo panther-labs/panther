@@ -47,7 +47,7 @@ type writeResult struct {
 	err        error
 }
 
-// BulkUpload uploads multiple policies from a zipfile.
+// BulkUpload uploads multiple analysis items from a zipfile.
 func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	input, err := parseBulkUpload(request)
 	if err != nil {
@@ -84,6 +84,10 @@ func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		ModifiedRules: aws.Int64(0),
 		NewRules:      aws.Int64(0),
 		TotalRules:    aws.Int64(0),
+
+		ModifiedGlobals: aws.Int64(0),
+		NewGlobals:      aws.Int64(0),
+		TotalGlobals:    aws.Int64(0),
 	}
 
 	var response *events.APIGatewayProxyResponse
@@ -105,19 +109,27 @@ func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 			continue
 		}
 
-		if result.item.Type == typePolicy {
+		switch result.item.Type {
+		case typePolicy:
 			*counts.TotalPolicies++
 			if result.changeType == newItem {
 				*counts.NewPolicies++
 			} else if result.changeType == updatedItem {
 				*counts.ModifiedPolicies++
 			}
-		} else {
+		case typeRule:
 			*counts.TotalRules++
 			if result.changeType == newItem {
 				*counts.NewRules++
 			} else if result.changeType == updatedItem {
 				*counts.ModifiedRules++
+			}
+		case typeGlobal:
+			*counts.TotalGlobals++
+			if result.changeType == newItem {
+				*counts.NewGlobals++
+			} else if result.changeType == updatedItem {
+				*counts.ModifiedGlobals++
 			}
 		}
 	}
@@ -213,22 +225,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Type:          strings.ToUpper(config.AnalysisType),
 		}
 
-		if analysisItem.Type == string(models.AnalysisTypeRULE) {
-			// If there is no value set, default to 60 minutes
-			if config.DedupPeriodMinutes == 0 {
-				analysisItem.DedupPeriodMinutes = defaultDedupPeriodMinutes
-			} else {
-				analysisItem.DedupPeriodMinutes = models.DedupPeriodMinutes(config.DedupPeriodMinutes)
-			}
-
-			// These "syntax sugar" re-mappings are to make managing rules from the CLI more intuitive
-			if config.PolicyID == "" {
-				analysisItem.ID = models.ID(config.RuleID)
-			}
-			if len(config.ResourceTypes) == 0 {
-				analysisItem.ResourceTypes = config.LogTypes
-			}
-		}
+		typeNormalizeTableItem(&analysisItem, config)
 
 		for i, test := range config.Tests {
 			// A test can specify a resource and a resource type or a log and a log type.
@@ -262,6 +259,34 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 	}
 
 	return result, nil
+}
+
+// typeNormalizeTableItem handles special cases that depend on a table item's analysis type
+func typeNormalizeTableItem(item *tableItem, config analysis.Config) {
+	if item.Type == string(models.AnalysisTypeRULE) {
+		// If there is no value set, default to 60 minutes
+		if config.DedupPeriodMinutes == 0 {
+			item.DedupPeriodMinutes = defaultDedupPeriodMinutes
+		} else {
+			item.DedupPeriodMinutes = models.DedupPeriodMinutes(config.DedupPeriodMinutes)
+		}
+
+		// These "syntax sugar" re-mappings are to make managing rules from the CLI more intuitive
+		if config.PolicyID == "" {
+			item.ID = models.ID(config.RuleID)
+		}
+		if len(config.ResourceTypes) == 0 {
+			item.ResourceTypes = config.LogTypes
+		}
+	}
+
+	if item.Type == string(models.AnalysisTypeGLOBAL) {
+		item.ID = models.ID(config.GlobalID)
+		// Support non-ID'd globals as the 'panther' global
+		if item.ID == "" {
+			item.ID = "panther"
+		}
+	}
 }
 
 func buildRuleTest(test analysis.Test) (*models.UnitTest, error) {
@@ -307,8 +332,12 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 
 // Ensure that the uploaded policy is valid according to the API spec for a Policy
 func validateUploadedPolicy(item *tableItem, userID models.UserID) error {
-	if item.Type != typePolicy && item.Type != typeRule {
+	if item.Type != typePolicy && item.Type != typeRule && item.Type != typeGlobal {
 		return fmt.Errorf("policy ID %s is invalid: unknown analysis type %s", item.ID, item.Type)
+	}
+
+	if item.Type == typeGlobal {
+		item.Severity = models.SeverityINFO
 	}
 
 	policy := item.Policy(models.ComplianceStatusPASS) // Convert to the external Policy model for validation

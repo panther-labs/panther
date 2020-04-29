@@ -50,6 +50,15 @@ const (
 	ViewsDatabaseDescription = "Holds views useful for querying Panther data"
 )
 
+var (
+	// PantherDatabases is exposed as public var to allow code to get/lookup the Panther databases
+	PantherDatabases = map[string]string{
+		LogProcessingDatabaseName: LogProcessingDatabaseDescription,
+		RuleMatchDatabaseName:     RuleMatchDatabaseDescription,
+		ViewsDatabaseName:         ViewsDatabaseDescription,
+	}
+)
+
 type PartitionKey struct {
 	Name string
 	Type string

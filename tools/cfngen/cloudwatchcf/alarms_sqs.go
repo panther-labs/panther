@@ -41,7 +41,7 @@ func NewSQSAlarm(queueName, alarmType, metricName, message string) *SQSAlarm {
 	return alarm
 }
 
-func generateSQSAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
+func generateSQSAlarms(resource map[string]interface{}) (alarms []*Alarm) {
 	queueName := getResourceProperty("QueueName", resource)
 
 	// DLQ qs are special, we alarm on ANY data in q

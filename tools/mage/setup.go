@@ -86,7 +86,7 @@ func Setup() {
 		c <- goroutineResult{"npm install", installNodeModules()}
 	}(results)
 
-	logResults(results, "setup", count)
+	logResults(results, "setup", 1, count, count)
 }
 
 // Fetch all Go modules needed for tests and compilation.

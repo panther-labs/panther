@@ -51,10 +51,11 @@ type PantherLog struct {
 	PantherParseTime *timestamp.RFC3339 `json:"p_parse_time,omitempty" validate:"required" description:"Panther added standardize log parse time (UTC)"`
 
 	// optional (any)
-	PantherAnyIPAddresses *PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
-	PantherAnyDomainNames *PantherAnyString `json:"p_any_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
-	PantherAnySHA1Hashes  *PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
-	PantherAnyMD5Hashes   *PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
+	PantherAnyIPAddresses  *PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
+	PantherAnyDomainNames  *PantherAnyString `json:"p_any_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
+	PantherAnySHA1Hashes   *PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
+	PantherAnyMD5Hashes    *PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
+	PantherAnySHA256Hashes *PantherAnyString `json:"p_any_sha256_hashes,omitempty" description:"Panther added field with collection of SHA256 hashes of any algorithm associated with the row"`
 }
 
 type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
@@ -214,6 +215,21 @@ func (pl *PantherLog) AppendAnyMD5Hashes(values ...string) {
 		pl.PantherAnyMD5Hashes = NewPantherAnyString()
 	}
 	AppendAnyString(pl.PantherAnyMD5Hashes, values...)
+}
+
+func (pl *PantherLog) AppendAnySHA256Hashes(values ...string) {
+	if pl.PantherAnySHA256Hashes == nil { // lazy create
+		pl.PantherAnySHA256Hashes = NewPantherAnyString()
+	}
+	AppendAnyString(pl.PantherAnySHA256Hashes, values...)
+}
+
+func (pl *PantherLog) AppendAnySHA256HashesPtr(values ...*string) {
+	for _, value := range values {
+		if value != nil {
+			pl.AppendAnySHA256Hashes(*value)
+		}
+	}
 }
 
 func AppendAnyString(any *PantherAnyString, values ...string) {

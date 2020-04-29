@@ -17,40 +17,71 @@
  */
 
 import React from 'react';
-import { IAceEditorProps } from 'react-ace/lib/ace';
+import { useTheme } from 'pouncejs';
+import { IAceEditorProps } from 'react-ace';
 
 // Lazy-load the ace editor. Make sure that both editor and modes get bundled under the same chunk
 const AceEditor = React.lazy(() => import(/* webpackChunkName: "ace-editor" */ 'react-ace'));
 
-const baseAceEditorConfig = {
-  fontSize: '16px',
-  editorProps: {
-    $blockScrolling: Infinity,
-  },
-  wrapEnabled: true,
-  theme: 'cobalt',
-  showPrintMargin: true,
-  showGutter: true,
-  highlightActiveLine: true,
-  maxLines: Infinity,
-  style: {
-    zIndex: 0,
-  },
+export type Completion = { value: string; type: string };
+export type EditorProps = IAceEditorProps & {
+  fallback?: React.ReactElement;
+  completions?: Completion[];
 };
 
-export type EditorProps = IAceEditorProps;
+const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...rest }) => {
+  const theme = useTheme();
 
-const Editor: React.FC<EditorProps> = props => {
   // Asynchronously load (post-mount) all the mode & themes
   React.useEffect(() => {
     import(/* webpackChunkName: "ace-editor" */ 'brace/mode/json');
+    import(/* webpackChunkName: "ace-editor" */ 'brace/mode/sql');
     import(/* webpackChunkName: "ace-editor" */ 'brace/mode/python');
-    import(/* webpackChunkName: "ace-editor" */ 'brace/theme/cobalt');
+    import(/* webpackChunkName: "ace-editor" */ 'brace/ext/language_tools');
+    import(/* webpackChunkName: "ace-editor" */ './theme');
   }, []);
 
+  React.useEffect(() => {
+    if (completions.length) {
+      import(/* webpackChunkName: "ace-editor" */ 'brace').then(({ acequire }) => {
+        // @ts-ignore
+        // Project is so old that I cba to deal with typings
+        acequire(['ace/ext/language_tools'], langTools => {
+          langTools.addCompleter({
+            getCompletions: (e, session, pos, prefix, callback) => {
+              callback(
+                null,
+                completions.map(({ value, type }) => ({ name: value, value, score: 0, meta: type }))
+              );
+            },
+          });
+        });
+      });
+    }
+  }, [completions]);
+
+  const baseAceEditorConfig = React.useMemo(
+    () => ({
+      enableBasicAutocompletion: true,
+      enableLiveAutocompletion: true,
+      highlightActiveLine: false,
+      fontSize: theme.fontSizes[2],
+      editorProps: {
+        $blockScrolling: Infinity,
+      },
+      wrapEnabled: true,
+      theme: 'panther',
+      maxLines: Infinity,
+      style: {
+        zIndex: 0,
+      },
+    }),
+    [theme]
+  );
+
   return (
-    <React.Suspense fallback={null}>
-      <AceEditor {...baseAceEditorConfig} {...props} />
+    <React.Suspense fallback={fallback}>
+      <AceEditor {...baseAceEditorConfig} {...rest} />
     </React.Suspense>
   );
 };

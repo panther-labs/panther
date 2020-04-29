@@ -38,7 +38,6 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import ResourceDetailsTable from './ResourceDetailsTable';
 import ResourceDetailsInfo from './ResourceDetailsInfo';
-import columns from './columns';
 import ResourceDetailsPageSkeleton from './Skeleton';
 import { useResourceDetails } from './graphql/resourceDetails.generated';
 
@@ -171,8 +170,7 @@ const ResourceDetailsPage = () => {
         >
           <ErrorBoundary>
             <ResourceDetailsTable
-              items={policies}
-              columns={columns}
+              policies={policies}
               enumerationStartIndex={(pagingData.thisPage - 1) * DEFAULT_SMALL_PAGE_SIZE}
             />
           </ErrorBoundary>
