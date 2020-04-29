@@ -24,6 +24,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 type LogEntryAuditLog struct {
@@ -101,9 +102,9 @@ func (p *AuditLogParser) Parse(log string) ([]*parsers.PantherLog, error) {
 // nolint:lll
 type AuditLog struct {
 	PayloadType        *string             `json:"@type" validate:"required,eq=type.googleapis.com/google.cloud.audit.AuditLog" description:"The type of payload"`
-	ServiceName        *string             `json:"serviceName" validate:"required" description:"The name of the API service performing the operation"`
-	MethodName         *string             `json:"methodName" validate:"required" description:"The name of the service method or operation. For API calls, this should be the name of the API method."`
-	ResourceName       *string             `json:"resourceName" validate:"required" description:"The resource or collection that is the target of the operation. The name is a scheme-less URI, not including the API service name."`
+	ServiceName        *string             `json:"serviceName,omitempty" description:"The name of the API service performing the operation"`
+	MethodName         *string             `json:"methodName,omitempty" description:"The name of the service method or operation. For API calls, this should be the name of the API method."`
+	ResourceName       *string             `json:"resourceName,omitempty" description:"The resource or collection that is the target of the operation. The name is a scheme-less URI, not including the API service name."`
 	NumResponseItems   *numerics.Int64     `json:"numResponseItems,omitempty" description:"The number of items returned from a List or Query API method, if applicable."`
 	Status             *Status             `json:"status,omitempty" description:" The status of the overall operation."`
 	AuthenticationInfo *AuthenticationInfo `json:"authenticationInfo,omitempty" description:"Authentication information."`
@@ -117,7 +118,7 @@ type AuditLog struct {
 // nolint:lll
 type Status struct {
 	// https://cloud.google.com/vision/docs/reference/rpc/google.rpc#google.rpc.Code
-	Code    *int32              `json:"code" validate:"required" description:"The status code, which should be an enum value of google.rpc.Code."`
+	Code    *int32              `json:"code,omitempty" description:"The status code, which should be an enum value of google.rpc.Code."`
 	Message *string             `json:"message,omitempty" description:"A developer-facing error message, which should be in English."`
 	Details jsoniter.RawMessage `json:"details,omitempty" description:"A list of messages that carry the error details. There is a common set of message types for APIs to use."`
 }
@@ -136,9 +137,44 @@ type AuthorizationInfo struct {
 }
 
 // nolint:lll
+// Reference https://cloud.google.com/service-infrastructure/docs/service-control/reference/rest/v1/AuditLog#RequestMetadata
 type RequestMetadata struct {
-	CallerIP                *string `json:"callerIP" validate:"required" description:"The IP address of the caller."`
-	CallerSuppliedUserAgent *string `json:"callerSuppliedUserAgent" validate:"required" description:"The user agent of the caller. This information is not authenticated and should be treated accordingly."`
+	CallerIP                *string            `json:"callerIP,omitempty"  description:"The IP address of the caller."`
+	CallerSuppliedUserAgent *string            `json:"callerSuppliedUserAgent,omitempty"  description:"The user agent of the caller. This information is not authenticated and should be treated accordingly."`
+	CallerNetwork           *string            `json:"callerNetwork,omitempty" description:"The network of the caller. Set only if the network host project is part of the same GCP organization (or project) as the accessed resource."`
+	RequestAttributes       *RequestAttributes `json:"requestAttributes,omitempty" description:"Request attributes used in IAM condition evaluation. This field contains request attributes like request time and access levels associated with the request."`
+	DestinationAttributes   *Peer              `json:"destinationAttributes,omitempty" description:"The destination of a network activity, such as accepting a TCP connection."`
+}
+type RequestAttributes struct {
+	ID       *string            `json:"id,omitempty" description:"The unique ID for a request, which can be propagated to downstream systems."`
+	Method   *string            `json:"method,omitempty" description:"The HTTP request method, such as GET, POST."`
+	Headers  map[string]string  `json:"headers,omitempty" description:"The HTTP request headers. If multiple headers share the same key, they must be merged according to the HTTP spec. All header keys must be lowercased, because HTTP header keys are case-insensitive"`
+	Path     *string            `json:"path,omitempty" description:"The HTTP URL path."`
+	Host     *string            `json:"host,omitempty" description:"The HTTP request host header value."`
+	Scheme   *string            `json:"scheme,omitempty" description:"The HTTP URL scheme, such as http and https."`
+	Query    *string            `json:"query,omitempty" description:"The HTTP URL query in the format of 'name1=value&name2=value2', as it appears in the first line of the HTTP request. No decoding is performed."`
+	Fragment *string            `json:"fragment,omitempty" description:"The HTTP URL fragment. No URL decoding is performed."`
+	Time     *timestamp.RFC3339 `json:"time,omitempty" description:"The timestamp when the destination service receives the first byte of the request."`
+	Size     *int64             `json:"size,omitempty" description:"The HTTP request size in bytes. If unknown, it must be -1."`
+	Protocol *string            `json:"protocol,omitempty" description:"The network protocol used with the request, such as 'http/1.1', 'spdy/3', 'h2', 'h2c', 'webrtc', 'tcp', 'udp', 'quic'."`
+	Reason   *string            `json:"reason,omitempty" description:"A special parameter for request reason. It is used by security systems to associate auditing information with a request."`
+	Auth     *Auth              `json:"auth,omitempty" description:"A special parameter for request reason. It is used by security systems to associate auditing information with a request."`
+}
+
+type Peer struct {
+	IP         *string           `json:"ip,omitempty" description:"The IP address of the peer."`
+	Port       *numerics.Integer `json:"port,omitempty" description:"The network port of the peer."`
+	Service    *string           `json:"service,omitempty" description:"The canonical service name of the peer."`
+	Labels     Labels            `json:"labels,omitempty" description:"The labels associated with the peer."`
+	Principal  *string           `json:"principal,omitempty" description:"The identity of this peer. Similar to Request.auth.principal, but relative to the peer instead of the request."`
+	RegionCode *string           `json:"regionCode,omitempty" description:"The CLDR country/region code associated with the above IP address. If the IP address is private, the regionCode should reflect the physical location where this peer is running."`
+}
+type Auth struct {
+	Principal    *string              `json:"principal,omitempty" description:"The authenticated principal. Reflects the issuer (iss) and subject (sub) claims within a JWT."`
+	Audiences    []string             `json:"audiences,omitempty" description:"The intended audience(s) for this authentication information. Reflects the audience (aud) claim within a JWT."`
+	Presenter    *string              `json:"presenter,omitempty" description:"The authorized presenter of the credential. Reflects the optional Authorized Presenter (azp) claim within a JWT or the OAuth client id."`
+	AccessLevels []string             `json:"accessLevels,omitempty" description:"A list of access level resource names that allow resources to be accessed by authenticated requester. It is part of Secure GCP processing for the incoming request."`
+	Claims       *jsoniter.RawMessage `json:"claims,omitempty" description:"Structured claims presented with the credential. JWTs include {key: value} pairs for standard and private claims."`
 }
 
 // IAM Data audit log

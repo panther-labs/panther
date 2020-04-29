@@ -30,7 +30,7 @@ import (
 // nolint:lll
 type LogEntry struct {
 	LogName          *string                 `json:"logName" validate:"required" description:"The resource name of the log to which this log entry belongs."`
-	Severity         *int                    `json:"severity,omitempty" description:"The severity of the log entry. The default value is LogSeverity.DEFAULT."`
+	Severity         *string                 `json:"severity,omitempty" description:"The severity of the log entry. The default value is LogSeverity.DEFAULT."`
 	InsertID         *string                 `json:"insertId,omitempty" description:"A unique identifier for the log entry."`
 	Resource         MonitoredResource       `json:"resource" validate:"required" description:"The monitored resource that produced this log entry."`
 	Timestamp        *timestamp.RFC3339      `json:"timestamp,omitempty" description:"The time the event described by the log entry occurred."`
@@ -79,10 +79,10 @@ type LogEntryOperation struct {
 
 // nolint:lll
 type HTTPRequest struct {
-	RequestMethod  *string         `json:"requestMethod" validate:"required" description:"The request HTTP method."`
-	RequestURL     *string         `json:"requestURL" validate:"required" description:"The scheme (http, https), the host name, the path and the query portion of the URL that was requested."`
+	RequestMethod  *string         `json:"requestMethod,omitempty" description:"The request HTTP method."`
+	RequestURL     *string         `json:"requestURL,omitempty" description:"The scheme (http, https), the host name, the path and the query portion of the URL that was requested."`
 	RequestSize    *numerics.Int64 `json:"requestSize,omitempty" description:"The size of the HTTP request message in bytes, including the request headers and the request body."`
-	Status         *int16          `json:"status" validate:"required" description:"The response HTTP status code"`
+	Status         *int16          `json:"status,omitempty" description:"The response HTTP status code"`
 	ResponseSize   *numerics.Int64 `json:"responseSize,omitempty" description:"The size of the HTTP response message sent back to the client, in bytes, including the response headers and the response body."`
 	UserAgent      *string         `json:"userAgent,omitempty"  description:"The user agent sent by the client."`
 	RemoteIP       *string         `json:"remoteIP,omitempty"  description:"The IP address (IPv4 or IPv6) of the client that issued the HTTP request."`
@@ -93,7 +93,7 @@ type HTTPRequest struct {
 	CacheHit       *bool           `json:"cacheHit,omitempty"  description:"Whether or not an entity was served from cache (with or without validation)."`
 	CacheValidated *bool           `json:"cacheValidatedWithOriginServer,omitempty" description:"Whether or not an entity was served from cache (with or without validation)."`
 	CacheFillBytes *numerics.Int64 `json:"cacheFillBytes,omitempty" description:"Whether or not an entity was served from cache (with or without validation)."`
-	Protocol       *string         `json:"protocol" validate:"required" description:"Protocol used for the request."`
+	Protocol       *string         `json:"protocol,omitempty" description:"Protocol used for the request."`
 }
 
 // nolint:lll

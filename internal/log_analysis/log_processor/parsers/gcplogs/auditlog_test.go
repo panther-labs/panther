@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -136,5 +137,97 @@ func TestAuditLogParserActivity(t *testing.T) {
 
 	entry.SetCoreFields(TypeAuditLog, entry.Timestamp, entry)
 	entry.AppendAnyIPAddress("35.238.150.117")
+	testutil.CheckPantherParser(t, log, NewAuditLogParser(), &entry.PantherLog)
+}
+
+func TestAuditLogParserSystemEvent(t *testing.T) {
+	log := `{
+		"protoPayload": {
+			"@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+			"status": {},
+			"authenticationInfo": {
+				"principalEmail": "system@google.com"
+			},
+			"requestMetadata": {
+				"requestAttributes": {},
+				"destinationAttributes": {}
+			},
+			"serviceName": "compute.googleapis.com",
+			"methodName": "compute.instances.migrateOnHostMaintenance",
+			"resourceName": "projects/project-id/zones/us-central1-f/instances/gke-cluster-default-pool-7dff1419-8v1j",
+			"request": {
+			"@type": "type.googleapis.com/compute.instances.migrateOnHostMaintenance"
+			}
+		},
+		"insertId": "nbhw56e2lqay",
+		"resource": {
+			"type": "gce_instance",
+			"labels": {
+				"instance_id": "2587554859816992587",
+				"zone": "us-central1-f",
+				"project_id": "project-id"
+			}
+		},
+		"timestamp": "2020-04-27T02:23:38.115Z",
+		"severity": "INFO",
+		"logName": "projects/project-id/logs/cloudaudit.googleapis.com%2Fsystem_event",
+		"operation": {
+			"id": "systemevent-1587954193000-5a43c6597e640-3808c99a-7b3122a5",
+			"producer": "compute.instances.migrateOnHostMaintenance",
+			"first": true,
+			"last": true
+		},
+		"receiveTimestamp": "2020-04-27T02:23:39.222004985Z"
+	}`
+
+	ts, err := time.Parse(time.RFC3339Nano, "2020-04-27T02:23:38.115Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tsReceive, err := time.Parse(time.RFC3339Nano, "2020-04-27T02:23:39.222004985Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entry := &LogEntryAuditLog{
+		LogEntry: LogEntry{
+			LogName:          aws.String("projects/project-id/logs/cloudaudit.googleapis.com%2Fsystem_event"),
+			Timestamp:        (*timestamp.RFC3339)(&ts),
+			ReceiveTimestamp: (*timestamp.RFC3339)(&tsReceive),
+			InsertID:         aws.String("nbhw56e2lqay"),
+			Resource: MonitoredResource{
+				Type: aws.String("gce_instance"),
+				Labels: Labels{
+					"instance_id": "2587554859816992587",
+					"zone":        "us-central1-f",
+					"project_id":  "project-id",
+				},
+			},
+			Severity: aws.String("INFO"),
+			Operation: &LogEntryOperation{
+				ID:       aws.String("systemevent-1587954193000-5a43c6597e640-3808c99a-7b3122a5"),
+				Producer: aws.String("compute.instances.migrateOnHostMaintenance"),
+				First:    aws.Bool(true),
+				Last:     aws.Bool(true),
+			},
+		},
+		Payload: AuditLog{
+			PayloadType: aws.String("type.googleapis.com/google.cloud.audit.AuditLog"),
+			AuthenticationInfo: &AuthenticationInfo{
+				PrincipalEmail: aws.String("system@google.com"),
+			},
+			MethodName: aws.String("compute.instances.migrateOnHostMaintenance"),
+			RequestMetadata: &RequestMetadata{
+				RequestAttributes:     &RequestAttributes{},
+				DestinationAttributes: &Peer{},
+			},
+			ResourceName: aws.String("projects/project-id/zones/us-central1-f/instances/gke-cluster-default-pool-7dff1419-8v1j"),
+			ServiceName:  aws.String("compute.googleapis.com"),
+			Status:       &Status{},
+			Request:      jsoniter.RawMessage(`{"@type": "type.googleapis.com/compute.instances.migrateOnHostMaintenance"}`),
+		},
+	}
+
+	entry.SetCoreFields(TypeAuditLog, entry.Timestamp, entry)
 	testutil.CheckPantherParser(t, log, NewAuditLogParser(), &entry.PantherLog)
 }
