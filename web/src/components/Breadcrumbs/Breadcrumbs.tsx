@@ -22,7 +22,8 @@ import { isGuid, capitalize, shortenId, isHash } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 import useRouter from 'Hooks/useRouter';
 
-const transformBreadcrumbText = text => (isHash(text) ? shortenId(text) : text);
+const transformBreadcrumbText = text =>
+  isHash(text.toLowerCase()) ? shortenId(text).toLowerCase() : text;
 
 const Breadcrumbs: React.FC = () => {
   const {

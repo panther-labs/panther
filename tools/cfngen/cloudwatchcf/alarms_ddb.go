@@ -26,7 +26,7 @@ type DynamoDBAlarm struct {
 	Alarm
 }
 
-func NewDynamoDBAlarm(operation, alarmType, metricName, message string, resource map[interface{}]interface{}) *DynamoDBAlarm {
+func NewDynamoDBAlarm(operation, alarmType, metricName, message string, resource map[string]interface{}) *DynamoDBAlarm {
 	const (
 		metricDimension = "TableName"
 		metricNamespace = "AWS/DynamoDB"
@@ -42,7 +42,7 @@ func NewDynamoDBAlarm(operation, alarmType, metricName, message string, resource
 	return alarm
 }
 
-func generateDynamoDBAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
+func generateDynamoDBAlarms(resource map[string]interface{}) (alarms []*Alarm) {
 	// NOTE: error metrics appear to have no units
 	operations := []string{"GetItem", "PutItem", "UpdateItem", "Scan", "BatchWriteItem"}
 

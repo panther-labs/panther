@@ -17,7 +17,6 @@
  */
 
 import dayjs from 'dayjs';
-import * as React from 'react';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
@@ -35,9 +34,10 @@ import {
 } from 'Source/constants';
 import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
-import { Box, ColumnProps, Label } from 'pouncejs';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
+
+export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
 // Generate a new secret code that contains metadata of issuer and user email
 export const formatSecretCode = (code: string, email: string): string => {
@@ -68,23 +68,6 @@ export const isGuid = (str: string) =>
  * caps the first letter of a string
  */
 export const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
-
-/* eslint-disable react/display-name */
-export const generateEnumerationColumn = (startIndex = 0) => {
-  const enumerationColumn: ColumnProps<{}> = {
-    key: 'enumeration',
-    flex: '0 1 auto',
-    renderColumnHeader: () => <Box ml={2} width={20} />,
-    renderCell: (item: any, index: number) => (
-      <Label size="medium" ml={2} minWidth={20}>
-        {startIndex + index + 1}
-      </Label>
-    ),
-  };
-
-  return enumerationColumn;
-};
-/* eslint-enable react/display-name */
 
 /**
  * Given a server-received DateTime string, creates a proper display text for it. We manually
@@ -249,13 +232,13 @@ export const copyTextToClipboard = (text: string) => {
   }
 };
 
-// Function that given an version always return the stable version i.e "v1.0.1-abc" return "v1.0.1"
+// Extracts stable version from git tag, i.e "v1.0.1-abc" returns "v1.0.1"
 export const getStableVersion = (version: string) =>
   version.indexOf('-') > 0 ? version.substring(0, version.indexOf('-')) : version;
 
 export const generateDocUrl = (baseUrl: string, version: string) => {
   if (version) {
-    return `${baseUrl}/v/${getStableVersion(version)}`;
+    return `${baseUrl}/v/${getStableVersion(version)}-docs`;
   }
   return baseUrl;
 };

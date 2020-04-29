@@ -26,7 +26,7 @@ type APIGatewayAlarm struct {
 	Alarm
 }
 
-func NewAPIGatewayAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) (alarm *APIGatewayAlarm) {
+func NewAPIGatewayAlarm(alarmType, metricName, message string, resource map[string]interface{}) (alarm *APIGatewayAlarm) {
 	const (
 		metricDimension = "Name"
 		metricNamespace = "AWS/ApiGateway"
@@ -41,7 +41,7 @@ func NewAPIGatewayAlarm(alarmType, metricName, message string, resource map[inte
 	return alarm
 }
 
-func generateAPIGatewayAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
+func generateAPIGatewayAlarms(resource map[string]interface{}) (alarms []*Alarm) {
 	// NOTE: error metrics appear to have no units
 
 	// server errors

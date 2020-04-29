@@ -99,8 +99,11 @@ Setup:
     # A list of ARNs of Principals that want to subscribe to log data.
     # These ARNs will be granted read permission on the processed log bucket and
     # SNS subscribe permission to the panther-processed-data-notifications topic.
+    # For example:
+    # PrincipalARNs:
+    #   - arn:aws:iam::123456789012:role/mysystem-access
+    #   - arn:aws:iam::123456789012:user/mysystem-iam-user
     PrincipalARNs:
-      -
 
 Web:
   # ARN of an AWS ACM certificate used on the loadbalancer presenting the panther web app

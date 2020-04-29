@@ -18,7 +18,7 @@ package cloudwatchcf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-func generateLambdaMetricFilters(resource map[interface{}]interface{}) []*MetricFilter {
+func generateLambdaMetricFilters(resource map[string]interface{}) []*MetricFilter {
 	lambdaName := getResourceProperty("FunctionName", resource)
 	runtime := getResourceProperty("Runtime", resource)
 

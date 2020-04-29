@@ -18,10 +18,10 @@
 
 import React from 'react';
 import { Box, Button, Flex, Icon } from 'pouncejs';
-import ListUsersTable from 'Pages/Users/ListUsersTable';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import ListUsers from './ListUsers';
 
 const UsersPage: React.FC = () => {
   const { showSidesheet } = useSidesheet();
@@ -42,7 +42,7 @@ const UsersPage: React.FC = () => {
         </Button>
       </Flex>
       <ErrorBoundary>
-        <ListUsersTable />
+        <ListUsers />
       </ErrorBoundary>
     </Box>
   );

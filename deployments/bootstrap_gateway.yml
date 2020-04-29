@@ -76,7 +76,7 @@ Resources:
       EndpointConfiguration: REGIONAL
       Name: panther-analysis-api
       # <cfndoc>
-      # The `panther-analysis-api` API Gateway calles the `panther-analysis-api` lambda.
+      # The `panther-analysis-api` API Gateway calls the `panther-analysis-api` lambda.
       # </cfndoc>
       StageName: v1
       TracingEnabled: !Ref TracingEnabled
