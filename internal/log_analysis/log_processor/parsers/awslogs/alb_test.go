@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -70,11 +69,11 @@ func TestHTTPLog(t *testing.T) {
 		ErrorReason:            nil,
 	}
 	testutil.CheckPantherEvent(t, event, TypeALB, tm,
-		parsers.KindIPAddress.Field("192.168.131.39"),
-		parsers.KindIPAddress.Field("10.0.0.1"),
-		KindAWSARN.Field("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+		parsers.IPAddress("192.168.131.39"),
+		parsers.IPAddress("10.0.0.1"),
+		ARN("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &ALBParser{}, event)
+	testutil.CheckParser(t, log, TypeALB, event)
 }
 
 func TestHTTPSLog(t *testing.T) {
@@ -119,13 +118,13 @@ func TestHTTPSLog(t *testing.T) {
 		ErrorReason:            nil,
 	}
 	testutil.CheckPantherEvent(t, event, TypeALB, tm,
-		parsers.KindIPAddress.Field("192.168.131.39"),
-		parsers.KindIPAddress.Field("10.0.0.1"),
-		parsers.KindDomainName.Field("www.example.com"),
-		KindAWSARN.Field("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+		parsers.IPAddress("192.168.131.39"),
+		parsers.IPAddress("10.0.0.1"),
+		parsers.DomainName("www.example.com"),
+		ARN("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+		ARN("arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &ALBParser{}, event)
-
+	testutil.CheckParser(t, log, TypeALB, event)
 }
 
 func TestHTTP2Log(t *testing.T) {
@@ -172,10 +171,10 @@ func TestHTTP2Log(t *testing.T) {
 	testutil.CheckPantherEvent(t, event, TypeALB, tm,
 		parsers.KindIPAddress.Field("10.0.1.252"),
 		parsers.KindIPAddress.Field("10.0.0.66"),
-		KindAWSARN.Field("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+		ARN("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
 	)
 
-	testutil.CheckPantherParserJSON(t, log, &ALBParser{}, event)
+	testutil.CheckParser(t, log, TypeALB, event)
 }
 
 func TestHTTPSNoTarget(t *testing.T) {
@@ -219,13 +218,8 @@ func TestHTTPSNoTarget(t *testing.T) {
 		ErrorReason:            nil,
 	}
 	testutil.CheckPantherEvent(t, event, TypeALB, tm,
-		parsers.KindIPAddress.Field("138.246.253.5"),
-		KindAWSARN.Field("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
+		parsers.IPAddress("138.246.253.5"),
+		ARN("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &ALBParser{}, event)
-}
-
-func TestAlbLogType(t *testing.T) {
-	parser := &ALBParser{}
-	require.Equal(t, TypeALB, parser.LogType())
+	testutil.CheckParser(t, log, TypeALB, event)
 }

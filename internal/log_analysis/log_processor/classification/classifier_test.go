@@ -31,11 +31,11 @@ import (
 )
 
 type mockParser struct {
-	parsers.LogParser
+	parsers.Parser
 	mock.Mock
 }
 
-func (m *mockParser) New() parsers.LogParser {
+func (m *mockParser) New() parsers.Parser {
 	return m // pass through (not stateful)
 }
 

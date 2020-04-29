@@ -66,7 +66,7 @@ var (
 			To:   GlueTimestampType,
 		},
 		{
-			From: reflect.TypeOf(parsers.PantherAnyString{}),
+			From: reflect.TypeOf(parsers.SmallStringSet{}),
 			To:   "array<string>",
 		},
 		{

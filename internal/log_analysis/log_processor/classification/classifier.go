@@ -20,12 +20,11 @@ package classification
 
 import (
 	"container/heap"
-	"fmt"
-	"runtime/debug"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -79,24 +78,14 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []*parsers.PantherLogJSON) {
+func safeLogParse(parser parsers.Parser, logType string, log string) (parsedEvents []*parsers.PantherLogJSON, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Debug("parser panic",
-				zap.String("parser", parser.LogType()),
-				zap.Error(fmt.Errorf("%v", r)),
-				zap.String("stacktrace", string(debug.Stack())))
+			err = errors.Errorf("parser %q panicked %q", logType, r)
 			parsedEvents = nil // return indicator that parse failed
 		}
 	}()
-	parsedEvents, err := parser.Parse(log)
-	if err != nil {
-		zap.L().Debug("parser failed",
-			zap.String("parser", parser.LogType()),
-			zap.Error(err))
-		return nil
-	}
-	return parsedEvents
+	return parser.Parse(log)
 }
 
 // Classify attempts to classify the provided log line
@@ -135,14 +124,19 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 		currentItem := c.parsers.Peek()
 
 		startParseTime := time.Now().UTC()
-		parsedEvents := safeLogParse(currentItem.parser, log)
+		parsedEvents, err := safeLogParse(currentItem.parser, currentItem.logType, log)
+		if err != nil {
+			zap.L().Debug("parser failed",
+				zap.String("logType", currentItem.logType),
+				zap.Error(err))
+		}
 		endParseTime := time.Now().UTC()
 
-		logType := currentItem.parser.LogType()
+		logType := currentItem.logType
 
 		// Parser failed to parse event
 		if parsedEvents == nil {
-			zap.L().Debug("failed to parse event", zap.String("expectedLogType", currentItem.parser.LogType()))
+			zap.L().Debug("failed to parse event", zap.String("expectedLogType", logType))
 			// Removing parser from queue
 			popped = append(popped, heap.Pop(c.parsers))
 			// Increasing penalty of the parser

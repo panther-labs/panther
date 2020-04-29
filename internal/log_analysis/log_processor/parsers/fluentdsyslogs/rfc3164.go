@@ -26,8 +26,16 @@ import (
 
 const TypeRFC3164 = "Fluentd.Syslog3164"
 
-var RFC3164Desc = `Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)
-Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log`
+var LogTypeRFC3164 = parsers.LogType{
+	Name: TypeRFC3164,
+	Description: `Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)
+Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log`,
+	Schema: struct {
+		RFC3164
+		parsers.PantherLog
+	}{},
+	NewParser: NewRFC3164Parser,
+}
 
 // nolint:lll
 type RFC3164 struct {
@@ -45,9 +53,9 @@ var _ parsers.PantherEventer = (*RFC3164)(nil)
 // RFC3164Parser parses Fluentd syslog logs in the RFC3164 format
 type RFC3164Parser struct{}
 
-var _ parsers.LogParser = (*RFC3164Parser)(nil)
+var _ parsers.Parser = (*RFC3164Parser)(nil)
 
-func (p *RFC3164Parser) New() parsers.LogParser {
+func NewRFC3164Parser() parsers.Parser {
 	return &RFC3164Parser{}
 }
 
@@ -56,20 +64,11 @@ func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(&RFC3164{}, log)
 }
 
-// LogType returns the log type supported by this parser
-func (p *RFC3164Parser) LogType() string {
-	return TypeRFC3164
-}
-
 func (event *RFC3164) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeRFC3164, event.Timestamp.UTC())
-	// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
-	// add as a domain name. https://tools.ietf.org/html/rfc3164#section-6.2.4
-	if event.Hostname != nil {
-		e.AppendDomainOrIP(*event.Hostname)
-	}
-	if event.Message != nil {
-		e.AppendIP(*event.Message)
-	}
-	return e
+	return parsers.NewEvent(TypeRFC3164, event.Timestamp.UTC(),
+		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
+		// add as a domain name. https://tools.ietf.org/html/rfc5424#section-6.2.4
+		parsers.HostnameP(event.Hostname),
+		parsers.IPAddressP(event.Message),
+	)
 }

@@ -19,16 +19,28 @@ package zeeklogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var ZeekDNSDesc = `Zeek DNS activity
-Reference: https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`
+func init() {
+	parsers.MustRegister(parsers.LogType{
+		Name:        TypeDNS,
+		Description: ZeekDNSDesc,
+		Schema: struct {
+			ZeekDNS
+			parsers.PantherLog
+		}{},
+		NewParser: NewZeekDNSParser,
+	})
+}
 
 // https://docs.zeek.org/en/current/scripts/base/protocols/dns/consts.zeek.html#id-DNS::query_types
 const (
+	TypeDNS     = "Zeek.DNS"
+	ZeekDNSDesc = `Zeek DNS activity
+Reference: https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`
+
 	aQueryType    = uint64(1)
 	aaaaQueryType = uint64(28)
 )
@@ -65,9 +77,9 @@ var _ parsers.PantherEventer = (*ZeekDNS)(nil)
 // ZeekDNSParser parses zeek dns logs
 type ZeekDNSParser struct{}
 
-var _ parsers.LogParser = (*ZeekDNSParser)(nil)
+var _ parsers.Parser = (*ZeekDNSParser)(nil)
 
-func (p *ZeekDNSParser) New() parsers.LogParser {
+func NewZeekDNSParser() parsers.Parser {
 	return &ZeekDNSParser{}
 }
 
@@ -76,26 +88,16 @@ func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(&ZeekDNS{}, log)
 }
 
-const TypeDNS = "Zeek.DNS"
-
-// LogType returns the log type supported by this parser
-func (p *ZeekDNSParser) LogType() string {
-	return TypeDNS
-}
-
 func (event *ZeekDNS) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeDNS, event.Ts.UTC())
-	e.AppendDomainOrIP(aws.StringValue(event.IDOrigH))
-	e.AppendDomainOrIP(aws.StringValue(event.IDRespH))
+	e := parsers.NewEvent(TypeDNS, event.Ts.UTC(),
+		parsers.HostnameP(event.IDOrigH),
+		parsers.HostnameP(event.IDRespH),
+	)
 	if event.QType != nil && (*event.QType == aQueryType || *event.QType == aaaaQueryType) {
-		if event.Query != nil {
-			e.AppendDomain(*event.Query)
-		}
+		e.Insert(parsers.HostnameP(event.Query))
 	}
-
 	for _, answer := range event.Answers {
-		// Answer might be IP or Domain name
-		e.AppendDomainOrIP(answer)
+		e.Insert(parsers.Hostname(answer))
 	}
 	return e
 }

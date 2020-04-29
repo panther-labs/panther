@@ -29,13 +29,22 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var AuroraMySQLAuditDesc = `AuroraMySQLAudit is an RDS Aurora audit log which contains context around database calls.
-Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html`
-
 // FIXME: SQL statement can cause MIS parsing, needs review and testing.
 const (
+	TypeAuroraMySQLAudit               = "AWS.AuroraMySQLAudit"
 	auroraMySQLAuditMinNumberOfColumns = 9
 )
+
+var LogTypeAuroraMySQLAudit = parsers.LogType{
+	Name: TypeAuroraMySQLAudit,
+	Description: `AuroraMySQLAudit is an RDS Aurora audit log which contains context around database calls.
+Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html`,
+	Schema: struct {
+		AuroraMySQLAudit
+		AWSPantherLog
+	}{},
+	NewParser: NewAuroraMySQLAuditParser,
+}
 
 // nolint:lll
 type AuroraMySQLAudit struct {
@@ -53,14 +62,21 @@ type AuroraMySQLAudit struct {
 
 var _ parsers.PantherEventer = (*AuroraMySQLAudit)(nil)
 
+func (event *AuroraMySQLAudit) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeAuroraMySQLAudit, event.Timestamp.UTC(),
+		parsers.IPAddress(aws.StringValue(event.Host)),
+		parsers.DomainName(aws.StringValue(event.ServerHost)),
+	)
+}
+
 // AuroraMySQLAuditParser parses AWS Aurora MySQL Audit logs
 type AuroraMySQLAuditParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 }
 
-var _ parsers.LogParser = (*AuroraMySQLAuditParser)(nil)
+var _ parsers.Parser = (*AuroraMySQLAuditParser)(nil)
 
-func (p *AuroraMySQLAuditParser) New() parsers.LogParser {
+func NewAuroraMySQLAuditParser() parsers.Parser {
 	return &AuroraMySQLAuditParser{
 		CSVReader: csvstream.NewStreamingCSVReader(),
 	}
@@ -106,19 +122,4 @@ func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLogJSON, e
 		return nil, err
 	}
 	return []*parsers.PantherLogJSON{packed}, nil
-
-}
-
-// LogType returns the log type supported by this parser
-func (p *AuroraMySQLAuditParser) LogType() string {
-	return TypeAuroraMySQLAudit
-}
-
-const TypeAuroraMySQLAudit = "AWS.AuroraMySQLAudit"
-
-func (event *AuroraMySQLAudit) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeAuroraMySQLAudit, event.Timestamp.UTC(),
-		parsers.IPAddress(aws.StringValue(event.Host)),
-		parsers.DomainName(aws.StringValue(event.ServerHost)),
-	)
 }

@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -51,7 +50,7 @@ func TestRFC5424(t *testing.T) {
 	testutil.CheckPantherEvent(t, event, TypeRFC5424, tm,
 		parsers.IPAddress("192.168.0.1"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, event)
+	testutil.CheckParser(t, log, TypeRFC5424, event)
 }
 
 func TestRFC5424Domain(t *testing.T) {
@@ -73,10 +72,5 @@ func TestRFC5424Domain(t *testing.T) {
 	testutil.CheckPantherEvent(t, event, TypeRFC5424, tm,
 		parsers.DomainName("ip-192-168-0-1"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &RFC5424Parser{}, event)
-}
-
-func TestRFC5424TypeType(t *testing.T) {
-	parser := &RFC5424Parser{}
-	require.Equal(t, TypeRFC5424, parser.LogType())
+	testutil.CheckParser(t, log, TypeRFC5424, event)
 }

@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -51,14 +50,8 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 		RetCode: aws.Int(0),
 	}
 	testutil.CheckPantherEvent(t, event, TypeAuroraMySQLAudit, tm,
-		parsers.KindIPAddress.Field("10.0.143.147"),
-		parsers.KindDomainName.Field("10.0.143.147"),
-		parsers.KindDomainName.Field("db-instance-name"),
+		parsers.IPAddress("10.0.143.147"),
+		parsers.DomainName("db-instance-name"),
 	)
 	testutil.CheckPantherParserJSON(t, log, &AuroraMySQLAuditParser{}, event)
-}
-
-func TestAuroraMysqlAuditLogType(t *testing.T) {
-	parser := &AuroraMySQLAuditParser{}
-	require.Equal(t, TypeAuroraMySQLAudit, parser.LogType())
 }

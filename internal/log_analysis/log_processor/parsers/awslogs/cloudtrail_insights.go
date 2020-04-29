@@ -25,8 +25,18 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-var CloudTrailInsightDesc = `AWSCloudTrailInsight represents the content of a CloudTrail Insight event record S3 object.
-Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`
+const TypeCloudTrailInsight = "AWS.CloudTrailInsight"
+
+var LogTypeCloudTrailInsight = parsers.LogType{
+	Name: TypeCloudTrailInsight,
+	Description: `AWSCloudTrailInsight represents the content of a CloudTrail Insight event record S3 object.
+Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
+	Schema: struct {
+		CloudTrailInsight
+		AWSPantherLog
+	}{},
+	NewParser: NewCloudTrailInsightParser,
+}
 
 // nolint:lll
 type CloudTrailInsightRecords struct {
@@ -51,6 +61,12 @@ type CloudTrailInsight struct {
 }
 
 var _ parsers.PantherEventer = (*CloudTrailInsight)(nil)
+
+func (event *CloudTrailInsight) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeCloudTrailInsight, event.EventTime.UTC(),
+		AccountIDP(event.RecipientAccountID),
+	)
+}
 
 // nolint:lll
 type InsightDetails struct {
@@ -81,9 +97,9 @@ type InsightAverage struct {
 type CloudTrailInsightParser struct{}
 
 // NOTE: guard to ensure interface implementation
-var _ parsers.LogParser = (*CloudTrailInsightParser)(nil)
+var _ parsers.Parser = (*CloudTrailInsightParser)(nil)
 
-func (p *CloudTrailInsightParser) New() parsers.LogParser {
+func NewCloudTrailInsightParser() parsers.Parser {
 	return &CloudTrailInsightParser{}
 }
 
@@ -107,17 +123,4 @@ func (p *CloudTrailInsightParser) Parse(log string) ([]*parsers.PantherLogJSON, 
 		result[i] = r
 	}
 	return result, nil
-}
-
-// LogType returns the log type supported by this parser
-func (p *CloudTrailInsightParser) LogType() string {
-	return TypeCloudTrailInsight
-}
-
-const TypeCloudTrailInsight = "AWS.CloudTrailInsight"
-
-func (event *CloudTrailInsight) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeCloudTrailInsight, event.EventTime.UTC())
-	e.AppendP(KindAWSAccountID, event.RecipientAccountID)
-	return e
 }

@@ -19,16 +19,27 @@ package osseclogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-const TypeEventInfo = "OSSEC.EventInfo"
-
-var EventInfoDesc = `OSSEC EventInfo alert parser. Currently only JSON output is supported.
+const (
+	TypeEventInfo = "OSSEC.EventInfo"
+	EventInfoDesc = `OSSEC EventInfo alert parser. Currently only JSON output is supported.
 Reference: https://www.ossec.net/docs/docs/formats/alerts.html`
+)
+
+func init() {
+	parsers.MustRegister(parsers.LogType{
+		Name:        TypeEventInfo,
+		Description: EventInfoDesc,
+		Schema: struct {
+			EventInfo
+			parsers.PantherLog
+		}{},
+		NewParser: NewEventInfoParser,
+	})
+}
 
 // nolint:lll
 type EventInfo struct {
@@ -117,9 +128,9 @@ type Decoder struct {
 // EventInfoParser parses OSSEC EventInfo alerts in the JSON format
 type EventInfoParser struct{}
 
-var _ parsers.LogParser = (*EventInfoParser)(nil)
+var _ parsers.Parser = (*EventInfoParser)(nil)
 
-func (p *EventInfoParser) New() parsers.LogParser {
+func NewEventInfoParser() parsers.Parser {
 	return &EventInfoParser{}
 }
 
@@ -128,25 +139,17 @@ func (p *EventInfoParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(&EventInfo{}, log)
 }
 
-// LogType returns the log type supported by this parser
-func (p *EventInfoParser) LogType() string {
-	return TypeEventInfo
-}
-
 func (event *EventInfo) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeEventInfo, event.Timestamp.UTC())
-	if event.SrcIP != nil {
-		e.AppendIP(*event.SrcIP)
-	}
-	if event.DstIP != nil {
-		e.AppendIP(*event.DstIP)
-	}
+	e := parsers.NewEvent(TypeEventInfo, event.Timestamp.UTC(),
+		parsers.IPAddressP(event.SrcIP),
+		parsers.IPAddressP(event.DstIP),
+	)
 	if f := event.SyscheckFile; f != nil {
-		e.Fields = append(e.Fields,
-			parsers.MD5Hash(aws.StringValue(f.MD5Before)),
-			parsers.MD5Hash(aws.StringValue(f.MD5After)),
-			parsers.SHA1Hash(aws.StringValue(f.SHA1Before)),
-			parsers.SHA1Hash(aws.StringValue(f.SHA1After)),
+		e.Extend(
+			parsers.MD5HashP(f.MD5Before),
+			parsers.MD5HashP(f.MD5After),
+			parsers.SHA1HashP(f.SHA1Before),
+			parsers.SHA1HashP(f.SHA1After),
 		)
 	}
 	return e

@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -62,8 +61,4 @@ func TestAuditParser(t *testing.T) {
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeAudit, expectedTime)
 	testutil.CheckPantherParserJSON(t, log, &AuditParser{}, expectedEvent)
-}
-func TestAuditType(t *testing.T) {
-	parser := (&AuditParser{}).New()
-	require.Equal(t, "GitLab.Audit", parser.LogType())
 }

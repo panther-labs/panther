@@ -20,7 +20,6 @@ package sysloglogs
 
 import (
 	"errors"
-	"net"
 
 	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/rfc5424"
@@ -29,8 +28,23 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var RFC5424Desc = `Syslog parser for the RFC5424 format.
+const (
+	TypeRFC5424 = "Syslog.RFC5424"
+	RFC5424Desc = `Syslog parser for the RFC5424 format.
 Reference: https://tools.ietf.org/html/rfc5424`
+)
+
+func init() {
+	parsers.MustRegister(parsers.LogType{
+		Name:        TypeRFC5424,
+		Description: RFC5424Desc,
+		NewParser:   NewRFC5424Parser,
+		Schema: struct {
+			RFC5424
+			parsers.PantherLog
+		}{},
+	})
+}
 
 // nolint:lll
 type RFC5424 struct {
@@ -49,15 +63,20 @@ type RFC5424 struct {
 
 var _ parsers.PantherEventer = (*RFC5424)(nil)
 
+func (event *RFC5424) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeRFC5424, event.Timestamp.UTC(),
+		parsers.HostnameP(event.Hostname))
+}
+
 // RFC5424Parser parses Syslog logs in the RFC5424 format
 type RFC5424Parser struct {
 	parser syslog.Machine
 }
 
-var _ parsers.LogParser = (*RFC5424Parser)(nil)
+var _ parsers.Parser = (*RFC5424Parser)(nil)
 
 // New returns an initialized LogParser for Syslog RFC5424 logs
-func (p *RFC5424Parser) New() parsers.LogParser {
+func NewRFC5424Parser() parsers.Parser {
 	return &RFC5424Parser{
 		parser: rfc5424.NewParser(rfc5424.WithBestEffort()),
 	}
@@ -87,27 +106,5 @@ func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 		Message:        internalRFC5424.Message,
 	}
 
-	if err := parsers.Validator.Struct(externalRFC5424); err != nil {
-		return nil, err
-	}
 	return parsers.PackEvents(externalRFC5424)
-}
-
-// LogType returns the log type supported by this parser
-func (p *RFC5424Parser) LogType() string {
-	return TypeRFC5424
-}
-
-const TypeRFC5424 = "Syslog.RFC5424"
-
-func (event *RFC5424) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeRFC5424, event.Timestamp.UTC())
-	if host := event.Hostname; host != nil {
-		if net.ParseIP(*host) == nil {
-			e.Append(parsers.KindDomainName, *host)
-		} else {
-			e.Append(parsers.KindIPAddress, *host)
-		}
-	}
-	return e
 }

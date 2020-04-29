@@ -29,8 +29,23 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var RFC3164Desc = `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)
+const (
+	TypeRFC3164 = "Syslog.RFC3164"
+	RFC3164Desc = `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)
 Reference: https://tools.ietf.org/html/rfc3164`
+)
+
+func init() {
+	parsers.MustRegister(parsers.LogType{
+		Name:        TypeRFC3164,
+		Description: RFC3164Desc,
+		Schema: struct {
+			RFC3164
+			parsers.PantherLog
+		}{},
+		NewParser: NewRFC3164Parser,
+	})
+}
 
 // nolint:lll
 type RFC3164 struct {
@@ -52,8 +67,10 @@ type RFC3164Parser struct {
 	parser syslog.Machine
 }
 
+var _ parsers.Parser = (*RFC3164Parser)(nil)
+
 // New returns an initialized LogParser for Syslog RFC3164 logs
-func (p *RFC3164Parser) New() parsers.LogParser {
+func NewRFC3164Parser() parsers.Parser {
 	return &RFC3164Parser{
 		parser: rfc3164.NewParser(
 			rfc3164.WithBestEffort(),
@@ -63,8 +80,6 @@ func (p *RFC3164Parser) New() parsers.LogParser {
 		),
 	}
 }
-
-var _ parsers.LogParser = (*RFC3164Parser)(nil)
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
@@ -89,29 +104,15 @@ func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 		Message:   internalRFC3164.Message,
 	}
 
-	if err := parsers.Validator.Struct(externalRFC3164); err != nil {
-		return nil, err
-	}
+	// if err := parsers.Validator.Struct(externalRFC3164); err != nil {
+	// 	return nil, err
+	// }
 	return parsers.PackEvents(externalRFC3164)
 }
 
-// LogType returns the log type supported by this parser
-func (p *RFC3164Parser) LogType() string {
-	return TypeRFC3164
-}
-
-const TypeRFC3164 = "Syslog.RFC3164"
-
 func (event *RFC3164) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeRFC3164, event.Timestamp.UTC())
-	if event.Message != nil {
-		e.AppendIP(*event.Message)
-	}
-	if event.Hostname != nil {
-		e.AppendDomainOrIP(*event.Hostname)
-	}
-	if event.Message != nil {
-		e.AppendIP(*event.Message)
-	}
-	return e
+	return parsers.NewEvent(TypeRFC3164, event.Timestamp.UTC(),
+		parsers.HostnameP(event.Hostname),
+		parsers.IPAddressP(event.Message),
+	)
 }

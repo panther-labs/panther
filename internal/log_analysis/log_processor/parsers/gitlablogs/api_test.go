@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -81,10 +80,6 @@ func TestGitLabAPI(t *testing.T) {
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeAPI, expectedTime, parsers.IPAddress("::1"))
 	testutil.CheckPantherParserJSON(t, log, &APIParser{}, expectedEvent)
-}
-func TestGitLabAPIType(t *testing.T) {
-	parser := (&APIParser{}).New()
-	require.Equal(t, TypeAPI, parser.LogType())
 }
 
 // func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {

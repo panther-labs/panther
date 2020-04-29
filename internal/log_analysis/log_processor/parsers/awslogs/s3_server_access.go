@@ -20,9 +20,7 @@ package awslogs
 
 import (
 	"errors"
-	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -30,8 +28,16 @@ import (
 
 const TypeS3ServerAccess = "AWS.S3ServerAccess"
 
-var S3ServerAccessDesc = `S3ServerAccess is an AWS S3 Access Log.
-Log format & samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html`
+var LogTypeS3ServerAccess = parsers.LogType{
+	Name: TypeS3ServerAccess,
+	Description: `S3ServerAccess is an AWS S3 Access Log.
+Log format & samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html`,
+	Schema: struct {
+		S3ServerAccess
+		AWSPantherLog
+	}{},
+	NewParser: NewS3ServerAccessParser,
+}
 
 const (
 	s3ServerAccessMinNumberOfColumns = 25
@@ -73,9 +79,9 @@ type S3ServerAccessParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 }
 
-var _ parsers.LogParser = (*S3ServerAccessParser)(nil)
+var _ parsers.Parser = (*S3ServerAccessParser)(nil)
 
-func (p *S3ServerAccessParser) New() parsers.LogParser {
+func NewS3ServerAccessParser() parsers.Parser {
 	reader := csvstream.NewStreamingCSVReader()
 	// non-default settings
 	reader.CVSReader.Comma = ' '
@@ -139,17 +145,9 @@ func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLogJSON, err
 	return parsers.PackEvents(event)
 }
 
-// LogType returns the log type supported by this parser
-func (p *S3ServerAccessParser) LogType() string {
-	return TypeS3ServerAccess
-}
-
 func (event *S3ServerAccess) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeS3ServerAccess, event.Time.UTC(),
-		parsers.IPAddress(aws.StringValue(event.RemoteIP)),
+	return parsers.NewEvent(TypeS3ServerAccess, event.Time.UTC(),
+		parsers.IPAddressP(event.RemoteIP),
+		ArnP(event.Requester),
 	)
-	if event.Requester != nil && strings.HasPrefix(*event.Requester, "arn:") {
-		e.Fields = append(e.Fields, KindAWSARN.Field(*event.Requester))
-	}
-	return e
 }

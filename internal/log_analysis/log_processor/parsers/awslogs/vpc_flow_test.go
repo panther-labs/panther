@@ -99,7 +99,7 @@ func TestExtendedVpcFlowLog(t *testing.T) {
 		parsers.IPAddress("76.198.154.105"),
 		parsers.IPAddress("172.31.88.3"),
 		KindAWSAccountID.Field("348372346321"),
-		KindAWSAccountID.Field("i-038407d32b0f38c60"),
+		KindAWSInstanceID.Field("i-038407d32b0f38c60"),
 	)
 	checkVPCFlowParser(t, string(vpcFlowExtendedHeader), log, event)
 }
@@ -116,8 +116,9 @@ func TestVpcFlowLogNoData(t *testing.T) {
 		End:         (*timestamp.RFC3339)(&tmEnd),
 		LogStatus:   aws.String("NODATA"),
 	}
-	parser := (&VPCFlowParser{}).New()
-	parser.Parse(vpcFlowDefaultHeader)
+	parser := NewVPCFlowParser()
+	_, err := parser.Parse(vpcFlowDefaultHeader)
+	require.NoError(t, err)
 	testutil.CheckPantherEvent(t, event, TypeVPCFlow, tmStart)
 	checkVPCFlowParser(t, string(vpcFlowDefaultHeader), log, event)
 }
@@ -135,17 +136,21 @@ func TestVpcFlowLogHeaderExtended(t *testing.T) {
 	require.Empty(t, events)
 }
 
-func TestVpcFlowLogType(t *testing.T) {
-	parser := &VPCFlowParser{}
-	require.Equal(t, TypeVPCFlow, parser.LogType())
-}
-
 func checkVPCFlowParser(t *testing.T, header, log string, events ...parsers.PantherEventer) {
 	t.Helper()
-	parser := &VPCFlowParser{}
+	parser, err := parsers.NewParser(TypeVPCFlow)
+	require.NoError(t, err)
+	require.NotNil(t, parser)
 	headerEvents, err := parser.Parse(header)
 	require.NoError(t, err, "Header parsing should not return an error")
 	require.NotNil(t, headerEvents, "Header parsing should return empty events")
 	require.Empty(t, headerEvents, "Header parsing should return empty events")
-	testutil.CheckPantherParserJSON(t, log, parser, events...)
+	results, err := parser.Parse(log)
+	require.NoError(t, err)
+	require.Equal(t, len(results), len(events))
+	for i, event := range events {
+		expect, err := parsers.RepackJSON(event)
+		require.NoError(t, err)
+		testutil.PantherLogJSONEq(t, expect, results[i])
+	}
 }

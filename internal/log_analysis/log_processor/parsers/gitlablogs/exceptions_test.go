@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -84,9 +83,4 @@ func TestExceptionsParser(t *testing.T) {
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeExceptions, expectedTime)
 	testutil.CheckPantherParserJSON(t, log, &ExceptionsParser{}, expectedEvent)
-
-}
-func TestExceptionsType(t *testing.T) {
-	parser := (&ExceptionsParser{}).New()
-	require.Equal(t, TypeExceptions, parser.LogType())
 }

@@ -83,6 +83,10 @@ func NewGlueTableMetadata(
 	}
 }
 
+func LogDataHourlyTableMetadata(logType string, logDescription string, eventStruct interface{}) *GlueTableMetadata {
+	return NewGlueTableMetadata(models.LogData, logType, logDescription, GlueTableHourly, eventStruct)
+}
+
 func (gm *GlueTableMetadata) DatabaseName() string {
 	return gm.databaseName
 }

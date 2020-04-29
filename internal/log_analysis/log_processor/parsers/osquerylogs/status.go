@@ -19,7 +19,6 @@ package osquerylogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -30,17 +29,17 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 
 // nolint:lll
 type Status struct { // FIXME: field descriptions need updating!
-	CalendarTime      *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
-	Decorations       map[string]string      `json:"decorations,omitempty" description:"Decorations"`
-	Filename          *string                `json:"filename,omitempty" validate:"required" description:"Filename"`
-	HostIdentifier    *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
-	Line              *numerics.Integer      `json:"line,omitempty" validate:"required" description:"Line"`
-	LogType           *string                `json:"logType,omitempty"  description:"LogType"`
-	LogUnderscoreType *string                `json:"log_type,omitempty" description:"LogUnderScoreType"`
-	Message           *string                `json:"message,omitempty" description:"Message"`
-	Severity          *numerics.Integer      `json:"severity,omitempty" validate:"required" description:"Severity"`
-	UnixTime          *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
-	Version           *string                `json:"version,omitempty" validate:"required" description:"Version"`
+	CalendarTime   *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	Decorations    map[string]string      `json:"decorations,omitempty" description:"Decorations"`
+	Filename       *string                `json:"filename,omitempty" validate:"required" description:"Filename"`
+	HostIdentifier *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
+	Line           *numerics.Integer      `json:"line,omitempty" validate:"required" description:"Line"`
+	LogType        *string                `json:"log_type,omitempty"  description:"LogType"`
+	// LogUnderscoreType *string                `json:"log_type,omitempty" description:"LogUnderScoreType"`
+	Message  *string           `json:"message,omitempty" description:"Message"`
+	Severity *numerics.Integer `json:"severity,omitempty" validate:"required" description:"Severity"`
+	UnixTime *numerics.Integer `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
+	Version  *string           `json:"version,omitempty" validate:"required" description:"Version"`
 }
 
 var _ parsers.PantherEventer = (*Status)(nil)
@@ -48,9 +47,9 @@ var _ parsers.PantherEventer = (*Status)(nil)
 // StatusParser parses OsQuery Status logs
 type StatusParser struct{}
 
-var _ parsers.LogParser = (*StatusParser)(nil)
+var _ parsers.Parser = (*StatusParser)(nil)
 
-func (p *StatusParser) New() parsers.LogParser {
+func (p *StatusParser) New() parsers.Parser {
 	return &StatusParser{}
 }
 
@@ -86,6 +85,6 @@ const TypeStatus = "Osquery.Status"
 
 func (event *Status) PantherEvent() *parsers.PantherEvent {
 	return parsers.NewEvent(TypeStatus, event.CalendarTime.UTC(),
-		parsers.DomainName(aws.StringValue(event.HostIdentifier)),
+		parsers.DomainNameP(event.HostIdentifier),
 	)
 }

@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"sync"
@@ -44,7 +45,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
 const (
@@ -63,25 +63,26 @@ var (
 )
 
 type mockParser struct {
-	parsers.LogParser
+	parsers.Parser
 	mock.Mock
 }
 
-var _ parsers.LogParser = (*mockParser)(nil)
+var _ parsers.Parser = (*mockParser)(nil)
 
 func (m *mockParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	args := m.Called(log)
 	result := args.Get(0)
+	err := args.Get(1)
 	if result == nil {
-		return nil, nil
+		return nil, err.(error)
 	}
 	return result.([]*parsers.PantherLogJSON), nil
 }
 
-func (m *mockParser) LogType() string {
-	args := m.Called()
-	return args.String(0)
-}
+// func (m *mockParser) LogType() string {
+// 	args := m.Called()
+// 	return args.String(0)
+// }
 
 type mockS3ManagerUploader struct {
 	s3manageriface.UploaderAPI
@@ -110,9 +111,10 @@ func newSimpleTestEvent() *parsers.PantherLogJSON {
 
 func newTestEvent(logType string, eventTime timestamp.RFC3339) *parsers.PantherLogJSON {
 	te := testEvent{
-		Data: "test",
+		Data:       "test",
+		PantherLog: *parsers.NewPantherLog(logType, eventTime.UTC()),
 	}
-	te.SetCoreFields(logType, &eventTime, te)
+
 	data, _ := jsoniter.Marshal(te)
 	return &parsers.PantherLogJSON{
 		JSON:      data,
@@ -124,9 +126,9 @@ func newTestEvent(logType string, eventTime timestamp.RFC3339) *parsers.PantherL
 // sized at max single buffer size
 func newBigTestEvent() *parsers.PantherLogJSON {
 	te := &testEvent{
-		Data: (string)(make([]byte, maxS3BufferSizeBytes)),
+		Data:       (string)(make([]byte, maxS3BufferSizeBytes)),
+		PantherLog: *parsers.NewPantherLog(testLogType, refTime.UTC()),
 	}
-	te.SetCoreFields(testLogType, &refTime, te)
 	data, _ := jsoniter.Marshal(te)
 	return &parsers.PantherLogJSON{
 		JSON:      data,
@@ -140,38 +142,24 @@ func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
 }
 
-func registerMockParser(logType string, testEvent *parsers.PantherLogJSON) (testParser *mockParser) {
+var localRegistry = &parsers.Registry{}
+
+func registerMockParser(logType string, event *parsers.PantherLogJSON) (testParser *mockParser) {
 	testParser = &mockParser{}
-	testParser.On("Parse", mock.Anything).Return([]parsers.PantherLogJSON{*testEvent})
-	testParser.On("LogType").Return(logType)
-	p := registry.DefaultLogParser(testParser, testEvent, "Test "+logType)
-	testRegistry.Add(p)
+	testParser.On("Parse", mock.Anything).Return([]*parsers.PantherLogJSON{event})
+	localRegistry.Register(parsers.LogType{
+		Name:        logType,
+		Description: fmt.Sprintf("Mock log type %s", logType),
+		NewParser:   func() parsers.Parser { return testParser },
+		Schema: struct {
+			testEvent parsers.PantherLog
+		}{},
+	})
 	return
 }
 
-// admit to registry.Interface interface
-type TestRegistry map[string]*registry.LogParserMetadata
-
-func NewTestRegistry() TestRegistry {
-	return make(map[string]*registry.LogParserMetadata)
-}
-
-func (r TestRegistry) Add(lpm *registry.LogParserMetadata) {
-	r[lpm.Parser.LogType()] = lpm
-}
-
-func (r TestRegistry) Elements() map[string]*registry.LogParserMetadata {
-	return r
-}
-
-func (r TestRegistry) LookupParser(logType string) (lpm *registry.LogParserMetadata) {
-	return (registry.Registry)(r).LookupParser(logType) // call registry code
-}
-
-var testRegistry = NewTestRegistry()
-
 func initTest() {
-	parserRegistry = testRegistry // re-bind as interface
+	localRegistry = &parsers.Registry{} // reset registry
 }
 
 type testS3Destination struct {

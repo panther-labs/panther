@@ -23,12 +23,26 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// TypeGit is the log type of Git log records
-const TypeGit = PantherPrefix + ".Git"
+const (
+	// TypeGit is the log type of Git log records
+	TypeGit = PantherPrefix + ".Git"
 
-// GitDesc describes the Git log record
-var GitDesc = `GitLab log file containing all failed requests from GitLab to Git repositories.
+	// GitDesc describes the Git log record
+	GitDesc = `GitLab log file containing all failed requests from GitLab to Git repositories.
 Reference: https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog`
+)
+
+func init() {
+	parsers.MustRegister(parsers.LogType{
+		Name:        TypeGit,
+		Description: GitDesc,
+		Schema: struct {
+			Git
+			parsers.PantherLog
+		}{},
+		NewParser: NewGitParser,
+	})
+}
 
 // Git is a a GitLab log line from a failed interaction with git
 type Git struct {
@@ -41,10 +55,10 @@ type Git struct {
 // GitParser parses gitlab rails logs
 type GitParser struct{}
 
-var _ parsers.LogParser = (*GitParser)(nil)
+var _ parsers.Parser = (*GitParser)(nil)
 
 // New creates a new parser
-func (p *GitParser) New() parsers.LogParser {
+func NewGitParser() parsers.Parser {
 	return &GitParser{}
 }
 

@@ -26,9 +26,16 @@ import (
 // TypeExceptions is the log type of Exceptions log records
 const TypeExceptions = PantherPrefix + ".Exceptions"
 
-// ExceptionsDesc describes the Git log record
-var ExceptionsDesc = `GitLab log file containing changes to group or project settings 
-Reference: https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog`
+var LogTypeExceptions = parsers.LogType{
+	Name: TypeExceptions,
+	Description: `GitLab log file containing changes to group or project settings 
+Reference: https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog`,
+	Schema: struct {
+		Exceptions
+		parsers.PantherLog
+	}{},
+	NewParser: NewExceptionsParser,
+}
 
 // Exceptions is a a GitLab log line from a failed interaction with git
 // nolint: lll
@@ -43,6 +50,12 @@ type Exceptions struct {
 	ExceptionClass     *string            `json:"exception.class" validate:"required" description:"Class name of the exception that occurred"`
 	ExceptionMessage   *string            `json:"exception.message" validate:"required" description:"Message of the exception that occurred"`
 	ExceptionBacktrace []string           `json:"exception.backtrace,omitempty" description:"Stack trace of the exception that occurred"`
+}
+
+var _ parsers.PantherEventer = (*Exceptions)(nil)
+
+func (event *Exceptions) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeExceptions, event.Time.UTC())
 }
 
 // ExtraServer has info about the server an exception occurred
@@ -67,23 +80,14 @@ type ServerOS struct {
 // ExceptionsParser parses gitlab rails logs
 type ExceptionsParser struct{}
 
-var _ parsers.LogParser = (*ExceptionsParser)(nil)
+var _ parsers.Parser = (*ExceptionsParser)(nil)
 
 // New creates a new parser
-func (p *ExceptionsParser) New() parsers.LogParser {
+func NewExceptionsParser() parsers.Parser {
 	return &ExceptionsParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *ExceptionsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(&Exceptions{}, log)
-}
-
-// LogType returns the log type supported by this parser
-func (p *ExceptionsParser) LogType() string {
-	return TypeExceptions
-}
-
-func (event *Exceptions) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeExceptions, event.Time.UTC())
 }

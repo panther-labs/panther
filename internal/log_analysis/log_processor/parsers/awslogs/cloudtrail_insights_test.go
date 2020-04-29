@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -150,10 +149,5 @@ func TestCloudTrailInsightParser(t *testing.T) {
 	testutil.CheckPantherEvent(t, eventEnd, TypeCloudTrailInsight, tmEnd,
 		KindAWSAccountID.Field("123456789012"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &CloudTrailInsightParser{}, eventStart, eventEnd)
-}
-
-func TestCloudTrailInsightLogType(t *testing.T) {
-	parser := &CloudTrailInsightParser{}
-	require.Equal(t, "AWS.CloudTrailInsight", parser.LogType())
+	testutil.CheckParser(t, log, TypeCloudTrailInsight, eventStart, eventEnd)
 }

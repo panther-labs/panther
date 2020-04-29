@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -61,9 +60,4 @@ func TestAnomaly(t *testing.T) {
 		parsers.IPAddress("192.168.2.22"),
 	)
 	testutil.CheckPantherParserJSON(t, log, &AnomalyParser{}, event)
-}
-
-func TestAnomalyType(t *testing.T) {
-	parser := &AnomalyParser{}
-	require.Equal(t, TypeAnomaly, parser.LogType())
 }

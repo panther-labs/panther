@@ -27,9 +27,16 @@ import (
 // TypeAPI is the type of the GitLabAPI log record
 const TypeAPI = PantherPrefix + ".API"
 
-// APIDesc describes the GitLabAPI log record
-var APIDesc = `GitLab log for API requests received from GitLab
-Reference: https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog`
+var LogTypeAPI = parsers.LogType{
+	Name: TypeAPI,
+	Description: `GitLab log for API requests received from GitLab
+Reference: https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog`,
+	Schema: struct {
+		API
+		parsers.PantherLog
+	}{},
+	NewParser: NewAPIParser,
+}
 
 // API is a a GitLab log line from an internal API endpoint
 // TODO: Check more samples from [Lograge](https://github.com/roidrage/lograge/) JSON output to find missing fields
@@ -61,25 +68,19 @@ type APIParser struct{}
 var _ parsers.PantherEventer = (*API)(nil)
 
 func (event *API) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeAudit, event.Time.UTC(),
+	return parsers.NewEvent(TypeAPI, event.Time.UTC(),
 		parsers.IPAddress(aws.StringValue(event.RemoteIP)),
 	)
-
 }
 
-var _ parsers.LogParser = (*APIParser)(nil)
+var _ parsers.Parser = (*APIParser)(nil)
 
 // New creates a new parser
-func (p *APIParser) New() parsers.LogParser {
+func NewAPIParser() parsers.Parser {
 	return &APIParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *APIParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(&API{}, log)
-}
-
-// LogType returns the log type supported by this parser
-func (p *APIParser) LogType() string {
-	return TypeAPI
 }

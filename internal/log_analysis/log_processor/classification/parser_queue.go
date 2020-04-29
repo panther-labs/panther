@@ -20,10 +20,9 @@ package classification
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
-var parserRegistry registry.Interface = registry.AvailableParsers()
+// var parserRegistry registry.Interface = registry.AvailableParsers()
 
 // ParserPriorityQueue contains parsers in priority order
 type ParserPriorityQueue struct {
@@ -33,9 +32,10 @@ type ParserPriorityQueue struct {
 // initialize adds all registered parsers to the priority queue
 // All parsers have the same priority
 func (q *ParserPriorityQueue) initialize() {
-	for _, parserMetadata := range parserRegistry.Elements() {
+	for _, logType := range parsers.AvailableLogTypes() {
 		q.items = append(q.items, &ParserQueueItem{
-			parser:  parserMetadata.Parser.New(),
+			logType: logType.Name,
+			parser:  logType.NewParser(),
 			penalty: 1,
 		})
 	}
@@ -43,7 +43,8 @@ func (q *ParserPriorityQueue) initialize() {
 
 // ParserQueueItem contains all the information needed to initialize a schema.
 type ParserQueueItem struct {
-	parser parsers.LogParser
+	logType string
+	parser  parsers.Parser
 	// The smaller the number the higher the priority of the parser in the queue
 	penalty int
 }

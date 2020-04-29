@@ -19,14 +19,28 @@ package suricatalogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var AnomalyDesc = `Suricata parser for the Anomaly event type in the EVE JSON output.
+const (
+	TypeAnomaly = "Suricata.Anomaly"
+	AnomalyDesc = `Suricata parser for the Anomaly event type in the EVE JSON output.
 Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#anomaly`
+)
+
+func init() {
+	parsers.MustRegister(parsers.LogType{
+		Name:        TypeAnomaly,
+		Description: AnomalyDesc,
+		Schema: struct {
+			Anomaly
+			parsers.PantherLog
+		}{},
+		NewParser: NewAnomalyParser,
+	})
+}
 
 //nolint:lll
 type Anomaly struct {
@@ -82,9 +96,9 @@ type AnomalyMetadataFlowints struct {
 // AnomalyParser parses Suricata Anomaly alerts in the JSON format
 type AnomalyParser struct{}
 
-var _ parsers.LogParser = (*AnomalyParser)(nil)
+var _ parsers.Parser = (*AnomalyParser)(nil)
 
-func (p *AnomalyParser) New() parsers.LogParser {
+func NewAnomalyParser() parsers.Parser {
 	return &AnomalyParser{}
 }
 
@@ -94,16 +108,9 @@ func (p *AnomalyParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(event, log)
 }
 
-// LogType returns the log type supported by this parser
-func (p *AnomalyParser) LogType() string {
-	return TypeAnomaly
-}
-
-const TypeAnomaly = "Suricata.Anomaly"
-
 func (event *Anomaly) PantherEvent() *parsers.PantherEvent {
 	return parsers.NewEvent(TypeAnomaly, event.Timestamp.UTC(),
-		parsers.IPAddress(aws.StringValue(event.SrcIP)),
-		parsers.IPAddress(aws.StringValue(event.DestIP)),
+		parsers.IPAddressP(event.SrcIP),
+		parsers.IPAddressP(event.DestIP),
 	)
 }

@@ -35,6 +35,17 @@ func Extract(rawMessage *jsoniter.RawMessage, extractors ...Extractor) {
 	result := gjson.ParseBytes(*rawMessage)
 	Parsed(result, extractors...)
 }
+func VisitPaths(src string, ext Extractor, paths ...string) {
+	var result gjson.Result
+	for _, path := range paths {
+		if len(result.Raw) == 0 {
+			result = gjson.Parse(src)
+		}
+		if r := result.Get(path); r.Exists() {
+			Parsed(r, ext)
+		}
+	}
+}
 
 // Parsed walks parsed JSON extracting tasty things (use if you already parsed the JSON)
 func Parsed(result gjson.Result, extractors ...Extractor) {

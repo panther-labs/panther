@@ -23,12 +23,22 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// TypeAudit is the log type of Audit log records
-const TypeAudit = PantherPrefix + ".Audit"
+const (
+	// TypeAudit is the log type of Audit log records
+	TypeAudit = PantherPrefix + ".Audit"
+	// AuditDesc describes the Git log record
+)
 
-// AuditDesc describes the Git log record
-var AuditDesc = `GitLab log file containing changes to group or project settings 
-Reference: https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog`
+var LogTypeAudit = parsers.LogType{
+	Name: TypeAudit,
+	Description: `GitLab log file containing changes to group or project settings 
+Reference: https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog`,
+	Schema: struct {
+		Audit
+		parsers.PantherLog
+	}{},
+	NewParser: NewAuditParser,
+}
 
 // Audit is a a GitLab log line from a failed interaction with git
 // nolint: lll
@@ -47,28 +57,23 @@ type Audit struct {
 	TargetDetails *string            `json:"target_details" validate:"required" description:"Details of the target of the modified setting"`
 }
 
+func (event *Audit) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeAudit, event.Time.UTC())
+}
+
 // AuditParser parses gitlab rails logs
 type AuditParser struct{}
 
 var _ parsers.PantherEventer = (*Audit)(nil)
 
-var _ parsers.LogParser = (*AuditParser)(nil)
+var _ parsers.Parser = (*AuditParser)(nil)
 
 // New creates a new parser
-func (p *AuditParser) New() parsers.LogParser {
+func NewAuditParser() parsers.Parser {
 	return &AuditParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *AuditParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(&Audit{}, log)
-}
-
-// LogType returns the log type supported by this parser
-func (p *AuditParser) LogType() string {
-	return TypeAudit
-}
-
-func (event *Audit) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeAudit, event.Time.UTC())
 }

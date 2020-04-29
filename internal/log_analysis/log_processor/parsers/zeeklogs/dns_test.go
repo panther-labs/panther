@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -59,16 +58,11 @@ func TestZeekDNS(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
-		parsers.IPAddress(aws.StringValue(event.IDOrigH)),
-		parsers.IPAddress(aws.StringValue(event.IDRespH)),
-		parsers.DomainName(aws.StringValue(event.Query)),
+		parsers.IPAddressP((event.IDOrigH)),
+		parsers.IPAddressP((event.IDRespH)),
+		parsers.DomainNameP((event.Query)),
 		parsers.DomainName(event.Answers[0]),
 	)
 
-	testutil.CheckPantherParserJSON(t, log, &ZeekDNSParser{}, event)
-}
-
-func TestZeekDNSType(t *testing.T) {
-	parser := &ZeekDNSParser{}
-	require.Equal(t, TypeDNS, parser.LogType())
+	testutil.CheckPantherParserJSON(t, log, NewZeekDNSParser(), event)
 }

@@ -19,7 +19,6 @@ package awslogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -27,9 +26,17 @@ import (
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
-var GuardDutyDesc = `Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity 
+var LogTypeGuardDuty = parsers.LogType{
+	Name: TypeGuardDuty,
+	Description: `Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity 
 and unauthorized behavior inside AWS Accounts. 
-See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html`
+See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html`,
+	Schema: struct {
+		GuardDuty
+		AWSPantherLog
+	}{},
+	NewParser: NewGuardDutyParser,
+}
 
 // nolint:lll
 type GuardDuty struct {
@@ -68,9 +75,9 @@ type GuardDutyService struct {
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type GuardDutyParser struct{}
 
-var _ parsers.LogParser = (*GuardDutyParser)(nil)
+var _ parsers.Parser = (*GuardDutyParser)(nil)
 
-func (p *GuardDutyParser) New() parsers.LogParser {
+func NewGuardDutyParser() parsers.Parser {
 	return &GuardDutyParser{}
 }
 
@@ -80,14 +87,10 @@ func (p *GuardDutyParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(event, log)
 }
 
-// LogType returns the log type supported by this parser
-func (p *GuardDutyParser) LogType() string {
-	return TypeGuardDuty
-}
 func (event *GuardDuty) PantherEvent() *parsers.PantherEvent {
 	e := parsers.NewEvent(TypeGuardDuty, event.CreatedAt.UTC(),
-		KindAWSARN.Field(aws.StringValue(event.Arn)),
-		KindAWSAccountID.Field(aws.StringValue(event.AccountID)),
+		ArnP(event.Arn),
+		AccountIDP(event.AccountID),
 	)
 
 	// polymorphic (unparsed) fields
@@ -98,5 +101,4 @@ func (event *GuardDuty) PantherEvent() *parsers.PantherEvent {
 		extract.Extract(event.Service.Action, awsExtractor)
 	}
 	return e
-
 }

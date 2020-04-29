@@ -28,12 +28,21 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var ALBDesc = `Application Load Balancer logs Layer 7 network logs for your application load balancer.
-Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html`
-
 const (
+	TypeALB               = "AWS.ALB"
 	albMinNumberOfColumns = 25
 )
+
+var LogTypeALB = parsers.LogType{
+	Name: TypeALB,
+	Description: `Application Load Balancer logs Layer 7 network logs for your application load balancer.
+Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html`,
+	Schema: struct {
+		ALB
+		AWSPantherLog
+	}{},
+	NewParser: NewALBParser,
+}
 
 // nolint:lll
 type ALB struct {
@@ -75,9 +84,9 @@ type ALBParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 }
 
-var _ parsers.LogParser = (*ALBParser)(nil)
+var _ parsers.Parser = (*ALBParser)(nil)
 
-func (p *ALBParser) New() parsers.LogParser {
+func NewALBParser() parsers.Parser {
 	reader := csvstream.NewStreamingCSVReader()
 	// non-default settings
 	reader.CVSReader.Comma = ' '
@@ -86,7 +95,7 @@ func (p *ALBParser) New() parsers.LogParser {
 	}
 }
 
-// Parse returns the parsed events or nil if parsing failed
+// Parse implements parsers.Parser interface
 func (p *ALBParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
@@ -157,17 +166,12 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.PackEvents(event)
 }
 
-// LogType returns the log type supported by this parser
-func (p *ALBParser) LogType() string {
-	return TypeALB
-}
-
-const TypeALB = "AWS.ALB"
-
 func (event *ALB) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeALB, event.Timestamp.UTC())
-	e.AppendP(parsers.KindIPAddress, event.ClientIP, event.TargetIP)
-	e.AppendP(parsers.KindDomainName, event.DomainName)
-	e.AppendP(KindAWSARN, event.ChosenCertARN, event.TargetGroupARN)
-	return e
+	return parsers.NewEvent(TypeALB, event.Timestamp.UTC(),
+		parsers.IPAddressP(event.ClientIP),
+		parsers.IPAddressP(event.TargetIP),
+		parsers.DomainNameP(event.DomainName),
+		KindAWSARN.FieldP(event.ChosenCertARN),
+		KindAWSARN.FieldP(event.TargetGroupARN),
+	)
 }

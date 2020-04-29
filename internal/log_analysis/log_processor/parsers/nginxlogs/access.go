@@ -56,9 +56,9 @@ var _ parsers.PantherEventer = (*Access)(nil)
 // AccessParser parses Nginx Access logs in 'combined' log format
 type AccessParser struct{}
 
-var _ parsers.LogParser = (*AccessParser)(nil)
+var _ parsers.Parser = (*AccessParser)(nil)
 
-func (p *AccessParser) New() parsers.LogParser {
+func (p *AccessParser) New() parsers.Parser {
 	return &AccessParser{}
 }
 

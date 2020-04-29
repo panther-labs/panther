@@ -19,7 +19,6 @@ package osquerylogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -32,18 +31,18 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
 
 // nolint:lll
 type Differential struct { // FIXME: field descriptions need updating!
-	Action               *string                `json:"action,omitempty" validate:"required" description:"Action"`
-	CalendarTime         *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
-	Columns              map[string]string      `json:"columns,omitempty" validate:"required" description:"Columns"`
-	Counter              *numerics.Integer      `json:"counter,omitempty" description:"Counter"`
-	Decorations          map[string]string      `json:"decorations,omitempty" description:"Decorations"`
-	Epoch                *numerics.Integer      `json:"epoch,omitempty" validate:"required" description:"Epoch"`
-	HostIdentifier       *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
-	LogType              *string                `json:"logType,omitempty"  description:"LogType"`
-	LogUnderscoreType    *string                `json:"log_type,omitempty" description:"LogUnderscoreType"`
-	Name                 *string                `json:"name,omitempty" validate:"required" description:"Name"`
-	UnixTime             *numerics.Integer      `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
-	LogNumericsAsNumbers *bool                  `json:"logNumericsAsNumbers,omitempty,string" description:"LogNumericsAsNumbers"`
+	Action         *string                `json:"action,omitempty" validate:"required" description:"Action"`
+	CalendarTime   *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
+	Columns        map[string]string      `json:"columns,omitempty" validate:"required" description:"Columns"`
+	Counter        *numerics.Integer      `json:"counter,omitempty" description:"Counter"`
+	Decorations    map[string]string      `json:"decorations,omitempty" description:"Decorations"`
+	Epoch          *numerics.Integer      `json:"epoch,omitempty" validate:"required" description:"Epoch"`
+	HostIdentifier *string                `json:"hostIdentifier,omitempty" validate:"required" description:"HostIdentifier"`
+	LogType        *string                `json:"log_type,omitempty"  description:"LogType"`
+	// LogUnderscoreType    *string           `json:"log_type,omitempty" description:"LogUnderscoreType"`
+	Name                 *string           `json:"name,omitempty" validate:"required" description:"Name"`
+	UnixTime             *numerics.Integer `json:"unixTime,omitempty" validate:"required" description:"UnixTime"`
+	LogNumericsAsNumbers *bool             `json:"logNumericsAsNumbers,omitempty,string" description:"LogNumericsAsNumbers"`
 }
 
 var _ parsers.PantherEventer = (*Differential)(nil)
@@ -51,9 +50,9 @@ var _ parsers.PantherEventer = (*Differential)(nil)
 // DifferentialParser parses OsQuery Differential logs
 type DifferentialParser struct{}
 
-var _ parsers.LogParser = (*DifferentialParser)(nil)
+var _ parsers.Parser = (*DifferentialParser)(nil)
 
-func (p *DifferentialParser) New() parsers.LogParser {
+func (p *DifferentialParser) New() parsers.Parser {
 	return &DifferentialParser{}
 }
 
@@ -74,7 +73,7 @@ func (p *DifferentialParser) LogType() string {
 
 func (event *Differential) PantherEvent() *parsers.PantherEvent {
 	return parsers.NewEvent(TypeDifferential, event.CalendarTime.UTC(),
-		parsers.DomainName(aws.StringValue(event.HostIdentifier)),
+		parsers.DomainNameP(event.HostIdentifier),
 		parsers.IPAddress(event.Columns["local_address"]),
 		parsers.IPAddress(event.Columns["remote_address"]),
 	)

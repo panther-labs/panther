@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -49,7 +48,7 @@ func TestRFC3164(t *testing.T) {
 	testutil.CheckPantherEvent(t, event, TypeRFC3164, tm,
 		parsers.DomainName("ip-172-31-84-73"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &RFC3164Parser{}, event)
+	testutil.CheckParser(t, log, TypeRFC3164, event)
 }
 
 func TestRFC3164WithoutPriority(t *testing.T) {
@@ -67,7 +66,7 @@ func TestRFC3164WithoutPriority(t *testing.T) {
 	testutil.CheckPantherEvent(t, event, TypeRFC3164, tm,
 		parsers.DomainName("ip-172-31-91-66"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &RFC3164Parser{}, event)
+	testutil.CheckParser(t, log, TypeRFC3164, event)
 }
 
 func TestRFC3164SSHMessage(t *testing.T) {
@@ -86,10 +85,5 @@ func TestRFC3164SSHMessage(t *testing.T) {
 	testutil.CheckPantherEvent(t, event, TypeRFC3164, tm,
 		parsers.DomainName("ip-172-31-33-197"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &RFC3164Parser{}, event)
-}
-
-func TestRFC3164TypeType(t *testing.T) {
-	parser := &RFC3164Parser{}
-	require.Equal(t, TypeRFC3164, parser.LogType())
+	testutil.CheckParser(t, log, TypeRFC3164, event)
 }

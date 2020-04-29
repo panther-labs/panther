@@ -39,7 +39,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
 const (
@@ -65,7 +64,7 @@ const (
 var (
 	newLineDelimiter = []byte("\n")
 
-	parserRegistry registry.Interface = registry.AvailableParsers() // initialize
+	// parserRegistry = parsers.AvailableLogTypes() // initialize
 
 	memUsedAtStartupMB int // set in init(), used to size memory buffers for S3 write
 )
@@ -301,7 +300,7 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 
 func getS3ObjectKey(logType string, timestamp time.Time) string {
 	return fmt.Sprintf(s3ObjectKeyFormat,
-		parserRegistry.LookupParser(logType).GlueTableMetadata.GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
+		parsers.Get(logType).GlueTableMetaData().GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
 		timestamp.Format(S3ObjectTimestampFormat),
 		uuid.New().String())
 }

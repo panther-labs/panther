@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -55,7 +54,10 @@ func TestS3AccessLogGetHttpOk(t *testing.T) {
 		HostHeader:         aws.String("awsexamplebucket.s3.amazonaws.com"),
 		TLSVersion:         aws.String("TLSV1.1"),
 	}
-	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm, parsers.IPAddress("192.0.2.3"))
+	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm,
+		parsers.IPAddress("192.0.2.3"),
+	)
+
 	testutil.CheckPantherParserJSON(t, log, &S3ServerAccessParser{}, event)
 }
 
@@ -85,7 +87,9 @@ func TestS3AccessLogGetHttpNotFound(t *testing.T) {
 		HostHeader:         aws.String("awsexamplebucket.s3.amazonaws.com"),
 		TLSVersion:         aws.String("TLSV1.1"),
 	}
-	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm, parsers.IPAddress("192.0.2.3"))
+	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm,
+		parsers.IPAddress("192.0.2.3"),
+	)
 	testutil.CheckPantherParserJSON(t, log, &S3ServerAccessParser{}, event)
 }
 
@@ -152,11 +156,11 @@ func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
 		AdditionalFields:   []string{"test1", "test2"},
 	}
 	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm, parsers.IPAddress("192.0.2.3"))
-	testutil.CheckPantherParserJSON(t, log, &S3ServerAccessParser{}, event)
+	testutil.CheckParser(t, log, TypeS3ServerAccess, event)
 }
 
+//nolint:lll
 func TestS3AccessLogExpireNoHttpStatusObject(t *testing.T) {
-	//nolint:lll
 	log := `e45ff2803a4a73e13cca79d315b9aed3cf228184ab5c07725da3feaca1db2c98 panther-s3-logs-012345678901-us-east-1 [06/Feb/2019:00:00:38 +0000] - AmazonS3 128E87669E4C15FA S3.EXPIRE.OBJECT panther-s3-logs-012345678901-us-east-1/2020-01-11-22-33-30-23B392B734E22958 "-" - - - 3922 - - "-" "-" DkKg9NTmHopKgqKMcgjFyf4oujClO4J1 JFLmDHDLlTpiqmG5NECMOIsZfzN2Mki0OqHGVbsP20tAVq3176HcY0/F8Y9ONTth - - - - -`
 
 	tm := time.Unix(1549411238, 0).UTC()
@@ -173,11 +177,5 @@ func TestS3AccessLogExpireNoHttpStatusObject(t *testing.T) {
 		VersionID:   aws.String("DkKg9NTmHopKgqKMcgjFyf4oujClO4J1"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm)
-	testutil.CheckPantherParserJSON(t, log, &S3ServerAccessParser{}, event)
-
-}
-
-func TestS3ServerAccessLogType(t *testing.T) {
-	parser := &S3ServerAccessParser{}
-	require.Equal(t, TypeS3ServerAccess, parser.LogType())
+	testutil.CheckParser(t, log, TypeS3ServerAccess, event)
 }

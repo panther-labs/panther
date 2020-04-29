@@ -19,7 +19,6 @@ package awslogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -27,8 +26,18 @@ import (
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
-var CloudTrailDesc = `AWSCloudTrail represents the content of a CloudTrail S3 object.
-Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`
+const TypeCloudTrail = "AWS.CloudTrail"
+
+var LogTypeCloudTrail = parsers.LogType{
+	Name: TypeCloudTrail,
+	Description: `AWSCloudTrail represents the content of a CloudTrail S3 object.
+Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
+	Schema: struct {
+		CloudTrail
+		AWSPantherLog
+	}{},
+	NewParser: NewCloudTrailParser,
+}
 
 type CloudTrailRecords struct {
 	Records []*CloudTrail `json:"Records" validate:"required,dive"`
@@ -119,9 +128,9 @@ type CloudTrailSessionContextWebIDFederationData struct {
 // CloudTrailParser parses CloudTrail logs
 type CloudTrailParser struct{}
 
-var _ parsers.LogParser = (*CloudTrailParser)(nil)
+var _ parsers.Parser = (*CloudTrailParser)(nil)
 
-func (p *CloudTrailParser) New() parsers.LogParser {
+func NewCloudTrailParser() parsers.Parser {
 	return &CloudTrailParser{}
 }
 
@@ -139,30 +148,20 @@ func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLogJSON, error) 
 	return parsers.PackEvents(events...)
 }
 
-// LogType returns the log type supported by this parser
-func (p *CloudTrailParser) LogType() string {
-	return TypeCloudTrail
-}
-
-const TypeCloudTrail = "AWS.CloudTrail"
-
 func (event *CloudTrail) PantherEvent() *parsers.PantherEvent {
 	e := parsers.NewEvent(TypeCloudTrail, event.EventTime.UTC(),
-		parsers.DomainName(aws.StringValue(event.SourceIPAddress)),
-		KindAWSAccountID.Field(aws.StringValue(event.RecipientAccountID)),
+		parsers.HostnameP(event.SourceIPAddress),
+		AccountIDP(event.RecipientAccountID),
 	)
 	for _, resource := range event.Resources {
-		e.Append(KindAWSARN, aws.StringValue(resource.ARN))
-		e.Append(KindAWSAccountID, aws.StringValue(resource.AccountID))
+		e.Extend(ArnP(resource.ARN), AccountIDP(resource.AccountID))
 	}
 	if user := event.UserIdentity; user != nil {
-		e.Append(KindAWSARN, aws.StringValue(user.ARN))
-		e.Append(KindAWSAccountID, aws.StringValue(user.AccountID))
+		e.Extend(ArnP(user.ARN), AccountIDP(user.AccountID))
 
 		if ctx := user.SessionContext; ctx != nil {
 			if issuer := ctx.SessionIssuer; issuer != nil {
-				e.Append(KindAWSARN, aws.StringValue(issuer.Arn))
-				e.Append(KindAWSAccountID, aws.StringValue(issuer.AccountID))
+				e.Extend(ArnP(issuer.Arn), AccountIDP(issuer.AccountID))
 			}
 		}
 	}

@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -89,9 +88,4 @@ func TestEventInfoWithSyscheckFile(t *testing.T) {
 		parsers.SHA1Hash("4df65340f366c18f85be228c26817e20391f32c4"),
 	)
 	testutil.CheckPantherParserJSON(t, log, &EventInfoParser{}, event)
-}
-
-func TestEventInfoType(t *testing.T) {
-	parser := &EventInfoParser{}
-	require.Equal(t, TypeEventInfo, parser.LogType())
 }

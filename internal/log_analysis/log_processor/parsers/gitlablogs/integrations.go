@@ -26,9 +26,16 @@ import (
 // TypeIntegrations is the log type of GitLabIntegrations
 const TypeIntegrations = PantherPrefix + ".Integrations"
 
-// IntegrationsDesc describes the GitLabIntegrations log record
-var IntegrationsDesc = `GitLab log with information about integrations activities such as Jira, Asana, and Irker services.
-Reference: https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog`
+var LogTypeIntegrations = parsers.LogType{
+	Name: TypeIntegrations,
+	Description: `GitLab log with information about integrations activities such as Jira, Asana, and Irker services.
+Reference: https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog`,
+	Schema: struct {
+		Integrations
+		parsers.PantherLog
+	}{},
+	NewParser: NewIntegrationsParser,
+}
 
 // Integrations is a a GitLab log line from an integrated gitlab activity
 type Integrations struct {
@@ -47,21 +54,15 @@ var _ parsers.PantherEventer = (*Integrations)(nil)
 // IntegrationsParser parses gitlab integration logs
 type IntegrationsParser struct{}
 
-var _ parsers.LogParser = (*IntegrationsParser)(nil)
+var _ parsers.Parser = (*IntegrationsParser)(nil)
 
-// New creates a new parser
-func (p *IntegrationsParser) New() parsers.LogParser {
+func NewIntegrationsParser() parsers.Parser {
 	return &IntegrationsParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *IntegrationsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(&Integrations{}, log)
-}
-
-// LogType returns the log type supported by this parser
-func (p *IntegrationsParser) LogType() string {
-	return TypeIntegrations
 }
 
 func (event *Integrations) PantherEvent() *parsers.PantherEvent {

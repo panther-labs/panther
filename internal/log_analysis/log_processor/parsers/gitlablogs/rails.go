@@ -27,9 +27,16 @@ import (
 // TypeRails is the type of the GitLabRails log record
 const TypeRails = PantherPrefix + ".Rails"
 
-// RailsDesc describes the GitLabRails log record
-var RailsDesc = `GitLab log for Rails controller requests received from GitLab
-Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog`
+var LogTypeRails = parsers.LogType{
+	Name: TypeRails,
+	Description: `GitLab log for Rails controller requests received from GitLab
+Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog`,
+	Schema: struct {
+		Rails
+		parsers.PantherLog
+	}{},
+	NewParser: NewRailsParser,
+}
 
 // Rails is a a GitLab Rails controller log line from a non-API endpoint
 // TODO: Check more samples from [Lograge](https://github.com/roidrage/lograge/) JSON output to find missing fields
@@ -71,21 +78,16 @@ type QueryParam struct {
 // RailsParser parses gitlab rails logs
 type RailsParser struct{}
 
-var _ parsers.LogParser = (*RailsParser)(nil)
+var _ parsers.Parser = (*RailsParser)(nil)
 
 // New creates a new parser
-func (p *RailsParser) New() parsers.LogParser {
+func NewRailsParser() parsers.Parser {
 	return &RailsParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *RailsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	return parsers.QuickParseJSON(&Rails{}, log)
-}
-
-// LogType returns the log type supported by this parser
-func (p *RailsParser) LogType() string {
-	return TypeRails
 }
 
 func (event *Rails) PantherEvent() *parsers.PantherEvent {

@@ -19,23 +19,27 @@ package awslogs
  */
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
-	"go.uber.org/zap"
-
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/pkg/errors"
 )
 
 const TypeVPCFlow = "AWS.VPCFlow"
 
-var VPCFlowDesc = `VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.
-Log format & samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html`
+var LogTypeVPCFlow = parsers.LogType{
+	Name: TypeVPCFlow,
+	Description: `VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.
+Log format & samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html`,
+	Schema: struct {
+		VPCFlow
+		AWSPantherLog
+	}{},
+	NewParser: NewVPCFlowParser,
+}
 
 // nolint:lll
 type VPCFlow struct { // NOTE: since fields are customizable by users, the only "required" fields are the Start/End times since those are critical and data is useless w/out those
@@ -66,15 +70,26 @@ type VPCFlow struct { // NOTE: since fields are customizable by users, the only 
 
 var _ parsers.PantherEventer = (*VPCFlow)(nil)
 
+func (event *VPCFlow) PantherEvent() *parsers.PantherEvent {
+	return parsers.NewEvent(TypeVPCFlow, event.Start.UTC(),
+		AccountIDP(event.AccountID),
+		InstanceIDP(event.InstanceID),
+		parsers.IPAddressP(event.SrcAddr),
+		parsers.IPAddressP(event.DstAddr),
+		parsers.IPAddressP(event.PacketSrcAddr),
+		parsers.IPAddressP(event.PacketDstAddr),
+	)
+}
+
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type VPCFlowParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 	columnMap map[int]string // column position to header name
 }
 
-var _ parsers.LogParser = (*VPCFlowParser)(nil)
+var _ parsers.Parser = (*VPCFlowParser)(nil)
 
-func (p *VPCFlowParser) New() parsers.LogParser {
+func NewVPCFlowParser() parsers.Parser {
 	reader := csvstream.NewStreamingCSVReader()
 	// non-default settings
 	reader.CVSReader.Comma = ' '
@@ -151,13 +166,11 @@ func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 		return nil, err
 	}
 
-	event := p.populateEvent(record) // parser should only receive 1 line at a time
+	event, err := p.populateEvent(record) // parser should only receive 1 line at a time
+	if err != nil {
+		return nil, err
+	}
 	return parsers.PackEvents(event)
-}
-
-// LogType returns the log type supported by this parser
-func (p *VPCFlowParser) LogType() string {
-	return TypeVPCFlow
 }
 
 func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
@@ -188,9 +201,8 @@ func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
 	return true
 }
 
-func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
-	event = &VPCFlow{}
-
+func (p *VPCFlowParser) populateEvent(columns []string) (*VPCFlow, error) {
+	event := &VPCFlow{}
 	for i := range columns {
 		switch p.columnMap[i] {
 		// default fields
@@ -219,14 +231,14 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 		case vpcFlowStart:
 			startTimeUnix, err := strconv.Atoi(columns[i])
 			if err != nil {
-				return nil
+				return nil, errors.Errorf("failed to parse %q field %q: %s", TypeVPCFlow, vpcFlowStart, err)
 			}
 			ts := timestamp.Unix(int64(startTimeUnix), 0)
 			event.Start = &ts
 		case vpcFlowEnd:
 			endTimeUnix, err := strconv.Atoi(columns[i])
 			if err != nil {
-				return nil
+				return nil, errors.Errorf("failed to parse %q field %q: %s", TypeVPCFlow, vpcFlowEnd, err)
 			}
 			ts := timestamp.Unix(int64(endTimeUnix), 0)
 			event.End = &ts
@@ -251,20 +263,8 @@ func (p *VPCFlowParser) populateEvent(columns []string) (event *VPCFlow) {
 		case vpcFlowPktDstAddr:
 			event.PacketDstAddr = parsers.CsvStringToPointer(columns[i])
 		default:
-			zap.L().Warn(fmt.Sprintf("unknown %s header %s (could be a new header, check AWS documentation)", p.LogType(), p.columnMap[i]))
+			return nil, errors.Errorf("unknown %s header %s (could be a new header, check AWS documentation)", TypeVPCFlow, p.columnMap[i])
 		}
 	}
-
-	return event
-}
-
-func (event *VPCFlow) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeVPCFlow, event.Start.UTC(),
-		KindAWSAccountID.Field(aws.StringValue(event.AccountID)),
-		KindAWSInstanceID.Field(aws.StringValue(event.InstanceID)),
-		parsers.IPAddress(aws.StringValue(event.SrcAddr)),
-		parsers.IPAddress(aws.StringValue(event.DstAddr)),
-		parsers.IPAddress(aws.StringValue(event.PacketSrcAddr)),
-		parsers.IPAddress(aws.StringValue(event.PacketDstAddr)),
-	)
+	return event, nil
 }

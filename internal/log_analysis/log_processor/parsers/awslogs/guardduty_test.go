@@ -34,8 +34,8 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 	//nolint
 	log := `{"schemaVersion":"2.0","accountId":"123456789012","region":"eu-west-1","partition":"aws","id":"44b7c4e9781822beb75d3fbd518abf5b","arn":"arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b","type":"Stealth:IAMUser/LoggingConfigurationModified","resource":{"resourceType":"AccessKey","accessKeyDetails":{"accessKeyId":"GeneratedFindingAccessKeyId","principalId":"GeneratedFindingPrincipalId","userType":"IAMUser","userName":"GeneratedFindingUserName"}},"service":{"serviceName":"guardduty","detectorId":"b2b7c4e8df224d1b74bece34cc2cf1d5","action":{"actionType":"AWS_API_CALL","awsApiCallAction":{"api":"GeneratedFindingAPIName","serviceName":"GeneratedFindingAPIServiceName","callerType":"Remote IP","remoteIpDetails":{"ipAddressV4":"198.51.100.0","organization":{"asn":"-1","asnOrg":"GeneratedFindingASNOrg","isp":"GeneratedFindingISP","org":"GeneratedFindingORG"},"country":{"countryName":"GeneratedFindingCountryName"},"city":{"cityName":"GeneratedFindingCityName"},"geoLocation":{"lat":0,"lon":0}},"affectedResources":{}}},"resourceRole":"TARGET","additionalInfo":{"recentApiCalls":[{"count":2,"api":"GeneratedFindingAPIName1"},{"count":2,"api":"GeneratedFindingAPIName2"}],"sample":true},"eventFirstSeen":"2018-08-26T14:17:23.000Z","eventLastSeen":"2018-08-26T14:17:23.000Z","archived":false,"count":20},"severity":5,"createdAt":"2018-08-26T14:17:23.000Z","updatedAt":"2018-08-26T14:17:23.000Z","title":"Unusual changes to API activity logging by GeneratedFindingUserName.","description":"APIs commonly used to stop CloudTrail logging, delete existing logs and other such activity that erases any trace of activity in the account, was invoked by IAM principal GeneratedFindingUserName. Such activity is not typically seen from this principal."}`
 
-	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
-	expectedEvent := &GuardDuty{
+	tm := time.Unix(1535293043, 0).In(time.UTC)
+	event := &GuardDuty{
 		SchemaVersion: aws.String("2.0"),
 		AccountID:     aws.String("123456789012"),
 		Region:        aws.String("eu-west-1"),
@@ -48,8 +48,8 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 		Title:    aws.String("Unusual changes to API activity logging by GeneratedFindingUserName."),
 		//nolint
 		Description: aws.String("APIs commonly used to stop CloudTrail logging, delete existing logs and other such activity that erases any trace of activity in the account, was invoked by IAM principal GeneratedFindingUserName. Such activity is not typically seen from this principal."),
-		CreatedAt:   (*timestamp.RFC3339)(&expectedDate),
-		UpdatedAt:   (*timestamp.RFC3339)(&expectedDate),
+		CreatedAt:   (*timestamp.RFC3339)(&tm),
+		UpdatedAt:   (*timestamp.RFC3339)(&tm),
 		Resource:    newRawMessage(`{"resourceType":"AccessKey","accessKeyDetails":{"accessKeyId":"GeneratedFindingAccessKeyId","principalId":"GeneratedFindingPrincipalId","userType":"IAMUser","userName":"GeneratedFindingUserName"}}`), // nolint(lll)
 		Service: &GuardDutyService{
 			AdditionalInfo: newRawMessage(`{"recentApiCalls":[{"count":2,"api":"GeneratedFindingAPIName1"},{"count":2,"api":"GeneratedFindingAPIName2"}],"sample":true}`),                                                                                                                                                                                                                                                                                                                                                                    // nolint(lll)
@@ -57,25 +57,25 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 			ServiceName:    aws.String("guardduty"),
 			DetectorID:     aws.String("b2b7c4e8df224d1b74bece34cc2cf1d5"),
 			ResourceRole:   aws.String("TARGET"),
-			EventFirstSeen: (*timestamp.RFC3339)(&expectedDate),
-			EventLastSeen:  (*timestamp.RFC3339)(&expectedDate),
+			EventFirstSeen: (*timestamp.RFC3339)(&tm),
+			EventLastSeen:  (*timestamp.RFC3339)(&tm),
 			Archived:       aws.Bool(false),
 			Count:          aws.Int(20),
 		},
 	}
-	testutil.CheckPantherEvent(t, expectedEvent, TypeGuardDuty, expectedDate,
-		parsers.KindIPAddress.Field("198.51.100.0"),
-		KindAWSAccountID.Field("123456789012"),
-		KindAWSARN.Field("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b"),
+	testutil.CheckPantherEvent(t, event, TypeGuardDuty, tm,
+		parsers.IPAddress("198.51.100.0"),
+		AccountID("123456789012"),
+		ARN("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &GuardDutyParser{}, expectedEvent)
+	testutil.CheckParser(t, log, TypeGuardDuty, event)
 }
 
 func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 	//nolint
 	log := `{"schemaVersion":"2.0","accountId":"123456789012","region":"eu-west-1","partition":"aws","id":"96b7c4e9781a57ad76e82080578d7d56","arn":"arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56","type":"Trojan:EC2/DGADomainRequest.B","resource":{"resourceType":"Instance","instanceDetails":{"instanceId":"i-99999999","instanceType":"m3.xlarge","launchTime":"2018-08-26T14:17:23Z","instanceState":"running","availabilityZone":"GeneratedFindingInstaceAvailabilityZone","imageId":"ami-99999999","imageDescription":"GeneratedFindingInstaceImageDescription"}},"service":{"serviceName":"guardduty","detectorId":"b2b7c4e8df224d1b74bece34cc2cf1d5","action":{"actionType":"DNS_REQUEST","dnsRequestAction":{"domain":"GeneratedFindingDomainName","protocol":"0","blocked":true}},"resourceRole":"ACTOR","additionalInfo":{"domain":"GeneratedFindingAdditionalDomainName","sample":true},"eventFirstSeen":"2018-08-26T14:17:23.000Z","eventLastSeen":"2018-08-26T14:17:23.000Z","archived":false,"count":18},"severity":8,"createdAt":"2018-08-26T14:17:23.000Z","updatedAt":"2018-08-26T14:17:23.000Z","title":"DGA domain name queried by EC2 instance i-99999999.","description":"EC2 instance i-99999999 is querying algorithmically generated domains. Such domains are commonly used by malware and could be an indication of a compromised EC2 instance."}`
 
-	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
+	tm := time.Unix(1535293043, 0).In(time.UTC)
 	event := &GuardDuty{
 		SchemaVersion: aws.String("2.0"),
 		AccountID:     aws.String("123456789012"),
@@ -89,8 +89,8 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 		Title:    aws.String("DGA domain name queried by EC2 instance i-99999999."),
 		//nolint
 		Description: aws.String("EC2 instance i-99999999 is querying algorithmically generated domains. Such domains are commonly used by malware and could be an indication of a compromised EC2 instance."), // nolint(lll)
-		CreatedAt:   (*timestamp.RFC3339)(&expectedDate),
-		UpdatedAt:   (*timestamp.RFC3339)(&expectedDate),
+		CreatedAt:   (*timestamp.RFC3339)(&tm),
+		UpdatedAt:   (*timestamp.RFC3339)(&tm),
 		Resource:    newRawMessage(`{"resourceType":"Instance","instanceDetails":{"instanceId":"i-99999999","instanceType":"m3.xlarge","launchTime":"2018-08-26T14:17:23Z","instanceState":"running","availabilityZone":"GeneratedFindingInstaceAvailabilityZone","imageId":"ami-99999999","imageDescription":"GeneratedFindingInstaceImageDescription"}}`), // nolint(lll)
 		Service: &GuardDutyService{
 			AdditionalInfo: newRawMessage(`{"domain":"GeneratedFindingAdditionalDomainName","sample":true}`),
@@ -98,29 +98,29 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 			ServiceName:    aws.String("guardduty"),
 			DetectorID:     aws.String("b2b7c4e8df224d1b74bece34cc2cf1d5"),
 			ResourceRole:   aws.String("ACTOR"),
-			EventFirstSeen: (*timestamp.RFC3339)(&expectedDate),
-			EventLastSeen:  (*timestamp.RFC3339)(&expectedDate),
+			EventFirstSeen: (*timestamp.RFC3339)(&tm),
+			EventLastSeen:  (*timestamp.RFC3339)(&tm),
 			Archived:       aws.Bool(false),
 			Count:          aws.Int(18),
 		},
 	}
-	testutil.CheckPantherEvent(t, event, TypeGuardDuty, expectedDate,
+	testutil.CheckPantherEvent(t, event, TypeGuardDuty, tm,
 		KindAWSInstanceID.Field("i-99999999"),
 		KindAWSAccountID.Field("123456789012"),
 		parsers.KindDomainName.Field("GeneratedFindingDomainName"),
 		parsers.KindDomainName.Field("GeneratedFindingAdditionalDomainName"),
+		// nolint:lll
 		KindAWSARN.Field("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &GuardDutyParser{}, event)
-
+	testutil.CheckParser(t, log, TypeGuardDuty, event)
 }
 
 func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 	// nolint
 	log := `{"schemaVersion":"2.0","accountId":"123456789012","region":"us-east-1","partition":"aws","id":"70b7e42a3241b4c73d8d8cf7b1781f7e","arn":"arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e","type":"UnauthorizedAccess:EC2/SSHBruteForce","resource":{"resourceType":"Instance","instanceDetails":{"platform":null,"tags":[{"key":"tag1","value":"val1"}],"availabilityZone":"us-east-1b","imageDescription":"Amazon Linux 2 AMI 2.0.20191217.0 x86_64 HVM gp2","instanceId":"i-081de1d7604b11e4a","instanceType":"t2.micro","launchTime":"2020-01-13T20:22:32Z","productCodes":[],"iamInstanceProfile":{"id":"AIPAQXSBWDWTIWB5KZKXA","arn":"arn:aws:iam::123456789012:instance-profile/EC2Dev"},"networkInterfaces":[{"subnetId":"subnet-48998e66","privateDnsName":"ip-172-31-81-237.ec2.internal","publicIp":"54.152.215.140","networkInterfaceId":"eni-0fd8e8a70bb7804e3","vpcId":"vpc-4a486c30","securityGroups":[{"groupName":"launch-wizard-31","groupId":"sg-0225c1ef2723cd87d"}],"ipv6Addresses":["2001:0db8:85a3:0000:0000:8a2e:0370:7334"],"publicDnsName":"ec2-54-152-215-140.compute-1.amazonaws.com","privateIpAddress":"172.31.81.237","privateIpAddresses":[{"privateDnsName":"ip-172-31-81-237.ec2.internal","privateIpAddress":"172.31.81.237"}]}],"instanceState":"running","imageId":"ami-062f7200baf2fa504"}},"severity":2,"createdAt":"2018-08-26T14:17:23.000Z","updatedAt":"2018-08-26T14:17:23.000Z","title":"151.80.19.228 is performing SSH brute force attacks against i-081de1d7604b11e4a. ","description":"151.80.19.228 is performing SSH brute force attacks against i-081de1d7604b11e4a. Brute force attacks are used to gain unauthorized access to your instance by guessing the SSH password.","service":{"additionalInfo":{},"action":{"actionType":"NETWORK_CONNECTION","networkConnectionAction":{"localPortDetails":{"portName":"SSH","port":22},"protocol":"TCP","blocked":false,"connectionDirection":"INBOUND","remoteIpDetails":{"ipAddressV4":"151.80.19.228","organization":{"asn":"16276","asnOrg":"OVH SAS","isp":"OVH SAS","org":"OVH SAS"},"country":{"countryName":"France"},"city":{"cityName":"Roubaix"},"geoLocation":{"lon":3.178,"lat":50.6974}},"remotePortDetails":{"port":32938,"portName":"Unknown"}}},"serviceName":"guardduty","detectorId":"6eb7d75a6563c71411485bf5e38adb2f","resourceRole":"TARGET","eventFirstSeen":"2018-08-26T14:17:23.000Z","eventLastSeen":"2018-08-26T14:17:23.000Z","archived":false,"count":3}}`
 
-	expectedDate := time.Unix(1535293043, 0).In(time.UTC)
-	expectedEvent := &GuardDuty{
+	tm := time.Unix(1535293043, 0).In(time.UTC)
+	event := &GuardDuty{
 		SchemaVersion: aws.String("2.0"),
 		AccountID:     aws.String("123456789012"),
 		Region:        aws.String("us-east-1"),
@@ -133,8 +133,8 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 		Title:    aws.String("151.80.19.228 is performing SSH brute force attacks against i-081de1d7604b11e4a. "),
 		//nolint
 		Description: aws.String("151.80.19.228 is performing SSH brute force attacks against i-081de1d7604b11e4a. Brute force attacks are used to gain unauthorized access to your instance by guessing the SSH password."), // nolint(lll)
-		CreatedAt:   (*timestamp.RFC3339)(&expectedDate),
-		UpdatedAt:   (*timestamp.RFC3339)(&expectedDate),
+		CreatedAt:   (*timestamp.RFC3339)(&tm),
+		UpdatedAt:   (*timestamp.RFC3339)(&tm),
 		Resource:    newRawMessage(`{"resourceType":"Instance","instanceDetails":{"platform":null,"tags":[{"key":"tag1","value":"val1"}],"availabilityZone":"us-east-1b","imageDescription":"Amazon Linux 2 AMI 2.0.20191217.0 x86_64 HVM gp2","instanceId":"i-081de1d7604b11e4a","instanceType":"t2.micro","launchTime":"2020-01-13T20:22:32Z","productCodes":[],"iamInstanceProfile":{"id":"AIPAQXSBWDWTIWB5KZKXA","arn":"arn:aws:iam::123456789012:instance-profile/EC2Dev"},"networkInterfaces":[{"subnetId":"subnet-48998e66","privateDnsName":"ip-172-31-81-237.ec2.internal","publicIp":"54.152.215.140","networkInterfaceId":"eni-0fd8e8a70bb7804e3","vpcId":"vpc-4a486c30","securityGroups":[{"groupName":"launch-wizard-31","groupId":"sg-0225c1ef2723cd87d"}],"ipv6Addresses":["2001:0db8:85a3:0000:0000:8a2e:0370:7334"],"publicDnsName":"ec2-54-152-215-140.compute-1.amazonaws.com","privateIpAddress":"172.31.81.237","privateIpAddresses":[{"privateDnsName":"ip-172-31-81-237.ec2.internal","privateIpAddress":"172.31.81.237"}]}],"instanceState":"running","imageId":"ami-062f7200baf2fa504"}}`), // nolint(lll)
 		Service: &GuardDutyService{
 			AdditionalInfo: newRawMessage(`{}`),
@@ -142,26 +142,26 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 			ServiceName:    aws.String("guardduty"),
 			DetectorID:     aws.String("6eb7d75a6563c71411485bf5e38adb2f"),
 			ResourceRole:   aws.String("TARGET"),
-			EventFirstSeen: (*timestamp.RFC3339)(&expectedDate),
-			EventLastSeen:  (*timestamp.RFC3339)(&expectedDate),
+			EventFirstSeen: (*timestamp.RFC3339)(&tm),
+			EventLastSeen:  (*timestamp.RFC3339)(&tm),
 			Archived:       aws.Bool(false),
 			Count:          aws.Int(3),
 		},
 	}
-	testutil.CheckPantherEvent(t, expectedEvent, TypeGuardDuty, expectedDate,
-		KindAWSInstanceID.Field("i-081de1d7604b11e4a"),
-		KindAWSAccountID.Field("123456789012"),
-		parsers.KindIPAddress.Field("54.152.215.140"),
-		parsers.KindIPAddress.Field("151.80.19.228"),
-		parsers.KindIPAddress.Field("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
-		parsers.KindIPAddress.Field("172.31.81.237"),
-		KindAWSTag.Field("tag1:val1"),
-		parsers.KindDomainName.Field("ec2-54-152-215-140.compute-1.amazonaws.com"),
-		parsers.KindDomainName.Field("ip-172-31-81-237.ec2.internal"),
-		KindAWSARN.Field("arn:aws:iam::123456789012:instance-profile/EC2Dev"),
-		KindAWSARN.Field("arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e"),
+	testutil.CheckPantherEvent(t, event, TypeGuardDuty, tm,
+		InstanceID("i-081de1d7604b11e4a"),
+		AccountID("123456789012"),
+		parsers.IPAddress("54.152.215.140"),
+		parsers.IPAddress("151.80.19.228"),
+		parsers.IPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+		parsers.IPAddress("172.31.81.237"),
+		Tag("tag1:val1"),
+		parsers.DomainName("ec2-54-152-215-140.compute-1.amazonaws.com"),
+		parsers.DomainName("ip-172-31-81-237.ec2.internal"),
+		ARN("arn:aws:iam::123456789012:instance-profile/EC2Dev"),
+		ARN("arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &GuardDutyParser{}, expectedEvent)
+	testutil.CheckParser(t, log, TypeGuardDuty, event)
 }
 
 func TestGuardDutyLogMissingRequiredField(t *testing.T) {
@@ -170,9 +170,4 @@ func TestGuardDutyLogMissingRequiredField(t *testing.T) {
 	events, err := parser.Parse(log)
 	require.Error(t, err)
 	require.Nil(t, events)
-}
-
-func TestGuardDutyLogType(t *testing.T) {
-	parser := &GuardDutyParser{}
-	require.Equal(t, TypeGuardDuty, parser.LogType())
 }

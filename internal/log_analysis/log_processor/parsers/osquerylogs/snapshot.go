@@ -19,7 +19,6 @@ package osquerylogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -46,9 +45,9 @@ var _ parsers.PantherEventer = (*Snapshot)(nil)
 // SnapshotParser parses OsQuery snapshot logs
 type SnapshotParser struct{}
 
-var _ parsers.LogParser = (*SnapshotParser)(nil)
+var _ parsers.Parser = (*SnapshotParser)(nil)
 
-func (p *SnapshotParser) New() parsers.LogParser {
+func (p *SnapshotParser) New() parsers.Parser {
 	return &SnapshotParser{}
 }
 
@@ -66,6 +65,6 @@ const TypeSnapshot = "Osquery.Snapshot"
 
 func (event *Snapshot) PantherEvent() *parsers.PantherEvent {
 	return parsers.NewEvent(TypeSnapshot, event.CalendarTime.UTC(),
-		parsers.DomainName(aws.StringValue(event.HostIdentifier)),
+		parsers.DomainNameP((event.HostIdentifier)),
 	)
 }

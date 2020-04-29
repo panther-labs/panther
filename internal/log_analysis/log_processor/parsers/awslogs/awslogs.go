@@ -1,6 +1,4 @@
-package gitlablogs
-
-import "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+package awslogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,17 +18,35 @@ import "github.com/panther-labs/panther/internal/log_analysis/log_processor/pars
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Package gitlablogs parses GitLab JSON logs.
+import (
+	"time"
 
-// PantherPrefix is the prefix of all logs parsed by this package
-const PantherPrefix = "GitLab"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
 
 func init() {
+	// Register log types
 	parsers.MustRegister(
-		LogTypeAPI,
-		LogTypeAudit,
-		LogTypeExceptions,
-		LogTypeIntegrations,
-		LogTypeRails,
+		LogTypeALB,
+		LogTypeAuroraMySQLAudit,
+		LogTypeCloudTrail,
+		LogTypeCloudTrailInsight,
+		LogTypeGuardDuty,
+		LogTypeS3ServerAccess,
+		LogTypeVPCFlow,
 	)
+
+	parsers.RegisterPantherLogPrefix("AWS", func(typ string, tm time.Time, fields ...parsers.PantherField) interface{} {
+		p := parsers.NewPantherLog(typ, tm)
+		ap := AWSPantherLog{
+			PantherLog: *p,
+		}
+		ap.ExtendPantherFields(fields...)
+		return &ap
+	})
+
+	parsers.RegisterPantherField(KindAWSARN, ARN)
+	parsers.RegisterPantherField(KindAWSInstanceID, InstanceID)
+	parsers.RegisterPantherField(KindAWSAccountID, AccountID)
+	parsers.RegisterPantherField(KindAWSTag, Tag)
 }

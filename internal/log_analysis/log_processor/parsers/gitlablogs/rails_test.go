@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -147,8 +146,4 @@ func TestGitLabRailsException(t *testing.T) {
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeRails, expectedTime, parsers.IPAddress("127.0.0.1"))
 	testutil.CheckPantherParserJSON(t, log, &RailsParser{}, expectedEvent)
-}
-func TestGitLabRailsType(t *testing.T) {
-	parser := (&RailsParser{}).New()
-	require.Equal(t, "GitLab.Rails", parser.LogType())
 }

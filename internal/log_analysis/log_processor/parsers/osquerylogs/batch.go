@@ -52,9 +52,9 @@ type BatchDiffResults struct {
 // BatchParser parses OsQuery Batch logs
 type BatchParser struct{}
 
-var _ parsers.LogParser = (*BatchParser)(nil)
+var _ parsers.Parser = (*BatchParser)(nil)
 
-func (p *BatchParser) New() parsers.LogParser {
+func (p *BatchParser) New() parsers.Parser {
 	return &BatchParser{}
 }
 
@@ -70,6 +70,6 @@ func (p *BatchParser) LogType() string {
 
 func (event *Batch) PantherEvent() *parsers.PantherEvent {
 	return parsers.NewEvent(TypeBatch, event.CalendarTime.UTC(),
-		parsers.DomainName(*event.Hostname),
+		parsers.DomainNameP(event.Hostname),
 	)
 }

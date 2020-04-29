@@ -215,7 +215,7 @@ func formatType(col gluecf.Column) string {
 	// complex Glue types are hard to read, so use JSON schema
 	colType := col.Field.Type
 	switch colType.String() { // handle special Panther types that will not work with JSON schema
-	case reflect.TypeOf(&parsers.PantherAnyString{}).String():
+	case reflect.TypeOf(&parsers.SmallStringSet{}).String():
 		colType = reflect.TypeOf([]string{}) // slice of strings
 	}
 	// deference pointers

@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
@@ -98,10 +97,10 @@ func TestDNSAnswerNoError(t *testing.T) {
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
-		parsers.IPAddress(("192.168.88.1")),
-		parsers.IPAddress(("192.168.88.61")),
-		parsers.IPAddress(("199.16.156.6")),
-		parsers.DomainName(("twitter.com")),
+		parsers.IPAddress("192.168.88.1"),
+		parsers.IPAddress("192.168.88.61"),
+		parsers.IPAddress("199.16.156.6"),
+		parsers.DomainName("twitter.com"),
 	)
 	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
 }
@@ -280,9 +279,4 @@ func TestDNSGroupedFormat(t *testing.T) {
 		parsers.DomainName("suricata-ids.org"),
 	)
 	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
-}
-
-func TestDNSType(t *testing.T) {
-	parser := &DNSParser{}
-	require.Equal(t, TypeDNS, parser.LogType())
 }
