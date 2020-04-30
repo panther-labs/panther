@@ -24,6 +24,8 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -34,7 +36,12 @@ import (
 
 func TestCloudSecTemplate(t *testing.T) {
 	s3Mock := &testutils.S3Mock{}
-	s3Client = s3Mock
+	templateS3Client = s3Mock
+	awsSession = &session.Session{
+		Config: &aws.Config{
+			Region: aws.String(endpoints.UsEast1RegionID),
+		},
+	}
 	input := &models.GetIntegrationTemplateInput{
 		AWSAccountID:       aws.String("123456789012"),
 		IntegrationType:    aws.String(models.IntegrationTypeAWSScan),
@@ -57,7 +64,7 @@ func TestCloudSecTemplate(t *testing.T) {
 
 func TestLogAnalysisTemplate(t *testing.T) {
 	s3Mock := &testutils.S3Mock{}
-	s3Client = s3Mock
+	templateS3Client = s3Mock
 	input := &models.GetIntegrationTemplateInput{
 		AWSAccountID:     aws.String("123456789012"),
 		IntegrationType:  aws.String(models.IntegrationTypeAWS3),
