@@ -40,7 +40,7 @@ func TestListIntegrations(t *testing.T) {
 	lastScanStartTime, err := time.Parse(time.RFC3339, "2019-04-10T22:59:00Z")
 	require.NoError(t, err)
 
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
@@ -89,7 +89,7 @@ func TestListIntegrations(t *testing.T) {
 
 // An empty list of integrations is returned instead of null
 func TestListIntegrationsEmpty(t *testing.T) {
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{},
 			TestErr:            false,
@@ -104,7 +104,7 @@ func TestListIntegrationsEmpty(t *testing.T) {
 }
 
 func TestHandleListIntegrationsScanError(t *testing.T) {
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{},
 			TestErr:            true,
