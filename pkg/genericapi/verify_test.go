@@ -24,12 +24,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestContainsHTML(t *testing.T) {
-	assert.False(t, ContainsHTML(""))
-	assert.True(t, ContainsHTML(`<a href="runpanther.io">click</a>`))
-	assert.False(t, ContainsHTML(`runpanther.io`))
-}
-
 func TestVerifyNoHandlers(t *testing.T) {
 	type badinput struct {
 		DoStuff *string

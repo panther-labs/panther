@@ -43,10 +43,6 @@ var (
 
 // PutIntegration adds a set of new integrations in a batch.
 func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.SourceIntegrationMetadata, error) {
-	if genericapi.ContainsHTML(aws.StringValue(input.IntegrationLabel)) {
-		return nil, fmt.Errorf("label cannot contain %s", genericapi.HTMLCharacterSet)
-	}
-
 	// Validate the new integration
 	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		AWSAccountID:      input.AWSAccountID,

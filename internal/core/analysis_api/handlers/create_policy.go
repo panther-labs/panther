@@ -80,7 +80,7 @@ func parseUpdatePolicy(request *events.APIGatewayProxyRequest) (*models.UpdatePo
 
 	// Policy names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
 	if genericapi.ContainsHTML(string(result.DisplayName)) {
-		return nil, fmt.Errorf("display name cannot contain %s", genericapi.HTMLCharacterSet)
+		return nil, fmt.Errorf("display name: %v", genericapi.ErrContainsHTML)
 	}
 
 	return &result, nil

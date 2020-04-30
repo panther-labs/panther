@@ -353,8 +353,7 @@ func validateUploadedPolicy(item *tableItem, userID models.UserID) error {
 	}
 
 	if genericapi.ContainsHTML(string(policy.DisplayName)) {
-		return fmt.Errorf("policy ID %s invalid: display name cannot contain %s",
-			policy.ID, genericapi.HTMLCharacterSet)
+		return fmt.Errorf("policy ID %s invalid: display name: %v", policy.ID, genericapi.ErrContainsHTML)
 	}
 
 	return nil

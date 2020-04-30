@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -32,10 +31,6 @@ import (
 
 // AddOutput encrypts the output configuration and stores it to Dynamo.
 func (API) AddOutput(input *models.AddOutputInput) (*models.AddOutputOutput, error) {
-	if genericapi.ContainsHTML(aws.StringValue(input.DisplayName)) {
-		return nil, fmt.Errorf("display name cannot contain %s", genericapi.HTMLCharacterSet)
-	}
-
 	item, err := outputsTable.GetOutputByName(input.DisplayName)
 	if err != nil {
 		return nil, err

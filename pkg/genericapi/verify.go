@@ -21,18 +21,7 @@ package genericapi
 import (
 	"fmt"
 	"reflect"
-	"strings"
 )
-
-// This is the same set of characters replaced by html.EscapeString
-const HTMLCharacterSet = `'<>&"`
-
-// ContainsHTML is true if the string contains one of the following: < > & " '
-//
-// Such strings should be rejected for user-defined names and labels to prevent injection attacks.
-func ContainsHTML(s string) bool {
-	return strings.ContainsAny(s, HTMLCharacterSet)
-}
 
 // VerifyHandlers returns an error if the route handlers don't match the Lambda input struct.
 //

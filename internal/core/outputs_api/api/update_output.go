@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -30,10 +29,6 @@ import (
 
 // UpdateOutput updates the alert output with the new values
 func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOutput, error) {
-	if genericapi.ContainsHTML(aws.StringValue(input.DisplayName)) {
-		return nil, fmt.Errorf("display name cannot contain %s", genericapi.HTMLCharacterSet)
-	}
-
 	existingOutput, err := outputsTable.GetOutputByName(input.DisplayName)
 	if err != nil {
 		return nil, err

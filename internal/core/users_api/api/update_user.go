@@ -19,20 +19,11 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // UpdateUser modifies user attributes.
 func (API) UpdateUser(input *models.UpdateUserInput) (*models.UpdateUserOutput, error) {
-	if genericapi.ContainsHTML(aws.StringValue(input.FamilyName)) ||
-		genericapi.ContainsHTML(aws.StringValue(input.GivenName)) {
-
-		return nil, &genericapi.InvalidInputError{Message: "Names cannot contain " + genericapi.HTMLCharacterSet}
-	}
-
 	if err := userGateway.UpdateUser(input); err != nil {
 		return nil, err
 	}

@@ -19,17 +19,10 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/panther-labs/panther/api/lambda/organization/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // UpdateSettings updates account settings.
 func (API) UpdateSettings(input *models.UpdateSettingsInput) (*models.GeneralSettings, error) {
-	if genericapi.ContainsHTML(aws.StringValue(input.DisplayName)) {
-		return nil, &genericapi.InvalidInputError{Message: "Company name cannot contain " + genericapi.HTMLCharacterSet}
-	}
-
 	return orgTable.Update(input)
 }

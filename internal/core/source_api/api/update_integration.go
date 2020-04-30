@@ -21,7 +21,6 @@ package api
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -33,10 +32,6 @@ import (
 //
 // This endpoint updates attributes such as the behavior of the integration, or display information.
 func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettingsInput) (*models.SourceIntegration, error) {
-	if genericapi.ContainsHTML(aws.StringValue(input.IntegrationLabel)) {
-		return nil, fmt.Errorf("label cannot contain %s", genericapi.HTMLCharacterSet)
-	}
-
 	// First get the current integration settings so that we can properly evaluate it
 	integration, err := db.GetIntegration(input.IntegrationID)
 	if err != nil {
