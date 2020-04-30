@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -106,11 +107,20 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	// overwriting default database
 	gm.databaseName = testDb
 
-	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
-	err = gm.CreateJSONPartition(glueClient, refTime)
+	getPartitionOutput, err := gm.GetPartition(glueClient, refTime)
 	require.NoError(t, err)
+	assert.Nil(t, getPartitionOutput) // should not be there yet
+
+	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
+	created, err := gm.CreateJSONPartition(glueClient, refTime)
+	require.NoError(t, err)
+	assert.True(t, created)
 	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Equal(t, expectedPath, *partitionLocation)
+
+	getPartitionOutput, err = gm.GetPartition(glueClient, refTime)
+	require.NoError(t, err)
+	assert.NotNil(t, getPartitionOutput) // should be there now
 
 	// sync it (which does an update of schema)
 	var startDate time.Time // default unset

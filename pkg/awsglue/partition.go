@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
@@ -52,6 +53,10 @@ func (gp *GluePartition) GetDatabase() string {
 
 func (gp *GluePartition) GetTable() string {
 	return gp.tableName
+}
+
+func (gp *GluePartition) GetHour() time.Time {
+	return gp.hour
 }
 
 func (gp *GluePartition) GetS3Bucket() string {
@@ -104,8 +109,13 @@ type PartitionColumnInfo struct {
 }
 
 // Creates a new partition in Glue using the client provided.
-func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
+func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) (created bool, err error) {
 	return NewGlueTableMetadata(gp.datatype, gp.tableName, "", GlueTableHourly, nil).CreateJSONPartition(client, gp.hour)
+}
+
+// Gets the Glue partition using the client provided.
+func (gp *GluePartition) GetPartition(client glueiface.GlueAPI) (output *glue.GetPartitionOutput, err error) {
+	return NewGlueTableMetadata(gp.datatype, gp.tableName, "", GlueTableHourly, nil).GetPartition(client, gp.hour)
 }
 
 // Gets the partition from S3bucket and S3 object key info.
