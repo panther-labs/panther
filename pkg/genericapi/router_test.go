@@ -94,8 +94,7 @@ func TestHandleValidationFailed(t *testing.T) {
 
 	errExpected := &InvalidInputError{
 		Route: "AddRule",
-		Message: ("Key: 'lambdaInput.AddRule.Name' Error:" +
-			"Field validation for 'Name' failed on the 'min' tag"),
+		Message: "Name invalid, failed to satisfy the condition: min=1",
 	}
 	assert.Equal(t, errExpected, err)
 }
