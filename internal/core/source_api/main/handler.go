@@ -45,5 +45,6 @@ func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{
 }
 
 func main() {
+	api.Setup()
 	lambda.Start(lambdaHandler)
 }
