@@ -90,6 +90,7 @@ export const LOG_TYPES = [
   'AWS.VPCFlow',
   'Fluentd.Syslog3164',
   'Fluentd.Syslog5424',
+  'GCP.AuditLog',
   'GitLab.API',
   'GitLab.Audit',
   'GitLab.Exceptions',

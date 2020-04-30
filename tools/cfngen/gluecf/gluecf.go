@@ -77,6 +77,10 @@ var (
 			From: reflect.TypeOf(*new(numerics.Integer)),
 			To:   "bigint",
 		},
+		{
+			From: reflect.TypeOf(*new(numerics.Int64)),
+			To:   "bigint",
+		},
 	}
 
 	// RuleMatchColumns are columns added by the rules engine

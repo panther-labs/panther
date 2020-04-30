@@ -442,9 +442,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
 			"AnalysisApiId":         outputs["AnalysisApiId"],
-			"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
-			"GraphQLApiEndpoint":    outputs["GraphQLApiEndpoint"],
-			"GraphQLApiId":          outputs["GraphQLApiId"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],

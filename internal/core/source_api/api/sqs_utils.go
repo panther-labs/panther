@@ -105,9 +105,9 @@ func RemovePermissionFromLogProcessorQueue(accountID string) error {
 func getQueuePolicy() (*SqsPolicy, error) {
 	getAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{policyAttributeName}),
-		QueueUrl:       aws.String(logProcessorQueueURL),
+		QueueUrl:       aws.String(env.LogProcessorQueueURL),
 	}
-	attributes, err := SQSClient.GetQueueAttributes(getAttributesInput)
+	attributes, err := sqsClient.GetQueueAttributes(getAttributesInput)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get queue attributes")
 	}
@@ -145,13 +145,13 @@ func setQueuePolicy(policy *SqsPolicy) error {
 	}
 
 	setAttributesInput := &sqs.SetQueueAttributesInput{
-		QueueUrl: aws.String(logProcessorQueueURL),
+		QueueUrl: aws.String(env.LogProcessorQueueURL),
 		Attributes: map[string]*string{
 			policyAttributeName: policyAttribute,
 		},
 	}
 
-	_, err := SQSClient.SetQueueAttributes(setAttributesInput)
+	_, err := sqsClient.SetQueueAttributes(setAttributesInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to set queue attributes")
 	}
@@ -165,7 +165,7 @@ func getStatementForAccount(accountID string) SqsPolicyStatement {
 		Effect:    "Allow",
 		Principal: map[string]string{"AWS": "*"},
 		Action:    "sqs:SendMessage",
-		Resource:  logProcessorQueueArn,
+		Resource:  env.LogProcessorQueueArn,
 		Condition: map[string]interface{}{
 			"ArnLike": map[string]string{
 				"aws:SourceArn": fmt.Sprintf("arn:aws:sns:*:%s:*", accountID),

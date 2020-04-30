@@ -20,7 +20,8 @@ package numerics
 
 import (
 	"strconv"
-	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // this is an int that is read from JSON as either a string or int
@@ -33,16 +34,68 @@ func (i *Integer) String() string {
 	return strconv.Itoa((int)(*i))
 }
 
+// MarshalJSON implements json.Marshaler interface
 func (i *Integer) MarshalJSON() ([]byte, error) {
-	return ([]byte)(i.String()), nil
-}
-
-func (i *Integer) UnmarshalJSON(jsonBytes []byte) (err error) {
-	parsedInt, err := strconv.Atoi(strings.Trim((string)(jsonBytes), `"`)) // remove quotes, to int
-	if err == nil && i != nil {
-		*i = (Integer)(parsedInt)
+	if i == nil {
+		return []byte(`null`), nil
 	}
-	return err
+	return strconv.AppendInt(nil, (int64)(*i), 10), nil
 }
 
-// add others below as we need them
+// UnmarshalJSON implements json.Unmarshaler interface
+func (i *Integer) UnmarshalJSON(data []byte) (err error) {
+	if i == nil {
+		return errors.Errorf("nil target")
+	}
+	data = unquoteJSON(data)
+	// Detect over/underflow errors in `strconv`
+	n, err := strconv.ParseInt(string(data), 10, strconv.IntSize)
+	if err != nil {
+		return err
+	}
+	// Safely cast `int64` to `int` since `ParseInt` has checked for overflow
+	*i = Integer(int(n))
+	return nil
+}
+
+// Int64 decodes from both string and number json values
+type Int64 int64
+
+func (i *Int64) String() string {
+	if i == nil {
+		return "nil"
+	}
+	return strconv.FormatInt((int64)(*i), 10)
+}
+
+// MarshalJSON implements json.Marshaler interface
+func (i *Int64) MarshalJSON() ([]byte, error) {
+	if i == nil {
+		return []byte(`null`), nil
+	}
+	return strconv.AppendInt(nil, (int64)(*i), 10), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler interface
+func (i *Int64) UnmarshalJSON(data []byte) error {
+	if i == nil {
+		return errors.Errorf("nil target")
+	}
+	data = unquoteJSON(data)
+	n, err := strconv.ParseInt(string(data), 10, 64)
+	if err != nil {
+		return err
+	}
+	*i = Int64(n)
+	return nil
+}
+
+func unquoteJSON(data []byte) []byte {
+	if len(data) > 1 && data[0] == '"' {
+		data = data[1:]
+		if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '"' {
+			return data[:n]
+		}
+	}
+	return data
+}
