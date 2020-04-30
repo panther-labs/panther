@@ -93,7 +93,7 @@ func TestHandleValidationFailed(t *testing.T) {
 	assert.Nil(t, result)
 
 	errExpected := &InvalidInputError{
-		Route: "AddRule",
+		Route:   "AddRule",
 		Message: "Name invalid, failed to satisfy the condition: min=1",
 	}
 	assert.Equal(t, errExpected, err)
