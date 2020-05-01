@@ -25,10 +25,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestProcessSuccess(t *testing.T) {
-	initTest()
+	initProcessTest()
 
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
@@ -38,7 +40,7 @@ func TestProcessSuccess(t *testing.T) {
 }
 
 func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
-	initTest()
+	initProcessTest()
 
 	// We should attempt to create the partition only once. We shouldn't try to re-create it a second time
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
@@ -52,7 +54,7 @@ func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
 }
 
 func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
-	initTest()
+	initProcessTest()
 
 	// First glue operation fails
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
@@ -70,7 +72,7 @@ func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
 }
 
 func TestProcessGlueFailure(t *testing.T) {
-	initTest()
+	initProcessTest()
 
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error")).Once()
@@ -80,7 +82,14 @@ func TestProcessGlueFailure(t *testing.T) {
 }
 
 func TestProcessInvalidS3Key(t *testing.T) {
-	initTest()
+	initProcessTest()
 	//Invalid keys should just be ignored
 	assert.NoError(t, SQS(getEvent(t, "test")))
+}
+
+// initProcessTest is run at the start of each test to create new mocks and reset state
+func initProcessTest() {
+	partitionPrefixCache = make(map[string]struct{})
+	mockGlueClient = &testutils.GlueMock{}
+	glueClient = mockGlueClient
 }
