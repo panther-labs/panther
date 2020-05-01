@@ -174,7 +174,10 @@ func GetDataPrefix(databaseName string) string {
 	case RuleMatchDatabaseName:
 		return ruleMatchS3Prefix
 	default:
-		return logS3Prefix // assume logs, used for integration tests
+		if strings.Contains(databaseName, "test") {
+			return logS3Prefix // assume logs, used for integration tests
+		}
+		panic(databaseName + " is not associated with an s3 prefix")
 	}
 }
 

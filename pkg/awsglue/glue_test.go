@@ -82,7 +82,7 @@ type partitionTestEvent struct{}
 func TestGetDataPrefix(t *testing.T) {
 	assert.Equal(t, logS3Prefix, GetDataPrefix(LogProcessingDatabaseName))
 	assert.Equal(t, ruleMatchS3Prefix, GetDataPrefix(RuleMatchDatabaseName))
-	assert.Equal(t, logS3Prefix, GetDataPrefix("somedatabase")) // default test
+	assert.Equal(t, logS3Prefix, GetDataPrefix("some_test_database"))
 }
 
 func TestGlueTableMetadataLogData(t *testing.T) {
