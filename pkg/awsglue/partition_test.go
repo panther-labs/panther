@@ -128,13 +128,13 @@ func TestCreatePartitionLog(t *testing.T) {
 	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
-	created, err := partition.CreatePartition(mockClient)
+	created, err := partition.GetGlueTableMetadata().CreateJSONPartition(mockClient, partition.GetTime())
 	assert.NoError(t, err)
 	assert.True(t, created)
 	mockClient.AssertExpectations(t)
 }
 
-func TestCreatePartitionRule(t *testing.T) {
+func TestCreateParitionRule(t *testing.T) {
 	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
 	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
 	require.NoError(t, err)
@@ -143,7 +143,7 @@ func TestCreatePartitionRule(t *testing.T) {
 	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
-	created, err := partition.CreatePartition(mockClient)
+	created, err := partition.GetGlueTableMetadata().CreateJSONPartition(mockClient, partition.GetTime())
 	assert.NoError(t, err)
 	assert.True(t, created)
 	mockClient.AssertExpectations(t)
@@ -159,7 +159,7 @@ func TestCreatePartitionPartitionAlreadExists(t *testing.T) {
 	mockClient.On("CreatePartition", mock.Anything).
 		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeAlreadyExistsException, "error", nil)).Once()
 
-	created, err := partition.CreatePartition(mockClient)
+	created, err := partition.GetGlueTableMetadata().CreateJSONPartition(mockClient, partition.GetTime())
 	assert.NoError(t, err)
 	assert.False(t, created)
 	mockClient.AssertExpectations(t)
@@ -175,7 +175,7 @@ func TestCreatePartitionAwsError(t *testing.T) {
 	mockClient.On("CreatePartition", mock.Anything).
 		Return(&glue.CreatePartitionOutput{}, awserr.New(glue.ErrCodeInternalServiceException, "error", nil)).Once()
 
-	created, err := partition.CreatePartition(mockClient)
+	created, err := partition.GetGlueTableMetadata().CreateJSONPartition(mockClient, partition.GetTime())
 	assert.Error(t, err)
 	assert.False(t, created)
 	mockClient.AssertExpectations(t)
@@ -190,7 +190,7 @@ func TestCreatePartitionGeneralError(t *testing.T) {
 	mockClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error")).Once()
 
-	created, err := partition.CreatePartition(mockClient)
+	created, err := partition.GetGlueTableMetadata().CreateJSONPartition(mockClient, partition.GetTime())
 	assert.Error(t, err)
 	assert.False(t, created)
 	mockClient.AssertExpectations(t)

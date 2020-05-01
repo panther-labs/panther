@@ -24,8 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -76,6 +74,10 @@ func (gp *GluePartition) GetPartitionColumnsInfo() []PartitionColumnInfo {
 	return gp.partitionColumns
 }
 
+func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
+	return gp.gm
+}
+
 func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
 	tableName := GetTableName(logType)
 	tablePrefix := getTablePrefix(datatype, tableName)
@@ -107,16 +109,6 @@ func (gp *GluePartition) GetPartitionLocation() string {
 type PartitionColumnInfo struct {
 	Key   string
 	Value string
-}
-
-// Creates a new partition in Glue using the client provided.
-func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) (created bool, err error) {
-	return gp.gm.CreateJSONPartition(client, gp.time)
-}
-
-// Gets the Glue partition using the client provided.
-func (gp *GluePartition) GetPartition(client glueiface.GlueAPI) (output *glue.GetPartitionOutput, err error) {
-	return gp.gm.GetPartition(client, gp.time)
 }
 
 // Gets the partition from S3bucket and S3 object key info.

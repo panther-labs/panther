@@ -59,8 +59,8 @@ func SQS(event events.SQSEvent) error {
 				continue
 			}
 
-			// attempt to create the partition, created = false if it already exists in the Glue catalog
-			_, err = gluePartition.CreatePartition(glueClient)
+			// attempt to create the partition
+			_, err = gluePartition.GetGlueTableMetadata().CreateJSONPartition(glueClient, gluePartition.GetTime())
 			if err != nil {
 				return errors.Wrapf(err, "failed to create partition %#v", notification)
 			}
