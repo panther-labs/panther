@@ -1,5 +1,7 @@
 package process
 
+import "github.com/panther-labs/panther/pkg/testutils"
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,8 +20,9 @@ package process
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// initTest is run at the start of each test to create new mocks and reset state
 func initTest() {
 	partitionPrefixCache = make(map[string]struct{})
-	mockGlueClient = &mockGlue{}
+	mockGlueClient = &testutils.GlueMock{}
 	glueClient = mockGlueClient
 }
