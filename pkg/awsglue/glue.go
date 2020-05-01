@@ -19,7 +19,6 @@ package awsglue
  */
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 	"sync"
@@ -213,7 +212,7 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 					continue // drain channel
 				}
 
-				values := PartitionValuesFromTime(gm.timebin, update)
+				values := gm.timebin.PartitionValuesFromTime(update)
 
 				getPartitionInput := &glue.GetPartitionInput{
 					DatabaseName:    aws.String(gm.databaseName),
@@ -310,7 +309,7 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 	storageDescriptor.Location = aws.String("s3://" + location.Host + "/" + gm.GetPartitionPrefix(t))
 
 	partitionInput := &glue.PartitionInput{
-		Values:            PartitionValuesFromTime(gm.timebin, t),
+		Values:            gm.timebin.PartitionValuesFromTime(t),
 		StorageDescriptor: &storageDescriptor,
 	}
 	input := &glue.CreatePartitionInput{
@@ -333,7 +332,7 @@ func (gm *GlueTableMetadata) GetPartition(client glueiface.GlueAPI, t time.Time)
 	input := &glue.GetPartitionInput{
 		DatabaseName:    aws.String(gm.databaseName),
 		TableName:       aws.String(gm.tableName),
-		PartitionValues: PartitionValuesFromTime(gm.timebin, t),
+		PartitionValues: gm.timebin.PartitionValuesFromTime(t),
 	}
 	output, err = client.GetPartition(input)
 	if err != nil {
@@ -349,7 +348,7 @@ func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Ti
 	input := &glue.DeletePartitionInput{
 		DatabaseName:    aws.String(gm.databaseName),
 		TableName:       aws.String(gm.tableName),
-		PartitionValues: PartitionValuesFromTime(gm.timebin, t),
+		PartitionValues: gm.timebin.PartitionValuesFromTime(t),
 	}
 	return client.DeletePartition(input)
 }
@@ -379,20 +378,4 @@ func (gm *GlueTableMetadata) partitionHasData(client s3iface.S3API, t time.Time,
 	})
 
 	return hasData, err
-}
-
-// Based on Timebin(), return an []*string values (used for Glue APIs)
-func PartitionValuesFromTime(timebin GlueTableTimebin, t time.Time) (values []*string) {
-	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))}
-
-	if timebin >= GlueTableMonthly {
-		values = append(values, aws.String(fmt.Sprintf("%02d", t.Month())))
-	}
-	if timebin >= GlueTableDaily {
-		values = append(values, aws.String(fmt.Sprintf("%02d", t.Day())))
-	}
-	if timebin >= GlueTableHourly {
-		values = append(values, aws.String(fmt.Sprintf("%02d", t.Hour())))
-	}
-	return
 }
