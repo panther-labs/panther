@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // CreatePolicy adds a new policy to the Dynamo table.
@@ -74,6 +76,11 @@ func parseUpdatePolicy(request *events.APIGatewayProxyRequest) (*models.UpdatePo
 
 	if err := result.Validate(nil); err != nil {
 		return nil, err
+	}
+
+	// Policy names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
+	if genericapi.ContainsHTML(string(result.DisplayName)) {
+		return nil, fmt.Errorf("display name: %v", genericapi.ErrContainsHTML)
 	}
 
 	return &result, nil
