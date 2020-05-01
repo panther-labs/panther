@@ -49,7 +49,7 @@ func SQS(event events.SQSEvent) error {
 		}
 
 		for _, eventRecord := range notification.Records {
-			existsInCache, partitionLocation, gluePartition, err := getPartition(eventRecord.S3.Bucket.Name, eventRecord.S3.Object.Key)
+			existsInCache, gluePartition, err := getPartition(eventRecord.S3.Bucket.Name, eventRecord.S3.Object.Key)
 			if err != nil {
 				zap.L().Error("failed to get partition information from notification",
 					zap.Any("notification", notification), zap.Error(err))
@@ -66,24 +66,24 @@ func SQS(event events.SQSEvent) error {
 			}
 
 			// remember in cache
-			partitionPrefixCache[partitionLocation] = struct{}{}
+			partitionPrefixCache[gluePartition.GetPartitionLocation()] = struct{}{}
 		}
 	}
 	return nil
 }
 
-func getPartition(bucketName, key string) (existsInCache bool, partitionLocation string, gluePartition *awsglue.GluePartition, err error) {
+func getPartition(bucketName, key string) (existsInCache bool, gluePartition *awsglue.GluePartition, err error) {
 	gluePartition, err = awsglue.GetPartitionFromS3(bucketName, key)
 	if err != nil {
-		return false, "", nil, errors.Wrapf(err, "cannot get partition from s3://%s/%s", bucketName, key)
+		return false, nil, errors.Wrapf(err, "cannot get partition from s3://%s/%s", bucketName, key)
 	}
 
 	// already done?
-	partitionLocation = gluePartition.GetPartitionLocation()
+	partitionLocation := gluePartition.GetPartitionLocation()
 	if _, ok := partitionPrefixCache[partitionLocation]; ok {
 		zap.L().Debug("partition has already been created")
-		return true, partitionLocation, gluePartition, nil
+		return true, gluePartition, nil
 	}
 
-	return false, partitionLocation, gluePartition, nil
+	return false, gluePartition, nil
 }
