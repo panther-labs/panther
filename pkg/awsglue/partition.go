@@ -45,6 +45,7 @@ type GluePartition struct {
 	compression      string    // Can only be "gzip" currently
 	hour             time.Time // the hour this partition corresponds to
 	partitionColumns []PartitionColumnInfo
+	gm               *GlueTableMetadata // this is the abstraction for dealing directly with the glue catalog
 }
 
 func (gp *GluePartition) GetDatabase() string {
@@ -110,12 +111,12 @@ type PartitionColumnInfo struct {
 
 // Creates a new partition in Glue using the client provided.
 func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) (created bool, err error) {
-	return NewGlueTableMetadata(gp.datatype, gp.tableName, "", GlueTableHourly, nil).CreateJSONPartition(client, gp.hour)
+	return gp.gm.CreateJSONPartition(client, gp.hour)
 }
 
 // Gets the Glue partition using the client provided.
 func (gp *GluePartition) GetPartition(client glueiface.GlueAPI) (output *glue.GetPartitionOutput, err error) {
-	return NewGlueTableMetadata(gp.datatype, gp.tableName, "", GlueTableHourly, nil).GetPartition(client, gp.hour)
+	return gp.gm.GetPartition(client, gp.hour)
 }
 
 // Gets the partition from S3bucket and S3 object key info.
@@ -199,6 +200,8 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 		return partition, nil
 	}
 	partition.hour = time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC)
+
+	partition.gm = NewGlueTableMetadata(partition.datatype, partition.tableName, "", GlueTableHourly, nil)
 
 	return partition, nil
 }
