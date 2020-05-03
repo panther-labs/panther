@@ -304,6 +304,7 @@ func createChangeSet(
 		StackName:     &stack,
 		Tags: []*cfn.Tag{ // Tags are propagated to every supported resource in the stack
 			{Key: aws.String("Application"), Value: aws.String("Panther")},
+			{Key: aws.String("PantherEdition"), Value: aws.String("OpenSource")},
 			{Key: aws.String("PantherVersion"), Value: &pantherVersion},
 			{Key: aws.String("Stack"), Value: &stack},
 		},
