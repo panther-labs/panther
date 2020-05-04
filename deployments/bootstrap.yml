@@ -431,6 +431,7 @@ Resources:
       GenerateSecret: false
       RefreshTokenValidity: 1
       UserPoolId: !Ref UserPool
+      PreventUserExistenceErrors: ENABLED
       WriteAttributes:
         - email
         - given_name

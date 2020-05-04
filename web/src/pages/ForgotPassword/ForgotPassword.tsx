@@ -24,11 +24,6 @@ import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import React from 'react';
 
-interface EmailStatusState {
-  state: 'SENT' | 'FAILED' | 'PENDING';
-  message?: string;
-}
-
 const ForgotPasswordPage: React.FC = () => {
   return (
     <AuthPageContainer banner={Banner}>
@@ -39,8 +34,8 @@ const ForgotPasswordPage: React.FC = () => {
       <ForgotPasswordForm />
       <Text size="small" color="grey200" mt={8} as="p" textAlign="center">
         <i>
-          By clicking the button above you will receive an email with instructions on how to reset
-          your password
+          By submitting a request, you will receive an email with instructions on how to reset your
+          password
         </i>
       </Text>
       <AuthPageContainer.AltOptions>
