@@ -24,9 +24,7 @@ import { useListUsers } from './graphql/listUsers.generated';
 import ListUsersTable from '../ListUsersTable';
 
 const ListUsers = () => {
-  const { loading, error, data } = useListUsers({
-    fetchPolicy: 'cache-and-network',
-  });
+  const { loading, error, data } = useListUsers();
 
   if (loading && !data) {
     return (
