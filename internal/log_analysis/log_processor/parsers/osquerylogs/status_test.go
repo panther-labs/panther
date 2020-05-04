@@ -23,9 +23,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -52,9 +51,9 @@ func TestStatusLog(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeStatus, tm,
-		parsers.DomainName("jacks-mbp.lan"),
+		logs.DomainName("jacks-mbp.lan"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &StatusParser{}, event)
+	testutil.CheckParser(t, log, TypeStatus, event)
 }
 
 func TestStatusLogNoLogType(t *testing.T) {
@@ -77,12 +76,7 @@ func TestStatusLogNoLogType(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeStatus, tm,
-		parsers.DomainName("jaguar.local"),
+		logs.DomainName("jaguar.local"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &StatusParser{}, event)
-}
-
-func TestOsQueryStatusLogType(t *testing.T) {
-	parser := &StatusParser{}
-	require.Equal(t, TypeStatus, parser.LogType())
+	testutil.CheckParser(t, log, TypeStatus, event)
 }

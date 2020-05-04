@@ -20,6 +20,7 @@ package zeeklogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -29,7 +30,7 @@ func init() {
 		Description: ZeekDNSDesc,
 		Schema: struct {
 			ZeekDNS
-			parsers.PantherLog
+			logs.Meta
 		}{},
 		NewParser: NewZeekDNSParser,
 	})
@@ -74,30 +75,30 @@ type ZeekDNS struct {
 
 var _ parsers.PantherEventer = (*ZeekDNS)(nil)
 
+func (event *ZeekDNS) PantherEvent() *logs.Event {
+	e := logs.NewEvent(TypeDNS, event.Ts.UTC(),
+		logs.HostnameP(event.IDOrigH),
+		logs.HostnameP(event.IDRespH),
+	)
+	if event.QType != nil && (*event.QType == aQueryType || *event.QType == aaaaQueryType) {
+		e.Add(logs.HostnameP(event.Query))
+	}
+	for _, answer := range event.Answers {
+		e.Add(logs.Hostname(answer))
+	}
+	return e
+}
+
 // ZeekDNSParser parses zeek dns logs
 type ZeekDNSParser struct{}
 
-var _ parsers.Parser = (*ZeekDNSParser)(nil)
+var _ parsers.Interface = (*ZeekDNSParser)(nil)
 
-func NewZeekDNSParser() parsers.Parser {
+func NewZeekDNSParser() parsers.Interface {
 	return &ZeekDNSParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *ZeekDNSParser) Parse(log string) (results []*parsers.Result, err error) {
 	return parsers.QuickParseJSON(&ZeekDNS{}, log)
-}
-
-func (event *ZeekDNS) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeDNS, event.Ts.UTC(),
-		parsers.HostnameP(event.IDOrigH),
-		parsers.HostnameP(event.IDRespH),
-	)
-	if event.QType != nil && (*event.QType == aQueryType || *event.QType == aaaaQueryType) {
-		e.Insert(parsers.HostnameP(event.Query))
-	}
-	for _, answer := range event.Answers {
-		e.Insert(parsers.Hostname(answer))
-	}
-	return e
 }

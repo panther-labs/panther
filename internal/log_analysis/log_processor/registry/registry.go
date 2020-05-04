@@ -19,72 +19,33 @@ package registry
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	// Register parsers by importing it's package here
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
-// type Interface interface {
-// 	Elements() map[string]*LogParserMetadata
-// 	LookupParser(logType string) (lpm *LogParserMetadata)
-// }
-
-// FIXME: this is not working due to init uncertainty
-// Don't forget to register new parsers with parsers.MustRegister!
-func initRegistry() Registry {
-	r := Registry{}
-	for _, logType := range parsers.AvailableLogTypes() {
-		r[logType.Name] = DefaultLogParser(logType)
-	}
-	return r
-}
-
-// mapping of LogType -> LogParserMetadata
-var parsersRegistry = initRegistry()
-
-type Registry map[string]*LogParserMetadata
-
-// Most parsers follow this structure, these are currently assumed to all be JSON based, using LogType() as tableName
-func DefaultLogParser(logType parsers.LogType) *LogParserMetadata {
-	// describes Glue table over processed data in S3
-	gm := awsglue.NewGlueTableMetadata(models.LogData, logType.Name, logType.Description, awsglue.GlueTableHourly, logType.Schema)
-	return &LogParserMetadata{
-		LogType:           logType.Name,
-		Factory:           logType.NewParser,
-		GlueTableMetadata: gm,
-	}
-}
-
-// Describes each parser
-type LogParserMetadata struct {
-	LogType           string
-	Factory           func() parsers.Parser
-	GlueTableMetadata *awsglue.GlueTableMetadata // describes associated AWS Glue table (used to generate CF)
-}
-
 // Return a map containing all the available parsers
-func AvailableParsers() Registry {
-	return parsersRegistry
+func AvailableParsers() []parsers.LogType {
+	return parsers.AvailableLogTypes()
+}
+
+func MustGet(name string) *parsers.LogType {
+	return parsers.MustGet(name)
 }
 
 // Return a slice containing just the Glue tables
 func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
-	for _, lpm := range parsersRegistry {
-		tables = append(tables, lpm.GlueTableMetadata)
-	}
-	return
-}
-
-// Provides access to underlying type so 'range' will work
-func (r Registry) Elements() map[string]*LogParserMetadata {
-	return r
-}
-
-// Provides mapping from LogType -> metadata (panics!), used in core code to ensure ALL parsers are registered
-func (r Registry) LookupParser(logType string) (lpm *LogParserMetadata) {
-	lpm, found := r[logType]
-	if !found {
-		panic("Cannot find LogType: " + logType) // super serious error, die die die
+	for _, logType := range AvailableParsers() {
+		tables = append(tables, logType.GlueTableMetadata())
 	}
 	return
 }

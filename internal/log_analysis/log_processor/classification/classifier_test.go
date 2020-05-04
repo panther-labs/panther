@@ -20,6 +20,7 @@ package classification
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -27,83 +28,66 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
 type mockParser struct {
-	parsers.Parser
+	parsers.Interface
 	mock.Mock
 }
 
-func (m *mockParser) New() parsers.Parser {
-	return m // pass through (not stateful)
-}
-
-func (m *mockParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+// Parse implements parsers.Parser interface
+func (m *mockParser) Parse(log string) ([]*parsers.Result, error) {
 	args := m.Called(log)
 	result := args.Get(0)
 	err := args.Error(1)
 	if result == nil {
 		return nil, err
 	}
-	return result.([]*parsers.PantherLogJSON), err
+	return result.([]*parsers.Result), err
 }
 
-func (m *mockParser) LogType() string {
-	args := m.Called()
-	return args.String(0)
+func newMockParser(err error, logs ...*parsers.Result) *mockParser {
+	p := &mockParser{}
+	p.On("Parse").Return(logs, err)
+	return p
 }
 
-// admit to registry.Interface interface
-type TestRegistry map[string]*registry.LogParserMetadata
-
-func NewTestRegistry() TestRegistry {
-	return make(map[string]*registry.LogParserMetadata)
+func mockLogType(name string, parser *mockParser) parsers.LogType {
+	return parsers.LogType{
+		Name:        name,
+		Description: fmt.Sprintf("Mock log type %q", name),
+		NewParser: func() parsers.Interface {
+			return parser
+		},
+		Schema: struct{}{},
+	}
 }
 
-func (r TestRegistry) Add(lpm *registry.LogParserMetadata) {
-	r[lpm.Parser.LogType()] = lpm
-}
-
-func (r TestRegistry) Elements() map[string]*registry.LogParserMetadata {
-	return r
-}
-
-func (r TestRegistry) LookupParser(logType string) (lpm *registry.LogParserMetadata) {
-	return (registry.Registry)(r).LookupParser(logType) // call registry code
-}
+var testRegistry *parsers.Registry
 
 func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
-	succeedingParser := &mockParser{}
-	failingParser1 := &mockParser{}
-	failingParser2 := &mockParser{}
+	parserSuccess := newMockParser(nil, &parsers.Result{})
+	parserFail1 := newMockParser(errors.New("fail1"))
+	parserFail2 := newMockParser(errors.New("fail2"))
+	logTypeSuccess := mockLogType("success", parserSuccess)
+	logTypeFail1 := mockLogType("failure1", parserFail1)
+	logTypeFail2 := mockLogType("failure2", parserFail2)
 
-	succeedingParser.On("Parse", mock.Anything).Return([]*parsers.PantherLog{{}}, nil)
-	succeedingParser.On("LogType").Return("success")
-	failingParser1.On("Parse", mock.Anything).Return(nil, errors.New("fail1"))
-	failingParser1.On("LogType").Return("failure1")
-	failingParser2.On("Parse", mock.Anything).Return(nil, errors.New("fail2"))
-	failingParser2.On("LogType").Return("failure2")
-
-	availableParsers := []*registry.LogParserMetadata{
-		{Parser: failingParser1},
-		{Parser: succeedingParser},
-		{Parser: failingParser2},
-	}
-	testRegistry := NewTestRegistry()
-	parserRegistry = testRegistry // re-bind as interface
-	for i := range availableParsers {
-		testRegistry.Add(availableParsers[i]) // update registry
-	}
-
-	classifier := NewClassifier()
+	// Reset registry
+	r, err := parsers.NewRegistry(
+		logTypeSuccess,
+		logTypeFail1,
+		logTypeFail2,
+	)
+	require.NoError(t, err)
+	classifier := NewClassifier(r)
 
 	logLine := "log"
 
 	repetitions := 1000
 
 	expectedResult := &ClassifierResult{
-		Events:  []*parsers.PantherLogJSON{{}},
+		Events:  []*parsers.Result{{}},
 		LogType: aws.String("success"),
 	}
 	expectedStats := &ClassifierStats{
@@ -129,33 +113,26 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
 	require.Equal(t, expectedStats, classifier.Stats())
 
-	succeedingParser.AssertNumberOfCalls(t, "Parse", repetitions)
-	require.NotNil(t, classifier.ParserStats()[succeedingParser.LogType()])
-	// skipping validating the times
-	expectedParserStats.ParserTimeMicroseconds = classifier.ParserStats()[succeedingParser.LogType()].ParserTimeMicroseconds
-	require.Equal(t, expectedParserStats, classifier.ParserStats()[succeedingParser.LogType()])
+	parserSuccess.AssertNumberOfCalls(t, "Parse", repetitions)
 
-	requireLessOrEqualNumberOfCalls(t, failingParser1, "Parse", 1)
-	require.Nil(t, classifier.ParserStats()[failingParser1.LogType()])
-	require.Nil(t, classifier.ParserStats()[failingParser2.LogType()])
+	require.NotNil(t, classifier.ParserStats()["success"])
+	// skipping validating the times
+	expectedParserStats.ParserTimeMicroseconds = classifier.ParserStats()["success"].ParserTimeMicroseconds
+	require.Equal(t, expectedParserStats, classifier.ParserStats()["success"])
+
+	requireLessOrEqualNumberOfCalls(t, parserFail1, "Parse", 1)
+	require.Nil(t, classifier.ParserStats()["failure1"])
+	require.Nil(t, classifier.ParserStats()["failure2"])
 }
 
 func TestClassifyNoMatch(t *testing.T) {
 	failingParser := &mockParser{}
-
 	failingParser.On("Parse", mock.Anything).Return(nil)
-	failingParser.On("LogType").Return("failure")
 
-	availableParsers := []*registry.LogParserMetadata{
-		{Parser: failingParser},
-	}
-	testRegistry := NewTestRegistry()
-	parserRegistry = testRegistry // re-bind as interface
-	for i := range availableParsers {
-		testRegistry.Add(availableParsers[i]) // update registry
-	}
-
-	classifier := NewClassifier()
+	logType := mockLogType("failure", failingParser)
+	r, err := parsers.NewRegistry(logType)
+	require.NoError(t, err)
+	classifier := NewClassifier(r)
 
 	logLine := "log"
 
@@ -175,7 +152,7 @@ func TestClassifyNoMatch(t *testing.T) {
 
 	require.Equal(t, &ClassifierResult{}, result)
 	failingParser.AssertNumberOfCalls(t, "Parse", 1)
-	require.Nil(t, classifier.ParserStats()[failingParser.LogType()])
+	require.Nil(t, classifier.ParserStats()[logType.Name])
 }
 
 func TestClassifyParserPanic(t *testing.T) {
@@ -188,20 +165,11 @@ func TestClassifyParserPanic(t *testing.T) {
 	*/
 
 	panicParser := &mockParser{}
-
 	panicParser.On("Parse", mock.Anything).Run(func(args mock.Arguments) { panic("test parser panic") })
-	panicParser.On("LogType").Return("panic parser")
-
-	availableParsers := []*registry.LogParserMetadata{
-		{Parser: panicParser},
-	}
-	testRegistry := NewTestRegistry()
-	parserRegistry = testRegistry // re-bind as interface
-	for i := range availableParsers {
-		testRegistry.Add(availableParsers[i]) // update registry
-	}
-
-	classifier := NewClassifier()
+	panicLogType := mockLogType("panic", panicParser)
+	r, err := parsers.NewRegistry(panicLogType)
+	require.NoError(t, err)
+	classifier := NewClassifier(r)
 
 	logLine := "log of death"
 
@@ -236,25 +204,17 @@ func TestClassifyLogLineIsWhiteSpace(t *testing.T) {
 
 func testSkipClassify(logLine string, t *testing.T) {
 	// this tests the shortcut path where if log line == "" or "<whitepace>" we just skip
-	failingParser1 := &mockParser{}
-	failingParser2 := &mockParser{}
+	failingParser1 := newMockParser(nil)
+	failingParser2 := newMockParser(nil)
+	logType1 := mockLogType("failure1", failingParser1)
+	logType2 := mockLogType("failure2", failingParser2)
 
-	failingParser1.On("Parse", mock.Anything).Return(nil)
-	failingParser1.On("LogType").Return("failure1")
-	failingParser2.On("Parse", mock.Anything).Return(nil)
-	failingParser2.On("LogType").Return("failure2")
-
-	availableParsers := []*registry.LogParserMetadata{
-		{Parser: failingParser1},
-		{Parser: failingParser2},
-	}
-	testRegistry := NewTestRegistry()
-	parserRegistry = testRegistry // re-bind as interface
-	for i := range availableParsers {
-		testRegistry.Add(availableParsers[i]) // update registry
-	}
-
-	classifier := NewClassifier()
+	r, err := parsers.NewRegistry(
+		logType1,
+		logType2,
+	)
+	require.NoError(t, err)
+	classifier := NewClassifier(r)
 
 	repetitions := 1000
 
@@ -281,8 +241,8 @@ func testSkipClassify(logLine string, t *testing.T) {
 	require.Equal(t, expectedStats, classifier.Stats())
 
 	requireLessOrEqualNumberOfCalls(t, failingParser1, "Parse", 1)
-	require.Nil(t, classifier.ParserStats()[failingParser1.LogType()])
-	require.Nil(t, classifier.ParserStats()[failingParser2.LogType()])
+	require.Nil(t, classifier.ParserStats()[logType1.Name])
+	require.Nil(t, classifier.ParserStats()[logType2.Name])
 }
 
 func requireLessOrEqualNumberOfCalls(t *testing.T, underTest *mockParser, method string, number int) {

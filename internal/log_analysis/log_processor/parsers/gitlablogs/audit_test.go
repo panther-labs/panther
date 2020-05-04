@@ -60,5 +60,5 @@ func TestAuditParser(t *testing.T) {
 		TargetDetails: aws.String("namespace2/project2"),
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeAudit, expectedTime)
-	testutil.CheckPantherParserJSON(t, log, &AuditParser{}, expectedEvent)
+	testutil.CheckParser(t, log, TypeAudit, expectedEvent)
 }

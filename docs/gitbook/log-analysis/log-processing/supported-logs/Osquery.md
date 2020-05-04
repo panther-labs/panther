@@ -101,8 +101,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Decorations</td></tr>
 <tr><td valign=top><code><b>epoch</b></code></td><td><code>bigint</code></td><td valign=top>Epoch</td></tr>
 <tr><td valign=top><code><b>hostIdentifier</b></code></td><td><code>string</code></td><td valign=top>HostIdentifier</td></tr>
-<tr><td valign=top><code>logType</code></td><td><code>string</code></td><td valign=top>LogType</td></tr>
-<tr><td valign=top><code>log_type</code></td><td><code>string</code></td><td valign=top>LogUnderscoreType</td></tr>
+<tr><td valign=top><code>log_type</code></td><td><code>string</code></td><td valign=top>LogType</td></tr>
 <tr><td valign=top><code><b>name</b></code></td><td><code>string</code></td><td valign=top>Name</td></tr>
 <tr><td valign=top><code><b>unixTime</b></code></td><td><code>bigint</code></td><td valign=top>UnixTime</td></tr>
 <tr><td valign=top><code>logNumericsAsNumbers</code></td><td><code>boolean</code></td><td valign=top>LogNumericsAsNumbers</td></tr>
@@ -214,8 +213,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 <tr><td valign=top><code><b>filename</b></code></td><td><code>string</code></td><td valign=top>Filename</td></tr>
 <tr><td valign=top><code><b>hostIdentifier</b></code></td><td><code>string</code></td><td valign=top>HostIdentifier</td></tr>
 <tr><td valign=top><code><b>line</b></code></td><td><code>bigint</code></td><td valign=top>Line</td></tr>
-<tr><td valign=top><code>logType</code></td><td><code>string</code></td><td valign=top>LogType</td></tr>
-<tr><td valign=top><code>log_type</code></td><td><code>string</code></td><td valign=top>LogUnderScoreType</td></tr>
+<tr><td valign=top><code>log_type</code></td><td><code>string</code></td><td valign=top>LogType</td></tr>
 <tr><td valign=top><code>message</code></td><td><code>string</code></td><td valign=top>Message</td></tr>
 <tr><td valign=top><code><b>severity</b></code></td><td><code>bigint</code></td><td valign=top>Severity</td></tr>
 <tr><td valign=top><code><b>unixTime</b></code></td><td><code>bigint</code></td><td valign=top>UnixTime</td></tr>

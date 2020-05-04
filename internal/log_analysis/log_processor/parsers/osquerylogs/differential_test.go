@@ -23,9 +23,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -54,9 +53,9 @@ func TestDifferentialLog(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeDifferential, tm,
-		parsers.DomainName("Quans-MacBook-Pro-2.local"),
+		logs.DomainName("Quans-MacBook-Pro-2.local"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &DifferentialParser{}, event)
+	testutil.CheckParser(t, log, TypeDifferential, event)
 }
 
 func TestDifferentialLogWithExtraIps(t *testing.T) {
@@ -84,11 +83,11 @@ func TestDifferentialLogWithExtraIps(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeDifferential, tm,
-		parsers.DomainName("Quans-MacBook-Pro-2.local"),
-		parsers.IPAddress("192.168.1.1"),
-		parsers.IPAddress("192.168.1.2"),
+		logs.DomainName("Quans-MacBook-Pro-2.local"),
+		logs.IPAddress("192.168.1.1"),
+		logs.IPAddress("192.168.1.2"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &DifferentialParser{}, event)
+	testutil.CheckParser(t, log, TypeDifferential, event)
 }
 
 func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
@@ -113,10 +112,10 @@ func TestDifferentialLogWithoutLogNumericAsNumbers(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeDifferential, tm,
-		parsers.DomainName("host.lan"),
+		logs.DomainName("host.lan"),
 	)
 
-	testutil.CheckPantherParserJSON(t, log, &DifferentialParser{}, event)
+	testutil.CheckParser(t, log, TypeDifferential, event)
 }
 
 func TestDifferentialLogWithoutLogType(t *testing.T) {
@@ -147,13 +146,8 @@ func TestDifferentialLogWithoutLogType(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeDifferential, tm,
-		parsers.DomainName("jaguar.local"),
+		logs.DomainName("jaguar.local"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &DifferentialParser{}, event)
+	testutil.CheckParser(t, log, TypeDifferential, event)
 
-}
-
-func TestOsQueryDifferentialLogType(t *testing.T) {
-	parser := &DifferentialParser{}
-	require.Equal(t, TypeDifferential, parser.LogType())
 }

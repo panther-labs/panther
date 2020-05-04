@@ -120,7 +120,7 @@ type S3Destination struct {
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 // The sendData() method is called as go routine to allow processing to continue and hide network latency.
-func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.PantherLogJSON, errChan chan error) {
+func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
 	// used to flush expired buffers
 	flushExpired := time.NewTicker(destination.maxDuration)
 	defer flushExpired.Stop()
@@ -300,7 +300,7 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 
 func getS3ObjectKey(logType string, timestamp time.Time) string {
 	return fmt.Sprintf(s3ObjectKeyFormat,
-		parsers.Get(logType).GlueTableMetaData().GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
+		parsers.Get(logType).GlueTableMetadata().GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
 		timestamp.Format(S3ObjectTimestampFormat),
 		uuid.New().String())
 }
@@ -317,7 +317,7 @@ func newS3EventBufferSet() *s3EventBufferSet {
 	}
 }
 
-func (bs *s3EventBufferSet) getBuffer(event *parsers.PantherLogJSON) *s3EventBuffer {
+func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	// bin by hour (this is our partition size)
 	hour := event.EventTime.Truncate(time.Hour)
 

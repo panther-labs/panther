@@ -25,6 +25,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -39,7 +40,7 @@ var LogTypeALB = parsers.LogType{
 Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html`,
 	Schema: struct {
 		ALB
-		AWSPantherLog
+		Meta
 	}{},
 	NewParser: NewALBParser,
 }
@@ -84,9 +85,9 @@ type ALBParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 }
 
-var _ parsers.Parser = (*ALBParser)(nil)
+var _ parsers.Interface = (*ALBParser)(nil)
 
-func NewALBParser() parsers.Parser {
+func NewALBParser() parsers.Interface {
 	reader := csvstream.NewStreamingCSVReader()
 	// non-default settings
 	reader.CVSReader.Comma = ' '
@@ -96,7 +97,7 @@ func NewALBParser() parsers.Parser {
 }
 
 // Parse implements parsers.Parser interface
-func (p *ALBParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *ALBParser) Parse(log string) ([]*parsers.Result, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
 		return nil, err
@@ -163,15 +164,15 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 		RedirectURL:            parsers.CsvStringToPointer(record[23]),
 		ErrorReason:            parsers.CsvStringToPointer(record[24]),
 	}
-	return parsers.PackEvents(event)
+	return parsers.PackResults(event)
 }
 
-func (event *ALB) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeALB, event.Timestamp.UTC(),
-		parsers.IPAddressP(event.ClientIP),
-		parsers.IPAddressP(event.TargetIP),
-		parsers.DomainNameP(event.DomainName),
-		KindAWSARN.FieldP(event.ChosenCertARN),
-		KindAWSARN.FieldP(event.TargetGroupARN),
+func (event *ALB) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeALB, event.Timestamp.UTC(),
+		logs.IPAddressP(event.ClientIP),
+		logs.IPAddressP(event.TargetIP),
+		logs.DomainNameP(event.DomainName),
+		ArnP(event.ChosenCertARN),
+		ArnP(event.TargetGroupARN),
 	)
 }

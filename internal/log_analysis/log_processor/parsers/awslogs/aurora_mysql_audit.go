@@ -24,8 +24,10 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -41,7 +43,7 @@ var LogTypeAuroraMySQLAudit = parsers.LogType{
 Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html`,
 	Schema: struct {
 		AuroraMySQLAudit
-		AWSPantherLog
+		Meta
 	}{},
 	NewParser: NewAuroraMySQLAuditParser,
 }
@@ -62,10 +64,10 @@ type AuroraMySQLAudit struct {
 
 var _ parsers.PantherEventer = (*AuroraMySQLAudit)(nil)
 
-func (event *AuroraMySQLAudit) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeAuroraMySQLAudit, event.Timestamp.UTC(),
-		parsers.IPAddress(aws.StringValue(event.Host)),
-		parsers.DomainName(aws.StringValue(event.ServerHost)),
+func (event *AuroraMySQLAudit) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeAuroraMySQLAudit, event.Timestamp.UTC(),
+		logs.IPAddress(aws.StringValue(event.Host)),
+		logs.DomainName(aws.StringValue(event.ServerHost)),
 	)
 }
 
@@ -74,16 +76,16 @@ type AuroraMySQLAuditParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 }
 
-var _ parsers.Parser = (*AuroraMySQLAuditParser)(nil)
+var _ parsers.Interface = (*AuroraMySQLAuditParser)(nil)
 
-func NewAuroraMySQLAuditParser() parsers.Parser {
+func NewAuroraMySQLAuditParser() parsers.Interface {
 	return &AuroraMySQLAuditParser{
 		CSVReader: csvstream.NewStreamingCSVReader(),
 	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.Result, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
 		return nil, err
@@ -117,9 +119,5 @@ func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLogJSON, e
 		RetCode:      parsers.CsvStringToIntPointer(record[len(record)-1]),
 	}
 
-	packed, err := parsers.RepackJSON(event)
-	if err != nil {
-		return nil, err
-	}
-	return []*parsers.PantherLogJSON{packed}, nil
+	return parsers.PackResults(event)
 }

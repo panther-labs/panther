@@ -19,9 +19,8 @@ package awslogs
  */
 
 import (
-	"time"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 )
 
 func init() {
@@ -36,17 +35,20 @@ func init() {
 		LogTypeVPCFlow,
 	)
 
-	parsers.RegisterPantherLogPrefix("AWS", func(typ string, tm time.Time, fields ...parsers.PantherField) interface{} {
-		p := parsers.NewPantherLog(typ, tm)
-		ap := AWSPantherLog{
-			PantherLog: *p,
-		}
-		ap.ExtendPantherFields(fields...)
-		return &ap
-	})
+	// parsers.RegisterPantherLogPrefix("AWS", )
 
-	parsers.RegisterPantherField(KindAWSARN, ARN)
-	parsers.RegisterPantherField(KindAWSInstanceID, InstanceID)
-	parsers.RegisterPantherField(KindAWSAccountID, AccountID)
-	parsers.RegisterPantherField(KindAWSTag, Tag)
+	logs.RegisterPrefixMeta("AWS", NewMeta)
+	// logs.RegisterPantherField(KindAWSInstanceID, InstanceID)
+	// logs.RegisterPantherField(KindAWSAccountID, AccountID)
+	// logs.RegisterPantherField(KindAWSTag, Tag)
+}
+
+func NewMeta(event *logs.Event) (interface{}, error) {
+	return &Meta{
+		Meta:                     logs.NewMeta(event),
+		PantherAnyAWSARNs:        event.Values(KindAWSARN),
+		PantherAnyAWSAccountIds:  event.Values(KindAWSAccountID),
+		PantherAnyAWSInstanceIds: event.Values(KindAWSInstanceID),
+		PantherAnyAWSTags:        event.Values(KindAWSTag),
+	}, nil
 }

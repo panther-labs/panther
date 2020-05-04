@@ -20,7 +20,9 @@ package gitlablogs
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -33,7 +35,7 @@ var LogTypeAPI = parsers.LogType{
 Reference: https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog`,
 	Schema: struct {
 		API
-		parsers.PantherLog
+		logs.Meta
 	}{},
 	NewParser: NewAPIParser,
 }
@@ -67,20 +69,20 @@ type APIParser struct{}
 
 var _ parsers.PantherEventer = (*API)(nil)
 
-func (event *API) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeAPI, event.Time.UTC(),
-		parsers.IPAddress(aws.StringValue(event.RemoteIP)),
+func (event *API) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeAPI, event.Time.UTC(),
+		logs.IPAddress(aws.StringValue(event.RemoteIP)),
 	)
 }
 
-var _ parsers.Parser = (*APIParser)(nil)
+var _ parsers.Interface = (*APIParser)(nil)
 
 // New creates a new parser
-func NewAPIParser() parsers.Parser {
+func NewAPIParser() parsers.Interface {
 	return &APIParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *APIParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *APIParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&API{}, log)
 }

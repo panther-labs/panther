@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -78,8 +78,8 @@ func TestGitLabAPI(t *testing.T) {
 		GitalyDuration: aws.Float32(5.36),
 		QueueDuration:  aws.Float32(100.31),
 	}
-	testutil.CheckPantherEvent(t, expectedEvent, TypeAPI, expectedTime, parsers.IPAddress("::1"))
-	testutil.CheckPantherParserJSON(t, log, &APIParser{}, expectedEvent)
+	testutil.CheckPantherEvent(t, expectedEvent, TypeAPI, expectedTime, logs.IPAddress("::1"))
+	testutil.CheckParser(t, log, TypeAPI, expectedEvent)
 }
 
 // func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {

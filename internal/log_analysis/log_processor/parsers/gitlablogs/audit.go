@@ -20,6 +20,7 @@ package gitlablogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -35,7 +36,7 @@ var LogTypeAudit = parsers.LogType{
 Reference: https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog`,
 	Schema: struct {
 		Audit
-		parsers.PantherLog
+		logs.Meta
 	}{},
 	NewParser: NewAuditParser,
 }
@@ -57,8 +58,8 @@ type Audit struct {
 	TargetDetails *string            `json:"target_details" validate:"required" description:"Details of the target of the modified setting"`
 }
 
-func (event *Audit) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeAudit, event.Time.UTC())
+func (event *Audit) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeAudit, event.Time.UTC())
 }
 
 // AuditParser parses gitlab rails logs
@@ -66,14 +67,14 @@ type AuditParser struct{}
 
 var _ parsers.PantherEventer = (*Audit)(nil)
 
-var _ parsers.Parser = (*AuditParser)(nil)
+var _ parsers.Interface = (*AuditParser)(nil)
 
 // New creates a new parser
-func NewAuditParser() parsers.Parser {
+func NewAuditParser() parsers.Interface {
 	return &AuditParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AuditParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *AuditParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Audit{}, log)
 }

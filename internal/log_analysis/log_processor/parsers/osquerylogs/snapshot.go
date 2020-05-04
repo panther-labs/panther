@@ -20,12 +20,23 @@ package osquerylogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var SnapshotDesc = `Snapshot contains all the data included in OsQuery differential logs
-Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
+const TypeSnapshot = "Osquery.Snapshot"
+
+var LogTypeSnapshot = parsers.LogType{
+	Name: TypeSnapshot,
+	Description: `Snapshot contains all the data included in OsQuery differential logs
+Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`,
+	Schema: struct {
+		Snapshot
+		logs.Meta
+	}{},
+	NewParser: NewSnapshotParser,
+}
 
 // nolint:lll
 type Snapshot struct { // FIXME: field descriptions need updating!
@@ -45,26 +56,19 @@ var _ parsers.PantherEventer = (*Snapshot)(nil)
 // SnapshotParser parses OsQuery snapshot logs
 type SnapshotParser struct{}
 
-var _ parsers.Parser = (*SnapshotParser)(nil)
+var _ parsers.Interface = (*SnapshotParser)(nil)
 
-func (p *SnapshotParser) New() parsers.Parser {
+func NewSnapshotParser() parsers.Interface {
 	return &SnapshotParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *SnapshotParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *SnapshotParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Snapshot{}, log)
 }
 
-// LogType returns the log type supported by this parser
-func (p *SnapshotParser) LogType() string {
-	return TypeSnapshot
-}
-
-const TypeSnapshot = "Osquery.Snapshot"
-
-func (event *Snapshot) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeSnapshot, event.CalendarTime.UTC(),
-		parsers.DomainNameP((event.HostIdentifier)),
+func (event *Snapshot) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeSnapshot, event.CalendarTime.UTC(),
+		logs.DomainNameP((event.HostIdentifier)),
 	)
 }

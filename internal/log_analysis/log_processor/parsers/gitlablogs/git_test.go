@@ -46,5 +46,5 @@ func TestGitParser(t *testing.T) {
 		Message:       aws.String("Command failed [1]: /usr/bin/git --git-dir=/Users/vsizov/gitlab-development-kit/gitlab/tmp/tests/gitlab-satellites/group184/gitlabhq/.git --work-tree=/Users/vsizov/gitlab-development-kit/gitlab/tmp/tests/gitlab-satellites/group184/gitlabhq merge --no-ff -mMerge branch 'feature_conflict' into 'feature' source/feature_conflict\n\nerror: failed to push some refs to '/Users/vsizov/gitlab-development-kit/repositories/gitlabhq/gitlab_git.git'"),
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeGit, expectedTime)
-	testutil.CheckPantherParserJSON(t, log, &GitParser{}, expectedEvent)
+	testutil.CheckParser(t, log, TypeGit, expectedEvent)
 }

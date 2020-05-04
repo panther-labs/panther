@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -47,32 +47,32 @@ func TestRFC3164Simple(t *testing.T) {
 		Message:   aws.String("Test"),
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(),
-		parsers.DomainName("host"),
+		logs.DomainName("host"),
 	)
-	testutil.CheckPantherParserJSON(t, log, NewRFC3164Parser(), expectedEvent)
+	testutil.CheckParser(t, log, TypeRFC3164, expectedEvent)
 }
 
 func TestRFC3164WithRFC3339Timestamp(t *testing.T) {
 	//nolint:lll
 	log := `<28>2019-12-02T16:49:23+02:00 host app[23410]: Test`
 
-	expectedTime, _ := time.Parse(time.RFC3339, "2019-12-02T16:49:23+02:00")
+	tm, _ := time.Parse(time.RFC3339, "2019-12-02T16:49:23+02:00")
 
-	expectedEvent := &RFC3164{
+	event := &RFC3164{
 		Priority:  aws.Uint8(28),
 		Facility:  aws.Uint8(3),
 		Severity:  aws.Uint8(4),
-		Timestamp: (*timestamp.RFC3339)(&expectedTime),
+		Timestamp: (*timestamp.RFC3339)(&tm),
 		Hostname:  aws.String("host"),
 		Appname:   aws.String("app"),
 		ProcID:    aws.String("23410"),
 		MsgID:     nil,
 		Message:   aws.String("Test"),
 	}
-	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(),
-		parsers.DomainName("host"),
+	testutil.CheckPantherEvent(t, event, TypeRFC3164, event.Timestamp.UTC(),
+		logs.DomainName("host"),
 	)
-	testutil.CheckPantherParserJSON(t, log, NewRFC3164Parser(), expectedEvent)
+	testutil.CheckParser(t, log, TypeRFC3164, event)
 
 }
 
@@ -95,9 +95,9 @@ func TestRFC3164Example1(t *testing.T) {
 		Message:   aws.String("'su root' failed for lonvick on /dev/pts/8"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeRFC3164, event.Timestamp.UTC(),
-		parsers.DomainName("mymachine"),
+		logs.DomainName("mymachine"),
 	)
-	testutil.CheckPantherParserJSON(t, log, NewRFC3164Parser(), event)
+	testutil.CheckParser(t, log, TypeRFC3164, event)
 }
 
 // Example2 from https://tools.ietf.org/html/rfc3164#section-5.4
@@ -120,9 +120,9 @@ func TestRFC3164Example2(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(),
-		parsers.IPAddress("10.0.0.99"),
+		logs.IPAddress("10.0.0.99"),
 	)
-	testutil.CheckPantherParserJSON(t, log, NewRFC3164Parser(), expectedEvent)
+	testutil.CheckParser(t, log, TypeRFC3164, expectedEvent)
 }
 
 // Example3 from https://tools.ietf.org/html/rfc3164#section-5.4
@@ -145,7 +145,7 @@ func TestRFC3164Example3(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, expectedEvent, TypeRFC3164, expectedEvent.Timestamp.UTC(),
-		parsers.DomainName("CST"),
+		logs.DomainName("CST"),
 	)
-	testutil.CheckPantherParserJSON(t, log, NewRFC3164Parser(), expectedEvent)
+	testutil.CheckParser(t, log, TypeRFC3164, expectedEvent)
 }

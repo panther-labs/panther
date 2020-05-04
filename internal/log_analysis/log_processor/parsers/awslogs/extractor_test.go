@@ -19,13 +19,13 @@ package awslogs
  */
 
 import (
-	"sort"
 	"testing"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
@@ -124,33 +124,27 @@ func TestAWSExtractor(t *testing.T) {
 
 }
 `)
-	event := &parsers.PantherEvent{
-		Fields: []parsers.PantherField{
-			KindAWSARN.Field("arn:aws:iam::123456789012:instance-profile/EC2Dev"),
-			KindAWSARN.Field("arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail"),
-			KindAWSARN.Field("arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e"),
-			KindAWSARN.Field("arn:aws:ec2:region:111122223333:instance/"),
-			KindAWSInstanceID.Field("i-081de1d7604b11e4a"), /* from ARN */
-			KindAWSInstanceID.Field("i-0072230f74b3a798e"), /* from ARN */
-			KindAWSAccountID.Field("123456789012"),
-			KindAWSAccountID.Field("888888888888"), /* from ARN */
-			KindAWSAccountID.Field("111122223333"), /* from ARN */
-			parsers.IPAddress("54.152.215.140"),
-			parsers.IPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
-			parsers.IPAddress("172.31.81.237"),
-			parsers.IPAddress("151.80.19.228"),
-			KindAWSTag.Field("tag1:val1"),
-			parsers.DomainName("ec2-54-152-215-140.compute-1.amazonaws.com"),
-			parsers.DomainName("GeneratedFindingDomainName"),
-			parsers.DomainName("ip-172-31-81-237.ec2.internal"),
-		},
-	}
+	event := logs.NewEvent("test", time.Time{},
+		ARN("arn:aws:iam::123456789012:instance-profile/EC2Dev"),
+		ARN("arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail"),
+		ARN("arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e"),
+		ARN("arn:aws:ec2:region:111122223333:instance/"),
+		InstanceID("i-081de1d7604b11e4a"), /* from ARN */
+		InstanceID("i-0072230f74b3a798e"), /* from ARN */
+		AccountID("123456789012"),
+		AccountID("888888888888"), /* from ARN */
+		AccountID("111122223333"), /* from ARN */
+		logs.IPAddress("54.152.215.140"),
+		logs.IPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+		logs.IPAddress("172.31.81.237"),
+		logs.IPAddress("151.80.19.228"),
+		Tag("tag1:val1"),
+		logs.DomainName("ec2-54-152-215-140.compute-1.amazonaws.com"),
+		logs.DomainName("GeneratedFindingDomainName"),
+		logs.DomainName("ip-172-31-81-237.ec2.internal"),
+	)
 
-	ext := &AWSExtractor{PantherEvent: &parsers.PantherEvent{}}
-
+	ext := &AWSExtractor{Event: logs.NewEvent("test", time.Time{})}
 	extract.Extract(&json, ext)
-	// ext.RemoveDuplicates()
-	sort.Sort(ext)
-	sort.Sort(event)
-	require.Equal(t, event, ext.PantherEvent)
+	testutil.EventEqual(t, event, ext.Event)
 }

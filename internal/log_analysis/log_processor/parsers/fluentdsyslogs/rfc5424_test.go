@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -48,7 +48,7 @@ func TestRFC5424(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, event, TypeRFC5424, tm,
-		parsers.IPAddress("192.168.0.1"),
+		logs.IPAddress("192.168.0.1"),
 	)
 	testutil.CheckParser(t, log, TypeRFC5424, event)
 }
@@ -70,7 +70,7 @@ func TestRFC5424Domain(t *testing.T) {
 		Timestamp: (*timestamp.FluentdTimestamp)(&tm),
 	}
 	testutil.CheckPantherEvent(t, event, TypeRFC5424, tm,
-		parsers.DomainName("ip-192-168-0-1"),
+		logs.DomainName("ip-192-168-0-1"),
 	)
 	testutil.CheckParser(t, log, TypeRFC5424, event)
 }

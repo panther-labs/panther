@@ -44,6 +44,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -63,20 +64,20 @@ var (
 )
 
 type mockParser struct {
-	parsers.Parser
+	parsers.Interface
 	mock.Mock
 }
 
-var _ parsers.Parser = (*mockParser)(nil)
+var _ parsers.Interface = (*mockParser)(nil)
 
-func (m *mockParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (m *mockParser) Parse(log string) ([]*parsers.Result, error) {
 	args := m.Called(log)
 	result := args.Get(0)
 	err := args.Get(1)
 	if result == nil {
 		return nil, err.(error)
 	}
-	return result.([]*parsers.PantherLogJSON), nil
+	return result.([]*parsers.Result), nil
 }
 
 // func (m *mockParser) LogType() string {
@@ -102,21 +103,21 @@ type mockSns struct {
 // testEvent is a test event used for the purposes of this test
 type testEvent struct {
 	Data string
-	parsers.PantherLog
+	logs.Meta
 }
 
-func newSimpleTestEvent() *parsers.PantherLogJSON {
+func newSimpleTestEvent() *parsers.Result {
 	return newTestEvent(testLogType, refTime)
 }
 
-func newTestEvent(logType string, eventTime timestamp.RFC3339) *parsers.PantherLogJSON {
+func newTestEvent(logType string, eventTime timestamp.RFC3339) *parsers.Result {
 	te := testEvent{
-		Data:       "test",
-		PantherLog: *parsers.NewPantherLog(logType, eventTime.UTC()),
+		Data: "test",
+		Meta: logs.NewMeta(logs.NewEvent(logType, eventTime.UTC())),
 	}
 
 	data, _ := jsoniter.Marshal(te)
-	return &parsers.PantherLogJSON{
+	return &parsers.Result{
 		JSON:      data,
 		EventTime: time.Time(eventTime),
 		LogType:   logType,
@@ -124,13 +125,13 @@ func newTestEvent(logType string, eventTime timestamp.RFC3339) *parsers.PantherL
 }
 
 // sized at max single buffer size
-func newBigTestEvent() *parsers.PantherLogJSON {
+func newBigTestEvent() *parsers.Result {
 	te := &testEvent{
-		Data:       (string)(make([]byte, maxS3BufferSizeBytes)),
-		PantherLog: *parsers.NewPantherLog(testLogType, refTime.UTC()),
+		Data: (string)(make([]byte, maxS3BufferSizeBytes)),
+		Meta: logs.NewMeta(logs.NewEvent(testLogType, refTime.UTC())),
 	}
 	data, _ := jsoniter.Marshal(te)
-	return &parsers.PantherLogJSON{
+	return &parsers.Result{
 		JSON:      data,
 		EventTime: time.Time(refTime),
 		LogType:   testLogType,
@@ -144,15 +145,15 @@ func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 
 var localRegistry = &parsers.Registry{}
 
-func registerMockParser(logType string, event *parsers.PantherLogJSON) (testParser *mockParser) {
+func registerMockParser(logType string, event *parsers.Result) (testParser *mockParser) {
 	testParser = &mockParser{}
-	testParser.On("Parse", mock.Anything).Return([]*parsers.PantherLogJSON{event})
+	testParser.On("Parse", mock.Anything).Return([]*parsers.Result{event})
 	localRegistry.Register(parsers.LogType{
 		Name:        logType,
 		Description: fmt.Sprintf("Mock log type %s", logType),
-		NewParser:   func() parsers.Parser { return testParser },
+		NewParser:   func() parsers.Interface { return testParser },
 		Schema: struct {
-			testEvent parsers.PantherLog
+			testEvent logs.Meta
 		}{},
 	})
 	return
@@ -190,7 +191,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 1)
+	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
 
@@ -256,7 +257,7 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	testEvent := newSimpleTestEvent()
 
@@ -286,7 +287,7 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	testEvent := newBigTestEvent()
 
@@ -314,7 +315,7 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 	doneChannel := make(chan bool, 1)
 
 	const nevents = 7
@@ -352,7 +353,7 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	logType1 := "testtype1"
 	testEvent1 := newTestEvent(logType1, refTime)
@@ -379,7 +380,7 @@ func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	// should write 1 file
 	testEvent1 := newTestEvent(testLogType, refTime)
@@ -404,7 +405,7 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	// should write 2 files with different time partitions
 	testEvent1 := newTestEvent(testLogType, refTime)
@@ -439,7 +440,7 @@ func TestSendDataFailsIfS3Fails(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 1)
+	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
 
@@ -459,7 +460,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *parsers.PantherLogJSON, 1)
+	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
 
@@ -479,7 +480,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 
 func TestBufferSetLargest(t *testing.T) {
 	const size = 100
-	event := &parsers.PantherLogJSON{}
+	event := &parsers.Result{}
 	event.LogType = testLogType
 	event.EventTime = time.Time(refTime)
 	bs := newS3EventBufferSet()
@@ -495,11 +496,11 @@ func TestBufferSetLargest(t *testing.T) {
 	require.Same(t, bs.largestBuffer(), expectedLargest)
 }
 
-func runSendEvents(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLogJSON, expectErr bool) {
+func runSendEvents(t *testing.T, destination Destination, eventChannel chan *parsers.Result, expectErr bool) {
 	runSendEventsSignaled(t, destination, eventChannel, expectErr, nil)
 }
 
-func runSendEventsSignaled(t *testing.T, destination Destination, eventChannel chan *parsers.PantherLogJSON,
+func runSendEventsSignaled(t *testing.T, destination Destination, eventChannel chan *parsers.Result,
 	expectErr bool, doneChan chan bool) {
 
 	var waitErr sync.WaitGroup

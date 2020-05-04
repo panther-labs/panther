@@ -22,6 +22,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/extract"
 )
@@ -33,7 +34,7 @@ and unauthorized behavior inside AWS Accounts.
 See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html`,
 	Schema: struct {
 		GuardDuty
-		AWSPantherLog
+		Meta
 	}{},
 	NewParser: NewGuardDutyParser,
 }
@@ -75,26 +76,26 @@ type GuardDutyService struct {
 // VPCFlowParser parses AWS VPC Flow Parser logs
 type GuardDutyParser struct{}
 
-var _ parsers.Parser = (*GuardDutyParser)(nil)
+var _ parsers.Interface = (*GuardDutyParser)(nil)
 
-func NewGuardDutyParser() parsers.Parser {
+func NewGuardDutyParser() parsers.Interface {
 	return &GuardDutyParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *GuardDutyParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *GuardDutyParser) Parse(log string) ([]*parsers.Result, error) {
 	event := &GuardDuty{}
 	return parsers.QuickParseJSON(event, log)
 }
 
-func (event *GuardDuty) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeGuardDuty, event.CreatedAt.UTC(),
+func (event *GuardDuty) PantherEvent() *logs.Event {
+	e := logs.NewEvent(TypeGuardDuty, event.CreatedAt.UTC(),
 		ArnP(event.Arn),
 		AccountIDP(event.AccountID),
 	)
 
 	// polymorphic (unparsed) fields
-	awsExtractor := &AWSExtractor{PantherEvent: e}
+	awsExtractor := &AWSExtractor{Event: e}
 	extract.Extract(event.Resource, awsExtractor)
 	if event.Service != nil {
 		extract.Extract(event.Service.AdditionalInfo, awsExtractor)

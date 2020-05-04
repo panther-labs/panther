@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -46,7 +46,7 @@ func TestRFC3164(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, event, TypeRFC3164, tm,
-		parsers.DomainName("ip-172-31-84-73"),
+		logs.DomainName("ip-172-31-84-73"),
 	)
 	testutil.CheckParser(t, log, TypeRFC3164, event)
 }
@@ -64,7 +64,7 @@ func TestRFC3164WithoutPriority(t *testing.T) {
 		Timestamp: (*timestamp.FluentdTimestamp)(&tm),
 	}
 	testutil.CheckPantherEvent(t, event, TypeRFC3164, tm,
-		parsers.DomainName("ip-172-31-91-66"),
+		logs.DomainName("ip-172-31-91-66"),
 	)
 	testutil.CheckParser(t, log, TypeRFC3164, event)
 }
@@ -83,7 +83,7 @@ func TestRFC3164SSHMessage(t *testing.T) {
 		Timestamp: (*timestamp.FluentdTimestamp)(&tm),
 	}
 	testutil.CheckPantherEvent(t, event, TypeRFC3164, tm,
-		parsers.DomainName("ip-172-31-33-197"),
+		logs.DomainName("ip-172-31-33-197"),
 	)
 	testutil.CheckParser(t, log, TypeRFC3164, event)
 }

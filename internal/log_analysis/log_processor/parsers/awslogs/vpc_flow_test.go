@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -57,14 +58,15 @@ func TestStandardVpcFlowLog(t *testing.T) {
 		Version:     aws.Int(2),
 	}
 	testutil.CheckPantherEvent(t, event, TypeVPCFlow, tmStart,
-		parsers.IPAddress("172.31.20.31"),
-		parsers.IPAddress("52.119.169.95"),
-		KindAWSAccountID.Field("348372346321"),
+		logs.IPAddress("172.31.20.31"),
+		logs.IPAddress("52.119.169.95"),
+		AccountID("348372346321"),
 	)
 	checkVPCFlowParser(t, string(vpcFlowDefaultHeader), log, event)
 }
 
 func TestExtendedVpcFlowLog(t *testing.T) {
+	// FIXME: the test silently outputs a zap warning but doesn't fail. Check sample data
 	log := "3 348372346321 eni-00184058652e5a320 52.119.169.95 172.31.20.31 443 48316 6 19 7119 1573642242 1573642284 ACCEPT OK vpc-4a486c30 subnet-48998e66 i-038407d32b0f38c60 0 IPv4 76.198.154.105 172.31.88.3 extra-data-should-not-break" // nolint:lll
 
 	tmStart := time.Unix(1573642242, 0).UTC()
@@ -94,12 +96,12 @@ func TestExtendedVpcFlowLog(t *testing.T) {
 		PacketDstAddr: aws.String("172.31.88.3"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeVPCFlow, tmStart,
-		parsers.IPAddress("172.31.20.31"),
-		parsers.IPAddress("52.119.169.95"),
-		parsers.IPAddress("76.198.154.105"),
-		parsers.IPAddress("172.31.88.3"),
-		KindAWSAccountID.Field("348372346321"),
-		KindAWSInstanceID.Field("i-038407d32b0f38c60"),
+		logs.IPAddress("172.31.20.31"),
+		logs.IPAddress("52.119.169.95"),
+		logs.IPAddress("76.198.154.105"),
+		logs.IPAddress("172.31.88.3"),
+		AccountID("348372346321"),
+		InstanceID("i-038407d32b0f38c60"),
 	)
 	checkVPCFlowParser(t, string(vpcFlowExtendedHeader), log, event)
 }
@@ -136,6 +138,7 @@ func TestVpcFlowLogHeaderExtended(t *testing.T) {
 	require.Empty(t, events)
 }
 
+// Test helper that handles CSV Header properly
 func checkVPCFlowParser(t *testing.T, header, log string, events ...parsers.PantherEventer) {
 	t.Helper()
 	parser, err := parsers.NewParser(TypeVPCFlow)
@@ -149,8 +152,8 @@ func checkVPCFlowParser(t *testing.T, header, log string, events ...parsers.Pant
 	require.NoError(t, err)
 	require.Equal(t, len(results), len(events))
 	for i, event := range events {
-		expect, err := parsers.RepackJSON(event)
+		expect, err := parsers.PackResult(event)
 		require.NoError(t, err)
-		testutil.PantherLogJSONEq(t, expect, results[i])
+		testutil.ResultEqual(t, expect, results[i])
 	}
 }

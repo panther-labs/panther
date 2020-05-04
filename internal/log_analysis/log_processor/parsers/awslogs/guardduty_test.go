@@ -25,7 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -64,7 +64,7 @@ func TestGuardDutyLogIAMUserLoggingConfigurationModified(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeGuardDuty, tm,
-		parsers.IPAddress("198.51.100.0"),
+		logs.IPAddress("198.51.100.0"),
 		AccountID("123456789012"),
 		ARN("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/44b7c4e9781822beb75d3fbd518abf5b"),
 	)
@@ -105,12 +105,12 @@ func TestGuardDutyLogEC2DGADomainRequest(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeGuardDuty, tm,
-		KindAWSInstanceID.Field("i-99999999"),
-		KindAWSAccountID.Field("123456789012"),
-		parsers.KindDomainName.Field("GeneratedFindingDomainName"),
-		parsers.KindDomainName.Field("GeneratedFindingAdditionalDomainName"),
+		InstanceID("i-99999999"),
+		AccountID("123456789012"),
+		logs.DomainName("GeneratedFindingDomainName"),
+		logs.DomainName("GeneratedFindingAdditionalDomainName"),
 		// nolint:lll
-		KindAWSARN.Field("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56"),
+		ARN("arn:aws:guardduty:eu-west-1:123456789012:detector/b2b7c4e8df224d1b74bece34cc2cf1d5/finding/96b7c4e9781a57ad76e82080578d7d56"),
 	)
 	testutil.CheckParser(t, log, TypeGuardDuty, event)
 }
@@ -151,13 +151,13 @@ func TestGuardDutyLogSSHBruteForce(t *testing.T) {
 	testutil.CheckPantherEvent(t, event, TypeGuardDuty, tm,
 		InstanceID("i-081de1d7604b11e4a"),
 		AccountID("123456789012"),
-		parsers.IPAddress("54.152.215.140"),
-		parsers.IPAddress("151.80.19.228"),
-		parsers.IPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
-		parsers.IPAddress("172.31.81.237"),
+		logs.IPAddress("54.152.215.140"),
+		logs.IPAddress("151.80.19.228"),
+		logs.IPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+		logs.IPAddress("172.31.81.237"),
 		Tag("tag1:val1"),
-		parsers.DomainName("ec2-54-152-215-140.compute-1.amazonaws.com"),
-		parsers.DomainName("ip-172-31-81-237.ec2.internal"),
+		logs.DomainName("ec2-54-152-215-140.compute-1.amazonaws.com"),
+		logs.DomainName("ip-172-31-81-237.ec2.internal"),
 		ARN("arn:aws:iam::123456789012:instance-profile/EC2Dev"),
 		ARN("arn:aws:guardduty:us-east-1:123456789012:detector/6eb7d75a6563c71411485bf5e38adb2f/finding/70b7e42a3241b4c73d8d8cf7b1781f7e"),
 	)

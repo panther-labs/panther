@@ -53,7 +53,7 @@ func TestIntegrationsError(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, expectedEvent, TypeIntegrations, expectedTime)
-	testutil.CheckPantherParserJSON(t, log, &IntegrationsParser{}, expectedEvent)
+	testutil.CheckParser(t, log, TypeIntegrations, expectedEvent)
 }
 func TestIntegrations(t *testing.T) {
 	log := `{
@@ -78,5 +78,5 @@ func TestIntegrations(t *testing.T) {
 		ClientURL:    aws.String("http://jira.example.com"),
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeIntegrations, expectedTime)
-	testutil.CheckPantherParserJSON(t, log, &IntegrationsParser{}, expectedEvent)
+	testutil.CheckParser(t, log, TypeIntegrations, expectedEvent)
 }

@@ -28,13 +28,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 )
 
 // CheckPantherEvent verifies PantherEvent returned by logs.
 // Order of fields is irrelevant.
-func CheckPantherEvent(t *testing.T, src parsers.PantherEventer, logType string, tm time.Time, fields ...parsers.PantherField) {
+func CheckPantherEvent(t *testing.T, src parsers.PantherEventer, logType string, tm time.Time, fields ...logs.Field) {
 	t.Helper()
 	// Check PantherEventer works for zero value
 	require.NotPanics(t, func() {
@@ -44,28 +46,32 @@ func CheckPantherEvent(t *testing.T, src parsers.PantherEventer, logType string,
 		_ = blank.Interface().(parsers.PantherEventer).PantherEvent()
 	})
 	actual := src.PantherEvent()
-	expect := parsers.NewEvent(logType, tm, fields...)
+	expect := logs.NewEvent(logType, tm, fields...)
+	actualFields := actual.AppendFields(nil)
+	expectFields := expect.AppendFields(nil)
 	// Sort fields so events can be checked for equality
-	sort.Sort(actual)
-	sort.Sort(expect)
-	require.Equal(t, expect, actual)
+	sort.Sort(logs.FieldSlice(actualFields))
+	sort.Sort(logs.FieldSlice(expectFields))
+	require.Equal(t, expect.Timestamp, actual.Timestamp)
+	require.Equal(t, expect.LogType, actual.LogType)
+	require.Equal(t, expectFields, actualFields)
 }
 
-// CheckPantherParserJSON checks events produced by a parsers.LogParser on log input
-// It can test parsers that return zero, one or many events
-func CheckPantherParserJSON(t *testing.T, log string, parser parsers.Parser, expect ...parsers.PantherEventer) {
-	t.Helper()
-	results, err := parser.Parse(log)
-	require.NoError(t, err)
-	require.NotNil(t, results)
-	// Prepend the required log arg to more
-	require.Equal(t, len(expect), len(results), "Invalid number of pather logs produced by parser")
-	for i, result := range results {
-		expect, err := parsers.RepackJSON(expect[i])
-		require.NoError(t, err)
-		PantherLogJSONEq(t, expect, result)
-	}
-}
+// // CheckPantherParserJSON checks events produced by a parsers.LogParser on log input
+// // It can test parsers that return zero, one or many events
+// func CheckPantherParserJSON(t *testing.T, log string, parser parsers.Parser, expect ...parsers.PantherEventer) {
+// 	t.Helper()
+// 	results, err := parser.Parse(log)
+// 	require.NoError(t, err)
+// 	require.NotNil(t, results)
+// 	// Prepend the required log arg to more
+// 	require.Equal(t, len(expect), len(results), "Invalid number of pather logs produced by parser")
+// 	for i, result := range results {
+// 		expect, err := parsers.RepackJSON(expect[i])
+// 		require.NoError(t, err)
+// 		PantherLogJSONEq(t, expect, result)
+// 	}
+// }
 
 // CheckPantherParserJSON checks events produced by a parsers.LogParser on log input
 // It can test parsers that return zero, one or many events
@@ -80,15 +86,15 @@ func CheckParser(t *testing.T, log, logType string, expect ...parsers.PantherEve
 	// Prepend the required log arg to more
 	require.Equal(t, len(expect), len(results), "Invalid number of pather logs produced by parser")
 	for i, result := range results {
-		expect, err := parsers.RepackJSON(expect[i])
+		expect, err := parsers.PackResult(expect[i])
 		require.NoError(t, err)
-		PantherLogJSONEq(t, expect, result)
+		ResultEqual(t, expect, result)
 	}
 }
 
-// PantherLogJSONEq asserts that two JSON panther logs are equivalent.
+// ResultEqual asserts that two JSON panther logs are equivalent.
 //
-func PantherLogJSONEq(t *testing.T, expected, actual *parsers.PantherLogJSON, msgAndArgs ...interface{}) bool {
+func ResultEqual(t *testing.T, expected, actual *parsers.Result, msgAndArgs ...interface{}) bool {
 	t.Helper()
 	require.Equal(t, expected.EventTime, actual.EventTime)
 	require.Equal(t, expected.LogType, actual.LogType)
@@ -103,8 +109,12 @@ func PantherLogJSONEq(t *testing.T, expected, actual *parsers.PantherLogJSON, ms
 		t.Errorf(fmt.Sprintf("Expected value ('%s') is not valid json.\nJSON parsing error: '%s'", actual, err.Error()), msgAndArgs...)
 		return false
 	}
-	require.NotEmpty(t, expectedJSONAsInterface["p_row_id"])
+	require.NotEmpty(t, expectedJSONAsInterface["p_log_type"])
+	require.NotEmpty(t, actualJSONAsInterface["p_log_type"])
 	require.NotEmpty(t, expectedJSONAsInterface["p_parse_time"])
+	require.NotEmpty(t, actualJSONAsInterface["p_parse_time"])
+	require.NotEmpty(t, expectedJSONAsInterface["p_row_id"])
+	require.NotEmpty(t, actualJSONAsInterface["p_row_id"])
 	delete(expectedJSONAsInterface, "p_row_id")
 	delete(actualJSONAsInterface, "p_row_id")
 	delete(expectedJSONAsInterface, "p_parse_time")
@@ -116,4 +126,15 @@ func PantherLogJSONEq(t *testing.T, expected, actual *parsers.PantherLogJSON, ms
 	}
 	require.Equal(t, expectedJSONAsInterface, actualJSONAsInterface, msgAndArgs...)
 	return true
+}
+
+func EventEqual(t *testing.T, expect, actual *logs.Event) {
+	t.Helper()
+	expectFields := logs.FieldSlice(expect.AppendFields(nil))
+	actualFields := logs.FieldSlice(actual.AppendFields(nil))
+	sort.Sort(actualFields)
+	sort.Sort(expectFields)
+	require.Equal(t, expectFields, actualFields)
+	require.Equal(t, expect.Timestamp, actual.Timestamp)
+	require.Equal(t, expect.LogType, actual.LogType)
 }

@@ -23,9 +23,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -61,12 +60,7 @@ func TestBatchLog(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeBatch, tm,
-		parsers.DomainName("hostname.local"),
+		logs.DomainName("hostname.local"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &BatchParser{}, event)
-}
-
-func TestOsQueryBatchLogType(t *testing.T) {
-	parser := &BatchParser{}
-	require.Equal(t, TypeBatch, parser.LogType())
+	testutil.CheckParser(t, log, TypeBatch, event)
 }

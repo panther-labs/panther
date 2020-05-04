@@ -45,7 +45,7 @@ type FirehoseDestination struct {
 // It continuously reads events from outputChannel, groups them in batches per log type
 // and sends them to the appropriate Kinesis FIrehose. If the method encounters an error
 // it stops reading from the outputChannel and writes an error to the errorChannel
-func (destination *FirehoseDestination) SendEvents(parsedEventChannel chan *parsers.PantherLogJSON, errChan chan error) {
+func (destination *FirehoseDestination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
 	logtypeToRecords := make(map[string]*recordBatch)
 	eventsProcessed := 0
 	zap.L().Info("starting to read events from channel")

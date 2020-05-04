@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -58,11 +58,11 @@ func TestZeekDNS(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
-		parsers.IPAddressP((event.IDOrigH)),
-		parsers.IPAddressP((event.IDRespH)),
-		parsers.DomainNameP((event.Query)),
-		parsers.DomainName(event.Answers[0]),
+		logs.IPAddressP((event.IDOrigH)),
+		logs.IPAddressP((event.IDRespH)),
+		logs.DomainNameP((event.Query)),
+		logs.DomainName(event.Answers[0]),
 	)
 
-	testutil.CheckPantherParserJSON(t, log, NewZeekDNSParser(), event)
+	testutil.CheckParser(t, log, TypeDNS, event)
 }

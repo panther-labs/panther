@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -55,10 +55,10 @@ func TestS3AccessLogGetHttpOk(t *testing.T) {
 		TLSVersion:         aws.String("TLSV1.1"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm,
-		parsers.IPAddress("192.0.2.3"),
+		logs.IPAddress("192.0.2.3"),
 	)
 
-	testutil.CheckPantherParserJSON(t, log, &S3ServerAccessParser{}, event)
+	testutil.CheckParser(t, log, TypeS3ServerAccess, event)
 }
 
 func TestS3AccessLogGetHttpNotFound(t *testing.T) {
@@ -88,9 +88,9 @@ func TestS3AccessLogGetHttpNotFound(t *testing.T) {
 		TLSVersion:         aws.String("TLSV1.1"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm,
-		parsers.IPAddress("192.0.2.3"),
+		logs.IPAddress("192.0.2.3"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &S3ServerAccessParser{}, event)
+	testutil.CheckParser(t, log, TypeS3ServerAccess, event)
 }
 
 func TestS3AccessLogPutHttpOK(t *testing.T) {
@@ -121,10 +121,10 @@ func TestS3AccessLogPutHttpOK(t *testing.T) {
 		TLSVersion:         aws.String("TLSV1.1"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm,
-		parsers.IPAddress("192.0.2.3"),
-		KindAWSARN.Field("arn:aws:sts::123456789012:assumed-role/PantherLogProcessingRole/1579693334126446707"),
+		logs.IPAddress("192.0.2.3"),
+		ARN("arn:aws:sts::123456789012:assumed-role/PantherLogProcessingRole/1579693334126446707"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &S3ServerAccessParser{}, event)
+	testutil.CheckParser(t, log, TypeS3ServerAccess, event)
 }
 
 func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
@@ -155,7 +155,7 @@ func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
 		TLSVersion:         aws.String("TLSV1.1"),
 		AdditionalFields:   []string{"test1", "test2"},
 	}
-	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm, parsers.IPAddress("192.0.2.3"))
+	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm, logs.IPAddress("192.0.2.3"))
 	testutil.CheckParser(t, log, TypeS3ServerAccess, event)
 }
 

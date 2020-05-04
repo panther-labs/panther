@@ -144,10 +144,10 @@ func TestCloudTrailInsightParser(t *testing.T) {
 		EventCategory: aws.String("Insight"),
 	}
 	testutil.CheckPantherEvent(t, eventStart, TypeCloudTrailInsight, tmStart,
-		KindAWSAccountID.Field("123456789012"),
+		AccountID("123456789012"),
 	)
 	testutil.CheckPantherEvent(t, eventEnd, TypeCloudTrailInsight, tmEnd,
-		KindAWSAccountID.Field("123456789012"),
+		AccountID("123456789012"),
 	)
 	testutil.CheckParser(t, log, TypeCloudTrailInsight, eventStart, eventEnd)
 }

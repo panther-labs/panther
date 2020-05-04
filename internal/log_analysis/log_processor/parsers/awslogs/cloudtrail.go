@@ -22,6 +22,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/extract"
 )
@@ -34,7 +35,7 @@ var LogTypeCloudTrail = parsers.LogType{
 Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
 	Schema: struct {
 		CloudTrail
-		AWSPantherLog
+		Meta
 	}{},
 	NewParser: NewCloudTrailParser,
 }
@@ -128,14 +129,14 @@ type CloudTrailSessionContextWebIDFederationData struct {
 // CloudTrailParser parses CloudTrail logs
 type CloudTrailParser struct{}
 
-var _ parsers.Parser = (*CloudTrailParser)(nil)
+var _ parsers.Interface = (*CloudTrailParser)(nil)
 
-func NewCloudTrailParser() parsers.Parser {
+func NewCloudTrailParser() parsers.Interface {
 	return &CloudTrailParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *CloudTrailParser) Parse(log string) ([]*parsers.Result, error) {
 	cloudTrailRecords := &CloudTrailRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailRecords)
 	if err != nil {
@@ -145,29 +146,32 @@ func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLogJSON, error) 
 	for i, event := range cloudTrailRecords.Records {
 		events[i] = event
 	}
-	return parsers.PackEvents(events...)
+	return parsers.PackResults(events...)
 }
 
-func (event *CloudTrail) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeCloudTrail, event.EventTime.UTC(),
-		parsers.HostnameP(event.SourceIPAddress),
+func (event *CloudTrail) PantherEvent() *logs.Event {
+	e := logs.NewEvent(TypeCloudTrail, event.EventTime.UTC(),
+		logs.HostnameP(event.SourceIPAddress),
 		AccountIDP(event.RecipientAccountID),
 	)
 	for _, resource := range event.Resources {
-		e.Extend(ArnP(resource.ARN), AccountIDP(resource.AccountID))
+		e.Add(ArnP(resource.ARN))
+		e.Add(AccountIDP(resource.AccountID))
 	}
 	if user := event.UserIdentity; user != nil {
-		e.Extend(ArnP(user.ARN), AccountIDP(user.AccountID))
+		e.Add(ArnP(user.ARN))
+		e.Add(AccountIDP(user.AccountID))
 
 		if ctx := user.SessionContext; ctx != nil {
 			if issuer := ctx.SessionIssuer; issuer != nil {
-				e.Extend(ArnP(issuer.Arn), AccountIDP(issuer.AccountID))
+				e.Add(ArnP(issuer.Arn))
+				e.Add(AccountIDP(issuer.AccountID))
 			}
 		}
 	}
 
 	// polymorphic (unparsed) fields
-	awsExtractor := &AWSExtractor{PantherEvent: e}
+	awsExtractor := &AWSExtractor{Event: e}
 	extract.Extract(event.AdditionalEventData, awsExtractor)
 	extract.Extract(event.RequestParameters, awsExtractor)
 	extract.Extract(event.ResponseElements, awsExtractor)

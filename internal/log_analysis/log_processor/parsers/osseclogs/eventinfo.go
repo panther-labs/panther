@@ -20,6 +20,7 @@ package osseclogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -35,7 +36,7 @@ func init() {
 		Description: EventInfoDesc,
 		Schema: struct {
 			EventInfo
-			parsers.PantherLog
+			logs.Meta
 		}{},
 		NewParser: NewEventInfoParser,
 	})
@@ -128,29 +129,27 @@ type Decoder struct {
 // EventInfoParser parses OSSEC EventInfo alerts in the JSON format
 type EventInfoParser struct{}
 
-var _ parsers.Parser = (*EventInfoParser)(nil)
+var _ parsers.Interface = (*EventInfoParser)(nil)
 
-func NewEventInfoParser() parsers.Parser {
+func NewEventInfoParser() parsers.Interface {
 	return &EventInfoParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *EventInfoParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *EventInfoParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&EventInfo{}, log)
 }
 
-func (event *EventInfo) PantherEvent() *parsers.PantherEvent {
-	e := parsers.NewEvent(TypeEventInfo, event.Timestamp.UTC(),
-		parsers.IPAddressP(event.SrcIP),
-		parsers.IPAddressP(event.DstIP),
+func (event *EventInfo) PantherEvent() *logs.Event {
+	e := logs.NewEvent(TypeEventInfo, event.Timestamp.UTC(),
+		logs.IPAddressP(event.SrcIP),
+		logs.IPAddressP(event.DstIP),
 	)
 	if f := event.SyscheckFile; f != nil {
-		e.Extend(
-			parsers.MD5HashP(f.MD5Before),
-			parsers.MD5HashP(f.MD5After),
-			parsers.SHA1HashP(f.SHA1Before),
-			parsers.SHA1HashP(f.SHA1After),
-		)
+		e.Add(logs.MD5HashP(f.MD5Before))
+		e.Add(logs.MD5HashP(f.MD5After))
+		e.Add(logs.SHA1HashP(f.SHA1Before))
+		e.Add(logs.SHA1HashP(f.SHA1After))
 	}
 	return e
 }

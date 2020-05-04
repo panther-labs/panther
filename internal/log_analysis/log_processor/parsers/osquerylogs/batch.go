@@ -20,14 +20,23 @@ package osquerylogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const TypeBatch = "Osquery.Batch"
 
-var BatchDesc = `Batch contains all the data included in OsQuery batch logs
-Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/`
+var LogTypeBatch = parsers.LogType{
+	Name: TypeBatch,
+	Description: `Batch contains all the data included in OsQuery batch logs
+Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/`,
+	NewParser: NewBatchParser,
+	Schema: struct {
+		Batch
+		logs.Meta
+	}{},
+}
 
 // nolint:lll
 type Batch struct { // FIXME: field descriptions need updating!
@@ -43,6 +52,12 @@ type Batch struct { // FIXME: field descriptions need updating!
 
 var _ parsers.PantherEventer = (*Batch)(nil)
 
+func (event *Batch) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeBatch, event.CalendarTime.UTC(),
+		logs.DomainNameP(event.Hostname),
+	)
+}
+
 // OsqueryBatchDiffResults contains diff data for OsQuery batch results
 type BatchDiffResults struct {
 	Added   []map[string]string `json:"added,omitempty"`
@@ -52,24 +67,13 @@ type BatchDiffResults struct {
 // BatchParser parses OsQuery Batch logs
 type BatchParser struct{}
 
-var _ parsers.Parser = (*BatchParser)(nil)
+var _ parsers.Interface = (*BatchParser)(nil)
 
-func (p *BatchParser) New() parsers.Parser {
+func NewBatchParser() parsers.Interface {
 	return &BatchParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *BatchParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *BatchParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Batch{}, log)
-}
-
-// LogType returns the log type supported by this parser
-func (p *BatchParser) LogType() string {
-	return TypeBatch
-}
-
-func (event *Batch) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeBatch, event.CalendarTime.UTC(),
-		parsers.DomainNameP(event.Hostname),
-	)
 }

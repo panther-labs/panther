@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -160,7 +160,7 @@ func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata
 	columns = append(columns, extraColumns...)
 	var selectColumns []string
 	for _, col := range columns {
-		if strings.HasPrefix(col.Name, parsers.PantherFieldPrefix) { // only Panther columns
+		if strings.HasPrefix(col.Name, logs.PantherFieldPrefix) { // only Panther columns
 			selectColumns = append(selectColumns, col.Name)
 		}
 	}

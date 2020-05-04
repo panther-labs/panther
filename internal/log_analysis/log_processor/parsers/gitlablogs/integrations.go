@@ -20,6 +20,7 @@ package gitlablogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -32,7 +33,7 @@ var LogTypeIntegrations = parsers.LogType{
 Reference: https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog`,
 	Schema: struct {
 		Integrations
-		parsers.PantherLog
+		logs.Meta
 	}{},
 	NewParser: NewIntegrationsParser,
 }
@@ -54,17 +55,17 @@ var _ parsers.PantherEventer = (*Integrations)(nil)
 // IntegrationsParser parses gitlab integration logs
 type IntegrationsParser struct{}
 
-var _ parsers.Parser = (*IntegrationsParser)(nil)
+var _ parsers.Interface = (*IntegrationsParser)(nil)
 
-func NewIntegrationsParser() parsers.Parser {
+func NewIntegrationsParser() parsers.Interface {
 	return &IntegrationsParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *IntegrationsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *IntegrationsParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Integrations{}, log)
 }
 
-func (event *Integrations) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeIntegrations, event.Time.UTC())
+func (event *Integrations) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeIntegrations, event.Time.UTC())
 }

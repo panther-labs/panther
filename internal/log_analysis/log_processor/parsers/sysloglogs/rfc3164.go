@@ -26,22 +26,22 @@ import (
 	"github.com/influxdata/go-syslog/v3/rfc3164"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const (
 	TypeRFC3164 = "Syslog.RFC3164"
-	RFC3164Desc = `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)
-Reference: https://tools.ietf.org/html/rfc3164`
 )
 
 func init() {
 	parsers.MustRegister(parsers.LogType{
-		Name:        TypeRFC3164,
-		Description: RFC3164Desc,
+		Name: TypeRFC3164,
+		Description: `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)
+Reference: https://tools.ietf.org/html/rfc3164`,
 		Schema: struct {
 			RFC3164
-			parsers.PantherLog
+			logs.Meta
 		}{},
 		NewParser: NewRFC3164Parser,
 	})
@@ -67,10 +67,10 @@ type RFC3164Parser struct {
 	parser syslog.Machine
 }
 
-var _ parsers.Parser = (*RFC3164Parser)(nil)
+var _ parsers.Interface = (*RFC3164Parser)(nil)
 
 // New returns an initialized LogParser for Syslog RFC3164 logs
-func NewRFC3164Parser() parsers.Parser {
+func NewRFC3164Parser() parsers.Interface {
 	return &RFC3164Parser{
 		parser: rfc3164.NewParser(
 			rfc3164.WithBestEffort(),
@@ -82,7 +82,7 @@ func NewRFC3164Parser() parsers.Parser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *RFC3164Parser) Parse(log string) ([]*parsers.Result, error) {
 	if p.parser == nil {
 		return nil, errors.New("nil parser")
 	}
@@ -107,12 +107,12 @@ func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	// if err := parsers.Validator.Struct(externalRFC3164); err != nil {
 	// 	return nil, err
 	// }
-	return parsers.PackEvents(externalRFC3164)
+	return parsers.PackResults(externalRFC3164)
 }
 
-func (event *RFC3164) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeRFC3164, event.Timestamp.UTC(),
-		parsers.HostnameP(event.Hostname),
-		parsers.IPAddressP(event.Message),
+func (event *RFC3164) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeRFC3164, event.Timestamp.UTC(),
+		logs.HostnameP(event.Hostname),
+		logs.IPAddressP(event.Message),
 	)
 }

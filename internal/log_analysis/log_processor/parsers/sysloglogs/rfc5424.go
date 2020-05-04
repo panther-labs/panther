@@ -25,6 +25,7 @@ import (
 	"github.com/influxdata/go-syslog/v3/rfc5424"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -41,7 +42,7 @@ func init() {
 		NewParser:   NewRFC5424Parser,
 		Schema: struct {
 			RFC5424
-			parsers.PantherLog
+			logs.Meta
 		}{},
 	})
 }
@@ -63,9 +64,9 @@ type RFC5424 struct {
 
 var _ parsers.PantherEventer = (*RFC5424)(nil)
 
-func (event *RFC5424) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeRFC5424, event.Timestamp.UTC(),
-		parsers.HostnameP(event.Hostname))
+func (event *RFC5424) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeRFC5424, event.Timestamp.UTC(),
+		logs.HostnameP(event.Hostname))
 }
 
 // RFC5424Parser parses Syslog logs in the RFC5424 format
@@ -73,17 +74,17 @@ type RFC5424Parser struct {
 	parser syslog.Machine
 }
 
-var _ parsers.Parser = (*RFC5424Parser)(nil)
+var _ parsers.Interface = (*RFC5424Parser)(nil)
 
 // New returns an initialized LogParser for Syslog RFC5424 logs
-func NewRFC5424Parser() parsers.Parser {
+func NewRFC5424Parser() parsers.Interface {
 	return &RFC5424Parser{
 		parser: rfc5424.NewParser(rfc5424.WithBestEffort()),
 	}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *RFC5424Parser) Parse(log string) ([]*parsers.Result, error) {
 	if p.parser == nil {
 		return nil, errors.New("parser can not be nil")
 	}
@@ -106,5 +107,5 @@ func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 		Message:        internalRFC5424.Message,
 	}
 
-	return parsers.PackEvents(externalRFC5424)
+	return parsers.PackResults(externalRFC5424)
 }

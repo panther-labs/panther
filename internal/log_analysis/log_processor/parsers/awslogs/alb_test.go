@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -69,8 +69,8 @@ func TestHTTPLog(t *testing.T) {
 		ErrorReason:            nil,
 	}
 	testutil.CheckPantherEvent(t, event, TypeALB, tm,
-		parsers.IPAddress("192.168.131.39"),
-		parsers.IPAddress("10.0.0.1"),
+		logs.IPAddress("192.168.131.39"),
+		logs.IPAddress("10.0.0.1"),
 		ARN("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
 	)
 	testutil.CheckParser(t, log, TypeALB, event)
@@ -118,9 +118,9 @@ func TestHTTPSLog(t *testing.T) {
 		ErrorReason:            nil,
 	}
 	testutil.CheckPantherEvent(t, event, TypeALB, tm,
-		parsers.IPAddress("192.168.131.39"),
-		parsers.IPAddress("10.0.0.1"),
-		parsers.DomainName("www.example.com"),
+		logs.IPAddress("192.168.131.39"),
+		logs.IPAddress("10.0.0.1"),
+		logs.DomainName("www.example.com"),
 		ARN("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
 		ARN("arn:aws:acm:us-east-2:123456789012:certificate/12345678-1234-1234-1234-123456789012"),
 	)
@@ -169,8 +169,8 @@ func TestHTTP2Log(t *testing.T) {
 		ErrorReason:            nil,
 	}
 	testutil.CheckPantherEvent(t, event, TypeALB, tm,
-		parsers.KindIPAddress.Field("10.0.1.252"),
-		parsers.KindIPAddress.Field("10.0.0.66"),
+		logs.IPAddress("10.0.1.252"),
+		logs.IPAddress("10.0.0.66"),
 		ARN("arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
 	)
 
@@ -218,7 +218,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 		ErrorReason:            nil,
 	}
 	testutil.CheckPantherEvent(t, event, TypeALB, tm,
-		parsers.IPAddress("138.246.253.5"),
+		logs.IPAddress("138.246.253.5"),
 		ARN("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c"),
 	)
 	testutil.CheckParser(t, log, TypeALB, event)

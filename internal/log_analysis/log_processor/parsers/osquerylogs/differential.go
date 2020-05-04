@@ -20,14 +20,23 @@ package osquerylogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const TypeDifferential = "Osquery.Differential"
 
-var DifferentialDesc = `Differential contains all the data included in OsQuery differential logs
-Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
+var LogTypeDifferential = parsers.LogType{
+	Name: TypeDifferential,
+	Description: `Differential contains all the data included in OsQuery differential logs
+Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`,
+	Schema: struct {
+		Differential
+		logs.Meta
+	}{},
+	NewParser: NewDifferentialParser,
+}
 
 // nolint:lll
 type Differential struct { // FIXME: field descriptions need updating!
@@ -47,34 +56,29 @@ type Differential struct { // FIXME: field descriptions need updating!
 
 var _ parsers.PantherEventer = (*Differential)(nil)
 
+func (event *Differential) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeDifferential, event.CalendarTime.UTC(),
+		logs.DomainNameP(event.HostIdentifier),
+		logs.IPAddress(event.Columns["local_address"]),
+		logs.IPAddress(event.Columns["remote_address"]),
+	)
+}
+
 // DifferentialParser parses OsQuery Differential logs
 type DifferentialParser struct{}
 
-var _ parsers.Parser = (*DifferentialParser)(nil)
+var _ parsers.Interface = (*DifferentialParser)(nil)
 
-func (p *DifferentialParser) New() parsers.Parser {
+func NewDifferentialParser() parsers.Interface {
 	return &DifferentialParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *DifferentialParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *DifferentialParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Differential{}, log)
 	// Populating LogType with LogTypeInput value
 	// This is needed because we want the JSON field with key `log_type` to be marshalled
 	// with key `logtype`
 	// event.LogType = event.LogUnderscoreType
 	// event.LogUnderscoreType = nil
-}
-
-// LogType returns the log type supported by this parser
-func (p *DifferentialParser) LogType() string {
-	return TypeDifferential
-}
-
-func (event *Differential) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeDifferential, event.CalendarTime.UTC(),
-		parsers.DomainNameP(event.HostIdentifier),
-		parsers.IPAddress(event.Columns["local_address"]),
-		parsers.IPAddress(event.Columns["remote_address"]),
-	)
 }

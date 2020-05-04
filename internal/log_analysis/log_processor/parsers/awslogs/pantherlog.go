@@ -21,78 +21,72 @@ package awslogs
 import (
 	"strings"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 )
 
 // nolint(lll)
-type AWSPantherLog struct {
-	parsers.PantherLog
+type Meta struct {
+	logs.Meta
 
-	PantherAnyAWSAccountIds  parsers.SmallStringSet `json:"p_any_aws_account_ids,omitempty" description:"Panther added field with collection of aws account ids associated with the row"`
-	PantherAnyAWSInstanceIds parsers.SmallStringSet `json:"p_any_aws_instance_ids,omitempty" description:"Panther added field with collection of aws instance ids associated with the row"`
-	PantherAnyAWSARNs        parsers.SmallStringSet `json:"p_any_aws_arns,omitempty" description:"Panther added field with collection of aws arns associated with the row"`
-	PantherAnyAWSTags        parsers.SmallStringSet `json:"p_any_aws_tags,omitempty" description:"Panther added field with collection of aws tags associated with the row"`
+	PantherAnyAWSAccountIds  []string `json:"p_any_aws_account_ids,omitempty" description:"Panther added field with collection of aws account ids associated with the row"`
+	PantherAnyAWSInstanceIds []string `json:"p_any_aws_instance_ids,omitempty" description:"Panther added field with collection of aws instance ids associated with the row"`
+	PantherAnyAWSARNs        []string `json:"p_any_aws_arns,omitempty" description:"Panther added field with collection of aws arns associated with the row"`
+	PantherAnyAWSTags        []string `json:"p_any_aws_tags,omitempty" description:"Panther added field with collection of aws tags associated with the row"`
 }
 
 const (
-	_ parsers.PantherFieldKind = iota + 999
+	_ logs.FieldKind = iota + 999
 	KindAWSARN
 	KindAWSAccountID
 	KindAWSInstanceID
 	KindAWSTag
 )
 
-func ArnP(arn *string) parsers.PantherField {
+func ArnP(arn *string) logs.Field {
 	if arn != nil {
 		return ARN(*arn)
 	}
-	return parsers.PantherFieldZero()
+	return logs.Field{}
 }
-func InstanceIDP(id *string) parsers.PantherField {
-	return parsers.NewPantherFieldP(KindAWSInstanceID, id)
+func InstanceIDP(id *string) logs.Field {
+	if id != nil {
+		return InstanceID(*id)
+	}
+	return logs.Field{}
 }
-func AccountIDP(id *string) parsers.PantherField {
-	return parsers.NewPantherFieldP(KindAWSAccountID, id)
+func AccountIDP(id *string) logs.Field {
+	if id != nil {
+		return AccountID(*id)
+	}
+	return logs.Field{}
 }
-func TagP(tag *string) parsers.PantherField {
-	return parsers.NewPantherFieldP(KindAWSTag, tag)
+func TagP(tag *string) logs.Field {
+	if tag != nil {
+		return Tag(*tag)
+	}
+	return logs.Field{}
 }
-func ARN(arn string) parsers.PantherField {
+func ARN(arn string) logs.Field {
 	if arn = strings.TrimSpace(arn); strings.HasPrefix(arn, "arn:") {
-		return parsers.NewPantherField(KindAWSARN, arn)
+		return logs.Field{KindAWSARN, arn}
 	}
-	return parsers.PantherFieldZero()
+	return logs.Field{}
 }
-func InstanceID(id string) parsers.PantherField {
-	return parsers.NewPantherField(KindAWSInstanceID, id)
-}
-func AccountID(id string) parsers.PantherField {
-	return parsers.NewPantherField(KindAWSAccountID, id)
-}
-func Tag(tag string) parsers.PantherField {
-	return parsers.NewPantherField(KindAWSTag, tag)
-}
-
-func (pl *AWSPantherLog) ExtendPantherFields(fields ...parsers.PantherField) {
-	for i := range fields {
-		if field := &fields[i]; !field.IsEmpty() {
-			pl.InsertPantherField(field.Kind, field.Value)
-		}
+func InstanceID(id string) logs.Field {
+	if id := strings.TrimSpace(id); id != "" {
+		return logs.Field{KindAWSInstanceID, id}
 	}
+	return logs.Field{}
 }
-
-func (pl *AWSPantherLog) InsertPantherField(kind parsers.PantherFieldKind, value string) {
-	switch kind {
-	case KindAWSARN:
-		pl.PantherAnyAWSARNs.Insert(value)
-	case KindAWSAccountID:
-		pl.PantherAnyAWSAccountIds.Insert(value)
-	case KindAWSInstanceID:
-		pl.PantherAnyAWSInstanceIds.Insert(value)
-	case KindAWSTag:
-		pl.PantherAnyAWSTags.Insert(value)
-	default:
-		// delegate to base PantherLog
-		pl.PantherLog.InsertPantherField(kind, value)
+func AccountID(id string) logs.Field {
+	if id := strings.TrimSpace(id); id != "" {
+		return logs.Field{KindAWSAccountID, id}
 	}
+	return logs.Field{}
+}
+func Tag(tag string) logs.Field {
+	if tag := strings.TrimSpace(tag); tag != "" {
+		return logs.Field{KindAWSTag, tag}
+	}
+	return logs.Field{}
 }

@@ -23,9 +23,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -46,9 +45,9 @@ func TestAccessLog(t *testing.T) {
 		HTTPReferer:   aws.String("https://domain1.com/?p=1"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeAccess, tm,
-		parsers.IPAddress("180.76.15.143"),
+		logs.IPAddress("180.76.15.143"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &AccessParser{}, event)
+	testutil.CheckParser(t, log, TypeAccess, event)
 
 }
 
@@ -68,12 +67,7 @@ func TestAccessLogWithoutReferer(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, event, TypeAccess, tm,
-		parsers.IPAddress("180.76.15.143"),
+		logs.IPAddress("180.76.15.143"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &AccessParser{}, event)
-}
-
-func TestAccessLogType(t *testing.T) {
-	parser := &AccessParser{}
-	require.Equal(t, TypeAccess, parser.LogType())
+	testutil.CheckParser(t, log, TypeAccess, event)
 }

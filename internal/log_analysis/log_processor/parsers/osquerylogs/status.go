@@ -20,12 +20,23 @@ package osquerylogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var StatusDesc = `Status is a diagnostic osquery log about the daemon.
-Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`
+const TypeStatus = "Osquery.Status"
+
+var LogTypeStatus = parsers.LogType{
+	Name: TypeStatus,
+	Description: `Status is a diagnostic osquery log about the daemon.
+Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/`,
+	NewParser: NewStatusParser,
+	Schema: struct {
+		Status
+		logs.Meta
+	}{},
+}
 
 // nolint:lll
 type Status struct { // FIXME: field descriptions need updating!
@@ -47,14 +58,14 @@ var _ parsers.PantherEventer = (*Status)(nil)
 // StatusParser parses OsQuery Status logs
 type StatusParser struct{}
 
-var _ parsers.Parser = (*StatusParser)(nil)
+var _ parsers.Interface = (*StatusParser)(nil)
 
-func (p *StatusParser) New() parsers.Parser {
+func NewStatusParser() parsers.Interface {
 	return &StatusParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *StatusParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *StatusParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Status{}, log)
 	// event := &Status{}
 	// err := jsoniter.UnmarshalFromString(log, event)
@@ -76,15 +87,8 @@ func (p *StatusParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 	// return event.Logs(), nil
 }
 
-// LogType returns the log type supported by this parser
-func (p *StatusParser) LogType() string {
-	return TypeStatus
-}
-
-const TypeStatus = "Osquery.Status"
-
-func (event *Status) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeStatus, event.CalendarTime.UTC(),
-		parsers.DomainNameP(event.HostIdentifier),
+func (event *Status) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeStatus, event.CalendarTime.UTC(),
+		logs.DomainNameP(event.HostIdentifier),
 	)
 }

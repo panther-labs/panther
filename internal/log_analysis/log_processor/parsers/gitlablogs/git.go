@@ -20,6 +20,7 @@ package gitlablogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -38,7 +39,7 @@ func init() {
 		Description: GitDesc,
 		Schema: struct {
 			Git
-			parsers.PantherLog
+			logs.Meta
 		}{},
 		NewParser: NewGitParser,
 	})
@@ -55,15 +56,15 @@ type Git struct {
 // GitParser parses gitlab rails logs
 type GitParser struct{}
 
-var _ parsers.Parser = (*GitParser)(nil)
+var _ parsers.Interface = (*GitParser)(nil)
 
 // New creates a new parser
-func NewGitParser() parsers.Parser {
+func NewGitParser() parsers.Interface {
 	return &GitParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *GitParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *GitParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Git{}, log)
 }
 
@@ -72,6 +73,6 @@ func (p *GitParser) LogType() string {
 	return TypeGit
 }
 
-func (event *Git) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeGit, event.Time.UTC())
+func (event *Git) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeGit, event.Time.UTC())
 }

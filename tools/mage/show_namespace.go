@@ -33,7 +33,8 @@ type Show mg.Namespace
 // Schemas Prints to stdout a JSON representation each supported log type
 func (b Show) Schemas() {
 	for _, parser := range registry.AvailableParsers() {
-		jsonSchema := jsonschema.Reflect(parser.GlueTableMetadata.EventStruct())
+		meta := parser.GlueTableMetadata()
+		jsonSchema := jsonschema.Reflect(meta.EventStruct())
 		for name, schemaType := range jsonSchema.Definitions {
 			fmt.Println(name)
 			props, err := json.MarshalIndent(schemaType.Properties, "", "    ")

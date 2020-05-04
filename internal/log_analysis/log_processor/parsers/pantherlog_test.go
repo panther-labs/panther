@@ -19,12 +19,9 @@ package parsers
  */
 
 import (
-	"testing"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	"github.com/stretchr/testify/require"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 )
 
 type TestEvent struct {
@@ -34,126 +31,55 @@ type TestEvent struct {
 
 var _ PantherEventer = (*TestEvent)(nil)
 
-func (e *TestEvent) PantherEvent() *PantherEvent {
-	return NewEvent("test", e.Ts, IPAddress(e.RemoteIP))
+func (e *TestEvent) PantherEvent() *logs.Event {
+	return logs.NewEvent("test", e.Ts,
+		logs.IPAddress(e.RemoteIP))
 }
 
-func TestPantherLog(t *testing.T) {
-	now := time.Now()
-	strTime := (*timestamp.RFC3339)(&now).String()
-	testEvent := TestEvent{
-		Ts:       now,
-		RemoteIP: "127.0.0.1",
-	}
+type testParser struct{}
 
-	actual, err := RepackJSON(&testEvent)
-	require.NoError(t, err)
-	exp := &PantherLogJSON{
-		JSON: []byte(`{
-			"ts": "` + strTime + `",
-			"remote_ip": "127.0.0.1",
-			"p_any_ip_addresses": ["127.0.0.1"],
-			"p_event_time": "` + strTime + `",
-			"p_parse_time": "` + strTime + `",
-			"p_log_type": "test"
-		}`),
-		LogType:   "test",
-		EventTime: now,
-	}
-	// require.Equal(t, exp, actual)
-	require.JSONEq(t, string(exp.JSON), string(actual.JSON))
+func (p *testParser) Parse(log string) ([]*Result, error) {
+	return nil, nil
 }
-func TestSmallStringSetInsert(t *testing.T) {
-	{
-		values := SmallStringSet{}
-		values.Insert("foo")
-		require.Equal(t, values, SmallStringSet{"foo"})
-	}
-	{
-		var values SmallStringSet
-		values.Insert("")
-		require.Equal(t, values, SmallStringSet(nil))
-	}
-	{
-		var values SmallStringSet
-		values.Insert("foo")
-		require.Equal(t, values, SmallStringSet{"foo"})
-	}
-	{
-		values := SmallStringSet{}
-		values.Insert("")
-		require.Equal(t, values, SmallStringSet{})
-	}
-	{
-		values := SmallStringSet{"foo"}
-		values.Insert("foo")
-		require.Equal(t, values, SmallStringSet{"foo"})
-	}
-	{
-		values := SmallStringSet{"foo", "bar"}
-		values.Insert("foo")
-		require.Equal(t, values, SmallStringSet{"foo", "bar"})
-	}
-	{
-		values := SmallStringSet{"foo", "bar"}
-		values.Insert("baz")
-		values.Insert("")
-		require.Equal(t, values, SmallStringSet{"foo", "bar", "baz"})
-	}
-}
-func TestSmallStringSetMarshal(t *testing.T) {
-	type testCase struct {
-		value   SmallStringSet
-		json    string
-		wantErr bool
-	}
-	for _, tc := range []testCase{
-		{SmallStringSet{"foo", "bar", "baz"}, `["bar","baz","foo"]`, false},
-		{SmallStringSet{"foo"}, `["foo"]`, false},
-		{SmallStringSet{}, `[]`, false},
-		{SmallStringSet(nil), `null`, false},
-	} {
-		tc := tc // Avoid lint whining
-		t.Run(tc.json, func(t *testing.T) {
-			data, err := jsoniter.Marshal(tc.value)
-			if (err != nil) != tc.wantErr {
-				t.Errorf("Unexpected error %s", err)
-			}
-			if string(data) != tc.json {
-				t.Errorf("Invalid JSON output %q != %q", data, tc.json)
-			}
-		})
 
-	}
-}
-func TestSmallStringSetMarshalOmitEmpty(t *testing.T) {
-	type A struct {
-		Values SmallStringSet `json:"values,omitempty"`
-	}
+// func TestPantherLog(t *testing.T) {
+// 	now := time.Now()
+// 	strTime := (*timestamp.RFC3339)(&now).String()
+// 	testEvent := TestEvent{
+// 		Ts:       now,
+// 		RemoteIP: "127.0.0.1",
+// 	}
 
-	type testCase struct {
-		value   SmallStringSet
-		json    string
-		wantErr bool
-	}
-	for _, tc := range []testCase{
-		{SmallStringSet{"foo", "bar", "baz"}, `{"values":["bar","baz","foo"]}`, false},
-		{SmallStringSet{}, `{}`, false},
-		{SmallStringSet(nil), `{}`, false},
-	} {
-		tc := tc // Avoid lint whining
-		t.Run(tc.json, func(t *testing.T) {
-			data, err := jsoniter.Marshal(A{tc.value})
-			if (err != nil) != (tc.wantErr) {
-				t.Errorf("Unexpected error %s", err)
-			}
-			if string(data) != tc.json {
-				t.Errorf("Invalid JSON output %q != %q", data, tc.json)
-			}
-		})
+// 	r, _ := NewRegistry()
+// 	r.Register(LogType{
+// 		Name:        "test",
+// 		Description: "foo",
+// 		Schema: struct {
+// 			TestEvent
+// 			PantherLog
+// 		}{},
+// 		NewParser: func() Parser {
+// 			return &testParser{}
+// 		},
+// 	})
 
-	}
-}
+// 	actual, err := r.RepackJSON(&testEvent)
+// 	require.NoError(t, err)
+// 	exp := &PantherLogJSON{
+// 		JSON: []byte(`{
+// 			"ts": "` + strTime + `",
+// 			"remote_ip": "127.0.0.1",
+// 			"p_any_ip_addresses": ["127.0.0.1"],
+// 			"p_event_time": "` + strTime + `",
+// 			"p_parse_time": "` + strTime + `",
+// 			"p_log_type": "test"
+// 		}`),
+// 		LogType:   "test",
+// 		EventTime: now,
+// 	}
+// 	// require.Equal(t, exp, actual)
+// 	require.JSONEq(t, string(exp.JSON), string(actual.JSON))
+// }
 
 // func TestAnyStringUnmarshal(t *testing.T) {
 // 	var any PantherAnyString

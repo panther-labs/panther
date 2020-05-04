@@ -31,7 +31,6 @@ import (
 
 	"github.com/alecthomas/jsonschema"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
@@ -152,7 +151,7 @@ func logDocs() error {
 
 		// use html table to get needed control
 		for _, logType := range logTypes {
-			table := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata
+			table := registry.MustGet(logType).GlueTableMetadata()
 
 			description := html.EscapeString(table.Description())
 
@@ -214,10 +213,10 @@ func formatType(col gluecf.Column) string {
 
 	// complex Glue types are hard to read, so use JSON schema
 	colType := col.Field.Type
-	switch colType.String() { // handle special Panther types that will not work with JSON schema
-	case reflect.TypeOf(&parsers.SmallStringSet{}).String():
-		colType = reflect.TypeOf([]string{}) // slice of strings
-	}
+	// switch colType.String() { // handle special Panther types that will not work with JSON schema
+	// case reflect.TypeOf(&parsers.SmallStringSet{}).String():
+	// 	colType = reflect.TypeOf([]string{}) // slice of strings
+	// }
 	// deference pointers
 	if colType.Kind() == reflect.Ptr {
 		colType = colType.Elem()

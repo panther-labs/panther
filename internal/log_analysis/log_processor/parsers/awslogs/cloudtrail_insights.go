@@ -4,6 +4,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -33,7 +34,7 @@ var LogTypeCloudTrailInsight = parsers.LogType{
 Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
 	Schema: struct {
 		CloudTrailInsight
-		AWSPantherLog
+		Meta
 	}{},
 	NewParser: NewCloudTrailInsightParser,
 }
@@ -62,8 +63,8 @@ type CloudTrailInsight struct {
 
 var _ parsers.PantherEventer = (*CloudTrailInsight)(nil)
 
-func (event *CloudTrailInsight) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeCloudTrailInsight, event.EventTime.UTC(),
+func (event *CloudTrailInsight) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeCloudTrailInsight, event.EventTime.UTC(),
 		AccountIDP(event.RecipientAccountID),
 	)
 }
@@ -97,26 +98,26 @@ type InsightAverage struct {
 type CloudTrailInsightParser struct{}
 
 // NOTE: guard to ensure interface implementation
-var _ parsers.Parser = (*CloudTrailInsightParser)(nil)
+var _ parsers.Interface = (*CloudTrailInsightParser)(nil)
 
-func NewCloudTrailInsightParser() parsers.Parser {
+func NewCloudTrailInsightParser() parsers.Interface {
 	return &CloudTrailInsightParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailInsightParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *CloudTrailInsightParser) Parse(log string) ([]*parsers.Result, error) {
 	cloudTrailInsightRecords := &CloudTrailInsightRecords{}
 	err := jsoniter.UnmarshalFromString(log, cloudTrailInsightRecords)
 	if err != nil {
 		return nil, err
 	}
-	if err := parsers.Validator.Struct(cloudTrailInsightRecords); err != nil {
+	if err := parsers.ValidateStruct(cloudTrailInsightRecords); err != nil {
 		return nil, err
 	}
 
-	result := make([]*parsers.PantherLogJSON, len(cloudTrailInsightRecords.Records))
+	result := make([]*parsers.Result, len(cloudTrailInsightRecords.Records))
 	for i, event := range cloudTrailInsightRecords.Records {
-		r, err := parsers.RepackJSON(event)
+		r, err := parsers.PackResult(event)
 		if err != nil {
 			return nil, err
 		}

@@ -23,9 +23,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -53,12 +52,7 @@ func TestSnapshotLog(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, event, TypeSnapshot, tm,
-		parsers.DomainName("hostname.local"),
+		logs.DomainName("hostname.local"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &SnapshotParser{}, event)
-}
-
-func TestOsQuerySnapshotLogType(t *testing.T) {
-	parser := &SnapshotParser{}
-	require.Equal(t, TypeSnapshot, parser.LogType())
+	testutil.CheckParser(t, log, TypeSnapshot, event)
 }

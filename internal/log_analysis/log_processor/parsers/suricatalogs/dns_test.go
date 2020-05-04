@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -57,11 +57,11 @@ func TestDNSQuery(t *testing.T) {
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
-		parsers.IPAddress(("192.168.89.2")),
-		parsers.IPAddress(("8.8.8.8")),
-		parsers.DomainName(("localhost")),
+		logs.IPAddress(("192.168.89.2")),
+		logs.IPAddress(("8.8.8.8")),
+		logs.DomainName(("localhost")),
 	)
-	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
+	testutil.CheckParser(t, log, TypeDNS, event)
 }
 
 func TestDNSAnswerNoError(t *testing.T) {
@@ -97,12 +97,12 @@ func TestDNSAnswerNoError(t *testing.T) {
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
-		parsers.IPAddress("192.168.88.1"),
-		parsers.IPAddress("192.168.88.61"),
-		parsers.IPAddress("199.16.156.6"),
-		parsers.DomainName("twitter.com"),
+		logs.IPAddress("192.168.88.1"),
+		logs.IPAddress("192.168.88.61"),
+		logs.IPAddress("199.16.156.6"),
+		logs.DomainName("twitter.com"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
+	testutil.CheckParser(t, log, TypeDNS, event)
 }
 
 func TestDNSAnswerRefused(t *testing.T) {
@@ -137,11 +137,11 @@ func TestDNSAnswerRefused(t *testing.T) {
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
-		parsers.IPAddress("192.168.88.1"),
-		parsers.IPAddress("192.168.88.61"),
-		parsers.DomainName("time.nist.gov"),
+		logs.IPAddress("192.168.88.1"),
+		logs.IPAddress("192.168.88.61"),
+		logs.DomainName("time.nist.gov"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
+	testutil.CheckParser(t, log, TypeDNS, event)
 }
 
 func TestDNSDetailedFormat(t *testing.T) {
@@ -219,21 +219,21 @@ func TestDNSDetailedFormat(t *testing.T) {
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
-		parsers.IPAddress("192.168.88.1"),
-		parsers.IPAddress("192.168.88.61"),
-		parsers.IPAddress("192.0.78.24"),
-		parsers.IPAddress("192.0.78.25"),
-		parsers.IPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
-		parsers.DomainName("foo.suricata-ids.org"),
-		parsers.DomainName("suricata-ids.org"),
-		parsers.DomainName("suricata-ids-aaaa.org"),
-		parsers.DomainName("suricata-ids-cname.org"),
-		parsers.DomainName("suricata-ids-txt.org"),
-		parsers.DomainName("suricata-ids-mx.org"),
-		parsers.DomainName("mail.server"),
-		parsers.DomainName("hostname1.example.com"),
+		logs.IPAddress("192.168.88.1"),
+		logs.IPAddress("192.168.88.61"),
+		logs.IPAddress("192.0.78.24"),
+		logs.IPAddress("192.0.78.25"),
+		logs.IPAddress("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+		logs.DomainName("foo.suricata-ids.org"),
+		logs.DomainName("suricata-ids.org"),
+		logs.DomainName("suricata-ids-aaaa.org"),
+		logs.DomainName("suricata-ids-cname.org"),
+		logs.DomainName("suricata-ids-txt.org"),
+		logs.DomainName("suricata-ids-mx.org"),
+		logs.DomainName("mail.server"),
+		logs.DomainName("hostname1.example.com"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
+	testutil.CheckParser(t, log, TypeDNS, event)
 }
 
 func TestDNSGroupedFormat(t *testing.T) {
@@ -272,11 +272,11 @@ func TestDNSGroupedFormat(t *testing.T) {
 	}
 
 	testutil.CheckPantherEvent(t, event, TypeDNS, tm,
-		parsers.IPAddress("192.168.88.1"),
-		parsers.IPAddress("192.168.88.61"),
-		parsers.IPAddress("192.0.78.24"),
-		parsers.IPAddress("192.0.78.25"),
-		parsers.DomainName("suricata-ids.org"),
+		logs.IPAddress("192.168.88.1"),
+		logs.IPAddress("192.168.88.61"),
+		logs.IPAddress("192.0.78.24"),
+		logs.IPAddress("192.0.78.25"),
+		logs.DomainName("suricata-ids.org"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &DNSParser{}, event)
+	testutil.CheckParser(t, log, TypeDNS, event)
 }

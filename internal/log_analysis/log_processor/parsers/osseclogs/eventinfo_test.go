@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -50,7 +50,7 @@ func TestEventInfo(t *testing.T) {
 		ProgramName: aws.String("syslogd"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeEventInfo, tm)
-	testutil.CheckPantherParserJSON(t, log, &EventInfoParser{}, event)
+	testutil.CheckParser(t, log, TypeEventInfo, event)
 }
 
 func TestEventInfoWithSyscheckFile(t *testing.T) {
@@ -82,10 +82,10 @@ func TestEventInfoWithSyscheckFile(t *testing.T) {
 		Hostname: aws.String("ip-172-16-2-16"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeEventInfo, tm,
-		parsers.MD5Hash("220a8f105af5e711f99e52583209a871"),
-		parsers.MD5Hash("22271cce0732d887e3980e5a6868e459"),
-		parsers.SHA1Hash("c7414fd048c81361720e2d9c8d2f82faf33748b6"),
-		parsers.SHA1Hash("4df65340f366c18f85be228c26817e20391f32c4"),
+		logs.MD5Hash("220a8f105af5e711f99e52583209a871"),
+		logs.MD5Hash("22271cce0732d887e3980e5a6868e459"),
+		logs.SHA1Hash("c7414fd048c81361720e2d9c8d2f82faf33748b6"),
+		logs.SHA1Hash("4df65340f366c18f85be228c26817e20391f32c4"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &EventInfoParser{}, event)
+	testutil.CheckParser(t, log, TypeEventInfo, event)
 }

@@ -82,5 +82,5 @@ func TestExceptionsParser(t *testing.T) {
 		},
 	}
 	testutil.CheckPantherEvent(t, expectedEvent, TypeExceptions, expectedTime)
-	testutil.CheckPantherParserJSON(t, log, &ExceptionsParser{}, expectedEvent)
+	testutil.CheckParser(t, log, TypeExceptions, expectedEvent)
 }

@@ -20,6 +20,7 @@ package fluentdsyslogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -32,7 +33,7 @@ var LogTypeRFC5424 = parsers.LogType{
 Reference: https://docs.fluentd.org/parser/syslog#rfc5424-log`,
 	Schema: struct {
 		RFC5424
-		parsers.PantherLog
+		logs.Meta
 	}{},
 	NewParser: NewRFC5424Parser,
 }
@@ -55,22 +56,22 @@ var _ parsers.PantherEventer = (*RFC5424)(nil)
 // RFC5424Parser parses fluentd syslog logs in the RFC5424 format
 type RFC5424Parser struct{}
 
-var _ parsers.Parser = (*RFC5424Parser)(nil)
+var _ parsers.Interface = (*RFC5424Parser)(nil)
 
-func NewRFC5424Parser() parsers.Parser {
+func NewRFC5424Parser() parsers.Interface {
 	return &RFC5424Parser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *RFC5424Parser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&RFC5424{}, log)
 }
 
-func (event *RFC5424) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeRFC5424, event.Timestamp.UTC(),
+func (event *RFC5424) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeRFC5424, event.Timestamp.UTC(),
 		// The hostname should be a FQDN, but may also be an IP address. Check for IP, otherwise
 		// add as a domain name. https://tools.ietf.org/html/rfc5424#section-6.2.4
-		parsers.HostnameP(event.Hostname),
-		parsers.IPAddressP(event.Message),
+		logs.HostnameP(event.Hostname),
+		logs.IPAddressP(event.Message),
 	)
 }

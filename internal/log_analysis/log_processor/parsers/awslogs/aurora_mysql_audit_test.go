@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -50,8 +50,8 @@ func TestAuroraMySQLAuditLog(t *testing.T) {
 		RetCode: aws.Int(0),
 	}
 	testutil.CheckPantherEvent(t, event, TypeAuroraMySQLAudit, tm,
-		parsers.IPAddress("10.0.143.147"),
-		parsers.DomainName("db-instance-name"),
+		logs.IPAddress("10.0.143.147"),
+		logs.DomainName("db-instance-name"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &AuroraMySQLAuditParser{}, event)
+	testutil.CheckParser(t, log, TypeAuroraMySQLAudit, event)
 }

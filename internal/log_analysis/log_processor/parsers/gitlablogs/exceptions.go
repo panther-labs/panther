@@ -20,6 +20,7 @@ package gitlablogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -32,7 +33,7 @@ var LogTypeExceptions = parsers.LogType{
 Reference: https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog`,
 	Schema: struct {
 		Exceptions
-		parsers.PantherLog
+		logs.Meta
 	}{},
 	NewParser: NewExceptionsParser,
 }
@@ -54,8 +55,8 @@ type Exceptions struct {
 
 var _ parsers.PantherEventer = (*Exceptions)(nil)
 
-func (event *Exceptions) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeExceptions, event.Time.UTC())
+func (event *Exceptions) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeExceptions, event.Time.UTC())
 }
 
 // ExtraServer has info about the server an exception occurred
@@ -80,14 +81,14 @@ type ServerOS struct {
 // ExceptionsParser parses gitlab rails logs
 type ExceptionsParser struct{}
 
-var _ parsers.Parser = (*ExceptionsParser)(nil)
+var _ parsers.Interface = (*ExceptionsParser)(nil)
 
 // New creates a new parser
-func NewExceptionsParser() parsers.Parser {
+func NewExceptionsParser() parsers.Interface {
 	return &ExceptionsParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *ExceptionsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *ExceptionsParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Exceptions{}, log)
 }

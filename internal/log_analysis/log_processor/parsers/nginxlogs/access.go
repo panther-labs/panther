@@ -24,7 +24,9 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -36,8 +38,16 @@ const (
 	accessTimestampFormatTimeLocal = "[2/Jan/2006:15:04:05-0700]"
 )
 
-var AccessDesc = `Access Logs for your Nginx server. We currently support Nginx 'combined' format. 
-Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`
+var LogTypeAccess = parsers.LogType{
+	Name: TypeAccess,
+	Description: `Access Logs for your Nginx server. We currently support Nginx 'combined' format. 
+Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`,
+	Schema: struct {
+		Access
+		logs.Meta
+	}{},
+	NewParser: NewAccessParser,
+}
 
 // nolint:lll
 type Access struct {
@@ -56,14 +66,14 @@ var _ parsers.PantherEventer = (*Access)(nil)
 // AccessParser parses Nginx Access logs in 'combined' log format
 type AccessParser struct{}
 
-var _ parsers.Parser = (*AccessParser)(nil)
+var _ parsers.Interface = (*AccessParser)(nil)
 
-func (p *AccessParser) New() parsers.Parser {
+func NewAccessParser() parsers.Interface {
 	return &AccessParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AccessParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *AccessParser) Parse(log string) ([]*parsers.Result, error) {
 	reader := csv.NewReader(strings.NewReader(log))
 	// Separator between fields is the empty space
 	reader.Comma = ' ' // NOTE: [nginxlogs]
@@ -108,16 +118,11 @@ func (p *AccessParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
 		HTTPReferer:   parsers.CsvStringToPointer(record[8]),
 		HTTPUserAgent: parsers.CsvStringToPointer(record[9]),
 	}
-	return parsers.PackEvents(event)
+	return parsers.PackResults(event)
 }
 
-// LogType returns the log type supported by this parser
-func (p *AccessParser) LogType() string {
-	return TypeAccess
-}
-
-func (event *Access) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeAccess, event.Time.UTC(),
-		parsers.IPAddress(aws.StringValue(event.RemoteAddress)),
+func (event *Access) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeAccess, event.Time.UTC(),
+		logs.IPAddress(aws.StringValue(event.RemoteAddress)),
 	)
 }

@@ -45,15 +45,15 @@ type ClassifierResult struct {
 	// Events contains the parsed events
 	// If the classification process was not successful and the log is from an
 	// unsupported type, this will be nil
-	Events []*parsers.PantherLogJSON
+	Events []*parsers.Result
 	// LogType is the identified type of the log
 	LogType *string
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
-func NewClassifier() ClassifierAPI {
+func NewClassifier(r *parsers.Registry) ClassifierAPI {
 	parserQueue := &ParserPriorityQueue{}
-	parserQueue.initialize()
+	parserQueue.initialize(r)
 	return &Classifier{
 		parsers:     parserQueue,
 		parserStats: make(map[string]*ParserStats),
@@ -78,7 +78,7 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(parser parsers.Parser, logType string, log string) (parsedEvents []*parsers.PantherLogJSON, err error) {
+func safeLogParse(parser parsers.Interface, logType string, log string) (parsedEvents []*parsers.Result, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.Errorf("parser %q panicked %q", logType, r)

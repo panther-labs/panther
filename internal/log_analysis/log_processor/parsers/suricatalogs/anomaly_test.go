@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -56,8 +56,8 @@ func TestAnomaly(t *testing.T) {
 		PcapFilename: aws.String("/pcaps/4SICS-GeekLounge-151022.pcap"),
 	}
 	testutil.CheckPantherEvent(t, event, TypeAnomaly, tm,
-		parsers.IPAddress("192.168.88.25"),
-		parsers.IPAddress("192.168.2.22"),
+		logs.IPAddress("192.168.88.25"),
+		logs.IPAddress("192.168.2.22"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &AnomalyParser{}, event)
+	testutil.CheckParser(t, log, TypeAnomaly, event)
 }

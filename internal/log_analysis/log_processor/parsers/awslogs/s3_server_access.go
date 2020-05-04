@@ -23,6 +23,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/csvstream"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -34,7 +35,7 @@ var LogTypeS3ServerAccess = parsers.LogType{
 Log format & samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html`,
 	Schema: struct {
 		S3ServerAccess
-		AWSPantherLog
+		Meta
 	}{},
 	NewParser: NewS3ServerAccessParser,
 }
@@ -79,9 +80,9 @@ type S3ServerAccessParser struct {
 	CSVReader *csvstream.StreamingCSVReader
 }
 
-var _ parsers.Parser = (*S3ServerAccessParser)(nil)
+var _ parsers.Interface = (*S3ServerAccessParser)(nil)
 
-func NewS3ServerAccessParser() parsers.Parser {
+func NewS3ServerAccessParser() parsers.Interface {
 	reader := csvstream.NewStreamingCSVReader()
 	// non-default settings
 	reader.CVSReader.Comma = ' '
@@ -92,7 +93,7 @@ func NewS3ServerAccessParser() parsers.Parser {
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.Result, error) {
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
 		return nil, err
@@ -142,12 +143,12 @@ func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLogJSON, err
 		TLSVersion:         parsers.CsvStringToPointer(record[24]),
 		AdditionalFields:   additionalFields,
 	}
-	return parsers.PackEvents(event)
+	return parsers.PackResults(event)
 }
 
-func (event *S3ServerAccess) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeS3ServerAccess, event.Time.UTC(),
-		parsers.IPAddressP(event.RemoteIP),
+func (event *S3ServerAccess) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeS3ServerAccess, event.Time.UTC(),
+		logs.IPAddressP(event.RemoteIP),
 		ArnP(event.Requester),
 	)
 }

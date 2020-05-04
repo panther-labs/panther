@@ -24,7 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -62,14 +62,14 @@ func TestCloudTrailLogGenerateDataKey(t *testing.T) {
 		RequestParameters:  newRawMessage(`{"keySpec":"AES_256","encryptionContext":{"aws:cloudtrail:arn":"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail","aws:s3:arn":"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"},"keyId":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"}`),
 	}
 	testutil.CheckPantherEvent(t, event, TypeCloudTrail, tm,
-		KindAWSARN.Field("arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"),
-		KindAWSARN.Field("arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail"),
-		KindAWSARN.Field("arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"),
-		KindAWSAccountID.Field("888888888888"),
-		KindAWSAccountID.Field("777777777777"),
-		parsers.DomainName("cloudtrail.amazonaws.com"),
+		ARN("arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"),
+		ARN("arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail"),
+		ARN("arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"),
+		AccountID("888888888888"),
+		AccountID("777777777777"),
+		logs.DomainName("cloudtrail.amazonaws.com"),
 	)
-	testutil.CheckPantherParserJSON(t, log, &CloudTrailParser{}, event)
+	testutil.CheckParser(t, log, TypeCloudTrail, event)
 }
 
 // nolint:lll
@@ -127,7 +127,7 @@ func TestCloudTrailLogDecrypt(t *testing.T) {
 		ARN("arn:aws:sts::888888888888:assumed-role/panther-app-LogProcessor-XXXXXXXXXXXX-FunctionRole-XXXXXXXXXX/panther-log-processor"),
 		ARN("arn:aws:lambda:us-east-1:888888888888:function:panther-log-processor"),
 		AccountID("888888888888"),
-		parsers.IPAddress("1.2.3.4"),
+		logs.IPAddress("1.2.3.4"),
 	)
 	testutil.CheckParser(t, log, TypeCloudTrail, event)
 }

@@ -61,7 +61,7 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 	newProcessorFunc func(*common.DataStream) *Processor) error {
 
 	zap.L().Debug("processing data streams", zap.Int("numDataStreams", len(dataStreams)))
-	parsedEventChannel := make(chan *parsers.PantherLogJSON, ParsedEventBufferSize)
+	parsedEventChannel := make(chan *parsers.Result, ParsedEventBufferSize)
 	errorChannel := make(chan error)
 
 	// go routine aggregates data written to s3
@@ -105,7 +105,7 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 }
 
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
-func (p *Processor) run(outputChan chan *parsers.PantherLogJSON) error {
+func (p *Processor) run(outputChan chan *parsers.Result) error {
 	var err error
 	stream := bufio.NewReader(p.input.Reader)
 	for {
@@ -127,7 +127,7 @@ func (p *Processor) run(outputChan chan *parsers.PantherLogJSON) error {
 	return err
 }
 
-func (p *Processor) processLogLine(line string, outputChan chan *parsers.PantherLogJSON) {
+func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
 	classificationResult := p.classifyLogLine(line)
 	if classificationResult.LogType == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
 		return
@@ -148,7 +148,7 @@ func (p *Processor) classifyLogLine(line string) *classification.ClassifierResul
 	return result
 }
 
-func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.PantherLogJSON) {
+func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.Result) {
 	for _, event := range result.Events {
 		outputChan <- event
 	}
@@ -171,7 +171,7 @@ type Processor struct {
 func NewProcessor(input *common.DataStream) *Processor {
 	return &Processor{
 		input:      input,
-		classifier: classification.NewClassifier(),
+		classifier: classification.NewClassifier(nil),
 		operation:  common.OpLogManager.Start(operationName),
 	}
 }

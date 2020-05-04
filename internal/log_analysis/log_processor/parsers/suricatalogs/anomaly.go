@@ -20,26 +20,22 @@ package suricatalogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-const (
-	TypeAnomaly = "Suricata.Anomaly"
-	AnomalyDesc = `Suricata parser for the Anomaly event type in the EVE JSON output.
-Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#anomaly`
-)
+const TypeAnomaly = "Suricata.Anomaly"
 
-func init() {
-	parsers.MustRegister(parsers.LogType{
-		Name:        TypeAnomaly,
-		Description: AnomalyDesc,
-		Schema: struct {
-			Anomaly
-			parsers.PantherLog
-		}{},
-		NewParser: NewAnomalyParser,
-	})
+var LogTypeAnomaly = parsers.LogType{
+	Name: TypeAnomaly,
+	Description: `Suricata parser for the Anomaly event type in the EVE JSON output.
+Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#anomaly`,
+	Schema: struct {
+		Anomaly
+		logs.Meta
+	}{},
+	NewParser: NewAnomalyParser,
 }
 
 //nolint:lll
@@ -96,21 +92,21 @@ type AnomalyMetadataFlowints struct {
 // AnomalyParser parses Suricata Anomaly alerts in the JSON format
 type AnomalyParser struct{}
 
-var _ parsers.Parser = (*AnomalyParser)(nil)
+var _ parsers.Interface = (*AnomalyParser)(nil)
 
-func NewAnomalyParser() parsers.Parser {
+func NewAnomalyParser() parsers.Interface {
 	return &AnomalyParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *AnomalyParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *AnomalyParser) Parse(log string) ([]*parsers.Result, error) {
 	event := &Anomaly{}
 	return parsers.QuickParseJSON(event, log)
 }
 
-func (event *Anomaly) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeAnomaly, event.Timestamp.UTC(),
-		parsers.IPAddressP(event.SrcIP),
-		parsers.IPAddressP(event.DestIP),
+func (event *Anomaly) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeAnomaly, event.Timestamp.UTC(),
+		logs.IPAddressP(event.SrcIP),
+		logs.IPAddressP(event.DestIP),
 	)
 }

@@ -20,7 +20,9 @@ package gitlablogs
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -33,7 +35,7 @@ var LogTypeRails = parsers.LogType{
 Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog`,
 	Schema: struct {
 		Rails
-		parsers.PantherLog
+		logs.Meta
 	}{},
 	NewParser: NewRailsParser,
 }
@@ -78,20 +80,20 @@ type QueryParam struct {
 // RailsParser parses gitlab rails logs
 type RailsParser struct{}
 
-var _ parsers.Parser = (*RailsParser)(nil)
+var _ parsers.Interface = (*RailsParser)(nil)
 
 // New creates a new parser
-func NewRailsParser() parsers.Parser {
+func NewRailsParser() parsers.Interface {
 	return &RailsParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *RailsParser) Parse(log string) ([]*parsers.PantherLogJSON, error) {
+func (p *RailsParser) Parse(log string) ([]*parsers.Result, error) {
 	return parsers.QuickParseJSON(&Rails{}, log)
 }
 
-func (event *Rails) PantherEvent() *parsers.PantherEvent {
-	return parsers.NewEvent(TypeRails, event.Time.UTC(),
-		parsers.IPAddress(aws.StringValue(event.RemoteIP)),
+func (event *Rails) PantherEvent() *logs.Event {
+	return logs.NewEvent(TypeRails, event.Time.UTC(),
+		logs.IPAddress(aws.StringValue(event.RemoteIP)),
 	)
 }
