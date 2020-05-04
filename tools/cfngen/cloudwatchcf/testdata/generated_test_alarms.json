@@ -470,10 +470,10 @@
         "Statistic": "Sum"
       }
     },
-    "PantherAlarmELBErrorWeb": {
+    "PantherAlarmELB4XXErrorWeb": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
-        "AlarmName": "PantherAlarm-ELBError-Web",
+        "AlarmName": "PantherAlarm-ELB4XXError-Web",
         "AlarmDescription": "ALB has elevated ELB 4XX errors. See: https://docs.runpanther.io/operations/runbooks#web",
         "AlarmActions": [
           {
@@ -492,10 +492,32 @@
         "Statistic": "Sum"
       }
     },
-    "PantherAlarmELBTargetErrorWeb": {
+    "PantherAlarmELB5XXErrorWeb": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
-        "AlarmName": "PantherAlarm-ELBTargetError-Web",
+        "AlarmName": "PantherAlarm-ELB5XXError-Web",
+        "AlarmDescription": "ALB has elevated ELB 5XX errors. See: https://docs.runpanther.io/operations/runbooks#web",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicArn"
+          }
+        ],
+        "TreatMissingData": "notBreaching",
+        "Namespace": "AWS/ApplicationELB",
+        "MetricName": "HTTPCode_ELB_5XX_Count",
+        "Dimensions": [{ "Name": "LoadBalancer", "Value": { "Ref": "LoadBalancerFullName" } }],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "EvaluationPeriods": 1,
+        "Period": 300,
+        "Threshold": 0,
+        "Unit": "None",
+        "Statistic": "Sum"
+      }
+    },
+    "PantherAlarmELBTarget4XXErrorWeb": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "PantherAlarm-ELBTarget4XXError-Web",
         "AlarmDescription": "ALB has elevated Target 4XX errors. See: https://docs.runpanther.io/operations/runbooks#web",
         "AlarmActions": [
           {
@@ -512,6 +534,50 @@
         "Threshold": 5,
         "Unit": "None",
         "Statistic": "Sum"
+      }
+    },
+    "PantherAlarmELBTarget5XXErrorWeb": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "PantherAlarm-ELBTarget5XXError-Web",
+        "AlarmDescription": "ALB has elevated Target 5XX errors. See: https://docs.runpanther.io/operations/runbooks#web",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicArn"
+          }
+        ],
+        "TreatMissingData": "notBreaching",
+        "Namespace": "AWS/ApplicationELB",
+        "MetricName": "HTTPCode_Target_5XX_Count",
+        "Dimensions": [{ "Name": "LoadBalancer", "Value": { "Ref": "LoadBalancerFullName" } }],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "EvaluationPeriods": 1,
+        "Period": 300,
+        "Threshold": 0,
+        "Unit": "None",
+        "Statistic": "Sum"
+      }
+    },
+    "PantherAlarmELBTargetLatencyWeb": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "PantherAlarm-ELBTargetLatency-Web",
+        "AlarmDescription": "ALB has elevated latency. See: https://docs.runpanther.io/operations/runbooks#web",
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicArn"
+          }
+        ],
+        "TreatMissingData": "notBreaching",
+        "Namespace": "AWS/ApplicationELB",
+        "MetricName": "TargetResponseTime",
+        "Dimensions": [{ "Name": "LoadBalancer", "Value": { "Ref": "LoadBalancerFullName" } }],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "EvaluationPeriods": 5,
+        "Period": 300,
+        "Threshold": 0.5,
+        "Unit": "Seconds",
+        "ExtendedStatistic": "p95"
       }
     },
     "PantherAlarmELBUnhealthyWeb": {

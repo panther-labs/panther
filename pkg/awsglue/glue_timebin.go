@@ -21,6 +21,8 @@ package awsglue
 import (
 	"fmt"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 // Use this to tag the time partitioning used in a GlueTableMetadata table
@@ -42,7 +44,7 @@ func (tb GlueTableTimebin) Validate() (err error) {
 	return
 }
 
-// return the next time interval
+// Next returns the next time interval
 func (tb GlueTableTimebin) Next(t time.Time) (next time.Time) {
 	switch tb {
 	case GlueTableHourly:
@@ -58,4 +60,20 @@ func (tb GlueTableTimebin) Next(t time.Time) (next time.Time) {
 	default:
 		panic(fmt.Sprintf("unknown GlueTableMetadata table time bin: %d", tb))
 	}
+}
+
+// PartitionValuesFromTime returns an []*string values (used for Glue APIs)
+func (tb GlueTableTimebin) PartitionValuesFromTime(t time.Time) (values []*string) {
+	values = []*string{aws.String(fmt.Sprintf("%d", t.Year()))}
+
+	if tb >= GlueTableMonthly {
+		values = append(values, aws.String(fmt.Sprintf("%02d", t.Month())))
+	}
+	if tb >= GlueTableDaily {
+		values = append(values, aws.String(fmt.Sprintf("%02d", t.Day())))
+	}
+	if tb >= GlueTableHourly {
+		values = append(values, aws.String(fmt.Sprintf("%02d", t.Hour())))
+	}
+	return
 }
