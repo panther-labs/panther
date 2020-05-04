@@ -20,6 +20,7 @@ package genericapi
  */
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -78,7 +79,24 @@ func (r *Router) Handle(input interface{}) (output interface{}, err error) {
 	}()
 
 	if err = r.validate.Struct(input); err != nil {
-		return nil, &InvalidInputError{Route: req.route, Message: err.Error()}
+		var msg string
+		if vErr, ok := err.(validator.ValidationErrors); ok {
+			// The default error message looks like this:
+			//     Key: 'Input.Name' Error:Field validation for 'Name' failed on the 'excludesall' tag
+			// Restructure to be more user friendly:
+			//     Name invalid, failed to satisfy the condition: excludesall=&<>
+			fieldErr := []validator.FieldError(vErr)[0]
+			property := fieldErr.Tag()
+			if param := fieldErr.Param(); param != "" {
+				// If the validation tag has parameters, include them in the message
+				property += "=" + param
+			}
+			msg = fmt.Sprintf("%s invalid, failed to satisfy the condition: %s", fieldErr.Field(), property)
+		} else {
+			msg = err.Error()
+		}
+
+		return nil, &InvalidInputError{Route: req.route, Message: msg}
 	}
 
 	// Find the handler function, either cached or reflected.
