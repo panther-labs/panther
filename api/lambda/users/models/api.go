@@ -67,8 +67,8 @@ type GetUserOutput = User
 
 // InviteUserInput creates a new user with minimal permissions and sends them an invite.
 type InviteUserInput struct {
-	GivenName  *string `json:"givenName" validate:"required,min=1"`
-	FamilyName *string `json:"familyName" validate:"required,min=1"`
+	GivenName  *string `json:"givenName" validate:"required,min=1,excludesall='<>&\""`
+	FamilyName *string `json:"familyName" validate:"required,min=1,excludesall='<>&\""`
 	Email      *string `json:"email" validate:"required,email"`
 
 	// RESEND or SUPPRESS the invitation message
@@ -145,8 +145,8 @@ type UpdateUserInput struct {
 	ID *string `json:"id" validate:"required,uuid4"`
 
 	// At least one of the following must be specified:
-	GivenName  *string `json:"givenName" validate:"omitempty,min=1"`
-	FamilyName *string `json:"familyName" validate:"omitempty,min=1"`
+	GivenName  *string `json:"givenName" validate:"omitempty,min=1,excludesall='<>&\""`
+	FamilyName *string `json:"familyName" validate:"omitempty,min=1,excludesall='<>&\""`
 	Email      *string `json:"email" validate:"omitempty,min=1"`
 }
 

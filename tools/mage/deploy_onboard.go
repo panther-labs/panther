@@ -105,10 +105,8 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 
 	// avoid alarms/errors and check first if the integrations exist
 	var listOutput []*models.SourceIntegration
-	var listInput = struct {
-		ListIntegrations *models.ListIntegrationsInput
-	}{
-		&models.ListIntegrationsInput{},
+	var listInput = &models.LambdaInput{
+		ListIntegrations: &models.ListIntegrationsInput{},
 	}
 	if err := invokeLambda(awsSession, "panther-source-api", listInput, &listOutput); err != nil {
 		return fmt.Errorf("error calling lambda to register account: %v", err)
@@ -118,13 +116,13 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 	// fails this generates alarms. We don't want that so we check first and give a nice message.
 	registerCloudSec, registerLogProcessing := true, true
 	for _, integration := range listOutput {
-		if *integration.AWSAccountID == accountID &&
+		if aws.StringValue(integration.AWSAccountID) == accountID &&
 			*integration.IntegrationType == models.IntegrationTypeAWSScan {
 
 			logger.Infof("deploy: account %s is already registered for cloud security", accountID)
 			registerCloudSec = false
 		}
-		if *integration.AWSAccountID == accountID &&
+		if aws.StringValue(integration.AWSAccountID) == accountID &&
 			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
 			*integration.IntegrationLabel == genLogProcessingLabel(awsSession) {
 

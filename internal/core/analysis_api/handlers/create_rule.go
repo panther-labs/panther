@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
@@ -80,6 +82,11 @@ func parseUpdateRule(request *events.APIGatewayProxyRequest) (*models.UpdateRule
 
 	if err := result.Validate(nil); err != nil {
 		return nil, err
+	}
+
+	// Rule names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
+	if genericapi.ContainsHTML(string(result.DisplayName)) {
+		return nil, fmt.Errorf("display name: %v", genericapi.ErrContainsHTML)
 	}
 
 	return &result, nil

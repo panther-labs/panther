@@ -122,7 +122,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 			zap.String("key", s3Object.S3ObjectKey))
 	}()
 
-	s3Client, err := getS3Client(s3Object)
+	s3Client, _, err := getS3Client(s3Object)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
