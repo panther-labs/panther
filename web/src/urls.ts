@@ -74,7 +74,7 @@ const urls = {
   settings: {
     home: () => '/settings/',
     general: () => `${urls.settings.home()}general/`,
-    globalModule: () => `${urls.settings.home()}/module/`,
+    globalModule: () => `${urls.settings.home()}module/`,
     users: () => `${urls.settings.home()}users/`,
     destinations: () => `${urls.settings.home()}destinations/`,
   },
