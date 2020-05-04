@@ -21,7 +21,6 @@ package cfndoc
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -56,6 +55,7 @@ Resources:
         maxReceiveCount: 10
 */
 
+// TODO - Parse CfnDoc as yaml field instead of comment, then group by resource type
 const (
 	StartTag = `<cfndoc>`
 	EndTag   = `</cfndoc>`
@@ -63,10 +63,11 @@ const (
 
 var (
 	commentMarkers      = regexp.MustCompile(`\n\s*[#]`)
-	extractResourceDocs = regexp.MustCompile(`(?s)[[:alpha:]]+:[\s]*([\S^]+)[\s\#]*` + StartTag + `(.+?)` + EndTag)
+	extractResourceDocs = regexp.MustCompile(`(?s)([[:alpha:]]+):[ \t]*(\S+)[\s\#]*` + StartTag + `(.+?)` + EndTag)
 )
 
 type ResourceDoc struct {
+	FieldName     string // "QueueName", "FunctionName", etc
 	Resource      string // referenced label
 	Documentation string
 }
@@ -79,18 +80,20 @@ func ReadCfn(paths ...string) (docs []*ResourceDoc, err error) {
 		}
 		docs = append(docs, fileDocs...)
 	}
-	sort.Sort(ByLabel(docs))
+	sort.Slice(docs, func(i, j int) bool {
+		if docs[i].Resource == docs[j].Resource {
+			// Same resource name: break ties by resource "type" based on field name
+			return docs[i].FieldName < docs[j].FieldName
+		}
+
+		return docs[i].Resource < docs[j].Resource
+	})
+
 	return docs, nil
 }
 
-func Read(fileName string) (docs []*ResourceDoc, err error) {
-	fd, err := os.Open(fileName)
-	if err != nil {
-		return nil, errors.Wrapf(err, "cannot open %s for doc extraction", fileName)
-	}
-	defer fd.Close()
-
-	cfn, err := ioutil.ReadAll(fd)
+func Read(fileName string) ([]*ResourceDoc, error) {
+	cfn, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot read %s for doc extraction", fileName)
 	}
@@ -100,12 +103,13 @@ func Read(fileName string) (docs []*ResourceDoc, err error) {
 
 func Parse(cfn string) (docs []*ResourceDoc) {
 	for _, match := range extractResourceDocs.FindAllStringSubmatch(cfn, -1) {
-		if len(match) != 3 {
+		if len(match) != 4 {
 			panic(fmt.Sprintf("bad match, likely regexp is wrong: %#v", match))
 		}
 		docs = append(docs, &ResourceDoc{
-			Resource:      match[1],
-			Documentation: clean(match[2]),
+			FieldName:     match[1],
+			Resource:      match[2],
+			Documentation: clean(match[3]),
 		})
 	}
 	return docs
@@ -115,9 +119,3 @@ func clean(s string) string {
 	// we want to allow # so markdown can work but remove the leading # comment markers
 	return strings.TrimSpace(commentMarkers.ReplaceAllString(s, "\n"))
 }
-
-type ByLabel []*ResourceDoc
-
-func (a ByLabel) Len() int           { return len(a) }
-func (a ByLabel) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByLabel) Less(i, j int) bool { return a[i].Resource < a[j].Resource }

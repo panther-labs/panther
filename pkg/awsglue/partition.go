@@ -24,7 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -42,8 +41,9 @@ type GluePartition struct {
 	s3Bucket         string
 	dataFormat       string    // Can currently be only "json"
 	compression      string    // Can only be "gzip" currently
-	hour             time.Time // the hour this partition corresponds to
+	time             time.Time // the time (e.g., specific hour) this partition corresponds to
 	partitionColumns []PartitionColumnInfo
+	gm               *GlueTableMetadata // this is the abstraction for dealing directly with the glue catalog
 }
 
 func (gp *GluePartition) GetDatabase() string {
@@ -52,6 +52,10 @@ func (gp *GluePartition) GetDatabase() string {
 
 func (gp *GluePartition) GetTable() string {
 	return gp.tableName
+}
+
+func (gp *GluePartition) GetTime() time.Time {
+	return gp.time
 }
 
 func (gp *GluePartition) GetS3Bucket() string {
@@ -68,6 +72,10 @@ func (gp *GluePartition) GetCompression() string {
 
 func (gp *GluePartition) GetPartitionColumnsInfo() []PartitionColumnInfo {
 	return gp.partitionColumns
+}
+
+func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
+	return gp.gm
 }
 
 func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
@@ -101,11 +109,6 @@ func (gp *GluePartition) GetPartitionLocation() string {
 type PartitionColumnInfo struct {
 	Key   string
 	Value string
-}
-
-// Creates a new partition in Glue using the client provided.
-func (gp *GluePartition) CreatePartition(client glueiface.GlueAPI) error {
-	return NewGlueTableMetadata(gp.datatype, gp.tableName, "", GlueTableHourly, nil).CreateJSONPartition(client, gp.hour)
 }
 
 // Gets the partition from S3bucket and S3 object key info.
@@ -188,7 +191,9 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	if err != nil {
 		return partition, nil
 	}
-	partition.hour = time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC)
+	partition.time = time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC)
+
+	partition.gm = NewGlueTableMetadata(partition.datatype, partition.tableName, "", GlueTableHourly, nil)
 
 	return partition, nil
 }
