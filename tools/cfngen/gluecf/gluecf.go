@@ -120,10 +120,12 @@ func GenerateTables(tables []*awsglue.GlueTableMetadata) (cf []byte, err error) 
 	logsDB := NewDatabase(CatalogIDRef, awsglue.LogProcessingDatabaseName, awsglue.LogProcessingDatabaseDescription)
 	ruleMatchDB := NewDatabase(CatalogIDRef, awsglue.RuleMatchDatabaseName, awsglue.RuleMatchDatabaseDescription)
 	viewsDB := NewDatabase(CatalogIDRef, awsglue.ViewsDatabaseName, awsglue.ViewsDatabaseDescription)
+	tempDB := NewDatabase(CatalogIDRef, awsglue.TempDatabaseName, awsglue.TempDatabaseDescription)
 	resources := map[string]interface{}{
 		cfngen.SanitizeResourceName(awsglue.LogProcessingDatabaseName): logsDB,
 		cfngen.SanitizeResourceName(awsglue.RuleMatchDatabaseName):     ruleMatchDB,
 		cfngen.SanitizeResourceName(awsglue.ViewsDatabaseName):         viewsDB,
+		cfngen.SanitizeResourceName(awsglue.TempDatabaseName):          tempDB,
 	}
 
 	// output databases

@@ -55,7 +55,8 @@ type AlarmProperties struct {
 	Period             int
 	Threshold          float32
 	Unit               string
-	Statistic          string
+	Statistic          string `json:",omitempty"`
+	ExtendedStatistic  string `json:",omitempty"`
 }
 
 type MetricDimension struct {
@@ -181,6 +182,17 @@ func (alarm *Alarm) MaxNoUnitsThreshold(threshold float32, period int) *Alarm {
 	alarm.Properties.Unit = cloudwatch.StandardUnitNone
 	alarm.Properties.Period = period
 	alarm.Properties.Statistic = cloudwatch.StatisticMaximum
+	alarm.Properties.TreatMissingData = "notBreaching"
+	return alarm
+}
+
+// P95SecondsThreshold configures alarm for p90 threshold with Seconds units
+func (alarm *Alarm) P95SecondsThreshold(threshold float32, period int) *Alarm {
+	alarm.Properties.ComparisonOperator = cloudwatch.ComparisonOperatorGreaterThanThreshold
+	alarm.Properties.Threshold = threshold
+	alarm.Properties.Unit = cloudwatch.StandardUnitSeconds
+	alarm.Properties.Period = period
+	alarm.Properties.ExtendedStatistic = "p95"
 	alarm.Properties.TreatMissingData = "notBreaching"
 	return alarm
 }

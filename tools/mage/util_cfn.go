@@ -322,8 +322,8 @@ func stackSetExists(cfClient *cfn.CloudFormation, stackSetName string) (bool, er
 	input := &cfn.DescribeStackSetInput{StackSetName: aws.String(stackSetName)}
 	_, err := cfClient.DescribeStackSet(input)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "StackSetNotFoundException" {
-			err = nil
+		if stackSetDoesNotExistError(err) {
+			return false, nil
 		}
 		return false, err
 	}
@@ -337,17 +337,31 @@ func stackSetInstanceExists(cfClient *cfn.CloudFormation, stackSetName, account,
 		StackInstanceAccount: &account,
 		StackInstanceRegion:  &region,
 	}
-	_, err := cfClient.DescribeStackInstance(input)
+	response, err := cfClient.DescribeStackInstance(input)
 	if err != nil {
-		// need to also check for "StackSetNotFoundException" if the containing stack set does not exist
-		if awsErr, ok := err.(awserr.Error); ok &&
-			(awsErr.Code() == "StackInstanceNotFoundException" || awsErr.Code() == "StackSetNotFoundException") {
-
-			err = nil
+		if stackSetDoesNotExistError(err) {
+			return false, nil
 		}
-		return false, err
+		return false, fmt.Errorf("failed to describe stack instance %s in %s: %v", stackSetName, region, err)
 	}
+
+	if status := aws.StringValue(response.StackInstance.Status); status == cfn.StackInstanceStatusInoperable {
+		return false, fmt.Errorf("%s stack set instance is %s and will have to be deleted manually: %s",
+			stackSetName, status, aws.StringValue(response.StackInstance.StatusReason))
+	}
+
 	return true, nil
+}
+
+// Returns true if the error is caused by a non-existent stack set / instance
+func stackSetDoesNotExistError(err error) bool {
+	// need to also check for "StackSetNotFoundException" if the containing stack set does not exist
+	if awsErr, ok := err.(awserr.Error); ok &&
+		(awsErr.Code() == "StackInstanceNotFoundException" || awsErr.Code() == "StackSetNotFoundException") {
+
+		return true
+	}
+	return false
 }
 
 // Returns stack status, outputs, and any error

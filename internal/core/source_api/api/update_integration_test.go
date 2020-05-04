@@ -36,7 +36,7 @@ import (
 
 func TestUpdateIntegrationSettings(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
@@ -70,7 +70,7 @@ func TestUpdateIntegrationSettings(t *testing.T) {
 
 func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
 		"AWSAccountID":  {S: aws.String("123456789012")},
@@ -106,7 +106,7 @@ func TestUpdateIntegrationValidTime(t *testing.T) {
 
 func TestUpdateIntegrationLastScanStart(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	resp := &dynamodb.UpdateItemOutput{}
 	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
@@ -127,7 +127,7 @@ func TestUpdateIntegrationLastScanStart(t *testing.T) {
 
 func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 	mockClient := &modelstest.MockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	resp := &dynamodb.UpdateItemOutput{}
 

@@ -212,6 +212,18 @@
   }
  }
 },
+  "panthertemp": {
+ "Type": "AWS::Glue::Database",
+ "Properties": {
+  "CatalogId": {
+   "Ref": "AWS::AccountId"
+  },
+  "DatabaseInput": {
+   "Name": "panther_temp",
+   "Description": "Holds temporary tables used for processing tasks"
+  }
+ }
+},
   "pantherviews": {
  "Type": "AWS::Glue::Database",
  "Properties": {

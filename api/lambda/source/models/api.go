@@ -70,7 +70,7 @@ type PutIntegrationInput struct {
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
 	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel"`
+	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel,excludesall='<>&\""`
 	IntegrationType    *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
@@ -139,7 +139,7 @@ type UpdateIntegrationLastScanEndInput struct {
 // UpdateIntegrationSettingsInput is used to update integration settings.
 type UpdateIntegrationSettingsInput struct {
 	IntegrationID      *string   `json:"integrationId" validate:"required,uuid4"`
-	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel"`
+	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel,excludesall='<>&\""`
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
 	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`

@@ -1,4 +1,4 @@
-package api
+package process
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,14 +19,22 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 )
 
-// ListIntegrations returns all enabled integrations across each organization.
-//
-// The output of this handler is used to schedule pollers.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
+const (
+	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+)
 
-	return dynamoClient.ScanIntegrations(input)
+var (
+	awsSession *session.Session
+	glueClient glueiface.GlueAPI
+)
+
+func Setup() {
+	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
+	glueClient = glue.New(awsSession)
 }

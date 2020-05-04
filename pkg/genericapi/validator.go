@@ -1,4 +1,4 @@
-package api
+package genericapi
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,14 +19,25 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/source/models"
+	"errors"
+	"strings"
 )
 
-// ListIntegrations returns all enabled integrations across each organization.
-//
-// The output of this handler is used to schedule pollers.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
+// HTMLCharacterSet is the same set of characters replaced by the built-in html.EscapeString.
+const HTMLCharacterSet = `'<>&"`
 
-	return dynamoClient.ScanIntegrations(input)
+// ErrContainsHTML defines a standard error message if a field contains HTML characters.
+var ErrContainsHTML = func() error {
+	var chars []string
+	for _, x := range HTMLCharacterSet {
+		chars = append(chars, string(x))
+	}
+	return errors.New("cannot contain any of: " + strings.Join(chars, " "))
+}()
+
+// ContainsHTML is true if the string contains any of HTMLCharacterSet
+//
+// Such strings should be rejected for user-defined names and labels to prevent injection attacks.
+func ContainsHTML(s string) bool {
+	return strings.ContainsAny(s, HTMLCharacterSet)
 }
