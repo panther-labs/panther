@@ -199,13 +199,15 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
           </React.Fragment>
         )}
       </SimpleGrid>
-      <Link external color="blue300" as={RRLink} to={urls.settings.globalModule()}>
-        <Text size="small" mt={3}>
-          Open Global Python Module
-        </Text>
-      </Link>
       <Box my={3}>
-        <InputElementLabel htmlFor="enabled">{`* ${capitalize(type)} Function`}</InputElementLabel>
+        <Flex align="center">
+          <InputElementLabel htmlFor={'body'} mr={2}>
+            {`* ${capitalize(type)} Function`} -
+          </InputElementLabel>
+          <Link external color="blue300" as={RRLink} to={urls.settings.globalModule()}>
+            <Text size="small">Open Global Python Module</Text>
+          </Link>
+        </Flex>
         <Field
           as={FormikEditor}
           placeholder={`# Enter the body of the ${type} here...`}
