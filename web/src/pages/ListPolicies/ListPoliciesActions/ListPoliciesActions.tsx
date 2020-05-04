@@ -59,7 +59,7 @@ export const filters = {
       label: 'Severity',
       items: ['', ...severityOptions],
       itemToString: (severity: SeverityEnum | '') =>
-        severity === '' ? severity : capitalize(severity.toLowerCase()),
+        severity === '' ? 'All' : capitalize(severity.toLowerCase()),
       inputProps: {
         placeholder: 'Choose a severity...',
       },
@@ -83,7 +83,7 @@ export const filters = {
       label: 'Status',
       items: ['', ...statusOptions],
       itemToString: (status: ComplianceStatusEnum | '') =>
-        status === '' ? status : capitalize(status.toLowerCase()),
+        status === '' ? 'All' : capitalize(status.toLowerCase()),
       inputProps: {
         placeholder: 'Choose a status...',
       },
@@ -93,15 +93,15 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Enabled',
-      items: ['', true, false],
+      items: ['', 'true', 'false'],
       itemToString: (item: boolean | string) => {
-        if (typeof item === 'boolean') {
-          return item ? 'Yes' : 'No';
+        if (!item) {
+          return 'All';
         }
-        return item;
+        return item === 'true' ? 'Yes' : 'No';
       },
       inputProps: {
-        placeholder: 'Choose if policies are enabled...',
+        placeholder: 'Show only enabled?',
       },
     },
   },
@@ -109,15 +109,15 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Auto-remediation Status',
-      items: ['', true, false],
+      items: ['', 'true', 'false'],
       itemToString: (item: boolean | string) => {
-        if (typeof item === 'boolean') {
-          return item ? 'Configured' : 'Not Configured';
+        if (!item) {
+          return 'All';
         }
-        return item;
+        return item === 'true' ? 'Configured' : 'Not Configured';
       },
       inputProps: {
-        placeholder: 'Choose a remediation status...',
+        placeholder: 'Choose a status...',
       },
     },
   },

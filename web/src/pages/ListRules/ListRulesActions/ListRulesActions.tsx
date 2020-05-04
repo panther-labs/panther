@@ -58,7 +58,7 @@ export const filters = {
       label: 'Severity',
       items: ['', ...severityOptions],
       itemToString: (severity: SeverityEnum | '') =>
-        severity === '' ? severity : capitalize(severity.toLowerCase()),
+        severity === '' ? 'All' : capitalize(severity.toLowerCase()),
       inputProps: {
         placeholder: 'Choose a severity...',
       },
@@ -80,15 +80,15 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Enabled',
-      items: ['', true, false],
+      items: ['', 'true', 'false'],
       itemToString: (item: boolean | string) => {
-        if (typeof item === 'boolean') {
-          return item ? 'Yes' : 'No';
+        if (!item) {
+          return 'All';
         }
-        return item;
+        return item === 'true' ? 'Yes' : 'No';
       },
       inputProps: {
-        placeholder: 'Choose if rules are enabled...',
+        placeholder: 'Show only enabled?',
       },
     },
   },
