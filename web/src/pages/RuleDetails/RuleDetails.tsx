@@ -31,6 +31,7 @@ import RuleDetailsAlertsTable from './RuleDetailsAlertsTable';
 const RuleDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
   const { error, data, loading } = useRuleDetails({
+    fetchPolicy: 'cache-and-network',
     variables: {
       ruleDetailsInput: {
         ruleId: match.params.id,

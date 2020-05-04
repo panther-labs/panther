@@ -44,6 +44,7 @@ const ListResources = () => {
   } = useRequestParamsWithPagination<ListResourcesInput>();
 
   const { loading, data, error } = useListResources({
+    fetchPolicy: 'cache-and-network',
     variables: {
       input: encodeParams(convertObjArrayValuesToCsv(requestParams), ['idContains']),
     },
