@@ -19,7 +19,15 @@
 import React from 'react';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { InputElementLabel, Flex, Box, InputElementErrorLabel, Text, SimpleGrid } from 'pouncejs';
+import {
+  InputElementLabel,
+  Flex,
+  Box,
+  InputElementErrorLabel,
+  Text,
+  SimpleGrid,
+  Link,
+} from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
 import { capitalize, minutesToString } from 'Helpers/utils';
 import FormikTextArea from 'Components/fields/TextArea';
@@ -30,6 +38,8 @@ import FormikEditor from 'Components/fields/Editor';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { RuleFormValues } from 'Components/forms/RuleForm';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
 
 export const ruleCoreEditableFields = [
   'body',
@@ -189,7 +199,12 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
           </React.Fragment>
         )}
       </SimpleGrid>
-      <Box my={6}>
+      <Link external color="blue300" as={RRLink} to={urls.settings.globalModule()}>
+        <Text size="small" mt={3}>
+          Open Global Python Module
+        </Text>
+      </Link>
+      <Box my={3}>
         <InputElementLabel htmlFor="enabled">{`* ${capitalize(type)} Function`}</InputElementLabel>
         <Field
           as={FormikEditor}
