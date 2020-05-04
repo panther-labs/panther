@@ -316,13 +316,10 @@ export type GithubConfigInput = {
 export type GlobalModuleDetails = {
   __typename?: 'GlobalModuleDetails';
   body: Scalars['String'];
-  createdAt?: Maybe<Scalars['AWSDateTime']>;
-  createdBy?: Maybe<Scalars['ID']>;
   description: Scalars['String'];
   id: Scalars['ID'];
-  lastModified?: Maybe<Scalars['AWSDateTime']>;
-  lastModifiedBy?: Maybe<Scalars['ID']>;
-  versionId?: Maybe<Scalars['ID']>;
+  createdAt: Scalars['AWSDateTime'];
+  lastModified: Scalars['AWSDateTime'];
 };
 
 export type IntegrationItemHealthStatus = {
@@ -1543,13 +1540,10 @@ export type GlobalModuleDetailsResolvers<
   ParentType extends ResolversParentTypes['GlobalModuleDetails'] = ResolversParentTypes['GlobalModuleDetails']
 > = {
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  createdAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  createdBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  lastModifiedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  versionId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  lastModified?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 

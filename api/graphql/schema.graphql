@@ -545,13 +545,10 @@ type PolicyDetails {
 
 type GlobalModuleDetails {
   body: String!
-  createdAt: AWSDateTime
-  createdBy: ID
   description: String!
   id: ID!
-  lastModified: AWSDateTime
-  lastModifiedBy: ID
-  versionId: ID
+  createdAt: AWSDateTime!
+  lastModified: AWSDateTime!
 }
 
 type PagingData {

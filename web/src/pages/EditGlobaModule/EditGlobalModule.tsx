@@ -26,7 +26,7 @@ import { extractErrorMessage } from 'Helpers/utils';
 import { useGlobalModuleDetails } from './graphql/globalModuleDetails.generated';
 import { useUpdateGlobalModule } from './graphql/updateGlobalModule.generated';
 
-export const defaultInitialValues: GlobalModuleDetails = {
+export const defaultInitialValues: Pick<GlobalModuleDetails, 'id' | 'description' | 'body'> = {
   description: '',
   id: '',
   body: '',
