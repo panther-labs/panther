@@ -367,18 +367,6 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: WriteGluePartitions
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - glue:GetPartition
-                - glue:CreatePartition
-                - glue:GetTable
-              Resource:
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
 
   UpdaterSnsSubscription:
     Type: AWS::SNS::Subscription
@@ -404,6 +392,7 @@ Resources:
             Condition:
               ArnLike:
                 aws:SourceArn: !Ref ProcessedDataTopicArn
+
   UpdaterQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -485,7 +474,6 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - glue:GetPartition
                 - glue:CreatePartition
                 - glue:GetTable
               Resource:
