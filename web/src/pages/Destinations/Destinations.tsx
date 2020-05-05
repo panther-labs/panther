@@ -27,9 +27,7 @@ import DestinationCreateButton from './CreateButton';
 import ListDestinationsTable from './ListDestinationsTable';
 
 const ListDestinations = () => {
-  const { loading, error, data } = useListDestinationsAndDefaults({
-    fetchPolicy: 'cache-and-network',
-  });
+  const { loading, error, data } = useListDestinationsAndDefaults();
 
   if (loading && !data) {
     return <DestinationsPageSkeleton />;

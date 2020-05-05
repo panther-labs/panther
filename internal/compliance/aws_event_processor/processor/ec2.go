@@ -97,6 +97,10 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		deleteResource = true
 		ec2Type = aws.Ec2SecurityGroupSchema
 		ec2ARN.Resource = "security-group/" + detail.Get("requestParameters.groupId").Str
+	case "DeleteVpc":
+		deleteResource = true
+		ec2Type = aws.Ec2VpcSchema
+		ec2ARN.Resource = "vpc/" + detail.Get("requestParameters.vpcId").Str
 	case "DeleteNetworkAcl":
 		deleteResource = true
 		ec2Type = aws.Ec2NetworkAclSchema

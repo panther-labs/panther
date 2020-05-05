@@ -71,6 +71,7 @@ var (
 		"ResendValidationEmail": {},
 
 		// appsync
+		"CreateResolver":      {}, // unable to get AWS region from CloudTrail event
 		"StartSchemaCreation": {},
 
 		// cloudformation

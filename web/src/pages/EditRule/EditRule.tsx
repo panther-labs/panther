@@ -37,7 +37,6 @@ const EditRulePage: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
 
   const { error: fetchRuleError, data: queryData, loading: isFetchingRule } = useRuleDetails({
-    fetchPolicy: 'cache-and-network',
     variables: {
       input: {
         ruleId: match.params.id,
