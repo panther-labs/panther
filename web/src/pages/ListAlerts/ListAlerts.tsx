@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useInfiniteScroll } from 'react-infinite-scroll-hook';
+import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { useListAlerts } from './graphql/listAlerts.generated';
@@ -40,12 +40,11 @@ const ListAlerts = () => {
 
   const alertItems = data?.alerts.alertSummaries || [];
   const lastEvaluatedKey = data?.alerts.lastEvaluatedKey || null;
+  const hasNextPage = !!data?.alerts?.lastEvaluatedKey;
 
-  const infiniteRef = useInfiniteScroll<HTMLDivElement>({
+  const { sentinelRef } = useInfiniteScroll<HTMLDivElement>({
     loading,
-    hasNextPage: !!data?.alerts?.lastEvaluatedKey,
-    checkInterval: 600,
-    threshold: 400,
+    threshold: 500,
     onLoadMore: () => {
       fetchMore({
         variables: {
@@ -92,16 +91,14 @@ const ListAlerts = () => {
   //  Check how many active filters exist by checking how many columns keys exist in the URL
   return (
     <ErrorBoundary>
-      <div ref={infiniteRef}>
-        <Card mb={8}>
-          <ListAlertsTable items={alertItems} />
-          {loading && (
-            <Box p={8}>
-              <TablePlaceholder rowCount={10} />
-            </Box>
-          )}
-        </Card>
-      </div>
+      <Card mb={8}>
+        <ListAlertsTable items={alertItems} />
+        {hasNextPage && (
+          <Box p={8} ref={sentinelRef}>
+            <TablePlaceholder rowCount={10} />
+          </Box>
+        )}
+      </Card>
     </ErrorBoundary>
   );
 };
