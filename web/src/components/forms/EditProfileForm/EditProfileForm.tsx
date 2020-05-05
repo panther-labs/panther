@@ -22,8 +22,8 @@ import { Field, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useAuth from 'Hooks/useAuth';
-import { useState } from 'react';
 import { useEditUser } from 'Components/sidesheets/EditUserSidesheet/graphql/editUser.generated';
+import { extractErrorMessage } from 'Helpers/utils';
 
 interface EditProfileFormProps {
   onSuccess: () => void;
@@ -37,17 +37,17 @@ interface EditProfileFormValues {
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
   const { userInfo, refetchUserInfo } = useAuth();
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = React.useState(null);
 
   const [editUser] = useEditUser({
     onCompleted: () => {
       onSuccess();
       return refetchUserInfo();
     },
-    onError: ({ message }) =>
+    onError: updateUserError =>
       setStatus({
         title: 'Unable to update profile',
-        message,
+        message: extractErrorMessage(updateUserError) || 'An unknown error occurred',
       }),
   });
 
