@@ -1,0 +1,7 @@
+fragment GlobalModuleFull on GlobalModuleDetails {
+  createdAt
+  description
+  id
+  lastModified
+  body
+}
