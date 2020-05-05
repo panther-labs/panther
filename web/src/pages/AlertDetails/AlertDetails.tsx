@@ -22,6 +22,7 @@ import { Alert, Box } from 'pouncejs';
 import AlertDetailsPageSkeleton from 'Pages/AlertDetails/AlertDetailsSkeleton';
 import AlertDetailsInfo from 'Pages/AlertDetails/AlertDetailsInfo';
 import AlertEvents from 'Pages/AlertDetails/AlertDetailsEvents';
+import Page404 from 'Pages/404';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
@@ -94,6 +95,10 @@ const AlertDetailsPage = () => {
         mb={6}
       />
     );
+  }
+
+  if (!alertData.alert) {
+    return <Page404 />;
   }
 
   return (
