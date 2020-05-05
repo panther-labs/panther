@@ -136,6 +136,12 @@ The `panther-aws-remediation` lambda executes automated infrastructure remediati
  Failure Impact
  * Failure of this lambda will mean specific remediations are failing and infrastructure will remain in violation of policy.
 
+## panther-cfn-custom-resources
+Used by CloudFormation when deploying or updating Panther.
+
+ Failure Impact
+ * Panther itself will not be affected, but deployments may be failing
+
 ## panther-compliance
 This ddb table holds policy violation events for associated resources in the `panther-resources` ddb table.
 

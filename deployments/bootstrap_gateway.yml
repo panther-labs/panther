@@ -24,6 +24,7 @@ Description: API gateway and Python layer
 # - API gateways: 'mage deploy' embeds swagger definitions directly into this template,
 #     making the template too large to deploy without an S3 bucket
 # - Python layer: the layer source has to be uploaded to S3 before the cfn resource can be created
+# - Custom resource: the Lambda function which handles custom CFN resources
 
 Parameters:
   # From the config file
@@ -68,6 +69,53 @@ Resources:
         S3ObjectVersion: !Ref PythonLayerObjectVersion
       Description: Pip libraries available to the Python analysis/remediation functions
       LayerName: panther-analysis
+
+  CustomResourceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: main
+      Description: Panther custom CloudFormation resources
+      FunctionName: panther-cfn-custom-resources
+      # <cfndoc>
+      # Used by CloudFormation when deploying or updating Panther.
+      #
+      # Failure Impact
+      # * Panther itself will not be affected, but deployments may be failing
+      # </cfndoc>
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+      Handler: main
+      MemorySize: 256
+      Runtime: go1.x
+      Timeout: 900 # Maximum allowed: 15 minutes
+
+      # This function has more permissions than usual because it creates and destroys infrastructure.
+      # It is used only in the deploy process and not by the Panther application itself.
+      Policies:
+        - Id: CertificateManagement
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - acm:AddTagsToCertificate
+                - acm:DeleteCertificate
+                - acm:ImportCertificate
+                - acm:RemoveTagsFromCertificate
+              # ACM certificate IDs are random and at the time of writing, DeleteCertificate does
+              # not support using resource tags as a condition.
+              # So we unfortunately have to grant resource:* here
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - iam:DeleteServerCertificate
+                - iam:UploadServerCertificate
+              Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
+
+  TestCertificate:
+    Type: Custom::Certificate
+    Properties:
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   AnalysisApi:
     Type: AWS::Serverless::Api
