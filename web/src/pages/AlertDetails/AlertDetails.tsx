@@ -40,6 +40,7 @@ const AlertDetailsPage = () => {
     variables,
   } = useAlertDetails({
     fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all',
     variables: {
       input: {
         alertId: match.params.id,
@@ -52,7 +53,7 @@ const AlertDetailsPage = () => {
     skip: !alertData,
     variables: {
       input: {
-        ruleId: alertData?.alert.ruleId,
+        ruleId: alertData?.alert?.ruleId,
       },
     },
   });
@@ -83,6 +84,10 @@ const AlertDetailsPage = () => {
     return <AlertDetailsPageSkeleton />;
   }
 
+  if (alertData?.alert === null) {
+    return <Page404 />;
+  }
+
   if (alertError) {
     return (
       <Alert
@@ -95,10 +100,6 @@ const AlertDetailsPage = () => {
         mb={6}
       />
     );
-  }
-
-  if (!alertData.alert) {
-    return <Page404 />;
   }
 
   return (
