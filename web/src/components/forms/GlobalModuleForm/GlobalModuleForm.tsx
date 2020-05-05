@@ -19,7 +19,7 @@
 import React from 'react';
 import { GlobalModuleDetails } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box, Button, Flex, Grid, InputElementLabel } from 'pouncejs';
+import { Box, Button, Flex, Grid, InputElementLabel, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
@@ -61,6 +61,10 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
           {({ handleSubmit, isSubmitting, isValid, dirty }) => {
             return (
               <form onSubmit={handleSubmit}>
+                <Text size="medium" color="grey300">
+                  This is the global python module. Functions and classes defined here can be
+                  imported to Policies and Rules
+                </Text>
                 <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={9}>
                   <Field
                     as={FormikTextInput}
