@@ -5,7 +5,7 @@ data. It adds a clean UI powered by a robust backend, with persistence and autoc
 With Panther Data Explorer, you are able to:
 
 * Browse collected log data, rule matches, and search standard fields across all data
-* Write SQL queries on normalized data
+* Write SQL queries on normalized data with autocompletion on every step of the way
 * View query results in a friendly way
 * Share results with their team through a shareable link
 * Download results in a CSV
