@@ -61,9 +61,10 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
           {({ handleSubmit, isSubmitting, isValid, dirty }) => {
             return (
               <form onSubmit={handleSubmit}>
-                <Text size="medium" color="grey300">
-                  This is the global python module. Functions and classes defined here can be
-                  imported to Policies and Rules
+                <Text size="large" color="grey300" mb={4}>
+                  The global module allows you to define a set of re-usable functions, variables and
+                  classes which can be directly imported to your Rule or Policy definition. Anything
+                  defined below can later be imported through the aws_imports module
                 </Text>
                 <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={9}>
                   <Field
@@ -82,7 +83,7 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
                   />
                 </Grid>
                 <Box my={6}>
-                  <InputElementLabel htmlFor="enabled">{'Global Function'}</InputElementLabel>
+                  <InputElementLabel htmlFor="enabled">{'Module definitions'}</InputElementLabel>
                   <Field
                     as={FormikEditor}
                     placeholder="# Enter the body of the global here..."
