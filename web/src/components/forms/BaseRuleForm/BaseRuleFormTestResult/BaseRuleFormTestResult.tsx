@@ -34,15 +34,22 @@ interface BaseRuleFormTestResultProps {
   /** The name of the test */
   testName: string;
 
-  /** The value that is going to displayed to the user as a result for this test */
+  /** The result of the text */
   status: ComplianceStatusEnum;
+
+  /** The value that is going to displayed to the user as a result for this test */
+  text: string;
 }
 
-const BaseRuleFormTestResult: React.FC<BaseRuleFormTestResultProps> = ({ testName, status }) => (
+const BaseRuleFormTestResult: React.FC<BaseRuleFormTestResultProps> = ({
+  testName,
+  status,
+  text,
+}) => (
   <Flex align="center">
-    <Card bg={mapTestStatusToColor[status]} mr={2} width={50} py={1}>
+    <Card bg={mapTestStatusToColor[status]} mr={2} width={95} py={1}>
       <Label size="small" color="white" mx="auto" as="div" textAlign="center">
-        {status}
+        {text.toUpperCase()}
       </Label>
     </Card>
     <Label size="medium" color="grey400">

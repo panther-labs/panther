@@ -217,7 +217,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                       <Box>
                         <Flex justify="space-between" width={225}>
                           <InputElementLabel htmlFor="expected-result-true">
-                            Evaluate to True
+                            Expect result to be True
                           </InputElementLabel>
                           <Field
                             as={FormikRadio}
@@ -228,7 +228,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                         </Flex>
                         <Flex justify="space-between" width={225}>
                           <InputElementLabel htmlFor="expected-result-false">
-                            Evaluate to False
+                            Expect result to be False
                           </InputElementLabel>
                           <Field
                             as={FormikRadio}
