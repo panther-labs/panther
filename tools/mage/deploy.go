@@ -192,14 +192,12 @@ func deployPrecheck(awsRegion string) {
 //
 // Returns combined outputs from bootstrap stacks.
 func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[string]string {
-	var outputs map[string]string
-
-	results := make(chan goroutineResult)
-	count := 0
+	build.API()
+	build.Cfn()
+	build.Lambda() // Lambda compilation required for most stacks, including bootstrap-gateway
 
 	// If the bootstrap stack is ROLLBACK_COMPLETE or similar, we need to do a full teardown.
 	// Check for that now, instead of waiting until the actual deployTemplate() call:
-	//    - teardown can get user confirmation without other log messages running in parallel
 	//    - bootstrap stack needs to be stable before we read its outputs to find the certificate arn
 	oldBootstrapOutputs, err := prepareStack(awsSession, bootstrapStack)
 	if err != nil && !errStackDoesNotExist(err) {
@@ -207,24 +205,11 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	}
 
 	// Deploy bootstrap stacks
-	count++
-	go func(c chan goroutineResult) {
-		var err error
-		outputs, err = deployBoostrapStacks(awsSession, settings, oldBootstrapOutputs["CertificateArn"])
-		c <- goroutineResult{summary: "bootstrap: stacks", err: err}
-	}(results)
+	outputs, err := deployBoostrapStacks(awsSession, settings, oldBootstrapOutputs["CertificateArn"])
+	if err != nil {
+		logger.Fatal(err)
+	}
 
-	// Compile Lambda functions
-	count++
-	go func(c chan goroutineResult) {
-		var err error
-		if err = build.api(); err == nil {
-			err = build.lambda()
-		}
-		c <- goroutineResult{summary: "bootstrap: compile source", err: err}
-	}(results)
-
-	logResults(results, "deploy: bootstrap", 1, count, count)
 	return outputs
 }
 
@@ -265,15 +250,12 @@ func deployBoostrapStacks(
 	if err != nil {
 		return nil, fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
 	}
+	logger.Infof("    √ %s finished (1/%d)", bootstrapStack, len(allStacks))
 
-	if err := build.cfn(); err != nil {
-		return nil, err
-	}
-
-	// Now that the S3 buckets are in place and swagger specs are embedded, we can deploy the second
-	// bootstrap stack (API gateways and the Python layer).
+	// Now that the S3 buckets are in place, we can deploy the second bootstrap stack.
 	sourceBucket := outputs["SourceBucket"]
 	params = map[string]string{
+		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"TracingEnabled": strconv.FormatBool(settings.Monitoring.TracingMode != ""),
 	}
 
@@ -300,6 +282,7 @@ func deployBoostrapStacks(
 		outputs[k] = v
 	}
 
+	logger.Infof("    √ %s finished (2/%d)", gatewayStack, len(allStacks))
 	return outputs, nil
 }
 
@@ -464,8 +447,8 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	}(results)
 
 	// Wait for stacks to finish.
-	// There will be two stacks after this one (metric filters + onboarding)
-	logResults(results, "deploy", 1, count, count+2)
+	// There are two stacks before and after this one
+	logResults(results, "deploy", 3, count+2, len(allStacks))
 
 	// Metric filters have to be deployed after all log groups have been created
 	go func(c chan goroutineResult) {
@@ -484,7 +467,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 
 	// Log stack results, counting where the last parallel group left off to give the illusion of
 	// one continuous deploy progress tracker.
-	logResults(results, "deploy", count+1, count+2, count+2)
+	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
 }
 
 func deployGlue(awsSession *session.Session, outputs map[string]string) error {

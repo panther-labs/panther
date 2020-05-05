@@ -28,6 +28,10 @@ Description: API gateway and Python layer
 
 Parameters:
   # From the config file
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation
@@ -73,8 +77,8 @@ Resources:
   CustomResourceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: main
-      Description: Panther custom CloudFormation resources
+      CodeUri: ../bin/internal/core/custom_resources/main
+      Description: Custom CloudFormation resources when deploying Panther
       FunctionName: panther-cfn-custom-resources
       # <cfndoc>
       # Used by CloudFormation when deploying or updating Panther.
@@ -112,10 +116,16 @@ Resources:
                 - iam:UploadServerCertificate
               Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
 
-  TestCertificate:
-    Type: Custom::Certificate
+  CustomResourceLogGroup:
+    Type: AWS::Logs::LogGroup
     Properties:
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      LogGroupName: /aws/lambda/panther-cfn-custom-resources
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+  #
+  #  TestCertificate:
+  #    Type: Custom::Certificate
+  #    Properties:
+  #      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   AnalysisApi:
     Type: AWS::Serverless::Api
