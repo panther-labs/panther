@@ -35,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/pkg/awsglue"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
@@ -56,6 +57,11 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	if err != nil {
 		return nil, err
 	}
+
+	if alertItem == nil {
+		return nil, &genericapi.DoesNotExistError{Message: fmt.Sprintf("Alert with ID %s doesn't exist", *input.AlertID)}
+	}
+
 	var token *EventPaginationToken
 	if input.EventsExclusiveStartKey == nil {
 		token = newPaginationToken()

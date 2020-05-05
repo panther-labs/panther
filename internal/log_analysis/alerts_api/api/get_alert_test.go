@@ -76,6 +76,9 @@ type tableMock struct {
 
 func (m *tableMock) GetAlert(input *string) (*table.AlertItem, error) {
 	args := m.Called(input)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
 
@@ -93,6 +96,22 @@ func init() {
 	env = envConfig{
 		ProcessedDataBucket: "bucket",
 	}
+}
+
+func TestGetAlertDoesNotExist(t *testing.T) {
+	tableMock := &tableMock{}
+	alertsDB = tableMock
+
+	input := &models.GetAlertInput{
+		AlertID:        aws.String("alertId"),
+		EventsPageSize: aws.Int(5),
+	}
+
+	tableMock.On("GetAlert", aws.String("alertId")).Return(nil, nil)
+	api := API{}
+	result, err := api.GetAlert(input)
+	require.Nil(t, result)
+	require.Error(t, err)
 }
 
 func TestGetAlert(t *testing.T) {
