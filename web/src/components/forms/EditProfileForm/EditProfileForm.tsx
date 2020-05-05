@@ -17,11 +17,13 @@
  */
 
 import * as React from 'react';
-import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
+import { Alert, Box, Flex } from 'pouncejs';
 import { Field, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useAuth from 'Hooks/useAuth';
+import { useState } from 'react';
+import { useEditUser } from 'Components/sidesheets/EditUserSidesheet/graphql/editUser.generated';
 
 interface EditProfileFormProps {
   onSuccess: () => void;
@@ -34,8 +36,20 @@ interface EditProfileFormValues {
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
-  const { userInfo, updateUserInfo } = useAuth();
-  const { pushSnackbar } = useSnackbar();
+  const { userInfo, refetchUserInfo } = useAuth();
+  const [status, setStatus] = useState(null);
+
+  const [editUser] = useEditUser({
+    onCompleted: () => {
+      onSuccess();
+      return refetchUserInfo();
+    },
+    onError: ({ message }) =>
+      setStatus({
+        title: 'Unable to update profile',
+        message,
+      }),
+  });
 
   const initialValues = {
     email: userInfo.email || '',
@@ -46,25 +60,19 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
   return (
     <Formik<EditProfileFormValues>
       initialValues={initialValues}
-      onSubmit={async ({ givenName, familyName }, { setStatus }) =>
-        updateUserInfo({
-          newAttributes: {
-            given_name: givenName,
-            family_name: familyName,
+      onSubmit={async values =>
+        editUser({
+          variables: {
+            input: {
+              id: userInfo.sub,
+              familyName: values.familyName,
+              givenName: values.givenName,
+            },
           },
-          onSuccess: () => {
-            onSuccess();
-            pushSnackbar({ title: 'Successfully updated profile!', variant: 'success' });
-          },
-          onError: ({ message }) =>
-            setStatus({
-              title: 'Unable to update profile',
-              message,
-            }),
         })
       }
     >
-      {({ handleSubmit, status, isSubmitting, isValid, dirty }) => (
+      {({ handleSubmit, isSubmitting, isValid, dirty }) => (
         <Box as="form" onSubmit={handleSubmit}>
           {status && (
             <Alert variant="error" title={status.title} description={status.message} mb={6} />
