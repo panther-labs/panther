@@ -44,6 +44,9 @@ type Meta struct {
 	PantherAnyMD5Hashes   []string           `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
 }
 
+// NewMeta creates a new Meta from an event.
+// It returns a struct directly to be easily used in MetaFactory functions for
+// structs that embed the default `Meta` struct
 func NewMeta(event *Event) Meta {
 	if event == nil {
 		return Meta{}
@@ -71,6 +74,7 @@ func NewMeta(event *Event) Meta {
 
 var metaRegistry = map[string]MetaFactory{}
 
+// RegisterPrefixMeta registers a custom MetaFactory for a log type prefix.
 func RegisterPrefixMeta(prefix string, fac MetaFactory) {
 	if fac == nil {
 		panic(errors.New("nil factory"))
@@ -82,30 +86,21 @@ func RegisterPrefixMeta(prefix string, fac MetaFactory) {
 	metaRegistry[prefix] = fac
 }
 
+// MetaFactory converts an event to a struct containing panthe meta info.
 type MetaFactory func(e *Event) (interface{}, error)
 
 func defaultMetaFactory(event *Event) (interface{}, error) {
 	if event == nil {
 		return nil, errors.Errorf("nil event")
 	}
-	parseTime := time.Now()
-	eventTime := event.Timestamp
-	if eventTime.IsZero() {
-		eventTime = parseTime
-	}
-	rowID := NextRowID()
-	return &Meta{
-		PantherRowID:          &rowID,
-		PantherLogType:        &event.LogType,
-		PantherParseTime:      (*timestamp.RFC3339)(&parseTime),
-		PantherEventTime:      (*timestamp.RFC3339)(&eventTime),
-		PantherAnyDomainNames: event.Values(KindDomainName),
-		PantherAnyIPAddresses: event.Values(KindIPAddress),
-		PantherAnySHA1Hashes:  event.Values(KindSHA1Hash),
-		PantherAnyMD5Hashes:   event.Values(KindMD5Hash),
-	}, nil
+	meta := NewMeta(event)
+	return &meta, nil
 }
 
+// Meta uses the logType prefix to construct a value containing all panther meta fields and info.
+// If a custom factory is registered for the event.LogType it is used to create the value.
+// Otherwise the default Meta struct is returned.
+// A custom MetaFactory can be registered for a log type prefix with `RegisterPrefixMeta`.
 func (e *Event) Meta() (interface{}, error) {
 	if e == nil {
 		return nil, errors.Errorf("nil event")

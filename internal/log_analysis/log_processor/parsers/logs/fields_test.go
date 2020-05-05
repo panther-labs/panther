@@ -27,15 +27,12 @@ import (
 )
 
 func TestGJSONExtractor(t *testing.T) {
-
 	raw := `{"foo":{"bar":42,"baz":"1.1.1.1"}}`
-	ext := logs.GJSONFieldExtractor{
-		"*.baz": logs.KindIPAddress,
+	ext := logs.GJSONFieldParser{
+		"*.baz": logs.IPAddressParser(),
 	}
-	buffer := logs.FieldBuffer{}
-	err := ext.ExtractFields(raw, &buffer)
+	fields, err := ext.ParseFields(nil, raw)
 	require.NoError(t, err)
-	fields := buffer.AppendFields(nil)
 	require.Equal(t, fields, []logs.Field{
 		{
 			Kind:  logs.KindIPAddress,

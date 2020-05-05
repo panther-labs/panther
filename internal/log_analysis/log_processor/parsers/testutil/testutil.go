@@ -47,14 +47,7 @@ func CheckPantherEvent(t *testing.T, src parsers.PantherEventer, logType string,
 	})
 	actual := src.PantherEvent()
 	expect := logs.NewEvent(logType, tm, fields...)
-	actualFields := actual.AppendFields(nil)
-	expectFields := expect.AppendFields(nil)
-	// Sort fields so events can be checked for equality
-	sort.Sort(logs.FieldSlice(actualFields))
-	sort.Sort(logs.FieldSlice(expectFields))
-	require.Equal(t, expect.Timestamp, actual.Timestamp)
-	require.Equal(t, expect.LogType, actual.LogType)
-	require.Equal(t, expectFields, actualFields)
+	EventEqual(t, expect, actual)
 }
 
 // // CheckPantherParserJSON checks events produced by a parsers.LogParser on log input

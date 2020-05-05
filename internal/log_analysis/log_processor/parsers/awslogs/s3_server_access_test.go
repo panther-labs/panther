@@ -155,7 +155,9 @@ func TestS3AccessLogPutHttpOKExtraFields(t *testing.T) {
 		TLSVersion:         aws.String("TLSV1.1"),
 		AdditionalFields:   []string{"test1", "test2"},
 	}
-	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm, logs.IPAddress("192.0.2.3"))
+	testutil.CheckPantherEvent(t, event, TypeS3ServerAccess, tm,
+		logs.IPAddress("192.0.2.3"),
+	)
 	testutil.CheckParser(t, log, TypeS3ServerAccess, event)
 }
 

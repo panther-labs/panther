@@ -35,12 +35,14 @@ func init() {
 		LogTypeVPCFlow,
 	)
 
-	// parsers.RegisterPantherLogPrefix("AWS", )
-
+	// Register AWS meta struct
 	logs.RegisterPrefixMeta("AWS", NewMeta)
-	// logs.RegisterPantherField(KindAWSInstanceID, InstanceID)
-	// logs.RegisterPantherField(KindAWSAccountID, AccountID)
-	// logs.RegisterPantherField(KindAWSTag, Tag)
+
+	// Register AWS fields
+	logs.RegisterField(KindAWSARN, "aws_arn", ARN)
+	logs.RegisterField(KindAWSInstanceID, "aws_instance_id", InstanceID)
+	logs.RegisterField(KindAWSAccountID, "aws_account_id", AccountID)
+	logs.RegisterField(KindAWSTag, "aws_tag", Tag)
 }
 
 func NewMeta(event *logs.Event) (interface{}, error) {

@@ -68,25 +68,25 @@ func TagP(tag *string) logs.Field {
 }
 func ARN(arn string) logs.Field {
 	if arn = strings.TrimSpace(arn); strings.HasPrefix(arn, "arn:") {
-		return logs.Field{KindAWSARN, arn}
+		return logs.Field{Kind: KindAWSARN, Value: arn}
 	}
 	return logs.Field{}
 }
 func InstanceID(id string) logs.Field {
 	if id := strings.TrimSpace(id); id != "" {
-		return logs.Field{KindAWSInstanceID, id}
+		return logs.Field{Kind: KindAWSInstanceID, Value: id}
 	}
 	return logs.Field{}
 }
 func AccountID(id string) logs.Field {
 	if id := strings.TrimSpace(id); id != "" {
-		return logs.Field{KindAWSAccountID, id}
+		return logs.Field{Kind: KindAWSAccountID, Value: id}
 	}
 	return logs.Field{}
 }
 func Tag(tag string) logs.Field {
 	if tag := strings.TrimSpace(tag); tag != "" {
-		return logs.Field{KindAWSTag, tag}
+		return logs.Field{Kind: KindAWSTag, Value: tag}
 	}
 	return logs.Field{}
 }

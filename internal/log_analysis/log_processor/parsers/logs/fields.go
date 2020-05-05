@@ -22,41 +22,71 @@ import (
 	"net"
 	"sort"
 	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
 )
 
+// Field is a field value extracted from a log entry to be used in queries by Panther
 type Field struct {
 	Kind  FieldKind
 	Value string
 }
 
+// IsZero checks if a field is empty.
+// Zero value fields can be returned by FieldFactory if the value is not valid for the specified FieldKind.
 func (f Field) IsZero() bool {
 	return f == Field{}
 }
 
-type FieldSlice []Field
+// FieldKind is an enum of field types.
+// Log parsers can register custom field types with `RegisterField`.
+type FieldKind int
 
-var _ sort.Interface = (FieldSlice)(nil)
+const (
+	KindNone FieldKind = iota
+	KindIPAddress
+	KindDomainName
+	KindMD5Hash
+	KindSHA1Hash
+	KindSHA256Hash
+	KindHostname // Resolves to IPAddress or DomainName
+)
 
-func (fields FieldSlice) Len() int {
-	return len(fields)
-}
-func (fields FieldSlice) Swap(i, j int) {
-	fields[i], fields[j] = fields[j], fields[i]
-}
-
-func (fields FieldSlice) Less(i, j int) bool {
-	a := &fields[i]
-	b := &fields[j]
-	if a.Kind == b.Kind {
-		return a.Value < b.Value
+// ParseFields implements FieldParser interface for registered fields
+func (k FieldKind) ParseFields(fields []Field, value string) ([]Field, error) {
+	entry, ok := fieldRegistry[k]
+	if !ok {
+		return fields, errors.Errorf("unregistered field kind %d", k)
 	}
-	return a.Kind < b.Kind
+	field := entry.Factory(value)
+	if field.IsZero() {
+		return fields, errors.Errorf("empty field %q", entry.Name)
+	}
+	return append(fields, field), nil
 }
 
+// FieldBuffer is a reusable buffer of field values.
+// It provides helper methods to collect fields from log entries.
+// A FieldBuffer can be reset and used in a pool.
 type FieldBuffer struct {
-	Fields map[FieldKind]sort.StringSlice
+	scratch []Field
+	Fields  map[FieldKind]sort.StringSlice
 }
 
+// Parse uses a parser to add fields from a string value.
+// If the parser returns an error none of the fields parsed are added to the buffer.
+func (b *FieldBuffer) Parse(value string, parser FieldParser) (err error) {
+	b.scratch, err = parser.ParseFields(b.scratch[:0], value)
+	if err == nil {
+		for _, field := range b.scratch {
+			b.Add(field)
+		}
+	}
+	return
+}
+
+// Contains checks if a field buffer contains a specific field.
 func (b *FieldBuffer) Contains(field Field) bool {
 	if values, ok := b.Fields[field.Kind]; ok {
 		for _, value := range values {
@@ -69,7 +99,7 @@ func (b *FieldBuffer) Contains(field Field) bool {
 }
 
 // AppendFields appends all fields stored in the buffer to a slice.
-// Usefull for tests.
+// This is mainly useful for tests.
 func (b *FieldBuffer) AppendFields(fields []Field) []Field {
 	for kind, values := range b.Fields {
 		for _, value := range values {
@@ -82,6 +112,8 @@ func (b *FieldBuffer) AppendFields(fields []Field) []Field {
 	return fields
 }
 
+// Add adds a field to the buffer.
+// Zero fields or duplicate field values are ignored.
 func (b *FieldBuffer) Add(field Field) {
 	if field.IsZero() {
 		return
@@ -99,10 +131,12 @@ func (b *FieldBuffer) Add(field Field) {
 	b.Fields[field.Kind] = append(values, field.Value)
 }
 
+// Reset clears all fields from a buffer retaining allocated memory.
 func (b *FieldBuffer) Reset() {
 	for kind, values := range b.Fields {
 		b.Fields[kind] = values[:0]
 	}
+	b.scratch = b.scratch[:0]
 }
 
 // ValuesUnsorted returns unsorted field values
@@ -119,141 +153,52 @@ func (b *FieldBuffer) Values(kind FieldKind) []string {
 	return values
 }
 
-// func (b *FieldBuffer) WriteJSON(stream *jsoniter.Stream) error {
-// 	if b == nil {
-// 		stream.WriteNil()
-// 		return nil
-// 	}
-// 	if len(b.Fields) == 0 {
-// 		stream.WriteEmptyObject()
-// 		return nil
-// 	}
-// 	stream.WriteObjectStart()
-// 	n := 0
-// 	for kind, values := range b.Fields {
-// 		if len(values) == 0 {
-// 			continue
-// 		}
-// 		fieldName := fieldRegistry[kind].FieldNameJSON
-// 		if fieldName == "" {
-// 			continue
-// 		}
-// 		values = sort.StringSlice(values)
-// 		if n > 0 {
-// 			stream.WriteMore()
-// 		}
-// 		n++
-// 		stream.WriteObjectField(fieldName)
-// 		stream.WriteArrayStart()
-// 		for i, value := range values {
-// 			if i != 0 {
-// 				stream.WriteMore()
-// 			}
-// 			stream.WriteString(value)
-// 		}
-// 		stream.WriteArrayEnd()
-// 	}
-// 	stream.WriteObjectEnd()
-// 	return nil
-// }
+// FieldFactory creates a field from a string value.
+// Implementations can return different kind of fields depending on input.
+// Implementations should return a zero Field value if the input value is invalid.
+type FieldFactory func(value string) Field
 
-type FieldFactory func(string) Field
-
-type FieldEntry struct {
-	Name          string
-	NewField      FieldFactory
-	FieldNameJSON string
+type fieldEntry struct {
+	Name    string
+	Factory FieldFactory
 }
 
-var fieldRegistry = map[FieldKind]FieldEntry{
-	KindIPAddress: {
-		Name:          "ip_address",
-		FieldNameJSON: "p_any_ip_addresses",
-		NewField:      IPAddress,
-	},
-	KindDomainName: {
-		Name:          "domain",
-		FieldNameJSON: "p_any_domain_names",
-		NewField:      DomainName,
-	},
-	KindHostname: {
-		Name:          "hostname",
-		FieldNameJSON: "-",
-		NewField:      Hostname,
-	},
-	KindMD5Hash: {
-		Name:          "md5",
-		FieldNameJSON: "p_any_md5_hashes",
-		NewField:      MD5Hash,
-	},
-	KindSHA1Hash: {
-		Name:          "sha1",
-		FieldNameJSON: "p_any_sha1_hashes",
-		NewField:      SHA1Hash,
-	},
-	KindSHA256Hash: {
-		Name:          "sha256",
-		FieldNameJSON: "p_any_sha256_hashes",
-		NewField:      SHA256Hash,
-	},
+var fieldRegistry = map[FieldKind]*fieldEntry{}
+
+func init() {
+	RegisterField(KindIPAddress, "ip_address", IPAddress)
+	RegisterField(KindDomainName, "domain", DomainName)
+	RegisterField(KindHostname, "hostname", Hostname)
+	RegisterField(KindMD5Hash, "md5", MD5Hash)
+	RegisterField(KindSHA1Hash, "sha1", SHA1Hash)
+	RegisterField(KindSHA256Hash, "sha256", SHA256Hash)
 }
 
-type FieldKind int
+// RegisterField registers a field kind at init()
+// Registered fields have a name and a factory function.
+func RegisterField(kind FieldKind, name string, fac FieldFactory) {
+	name = strings.TrimSpace(name)
+	// Reserve negative field kind values
+	if kind <= 0 {
+		panic(errors.Errorf("invalid field kind %d", kind))
+	}
+	if name == "" {
+		panic(errors.Errorf("empty field name %d", kind))
+	}
+	if fac == nil {
+		panic(errors.Errorf("nil field factory %q", name))
 
-const (
-	KindNone FieldKind = iota
-	KindIPAddress
-	KindDomainName
-	KindMD5Hash
-	KindSHA1Hash
-	KindSHA256Hash
-	KindHostname // Resolves to IPAddress or DomainName
-)
-
-func (kind FieldKind) String() string {
-	switch kind {
-	case KindIPAddress:
-		return "ip_address"
-	case KindMD5Hash:
-		return "md5"
-	case KindSHA1Hash:
-		return "sha1"
-	case KindDomainName:
-		return "domain"
-	case KindHostname:
-		return "hostname"
-	default:
-		return ""
+	}
+	if entry, duplicate := fieldRegistry[kind]; duplicate {
+		panic(errors.Errorf("duplicate field kind %d %q, %q", kind, name, entry.Name))
+	}
+	fieldRegistry[kind] = &fieldEntry{
+		Name:    name,
+		Factory: fac,
 	}
 }
 
-var _ FieldExtractor = (FieldKind)(0)
-
-func (kind FieldKind) ExtractFields(value string, fields *FieldBuffer) error {
-	field := Field{Kind: kind, Value: value}
-	if field.IsZero() {
-		return nil
-	}
-	fields.Add(field)
-	return nil
-}
-
-// func (kind FieldKind) Field(value string) Field {
-// 	if entry, ok := fieldRegistry[kind]; ok {
-// 		return entry.NewField(value)
-// 	}
-// 	value = strings.TrimSpace(value)
-// 	return Field{
-// 		Kind:  kind,
-// 		Value: value,
-// 	}
-// }
-
-// CheckIPAddress checks if an IP address is valid
-func checkIPAddress(addr string) bool {
-	return net.ParseIP(addr) != nil
-}
-
+// IPAddress creates a new field for an ip address string
 func IPAddress(addr string) Field {
 	addr = strings.TrimSpace(addr)
 	if checkIPAddress(addr) {
@@ -261,6 +206,8 @@ func IPAddress(addr string) Field {
 	}
 	return Field{}
 }
+
+// IPAddressP creates a new field for an ip address string pointer
 func IPAddressP(addr *string) Field {
 	if addr != nil {
 		return IPAddress(*addr)
@@ -268,7 +215,7 @@ func IPAddressP(addr *string) Field {
 	return Field{}
 }
 
-// SHA1Hash packs an SHA1 hash value to a PantherField
+// SHA1Hash packs an SHA1 hash value to a Field
 func SHA1Hash(hash string) Field {
 	return Field{
 		Kind:  KindSHA1Hash,
@@ -283,7 +230,7 @@ func SHA1HashP(hash *string) Field {
 	return Field{}
 }
 
-// MD5Hash packs an MD5 hash value to a PantherField
+// MD5Hash packs an MD5 hash value to a Field
 func MD5Hash(hash string) Field {
 	return Field{
 		Kind:  KindMD5Hash,
@@ -292,7 +239,7 @@ func MD5Hash(hash string) Field {
 
 }
 
-// MD5HashP packs an MD5 hash pointer value to a PantherField
+// MD5HashP packs an MD5 hash pointer value to a Field
 func MD5HashP(hash *string) Field {
 	if hash != nil {
 		return MD5Hash(*hash)
@@ -300,7 +247,7 @@ func MD5HashP(hash *string) Field {
 	return Field{}
 }
 
-// SHA256Hash packs an SHA356 hash value to a PantherField
+// SHA256Hash packs an SHA256 hash value to a Field
 func SHA256Hash(hash string) Field {
 	return Field{
 		Kind:  KindSHA256Hash,
@@ -309,6 +256,7 @@ func SHA256Hash(hash string) Field {
 
 }
 
+// SHA256Hash packs an SHA256 hash pointer value to a Field
 func SHA256HashP(hash *string) Field {
 	if hash != nil {
 		return SHA256Hash(*hash)
@@ -316,7 +264,7 @@ func SHA256HashP(hash *string) Field {
 	return Field{}
 }
 
-// DomainName packs a domain name value to a PantherField
+// DomainName packs a domain name value to a Field
 func DomainName(name string) Field {
 	return Field{
 		Value: name,
@@ -350,36 +298,148 @@ func HostnameP(value *string) Field {
 	return Field{}
 }
 
-// type SmallStringSet struct {
-// 	Values []string
-// }
+// FieldSlice is a helper type for sorting fields
+type FieldSlice []Field
 
-// func (set *SmallStringSet) Reset() {
-// 	set.Values = set.Values[:0]
-// }
+var _ sort.Interface = (FieldSlice)(nil)
 
-// func (set *SmallStringSet) MarshalJSON() ([]byte, error) {
-// 	sort.Strings(set.Values)
-// 	return jsoniter.Marshal(([]string)(set.Values))
-// }
+func (fields FieldSlice) Len() int {
+	return len(fields)
+}
+func (fields FieldSlice) Swap(i, j int) {
+	fields[i], fields[j] = fields[j], fields[i]
+}
 
-// func (set *SmallStringSet) Contains(value string) bool {
-// 	for _, s := range set.Values {
-// 		if s == value {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+func (fields FieldSlice) Less(i, j int) bool {
+	a := &fields[i]
+	b := &fields[j]
+	if a.Kind == b.Kind {
+		return a.Value < b.Value
+	}
+	return a.Kind < b.Kind
+}
 
-// func (set *SmallStringSet) Insert(value string) {
-// 	if value == "" {
-// 		return
-// 	}
-// 	for _, v := range set.Values {
-// 		if v == value {
-// 			return
-// 		}
-// 	}
-// 	set.Values = append(set.Values, value)
-// }
+// FieldParser parses fields from a string and appends them to a slice.
+// Implementations should:
+// - return the `fields` argument and nil error if the value was empty.
+// - return the `fields` argument and an error if the value was invalid.
+// - append all parsed fields to the `fields` argument and return it.
+type FieldParser interface {
+	// Parse fields appends fields parsed from value to fields
+	ParseFields(fields []Field, value string) ([]Field, error)
+}
+
+// FieldParserFunc is a function implementing FieldParser interface
+type FieldParserFunc func(fields []Field, value string) ([]Field, error)
+
+var _ FieldParser = (FieldParserFunc)(nil)
+
+// ParseFields implements FieldParser interface
+func (f FieldParserFunc) ParseFields(fields []Field, value string) ([]Field, error) {
+	return f(fields, value)
+}
+
+// NonEmptyParser returns a field parser that trims space and checks that a value is non empty.
+func NonEmptyParser(kind FieldKind) FieldParser {
+	return &fieldParserNonEmpty{kind}
+}
+
+type fieldParserNonEmpty struct {
+	kind FieldKind
+}
+
+// ParseFields implements FieldParser interface
+func (p *fieldParserNonEmpty) ParseFields(fields []Field, value string) ([]Field, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fields, nil
+	}
+	return append(fields, Field{
+		Kind:  p.kind,
+		Value: value,
+	}), nil
+}
+
+type fieldParserIPAddress struct{}
+
+// IPAddressParser parses an IP address field.
+// It returns an error if the value is not valid IP address.
+func IPAddressParser() FieldParser {
+	return &fieldParserIPAddress{}
+}
+
+var _ FieldParser = (*fieldParserIPAddress)(nil)
+
+// ParseFields implements FieldParser interface
+func (*fieldParserIPAddress) ParseFields(fields []Field, value string) ([]Field, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fields, nil
+	}
+	if net.ParseIP(value) == nil {
+		return fields, errors.Errorf("invalid ip address %q", value)
+	}
+	return append(fields, Field{
+		Kind:  KindIPAddress,
+		Value: value,
+	}), nil
+}
+
+// HostNameParser parses a string to get either an IP address field or a domain field.
+func HostNameParser() FieldParser {
+	return &fieldParserHostname{}
+}
+
+type fieldParserHostname struct{}
+
+var _ FieldParser = (*fieldParserHostname)(nil)
+
+func (*fieldParserHostname) ParseFields(fields []Field, value string) ([]Field, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fields, nil
+	}
+	if net.ParseIP(value) != nil {
+		return append(fields, Field{
+			Kind:  KindIPAddress,
+			Value: value,
+		}), nil
+	}
+	return append(fields, Field{
+		Kind:  KindDomainName,
+		Value: value,
+	}), nil
+}
+
+type GJSONFieldParser map[string]FieldParser
+
+var _ FieldParser = (GJSONFieldParser)(nil)
+
+func (g GJSONFieldParser) ParseFields(fields []Field, value string) ([]Field, error) {
+	if value == "" {
+		return fields, nil
+	}
+	if !gjson.Valid(value) {
+		return fields, errors.Errorf("invalid JSON value %q", value)
+	}
+	var err error
+	for path, parser := range g {
+		if parser == nil {
+			continue
+		}
+		// nolint:scope
+		gjson.Get(value, path).ForEach(func(_, jsonValue gjson.Result) bool {
+			fields, err = parser.ParseFields(fields, jsonValue.Str)
+			return err == nil
+		})
+		if err != nil {
+			break
+		}
+	}
+	return fields, nil
+}
+
+// CheckIPAddress checks if an IP address is valid
+func checkIPAddress(addr string) bool {
+	return net.ParseIP(addr) != nil
+}

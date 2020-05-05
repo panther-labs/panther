@@ -148,7 +148,7 @@ var localRegistry = &parsers.Registry{}
 func registerMockParser(logType string, event *parsers.Result) (testParser *mockParser) {
 	testParser = &mockParser{}
 	testParser.On("Parse", mock.Anything).Return([]*parsers.Result{event})
-	localRegistry.Register(parsers.LogType{
+	err := localRegistry.Register(parsers.LogType{
 		Name:        logType,
 		Description: fmt.Sprintf("Mock log type %s", logType),
 		NewParser:   func() parsers.Interface { return testParser },
@@ -156,6 +156,9 @@ func registerMockParser(logType string, event *parsers.Result) (testParser *mock
 			testEvent logs.Meta
 		}{},
 	})
+	if err != nil {
+		panic(err)
+	}
 	return
 }
 

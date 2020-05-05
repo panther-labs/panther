@@ -36,11 +36,11 @@ func (e *TestEvent) PantherEvent() *logs.Event {
 		logs.IPAddress(e.RemoteIP))
 }
 
-type testParser struct{}
+// type testParser struct{}
 
-func (p *testParser) Parse(log string) ([]*Result, error) {
-	return nil, nil
-}
+// func (p *testParser) Parse(log string) ([]*Result, error) {
+// 	return nil, nil
+// }
 
 // func TestPantherLog(t *testing.T) {
 // 	now := time.Now()

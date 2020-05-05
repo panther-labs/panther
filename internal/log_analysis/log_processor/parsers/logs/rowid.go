@@ -98,6 +98,7 @@ func getHardwareInterface() (net.Interface, error) {
 
 var nextRowID RowID
 
+// NextRowID returns the next row id from a package-wide id generator.
 func NextRowID() string {
 	return nextRowID.NewRowID()
 }

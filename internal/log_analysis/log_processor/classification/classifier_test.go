@@ -63,7 +63,7 @@ func mockLogType(name string, parser *mockParser) parsers.LogType {
 	}
 }
 
-var testRegistry *parsers.Registry
+// var testRegistry *parsers.Registry
 
 func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	parserSuccess := newMockParser(nil, &parsers.Result{})

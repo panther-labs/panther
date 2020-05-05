@@ -71,9 +71,7 @@ func TestJoinObjects(t *testing.T) {
 		if string(joined) != tc.Want {
 			t.Errorf("Invalid strip output %q: %q != %q", tc.JSON, joined, tc.Want)
 		}
-
 	}
-
 }
 
 func TestJoinObjectsInplace(t *testing.T) {

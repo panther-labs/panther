@@ -23,17 +23,23 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsontricks"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 )
 
 // const (
 // 	PantherFieldPrefix = "p_"
 // )
 
+// nolint:lll
 // var (
-// 	// nolint:lll
 // 	ipv4Regex  = regexp.MustCompile(`(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])*`)
 // 	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 // )
+
+// PantherEventer is the interface to be implemented by all parsed log events.
+type PantherEventer interface {
+	PantherEvent() *logs.Event
+}
 
 // QuickParseJSON is a helper method for parsers that produce a single event from each JSON log line input.
 func QuickParseJSON(event PantherEventer, src string) ([]*Result, error) {
