@@ -33,7 +33,7 @@ const EditComplianceSource: React.FC = () => {
     variables: { id: match.params.id },
     onError: error => {
       pushSnackbar({
-        title: extractErrorMessage(error) || 'An unknown error occured',
+        title: extractErrorMessage(error) || 'An unknown error occurred',
         variant: 'error',
       });
     },

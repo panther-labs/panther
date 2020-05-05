@@ -1,4 +1,4 @@
-package main
+package genericapi
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,29 +19,25 @@ package main
  */
 
 import (
-	"context"
-
-	"github.com/aws/aws-lambda-go/lambda"
-	"gopkg.in/go-playground/validator.v9"
-
-	"github.com/panther-labs/panther/api/lambda/database/models"
-	"github.com/panther-labs/panther/internal/core/database_api/athena/driver/api"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"errors"
+	"strings"
 )
 
-var router *genericapi.Router
+// HTMLCharacterSet is the same set of characters replaced by the built-in html.EscapeString.
+const HTMLCharacterSet = `'<>&"`
 
-func init() {
-	router = genericapi.NewRouter("database", "athena", validator.New(), api.API{})
-}
+// ErrContainsHTML defines a standard error message if a field contains HTML characters.
+var ErrContainsHTML = func() error {
+	var chars []string
+	for _, x := range HTMLCharacterSet {
+		chars = append(chars, string(x))
+	}
+	return errors.New("cannot contain any of: " + strings.Join(chars, " "))
+}()
 
-func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(request)
-}
-
-func main() {
-	api.SessionInit()
-	lambda.Start(lambdaHandler)
+// ContainsHTML is true if the string contains any of HTMLCharacterSet
+//
+// Such strings should be rejected for user-defined names and labels to prevent injection attacks.
+func ContainsHTML(s string) bool {
+	return strings.ContainsAny(s, HTMLCharacterSet)
 }

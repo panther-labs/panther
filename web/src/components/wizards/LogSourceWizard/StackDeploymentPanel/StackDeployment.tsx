@@ -20,6 +20,7 @@ import { Text, Box, Heading, Spinner, Flex, Link } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage, toStackNameFormat } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
+import { LOG_ONBOARDING_DOC_URL } from 'Source/constants';
 import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { LogSourceWizardValues } from '../LogSourceWizard';
 
@@ -79,8 +80,18 @@ const StackDeployment: React.FC = () => {
 
       return (
         <React.Fragment>
+          <Heading size="medium" m="auto" mb={2} color="grey400">
+            Step 1: Allow Panther to Read S3 Data
+          </Heading>
+          <Text size="large" color="grey200" as="p" mb={10}>
+            To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
+            <b>{values.awsAccountId}</b>.{' '}
+            {!initialValues.integrationId
+              ? 'This will create a ReadOnly IAM Role to access the logs.'
+              : 'This will update the existing ReadOnly IAM Role.'}
+          </Text>
           <Text size="large" color="grey200" as="p" mt={2} mb={2}>
-            The quickest way to do it, is through the AWS console
+            The quickest way to do it is through the AWS console
           </Text>
           <Link
             external
@@ -105,12 +116,37 @@ const StackDeployment: React.FC = () => {
           >
             Download template
           </Link>
+          <Heading size="medium" m="auto" mt={8} color="grey400">
+            Step 2: Adding Notifications For New Data
+          </Heading>
+          <Text size="large" color="grey200" as="p" mt={4} mb={2}>
+            After deploying the stack above, follow the steps{' '}
+            <Link
+              external
+              color="blue300"
+              title="SNS Notification Setup"
+              href={LOG_ONBOARDING_DOC_URL}
+            >
+              here
+            </Link>{' '}
+            to notify Panther when new data becomes available for analysis.
+          </Text>
         </React.Fragment>
       );
     }
 
     return (
       <React.Fragment>
+        <Heading size="medium" m="auto" mb={2} color="grey400">
+          Deploy your configured stack
+        </Heading>
+        <Text size="large" color="grey200" as="p" mb={10}>
+          To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
+          <b>{values.awsAccountId}</b>.{' '}
+          {!initialValues.integrationId
+            ? 'This will create a ReadOnly IAM Role to access the logs.'
+            : 'This will update the existing ReadOnly IAM Role.'}
+        </Text>
         <Box as="ol">
           <Flex as="li" align="center" mb={3}>
             <Text size="large" color="grey200" mr={1}>
@@ -157,21 +193,7 @@ const StackDeployment: React.FC = () => {
     );
   };
 
-  return (
-    <Box>
-      <Heading size="medium" m="auto" mb={2} color="grey400">
-        Deploy your configured stack
-      </Heading>
-      <Text size="large" color="grey200" as="p" mb={10}>
-        To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
-        <b>{values.awsAccountId}</b>.{' '}
-        {!initialValues.integrationId
-          ? 'This will create a ReadOnly IAM Role to access the logs.'
-          : 'This will update the existing ReadOnly IAM Role.'}
-      </Text>
-      {renderContent()}
-    </Box>
-  );
+  return <Box>{renderContent()}</Box>;
 };
 
 export default StackDeployment;

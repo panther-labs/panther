@@ -21,8 +21,8 @@ package api
 import (
 	"github.com/stretchr/testify/mock"
 
-	"github.com/panther-labs/panther/internal/core/outputs_api/encryption"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
+	"github.com/panther-labs/panther/pkg/encryption"
 )
 
 type mockOutputTable struct {

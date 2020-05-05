@@ -19,7 +19,6 @@ package cfndoc
  */
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -29,6 +28,7 @@ func TestMatch(t *testing.T) {
 	var match string
 	expected := []*ResourceDoc{
 		{
+			FieldName:     "Resource",
 			Resource:      "label",
 			Documentation: "doc doc",
 		},
@@ -73,6 +73,7 @@ Resource: label
 
 	expected = []*ResourceDoc{
 		{
+			FieldName:     "Resource",
 			Resource:      "label",
 			Documentation: "# doc \n   ## doc",
 		},
@@ -102,31 +103,4 @@ func TestNoMatch(t *testing.T) {
 
 	nomatch = `</cfndoc> <cfndoc>`
 	require.Equal(t, expected, Parse(nomatch))
-}
-
-func TestSort(t *testing.T) {
-	var match string
-	expected := []*ResourceDoc{
-		{
-			Resource:      "label1",
-			Documentation: "doc doc",
-		},
-		{
-			Resource:      "label2",
-			Documentation: "doc doc",
-		},
-		{
-			Resource:      "label3",
-			Documentation: "doc doc",
-		},
-	}
-
-	match = `
-Resource: label2 <cfndoc> doc doc</cfndoc>
-Resource: label1 <cfndoc> doc doc</cfndoc>
-Resource: label3 <cfndoc> doc doc</cfndoc>
-`
-	docs := Parse(match)
-	sort.Sort(ByLabel(docs))
-	require.Equal(t, expected, docs)
 }

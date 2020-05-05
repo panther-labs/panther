@@ -79,6 +79,12 @@ var (
 
 type partitionTestEvent struct{}
 
+func TestGetDataPrefix(t *testing.T) {
+	assert.Equal(t, logS3Prefix, GetDataPrefix(LogProcessingDatabaseName))
+	assert.Equal(t, ruleMatchS3Prefix, GetDataPrefix(RuleMatchDatabaseName))
+	assert.Equal(t, logS3Prefix, GetDataPrefix("some_test_database"))
+}
+
 func TestGlueTableMetadataLogData(t *testing.T) {
 	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{})
 
@@ -112,7 +118,9 @@ func TestCreateJSONPartition(t *testing.T) {
 	glueClient := &mockGlue{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Once()
-	assert.NoError(t, gm.CreateJSONPartition(glueClient, refTime))
+	created, err := gm.CreateJSONPartition(glueClient, refTime)
+	assert.NoError(t, err)
+	assert.True(t, created)
 	glueClient.AssertExpectations(t)
 }
 
@@ -123,8 +131,9 @@ func TestCreateJSONPartitionPartitionExists(t *testing.T) {
 	glueClient := &mockGlue{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil)
 	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, entityExistsError)
-	err := gm.CreateJSONPartition(glueClient, refTime)
+	created, err := gm.CreateJSONPartition(glueClient, refTime)
 	assert.NoError(t, err)
+	assert.False(t, created)
 	glueClient.AssertExpectations(t)
 }
 
@@ -133,8 +142,9 @@ func TestCreateJSONPartitionErrorGettingTable(t *testing.T) {
 	// test error in GetTable
 	glueClient := &mockGlue{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nonAWSError).Once()
-	err := gm.CreateJSONPartition(glueClient, refTime)
+	created, err := gm.CreateJSONPartition(glueClient, refTime)
 	assert.Error(t, err)
+	assert.False(t, created)
 	assert.Equal(t, nonAWSError, err)
 	glueClient.AssertExpectations(t)
 }
@@ -145,8 +155,9 @@ func TestCreateJSONPartitionNonAWSError(t *testing.T) {
 	glueClient := &mockGlue{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nonAWSError).Once()
-	err := gm.CreateJSONPartition(glueClient, refTime)
+	created, err := gm.CreateJSONPartition(glueClient, refTime)
 	assert.Error(t, err)
+	assert.False(t, created)
 	assert.Equal(t, nonAWSError, err)
 	glueClient.AssertExpectations(t)
 }
