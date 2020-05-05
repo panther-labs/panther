@@ -37,7 +37,6 @@ const EditPolicyPage: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
 
   const { error: fetchPolicyError, data: queryData, loading: isFetchingPolicy } = usePolicyDetails({
-    fetchPolicy: 'cache-and-network',
     variables: {
       input: {
         policyId: match.params.id,

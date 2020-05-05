@@ -57,8 +57,9 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Severity',
-      items: severityOptions,
-      itemToString: (severity: SeverityEnum) => capitalize(severity.toLowerCase()),
+      items: ['', ...severityOptions],
+      itemToString: (severity: SeverityEnum | '') =>
+        severity === '' ? 'All' : capitalize(severity.toLowerCase()),
       inputProps: {
         placeholder: 'Choose a severity...',
       },
@@ -80,10 +81,27 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Status',
-      items: statusOptions,
-      itemToString: (status: ComplianceStatusEnum) => capitalize(status.toLowerCase()),
+      items: ['', ...statusOptions],
+      itemToString: (status: ComplianceStatusEnum | '') =>
+        status === '' ? 'All' : capitalize(status.toLowerCase()),
       inputProps: {
         placeholder: 'Choose a status...',
+      },
+    },
+  },
+  enabled: {
+    component: FormikCombobox,
+    props: {
+      label: 'Enabled',
+      items: ['', 'true', 'false'],
+      itemToString: (item: boolean | string) => {
+        if (!item) {
+          return 'All';
+        }
+        return item === 'true' ? 'Yes' : 'No';
+      },
+      inputProps: {
+        placeholder: 'Show only enabled?',
       },
     },
   },
@@ -91,10 +109,15 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Auto-remediation Status',
-      items: [true, false],
-      itemToString: (item: boolean) => (item ? 'Configured' : 'Not Configured'),
+      items: ['', 'true', 'false'],
+      itemToString: (item: boolean | string) => {
+        if (!item) {
+          return 'All';
+        }
+        return item === 'true' ? 'Configured' : 'Not Configured';
+      },
       inputProps: {
-        placeholder: 'Choose a remediation status...',
+        placeholder: 'Choose a status...',
       },
     },
   },
@@ -102,7 +125,7 @@ export const filters = {
 
 export type ListPoliciesFiltersValues = Pick<
   ListPoliciesInput,
-  'complianceStatus' | 'tags' | 'severity' | 'resourceTypes' | 'nameContains'
+  'complianceStatus' | 'tags' | 'severity' | 'resourceTypes' | 'nameContains' | 'enabled'
 >;
 
 const ListPoliciesActions: React.FC = () => {
