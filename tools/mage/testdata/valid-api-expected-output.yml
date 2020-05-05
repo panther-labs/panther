@@ -17,12 +17,10 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Template with two embedded api bodies
-
 Resources:
   FirstApi:
     Type: AWS::Serverless::Api
     Properties:
-      # preceding comment
       DefinitionBody:
         consumes:
           - application/json
@@ -75,5 +73,4 @@ Resources:
           validate-all:
             validateRequestBody: true
             validateRequestParameters: true
-      # trailing comment
       Name: first-api

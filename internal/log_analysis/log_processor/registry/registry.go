@@ -23,6 +23,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gcplogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
@@ -96,6 +97,11 @@ var (
 			&awslogs.CloudTrailDigest{}, awslogs.CloudTrailDigestDesc),
 		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
 			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
+		gcplogs.TypeAuditLog: DefaultLogParser(
+			gcplogs.NewAuditLogParser(),
+			&gcplogs.LogEntryAuditLog{},
+			gcplogs.AuditLogDesc,
+		),
 	}
 )
 

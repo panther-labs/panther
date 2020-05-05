@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,32 +16,23 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"go.uber.org/zap"
+import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client';
 
-	"github.com/panther-labs/panther/api/lambda/database/models"
-	"github.com/panther-labs/panther/pkg/awsathena"
-)
+import { History } from 'history';
+import { LocationErrorState } from 'Components/utils/ApiErrorFallback';
+import createErrorLink from './createErrorLink';
+import authLink from './authLink';
+import cleanParamsLink from './cleanParamsLink';
+import httpLink from './httpLink';
+import typePolicies from './typePolicies';
 
-func (api API) StopQuery(input *models.StopQueryInput) (*models.StopQueryOutput, error) {
-	var output models.StopQueryOutput
+/**
+ * A function that will create an ApolloClient given a specific instance of a history
+ */
+const createApolloClient = (history: History<LocationErrorState>) =>
+  new ApolloClient({
+    link: ApolloLink.from([cleanParamsLink, createErrorLink(history), authLink, httpLink]),
+    cache: new InMemoryCache({ typePolicies }),
+  });
 
-	var err error
-	defer func() {
-		if err != nil {
-			err = apiError(err) // lambda failed
-		}
-
-		// allows tracing queries
-		zap.L().Info("StopQuery",
-			zap.String("queryId", input.QueryID),
-			zap.Error(err))
-	}()
-
-	_, err = awsathena.StopQuery(athenaClient, input.QueryID)
-	if err != nil {
-		return &output, err
-	}
-
-	return api.GetQueryStatus(input)
-}
+export default createApolloClient;

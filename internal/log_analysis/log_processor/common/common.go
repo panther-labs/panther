@@ -23,6 +23,15 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
+	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go/service/sns/snsiface"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
+	"github.com/kelseyhightower/envconfig"
 )
 
 const (
@@ -30,8 +39,36 @@ const (
 	EventDelimiter = '\n'
 )
 
-// Session AWS Session that can be used by components of the system
-var Session = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(MaxRetries)))
+var (
+	// Session and clients that can be used by components of the log processor
+	Session      *session.Session
+	LambdaClient lambdaiface.LambdaAPI
+	S3Uploader   s3manageriface.UploaderAPI
+	SqsClient    sqsiface.SQSAPI
+	SnsClient    snsiface.SNSAPI
+
+	Config EnvConfig
+)
+
+type EnvConfig struct {
+	AwsLambdaFunctionMemorySize int    `required:"true" split_words:"true"`
+	ProcessedDataBucket         string `required:"true" split_words:"true"`
+	SqsQueueURL                 string `required:"true" split_words:"true"`
+	SnsTopicARN                 string `required:"true" split_words:"true"`
+}
+
+func Setup() {
+	Session = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(MaxRetries)))
+	LambdaClient = lambda.New(Session)
+	S3Uploader = s3manager.NewUploader(Session)
+	SqsClient = sqs.New(Session)
+	SnsClient = sns.New(Session)
+
+	err := envconfig.Process("", &Config)
+	if err != nil {
+		panic(err)
+	}
+}
 
 // DataStream represents a data stream that read by the processor
 type DataStream struct {

@@ -29,7 +29,7 @@ type AppSyncAlarm struct {
 	Alarm
 }
 
-func NewAppSyncAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) (alarm *AppSyncAlarm) {
+func NewAppSyncAlarm(alarmType, metricName, message string, resource map[string]interface{}) (alarm *AppSyncAlarm) {
 	const (
 		metricDimension = "GraphQLAPIId"
 		metricNamespace = "AWS/AppSync"
@@ -45,7 +45,7 @@ func NewAppSyncAlarm(alarmType, metricName, message string, resource map[interfa
 	return alarm
 }
 
-func generateAppSyncAlarms(resource map[interface{}]interface{}) (alarms []*Alarm) {
+func generateAppSyncAlarms(resource map[string]interface{}) (alarms []*Alarm) {
 	// NOTE: these metrics appear to have no units
 
 	// server errors

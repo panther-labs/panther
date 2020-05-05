@@ -24,8 +24,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/panther-labs/panther/internal/core/outputs_api/encryption"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
+	"github.com/panther-labs/panther/pkg/encryption"
 )
 
 // The API consists of receiver methods for each of the handlers.

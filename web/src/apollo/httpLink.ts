@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,12 +16,11 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/pkg/genericapi"
-)
+import { createHttpLink } from '@apollo/client';
 
-// conform to generic api
-func apiError(err error) error {
-	err = &genericapi.InternalError{Message: err.Error()}
-	return err
-}
+/**
+ * Typical HTTP link to add the GraphQL URL to query
+ */
+const httpLink = createHttpLink({ uri: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT });
+
+export default httpLink;

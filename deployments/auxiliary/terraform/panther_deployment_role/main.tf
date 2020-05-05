@@ -57,42 +57,6 @@ resource "aws_iam_policy" "deployment" {
           "cloudwatch:*",
           "cognito-idp:*",
           "dynamodb:List*",
-          "ecr:GetAuthorizationToken",
-          "ecs:*",
-          "events:*",
-          "glue:*",
-          "guardduty:CreatePublishingDestination",
-          "guardduty:ListDetectors",
-          "kms:CreateKey",
-          "kms:List*",
-          "lambda:*EventSourceMapping",
-          "lambda:List*",
-          "logs:*",
-          "sns:List*",
-          "sqs:List*",
-          "states:CreateStateMachine",
-          "states:TagResource",
-          "states:UntagResource",
-        ],
-        Resource : "*"
-      },
-      {
-        Effect : "Allow",
-        Action : "cloudformation:*",
-        Resource : [
-          "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stack/panther-*",
-          "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stackset/panther-*",
-          "arn:${var.aws_partition}:cloudformation:*:aws:transform/Serverless-2016-10-31",
-        ]
-      },
-      {
-        Effect : "Allow",
-        Action : "dynamodb:*",
-        Resource : "arn:${var.aws_partition}:dynamodb:*:${var.aws_account_id}:table/panther-*"
-      },
-      {
-        Effect : "Allow",
-        Action : [
           "ec2:AssociateRouteTable",
           "ec2:AssociateSubnetCidrBlock",
           "ec2:AssociateVpcCidrBlock",
@@ -127,9 +91,51 @@ resource "aws_iam_policy" "deployment" {
           "ec2:RevokeSecurityGroupIngress",
           "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
           "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
-          "elasticloadbalancing:*"
+          "elasticloadbalancing:*",
+          "ecr:GetAuthorizationToken",
+          "ecs:*",
+          "events:*",
+          "glue:*",
+          "guardduty:CreatePublishingDestination",
+          "guardduty:ListDetectors",
+          "kms:CreateKey",
+          "kms:List*",
+          "lambda:*EventSourceMapping",
+          "lambda:List*",
+          "logs:*",
+          "sns:List*",
+          "sqs:List*",
+          "states:CreateStateMachine",
+          "states:TagResource",
+          "states:UntagResource",
         ],
         Resource : "*"
+      },
+      {
+        Effect : "Allow",
+        Action : [
+          "cloudtrail:AddTags",
+          "cloudtrail:DeleteTrail",
+          "cloudtrail:PutEventSelectors",
+          "cloudtrail:StartLogging",
+          "cloudtrail:StopLogging",
+          "cloudtrail:UpdateTrail",
+        ],
+        Resource : "arn:${var.aws_partition}:cloudtrail:*:${var.aws_account_id}:trail/panther-cloudtrail-*"
+      },
+      {
+        Effect : "Allow",
+        Action : "cloudformation:*",
+        Resource : [
+          "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stack/panther-*",
+          "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stackset/panther-*",
+          "arn:${var.aws_partition}:cloudformation:*:aws:transform/Serverless-2016-10-31",
+        ]
+      },
+      {
+        Effect : "Allow",
+        Action : "dynamodb:*",
+        Resource : "arn:${var.aws_partition}:dynamodb:*:${var.aws_account_id}:table/panther-*"
       },
       {
         Effect : "Allow",

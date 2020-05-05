@@ -23,7 +23,7 @@ import (
 	"strconv"
 )
 
-func getResourceFloat32Property(key string, resource map[interface{}]interface{}) float32 {
+func getResourceFloat32Property(key string, resource map[string]interface{}) float32 {
 	floatVal, err := strconv.ParseFloat(getResourceProperty(key, resource), 32)
 	if err != nil {
 		panic(fmt.Sprintf("cannot parse %s as float32: from %#v",
@@ -32,15 +32,17 @@ func getResourceFloat32Property(key string, resource map[interface{}]interface{}
 	return (float32)(floatVal)
 }
 
-func getResourceProperty(key string, resource map[interface{}]interface{}) string {
-	switch props := resource[(interface{})("Properties")].(type) {
-	case map[interface{}]interface{}:
-		switch val := props[(interface{})(key)].(type) {
+func getResourceProperty(key string, resource map[string]interface{}) string {
+	switch props := resource["Properties"].(type) {
+	case map[string]interface{}:
+		switch val := props[key].(type) {
 		case string:
 			return val
+		case float32, float64:
+			return fmt.Sprintf("%f", val)
 		case int, int32, int64:
 			return fmt.Sprintf("%d", val)
 		}
 	}
-	panic(fmt.Sprintf("Cannot find name: %s in %#v", key, resource))
+	panic(fmt.Sprintf("Cannot find name: %s in %#v", key, resource["Properties"]))
 }

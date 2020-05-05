@@ -20,12 +20,12 @@ package classification
 
 import (
 	"container/heap"
-	"fmt"
 	"runtime/debug"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -84,7 +84,7 @@ func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []*parsers
 		if r := recover(); r != nil {
 			zap.L().Debug("parser panic",
 				zap.String("parser", parser.LogType()),
-				zap.Error(fmt.Errorf("%v", r)),
+				zap.Error(errors.Errorf("%v", r)),
 				zap.String("stacktrace", string(debug.Stack())))
 			parsedEvents = nil // return indicator that parse failed
 		}

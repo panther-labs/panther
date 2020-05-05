@@ -26,7 +26,7 @@ type SNSAlarm struct {
 	Alarm
 }
 
-func NewSNSAlarm(alarmType, metricName, message string, resource map[interface{}]interface{}) *SNSAlarm {
+func NewSNSAlarm(alarmType, metricName, message string, resource map[string]interface{}) *SNSAlarm {
 	const (
 		metricDimension = "TopicName"
 		metricNamespace = "AWS/SNS"
@@ -41,7 +41,7 @@ func NewSNSAlarm(alarmType, metricName, message string, resource map[interface{}
 	return alarm
 }
 
-func generateSNSAlarms(resource map[interface{}]interface{}) []*Alarm {
+func generateSNSAlarms(resource map[string]interface{}) []*Alarm {
 	return []*Alarm{
 		NewSNSAlarm(
 			"SNSError",

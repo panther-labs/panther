@@ -25,6 +25,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/tools/cfngen"
+	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -54,7 +55,8 @@ type AlarmProperties struct {
 	Period             int
 	Threshold          float32
 	Unit               string
-	Statistic          string
+	Statistic          string `json:",omitempty"`
+	ExtendedStatistic  string `json:",omitempty"`
 }
 
 type MetricDimension struct {
@@ -184,6 +186,17 @@ func (alarm *Alarm) MaxNoUnitsThreshold(threshold float32, period int) *Alarm {
 	return alarm
 }
 
+// P95SecondsThreshold configures alarm for p90 threshold with Seconds units
+func (alarm *Alarm) P95SecondsThreshold(threshold float32, period int) *Alarm {
+	alarm.Properties.ComparisonOperator = cloudwatch.ComparisonOperatorGreaterThanThreshold
+	alarm.Properties.Threshold = threshold
+	alarm.Properties.Unit = cloudwatch.StandardUnitSeconds
+	alarm.Properties.Period = period
+	alarm.Properties.ExtendedStatistic = "p95"
+	alarm.Properties.TreatMissingData = "notBreaching"
+	return alarm
+}
+
 func AlarmName(alarmType, resourceName string) string {
 	return alarmPrefix + "-" + alarmType + "-" + resourceName
 }
@@ -229,12 +242,12 @@ func GenerateAlarms(settings *config.PantherConfig, cfFiles ...string) ([]*Alarm
 }
 
 func generateAlarms(fileName string, settings *config.PantherConfig) (alarms []*Alarm, err error) {
-	yamlObj, err := readYaml(fileName)
+	obj, err := cfnparse.ParseTemplate(fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	walkYamlMap(yamlObj, func(resourceType string, resource map[interface{}]interface{}) {
+	walkJSONMap(obj, func(resourceType string, resource map[string]interface{}) {
 		alarms = append(alarms, alarmDispatchOnType(resourceType, resource, settings)...)
 	})
 
@@ -242,7 +255,7 @@ func generateAlarms(fileName string, settings *config.PantherConfig) (alarms []*
 }
 
 // dispatch on "Type" to create specific alarms
-func alarmDispatchOnType(resourceType string, resource map[interface{}]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
+func alarmDispatchOnType(resourceType string, resource map[string]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
 	switch resourceType { // this could be a map of key -> func if this gets long
 	case "AWS::SNS::Topic":
 		return generateSNSAlarms(resource)

@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.1.1
+  Version: v1.1.2
 
 Resources:
   DeploymentRole:
@@ -57,37 +57,11 @@ Resources:
               - athena:*
               - cloudformation:Describe*
               - cloudformation:List*
+              - cloudtrail:DescribeTrails
+              - cloudtrail:CreateTrail
               - cloudwatch:*
               - cognito-idp:*
               - dynamodb:List*
-              - ecr:GetAuthorizationToken
-              - ecs:*
-              - events:*
-              - glue:*
-              - guardduty:CreatePublishingDestination
-              - guardduty:ListDetectors
-              - kms:CreateKey
-              - kms:List*
-              - lambda:*EventSourceMapping
-              - lambda:List*
-              - logs:*
-              - sns:List*
-              - sqs:List*
-              - states:CreateStateMachine
-              - states:TagResource
-              - states:UntagResource
-            Resource: '*'
-          - Effect: Allow
-            Action: cloudformation:*
-            Resource:
-              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/panther-*
-              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stackset/panther-*
-              - !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless-2016-10-31
-          - Effect: Allow
-            Action: dynamodb:*
-            Resource: !Sub arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/panther-*
-          - Effect: Allow
-            Action:
               - ec2:AssociateRouteTable
               - ec2:AssociateSubnetCidrBlock
               - ec2:AssociateVpcCidrBlock
@@ -123,7 +97,41 @@ Resources:
               - ec2:UpdateSecurityGroupRuleDescriptionsEgress
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
               - elasticloadbalancing:*
+              - ecr:GetAuthorizationToken
+              - ecs:*
+              - events:*
+              - glue:*
+              - guardduty:CreatePublishingDestination
+              - guardduty:ListDetectors
+              - kms:CreateKey
+              - kms:List*
+              - lambda:*EventSourceMapping
+              - lambda:List*
+              - logs:*
+              - sns:List*
+              - sqs:List*
+              - states:CreateStateMachine
+              - states:TagResource
+              - states:UntagResource
             Resource: '*'
+          - Effect: Allow
+            Action: # permissions for handling self-onboarding CloudTrail
+              - cloudtrail:AddTags
+              - cloudtrail:DeleteTrail
+              - cloudtrail:PutEventSelectors
+              - cloudtrail:StartLogging
+              - cloudtrail:StopLogging
+              - cloudtrail:UpdateTrail
+            Resource: !Sub arn:${AWS::Partition}:cloudtrail:*:${AWS::AccountId}:trail/panther-cloudtrail-*
+          - Effect: Allow
+            Action: cloudformation:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/panther-*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stackset/panther-*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless-2016-10-31
+          - Effect: Allow
+            Action: dynamodb:*
+            Resource: !Sub arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/panther-*
           - Effect: Allow
             Action: ecr:*
             Resource: !Sub arn:${AWS::Partition}:ecr:*:${AWS::AccountId}:repository/panther-*

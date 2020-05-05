@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
-	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -73,18 +72,6 @@ Each resource describes its function and failure impacts.
 // generate operational documentation from deployment CloudFormation
 func opDocs() error {
 	logger.Infof("doc: generating operational documentation from cloudformation")
-	outDir := filepath.Join("docs", "gitbook", "operations")
-	if err := os.MkdirAll(outDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
-	}
-	inventoryFileName := filepath.Join(outDir, "runbooks.md")
-
-	inventoryFile, err := os.Create(inventoryFileName)
-	if err != nil {
-		return fmt.Errorf("failed to create file %s: %v", inventoryFileName, err)
-	}
-	defer inventoryFile.Close()
-
 	docs, err := cfndoc.ReadCfn(cfnFiles()...)
 	if err != nil {
 		return fmt.Errorf("failed to generate operational documentation: %v", err)
@@ -95,11 +82,8 @@ func opDocs() error {
 	for _, doc := range docs {
 		docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n\n", doc.Resource, doc.Documentation))
 	}
-	if _, err = inventoryFile.Write(docsBuffer.Bytes()); err != nil {
-		return fmt.Errorf("failed to write file %s: %v", inventoryFileName, err)
-	}
 
-	return nil
+	return writeFile(filepath.Join("docs", "gitbook", "operations", "runbooks.md"), docsBuffer.Bytes())
 }
 
 const (
@@ -111,9 +95,6 @@ const (
 func logDocs() error {
 	logger.Infof("doc: generating documentation on supported logs")
 	outDir := filepath.Join("docs", "gitbook", "log-analysis", "log-processing", "supported-logs")
-	if err := os.MkdirAll(outDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", outDir, err)
-	}
 
 	// group the data by category
 	tables := registry.AvailableTables()
@@ -135,16 +116,8 @@ func logDocs() error {
 
 	docCategory := func(category string) error {
 		var docsBuffer bytes.Buffer
-		docsBuffer.WriteString(parserReadmeHeader)
-
-		readmeFileName := filepath.Join(outDir, category+".md")
-		readmeFile, err := os.Create(readmeFileName)
-		if err != nil {
-			return fmt.Errorf("failed to create file %s: %v", readmeFileName, err)
-		}
-		defer readmeFile.Close()
-
 		logTypes := logCategories[category]
+		docsBuffer.WriteString(parserReadmeHeader)
 		docsBuffer.WriteString(fmt.Sprintf("# %s\n%sRequired fields are in <b>bold</b>.%s\n",
 			category,
 			`{% hint style="info" %}`,
@@ -177,10 +150,7 @@ func logDocs() error {
 			docsBuffer.WriteString("</table>\n\n")
 		}
 
-		if _, err = readmeFile.Write(docsBuffer.Bytes()); err != nil {
-			return fmt.Errorf("failed to write file %s: %v", readmeFileName, err)
-		}
-		return nil
+		return writeFile(filepath.Join(outDir, category+".md"), docsBuffer.Bytes())
 	}
 
 	// one file per category

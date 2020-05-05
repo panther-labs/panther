@@ -44,7 +44,35 @@ const (
 )
 
 // For CPU-intensive operations, limit the max number of worker goroutines.
-var maxWorkers = runtime.NumCPU() - 1
+var maxWorkers = func() int {
+	n := runtime.NumCPU()
+	// Use all CPUs on CI environment
+	if runningInCI() {
+		return n
+	}
+	// Ensure we don't set maxWorkers to zero
+	if n > 1 {
+		return n - 1
+	}
+	return 1
+}()
+
+// Queue limiting concurrent tasks when using `runTask`
+var taskQueue = make(chan struct{}, maxWorkers)
+
+// Ugly task queue hack to limit concurrent tasks
+func runTask(results chan<- goroutineResult, name string, task func() error) {
+	taskQueue <- struct{}{}
+	go func() {
+		defer func() {
+			<-taskQueue
+		}()
+		results <- goroutineResult{
+			summary: name,
+			err:     task(),
+		}
+	}()
+}
 
 // Track results when executing similar tasks in parallel
 type goroutineResult struct {
@@ -54,15 +82,22 @@ type goroutineResult struct {
 
 // Wait for the given number of goroutines to finish, logging results as they come in.
 //
+// This can be invoked multiple times to track progress over many parallel chunks of work:
+//   "start" is the first message number to show in the output
+//   "end" is the last message number to show in the output
+//   "total" is the total number of tasks (across all invocations)
+//
+// This will consume exactly (end - start) + 1 messages in the channel.
+//
 // Logs a fatal message at the end if there were any errors.
-func logResults(results chan goroutineResult, command string, count int) {
+func logResults(results chan goroutineResult, command string, start, end, total int) {
 	var erroredTasks []string
-	for i := 1; i <= count; i++ {
+	for i := start; i <= end; i++ {
 		r := <-results
 		if r.err == nil {
-			logger.Infof("    √ %s finished (%d/%d)", r.summary, i, count)
+			logger.Infof("    √ %s finished (%d/%d)", r.summary, i, total)
 		} else {
-			logger.Errorf("    X %s failed (%d/%d): %v", r.summary, i, count, r.err)
+			logger.Errorf("    X %s failed (%d/%d): %v", r.summary, i, total, r.err)
 			erroredTasks = append(erroredTasks, r.summary)
 		}
 	}
@@ -95,11 +130,21 @@ func readFile(path string) []byte {
 	return contents
 }
 
-// Wrapper around ioutil.WriteFile, logging errors as fatal.
-func writeFile(path string, data []byte) {
-	if err := ioutil.WriteFile(path, data, 0644); err != nil {
-		logger.Fatalf("failed to write %s: %v", path, err)
+// Wrapper around ioutil.WriteFile, creating the parent directories if needed.
+func writeFile(path string, data []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}
+
+	var permissions os.FileMode = 0644
+	if strings.HasSuffix(path, ".key") || strings.HasSuffix(path, ".crt") {
+		permissions = certFilePermissions
+	}
+
+	if err := ioutil.WriteFile(path, data, permissions); err != nil {
+		return fmt.Errorf("failed to write file %s: %v", path, err)
+	}
+	return nil
 }
 
 // Build the AWS session from the environment or a credentials file.

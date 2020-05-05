@@ -1,4 +1,4 @@
-package main
+package process
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,29 +19,22 @@ package main
  */
 
 import (
-	"context"
-
-	"github.com/aws/aws-lambda-go/lambda"
-	"gopkg.in/go-playground/validator.v9"
-
-	"github.com/panther-labs/panther/api/lambda/database/models"
-	"github.com/panther-labs/panther/internal/core/database_api/athena/driver/api"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 )
 
-var router *genericapi.Router
+const (
+	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+)
 
-func init() {
-	router = genericapi.NewRouter("database", "athena", validator.New(), api.API{})
-}
+var (
+	awsSession *session.Session
+	glueClient glueiface.GlueAPI
+)
 
-func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(request)
-}
-
-func main() {
-	api.SessionInit()
-	lambda.Start(lambdaHandler)
+func Setup() {
+	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
+	glueClient = glue.New(awsSession)
 }

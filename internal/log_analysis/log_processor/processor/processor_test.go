@@ -102,7 +102,10 @@ func TestProcess(t *testing.T) {
 	mockClassifier.standardMocks(mockStats, mockParserStats)
 
 	newProcessorFunc := func(*common.DataStream) *Processor { return p }
-	err := process([]*common.DataStream{dataStream}, destination, newProcessorFunc)
+	streamChan := make(chan *common.DataStream, 1)
+	streamChan <- dataStream
+	close(streamChan)
+	err := process(streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 	require.Equal(t, testLogEvents, destination.nEvents)
 }
@@ -123,7 +126,10 @@ func TestProcessDataStreamError(t *testing.T) {
 	mockClassifier.standardMocks(mockStats, mockParserStats)
 
 	newProcessorFunc := func(*common.DataStream) *Processor { return p }
-	err := process([]*common.DataStream{dataStream}, destination, newProcessorFunc)
+	streamChan := make(chan *common.DataStream, 1)
+	streamChan <- dataStream
+	close(streamChan)
+	err := process(streamChan, destination, newProcessorFunc)
 	require.Error(t, err)
 
 	// confirm error log is as expected
@@ -199,7 +205,10 @@ func TestProcessDestinationError(t *testing.T) {
 	mockClassifier.standardMocks(mockStats, mockParserStats)
 
 	newProcessorFunc := func(*common.DataStream) *Processor { return p }
-	err := process([]*common.DataStream{dataStream}, destination, newProcessorFunc)
+	streamChan := make(chan *common.DataStream, 1)
+	streamChan <- dataStream
+	close(streamChan)
+	err := process(streamChan, destination, newProcessorFunc)
 	require.Error(t, err)
 }
 
@@ -249,7 +258,10 @@ func TestProcessClassifyFailure(t *testing.T) {
 	mockClassifier.On("ParserStats", mock.Anything).Return(mockParserStats)
 
 	newProcessorFunc := func(*common.DataStream) *Processor { return p }
-	err := process([]*common.DataStream{dataStream}, destination, newProcessorFunc)
+	streamChan := make(chan *common.DataStream, 1)
+	streamChan <- dataStream
+	close(streamChan)
+	err := process(streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 
 	actual := logs.AllUntimed()

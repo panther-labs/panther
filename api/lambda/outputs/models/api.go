@@ -43,7 +43,7 @@ type LambdaInput struct {
 // }
 type AddOutputInput struct {
 	UserID             *string       `json:"userId" validate:"required,uuid4"`
-	DisplayName        *string       `json:"displayName" validate:"required,min=1"`
+	DisplayName        *string       `json:"displayName" validate:"required,min=1,excludesall='<>&\""`
 	OutputConfig       *OutputConfig `json:"outputConfig" validate:"required"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`
 }
@@ -81,7 +81,7 @@ type DeleteOutputInput struct {
 // }
 type UpdateOutputInput struct {
 	UserID             *string       `json:"userId" validate:"required,uuid4"`
-	DisplayName        *string       `json:"displayName" validate:"required,min=1"`
+	DisplayName        *string       `json:"displayName" validate:"required,min=1,excludesall='<>&\""`
 	OutputID           *string       `json:"outputId" validate:"required,uuid4"`
 	OutputConfig       *OutputConfig `json:"outputConfig" validate:"required"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`

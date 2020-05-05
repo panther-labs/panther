@@ -29,11 +29,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	lru "github.com/hashicorp/golang-lru"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -43,16 +45,16 @@ var (
 			AWSAccountID:      aws.String("1234567890123"),
 			S3Bucket:          aws.String("test-bucket"),
 			S3Prefix:          aws.String("prefix"),
+			IntegrationType:   aws.String(models.IntegrationTypeAWS3),
 			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
 		},
 	}
 )
 
 func TestGetS3Client(t *testing.T) {
-	// resetting cache
-	sourceCache.cacheUpdateTime = time.Unix(0, 0)
+	resetCaches()
 	lambdaMock := &testutils.LambdaMock{}
-	lambdaClient = lambdaMock
+	common.LambdaClient = lambdaMock
 
 	s3Mock := &testutils.S3Mock{}
 	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
@@ -71,28 +73,34 @@ func TestGetS3Client(t *testing.T) {
 	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
+	newCredentialsFunc =
+		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
+			return &credentials.Credentials{}
+		}
+
 	s3Object := &S3ObjectInfo{
 		S3Bucket:    "test-bucket",
 		S3ObjectKey: "prefix/key",
 	}
-	result, err := getS3Client(s3Object)
+	result, sourceType, err := getS3Client(s3Object)
 	require.NoError(t, err)
 	require.NotNil(t, result)
+	require.Equal(t, models.IntegrationTypeAWS3, sourceType)
 
 	// Subsequent calls should use cache
-	result, err = getS3Client(s3Object)
+	result, sourceType, err = getS3Client(s3Object)
 	require.NoError(t, err)
 	require.NotNil(t, result)
+	require.Equal(t, models.IntegrationTypeAWS3, sourceType)
 
 	s3Mock.AssertExpectations(t)
 	lambdaMock.AssertExpectations(t)
 }
 
 func TestGetS3ClientUnknownBucket(t *testing.T) {
-	// resetting cache
-	sourceCache.cacheUpdateTime = time.Unix(0, 0)
+	resetCaches()
 	lambdaMock := &testutils.LambdaMock{}
-	lambdaClient = lambdaMock
+	common.LambdaClient = lambdaMock
 
 	s3Mock := &testutils.S3Mock{}
 	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
@@ -117,19 +125,19 @@ func TestGetS3ClientUnknownBucket(t *testing.T) {
 		S3ObjectKey: "prefix/key",
 	}
 
-	result, err := getS3Client(s3Object)
+	result, sourceType, err := getS3Client(s3Object)
 	require.Error(t, err)
 	require.Nil(t, result)
+	require.Equal(t, "", sourceType)
 
 	s3Mock.AssertExpectations(t)
 	lambdaMock.AssertExpectations(t)
 }
 
 func TestGetS3ClientSourceNoPrefix(t *testing.T) {
-	// resetting cache
-	sourceCache.cacheUpdateTime = time.Unix(0, 0)
+	resetCaches()
 	lambdaMock := &testutils.LambdaMock{}
-	lambdaClient = lambdaMock
+	common.LambdaClient = lambdaMock
 
 	s3Mock := &testutils.S3Mock{}
 	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
@@ -141,6 +149,7 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 			AWSAccountID:      aws.String("1234567890123"),
 			S3Bucket:          aws.String("test-bucket"),
 			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
+			IntegrationType:   aws.String(models.IntegrationTypeAWS3),
 		},
 	}
 
@@ -152,6 +161,10 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
 
+	expectedGetBucketLocationInput := &s3.GetBucketLocationInput{Bucket: aws.String("test-bucket")}
+	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
+		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
+
 	newCredentialsFunc =
 		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
 			return &credentials.Credentials{}
@@ -162,10 +175,18 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 		S3ObjectKey: "test",
 	}
 
-	result, err := getS3Client(s3Object)
+	result, sourceType, err := getS3Client(s3Object)
 	require.NoError(t, err)
 	require.NotNil(t, result)
+	require.Equal(t, models.IntegrationTypeAWS3, sourceType)
 
 	s3Mock.AssertExpectations(t)
 	lambdaMock.AssertExpectations(t)
+}
+
+func resetCaches() {
+	// resetting cache
+	sourceCache.cacheUpdateTime = time.Unix(0, 0)
+	bucketCache, _ = lru.NewARC(s3BucketLocationCacheSize)
+	s3ClientCache, _ = lru.NewARC(s3ClientCacheSize)
 }

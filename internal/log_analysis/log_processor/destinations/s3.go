@@ -56,13 +56,16 @@ const (
 
 	messageAttributeDataType = "String"
 
-	maxDuration = 1 * time.Minute //  maximum time to hold an s3 buffer in memory
+	//  maximum time to hold an s3 buffer in memory (controls latency of rules engine which processes this output
+	maxDuration = 2 * time.Minute
 
-	bytesPerMB           = 1024 * 1024
-	maxS3BufferSizeBytes = 50 * bytesPerMB // the largest we let any single buffer get
+	bytesPerMB                  = 1024 * 1024
+	defaultMaxS3BufferSizeBytes = 50 * bytesPerMB
 )
 
 var (
+	maxS3BufferSizeBytes = defaultMaxS3BufferSizeBytes // the largest we let any single buffer get (var so we can set in tests)
+
 	newLineDelimiter = []byte("\n")
 
 	parserRegistry registry.Interface = registry.AvailableParsers() // initialize
@@ -76,6 +79,17 @@ func init() {
 	memUsedAtStartupMB = (int)(memStats.Sys/(bytesPerMB)) + 1
 }
 
+func CreateS3Destination() Destination {
+	return &S3Destination{
+		s3Uploader:          common.S3Uploader,
+		snsClient:           common.SnsClient,
+		s3Bucket:            common.Config.ProcessedDataBucket,
+		snsTopicArn:         common.Config.SnsTopicARN,
+		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
+		maxDuration:         maxDuration,
+	}
+}
+
 // the largest we let total size of compressed output buffers get before calling sendData() to write to S3 in bytes
 // NOTE: this presumes processing 1 file at a time
 func maxS3BufferMemUsageBytes(lambdaSizeMB int) uint64 {
@@ -87,7 +101,7 @@ func maxS3BufferMemUsageBytes(lambdaSizeMB int) uint64 {
 					  limit is met or the time limit has been exceeded"
 				    Because CT files are "document" JSON and all on 1 line we currently need to read ALL the uncompressed data into memory.
 			        FIXME: we should switch to streaming JSON reader
-					Below we set the lower bound on memory to be 45MB * 3 (because we convert all the records and parse) plus some for overhead
+					Below we set the lower bound on memory to be 45MB * 4 (because we convert all the records and parse) plus some for overhead
 		*/
 		largestAllInMemFileMB     = 45
 		processingExpansionFactor = 4
@@ -403,26 +417,24 @@ func newS3EventBuffer(logType string, hour time.Time) *s3EventBuffer {
 
 // addEvent adds new data to the s3EventBuffer, return bytes added and error
 func (b *s3EventBuffer) addEvent(event []byte) (int, error) {
-	var nbytes int
+	startBufferSize := b.buffer.Len()
 
-	bytesWritten, err := b.writer.Write(event)
+	_, err := b.writer.Write(event)
 	if err != nil {
 		err = errors.Wrap(err, "failed to add data to buffer %s")
 		return 0, err
 	}
-	nbytes += bytesWritten
 
 	// Adding new line delimiter
-	bytesWritten, err = b.writer.Write(newLineDelimiter)
+	_, err = b.writer.Write(newLineDelimiter)
 	if err != nil {
 		err = errors.Wrap(err, "failed to add data to buffer")
 		return 0, err
 	}
-	nbytes += bytesWritten
 
-	b.bytes += nbytes
+	b.bytes = b.buffer.Len() // size of compressed data minus gzip buffer (that's ok we just use this for memory pressure)
 	b.events++
-	return nbytes, nil
+	return b.bytes - startBufferSize, nil
 }
 
 func (b *s3EventBuffer) read() ([]byte, error) {
@@ -432,6 +444,7 @@ func (b *s3EventBuffer) read() ([]byte, error) {
 	}
 
 	data := b.buffer.Bytes()
+	b.bytes = len(data) // true final size after flushing gzip buffer
 
 	// clear to make GC more effective
 	b.buffer.Reset()

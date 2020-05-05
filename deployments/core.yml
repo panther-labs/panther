@@ -454,7 +454,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-alerts-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
   AlertDeliveryFunction:
@@ -650,7 +650,7 @@ Resources:
       # * Failure of this sqs queue will prevent users from updating the globals layer.
       # * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered, one event should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue` and the rest should be purged.
       # </cfndoc>
-      MessageRetentionPeriod: 86400 # 24 hours
+      MessageRetentionPeriod: '86400' # 24 hours
       KmsMasterKeyId: !Ref SqsKeyId
       VisibilityTimeout: 60 # Should match lambda timeout
       RedrivePolicy:
@@ -667,7 +667,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
   LayerManagerFunction:
