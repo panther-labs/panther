@@ -28,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -38,6 +37,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 const (
@@ -47,7 +47,7 @@ const (
 var (
 	streamTestDeadline time.Time
 
-	streamTestSqsClient *mockSQS
+	streamTestSqsClient *testutils.SqsMock
 
 	snsMessage = `{}` // empty JSON is fine
 
@@ -296,7 +296,7 @@ func TestStreamSQSBatchDelete(t *testing.T) {
 func initTest() {
 	common.Config.AwsLambdaFunctionMemorySize = 1024
 	common.Config.SqsQueueURL = "https://fakesqsurl"
-	streamTestSqsClient = &mockSQS{}
+	streamTestSqsClient = &testutils.SqsMock{}
 	streamTestDeadline = time.Now().Add(defaultTestTimeLimit)
 }
 
@@ -320,24 +320,4 @@ func noopReadSnsMessagesFunc(messages []string) ([]*common.DataStream, error) {
 // simulated error parsing sqs message or reading s3 object
 func failReadSnsMessagesFunc(messages []string) ([]*common.DataStream, error) {
 	return nil, fmt.Errorf("readEventError")
-}
-
-type mockSQS struct {
-	sqsiface.SQSAPI
-	mock.Mock
-}
-
-func (m *mockSQS) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.DeleteMessageBatchOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sqs.DeleteMessageBatchOutput), args.Error(1)
-}
-
-func (m *mockSQS) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
-}
-
-func (m *mockSQS) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.GetQueueAttributesOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
 }

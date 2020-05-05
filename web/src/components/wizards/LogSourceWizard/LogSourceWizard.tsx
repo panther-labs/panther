@@ -17,7 +17,12 @@
  */
 
 import React from 'react';
-import { AWS_ACCOUNT_ID_REGEX, LOG_TYPES, SOURCE_LABEL_REGEX } from 'Source/constants';
+import {
+  AWS_ACCOUNT_ID_REGEX,
+  LOG_TYPES,
+  S3_BUCKET_NAME_REGEX,
+  SOURCE_LABEL_REGEX,
+} from 'Source/constants';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
@@ -54,7 +59,9 @@ const validationSchema = Yup.object().shape<LogSourceWizardValues>({
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
-  s3Bucket: Yup.string().required(),
+  s3Bucket: Yup.string()
+    .matches(S3_BUCKET_NAME_REGEX, 'Must be valid S3 Bucket name')
+    .required(),
   logTypes: Yup.array()
     .of(Yup.string().oneOf((LOG_TYPES as unknown) as string[]))
     .required(),
@@ -104,7 +111,7 @@ const LogSourceWizard: React.FC<LogSourceWizardProps> = ({
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionPrev />
-                    <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
+                    <WizardPanelWrapper.ActionNext />
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
