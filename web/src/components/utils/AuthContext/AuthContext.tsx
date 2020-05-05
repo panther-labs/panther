@@ -98,12 +98,6 @@ interface SetNewPasswordParams {
   onError?: (err: AuthError) => void;
 }
 
-interface UpdateUserInfoParams {
-  newAttributes: Partial<EnhancedCognitoUser['attributes']>;
-  onSuccess?: () => void;
-  onError?: (err: AuthError) => void;
-}
-
 interface ChangePasswordParams {
   oldPassword: string;
   newPassword: string;
@@ -144,7 +138,6 @@ export interface AuthContextValue {
   verifyTotpSetup: (params: VerifyTotpSetupParams) => Promise<void>;
   requestTotpSecretCode: () => Promise<string>;
   signOut: (params?: SignOutParams) => Promise<void>;
-  updateUserInfo: (params: UpdateUserInfoParams) => Promise<void>;
   changePassword: (params: ChangePasswordParams) => Promise<void>;
   resetPassword: (params: ResetPasswordParams) => Promise<void>;
   forgotPassword: (params: ForgotPasswordParams) => Promise<void>;
@@ -285,27 +278,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const confirmedUser = await Auth.currentAuthenticatedUser();
         setAuthUser(confirmedUser);
         setAuthenticated(true);
-        onSuccess();
-      } catch (err) {
-        onError(err as AuthError);
-      }
-    },
-    [authUser]
-  );
-
-  /**
-   *
-   * @public
-   * Updates the user's personal information
-   *
-   */
-  const updateUserInfo = React.useCallback(
-    async ({ newAttributes, onSuccess = () => {}, onError = () => {} }: UpdateUserInfoParams) => {
-      try {
-        await Auth.updateUserAttributes(authUser, newAttributes);
-        const updatedUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
-        setAuthUser(updatedUser);
-
         onSuccess();
       } catch (err) {
         onError(err as AuthError);
@@ -456,7 +428,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       isAuthenticated,
       currentAuthChallengeName: authUser?.challengeName || null,
       userInfo,
-      updateUserInfo,
       refetchUserInfo,
 
       signIn,
