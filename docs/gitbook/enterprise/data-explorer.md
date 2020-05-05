@@ -8,9 +8,9 @@ With Panther Data Explorer, users are able to:
 
 * Browse their databases, populated tables & related columns
 * Issue SQL queries against their logs
-* View results in real-time
+* View query results in a friendly way
 * Share results with their team through a shareable link
-* Store results in a CSV
+* Download results in a CSV
 
 ![Data Explorer](../.gitbook/assets/data-explorer.png)
 

@@ -94,7 +94,7 @@ function GenerateFiltersGroup<T extends { [key: string]: any }>({
     <Formik<T> initialValues={initialValuesWithDefaults} onSubmit={onSubmit}>
       {({ handleSubmit, setValues, submitForm, resetForm }) => (
         <form onSubmit={handleSubmit}>
-          <SimpleGrid columns={3} spacing={6} mb={8}>
+          <SimpleGrid columns={4} spacing={6} mb={8}>
             {map(filters, (filterData, filterName) => (
               <Field
                 key={filterName}

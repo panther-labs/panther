@@ -39,7 +39,12 @@ import (
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 
-const maxBackoff = 30 * time.Second
+const (
+	maxBackoff = 30 * time.Second
+	// Expire resources after three days (slightly longer than compliance-api timeout of two days) automatically
+	// if we miss the delete API call
+	deleteMissWindow = 3 * 24 * 60 * 60
+)
 
 // AddResources batch writes a group of resources to the Dynamo table.
 func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
@@ -61,6 +66,7 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 			LastModified:    now,
 			Type:            r.Type,
 			LowerID:         strings.ToLower(string(r.ID)),
+			ExpiresAt:       time.Now().Unix() + deleteMissWindow,
 		}
 
 		marshalled, err := dynamodbattribute.MarshalMap(item)
