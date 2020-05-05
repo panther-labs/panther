@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Alert, Box, Flex } from 'pouncejs';
+import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
 import { Field, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
@@ -37,11 +37,16 @@ interface EditProfileFormValues {
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
   const { userInfo, refetchUserInfo } = useAuth();
+  const { pushSnackbar } = useSnackbar();
   const [status, setStatus] = React.useState(null);
 
   const [editUser] = useEditUser({
     onCompleted: () => {
       onSuccess();
+      pushSnackbar({
+        variant: 'success',
+        title: 'User profile updated successfully',
+      });
       return refetchUserInfo();
     },
     onError: updateUserError =>
