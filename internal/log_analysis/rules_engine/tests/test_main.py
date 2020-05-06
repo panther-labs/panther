@@ -89,7 +89,7 @@ class TestMainDirectAnalysis(TestCase):
                         'notMatched': [],
                         'errored': [{
                             'id': 'rule_id',
-                            'message': 'No module named \'stuff\''
+                            'message': 'ModuleNotFoundError: No module named \'stuff\''
                         }]
                     }
                 ]
