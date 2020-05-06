@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sync"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/pkg/awsglue"
@@ -34,9 +35,7 @@ type LogType struct {
 	NewParser   ParserFactory
 }
 
-// // PantherLogFactory creates a serializable struct from a PantherEvent
-// // This is not optimal in terms of performance
-// type PantherLogFactory func(logType string, tm time.Time, fields ...pantherlog.Field) interface{}
+type ParserFactory func() Interface
 
 func (entry *LogType) GlueTableMetadata() *awsglue.GlueTableMetadata {
 	return awsglue.LogDataHourlyTableMetadata(entry.Name, entry.Description, entry.Schema)
@@ -151,6 +150,18 @@ func NewParser(logType string) (Interface, error) {
 	return nil, errors.Errorf("unregistered LogType %q", logType)
 }
 
-// func defaultPantherLogFactory(logType string, tm time.Time, fields ...PantherField) interface{} {
-// 	return NewPantherLog(logType, tm, fields...)
-// }
+func checkLogEntrySchema(logType string, schema interface{}) error {
+	if schema == nil {
+		return errors.Errorf("nil schema for log type %q", logType)
+	}
+	data, err := jsoniter.Marshal(schema)
+	if err != nil {
+		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
+	}
+	var fields map[string]interface{}
+	if err := jsoniter.Unmarshal(data, &fields); err != nil {
+		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
+	}
+	// TODO: [parsers] Use reflect to check provided schema struct for required panther fields
+	return nil
+}

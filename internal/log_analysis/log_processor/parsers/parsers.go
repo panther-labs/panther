@@ -22,11 +22,14 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsontricks"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
 )
 
 // Interface represents a parser for a supported log type
+// It is designed to act as a 'black box' concerning how the log entry is processed
 type Interface interface {
 	// Parse attempts to parse the provided log line
 	// If the provided log is not of the supported type the method returns nil and an error
@@ -39,27 +42,88 @@ type Result struct {
 	JSON      []byte
 }
 
-type ParserFactory func() Interface
+func (r *Result) Results() []*Result {
+	if r == nil {
+		return nil
+	}
+	return []*Result{r}
+}
+
+// PantherEventer is the interface to be implemented by all parsed log events.
+// Implementations should use `logs.NewEvent` to get an event from the pool.
+type PantherEventer interface {
+	PantherEvent() *logs.Event
+}
 
 var valid = validator.New()
 
-// Validator can be used to validate schemas of log fields
-func ValidateStruct(x interface{}) error {
-	return valid.Struct(x)
+// QuickParseJSON is a helper method for parsers that produce a single event from each JSON log line input.
+func QuickParseJSON(event PantherEventer, src string) ([]*Result, error) {
+	if err := jsoniter.UnmarshalFromString(src, event); err != nil {
+		return nil, err
+	}
+	if err := valid.Struct(event); err != nil {
+		return nil, err
+	}
+	result, err := PackResult(event)
+	if err != nil {
+		return nil, err
+	}
+	return result.Results(), nil
 }
 
-func checkLogEntrySchema(logType string, schema interface{}) error {
-	if schema == nil {
-		return errors.Errorf("nil schema for log type %q", logType)
+// PackResults is a helper function for parsers to convert log events to PantherLogJSON.
+// It validates, composes and serializes an appropriate struct based on the PantherEvent returned by the arguments.
+func PackResults(events ...PantherEventer) ([]*Result, error) {
+	results := make([]*Result, 0, len(events))
+	for _, event := range events {
+		if event == nil {
+			continue
+		}
+
+		result, err := PackResult(event)
+		if err != nil {
+			return nil, errors.Errorf("Failed to pack event: %s", err)
+		}
+		results = append(results, result)
 	}
-	data, err := jsoniter.Marshal(schema)
+	return results, nil
+}
+
+// PackResult is a helper function for parsers to convert a log event to Result.
+// It detects the appropriate base pantherlog Meta struct to used from the prefix of the LogType.
+// Custom panther logs that handle 'exotic' panther fields such as AWSPantherLog need to be
+// registered in an `init()` block with `pantherlog.RegisterPrefix`
+func PackResult(e PantherEventer) (*Result, error) {
+	if e == nil {
+		return nil, errors.Errorf("nil event")
+	}
+
+	event := e.PantherEvent()
+	// Nil event is considered an error
+	if event == nil {
+		return nil, errors.Errorf("nil event")
+	}
+
+	// Meta uses logs.MetaFactory that should handle validate meta validation.
+	meta, err := event.Meta()
 	if err != nil {
-		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
+		event.Close()
+		return nil, err
 	}
-	var fields map[string]interface{}
-	if err := jsoniter.Unmarshal(data, &fields); err != nil {
-		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
+
+	// Compose a JSON object of fields of meta and e
+	// Order is important
+	resultJSON, err := jsontricks.ConcatObjects(nil, e, meta)
+	if err != nil {
+		event.Close()
+		return nil, err
 	}
-	// TODO: [parsers] Use reflect to check provided schema struct for required panther fields
-	return nil
+
+	event.Close()
+	return &Result{
+		LogType:   event.LogType,
+		EventTime: event.Timestamp,
+		JSON:      resultJSON,
+	}, nil
 }

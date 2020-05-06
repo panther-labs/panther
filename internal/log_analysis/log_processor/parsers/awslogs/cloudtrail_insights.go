@@ -2,6 +2,7 @@ package awslogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
@@ -104,6 +105,8 @@ func NewCloudTrailInsightParser() parsers.Interface {
 	return &CloudTrailInsightParser{}
 }
 
+var valid = validator.New()
+
 // Parse returns the parsed events or nil if parsing failed
 func (p *CloudTrailInsightParser) Parse(log string) ([]*parsers.Result, error) {
 	cloudTrailInsightRecords := &CloudTrailInsightRecords{}
@@ -111,7 +114,7 @@ func (p *CloudTrailInsightParser) Parse(log string) ([]*parsers.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := parsers.ValidateStruct(cloudTrailInsightRecords); err != nil {
+	if err := valid.Struct(cloudTrailInsightRecords); err != nil {
 		return nil, err
 	}
 

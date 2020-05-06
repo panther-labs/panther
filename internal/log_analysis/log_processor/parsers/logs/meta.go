@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -86,14 +87,20 @@ func RegisterPrefixMeta(prefix string, fac MetaFactory) {
 	metaRegistry[prefix] = fac
 }
 
-// MetaFactory converts an event to a struct containing panthe meta info.
+// MetaFactory converts an event to a struct containing panther meta info.
+// Meta returned is considered valid, any validation on the meta struct should happen here.
 type MetaFactory func(e *Event) (interface{}, error)
+
+var valid = validator.New()
 
 func defaultMetaFactory(event *Event) (interface{}, error) {
 	if event == nil {
 		return nil, errors.Errorf("nil event")
 	}
 	meta := NewMeta(event)
+	if err := valid.Struct(meta); err != nil {
+		return nil, err
+	}
 	return &meta, nil
 }
 
