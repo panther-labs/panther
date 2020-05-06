@@ -52,9 +52,11 @@ const ListAlerts = () => {
           input: { pageSize: DEFAULT_LARGE_PAGE_SIZE, exclusiveStartKey: lastEvaluatedKey },
         },
         updateQuery: (previousResult, { fetchMoreResult }) => {
+          // FIXME: Centralize this behavior for alert pagination, when apollo fixes a bug which
+          // causes wrong params to be passed to the merge function in type policies
+          // https://github.com/apollographql/apollo-client/issues/5951
           return {
             alerts: {
-              ...previousResult.alerts,
               ...fetchMoreResult.alerts,
               alertSummaries: [
                 ...previousResult.alerts.alertSummaries,
