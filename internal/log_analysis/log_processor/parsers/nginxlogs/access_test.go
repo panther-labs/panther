@@ -48,7 +48,6 @@ func TestAccessLog(t *testing.T) {
 		logs.IPAddress("180.76.15.143"),
 	)
 	testutil.CheckParser(t, log, TypeAccess, event)
-
 }
 
 func TestAccessLogWithoutReferer(t *testing.T) {

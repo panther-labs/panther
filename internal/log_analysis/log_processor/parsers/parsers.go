@@ -22,10 +22,11 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsontricks"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsontricks"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 )
 
 // Interface represents a parser for a supported log type
