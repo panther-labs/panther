@@ -51,6 +51,18 @@ const ListAlerts = () => {
         variables: {
           input: { pageSize: DEFAULT_LARGE_PAGE_SIZE, exclusiveStartKey: lastEvaluatedKey },
         },
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          return {
+            alerts: {
+              ...previousResult.alerts,
+              ...fetchMoreResult.alerts,
+              alertSummaries: [
+                ...previousResult.alerts.alertSummaries,
+                ...fetchMoreResult.alerts.alertSummaries,
+              ],
+            },
+          };
+        },
       });
     },
   });
