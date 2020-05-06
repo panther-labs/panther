@@ -71,7 +71,7 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
         if rule_exception:
             result['errored'] = [{
                 'id': raw_rule['id'],
-                'message': str(rule_exception),
+                'message': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
             }]
             # If rule was invalid, no need to try to run it
 
