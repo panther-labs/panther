@@ -42,7 +42,6 @@ func TestStripObjectDelimiters(t *testing.T) {
 		if string(stripped) != tc.Want {
 			t.Errorf("Invalid strip output %q: %q != %q", tc.JSON, stripped, tc.Want)
 		}
-
 	}
 }
 

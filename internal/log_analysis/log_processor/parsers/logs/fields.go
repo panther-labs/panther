@@ -187,7 +187,6 @@ func RegisterField(kind FieldKind, name string, fac FieldFactory) {
 	}
 	if fac == nil {
 		panic(errors.Errorf("nil field factory %q", name))
-
 	}
 	if entry, duplicate := fieldRegistry[kind]; duplicate {
 		panic(errors.Errorf("duplicate field kind %d %q, %q", kind, name, entry.Name))
@@ -236,7 +235,6 @@ func MD5Hash(hash string) Field {
 		Kind:  KindMD5Hash,
 		Value: hash,
 	}
-
 }
 
 // MD5HashP packs an MD5 hash pointer value to a Field
