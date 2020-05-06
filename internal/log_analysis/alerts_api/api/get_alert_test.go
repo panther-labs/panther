@@ -111,7 +111,7 @@ func TestGetAlertDoesNotExist(t *testing.T) {
 	api := API{}
 	result, err := api.GetAlert(input)
 	require.Nil(t, result)
-	require.Error(t, err)
+	require.NoError(t, err)
 }
 
 func TestGetAlert(t *testing.T) {
