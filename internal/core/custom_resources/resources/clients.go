@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 )
 
-// Lazily build all AWS clients since a single request will need at most one.
+// Lazily build all AWS clients - each Lambda invocation usually needs at most 1 of these
 var (
 	awsSession *session.Session
 

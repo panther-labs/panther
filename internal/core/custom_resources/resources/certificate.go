@@ -28,6 +28,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/cfn"
@@ -173,8 +174,13 @@ func deleteCert(certArn string) error {
 			&acm.DeleteCertificateInput{CertificateArn: &certArn})
 		return err
 	case "iam":
+		// Pull the certificate name out of the arn. Example:
+		//     arn:aws:iam::XXXX:server-certificate/panther/us-east-1/PantherCertificate-2020-04-27T17-23-11
+		// IAM cert names cannot contain "/", so we know everything after the last / is the name
+		split := strings.Split(parsedArn.Resource, "/")
+		name := split[len(split)-1]
 		_, err := getIamClient().DeleteServerCertificate(
-			&iam.DeleteServerCertificateInput{ServerCertificateName: &certArn})
+			&iam.DeleteServerCertificateInput{ServerCertificateName: &name})
 		return err
 	default:
 		return fmt.Errorf("%s is not an ACM/IAM cert", certArn)

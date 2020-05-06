@@ -33,9 +33,9 @@ import (
 // Returns physicalResourceID and outputs
 func customResourceHandler(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	_, logger := lambdalogger.ConfigureGlobal(ctx, map[string]interface{}{
-		"requestType":  event.RequestType,
-		"resourceType": event.ResourceType,
-		"physicalId":   event.PhysicalResourceID,
+		"requestType":        event.RequestType,
+		"resourceType":       event.ResourceType,
+		"physicalResourceId": event.PhysicalResourceID,
 	})
 	logger.Info("received custom resource request", zap.Any("event", event))
 

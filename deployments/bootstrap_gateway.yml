@@ -121,11 +121,6 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-cfn-custom-resources
       RetentionInDays: !Ref CloudWatchLogRetentionDays
-  #
-  #  TestCertificate:
-  #    Type: Custom::Certificate
-  #    Properties:
-  #      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   AnalysisApi:
     Type: AWS::Serverless::Api
