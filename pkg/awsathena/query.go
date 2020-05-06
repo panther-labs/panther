@@ -84,7 +84,7 @@ func WaitForResults(client athenaiface.AthenaAPI, queryExecutionID string) (quer
 				return nil, err
 			}
 			if done {
-				return executionOutput, err
+				return executionOutput, nil
 			}
 			time.Sleep(pollDelay)
 		}
