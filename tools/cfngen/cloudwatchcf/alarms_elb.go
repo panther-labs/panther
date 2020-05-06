@@ -46,16 +46,29 @@ func NewApplicationELBAlarm(alarmType, metricName, message string, resource map[
 }
 
 func generateApplicationELBAlarms(resource map[string]interface{}) (alarms []*Alarm) {
-	// NOTE: these metrics appear to have no units
+	// https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html
+	// NOTE: the Count metrics appear to have no units
+
+	// latency, alarm if there is sustained (5 x 5min period) poor max latency
+	alarms = append(alarms, NewApplicationELBAlarm("ELBTargetLatency", "TargetResponseTime",
+		"has elevated latency", resource).P95SecondsThreshold(0.5, 60*5).EvaluationPeriods(5))
 
 	// target 4XX errors are important as they may indicate issues with the application
-	alarms = append(alarms, NewApplicationELBAlarm("ELBTargetError", "HTTPCode_Target_4XX_Count",
+	alarms = append(alarms, NewApplicationELBAlarm("ELBTarget4XXError", "HTTPCode_Target_4XX_Count",
 		"has elevated Target 4XX errors", resource).SumNoUnitsThreshold(5, 60*5) /* tolerate a few  errors */)
+
+	// target 5XX errors can indicate misconfiguration or security issues
+	alarms = append(alarms, NewApplicationELBAlarm("ELBTarget5XXError", "HTTPCode_Target_5XX_Count",
+		"has elevated Target 5XX errors", resource).SumNoUnitsThreshold(0, 60*5))
 
 	// elb 4XX errors are less interesting if exposed to the Internet, but if there are large numbers
 	// this could be a security issue, perhaps an attacker probing Panther
-	alarms = append(alarms, NewApplicationELBAlarm("ELBError", "HTTPCode_ELB_4XX_Count",
+	alarms = append(alarms, NewApplicationELBAlarm("ELB4XXError", "HTTPCode_ELB_4XX_Count",
 		"has elevated ELB 4XX errors", resource).SumNoUnitsThreshold(20, 60*5) /* tolerate a few  errors */)
+
+	// elb 5XX errors can indicate misconfiguration or security issues
+	alarms = append(alarms, NewApplicationELBAlarm("ELB5XXError", "HTTPCode_ELB_5XX_Count",
+		"has elevated ELB 5XX errors", resource).SumNoUnitsThreshold(0, 60*5))
 
 	// unhealthy
 	alarms = append(alarms, NewApplicationELBAlarm("ELBUnhealthy", "UnHealthyHostCount",

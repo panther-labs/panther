@@ -21,6 +21,8 @@ package testutils
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -78,4 +80,54 @@ type SqsMock struct {
 func (m *SqsMock) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
+}
+
+func (m *SqsMock) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.SendMessageBatchOutput), args.Error(1)
+}
+
+func (m *SqsMock) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.DeleteMessageBatchOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.DeleteMessageBatchOutput), args.Error(1)
+}
+
+func (m *SqsMock) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
+}
+
+func (m *SqsMock) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.GetQueueAttributesOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
+}
+
+type GlueMock struct {
+	glueiface.GlueAPI
+	mock.Mock
+}
+
+func (m *GlueMock) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetTableOutput), args.Error(1)
+}
+
+func (m *GlueMock) DeleteTable(input *glue.DeleteTableInput) (*glue.DeleteTableOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.DeleteTableOutput), args.Error(1)
+}
+
+func (m *GlueMock) CreatePartition(input *glue.CreatePartitionInput) (*glue.CreatePartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.CreatePartitionOutput), args.Error(1)
+}
+
+func (m *GlueMock) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
+}
+
+func (m *GlueMock) UpdatePartition(input *glue.UpdatePartitionInput) (*glue.UpdatePartitionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.UpdatePartitionOutput), args.Error(1)
 }

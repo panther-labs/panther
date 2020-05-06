@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,12 +16,5 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/pkg/genericapi"
-)
-
-// conform to generic api
-func apiError(err error) error {
-	err = &genericapi.InternalError{Message: err.Error()}
-	return err
-}
+export { default } from './GlobalModuleForm';
+export * from './GlobalModuleForm';

@@ -28,5 +28,5 @@ import (
 func (API) ListIntegrations(
 	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
 
-	return db.ScanIntegrations(input)
+	return dynamoClient.ScanIntegrations(input)
 }

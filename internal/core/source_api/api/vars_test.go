@@ -18,20 +18,11 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-)
-
 const (
 	testIntegrationID    = "45be7365-688f-4c6f-a4da-803be356e3c7"
 	testIntegrationLabel = "ProdAWS"
 	testAccountID        = "123456789012"
 	testUserID           = "97c4db4e-61d5-40a7-82de-6dd63b199bd2"
 )
-
-func init() {
-	sess.Config.Region = aws.String(endpoints.UsEast1RegionID)
-}
 
 var apiTest = API{}

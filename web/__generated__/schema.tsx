@@ -274,6 +274,11 @@ export type GetComplianceIntegrationTemplateInput = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
 
+export type GetGlobalModuleInput = {
+  globalId: Scalars['ID'];
+  versionId?: Maybe<Scalars['ID']>;
+};
+
 export type GetLogIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
   integrationLabel: Scalars['String'];
@@ -306,6 +311,15 @@ export type GithubConfig = {
 export type GithubConfigInput = {
   repoName: Scalars['String'];
   token: Scalars['String'];
+};
+
+export type GlobalModuleDetails = {
+  __typename?: 'GlobalModuleDetails';
+  body: Scalars['String'];
+  description: Scalars['String'];
+  id: Scalars['ID'];
+  createdAt: Scalars['AWSDateTime'];
+  lastModified: Scalars['AWSDateTime'];
 };
 
 export type IntegrationItemHealthStatus = {
@@ -479,6 +493,12 @@ export type LogIntegrationHealth = {
   kmsKeyStatus: IntegrationItemHealthStatus;
 };
 
+export type ModifyGlobalModuleInput = {
+  description: Scalars['String'];
+  id: Scalars['ID'];
+  body: Scalars['String'];
+};
+
 export type MsTeamsConfig = {
   __typename?: 'MsTeamsConfig';
   webhookURL: Scalars['String'];
@@ -514,6 +534,7 @@ export type Mutation = {
   updateRule?: Maybe<RuleDetails>;
   updateUser: User;
   uploadPolicies?: Maybe<UploadPoliciesResponse>;
+  updateGlobalPythonlModule?: Maybe<GlobalModuleDetails>;
 };
 
 export type MutationAddDestinationArgs = {
@@ -610,6 +631,10 @@ export type MutationUpdateUserArgs = {
 
 export type MutationUploadPoliciesArgs = {
   input: UploadPoliciesInput;
+};
+
+export type MutationUpdateGlobalPythonlModuleArgs = {
+  input: ModifyGlobalModuleInput;
 };
 
 export type OpsgenieConfig = {
@@ -745,6 +770,7 @@ export type Query = {
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
   resourcesForPolicy?: Maybe<ListComplianceItemsResponse>;
+  getGlobalPythonModule?: Maybe<GlobalModuleDetails>;
   policy?: Maybe<PolicyDetails>;
   policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
@@ -794,6 +820,10 @@ export type QueryResourcesArgs = {
 
 export type QueryResourcesForPolicyArgs = {
   input: ResourcesForPolicyInput;
+};
+
+export type QueryGetGlobalPythonModuleArgs = {
+  input: GetGlobalModuleInput;
 };
 
 export type QueryPolicyArgs = {
@@ -1146,6 +1176,8 @@ export type ResolversTypes = {
   ComplianceItem: ResolverTypeWrapper<ComplianceItem>;
   ActiveSuppressCount: ResolverTypeWrapper<ActiveSuppressCount>;
   ComplianceStatusCounts: ResolverTypeWrapper<ComplianceStatusCounts>;
+  GetGlobalModuleInput: GetGlobalModuleInput;
+  GlobalModuleDetails: ResolverTypeWrapper<GlobalModuleDetails>;
   GetPolicyInput: GetPolicyInput;
   PolicyDetails: ResolverTypeWrapper<PolicyDetails>;
   PolicyUnitTest: ResolverTypeWrapper<PolicyUnitTest>;
@@ -1202,6 +1234,7 @@ export type ResolversTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
+  ModifyGlobalModuleInput: ModifyGlobalModuleInput;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1256,6 +1289,8 @@ export type ResolversParentTypes = {
   ComplianceItem: ComplianceItem;
   ActiveSuppressCount: ActiveSuppressCount;
   ComplianceStatusCounts: ComplianceStatusCounts;
+  GetGlobalModuleInput: GetGlobalModuleInput;
+  GlobalModuleDetails: GlobalModuleDetails;
   GetPolicyInput: GetPolicyInput;
   PolicyDetails: PolicyDetails;
   PolicyUnitTest: PolicyUnitTest;
@@ -1312,6 +1347,7 @@ export type ResolversParentTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
+  ModifyGlobalModuleInput: ModifyGlobalModuleInput;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1496,6 +1532,18 @@ export type GithubConfigResolvers<
 > = {
   repoName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type GlobalModuleDetailsResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['GlobalModuleDetails'] = ResolversParentTypes['GlobalModuleDetails']
+> = {
+  body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  lastModified?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1773,6 +1821,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUploadPoliciesArgs, 'input'>
   >;
+  updateGlobalPythonlModule?: Resolver<
+    Maybe<ResolversTypes['GlobalModuleDetails']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateGlobalPythonlModuleArgs, 'input'>
+  >;
 };
 
 export type OpsgenieConfigResolvers<
@@ -1981,6 +2035,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryResourcesForPolicyArgs, 'input'>
+  >;
+  getGlobalPythonModule?: Resolver<
+    Maybe<ResolversTypes['GlobalModuleDetails']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetGlobalPythonModuleArgs, 'input'>
   >;
   policy?: Resolver<
     Maybe<ResolversTypes['PolicyDetails']>,
@@ -2204,6 +2264,7 @@ export type Resolvers<ContextType = any> = {
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
+  GlobalModuleDetails?: GlobalModuleDetailsResolvers<ContextType>;
   IntegrationItemHealthStatus?: IntegrationItemHealthStatusResolvers<ContextType>;
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;

@@ -1,5 +1,3 @@
-package main
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,30 +16,23 @@ package main
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"context"
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
-	"github.com/aws/aws-lambda-go/lambda"
-	"gopkg.in/go-playground/validator.v9"
+import * as Types from '../../../__generated__/schema';
 
-	"github.com/panther-labs/panther/api/lambda/database/models"
-	"github.com/panther-labs/panther/internal/core/database_api/athena/driver/api"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
-)
+import gql from 'graphql-tag';
 
-var router *genericapi.Router
+export type GlobalModuleFull = Pick<
+  Types.GlobalModuleDetails,
+  'createdAt' | 'description' | 'id' | 'lastModified' | 'body'
+>;
 
-func init() {
-	router = genericapi.NewRouter("database", "athena", validator.New(), api.API{})
-}
-
-func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(request)
-}
-
-func main() {
-	api.SessionInit()
-	lambda.Start(lambdaHandler)
-}
+export const GlobalModuleFull = gql`
+  fragment GlobalModuleFull on GlobalModuleDetails {
+    createdAt
+    description
+    id
+    lastModified
+    body
+  }
+`;

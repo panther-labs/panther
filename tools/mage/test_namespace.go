@@ -51,85 +51,39 @@ var (
 )
 
 // CI Run all required checks for a pull request
-func (t Test) CI() {
+func (Test) CI() {
 	// Formatting modifies files (and may generate new ones), so we need to run this first
 	fmtErr := testFmtAndGeneratedFiles()
-
 	results := make(chan goroutineResult)
-	count := 0
-
+	tasks := []struct {
+		Name string
+		Task func() error
+	}{
+		{"fmt", func() error { return fmtErr }},
+		{"build:cfn", build.cfn},
+		{"build:lambda", build.lambda},
+		{"build:tools", build.tools},
+		{"cfn lint", testCfnLint},
+		{"go unit tests", testGoUnit},
+		{"golangci-lint", testGoLint},
+		{"python unit tests", testPythonUnit},
+		{"pylint", testPythonLint},
+		{"bandit (python security linting)", testPythonBandit},
+		{"mypy (python type checking)", testPythonMypy},
+		{"npm run eslint", testWebEslint},
+		{"npm run tsc", testWebTsc},
+		{"terraform validate", testTfValidate},
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		logResults(results, "test:ci", 1, len(tasks), len(tasks))
+	}()
 	logger.Info("running tests in parallel...")
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"fmt", fmtErr}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"build:cfn", build.cfn()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"build:lambda", build.lambda()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"build:tools", build.tools()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"cfn-lint", testCfnLint()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"go unit tests", testGoUnit()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"golangci-lint", testGoLint()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"python unit tests", testPythonUnit()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"pylint", testPythonLint()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"bandit (python security linting)", testPythonBandit()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"mypy (python type checking)", testPythonMypy()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"npm run eslint", testWebEslint()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"npm run tsc", testWebTsc()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"terraform validate", testTfValidate()}
-	}(results)
-
-	logResults(results, "test:ci", 1, count, count)
+	for _, task := range tasks {
+		runTask(results, task.Name, task.Task)
+	}
+	<-done
 }
 
 // Format source files and build APIs and check for changes.

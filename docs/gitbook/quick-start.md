@@ -29,7 +29,7 @@ Get started with 3 quick steps!
 Clone the latest release of [Panther](https://github.com/panther-labs/panther):
 
 ```bash
-git clone https://github.com/panther-labs/panther --depth 1 --branch v1.1.1
+git clone https://github.com/panther-labs/panther --depth 1 --branch v1.2.0
 cd panther
 ```
 
@@ -65,7 +65,7 @@ Run the following command to deploy Panther:
 mage setup deploy
 ```
 
-- Optionally, you can `mage test:ci` before deploying to confirm that all tests are passing
+- Optionally, you can run `mage setup test:ci` before deploying to confirm that all tests are passing (`setup` only needs to be run once in the repo).
 - The initial deployment will take ~10 minutes with a fast internet connection. If your credentials timeout, you can safely redeploy to pick up where you left off.
 - At the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
 - You'll get an email from `no-reply@verificationemail.com` with your temporary password. If you don't see it, be sure to check your spam folder.
