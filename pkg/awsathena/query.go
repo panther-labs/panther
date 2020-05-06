@@ -81,7 +81,11 @@ func WaitForResults(client athenaiface.AthenaAPI, queryExecutionID string) (quer
 				return nil, err
 			}
 			if done {
-				return executionOutput, nil
+				if *executionOutput.QueryExecution.Status.State == athena.QueryExecutionStateFailed {
+					err = errors.Errorf("query execution failed: %s",
+						*executionOutput.QueryExecution.Status.StateChangeReason)
+				}
+				return executionOutput, err
 			}
 			time.Sleep(pollDelay)
 		}
