@@ -13,7 +13,7 @@ Reference: https://cloud.google.com/logging/docs/audit
 <tr><td valign=top><code><b>logName</b></code></td><td><code>string</code></td><td valign=top>The resource name of the log to which this log entry belongs.</td></tr>
 <tr><td valign=top><code>severity</code></td><td><code>string</code></td><td valign=top>The severity of the log entry. The default value is LogSeverity.DEFAULT.</td></tr>
 <tr><td valign=top><code>insertId</code></td><td><code>string</code></td><td valign=top>A unique identifier for the log entry.</td></tr>
-<tr><td valign=top><code><b>resource</b></code></td><td><code>{
+<tr><td valign=top><code>resource</code></td><td><code>{
 <br>&nbsp;&nbsp;"type": {
 <br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
 <br>&nbsp;&nbsp;},
