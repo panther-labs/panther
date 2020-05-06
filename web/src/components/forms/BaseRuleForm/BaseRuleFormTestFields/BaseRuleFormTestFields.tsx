@@ -29,6 +29,7 @@ import {
   TabList,
   TabPanel,
   Alert,
+  SimpleGrid,
 } from 'pouncejs';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
@@ -185,8 +186,9 @@ const BaseRuleFormTestFields: React.FC = () => {
                 </TabList>
                 {testsCount > 0 && (
                   <TabPanel selected aria-labelledby={tests[activeTabIndex].name}>
-                    <Flex
-                      justify="space-around"
+                    <SimpleGrid
+                      columns={3}
+                      gap={10}
                       py={3}
                       borderTop="1px solid"
                       borderBottom="1px solid"
@@ -196,28 +198,32 @@ const BaseRuleFormTestFields: React.FC = () => {
                         <InputElementLabel htmlFor="severity" mr={6}>
                           * Name
                         </InputElementLabel>
-                        <Field
-                          as={FormikTextInput}
-                          name={`tests[${activeTabIndex}].name`}
-                          placeholder="The name of your test"
-                        />
+                        <Box flexGrow={1}>
+                          <Field
+                            as={FormikTextInput}
+                            name={`tests[${activeTabIndex}].name`}
+                            placeholder="The name of your test"
+                          />
+                        </Box>
                       </Flex>
                       <Flex mt={5}>
                         <InputElementLabel htmlFor="severity" mr={6}>
                           * {isPolicy ? 'Resource' : 'Log'} Type
                         </InputElementLabel>
-                        <Field
-                          as={FormikCombobox}
-                          searchable
-                          name={`tests[${activeTabIndex}].resourceType`}
-                          items={isPolicy ? RESOURCE_TYPES : LOG_TYPES}
-                          inputProps={resourceTypeInputProps}
-                        />
+                        <Box flexGrow={1}>
+                          <Field
+                            as={FormikCombobox}
+                            searchable
+                            name={`tests[${activeTabIndex}].resourceType`}
+                            items={isPolicy ? RESOURCE_TYPES : LOG_TYPES}
+                            inputProps={resourceTypeInputProps}
+                          />
+                        </Box>
                       </Flex>
                       <Box>
-                        <Flex justify="space-between" width={225}>
+                        <Flex justify="space-between">
                           <InputElementLabel htmlFor="expected-result-true">
-                            Expect result to be True
+                            Test resource should be compliant
                           </InputElementLabel>
                           <Field
                             as={FormikRadio}
@@ -226,9 +232,9 @@ const BaseRuleFormTestFields: React.FC = () => {
                             value={true}
                           />
                         </Flex>
-                        <Flex justify="space-between" width={225}>
+                        <Flex justify="space-between">
                           <InputElementLabel htmlFor="expected-result-false">
-                            Expect result to be False
+                            Test resource should be non-compliant
                           </InputElementLabel>
                           <Field
                             as={FormikRadio}
@@ -238,7 +244,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                           />
                         </Flex>
                       </Box>
-                    </Flex>
+                    </SimpleGrid>
                     <Box mt={10} hidden={!tests.length}>
                       <Field
                         disabled={true}
