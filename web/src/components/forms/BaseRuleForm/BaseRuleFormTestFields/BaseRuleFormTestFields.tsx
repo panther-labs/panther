@@ -195,7 +195,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                       borderColor="grey50"
                     >
                       <Flex mt={5}>
-                        <InputElementLabel htmlFor="severity" mr={6}>
+                        <InputElementLabel htmlFor="severity" mr={6} whiteSpace="nowrap">
                           * Name
                         </InputElementLabel>
                         <Box flexGrow={1}>
@@ -207,7 +207,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                         </Box>
                       </Flex>
                       <Flex mt={5}>
-                        <InputElementLabel htmlFor="severity" mr={6}>
+                        <InputElementLabel htmlFor="severity" mr={6} whiteSpace="nowrap">
                           * {isPolicy ? 'Resource' : 'Log'} Type
                         </InputElementLabel>
                         <Box flexGrow={1}>
