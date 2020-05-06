@@ -223,7 +223,9 @@ const BaseRuleFormTestFields: React.FC = () => {
                       <Box>
                         <Flex justify="space-between">
                           <InputElementLabel htmlFor="expected-result-true">
-                            Test resource should be compliant
+                            {isPolicy
+                              ? 'Test resource should be compliant'
+                              : 'Test event should trigger an alert'}
                           </InputElementLabel>
                           <Field
                             as={FormikRadio}
@@ -234,7 +236,9 @@ const BaseRuleFormTestFields: React.FC = () => {
                         </Flex>
                         <Flex justify="space-between">
                           <InputElementLabel htmlFor="expected-result-false">
-                            Test resource should be non-compliant
+                            {isPolicy
+                              ? 'Test resource should be non-compliant'
+                              : 'Test event should not trigger an alert'}
                           </InputElementLabel>
                           <Field
                             as={FormikRadio}
