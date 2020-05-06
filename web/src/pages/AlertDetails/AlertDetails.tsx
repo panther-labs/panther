@@ -40,7 +40,6 @@ const AlertDetailsPage = () => {
     variables,
   } = useAlertDetails({
     fetchPolicy: 'cache-and-network',
-    errorPolicy: 'all',
     variables: {
       input: {
         alertId: match.params.id,
@@ -84,10 +83,6 @@ const AlertDetailsPage = () => {
     return <AlertDetailsPageSkeleton />;
   }
 
-  if (alertData?.alert === null) {
-    return <Page404 />;
-  }
-
   if (alertError) {
     return (
       <Alert
@@ -100,6 +95,10 @@ const AlertDetailsPage = () => {
         mb={6}
       />
     );
+  }
+
+  if (!alertData.alert) {
+    return <Page404 />;
   }
 
   return (
