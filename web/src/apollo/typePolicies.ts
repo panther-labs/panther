@@ -50,6 +50,19 @@ export type TypePolicies = Partial<
 const typePolicies: TypePolicies = {
   Query: {
     fields: {
+      alerts: {
+        keyArgs: input => input.input.ruleId || 'all',
+        merge: (existing, incoming) => {
+          if (!existing) {
+            return incoming;
+          }
+
+          return {
+            ...incoming,
+            alertSummaries: [...existing.alertSummaries, ...incoming.alertSummaries],
+          };
+        },
+      },
       getComplianceIntegration(existingData, { args, toReference }) {
         return (
           existingData ||

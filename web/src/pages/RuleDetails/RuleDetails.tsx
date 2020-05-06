@@ -73,18 +73,6 @@ const RuleDetailsPage = () => {
             exclusiveStartKey: listAlertsData.alerts.lastEvaluatedKey,
           },
         },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          return {
-            alerts: {
-              ...previousResult.alerts,
-              ...fetchMoreResult.alerts,
-              alertSummaries: [
-                ...previousResult.alerts.alertSummaries,
-                ...fetchMoreResult.alerts.alertSummaries,
-              ],
-            },
-          };
-        },
       });
     },
   });
