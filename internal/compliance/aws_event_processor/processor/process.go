@@ -255,7 +255,6 @@ var (
 		"SetUserMFAPreference":   {},
 		"InitiateAuth":           {},
 		"RespondToAuthChallenge": {},
-		"AssumeRole":             {},
 	}
 
 	// Some prefixes are common to so many API calls (and new ones are so constantly being added) that we do a prefix
@@ -265,6 +264,7 @@ var (
 		"Get",
 		"Describe",
 		"List",
+		"AssumeRole", // covers AssumeRole, AssumeRoleWithSAML and other AssumeRole* cases
 	}
 )
 
