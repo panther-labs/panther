@@ -37,12 +37,19 @@ type Interface interface {
 	Parse(log string) ([]*Result, error)
 }
 
+// Result is the parsed result from a log parser.
+// It contains all info required to store a log event in a bucket.
+// JSON serialization is a responsibility of the parser. This is a conscious choice
+// since there is a lot of (yet untapped) room for performance optimization in the
+// process of mapping input to JSON. Having parsers be responsible for this allows
+// experimentation in an isolated scope.
 type Result struct {
 	LogType   string
 	EventTime time.Time
 	JSON      []byte
 }
 
+// Results wraps a single result to a slice of results
 func (r *Result) Results() []*Result {
 	if r == nil {
 		return nil

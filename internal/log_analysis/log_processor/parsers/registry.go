@@ -28,6 +28,10 @@ import (
 	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
+// LogType decsribes a log type.
+// It provides a method to create a new parser and a schema struct to derive
+// tables from. LogTypes can be grouped in a `Registry` to have an index of available
+// log types.
 type LogType struct {
 	Name        string
 	Description string
@@ -35,8 +39,10 @@ type LogType struct {
 	NewParser   ParserFactory
 }
 
+// ParserFactory creates a new parser instance.
 type ParserFactory func() Interface
 
+// GlueTableMetadata returns metadata about the glue table based on LogType.Schema
 func (entry *LogType) GlueTableMetadata() *awsglue.GlueTableMetadata {
 	return awsglue.LogDataHourlyTableMetadata(entry.Name, entry.Description, entry.Schema)
 }
@@ -59,6 +65,8 @@ func (entry *LogType) Check() error {
 	return checkLogEntrySchema(entry.Name, entry.Schema)
 }
 
+// Registry is a collection of LogTypes.
+// It is safe to use a registry from multiple go routines.
 type Registry struct {
 	mu      sync.RWMutex
 	entries map[string]*LogType
@@ -88,6 +96,7 @@ func (r *Registry) Get(name string) *LogType {
 	return r.entries[name]
 }
 
+// LogTypes returns all available log types in a registry
 func (r *Registry) LogTypes() (logTypes []LogType) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

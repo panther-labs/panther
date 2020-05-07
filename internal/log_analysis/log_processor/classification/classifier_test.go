@@ -73,14 +73,11 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	logTypeFail1 := mockLogType("failure1", parserFail1)
 	logTypeFail2 := mockLogType("failure2", parserFail2)
 
-	// Reset registry
-	r, err := parsers.NewRegistry(
+	classifier := NewClassifier(
 		logTypeSuccess,
 		logTypeFail1,
 		logTypeFail2,
 	)
-	require.NoError(t, err)
-	classifier := NewClassifier(r)
 
 	logLine := "log"
 
@@ -97,11 +94,10 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 		SuccessfullyClassifiedCount: uint64(repetitions),
 		ClassificationFailureCount:  0,
 	}
-	expectedParserStats := &ParserStats{
-		BytesProcessedCount: uint64(repetitions * len(logLine)),
-		LogLineCount:        uint64(repetitions),
-		EventCount:          uint64(repetitions),
-		LogType:             "success",
+	expectedParserStats := parsers.Stats{
+		NumBytes:   float64(repetitions * len(logLine)),
+		NumLines:   float64(repetitions),
+		NumResults: float64(repetitions),
 	}
 
 	for i := 0; i < repetitions; i++ {
@@ -117,7 +113,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 
 	require.NotNil(t, classifier.ParserStats()["success"])
 	// skipping validating the times
-	expectedParserStats.ParserTimeMicroseconds = classifier.ParserStats()["success"].ParserTimeMicroseconds
+	expectedParserStats.TotalTimeSeconds = classifier.ParserStats()["success"].TotalTimeSeconds
 	require.Equal(t, expectedParserStats, classifier.ParserStats()["success"])
 
 	requireLessOrEqualNumberOfCalls(t, parserFail1, "Parse", 1)
@@ -127,12 +123,10 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 
 func TestClassifyNoMatch(t *testing.T) {
 	failingParser := &mockParser{}
-	failingParser.On("Parse", mock.Anything).Return(nil)
+	failingParser.On("Parse", mock.Anything).Return(nil, errors.New("fail"))
 
 	logType := mockLogType("failure", failingParser)
-	r, err := parsers.NewRegistry(logType)
-	require.NoError(t, err)
-	classifier := NewClassifier(r)
+	classifier := NewClassifier(logType)
 
 	logLine := "log"
 
@@ -167,9 +161,7 @@ func TestClassifyParserPanic(t *testing.T) {
 	panicParser := &mockParser{}
 	panicParser.On("Parse", mock.Anything).Run(func(args mock.Arguments) { panic("test parser panic") })
 	panicLogType := mockLogType("panic", panicParser)
-	r, err := parsers.NewRegistry(panicLogType)
-	require.NoError(t, err)
-	classifier := NewClassifier(r)
+	classifier := NewClassifier(panicLogType)
 
 	logLine := "log of death"
 
@@ -209,12 +201,7 @@ func testSkipClassify(logLine string, t *testing.T) {
 	logType1 := mockLogType("failure1", failingParser1)
 	logType2 := mockLogType("failure2", failingParser2)
 
-	r, err := parsers.NewRegistry(
-		logType1,
-		logType2,
-	)
-	require.NoError(t, err)
-	classifier := NewClassifier(r)
+	classifier := NewClassifier(logType1, logType2)
 
 	repetitions := 1000
 

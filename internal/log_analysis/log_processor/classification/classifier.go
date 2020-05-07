@@ -37,7 +37,7 @@ type ClassifierAPI interface {
 	// aggregate stats
 	Stats() *ClassifierStats
 	// per-parser stats, map of LogType -> stats
-	ParserStats() map[string]*ParserStats
+	ParserStats() map[string]parsers.Stats
 }
 
 // ClassifierResult is the result of the ClassifierAPI#Classify method
@@ -51,12 +51,11 @@ type ClassifierResult struct {
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
-func NewClassifier(r *parsers.Registry) ClassifierAPI {
+func NewClassifier(logTypes ...parsers.LogType) ClassifierAPI {
 	parserQueue := &ParserPriorityQueue{}
-	parserQueue.initialize(r)
+	parserQueue.initialize(logTypes)
 	return &Classifier{
-		parsers:     parserQueue,
-		parserStats: make(map[string]*ParserStats),
+		parsers: parserQueue,
 	}
 }
 
@@ -65,20 +64,27 @@ type Classifier struct {
 	parsers *ParserPriorityQueue
 	// aggregate stats
 	stats ClassifierStats
-	// per-parser stats, map of LogType -> stats
-	parserStats map[string]*ParserStats
+	// // per-parser stats, map of LogType -> stats
+	parserStats map[string]parsers.Stats
 }
 
 func (c *Classifier) Stats() *ClassifierStats {
 	return &c.stats
 }
 
-func (c *Classifier) ParserStats() map[string]*ParserStats {
+func (c *Classifier) ParserStats() map[string]parsers.Stats {
+	if c.parserStats == nil {
+		c.parserStats = make(map[string]parsers.Stats)
+	}
+	// Collect stats from entries lazily
+	for _, item := range c.parsers.items {
+		c.parserStats[item.logType] = item.parser.Stats()
+	}
 	return c.parserStats
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(parser parsers.Interface, logType string, log string) (parsedEvents []*parsers.Result, err error) {
+func safeLogParse(parser *parsers.Metered, logType string, log string) (parsedEvents []*parsers.Result, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.Errorf("parser %q panicked %q", logType, r)
@@ -123,14 +129,12 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 	for c.parsers.Len() > 0 {
 		currentItem := c.parsers.Peek()
 
-		startParseTime := time.Now().UTC()
 		parsedEvents, err := safeLogParse(currentItem.parser, currentItem.logType, log)
 		if err != nil {
 			zap.L().Debug("parser failed",
 				zap.String("logType", currentItem.logType),
 				zap.Error(err))
 		}
-		endParseTime := time.Now().UTC()
 
 		logType := currentItem.logType
 
@@ -152,21 +156,6 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 		result.LogType = aws.String(logType)
 		result.Events = parsedEvents
 
-		// update per-parser stats
-		var parserStat *ParserStats
-		var parserStatExists bool
-		// lazy create
-		if parserStat, parserStatExists = c.parserStats[logType]; !parserStatExists {
-			parserStat = &ParserStats{
-				LogType: logType,
-			}
-			c.parserStats[logType] = parserStat
-		}
-		parserStat.ParserTimeMicroseconds += uint64(endParseTime.Sub(startParseTime).Microseconds())
-		parserStat.BytesProcessedCount += uint64(len(log))
-		parserStat.LogLineCount++
-		parserStat.EventCount += uint64(len(result.Events))
-
 		break
 	}
 
@@ -185,13 +174,4 @@ type ClassifierStats struct {
 	EventCount                  uint64 // output records
 	SuccessfullyClassifiedCount uint64
 	ClassificationFailureCount  uint64
-}
-
-// per parser stats
-type ParserStats struct {
-	ParserTimeMicroseconds uint64 // total time parsing
-	BytesProcessedCount    uint64 // input bytes
-	LogLineCount           uint64 // input records
-	EventCount             uint64 // output records
-	LogType                string
 }

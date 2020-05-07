@@ -31,17 +31,16 @@ type ParserPriorityQueue struct {
 
 // initialize adds all registered parsers to the priority queue
 // All parsers have the same priority
-func (q *ParserPriorityQueue) initialize(r *parsers.Registry) {
-	var logTypes []parsers.LogType
-	if r == nil {
+func (q *ParserPriorityQueue) initialize(logTypes []parsers.LogType) {
+	if logTypes == nil {
 		logTypes = parsers.AvailableLogTypes()
-	} else {
-		logTypes = r.LogTypes()
 	}
 	for _, logType := range logTypes {
+		parser := logType.NewParser()
+
 		q.items = append(q.items, &ParserQueueItem{
 			logType: logType.Name,
-			parser:  logType.NewParser(),
+			parser:  parsers.NewMetered(parser),
 			penalty: 1,
 		})
 	}
@@ -50,7 +49,7 @@ func (q *ParserPriorityQueue) initialize(r *parsers.Registry) {
 // ParserQueueItem contains all the information needed to initialize a schema.
 type ParserQueueItem struct {
 	logType string
-	parser  parsers.Interface
+	parser  *parsers.Metered
 	// The smaller the number the higher the priority of the parser in the queue
 	penalty int
 }

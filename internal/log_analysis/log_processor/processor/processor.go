@@ -31,6 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -53,7 +54,9 @@ var (
 // Process orchestrates the tasks of parsing logs, classification, normalization
 // and forwarding the logs to the appropriate destination. Any errors will cause Lambda invocation to fail
 func Process(dataStreams []*common.DataStream, destination destinations.Destination) error {
-	return process(dataStreams, destination, NewProcessor)
+	return process(dataStreams, destination, func(ds *common.DataStream) *Processor {
+		return NewProcessor(ds, registry.AvailableParsers()...)
+	})
 }
 
 // entry point to allow customizing processor for testing
@@ -128,11 +131,13 @@ func (p *Processor) run(outputChan chan *parsers.Result) error {
 }
 
 func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
-	classificationResult := p.classifyLogLine(line)
-	if classificationResult.LogType == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
+	result := p.classifyLogLine(line)
+	if result != nil { // unable to classify, no error, keep parsing (best effort, will be logged)
 		return
 	}
-	p.sendEvents(classificationResult, outputChan)
+	for _, result := range result.Events {
+		outputChan <- result
+	}
 }
 
 func (p *Processor) classifyLogLine(line string) *classification.ClassifierResult {
@@ -148,17 +153,11 @@ func (p *Processor) classifyLogLine(line string) *classification.ClassifierResul
 	return result
 }
 
-func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.Result) {
-	for _, event := range result.Events {
-		outputChan <- event
-	}
-}
-
 func (p *Processor) logStats(err error) {
 	p.operation.Stop()
 	p.operation.Log(err, zap.Any(statsKey, *p.classifier.Stats()))
 	for _, parserStats := range p.classifier.ParserStats() {
-		p.operation.Log(err, zap.Any(statsKey, *parserStats))
+		p.operation.Log(err, zap.Any(statsKey, parserStats))
 	}
 }
 
@@ -168,10 +167,13 @@ type Processor struct {
 	operation  *oplog.Operation
 }
 
-func NewProcessor(input *common.DataStream) *Processor {
+func NewProcessor(input *common.DataStream, logTypes ...parsers.LogType) *Processor {
+	if logTypes == nil {
+		logTypes = registry.AvailableParsers()
+	}
 	return &Processor{
 		input:      input,
-		classifier: classification.NewClassifier(nil),
+		classifier: classification.NewClassifier(logTypes...),
 		operation:  common.OpLogManager.Start(operationName),
 	}
 }
