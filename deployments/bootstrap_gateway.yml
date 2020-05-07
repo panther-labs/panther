@@ -114,7 +114,9 @@ Resources:
               Action:
                 - iam:DeleteServerCertificate
                 - iam:UploadServerCertificate
-              Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
+              Resource:
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup

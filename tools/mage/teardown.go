@@ -26,11 +26,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -105,11 +103,6 @@ func Teardown() {
 		logger.Fatal(cfnErr)
 	}
 
-	// Remove self-signed certs that may have been uploaded.
-	//
-	// Certs can only be deleted if they aren't in use, so don't try unless the stacks deleted successfully.
-	// Certificates are not managed with CloudFormation, we have to list them explicitly.
-	destroyCerts(awsSession)
 	logger.Info("successfully removed Panther infrastructure")
 }
 
@@ -417,75 +410,6 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
 		logger.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
 	}
-}
-
-// Destroy Panther ACM or IAM certificates.
-//
-// In ACM, delete certs for "example.com" tagged with "Application:Panther"
-// In IAM, delete certs in "/panther/(region)/" path whose names start with "PantherCertificate-"
-func destroyCerts(awsSession *session.Session) {
-	logger.Debug("checking for ACM certificates")
-	acmClient := acm.New(awsSession)
-	err := acmClient.ListCertificatesPages(
-		&acm.ListCertificatesInput{},
-		func(page *acm.ListCertificatesOutput, isLast bool) bool {
-			for _, summary := range page.CertificateSummaryList {
-				if canRemoveAcmCert(acmClient, summary) {
-					logger.Infof("deleting ACM cert %s", *summary.CertificateArn)
-					input := &acm.DeleteCertificateInput{CertificateArn: summary.CertificateArn}
-					if _, err := acmClient.DeleteCertificate(input); err != nil {
-						logger.Fatalf("failed to delete cert %s: %v", *summary.CertificateArn, err)
-					}
-				}
-			}
-			return true // keep paging
-		},
-	)
-	if err != nil {
-		logger.Fatalf("failed to list ACM certificates: %v", err)
-	}
-
-	logger.Debug("checking for IAM server certificates")
-	iamClient := iam.New(awsSession)
-	path := "/panther/" + *awsSession.Config.Region + "/"
-	input := &iam.ListServerCertificatesInput{PathPrefix: &path}
-	err = iamClient.ListServerCertificatesPages(input, func(page *iam.ListServerCertificatesOutput, isLast bool) bool {
-		for _, cert := range page.ServerCertificateMetadataList {
-			name := cert.ServerCertificateName
-			if strings.HasPrefix(*name, "PantherCertificate-") {
-				logger.Infof("deleting IAM cert %s", *name)
-				if _, err := iamClient.DeleteServerCertificate(&iam.DeleteServerCertificateInput{
-					ServerCertificateName: name,
-				}); err != nil {
-					logger.Fatalf("failed to delete IAM cert %s: %v", *name, err)
-				}
-			}
-		}
-		return true // keep paging
-	})
-	if err != nil {
-		logger.Fatalf("failed to list IAM server certificates: %v", err)
-	}
-}
-
-// Returns true if the ACM cert is for example.com and tagged with Application:Panther
-func canRemoveAcmCert(client *acm.ACM, summary *acm.CertificateSummary) bool {
-	if aws.StringValue(summary.DomainName) != "example.com" {
-		return false
-	}
-
-	certArn := summary.CertificateArn
-	tags, err := client.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: certArn})
-	if err != nil {
-		logger.Fatalf("failed to list tags for ACM cert %s: %v", *certArn, err)
-	}
-
-	for _, tag := range tags.Tags {
-		if aws.StringValue(tag.Key) == "Application" && aws.StringValue(tag.Value) == "Panther" {
-			return true
-		}
-	}
-	return false
 }
 
 // Destroy any leftover CloudWatch log groups

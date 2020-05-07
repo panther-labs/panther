@@ -34,6 +34,7 @@ import (
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"go.uber.org/zap"
@@ -55,63 +56,16 @@ func customCertificate(_ context.Context, event cfn.Event) (string, map[string]i
 			return "", nil, err
 		}
 
-		return certArn, map[string]interface{}{"CertificateArn": certArn}, nil
-
-	case cfn.RequestUpdate:
-		// There is nothing to update on an existing certificate.
-		certArn := event.PhysicalResourceID
-		return certArn, map[string]interface{}{"CertificateArn": certArn}, nil
+		return certArn, map[string]interface{}{"Arn": certArn}, nil
 
 	case cfn.RequestDelete:
 		return event.PhysicalResourceID, nil, deleteCert(event.PhysicalResourceID)
 
 	default:
-		return "", nil, fmt.Errorf("unknown request type: %v", event.RequestType)
+		// There is nothing to update on an existing certificate.
+		certArn := event.PhysicalResourceID
+		return certArn, map[string]interface{}{"Arn": certArn}, nil
 	}
-}
-
-// Import a cert in ACM if possible, falling back to IAM if necessary. Returns the certificate arn.
-func importCert(cert, privateKey []byte) (string, error) {
-	certArn, err := importAcmCert(cert, privateKey)
-	if err == nil {
-		return certArn, nil
-	}
-
-	zap.L().Warn("ACM import failed, falling back to IAM", zap.Error(err))
-	return importIamCert(cert, privateKey)
-}
-
-func importAcmCert(cert, privateKey []byte) (string, error) {
-	output, err := getAcmClient().ImportCertificate(&acm.ImportCertificateInput{
-		Certificate: cert,
-		PrivateKey:  privateKey,
-		Tags: []*acm.Tag{
-			{
-				Key:   aws.String("Application"),
-				Value: aws.String("Panther"),
-			},
-		},
-	})
-
-	if err != nil {
-		return "", err
-	}
-	return *output.CertificateArn, nil
-}
-
-func importIamCert(cert, privateKey []byte) (string, error) {
-	output, err := getIamClient().UploadServerCertificate(&iam.UploadServerCertificateInput{
-		CertificateBody: aws.String(string(cert)),
-		Path:            aws.String("/panther/" + *getSession().Config.Region + "/"),
-		PrivateKey:      aws.String(string(privateKey)),
-		ServerCertificateName: aws.String(
-			"PantherCertificate-" + time.Now().Format("2006-01-02T15-04-05")),
-	})
-
-	if err != nil {
-		return "", err
-	}
-	return *output.ServerCertificateMetadata.Arn, nil
 }
 
 // Generate a self-signed certificate and private key.
@@ -162,6 +116,55 @@ func generateKeys() ([]byte, []byte, error) {
 	return certBuffer.Bytes(), keyBuffer.Bytes(), nil
 }
 
+// Import a cert in ACM if possible, falling back to IAM if necessary. Returns the certificate arn.
+func importCert(cert, privateKey []byte) (string, error) {
+	certArn, err := importAcmCert(cert, privateKey)
+	if err == nil {
+		return certArn, nil
+	}
+
+	zap.L().Warn("ACM import failed, falling back to IAM", zap.Error(err))
+	return importIamCert(cert, privateKey)
+}
+
+func importAcmCert(cert, privateKey []byte) (string, error) {
+	output, err := getAcmClient().ImportCertificate(&acm.ImportCertificateInput{
+		Certificate: cert,
+		PrivateKey:  privateKey,
+		Tags: []*acm.Tag{
+			{
+				Key:   aws.String("Application"),
+				Value: aws.String("Panther"),
+			},
+		},
+	})
+
+	if err != nil {
+		return "", err
+	}
+	return *output.CertificateArn, nil
+}
+
+func importIamCert(cert, privateKey []byte) (string, error) {
+	output, err := getIamClient().UploadServerCertificate(&iam.UploadServerCertificateInput{
+		CertificateBody: aws.String(string(cert)),
+		Path:            aws.String("/panther/" + *getSession().Config.Region + "/"),
+		PrivateKey:      aws.String(string(privateKey)),
+		ServerCertificateName: aws.String(
+			"PantherCertificate-" + time.Now().Format("2006-01-02T15-04-05")),
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	// It takes quite a few seconds for IAM server certificates to be visible to other services like ELB.
+	// Without this sleep, the ELB which depends on the custom cert fails to create with:
+	// 	Certificate 'arn:aws:iam::XXXX:server-certificate/panther/...' not found
+	time.Sleep(10 * time.Second)
+	return *output.ServerCertificateMetadata.Arn, nil
+}
+
 func deleteCert(certArn string) error {
 	parsedArn, err := arn.Parse(certArn)
 	if err != nil {
@@ -172,7 +175,12 @@ func deleteCert(certArn string) error {
 	case "acm":
 		_, err := getAcmClient().DeleteCertificate(
 			&acm.DeleteCertificateInput{CertificateArn: &certArn})
+
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == acm.ErrCodeResourceNotFoundException {
+			return nil // cert has already been deleted out of band
+		}
 		return err
+
 	case "iam":
 		// Pull the certificate name out of the arn. Example:
 		//     arn:aws:iam::XXXX:server-certificate/panther/us-east-1/PantherCertificate-2020-04-27T17-23-11
@@ -181,7 +189,12 @@ func deleteCert(certArn string) error {
 		name := split[len(split)-1]
 		_, err := getIamClient().DeleteServerCertificate(
 			&iam.DeleteServerCertificateInput{ServerCertificateName: &name})
+
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
+			return nil // cert has already been deleted out of band
+		}
 		return err
+
 	default:
 		return fmt.Errorf("%s is not an ACM/IAM cert", certArn)
 	}

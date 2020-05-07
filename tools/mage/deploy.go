@@ -196,16 +196,8 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	build.Cfn()
 	build.Lambda() // Lambda compilation required for most stacks, including bootstrap-gateway
 
-	// If the bootstrap stack is ROLLBACK_COMPLETE or similar, we need to do a full teardown.
-	// Check for that now, instead of waiting until the actual deployTemplate() call:
-	//    - bootstrap stack needs to be stable before we read its outputs to find the certificate arn
-	oldBootstrapOutputs, err := prepareStack(awsSession, bootstrapStack)
-	if err != nil && !errStackDoesNotExist(err) {
-		logger.Fatal(err)
-	}
-
 	// Deploy bootstrap stacks
-	outputs, err := deployBoostrapStacks(awsSession, settings, oldBootstrapOutputs["CertificateArn"])
+	outputs, err := deployBoostrapStacks(awsSession, settings)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -217,14 +209,12 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 func deployBoostrapStacks(
 	awsSession *session.Session,
 	settings *config.PantherConfig,
-	existingCertArn string,
 ) (map[string]string, error) {
 
 	params := map[string]string{
 		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
-		"CertificateArn":             certificateArn(awsSession, settings, existingCertArn),
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomDomain":               settings.Web.CustomDomain,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
