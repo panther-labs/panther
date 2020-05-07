@@ -185,10 +185,16 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           </Label>
           {rule.tags.length ? (
             rule.tags.map((tag, index) => (
-              <Text size="medium" color="black" key={tag} as="span">
+              <Link
+                key={tag}
+                fontSize={2}
+                color="blue300"
+                as={RRLink}
+                to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}
+              >
                 {tag}
                 {index !== rule.tags.length - 1 ? ', ' : null}
-              </Text>
+              </Link>
             ))
           ) : (
             <Text size="medium" color="grey200">
