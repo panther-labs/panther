@@ -92,7 +92,7 @@ Resources:
       Description: Custom CloudFormation resources when deploying Panther
       Environment:
         Variables:
-          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          DEBUG: !Ref Debug
       FunctionName: panther-cfn-custom-resources
       # <cfndoc>
       # Used by CloudFormation when deploying or updating Panther.
