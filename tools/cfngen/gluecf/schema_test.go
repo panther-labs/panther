@@ -39,6 +39,7 @@ type TestCustomStructType struct {
 type TestStruct struct {
 	Field1 string `description:"test field"`
 	Field2 int32  `description:"test field"`
+	Remap  string `json:"@remap" description:"remap field"`
 
 	TagSuppressed int `json:"-" description:"test field"` // should be skipped cuz of tag
 
@@ -67,6 +68,18 @@ type TestInterface interface {
 	Foo()
 }
 
+func TestInferJsonColumnsRemap(t *testing.T) {
+	obj := struct { //nolint
+		Payload TestStruct `description:"payload"`
+	}{}
+	expectedCols := []Column{
+		{Name: "Payload", Type: "struct<Field1:string,Field2:int,_at_sign_remap:string>", Comment: "payload"}, // nolint
+	}
+	actualCols := InferJSONColumns(obj)
+	resetField(actualCols) // reset the Field, not needed for tests
+	require.Equal(t, expectedCols, actualCols)
+}
+
 func TestInferJsonColumns(t *testing.T) {
 	// used to test pointers and types
 	var s string = "S"
@@ -79,6 +92,7 @@ func TestInferJsonColumns(t *testing.T) {
 
 		StringField    string  `json:"stringField" description:"test field"`              // test we use json tags
 		StringPtrField *string `json:"stringPtrField,omitempty" description:"test field"` // test we use json tags
+		RemapField     string  `json:"@remap,omitempty" description:"remap field"`        // test invalid characters are remaped
 
 		IntField    int    `description:"test field"`
 		Int8Field   int8   `description:"test field"`
@@ -120,6 +134,7 @@ func TestInferJsonColumns(t *testing.T) {
 
 		StringField:    s,
 		StringPtrField: &s,
+		RemapField:     s,
 
 		IntField:    1,
 		Int8Field:   1,
@@ -187,6 +202,7 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "BoolField", Type: "boolean", Comment: "test field", Required: true}, // test finding required tag
 		{Name: "stringField", Type: "string", Comment: "test field"},
 		{Name: "stringPtrField", Type: "string", Comment: "test field"},
+		{Name: "_at_sign_remap", Type: "string", Comment: "remap field"},
 		{Name: "IntField", Type: nativeIntMapping(), Comment: "test field"},
 		{Name: "Int8Field", Type: "tinyint", Comment: "test field"},
 		{Name: "Int16Field", Type: "smallint", Comment: "test field"},
@@ -202,14 +218,14 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "Int64Slice", Type: "array<bigint>", Comment: "test field"},
 		{Name: "Float32Slice", Type: "array<float>", Comment: "test field"},
 		{Name: "Float64Slice", Type: "array<double>", Comment: "test field"},
-		{Name: "StructSlice", Type: "array<struct<Field1:string,Field2:int>>", Comment: "test field"},
+		{Name: "StructSlice", Type: "array<struct<Field1:string,Field2:int,_at_sign_remap:string>>", Comment: "test field"},
 		{Name: "MapSlice", Type: "array<map<string,string>>", Comment: "test field"},
 		{Name: "MapStringToInterface", Type: "map<string,string>", Comment: "test field"}, // special case
 		{Name: "MapStringToString", Type: "map<string,string>", Comment: "test field"},
-		{Name: "MapStringToStruct", Type: "map<string,struct<Field1:string,Field2:int>>", Comment: "test field"},
+		{Name: "MapStringToStruct", Type: "map<string,struct<Field1:string,Field2:int,_at_sign_remap:string>>", Comment: "test field"},
 		{Name: "MapStringToMap", Type: "map<string,map<string,string>>", Comment: "test field"},
-		{Name: "StructField", Type: "struct<Field1:string,Field2:int>", Comment: "test field"},
-		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int>,B:struct<Field1:string,Field2:int>,C:struct<Field1:string,Field2:int>>", Comment: "test field"}, // nolint
+		{Name: "StructField", Type: "struct<Field1:string,Field2:int,_at_sign_remap:string>", Comment: "test field"},
+		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int,_at_sign_remap:string>,B:struct<Field1:string,Field2:int,_at_sign_remap:string>,C:struct<Field1:string,Field2:int,_at_sign_remap:string>>", Comment: "test field"}, // nolint
 		{Name: "CustomTypeField", Type: "foo", Comment: "test field"},
 		{Name: "CustomSliceField", Type: "baz", Comment: "test field"},
 		{Name: "CustomStructField", Type: "bar", Comment: "test field"},
@@ -220,11 +236,9 @@ func TestInferJsonColumns(t *testing.T) {
 	resetField(cols) // reset the Field, not needed for tests
 
 	// uncomment to see results
-	/*
-		for _, col := range cols {
-			fmt.Printf("{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n", col.Name, col.Type)
-		}
-	*/
+	for _, col := range cols {
+		fmt.Printf(`{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n`, col.Name, col.Type)
+	}
 	assert.Equal(t, excpectedCols, cols, "Expected columns not found")
 
 	// Test using interface
@@ -234,6 +248,7 @@ func TestInferJsonColumns(t *testing.T) {
 	assert.Equal(t, []Column{
 		{Name: "Field1", Type: "string", Comment: "test field"},
 		{Name: "Field2", Type: "int", Comment: "test field"},
+		{Name: "_at_sign_remap", Type: "string", Comment: "remap field"},
 	}, cols, "Interface test failed")
 }
 
@@ -243,7 +258,8 @@ type composedStruct struct {
 }
 
 type fooStruct struct {
-	Foo string `description:"this is Foo field and it is awesome"`
+	Foo   string `description:"this is Foo field and it is awesome"`
+	Remap string `json:"@remap" description:"this is Remap field and it's naughty"`
 }
 
 func TestComposeStructs(t *testing.T) {
@@ -258,6 +274,7 @@ func TestComposeStructs(t *testing.T) {
 	resetField(cols) // reset the Field, not needed for tests
 	expectedColumns := []Column{
 		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
+		{Name: "_at_sign_remap", Type: "string", Comment: "this is Remap field and it's naughty"},
 		{Name: "Bar", Type: "string", Comment: "test field"},
 	}
 	require.Equal(t, expectedColumns, cols)
