@@ -15,10 +15,10 @@ type parserEntry struct {
 }
 
 type Classifier struct {
-	errMessage         string
-	numClassifications AtomicFloat
-	numHit             AtomicFloat
-	numMiss            AtomicFloat
+	errMessage string
+	numLines   AtomicFloat
+	numHit     AtomicFloat
+	numMiss    AtomicFloat
 
 	mu      sync.RWMutex
 	entries []*parserEntry
@@ -64,14 +64,19 @@ func (q *Classifier) resetLocked(logTypes []LogType) {
 }
 
 func (q *Classifier) Parse(log string) ([]*Result, error) {
-	q.numClassifications.Add(1)
+	_, results, err := q.Classify(log)
+	return results, err
+}
+
+func (q *Classifier) Classify(log string) (string, []*Result, error) {
+	q.numLines.Add(1)
 	q.mu.Lock()
 	if q.active != nil {
 		result, err := q.active.Parse(log)
 		if err == nil {
 			q.mu.Unlock()
 			q.numHit.Add(1)
-			return result, nil
+			return q.active.LogType, result, nil
 		}
 		q.numMiss.Add(1)
 		q.active.order += 1
@@ -90,14 +95,14 @@ func (q *Classifier) Parse(log string) ([]*Result, error) {
 		if err == nil {
 			entry.order = 0
 			q.active = entry
-			return result, nil
+			return entry.LogType, result, nil
 		}
 		entry.order += 1
 	}
 	q.active = nil
-	return nil, errors.New(q.errMessage)
-
+	return "", nil, errors.New(q.errMessage)
 }
+
 func (q *Classifier) ParserStats() map[string]Stats {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
@@ -109,16 +114,26 @@ func (q *Classifier) ParserStats() map[string]Stats {
 	return parsers
 }
 
-func (q *Classifier) Stats() QueueStats {
-	return QueueStats{
-		NumHit:  q.numHit.Load(),
-		NumMiss: q.numMiss.Load(),
-		Parsers: q.ParserStats(),
+func (q *Classifier) NumLines() float64 {
+	return q.numLines.Load()
+}
+func (q *Classifier) NumHits() float64 {
+	return q.numHit.Load()
+}
+func (q *Classifier) NumMisses() float64 {
+	return q.numMiss.Load()
+}
+func (q *Classifier) Stats() ClassifierStats {
+	return ClassifierStats{
+		NumLines:  q.NumLines(),
+		NumMisses: q.NumMisses(),
+		NumHits:   q.NumHits(),
 	}
+
 }
 
-type QueueStats struct {
-	NumHit  float64
-	NumMiss float64
-	Parsers map[string]Stats
+type ClassifierStats struct {
+	NumLines  float64
+	NumMisses float64
+	NumHits   float64
 }

@@ -62,22 +62,13 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 		{LogType: "success"},
 	}
 
-	expectedStats := &QueueStats{
-		NumHit:  float64(repetitions - 1),
-		NumMiss: 0,
-		Parsers: map[string]Stats{
-			"success": {},
-			"fail1":   {},
-			"fail2":   {},
-		},
-	}
-
 	for i := 0; i < repetitions; i++ {
 		result, err := classifier.Parse(logLine)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	}
-	_ = expectedStats
+	require.Equal(t, float64(repetitions)-1.0, classifier.NumHits())
+	require.Equal(t, 1.0, classifier.NumMisses())
 
 	// // skipping specifically validating the times
 	// expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
