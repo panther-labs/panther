@@ -47,7 +47,7 @@ const BaseRuleFormTestResult: React.FC<BaseRuleFormTestResultProps> = ({
   text,
 }) => (
   <Flex align="center">
-    <Card bg={mapTestStatusToColor[status]} mr={2} width={95} py={1}>
+    <Card bg={mapTestStatusToColor[status]} mr={2} width={90} py={1}>
       <Label
         size="small"
         color="white"
