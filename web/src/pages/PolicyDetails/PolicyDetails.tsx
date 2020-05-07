@@ -122,7 +122,7 @@ const PolicyDetailsPage = () => {
                 onClick={() =>
                   setRequestParamsAndResetPaging({
                     status: ComplianceStatusEnum.Fail,
-                    suppressed: undefined,
+                    suppressed: false,
                   })
                 }
               />
@@ -135,7 +135,7 @@ const PolicyDetailsPage = () => {
                 onClick={() =>
                   setRequestParamsAndResetPaging({
                     status: ComplianceStatusEnum.Pass,
-                    suppressed: undefined,
+                    suppressed: false,
                   })
                 }
               />
