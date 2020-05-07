@@ -52,7 +52,6 @@ func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 		"DeleteFunction",
 		"DeleteFunctionConcurrency",
 		"PublishVersion",
-		"PublishLayerVersion",
 		"PutFunctionConcurrency",
 		"RemovePermission",
 		"UpdateAlias",
@@ -70,6 +69,13 @@ func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 	case "DeleteEventSourceMapping":
 		functionName := detail.Get("responseElements.functionArn").Str
 		lambdaARN.Resource += lambdaNameRegex.FindStringSubmatch(functionName)[7]
+	case "AddLayerVersionPermission",
+		"DeleteLayerVersion",
+		"PublishLayerVersion",
+		"RemoveLayerVersionPermission":
+		// Normally we would add these as ignored events in process.go to save time, but then we would not have the
+		// special lambda event version suffix stripping logic applied which we need
+		return nil
 	case "TagResource",
 		"UntagResource":
 		var err error

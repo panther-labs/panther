@@ -33,6 +33,7 @@ type Mutation {
   updateRule(input: CreateOrModifyRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
+  updateGlobalPythonlModule(input: ModifyGlobalModuleInput!): GlobalModuleDetails
 }
 
 type Query {
@@ -51,6 +52,7 @@ type Query {
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
   resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
+  getGlobalPythonModule(input: GetGlobalModuleInput!): GlobalModuleDetails
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
@@ -541,6 +543,14 @@ type PolicyDetails {
   versionId: ID
 }
 
+type GlobalModuleDetails {
+  body: String!
+  description: String!
+  id: ID!
+  createdAt: AWSDateTime!
+  lastModified: AWSDateTime!
+}
+
 type PagingData {
   thisPage: Int
   totalPages: Int
@@ -583,6 +593,17 @@ input CreateOrModifyPolicyInput {
 input GetPolicyInput {
   policyId: ID!
   versionId: ID
+}
+
+input GetGlobalModuleInput {
+  globalId: ID!
+  versionId: ID
+}
+
+input ModifyGlobalModuleInput {
+  description: String!
+  id: ID!
+  body: String!
 }
 
 input DeletePolicyInput {

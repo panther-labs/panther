@@ -16,17 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Combobox, ComboboxProps } from 'pouncejs';
-import { FieldConfig, useField } from 'formik';
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
-function FormikCombobox<T>(
-  props: ComboboxProps<T> & Required<Pick<FieldConfig, 'name'>>
-): React.ReactNode {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue }] = useField(props.name);
+import * as Types from '../../../__generated__/schema';
 
-  return <Combobox {...props} onChange={setValue} />;
-}
+import gql from 'graphql-tag';
 
-export default FormikCombobox;
+export type GlobalModuleFull = Pick<
+  Types.GlobalModuleDetails,
+  'createdAt' | 'description' | 'id' | 'lastModified' | 'body'
+>;
+
+export const GlobalModuleFull = gql`
+  fragment GlobalModuleFull on GlobalModuleDetails {
+    createdAt
+    description
+    id
+    lastModified
+    body
+  }
+`;

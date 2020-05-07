@@ -44,7 +44,35 @@ const (
 )
 
 // For CPU-intensive operations, limit the max number of worker goroutines.
-var maxWorkers = runtime.NumCPU() - 1
+var maxWorkers = func() int {
+	n := runtime.NumCPU()
+	// Use all CPUs on CI environment
+	if runningInCI() {
+		return n
+	}
+	// Ensure we don't set maxWorkers to zero
+	if n > 1 {
+		return n - 1
+	}
+	return 1
+}()
+
+// Queue limiting concurrent tasks when using `runTask`
+var taskQueue = make(chan struct{}, maxWorkers)
+
+// Ugly task queue hack to limit concurrent tasks
+func runTask(results chan<- goroutineResult, name string, task func() error) {
+	taskQueue <- struct{}{}
+	go func() {
+		defer func() {
+			<-taskQueue
+		}()
+		results <- goroutineResult{
+			summary: name,
+			err:     task(),
+		}
+	}()
+}
 
 // Track results when executing similar tasks in parallel
 type goroutineResult struct {
