@@ -60,7 +60,7 @@ const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ runn
               <PolicyFormTestResult
                 testName={testName}
                 status={ComplianceStatusEnum.Error}
-                text="Test Errored"
+                text="Error"
               />
               <Label size="small" as="pre" color={mapTestStatusToColor[ComplianceStatusEnum.Error]}>
                 {errorMessage}
