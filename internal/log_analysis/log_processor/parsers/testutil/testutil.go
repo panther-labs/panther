@@ -93,14 +93,13 @@ func MustReadFileJSONLines(filename string) (lines []string) {
 	}
 	decoder := jsoniter.NewDecoder(fd)
 	for {
-		msg := jsoniter.RawMessage{}
-		if err := decoder.Decode(&msg); err != nil {
+		raw := jsoniter.RawMessage{}
+		if err := decoder.Decode(&raw); err != nil {
 			if err == io.EOF {
 				return
 			}
 			panic(errors.Wrapf(err, "Invalid JSON value %q", filename))
 		}
-		lines = append(lines, string(msg))
+		lines = append(lines, string(raw))
 	}
-
 }
