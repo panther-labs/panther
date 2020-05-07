@@ -37,6 +37,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 )
 
@@ -187,13 +188,36 @@ func deleteCert(certArn string) error {
 		// IAM cert names cannot contain "/", so we know everything after the last / is the name
 		split := strings.Split(parsedArn.Resource, "/")
 		name := split[len(split)-1]
-		_, err := getIamClient().DeleteServerCertificate(
-			&iam.DeleteServerCertificateInput{ServerCertificateName: &name})
+		input := &iam.DeleteServerCertificateInput{ServerCertificateName: &name}
 
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
-			return nil // cert has already been deleted out of band
+		deleteFunc := func() error {
+			_, err := getIamClient().DeleteServerCertificate(input)
+			if err == nil {
+				return nil // delete successful!
+			}
+
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
+				return nil // cert has already been deleted out of band
+			}
+
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeDeleteConflictException {
+				// The certificate is still in use - log a warning and try again with backoff.
+				// When the cert is deleted in the same stack it is used, it can take awhile for IAM
+				// to realize it's safe to delete.
+				zap.L().Warn("iam server certificate still in use",
+					zap.String("certificateName", name), zap.Error(err))
+
+				return err
+			}
+
+			// Some other error - don't retry
+			return backoff.Permanent(err)
 		}
-		return err
+
+		config := backoff.NewExponentialBackOff()
+		config.MaxInterval = 30 * time.Second
+		config.MaxElapsedTime = 5 * time.Minute
+		return backoff.Retry(deleteFunc, config)
 
 	default:
 		return fmt.Errorf("%s is not an ACM/IAM cert", certArn)

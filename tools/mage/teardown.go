@@ -194,18 +194,20 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	client := cloudformation.New(awsSession)
 
 	// Define a common routine for processing stack delete results
-	var errCount int
+	var errCount, finishCount int
 	handleResult := func(result deleteStackResult) {
+		finishCount++
 		if result.err != nil {
-			logger.Errorf("    - %s failed to delete: %v", result.stackName, result.err)
+			logger.Errorf("    - %s failed to delete (%d/%d): %v",
+				result.stackName, finishCount, len(allStacks), result.err)
 			errCount++
 			return
 		}
 
 		if strings.Contains(result.stackName, "skipped") {
-			logger.Infof("    √ %s", result.stackName)
+			logger.Infof("    √ %s (%d/%d)", result.stackName, finishCount, len(allStacks))
 		} else {
-			logger.Infof("    √ %s successfully deleted", result.stackName)
+			logger.Infof("    √ %s successfully deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
 		}
 	}
 
@@ -216,10 +218,8 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 
 	// Trigger the deletion of the main stacks in parallel
 	//
-	// The ECS cluster in the bootstrap stack has to wait until the ECS service in the frontend stack is
-	// completely stopped. So we don't include the bootstrap stack in the initial parallel set
+	// The bootstrap stacks have to be last because of the ECS cluster and custom resource Lambda.
 	parallelStacks := []string{
-		gatewayStack,
 		alarmsStack,
 		appsyncStack,
 		cloudsecStack,
@@ -231,21 +231,21 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 		metricFilterStack,
 		onboardStack,
 	}
-	logger.Infof("deleting CloudFormation stacks: %s",
-		strings.Join(append(parallelStacks, bootstrapStack), ", "))
+	logger.Infof("deleting %d CloudFormation stacks", len(allStacks))
 	for _, stack := range parallelStacks {
 		go deleteStack(client, aws.String(stack), results)
 	}
 
-	// Wait for all of the stacks (incl. bootstrap) to finish deleting
-	for i := 0; i < len(parallelStacks)+1; i++ {
-		r := <-results
-		handleResult(r)
+	// Wait for all of the main stacks to finish deleting
+	for i := 0; i < len(parallelStacks); i++ {
+		handleResult(<-results)
+	}
 
-		if r.stackName == frontendStack {
-			// now we can delete the bootstrap stack
-			go deleteStack(client, aws.String(bootstrapStack), results)
-		}
+	// Now finish with the bootstrap stacks
+	go deleteStack(client, aws.String(bootstrapStack), results)
+	go deleteStack(client, aws.String(gatewayStack), results)
+	for i := 0; i < 2; i++ {
+		handleResult(<-results)
 	}
 
 	if errCount > 0 {
