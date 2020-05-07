@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// Stats holds stats for a parser.
+// Metrics are stored as float64 to easily be able to provide rates (ie B/s, RPS etc) and averages.
 type Stats struct {
 	TotalTimeSeconds float64
 	NumBytes         float64 // input bytes
@@ -14,13 +16,18 @@ type Stats struct {
 	NumErrors        float64
 }
 
+// Throughput returns the bytes per second throughput of a parser
 func (s *Stats) Throughput() float64 {
 	return s.NumBytes / s.TotalTimeSeconds
 }
-func (s *Stats) LinesPerSecond() float64 {
-	return s.NumLines / s.TotalTimeSeconds
+
+// AvgParseTimeSeconds returns the average number of seconds spent parsing a single line
+func (s *Stats) AvgParseTimeSeconds() float64 {
+	return s.TotalTimeSeconds / s.NumLines
 }
 
+// Metered is a log parser wrapper that keeps track of metrics.
+// Metrics can be retrieved safely from different goroutines.
 type Metered struct {
 	parser            Interface
 	totalTimeSeconds  AtomicFloat
@@ -30,6 +37,7 @@ type Metered struct {
 	numLines          AtomicFloat
 }
 
+// Stats returns stats for the inner parser
 func (m *Metered) Stats() Stats {
 	return Stats{
 		TotalTimeSeconds: m.totalTimeSeconds.Load(),
@@ -40,12 +48,27 @@ func (m *Metered) Stats() Stats {
 	}
 }
 
+// Parser returns the wrapped parser
+func (m *Metered) Parser() Interface {
+	return m.parser
+}
+
+// NewMetered wraps a parser tracking metrics
 func NewMetered(parser Interface) *Metered {
+	// Garbage in, garbage out
+	if parser == nil {
+		return nil
+	}
+	// Avoid double wrapping
+	if m, ok := parser.(*Metered); ok {
+		return m
+	}
 	return &Metered{
 		parser: parser,
 	}
 }
 
+// Parse implements parsers.Interface
 func (o *Metered) Parse(log string) (results []*Result, err error) {
 	tm := time.Now()
 	defer func() {
@@ -61,14 +84,17 @@ func (o *Metered) Parse(log string) (results []*Result, err error) {
 	return
 }
 
+// AtomicFloat keeps track of some metric
 type AtomicFloat struct {
 	value uint64
 }
 
+// Load loads the value of the metric
 func (a *AtomicFloat) Load() float64 {
 	return math.Float64frombits(atomic.LoadUint64(&a.value))
 }
 
+// Add adds some diff to the value
 func (a *AtomicFloat) Add(d float64) {
 	for {
 		original := atomic.LoadUint64(&a.value)
