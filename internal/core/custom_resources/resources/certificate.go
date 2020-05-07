@@ -161,7 +161,13 @@ func importIamCert(cert, privateKey []byte) (string, error) {
 
 	// It takes quite a few seconds for IAM server certificates to be visible to other services like ELB.
 	// Without this sleep, the ELB which depends on the custom cert fails to create with:
-	// 	Certificate 'arn:aws:iam::XXXX:server-certificate/panther/...' not found
+	// 	  Certificate 'arn:aws:iam::XXXX:server-certificate/panther/...' not found
+	//
+	// NOTE: we can make this a parameter in the future if we need to use this resource more than once.
+	// For example,
+	//   Type: Custom::Certificate
+	//   Properties:
+	//     WaitAfterCreation: 10s
 	time.Sleep(10 * time.Second)
 	return *output.ServerCertificateMetadata.Arn, nil
 }
@@ -172,15 +178,38 @@ func deleteCert(certArn string) error {
 		return fmt.Errorf("failed to parse %s as arn: %v", certArn, err)
 	}
 
+	backoffConfig := backoff.NewExponentialBackOff()
+	backoffConfig.MaxInterval = 30 * time.Second
+	backoffConfig.MaxElapsedTime = 5 * time.Minute
+
 	switch parsedArn.Service {
 	case "acm":
-		_, err := getAcmClient().DeleteCertificate(
-			&acm.DeleteCertificateInput{CertificateArn: &certArn})
+		input := &acm.DeleteCertificateInput{CertificateArn: &certArn}
 
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == acm.ErrCodeResourceNotFoundException {
-			return nil // cert has already been deleted out of band
+		deleteFunc := func() error {
+			_, err := getAcmClient().DeleteCertificate(input)
+			if err == nil {
+				return nil
+			}
+
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == acm.ErrCodeResourceNotFoundException {
+				return nil // cert has already been deleted out of band
+			}
+
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == acm.ErrCodeResourceInUseException {
+				// The certificate is still in use - log a warning and try again with backoff.
+				// When the cert is deleted in the same stack it is used, it can take awhile for ACM
+				// to realize it's safe to delete.
+				zap.L().Warn("acm certificate still in use", zap.Error(err))
+
+				return err
+			}
+
+			// Some other error - don't retry
+			return backoff.Permanent(err)
 		}
-		return err
+
+		return backoff.Retry(deleteFunc, backoffConfig)
 
 	case "iam":
 		// Pull the certificate name out of the arn. Example:
@@ -193,7 +222,7 @@ func deleteCert(certArn string) error {
 		deleteFunc := func() error {
 			_, err := getIamClient().DeleteServerCertificate(input)
 			if err == nil {
-				return nil // delete successful!
+				return nil
 			}
 
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
@@ -204,8 +233,7 @@ func deleteCert(certArn string) error {
 				// The certificate is still in use - log a warning and try again with backoff.
 				// When the cert is deleted in the same stack it is used, it can take awhile for IAM
 				// to realize it's safe to delete.
-				zap.L().Warn("iam server certificate still in use",
-					zap.String("certificateName", name), zap.Error(err))
+				zap.L().Warn("iam server certificate still in use", zap.Error(err))
 
 				return err
 			}
@@ -214,10 +242,7 @@ func deleteCert(certArn string) error {
 			return backoff.Permanent(err)
 		}
 
-		config := backoff.NewExponentialBackOff()
-		config.MaxInterval = 30 * time.Second
-		config.MaxElapsedTime = 5 * time.Minute
-		return backoff.Retry(deleteFunc, config)
+		return backoff.Retry(deleteFunc, backoffConfig)
 
 	default:
 		return fmt.Errorf("%s is not an ACM/IAM cert", certArn)

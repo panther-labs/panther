@@ -246,7 +246,9 @@ func deployBoostrapStacks(
 	sourceBucket := outputs["SourceBucket"]
 	params = map[string]string{
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"TracingEnabled":             strconv.FormatBool(settings.Monitoring.TracingMode != ""),
+		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"TracingMode":                settings.Monitoring.TracingMode,
 	}
 
 	if settings.Infra.PythonLayerVersionArn == "" {
