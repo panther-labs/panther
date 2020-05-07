@@ -30,6 +30,7 @@ import {
   TabPanel,
   Alert,
   SimpleGrid,
+  Label,
 } from 'pouncejs';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
@@ -96,7 +97,9 @@ const BaseRuleFormTestFields: React.FC = () => {
   const testsCount = tests.length;
   return (
     <section>
-      <InputElementLabel htmlFor="enabled">Test Record</InputElementLabel>
+      <Label size="large" color="grey500">
+        Test Record
+      </Label>
       <Box mt={6}>
         <FieldArray
           name="tests"
@@ -195,25 +198,35 @@ const BaseRuleFormTestFields: React.FC = () => {
                       borderColor="grey50"
                     >
                       <Flex mt={5}>
-                        <InputElementLabel htmlFor="severity" mr={6} whiteSpace="nowrap">
+                        <InputElementLabel
+                          htmlFor={`tests[${activeTabIndex}].name`}
+                          mr={6}
+                          whiteSpace="nowrap"
+                        >
                           * Name
                         </InputElementLabel>
                         <Box flexGrow={1}>
                           <Field
                             as={FormikTextInput}
+                            id={`tests[${activeTabIndex}].name`}
                             name={`tests[${activeTabIndex}].name`}
                             placeholder="The name of your test"
                           />
                         </Box>
                       </Flex>
                       <Flex mt={5}>
-                        <InputElementLabel htmlFor="severity" mr={6} whiteSpace="nowrap">
+                        <InputElementLabel
+                          htmlFor={`tests[${activeTabIndex}].resourceType`}
+                          mr={6}
+                          whiteSpace="nowrap"
+                        >
                           * {isPolicy ? 'Resource' : 'Log'} Type
                         </InputElementLabel>
                         <Box flexGrow={1}>
                           <Field
                             as={FormikCombobox}
                             searchable
+                            id={`tests[${activeTabIndex}].resourceType`}
                             name={`tests[${activeTabIndex}].resourceType`}
                             items={isPolicy ? RESOURCE_TYPES : LOG_TYPES}
                             inputProps={resourceTypeInputProps}
