@@ -18,7 +18,17 @@ package parsers
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "gopkg.in/go-playground/validator.v9"
+import (
+	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
+)
+
+func init() {
+	// Registers a jsoniter extension to rewrite field names to Athena compatible on encoding only.
+	// WARNING: Don't relocate. This is placed here so that any code that uses the `parsers` module behaves correctly.
+	jsonutil.RegisterAthenaRewrite()
+}
 
 // LogParser represents a parser for a supported log type
 type LogParser interface {
