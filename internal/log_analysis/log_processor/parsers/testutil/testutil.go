@@ -21,10 +21,13 @@ package testutil
 // used for test code that should NOT be in production code
 
 import (
+	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -81,4 +84,23 @@ func MustReadFileString(filename string) string {
 		panic(err)
 	}
 	return string(data)
+}
+
+func MustReadFileJSONLines(filename string) (lines []string) {
+	fd, err := os.Open(filename)
+	if err != nil {
+		panic(errors.Wrapf(err, "Failed to open file %q", filename))
+	}
+	decoder := jsoniter.NewDecoder(fd)
+	for {
+		msg := jsoniter.RawMessage{}
+		if err := decoder.Decode(&msg); err != nil {
+			if err == io.EOF {
+				return
+			}
+			panic(errors.Wrapf(err, "Invalid JSON value %q", filename))
+		}
+		lines = append(lines, string(msg))
+	}
+
 }

@@ -19,8 +19,6 @@ package gcplogs
  */
 
 import (
-	"io"
-	"os"
 	"testing"
 	"time"
 
@@ -237,19 +235,18 @@ func TestAuditLogParserSystemEvent(t *testing.T) {
 }
 
 func TestAuditLogParserUnmarshalJSON(t *testing.T) {
+	samples := testutil.MustReadFileJSONLines("testdata/auditlog_samples.jsonl")
+	parser := NewAuditLogParser()
 	valid := validator.New()
-	fd, _ := os.Open("testdata/auditlog_samples.jsonl")
-	decoder := jsoniter.NewDecoder(fd)
-	for {
-		entry := LogEntryAuditLog{}
-		if err := decoder.Decode(&entry); err != nil {
-			if err == io.EOF {
-				return
-			}
-			require.NoError(t, err)
+
+	for _, sample := range samples {
+		results, err := parser.Parse(sample)
+		require.NoError(t, err)
+		require.NotEmpty(t, results)
+		for _, result := range results {
+			require.NoError(t, valid.Struct(result.Event()))
 		}
-		require.NoError(t, valid.Struct(entry.Payload))
-		require.NoError(t, valid.Struct(entry.LogEntry))
+
 	}
 }
 
