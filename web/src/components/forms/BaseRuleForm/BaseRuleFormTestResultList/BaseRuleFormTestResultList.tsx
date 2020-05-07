@@ -39,17 +39,29 @@ const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ runn
         <React.Fragment>
           {results.testsPassed.map(testName => (
             <Box mb={1} key={testName}>
-              <PolicyFormTestResult testName={testName} status={ComplianceStatusEnum.Pass} />
+              <PolicyFormTestResult
+                testName={testName}
+                status={ComplianceStatusEnum.Pass}
+                text="Test Passed"
+              />
             </Box>
           ))}
           {results.testsFailed.map(testName => (
             <Box mb={1} key={testName}>
-              <PolicyFormTestResult testName={testName} status={ComplianceStatusEnum.Fail} />
+              <PolicyFormTestResult
+                testName={testName}
+                status={ComplianceStatusEnum.Fail}
+                text="Test Failed"
+              />
             </Box>
           ))}
           {results.testsErrored.map(({ name: testName, errorMessage }) => (
             <Box key={testName} mb={1}>
-              <PolicyFormTestResult testName={testName} status={ComplianceStatusEnum.Error} />
+              <PolicyFormTestResult
+                testName={testName}
+                status={ComplianceStatusEnum.Error}
+                text="Error"
+              />
               <Label size="small" as="pre" color={mapTestStatusToColor[ComplianceStatusEnum.Error]}>
                 {errorMessage}
               </Label>
