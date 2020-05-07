@@ -28,6 +28,7 @@ import { MODALS } from 'Components/utils/Modal';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import pick from 'lodash-es/pick';
 import { initialValues as createRuleInitialValues } from 'Pages/CreateRule';
+import withSEO from 'Hoc/withSEO';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useUpdateRule } from './graphql/updateRule.generated';
 
@@ -140,4 +141,4 @@ const EditRulePage: React.FC = () => {
   );
 };
 
-export default EditRulePage;
+export default withSEO({ title: ({ match }) => `Edit ${match.params.id}` })(EditRulePage);

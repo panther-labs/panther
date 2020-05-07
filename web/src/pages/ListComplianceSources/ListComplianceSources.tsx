@@ -24,6 +24,7 @@ import Panel from 'Components/Panel';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import withSEO from 'Hoc/withSEO';
 import { useListComplianceSources } from './graphql/listComplianceSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 import ComplianceSourceTable from './ComplianceSourceTable';
@@ -78,4 +79,4 @@ const ListComplianceSources = () => {
   );
 };
 
-export default ListComplianceSources;
+export default withSEO({ title: 'Cloud Security Sources' })(ListComplianceSources);

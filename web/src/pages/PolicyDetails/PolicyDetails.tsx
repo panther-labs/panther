@@ -34,6 +34,7 @@ import {
 import pick from 'lodash-es/pick';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
+import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import PolicyDetailsTable from './PolicyDetailsTable';
 import PolicyDetailsInfo from './PolicyDetailsInfo';
@@ -178,4 +179,4 @@ const PolicyDetailsPage = () => {
   );
 };
 
-export default PolicyDetailsPage;
+export default withSEO({ title: ({ match }) => match.params.id })(PolicyDetailsPage);

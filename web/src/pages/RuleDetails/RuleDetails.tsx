@@ -22,6 +22,7 @@ import useRouter from 'Hooks/useRouter';
 import { Alert, Box } from 'pouncejs';
 import Panel from 'Components/Panel';
 import { extractErrorMessage } from 'Helpers/utils';
+import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import RuleDetailsPageSkeleton from './Skeleton';
 import RuleDetailsInfo from './RuleDetailsInfo';
@@ -76,4 +77,4 @@ const RuleDetailsPage = () => {
   );
 };
 
-export default RuleDetailsPage;
+export default withSEO({ title: ({ match }) => match.params.id })(RuleDetailsPage);
