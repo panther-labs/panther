@@ -28,40 +28,28 @@ import (
 )
 
 func DeleteMessageBatch(sqsClient sqsiface.SQSAPI, queueURL string, messageReceipts []*string) {
-	messageReceiptChan := make(chan *string, maxMessages)
-	go func() {
-		for _, messageReceipt := range messageReceipts {
-			messageReceiptChan <- messageReceipt
-		}
-		close(messageReceiptChan) // tells streamDeleteSqsMessages() we are done
-	}()
-
-	streamDeleteSqsMessages(sqsClient, queueURL, messageReceiptChan) // blocks until done
-}
-
-func streamDeleteSqsMessages(sqsClient sqsiface.SQSAPI, queueURL string, messageReceiptChan chan *string) {
 	// pre-allocate space
 	deleteMessageBatchRequestEntries := make([]*sqs.DeleteMessageBatchRequestEntry, maxMessages)
-	batchCounter := 0
+	messagesInBatchCounter := 0
 	for i := range deleteMessageBatchRequestEntries {
 		deleteMessageBatchRequestEntries[i] = &sqs.DeleteMessageBatchRequestEntry{
 			Id: aws.String(strconv.Itoa(i)), // preset ids within batch
 		}
 	}
 
-	for messageReceipt := range messageReceiptChan {
-		deleteMessageBatchRequestEntries = deleteMessageBatchRequestEntries[:batchCounter+1] // extend
-		deleteMessageBatchRequestEntries[batchCounter].ReceiptHandle = messageReceipt        // set
-		batchCounter++
-		if batchCounter == maxMessages {
+	for _, messageReceipt := range messageReceipts {
+		deleteMessageBatchRequestEntries = deleteMessageBatchRequestEntries[:messagesInBatchCounter+1] // extend
+		deleteMessageBatchRequestEntries[messagesInBatchCounter].ReceiptHandle = messageReceipt        // set
+		messagesInBatchCounter++
+		if messagesInBatchCounter == maxMessages {
 			deleteMessageBatch(sqsClient, queueURL, deleteMessageBatchRequestEntries)
 			// reset
-			batchCounter = 0
+			messagesInBatchCounter = 0
 			deleteMessageBatchRequestEntries = deleteMessageBatchRequestEntries[:0]
 		}
 	}
 	// the rest
-	if batchCounter > 0 {
+	if messagesInBatchCounter > 0 {
 		deleteMessageBatch(sqsClient, queueURL, deleteMessageBatchRequestEntries)
 	}
 }
