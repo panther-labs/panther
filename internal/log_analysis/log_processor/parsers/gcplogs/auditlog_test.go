@@ -246,7 +246,6 @@ func TestAuditLogParserUnmarshalJSON(t *testing.T) {
 		for _, result := range results {
 			require.NoError(t, valid.Struct(result.Event()))
 		}
-
 	}
 }
 
