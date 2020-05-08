@@ -19,16 +19,13 @@ package parsers
  */
 
 import (
+	"strings"
+
 	"gopkg.in/go-playground/validator.v9"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
-
-func init() {
-	// Registers a jsoniter extension to rewrite field names to Athena compatible on encoding only.
-	// WARNING: Don't relocate. This is placed here so that any code that uses the `parsers` module behaves correctly.
-	jsonutil.RegisterAthenaRewrite()
-}
 
 // LogParser represents a parser for a supported log type
 type LogParser interface {
@@ -45,3 +42,32 @@ type LogParser interface {
 
 // Validator can be used to validate schemas of log fields
 var Validator = validator.New()
+
+// TODO: [parsers] Add more mappings of invalid Athena field name characters here
+// NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
+// to avoid possible conflicts with other fields.
+var fieldNameReplacer = strings.NewReplacer(
+	"@", "_at_sign_",
+	",", "_comma_",
+	"`", "_backtick_",
+	"'", "_apostrophe_",
+)
+
+func RewriteFieldName(name string) string {
+	return fieldNameReplacer.Replace(name)
+}
+
+// JSON is a custom jsoniter config to properly remap field names for compatibility with Athena views
+var JSON = func() jsoniter.API {
+	config := jsoniter.Config{
+		EscapeHTML: true,
+		// Validate raw JSON messages to make sure queries work as expected
+		ValidateJsonRawMessage: true,
+		// We don't need sorted map keys
+		SortMapKeys: false,
+	}
+	api := config.Froze()
+	rewriteFields := jsonutil.NewEncoderNamingStrategy(RewriteFieldName)
+	api.RegisterExtension(rewriteFields)
+	return api
+}()

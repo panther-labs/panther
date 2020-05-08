@@ -20,45 +20,23 @@ package jsonutil
 
 import (
 	"strings"
-	"sync"
 
 	jsoniter "github.com/json-iterator/go"
 )
 
-// TODO: [parsers] Add more mappings of invalid Athena field name characters here
-// NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
-// to avoid possible conflicts with other fields.
-var athenaStringReplacer = strings.NewReplacer(
-	"@", "_at_sign_",
-	",", "_comma_",
-	"`", "_backtick_",
-	"'", "_apostrophe_",
-)
-
-func RewriteFieldNameAthena(name string) string {
-	return athenaStringReplacer.Replace(name)
+func NewEncoderNamingStrategy(translate func(string) string) jsoniter.Extension {
+	return &encoderNamingStrategy{
+		translate: translate,
+	}
 }
 
-// ensures the extension is registered only once
-var registerAthenaOnce sync.Once
-
-// RegisterAthenaRewrite registers a jsoniter extension to rewrite field names to Athena compatible on encoding only.
-func RegisterAthenaRewrite() {
-	registerAthenaOnce.Do(func() {
-		// Sets mapping of JSON field names to be compatible with Athena on the encoded output
-		jsoniter.RegisterExtension(&encoderRewriteStrategyExtension{
-			translate: RewriteFieldNameAthena,
-		})
-	})
-}
-
-type encoderRewriteStrategyExtension struct {
+type encoderNamingStrategy struct {
 	jsoniter.DummyExtension
 	translate func(string) string
 }
 
 // UpdateStructDescription maps output field names to
-func (extension *encoderRewriteStrategyExtension) UpdateStructDescriptor(structDescriptor *jsoniter.StructDescriptor) {
+func (extension *encoderNamingStrategy) UpdateStructDescriptor(structDescriptor *jsoniter.StructDescriptor) {
 	for _, binding := range structDescriptor.Fields {
 		tag, hastag := binding.Field.Tag().Lookup("json")
 

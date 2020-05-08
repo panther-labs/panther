@@ -35,7 +35,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -213,7 +212,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	assert.True(t, strings.HasPrefix(*uploadInput.Key, expectedS3Prefix))
 
 	// Gzipping the test event
-	marshaledEvent, _ := jsoniter.Marshal(testEvent.Event())
+	marshaledEvent, _ := parsers.JSON.Marshal(testEvent.Event())
 	var buffer bytes.Buffer
 	writer := gzip.NewWriter(&buffer)
 	writer.Write(marshaledEvent) //nolint:errcheck
@@ -230,7 +229,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	expectedS3Notification := models.NewS3ObjectPutNotification(destination.s3Bucket, *uploadInput.Key,
 		len(expectedBytes))
 
-	marshaledExpectedS3Notification, _ := jsoniter.MarshalToString(expectedS3Notification)
+	marshaledExpectedS3Notification, _ := parsers.JSON.MarshalToString(expectedS3Notification)
 	expectedSnsPublishInput := &sns.PublishInput{
 		Message:  aws.String(marshaledExpectedS3Notification),
 		TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:test"),

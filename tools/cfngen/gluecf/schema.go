@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 const (
@@ -126,7 +126,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	}
 
 	// Rewrite field the same way as the jsoniter extension to avoid invalid column names
-	fieldName = jsonutil.RewriteFieldNameAthena(fieldName)
+	fieldName = parsers.RewriteFieldName(fieldName)
 
 	comment = sf.Tag.Get("description")
 

@@ -25,22 +25,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAthenaRewrite(t *testing.T) {
-	field := "@name"
-	mapped := RewriteFieldNameAthena(field)
-	require.Equal(t, "_at_sign_name", mapped)
-}
-
-func TestJSONIterExtension(t *testing.T) {
-	RegisterAthenaRewrite()
+func TestEncoderNamingStrategy(t *testing.T) {
+	api := jsoniter.Config{}.Froze()
+	api.RegisterExtension(NewEncoderNamingStrategy(func(name string) string {
+		if name == "foo" {
+			return "bar"
+		}
+		return name
+	}))
 
 	type S struct {
-		Type string `json:"@type"`
+		Foo string `json:"foo"`
+		Baz string `json:"baz"`
 	}
-	var value S
-	err := jsoniter.UnmarshalFromString(`{"@type":"foo"}`, &value)
+	value := S{}
+	err := api.UnmarshalFromString(`{"foo":"foo","baz":"baz"}`, &value)
 	require.NoError(t, err)
-	data, err := jsoniter.MarshalToString(&value)
+	require.Equal(t, S{Foo: "foo", Baz: "baz"}, value)
+	data, err := api.MarshalToString(&value)
 	require.NoError(t, err)
-	require.Equal(t, `{"_at_sign_type":"foo"}`, data)
+	require.Equal(t, `{"bar":"foo","baz":"baz"}`, data)
 }
