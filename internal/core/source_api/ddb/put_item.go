@@ -18,17 +18,24 @@ package ddb
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * Panther Enterprise is licensed under the terms of a commercial license available from
+ * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+ * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+ * falls under the Panther Commercial License to the extent it is permitted.
+ */
+
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
-// PutSourceIntegration adds a batch of new Snapshot Integrations to the database.
-func (ddb *DDB) PutSourceIntegration(input *models.SourceIntegrationMetadata) error {
+// PutItem adds a source integration to the database
+func (ddb *DDB) PutItem(input *IntegrationItem) error {
 	item, err := dynamodbattribute.MarshalMap(input)
 	if err != nil {
 		return errors.Wrapf(err, "failed to marshal integration metadata")
@@ -39,5 +46,8 @@ func (ddb *DDB) PutSourceIntegration(input *models.SourceIntegrationMetadata) er
 		Item:      item,
 	}
 	_, err = ddb.Client.PutItem(putRequest)
-	return err
+	if err != nil {
+		return errors.Wrap(err, "failed to put item")
+	}
+	return nil
 }

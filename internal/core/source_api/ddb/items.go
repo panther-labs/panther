@@ -18,25 +18,40 @@ package ddb
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * Panther Enterprise is licensed under the terms of a commercial license available from
+ * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+ * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+ * falls under the Panther Commercial License to the extent it is permitted.
+ */
+
 import "time"
 
-// UpdateIntegrationItem updates almost every attribute in the table.
-//
-// It's used for attributes that can change, which is almost all of them except for the
-// creation based ones (CreatedAtTime and CreatedBy).
-type UpdateIntegrationItem struct {
-	RemediationEnabled   *bool      `json:"remediationEnabled"`
-	CWEEnabled           *bool      `json:"cweEnabled"`
-	IntegrationID        *string    `json:"integrationId"`
-	IntegrationLabel     *string    `json:"integrationLabel"`
-	IntegrationType      *string    `json:"integrationType"`
+// IntegrationItem represents an integration item as it is stored in DynamoDB.
+type IntegrationItem struct {
+	CreatedAtTime    *time.Time `json:"createdAtTime"`
+	CreatedBy        *string    `json:"createdBy"`
+	IntegrationID    *string    `json:"integrationId"`
+	IntegrationLabel *string    `json:"integrationLabel"`
+	IntegrationType  *string    `json:"integrationType"`
+
+	AWSAccountID       *string `json:"awsAccountId"`
+	RemediationEnabled *bool   `json:"remediationEnabled"`
+	CWEEnabled         *bool   `json:"cweEnabled"`
+
 	LastScanEndTime      *time.Time `json:"lastScanEndTime"`
 	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
 	LastScanStartTime    *time.Time `json:"lastScanStartTime"`
 	ScanStatus           *string    `json:"scanStatus"`
+	EventStatus          *string    `json:"eventStatus"`
 	ScanIntervalMins     *int       `json:"scanIntervalMins"`
-	S3Bucket             *string    `json:"s3Bucket"`
-	S3Prefix             *string    `json:"s3Prefix"`
-	KmsKey               *string    `json:"kmsKey"`
-	LogTypes             []*string  `json:"logTypes" dynamodbav:"logTypes,stringset"`
+
+	S3Bucket          *string   `json:"s3Bucket"`
+	S3Prefix          *string   `json:"s3Prefix"`
+	KmsKey            *string   `json:"kmsKey"`
+	LogTypes          []*string `json:"logTypes" dynamodbav:"logTypes,stringset"`
+	StackName         *string   `json:"stackName,omitempty"`
+	LogProcessingRole *string   `json:"logProcessingRole,omitempty"`
 }

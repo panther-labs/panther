@@ -65,7 +65,7 @@ func TestIntegration(t *testing.T) {
 	//}
 	// TODO This integration test currently fails since it tries to do healthcheck when adding integration.
 	// This causes all subsequent tests to fail
-	// See https://github.com/panther-labs/panther/issues/394
+	// See https://github.com/panther-labs/panther-enterprise/issues/394
 	t.Skip()
 
 	sess = session.Must(session.NewSession())
@@ -198,7 +198,7 @@ func updateIntegrationSettings(t *testing.T) {
 	assert.NotNil(t, result.AWSAccountID)
 	assert.NotNil(t, result.CreatedAtTime)
 	expected := models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			AWSAccountID:     result.AWSAccountID,
 			CreatedAtTime:    result.CreatedAtTime,
 			CreatedBy:        result.CreatedBy,
@@ -207,8 +207,6 @@ func updateIntegrationSettings(t *testing.T) {
 			IntegrationType:  aws.String("aws-scan"),
 			ScanIntervalMins: aws.Int(180),
 		},
-		SourceIntegrationStatus:          nil,
-		SourceIntegrationScanInformation: nil,
 	}
 	assert.Equal(t, expected, result)
 

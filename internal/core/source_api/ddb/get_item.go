@@ -18,17 +18,26 @@ package ddb
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * Panther Enterprise is licensed under the terms of a commercial license available from
+ * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+ * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+ * falls under the Panther Commercial License to the extent it is permitted.
+ */
+
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// GetIntegration returns an integration by its ID
-func (ddb *DDB) GetIntegration(integrationID *string) (*models.SourceIntegrationMetadata, error) {
+// GetItem returns an integration by its ID
+func (ddb *DDB) GetItem(integrationID *string) (*IntegrationItem, error) {
 	output, err := ddb.Client.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(ddb.TableName),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -39,12 +48,12 @@ func (ddb *DDB) GetIntegration(integrationID *string) (*models.SourceIntegration
 		return nil, &genericapi.AWSError{Err: err, Method: "Dynamodb.GetItem"}
 	}
 
-	var integration models.SourceIntegrationMetadata
+	var integration IntegrationItem
 	if output.Item == nil {
-		return nil, err
+		return nil, nil
 	}
 	if err := dynamodbattribute.UnmarshalMap(output.Item, &integration); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to unmarshal DDB item")
 	}
 
 	return &integration, nil
