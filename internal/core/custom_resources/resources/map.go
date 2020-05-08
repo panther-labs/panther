@@ -28,6 +28,15 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//
 	// Parameters: None
 	// Outputs:
-	//    CertificateArn: ACM or IAM certificate arn
+	//     CertificateArn: ACM or IAM certificate arn
 	"Custom::Certificate": customCertificate,
+
+	// Enforces MFA with TOTP as the only option.
+	//
+	// Parameters:
+	//     UserPoolId: String (required)
+	// Outputs: None
+	//
+	// Deleting this resource has no effect on the user pool.
+	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
 }

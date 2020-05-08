@@ -32,7 +32,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
@@ -226,20 +225,6 @@ func deployBoostrapStacks(
 		return nil, err
 	}
 
-	// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
-	// forces SMS as a fallback option, but the SDK does not.
-	userPoolID := outputs["UserPoolId"]
-	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
-	_, err = cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
-		MfaConfiguration: aws.String("ON"),
-		SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
-			Enabled: aws.Bool(true),
-		},
-		UserPoolId: &userPoolID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
-	}
 	logger.Infof("    √ %s finished (1/%d)", bootstrapStack, len(allStacks))
 
 	// Now that the S3 buckets are in place, we can deploy the second bootstrap stack.
@@ -248,6 +233,7 @@ func deployBoostrapStacks(
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"TracingMode":                settings.Monitoring.TracingMode,
+		"UserPoolId":                 outputs["UserPoolId"],
 	}
 
 	if settings.Infra.PythonLayerVersionArn == "" {

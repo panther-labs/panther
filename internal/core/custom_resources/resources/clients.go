@@ -22,6 +22,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 )
@@ -30,8 +32,9 @@ import (
 var (
 	awsSession *session.Session
 
-	acmClient acmiface.ACMAPI
-	iamClient iamiface.IAMAPI
+	acmClient     acmiface.ACMAPI
+	cognitoClient cognitoidentityprovideriface.CognitoIdentityProviderAPI
+	iamClient     iamiface.IAMAPI
 )
 
 func getSession() *session.Session {
@@ -46,6 +49,13 @@ func getAcmClient() acmiface.ACMAPI {
 		acmClient = acm.New(getSession())
 	}
 	return acmClient
+}
+
+func getCognitoClient() cognitoidentityprovideriface.CognitoIdentityProviderAPI {
+	if cognitoClient == nil {
+		cognitoClient = cognitoidentityprovider.New(getSession())
+	}
+	return cognitoClient
 }
 
 func getIamClient() iamiface.IAMAPI {

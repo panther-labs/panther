@@ -46,6 +46,11 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
+  # From the bootstrap stack:
+  UserPoolId:
+    Type: String
+    Description: Cognito user pool ID
+
   # If no custom layer is provided, 'mage deploy' will have uploaded a layer here:
   SourceBucket:
     Type: String
@@ -129,12 +134,26 @@ Resources:
                 # IAM sometimes requires permissions to match the certificate name, not the full path
                 # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
+        - Id: UserPoolMfa
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: cognito-idp:SetUserPoolMfaConfig
+              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-cfn-custom-resources
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  # Enable only software MFA for the Cognito user pool - enabling MFA via native CloudFormation
+  # forces SMS as a fallback option, but the SDK does not.
+  UserPoolMfa:
+    Type: Custom::CognitoUserPoolMfa
+    Properties:
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      UserPoolId: !Ref UserPoolId
 
   AnalysisApi:
     Type: AWS::Serverless::Api
