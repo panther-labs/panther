@@ -121,8 +121,8 @@ Resources:
                 - acm:RemoveTagsFromCertificate
               # ACM certificate IDs are random and at the time of writing, DeleteCertificate does
               # not support using resource tags as a condition.
-              # So we unfortunately have to grant resource:* here
-              Resource: '*'
+              # So this is as narrow as this resource can get:
+              Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
             - Effect: Allow
               Action:
                 - iam:DeleteServerCertificate
