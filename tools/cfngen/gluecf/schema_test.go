@@ -236,9 +236,9 @@ func TestInferJsonColumns(t *testing.T) {
 	resetField(cols) // reset the Field, not needed for tests
 
 	// uncomment to see results
-	for _, col := range cols {
-		fmt.Printf(`{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n`, col.Name, col.Type)
-	}
+	// for _, col := range cols {
+	// 	fmt.Printf(`{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n`, col.Name, col.Type)
+	// }
 	assert.Equal(t, excpectedCols, cols, "Expected columns not found")
 
 	// Test using interface
