@@ -131,7 +131,7 @@ const ResourceDetailsPage = () => {
                 onClick={() =>
                   setRequestParamsAndResetPaging({
                     status: ComplianceStatusEnum.Fail,
-                    suppressed: undefined,
+                    suppressed: false,
                   })
                 }
               />
@@ -144,7 +144,7 @@ const ResourceDetailsPage = () => {
                 onClick={() =>
                   setRequestParamsAndResetPaging({
                     status: ComplianceStatusEnum.Pass,
-                    suppressed: undefined,
+                    suppressed: false,
                   })
                 }
               />

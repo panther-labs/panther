@@ -21,10 +21,10 @@ import { Label, Link, Table } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, shortenId } from 'Helpers/utils';
-import { RuleDetails } from '../graphql/ruleDetails.generated';
+import { ListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 
 interface RuleDetailsAlertsTableProps {
-  alerts: RuleDetails['alerts']['alertSummaries'];
+  alerts: ListAlertsForRule['alerts']['alertSummaries'];
 }
 
 const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts }) => {
