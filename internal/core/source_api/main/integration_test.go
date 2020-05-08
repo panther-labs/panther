@@ -65,7 +65,7 @@ func TestIntegration(t *testing.T) {
 	//}
 	// TODO This integration test currently fails since it tries to do healthcheck when adding integration.
 	// This causes all subsequent tests to fail
-	// See https://github.com/panther-labs/panther-enterprise/issues/394
+	// See https://github.com/panther-labs/panther/issues/394
 	t.Skip()
 
 	sess = session.Must(session.NewSession())
