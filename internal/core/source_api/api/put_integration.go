@@ -193,6 +193,11 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 		zap.Int("count", len(sqsEntries)),
 	)
 
+	// Setup may have been skipped if this code was called directly from another lambda
+	if sqsClient == nil {
+		Setup()
+	}
+
 	// Batch send all the messages to SQS
 	_, err := sqsbatch.SendMessageBatch(sqsClient, maxElapsedTime, &sqs.SendMessageBatchInput{
 		Entries:  sqsEntries,
