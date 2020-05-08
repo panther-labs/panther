@@ -83,8 +83,8 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
 
   function onConfirm() {
     if (location.pathname.includes(rule.id)) {
-      // if we were on the particular policy's details page or edit page --> redirect on delete
-      history.push(urls.compliance.policies.list());
+      // if we were on the particular rule's details page or edit page --> redirect on delete
+      history.push(urls.logAnalysis.rules.list());
     }
     return confirmDeletion();
   }
