@@ -72,12 +72,6 @@ type SourceIntegrationHealth struct {
 	ProcessingRoleStatus SourceIntegrationItemStatus `json:"processingRoleStatus"`
 	S3BucketStatus       SourceIntegrationItemStatus `json:"s3BucketStatus"`
 	KMSKeyStatus         SourceIntegrationItemStatus `json:"kmsKeyStatus"`
-
-	// Checks for Amazon EventBridge integrations
-	EventBridgeBusStatus SourceIntegrationItemStatus `json:"eventBridgeStatus"`
-
-	// Checks for Log Polling integrations
-	LogPullingStatus SourceIntegrationItemStatus `json:"logPullingStatus"`
 }
 
 type SourceIntegrationItemStatus struct {
