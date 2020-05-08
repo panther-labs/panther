@@ -24,15 +24,14 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
+	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 
 const (
@@ -53,8 +52,6 @@ func StreamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 	return streamEvents(sqsClient, deadlineTime, event, Process, sources.ReadSnsMessages)
 }
 
-type messageReceiptSet = [][]*string
-
 // entry point for unit testing, pass in read/process functions
 func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event events.SQSEvent,
 	processFunc func(chan *common.DataStream, destinations.Destination) error,
@@ -67,7 +64,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	processingDeadlineTime := deadlineTime.Add(-time.Duration(float32(time.Since(deadlineTime)) * processingTimeLimitScalar))
 
-	var messageReceiptSets messageReceiptSet // accumulate message receipts for delete at the end
+	var accumulatedMessageReceipts []*string // accumulate message receipts for delete at the end
 
 	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
 	go func() {
@@ -102,19 +99,10 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			}
 
 			// keep reading from SQS to maximize output aggregation
-			messages, messageReceipts, overLimit, err := readSqsMessages(sqsClient)
+			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient, common.Config.SqsQueueURL, sqsWaitTimeSeconds)
 			if err != nil {
 				readEventErrorChan <- err
 				return
-			}
-
-			// just stop processing if the queue has too many requests in flight (and delete from queue)
-			// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html
-			if overLimit {
-				zap.L().Warn("sqs queue has too many messages in-flight, stopping reading new messages and finishing processing",
-					zap.String("guidance", "considering increasing the size of the log processor lambda in panther_config.yml"),
-					zap.String("queueURL", common.Config.SqsQueueURL))
-				break
 			}
 
 			if len(messages) == 0 { // no more work
@@ -122,7 +110,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			}
 
 			// remember so we can delete when done
-			messageReceiptSets = append(messageReceiptSets, messageReceipts)
+			accumulatedMessageReceipts = append(accumulatedMessageReceipts, messageReceipts...)
 
 			// extract from sqs read responses
 			dataStreams, err = sqsDataStreams(messages, generateDataStreamsFunc)
@@ -150,7 +138,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 	}
 
 	// delete messages from sqs q on success (best effort)
-	deleteSqsMessages(sqsClient, messageReceiptSets)
+	sqsbatch.DeleteMessageBatch(sqsClient, common.Config.SqsQueueURL, accumulatedMessageReceipts)
 	return sqsMessageCount, nil
 }
 
@@ -176,86 +164,6 @@ func sqsDataStreams(messages []*sqs.Message,
 		eventMessages[i] = *message.Body
 	}
 	return readSnsMessagesFunc(eventMessages)
-}
-
-func readSqsMessages(sqsClient sqsiface.SQSAPI) (messages []*sqs.Message, messageReceipts []*string, overLimit bool, err error) {
-	receiveMessageOutput, err := sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
-		WaitTimeSeconds:     aws.Int64(sqsWaitTimeSeconds), // wait this long UNLESS MaxNumberOfMessages read
-		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),    // max size allowed
-		QueueUrl:            &common.Config.SqsQueueURL,
-	})
-	if err != nil {
-		// in the case of sqs.ErrCodeOverLimit we just tell caller, no error
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == sqs.ErrCodeOverLimit {
-			return nil, nil, true, nil
-		}
-		err = errors.Wrapf(err, "failure receiving messages from %s", common.Config.SqsQueueURL)
-		return nil, nil, false, err
-	}
-
-	messageReceipts = make([]*string, len(receiveMessageOutput.Messages))
-	for i := range receiveMessageOutput.Messages {
-		messageReceipts[i] = receiveMessageOutput.Messages[i].ReceiptHandle
-	}
-
-	return receiveMessageOutput.Messages, messageReceipts, false, err
-}
-
-func deleteSqsMessages(sqsClient sqsiface.SQSAPI, messageReceiptSets messageReceiptSet) {
-	messageReceiptChan := make(chan *string, sqsMaxBatchSize)
-	go func() {
-		for _, messageReceipts := range messageReceiptSets {
-			for _, messageReceipt := range messageReceipts {
-				messageReceiptChan <- messageReceipt
-			}
-		}
-		close(messageReceiptChan) // tells streamDeleteSqsMessages() we are done
-	}()
-
-	streamDeleteSqsMessages(sqsClient, messageReceiptChan) // blocks until done
-}
-
-func streamDeleteSqsMessages(sqsClient sqsiface.SQSAPI, messageReceiptChan chan *string) {
-	// pre-allocate space
-	deleteMessageBatchRequestEntries := make([]*sqs.DeleteMessageBatchRequestEntry, sqsMaxBatchSize)
-	batchCounter := 0
-	for i := range deleteMessageBatchRequestEntries {
-		deleteMessageBatchRequestEntries[i] = &sqs.DeleteMessageBatchRequestEntry{
-			Id: aws.String(strconv.Itoa(i)), // preset ids within batch
-		}
-	}
-
-	for messageReceipt := range messageReceiptChan {
-		deleteMessageBatchRequestEntries = deleteMessageBatchRequestEntries[:batchCounter+1] // extend
-		deleteMessageBatchRequestEntries[batchCounter].ReceiptHandle = messageReceipt        // set
-		batchCounter++
-		if batchCounter == sqsMaxBatchSize {
-			batchDeleteSqsMessages(sqsClient, deleteMessageBatchRequestEntries)
-			// reset
-			batchCounter = 0
-			deleteMessageBatchRequestEntries = deleteMessageBatchRequestEntries[:0]
-		}
-	}
-	// the rest
-	if batchCounter > 0 {
-		batchDeleteSqsMessages(sqsClient, deleteMessageBatchRequestEntries)
-	}
-}
-
-func batchDeleteSqsMessages(sqsClient sqsiface.SQSAPI, deleteMessageBatchRequestEntries []*sqs.DeleteMessageBatchRequestEntry) {
-	// NOTE: this is a best effort, and we log any errors. Failed deleted messages will be re-processed
-	deleteMessageBatchOutput, err := sqsClient.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
-		Entries:  deleteMessageBatchRequestEntries,
-		QueueUrl: &common.Config.SqsQueueURL,
-	})
-	if err != nil {
-		zap.L().Error("failure deleting sqs messages",
-			zap.String("guidance", "failed messages will be reprocessed"),
-			zap.String("queueURL", common.Config.SqsQueueURL),
-			zap.Int("numberOfFailedMessages", len(deleteMessageBatchOutput.Failed)),
-			zap.Int("numberOfSuccessfulMessages", len(deleteMessageBatchOutput.Successful)),
-			zap.Error(err))
-	}
 }
 
 func queueDepth(sqsClient sqsiface.SQSAPI) (numberOfQueuedMessages int, err error) {
