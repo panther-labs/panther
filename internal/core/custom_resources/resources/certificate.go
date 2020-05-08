@@ -71,7 +71,7 @@ func customCertificate(_ context.Context, event cfn.Event) (string, map[string]i
 
 // Generate a self-signed certificate and private key.
 func generateKeys() ([]byte, []byte, error) {
-	now := time.Now()
+	now := time.Now().UTC()
 	certificateTemplate := x509.Certificate{
 		BasicConstraintsValid: true,
 		// AWS will not attach a certificate that does not have a domain specified

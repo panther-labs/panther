@@ -32,11 +32,6 @@ Parameters:
     Type: Number
     Description: CloudWatch log retention period
     Default: 365
-  Debug:
-    Type: String
-    Default: false
-    Description: Toggle debug logging
-    AllowedValues: [true, false]
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
@@ -85,6 +80,8 @@ Resources:
       Description: Pip libraries available to the Python analysis/remediation functions
       LayerName: panther-analysis
 
+  # When deploying from source, the S3 "source" bucket must exist before this function can be packaged.
+  # That is why this resource is here instead of in the very first "bootstrap" stack.
   CustomResourceFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -92,7 +89,7 @@ Resources:
       Description: Custom CloudFormation resources when deploying Panther
       Environment:
         Variables:
-          DEBUG: !Ref Debug
+          DEBUG: true
       FunctionName: panther-cfn-custom-resources
       # <cfndoc>
       # Used by CloudFormation when deploying or updating Panther.
@@ -129,6 +126,8 @@ Resources:
                 - iam:UploadServerCertificate
               Resource:
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
+                # IAM sometimes requires permissions to match the certificate name, not the full path
+                # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
 
   CustomResourceLogGroup:
