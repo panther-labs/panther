@@ -21,9 +21,9 @@ package parsers
 import (
 	"strings"
 
+	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/go-playground/validator.v9"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
 
