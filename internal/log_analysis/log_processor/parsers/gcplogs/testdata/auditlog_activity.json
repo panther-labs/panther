@@ -1,0 +1,104 @@
+{
+  "insertId": "-eyvi2zd601a",
+  "logName": "projects/some-project-id/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "operations/acf.73aabd99-b28a-4989-8bda-1b4ca5b90cef",
+    "last": true,
+    "producer": "servicemanagement.googleapis.com"
+  },
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "test@runpanther.io"
+    },
+    "authorizationInfo": [
+      {
+        "granted": true,
+        "permission": "servicemanagement.services.bind",
+        "resource": "services/bigtableadmin.googleapis.com"
+      },
+      {
+        "granted": true,
+        "permission": "serviceusage.services.enable",
+        "resource": "projectnumbers/951849100836/services/-"
+      },
+      {
+        "granted": true,
+        "permission": "serviceusage.services.enable",
+        "resource": "projectnumbers/951849100836/services/-"
+      },
+      {
+        "permission": "servicemanagement.services.bindAll",
+        "resource": "services/bigtableadmin.googleapis.com"
+      },
+      {
+        "permission": "serviceconsumermanagement.consumers.enable",
+        "resource": "services/bigtableadmin.googleapis.com/consumers/951849100836"
+      },
+      {
+        "granted": true,
+        "permission": "servicemanagement.services.bind",
+        "resource": "services/bigtable.googleapis.com"
+      },
+      {
+        "granted": true,
+        "permission": "serviceusage.services.enable",
+        "resource": "projectnumbers/951849100836/services/-"
+      },
+      {
+        "granted": true,
+        "permission": "serviceusage.services.enable",
+        "resource": "projectnumbers/951849100836/services/-"
+      },
+      {
+        "permission": "servicemanagement.services.bindAll",
+        "resource": "services/bigtable.googleapis.com"
+      },
+      {
+        "permission": "serviceconsumermanagement.consumers.enable",
+        "resource": "services/bigtable.googleapis.com/consumers/951849100836"
+      }
+    ],
+    "methodName": "google.api.servicemanagement.v1.ServiceManager.ActivateServices",
+    "request": {
+      "@type": "type.googleapis.com/google.api.servicemanagement.v1.ActivateServicesRequest",
+      "consumerProjectId": "951849100836",
+      "serviceNames": ["bigtableadmin.googleapis.com", "bigtable.googleapis.com"]
+    },
+    "requestMetadata": {
+      "callerIp": "0:0:0:0:0:0:0:1",
+      "callerSuppliedUserAgent": "unknown"
+    },
+    "resourceName": "projects/951849100836/services/[bigtableadmin.googleapis.com, bigtable.googleapis.com]",
+    "response": {
+      "@type": "type.googleapis.com/google.api.servicemanagement.v1.ActivateServicesResponse",
+      "settings": [
+        {
+          "serviceName": "bigtableadmin.googleapis.com",
+          "usageSettings": {
+            "consumerEnableStatus": "ENABLED"
+          }
+        },
+        {
+          "serviceName": "bigtable.googleapis.com",
+          "usageSettings": {
+            "consumerEnableStatus": "ENABLED"
+          }
+        }
+      ]
+    },
+    "serviceName": "servicemanagement.googleapis.com",
+    "status": {}
+  },
+  "receiveTimestamp": "2020-05-06T03:55:36.131777024Z",
+  "resource": {
+    "labels": {
+      "method": "google.api.servicemanagement.v1.ServiceManager.ActivateServices",
+      "project_id": "some-project-id",
+      "service": "servicemanagement.googleapis.com"
+    },
+    "type": "audited_resource"
+  },
+  "severity": "NOTICE",
+  "timestamp": "2020-05-06T03:55:36.131777024Z"
+}

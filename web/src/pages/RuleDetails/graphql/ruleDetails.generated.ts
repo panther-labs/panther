@@ -22,36 +22,25 @@ import * as Types from '../../../../__generated__/schema';
 
 import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
 import { RuleDates } from '../../../graphql/fragments/RuleDates.generated';
-import { AlertSummaryFull } from '../../../graphql/fragments/AlertSummaryFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type RuleDetailsVariables = {
-  ruleDetailsInput: Types.GetRuleInput;
-  alertsForRuleInput: Types.ListAlertsInput;
+  input: Types.GetRuleInput;
 };
 
-export type RuleDetails = {
-  rule?: Types.Maybe<RuleBasic & RuleDates>;
-  alerts?: Types.Maybe<{ alertSummaries: Array<Types.Maybe<AlertSummaryFull>> }>;
-};
+export type RuleDetails = { rule?: Types.Maybe<RuleBasic & RuleDates> };
 
 export const RuleDetailsDocument = gql`
-  query RuleDetails($ruleDetailsInput: GetRuleInput!, $alertsForRuleInput: ListAlertsInput!) {
-    rule(input: $ruleDetailsInput) {
+  query RuleDetails($input: GetRuleInput!) {
+    rule(input: $input) {
       ...RuleBasic
       ...RuleDates
-    }
-    alerts(input: $alertsForRuleInput) {
-      alertSummaries {
-        ...AlertSummaryFull
-      }
     }
   }
   ${RuleBasic}
   ${RuleDates}
-  ${AlertSummaryFull}
 `;
 
 /**
@@ -66,8 +55,7 @@ export const RuleDetailsDocument = gql`
  * @example
  * const { data, loading, error } = useRuleDetails({
  *   variables: {
- *      ruleDetailsInput: // value for 'ruleDetailsInput'
- *      alertsForRuleInput: // value for 'alertsForRuleInput'
+ *      input: // value for 'input'
  *   },
  * });
  */
