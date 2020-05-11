@@ -21,10 +21,10 @@ import urls from 'Source/urls';
 import React from 'react';
 import { AlertDetails, RuleDetails } from 'Generated/schema';
 import Linkify from 'Components/Linkify';
-import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import { Link as RRLink } from 'react-router-dom';
+import SeverityBadge from 'Components/SeverityBadge';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails;
@@ -177,7 +177,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             SEVERITY
           </Label>
-          <Badge color={SEVERITY_COLOR_MAP[rule.severity]}>{rule.severity}</Badge>
+          <SeverityBadge severity={rule.severity} />
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
