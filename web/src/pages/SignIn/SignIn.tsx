@@ -28,6 +28,7 @@ import TotpForm from 'Components/forms/TotpForm';
 import SignInForm from 'Components/forms/SigninForm';
 import useAuth from 'Hooks/useAuth';
 import { CHALLENGE_NAMES } from 'Components/utils/AuthContext';
+import withSEO from 'Hoc/withSEO';
 
 /**
  * This page is only visitable by non-auth Users (since it's sitting behind a guarded route). Thus,
@@ -104,4 +105,4 @@ const SignInPage: React.FC = () => {
   }
 };
 
-export default SignInPage;
+export default withSEO({ title: 'Sign In' })(SignInPage);

@@ -20,6 +20,7 @@ import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Card, Box, useSnackbar } from 'pouncejs';
 import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
+import withSEO from 'Hoc/withSEO';
 import { GlobalModuleDetails } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -112,4 +113,4 @@ const EditGlobalModulePage: React.FC = () => {
   );
 };
 
-export default EditGlobalModulePage;
+export default withSEO({ title: 'Global Module' })(EditGlobalModulePage);

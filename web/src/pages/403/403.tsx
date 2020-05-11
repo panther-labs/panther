@@ -21,6 +21,7 @@ import { Box, Button, Flex, Heading, Text } from 'pouncejs';
 import useAuth from 'Hooks/useAuth';
 import { Link as RRLink } from 'react-router-dom';
 import AccessDeniedImg from 'Assets/illustrations/authentication.svg';
+import withSEO from 'Hoc/withSEO';
 
 const Page403: React.FC = () => {
   const { userInfo } = useAuth();
@@ -53,4 +54,4 @@ const Page403: React.FC = () => {
   );
 };
 
-export default Page403;
+export default withSEO({ title: 'Permission Denied' })(Page403);
