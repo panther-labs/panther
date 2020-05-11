@@ -27,6 +27,7 @@ import useRouter from 'Hooks/useRouter';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/Modal';
 import pick from 'lodash-es/pick';
+import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
 import { useUpdatePolicy } from './graphql/updatePolicy.generated';
@@ -142,4 +143,4 @@ const EditPolicyPage: React.FC = () => {
   );
 };
 
-export default EditPolicyPage;
+export default withSEO({ title: ({ match }) => `Edit ${match.params.id}` })(EditPolicyPage);

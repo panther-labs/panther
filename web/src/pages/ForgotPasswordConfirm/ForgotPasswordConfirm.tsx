@@ -22,6 +22,7 @@ import AuthPageContainer from 'Components/AuthPageContainer';
 import queryString from 'query-string';
 import ForgotPasswordConfirmForm from 'Components/forms/ForgotPasswordConfirmForm';
 import useRouter from 'Hooks/useRouter';
+import withSEO from 'Hoc/withSEO';
 
 const ForgotPasswordConfirmPage: React.FC = () => {
   const { location } = useRouter();
@@ -50,4 +51,4 @@ const ForgotPasswordConfirmPage: React.FC = () => {
   );
 };
 
-export default ForgotPasswordConfirmPage;
+export default withSEO({ title: 'Reset Password' })(ForgotPasswordConfirmPage);

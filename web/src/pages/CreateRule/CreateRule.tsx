@@ -23,6 +23,7 @@ import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
 import { ListRulesDocument } from 'Pages/ListRules';
 import { RuleDetails } from 'Generated/schema';
+import withSEO from 'Hoc/withSEO';
 import {
   DEFAULT_DEDUP_FUNCTION,
   DEFAULT_RULE_FUNCTION,
@@ -79,4 +80,4 @@ const CreateRulePage: React.FC = () => {
   );
 };
 
-export default CreateRulePage;
+export default withSEO({ title: 'New Rule' })(CreateRulePage);

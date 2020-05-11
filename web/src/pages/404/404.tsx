@@ -20,6 +20,7 @@ import React from 'react';
 import { Flex, Heading, Text, Button, Box } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import NotFoundImg from 'Assets/illustrations/not-found.svg';
+import withSEO from 'Hoc/withSEO';
 
 const Page404: React.FC = () => {
   return (
@@ -50,4 +51,4 @@ const Page404: React.FC = () => {
   );
 };
 
-export default Page404;
+export default withSEO({ title: 'Not Found' })(Page404);

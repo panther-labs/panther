@@ -20,6 +20,7 @@ import React from 'react';
 import { Box, Alert, SimpleGrid } from 'pouncejs';
 import Panel from 'Components/Panel';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useGetOrganizationStats } from './graphql/getOrganizationStats.generated';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
@@ -91,4 +92,4 @@ const ComplianceOverview: React.FC = () => {
   );
 };
 
-export default ComplianceOverview;
+export default withSEO({ title: 'Cloud Security Overview' })(ComplianceOverview);

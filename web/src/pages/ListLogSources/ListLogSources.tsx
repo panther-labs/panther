@@ -24,6 +24,7 @@ import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
+import withSEO from 'Hoc/withSEO';
 import { useListLogSources } from './graphql/listLogSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 import LogSourceTable from './LogSourceTable';
@@ -78,4 +79,4 @@ const ListLogSources = () => {
   );
 };
 
-export default ListLogSources;
+export default withSEO({ title: 'Log Analysis Sources' })(ListLogSources);
