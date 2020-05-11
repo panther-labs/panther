@@ -1,5 +1,23 @@
 package parsers
 
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import (
 	"math"
 	"sync/atomic"
@@ -44,7 +62,7 @@ func (m *Metered) Stats() Stats {
 		NumBytes:         m.numBytesProcessed.Load(),
 		NumLines:         m.numLines.Load(),
 		NumResults:       m.numResults.Load(),
-		NumErrors:        m.numLines.Load(),
+		NumErrors:        m.numErrors.Load(),
 	}
 }
 
@@ -69,18 +87,18 @@ func NewMetered(parser Interface) *Metered {
 }
 
 // Parse implements parsers.Interface
-func (o *Metered) Parse(log string) (results []*Result, err error) {
+func (m *Metered) Parse(log string) (results []*Result, err error) {
 	tm := time.Now()
 	defer func() {
-		o.numLines.Add(1)
-		o.totalTimeSeconds.Add(time.Now().Sub(tm).Seconds())
-		o.numBytesProcessed.Add(float64(len(log)))
-		o.numResults.Add(float64(len(results)))
+		m.numLines.Add(1)
+		m.totalTimeSeconds.Add(time.Since(tm).Seconds())
+		m.numBytesProcessed.Add(float64(len(log)))
+		m.numResults.Add(float64(len(results)))
 		if err != nil {
-			o.numErrors.Add(1)
+			m.numErrors.Add(1)
 		}
 	}()
-	results, err = o.parser.Parse(log)
+	results, err = m.parser.Parse(log)
 	return
 }
 

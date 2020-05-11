@@ -28,6 +28,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
@@ -56,6 +57,6 @@ func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error)
 	if err != nil {
 		return err
 	}
-	err = processor.Process(dataStreams, destinations.CreateDestination())
+	err = processor.Process(dataStreams, destinations.CreateDestination(parsers.DefaultRegistry()))
 	return err
 }

@@ -340,10 +340,11 @@ func assertLogEqual(t *testing.T, expected, actual observer.LoggedEntry) {
 }
 
 type testDestination struct {
-	destinations.Destination
 	mock.Mock
 	nEvents uint64
 }
+
+var _ destinations.Destination = (*testDestination)(nil)
 
 // mocks override
 func (d *testDestination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
@@ -352,7 +353,8 @@ func (d *testDestination) SendEvents(parsedEventChannel chan *parsers.Result, er
 
 func (d *testDestination) standardMock() *testDestination {
 	d.On("SendEvents", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
-		for range args.Get(0).(chan *parsers.Result) { // simulate reading
+		ch := args.Get(0).(chan *parsers.Result)
+		for range ch { // simulate reading
 			time.Sleep(sendDelay) // wait to give processor time to send events
 			d.nEvents++
 		}
@@ -361,7 +363,6 @@ func (d *testDestination) standardMock() *testDestination {
 }
 
 type testClassifier struct {
-	classification.ClassifierAPI
 	mock.Mock
 }
 

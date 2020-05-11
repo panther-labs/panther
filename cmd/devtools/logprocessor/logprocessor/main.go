@@ -13,6 +13,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 )
 
@@ -86,7 +87,8 @@ func main() {
 	}
 	zap.ReplaceGlobals(logger)
 
-	err = processor.Process(dataStreams, destinations.CreateDestination())
+	logTypes := parsers.DefaultRegistry()
+	err = processor.Process(dataStreams, destinations.CreateDestination(logTypes))
 	if err != nil {
 		log.Fatal(err)
 	}

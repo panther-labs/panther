@@ -71,8 +71,8 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 	var sendEventsWg sync.WaitGroup
 	sendEventsWg.Add(1)
 	go func() {
+		defer sendEventsWg.Done()
 		destination.SendEvents(parsedEventChannel, errorChannel) // runs until parsedEventChannel is closed
-		sendEventsWg.Done()
 	}()
 
 	// listen for errors, set to var below which will be returned
@@ -80,9 +80,9 @@ func process(dataStreams []*common.DataStream, destination destinations.Destinat
 	errorsWg.Add(1)
 	var err error
 	go func() {
+		defer errorsWg.Done()
 		for err = range errorChannel {
 		} // to ensure there are not writes to a closed channel, loop to drain
-		errorsWg.Done()
 	}()
 
 	// it is important to process the streams serially to manage memory!
@@ -132,11 +132,10 @@ func (p *Processor) run(outputChan chan *parsers.Result) error {
 
 func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
 	result := p.classifyLogLine(line)
-	if result != nil { // unable to classify, no error, keep parsing (best effort, will be logged)
-		return
-	}
-	for _, result := range result.Events {
-		outputChan <- result
+	if result != nil {
+		for _, event := range result.Events {
+			outputChan <- event
+		}
 	}
 }
 

@@ -122,7 +122,11 @@ func (r *Registry) Register(entry LogType) error {
 	return nil
 }
 
-var defaultRegistry Registry
+var defaultRegistry = &Registry{}
+
+func DefaultRegistry() *Registry {
+	return defaultRegistry
+}
 
 func Get(logType string) *LogType {
 	return defaultRegistry.Get(logType)

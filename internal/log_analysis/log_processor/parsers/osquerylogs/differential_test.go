@@ -149,5 +149,4 @@ func TestDifferentialLogWithoutLogType(t *testing.T) {
 		logs.DomainName("jaguar.local"),
 	)
 	testutil.CheckParser(t, log, TypeDifferential, event)
-
 }

@@ -42,14 +42,6 @@ import (
 )
 
 const (
-	// s3ObjectKeyFormat represents the format of the S3 object key
-	// It has 3 parts:
-	// 1. The key prefix 2. Timestamp in format `s3ObjectTimestampFormat` 3. UUID4
-	s3ObjectKeyFormat = "%s%s-%s.json.gz"
-
-	// The timestamp format in the S3 objects with second precision: yyyyMMddTHHmmssZ
-	S3ObjectTimestampFormat = "20060102T150405Z"
-
 	logDataTypeAttributeName = "type"
 	logTypeAttributeName     = "id"
 
@@ -113,6 +105,8 @@ type S3Destination struct {
 	// thresholds for ejection
 	maxBufferedMemBytes uint64 // max will hold in buffers before ejection
 	maxDuration         time.Duration
+	// logTypes to use
+	logTypes *parsers.Registry
 }
 
 // SendEvents stores events in S3.
@@ -130,10 +124,10 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 	sendChan := make(chan *s3EventBuffer) // unbuffered for back pressure (we want only 1 sendData() in flight)
 	sendWaitGroup.Add(1)
 	go func() {
+		defer sendWaitGroup.Done()
 		for buffer := range sendChan {
 			destination.sendData(buffer, errChan)
 		}
-		sendWaitGroup.Done()
 	}()
 
 	// accumulate results gzip'd in a buffer
@@ -224,7 +218,7 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 	var err error
 	var contentLength int64 = 0
 
-	key := getS3ObjectKey(buffer.logType, buffer.hour)
+	key := getS3ObjectKey(destination.logTypes, buffer.logType, buffer.hour)
 
 	operation := common.OpLogManager.Start("sendData", common.OpLogS3ServiceDim)
 	defer func() {
@@ -298,11 +292,29 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	return err
 }
 
-func getS3ObjectKey(logType string, timestamp time.Time) string {
+// The timestamp format in the S3 objects with second precision: yyyyMMddTHHmmssZ
+const S3ObjectTimestampFormat = "20060102T150405Z"
+
+func getS3ObjectKey(r *parsers.Registry, logType string, timestamp time.Time) string {
+	// s3ObjectKeyFormat represents the format of the S3 object key
+	// It has 3 parts:
+	// 1. The key prefix 2. Timestamp in format `s3ObjectTimestampFormat` 3. UUID4
+	const s3ObjectKeyFormat = "%s%s-%s.json.gz"
+	if r == nil {
+		r = parsers.DefaultRegistry()
+	}
+	entry := r.Get(logType)
+	if entry == nil {
+		panic("invalid log type " + logType)
+	}
+	meta := entry.GlueTableMetadata()
+	prefix := meta.GetPartitionPrefix(timestamp.UTC())
+	uuid := uuid.New().String()
 	return fmt.Sprintf(s3ObjectKeyFormat,
-		parsers.Get(logType).GlueTableMetadata().GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
+		prefix,
 		timestamp.Format(S3ObjectTimestampFormat),
-		uuid.New().String())
+		uuid,
+	)
 }
 
 // s3BufferSet is a group of buffers associated with hour time bins, pointing to maps logtype->s3EventBuffer

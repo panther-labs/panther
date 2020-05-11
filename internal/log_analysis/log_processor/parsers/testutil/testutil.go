@@ -22,12 +22,14 @@ package testutil
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -130,4 +132,52 @@ func EventEqual(t *testing.T, expect, actual *logs.Event) {
 	require.Equal(t, expectFields, actualFields)
 	require.Equal(t, expect.Timestamp, actual.Timestamp)
 	require.Equal(t, expect.LogType, actual.LogType)
+}
+
+type ParserConfig map[string]interface{}
+
+func AlwaysFailParser(err error) *MockParser {
+	p := MockParser{}
+	p.On("Parse", mock.AnythingOfType("string")).Return(([]*parsers.Result)(nil), err)
+	return &p
+}
+
+type MockParser struct {
+	mock.Mock
+}
+
+func (args ParserConfig) Parser() *MockParser {
+	p := &MockParser{}
+	for log, result := range args {
+		var err error
+		var results []*parsers.Result
+		switch x := result.(type) {
+		case error:
+			err = x
+		case []*parsers.Result:
+			results = x
+		case parsers.Result:
+			results = x.Results()
+		case *parsers.Result:
+			results = x.Results()
+		}
+		p.On("Parse", log).Return(results, err)
+	}
+	p.On("Parse", mock.AnythingOfType("string")).Return(([]*parsers.Result)(nil), errors.New("invalid log"))
+	return p
+}
+
+func (p *MockParser) Parse(log string) ([]*parsers.Result, error) {
+	args := p.MethodCalled("Parse", log)
+	return args.Get(0).([]*parsers.Result), args.Error(1)
+}
+func (p *MockParser) RequireLessOrEqualNumberOfCalls(t *testing.T, method string, number int) {
+	t.Helper()
+	timesCalled := 0
+	for _, call := range p.Calls {
+		if call.Method == method {
+			timesCalled++
+		}
+	}
+	require.LessOrEqual(t, timesCalled, number)
 }

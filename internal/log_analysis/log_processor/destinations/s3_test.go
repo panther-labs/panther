@@ -45,6 +45,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -62,28 +63,6 @@ var (
 	refTimePlusHour   = (timestamp.RFC3339)((time.Time)(refTime).Add(time.Hour))
 	expectedS3Prefix2 = "logs/testlogtype/year=2020/month=01/day=01/hour=01/20200101T010000Z"
 )
-
-type mockParser struct {
-	parsers.Interface
-	mock.Mock
-}
-
-var _ parsers.Interface = (*mockParser)(nil)
-
-func (m *mockParser) Parse(log string) ([]*parsers.Result, error) {
-	args := m.Called(log)
-	result := args.Get(0)
-	err := args.Get(1)
-	if result == nil {
-		return nil, err.(error)
-	}
-	return result.([]*parsers.Result), nil
-}
-
-// func (m *mockParser) LogType() string {
-// 	args := m.Called()
-// 	return args.String(0)
-// }
 
 type mockS3ManagerUploader struct {
 	s3manageriface.UploaderAPI
@@ -145,9 +124,10 @@ func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 
 var localRegistry = &parsers.Registry{}
 
-func registerMockParser(logType string, event *parsers.Result) (testParser *mockParser) {
-	testParser = &mockParser{}
-	testParser.On("Parse", mock.Anything).Return([]*parsers.Result{event})
+func registerMockParser(logType string, event *parsers.Result) (testParser *testutil.MockParser) {
+	testParser = testutil.ParserConfig{
+		mock.Anything: event,
+	}.Parser()
 	err := localRegistry.Register(parsers.LogType{
 		Name:        logType,
 		Description: fmt.Sprintf("Mock log type %s", logType),
@@ -184,6 +164,7 @@ func newS3Destination() *testS3Destination {
 			s3Uploader:          mockS3Uploader,
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
+			logTypes:            localRegistry,
 		},
 		mockSns:        mockSns,
 		mockS3Uploader: mockS3Uploader,

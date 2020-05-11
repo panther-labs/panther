@@ -37,12 +37,16 @@ type Destination interface {
 }
 
 // CreateDestination the method returns the appropriate Destination based on configuration
-func CreateDestination() Destination {
+// If no registry is specified the default registry is used
+func CreateDestination(r *parsers.Registry) Destination {
 	zap.L().Debug("creating S3 destination")
 	s3BucketName := os.Getenv("S3_BUCKET")
+	if r == nil {
+		r = parsers.DefaultRegistry()
+	}
 
 	if s3BucketName != "" {
-		return createS3Destination(s3BucketName)
+		return createS3Destination(s3BucketName, r)
 	}
 	return createFirehoseDestination()
 }
@@ -56,7 +60,7 @@ func createFirehoseDestination() Destination {
 	}
 }
 
-func createS3Destination(s3BucketName string) Destination {
+func createS3Destination(s3BucketName string, r *parsers.Registry) Destination {
 	// do not need to check error below, maxS3BufferMemUsageBytes() will panic if not set
 	lambdaSize, _ := strconv.Atoi(os.Getenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"))
 	return &S3Destination{
@@ -66,5 +70,6 @@ func createS3Destination(s3BucketName string) Destination {
 		snsTopicArn:         os.Getenv("SNS_TOPIC_ARN"),
 		maxBufferedMemBytes: maxS3BufferMemUsageBytes(lambdaSize),
 		maxDuration:         maxDuration,
+		logTypes:            r,
 	}
 }

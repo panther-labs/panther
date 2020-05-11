@@ -251,7 +251,6 @@ func SHA256Hash(hash string) Field {
 		Kind:  KindSHA256Hash,
 		Value: hash,
 	}
-
 }
 
 // SHA256Hash packs an SHA256 hash pointer value to a Field

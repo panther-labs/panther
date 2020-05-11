@@ -73,7 +73,6 @@ func TestRFC3164WithRFC3339Timestamp(t *testing.T) {
 		logs.DomainName("host"),
 	)
 	testutil.CheckParser(t, log, TypeRFC3164, event)
-
 }
 
 // Example1 from https://tools.ietf.org/html/rfc3164#section-5.4

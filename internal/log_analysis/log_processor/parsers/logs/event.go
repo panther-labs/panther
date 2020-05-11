@@ -42,7 +42,7 @@ var eventPool = &sync.Pool{
 func NewEvent(logType string, timestamp time.Time, fields ...Field) *Event {
 	event := eventPool.Get().(*Event)
 	event.LogType = logType
-	event.Timestamp = timestamp
+	event.Timestamp = timestamp.UTC()
 	for _, field := range fields {
 		event.Add(field)
 	}
