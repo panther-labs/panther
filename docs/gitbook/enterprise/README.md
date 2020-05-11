@@ -4,6 +4,7 @@ In addition to the open-source community edition, Panther offers an enterprise p
 community features plus:
 
 * [Role-Based Access Control](rbac.md)
+* [Data Explorer](data-explorer.md)
 * Premium Analysis Packs for PCI and AWS+
 * Customer Support with SLAs
 

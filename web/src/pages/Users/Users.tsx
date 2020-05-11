@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { Box, Button, Flex, Icon } from 'pouncejs';
+import withSEO from 'Hoc/withSEO';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -48,4 +49,4 @@ const UsersPage: React.FC = () => {
   );
 };
 
-export default UsersPage;
+export default withSEO({ title: 'Users' })(UsersPage);

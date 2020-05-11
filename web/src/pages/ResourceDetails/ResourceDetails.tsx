@@ -35,6 +35,7 @@ import {
 } from 'Components/utils/TableControls';
 import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import withSEO from 'Hoc/withSEO';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import ResourceDetailsTable from './ResourceDetailsTable';
 import ResourceDetailsInfo from './ResourceDetailsInfo';
@@ -187,4 +188,4 @@ const ResourceDetailsPage = () => {
   );
 };
 
-export default ResourceDetailsPage;
+export default withSEO({ title: ({ match }) => match.params.id })(ResourceDetailsPage);
