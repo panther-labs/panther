@@ -54,7 +54,11 @@ var fieldNameReplacer = strings.NewReplacer(
 )
 
 func RewriteFieldName(name string) string {
-	return fieldNameReplacer.Replace(name)
+	result := fieldNameReplacer.Replace(name)
+	if result == name {
+		return name
+	}
+	return strings.Trim(result, "_")
 }
 
 // JSON is a custom jsoniter config to properly remap field names for compatibility with Athena views
