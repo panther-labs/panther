@@ -169,6 +169,10 @@ func TestPollAndIssueNewScansNoneToRun(t *testing.T) {
 	mockLambda := &mockLambdaClient{}
 
 	mockLambda.
+		On("Invoke", mock.Anything).
+		// Pass in the first integration, which won't need a new scan.
+		Return(getTestInvokeOutput(exampleIntegrations[:1], 200), nil)
+	mockLambda.
 		On("Invoke", getTestInvokeInput()).
 		// Pass in the first integration, which won't need a new scan.
 		Return(getTestInvokeOutput(exampleIntegrations[:1], 200), nil)
