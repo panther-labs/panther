@@ -221,6 +221,7 @@ func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (
 // If the stack is ROLLBACK_COMPLETE or otherwise failed to create, it will be deleted automatically.
 // If the stack is still in progress, this will wait until it finishes.
 // If the stack exists, its outputs are returned to the caller (once complete).
+//     A return of (nil, nil) means the stack does not exist.
 func prepareStack(awsSession *session.Session, stackName string) (map[string]string, error) {
 	client := cfn.New(awsSession)
 
@@ -248,7 +249,7 @@ func prepareStack(awsSession *session.Session, stackName string) (map[string]str
 
 		if stackName == bootstrapStack {
 			// If the very first stack failed to create, we need to do a full teardown before trying again.
-			// Otherwise, there may be orphaned S3 buckets and an ACM cert that will never be used.
+			// Otherwise, there may be orphaned S3 buckets that will never be used.
 			logger.Warnf("The very first %s stack never created successfully (%s)", bootstrapStack, status)
 			logger.Warnf("Running 'mage teardown' to fully remove orphaned resources before trying again")
 			Teardown()
@@ -259,12 +260,12 @@ func prepareStack(awsSession *session.Session, stackName string) (map[string]str
 		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stackName}); err != nil {
 			return nil, fmt.Errorf("failed to start stack %s deletion: %v", stackName, err)
 		}
-		if _, err := waitForStackDelete(client, stackName); err != nil {
-			return nil, err
-		}
-	}
+		_, err = waitForStackDelete(client, stackName)
+		return nil, err // stack deleted - there are no outputs
 
-	return flattenStackOutputs(stack), nil
+	default:
+		return flattenStackOutputs(stack), nil
+	}
 }
 
 // Create a CloudFormation change set, returning its id.
