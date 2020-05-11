@@ -17,6 +17,7 @@
  */
 
 import React from 'react';
+import withSEO from 'Hoc/withSEO';
 import { Card } from 'pouncejs';
 import urls from 'Source/urls';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -71,4 +72,4 @@ const CreateLogSource: React.FC = () => {
   );
 };
 
-export default CreateLogSource;
+export default withSEO({ title: 'New Log Analysis Source' })(CreateLogSource);

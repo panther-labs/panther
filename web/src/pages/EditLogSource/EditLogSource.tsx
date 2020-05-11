@@ -23,6 +23,7 @@ import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
 import { extractErrorMessage } from 'Helpers/utils';
 import LogSourceWizard from 'Components/wizards/LogSourceWizard';
+import withSEO from 'Hoc/withSEO';
 import { useGetLogSource } from './graphql/getLogSource.generated';
 import { useUpdateLogSource } from './graphql/updateLogSource.generated';
 
@@ -86,4 +87,4 @@ const EditLogSource: React.FC = () => {
   );
 };
 
-export default EditLogSource;
+export default withSEO({ title: 'Edit Log Analysis Source' })(EditLogSource);

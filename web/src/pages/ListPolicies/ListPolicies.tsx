@@ -25,6 +25,7 @@ import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
+import withSEO from 'Hoc/withSEO';
 import ListPoliciesTable from './ListPoliciesTable';
 import ListPoliciesActions from './ListPoliciesActions';
 import ListPoliciesPageSkeleton from './Skeleton';
@@ -95,4 +96,4 @@ const ListPolicies = () => {
   );
 };
 
-export default ListPolicies;
+export default withSEO({ title: 'Policies' })(ListPolicies);

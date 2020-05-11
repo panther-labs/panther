@@ -20,6 +20,7 @@ import React from 'react';
 import { Card } from 'pouncejs';
 import urls from 'Source/urls';
 import useRouter from 'Hooks/useRouter';
+import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import ComplianceSourceWizard from 'Components/wizards/ComplianceSourceWizard';
 import { useAddComplianceSource } from './graphql/addComplianceSource.generated';
@@ -67,4 +68,4 @@ const CreateComplianceSource: React.FC = () => {
   );
 };
 
-export default CreateComplianceSource;
+export default withSEO({ title: 'New Cloud Security Source' })(CreateComplianceSource);
