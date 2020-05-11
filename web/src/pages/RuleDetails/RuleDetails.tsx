@@ -102,15 +102,16 @@ const RuleDetailsPage = () => {
 
   if (error) {
     return (
-      <Alert
-        variant="error"
-        title="Couldn't load rule"
-        description={
-          extractErrorMessage(error) ||
-          " An unknown error occured and we couldn't load the rule details from the server"
-        }
-        mb={6}
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load rule"
+          description={
+            extractErrorMessage(error) ||
+            " An unknown error occured and we couldn't load the rule details from the server"
+          }
+        />
+      </Box>
     );
   }
 

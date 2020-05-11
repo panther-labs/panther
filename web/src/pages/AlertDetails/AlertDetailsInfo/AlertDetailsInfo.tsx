@@ -35,12 +35,13 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
   if (!rule) {
     return (
       <Box>
-        <Alert
-          variant="info"
-          title="Origin rule has been deleted"
-          description="The rule that's responsible for this alert has been deleted and is no longer generating new alerts"
-          mb={6}
-        />
+        <Box mb={6}>
+          <Alert
+            variant="info"
+            title="Origin rule has been deleted"
+            description="The rule that's responsible for this alert has been deleted and is no longer generating new alerts"
+          />
+        </Box>
         <Panel size="large" title="Alert Details">
           <SimpleGrid columns={3} spacing={6}>
             <Box my={1}>
