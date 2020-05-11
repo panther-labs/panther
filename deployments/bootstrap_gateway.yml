@@ -74,7 +74,7 @@ Resources:
         - python3.6
         - python3.7
         - python3.8
-      Content: ../layer.zip
+      Content: ../layer.zip # relative to out/deployments since this template will first be swagger-embedded
       Description: Pip libraries available to the Python analysis/remediation functions
       LayerName: panther-analysis
 

@@ -1,14 +1,3 @@
-# Pip libraries used for development.
-#
-# The actual libraries and versions we care about are listed here, while
-# requirements.txt is a snapshot of all nested dependencies for CI.
-# To update the requirements.txt file:
-# rm -r .setup/venv
-# python3 -m venv .setup/venv
-# source .setup/venv/bin/activate
-# pip3 install -r requirements-top-level.txt
-# pip3 freeze -r requirements-top-level.txt > requirements.txt
-# deactivate
 aws-sam-cli==0.48.0
 bandit==1.6.2
 boto3==1.12.22
