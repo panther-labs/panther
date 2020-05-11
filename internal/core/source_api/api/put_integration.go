@@ -112,7 +112,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	}
 
 	if *input.IntegrationType == models.IntegrationTypeAWSScan {
-		err = ScanAllResources([]*models.SourceIntegrationMetadata{newIntegration})
+		err = api.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{newIntegration}})
 		if err != nil {
 			err = errors.Wrap(err, "failed to trigger scanning of resources")
 			return nil, putIntegrationInternalError
@@ -153,14 +153,14 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 	return nil
 }
 
-// ScanAllResources schedules scans for each Resource type for each integration.
+// FullScan schedules scans for each Resource type for each integration.
 //
 // Each Resource type is sent within its own SQS message.
-func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
+func (api API) FullScan(input *models.FullScanInput) error {
 	var sqsEntries []*sqs.SendMessageBatchRequestEntry
 
 	// For each integration, add a ScanMsg to the queue per service
-	for _, integration := range integrations {
+	for _, integration := range input.Integrations {
 		for resourceType := range awspoller.ServicePollers {
 			scanMsg := &pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{

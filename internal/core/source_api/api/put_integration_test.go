@@ -134,7 +134,7 @@ func TestAddToSnapshotQueue(t *testing.T) {
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(sqsOut, nil)
 	sqsClient = mockSQS
 
-	err = ScanAllResources([]*models.SourceIntegrationMetadata{testIntegration})
+	err = apiTest.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{testIntegration}})
 
 	require.NoError(t, err)
 	// Check that there is one message per service

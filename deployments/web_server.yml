@@ -18,13 +18,16 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: The service that defines the front-end NodeJS server that serves the Panther web application statics
 
 Parameters:
-  # Passed in from bootstrap.yml stack
+  # Passed in from bootstrap stacks
   SubnetOneId:
     Type: String
     Description: The ID of a subnet in the VPC above
   SubnetTwoId:
     Type: String
     Description: The ID of another subnet in the VPC above
+  ElbArn:
+    Type: String
+    Description: The ARN of the load balancer
   ElbTargetGroup:
     Type: String
     Description: The ARN of the load balancer target group
@@ -37,6 +40,10 @@ Parameters:
     Type: Number
     Description: CloudWatch log retention period
     Default: 365
+  CertificateArn:
+    Type: String
+    Description: TLS certificate used by the web app. If not specfied, a self-signed cert is created for you.
+    Default: ''
 
   # Generated in deploy process
   Image:
@@ -56,10 +63,49 @@ Parameters:
     Default: 80
     Description: The exposed port of the application, that will be used by the VPC & Container
 
+Conditions:
+  CreateCertificate: !Equals [!Ref CertificateArn, '']
+
 Resources:
+  SelfSignedCertificate:
+    Condition: CreateCertificate
+    Type: Custom::Certificate
+    Properties:
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  PublicLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates:
+        - CertificateArn:
+            !If [CreateCertificate, !GetAtt SelfSignedCertificate.Arn, !Ref CertificateArn]
+      DefaultActions:
+        - TargetGroupArn: !Ref ElbTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref ElbArn
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+
+  # Create a rule on the load balancer for routing traffic to the target group
+  LoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref ElbTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - '*'
+      ListenerArn: !Ref PublicLoadBalancerListener
+      Priority: 1
+
   # The service that will instantiate a server task and restrict access through our ALB
   WebApplicationServer:
     Type: AWS::ECS::Service
+    # The cert in the listener can't be deleted until the service has stopped.
+    DependsOn: PublicLoadBalancerListener
     Properties:
       Cluster: panther-web-cluster
       DeploymentConfiguration:

@@ -24,18 +24,27 @@ Description: API gateway and Python layer
 # - API gateways: 'mage deploy' embeds swagger definitions directly into this template,
 #     making the template too large to deploy without an S3 bucket
 # - Python layer: the layer source has to be uploaded to S3 before the cfn resource can be created
+# - Custom resource: the Lambda function which handles custom CFN resources
 
 Parameters:
   # From the config file
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of LayerVersion ARNs to attach to each function
+    Default: ''
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation
     Default: ''
-  TracingEnabled:
+  TracingMode:
     Type: String
-    Description: Enable XRay tracing on API Gateway
-    AllowedValues: [true, false]
-    Default: false
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
 
   # If no custom layer is provided, 'mage deploy' will have uploaded a layer here:
   SourceBucket:
@@ -52,7 +61,9 @@ Parameters:
     Default: ''
 
 Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   CreatePythonLayer: !Equals [!Ref PythonLayerVersionArn, '']
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
   PythonLayer:
@@ -69,6 +80,62 @@ Resources:
       Description: Pip libraries available to the Python analysis/remediation functions
       LayerName: panther-analysis
 
+  # When deploying from source, the S3 "source" bucket must exist before this function can be packaged.
+  # That is why this resource is here instead of in the very first "bootstrap" stack.
+  CustomResourceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../bin/internal/core/custom_resources/main
+      Description: Custom CloudFormation resources when deploying Panther
+      Environment:
+        Variables:
+          DEBUG: true
+      FunctionName: panther-cfn-custom-resources
+      # <cfndoc>
+      # Used by CloudFormation when deploying or updating Panther.
+      #
+      # Failure Impact
+      # * Panther itself will not be affected, but deployments may be failing
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: 256
+      Runtime: go1.x
+      Timeout: 900 # Maximum allowed: 15 minutes
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+
+      # This function has more permissions than usual because it creates and destroys infrastructure.
+      # It is used only by CloudFormation in the deploy process and not by the Panther application itself.
+      Policies:
+        - Id: CertificateManagement
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - acm:AddTagsToCertificate
+                - acm:DeleteCertificate
+                - acm:ImportCertificate
+                - acm:RemoveTagsFromCertificate
+              # ACM certificate IDs are random and at the time of writing, DeleteCertificate does
+              # not support using resource tags as a condition.
+              # So this is as narrow as this resource can get:
+              Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
+            - Effect: Allow
+              Action:
+                - iam:DeleteServerCertificate
+                - iam:UploadServerCertificate
+              Resource:
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
+                # IAM sometimes requires permissions to match the certificate name, not the full path
+                # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
+
+  CustomResourceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-cfn-custom-resources
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
   AnalysisApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -79,7 +146,7 @@ Resources:
       # The `panther-analysis-api` API Gateway calls the `panther-analysis-api` lambda.
       # </cfndoc>
       StageName: v1
-      TracingEnabled: !Ref TracingEnabled
+      TracingEnabled: !If [TracingEnabled, true, false]
 
   ComplianceApi:
     Type: AWS::Serverless::Api
@@ -91,7 +158,7 @@ Resources:
       # The `panther-compliance-api` API Gateway calls the `panther-compliance-api` lambda.
       # </cfndoc>
       StageName: v1
-      TracingEnabled: !Ref TracingEnabled
+      TracingEnabled: !If [TracingEnabled, true, false]
 
   RemediationApi:
     Type: AWS::Serverless::Api
@@ -103,7 +170,7 @@ Resources:
       # The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
       # </cfndoc>
       StageName: v1
-      TracingEnabled: !Ref TracingEnabled
+      TracingEnabled: !If [TracingEnabled, true, false]
 
   ResourcesApi:
     Type: AWS::Serverless::Api
@@ -115,7 +182,7 @@ Resources:
       # The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
       # </cfndoc>
       StageName: v1
-      TracingEnabled: !Ref TracingEnabled
+      TracingEnabled: !If [TracingEnabled, true, false]
 
 Outputs:
   PythonLayerVersionArn:
