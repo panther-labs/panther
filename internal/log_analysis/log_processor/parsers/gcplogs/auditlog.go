@@ -131,9 +131,9 @@ type AuthenticationInfo struct {
 
 // nolint:lll
 type AuthorizationInfo struct {
-	Resource   *string `json:"resource" validate:"required" description:"The resource being accessed, as a REST-style string."`
-	Permission *string `json:"permission" validate:"required" description:"The required IAM permission"`
-	Granted    *bool   `json:"granted" validate:"required" description:" Whether or not authorization for resource and permission was granted."`
+	Resource   *string `json:"resource,omitempty"  description:"The resource being accessed, as a REST-style string."`
+	Permission *string `json:"permission,omitempty"  description:"The required IAM permission"`
+	Granted    *bool   `json:"granted,omitempty" description:" Whether or not authorization for resource and permission was granted."`
 }
 
 // nolint:lll

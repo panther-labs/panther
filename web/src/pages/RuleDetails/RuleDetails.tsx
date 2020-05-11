@@ -22,6 +22,7 @@ import useRouter from 'Hooks/useRouter';
 import { Alert, Box } from 'pouncejs';
 import Panel from 'Components/Panel';
 import { extractErrorMessage } from 'Helpers/utils';
+import withSEO from 'Hoc/withSEO';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -135,4 +136,4 @@ const RuleDetailsPage = () => {
   );
 };
 
-export default RuleDetailsPage;
+export default withSEO({ title: ({ match }) => match.params.id })(RuleDetailsPage);

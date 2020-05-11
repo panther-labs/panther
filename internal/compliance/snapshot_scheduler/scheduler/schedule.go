@@ -28,7 +28,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	snapshotapi "github.com/panther-labs/panther/internal/core/source_api/api"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -62,7 +61,14 @@ func PollAndIssueNewScans() error {
 		}
 	}
 
-	return snapshotapi.ScanAllResources(integrationsToScan)
+	return genericapi.Invoke(
+		lambdaClient,
+		sourceAPIFunctionName,
+		&models.LambdaInput{FullScan: &models.FullScanInput{
+			Integrations: integrationsToScan,
+		}},
+		nil,
+	)
 }
 
 // getEnabledIntegrations lists enabled integrations from the snapshot-api.
@@ -75,9 +81,6 @@ func getEnabledIntegrations() (integrations []*models.SourceIntegration, err err
 		}},
 		&integrations,
 	)
-	if err != nil {
-		return
-	}
 
 	return
 }

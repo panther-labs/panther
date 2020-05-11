@@ -19,6 +19,7 @@
 import React from 'react';
 import WarningImg from 'Assets/illustrations/warning.svg';
 import { Box, Flex, Heading, Text } from 'pouncejs';
+import withSEO from 'Hoc/withSEO';
 
 const LogAnalysisOverview: React.FC = () => {
   return (
@@ -36,4 +37,4 @@ const LogAnalysisOverview: React.FC = () => {
   );
 };
 
-export default LogAnalysisOverview;
+export default withSEO({ title: 'Log Analysis Overview' })(LogAnalysisOverview);
