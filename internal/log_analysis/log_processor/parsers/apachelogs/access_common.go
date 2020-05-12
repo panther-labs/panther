@@ -22,7 +22,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 
@@ -103,7 +102,7 @@ func (log *AccessCommonLog) SetRow(row []string) error {
 		// Assignment in single line right after len check avoids bounds checks on fields
 		// nolint:lll
 		remoteIP, idRFC1413, userID, requestTime, requestLine, responseStatus, responseSize := row[0], row[1], row[2], row[3], row[4], row[5], row[6]
-		tm, err := parseAccessLogTimestamp(requestTime)
+		tm, err := timestamp.Parse(layoutApacheTimestamp, requestTime)
 		if err != nil {
 			return err
 		}
@@ -124,7 +123,7 @@ func (log *AccessCommonLog) SetRow(row []string) error {
 			RemoteHostIPAddress:   nonEmptyLogField(remoteIP),
 			ClientIdentityRFC1413: nonEmptyLogField(idRFC1413),
 			UserID:                nonEmptyLogField(userID),
-			RequestTime:           (*timestamp.RFC3339)(&tm),
+			RequestTime:           &tm,
 			RequestMethod:         &req.Method,
 			RequestProtocol:       &req.Protocol,
 			RequestURI:            &req.URI,
@@ -162,14 +161,6 @@ func nonEmptyLogField(s string) *string {
 // second = 2*digit
 // zone = (`+' | `-') 4*digit
 const layoutApacheTimestamp = `[02/Jan/2006:15:04:05 -0700]`
-
-func parseAccessLogTimestamp(s string) (time.Time, error) {
-	tm, err := time.Parse(layoutApacheTimestamp, s)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return tm.UTC(), nil
-}
 
 type requestLine struct {
 	Method   string
