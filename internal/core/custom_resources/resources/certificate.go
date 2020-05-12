@@ -49,12 +49,12 @@ func customCertificate(_ context.Context, event cfn.Event) (string, map[string]i
 	case cfn.RequestCreate:
 		cert, privateKey, err := generateKeys()
 		if err != nil {
-			return "", nil, err
+			return "-", nil, err
 		}
 
 		certArn, err := importCert(cert, privateKey)
 		if err != nil {
-			return "", nil, err
+			return "-", nil, err
 		}
 
 		return certArn, map[string]interface{}{"Arn": certArn}, nil

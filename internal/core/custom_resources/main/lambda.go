@@ -41,7 +41,7 @@ func customResourceHandler(ctx context.Context, event cfn.Event) (string, map[st
 
 	handler, ok := resources.CustomResources[event.ResourceType]
 	if !ok {
-		return "", nil, fmt.Errorf("unsupported resource type: %s", event.ResourceType)
+		return "-", nil, fmt.Errorf("unsupported resource type: %s", event.ResourceType)
 	}
 
 	return handler(ctx, event)
