@@ -224,23 +224,16 @@ func prettyPrintStructType(colType, indent string) string {
 	}
 	indent += prettyPrintIndent
 	var fieldTypes []string
-	for i, field := range fields {
+	for _, field := range fields {
 		splitIndex := strings.Index(field, ":") // name:type (can't use Split() cuz type can have ':'
 		if splitIndex == -1 {
-			fmt.Printf("%s %s %#v\n", colType, field, fields)
 			panic("could not parse struct field: " + field)
 		}
-		name := `"` + field[0:splitIndex] + `"` // make it look like JSON
+		name := `"` + field[0:splitIndex] + `"` // make it look like JSON by quoting
 		structFieldType := field[splitIndex+1:]
-		var structPrettyPrintFieldPrefix string // before each struct field
-		if i == 0 {
-			structPrettyPrintFieldPrefix = prettyPrintPrefix
-		} else {
-			structPrettyPrintFieldPrefix = "," + prettyPrintPrefix
-		}
-		fieldTypes = append(fieldTypes, structPrettyPrintFieldPrefix+indent+name+":"+prettyPrintType(structFieldType, indent))
+		fieldTypes = append(fieldTypes, prettyPrintPrefix+indent+name+":"+prettyPrintType(structFieldType, indent))
 	}
-	return "{" + strings.Join(fieldTypes, "") + prettyPrintPrefix + "}"
+	return "{" + strings.Join(fieldTypes, ",") + prettyPrintPrefix + "}"
 }
 
 func getTypeFields(complexType, colType string) (subFields []string) {
