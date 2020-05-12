@@ -133,15 +133,16 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
           onChange={handleFileChange}
         />
         {uploadPoliciesError && (
-          <Alert
-            variant="error"
-            title="An error has occurred"
-            description={
-              extractErrorMessage(uploadPoliciesError) ||
-              'An unknown error occurred while attempting to upload your policies'
-            }
-            mb={6}
-          />
+          <Box mb={6}>
+            <Alert
+              variant="error"
+              title="An error has occurred"
+              description={
+                extractErrorMessage(uploadPoliciesError) ||
+                'An unknown error occurred while attempting to upload your policies'
+              }
+            />
+          </Box>
         )}
         <SubmitButton
           disabled={loading}

@@ -65,7 +65,9 @@ const SetPasswordForm: React.FC = () => {
       {({ handleSubmit, status, isSubmitting, isValid, dirty }) => (
         <Box as="form" width={1} onSubmit={handleSubmit}>
           {status && (
-            <Alert variant="error" title={status.title} description={status.message} mb={6} />
+            <Box mb={6}>
+              <Alert variant="error" title={status.title} description={status.message} />
+            </Box>
           )}
           <Field
             as={FormikTextInput}
