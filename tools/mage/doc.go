@@ -230,7 +230,7 @@ func prettyPrintStructType(colType, indent string) string {
 			fmt.Printf("%s %s %#v\n", colType, field, fields)
 			panic("could not parse struct field: " + field)
 		}
-		name := `"` +field[0:splitIndex] + `"` // make it look like JSON
+		name := `"` + field[0:splitIndex] + `"` // make it look like JSON
 		structFieldType := field[splitIndex+1:]
 		var structPrettyPrintFieldPrefix string // before each struct field
 		if i == 0 {

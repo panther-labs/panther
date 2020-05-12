@@ -44,41 +44,41 @@ func TestLogDocPrettyPrint(t *testing.T) {
 
 	//  array of maps
 	colType = `array<map<string,string>>`
-	expected = `[{<br>&nbps;&nbps;key:string,<br>&nbps;&nbps;value:string<br>}]`
+	expected = `[{<br>&nbps;&nbps;string:string<br>}]`
 	assert.Equal(t, expected, prettyPrintType(colType, ""))
 
 	// array of structs
 	colType = `array<struct<foo:string,bar:string>>`
-	expected = `[{<br>&nbps;&nbps;foo:string,<br>&nbps;&nbps;bar:string<br>}]`
+	expected = `[{<br>&nbps;&nbps;"foo":string,<br>&nbps;&nbps;"bar":string<br>}]`
 	assert.Equal(t, expected, prettyPrintType(colType, ""))
 
 	// simple map
 	colType = `map<string,string>`
-	expected = `{<br>&nbps;&nbps;key:string,<br>&nbps;&nbps;value:string<br>}`
+	expected = `{<br>&nbps;&nbps;string:string<br>}`
 	assert.Equal(t, expected, prettyPrintType(colType, ""))
 
 	// map of maps
 	colType = `map<string,map<string,string>>`
-	expected = `{<br>&nbps;&nbps;key:string,<br>&nbps;&nbps;value:{<br>&nbps;&nbps;&nbps;&nbps;key:string,<br>&nbps;&nbps;&nbps;&nbps;value:string<br>}<br>}` // nolint:lll
+	expected = `{<br>&nbps;&nbps;string:{<br>&nbps;&nbps;&nbps;&nbps;string:string<br>}<br>}` // nolint:lll
 	assert.Equal(t, expected, prettyPrintType(colType, ""))
 
 	// simple struct
 	colType = `struct<foo:string,bar:string>`
-	expected = `{<br>&nbps;&nbps;foo:string,<br>&nbps;&nbps;bar:string<br>}`
+	expected = `{<br>&nbps;&nbps;"foo":string,<br>&nbps;&nbps;"bar":string<br>}`
 	assert.Equal(t, expected, prettyPrintType(colType, ""))
 
 	// struct of array and map
 	colType = `struct<foo:array<string>,bar:map<string,string>>`
-	expected = `{<br>&nbps;&nbps;foo:[string],<br>&nbps;&nbps;bar:{<br>&nbps;&nbps;&nbps;&nbps;key:string,<br>&nbps;&nbps;&nbps;&nbps;value:string<br>}<br>}` // nolint:lll
+	expected = `{<br>&nbps;&nbps;"foo":[string],<br>&nbps;&nbps;"bar":{<br>&nbps;&nbps;&nbps;&nbps;string:string<br>}<br>}` // nolint:lll
 	assert.Equal(t, expected, prettyPrintType(colType, ""))
 
 	// struct of struct
 	colType = `struct<foo:struct<bar:string>>`
-	expected = `{<br>&nbps;&nbps;foo:{<br>&nbps;&nbps;&nbps;&nbps;bar:string<br>}<br>}`
+	expected = `{<br>&nbps;&nbps;"foo":{<br>&nbps;&nbps;&nbps;&nbps;"bar":string<br>}<br>}`
 	assert.Equal(t, expected, prettyPrintType(colType, ""))
 
 	// struct of struct of struct
 	colType = `struct<foo:struct<bar:struct<zot:string>>>`
-	expected = `{<br>&nbps;&nbps;foo:{<br>&nbps;&nbps;&nbps;&nbps;bar:{<br>&nbps;&nbps;&nbps;&nbps;&nbps;&nbps;zot:string<br>}<br>}<br>}` // nolint:lll
+	expected = `{<br>&nbps;&nbps;"foo":{<br>&nbps;&nbps;&nbps;&nbps;"bar":{<br>&nbps;&nbps;&nbps;&nbps;&nbps;&nbps;"zot":string<br>}<br>}<br>}` // nolint:lll
 	assert.Equal(t, expected, prettyPrintType(colType, ""))
 }
