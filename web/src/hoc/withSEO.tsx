@@ -17,24 +17,30 @@
  */
 
 import React from 'react';
-import WarningImg from 'Assets/illustrations/warning.svg';
-import { Box, Flex, Heading, Text } from 'pouncejs';
-import withSEO from 'Hoc/withSEO';
+import { Helmet } from 'react-helmet';
+import useRouter from 'Hooks/useRouter';
+import { RouteComponentProps } from 'react-router';
 
-const LogAnalysisOverview: React.FC = () => {
-  return (
-    <Flex height="100%" width="100%" justify="center" align="center" direction="column">
-      <Box m={10}>
-        <img alt="Construction works" src={WarningImg} width="auto" height={400} />
-      </Box>
-      <Heading size="medium" color="grey400" mb={6}>
-        Log analysis overview is not available
-      </Heading>
-      <Text size="large" color="grey200" textAlign="center" mb={10}>
-        We are currently developing this page and will release it in the near future
-      </Text>
-    </Flex>
-  );
-};
+interface Options {
+  title: string | ((routerData: RouteComponentProps<any, undefined>) => string);
+}
 
-export default withSEO({ title: 'Log Analysis Overview' })(LogAnalysisOverview);
+function withSEO<P>({ title }: Options) {
+  return (Component: React.FC<P>) => {
+    const ComponentWithSEO: React.FC<P> = props => {
+      const routerData = useRouter();
+
+      return (
+        <React.Fragment>
+          <Helmet titleTemplate="%s | Panther">
+            <title>{typeof title === 'string' ? title : title(routerData)}</title>
+          </Helmet>
+          <Component {...props} />
+        </React.Fragment>
+      );
+    };
+    return ComponentWithSEO;
+  };
+}
+
+export default withSEO;

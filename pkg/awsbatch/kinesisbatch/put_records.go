@@ -25,7 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/kinesis"
 	"github.com/aws/aws-sdk-go/service/kinesis/kinesisiface"
-	"github.com/cenkalti/backoff"
+	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 )
 

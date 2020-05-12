@@ -24,6 +24,7 @@ import PolicyForm from 'Components/forms/PolicyForm';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { PolicyDetails } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
+import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
@@ -77,4 +78,4 @@ const CreatePolicyPage: React.FC = () => {
   );
 };
 
-export default CreatePolicyPage;
+export default withSEO({ title: 'New Policy' })(CreatePolicyPage);
