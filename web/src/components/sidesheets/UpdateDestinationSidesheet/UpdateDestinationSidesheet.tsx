@@ -16,15 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
 import React from 'react';
-
+import { Alert, Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
 import pick from 'lodash-es/pick';
 import useSidesheet from 'Hooks/useSidesheet';
 import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
-
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
-
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
 import SQSDestinationForm from 'Components/forms/SqsDestinationForm';
 import SlackDestinationForm from 'Components/forms/SlackDestinationForm';
@@ -34,7 +31,6 @@ import MicrosoftTeamsDestinationForm from 'Components/forms/MicrosoftTeamsDestin
 import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
 import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
-
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateDestination } from './graphql/updateDestination.generated';
 
@@ -216,16 +212,16 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
           Update {destination.outputType}
         </Heading>
         {updateDestinationError && (
-          <Alert
-            mt={2}
-            mb={6}
-            variant="error"
-            title="Destination not updated"
-            description={
-              extractErrorMessage(updateDestinationError) ||
-              'An unknown error has occured while trying to update your destination'
-            }
-          />
+          <Box mt={2} mb={6}>
+            <Alert
+              variant="error"
+              title="Destination not updated"
+              description={
+                extractErrorMessage(updateDestinationError) ||
+                'An unknown error has occured while trying to update your destination'
+              }
+            />
+          </Box>
         )}
         {renderFullDestinationForm()}
       </Box>

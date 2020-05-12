@@ -19,6 +19,7 @@
 import React from 'react';
 import Auth, { CognitoUser } from '@aws-amplify/auth';
 import { USER_INFO_STORAGE_KEY } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import storage from 'Helpers/storage';
 
 // Challenge names from Cognito from
@@ -151,7 +152,7 @@ const AuthContext = React.createContext<AuthContextValue>(undefined);
 // in the Amplify, since the `isAuthenticated` flag just decides which screens to show.
 const previousUserSessionExists = Boolean(
   storage.local.read(
-    `CognitoIdentityServiceProvider.${process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
+    `CognitoIdentityServiceProvider.${pantherConfig.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
   )
 );
 

@@ -18,6 +18,7 @@
 
 import { ErrorResponse } from 'apollo-link-error';
 import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import storage from 'Helpers/storage';
 import { Operation } from '@apollo/client';
 
@@ -34,7 +35,7 @@ interface ErrorData {
 export const logError = (error: Error | ErrorResponse, { operation, extras }: ErrorData = {}) => {
   // On some environments we have sentry disabled
   const sentryDsn = process.env.SENTRY_DSN;
-  const sentryRelease = process.env.PANTHER_VERSION;
+  const sentryRelease = pantherConfig.PANTHER_VERSION;
   if (!sentryDsn) {
     return;
   }
