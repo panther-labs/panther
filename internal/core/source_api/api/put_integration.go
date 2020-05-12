@@ -115,7 +115,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	}
 
 	if *input.IntegrationType == models.IntegrationTypeAWSScan {
-		err = api.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{newIntegration}})
+		err = api.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegration{newIntegration}})
 		if err != nil {
 			err = errors.Wrap(err, "failed to trigger scanning of resources")
 			return nil, putIntegrationInternalError

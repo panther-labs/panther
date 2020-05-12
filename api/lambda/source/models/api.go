@@ -34,7 +34,7 @@ type LambdaInput struct {
 	UpdateIntegrationLastScanEnd   *UpdateIntegrationLastScanEndInput   `json:"updateIntegrationLastScanEnd"`
 	UpdateIntegrationLastScanStart *UpdateIntegrationLastScanStartInput `json:"updateIntegrationLastScanStart"`
 
-	FullScan       *FullScanInput       `json:"fullScan"`
+	FullScan *FullScanInput `json:"fullScan"`
 }
 
 //
@@ -115,7 +115,7 @@ type DeleteIntegrationInput struct {
 
 // FullScanInput is used to do a full scan of one or more integrations.
 type FullScanInput struct {
-	Integrations []*SourceIntegrationMetadata
+	Integrations []*SourceIntegration
 }
 
 //
