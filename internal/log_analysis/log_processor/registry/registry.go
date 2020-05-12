@@ -21,6 +21,7 @@ package registry
 import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
@@ -96,6 +97,16 @@ var (
 			&awslogs.CloudTrailDigest{}, awslogs.CloudTrailDigestDesc),
 		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
 			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
+		apachelogs.TypeAccessCommon: DefaultLogParser(
+			apachelogs.NewAccessCommonParser(),
+			&apachelogs.AccessCommon{},
+			apachelogs.AccessCommonDesc,
+		),
+		apachelogs.TypeAccessCombined: DefaultLogParser(
+			apachelogs.NewAccessCombinedParser(),
+			&apachelogs.AccessCombined{},
+			apachelogs.AccessCombinedDesc,
+		),
 	}
 )
 
