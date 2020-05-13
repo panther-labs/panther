@@ -19,6 +19,12 @@ CloudWatch alarms are configured to notify this topic
  Failure Impact
  * CloudWatch alarm notifications will not be delivered to subscribers
 
+## panther-alarms
+CloudWatch alarms are configured to notify this topic
+
+ Failure Impact
+ * CloudWatch alarm notifications will not be delivered to subscribers
+
 ## panther-alert-delivery
 This lambda dispatches alerts to their specified outputs (destinations).
 

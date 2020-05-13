@@ -27,13 +27,13 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// CloudWatch alarms for API Gateway 5XX errors and high integration latency.
 	//
 	// Parameters:
-	//   ApiName:            string (required)
-	//   AlarmTopicArn:      string (required)
-	//   ErrorThreshold:     int (default: 0)
-	//   LatencyThresholdMs: int (default: 1000)
+	//     APIName:            string (required)
+	//     AlarmTopicArn:      string (required)
+	//     ErrorThreshold:     int (default: 0)
+	//     LatencyThresholdMs: int (default: 1000)
 	// Outputs: None
 	// PhysicalId: custom:alarms:api:$API_NAME
-	"Custom::Alarms::ApiGateway": customAlarmsApiGateway,
+	"Custom::ApiGatewayAlarms": customAPIGatewayAlarms,
 
 	// Creates a self-signed ACM or IAM server certificate.
 	//
@@ -59,6 +59,6 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//     LambdaRuntime: string ("Go" or "Python", default: "Go")
 	//     LogGroupName:  string (required)
 	// Outputs: None
-	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME TODO
+	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
 }

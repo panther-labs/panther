@@ -21,12 +21,12 @@ package resources
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"go.uber.org/zap"
 )
 
 const (
@@ -36,16 +36,16 @@ const (
 	gatewayErrorAlarm   = "ApiGatewayServerErrors"
 )
 
-type ApiGatewayAlarmProperties struct {
-	ApiName            string  `validate:"required"`
+type APIGatewayAlarmProperties struct {
+	APIName            string  `json:"ApiName" validate:"required"`
 	AlarmTopicArn      string  `validate:"required"`
 	ErrorThreshold     int     `validate:"omitempty,min=0"`
 	LatencyThresholdMs float64 `validate:"omitempty,min=100"`
 }
 
 // Add metric filters to a Lambda function's CloudWatch log group
-func customAlarmsApiGateway(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	var props ApiGatewayAlarmProperties
+func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+	var props APIGatewayAlarmProperties
 	if err := parseProperties(event.ResourceProperties, &props); err != nil {
 		return "", nil, err
 	}
@@ -55,12 +55,8 @@ func customAlarmsApiGateway(_ context.Context, event cfn.Event) (string, map[str
 	}
 
 	switch event.RequestType {
-	case cfn.RequestCreate:
-		return "custom:alarms:api:" + props.ApiName, nil, putGatewayAlarmGroup(props)
-
-	case cfn.RequestUpdate:
-		// TODO
-		return event.PhysicalResourceID, nil, nil
+	case cfn.RequestCreate, cfn.RequestUpdate:
+		return "custom:alarms:api:" + props.APIName, nil, putGatewayAlarmGroup(props)
 
 	case cfn.RequestDelete:
 		return event.PhysicalResourceID, nil, deleteGatewayAlarmGroup(event.PhysicalResourceID)
@@ -70,17 +66,17 @@ func customAlarmsApiGateway(_ context.Context, event cfn.Event) (string, map[str
 	}
 }
 
-func putGatewayAlarmGroup(props ApiGatewayAlarmProperties) error {
+func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 	client := getCloudWatchClient()
 	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"API Gateway %s is experiencing high integration latency. See: %s#%s",
-			props.ApiName, alarmRunbook, props.ApiName)),
-		AlarmName: aws.String(fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, props.ApiName)),
+			props.APIName, alarmRunbook, props.APIName)),
+		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, props.APIName)),
 		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
 		Dimensions: []*cloudwatch.Dimension{
-			{Name: aws.String("Name"), Value: &props.ApiName},
+			{Name: aws.String("Name"), Value: &props.APIName},
 		},
 		EvaluationPeriods: aws.Int64(5),
 		MetricName:        aws.String("IntegrationLatency"),
@@ -101,8 +97,8 @@ func putGatewayAlarmGroup(props ApiGatewayAlarmProperties) error {
 	// Many fields are the same - actions, comparison operator, dimensions, namespace, tags
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"API Gateway %s is reporting 5XX internal errors. See: %s#%s",
-		props.ApiName, alarmRunbook, props.ApiName))
-	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, props.ApiName))
+		props.APIName, alarmRunbook, props.APIName))
+	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, props.APIName))
 	input.EvaluationPeriods = aws.Int64(1)
 	input.MetricName = aws.String("5XXError")
 	input.Period = aws.Int64(300)
@@ -120,7 +116,11 @@ func putGatewayAlarmGroup(props ApiGatewayAlarmProperties) error {
 func deleteGatewayAlarmGroup(physicalID string) error {
 	// PhysicalID: custom:alarms:api:$API_NAME
 	split := strings.Split(physicalID, ":")
-	apiName := split[len(split)-1]
+	if len(split) < 4 {
+		zap.L().Warn("invalid physicalID - skipping delete")
+		return nil
+	}
+	apiName := split[3]
 
 	alarmNames := []string{
 		fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, apiName),

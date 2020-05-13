@@ -172,7 +172,7 @@ Resources:
       TracingEnabled: !If [TracingEnabled, true, false]
 
   AnalysisApiAlarms:
-    Type: Custom::Alarms::ApiGateway
+    Type: Custom::ApiGatewayAlarms
     Properties:
       ApiName: panther-analysis-api
       AlarmTopicArn: !Ref AlarmTopicArn
