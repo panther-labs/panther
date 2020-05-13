@@ -122,6 +122,11 @@ Resources:
               # So this is as narrow as this resource can get:
               Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
             - Effect: Allow
+              Action:
+                - cloudwatch:PutMetricAlarm
+                - cloudwatch:DeleteAlarms
+              Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
+            - Effect: Allow
               Action: cognito-idp:SetUserPoolMfaConfig
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
@@ -190,6 +195,13 @@ Resources:
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
+  ComplianceApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-compliance-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
   RemediationApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -202,6 +214,13 @@ Resources:
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
+  RemediationApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-remediation-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
   ResourcesApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -213,6 +232,13 @@ Resources:
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
+
+  ResourcesApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-resources-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
 Outputs:
   PythonLayerVersionArn:

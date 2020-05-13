@@ -7,50 +7,6 @@
     }
   },
   "Resources": {
-    "PantherAlarmApiGatewayHighIntegationLatencypantherresourcesapi": {
-      "Type": "AWS::CloudWatch::Alarm",
-      "Properties": {
-        "AlarmName": "PantherAlarm-ApiGatewayHighIntegationLatency-panther-resources-api",
-        "AlarmDescription": "ApiGateway panther-resources-api is experiencing high integration latency. See: https://docs.runpanther.io/operations/runbooks#panther-resources-api",
-        "AlarmActions": [
-          {
-            "Ref": "AlarmTopicArn"
-          }
-        ],
-        "TreatMissingData": "notBreaching",
-        "Namespace": "AWS/ApiGateway",
-        "MetricName": "IntegrationLatency",
-        "Dimensions": [{ "Name": "Name", "Value": "panther-resources-api" }],
-        "ComparisonOperator": "GreaterThanThreshold",
-        "EvaluationPeriods": 5,
-        "Period": 60,
-        "Threshold": 1000,
-        "Unit": "Milliseconds",
-        "Statistic": "Maximum"
-      }
-    },
-    "PantherAlarmApiGatewayServerErrorpantherresourcesapi": {
-      "Type": "AWS::CloudWatch::Alarm",
-      "Properties": {
-        "AlarmName": "PantherAlarm-ApiGatewayServerError-panther-resources-api",
-        "AlarmDescription": "ApiGateway panther-resources-api is failing. See: https://docs.runpanther.io/operations/runbooks#panther-resources-api",
-        "AlarmActions": [
-          {
-            "Ref": "AlarmTopicArn"
-          }
-        ],
-        "TreatMissingData": "notBreaching",
-        "Namespace": "AWS/ApiGateway",
-        "MetricName": "5XXError",
-        "Dimensions": [{ "Name": "Name", "Value": "panther-resources-api" }],
-        "ComparisonOperator": "GreaterThanThreshold",
-        "EvaluationPeriods": 1,
-        "Period": 300,
-        "Threshold": 0,
-        "Unit": "None",
-        "Statistic": "Sum"
-      }
-    },
     "PantherAlarmAppSyncClientErrorpanthergraphqlapi": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {

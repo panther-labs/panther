@@ -261,8 +261,6 @@ func alarmDispatchOnType(resourceType string, resource map[string]interface{}, s
 		return generateSNSAlarms(resource)
 	case "AWS::SQS::Queue":
 		return generateSQSAlarms(resource)
-	case "AWS::Serverless::Api":
-		return generateAPIGatewayAlarms(resource)
 	case "AWS::ElasticLoadBalancingV2::LoadBalancer":
 		return generateApplicationELBAlarms(resource)
 	case "AWS::AppSync::GraphQLApi":

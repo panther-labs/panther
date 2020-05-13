@@ -51,15 +51,6 @@ Resources:
         FieldLogLevel: ALL
       XrayEnabled: !If [TracingEnabled, True, !Ref 'AWS::NoValue']
 
-  #### API Gateway #####
-  GatewayApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      DefinitionBody: api/gateway/resources/api.yml
-      EndpointConfiguration: REGIONAL
-      Name: panther-resources-api
-      StageName: v1 # NOTE: sam also builds a stage called "Stage"
-
   # DDB
   ComplianceTable:
     Type: AWS::DynamoDB::Table

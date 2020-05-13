@@ -45,7 +45,7 @@ func parseProperties(params map[string]interface{}, out interface{}) error {
 	}
 
 	if err = jsoniter.Unmarshal(json, out); err != nil {
-		return fmt.Errorf("parameter validation failed: %v", err)
+		return fmt.Errorf("parameter extraction failed: %v", err)
 	}
 
 	if err = inputValidator.Struct(out); err != nil {

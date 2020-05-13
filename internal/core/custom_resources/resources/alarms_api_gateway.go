@@ -39,8 +39,8 @@ const (
 type APIGatewayAlarmProperties struct {
 	APIName            string  `json:"ApiName" validate:"required"`
 	AlarmTopicArn      string  `validate:"required"`
-	ErrorThreshold     int     `validate:"omitempty,min=0"`
-	LatencyThresholdMs float64 `validate:"omitempty,min=100"`
+	ErrorThreshold     int     `json:",string" validate:"omitempty,min=0"`
+	LatencyThresholdMs float64 `json:",string" validate:"omitempty,min=100"`
 }
 
 // Add metric filters to a Lambda function's CloudWatch log group
@@ -86,15 +86,17 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		Tags: []*cloudwatch.Tag{
 			{Key: aws.String("Application"), Value: aws.String("Panther")},
 		},
-		Threshold: &props.LatencyThresholdMs,
-		Unit:      aws.String(cloudwatch.StandardUnitMilliseconds),
+		Threshold:        &props.LatencyThresholdMs,
+		TreatMissingData: aws.String("notBreaching"),
+		Unit:             aws.String(cloudwatch.StandardUnitMilliseconds),
 	}
 
+	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
 	if _, err := client.PutMetricAlarm(input); err != nil {
 		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
 	}
 
-	// Many fields are the same - actions, comparison operator, dimensions, namespace, tags
+	// Many fields are the same - actions, comparison, dimensions, namespace, tags, treatMissingData
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"API Gateway %s is reporting 5XX internal errors. See: %s#%s",
 		props.APIName, alarmRunbook, props.APIName))
@@ -106,6 +108,7 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 	input.Threshold = aws.Float64(float64(props.ErrorThreshold))
 	input.Unit = aws.String(cloudwatch.StandardUnitCount)
 
+	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
 	if _, err := client.PutMetricAlarm(input); err != nil {
 		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
 	}
