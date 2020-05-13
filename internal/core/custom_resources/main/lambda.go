@@ -30,6 +30,10 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+// Always set the physicalID to a non-empty string.
+// Otherwise, CloudFormation will report "invalid PhysicalID" instead of the error message.
+const defaultPhysicalID = "error"
+
 // Returns physicalResourceID and outputs
 func customResourceHandler(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	_, logger := lambdalogger.ConfigureGlobal(ctx, map[string]interface{}{
@@ -41,15 +45,12 @@ func customResourceHandler(ctx context.Context, event cfn.Event) (string, map[st
 
 	handler, ok := resources.CustomResources[event.ResourceType]
 	if !ok {
-		return "error", nil, fmt.Errorf("unsupported resource type: %s", event.ResourceType)
+		return defaultPhysicalID, nil, fmt.Errorf("unsupported resource type: %s", event.ResourceType)
 	}
 
 	physicalID, outputs, err := handler(ctx, event)
-
-	// Always set the physicalID to a non-empty string.
-	// Otherwise, CloudFormation will report "invalid PhysicalID" instead of the error message.
 	if physicalID == "" {
-		physicalID = "error"
+		physicalID = defaultPhysicalID
 	}
 
 	return physicalID, outputs, err

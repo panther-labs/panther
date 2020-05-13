@@ -156,6 +156,9 @@ func putMetricFilter(logGroupName, filterPattern, metricName, metricValue string
 	return nil
 }
 
+// Delete all filters associated with the custom resource.
+//
+// The physicalID is of the form custom:metric-filters:$LOG_GROUP_NAME:$FILTER1/$FILTER2/...
 func deleteMetricFilterGroup(physicalID string) error {
 	split := strings.Split(physicalID, ":")
 	if len(split) != 4 {
