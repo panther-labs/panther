@@ -27,6 +27,7 @@ import BaseDestinationForm, {
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 import JsonViewer from 'Components/JsonViewer';
+import { pantherConfig } from 'Source/config';
 
 type SQSFieldValues = Pick<DestinationConfigInput, 'sqs'>;
 
@@ -53,7 +54,7 @@ const SQS_QUEUE_POLICY = {
       Effect: 'Allow',
       Action: 'sqs:SendMessage',
       Principal: {
-        AWS: `arn:aws:iam::${process.env.AWS_ACCOUNT_ID}:root`,
+        AWS: `arn:aws:iam::${pantherConfig.AWS_ACCOUNT_ID}:root`,
       },
       Resource: '<Destination-SQS-Queue-ARN>',
     },

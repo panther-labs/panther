@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { execSync } = require('child_process');
 const dotenv = require('dotenv');
 const chalk = require('chalk');
 
@@ -27,31 +26,22 @@ function loadDotEnvVars(path) {
   }
 }
 
-function getPantherDeploymentVersion() {
-  try {
-    return execSync('git describe --tags')
-      .toString()
-      .trim();
-  } catch (err) {
-    throw new Error(chalk.red(err.message));
-  }
-}
+function getAppTemplateParams() {
+  const PANTHER_CONFIG = {
+    PANTHER_VERSION: process.env.PANTHER_VERSION,
+    AWS_REGION: process.env.AWS_REGION,
+    AWS_ACCOUNT_ID: process.env.AWS_ACCOUNT_ID,
+    WEB_APPLICATION_GRAPHQL_API_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
+    WEB_APPLICATION_USER_POOL_CLIENT_ID: process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID,
+    WEB_APPLICATION_USER_POOL_ID: process.env.WEB_APPLICATION_USER_POOL_ID,
+  };
 
-function validateRequiredEnv() {
-  const requiredEnvs = [
-    'AWS_ACCOUNT_ID',
-    'AWS_REGION',
-    'WEB_APPLICATION_GRAPHQL_API_ENDPOINT',
-    'WEB_APPLICATION_USER_POOL_CLIENT_ID',
-    'WEB_APPLICATION_USER_POOL_ID',
-  ];
-
-  const unsetVars = requiredEnvs.filter(env => process.env[env] === undefined);
-  if (unsetVars.length) {
-    throw new Error(chalk.red(`Couldn't find the following ENV vars: ${unsetVars.join(', ')}`));
+  const missingKeys = Object.keys(PANTHER_CONFIG).filter(key => PANTHER_CONFIG[key] === undefined);
+  if (missingKeys.length) {
+    throw new Error(chalk.red(`Couldn't find the following ENV vars: ${missingKeys.join(', ')}`));
   }
 
-  return true;
+  return { PANTHER_CONFIG };
 }
 
-module.exports = { loadDotEnvVars, getPantherDeploymentVersion, validateRequiredEnv };
+module.exports = { loadDotEnvVars, getAppTemplateParams };

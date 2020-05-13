@@ -1,0 +1,22 @@
+# Pip libraries used for development.
+#
+# The actual libraries and versions we care about are listed here, while
+# requirements.txt is a snapshot of all nested dependencies for CI.
+#
+# To update the requirements.txt file:
+#
+# rm -r .setup/venv
+# python3 -m venv .setup/venv
+# source .setup/venv/bin/activate
+# pip3 install -r requirements-top-level.txt
+# pip3 freeze -r requirements-top-level.txt > requirements.txt
+# deactivate
+aws-sam-cli
+bandit
+boto3==1.12.22  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+cfn-lint
+cfn-flip
+mypy
+pylint
+requests
+yapf

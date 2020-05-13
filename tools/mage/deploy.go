@@ -25,15 +25,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
@@ -81,7 +78,6 @@ const (
 	// Python layer
 	layerSourceDir        = "out/pip/analysis/python"
 	layerZipfile          = "out/layer.zip"
-	layerS3ObjectKey      = "layers/python-analysis.zip"
 	defaultGlobalID       = "panther"
 	defaultGlobalLocation = "internal/compliance/policy_engine/src/helpers.py"
 
@@ -226,38 +222,20 @@ func deployBoostrapStacks(
 		return nil, err
 	}
 
-	// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
-	// forces SMS as a fallback option, but the SDK does not.
-	userPoolID := outputs["UserPoolId"]
-	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
-	_, err = cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
-		MfaConfiguration: aws.String("ON"),
-		SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
-			Enabled: aws.Bool(true),
-		},
-		UserPoolId: &userPoolID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
-	}
 	logger.Infof("    √ %s finished (1/%d)", bootstrapStack, len(allStacks))
 
 	// Now that the S3 buckets are in place, we can deploy the second bootstrap stack.
+	if err = buildLayer(settings.Infra.PipLayer); err != nil {
+		return nil, err
+	}
+
 	sourceBucket := outputs["SourceBucket"]
 	params = map[string]string{
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
 		"TracingMode":                settings.Monitoring.TracingMode,
-	}
-
-	if settings.Infra.PythonLayerVersionArn == "" {
-		// Build default layer
-		params["SourceBucket"] = sourceBucket
-		params["PythonLayerKey"] = layerS3ObjectKey
-		params["PythonLayerObjectVersion"] = uploadLayer(awsSession, settings.Infra.PipLayer, sourceBucket, layerS3ObjectKey)
-	} else {
-		// Use configured custom layer
-		params["PythonLayerVersionArn"] = settings.Infra.PythonLayerVersionArn
+		"UserPoolId":                 outputs["UserPoolId"],
 	}
 
 	// Deploy second bootstrap stack and merge outputs
@@ -277,29 +255,23 @@ func deployBoostrapStacks(
 	return outputs, nil
 }
 
-// Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
-func uploadLayer(awsSession *session.Session, libs []string, bucket, key string) string {
-	s3Client := s3.New(awsSession)
-	head, err := s3Client.HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &key})
-
-	sort.Strings(libs)
-	libString := strings.Join(libs, ",")
-	if err == nil && aws.StringValue(head.Metadata["Libs"]) == libString {
-		logger.Debugf("deploy: s3://%s/%s exists and is up to date", bucket, key)
-		return *head.VersionId
+// Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
+func buildLayer(libs []string) error {
+	if _, err := os.Stat(layerZipfile); err == nil {
+		logger.Debugf("%s already exists, not rebuilding layer")
+		return nil
 	}
 
-	// The layer is re-uploaded only if it doesn't exist yet or the library versions changed.
-	logger.Info("deploy: downloading python libraries " + libString)
+	logger.Info("deploy: downloading python libraries " + strings.Join(libs, ","))
 	if err := os.RemoveAll(layerSourceDir); err != nil {
-		logger.Fatalf("failed to remove layer directory %s: %v", layerSourceDir, err)
+		return fmt.Errorf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}
 	if err := os.MkdirAll(layerSourceDir, 0755); err != nil {
-		logger.Fatalf("failed to create layer directory %s: %v", layerSourceDir, err)
+		return fmt.Errorf("failed to create layer directory %s: %v", layerSourceDir, err)
 	}
 	args := append([]string{"install", "-t", layerSourceDir}, libs...)
 	if err := sh.Run("pip3", args...); err != nil {
-		logger.Fatalf("failed to download pip libraries: %v", err)
+		return fmt.Errorf("failed to download pip libraries: %v", err)
 	}
 
 	// The package structure needs to be:
@@ -309,16 +281,11 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	// └ python/policyuniverse-VERSION.dist-info/
 	//
 	// https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
-	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile, true); err != nil {
-		logger.Fatalf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
+	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile, false); err != nil {
+		return fmt.Errorf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
 	}
 
-	// Upload to S3
-	result, err := uploadFileToS3(awsSession, layerZipfile, bucket, key, map[string]*string{"Libs": &libString})
-	if err != nil {
-		logger.Fatalf("failed to upload %s to S3: %v", layerZipfile, err)
-	}
-	return *result.VersionID
+	return nil
 }
 
 // Deploy main stacks

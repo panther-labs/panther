@@ -20,6 +20,7 @@ import { Text, Box, Heading, Spinner, Link } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
+import { pantherConfig } from 'Source/config';
 import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.generated';
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
@@ -28,7 +29,7 @@ const StackDeployment: React.FC = () => {
   const { data, loading, error } = useGetComplianceCfnTemplate({
     variables: {
       input: {
-        awsAccountId: process.env.AWS_ACCOUNT_ID,
+        awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
         integrationLabel: values.integrationLabel,
         remediationEnabled: values.remediationEnabled,
         cweEnabled: values.cweEnabled,
@@ -79,11 +80,11 @@ const StackDeployment: React.FC = () => {
 
     if (!initialValues.integrationId) {
       const cfnConsoleLink =
-        `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
+        `https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${pantherConfig.AWS_REGION}#/stacks/create/review` +
         `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudsec-iam/v1.0.0/template.yml` +
         `&stackName=${stackName}` +
-        `&param_MasterAccountRegion=${process.env.AWS_REGION}` +
-        `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
+        `&param_MasterAccountRegion=${pantherConfig.AWS_REGION}` +
+        `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +
         `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
         `&param_DeployRemediation=${values.remediationEnabled}`;
 
@@ -123,7 +124,7 @@ const StackDeployment: React.FC = () => {
               ml={1}
               color="blue300"
               title="Launch Cloudformation console"
-              href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
+              href={`https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
             >
               Cloudformation console
             </Link>{' '}

@@ -18,13 +18,13 @@
 
 import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
-import { Badge, Box, Flex, InputElementLabel, Text } from 'pouncejs';
+import { Box, Flex, InputElementLabel, Text } from 'pouncejs';
 import { Field, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
+import SeverityBadge from 'Components/SeverityBadge';
 
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>
@@ -141,7 +141,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
                         ml={2}
                         style={{ display: 'inline-block' }} // needed since we have non-text content
                       >
-                        <Badge color={SEVERITY_COLOR_MAP[severity]}>{severity}</Badge>
+                        <SeverityBadge severity={severity} />
                       </InputElementLabel>
                     </Flex>
                   )}
