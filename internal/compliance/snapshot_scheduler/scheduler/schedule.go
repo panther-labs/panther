@@ -50,12 +50,12 @@ func PollAndIssueNewScans() error {
 	}
 
 	zap.L().Info("loaded enabled integrations", zap.Int("count", len(enabledIntegrations)))
-	var integrationsToScan []*models.SourceIntegration
+	var integrationsToScan []*models.SourceIntegrationMetadata
 
 	for _, integration := range enabledIntegrations {
 		// Only add new scans if needed
 		if (scanIntervalElapsed(integration) && scanIsNotOngoing(integration)) || scanIsStuck(integration) {
-			integrationsToScan = append(integrationsToScan, integration)
+			integrationsToScan = append(integrationsToScan, &integration.SourceIntegrationMetadata)
 		} else {
 			zap.L().Debug("skipping integration", zap.String("integrationID", *integration.IntegrationID))
 		}

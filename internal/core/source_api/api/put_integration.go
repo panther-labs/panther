@@ -93,6 +93,9 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	newIntegration := generateNewIntegration(input)
 
 	item := integrationToItem(newIntegration)
+	if err != nil {
+		return nil, putIntegrationInternalError
+	}
 
 	switch aws.StringValue(input.IntegrationType) {
 	case models.IntegrationTypeAWS3:
@@ -115,7 +118,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	}
 
 	if *input.IntegrationType == models.IntegrationTypeAWSScan {
-		err = api.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegration{newIntegration}})
+		err = api.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{&newIntegration.SourceIntegrationMetadata}})
 		if err != nil {
 			err = errors.Wrap(err, "failed to trigger scanning of resources")
 			return nil, putIntegrationInternalError

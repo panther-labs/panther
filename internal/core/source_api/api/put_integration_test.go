@@ -42,7 +42,7 @@ import (
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-func generateMockSQSBatchInputOutput(integration models.SourceIntegration) (
+func generateMockSQSBatchInputOutput(integration models.SourceIntegrationMetadata) (
 	*sqs.SendMessageBatchInput, *sqs.SendMessageBatchOutput, error) {
 
 	// Setup input/output
@@ -93,16 +93,14 @@ func generateMockSQSBatchInputOutput(integration models.SourceIntegration) (
 
 func TestAddToSnapshotQueue(t *testing.T) {
 	env.SnapshotPollersQueueURL = "test-url"
-	testIntegration := models.SourceIntegration{
-		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			AWSAccountID:     aws.String(testAccountID),
-			CreatedAtTime:    aws.Time(time.Time{}),
-			CreatedBy:        aws.String("Bobert"),
-			IntegrationID:    aws.String(testIntegrationID),
-			IntegrationLabel: aws.String("BobertTest"),
-			IntegrationType:  aws.String("aws-scan"),
-			ScanIntervalMins: aws.Int(60),
-		},
+	testIntegration := models.SourceIntegrationMetadata{
+		AWSAccountID:     aws.String(testAccountID),
+		CreatedAtTime:    aws.Time(time.Time{}),
+		CreatedBy:        aws.String("Bobert"),
+		IntegrationID:    aws.String(testIntegrationID),
+		IntegrationLabel: aws.String("BobertTest"),
+		IntegrationType:  aws.String("aws-scan"),
+		ScanIntervalMins: aws.Int(60),
 	}
 
 	sqsIn, sqsOut, err := generateMockSQSBatchInputOutput(testIntegration)
@@ -113,7 +111,7 @@ func TestAddToSnapshotQueue(t *testing.T) {
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(sqsOut, nil)
 	sqsClient = mockSQS
 
-	err = apiTest.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegration{&testIntegration}})
+	err = apiTest.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{&testIntegration}})
 
 	require.NoError(t, err)
 	// Check that there is one message per service

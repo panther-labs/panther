@@ -115,7 +115,7 @@ type DeleteIntegrationInput struct {
 
 // FullScanInput is used to do a full scan of one or more integrations.
 type FullScanInput struct {
-	Integrations []*SourceIntegration
+	Integrations []*SourceIntegrationMetadata
 }
 
 //
