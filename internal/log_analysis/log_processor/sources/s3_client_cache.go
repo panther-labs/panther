@@ -99,8 +99,8 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 	if sourceInfo == nil {
 		return nil, "", errors.Errorf("there is no source configured for S3 object %#v", s3Object)
 	}
-
-	awsCreds := getAwsCredentials(*sourceInfo.LogProcessingRole)
+	roleArn := getSourceLogProcessingRole(sourceInfo)
+	awsCreds := getAwsCredentials(roleArn)
 	if awsCreds == nil {
 		return nil, "", errors.Errorf("failed to fetch credentials for assumed role to read %#v", s3Object)
 	}
@@ -119,7 +119,7 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 
 	bucketRegionString := bucketRegion.(string)
 	cacheKey := s3ClientCacheKey{
-		roleArn:   *sourceInfo.LogProcessingRole,
+		roleArn:   roleArn,
 		awsRegion: bucketRegionString,
 	}
 
@@ -178,13 +178,11 @@ func getSourceInfo(s3Object *S3ObjectInfo) (*models.SourceIntegration, error) {
 		sourceCache.sources = output
 	}
 
-	for _, integration := range sourceCache.sources {
-		if aws.StringValue(integration.S3Bucket) == s3Object.S3Bucket {
-			if integration.S3Prefix == nil { // no prefix configured
-				return integration, nil
-			}
-			if strings.HasPrefix(s3Object.S3ObjectKey, aws.StringValue(integration.S3Prefix)) {
-				return integration, nil
+	for _, source := range sourceCache.sources {
+		integrationBucket, integrationPrefix := getSourceS3Info(source)
+		if aws.StringValue(integrationBucket) == s3Object.S3Bucket {
+			if strings.HasPrefix(s3Object.S3ObjectKey, aws.StringValue(integrationPrefix)) {
+				return source, nil
 			}
 		}
 	}
@@ -197,4 +195,21 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 		config.WithRegion(*region)
 	}
 	return s3.New(common.Session, config)
+}
+
+// Returns the configured S3 bucket and S3 object prefix for this source
+func getSourceS3Info(source *models.SourceIntegration) (*string, *string) {
+	switch *source.IntegrationType {
+	case models.IntegrationTypeAWS3:
+		return source.S3Bucket, source.S3Prefix
+	}
+	return nil, nil
+}
+
+func getSourceLogProcessingRole(source *models.SourceIntegration) (roleArn string) {
+	switch *source.IntegrationType {
+	case models.IntegrationTypeAWS3:
+		roleArn = *source.LogProcessingRole
+	}
+	return roleArn
 }

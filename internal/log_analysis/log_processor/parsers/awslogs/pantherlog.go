@@ -18,7 +18,15 @@ package awslogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+import (
+	"regexp"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
+
+var (
+	awsAccountIDRegex = regexp.MustCompile(`\d{12}`)
+)
 
 // nolint(lll)
 type AWSPantherLog struct {
@@ -39,10 +47,15 @@ func (pl *AWSPantherLog) AppendAnyAWSAccountIdPtrs(values ...*string) { // nolin
 }
 
 func (pl *AWSPantherLog) AppendAnyAWSAccountIds(values ...string) {
-	if pl.PantherAnyAWSAccountIds == nil { // lazy create
-		pl.PantherAnyAWSAccountIds = parsers.NewPantherAnyString()
+	for _, value := range values {
+		if !awsAccountIDRegex.MatchString(value) {
+			continue
+		}
+		if pl.PantherAnyAWSAccountIds == nil { // lazy create
+			pl.PantherAnyAWSAccountIds = parsers.NewPantherAnyString()
+		}
+		parsers.AppendAnyString(pl.PantherAnyAWSAccountIds, value)
 	}
-	parsers.AppendAnyString(pl.PantherAnyAWSAccountIds, values...)
 }
 
 func (pl *AWSPantherLog) AppendAnyAWSInstanceIdPtrs(values ...*string) { // nolint

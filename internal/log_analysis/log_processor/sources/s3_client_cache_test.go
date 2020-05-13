@@ -41,7 +41,7 @@ import (
 
 var (
 	integration = &models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			AWSAccountID:      aws.String("1234567890123"),
 			S3Bucket:          aws.String("test-bucket"),
 			S3Prefix:          aws.String("prefix"),
@@ -145,7 +145,7 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 	}
 
 	integration = &models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			AWSAccountID:      aws.String("1234567890123"),
 			S3Bucket:          aws.String("test-bucket"),
 			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
