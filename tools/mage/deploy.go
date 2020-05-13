@@ -131,7 +131,6 @@ func Deploy() {
 
 	// ***** Step 1: bootstrap stacks and build artifacts
 	outputs := bootstrap(awsSession, settings)
-	logger.Fatal(outputs)
 
 	// ***** Step 2: deploy remaining stacks in parallel
 	deployMainStacks(awsSession, settings, accountID, outputs)
@@ -314,7 +313,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
 			"AppsyncId":            outputs["GraphQLApiId"],
 			"LoadBalancerFullName": outputs["LoadBalancerFullName"],
-			"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
+			"AlarmTopicArn":        outputs["AlarmTopicArn"],
 		})
 		c <- goroutineResult{summary: alarmsStack, err: err}
 	}(results)

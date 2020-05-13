@@ -774,7 +774,7 @@ Resources:
     Condition: CreateAlarmSNSTopic
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: panther-alarms
+      TopicName: panther-cw-alarms
       # <cfndoc>
       # CloudWatch alarms are configured to notify this topic
       #
