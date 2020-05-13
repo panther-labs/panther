@@ -56,6 +56,9 @@ Parameters:
     Default: ''
 
   # From the bootstrap stack:
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
@@ -167,6 +170,13 @@ Resources:
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
+
+  AnalysisApiAlarms:
+    Type: Custom::Alarms::ApiGateway
+    Properties:
+      ApiName: panther-analysis-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ComplianceApi:
     Type: AWS::Serverless::Api

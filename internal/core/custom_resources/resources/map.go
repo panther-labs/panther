@@ -24,6 +24,17 @@ import (
 
 // CustomResources map type names to their respective handler functions.
 var CustomResources = map[string]cfn.CustomResourceFunction{
+	// CloudWatch alarms for API Gateway 5XX errors and high integration latency.
+	//
+	// Parameters:
+	//   ApiName:            string (required)
+	//   AlarmTopicArn:      string (required)
+	//   ErrorThreshold:     int (default: 0)
+	//   LatencyThresholdMs: int (default: 1000)
+	// Outputs: None
+	// PhysicalId: custom:alarms:api:$API_NAME
+	"Custom::Alarms::ApiGateway": customAlarmsApiGateway,
+
 	// Creates a self-signed ACM or IAM server certificate.
 	//
 	// Parameters: None
@@ -35,7 +46,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Enforces MFA with TOTP as the only option.
 	//
 	// Parameters:
-	//     UserPoolId: String (required)
+	//     UserPoolId: string (required)
 	// Outputs: None
 	// PhysicalId: custom:cognito-user-pool:$USER_POOL_ID:mfa
 	//
@@ -45,9 +56,9 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Creates error/warn/memory metric filters on a Lambda function's CloudWatch log group.
 	//
 	// Parameters:
-	//     LambdaRuntime: String ("Go" or "Python", defaults to "Go")
-	//     LogGroupName:  String (required)
+	//     LambdaRuntime: string ("Go" or "Python", default: "Go")
+	//     LogGroupName:  string (required)
 	// Outputs: None
-	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME:$FILTER1/$FILTER2/...
+	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME TODO
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
 }

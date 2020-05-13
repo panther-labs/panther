@@ -131,6 +131,7 @@ func Deploy() {
 
 	// ***** Step 1: bootstrap stacks and build artifacts
 	outputs := bootstrap(awsSession, settings)
+	logger.Fatal(outputs)
 
 	// ***** Step 2: deploy remaining stacks in parallel
 	deployMainStacks(awsSession, settings, accountID, outputs)
@@ -221,6 +222,7 @@ func deployBoostrapStacks(
 		"CustomDomain":               settings.Web.CustomDomain,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"TracingMode":                settings.Monitoring.TracingMode,
+		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
 	}
 
 	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
@@ -242,6 +244,7 @@ func deployBoostrapStacks(
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
+		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 	}
 
 	// Deploy second bootstrap stack and merge outputs

@@ -163,7 +163,7 @@ func deleteMetricFilterGroup(physicalID string) error {
 	split := strings.Split(physicalID, ":")
 	if len(split) != 4 {
 		// If creation fails before any filters were created, the resourceID will be "error"
-		zap.L().Warn("invalid physicalResourceId - skipping delete")
+		zap.L().Warn("åinvalid physicalResourceId - skipping delete")
 		return nil
 	}
 
