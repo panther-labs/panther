@@ -35,20 +35,18 @@ func TestAccessCombinedParser(t *testing.T) {
 	tm, err := time.Parse(layoutApacheTimestamp, `[10/Oct/2000:13:55:36 -0700]`)
 	require.NoError(t, err)
 	event := AccessCombined{
-		AccessCombinedLog: AccessCombinedLog{
-			AccessCommonLog: AccessCommonLog{
-				RemoteHostIPAddress: aws.String("127.0.0.1"),
-				UserID:              aws.String("frank"),
-				RequestTime:         (*timestamp.RFC3339)(&tm),
-				RequestMethod:       aws.String("GET"),
-				RequestURI:          aws.String("/apache_pb.gif"),
-				RequestProtocol:     aws.String("HTTP/1.0"),
-				ResponseStatus:      aws.Int16(200),
-				ResponseSize:        aws.Int64(2326),
-			},
-			Referer:   aws.String("http://www.example.com/start.html"),
-			UserAgent: aws.String("Mozilla/4.08 [en] (Win98; I ;Nav)"),
+		AccessCommonLog: AccessCommonLog{
+			RemoteHostIPAddress: aws.String("127.0.0.1"),
+			UserID:              aws.String("frank"),
+			RequestTime:         (*timestamp.RFC3339)(&tm),
+			RequestMethod:       aws.String("GET"),
+			RequestURI:          aws.String("/apache_pb.gif"),
+			RequestProtocol:     aws.String("HTTP/1.0"),
+			ResponseStatus:      aws.Int16(200),
+			ResponseSize:        aws.Int64(2326),
 		},
+		Referer:   aws.String("http://www.example.com/start.html"),
+		UserAgent: aws.String("Mozilla/4.08 [en] (Win98; I ;Nav)"),
 	}
 	event.PantherEventTime = (*timestamp.RFC3339)(&tm)
 	event.PantherLogType = aws.String(TypeAccessCombined)

@@ -36,26 +36,22 @@ Reference: https://httpd.apache.org/docs/current/logs.html#combined`
 // LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"" combined
 // https://httpd.apache.org/docs/current/mod/mod_log_config.html#formats
 // nolint:lll
-type AccessCombinedLog struct {
+type AccessCombined struct {
 	AccessCommonLog
 	UserAgent *string `json:"user_agent,omitempty" description:"The User-Agent HTTP header"`
 	Referer   *string `json:"referer,omitempty" description:"The Referer HTTP header"`
-}
-
-type AccessCombined struct {
-	AccessCombinedLog
 
 	parsers.PantherLog
 }
 
-func (log *AccessCombinedLog) ParseString(s string) error {
+func (log *AccessCombined) ParseString(s string) error {
 	match := rxAccessCombined.FindStringSubmatch(s)
 	if len(match) > 1 {
 		return log.SetRow(match[1:])
 	}
 	return errors.New("invalid access combined log")
 }
-func (log *AccessCombinedLog) SetRow(row []string) error {
+func (log *AccessCombined) SetRow(row []string) error {
 	const fieldIndexReferer = 7
 	const fieldIndexUserAgent = 8
 	if len(row) == numFieldsAccessCombined {
@@ -68,6 +64,14 @@ func (log *AccessCombinedLog) SetRow(row []string) error {
 		return nil
 	}
 	return errors.Errorf("invalid number of fields %d", len(row))
+}
+
+func (log *AccessCombined) updatePantherFields(p *parsers.PantherLog) {
+	p.SetCoreFields(TypeAccessCombined, log.RequestTime, log)
+	if !p.AppendAnyIPAddressPtr(log.RemoteHostIPAddress) {
+		// Handle cases where apache config has resolved addresses enabled
+		p.AppendAnyDomainNamePtrs(log.RemoteHostIPAddress)
+	}
 }
 
 type AccessCombinedParser struct{}
@@ -120,12 +124,4 @@ func buildRx(rxFields ...string) string {
 		groups[i] = fmt.Sprintf("(%s)", field)
 	}
 	return fmt.Sprintf(`^\s*%s\s*$`, strings.Join(groups, `\s+`))
-}
-
-func (event *AccessCombined) updatePantherFields(p *parsers.PantherLog) {
-	p.SetCoreFields(TypeAccessCombined, event.RequestTime, event)
-	if !p.AppendAnyIPAddressPtr(event.RemoteHostIPAddress) {
-		// Handle cases where apache config has resolved addresses enabled
-		p.AppendAnyDomainNamePtrs(event.RemoteHostIPAddress)
-	}
 }
