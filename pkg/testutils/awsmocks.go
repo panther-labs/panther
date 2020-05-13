@@ -21,16 +21,30 @@ package testutils
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/eventbridge"
+	"github.com/aws/aws-sdk-go/service/eventbridge/eventbridgeiface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/mock"
 )
+
+type S3UploaderMock struct {
+	s3manageriface.UploaderAPI
+	mock.Mock
+}
+
+func (m *S3UploaderMock) Upload(input *s3manager.UploadInput, f ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
+	args := m.Called(input, f)
+	return args.Get(0).(*s3manager.UploadOutput), args.Error(1)
+}
 
 type S3Mock struct {
 	s3iface.S3API
@@ -72,6 +86,21 @@ func (m *DynamoDBMock) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamodb.Up
 	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
 }
 
+func (m *DynamoDBMock) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
+}
+
+func (m *DynamoDBMock) DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.DeleteItemOutput), args.Error(1)
+}
+
+func (m *DynamoDBMock) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.ScanOutput), args.Error(1)
+}
+
 type SqsMock struct {
 	sqsiface.SQSAPI
 	mock.Mock
@@ -87,6 +116,16 @@ func (m *SqsMock) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendM
 	return args.Get(0).(*sqs.SendMessageBatchOutput), args.Error(1)
 }
 
+func (m *SqsMock) SetQueueAttributes(input *sqs.SetQueueAttributesInput) (*sqs.SetQueueAttributesOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.SetQueueAttributesOutput), args.Error(1)
+}
+
+func (m *SqsMock) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.GetQueueAttributesOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
+}
+
 func (m *SqsMock) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.DeleteMessageBatchOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.DeleteMessageBatchOutput), args.Error(1)
@@ -97,9 +136,34 @@ func (m *SqsMock) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMe
 	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
 }
 
-func (m *SqsMock) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.GetQueueAttributesOutput, error) {
+type EventBridgeMock struct {
+	eventbridgeiface.EventBridgeAPI
+	mock.Mock
+}
+
+func (m *EventBridgeMock) ListEventBuses(input *eventbridge.ListEventBusesInput) (*eventbridge.ListEventBusesOutput, error) {
 	args := m.Called(input)
-	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
+	return args.Get(0).(*eventbridge.ListEventBusesOutput), args.Error(1)
+}
+
+func (m *EventBridgeMock) PutTargets(input *eventbridge.PutTargetsInput) (*eventbridge.PutTargetsOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*eventbridge.PutTargetsOutput), args.Error(1)
+}
+
+func (m *EventBridgeMock) RemoveTargets(input *eventbridge.RemoveTargetsInput) (*eventbridge.RemoveTargetsOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*eventbridge.RemoveTargetsOutput), args.Error(1)
+}
+
+func (m *EventBridgeMock) PutRule(input *eventbridge.PutRuleInput) (*eventbridge.PutRuleOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*eventbridge.PutRuleOutput), args.Error(1)
+}
+
+func (m *EventBridgeMock) DeleteRule(input *eventbridge.DeleteRuleInput) (*eventbridge.DeleteRuleOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*eventbridge.DeleteRuleOutput), args.Error(1)
 }
 
 type GlueMock struct {
