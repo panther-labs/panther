@@ -18,7 +18,6 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './config';
 import history from './history';
 import App from './app';
 
