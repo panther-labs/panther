@@ -30,6 +30,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const { getAppTemplateParams } = require('./scripts/utils');
 
 const isEnvDevelopment = process.env.NODE_ENV === 'development';
 const isEnvProduction = process.env.NODE_ENV === 'production';
@@ -223,37 +224,36 @@ module.exports = {
         },
       ]),
     // Add scripts to the final HTML
-    new HtmlWebpackPlugin(
-      Object.assign(
-        {},
-        {
-          inject: true,
-          template: path.resolve(__dirname, 'public/index.ejs'),
-          filename: './index.html',
-          templateParameters: {
-            GRAPHQL_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
-            AWS_REGION: process.env.AWS_REGION,
-          },
-        },
-        // If we are in production, we make sure to also minify the HTML
-        isEnvProduction
-          ? {
-              minify: {
-                removeComments: true,
-                collapseWhitespace: true,
-                removeRedundantAttributes: true,
-                useShortDoctype: true,
-                removeEmptyAttributes: true,
-                removeStyleLinkTypeAttributes: true,
-                keepClosingSlash: true,
-                minifyJS: true,
-                minifyCSS: true,
-                minifyURLs: true,
-              },
-            }
-          : undefined
-      )
-    ),
+    new HtmlWebpackPlugin({
+      inject: true,
+      // We are using `html-loader` here for an EJS template (instead of the `ejs-loader`).
+      // The reason for that is that we have an EJS template, filled with template parameters
+      // that are going to be replaced in runtime. HtmlWebpackPlugin throws an error if those
+      // parameters are not provided during build time and there was no way to get around it.
+      // Basically, if those were undefined during build time, the EJS failed to compile. The
+      // only way to bypass that is to force HtmlWebpackPlugin to treat this template as a
+      // simple HTML and leave those template parameters untouched. Of course, we couldn't just
+      // remove this plugin entirely, since we need it for the CSS/JS tag injection
+      template: isEnvDevelopment
+        ? path.resolve(__dirname, 'public/index.ejs')
+        : `html-loader!${path.resolve(__dirname, 'public/index.ejs')}`,
+      filename: isEnvDevelopment ? 'index.html' : 'index.ejs',
+      templateParameters: isEnvDevelopment ? getAppTemplateParams() : undefined,
+      minify: isEnvProduction
+        ? {
+            removeComments: true,
+            collapseWhitespace: true,
+            removeRedundantAttributes: true,
+            useShortDoctype: true,
+            removeEmptyAttributes: true,
+            removeStyleLinkTypeAttributes: true,
+            keepClosingSlash: true,
+            minifyJS: true,
+            minifyCSS: true,
+            minifyURLs: true,
+          }
+        : undefined,
+    }),
     // Makes sure to inline the generated manifest to the HTML
     isEnvProduction && new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime-.+[.]js/]),
     // This is currently an experimental feature supported only by react-native, but released

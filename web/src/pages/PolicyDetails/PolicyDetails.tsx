@@ -34,6 +34,7 @@ import {
 import pick from 'lodash-es/pick';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
+import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import PolicyDetailsTable from './PolicyDetailsTable';
 import PolicyDetailsInfo from './PolicyDetailsInfo';
@@ -72,15 +73,16 @@ const PolicyDetailsPage = () => {
 
   if (error) {
     return (
-      <Alert
-        variant="error"
-        title="Couldn't load policy"
-        description={
-          extractErrorMessage(error) ||
-          "An unknown error occured and we couldn't load the policy details from the server"
-        }
-        mb={6}
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load policy"
+          description={
+            extractErrorMessage(error) ||
+            "An unknown error occured and we couldn't load the policy details from the server"
+          }
+        />
+      </Box>
     );
   }
 
@@ -122,7 +124,7 @@ const PolicyDetailsPage = () => {
                 onClick={() =>
                   setRequestParamsAndResetPaging({
                     status: ComplianceStatusEnum.Fail,
-                    suppressed: undefined,
+                    suppressed: false,
                   })
                 }
               />
@@ -135,7 +137,7 @@ const PolicyDetailsPage = () => {
                 onClick={() =>
                   setRequestParamsAndResetPaging({
                     status: ComplianceStatusEnum.Pass,
-                    suppressed: undefined,
+                    suppressed: false,
                   })
                 }
               />
@@ -178,4 +180,4 @@ const PolicyDetailsPage = () => {
   );
 };
 
-export default PolicyDetailsPage;
+export default withSEO({ title: ({ match }) => match.params.id })(PolicyDetailsPage);

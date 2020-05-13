@@ -220,16 +220,16 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
           <Heading size="medium">{capitalize(destinationType)} Configuration</Heading>
         </Flex>
         {addDestinationError && (
-          <Alert
-            mt={2}
-            mb={6}
-            variant="error"
-            title="Destination not added"
-            description={
-              extractErrorMessage(addDestinationError) ||
-              "An unknown error occured and we couldn't add your new destination"
-            }
-          />
+          <Box mt={2} mb={6}>
+            <Alert
+              variant="error"
+              title="Destination not added"
+              description={
+                extractErrorMessage(addDestinationError) ||
+                "An unknown error occured and we couldn't add your new destination"
+              }
+            />
+          </Box>
         )}
         {renderFullDestinationForm()}
       </Box>

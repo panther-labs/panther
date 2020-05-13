@@ -67,6 +67,22 @@ func TestGetAlert(t *testing.T) {
 	require.Equal(t, expectedAlert, result)
 }
 
+func TestGetAlertDoesNotExist(t *testing.T) {
+	mockDdbClient := &mockDynamoDB{}
+	table := AlertsTable{
+		AlertsTableName:                    "alertsTableName",
+		RuleIDCreationTimeIndexName:        "ruleIDCreationTimeIndexName",
+		TimePartitionCreationTimeIndexName: "timePartitionCreationTimeIndexName",
+		Client:                             mockDdbClient,
+	}
+
+	mockDdbClient.On("GetItem", mock.Anything).Return(&dynamodb.GetItemOutput{}, nil)
+
+	result, err := table.GetAlert(aws.String("alertId"))
+	require.NoError(t, err)
+	require.Nil(t, result)
+}
+
 func TestGetAlertErrorQueryingDynamo(t *testing.T) {
 	mockDdbClient := &mockDynamoDB{}
 	table := AlertsTable{

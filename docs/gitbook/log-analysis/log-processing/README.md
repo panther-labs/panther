@@ -193,14 +193,14 @@ Create a subscription between your SNS topic and Panther's log processing SQS qu
 2. Navigate to the [SNS Console](https://us-west-2.console.aws.amazon.com/sns/v3/home#/topics) and select the SNS Topic currently receiving events
 3. Take Note the ARN of this SNS topic
 4. Select the `Edit` button and scroll down to the `Access Policy` card
-5. Add the statement shown below to the topic's `Access Policy`. Populate `<MasterAccountId>` with the 12-digit account ID where Panther is deployed. Populate `SNS-TOPIC-ARN` with the ARN you noted on step \#3:
+5. Add the statement shown below to the topic's `Access Policy`. Populate `<PANTHER-MASTER-ACCOUNT-ID>` with the 12-digit account ID where Panther is deployed. Populate `SNS-TOPIC-ARN` with the ARN you noted on step \#3:
 
 ```yaml
 Sid: CrossAccountSubscription
 Effect: Allow
 Principal:
-  AWS: arn:aws:iam::<MasterAccountId>:root
-Action: sns:Subscribe,
+  AWS: arn:aws:iam::<PANTHER-MASTER-ACCOUNT-ID>:root
+Action: sns:Subscribe
 Resource: <SNS-TOPIC-ARN>
 ```
 
@@ -218,7 +218,7 @@ Resource: <SNS-TOPIC-ARN>
 
 #### Create SNS Subscription
 
-Finally, create the subscription to the Panther Master Account's SQS Queue.
+Finally, create the subscription to the Panther Master account's SQS queue.
 
 From the SNS Console, select the `Create subscription` button:
 

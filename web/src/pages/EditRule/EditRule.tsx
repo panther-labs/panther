@@ -28,6 +28,7 @@ import { MODALS } from 'Components/utils/Modal';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import pick from 'lodash-es/pick';
 import { initialValues as createRuleInitialValues } from 'Pages/CreateRule';
+import withSEO from 'Hoc/withSEO';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useUpdateRule } from './graphql/updateRule.generated';
 
@@ -90,15 +91,16 @@ const EditRulePage: React.FC = () => {
 
   if (fetchRuleError) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load the rule details"
-        description={
-          extractErrorMessage(fetchRuleError) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load the rule details"
+          description={
+            extractErrorMessage(fetchRuleError) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -126,18 +128,18 @@ const EditRulePage: React.FC = () => {
         <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {updateError && (
-        <Alert
-          mt={2}
-          mb={6}
-          variant="error"
-          title={
-            extractErrorMessage(updateError) ||
-            'An unknown error occured as were trying to update your rule'
-          }
-        />
+        <Box mt={2} mb={6}>
+          <Alert
+            variant="error"
+            title={
+              extractErrorMessage(updateError) ||
+              'An unknown error occured as were trying to update your rule'
+            }
+          />
+        </Box>
       )}
     </Box>
   );
 };
 
-export default EditRulePage;
+export default withSEO({ title: ({ match }) => `Edit ${match.params.id}` })(EditRulePage);

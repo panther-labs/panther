@@ -38,6 +38,10 @@ func (table *AlertsTable) GetAlert(alertID *string) (*AlertItem, error) {
 		return nil, errors.Wrap(err, "GetItem() failed for: "+*alertID)
 	}
 
+	if ddbResult.Item == nil {
+		return nil, nil
+	}
+
 	alertItem := &AlertItem{}
 	if err = dynamodbattribute.UnmarshalMap(ddbResult.Item, alertItem); err != nil {
 		return nil, errors.Wrap(err, "UnmarshalMap() failed for: "+*alertID)

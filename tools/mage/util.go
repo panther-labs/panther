@@ -136,12 +136,7 @@ func writeFile(path string, data []byte) error {
 		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}
 
-	var permissions os.FileMode = 0644
-	if strings.HasSuffix(path, ".key") || strings.HasSuffix(path, ".crt") {
-		permissions = certFilePermissions
-	}
-
-	if err := ioutil.WriteFile(path, data, permissions); err != nil {
+	if err := ioutil.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to write file %s: %v", path, err)
 	}
 	return nil

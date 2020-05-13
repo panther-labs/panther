@@ -52,7 +52,7 @@ export const getArnRegexForService = (awsService: string) => {
 export const createYupPasswordValidationSchema = () =>
   Yup.string()
     .required()
-    .min(14)
+    .min(14, 'Must be at least 14 characters')
     .matches(INCLUDE_DIGITS_REGEX, 'Include at least 1 digit')
     .matches(INCLUDE_LOWERCASE_REGEX, 'Include at least 1 lowercase character')
     .matches(INCLUDE_UPPERCASE_REGEX, 'Include at least 1 uppercase character')

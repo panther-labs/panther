@@ -20,6 +20,7 @@ import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Card, Box, useSnackbar } from 'pouncejs';
 import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
+import withSEO from 'Hoc/withSEO';
 import { GlobalModuleDetails } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -80,15 +81,16 @@ const EditGlobalModulePage: React.FC = () => {
 
   if (fetchPolicyError) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load the policy details"
-        description={
-          extractErrorMessage(fetchPolicyError) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load the policy details"
+          description={
+            extractErrorMessage(fetchPolicyError) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -98,18 +100,18 @@ const EditGlobalModulePage: React.FC = () => {
         <GlobalModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {updateError && (
-        <Alert
-          mt={2}
-          mb={6}
-          variant="error"
-          title={
-            extractErrorMessage(updateError) ||
-            'Unknown error occurred during update. Please contact support@runpanther.io'
-          }
-        />
+        <Box mt={2} mb={6}>
+          <Alert
+            variant="error"
+            title={
+              extractErrorMessage(updateError) ||
+              'Unknown error occurred during update. Please contact support@runpanther.io'
+            }
+          />
+        </Box>
       )}
     </Box>
   );
 };
 
-export default EditGlobalModulePage;
+export default withSEO({ title: 'Global Module' })(EditGlobalModulePage);

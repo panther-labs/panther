@@ -21,6 +21,7 @@ import React from 'react';
 import { extractErrorMessage, toStackNameFormat } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { LOG_ONBOARDING_DOC_URL } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { LogSourceWizardValues } from '../LogSourceWizard';
 
@@ -29,7 +30,7 @@ const StackDeployment: React.FC = () => {
   const { data, loading, error } = useGetLogCfnTemplate({
     variables: {
       input: {
-        awsAccountId: process.env.AWS_ACCOUNT_ID,
+        awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
         integrationLabel: values.integrationLabel,
         s3Bucket: values.s3Bucket,
         logTypes: values.logTypes,
@@ -69,10 +70,10 @@ const StackDeployment: React.FC = () => {
     const { stackName } = data.getLogIntegrationTemplate;
     if (!initialValues.integrationId) {
       const cfnConsoleLink =
-        `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
+        `https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${pantherConfig.AWS_REGION}#/stacks/create/review` +
         '?templateURL=https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-analysis-iam/v1.0.0/template.yml' +
         `&stackName=${stackName}` +
-        `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
+        `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +
         `&param_RoleSuffix=${toStackNameFormat(values.integrationLabel)}` +
         `&param_S3Bucket=${values.s3Bucket}` +
         `&param_S3Prefix=${values.s3Prefix}` +
@@ -170,7 +171,7 @@ const StackDeployment: React.FC = () => {
               ml={1}
               color="blue300"
               title="Launch Cloudformation console"
-              href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
+              href={`https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
             >
               Cloudformation console
             </Link>{' '}

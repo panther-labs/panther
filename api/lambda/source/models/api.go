@@ -25,6 +25,7 @@ type LambdaInput struct {
 	CheckIntegration *CheckIntegrationInput `json:"integrationHealthCheck"`
 
 	PutIntegration *PutIntegrationInput `json:"putIntegration"`
+	FullScan       *FullScanInput       `json:"fullScan"`
 
 	ListIntegrations *ListIntegrationsInput `json:"listIntegrations"`
 
@@ -83,12 +84,21 @@ type PutIntegrationSettings struct {
 }
 
 //
-// ListIntegrations: Used by the Scheduler
+// ListIntegrations: Used by the Scheduler to find integrations to scan
 //
 
 // ListIntegrationsInput allows filtering by the IntegrationType or Enabled fields
 type ListIntegrationsInput struct {
 	IntegrationType *string `json:"integrationType" validate:"omitempty,oneof=aws-scan aws-s3"`
+}
+
+//
+// FullScan: Used by the Scheduler to scan integrations
+//
+
+// FullScanInput is used to do a full scan of one or more integrations.
+type FullScanInput struct {
+	Integrations []*SourceIntegrationMetadata
 }
 
 //

@@ -56,6 +56,11 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	if err != nil {
 		return nil, err
 	}
+
+	if alertItem == nil {
+		return nil, nil
+	}
+
 	var token *EventPaginationToken
 	if input.EventsExclusiveStartKey == nil {
 		token = newPaginationToken()
