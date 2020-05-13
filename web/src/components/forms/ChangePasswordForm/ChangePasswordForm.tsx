@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert } from 'pouncejs';
+import { Alert, Box } from 'pouncejs';
 import { Field, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
@@ -68,13 +68,13 @@ const ChangePasswordForm: React.FC = () => {
     >
       {({ handleSubmit, status, isSubmitting, isValid, dirty }) => (
         <form onSubmit={handleSubmit}>
-          <Alert
-            variant="info"
-            title="Updating your password will log you out of all devices!"
-            mb={6}
-          />
+          <Box mb={6}>
+            <Alert variant="info" title="Updating your password will log you out of all devices!" />
+          </Box>
           {status && (
-            <Alert variant="error" title={status.title} description={status.message} mb={6} />
+            <Box mb={6}>
+              <Alert variant="error" title={status.title} description={status.message} />
+            </Box>
           )}
           <Field
             as={FormikTextInput}

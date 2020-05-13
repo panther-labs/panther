@@ -68,7 +68,9 @@ export const TotpForm: React.FC = () => {
       {({ handleSubmit, isSubmitting, status, isValid, dirty }) => (
         <Box as="form" width="100%" onSubmit={handleSubmit}>
           {status && (
-            <Alert variant="error" title={status.title} description={status.message} mb={6} />
+            <Box mb={6}>
+              <Alert variant="error" title={status.title} description={status.message} />
+            </Box>
           )}
           <Flex justify="center" mb={6} width={1}>
             <QRCode value={formatSecretCode(code, userInfo.email)} />

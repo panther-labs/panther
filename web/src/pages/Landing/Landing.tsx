@@ -22,6 +22,7 @@ import { Link as RRLink } from 'react-router-dom';
 import logo from 'Source/assets/panther-minimal-logo.svg';
 import urls from 'Source/urls';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import withSEO from 'Hoc/withSEO';
 
 const LandingPage: React.FC = () => {
@@ -159,7 +160,7 @@ const LandingPage: React.FC = () => {
                 external
                 color="blue300"
                 p={4}
-                href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/athena/`}
+                href={`https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/athena/`}
               >
                 Launch Athena
               </Link>

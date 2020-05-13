@@ -18,6 +18,7 @@
 
 import Auth from '@aws-amplify/auth';
 import { ApolloLink } from '@apollo/client';
+import { pantherConfig } from 'Source/config';
 import { createAuthLink, AUTH_TYPE } from 'aws-appsync-auth-link';
 
 /**
@@ -25,8 +26,8 @@ import { createAuthLink, AUTH_TYPE } from 'aws-appsync-auth-link';
  * authentication. It essentially signs the Authorization header with a JWT token
  */
 const authLink = (createAuthLink({
-  region: process.env.AWS_REGION,
-  url: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
+  region: pantherConfig.AWS_REGION,
+  url: pantherConfig.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
   auth: {
     jwtToken: () =>
       Auth.currentSession()
