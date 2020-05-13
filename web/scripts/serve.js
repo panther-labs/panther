@@ -20,6 +20,7 @@
 const express = require('express');
 const expressStaticGzip = require('express-static-gzip');
 const path = require('path');
+const { getAppTemplateParams } = require('./utils');
 
 // construct a mini server
 const app = express();
@@ -54,9 +55,10 @@ const addHeaders = (req, res, next) => {
   next();
 };
 
+// Add Security headers to all responses
 app.use('*', addHeaders);
 
-// allow static assets to be served from the /dist folder
+// Allow static assets to be served from the /dist folder
 app.use(
   expressStaticGzip(path.resolve(__dirname, '../dist'), {
     enableBrotli: true,
@@ -78,8 +80,9 @@ app.get('/healthcheck', (req, res) => {
 });
 
 // Resolve all other requests to the index.html file
+app.set('view engine', 'ejs');
 app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, '../dist/index.html'));
+  res.render(path.resolve(__dirname, '../dist/index.ejs'), getAppTemplateParams());
 });
 
 // initialize server

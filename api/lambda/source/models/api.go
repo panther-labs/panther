@@ -24,17 +24,17 @@ import "time"
 type LambdaInput struct {
 	CheckIntegration *CheckIntegrationInput `json:"integrationHealthCheck"`
 
-	PutIntegration *PutIntegrationInput `json:"putIntegration"`
-
-	ListIntegrations *ListIntegrationsInput `json:"listIntegrations"`
+	PutIntegration            *PutIntegrationInput            `json:"putIntegration"`
+	UpdateIntegrationSettings *UpdateIntegrationSettingsInput `json:"updateIntegrationSettings"`
+	ListIntegrations          *ListIntegrationsInput          `json:"listIntegrations"`
+	DeleteIntegration         *DeleteIntegrationInput         `json:"deleteIntegration"`
 
 	GetIntegrationTemplate *GetIntegrationTemplateInput `json:"getIntegrationTemplate"`
 
 	UpdateIntegrationLastScanEnd   *UpdateIntegrationLastScanEndInput   `json:"updateIntegrationLastScanEnd"`
 	UpdateIntegrationLastScanStart *UpdateIntegrationLastScanStartInput `json:"updateIntegrationLastScanStart"`
-	UpdateIntegrationSettings      *UpdateIntegrationSettingsInput      `json:"updateIntegrationSettings"`
 
-	DeleteIntegration *DeleteIntegrationInput `json:"deleteIntegration"`
+	FullScan *FullScanInput `json:"fullScan"`
 }
 
 //
@@ -69,7 +69,7 @@ type PutIntegrationInput struct {
 
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
-	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId,omitempty" validate:"required,len=12,numeric"`
 	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel,excludesall='<>&\""`
 	IntegrationType    *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
@@ -83,12 +83,39 @@ type PutIntegrationSettings struct {
 }
 
 //
-// ListIntegrations: Used by the Scheduler
+// ListIntegrations: Used by the Scheduler to find integrations to scan
 //
 
 // ListIntegrationsInput allows filtering by the IntegrationType or Enabled fields
 type ListIntegrationsInput struct {
 	IntegrationType *string `json:"integrationType" validate:"omitempty,oneof=aws-scan aws-s3"`
+}
+
+// UpdateIntegrationSettingsInput is used to update integration settings.
+type UpdateIntegrationSettingsInput struct {
+	IntegrationID      *string   `json:"integrationId" validate:"required,uuid4"`
+	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel,excludesall='<>&\""`
+	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
+	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
+	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	S3Bucket           *string   `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
+	S3Prefix           *string   `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
+	KmsKey             *string   `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
+	LogTypes           []*string `json:"logTypes,omitempty" validate:"omitempty,min=1"`
+}
+
+// DeleteIntegrationInput is used to delete a specific item from the database.
+type DeleteIntegrationInput struct {
+	IntegrationID *string `json:"integrationId" validate:"required,uuid4"`
+}
+
+//
+// FullScan: Used by the Scheduler to scan integrations
+//
+
+// FullScanInput is used to do a full scan of one or more integrations.
+type FullScanInput struct {
+	Integrations []*SourceIntegrationMetadata
 }
 
 //
@@ -105,15 +132,6 @@ type GetIntegrationTemplateInput struct {
 	S3Bucket           *string `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
 	S3Prefix           *string `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
 	KmsKey             *string `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
-}
-
-//
-// DeleteIntegration: Used by the UI
-//
-
-// DeleteIntegrationInput is used to delete a specific item from the database.
-type DeleteIntegrationInput struct {
-	IntegrationID *string `json:"integrationId" validate:"required,uuid4"`
 }
 
 //
@@ -134,17 +152,4 @@ type UpdateIntegrationLastScanEndInput struct {
 	LastScanEndTime      *time.Time `json:"lastScanEndTime" validate:"required"`
 	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
 	ScanStatus           *string    `json:"scanStatus" validate:"required,oneof=ok error scanning"`
-}
-
-// UpdateIntegrationSettingsInput is used to update integration settings.
-type UpdateIntegrationSettingsInput struct {
-	IntegrationID      *string   `json:"integrationId" validate:"required,uuid4"`
-	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel,excludesall='<>&\""`
-	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
-	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
-	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Bucket           *string   `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
-	S3Prefix           *string   `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
-	KmsKey             *string   `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
-	LogTypes           []*string `json:"logTypes,omitempty" validate:"omitempty,min=1"`
 }

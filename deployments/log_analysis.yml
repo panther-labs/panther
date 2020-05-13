@@ -73,6 +73,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-alerts-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  AlertsApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertsApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   AlertsApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -177,6 +183,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-log-alert-forwarder
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  AlertsForwarderMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertForwarderLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   AlertsForwarderFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -279,6 +291,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-log-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  LogProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref LogProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   LogProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -367,18 +385,6 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: WriteGluePartitions
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - glue:GetPartition
-                - glue:CreatePartition
-                - glue:GetTable
-              Resource:
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
 
   UpdaterSnsSubscription:
     Type: AWS::SNS::Subscription
@@ -404,6 +410,7 @@ Resources:
             Condition:
               ArnLike:
                 aws:SourceArn: !Ref ProcessedDataTopicArn
+
   UpdaterQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -439,6 +446,12 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-datacatalog-updater
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  UpdaterMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref UpdaterFunctionLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   UpdaterFunction:
     Type: AWS::Serverless::Function
@@ -485,7 +498,6 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - glue:GetPartition
                 - glue:CreatePartition
                 - glue:GetTable
               Resource:
@@ -584,6 +596,13 @@ Resources:
       LogGroupName: /aws/lambda/panther-rules-engine
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  RulesEngineMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LambdaRuntime: Python
+      LogGroupName: !Ref RulesEngineLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   RulesEngineFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -673,3 +692,10 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
+        - Id: ResourceLookup
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources

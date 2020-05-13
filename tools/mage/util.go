@@ -44,7 +44,35 @@ const (
 )
 
 // For CPU-intensive operations, limit the max number of worker goroutines.
-var maxWorkers = runtime.NumCPU() - 1
+var maxWorkers = func() int {
+	n := runtime.NumCPU()
+	// Use all CPUs on CI environment
+	if runningInCI() {
+		return n
+	}
+	// Ensure we don't set maxWorkers to zero
+	if n > 1 {
+		return n - 1
+	}
+	return 1
+}()
+
+// Queue limiting concurrent tasks when using `runTask`
+var taskQueue = make(chan struct{}, maxWorkers)
+
+// Ugly task queue hack to limit concurrent tasks
+func runTask(results chan<- goroutineResult, name string, task func() error) {
+	taskQueue <- struct{}{}
+	go func() {
+		defer func() {
+			<-taskQueue
+		}()
+		results <- goroutineResult{
+			summary: name,
+			err:     task(),
+		}
+	}()
+}
 
 // Track results when executing similar tasks in parallel
 type goroutineResult struct {
@@ -108,12 +136,7 @@ func writeFile(path string, data []byte) error {
 		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}
 
-	var permissions os.FileMode = 0644
-	if strings.HasSuffix(path, ".key") || strings.HasSuffix(path, ".crt") {
-		permissions = certFilePermissions
-	}
-
-	if err := ioutil.WriteFile(path, data, permissions); err != nil {
+	if err := ioutil.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to write file %s: %v", path, err)
 	}
 	return nil

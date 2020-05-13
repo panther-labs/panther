@@ -1,5 +1,3 @@
-package cloudwatchcf
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,24 +16,23 @@ package cloudwatchcf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-func generateLambdaMetricFilters(resource map[string]interface{}) []*MetricFilter {
-	lambdaName := getResourceProperty("FunctionName", resource)
-	runtime := getResourceProperty("Runtime", resource)
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
 
-	switch runtime {
-	case "go1.x":
-		return []*MetricFilter{
-			NewGoLambdaErrorMetricFilter(lambdaName),
-			NewGoLambdaWarnMetricFilter(lambdaName),
-			NewLambdaMemoryMetricFilter(lambdaName),
-		}
-	case "python3.7":
-		return []*MetricFilter{
-			NewPythonLambdaErrorMetricFilter(lambdaName),
-			NewPythonLambdaWarnMetricFilter(lambdaName),
-			NewLambdaMemoryMetricFilter(lambdaName),
-		}
-	default:
-		panic("Unknown lambda runtime: " + runtime)
-	}
-}
+import * as Types from '../../../__generated__/schema';
+
+import gql from 'graphql-tag';
+
+export type GlobalModuleFull = Pick<
+  Types.GlobalModuleDetails,
+  'createdAt' | 'description' | 'id' | 'lastModified' | 'body'
+>;
+
+export const GlobalModuleFull = gql`
+  fragment GlobalModuleFull on GlobalModuleDetails {
+    createdAt
+    description
+    id
+    lastModified
+    body
+  }
+`;

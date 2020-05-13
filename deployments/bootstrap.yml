@@ -30,11 +30,6 @@ Description: The very first Panther stack - static resources which don't require
 #   - The cognito user pool and appsync API
 
 Parameters:
-  # Required
-  CertificateArn:
-    Type: String
-    Description: The ARN of the TLS certificate that is going to be used by the ALB listener
-
   # Optional
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
@@ -492,6 +487,7 @@ Resources:
       GenerateSecret: false
       RefreshTokenValidity: 1
       UserPoolId: !Ref UserPool
+      PreventUserExistenceErrors: ENABLED
       WriteAttributes:
         - email
         - given_name
@@ -697,33 +693,6 @@ Resources:
       IpProtocol: '-1'
       SourceSecurityGroupId: !Ref PublicLoadBalancerSecurityGroup
 
-  PublicLoadBalancerListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      Certificates:
-        - CertificateArn: !Ref CertificateArn
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroup
-          Type: forward
-      LoadBalancerArn: !Ref PublicLoadBalancer
-      Port: 443
-      Protocol: HTTPS
-      SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
-
-  # Create a rule on the load balancer for routing traffic to the target group
-  LoadBalancerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref TargetGroup
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - '*'
-      ListenerArn: !Ref PublicLoadBalancerListener
-      Priority: 1
-
   ########## Appsync ##########
   AppsyncServiceRole:
     Type: AWS::IAM::Role
@@ -876,15 +845,15 @@ Outputs:
     Value: !Ref Source
 
   # Networking + elb
-  CertificateArn:
-    Description: The ARN of the TLS certificate used by the ALB listener
-    Value: !Ref CertificateArn
   SubnetOneId:
     Description: Public subnet one
     Value: !Ref PublicSubnetOne
   SubnetTwoId:
     Description: Public subnet two
     Value: !Ref PublicSubnetTwo
+  LoadBalancerArn:
+    Description: Web load balancer arn
+    Value: !Ref PublicLoadBalancer
   LoadBalancerFullName:
     Description: Web load balancer full resource name
     Value: !GetAtt PublicLoadBalancer.LoadBalancerFullName

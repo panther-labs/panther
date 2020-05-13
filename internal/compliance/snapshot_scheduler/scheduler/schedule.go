@@ -28,7 +28,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	snapshotapi "github.com/panther-labs/panther/internal/core/source_api/api"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -56,13 +55,20 @@ func PollAndIssueNewScans() error {
 	for _, integration := range enabledIntegrations {
 		// Only add new scans if needed
 		if (scanIntervalElapsed(integration) && scanIsNotOngoing(integration)) || scanIsStuck(integration) {
-			integrationsToScan = append(integrationsToScan, integration.SourceIntegrationMetadata)
+			integrationsToScan = append(integrationsToScan, &integration.SourceIntegrationMetadata)
 		} else {
 			zap.L().Debug("skipping integration", zap.String("integrationID", *integration.IntegrationID))
 		}
 	}
 
-	return snapshotapi.ScanAllResources(integrationsToScan)
+	return genericapi.Invoke(
+		lambdaClient,
+		sourceAPIFunctionName,
+		&models.LambdaInput{FullScan: &models.FullScanInput{
+			Integrations: integrationsToScan,
+		}},
+		nil,
+	)
 }
 
 // getEnabledIntegrations lists enabled integrations from the snapshot-api.
@@ -75,9 +81,6 @@ func getEnabledIntegrations() (integrations []*models.SourceIntegration, err err
 		}},
 		&integrations,
 	)
-	if err != nil {
-		return
-	}
 
 	return
 }
@@ -85,33 +88,24 @@ func getEnabledIntegrations() (integrations []*models.SourceIntegration, err err
 // scanIsStuck checks if an integration's is stuck in the "scanning" state.
 func scanIsStuck(integration *models.SourceIntegration) bool {
 	// Accounts for a new integration that has not completed a scan
-	if integration.SourceIntegrationStatus == nil || integration.LastScanEndTime == nil {
+	if integration.LastScanEndTime == nil {
 		return false
 	}
 
-	return *integration.ScanStatus == models.StatusScanning && scanIntervalElapsed(integration)
+	return aws.StringValue(integration.ScanStatus) == models.StatusScanning && scanIntervalElapsed(integration)
 }
 
 // scanIsNotOngoing checks if an integration's snapshot is currently running.
 func scanIsNotOngoing(integration *models.SourceIntegration) bool {
-	if integration.SourceIntegrationStatus == nil {
-		return true
-	}
-
-	return *integration.ScanStatus != models.StatusScanning
+	return aws.StringValue(integration.ScanStatus) != models.StatusScanning
 }
 
 // scanIntervalElapsed determines if a new scan needs to be started based on the configured interval.
 func scanIntervalElapsed(integration *models.SourceIntegration) bool {
-	// Account for cases when a scan has never ran.
-	if integration.SourceIntegrationScanInformation == nil {
+	if integration.LastScanEndTime == nil {
 		return true
 	}
 
-	if integration.SourceIntegrationScanInformation.LastScanEndTime == nil {
-		return true
-	}
-
-	intervalMins := time.Duration(*integration.SourceIntegrationMetadata.ScanIntervalMins) * time.Minute
+	intervalMins := time.Duration(*integration.ScanIntervalMins) * time.Minute
 	return time.Since(*integration.LastScanEndTime) >= intervalMins
 }

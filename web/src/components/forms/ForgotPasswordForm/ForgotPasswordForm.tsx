@@ -49,14 +49,7 @@ const ForgotPasswordForm: React.FC = () => {
         forgotPassword({
           email,
           onSuccess: () => setStatus('SENT'),
-          onError: ({ code, message }) => {
-            setErrors({
-              email:
-                code === 'UserNotFoundException'
-                  ? "We couldn't find this Panther account"
-                  : message,
-            });
-          },
+          onError: ({ message }) => setErrors({ email: message }),
         })
       }
     >
@@ -64,7 +57,7 @@ const ForgotPasswordForm: React.FC = () => {
         if (status === 'SENT') {
           return (
             <Card bg="green100" p={5} mb={8} boxShadow="none">
-              <Text color="green300" size="large">
+              <Text color="green300" size="medium">
                 We have successfully sent you an email with reset instructions at{' '}
                 <b>{values.email}</b>
               </Text>

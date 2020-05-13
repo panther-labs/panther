@@ -198,7 +198,7 @@ func updateIntegrationSettings(t *testing.T) {
 	assert.NotNil(t, result.AWSAccountID)
 	assert.NotNil(t, result.CreatedAtTime)
 	expected := models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			AWSAccountID:     result.AWSAccountID,
 			CreatedAtTime:    result.CreatedAtTime,
 			CreatedBy:        result.CreatedBy,
@@ -207,8 +207,6 @@ func updateIntegrationSettings(t *testing.T) {
 			IntegrationType:  aws.String("aws-scan"),
 			ScanIntervalMins: aws.Int(180),
 		},
-		SourceIntegrationStatus:          nil,
-		SourceIntegrationScanInformation: nil,
 	}
 	assert.Equal(t, expected, result)
 

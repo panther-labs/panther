@@ -66,9 +66,12 @@ func WaitForResults(client athenaiface.AthenaAPI, queryExecutionID string) (quer
 		switch *executionOutput.QueryExecution.Status.State {
 		case
 			athena.QueryExecutionStateSucceeded,
-			athena.QueryExecutionStateFailed,
 			athena.QueryExecutionStateCancelled:
 			return executionOutput, true, nil
+		case
+			athena.QueryExecutionStateFailed:
+			return executionOutput, true,
+				errors.Errorf("query execution failed: %s", *executionOutput.QueryExecution.Status.StateChangeReason)
 		default:
 			return executionOutput, false, nil
 		}

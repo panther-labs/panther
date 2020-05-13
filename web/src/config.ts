@@ -19,11 +19,25 @@
 import * as Yup from 'yup';
 import Auth from '@aws-amplify/auth';
 
+// read the NodeJS-injected configuration and parse it back from JSON -> JS object. During development,
+// the NodeJS server doesn't contribute in that at all, but instead the HtmlWebpackLoader injects
+// them directly. There is a long-run inconsistency with EJS templates and webpack's ejs-loader,
+// where the "symbol" for unescaped entities is different when using ejs-loader (development) and
+// when you are just using EJS templates without a webpack loader (production). Just because we
+// don't know whether we arrived here from development or production, we are doing the `&quot;`
+// replace you see to make sure we convert an escaped entity back to its original value
+export const pantherConfig = JSON.parse(
+  document
+    .getElementById('__PANTHER_CONFIG__')
+    .innerHTML.toString()
+    .replace(/&quot;/g, '"')
+);
+
 // Initialize the Cognito client to the correct user pool
 Auth.configure({
-  userPoolId: process.env.WEB_APPLICATION_USER_POOL_ID,
-  userPoolWebClientId: process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID,
-  region: process.env.AWS_REGION,
+  userPoolId: pantherConfig.WEB_APPLICATION_USER_POOL_ID,
+  userPoolWebClientId: pantherConfig.WEB_APPLICATION_USER_POOL_CLIENT_ID,
+  region: pantherConfig.AWS_REGION,
 });
 
 // Set the defaults for some of the pre-implemented yup funcs

@@ -92,38 +92,38 @@ func getTestInvokeOutput(payload interface{}, statusCode int64) *lambda.InvokeOu
 var (
 	exampleIntegrations = []*models.SourceIntegration{
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationID:    aws.String("45c378a7-2e36-4b12-8e16-2d3c49ff1371"),
 				IntegrationLabel: aws.String("ProdAWS"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
 			},
-			SourceIntegrationStatus: &models.SourceIntegrationStatus{
+			SourceIntegrationStatus: models.SourceIntegrationStatus{
 				ScanStatus: aws.String("ok"),
 			},
-			SourceIntegrationScanInformation: &models.SourceIntegrationScanInformation{
+			SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
 				LastScanEndTime:   aws.Time(time.Now().Add(time.Duration(-15) * time.Minute)),
 				LastScanStartTime: aws.Time(time.Now().Add(time.Duration(-20) * time.Minute)),
 			},
 		},
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationID:    aws.String("ebb4d69f-177b-4eff-a7a6-9251fdc72d21"),
 				IntegrationLabel: aws.String("TestAWS"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(30),
 			},
-			SourceIntegrationStatus: &models.SourceIntegrationStatus{
+			SourceIntegrationStatus: models.SourceIntegrationStatus{
 				ScanStatus: aws.String("ok"),
 			},
-			SourceIntegrationScanInformation: &models.SourceIntegrationScanInformation{
+			SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
 				LastScanEndTime:   aws.Time(time.Now().Add(time.Duration(-35) * time.Minute)),
 				LastScanStartTime: aws.Time(time.Now().Add(time.Duration(-40) * time.Minute)),
 			},
 		},
 		// A new integration that was recently added that has never been scanned.
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationID:    aws.String("ebb4d69f-177b-4eff-a7a6-9251fdc72d21"),
 				IntegrationLabel: aws.String("TestAWS"),
 				IntegrationType:  aws.String("aws-scan"),
@@ -132,31 +132,31 @@ var (
 		},
 		// An integration with a scan in progress, started 20 minutes ago.
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationID:    aws.String("9a171500-7794-4aaa-8b4a-19ce8e9ba4fb"),
 				IntegrationLabel: aws.String("Staging AWS Account"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
 			},
-			SourceIntegrationStatus: &models.SourceIntegrationStatus{
+			SourceIntegrationStatus: models.SourceIntegrationStatus{
 				ScanStatus: aws.String("scanning"),
 			},
-			SourceIntegrationScanInformation: &models.SourceIntegrationScanInformation{
+			SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
 				LastScanStartTime: aws.Time(time.Now().Add(time.Duration(-20) * time.Minute)),
 			},
 		},
 		// An integration with a scan in progress, stuck.
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationID:    aws.String("2654cf7a-a13a-4b9b-8b4d-f3e5bfc51cb4"),
 				IntegrationLabel: aws.String("Development AWS Account"),
 				IntegrationType:  aws.String("aws-scan"),
 				ScanIntervalMins: aws.Int(60),
 			},
-			SourceIntegrationStatus: &models.SourceIntegrationStatus{
+			SourceIntegrationStatus: models.SourceIntegrationStatus{
 				ScanStatus: aws.String("scanning"),
 			},
-			SourceIntegrationScanInformation: &models.SourceIntegrationScanInformation{
+			SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
 				LastScanStartTime: aws.Time(time.Now().Add(time.Duration(-65) * time.Minute)),
 				// Last time it scanned was a day ago.
 				LastScanEndTime: aws.Time(time.Now().Add(time.Duration(-24) * time.Hour)),
@@ -168,6 +168,10 @@ var (
 func TestPollAndIssueNewScansNoneToRun(t *testing.T) {
 	mockLambda := &mockLambdaClient{}
 
+	mockLambda.
+		On("Invoke", mock.Anything).
+		// Pass in the first integration, which won't need a new scan.
+		Return(getTestInvokeOutput(exampleIntegrations[:1], 200), nil)
 	mockLambda.
 		On("Invoke", getTestInvokeInput()).
 		// Pass in the first integration, which won't need a new scan.
@@ -198,10 +202,10 @@ func TestPollAndIssueNewScansZeroIntegrations(t *testing.T) {
 
 func TestScanIntervalElapsed(t *testing.T) {
 	assert.True(t, scanIntervalElapsed(&models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			ScanIntervalMins: aws.Int(30),
 		},
-		SourceIntegrationScanInformation: &models.SourceIntegrationScanInformation{
+		SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
 			LastScanEndTime: aws.Time(
 				time.Now().Add(time.Duration(-60) * time.Minute),
 			),
@@ -211,10 +215,10 @@ func TestScanIntervalElapsed(t *testing.T) {
 
 func TestNewScanNotNeeded(t *testing.T) {
 	assert.False(t, scanIntervalElapsed(&models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			ScanIntervalMins: aws.Int(30),
 		},
-		SourceIntegrationScanInformation: &models.SourceIntegrationScanInformation{
+		SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
 			LastScanEndTime: aws.Time(
 				time.Now().Add(time.Duration(-15) * time.Minute),
 			),
@@ -224,7 +228,7 @@ func TestNewScanNotNeeded(t *testing.T) {
 
 func TestScanIsNotOngoingScanning(t *testing.T) {
 	assert.False(t, scanIsNotOngoing(&models.SourceIntegration{
-		SourceIntegrationStatus: &models.SourceIntegrationStatus{
+		SourceIntegrationStatus: models.SourceIntegrationStatus{
 			ScanStatus: aws.String(models.StatusScanning),
 		},
 	}))
@@ -232,7 +236,7 @@ func TestScanIsNotOngoingScanning(t *testing.T) {
 
 func TestScanIsNotOngoingOK(t *testing.T) {
 	assert.True(t, scanIsNotOngoing(&models.SourceIntegration{
-		SourceIntegrationStatus: &models.SourceIntegrationStatus{
+		SourceIntegrationStatus: models.SourceIntegrationStatus{
 			ScanStatus: aws.String(models.StatusOK),
 		},
 	}))

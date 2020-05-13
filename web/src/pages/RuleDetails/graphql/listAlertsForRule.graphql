@@ -1,0 +1,8 @@
+query ListAlertsForRule($input: ListAlertsInput!) {
+  alerts(input: $input) {
+    alertSummaries {
+      ...AlertSummaryFull
+    }
+    lastEvaluatedKey
+  }
+}

@@ -16,18 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import React from 'react';
+import withSEO from 'Hoc/withSEO';
 import Banner from 'Assets/sign-up-banner.jpg';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import ForgotPasswordForm from 'Components/forms/ForgotPasswordForm';
 import { Button, Flex, Text } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
-import React from 'react';
-
-interface EmailStatusState {
-  state: 'SENT' | 'FAILED' | 'PENDING';
-  message?: string;
-}
 
 const ForgotPasswordPage: React.FC = () => {
   return (
@@ -39,8 +35,8 @@ const ForgotPasswordPage: React.FC = () => {
       <ForgotPasswordForm />
       <Text size="small" color="grey200" mt={8} as="p" textAlign="center">
         <i>
-          By clicking the button above you will receive an email with instructions on how to reset
-          your password
+          By submitting a request, you will receive an email with instructions on how to reset your
+          password
         </i>
       </Text>
       <AuthPageContainer.AltOptions>
@@ -63,4 +59,4 @@ const ForgotPasswordPage: React.FC = () => {
   );
 };
 
-export default ForgotPasswordPage;
+export default withSEO({ title: 'Forgot Password' })(ForgotPasswordPage);

@@ -26,11 +26,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -105,11 +103,6 @@ func Teardown() {
 		logger.Fatal(cfnErr)
 	}
 
-	// Remove self-signed certs that may have been uploaded.
-	//
-	// Certs can only be deleted if they aren't in use, so don't try unless the stacks deleted successfully.
-	// Certificates are not managed with CloudFormation, we have to list them explicitly.
-	destroyCerts(awsSession)
 	logger.Info("successfully removed Panther infrastructure")
 }
 
@@ -201,19 +194,17 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	client := cloudformation.New(awsSession)
 
 	// Define a common routine for processing stack delete results
-	var errCount int
+	var errCount, finishCount int
 	handleResult := func(result deleteStackResult) {
+		finishCount++
 		if result.err != nil {
-			logger.Errorf("    - %s failed to delete: %v", result.stackName, result.err)
+			logger.Errorf("    - %s failed to delete (%d/%d): %v",
+				result.stackName, finishCount, len(allStacks), result.err)
 			errCount++
 			return
 		}
 
-		if strings.Contains(result.stackName, "skipped") {
-			logger.Infof("    √ %s", result.stackName)
-		} else {
-			logger.Infof("    √ %s successfully deleted", result.stackName)
-		}
+		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
 	}
 
 	// The stackset must be deleted before the StackSetExecutionRole and the StackSetAdminRole
@@ -223,10 +214,8 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 
 	// Trigger the deletion of the main stacks in parallel
 	//
-	// The ECS cluster in the bootstrap stack has to wait until the ECS service in the frontend stack is
-	// completely stopped. So we don't include the bootstrap stack in the initial parallel set
+	// The bootstrap stacks have to be last because of the ECS cluster and custom resource Lambda.
 	parallelStacks := []string{
-		gatewayStack,
 		alarmsStack,
 		appsyncStack,
 		cloudsecStack,
@@ -235,24 +224,28 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 		frontendStack,
 		glueStack,
 		logAnalysisStack,
-		metricFilterStack,
 		onboardStack,
 	}
-	logger.Infof("deleting CloudFormation stacks: %s",
-		strings.Join(append(parallelStacks, bootstrapStack), ", "))
-	for _, stack := range parallelStacks {
-		go deleteStack(client, aws.String(stack), results)
+	logger.Infof("deleting %d CloudFormation stacks", len(allStacks))
+
+	deleteFunc := func(client *cloudformation.CloudFormation, stack string, r chan deleteStackResult) {
+		r <- deleteStackResult{stackName: stack, err: deleteStack(client, &stack)}
 	}
 
-	// Wait for all of the stacks (incl. bootstrap) to finish deleting
-	for i := 0; i < len(parallelStacks)+1; i++ {
-		r := <-results
-		handleResult(r)
+	for _, stack := range parallelStacks {
+		go deleteFunc(client, stack, results)
+	}
 
-		if r.stackName == frontendStack {
-			// now we can delete the bootstrap stack
-			go deleteStack(client, aws.String(bootstrapStack), results)
-		}
+	// Wait for all of the main stacks to finish deleting
+	for i := 0; i < len(parallelStacks); i++ {
+		handleResult(<-results)
+	}
+
+	// Now finish with the bootstrap stacks
+	go deleteFunc(client, bootstrapStack, results)
+	go deleteFunc(client, gatewayStack, results)
+	for i := 0; i < 2; i++ {
+		handleResult(<-results)
 	}
 
 	if errCount > 0 {
@@ -309,14 +302,13 @@ func deleteStackSet(client *cloudformation.CloudFormation, identity *sts.GetCall
 }
 
 // Delete a single CFN stack and wait for it to finish
-func deleteStack(client *cloudformation.CloudFormation, stack *string, results chan deleteStackResult) {
+func deleteStack(client *cloudformation.CloudFormation, stack *string) error {
 	if _, err := client.DeleteStack(&cloudformation.DeleteStackInput{StackName: stack}); err != nil {
-		results <- deleteStackResult{stackName: *stack, err: err}
-		return
+		return err
 	}
 
 	_, err := waitForStackDelete(client, *stack)
-	results <- deleteStackResult{stackName: *stack, err: err}
+	return err
 }
 
 // Delete all objects in the given S3 buckets and then remove them.
@@ -417,75 +409,6 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
 		logger.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
 	}
-}
-
-// Destroy Panther ACM or IAM certificates.
-//
-// In ACM, delete certs for "example.com" tagged with "Application:Panther"
-// In IAM, delete certs in "/panther/(region)/" path whose names start with "PantherCertificate-"
-func destroyCerts(awsSession *session.Session) {
-	logger.Debug("checking for ACM certificates")
-	acmClient := acm.New(awsSession)
-	err := acmClient.ListCertificatesPages(
-		&acm.ListCertificatesInput{},
-		func(page *acm.ListCertificatesOutput, isLast bool) bool {
-			for _, summary := range page.CertificateSummaryList {
-				if canRemoveAcmCert(acmClient, summary) {
-					logger.Infof("deleting ACM cert %s", *summary.CertificateArn)
-					input := &acm.DeleteCertificateInput{CertificateArn: summary.CertificateArn}
-					if _, err := acmClient.DeleteCertificate(input); err != nil {
-						logger.Fatalf("failed to delete cert %s: %v", *summary.CertificateArn, err)
-					}
-				}
-			}
-			return true // keep paging
-		},
-	)
-	if err != nil {
-		logger.Fatalf("failed to list ACM certificates: %v", err)
-	}
-
-	logger.Debug("checking for IAM server certificates")
-	iamClient := iam.New(awsSession)
-	path := "/panther/" + *awsSession.Config.Region + "/"
-	input := &iam.ListServerCertificatesInput{PathPrefix: &path}
-	err = iamClient.ListServerCertificatesPages(input, func(page *iam.ListServerCertificatesOutput, isLast bool) bool {
-		for _, cert := range page.ServerCertificateMetadataList {
-			name := cert.ServerCertificateName
-			if strings.HasPrefix(*name, "PantherCertificate-") {
-				logger.Infof("deleting IAM cert %s", *name)
-				if _, err := iamClient.DeleteServerCertificate(&iam.DeleteServerCertificateInput{
-					ServerCertificateName: name,
-				}); err != nil {
-					logger.Fatalf("failed to delete IAM cert %s: %v", *name, err)
-				}
-			}
-		}
-		return true // keep paging
-	})
-	if err != nil {
-		logger.Fatalf("failed to list IAM server certificates: %v", err)
-	}
-}
-
-// Returns true if the ACM cert is for example.com and tagged with Application:Panther
-func canRemoveAcmCert(client *acm.ACM, summary *acm.CertificateSummary) bool {
-	if aws.StringValue(summary.DomainName) != "example.com" {
-		return false
-	}
-
-	certArn := summary.CertificateArn
-	tags, err := client.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: certArn})
-	if err != nil {
-		logger.Fatalf("failed to list tags for ACM cert %s: %v", *certArn, err)
-	}
-
-	for _, tag := range tags.Tags {
-		if aws.StringValue(tag.Key) == "Application" && aws.StringValue(tag.Value) == "Panther" {
-			return true
-		}
-	}
-	return false
 }
 
 // Destroy any leftover CloudWatch log groups

@@ -19,6 +19,7 @@
 import React from 'react';
 import Auth, { CognitoUser } from '@aws-amplify/auth';
 import { USER_INFO_STORAGE_KEY } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import storage from 'Helpers/storage';
 
 // Challenge names from Cognito from
@@ -98,12 +99,6 @@ interface SetNewPasswordParams {
   onError?: (err: AuthError) => void;
 }
 
-interface UpdateUserInfoParams {
-  newAttributes: Partial<EnhancedCognitoUser['attributes']>;
-  onSuccess?: () => void;
-  onError?: (err: AuthError) => void;
-}
-
 interface ChangePasswordParams {
   oldPassword: string;
   newPassword: string;
@@ -144,7 +139,6 @@ export interface AuthContextValue {
   verifyTotpSetup: (params: VerifyTotpSetupParams) => Promise<void>;
   requestTotpSecretCode: () => Promise<string>;
   signOut: (params?: SignOutParams) => Promise<void>;
-  updateUserInfo: (params: UpdateUserInfoParams) => Promise<void>;
   changePassword: (params: ChangePasswordParams) => Promise<void>;
   resetPassword: (params: ResetPasswordParams) => Promise<void>;
   forgotPassword: (params: ForgotPasswordParams) => Promise<void>;
@@ -158,7 +152,7 @@ const AuthContext = React.createContext<AuthContextValue>(undefined);
 // in the Amplify, since the `isAuthenticated` flag just decides which screens to show.
 const previousUserSessionExists = Boolean(
   storage.local.read(
-    `CognitoIdentityServiceProvider.${process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
+    `CognitoIdentityServiceProvider.${pantherConfig.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
   )
 );
 
@@ -285,27 +279,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const confirmedUser = await Auth.currentAuthenticatedUser();
         setAuthUser(confirmedUser);
         setAuthenticated(true);
-        onSuccess();
-      } catch (err) {
-        onError(err as AuthError);
-      }
-    },
-    [authUser]
-  );
-
-  /**
-   *
-   * @public
-   * Updates the user's personal information
-   *
-   */
-  const updateUserInfo = React.useCallback(
-    async ({ newAttributes, onSuccess = () => {}, onError = () => {} }: UpdateUserInfoParams) => {
-      try {
-        await Auth.updateUserAttributes(authUser, newAttributes);
-        const updatedUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
-        setAuthUser(updatedUser);
-
         onSuccess();
       } catch (err) {
         onError(err as AuthError);
@@ -456,7 +429,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       isAuthenticated,
       currentAuthChallengeName: authUser?.challengeName || null,
       userInfo,
-      updateUserInfo,
       refetchUserInfo,
 
       signIn,

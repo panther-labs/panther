@@ -20,6 +20,8 @@ import { Text, Box, Heading, Spinner, Flex, Link } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage, toStackNameFormat } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
+import { LOG_ONBOARDING_DOC_URL } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { LogSourceWizardValues } from '../LogSourceWizard';
 
@@ -28,7 +30,7 @@ const StackDeployment: React.FC = () => {
   const { data, loading, error } = useGetLogCfnTemplate({
     variables: {
       input: {
-        awsAccountId: process.env.AWS_ACCOUNT_ID,
+        awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
         integrationLabel: values.integrationLabel,
         s3Bucket: values.s3Bucket,
         logTypes: values.logTypes,
@@ -68,10 +70,10 @@ const StackDeployment: React.FC = () => {
     const { stackName } = data.getLogIntegrationTemplate;
     if (!initialValues.integrationId) {
       const cfnConsoleLink =
-        `https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${process.env.AWS_REGION}#/stacks/create/review` +
+        `https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${pantherConfig.AWS_REGION}#/stacks/create/review` +
         '?templateURL=https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-analysis-iam/v1.0.0/template.yml' +
         `&stackName=${stackName}` +
-        `&param_MasterAccountId=${process.env.AWS_ACCOUNT_ID}` +
+        `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +
         `&param_RoleSuffix=${toStackNameFormat(values.integrationLabel)}` +
         `&param_S3Bucket=${values.s3Bucket}` +
         `&param_S3Prefix=${values.s3Prefix}` +
@@ -79,8 +81,18 @@ const StackDeployment: React.FC = () => {
 
       return (
         <React.Fragment>
+          <Heading size="medium" m="auto" mb={2} color="grey400">
+            Step 1: Allow Panther to Read S3 Data
+          </Heading>
+          <Text size="large" color="grey200" as="p" mb={10}>
+            To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
+            <b>{values.awsAccountId}</b>.{' '}
+            {!initialValues.integrationId
+              ? 'This will create a ReadOnly IAM Role to access the logs.'
+              : 'This will update the existing ReadOnly IAM Role.'}
+          </Text>
           <Text size="large" color="grey200" as="p" mt={2} mb={2}>
-            The quickest way to do it, is through the AWS console
+            The quickest way to do it is through the AWS console
           </Text>
           <Link
             external
@@ -105,12 +117,37 @@ const StackDeployment: React.FC = () => {
           >
             Download template
           </Link>
+          <Heading size="medium" m="auto" mt={8} color="grey400">
+            Step 2: Adding Notifications For New Data
+          </Heading>
+          <Text size="large" color="grey200" as="p" mt={4} mb={2}>
+            After deploying the stack above, follow the steps{' '}
+            <Link
+              external
+              color="blue300"
+              title="SNS Notification Setup"
+              href={LOG_ONBOARDING_DOC_URL}
+            >
+              here
+            </Link>{' '}
+            to notify Panther when new data becomes available for analysis.
+          </Text>
         </React.Fragment>
       );
     }
 
     return (
       <React.Fragment>
+        <Heading size="medium" m="auto" mb={2} color="grey400">
+          Deploy your configured stack
+        </Heading>
+        <Text size="large" color="grey200" as="p" mb={10}>
+          To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
+          <b>{values.awsAccountId}</b>.{' '}
+          {!initialValues.integrationId
+            ? 'This will create a ReadOnly IAM Role to access the logs.'
+            : 'This will update the existing ReadOnly IAM Role.'}
+        </Text>
         <Box as="ol">
           <Flex as="li" align="center" mb={3}>
             <Text size="large" color="grey200" mr={1}>
@@ -134,7 +171,7 @@ const StackDeployment: React.FC = () => {
               ml={1}
               color="blue300"
               title="Launch Cloudformation console"
-              href={`https://${process.env.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
+              href={`https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
             >
               Cloudformation console
             </Link>{' '}
@@ -157,21 +194,7 @@ const StackDeployment: React.FC = () => {
     );
   };
 
-  return (
-    <Box>
-      <Heading size="medium" m="auto" mb={2} color="grey400">
-        Deploy your configured stack
-      </Heading>
-      <Text size="large" color="grey200" as="p" mb={10}>
-        To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
-        <b>{values.awsAccountId}</b>.{' '}
-        {!initialValues.integrationId
-          ? 'This will create a ReadOnly IAM Role to access the logs.'
-          : 'This will update the existing ReadOnly IAM Role.'}
-      </Text>
-      {renderContent()}
-    </Box>
-  );
+  return <Box>{renderContent()}</Box>;
 };
 
 export default StackDeployment;
