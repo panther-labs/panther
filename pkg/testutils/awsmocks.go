@@ -61,6 +61,12 @@ func (m *S3Mock) GetBucketLocation(input *s3.GetBucketLocationInput) (*s3.GetBuc
 	return args.Get(0).(*s3.GetBucketLocationOutput), args.Error(1)
 }
 
+func (m *S3Mock) ListObjectsV2Pages(input *s3.ListObjectsV2Input, f func(page *s3.ListObjectsV2Output, morePages bool) bool) error {
+	args := m.Called(input, f)
+	f(args.Get(0).(*s3.ListObjectsV2Output), false)
+	return args.Error(1)
+}
+
 type LambdaMock struct {
 	lambdaiface.LambdaAPI
 	mock.Mock
@@ -189,6 +195,11 @@ func (m *GlueMock) CreatePartition(input *glue.CreatePartitionInput) (*glue.Crea
 func (m *GlueMock) GetPartition(input *glue.GetPartitionInput) (*glue.GetPartitionOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*glue.GetPartitionOutput), args.Error(1)
+}
+
+func (m *GlueMock) GetPartitions(input *glue.GetPartitionsInput) (*glue.GetPartitionsOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.GetPartitionsOutput), args.Error(1)
 }
 
 func (m *GlueMock) UpdatePartition(input *glue.UpdatePartitionInput) (*glue.UpdatePartitionOutput, error) {

@@ -46,8 +46,7 @@ var (
 
 func getSession() *session.Session {
 	if awsSession == nil {
-		awsSession = session.Must(session.NewSession())
-		awsSession.Config.MaxRetries = aws.Int(10)
+		awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
 	}
 	return awsSession
 }
