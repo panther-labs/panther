@@ -163,33 +163,15 @@ func testCfnLint() error {
 		// Right now, we just check logicalID and type, but we can always add additional validation
 		// of the resource properties in the future if needed.
 		for logicalID, resourceType := range resources {
-			if resourceType != "AWS::Serverless::Function" {
-				continue
-			}
-
-			idPrefix := strings.TrimSuffix(logicalID, "Function")
-			if resources[idPrefix+"MetricFilters"] != "Custom::LambdaMetricFilters" {
-				errs = append(errs, fmt.Sprintf(
-					"%s needs an associated %s resource in %s",
-					logicalID, idPrefix+"MetricFilters", template))
-			}
-
-			// Backwards compatibility - these resources did not originally match the naming scheme,
-			// renaming the logical IDs would delete + recreate the log group, which usually causes
-			// deployments to fail because it tries to create a log group which already exists.
-			if template == logAnalysisTemplate {
-				switch idPrefix {
-				case "AlertsForwarder":
-					idPrefix = "AlertForwarder"
-				case "Updater":
-					idPrefix = "UpdaterFunction"
+			switch resourceType {
+			case "AWS::Serverless::Api":
+				if err := cfnTestAPI(logicalID, template, resources); err != nil {
+					errs = append(errs, err.Error())
 				}
-			}
-
-			if resources[idPrefix+"LogGroup"] != "AWS::Logs::LogGroup" {
-				errs = append(errs, fmt.Sprintf(
-					"%s needs an associated %s resource in %s",
-					logicalID, idPrefix+"LogGroup", template))
+			case "AWS::Serverless::Function":
+				if err := cfnTestFunction(logicalID, template, resources); err != nil {
+					errs = append(errs, err.Error())
+				}
 			}
 		}
 	}
@@ -197,6 +179,43 @@ func testCfnLint() error {
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
+	return nil
+}
+
+// Returns an error if an AWS::Serverless::Api is missing associated resources
+func cfnTestAPI(logicalID, template string, resources map[string]string) error {
+	if resources[logicalID+"Alarms"] != "Custom::ApiGatewayAlarms" {
+		return fmt.Errorf("%s needs an associated %s resource in %s",
+			logicalID, logicalID+"Alarms", template)
+	}
+	return nil
+}
+
+// Returns an error if an AWS::Serverless::Function is missing associated resources
+func cfnTestFunction(logicalID, template string, resources map[string]string) error {
+	idPrefix := strings.TrimSuffix(logicalID, "Function")
+	if resources[idPrefix+"MetricFilters"] != "Custom::LambdaMetricFilters" {
+		return fmt.Errorf("%s needs an associated %s resource in %s",
+			logicalID, idPrefix+"MetricFilters", template)
+	}
+
+	// Backwards compatibility - these resources did not originally match the naming scheme,
+	// renaming the logical IDs would delete + recreate the log group, which usually causes
+	// deployments to fail because it tries to create a log group which already exists.
+	if template == logAnalysisTemplate {
+		switch idPrefix {
+		case "AlertsForwarder":
+			idPrefix = "AlertForwarder"
+		case "Updater":
+			idPrefix = "UpdaterFunction"
+		}
+	}
+
+	if resources[idPrefix+"LogGroup"] != "AWS::Logs::LogGroup" {
+		return fmt.Errorf("%s needs an associated %s resource in %s",
+			logicalID, idPrefix+"LogGroup", template)
+	}
+
 	return nil
 }
 

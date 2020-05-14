@@ -221,6 +221,7 @@ func deployBoostrapStacks(
 		"CustomDomain":               settings.Web.CustomDomain,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"TracingMode":                settings.Monitoring.TracingMode,
+		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
 	}
 
 	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
@@ -242,6 +243,7 @@ func deployBoostrapStacks(
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
+		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 	}
 
 	// Deploy second bootstrap stack and merge outputs
@@ -311,7 +313,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
 			"AppsyncId":            outputs["GraphQLApiId"],
 			"LoadBalancerFullName": outputs["LoadBalancerFullName"],
-			"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
+			"AlarmTopicArn":        outputs["AlarmTopicArn"],
 		})
 		c <- goroutineResult{summary: alarmsStack, err: err}
 	}(results)

@@ -24,6 +24,17 @@ import (
 
 // CustomResources map type names to their respective handler functions.
 var CustomResources = map[string]cfn.CustomResourceFunction{
+	// CloudWatch alarms for API Gateway 5XX errors and high integration latency.
+	//
+	// Parameters:
+	//     APIName:            string (required)
+	//     AlarmTopicArn:      string (required)
+	//     ErrorThreshold:     int (default: 0)
+	//     LatencyThresholdMs: int (default: 1000)
+	// Outputs: None
+	// PhysicalId: custom:alarms:api:$API_NAME
+	"Custom::ApiGatewayAlarms": customAPIGatewayAlarms,
+
 	// Creates a self-signed ACM or IAM server certificate.
 	//
 	// Parameters: None
