@@ -21,21 +21,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: Test CF for generating alarms
 
 Resources:
-  # ALB
-  PublicLoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Name: web
-      Scheme: internet-facing
-      LoadBalancerAttributes:
-        - Key: idle_timeout.timeout_seconds
-          Value: '30'
-      Subnets:
-        - !Ref SubnetOneId
-        - !Ref SubnetTwoId
-      SecurityGroups:
-        - !Ref PublicLoadBalancerSecurityGroup
-
   # DDB
   ComplianceTable:
     Type: AWS::DynamoDB::Table

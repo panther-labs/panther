@@ -23,6 +23,8 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/cfn"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
 const (
@@ -35,12 +37,12 @@ const (
 )
 
 type ElbAlarmProperties struct {
-	LoadBalancerName string `validate:"required"`
-	AlarmTopicArn    string `validate:"required"`
+	AlarmTopicArn            string `validate:"required"`
+	LoadBalancerFriendlyName string `validate:"required"`
+	LoadBalancerFullName     string `validate:"required"`
 
-	ElbClientErrorThreshold    int     `json:",string" validate:"omitempty,min=0"`
-	TargetClientErrorThreshold int     `json:",string" validate:"omitempty,min=0"`
-	LatencyThresholdSeconds    float64 `json:",string" validate:"omitempty,min=0"`
+	ClientErrorThreshold    int     `json:",string" validate:"omitempty,min=0"`
+	LatencyThresholdSeconds float64 `json:",string" validate:"omitempty,min=0"`
 }
 
 func customElbAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -55,12 +57,92 @@ func customElbAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
-		return "custom:alarms:elb:" + props.LoadBalancerName, nil, nil
+		return "custom:alarms:elb:" + props.LoadBalancerFriendlyName, nil, putElbAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, nil
+		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
+			elbClientErrorAlarm, elbServerErrorAlarm, elbTargetClientErrorAlarm,
+			elbTargetServerErrorAlarm, elbTargetLatencyAlarm, elbHealthAlarm)
 
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
+}
+
+func putElbAlarmGroup(props ElbAlarmProperties) error {
+	input := cloudwatch.PutMetricAlarmInput{
+		AlarmActions: []*string{&props.AlarmTopicArn},
+		AlarmDescription: aws.String(fmt.Sprintf(
+			"Load balancer %s has elevated 4XX errors (before reaching the target). See: %s#%s",
+			props.LoadBalancerFriendlyName, alarmRunbook, props.LoadBalancerFriendlyName)),
+		AlarmName: aws.String(
+			fmt.Sprintf("Panther-%s-%s", elbClientErrorAlarm, props.LoadBalancerFriendlyName)),
+		Dimensions: []*cloudwatch.Dimension{
+			{Name: aws.String("LoadBalancer"), Value: &props.LoadBalancerFullName},
+		},
+		MetricName: aws.String("HTTPCode_ELB_4XX_Count"),
+		Namespace:  aws.String("AWS/ApplicationELB"),
+		Threshold:  aws.Float64(float64(props.ClientErrorThreshold)),
+		Unit:       aws.String(cloudwatch.StandardUnitCount),
+	}
+	if err := putMetricAlarm(input); err != nil {
+		return err
+	}
+
+	input.AlarmDescription = aws.String(fmt.Sprintf(
+		"Load balancer %s has 5XX errors (before reaching the target). See: %s#%s",
+		props.LoadBalancerFriendlyName, alarmRunbook, props.LoadBalancerFriendlyName))
+	input.AlarmName = aws.String(
+		fmt.Sprintf("Panther-%s-%s", elbServerErrorAlarm, props.LoadBalancerFriendlyName))
+	input.MetricName = aws.String("HTTPCode_ELB_5XX_Count")
+	input.Threshold = aws.Float64(0)
+	if err := putMetricAlarm(input); err != nil {
+		return err
+	}
+
+	input.AlarmDescription = aws.String(fmt.Sprintf(
+		"Load balancer %s has elevated 4XX errors from its target. See: %s#%s",
+		props.LoadBalancerFriendlyName, alarmRunbook, props.LoadBalancerFriendlyName))
+	input.AlarmName = aws.String(
+		fmt.Sprintf("Panther-%s-%s", elbTargetClientErrorAlarm, props.LoadBalancerFriendlyName))
+	input.MetricName = aws.String("HTTPCode_Target_4XX_Count")
+	input.Threshold = aws.Float64(float64(props.ClientErrorThreshold))
+	if err := putMetricAlarm(input); err != nil {
+		return err
+	}
+
+	input.AlarmDescription = aws.String(fmt.Sprintf(
+		"Load balancer %s has 5XX errors from its target. See: %s#%s",
+		props.LoadBalancerFriendlyName, alarmRunbook, props.LoadBalancerFriendlyName))
+	input.AlarmName = aws.String(
+		fmt.Sprintf("Panther-%s-%s", elbTargetServerErrorAlarm, props.LoadBalancerFriendlyName))
+	input.MetricName = aws.String("HTTPCode_Target_5XX_Count")
+	input.Threshold = aws.Float64(0)
+	if err := putMetricAlarm(input); err != nil {
+		return err
+	}
+
+	input.AlarmDescription = aws.String(fmt.Sprintf(
+		"Load balancer %s has unhealthy hosts. See: %s#%s",
+		props.LoadBalancerFriendlyName, alarmRunbook, props.LoadBalancerFriendlyName))
+	input.AlarmName = aws.String(
+		fmt.Sprintf("Panther-%s-%s", elbHealthAlarm, props.LoadBalancerFriendlyName))
+	input.MetricName = aws.String("UnHealthyHostCount")
+	input.Threshold = aws.Float64(0)
+	if err := putMetricAlarm(input); err != nil {
+		return err
+	}
+
+	input.AlarmDescription = aws.String(fmt.Sprintf(
+		"Load balancer %s has elevated latency. See: %s#%s",
+		props.LoadBalancerFriendlyName, alarmRunbook, props.LoadBalancerFriendlyName))
+	input.AlarmName = aws.String(
+		fmt.Sprintf("Panther-%s-%s", elbTargetLatencyAlarm, props.LoadBalancerFriendlyName))
+	input.EvaluationPeriods = aws.Int64(5)
+	input.ExtendedStatistic = aws.String("p95")
+	input.MetricName = aws.String("TargetResponseTime")
+	input.Period = aws.Int64(25 * 60)
+	input.Threshold = aws.Float64(props.LatencyThresholdSeconds)
+	input.Unit = aws.String(cloudwatch.StandardUnitSeconds)
+	return putMetricAlarm(input)
 }

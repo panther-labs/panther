@@ -19,6 +19,9 @@ Description: The service that defines the front-end NodeJS server that serves th
 
 Parameters:
   # Passed in from bootstrap stacks
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   SubnetOneId:
     Type: String
     Description: The ID of a subnet in the VPC above
@@ -28,6 +31,9 @@ Parameters:
   ElbArn:
     Type: String
     Description: The ARN of the load balancer
+  ElbFullName:
+    Type: String
+    Description: The full name of the load balancer
   ElbTargetGroup:
     Type: String
     Description: The ARN of the load balancer target group
@@ -83,6 +89,17 @@ Resources:
     Condition: CreateCertificate
     Type: Custom::Certificate
     Properties:
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  LoadBalancerAlarms:
+    Condition: CreateCertificate
+    Type: Custom::ElbAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ClientErrorThreshold: 10 # within 5 minutes
+      LatencyThresholdSeconds: 0.5
+      LoadBalancerFriendlyName: web
+      LoadBalancerFullName: !Ref ElbFullName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   PublicLoadBalancerListener:

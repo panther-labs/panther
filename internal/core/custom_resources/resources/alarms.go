@@ -97,13 +97,14 @@ func deleteMetricAlarms(physicalID string, alarmNames ...string) error {
 	}
 	id := split[3]
 
-	fullAlarmNames := make([]*string, 0, len(alarmNames))
+	fullAlarmNames := make([]string, 0, len(alarmNames))
 	for _, name := range alarmNames {
-		fullAlarmNames = append(fullAlarmNames, aws.String(fmt.Sprintf("Panther-%s-%s", name, id)))
+		fullAlarmNames = append(fullAlarmNames, fmt.Sprintf("Panther-%s-%s", name, id))
 	}
 
-	zap.L().Info("deleting metric alarms", zap.Any("alarmNames", fullAlarmNames))
-	_, err := getCloudWatchClient().DeleteAlarms(&cloudwatch.DeleteAlarmsInput{AlarmNames: fullAlarmNames})
+	zap.L().Info("deleting metric alarms", zap.Strings("alarmNames", fullAlarmNames))
+	_, err := getCloudWatchClient().DeleteAlarms(
+		&cloudwatch.DeleteAlarmsInput{AlarmNames: aws.StringSlice(fullAlarmNames)})
 	if err != nil {
 		return fmt.Errorf("failed to delete %s alarms: %v", id, err)
 	}

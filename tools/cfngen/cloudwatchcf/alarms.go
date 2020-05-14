@@ -19,8 +19,6 @@ package cloudwatchcf
  */
 
 import (
-	"path/filepath"
-
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	jsoniter "github.com/json-iterator/go"
 
@@ -205,17 +203,12 @@ func AlarmName(alarmType, resourceName string) string {
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
 func GenerateAlarms(settings *config.PantherConfig, cfFiles ...string) ([]*Alarm, []byte, error) {
 	var alarms []*Alarm
-	includesBootstrap := false
 	for _, path := range cfFiles {
 		fileAlarms, err := generateAlarms(path, settings)
 		if err != nil {
 			return nil, nil, err
 		}
 		alarms = append(alarms, fileAlarms...)
-
-		if filepath.Base(path) == "bootstrap.yml" {
-			includesBootstrap = true
-		}
 	}
 
 	resources := make(map[string]interface{})
@@ -226,11 +219,6 @@ func GenerateAlarms(settings *config.PantherConfig, cfFiles ...string) ([]*Alarm
 	// generate CF using cfngen
 	parameters := map[string]interface{}{
 		topicParameterName: cfngen.Parameter{Type: "String"},
-	}
-
-	if includesBootstrap {
-		// The bootstrap stack has AppSync and the ELB
-		parameters[elbParameterName] = cfngen.Parameter{Type: "String"}
 	}
 
 	cf, err := cfngen.NewTemplate("Panther Alarms", parameters, resources, nil).CloudFormation()
@@ -260,8 +248,6 @@ func alarmDispatchOnType(resourceType string, resource map[string]interface{}, s
 		return generateSNSAlarms(resource)
 	case "AWS::SQS::Queue":
 		return generateSQSAlarms(resource)
-	case "AWS::ElasticLoadBalancingV2::LoadBalancer":
-		return generateApplicationELBAlarms(resource)
 	case "AWS::DynamoDB::Table":
 		return generateDynamoDBAlarms(resource)
 	case "AWS::Serverless::Function":
