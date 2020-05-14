@@ -224,7 +224,7 @@ func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t tim
 func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Time,
 	tableOutput *glue.GetTableOutput) (created bool, err error) {
 
-	bucket, _, err := parseS3URL(*tableOutput.Table.StorageDescriptor.Location)
+	bucket, _, err := ParseS3URL(*tableOutput.Table.StorageDescriptor.Location)
 	if err != nil {
 		return false, err
 	}

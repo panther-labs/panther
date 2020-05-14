@@ -172,7 +172,7 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 }
 
 func GetPartitionFromS3Path(s3Path string) (*GluePartition, error) {
-	bucketName, key, err := parseS3URL(s3Path)
+	bucketName, key, err := ParseS3URL(s3Path)
 	if err != nil {
 		return nil, err
 	}

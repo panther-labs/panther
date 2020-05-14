@@ -123,7 +123,7 @@ func IsJSONPartition(storageDescriptor *glue.StorageDescriptor) bool {
 	return strings.Contains(*storageDescriptor.SerdeInfo.SerializationLibrary, "json")
 }
 
-func parseS3URL(s3URL string) (bucket, key string, err error) {
+func ParseS3URL(s3URL string) (bucket, key string, err error) {
 	parsedPath, err := url.Parse(s3URL)
 	if err != nil {
 		return bucket, key, err
