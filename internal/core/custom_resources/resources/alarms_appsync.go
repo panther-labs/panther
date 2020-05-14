@@ -21,12 +21,10 @@ package resources
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"go.uber.org/zap"
 )
 
 const (
@@ -53,7 +51,8 @@ func customAppSyncAlarms(_ context.Context, event cfn.Event) (string, map[string
 		return "custom:alarms:appsync:" + props.APIID, nil, putAppSyncAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteAppSyncAlarmGroup(event.PhysicalResourceID)
+		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
+			appSyncClientErrorAlarm, appSyncServerErrorAlarm)
 
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
@@ -61,33 +60,22 @@ func customAppSyncAlarms(_ context.Context, event cfn.Event) (string, map[string
 }
 
 func putAppSyncAlarmGroup(props AppSyncAlarmProperties) error {
-	client := getCloudWatchClient()
-	input := &cloudwatch.PutMetricAlarmInput{
+	input := cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"AppSync %s has elevated 4XX errors. See: %s#%s",
 			props.APIName, alarmRunbook, props.APIName)),
-		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", appSyncClientErrorAlarm, props.APIName)),
-		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
+		AlarmName: aws.String(fmt.Sprintf("Panther-%s-%s", appSyncClientErrorAlarm, props.APIName)),
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("GraphQLAPIId"), Value: &props.APIID},
 		},
-		EvaluationPeriods: aws.Int64(1),
-		MetricName:        aws.String("4XXError"),
-		Namespace:         aws.String("AWS/AppSync"),
-		Period:            aws.Int64(300),
-		Statistic:         aws.String(cloudwatch.StatisticSum),
-		Tags: []*cloudwatch.Tag{
-			{Key: aws.String("Application"), Value: aws.String("Panther")},
-		},
-		Threshold:        aws.Float64(float64(props.ClientErrorThreshold)),
-		TreatMissingData: aws.String("notBreaching"),
-		Unit:             aws.String(cloudwatch.StandardUnitCount),
+		MetricName: aws.String("4XXError"),
+		Namespace:  aws.String("AWS/AppSync"),
+		Threshold:  aws.Float64(float64(props.ClientErrorThreshold)),
+		Unit:       aws.String(cloudwatch.StandardUnitCount),
 	}
-
-	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
-	if _, err := client.PutMetricAlarm(input); err != nil {
-		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
+	if err := putMetricAlarm(input); err != nil {
+		return err
 	}
 
 	input.AlarmDescription = aws.String(fmt.Sprintf(
@@ -96,31 +84,5 @@ func putAppSyncAlarmGroup(props AppSyncAlarmProperties) error {
 	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", appSyncServerErrorAlarm, props.APIName))
 	input.MetricName = aws.String("5XXError")
 	input.Threshold = aws.Float64(float64(props.ServerErrorThreshold))
-
-	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
-	if _, err := client.PutMetricAlarm(input); err != nil {
-		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
-	}
-
-	return nil
-}
-
-func deleteAppSyncAlarmGroup(physicalID string) error {
-	// PhysicalID: custom:alarms:appsync:$API_NAME
-	split := strings.Split(physicalID, ":")
-	if len(split) < 4 {
-		zap.L().Warn("invalid physicalID - skipping delete")
-		return nil
-	}
-	apiID := split[3]
-
-	alarmNames := []string{
-		fmt.Sprintf("Panther-%s-%s", appSyncClientErrorAlarm, apiID),
-		fmt.Sprintf("Panther-%s-%s", appSyncServerErrorAlarm, apiID),
-	}
-
-	zap.L().Info("deleting metric alarms", zap.Strings("alarmNames", alarmNames))
-	_, err := getCloudWatchClient().DeleteAlarms(&cloudwatch.DeleteAlarmsInput{
-		AlarmNames: aws.StringSlice(alarmNames)})
-	return err
+	return putMetricAlarm(input)
 }

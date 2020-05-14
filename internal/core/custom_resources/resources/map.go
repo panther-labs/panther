@@ -30,7 +30,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//     ApiName:            string (required)
 	//     AlarmTopicArn:      string (required)
 	//     ErrorThreshold:     int (default: 0)
-	//     LatencyThresholdMs: int (default: 1000)
+	//     LatencyThresholdMs: float (default: 1000)
 	// Outputs: None
 	// PhysicalId: custom:alarms:api:$API_NAME
 	"Custom::ApiGatewayAlarms": customAPIGatewayAlarms,
@@ -46,6 +46,18 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Outputs: None
 	// PhysicalId: custom:alarms:appsync:$API_ID
 	"Custom::AppSyncAlarms": customAppSyncAlarms,
+
+	// CloudWatch alarms for ELB errors, latency, and health
+	//
+	// Parameters:
+	//     LoadBalancerName:      string (required)
+	//     AlarmTopicArn:         string (required)
+	//     ElbClientErrorThreshold:     int (default: 0)
+	//     TargetClientErrorThreshold: int (default: 0)
+	//     LatencyThresholdSeconds: float (default: 0.5)
+	// Outputs: None
+	// PhysicalId: custom:alarms:elb:$LOAD_BALANCER_NAME
+	"Custom::ElbAlarms": customElbAlarms,
 
 	// Creates a self-signed ACM or IAM server certificate.
 	//

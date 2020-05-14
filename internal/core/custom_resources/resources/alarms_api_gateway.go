@@ -21,17 +21,13 @@ package resources
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"go.uber.org/zap"
 )
 
 const (
-	alarmRunbook = "https://docs.runpanther.io/operations/runbooks"
-
 	gatewayLatencyAlarm = "ApiGatewayHighIntegrationLatency"
 	gatewayErrorAlarm   = "ApiGatewayServerErrors"
 )
@@ -58,7 +54,8 @@ func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[str
 		return "custom:alarms:api:" + props.APIName, nil, putGatewayAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteGatewayAlarmGroup(event.PhysicalResourceID)
+		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
+			gatewayErrorAlarm, gatewayLatencyAlarm)
 
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
@@ -66,71 +63,30 @@ func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[str
 }
 
 func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
-	client := getCloudWatchClient()
-	input := &cloudwatch.PutMetricAlarmInput{
+	input := cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"API Gateway %s is experiencing high integration latency. See: %s#%s",
 			props.APIName, alarmRunbook, props.APIName)),
-		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, props.APIName)),
-		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
+		AlarmName: aws.String(fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, props.APIName)),
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("ApiName"), Value: &props.APIName},
 		},
-		EvaluationPeriods: aws.Int64(5),
-		MetricName:        aws.String("IntegrationLatency"),
-		Namespace:         aws.String("AWS/ApiGateway"),
-		Period:            aws.Int64(60),
-		Statistic:         aws.String(cloudwatch.StatisticMaximum),
-		Tags: []*cloudwatch.Tag{
-			{Key: aws.String("Application"), Value: aws.String("Panther")},
-		},
-		Threshold:        &props.LatencyThresholdMs,
-		TreatMissingData: aws.String("notBreaching"),
-		Unit:             aws.String(cloudwatch.StandardUnitMilliseconds),
+		MetricName: aws.String("IntegrationLatency"),
+		Namespace:  aws.String("AWS/ApiGateway"),
+		Threshold:  &props.LatencyThresholdMs,
+		Unit:       aws.String(cloudwatch.StandardUnitMilliseconds),
+	}
+	if err := putMetricAlarm(input); err != nil {
+		return err
 	}
 
-	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
-	if _, err := client.PutMetricAlarm(input); err != nil {
-		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
-	}
-
-	// Many fields are the same - actions, comparison, dimensions, namespace, tags, treatMissingData
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"API Gateway %s is reporting 5XX internal errors. See: %s#%s",
 		props.APIName, alarmRunbook, props.APIName))
 	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, props.APIName))
-	input.EvaluationPeriods = aws.Int64(1)
 	input.MetricName = aws.String("5XXError")
-	input.Period = aws.Int64(300)
-	input.Statistic = aws.String(cloudwatch.StatisticSum)
 	input.Threshold = aws.Float64(float64(props.ErrorThreshold))
 	input.Unit = aws.String(cloudwatch.StandardUnitCount)
-
-	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
-	if _, err := client.PutMetricAlarm(input); err != nil {
-		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
-	}
-
-	return nil
-}
-
-func deleteGatewayAlarmGroup(physicalID string) error {
-	// PhysicalID: custom:alarms:api:$API_NAME
-	split := strings.Split(physicalID, ":")
-	if len(split) < 4 {
-		zap.L().Warn("invalid physicalID - skipping delete")
-		return nil
-	}
-	apiName := split[3]
-
-	alarmNames := []string{
-		fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, apiName),
-		fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, apiName),
-	}
-
-	zap.L().Info("deleting metric alarms", zap.Strings("alarmNames", alarmNames))
-	_, err := getCloudWatchClient().DeleteAlarms(&cloudwatch.DeleteAlarmsInput{
-		AlarmNames: aws.StringSlice(alarmNames)})
-	return err
+	return putMetricAlarm(input)
 }
