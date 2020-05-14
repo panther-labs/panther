@@ -26,7 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -40,32 +39,10 @@ import (
 	awspoller "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb/modelstest"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-// Mocks
-
-// mockSQSClient mocks API calls to SQS.
-type mockSQSClient struct {
-	sqsiface.SQSAPI
-	mock.Mock
-}
-
-func (client *mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
-	args := client.Called(input)
-	return args.Get(0).(*sqs.SendMessageBatchOutput), args.Error(1)
-}
-
-func (client *mockSQSClient) SetQueueAttributes(input *sqs.SetQueueAttributesInput) (*sqs.SetQueueAttributesOutput, error) {
-	args := client.Called(input)
-	return args.Get(0).(*sqs.SetQueueAttributesOutput), args.Error(1)
-}
-
-func (client *mockSQSClient) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.GetQueueAttributesOutput, error) {
-	args := client.Called(input)
-	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
-}
-
-func generateMockSQSBatchInputOutput(integration *models.SourceIntegrationMetadata) (
+func generateMockSQSBatchInputOutput(integration models.SourceIntegrationMetadata) (
 	*sqs.SendMessageBatchInput, *sqs.SendMessageBatchOutput, error) {
 
 	// Setup input/output
@@ -116,7 +93,7 @@ func generateMockSQSBatchInputOutput(integration *models.SourceIntegrationMetada
 
 func TestAddToSnapshotQueue(t *testing.T) {
 	env.SnapshotPollersQueueURL = "test-url"
-	testIntegration := &models.SourceIntegrationMetadata{
+	testIntegration := models.SourceIntegrationMetadata{
 		AWSAccountID:     aws.String(testAccountID),
 		CreatedAtTime:    aws.Time(time.Time{}),
 		CreatedBy:        aws.String("Bobert"),
@@ -129,12 +106,12 @@ func TestAddToSnapshotQueue(t *testing.T) {
 	sqsIn, sqsOut, err := generateMockSQSBatchInputOutput(testIntegration)
 	require.NoError(t, err)
 
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	// It's non trivial to mock when the order of a slice is not promised
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(sqsOut, nil)
 	sqsClient = mockSQS
 
-	err = apiTest.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{testIntegration}})
+	err = apiTest.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{&testIntegration}})
 
 	require.NoError(t, err)
 	// Check that there is one message per service
@@ -142,7 +119,7 @@ func TestAddToSnapshotQueue(t *testing.T) {
 }
 
 func TestPutIntegration(t *testing.T) {
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	sqsClient = mockSQS
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
@@ -162,7 +139,7 @@ func TestPutIntegration(t *testing.T) {
 }
 
 func TestPutLogIntegrationExists(t *testing.T) {
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 	sqsClient = mockSQS
 
@@ -194,7 +171,7 @@ func TestPutLogIntegrationExists(t *testing.T) {
 }
 
 func TestPutCloudSecIntegrationExists(t *testing.T) {
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
 
 	dynamoClient = &ddb.DDB{
@@ -269,7 +246,7 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 		TableName: "test",
 	}
 
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
 	mockSQS.On("AddPermission", mock.Anything).Return(&sqs.AddPermissionOutput{}, nil)
 	// RemoveRermission will be called to remove the permission that was added previously
@@ -302,7 +279,7 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 		TableName: "test",
 	}
 
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
 	mockSQS.On("AddPermission", mock.Anything).Return(&sqs.AddPermissionOutput{}, nil)
 	// RemoveRermission will be called to remove the permission that was added previously
@@ -320,7 +297,7 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 
 func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
 	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
@@ -355,7 +332,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 
 func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
 	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 

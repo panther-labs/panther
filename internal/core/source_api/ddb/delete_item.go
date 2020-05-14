@@ -20,43 +20,20 @@ package ddb
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-
-	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/pkg/errors"
 )
 
-// DeleteIntegrationItem deletes an integration from the database based on the integration ID
-func (ddb *DDB) DeleteIntegrationItem(input *models.DeleteIntegrationInput) error {
-	condition := expression.AttributeExists(expression.Name("integrationId"))
-
-	builder := expression.NewBuilder().WithCondition(condition)
-	expr, err := builder.Build()
-	if err != nil {
-		return &genericapi.InternalError{Message: "failed to build DeleteIntegration ddb expression"}
-	}
-
-	_, err = ddb.Client.DeleteItem(&dynamodb.DeleteItemInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		ConditionExpression:       expr.Condition(),
+// DeleteItem deletes an integration from the database based on the integration ID
+func (ddb *DDB) DeleteItem(integrationID *string) error {
+	_, err := ddb.Client.DeleteItem(&dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			hashKey: {S: input.IntegrationID},
+			hashKey: {S: integrationID},
 		},
 		TableName: aws.String(ddb.TableName),
 	})
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case dynamodb.ErrCodeConditionalCheckFailedException:
-				return &genericapi.DoesNotExistError{Message: aerr.Error()}
-			default:
-				return &genericapi.AWSError{Err: err, Method: "Dynamodb.DeleteItem"}
-			}
-		}
-		return &genericapi.AWSError{Err: err, Method: "Dynamodb.DeleteItem"}
+		return errors.Wrap(err, "failed to delete item from DDB")
 	}
 
 	return nil

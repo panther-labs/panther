@@ -318,9 +318,6 @@ func (b Build) cfn() error {
 	if err := generateDashboards(); err != nil {
 		return err
 	}
-	if err := generateMetrics(); err != nil {
-		return err
-	}
 
 	return nil
 }

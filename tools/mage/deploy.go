@@ -31,6 +31,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
@@ -54,26 +55,25 @@ const (
 	gatewayTemplate   = apiEmbeddedTemplate
 
 	// Main stacks
-	alarmsStack          = "panther-cw-alarms"
-	alarmsTemplate       = "deployments/alarms.yml"
-	appsyncStack         = "panther-appsync"
-	appsyncTemplate      = "deployments/appsync.yml"
-	cloudsecStack        = "panther-cloud-security"
-	cloudsecTemplate     = "deployments/cloud_security.yml"
-	coreStack            = "panther-core"
-	coreTemplate         = "deployments/core.yml"
-	dashboardStack       = "panther-cw-dashboards"
-	dashboardTemplate    = "out/deployments/monitoring/dashboards.json"
-	frontendStack        = "panther-web"
-	frontendTemplate     = "deployments/web_server.yml"
-	glueStack            = "panther-glue"
-	glueTemplate         = "out/deployments/gluetables.json"
-	logAnalysisStack     = "panther-log-analysis"
-	logAnalysisTemplate  = "deployments/log_analysis.yml"
-	metricFilterStack    = "panther-cw-metric-filters"
-	metricFilterTemplate = "out/deployments/monitoring/metrics.json"
-	onboardStack         = "panther-onboard"
-	onboardTemplate      = "deployments/onboard.yml"
+	alarmsStack         = "panther-cw-alarms"
+	alarmsTemplate      = "deployments/alarms.yml"
+	appsyncStack        = "panther-appsync"
+	appsyncTemplate     = "deployments/appsync.yml"
+	cloudsecStack       = "panther-cloud-security"
+	cloudsecTemplate    = "deployments/cloud_security.yml"
+	coreStack           = "panther-core"
+	coreTemplate        = "deployments/core.yml"
+	dashboardStack      = "panther-cw-dashboards"
+	dashboardTemplate   = "out/deployments/monitoring/dashboards.json"
+	frontendStack       = "panther-web"
+	frontendTemplate    = "deployments/web_server.yml"
+	glueStack           = "panther-glue"
+	glueTemplate        = "out/deployments/gluetables.json"
+	logAnalysisStack    = "panther-log-analysis"
+	logAnalysisTemplate = "deployments/log_analysis.yml"
+	metricFilterStack   = "panther-cw-metric-filters"
+	onboardStack        = "panther-onboard"
+	onboardTemplate     = "deployments/onboard.yml"
 
 	// Python layer
 	layerSourceDir        = "out/pip/analysis/python"
@@ -146,7 +146,13 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
-	logger.Infof("deploy: finished successfully in %s", time.Since(start))
+	// ***** Step 4: migrations
+	// Starting in v1.3.0, the metric-filter stack is no longer used. It can be safely deleted
+	if err := deleteStack(cloudformation.New(awsSession), aws.String(metricFilterStack)); err != nil {
+		logger.Warnf("failed to delete deprecated %s stack: %v", metricFilterStack, err)
+	}
+
+	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
 	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
 }
 
@@ -405,14 +411,8 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	}(results)
 
 	// Wait for stacks to finish.
-	// There are two stacks before and after this one
+	// There are two stacks before and one stack after
 	logResults(results, "deploy", 3, count+2, len(allStacks))
-
-	// Metric filters have to be deployed after all log groups have been created
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
-		c <- goroutineResult{summary: metricFilterStack, err: err}
-	}(results)
 
 	// Onboard Panther to scan itself
 	go func(c chan goroutineResult) {
