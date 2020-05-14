@@ -80,7 +80,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		// We only need to retrieve as many returns as to fit the EventsPageSize given by the user
 		eventsToReturn := *input.EventsPageSize - len(events)
 		eventsReturned, resultToken, getEventsErr := getEventsForLogType(logType, token.LogTypeToToken[logType], alertItem, eventsToReturn)
-		if err != nil {
+		if getEventsErr != nil {
 			err = getEventsErr // set err so it is captured in oplog
 			return nil, err
 		}
