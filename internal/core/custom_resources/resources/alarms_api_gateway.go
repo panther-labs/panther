@@ -40,7 +40,7 @@ type APIGatewayAlarmProperties struct {
 	APIName            string  `json:"ApiName" validate:"required"`
 	AlarmTopicArn      string  `validate:"required"`
 	ErrorThreshold     int     `json:",string" validate:"omitempty,min=0"`
-	LatencyThresholdMs float64 `json:",string" validate:"omitempty,min=100"`
+	LatencyThresholdMs float64 `json:",string" validate:"omitempty,min=1"`
 }
 
 // Add metric filters to a Lambda function's CloudWatch log group
@@ -76,7 +76,7 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, props.APIName)),
 		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
 		Dimensions: []*cloudwatch.Dimension{
-			{Name: aws.String("Name"), Value: &props.APIName},
+			{Name: aws.String("ApiName"), Value: &props.APIName},
 		},
 		EvaluationPeriods: aws.Int64(5),
 		MetricName:        aws.String("IntegrationLatency"),
