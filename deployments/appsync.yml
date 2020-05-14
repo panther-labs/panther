@@ -24,6 +24,9 @@ Parameters:
   ApiId:
     Type: String
     Description: Appsync GraphQL API ID
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   ServiceRole:
     Type: String
     Description: Appsync IAM service role ARN
@@ -42,6 +45,17 @@ Parameters:
     Description: API Gateway HTTPS endpoint for panther-resources-api
 
 Resources:
+  # The API is defined in bootstrap, but the alarms require a custom resource,
+  # which isn't available until after the bootstrap stacks deploy.
+  AppsyncAlarms:
+    Type: Custom::AppSyncAlarms
+    Properties:
+      ApiId: !Ref ApiId
+      ApiName: panther-graphql-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ClientErrorThreshold: 20 # per 5-minute window
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   GraphQLSchema:
     Type: AWS::AppSync::GraphQLSchema
     Properties:

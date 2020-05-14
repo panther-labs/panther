@@ -311,7 +311,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	count++
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
-			"AppsyncId":            outputs["GraphQLApiId"],
 			"LoadBalancerFullName": outputs["LoadBalancerFullName"],
 			"AlarmTopicArn":        outputs["AlarmTopicArn"],
 		})
@@ -323,6 +322,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, appsyncTemplate, sourceBucket, appsyncStack, map[string]string{
 			"ApiId":          outputs["GraphQLApiId"],
+			"AlarmTopicArn":  outputs["AlarmTopicArn"],
 			"ServiceRole":    outputs["AppsyncServiceRoleArn"],
 			"AnalysisApi":    "https://" + outputs["AnalysisApiEndpoint"],
 			"ComplianceApi":  "https://" + outputs["ComplianceApiEndpoint"],

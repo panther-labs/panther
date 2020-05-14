@@ -36,21 +36,6 @@ Resources:
       SecurityGroups:
         - !Ref PublicLoadBalancerSecurityGroup
 
-  # AppSync
-  GraphQLApi:
-    Type: AWS::AppSync::GraphQLApi
-    Properties:
-      Name: panther-graphql-api
-      AuthenticationType: AMAZON_COGNITO_USER_POOLS
-      UserPoolConfig:
-        AwsRegion: !Ref AWS::Region
-        UserPoolId: !Ref UserPoolId
-        DefaultAction: ALLOW
-      LogConfig:
-        CloudWatchLogsRoleArn: !GetAtt AppsyncServiceRole.Arn
-        FieldLogLevel: ALL
-      XrayEnabled: !If [TracingEnabled, True, !Ref 'AWS::NoValue']
-
   # DDB
   ComplianceTable:
     Type: AWS::DynamoDB::Table

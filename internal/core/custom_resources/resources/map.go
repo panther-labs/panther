@@ -27,13 +27,25 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// CloudWatch alarms for API Gateway 5XX errors and high integration latency.
 	//
 	// Parameters:
-	//     APIName:            string (required)
+	//     ApiName:            string (required)
 	//     AlarmTopicArn:      string (required)
 	//     ErrorThreshold:     int (default: 0)
 	//     LatencyThresholdMs: int (default: 1000)
 	// Outputs: None
 	// PhysicalId: custom:alarms:api:$API_NAME
 	"Custom::ApiGatewayAlarms": customAPIGatewayAlarms,
+
+	// CloudWatch alarms for AppSync 4XX and 5XX errors
+	//
+	// Parameters:
+	//     ApiId:                string (required)
+	//     ApiName:              string (required)
+	//     AlarmTopicArn:        string (required)
+	//     ClientErrorThreshold: int (default: 0)
+	//     ServerErrorThreshold: int (default: 0)
+	// Outputs: None
+	// PhysicalId: custom:alarms:appsync:$API_ID
+	"Custom::AppSyncAlarms": customAppSyncAlarms,
 
 	// Creates a self-signed ACM or IAM server certificate.
 	//

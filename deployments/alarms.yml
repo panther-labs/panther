@@ -25,9 +25,6 @@ Description: Template for Panther's CloudWatch alarms
 # The nested stacks referenced here are generated with "mage build:cfn"
 
 Parameters:
-  AppsyncId:
-    Type: String
-    Description: Appsync GraphQL ID
   LoadBalancerFullName:
     Type: String
     Description: Full name of the application load balancer
@@ -41,7 +38,6 @@ Resources:
     Properties:
       Parameters:
         AlarmTopicArn: !Ref AlarmTopicArn
-        AppsyncId: !Ref AppsyncId
         LoadBalancerFullName: !Ref LoadBalancerFullName
       TemplateURL: ../out/deployments/monitoring/bootstrap_alarms.json
 

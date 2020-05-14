@@ -7,50 +7,6 @@
     }
   },
   "Resources": {
-    "PantherAlarmAppSyncClientErrorpanthergraphqlapi": {
-      "Type": "AWS::CloudWatch::Alarm",
-      "Properties": {
-        "AlarmName": "PantherAlarm-AppSyncClientError-panther-graphql-api",
-        "AlarmDescription": "AppSync panther-graphql-api has has elevated 4XX errors. See: https://docs.runpanther.io/operations/runbooks#panther-graphql-api",
-        "AlarmActions": [
-          {
-            "Ref": "AlarmTopicArn"
-          }
-        ],
-        "TreatMissingData": "notBreaching",
-        "Namespace": "AWS/AppSync",
-        "MetricName": "4XXError",
-        "Dimensions": [{ "Name": "GraphQLAPIId", "Value": { "Ref": "AppsyncId" } }],
-        "ComparisonOperator": "GreaterThanThreshold",
-        "EvaluationPeriods": 1,
-        "Period": 300,
-        "Threshold": 20,
-        "Unit": "None",
-        "Statistic": "Sum"
-      }
-    },
-    "PantherAlarmAppSyncServerErrorpanthergraphqlapi": {
-      "Type": "AWS::CloudWatch::Alarm",
-      "Properties": {
-        "AlarmName": "PantherAlarm-AppSyncServerError-panther-graphql-api",
-        "AlarmDescription": "AppSync panther-graphql-api is failing. See: https://docs.runpanther.io/operations/runbooks#panther-graphql-api",
-        "AlarmActions": [
-          {
-            "Ref": "AlarmTopicArn"
-          }
-        ],
-        "TreatMissingData": "notBreaching",
-        "Namespace": "AWS/AppSync",
-        "MetricName": "5XXError",
-        "Dimensions": [{ "Name": "GraphQLAPIId", "Value": { "Ref": "AppsyncId" } }],
-        "ComparisonOperator": "GreaterThanThreshold",
-        "EvaluationPeriods": 1,
-        "Period": 300,
-        "Threshold": 0,
-        "Unit": "None",
-        "Statistic": "Sum"
-      }
-    },
     "PantherAlarmDDBBatchWriteItemErrorpanthercompliance": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {

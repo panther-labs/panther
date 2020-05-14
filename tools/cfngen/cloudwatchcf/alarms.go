@@ -230,7 +230,6 @@ func GenerateAlarms(settings *config.PantherConfig, cfFiles ...string) ([]*Alarm
 
 	if includesBootstrap {
 		// The bootstrap stack has AppSync and the ELB
-		parameters[appsyncParameterName] = cfngen.Parameter{Type: "String"}
 		parameters[elbParameterName] = cfngen.Parameter{Type: "String"}
 	}
 
@@ -263,8 +262,6 @@ func alarmDispatchOnType(resourceType string, resource map[string]interface{}, s
 		return generateSQSAlarms(resource)
 	case "AWS::ElasticLoadBalancingV2::LoadBalancer":
 		return generateApplicationELBAlarms(resource)
-	case "AWS::AppSync::GraphQLApi":
-		return generateAppSyncAlarms(resource)
 	case "AWS::DynamoDB::Table":
 		return generateDynamoDBAlarms(resource)
 	case "AWS::Serverless::Function":
