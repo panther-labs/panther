@@ -19,6 +19,7 @@ package resources
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
@@ -42,7 +43,7 @@ var (
 
 func getSession() *session.Session {
 	if awsSession == nil {
-		awsSession = session.Must(session.NewSession())
+		awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
 	}
 	return awsSession
 }
